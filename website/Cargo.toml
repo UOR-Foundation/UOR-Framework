@@ -1,0 +1,16 @@
+[package]
+name = "uor-website"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "UOR Foundation static site generator — produces the complete https://uor.foundation/ website"
+
+[dependencies]
+uor-spec = { path = "../spec" }
+uor-docs = { path = "../docs" }
+serde = { workspace = true }
+serde_json = { workspace = true }
+anyhow = { workspace = true }
+thiserror = { workspace = true }
+tera = { workspace = true }
+walkdir = { workspace = true }

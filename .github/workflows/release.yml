@@ -1,0 +1,91 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+# Only one deployment runs at a time
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: 1
+
+jobs:
+  release:
+    name: Build, Conform, and Publish
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - name: Cache cargo registry
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: ${{ runner.os }}-cargo-
+
+      - name: Check formatting
+        run: cargo fmt --check
+
+      - name: Run Clippy
+        run: cargo clippy -- -D warnings
+
+      - name: Run tests
+        run: cargo test
+
+      - name: Build ontology artifacts
+        run: cargo run --bin uor-build
+
+      - name: Generate documentation
+        run: cargo run --bin uor-docs
+
+      - name: Generate website
+        run: cargo run --bin uor-website
+
+      - name: Run conformance suite
+        run: cargo run --bin uor-conformance
+
+      - name: Upload pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: public/
+
+      - name: Deploy to GitHub Pages
+        id: deploy
+        uses: actions/deploy-pages@v4
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            public/uor.foundation.json
+            public/uor.foundation.ttl
+            public/uor.foundation.nt
+          body: |
+            UOR Foundation ontology release ${{ github.ref_name }}.
+
+            **Artifacts:**
+            - `uor.foundation.json` — JSON-LD 1.1
+            - `uor.foundation.ttl` — Turtle 1.1
+            - `uor.foundation.nt` — N-Triples
+
+            Documentation: https://uor.foundation/

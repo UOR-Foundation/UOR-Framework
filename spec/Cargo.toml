@@ -1,0 +1,14 @@
+[package]
+name = "uor-spec"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "UOR Foundation ontology — all 14 namespaces encoded as typed Rust data with JSON-LD, Turtle, and N-Triples serialization"
+
+[dependencies]
+serde = { workspace = true }
+serde_json = { workspace = true }
+sophia_api = { workspace = true }
+sophia_inmem = { workspace = true }
+sophia_turtle = { workspace = true }
+thiserror = { workspace = true }

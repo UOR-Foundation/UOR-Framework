@@ -1,0 +1,18 @@
+[package]
+name = "uor-conformance"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "UOR Framework conformance suite — validates all artifacts against professional standards"
+
+[dependencies]
+uor-spec = { path = "../spec" }
+serde = { workspace = true }
+serde_json = { workspace = true }
+anyhow = { workspace = true }
+thiserror = { workspace = true }
+walkdir = { workspace = true }
+cssparser = { workspace = true }
+
+[dev-dependencies]
+uor-spec = { path = "../spec" }
