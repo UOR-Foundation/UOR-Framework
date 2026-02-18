@@ -53,7 +53,7 @@ use std::path::Path;
 use anyhow::Result;
 
 use extractor::OntologyIndex;
-use renderer::{escape_html, render_page};
+use renderer::{escape_html, render_docs_page};
 use uor_spec::{Individual, IndividualValue, NamespaceModule, Ontology, PropertyKind};
 
 /// Generates all documentation artifacts.
@@ -73,16 +73,17 @@ pub fn generate(out_dir: &Path, readme_path: &Path) -> Result<()> {
     let content_dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("content");
     verifier::verify_content(&content_dir)?;
 
-    let nav_html = build_nav_html(base_path);
+    let site_nav_html = build_site_nav_html(base_path);
+    let docs_nav_html = build_docs_sidebar_html(base_path);
 
     // Generate index page
-    let index_html = generate_index_page(&index, &nav_html, base_path);
+    let index_html = generate_index_page(&index, &site_nav_html, &docs_nav_html, base_path);
     writer::write_html(&out_dir.join("index.html"), &index_html)?;
 
     // Generate per-namespace reference pages (100% from spec)
     let ontology = Ontology::full();
     for module in &ontology.namespaces {
-        let html = generate_namespace_page(module, &nav_html, base_path);
+        let html = generate_namespace_page(module, &site_nav_html, &docs_nav_html, base_path);
         let path = out_dir
             .join("namespaces")
             .join(format!("{}.html", module.namespace.prefix));
@@ -94,12 +95,13 @@ pub fn generate(out_dir: &Path, readme_path: &Path) -> Result<()> {
         &content_dir.join("concepts"),
         &out_dir.join("concepts"),
         &index,
-        &nav_html,
+        &site_nav_html,
+        &docs_nav_html,
         base_path,
     )?;
 
     // Generate concepts index page
-    let concepts_index = render_page(
+    let concepts_index = render_docs_page(
         "Concepts",
         r#"<h1>Concepts</h1>
 <p>Explanatory documentation for the key ideas in the UOR Foundation ontology.</p>
@@ -112,7 +114,8 @@ pub fn generate(out_dir: &Path, readme_path: &Path) -> Result<()> {
 <li><a href="type-system.html">Type System — Typed expressions and abstraction layers</a></li>
 <li><a href="state-model.html">State Model — Execution contexts and binding frames</a></li>
 </ul>"#,
-        &nav_html,
+        &site_nav_html,
+        &docs_nav_html,
         &format!(
             r#"<a href="{base_path}/">Home</a> › <a href="{base_path}/docs/index.html">Docs</a> › Concepts"#
         ),
@@ -128,12 +131,13 @@ pub fn generate(out_dir: &Path, readme_path: &Path) -> Result<()> {
         &content_dir.join("guides"),
         &out_dir.join("guides"),
         &index,
-        &nav_html,
+        &site_nav_html,
+        &docs_nav_html,
         base_path,
     )?;
 
     // Generate guides index page
-    let guides_index = render_page(
+    let guides_index = render_docs_page(
         "Guides",
         r#"<h1>Guides</h1>
 <p>How-to guides for working with and implementing the UOR Framework.</p>
@@ -142,7 +146,8 @@ pub fn generate(out_dir: &Path, readme_path: &Path) -> Result<()> {
 <li><a href="conformance.html">Conformance — Validate your implementation</a></li>
 <li><a href="contributing.html">Contributing — How to contribute to UOR</a></li>
 </ul>"#,
-        &nav_html,
+        &site_nav_html,
+        &docs_nav_html,
         &format!(
             r#"<a href="{base_path}/">Home</a> › <a href="{base_path}/docs/index.html">Docs</a> › Guides"#
         ),
@@ -156,7 +161,8 @@ pub fn generate(out_dir: &Path, readme_path: &Path) -> Result<()> {
         &out_dir.join("overview.html"),
         "Overview",
         &index,
-        &nav_html,
+        &site_nav_html,
+        &docs_nav_html,
         base_path,
     )?;
     generate_single_page(
@@ -164,7 +170,8 @@ pub fn generate(out_dir: &Path, readme_path: &Path) -> Result<()> {
         &out_dir.join("architecture.html"),
         "Architecture",
         &index,
-        &nav_html,
+        &site_nav_html,
+        &docs_nav_html,
         base_path,
     )?;
 
@@ -175,8 +182,20 @@ pub fn generate(out_dir: &Path, readme_path: &Path) -> Result<()> {
     Ok(())
 }
 
-/// Generates the main site navigation HTML snippet.
-fn build_nav_html(base_path: &str) -> String {
+/// Generates the compact top-bar site navigation (4 items matching the main website).
+fn build_site_nav_html(base_path: &str) -> String {
+    format!(
+        r#"<ul>
+<li><a href="{base_path}/">Home</a></li>
+<li><a href="{base_path}/namespaces/">Namespaces</a></li>
+<li><a href="{base_path}/docs/index.html">Documentation</a></li>
+<li><a href="{base_path}/search.html">Search</a></li>
+</ul>"#
+    )
+}
+
+/// Generates the docs-specific sidebar navigation tree.
+fn build_docs_sidebar_html(base_path: &str) -> String {
     format!(
         r#"<ul>
 <li><a href="{base_path}/docs/index.html">Documentation</a></li>
@@ -224,7 +243,12 @@ fn build_nav_html(base_path: &str) -> String {
 }
 
 /// Generates the ontology inventory index page.
-fn generate_index_page(index: &OntologyIndex, nav_html: &str, base_path: &str) -> String {
+fn generate_index_page(
+    index: &OntologyIndex,
+    site_nav_html: &str,
+    docs_nav_html: &str,
+    base_path: &str,
+) -> String {
     let mut rows = String::new();
     for module in &index.modules {
         let ns = &module.namespace;
@@ -252,17 +276,23 @@ fn generate_index_page(index: &OntologyIndex, nav_html: &str, base_path: &str) -
 </table>"#
     );
 
-    render_page(
+    render_docs_page(
         "Documentation Index",
         &content,
-        nav_html,
+        site_nav_html,
+        docs_nav_html,
         &format!(r#"<a href="{base_path}/">Home</a> › Documentation"#),
         base_path,
     )
 }
 
 /// Generates a namespace reference page from the spec (100% auto-generated).
-fn generate_namespace_page(module: &NamespaceModule, nav_html: &str, base_path: &str) -> String {
+fn generate_namespace_page(
+    module: &NamespaceModule,
+    site_nav_html: &str,
+    docs_nav_html: &str,
+    base_path: &str,
+) -> String {
     let ns = &module.namespace;
     let mut content = format!(
         r#"<h1>{label}</h1>
@@ -346,10 +376,11 @@ fn generate_namespace_page(module: &NamespaceModule, nav_html: &str, base_path: 
         content.push_str("</tbody>\n</table>\n");
     }
 
-    render_page(
+    render_docs_page(
         ns.label,
         &content,
-        nav_html,
+        site_nav_html,
+        docs_nav_html,
         &format!(
             r#"<a href="{base_path}/">Home</a> › <a href="{base_path}/docs/index.html">Docs</a> › {}"#,
             escape_html(ns.label)
@@ -399,7 +430,8 @@ fn generate_content_pages(
     src_dir: &Path,
     out_dir: &Path,
     index: &OntologyIndex,
-    nav_html: &str,
+    site_nav_html: &str,
+    docs_nav_html: &str,
     base_path: &str,
 ) -> Result<()> {
     if !src_dir.exists() {
@@ -414,7 +446,15 @@ fn generate_content_pages(
         if path.extension().map(|x| x == "md").unwrap_or(false) {
             let stem = path.file_stem().and_then(|s| s.to_str()).unwrap_or("page");
             let out_path = out_dir.join(format!("{}.html", stem));
-            generate_single_page(&path, &out_path, stem, index, nav_html, base_path)?;
+            generate_single_page(
+                &path,
+                &out_path,
+                stem,
+                index,
+                site_nav_html,
+                docs_nav_html,
+                base_path,
+            )?;
         }
     }
 
@@ -431,7 +471,8 @@ fn generate_single_page(
     out: &Path,
     title: &str,
     index: &OntologyIndex,
-    nav_html: &str,
+    site_nav_html: &str,
+    docs_nav_html: &str,
     base_path: &str,
 ) -> Result<()> {
     let markdown = if src.exists() {
@@ -443,10 +484,11 @@ fn generate_single_page(
     };
 
     let content_html = renderer::render_markdown(&markdown, index);
-    let page = render_page(
+    let page = render_docs_page(
         title,
         &content_html,
-        nav_html,
+        site_nav_html,
+        docs_nav_html,
         &format!(
             r#"<a href="{base_path}/">Home</a> › <a href="{base_path}/docs/index.html">Docs</a> › {}"#,
             escape_html(title)

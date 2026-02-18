@@ -101,14 +101,19 @@ pub fn markdown_to_html(markdown: &str) -> String {
     html_output
 }
 
-/// Renders a page inside the standard HTML shell with nav, main, and footer.
-pub fn render_page(
+/// Renders a docs page inside the standard site shell with a sidebar.
+///
+/// Uses the same `<header class="site-header">` / `<footer class="site-footer">`
+/// as the website, with the docs-specific nav tree in an `<aside class="docs-sidebar">`.
+pub fn render_docs_page(
     title: &str,
     content_html: &str,
-    nav_html: &str,
+    site_nav_html: &str,
+    docs_nav_html: &str,
     breadcrumb: &str,
     base_path: &str,
 ) -> String {
+    let home_url = format!("{}/", base_path);
     let css_url = format!("{}/css/style.css", base_path);
     let js_url = format!("{}/js/search.js", base_path);
     format!(
@@ -122,24 +127,36 @@ pub fn render_page(
 </head>
 <body>
 <a href="#main-content" class="skip-link">Skip to main content</a>
-<nav aria-label="Site navigation">
-{nav_html}
+<header class="site-header">
+<a href="{home_url}" class="site-logo">UOR Foundation</a>
+<nav aria-label="Site navigation" class="site-nav">
+{site_nav_html}
 </nav>
+</header>
+<div class="docs-layout">
+<aside class="docs-sidebar">
+<nav aria-label="Documentation navigation">
+{docs_nav_html}
+</nav>
+</aside>
 <main id="main-content">
 <nav aria-label="Breadcrumb" class="breadcrumb">{breadcrumb}</nav>
-<article>
+<article class="page-content">
 {content_html}
 </article>
 </main>
-<footer>
-<p>UOR Foundation — <a href="https://uor.foundation/">uor.foundation</a></p>
+</div>
+<footer class="site-footer">
+<p>UOR Foundation — <a href="https://uor.foundation/">uor.foundation</a> — Apache-2.0</p>
 </footer>
 <script src="{js_url}" defer></script>
 </body>
 </html>"##,
         title = escape_html(title),
+        home_url = escape_html(&home_url),
         css_url = escape_html(&css_url),
-        nav_html = nav_html,
+        site_nav_html = site_nav_html,
+        docs_nav_html = docs_nav_html,
         breadcrumb = breadcrumb,
         content_html = content_html,
         js_url = escape_html(&js_url),

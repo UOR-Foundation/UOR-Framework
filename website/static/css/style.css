@@ -635,3 +635,79 @@ form[role="search"] label {
     grid-template-columns: 1fr;
   }
 }
+
+/* ── Docs two-column layout ─────────────────────────────────────────────────── */
+
+.docs-layout {
+  display: grid;
+  grid-template-columns: 17rem 1fr;
+  min-height: calc(100vh - 3.5rem);
+}
+
+.docs-sidebar {
+  background: #0d0d1f;
+  border-right: 1px solid #1e1e3a;
+  padding: 1.5rem 0;
+  position: sticky;
+  top: 3.5rem;
+  height: calc(100vh - 3.5rem);
+  overflow-y: auto;
+}
+
+.docs-sidebar nav ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.docs-sidebar nav > ul > li > a,
+.docs-sidebar nav > ul > li > span {
+  display: block;
+  padding: 0.4rem 1.25rem;
+  font-size: 0.9rem;
+  color: #b0b8d0;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.docs-sidebar nav > ul > li > a:hover {
+  color: #7eb8ff;
+}
+
+.docs-sidebar .nav-group > ul {
+  padding-left: 1rem;
+}
+
+.docs-sidebar .nav-group > ul a {
+  display: block;
+  padding: 0.25rem 1.25rem;
+  font-size: 0.85rem;
+  color: #8090b8;
+  text-decoration: none;
+}
+
+.docs-sidebar .nav-group > ul a:hover {
+  color: #7eb8ff;
+}
+
+.docs-sidebar .nav-group > span {
+  display: block;
+  padding: 0.75rem 1.25rem 0.2rem;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: #505880;
+}
+
+@media (max-width: 860px) {
+  .docs-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .docs-sidebar {
+    position: static;
+    height: auto;
+    border-right: none;
+    border-bottom: 1px solid #1e1e3a;
+  }
+}
