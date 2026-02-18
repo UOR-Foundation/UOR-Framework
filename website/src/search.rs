@@ -10,19 +10,20 @@ use crate::extractor::build_search_index;
 /// # Errors
 ///
 /// Returns an error if JSON serialization fails.
-pub fn generate_search_index() -> Result<String> {
-    let entries = build_search_index();
+pub fn generate_search_index(base_path: &str) -> Result<String> {
+    let entries = build_search_index(base_path);
     let json = serde_json::to_string(&entries)
         .map_err(|e| anyhow::anyhow!("Failed to serialize search index: {}", e))?;
     Ok(json)
 }
 
 /// Returns the lightweight client-side search JavaScript.
-pub fn search_js() -> &'static str {
-    r#"// UOR Foundation — client-side search
+pub fn search_js(base_path: &str) -> String {
+    format!(
+        r#"// UOR Foundation — client-side search
 // Reads search-index.json and filters results on input
 
-(function () {
+(function () {{
   'use strict';
 
   const input = document.getElementById('search-input');
@@ -32,30 +33,30 @@ pub fn search_js() -> &'static str {
 
   let index = [];
 
-  fetch('/search-index.json')
-    .then(function (r) { return r.json(); })
-    .then(function (data) { index = data; })
-    .catch(function (e) { console.error('Failed to load search index:', e); });
+  fetch('{base_path}/search-index.json')
+    .then(function (r) {{ return r.json(); }})
+    .then(function (data) {{ index = data; }})
+    .catch(function (e) {{ console.error('Failed to load search index:', e); }});
 
-  input.addEventListener('input', function () {
+  input.addEventListener('input', function () {{
     const query = input.value.trim().toLowerCase();
     results.innerHTML = '';
 
     if (query.length < 2) return;
 
-    const matches = index.filter(function (entry) {
+    const matches = index.filter(function (entry) {{
       return entry.label.toLowerCase().includes(query) ||
              entry.description.toLowerCase().includes(query);
-    }).slice(0, 20);
+    }}).slice(0, 20);
 
-    if (matches.length === 0) {
+    if (matches.length === 0) {{
       const li = document.createElement('li');
       li.textContent = 'No results.';
       results.appendChild(li);
       return;
-    }
+    }}
 
-    matches.forEach(function (entry) {
+    matches.forEach(function (entry) {{
       const li = document.createElement('li');
       const a = document.createElement('a');
       a.href = entry.url;
@@ -70,8 +71,10 @@ pub fn search_js() -> &'static str {
       li.appendChild(kind);
       li.appendChild(desc);
       results.appendChild(li);
-    });
-  });
-}());
-"#
+    }});
+  }});
+}}());
+"#,
+        base_path = base_path,
+    )
 }

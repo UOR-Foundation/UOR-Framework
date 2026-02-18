@@ -27,6 +27,12 @@
 //!   css/style.css
 //!   js/search.js
 //! ```
+//!
+//! # Base Path
+//!
+//! Set the `PUBLIC_BASE_PATH` environment variable to a path prefix (e.g.
+//! `/UOR-Framework`) when the site is served from a subdirectory. Defaults to
+//! an empty string (served from the root).
 
 #![deny(
     clippy::unwrap_used,
@@ -61,48 +67,67 @@ const BASE_URL: &str = "https://uor.foundation";
 
 /// Generates the complete website into `out_dir`.
 ///
+/// Reads `PUBLIC_BASE_PATH` from the environment (default: `""`). Set it to
+/// `/UOR-Framework` when deploying to GitHub Pages at a subdirectory.
+///
 /// # Errors
 ///
 /// Returns an error if any file cannot be written.
 pub fn generate(out_dir: &Path) -> Result<()> {
-    let nav = build_nav();
-    let nav_html = render_nav(&nav, "/");
+    let base_path = std::env::var("PUBLIC_BASE_PATH").unwrap_or_default();
+    let base_path = base_path.trim_end_matches('/');
+
+    let nav = build_nav(base_path);
+    let summaries = namespace_summaries(base_path);
 
     // Track all pages for sitemap
     let mut sitemap_paths: Vec<String> = Vec::new();
 
     // Homepage
-    let summaries = namespace_summaries();
-    let home_body = render_homepage(&summaries);
-    let home_html = render_page("UOR Foundation", &home_body, &nav_html, &home_breadcrumbs());
+    let home_body = render_homepage(&summaries, base_path);
+    let home_nav = render_nav(&nav, &format!("{}/", base_path));
+    let home_html = render_page(
+        "UOR Foundation",
+        &home_body,
+        &home_nav,
+        &home_breadcrumbs(base_path),
+        base_path,
+    );
     writer::write(&out_dir.join("index.html"), &home_html)?;
     sitemap_paths.push("/".to_string());
 
     // Search page
-    let search_body = render_search_page();
-    let search_nav = render_nav(&nav, "/search.html");
+    let search_body = render_search_page(base_path);
+    let search_nav = render_nav(&nav, &format!("{}/search.html", base_path));
     let search_crumbs = vec![
         model::BreadcrumbItem {
             label: "Home".to_string(),
-            url: "/".to_string(),
+            url: format!("{}/", base_path),
         },
         model::BreadcrumbItem {
             label: "Search".to_string(),
             url: String::new(),
         },
     ];
-    let search_html = render_page("Search", &search_body, &search_nav, &search_crumbs);
+    let search_html = render_page(
+        "Search",
+        &search_body,
+        &search_nav,
+        &search_crumbs,
+        base_path,
+    );
     writer::write(&out_dir.join("search.html"), &search_html)?;
     sitemap_paths.push("/search.html".to_string());
 
     // Namespaces index page
-    let ns_index_nav = render_nav(&nav, "/namespaces/");
+    let ns_index_nav = render_nav(&nav, &format!("{}/namespaces/", base_path));
     let ns_index_body = render_namespaces_index(&summaries);
     let ns_index_html = render_page(
         "Namespaces",
         &ns_index_body,
         &ns_index_nav,
-        &namespaces_index_breadcrumbs(),
+        &namespaces_index_breadcrumbs(base_path),
+        base_path,
     );
     writer::write(
         &out_dir.join("namespaces").join("index.html"),
@@ -115,10 +140,16 @@ pub fn generate(out_dir: &Path) -> Result<()> {
     for module in &ontology.namespaces {
         let prefix = module.namespace.prefix;
         let page_path = format!("/namespaces/{}/", prefix);
-        let page_nav = render_nav(&nav, &page_path);
-        let ns_breadcrumbs = namespace_breadcrumbs(module.namespace.label);
+        let page_nav = render_nav(&nav, &format!("{}{}", base_path, page_path));
+        let ns_breadcrumbs = namespace_breadcrumbs(module.namespace.label, base_path);
         let body = render_namespace_page(module);
-        let html = render_page(module.namespace.label, &body, &page_nav, &ns_breadcrumbs);
+        let html = render_page(
+            module.namespace.label,
+            &body,
+            &page_nav,
+            &ns_breadcrumbs,
+            base_path,
+        );
 
         let out_path = out_dir.join("namespaces").join(prefix).join("index.html");
         writer::write(&out_path, &html)?;
@@ -126,7 +157,7 @@ pub fn generate(out_dir: &Path) -> Result<()> {
     }
 
     // Search index
-    let search_index_json = search::generate_search_index()?;
+    let search_index_json = search::generate_search_index(base_path)?;
     writer::write(&out_dir.join("search-index.json"), &search_index_json)?;
 
     // Sitemap
@@ -137,7 +168,10 @@ pub fn generate(out_dir: &Path) -> Result<()> {
     writer::write(&out_dir.join("css").join("style.css"), style_css())?;
 
     // JavaScript
-    writer::write(&out_dir.join("js").join("search.js"), search::search_js())?;
+    writer::write(
+        &out_dir.join("js").join("search.js"),
+        &search::search_js(base_path),
+    )?;
 
     Ok(())
 }
@@ -153,20 +187,20 @@ mod tests {
 
     #[test]
     fn search_index_has_all_classes() {
-        let entries = extractor::build_search_index();
+        let entries = extractor::build_search_index("");
         let class_count = entries.iter().filter(|e| e.kind == "class").count();
         assert_eq!(class_count, 82, "Expected 82 class entries in search index");
     }
 
     #[test]
     fn namespace_summaries_count() {
-        let summaries = namespace_summaries();
+        let summaries = namespace_summaries("");
         assert_eq!(summaries.len(), 14);
     }
 
     #[test]
     fn nav_renders_non_empty() {
-        let nav = build_nav();
+        let nav = build_nav("");
         let html = render_nav(&nav, "/");
         assert!(!html.is_empty());
         assert!(html.contains("UOR Foundation") || html.contains("Home"));

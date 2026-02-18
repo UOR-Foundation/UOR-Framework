@@ -40,6 +40,10 @@ pub fn validate(artifacts: &Path) -> Result<ConformanceReport> {
         })
         .collect();
 
+    // Read the base path so we can resolve prefixed links correctly
+    let base_path = std::env::var("PUBLIC_BASE_PATH").unwrap_or_default();
+    let base_path = base_path.trim_end_matches('/').to_string();
+
     let mut broken: Vec<String> = Vec::new();
 
     for entry in WalkDir::new(artifacts)
@@ -77,8 +81,8 @@ pub fn validate(artifacts: &Path) -> Result<ConformanceReport> {
                 continue;
             }
 
-            // Resolve relative link
-            let resolved = resolve_href(&rel_dir, &href);
+            // Resolve relative link (stripping base_path prefix for root-relative links)
+            let resolved = resolve_href(&rel_dir, &href, &base_path);
 
             // Strip fragment
             let resolved = resolved.split('#').next().unwrap_or(&resolved).to_string();
@@ -141,10 +145,19 @@ fn extract_hrefs(html: &str) -> Vec<String> {
 }
 
 /// Resolves a relative href against a base directory.
-fn resolve_href(base_dir: &str, href: &str) -> String {
+///
+/// Strips `PUBLIC_BASE_PATH` from root-relative links so that generated sites
+/// that use a subpath prefix (e.g. `/UOR-Framework`) still resolve correctly
+/// against the local `public/` directory.
+fn resolve_href(base_dir: &str, href: &str, base_path: &str) -> String {
     if href.starts_with('/') {
-        // Absolute path from site root
-        href.trim_start_matches('/').to_string()
+        // Strip the base-path prefix if present, then resolve from root
+        let without_base = if !base_path.is_empty() {
+            href.strip_prefix(base_path).unwrap_or(href)
+        } else {
+            href
+        };
+        without_base.trim_start_matches('/').to_string()
     } else if base_dir.is_empty() {
         href.to_string()
     } else {

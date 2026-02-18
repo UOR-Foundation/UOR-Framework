@@ -48,9 +48,13 @@ jobs:
 
       - name: Generate website
         run: cargo run --bin uor-website
+        env:
+          PUBLIC_BASE_PATH: /UOR-Framework
 
       - name: Run conformance suite
         run: cargo run --bin uor-conformance
+        env:
+          PUBLIC_BASE_PATH: /UOR-Framework
 
       - name: Upload pages artifact
         # Only deploy Pages on pushes to main (not PRs)

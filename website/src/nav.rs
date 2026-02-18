@@ -5,7 +5,7 @@ use uor_spec::Ontology;
 use crate::model::NavItem;
 
 /// Builds the primary site navigation tree.
-pub fn build_nav() -> Vec<NavItem> {
+pub fn build_nav(base_path: &str) -> Vec<NavItem> {
     let ontology = Ontology::full();
 
     let namespace_children: Vec<NavItem> = ontology
@@ -13,7 +13,7 @@ pub fn build_nav() -> Vec<NavItem> {
         .iter()
         .map(|m| NavItem {
             label: m.namespace.label.to_string(),
-            url: format!("/namespaces/{}/", m.namespace.prefix),
+            url: format!("{}/namespaces/{}/", base_path, m.namespace.prefix),
             children: Vec::new(),
         })
         .collect();
@@ -21,43 +21,43 @@ pub fn build_nav() -> Vec<NavItem> {
     vec![
         NavItem {
             label: "Home".to_string(),
-            url: "/".to_string(),
+            url: format!("{}/", base_path),
             children: Vec::new(),
         },
         NavItem {
             label: "Namespaces".to_string(),
-            url: "/namespaces/".to_string(),
+            url: format!("{}/namespaces/", base_path),
             children: namespace_children,
         },
         NavItem {
             label: "Documentation".to_string(),
-            url: "/docs/".to_string(),
+            url: format!("{}/docs/", base_path),
             children: vec![
                 NavItem {
                     label: "Overview".to_string(),
-                    url: "/docs/overview.html".to_string(),
+                    url: format!("{}/docs/overview.html", base_path),
                     children: Vec::new(),
                 },
                 NavItem {
                     label: "Architecture".to_string(),
-                    url: "/docs/architecture.html".to_string(),
+                    url: format!("{}/docs/architecture.html", base_path),
                     children: Vec::new(),
                 },
                 NavItem {
                     label: "Concepts".to_string(),
-                    url: "/docs/concepts/".to_string(),
+                    url: format!("{}/docs/concepts/", base_path),
                     children: Vec::new(),
                 },
                 NavItem {
                     label: "Guides".to_string(),
-                    url: "/docs/guides/".to_string(),
+                    url: format!("{}/docs/guides/", base_path),
                     children: Vec::new(),
                 },
             ],
         },
         NavItem {
             label: "Search".to_string(),
-            url: "/search.html".to_string(),
+            url: format!("{}/search.html", base_path),
             children: Vec::new(),
         },
     ]

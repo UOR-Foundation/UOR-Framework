@@ -12,8 +12,12 @@ pub fn render_page(
     body: &str,
     nav_html: &str,
     breadcrumbs: &[BreadcrumbItem],
+    base_path: &str,
 ) -> String {
     let crumb_html = render_breadcrumbs(breadcrumbs);
+    let home_url = format!("{}/", base_path);
+    let css_url = format!("{}/css/style.css", base_path);
+    let js_url = format!("{}/js/search.js", base_path);
     format!(
         r##"<!DOCTYPE html>
 <html lang="en">
@@ -21,12 +25,12 @@ pub fn render_page(
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>{title} — UOR Foundation</title>
-<link rel="stylesheet" href="/css/style.css">
+<link rel="stylesheet" href="{css_url}">
 </head>
 <body>
 <a href="#main-content" class="skip-link">Skip to main content</a>
 <header class="site-header">
-<a href="/" class="site-logo">UOR Foundation</a>
+<a href="{home_url}" class="site-logo">UOR Foundation</a>
 <nav aria-label="Site navigation" class="site-nav">
 {nav_html}
 </nav>
@@ -42,13 +46,16 @@ pub fn render_page(
 <footer class="site-footer">
 <p>UOR Foundation — <a href="https://uor.foundation/">uor.foundation</a> — Apache-2.0</p>
 </footer>
-<script src="/js/search.js" defer></script>
+<script src="{js_url}" defer></script>
 </body>
 </html>"##,
         title = escape_html(title),
+        css_url = escape_html(&css_url),
+        home_url = escape_html(&home_url),
         nav_html = nav_html,
         crumb_html = crumb_html,
         body = body,
+        js_url = escape_html(&js_url),
     )
 }
 
@@ -74,7 +81,7 @@ pub fn render_breadcrumbs(crumbs: &[BreadcrumbItem]) -> String {
 }
 
 /// Renders the homepage body with namespace grid.
-pub fn render_homepage(summaries: &[NamespaceSummary]) -> String {
+pub fn render_homepage(summaries: &[NamespaceSummary], base_path: &str) -> String {
     let total_ns = summaries.len();
     let total_classes: usize = summaries.iter().map(|s| s.class_count).sum();
     let total_props: usize = summaries.iter().map(|s| s.property_count).sum();
@@ -105,14 +112,18 @@ pub fn render_homepage(summaries: &[NamespaceSummary]) -> String {
         ));
     }
 
+    let docs_url = format!("{}/docs/overview.html", base_path);
+    let ns_url = format!("{}/namespaces/", base_path);
+    let search_url = format!("{}/search.html", base_path);
+
     format!(
         r#"<section class="hero">
 <h1>UOR Foundation</h1>
 <p class="tagline">Universal Object Reference — a formal ontology for content-addressed, algebraically-structured object spaces.</p>
 <p>
-<a href="/docs/overview.html" class="btn-primary">Get Started</a>
-<a href="/namespaces/" class="btn-secondary">Browse Namespaces</a>
-<a href="/search.html" class="btn-secondary">Search</a>
+<a href="{docs_url}" class="btn-primary">Get Started</a>
+<a href="{ns_url}" class="btn-secondary">Browse Namespaces</a>
+<a href="{search_url}" class="btn-secondary">Search</a>
 </p>
 </section>
 
@@ -127,6 +138,9 @@ pub fn render_homepage(summaries: &[NamespaceSummary]) -> String {
 {grid}
 </div>
 </section>"#,
+        docs_url = escape_html(&docs_url),
+        ns_url = escape_html(&ns_url),
+        search_url = escape_html(&search_url),
         total_ns = total_ns,
         total_classes = total_classes,
         total_props = total_props,
@@ -299,13 +313,17 @@ fn render_individual_value(value: &IndividualValue) -> String {
 }
 
 /// Renders the search page body.
-pub fn render_search_page() -> String {
-    r#"<h1>Search</h1>
-<form role="search" action="/search.html" method="get">
+pub fn render_search_page(base_path: &str) -> String {
+    let action = format!("{}/search.html", base_path);
+    format!(
+        r#"<h1>Search</h1>
+<form role="search" action="{action}" method="get">
 <label for="search-input">Search ontology terms</label>
 <input type="search" id="search-input" name="q" placeholder="e.g. Ring, criticalIdentity, partition…" autocomplete="off">
 </form>
-<ul id="search-results" aria-live="polite"></ul>"#.to_string()
+<ul id="search-results" aria-live="polite"></ul>"#,
+        action = escape_html(&action),
+    )
 }
 
 /// Renders the sitemap.xml content.
