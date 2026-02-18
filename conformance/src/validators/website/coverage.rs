@@ -38,10 +38,7 @@ fn check_namespace_pages(artifacts: &Path, report: &mut ConformanceReport) {
             .join(module.namespace.prefix)
             .join("index.html");
         if !page.exists() {
-            missing.push(format!(
-                "namespaces/{}/index.html",
-                module.namespace.prefix
-            ));
+            missing.push(format!("namespaces/{}/index.html", module.namespace.prefix));
         }
     }
 
@@ -77,8 +74,8 @@ fn check_search_index(artifacts: &Path, report: &mut ConformanceReport) -> Resul
     let content = std::fs::read_to_string(&index_path)
         .with_context(|| format!("Failed to read {}", index_path.display()))?;
 
-    let index: Value = serde_json::from_str(&content)
-        .with_context(|| "Failed to parse search-index.json")?;
+    let index: Value =
+        serde_json::from_str(&content).with_context(|| "Failed to parse search-index.json")?;
 
     let ontology = uor_spec::Ontology::full();
     let mut missing: Vec<String> = Vec::new();

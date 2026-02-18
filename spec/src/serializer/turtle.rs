@@ -52,7 +52,9 @@ pub fn to_turtle(ontology: &Ontology) -> String {
         out.push_str(&format!("# Namespace: {}\n", module.namespace.prefix));
 
         // Namespace ontology declaration
-        let imports_str: String = module.namespace.imports
+        let imports_str: String = module
+            .namespace
+            .imports
             .iter()
             .map(|iri| format!("  owl:imports <{}> ;\n", iri))
             .collect();
@@ -67,11 +69,13 @@ pub fn to_turtle(ontology: &Ontology) -> String {
 
         // Classes
         for class in &module.classes {
-            let subclasses: String = class.subclass_of
+            let subclasses: String = class
+                .subclass_of
                 .iter()
                 .map(|iri| format!("  rdfs:subClassOf <{}> ;\n", iri))
                 .collect();
-            let disjoints: String = class.disjoint_with
+            let disjoints: String = class
+                .disjoint_with
                 .iter()
                 .map(|iri| format!("  owl:disjointWith <{}> ;\n", iri))
                 .collect();
@@ -88,11 +92,13 @@ pub fn to_turtle(ontology: &Ontology) -> String {
         // Properties
         for prop in &module.properties {
             let type_str = match prop.kind {
-                PropertyKind::Datatype if prop.functional =>
-                    "owl:DatatypeProperty , owl:FunctionalProperty",
+                PropertyKind::Datatype if prop.functional => {
+                    "owl:DatatypeProperty , owl:FunctionalProperty"
+                }
                 PropertyKind::Datatype => "owl:DatatypeProperty",
-                PropertyKind::Object if prop.functional =>
-                    "owl:ObjectProperty , owl:FunctionalProperty",
+                PropertyKind::Object if prop.functional => {
+                    "owl:ObjectProperty , owl:FunctionalProperty"
+                }
                 PropertyKind::Object => "owl:ObjectProperty",
                 PropertyKind::Annotation => "owl:AnnotationProperty",
             };
@@ -121,7 +127,11 @@ pub fn to_turtle(ontology: &Ontology) -> String {
                 turtle_string(ind.comment)
             );
             for (prop_iri, value) in ind.properties {
-                ind_str.push_str(&format!(" ;\n  <{}> {}", prop_iri, individual_value_to_turtle(value)));
+                ind_str.push_str(&format!(
+                    " ;\n  <{}> {}",
+                    prop_iri,
+                    individual_value_to_turtle(value)
+                ));
             }
             ind_str.push_str(" .\n\n");
             out.push_str(&ind_str);

@@ -10,8 +10,8 @@
 //!
 //! **Space classification:** `user` — transforms are instantiated by applications.
 
-use crate::model::{Class, Namespace, NamespaceModule, Property, PropertyKind, Space};
 use crate::model::iris::*;
+use crate::model::{Class, Namespace, NamespaceModule, Property, PropertyKind, Space};
 
 /// Returns the `morphism/` namespace module.
 #[must_use]
@@ -25,7 +25,14 @@ pub fn module() -> NamespaceModule {
                       isometries, embeddings, and group actions. The foundation \
                       provides the vocabulary; Prism writes the sentences.",
             space: Space::User,
-            imports: &[NS_SCHEMA, NS_TYPE, NS_OP, NS_OBSERVABLE, NS_PARTITION, NS_TRACE],
+            imports: &[
+                NS_SCHEMA,
+                NS_TYPE,
+                NS_OP,
+                NS_OBSERVABLE,
+                NS_PARTITION,
+                NS_TRACE,
+            ],
         },
         classes: classes(),
         properties: properties(),

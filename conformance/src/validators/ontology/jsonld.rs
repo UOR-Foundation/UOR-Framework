@@ -15,8 +15,25 @@ use crate::report::{ConformanceReport, TestResult};
 
 /// Required namespace prefixes in the JSON-LD context.
 const REQUIRED_PREFIXES: &[&str] = &[
-    "u", "schema", "op", "query", "resolver", "type", "partition", "observable", "proof",
-    "derivation", "trace", "cert", "morphism", "state", "owl", "rdf", "rdfs", "xsd", "sh",
+    "u",
+    "schema",
+    "op",
+    "query",
+    "resolver",
+    "type",
+    "partition",
+    "observable",
+    "proof",
+    "derivation",
+    "trace",
+    "cert",
+    "morphism",
+    "state",
+    "owl",
+    "rdf",
+    "rdfs",
+    "xsd",
+    "sh",
     "uor",
 ];
 

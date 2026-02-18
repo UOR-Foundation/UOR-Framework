@@ -35,10 +35,7 @@ pub fn validate(artifacts: &Path) -> Result<ConformanceReport> {
         .into_iter()
         .filter_map(|e| e.ok())
         .filter(|e| {
-            e.path()
-                .extension()
-                .map(|x| x == "html")
-                .unwrap_or(false)
+            e.path().extension().map(|x| x == "html").unwrap_or(false)
                 && !e.path().to_string_lossy().contains("target")
         })
     {
@@ -73,12 +70,18 @@ pub fn validate(artifacts: &Path) -> Result<ConformanceReport> {
     if issues.is_empty() {
         report.push(TestResult::pass(
             "website/html",
-            format!("All {} HTML pages pass structural validation", pages_checked),
+            format!(
+                "All {} HTML pages pass structural validation",
+                pages_checked
+            ),
         ));
     } else {
         report.push(TestResult::fail_with_details(
             "website/html",
-            format!("HTML structure issues across {} pages checked", pages_checked),
+            format!(
+                "HTML structure issues across {} pages checked",
+                pages_checked
+            ),
             issues,
         ));
     }

@@ -203,7 +203,11 @@ impl Ontology {
     #[must_use]
     pub fn property_count(&self) -> usize {
         // +1 for the global uor:space annotation property (Amendment 8)
-        self.namespaces.iter().map(|m| m.properties.len()).sum::<usize>() + 1
+        self.namespaces
+            .iter()
+            .map(|m| m.properties.len())
+            .sum::<usize>()
+            + 1
     }
 
     /// Returns the total number of named individuals across all namespaces.

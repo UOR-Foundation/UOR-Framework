@@ -15,15 +15,33 @@ use crate::report::{ConformanceReport, TestResult};
 /// Required files in the docs structure.
 const REQUIRED_SECTIONS: &[(&str, &str)] = &[
     ("docs/index.html", "Documentation index page"),
-    ("docs/namespaces", "Namespace reference section (Diataxis: reference)"),
-    ("docs/concepts", "Concept explanation section (Diataxis: explanation)"),
+    (
+        "docs/namespaces",
+        "Namespace reference section (Diataxis: reference)",
+    ),
+    (
+        "docs/concepts",
+        "Concept explanation section (Diataxis: explanation)",
+    ),
     ("docs/guides", "How-to guide section (Diataxis: how-to)"),
 ];
 
 /// Expected namespace pages (one per namespace prefix).
 const NAMESPACE_PREFIXES: &[&str] = &[
-    "u", "schema", "op", "query", "resolver", "type", "partition", "observable", "proof",
-    "derivation", "trace", "cert", "morphism", "state",
+    "u",
+    "schema",
+    "op",
+    "query",
+    "resolver",
+    "type",
+    "partition",
+    "observable",
+    "proof",
+    "derivation",
+    "trace",
+    "cert",
+    "morphism",
+    "state",
 ];
 
 /// Validates the Diataxis documentation structure.
@@ -53,7 +71,10 @@ pub fn validate(artifacts: &Path) -> Result<ConformanceReport> {
     // Check all 14 namespace reference pages
     let mut missing_namespaces: Vec<String> = Vec::new();
     for prefix in NAMESPACE_PREFIXES {
-        let page = artifacts.join("docs").join("namespaces").join(format!("{}.html", prefix));
+        let page = artifacts
+            .join("docs")
+            .join("namespaces")
+            .join(format!("{}.html", prefix));
         if !page.exists() {
             missing_namespaces.push(format!("{}.html", prefix));
         }

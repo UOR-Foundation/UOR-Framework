@@ -29,14 +29,23 @@ fn build_context(ontology: &Ontology) -> Value {
     let mut ctx = Map::new();
     // Standard semantic web prefixes
     ctx.insert("owl".to_owned(), json!("http://www.w3.org/2002/07/owl#"));
-    ctx.insert("rdf".to_owned(), json!("http://www.w3.org/1999/02/22-rdf-syntax-ns#"));
-    ctx.insert("rdfs".to_owned(), json!("http://www.w3.org/2000/01/rdf-schema#"));
+    ctx.insert(
+        "rdf".to_owned(),
+        json!("http://www.w3.org/1999/02/22-rdf-syntax-ns#"),
+    );
+    ctx.insert(
+        "rdfs".to_owned(),
+        json!("http://www.w3.org/2000/01/rdf-schema#"),
+    );
     ctx.insert("xsd".to_owned(), json!("http://www.w3.org/2001/XMLSchema#"));
     ctx.insert("sh".to_owned(), json!("http://www.w3.org/ns/shacl#"));
     ctx.insert("uor".to_owned(), json!("https://uor.foundation/"));
     // UOR namespace prefixes
     for module in &ontology.namespaces {
-        ctx.insert(module.namespace.prefix.to_owned(), json!(module.namespace.iri));
+        ctx.insert(
+            module.namespace.prefix.to_owned(),
+            json!(module.namespace.iri),
+        );
     }
     Value::Object(ctx)
 }
@@ -69,7 +78,9 @@ fn build_graph(ontology: &Ontology) -> Value {
     // Each namespace module
     for module in &ontology.namespaces {
         // Namespace ontology declaration
-        let imports: Vec<Value> = module.namespace.imports
+        let imports: Vec<Value> = module
+            .namespace
+            .imports
             .iter()
             .map(|iri| json!({ "@id": iri }))
             .collect();
@@ -105,11 +116,13 @@ fn build_graph(ontology: &Ontology) -> Value {
 }
 
 fn class_to_json(class: &crate::model::Class) -> Value {
-    let subclass_of: Vec<Value> = class.subclass_of
+    let subclass_of: Vec<Value> = class
+        .subclass_of
         .iter()
         .map(|iri| json!({ "@id": iri }))
         .collect();
-    let disjoint_with: Vec<Value> = class.disjoint_with
+    let disjoint_with: Vec<Value> = class
+        .disjoint_with
         .iter()
         .map(|iri| json!({ "@id": iri }))
         .collect();
@@ -288,10 +301,7 @@ mod tests {
         let json = to_json_ld(ontology);
         let graph = json["@graph"].as_array().expect("@graph must be array");
         for (i, node) in graph.iter().enumerate() {
-            assert!(
-                !node["@id"].is_null(),
-                "Node at index {i} is missing @id"
-            );
+            assert!(!node["@id"].is_null(), "Node at index {i} is missing @id");
         }
     }
 }

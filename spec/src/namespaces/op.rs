@@ -9,8 +9,10 @@
 //!
 //! **Space classification:** `kernel` — compiled into ROM.
 
-use crate::model::{Class, Individual, IndividualValue, Namespace, NamespaceModule, Property, PropertyKind, Space};
 use crate::model::iris::*;
+use crate::model::{
+    Class, Individual, IndividualValue, Namespace, NamespaceModule, Property, PropertyKind, Space,
+};
 
 /// Returns the `op/` namespace module.
 #[must_use]
@@ -249,7 +251,10 @@ fn individuals() -> Vec<Individual> {
                       (involution property).",
             properties: &[
                 ("https://uor.foundation/op/arity", IndividualValue::Int(1)),
-                ("https://uor.foundation/op/geometricCharacter", IndividualValue::Str("ring_reflection")),
+                (
+                    "https://uor.foundation/op/geometricCharacter",
+                    IndividualValue::Str("ring_reflection"),
+                ),
             ],
         },
         Individual {
@@ -260,7 +265,10 @@ fn individuals() -> Vec<Individual> {
                       The second generator of D_{2^n}. bnot(bnot(x)) = x.",
             properties: &[
                 ("https://uor.foundation/op/arity", IndividualValue::Int(1)),
-                ("https://uor.foundation/op/geometricCharacter", IndividualValue::Str("hypercube_reflection")),
+                (
+                    "https://uor.foundation/op/geometricCharacter",
+                    IndividualValue::Str("hypercube_reflection"),
+                ),
             ],
         },
         Individual {
@@ -271,12 +279,21 @@ fn individuals() -> Vec<Individual> {
                       The critical identity: succ is the composition neg ∘ bnot.",
             properties: &[
                 ("https://uor.foundation/op/arity", IndividualValue::Int(1)),
-                ("https://uor.foundation/op/geometricCharacter", IndividualValue::Str("rotation")),
-                ("https://uor.foundation/op/composedOf", IndividualValue::List(&[
-                    "https://uor.foundation/op/neg",
-                    "https://uor.foundation/op/bnot",
-                ])),
-                ("https://uor.foundation/op/inverse", IndividualValue::IriRef("https://uor.foundation/op/pred")),
+                (
+                    "https://uor.foundation/op/geometricCharacter",
+                    IndividualValue::Str("rotation"),
+                ),
+                (
+                    "https://uor.foundation/op/composedOf",
+                    IndividualValue::List(&[
+                        "https://uor.foundation/op/neg",
+                        "https://uor.foundation/op/bnot",
+                    ]),
+                ),
+                (
+                    "https://uor.foundation/op/inverse",
+                    IndividualValue::IriRef("https://uor.foundation/op/pred"),
+                ),
             ],
         },
         Individual {
@@ -287,12 +304,21 @@ fn individuals() -> Vec<Individual> {
                       The inverse of succ. pred is the composition bnot ∘ neg.",
             properties: &[
                 ("https://uor.foundation/op/arity", IndividualValue::Int(1)),
-                ("https://uor.foundation/op/geometricCharacter", IndividualValue::Str("rotation_inverse")),
-                ("https://uor.foundation/op/composedOf", IndividualValue::List(&[
-                    "https://uor.foundation/op/bnot",
-                    "https://uor.foundation/op/neg",
-                ])),
-                ("https://uor.foundation/op/inverse", IndividualValue::IriRef("https://uor.foundation/op/succ")),
+                (
+                    "https://uor.foundation/op/geometricCharacter",
+                    IndividualValue::Str("rotation_inverse"),
+                ),
+                (
+                    "https://uor.foundation/op/composedOf",
+                    IndividualValue::List(&[
+                        "https://uor.foundation/op/bnot",
+                        "https://uor.foundation/op/neg",
+                    ]),
+                ),
+                (
+                    "https://uor.foundation/op/inverse",
+                    IndividualValue::IriRef("https://uor.foundation/op/succ"),
+                ),
             ],
         },
         Individual {
@@ -303,11 +329,26 @@ fn individuals() -> Vec<Individual> {
                       Commutative, associative; identity element is 0.",
             properties: &[
                 ("https://uor.foundation/op/arity", IndividualValue::Int(2)),
-                ("https://uor.foundation/op/geometricCharacter", IndividualValue::Str("translation")),
-                ("https://uor.foundation/op/commutative", IndividualValue::Bool(true)),
-                ("https://uor.foundation/op/associative", IndividualValue::Bool(true)),
-                ("https://uor.foundation/op/identity", IndividualValue::Int(0)),
-                ("https://uor.foundation/op/inverse", IndividualValue::IriRef("https://uor.foundation/op/sub")),
+                (
+                    "https://uor.foundation/op/geometricCharacter",
+                    IndividualValue::Str("translation"),
+                ),
+                (
+                    "https://uor.foundation/op/commutative",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/op/associative",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/op/identity",
+                    IndividualValue::Int(0),
+                ),
+                (
+                    "https://uor.foundation/op/inverse",
+                    IndividualValue::IriRef("https://uor.foundation/op/sub"),
+                ),
             ],
         },
         Individual {
@@ -318,9 +359,18 @@ fn individuals() -> Vec<Individual> {
                       Not commutative, not associative.",
             properties: &[
                 ("https://uor.foundation/op/arity", IndividualValue::Int(2)),
-                ("https://uor.foundation/op/geometricCharacter", IndividualValue::Str("translation")),
-                ("https://uor.foundation/op/commutative", IndividualValue::Bool(false)),
-                ("https://uor.foundation/op/associative", IndividualValue::Bool(false)),
+                (
+                    "https://uor.foundation/op/geometricCharacter",
+                    IndividualValue::Str("translation"),
+                ),
+                (
+                    "https://uor.foundation/op/commutative",
+                    IndividualValue::Bool(false),
+                ),
+                (
+                    "https://uor.foundation/op/associative",
+                    IndividualValue::Bool(false),
+                ),
             ],
         },
         Individual {
@@ -331,10 +381,22 @@ fn individuals() -> Vec<Individual> {
                       Commutative, associative; identity element is 1.",
             properties: &[
                 ("https://uor.foundation/op/arity", IndividualValue::Int(2)),
-                ("https://uor.foundation/op/geometricCharacter", IndividualValue::Str("scaling")),
-                ("https://uor.foundation/op/commutative", IndividualValue::Bool(true)),
-                ("https://uor.foundation/op/associative", IndividualValue::Bool(true)),
-                ("https://uor.foundation/op/identity", IndividualValue::Int(1)),
+                (
+                    "https://uor.foundation/op/geometricCharacter",
+                    IndividualValue::Str("scaling"),
+                ),
+                (
+                    "https://uor.foundation/op/commutative",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/op/associative",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/op/identity",
+                    IndividualValue::Int(1),
+                ),
             ],
         },
         Individual {
@@ -345,10 +407,22 @@ fn individuals() -> Vec<Individual> {
                       Commutative, associative; identity element is 0.",
             properties: &[
                 ("https://uor.foundation/op/arity", IndividualValue::Int(2)),
-                ("https://uor.foundation/op/geometricCharacter", IndividualValue::Str("hypercube_translation")),
-                ("https://uor.foundation/op/commutative", IndividualValue::Bool(true)),
-                ("https://uor.foundation/op/associative", IndividualValue::Bool(true)),
-                ("https://uor.foundation/op/identity", IndividualValue::Int(0)),
+                (
+                    "https://uor.foundation/op/geometricCharacter",
+                    IndividualValue::Str("hypercube_translation"),
+                ),
+                (
+                    "https://uor.foundation/op/commutative",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/op/associative",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/op/identity",
+                    IndividualValue::Int(0),
+                ),
             ],
         },
         Individual {
@@ -359,9 +433,18 @@ fn individuals() -> Vec<Individual> {
                       Commutative, associative.",
             properties: &[
                 ("https://uor.foundation/op/arity", IndividualValue::Int(2)),
-                ("https://uor.foundation/op/geometricCharacter", IndividualValue::Str("hypercube_projection")),
-                ("https://uor.foundation/op/commutative", IndividualValue::Bool(true)),
-                ("https://uor.foundation/op/associative", IndividualValue::Bool(true)),
+                (
+                    "https://uor.foundation/op/geometricCharacter",
+                    IndividualValue::Str("hypercube_projection"),
+                ),
+                (
+                    "https://uor.foundation/op/commutative",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/op/associative",
+                    IndividualValue::Bool(true),
+                ),
             ],
         },
         Individual {
@@ -372,9 +455,18 @@ fn individuals() -> Vec<Individual> {
                       Commutative, associative.",
             properties: &[
                 ("https://uor.foundation/op/arity", IndividualValue::Int(2)),
-                ("https://uor.foundation/op/geometricCharacter", IndividualValue::Str("hypercube_join")),
-                ("https://uor.foundation/op/commutative", IndividualValue::Bool(true)),
-                ("https://uor.foundation/op/associative", IndividualValue::Bool(true)),
+                (
+                    "https://uor.foundation/op/geometricCharacter",
+                    IndividualValue::Str("hypercube_join"),
+                ),
+                (
+                    "https://uor.foundation/op/commutative",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/op/associative",
+                    IndividualValue::Bool(true),
+                ),
             ],
         },
         // Amendment 3: criticalIdentity individual
@@ -387,12 +479,21 @@ fn individuals() -> Vec<Individual> {
                       This identity links the two involutions (neg and bnot) to the \
                       successor operation, making succ derivable from neg and bnot.",
             properties: &[
-                ("https://uor.foundation/op/lhs", IndividualValue::IriRef("https://uor.foundation/op/succ")),
-                ("https://uor.foundation/op/rhs", IndividualValue::List(&[
-                    "https://uor.foundation/op/neg",
-                    "https://uor.foundation/op/bnot",
-                ])),
-                ("https://uor.foundation/op/forAll", IndividualValue::Str("x ∈ R_n")),
+                (
+                    "https://uor.foundation/op/lhs",
+                    IndividualValue::IriRef("https://uor.foundation/op/succ"),
+                ),
+                (
+                    "https://uor.foundation/op/rhs",
+                    IndividualValue::List(&[
+                        "https://uor.foundation/op/neg",
+                        "https://uor.foundation/op/bnot",
+                    ]),
+                ),
+                (
+                    "https://uor.foundation/op/forAll",
+                    IndividualValue::Str("x ∈ R_n"),
+                ),
             ],
         },
         // Amendment 4: D2n individual
@@ -404,9 +505,18 @@ fn individuals() -> Vec<Individual> {
                       reflection) and bnot (hypercube reflection). Every element of \
                       this group acts as an isometry on the type space 𝒯_n.",
             properties: &[
-                ("https://uor.foundation/op/generatedBy", IndividualValue::IriRef("https://uor.foundation/op/neg")),
-                ("https://uor.foundation/op/generatedBy", IndividualValue::IriRef("https://uor.foundation/op/bnot")),
-                ("https://uor.foundation/op/presentation", IndividualValue::Str("⟨r, s | r^{2^n} = s² = e, srs = r⁻¹⟩")),
+                (
+                    "https://uor.foundation/op/generatedBy",
+                    IndividualValue::IriRef("https://uor.foundation/op/neg"),
+                ),
+                (
+                    "https://uor.foundation/op/generatedBy",
+                    IndividualValue::IriRef("https://uor.foundation/op/bnot"),
+                ),
+                (
+                    "https://uor.foundation/op/presentation",
+                    IndividualValue::Str("⟨r, s | r^{2^n} = s² = e, srs = r⁻¹⟩"),
+                ),
             ],
         },
     ]

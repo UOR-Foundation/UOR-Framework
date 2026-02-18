@@ -10,8 +10,10 @@
 //!
 //! **Space classification:** `kernel` — compiled into ROM.
 
-use crate::model::{Class, Individual, IndividualValue, Namespace, NamespaceModule, Property, PropertyKind, Space};
 use crate::model::iris::*;
+use crate::model::{
+    Class, Individual, IndividualValue, Namespace, NamespaceModule, Property, PropertyKind, Space,
+};
 
 /// Returns the `schema/` namespace module.
 #[must_use]
@@ -240,9 +242,10 @@ fn individuals() -> Vec<Individual> {
             comment: "The unique generator of R_n under successor. Value = 1 at every \
                       quantum level. Under iterated application of succ, π₁ generates \
                       every element of the ring.",
-            properties: &[
-                ("https://uor.foundation/schema/value", IndividualValue::Int(1)),
-            ],
+            properties: &[(
+                "https://uor.foundation/schema/value",
+                IndividualValue::Int(1),
+            )],
         },
         // Amendment 2: zero — the additive identity
         Individual {
@@ -251,9 +254,10 @@ fn individuals() -> Vec<Individual> {
             label: "zero",
             comment: "The additive identity of the ring. Value = 0 at every quantum \
                       level. op:add(x, zero) = x for all x in R_n.",
-            properties: &[
-                ("https://uor.foundation/schema/value", IndividualValue::Int(0)),
-            ],
+            properties: &[(
+                "https://uor.foundation/schema/value",
+                IndividualValue::Int(0),
+            )],
         },
     ]
 }

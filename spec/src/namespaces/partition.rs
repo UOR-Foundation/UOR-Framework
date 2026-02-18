@@ -7,8 +7,8 @@
 //!
 //! **Space classification:** `bridge` — produced by the kernel, consumed by user-space.
 
-use crate::model::{Class, Namespace, NamespaceModule, Property, PropertyKind, Space};
 use crate::model::iris::*;
+use crate::model::{Class, Namespace, NamespaceModule, Property, PropertyKind, Space};
 
 /// Returns the `partition/` namespace module.
 #[must_use]

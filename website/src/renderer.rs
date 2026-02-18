@@ -247,7 +247,9 @@ pub fn render_namespace_page(module: &NamespaceModule) -> String {
     // Individuals
     if !module.individuals.is_empty() {
         body.push_str("<h2>Named Individuals</h2>\n<table>\n");
-        body.push_str("<thead><tr><th>Name</th><th>Type</th><th>Comment</th></tr></thead>\n<tbody>\n");
+        body.push_str(
+            "<thead><tr><th>Name</th><th>Type</th><th>Comment</th></tr></thead>\n<tbody>\n",
+        );
         for ind in &module.individuals {
             let local = local_name(ind.id);
             body.push_str(&format!(
@@ -313,10 +315,7 @@ pub fn render_sitemap(base_url: &str, paths: &[String]) -> String {
          <urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">\n",
     );
     for path in paths {
-        xml.push_str(&format!(
-            "  <url><loc>{}{}</loc></url>\n",
-            base_url, path
-        ));
+        xml.push_str(&format!("  <url><loc>{}{}</loc></url>\n", base_url, path));
     }
     xml.push_str("</urlset>\n");
     xml

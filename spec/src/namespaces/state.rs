@@ -7,8 +7,8 @@
 //!
 //! **Space classification:** `user` — state is managed by user-space (Prism).
 
-use crate::model::{Class, Namespace, NamespaceModule, Property, PropertyKind, Space};
 use crate::model::iris::*;
+use crate::model::{Class, Namespace, NamespaceModule, Property, PropertyKind, Space};
 
 /// Returns the `state/` namespace module.
 #[must_use]

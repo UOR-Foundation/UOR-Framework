@@ -15,7 +15,6 @@ pub fn write(path: &Path, content: &str) -> Result<()> {
         fs::create_dir_all(parent)
             .with_context(|| format!("Cannot create directory: {}", parent.display()))?;
     }
-    fs::write(path, content)
-        .with_context(|| format!("Cannot write file: {}", path.display()))?;
+    fs::write(path, content).with_context(|| format!("Cannot write file: {}", path.display()))?;
     Ok(())
 }

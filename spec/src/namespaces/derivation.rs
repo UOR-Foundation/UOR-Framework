@@ -5,8 +5,8 @@
 //!
 //! **Space classification:** `bridge` — kernel-produced, user-consumed.
 
-use crate::model::{Class, Namespace, NamespaceModule, Property, PropertyKind, Space};
 use crate::model::iris::*;
+use crate::model::{Class, Namespace, NamespaceModule, Property, PropertyKind, Space};
 
 /// Returns the `derivation/` namespace module.
 #[must_use]

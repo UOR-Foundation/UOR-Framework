@@ -4,17 +4,17 @@
 //! Modules are listed in dependency order; see [`crate::Ontology::full`] for the
 //! assembly sequence.
 
-pub mod u;
-pub mod schema;
+pub mod cert;
+pub mod derivation;
+pub mod morphism;
+pub mod observable;
 pub mod op;
+pub mod partition;
+pub mod proof;
 pub mod query;
 pub mod resolver;
-pub mod type_;
-pub mod partition;
-pub mod observable;
-pub mod proof;
-pub mod derivation;
-pub mod trace;
-pub mod cert;
-pub mod morphism;
+pub mod schema;
 pub mod state;
+pub mod trace;
+pub mod type_;
+pub mod u;

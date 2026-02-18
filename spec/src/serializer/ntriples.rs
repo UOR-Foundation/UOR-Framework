@@ -37,7 +37,12 @@ pub fn to_ntriples(ontology: &Ontology) -> String {
 
     // Root ontology
     triple(&mut out, ontology.base_iri, RDF_TYPE, &iri(OWL_ONTOLOGY));
-    triple(&mut out, ontology.base_iri, OWL_VERSION_INFO, &lit(ontology.version, XSD_STRING));
+    triple(
+        &mut out,
+        ontology.base_iri,
+        OWL_VERSION_INFO,
+        &lit(ontology.version, XSD_STRING),
+    );
 
     // Annotation properties
     for ap in &ontology.annotation_properties {
@@ -50,9 +55,24 @@ pub fn to_ntriples(ontology: &Ontology) -> String {
     for module in &ontology.namespaces {
         // Namespace ontology declaration
         triple(&mut out, module.namespace.iri, RDF_TYPE, &iri(OWL_ONTOLOGY));
-        triple(&mut out, module.namespace.iri, RDFS_LABEL, &lit(module.namespace.label, XSD_STRING));
-        triple(&mut out, module.namespace.iri, RDFS_COMMENT, &lit(module.namespace.comment, XSD_STRING));
-        triple(&mut out, module.namespace.iri, UOR_SPACE, &lit(module.namespace.space.as_str(), XSD_STRING));
+        triple(
+            &mut out,
+            module.namespace.iri,
+            RDFS_LABEL,
+            &lit(module.namespace.label, XSD_STRING),
+        );
+        triple(
+            &mut out,
+            module.namespace.iri,
+            RDFS_COMMENT,
+            &lit(module.namespace.comment, XSD_STRING),
+        );
+        triple(
+            &mut out,
+            module.namespace.iri,
+            UOR_SPACE,
+            &lit(module.namespace.space.as_str(), XSD_STRING),
+        );
         for import in module.namespace.imports {
             triple(&mut out, module.namespace.iri, OWL_IMPORTS, &iri(import));
         }
@@ -60,8 +80,18 @@ pub fn to_ntriples(ontology: &Ontology) -> String {
         // Classes
         for class in &module.classes {
             triple(&mut out, class.id, RDF_TYPE, &iri(OWL_CLASS));
-            triple(&mut out, class.id, RDFS_LABEL, &lit(class.label, XSD_STRING));
-            triple(&mut out, class.id, RDFS_COMMENT, &lit(class.comment, XSD_STRING));
+            triple(
+                &mut out,
+                class.id,
+                RDFS_LABEL,
+                &lit(class.label, XSD_STRING),
+            );
+            triple(
+                &mut out,
+                class.id,
+                RDFS_COMMENT,
+                &lit(class.comment, XSD_STRING),
+            );
             for parent in class.subclass_of {
                 triple(&mut out, class.id, RDFS_SUBCLASS_OF, &iri(parent));
             }
@@ -82,7 +112,12 @@ pub fn to_ntriples(ontology: &Ontology) -> String {
                 triple(&mut out, prop.id, RDF_TYPE, &iri(OWL_FUNCTIONAL_PROPERTY));
             }
             triple(&mut out, prop.id, RDFS_LABEL, &lit(prop.label, XSD_STRING));
-            triple(&mut out, prop.id, RDFS_COMMENT, &lit(prop.comment, XSD_STRING));
+            triple(
+                &mut out,
+                prop.id,
+                RDFS_COMMENT,
+                &lit(prop.comment, XSD_STRING),
+            );
             if let Some(domain) = prop.domain {
                 triple(&mut out, prop.id, RDFS_DOMAIN, &iri(domain));
             }
@@ -94,7 +129,12 @@ pub fn to_ntriples(ontology: &Ontology) -> String {
             triple(&mut out, ind.id, RDF_TYPE, &iri(OWL_NAMED_INDIVIDUAL));
             triple(&mut out, ind.id, RDF_TYPE, &iri(ind.type_));
             triple(&mut out, ind.id, RDFS_LABEL, &lit(ind.label, XSD_STRING));
-            triple(&mut out, ind.id, RDFS_COMMENT, &lit(ind.comment, XSD_STRING));
+            triple(
+                &mut out,
+                ind.id,
+                RDFS_COMMENT,
+                &lit(ind.comment, XSD_STRING),
+            );
             for (prop_iri, value) in ind.properties {
                 let obj = individual_value_to_object(value);
                 triple(&mut out, ind.id, prop_iri, &obj);
@@ -120,7 +160,10 @@ fn iri(s: &str) -> String {
 }
 
 fn lit(s: &str, datatype: &str) -> String {
-    let escaped = s.replace('\\', "\\\\").replace('"', "\\\"").replace('\n', "\\n");
+    let escaped = s
+        .replace('\\', "\\\\")
+        .replace('"', "\\\"")
+        .replace('\n', "\\n");
     format!("\"{}\"^^<{}>", escaped, datatype)
 }
 

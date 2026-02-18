@@ -87,7 +87,12 @@ pub fn generate(out_dir: &Path, readme_path: &Path) -> Result<()> {
     }
 
     // Generate concept pages from content/
-    generate_content_pages(&content_dir.join("concepts"), &out_dir.join("concepts"), &index, &nav_html)?;
+    generate_content_pages(
+        &content_dir.join("concepts"),
+        &out_dir.join("concepts"),
+        &index,
+        &nav_html,
+    )?;
 
     // Generate concepts index page
     let concepts_index = render_page(
@@ -106,10 +111,18 @@ pub fn generate(out_dir: &Path, readme_path: &Path) -> Result<()> {
         &nav_html,
         r#"<a href="/">Home</a> › <a href="/docs/index.html">Docs</a> › Concepts"#,
     );
-    writer::write_html(&out_dir.join("concepts").join("index.html"), &concepts_index)?;
+    writer::write_html(
+        &out_dir.join("concepts").join("index.html"),
+        &concepts_index,
+    )?;
 
     // Generate guide pages from content/
-    generate_content_pages(&content_dir.join("guides"), &out_dir.join("guides"), &index, &nav_html)?;
+    generate_content_pages(
+        &content_dir.join("guides"),
+        &out_dir.join("guides"),
+        &index,
+        &nav_html,
+    )?;
 
     // Generate guides index page
     let guides_index = render_page(
@@ -192,7 +205,8 @@ fn build_nav_html() -> String {
 </ul>
 </li>
 <li><a href="/search.html">Search</a></li>
-</ul>"#.to_string()
+</ul>"#
+        .to_string()
 }
 
 /// Generates the ontology inventory index page.
@@ -381,10 +395,7 @@ fn generate_content_pages(
         let entry = entry.map_err(|e| anyhow::anyhow!("Directory entry error: {}", e))?;
         let path = entry.path();
         if path.extension().map(|x| x == "md").unwrap_or(false) {
-            let stem = path
-                .file_stem()
-                .and_then(|s| s.to_str())
-                .unwrap_or("page");
+            let stem = path.file_stem().and_then(|s| s.to_str()).unwrap_or("page");
             let out_path = out_dir.join(format!("{}.html", stem));
             generate_single_page(&path, &out_path, stem, index, nav_html)?;
         }

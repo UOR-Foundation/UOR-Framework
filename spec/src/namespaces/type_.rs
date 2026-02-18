@@ -6,8 +6,8 @@
 //!
 //! **Space classification:** `user` — parameterizable at runtime.
 
-use crate::model::{Class, Namespace, NamespaceModule, Property, PropertyKind, Space};
 use crate::model::iris::*;
+use crate::model::{Class, Namespace, NamespaceModule, Property, PropertyKind, Space};
 
 /// Returns the `type/` namespace module.
 ///

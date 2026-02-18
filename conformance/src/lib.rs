@@ -96,7 +96,9 @@ pub fn run_all(paths: &WorkspacePaths) -> anyhow::Result<ConformanceReport> {
 
     // 8. Website
     report.extend(validators::website::html::validate(&paths.artifacts)?);
-    report.extend(validators::website::accessibility::validate(&paths.artifacts)?);
+    report.extend(validators::website::accessibility::validate(
+        &paths.artifacts,
+    )?);
     report.extend(validators::website::coverage::validate(&paths.artifacts)?);
     report.extend(validators::website::css::validate(&paths.artifacts)?);
     report.extend(validators::website::links::validate(&paths.artifacts)?);
@@ -120,11 +122,7 @@ mod tests_unit {
     #[test]
     fn owl_dl_constraints_pass() {
         let report = validators::ontology::owl::validate();
-        let failures: Vec<_> = report
-            .results
-            .iter()
-            .filter(|r| r.is_failure())
-            .collect();
+        let failures: Vec<_> = report.results.iter().filter(|r| r.is_failure()).collect();
         assert!(
             failures.is_empty(),
             "OWL 2 DL constraint failures: {:#?}",
@@ -135,11 +133,7 @@ mod tests_unit {
     #[test]
     fn shacl_instances_pass() {
         let report = validators::ontology::shacl::validate();
-        let failures: Vec<_> = report
-            .results
-            .iter()
-            .filter(|r| r.is_failure())
-            .collect();
+        let failures: Vec<_> = report.results.iter().filter(|r| r.is_failure()).collect();
         assert!(
             failures.is_empty(),
             "SHACL conformance failures: {:#?}",

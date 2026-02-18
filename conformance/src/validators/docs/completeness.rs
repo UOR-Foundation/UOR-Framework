@@ -32,12 +32,7 @@ pub fn validate(artifacts: &Path) -> Result<ConformanceReport> {
     for entry in WalkDir::new(&docs_dir)
         .into_iter()
         .filter_map(|e| e.ok())
-        .filter(|e| {
-            e.path()
-                .extension()
-                .map(|x| x == "html")
-                .unwrap_or(false)
-        })
+        .filter(|e| e.path().extension().map(|x| x == "html").unwrap_or(false))
     {
         if let Ok(content) = std::fs::read_to_string(entry.path()) {
             all_content.push_str(&content);
@@ -84,7 +79,10 @@ pub fn validate(artifacts: &Path) -> Result<ConformanceReport> {
     } else {
         report.push(TestResult::fail_with_details(
             "docs/completeness",
-            format!("{} classes missing from documentation", missing_classes.len()),
+            format!(
+                "{} classes missing from documentation",
+                missing_classes.len()
+            ),
             missing_classes,
         ));
     }

@@ -48,7 +48,9 @@ use std::path::Path;
 use anyhow::Result;
 use uor_spec::Ontology;
 
-use extractor::{home_breadcrumbs, namespace_breadcrumbs, namespace_summaries, namespaces_index_breadcrumbs};
+use extractor::{
+    home_breadcrumbs, namespace_breadcrumbs, namespace_summaries, namespaces_index_breadcrumbs,
+};
 use nav::{build_nav, render_nav};
 use renderer::{
     render_homepage, render_namespace_page, render_namespaces_index, render_page,
@@ -80,8 +82,14 @@ pub fn generate(out_dir: &Path) -> Result<()> {
     let search_body = render_search_page();
     let search_nav = render_nav(&nav, "/search.html");
     let search_crumbs = vec![
-        model::BreadcrumbItem { label: "Home".to_string(), url: "/".to_string() },
-        model::BreadcrumbItem { label: "Search".to_string(), url: String::new() },
+        model::BreadcrumbItem {
+            label: "Home".to_string(),
+            url: "/".to_string(),
+        },
+        model::BreadcrumbItem {
+            label: "Search".to_string(),
+            url: String::new(),
+        },
     ];
     let search_html = render_page("Search", &search_body, &search_nav, &search_crumbs);
     writer::write(&out_dir.join("search.html"), &search_html)?;
@@ -90,8 +98,16 @@ pub fn generate(out_dir: &Path) -> Result<()> {
     // Namespaces index page
     let ns_index_nav = render_nav(&nav, "/namespaces/");
     let ns_index_body = render_namespaces_index(&summaries);
-    let ns_index_html = render_page("Namespaces", &ns_index_body, &ns_index_nav, &namespaces_index_breadcrumbs());
-    writer::write(&out_dir.join("namespaces").join("index.html"), &ns_index_html)?;
+    let ns_index_html = render_page(
+        "Namespaces",
+        &ns_index_body,
+        &ns_index_nav,
+        &namespaces_index_breadcrumbs(),
+    );
+    writer::write(
+        &out_dir.join("namespaces").join("index.html"),
+        &ns_index_html,
+    )?;
     sitemap_paths.push("/namespaces/".to_string());
 
     // Namespace pages (100% auto-generated from spec)

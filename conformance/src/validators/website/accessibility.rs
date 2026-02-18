@@ -35,12 +35,7 @@ pub fn validate(artifacts: &Path) -> Result<ConformanceReport> {
     for entry in WalkDir::new(artifacts)
         .into_iter()
         .filter_map(|e| e.ok())
-        .filter(|e| {
-            e.path()
-                .extension()
-                .map(|x| x == "html")
-                .unwrap_or(false)
-        })
+        .filter(|e| e.path().extension().map(|x| x == "html").unwrap_or(false))
     {
         let path = entry.path();
         let content = match std::fs::read_to_string(path) {
@@ -77,10 +72,7 @@ pub fn validate(artifacts: &Path) -> Result<ConformanceReport> {
     } else {
         report.push(TestResult::fail_with_details(
             "website/accessibility",
-            format!(
-                "WCAG 2.1 AA violations in {} pages checked",
-                pages_checked
-            ),
+            format!("WCAG 2.1 AA violations in {} pages checked", pages_checked),
             issues,
         ));
     }
@@ -94,7 +86,10 @@ fn check_accessibility(path: &str, content: &str, issues: &mut Vec<String>) {
 
     // WCAG 3.1.1: lang attribute on <html>
     if !lower.contains("lang=") {
-        issues.push(format!("{}: <html> missing lang attribute (WCAG 3.1.1)", path));
+        issues.push(format!(
+            "{}: <html> missing lang attribute (WCAG 3.1.1)",
+            path
+        ));
     }
 
     // WCAG 2.4.1: skip-to-content link
@@ -113,7 +108,10 @@ fn check_accessibility(path: &str, content: &str, issues: &mut Vec<String>) {
         let end = remaining.find('>').unwrap_or(remaining.len());
         let tag_content = &remaining[..end];
         if !tag_content.contains("alt=") {
-            issues.push(format!("{}: <img> missing alt attribute (WCAG 1.1.1)", path));
+            issues.push(format!(
+                "{}: <img> missing alt attribute (WCAG 1.1.1)",
+                path
+            ));
         }
     }
 }

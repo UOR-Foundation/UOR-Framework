@@ -26,7 +26,7 @@ use std::process;
 
 use anyhow::Result;
 use clap::Parser;
-use uor_conformance::{WorkspacePaths, run_all};
+use uor_conformance::{run_all, WorkspacePaths};
 
 /// Run the UOR Framework conformance suite.
 #[derive(Parser)]

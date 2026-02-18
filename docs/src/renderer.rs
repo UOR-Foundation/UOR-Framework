@@ -102,12 +102,7 @@ pub fn markdown_to_html(markdown: &str) -> String {
 }
 
 /// Renders a page inside the standard HTML shell with nav, main, and footer.
-pub fn render_page(
-    title: &str,
-    content_html: &str,
-    nav_html: &str,
-    breadcrumb: &str,
-) -> String {
+pub fn render_page(title: &str, content_html: &str, nav_html: &str, breadcrumb: &str) -> String {
     format!(
         r##"<!DOCTYPE html>
 <html lang="en">

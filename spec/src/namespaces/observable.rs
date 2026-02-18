@@ -6,8 +6,8 @@
 //!
 //! **Space classification:** `bridge` — kernel-computed, user-requested.
 
-use crate::model::{Class, Namespace, NamespaceModule, Property, PropertyKind, Space};
 use crate::model::iris::*;
+use crate::model::{Class, Namespace, NamespaceModule, Property, PropertyKind, Space};
 
 /// Returns the `observable/` namespace module.
 #[must_use]

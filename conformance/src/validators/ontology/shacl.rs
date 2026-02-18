@@ -106,11 +106,7 @@ fn validate_primitives(src: &str) -> Result<(), String> {
     check_contains(src, "op:neg", "Missing op:neg individual reference")?;
     check_contains(src, "op:bnot", "Missing op:bnot individual reference")?;
     check_contains(src, "op:succ", "Missing op:succ individual reference")?;
-    check_contains(
-        src,
-        "op:composedOf",
-        "Missing op:composedOf property usage",
-    )?;
+    check_contains(src, "op:composedOf", "Missing op:composedOf property usage")?;
     Ok(())
 }
 

@@ -114,9 +114,7 @@ fn check_error_types(workspace: &Path, report: &mut ConformanceReport) -> Result
         let content = std::fs::read_to_string(path)?;
 
         // Check for error types using thiserror (acceptable pattern)
-        if content.contains("thiserror::Error")
-            || content.contains("use thiserror")
-        {
+        if content.contains("thiserror::Error") || content.contains("use thiserror") {
             continue;
         }
 

@@ -61,9 +61,7 @@ impl OntologyIndex {
 
     /// Finds a namespace module by prefix.
     pub fn find_module(&self, prefix: &str) -> Option<&&'static NamespaceModule> {
-        self.modules
-            .iter()
-            .find(|m| m.namespace.prefix == prefix)
+        self.modules.iter().find(|m| m.namespace.prefix == prefix)
     }
 
     /// Returns the namespace for a given IRI prefix.

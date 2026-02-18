@@ -6,8 +6,8 @@
 //!
 //! **Space classification:** `bridge` — user-requested, kernel-executed.
 
-use crate::model::{Class, Namespace, NamespaceModule, Property, PropertyKind, Space};
 use crate::model::iris::*;
+use crate::model::{Class, Namespace, NamespaceModule, Property, PropertyKind, Space};
 
 /// Returns the `resolver/` namespace module.
 #[must_use]

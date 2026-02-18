@@ -42,12 +42,7 @@ pub fn verify_content(content_dir: &Path) -> Result<()> {
         for entry in WalkDir::new(content_dir)
             .into_iter()
             .filter_map(|e| e.ok())
-            .filter(|e| {
-                e.path()
-                    .extension()
-                    .map(|x| x == "md")
-                    .unwrap_or(false)
-            })
+            .filter(|e| e.path().extension().map(|x| x == "md").unwrap_or(false))
         {
             let path = entry.path();
             let content = match std::fs::read_to_string(path) {
@@ -72,12 +67,7 @@ pub fn verify_content(content_dir: &Path) -> Result<()> {
 }
 
 /// Checks all `{@class}`, `{@prop}`, `{@ind}` references in a content file.
-fn check_refs_in_file(
-    content: &str,
-    path: &Path,
-    index: &OntologyIndex,
-    errors: &mut Vec<String>,
-) {
+fn check_refs_in_file(content: &str, path: &Path, index: &OntologyIndex, errors: &mut Vec<String>) {
     let mut remaining = content;
 
     while let Some(start) = remaining.find("{@") {
@@ -155,12 +145,7 @@ pub fn check_claims(content_dir: &Path) -> Result<()> {
     for entry in WalkDir::new(content_dir)
         .into_iter()
         .filter_map(|e| e.ok())
-        .filter(|e| {
-            e.path()
-                .extension()
-                .map(|x| x == "md")
-                .unwrap_or(false)
-        })
+        .filter(|e| e.path().extension().map(|x| x == "md").unwrap_or(false))
     {
         let path = entry.path();
         let content = match std::fs::read_to_string(path) {
@@ -193,12 +178,7 @@ fn extract_toml_frontmatter(content: &str) -> Option<String> {
 }
 
 /// Validates `[[claims]]` blocks from TOML front-matter against the spec.
-fn validate_claims(
-    toml_str: &str,
-    path: &Path,
-    index: &OntologyIndex,
-    errors: &mut Vec<String>,
-) {
+fn validate_claims(toml_str: &str, path: &Path, index: &OntologyIndex, errors: &mut Vec<String>) {
     // Parse TOML - if the parse fails, report it but don't crash
     let value: toml::Value = match toml_str.parse() {
         Ok(v) => v,
@@ -214,18 +194,9 @@ fn validate_claims(
     };
 
     for (i, claim) in claims.iter().enumerate() {
-        let subject = claim
-            .get("subject")
-            .and_then(|v| v.as_str())
-            .unwrap_or("");
-        let property_iri = claim
-            .get("property")
-            .and_then(|v| v.as_str())
-            .unwrap_or("");
-        let expected_value = claim
-            .get("value")
-            .and_then(|v| v.as_str())
-            .unwrap_or("");
+        let subject = claim.get("subject").and_then(|v| v.as_str()).unwrap_or("");
+        let property_iri = claim.get("property").and_then(|v| v.as_str()).unwrap_or("");
+        let expected_value = claim.get("value").and_then(|v| v.as_str()).unwrap_or("");
 
         // Validate the claim against the live spec
         if let Err(msg) = validate_single_claim(subject, property_iri, expected_value, index) {

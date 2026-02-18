@@ -6,8 +6,8 @@
 //!
 //! **Space classification:** `kernel` — compiled into ROM.
 
-use crate::model::{Class, Namespace, NamespaceModule, Property, PropertyKind, Space};
 use crate::model::iris::*;
+use crate::model::{Class, Namespace, NamespaceModule, Property, PropertyKind, Space};
 
 /// Returns the `u/` namespace module.
 #[must_use]

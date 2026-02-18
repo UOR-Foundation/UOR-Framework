@@ -43,7 +43,10 @@ pub fn validate(artifacts: &Path) -> Result<ConformanceReport> {
     if parse_result {
         report.push(TestResult::pass(
             "website/css",
-            format!("style.css parses without fatal errors ({} bytes)", content.len()),
+            format!(
+                "style.css parses without fatal errors ({} bytes)",
+                content.len()
+            ),
         ));
     } else {
         report.push(TestResult::fail(
@@ -70,7 +73,10 @@ pub fn validate(artifacts: &Path) -> Result<ConformanceReport> {
     if important_count <= 5 {
         report.push(TestResult::pass(
             "website/css",
-            format!("Acceptable !important usage: {} occurrences", important_count),
+            format!(
+                "Acceptable !important usage: {} occurrences",
+                important_count
+            ),
         ));
     } else {
         report.push(TestResult::warn(
