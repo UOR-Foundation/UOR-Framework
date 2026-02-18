@@ -3,7 +3,7 @@
 //! Verifies that the built ontology artifact contains the correct counts:
 //! - 14 namespaces
 //! - 82 classes
-//! - 118 properties
+//! - 119 namespace-level properties + 1 global annotation = 120 via property_count()
 //! - 14 named individuals
 
 use std::path::Path;
@@ -16,7 +16,7 @@ use crate::report::{ConformanceReport, TestResult};
 /// Expected inventory counts for the UOR Foundation ontology.
 const EXPECTED_NAMESPACES: usize = 14;
 const EXPECTED_CLASSES: usize = 82;
-const EXPECTED_PROPERTIES: usize = 119;
+const EXPECTED_PROPERTIES: usize = 120;
 const EXPECTED_INDIVIDUALS: usize = 14;
 
 /// Validates the ontology inventory counts in the built JSON-LD artifact.

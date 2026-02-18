@@ -213,7 +213,7 @@ fn generate_index_page(index: &OntologyIndex, nav_html: &str) -> String {
 
     let content = format!(
         r#"<h1>UOR Foundation Ontology</h1>
-<p>Version 1.0.0 — 14 namespaces, 82 classes, 119 properties, 14 named individuals.</p>
+<p>Version 1.0.0 — 14 namespaces, 82 classes, 120 properties, 14 named individuals.</p>
 <table>
 <thead>
 <tr><th>Prefix</th><th>Label</th><th>Classes</th><th>Properties</th><th>Individuals</th><th>Space</th></tr>
@@ -505,7 +505,7 @@ mod tests {
         let index = OntologyIndex::from_spec();
         assert_eq!(index.modules.len(), 14);
         assert_eq!(index.classes.len(), 82);
-        assert_eq!(index.properties.len(), 118);
+        assert_eq!(index.properties.len(), 119);
         assert_eq!(index.individuals.len(), 14);
     }
 

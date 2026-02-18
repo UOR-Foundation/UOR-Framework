@@ -92,7 +92,7 @@ pub fn validate(artifacts: &Path) -> Result<ConformanceReport> {
     if missing_properties.is_empty() {
         report.push(TestResult::pass(
             "docs/completeness",
-            "All 118 ontology properties are documented",
+            "All 119 ontology properties are documented",
         ));
     } else {
         report.push(TestResult::fail_with_details(

@@ -75,6 +75,11 @@ pub fn render_breadcrumbs(crumbs: &[BreadcrumbItem]) -> String {
 
 /// Renders the homepage body with namespace grid.
 pub fn render_homepage(summaries: &[NamespaceSummary]) -> String {
+    let total_ns = summaries.len();
+    let total_classes: usize = summaries.iter().map(|s| s.class_count).sum();
+    let total_props: usize = summaries.iter().map(|s| s.property_count).sum();
+    let total_inds: usize = summaries.iter().map(|s| s.individual_count).sum();
+
     let mut grid = String::new();
     for ns in summaries {
         grid.push_str(&format!(
@@ -113,7 +118,7 @@ pub fn render_homepage(summaries: &[NamespaceSummary]) -> String {
 
 <section class="inventory">
 <h2>Ontology Inventory</h2>
-<p>14 namespaces · 82 classes · 119 properties · 14 named individuals</p>
+<p>{total_ns} namespaces · {total_classes} classes · {total_props} properties · {total_inds} named individuals</p>
 </section>
 
 <section class="namespace-grid">
@@ -121,7 +126,12 @@ pub fn render_homepage(summaries: &[NamespaceSummary]) -> String {
 <div class="grid">
 {grid}
 </div>
-</section>"#
+</section>"#,
+        total_ns = total_ns,
+        total_classes = total_classes,
+        total_props = total_props,
+        total_inds = total_inds,
+        grid = grid,
     )
 }
 
@@ -321,6 +331,9 @@ pub fn escape_html(s: &str) -> String {
 }
 
 /// Extracts the local name from an IRI.
+///
+/// Handles both `/`-separated paths and `#`-fragment IRIs (OWL, XSD, RDF).
 fn local_name(iri: &str) -> &str {
-    iri.rsplit('/').next().unwrap_or(iri)
+    let after_slash = iri.rsplit('/').next().unwrap_or(iri);
+    after_slash.rsplit('#').next().unwrap_or(after_slash)
 }

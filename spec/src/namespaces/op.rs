@@ -388,7 +388,10 @@ fn individuals() -> Vec<Individual> {
                       successor operation, making succ derivable from neg and bnot.",
             properties: &[
                 ("https://uor.foundation/op/lhs", IndividualValue::IriRef("https://uor.foundation/op/succ")),
-                ("https://uor.foundation/op/rhs", IndividualValue::IriRef("https://uor.foundation/op/neg")),
+                ("https://uor.foundation/op/rhs", IndividualValue::List(&[
+                    "https://uor.foundation/op/neg",
+                    "https://uor.foundation/op/bnot",
+                ])),
                 ("https://uor.foundation/op/forAll", IndividualValue::Str("x ∈ R_n")),
             ],
         },
@@ -402,6 +405,7 @@ fn individuals() -> Vec<Individual> {
                       this group acts as an isometry on the type space 𝒯_n.",
             properties: &[
                 ("https://uor.foundation/op/generatedBy", IndividualValue::IriRef("https://uor.foundation/op/neg")),
+                ("https://uor.foundation/op/generatedBy", IndividualValue::IriRef("https://uor.foundation/op/bnot")),
                 ("https://uor.foundation/op/presentation", IndividualValue::Str("⟨r, s | r^{2^n} = s² = e, srs = r⁻¹⟩")),
             ],
         },

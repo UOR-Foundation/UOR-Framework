@@ -290,6 +290,8 @@ pub mod iris {
     pub const XSD_DATETIME: &str = "http://www.w3.org/2001/XMLSchema#dateTime";
     /// `owl:Thing`.
     pub const OWL_THING: &str = "http://www.w3.org/2002/07/owl#Thing";
+    /// `owl:Class`.
+    pub const OWL_CLASS: &str = "http://www.w3.org/2002/07/owl#Class";
     /// `rdf:List`.
     pub const RDF_LIST: &str = "http://www.w3.org/1999/02/22-rdf-syntax-ns#List";
 }

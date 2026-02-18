@@ -67,22 +67,31 @@ fn classes() -> Vec<Class> {
 fn properties() -> Vec<Property> {
     vec![
         Property {
-            id: "https://uor.foundation/query/subject",
-            label: "subject",
-            comment: "The datum or term this query is about.",
+            id: "https://uor.foundation/query/inputType",
+            label: "inputType",
+            comment: "The type of input the query accepts.",
             kind: PropertyKind::Object,
             functional: true,
             domain: Some("https://uor.foundation/query/Query"),
-            range: OWL_THING,
+            range: OWL_CLASS,
         },
         Property {
-            id: "https://uor.foundation/query/quantum",
-            label: "quantum",
-            comment: "The quantum level at which this query is evaluated.",
-            kind: PropertyKind::Datatype,
+            id: "https://uor.foundation/query/outputType",
+            label: "outputType",
+            comment: "The type of output the query produces.",
+            kind: PropertyKind::Object,
             functional: true,
             domain: Some("https://uor.foundation/query/Query"),
-            range: XSD_POSITIVE_INTEGER,
+            range: OWL_CLASS,
+        },
+        Property {
+            id: "https://uor.foundation/query/coordinate",
+            label: "coordinate",
+            comment: "Which coordinate the query extracts.",
+            kind: PropertyKind::Datatype,
+            functional: true,
+            domain: Some("https://uor.foundation/query/CoordinateQuery"),
+            range: XSD_STRING,
         },
     ]
 }

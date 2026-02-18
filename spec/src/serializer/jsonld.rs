@@ -182,10 +182,24 @@ fn individual_to_json(ind: &crate::model::Individual) -> Value {
                 })
             }
         };
-        // Use the last segment of the IRI as the JSON-LD key
-        // (relies on @context prefix expansion)
+        // Use the prefixed form of the IRI as the JSON-LD key.
+        // When the same property key appears more than once (non-functional property),
+        // promote to a JSON-LD array rather than overwriting.
         let key = shorten_iri(prop_iri);
-        node[key] = json_value;
+        if let Value::Object(ref mut map) = node {
+            if let Some(existing) = map.get_mut(&key) {
+                let prev = std::mem::replace(existing, Value::Null);
+                *existing = match prev {
+                    Value::Array(mut arr) => {
+                        arr.push(json_value);
+                        Value::Array(arr)
+                    }
+                    other => json!([other, json_value]),
+                };
+            } else {
+                map.insert(key, json_value);
+            }
+        }
     }
 
     node
@@ -264,8 +278,8 @@ mod tests {
         let json = to_json_ld(ontology);
         let graph = json["@graph"].as_array().expect("@graph must be array");
         // root ontology + annotation property + 14 ns declarations +
-        // 82 classes + 105 properties + 13 individuals >= 215
-        assert!(graph.len() >= 215, "graph has {} nodes", graph.len());
+        // 82 classes + 119 properties + 14 individuals >= 231
+        assert!(graph.len() >= 231, "graph has {} nodes", graph.len());
     }
 
     #[test]

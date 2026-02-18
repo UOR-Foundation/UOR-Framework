@@ -93,9 +93,8 @@ fn check_css_parseable(content: &str) -> bool {
     // Attempt to consume all tokens; cssparser is lenient (error-recovery mode).
     // Parser::next() returns Err at EOF.
     loop {
-        match parser.next() {
-            Err(_) => break,
-            Ok(_) => {}
+        if parser.next().is_err() {
+            break;
         }
     }
 

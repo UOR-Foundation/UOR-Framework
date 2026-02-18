@@ -41,7 +41,7 @@ Choose the appropriate query type:
 ```turtle
 <my:query>
     a               query:RepresentationQuery ;
-    query:subject   <my:target-address> .
+    query:inputType <my:target-address> .
 ```
 
 ## Step 3: Apply the Resolver

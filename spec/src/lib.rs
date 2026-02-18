@@ -1,7 +1,7 @@
 //! UOR Foundation ontology encoded as typed Rust data.
 //!
 //! The `uor-spec` crate provides the complete UOR Foundation ontology —
-//! 14 namespaces, 82 classes, 105 properties, and 13 named individuals —
+//! 14 namespaces, 82 classes, 119 properties, and 14 named individuals —
 //! as static Rust data structures, along with serializers that produce
 //! JSON-LD, Turtle, and N-Triples output.
 //!
@@ -94,8 +94,8 @@ mod tests {
 
     #[test]
     fn property_count() {
-        // 119 = 118 namespace-level properties + 1 global uor:space annotation (Amendment 8).
-        assert_eq!(Ontology::full().property_count(), 119);
+        // 120 = 119 namespace-level properties + 1 global uor:space annotation (Amendment 8).
+        assert_eq!(Ontology::full().property_count(), 120);
     }
 
     #[test]

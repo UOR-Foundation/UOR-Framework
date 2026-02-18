@@ -55,7 +55,7 @@ pub struct WorkspacePaths {
 ///
 /// Validators are run in this order:
 /// 1. Rust source standards (style, API surface)
-/// 2. Ontology inventory (counts must equal 14/82/118/14)
+/// 2. Ontology inventory (counts must equal 14/82/119/14)
 /// 3. Ontology JSON-LD 1.1
 /// 4. Ontology OWL 2 DL
 /// 5. Ontology RDF 1.1 / Turtle 1.1
@@ -113,7 +113,7 @@ mod tests_unit {
         let ontology = uor_spec::Ontology::full();
         assert_eq!(ontology.namespaces.len(), 14);
         assert_eq!(ontology.class_count(), 82);
-        assert_eq!(ontology.property_count(), 119);
+        assert_eq!(ontology.property_count(), 120);
         assert_eq!(ontology.individual_count(), 14);
     }
 
