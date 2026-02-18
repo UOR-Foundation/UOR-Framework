@@ -639,19 +639,26 @@ form[role="search"] label {
 /* ── Docs two-column layout ─────────────────────────────────────────────────── */
 
 .docs-layout {
-  display: grid;
-  grid-template-columns: 17rem 1fr;
+  display: flex;
+  align-items: flex-start;
   min-height: calc(100vh - 3.5rem);
 }
 
 .docs-sidebar {
+  flex: 0 0 17rem;
+  width: 17rem;
   background: #0d0d1f;
   border-right: 1px solid #1e1e3a;
   padding: 1.5rem 0;
   position: sticky;
   top: 3.5rem;
-  height: calc(100vh - 3.5rem);
+  max-height: calc(100vh - 3.5rem);
   overflow-y: auto;
+}
+
+.docs-layout > main {
+  flex: 1;
+  min-width: 0;
 }
 
 .docs-sidebar nav ul {
@@ -699,14 +706,16 @@ form[role="search"] label {
   color: #505880;
 }
 
-@media (max-width: 860px) {
+@media (max-width: 768px) {
   .docs-layout {
-    grid-template-columns: 1fr;
+    flex-direction: column;
   }
 
   .docs-sidebar {
+    flex: none;
+    width: 100%;
     position: static;
-    height: auto;
+    max-height: none;
     border-right: none;
     border-bottom: 1px solid #1e1e3a;
   }

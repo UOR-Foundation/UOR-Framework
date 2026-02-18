@@ -182,13 +182,38 @@ pub fn generate(out_dir: &Path, readme_path: &Path) -> Result<()> {
     Ok(())
 }
 
-/// Generates the compact top-bar site navigation (4 items matching the main website).
+/// Generates the top-bar site navigation matching the website exactly (with dropdowns).
 fn build_site_nav_html(base_path: &str) -> String {
+    let ontology = Ontology::full();
+
+    // Build the Namespaces dropdown children from the spec
+    let ns_items: String = ontology
+        .namespaces
+        .iter()
+        .map(|m| {
+            format!(
+                "    <li><a href=\"{base_path}/namespaces/{prefix}/\">{label}</a></li>\n",
+                prefix = escape_html(m.namespace.prefix),
+                label = escape_html(m.namespace.label),
+            )
+        })
+        .collect();
+
     format!(
         r#"<ul>
 <li><a href="{base_path}/">Home</a></li>
-<li><a href="{base_path}/namespaces/">Namespaces</a></li>
-<li><a href="{base_path}/docs/index.html">Documentation</a></li>
+<li><a href="{base_path}/namespaces/">Namespaces</a>
+<ul>
+{ns_items}</ul>
+</li>
+<li><a href="{base_path}/docs/">Documentation</a>
+<ul>
+    <li><a href="{base_path}/docs/overview.html">Overview</a></li>
+    <li><a href="{base_path}/docs/architecture.html">Architecture</a></li>
+    <li><a href="{base_path}/docs/concepts/">Concepts</a></li>
+    <li><a href="{base_path}/docs/guides/">Guides</a></li>
+</ul>
+</li>
 <li><a href="{base_path}/search.html">Search</a></li>
 </ul>"#
     )
