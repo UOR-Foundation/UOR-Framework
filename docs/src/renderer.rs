@@ -102,7 +102,15 @@ pub fn markdown_to_html(markdown: &str) -> String {
 }
 
 /// Renders a page inside the standard HTML shell with nav, main, and footer.
-pub fn render_page(title: &str, content_html: &str, nav_html: &str, breadcrumb: &str) -> String {
+pub fn render_page(
+    title: &str,
+    content_html: &str,
+    nav_html: &str,
+    breadcrumb: &str,
+    base_path: &str,
+) -> String {
+    let css_url = format!("{}/css/style.css", base_path);
+    let js_url = format!("{}/js/search.js", base_path);
     format!(
         r##"<!DOCTYPE html>
 <html lang="en">
@@ -110,7 +118,7 @@ pub fn render_page(title: &str, content_html: &str, nav_html: &str, breadcrumb: 
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>{title} — UOR Foundation</title>
-<link rel="stylesheet" href="/css/style.css">
+<link rel="stylesheet" href="{css_url}">
 </head>
 <body>
 <a href="#main-content" class="skip-link">Skip to main content</a>
@@ -126,13 +134,15 @@ pub fn render_page(title: &str, content_html: &str, nav_html: &str, breadcrumb: 
 <footer>
 <p>UOR Foundation — <a href="https://uor.foundation/">uor.foundation</a></p>
 </footer>
-<script src="/js/search.js" defer></script>
+<script src="{js_url}" defer></script>
 </body>
 </html>"##,
         title = escape_html(title),
+        css_url = escape_html(&css_url),
         nav_html = nav_html,
         breadcrumb = breadcrumb,
         content_html = content_html,
+        js_url = escape_html(&js_url),
     )
 }
 

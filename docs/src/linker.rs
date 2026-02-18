@@ -19,7 +19,9 @@ pub fn resolve_ref(kind: &str, iri: &str, index: &OntologyIndex) -> String {
     let fragment = fragment_from_iri(iri);
 
     let _ = kind; // kind used for semantic clarity but path is same for all
-    format!("/docs/namespaces/{}.html#{}", prefix, fragment)
+    let base_path = std::env::var("PUBLIC_BASE_PATH").unwrap_or_default();
+    let base_path = base_path.trim_end_matches('/');
+    format!("{}/docs/namespaces/{}.html#{}", base_path, prefix, fragment)
 }
 
 /// Extracts the local name from an IRI (the last path segment after `/`).

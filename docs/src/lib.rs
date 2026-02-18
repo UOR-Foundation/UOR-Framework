@@ -66,20 +66,23 @@ use uor_spec::{Individual, IndividualValue, NamespaceModule, Ontology, PropertyK
 pub fn generate(out_dir: &Path, readme_path: &Path) -> Result<()> {
     let index = OntologyIndex::from_spec();
 
+    let base_path = std::env::var("PUBLIC_BASE_PATH").unwrap_or_default();
+    let base_path = base_path.trim_end_matches('/');
+
     // Verify prose content references (if content/ dir exists alongside this crate)
     let content_dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("content");
     verifier::verify_content(&content_dir)?;
 
-    let nav_html = build_nav_html();
+    let nav_html = build_nav_html(base_path);
 
     // Generate index page
-    let index_html = generate_index_page(&index, &nav_html);
+    let index_html = generate_index_page(&index, &nav_html, base_path);
     writer::write_html(&out_dir.join("index.html"), &index_html)?;
 
     // Generate per-namespace reference pages (100% from spec)
     let ontology = Ontology::full();
     for module in &ontology.namespaces {
-        let html = generate_namespace_page(module, &nav_html);
+        let html = generate_namespace_page(module, &nav_html, base_path);
         let path = out_dir
             .join("namespaces")
             .join(format!("{}.html", module.namespace.prefix));
@@ -92,6 +95,7 @@ pub fn generate(out_dir: &Path, readme_path: &Path) -> Result<()> {
         &out_dir.join("concepts"),
         &index,
         &nav_html,
+        base_path,
     )?;
 
     // Generate concepts index page
@@ -109,7 +113,10 @@ pub fn generate(out_dir: &Path, readme_path: &Path) -> Result<()> {
 <li><a href="state-model.html">State Model — Execution contexts and binding frames</a></li>
 </ul>"#,
         &nav_html,
-        r#"<a href="/">Home</a> › <a href="/docs/index.html">Docs</a> › Concepts"#,
+        &format!(
+            r#"<a href="{base_path}/">Home</a> › <a href="{base_path}/docs/index.html">Docs</a> › Concepts"#
+        ),
+        base_path,
     );
     writer::write_html(
         &out_dir.join("concepts").join("index.html"),
@@ -122,6 +129,7 @@ pub fn generate(out_dir: &Path, readme_path: &Path) -> Result<()> {
         &out_dir.join("guides"),
         &index,
         &nav_html,
+        base_path,
     )?;
 
     // Generate guides index page
@@ -135,7 +143,10 @@ pub fn generate(out_dir: &Path, readme_path: &Path) -> Result<()> {
 <li><a href="contributing.html">Contributing — How to contribute to UOR</a></li>
 </ul>"#,
         &nav_html,
-        r#"<a href="/">Home</a> › <a href="/docs/index.html">Docs</a> › Guides"#,
+        &format!(
+            r#"<a href="{base_path}/">Home</a> › <a href="{base_path}/docs/index.html">Docs</a> › Guides"#
+        ),
+        base_path,
     );
     writer::write_html(&out_dir.join("guides").join("index.html"), &guides_index)?;
 
@@ -146,6 +157,7 @@ pub fn generate(out_dir: &Path, readme_path: &Path) -> Result<()> {
         "Overview",
         &index,
         &nav_html,
+        base_path,
     )?;
     generate_single_page(
         &content_dir.join("architecture.md"),
@@ -153,6 +165,7 @@ pub fn generate(out_dir: &Path, readme_path: &Path) -> Result<()> {
         "Architecture",
         &index,
         &nav_html,
+        base_path,
     )?;
 
     // Generate machine-generated README.md
@@ -163,54 +176,55 @@ pub fn generate(out_dir: &Path, readme_path: &Path) -> Result<()> {
 }
 
 /// Generates the main site navigation HTML snippet.
-fn build_nav_html() -> String {
-    r#"<ul>
-<li><a href="/docs/index.html">Documentation</a></li>
-<li><a href="/docs/overview.html">Overview</a></li>
-<li><a href="/docs/architecture.html">Architecture</a></li>
+fn build_nav_html(base_path: &str) -> String {
+    format!(
+        r#"<ul>
+<li><a href="{base_path}/docs/index.html">Documentation</a></li>
+<li><a href="{base_path}/docs/overview.html">Overview</a></li>
+<li><a href="{base_path}/docs/architecture.html">Architecture</a></li>
 <li class="nav-group"><span>Namespaces</span>
 <ul>
-<li><a href="/docs/namespaces/u.html">u</a></li>
-<li><a href="/docs/namespaces/schema.html">schema</a></li>
-<li><a href="/docs/namespaces/op.html">op</a></li>
-<li><a href="/docs/namespaces/query.html">query</a></li>
-<li><a href="/docs/namespaces/resolver.html">resolver</a></li>
-<li><a href="/docs/namespaces/type.html">type</a></li>
-<li><a href="/docs/namespaces/partition.html">partition</a></li>
-<li><a href="/docs/namespaces/observable.html">observable</a></li>
-<li><a href="/docs/namespaces/proof.html">proof</a></li>
-<li><a href="/docs/namespaces/derivation.html">derivation</a></li>
-<li><a href="/docs/namespaces/trace.html">trace</a></li>
-<li><a href="/docs/namespaces/cert.html">cert</a></li>
-<li><a href="/docs/namespaces/morphism.html">morphism</a></li>
-<li><a href="/docs/namespaces/state.html">state</a></li>
+<li><a href="{base_path}/docs/namespaces/u.html">u</a></li>
+<li><a href="{base_path}/docs/namespaces/schema.html">schema</a></li>
+<li><a href="{base_path}/docs/namespaces/op.html">op</a></li>
+<li><a href="{base_path}/docs/namespaces/query.html">query</a></li>
+<li><a href="{base_path}/docs/namespaces/resolver.html">resolver</a></li>
+<li><a href="{base_path}/docs/namespaces/type.html">type</a></li>
+<li><a href="{base_path}/docs/namespaces/partition.html">partition</a></li>
+<li><a href="{base_path}/docs/namespaces/observable.html">observable</a></li>
+<li><a href="{base_path}/docs/namespaces/proof.html">proof</a></li>
+<li><a href="{base_path}/docs/namespaces/derivation.html">derivation</a></li>
+<li><a href="{base_path}/docs/namespaces/trace.html">trace</a></li>
+<li><a href="{base_path}/docs/namespaces/cert.html">cert</a></li>
+<li><a href="{base_path}/docs/namespaces/morphism.html">morphism</a></li>
+<li><a href="{base_path}/docs/namespaces/state.html">state</a></li>
 </ul>
 </li>
 <li class="nav-group"><span>Concepts</span>
 <ul>
-<li><a href="/docs/concepts/ring.html">Ring</a></li>
-<li><a href="/docs/concepts/content-addressing.html">Content Addressing</a></li>
-<li><a href="/docs/concepts/critical-identity.html">Critical Identity</a></li>
-<li><a href="/docs/concepts/partition.html">Partition</a></li>
-<li><a href="/docs/concepts/resolution.html">Resolution</a></li>
-<li><a href="/docs/concepts/type-system.html">Type System</a></li>
-<li><a href="/docs/concepts/state-model.html">State Model</a></li>
+<li><a href="{base_path}/docs/concepts/ring.html">Ring</a></li>
+<li><a href="{base_path}/docs/concepts/content-addressing.html">Content Addressing</a></li>
+<li><a href="{base_path}/docs/concepts/critical-identity.html">Critical Identity</a></li>
+<li><a href="{base_path}/docs/concepts/partition.html">Partition</a></li>
+<li><a href="{base_path}/docs/concepts/resolution.html">Resolution</a></li>
+<li><a href="{base_path}/docs/concepts/type-system.html">Type System</a></li>
+<li><a href="{base_path}/docs/concepts/state-model.html">State Model</a></li>
 </ul>
 </li>
 <li class="nav-group"><span>Guides</span>
 <ul>
-<li><a href="/docs/guides/implementing-prism.html">Implementing PRISM</a></li>
-<li><a href="/docs/guides/conformance.html">Conformance</a></li>
-<li><a href="/docs/guides/contributing.html">Contributing</a></li>
+<li><a href="{base_path}/docs/guides/implementing-prism.html">Implementing PRISM</a></li>
+<li><a href="{base_path}/docs/guides/conformance.html">Conformance</a></li>
+<li><a href="{base_path}/docs/guides/contributing.html">Contributing</a></li>
 </ul>
 </li>
-<li><a href="/search.html">Search</a></li>
+<li><a href="{base_path}/search.html">Search</a></li>
 </ul>"#
-        .to_string()
+    )
 }
 
 /// Generates the ontology inventory index page.
-fn generate_index_page(index: &OntologyIndex, nav_html: &str) -> String {
+fn generate_index_page(index: &OntologyIndex, nav_html: &str, base_path: &str) -> String {
     let mut rows = String::new();
     for module in &index.modules {
         let ns = &module.namespace;
@@ -242,12 +256,13 @@ fn generate_index_page(index: &OntologyIndex, nav_html: &str) -> String {
         "Documentation Index",
         &content,
         nav_html,
-        r#"<a href="/">Home</a> › Documentation"#,
+        &format!(r#"<a href="{base_path}/">Home</a> › Documentation"#),
+        base_path,
     )
 }
 
 /// Generates a namespace reference page from the spec (100% auto-generated).
-fn generate_namespace_page(module: &NamespaceModule, nav_html: &str) -> String {
+fn generate_namespace_page(module: &NamespaceModule, nav_html: &str, base_path: &str) -> String {
     let ns = &module.namespace;
     let mut content = format!(
         r#"<h1>{label}</h1>
@@ -336,9 +351,10 @@ fn generate_namespace_page(module: &NamespaceModule, nav_html: &str) -> String {
         &content,
         nav_html,
         &format!(
-            r#"<a href="/">Home</a> › <a href="/docs/index.html">Docs</a> › {}"#,
+            r#"<a href="{base_path}/">Home</a> › <a href="{base_path}/docs/index.html">Docs</a> › {}"#,
             escape_html(ns.label)
         ),
+        base_path,
     )
 }
 
@@ -384,6 +400,7 @@ fn generate_content_pages(
     out_dir: &Path,
     index: &OntologyIndex,
     nav_html: &str,
+    base_path: &str,
 ) -> Result<()> {
     if !src_dir.exists() {
         return Ok(());
@@ -397,7 +414,7 @@ fn generate_content_pages(
         if path.extension().map(|x| x == "md").unwrap_or(false) {
             let stem = path.file_stem().and_then(|s| s.to_str()).unwrap_or("page");
             let out_path = out_dir.join(format!("{}.html", stem));
-            generate_single_page(&path, &out_path, stem, index, nav_html)?;
+            generate_single_page(&path, &out_path, stem, index, nav_html, base_path)?;
         }
     }
 
@@ -415,6 +432,7 @@ fn generate_single_page(
     title: &str,
     index: &OntologyIndex,
     nav_html: &str,
+    base_path: &str,
 ) -> Result<()> {
     let markdown = if src.exists() {
         std::fs::read_to_string(src)
@@ -430,9 +448,10 @@ fn generate_single_page(
         &content_html,
         nav_html,
         &format!(
-            r#"<a href="/">Home</a> › <a href="/docs/index.html">Docs</a> › {}"#,
+            r#"<a href="{base_path}/">Home</a> › <a href="{base_path}/docs/index.html">Docs</a> › {}"#,
             escape_html(title)
         ),
+        base_path,
     );
 
     writer::write_html(out, &page)

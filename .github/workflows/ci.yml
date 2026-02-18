@@ -45,6 +45,8 @@ jobs:
 
       - name: Generate documentation
         run: cargo run --bin uor-docs
+        env:
+          PUBLIC_BASE_PATH: /UOR-Framework
 
       - name: Generate website
         run: cargo run --bin uor-website

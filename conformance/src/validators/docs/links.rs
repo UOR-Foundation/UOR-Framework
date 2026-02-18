@@ -17,6 +17,8 @@ use crate::report::{ConformanceReport, TestResult};
 /// Returns an error if the docs directory cannot be read.
 pub fn validate(artifacts: &Path) -> Result<ConformanceReport> {
     let mut report = ConformanceReport::new();
+    let base_path = std::env::var("PUBLIC_BASE_PATH").unwrap_or_default();
+    let base_path = base_path.trim_end_matches('/').to_string();
 
     let docs_dir = artifacts.join("docs");
     if !docs_dir.exists() {
@@ -96,8 +98,13 @@ pub fn validate(artifacts: &Path) -> Result<ConformanceReport> {
             }
 
             let (resolved, check_all_artifacts) = if href.starts_with('/') {
-                // Absolute site-root path — resolve against artifacts root
-                let path = normalize_path(href.trim_start_matches('/'));
+                // Absolute site-root path — strip base_path prefix, then resolve against artifacts root
+                let without_base = if !base_path.is_empty() {
+                    href.strip_prefix(&base_path).unwrap_or(href.as_str())
+                } else {
+                    href.as_str()
+                };
+                let path = normalize_path(without_base.trim_start_matches('/'));
                 (path, true)
             } else {
                 // Relative path — resolve from this file's parent within docs
