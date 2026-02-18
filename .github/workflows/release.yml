@@ -7,13 +7,6 @@ on:
 
 permissions:
   contents: write
-  pages: write
-  id-token: write
-
-# Only one deployment runs at a time
-concurrency:
-  group: pages
-  cancel-in-progress: false
 
 env:
   CARGO_TERM_COLOR: always
@@ -21,11 +14,8 @@ env:
 
 jobs:
   release:
-    name: Build, Conform, and Publish
+    name: Build, Conform, and Publish Release
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deploy.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
 
@@ -64,15 +54,6 @@ jobs:
       - name: Run conformance suite
         run: cargo run --bin uor-conformance
 
-      - name: Upload pages artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: public/
-
-      - name: Deploy to GitHub Pages
-        id: deploy
-        uses: actions/deploy-pages@v4
-
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
@@ -88,4 +69,4 @@ jobs:
             - `uor.foundation.ttl` — Turtle 1.1
             - `uor.foundation.nt` — N-Triples
 
-            Documentation: https://uor.foundation/
+            Documentation: https://uor-foundation.github.io/UOR-Framework/

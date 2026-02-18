@@ -51,3 +51,27 @@ jobs:
 
       - name: Run conformance suite
         run: cargo run --bin uor-conformance
+
+      - name: Upload pages artifact
+        # Only deploy Pages on pushes to main (not PRs)
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: public/
+
+  deploy-pages:
+    name: Deploy to GitHub Pages
+    needs: validate
+    # Only deploy on pushes to main (not PRs, not tags)
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deploy
+        uses: actions/deploy-pages@v4
