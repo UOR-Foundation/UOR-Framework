@@ -1,0 +1,172 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://uor.foundation/schema/uor.schema.json",
+  "title": "UOR Schema",
+  "description": "Universal Object Reference schema for O(1) byte addressing via Braille bijection",
+
+  "$defs": {
+    "Taxon": {
+      "type": "object",
+      "description": "Universal byte reference (0-255) with bijective Braille mapping (U+2800-U+28FF)",
+      "properties": {
+        "value": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 255,
+          "description": "The byte value (0-255)"
+        },
+        "codepoint": {
+          "type": "integer",
+          "minimum": 10240,
+          "maximum": 10495,
+          "description": "Unicode Braille codepoint (0x2800 + value)"
+        },
+        "braille": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1,
+          "description": "The Braille glyph character"
+        },
+        "domain": {
+          "$ref": "#/$defs/DomainRef",
+          "description": "Triadic domain classification (value mod 3)"
+        },
+        "rank": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 85,
+          "description": "Position within domain (value div 3)"
+        }
+      },
+      "required": ["value"]
+    },
+
+    "Domain": {
+      "type": "object",
+      "description": "One of three triadic domains derived from T=3 axiom",
+      "properties": {
+        "residue": {
+          "type": "integer",
+          "enum": [0, 1, 2],
+          "description": "Residue class (0=Theta, 1=Psi, 2=Delta)"
+        },
+        "symbol": {
+          "type": "string",
+          "enum": ["\u03b8", "\u03c8", "\u03b4"],
+          "description": "Greek letter symbol"
+        },
+        "name": {
+          "type": "string",
+          "enum": ["Theta", "Psi", "Delta"],
+          "description": "Domain name"
+        },
+        "cardinality": {
+          "type": "integer",
+          "enum": [86, 86, 84],
+          "description": "Number of taxons in this domain"
+        }
+      },
+      "required": ["residue"]
+    },
+
+    "DomainRef": {
+      "type": "string",
+      "enum": ["Theta", "Psi", "Delta"],
+      "description": "Reference to a domain by name"
+    },
+
+    "Word": {
+      "type": "object",
+      "description": "Multi-taxon word for arbitrary-width O(1) operations",
+      "properties": {
+        "taxons": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/Taxon"},
+          "description": "Array of taxons (big-endian: index 0 is most significant)"
+        },
+        "size": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Number of taxons in the word"
+        }
+      },
+      "required": ["taxons", "size"]
+    },
+
+    "Word2": {
+      "allOf": [{"$ref": "#/$defs/Word"}],
+      "properties": {
+        "size": {"const": 2}
+      },
+      "description": "2-taxon word (u16 equivalent)"
+    },
+
+    "Word4": {
+      "allOf": [{"$ref": "#/$defs/Word"}],
+      "properties": {
+        "size": {"const": 4}
+      },
+      "description": "4-taxon word (u32 equivalent)"
+    },
+
+    "Word8": {
+      "allOf": [{"$ref": "#/$defs/Word"}],
+      "properties": {
+        "size": {"const": 8}
+      },
+      "description": "8-taxon word (u64 equivalent)"
+    },
+
+    "Word32": {
+      "allOf": [{"$ref": "#/$defs/Word"}],
+      "properties": {
+        "size": {"const": 32}
+      },
+      "description": "32-taxon word (SHA-256 hash)"
+    },
+
+    "Constants": {
+      "type": "object",
+      "description": "Axiom-derived constants",
+      "properties": {
+        "T": {
+          "const": 3,
+          "description": "Triality axiom - prime order of symmetry"
+        },
+        "O": {
+          "const": 8,
+          "description": "Octonion dimension axiom"
+        },
+        "BYTE_CARDINALITY": {
+          "const": 256,
+          "description": "Total taxon count (2^O)"
+        },
+        "BRAILLE_BASE": {
+          "const": 10240,
+          "description": "Unicode Braille block start (0x2800)"
+        },
+        "BRAILLE_MAX": {
+          "const": 10495,
+          "description": "Unicode Braille block end (0x28FF)"
+        },
+        "DOMAIN_CARDINALITIES": {
+          "type": "array",
+          "items": [
+            {"const": 86},
+            {"const": 86},
+            {"const": 84}
+          ],
+          "minItems": 3,
+          "maxItems": 3,
+          "description": "Taxon count per domain [Theta, Psi, Delta]"
+        }
+      }
+    },
+
+    "IRI": {
+      "type": "string",
+      "pattern": "^https://uor\\.foundation/u/U28[0-9A-F]{2}$",
+      "description": "Taxon IRI in format https://uor.foundation/u/U28XX"
+    }
+  }
+}

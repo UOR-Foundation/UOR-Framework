@@ -1,5 +1,5 @@
 [workspace]
-members = ["spec", "conformance", "docs", "website", "clients"]
+members = ["spec", "conformance", "docs", "website", "clients", "crates/uor"]
 resolver = "2"
 
 [workspace.package]
@@ -48,3 +48,9 @@ cssparser = "0.33"
 
 # TOML parsing (docs front-matter claims)
 toml = "0.8"
+
+# Benchmarking
+criterion = "0.5.1"
+
+# Property-based testing
+proptest = "1.5"

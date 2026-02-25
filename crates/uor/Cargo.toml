@@ -1,0 +1,49 @@
+[package]
+name = "uor"
+version = "0.1.0"
+edition = "2021"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/UOR-Foundation/UOR-Framework"
+description = "Universal Object Reference - O(1) computation via pre-computed lookup tables on a toroidal state model"
+keywords = ["uor", "computation", "lookup-tables", "zero-copy"]
+categories = ["encoding", "mathematics", "no-std"]
+readme = "README.md"
+
+[features]
+default = ["std"]
+std = []
+
+[dependencies]
+# No dependencies - pure Rust abstractions with Copy types only
+
+[dev-dependencies]
+criterion = "0.5"
+proptest = "1.5"
+
+[[bench]]
+name = "wavefront"
+harness = false
+
+[[bench]]
+name = "conformance"
+harness = false
+
+[[bench]]
+name = "view"
+harness = false
+
+[[bench]]
+name = "microcode"
+harness = false
+
+[[bench]]
+name = "executor"
+harness = false
+
+[[bench]]
+name = "frame"
+harness = false
+
+[[bench]]
+name = "calculator"
+harness = false

@@ -1,0 +1,2353 @@
+{
+  "@context": "https://uor.foundation/schema/uor.jsonld",
+  "@id": "https://uor.foundation/u/catalog",
+  "@type": "TaxonCatalog",
+  "description": "Complete catalog of all 256 UOR taxons with Braille bijection",
+  "constants": {
+    "T": 3,
+    "O": 8,
+    "BYTE_CARDINALITY": 256,
+    "BRAILLE_BASE": 10240,
+    "BRAILLE_MAX": 10495,
+    "DOMAIN_CARDINALITIES": [
+      86,
+      86,
+      84
+    ]
+  },
+  "domains": [
+    {
+      "@id": "uor:Theta",
+      "@type": "Domain",
+      "residue": 0,
+      "symbol": "θ",
+      "name": "Theta",
+      "cardinality": 86,
+      "description": "Structure domain (value mod 3 == 0)"
+    },
+    {
+      "@id": "uor:Psi",
+      "@type": "Domain",
+      "residue": 1,
+      "symbol": "ψ",
+      "name": "Psi",
+      "cardinality": 86,
+      "description": "Unity domain (value mod 3 == 1)"
+    },
+    {
+      "@id": "uor:Delta",
+      "@type": "Domain",
+      "residue": 2,
+      "symbol": "δ",
+      "name": "Delta",
+      "cardinality": 84,
+      "description": "Duality domain (value mod 3 == 2)"
+    }
+  ],
+  "@graph": [
+    {
+      "@id": "uor:U2800",
+      "@type": "Taxon",
+      "value": 0,
+      "codepoint": 10240,
+      "braille": "⠀",
+      "domain": "Theta",
+      "rank": 0
+    },
+    {
+      "@id": "uor:U2801",
+      "@type": "Taxon",
+      "value": 1,
+      "codepoint": 10241,
+      "braille": "⠁",
+      "domain": "Psi",
+      "rank": 0
+    },
+    {
+      "@id": "uor:U2802",
+      "@type": "Taxon",
+      "value": 2,
+      "codepoint": 10242,
+      "braille": "⠂",
+      "domain": "Delta",
+      "rank": 0
+    },
+    {
+      "@id": "uor:U2803",
+      "@type": "Taxon",
+      "value": 3,
+      "codepoint": 10243,
+      "braille": "⠃",
+      "domain": "Theta",
+      "rank": 1
+    },
+    {
+      "@id": "uor:U2804",
+      "@type": "Taxon",
+      "value": 4,
+      "codepoint": 10244,
+      "braille": "⠄",
+      "domain": "Psi",
+      "rank": 1
+    },
+    {
+      "@id": "uor:U2805",
+      "@type": "Taxon",
+      "value": 5,
+      "codepoint": 10245,
+      "braille": "⠅",
+      "domain": "Delta",
+      "rank": 1
+    },
+    {
+      "@id": "uor:U2806",
+      "@type": "Taxon",
+      "value": 6,
+      "codepoint": 10246,
+      "braille": "⠆",
+      "domain": "Theta",
+      "rank": 2
+    },
+    {
+      "@id": "uor:U2807",
+      "@type": "Taxon",
+      "value": 7,
+      "codepoint": 10247,
+      "braille": "⠇",
+      "domain": "Psi",
+      "rank": 2
+    },
+    {
+      "@id": "uor:U2808",
+      "@type": "Taxon",
+      "value": 8,
+      "codepoint": 10248,
+      "braille": "⠈",
+      "domain": "Delta",
+      "rank": 2
+    },
+    {
+      "@id": "uor:U2809",
+      "@type": "Taxon",
+      "value": 9,
+      "codepoint": 10249,
+      "braille": "⠉",
+      "domain": "Theta",
+      "rank": 3
+    },
+    {
+      "@id": "uor:U280A",
+      "@type": "Taxon",
+      "value": 10,
+      "codepoint": 10250,
+      "braille": "⠊",
+      "domain": "Psi",
+      "rank": 3
+    },
+    {
+      "@id": "uor:U280B",
+      "@type": "Taxon",
+      "value": 11,
+      "codepoint": 10251,
+      "braille": "⠋",
+      "domain": "Delta",
+      "rank": 3
+    },
+    {
+      "@id": "uor:U280C",
+      "@type": "Taxon",
+      "value": 12,
+      "codepoint": 10252,
+      "braille": "⠌",
+      "domain": "Theta",
+      "rank": 4
+    },
+    {
+      "@id": "uor:U280D",
+      "@type": "Taxon",
+      "value": 13,
+      "codepoint": 10253,
+      "braille": "⠍",
+      "domain": "Psi",
+      "rank": 4
+    },
+    {
+      "@id": "uor:U280E",
+      "@type": "Taxon",
+      "value": 14,
+      "codepoint": 10254,
+      "braille": "⠎",
+      "domain": "Delta",
+      "rank": 4
+    },
+    {
+      "@id": "uor:U280F",
+      "@type": "Taxon",
+      "value": 15,
+      "codepoint": 10255,
+      "braille": "⠏",
+      "domain": "Theta",
+      "rank": 5
+    },
+    {
+      "@id": "uor:U2810",
+      "@type": "Taxon",
+      "value": 16,
+      "codepoint": 10256,
+      "braille": "⠐",
+      "domain": "Psi",
+      "rank": 5
+    },
+    {
+      "@id": "uor:U2811",
+      "@type": "Taxon",
+      "value": 17,
+      "codepoint": 10257,
+      "braille": "⠑",
+      "domain": "Delta",
+      "rank": 5
+    },
+    {
+      "@id": "uor:U2812",
+      "@type": "Taxon",
+      "value": 18,
+      "codepoint": 10258,
+      "braille": "⠒",
+      "domain": "Theta",
+      "rank": 6
+    },
+    {
+      "@id": "uor:U2813",
+      "@type": "Taxon",
+      "value": 19,
+      "codepoint": 10259,
+      "braille": "⠓",
+      "domain": "Psi",
+      "rank": 6
+    },
+    {
+      "@id": "uor:U2814",
+      "@type": "Taxon",
+      "value": 20,
+      "codepoint": 10260,
+      "braille": "⠔",
+      "domain": "Delta",
+      "rank": 6
+    },
+    {
+      "@id": "uor:U2815",
+      "@type": "Taxon",
+      "value": 21,
+      "codepoint": 10261,
+      "braille": "⠕",
+      "domain": "Theta",
+      "rank": 7
+    },
+    {
+      "@id": "uor:U2816",
+      "@type": "Taxon",
+      "value": 22,
+      "codepoint": 10262,
+      "braille": "⠖",
+      "domain": "Psi",
+      "rank": 7
+    },
+    {
+      "@id": "uor:U2817",
+      "@type": "Taxon",
+      "value": 23,
+      "codepoint": 10263,
+      "braille": "⠗",
+      "domain": "Delta",
+      "rank": 7
+    },
+    {
+      "@id": "uor:U2818",
+      "@type": "Taxon",
+      "value": 24,
+      "codepoint": 10264,
+      "braille": "⠘",
+      "domain": "Theta",
+      "rank": 8
+    },
+    {
+      "@id": "uor:U2819",
+      "@type": "Taxon",
+      "value": 25,
+      "codepoint": 10265,
+      "braille": "⠙",
+      "domain": "Psi",
+      "rank": 8
+    },
+    {
+      "@id": "uor:U281A",
+      "@type": "Taxon",
+      "value": 26,
+      "codepoint": 10266,
+      "braille": "⠚",
+      "domain": "Delta",
+      "rank": 8
+    },
+    {
+      "@id": "uor:U281B",
+      "@type": "Taxon",
+      "value": 27,
+      "codepoint": 10267,
+      "braille": "⠛",
+      "domain": "Theta",
+      "rank": 9
+    },
+    {
+      "@id": "uor:U281C",
+      "@type": "Taxon",
+      "value": 28,
+      "codepoint": 10268,
+      "braille": "⠜",
+      "domain": "Psi",
+      "rank": 9
+    },
+    {
+      "@id": "uor:U281D",
+      "@type": "Taxon",
+      "value": 29,
+      "codepoint": 10269,
+      "braille": "⠝",
+      "domain": "Delta",
+      "rank": 9
+    },
+    {
+      "@id": "uor:U281E",
+      "@type": "Taxon",
+      "value": 30,
+      "codepoint": 10270,
+      "braille": "⠞",
+      "domain": "Theta",
+      "rank": 10
+    },
+    {
+      "@id": "uor:U281F",
+      "@type": "Taxon",
+      "value": 31,
+      "codepoint": 10271,
+      "braille": "⠟",
+      "domain": "Psi",
+      "rank": 10
+    },
+    {
+      "@id": "uor:U2820",
+      "@type": "Taxon",
+      "value": 32,
+      "codepoint": 10272,
+      "braille": "⠠",
+      "domain": "Delta",
+      "rank": 10
+    },
+    {
+      "@id": "uor:U2821",
+      "@type": "Taxon",
+      "value": 33,
+      "codepoint": 10273,
+      "braille": "⠡",
+      "domain": "Theta",
+      "rank": 11
+    },
+    {
+      "@id": "uor:U2822",
+      "@type": "Taxon",
+      "value": 34,
+      "codepoint": 10274,
+      "braille": "⠢",
+      "domain": "Psi",
+      "rank": 11
+    },
+    {
+      "@id": "uor:U2823",
+      "@type": "Taxon",
+      "value": 35,
+      "codepoint": 10275,
+      "braille": "⠣",
+      "domain": "Delta",
+      "rank": 11
+    },
+    {
+      "@id": "uor:U2824",
+      "@type": "Taxon",
+      "value": 36,
+      "codepoint": 10276,
+      "braille": "⠤",
+      "domain": "Theta",
+      "rank": 12
+    },
+    {
+      "@id": "uor:U2825",
+      "@type": "Taxon",
+      "value": 37,
+      "codepoint": 10277,
+      "braille": "⠥",
+      "domain": "Psi",
+      "rank": 12
+    },
+    {
+      "@id": "uor:U2826",
+      "@type": "Taxon",
+      "value": 38,
+      "codepoint": 10278,
+      "braille": "⠦",
+      "domain": "Delta",
+      "rank": 12
+    },
+    {
+      "@id": "uor:U2827",
+      "@type": "Taxon",
+      "value": 39,
+      "codepoint": 10279,
+      "braille": "⠧",
+      "domain": "Theta",
+      "rank": 13
+    },
+    {
+      "@id": "uor:U2828",
+      "@type": "Taxon",
+      "value": 40,
+      "codepoint": 10280,
+      "braille": "⠨",
+      "domain": "Psi",
+      "rank": 13
+    },
+    {
+      "@id": "uor:U2829",
+      "@type": "Taxon",
+      "value": 41,
+      "codepoint": 10281,
+      "braille": "⠩",
+      "domain": "Delta",
+      "rank": 13
+    },
+    {
+      "@id": "uor:U282A",
+      "@type": "Taxon",
+      "value": 42,
+      "codepoint": 10282,
+      "braille": "⠪",
+      "domain": "Theta",
+      "rank": 14
+    },
+    {
+      "@id": "uor:U282B",
+      "@type": "Taxon",
+      "value": 43,
+      "codepoint": 10283,
+      "braille": "⠫",
+      "domain": "Psi",
+      "rank": 14
+    },
+    {
+      "@id": "uor:U282C",
+      "@type": "Taxon",
+      "value": 44,
+      "codepoint": 10284,
+      "braille": "⠬",
+      "domain": "Delta",
+      "rank": 14
+    },
+    {
+      "@id": "uor:U282D",
+      "@type": "Taxon",
+      "value": 45,
+      "codepoint": 10285,
+      "braille": "⠭",
+      "domain": "Theta",
+      "rank": 15
+    },
+    {
+      "@id": "uor:U282E",
+      "@type": "Taxon",
+      "value": 46,
+      "codepoint": 10286,
+      "braille": "⠮",
+      "domain": "Psi",
+      "rank": 15
+    },
+    {
+      "@id": "uor:U282F",
+      "@type": "Taxon",
+      "value": 47,
+      "codepoint": 10287,
+      "braille": "⠯",
+      "domain": "Delta",
+      "rank": 15
+    },
+    {
+      "@id": "uor:U2830",
+      "@type": "Taxon",
+      "value": 48,
+      "codepoint": 10288,
+      "braille": "⠰",
+      "domain": "Theta",
+      "rank": 16
+    },
+    {
+      "@id": "uor:U2831",
+      "@type": "Taxon",
+      "value": 49,
+      "codepoint": 10289,
+      "braille": "⠱",
+      "domain": "Psi",
+      "rank": 16
+    },
+    {
+      "@id": "uor:U2832",
+      "@type": "Taxon",
+      "value": 50,
+      "codepoint": 10290,
+      "braille": "⠲",
+      "domain": "Delta",
+      "rank": 16
+    },
+    {
+      "@id": "uor:U2833",
+      "@type": "Taxon",
+      "value": 51,
+      "codepoint": 10291,
+      "braille": "⠳",
+      "domain": "Theta",
+      "rank": 17
+    },
+    {
+      "@id": "uor:U2834",
+      "@type": "Taxon",
+      "value": 52,
+      "codepoint": 10292,
+      "braille": "⠴",
+      "domain": "Psi",
+      "rank": 17
+    },
+    {
+      "@id": "uor:U2835",
+      "@type": "Taxon",
+      "value": 53,
+      "codepoint": 10293,
+      "braille": "⠵",
+      "domain": "Delta",
+      "rank": 17
+    },
+    {
+      "@id": "uor:U2836",
+      "@type": "Taxon",
+      "value": 54,
+      "codepoint": 10294,
+      "braille": "⠶",
+      "domain": "Theta",
+      "rank": 18
+    },
+    {
+      "@id": "uor:U2837",
+      "@type": "Taxon",
+      "value": 55,
+      "codepoint": 10295,
+      "braille": "⠷",
+      "domain": "Psi",
+      "rank": 18
+    },
+    {
+      "@id": "uor:U2838",
+      "@type": "Taxon",
+      "value": 56,
+      "codepoint": 10296,
+      "braille": "⠸",
+      "domain": "Delta",
+      "rank": 18
+    },
+    {
+      "@id": "uor:U2839",
+      "@type": "Taxon",
+      "value": 57,
+      "codepoint": 10297,
+      "braille": "⠹",
+      "domain": "Theta",
+      "rank": 19
+    },
+    {
+      "@id": "uor:U283A",
+      "@type": "Taxon",
+      "value": 58,
+      "codepoint": 10298,
+      "braille": "⠺",
+      "domain": "Psi",
+      "rank": 19
+    },
+    {
+      "@id": "uor:U283B",
+      "@type": "Taxon",
+      "value": 59,
+      "codepoint": 10299,
+      "braille": "⠻",
+      "domain": "Delta",
+      "rank": 19
+    },
+    {
+      "@id": "uor:U283C",
+      "@type": "Taxon",
+      "value": 60,
+      "codepoint": 10300,
+      "braille": "⠼",
+      "domain": "Theta",
+      "rank": 20
+    },
+    {
+      "@id": "uor:U283D",
+      "@type": "Taxon",
+      "value": 61,
+      "codepoint": 10301,
+      "braille": "⠽",
+      "domain": "Psi",
+      "rank": 20
+    },
+    {
+      "@id": "uor:U283E",
+      "@type": "Taxon",
+      "value": 62,
+      "codepoint": 10302,
+      "braille": "⠾",
+      "domain": "Delta",
+      "rank": 20
+    },
+    {
+      "@id": "uor:U283F",
+      "@type": "Taxon",
+      "value": 63,
+      "codepoint": 10303,
+      "braille": "⠿",
+      "domain": "Theta",
+      "rank": 21
+    },
+    {
+      "@id": "uor:U2840",
+      "@type": "Taxon",
+      "value": 64,
+      "codepoint": 10304,
+      "braille": "⡀",
+      "domain": "Psi",
+      "rank": 21
+    },
+    {
+      "@id": "uor:U2841",
+      "@type": "Taxon",
+      "value": 65,
+      "codepoint": 10305,
+      "braille": "⡁",
+      "domain": "Delta",
+      "rank": 21
+    },
+    {
+      "@id": "uor:U2842",
+      "@type": "Taxon",
+      "value": 66,
+      "codepoint": 10306,
+      "braille": "⡂",
+      "domain": "Theta",
+      "rank": 22
+    },
+    {
+      "@id": "uor:U2843",
+      "@type": "Taxon",
+      "value": 67,
+      "codepoint": 10307,
+      "braille": "⡃",
+      "domain": "Psi",
+      "rank": 22
+    },
+    {
+      "@id": "uor:U2844",
+      "@type": "Taxon",
+      "value": 68,
+      "codepoint": 10308,
+      "braille": "⡄",
+      "domain": "Delta",
+      "rank": 22
+    },
+    {
+      "@id": "uor:U2845",
+      "@type": "Taxon",
+      "value": 69,
+      "codepoint": 10309,
+      "braille": "⡅",
+      "domain": "Theta",
+      "rank": 23
+    },
+    {
+      "@id": "uor:U2846",
+      "@type": "Taxon",
+      "value": 70,
+      "codepoint": 10310,
+      "braille": "⡆",
+      "domain": "Psi",
+      "rank": 23
+    },
+    {
+      "@id": "uor:U2847",
+      "@type": "Taxon",
+      "value": 71,
+      "codepoint": 10311,
+      "braille": "⡇",
+      "domain": "Delta",
+      "rank": 23
+    },
+    {
+      "@id": "uor:U2848",
+      "@type": "Taxon",
+      "value": 72,
+      "codepoint": 10312,
+      "braille": "⡈",
+      "domain": "Theta",
+      "rank": 24
+    },
+    {
+      "@id": "uor:U2849",
+      "@type": "Taxon",
+      "value": 73,
+      "codepoint": 10313,
+      "braille": "⡉",
+      "domain": "Psi",
+      "rank": 24
+    },
+    {
+      "@id": "uor:U284A",
+      "@type": "Taxon",
+      "value": 74,
+      "codepoint": 10314,
+      "braille": "⡊",
+      "domain": "Delta",
+      "rank": 24
+    },
+    {
+      "@id": "uor:U284B",
+      "@type": "Taxon",
+      "value": 75,
+      "codepoint": 10315,
+      "braille": "⡋",
+      "domain": "Theta",
+      "rank": 25
+    },
+    {
+      "@id": "uor:U284C",
+      "@type": "Taxon",
+      "value": 76,
+      "codepoint": 10316,
+      "braille": "⡌",
+      "domain": "Psi",
+      "rank": 25
+    },
+    {
+      "@id": "uor:U284D",
+      "@type": "Taxon",
+      "value": 77,
+      "codepoint": 10317,
+      "braille": "⡍",
+      "domain": "Delta",
+      "rank": 25
+    },
+    {
+      "@id": "uor:U284E",
+      "@type": "Taxon",
+      "value": 78,
+      "codepoint": 10318,
+      "braille": "⡎",
+      "domain": "Theta",
+      "rank": 26
+    },
+    {
+      "@id": "uor:U284F",
+      "@type": "Taxon",
+      "value": 79,
+      "codepoint": 10319,
+      "braille": "⡏",
+      "domain": "Psi",
+      "rank": 26
+    },
+    {
+      "@id": "uor:U2850",
+      "@type": "Taxon",
+      "value": 80,
+      "codepoint": 10320,
+      "braille": "⡐",
+      "domain": "Delta",
+      "rank": 26
+    },
+    {
+      "@id": "uor:U2851",
+      "@type": "Taxon",
+      "value": 81,
+      "codepoint": 10321,
+      "braille": "⡑",
+      "domain": "Theta",
+      "rank": 27
+    },
+    {
+      "@id": "uor:U2852",
+      "@type": "Taxon",
+      "value": 82,
+      "codepoint": 10322,
+      "braille": "⡒",
+      "domain": "Psi",
+      "rank": 27
+    },
+    {
+      "@id": "uor:U2853",
+      "@type": "Taxon",
+      "value": 83,
+      "codepoint": 10323,
+      "braille": "⡓",
+      "domain": "Delta",
+      "rank": 27
+    },
+    {
+      "@id": "uor:U2854",
+      "@type": "Taxon",
+      "value": 84,
+      "codepoint": 10324,
+      "braille": "⡔",
+      "domain": "Theta",
+      "rank": 28
+    },
+    {
+      "@id": "uor:U2855",
+      "@type": "Taxon",
+      "value": 85,
+      "codepoint": 10325,
+      "braille": "⡕",
+      "domain": "Psi",
+      "rank": 28
+    },
+    {
+      "@id": "uor:U2856",
+      "@type": "Taxon",
+      "value": 86,
+      "codepoint": 10326,
+      "braille": "⡖",
+      "domain": "Delta",
+      "rank": 28
+    },
+    {
+      "@id": "uor:U2857",
+      "@type": "Taxon",
+      "value": 87,
+      "codepoint": 10327,
+      "braille": "⡗",
+      "domain": "Theta",
+      "rank": 29
+    },
+    {
+      "@id": "uor:U2858",
+      "@type": "Taxon",
+      "value": 88,
+      "codepoint": 10328,
+      "braille": "⡘",
+      "domain": "Psi",
+      "rank": 29
+    },
+    {
+      "@id": "uor:U2859",
+      "@type": "Taxon",
+      "value": 89,
+      "codepoint": 10329,
+      "braille": "⡙",
+      "domain": "Delta",
+      "rank": 29
+    },
+    {
+      "@id": "uor:U285A",
+      "@type": "Taxon",
+      "value": 90,
+      "codepoint": 10330,
+      "braille": "⡚",
+      "domain": "Theta",
+      "rank": 30
+    },
+    {
+      "@id": "uor:U285B",
+      "@type": "Taxon",
+      "value": 91,
+      "codepoint": 10331,
+      "braille": "⡛",
+      "domain": "Psi",
+      "rank": 30
+    },
+    {
+      "@id": "uor:U285C",
+      "@type": "Taxon",
+      "value": 92,
+      "codepoint": 10332,
+      "braille": "⡜",
+      "domain": "Delta",
+      "rank": 30
+    },
+    {
+      "@id": "uor:U285D",
+      "@type": "Taxon",
+      "value": 93,
+      "codepoint": 10333,
+      "braille": "⡝",
+      "domain": "Theta",
+      "rank": 31
+    },
+    {
+      "@id": "uor:U285E",
+      "@type": "Taxon",
+      "value": 94,
+      "codepoint": 10334,
+      "braille": "⡞",
+      "domain": "Psi",
+      "rank": 31
+    },
+    {
+      "@id": "uor:U285F",
+      "@type": "Taxon",
+      "value": 95,
+      "codepoint": 10335,
+      "braille": "⡟",
+      "domain": "Delta",
+      "rank": 31
+    },
+    {
+      "@id": "uor:U2860",
+      "@type": "Taxon",
+      "value": 96,
+      "codepoint": 10336,
+      "braille": "⡠",
+      "domain": "Theta",
+      "rank": 32
+    },
+    {
+      "@id": "uor:U2861",
+      "@type": "Taxon",
+      "value": 97,
+      "codepoint": 10337,
+      "braille": "⡡",
+      "domain": "Psi",
+      "rank": 32
+    },
+    {
+      "@id": "uor:U2862",
+      "@type": "Taxon",
+      "value": 98,
+      "codepoint": 10338,
+      "braille": "⡢",
+      "domain": "Delta",
+      "rank": 32
+    },
+    {
+      "@id": "uor:U2863",
+      "@type": "Taxon",
+      "value": 99,
+      "codepoint": 10339,
+      "braille": "⡣",
+      "domain": "Theta",
+      "rank": 33
+    },
+    {
+      "@id": "uor:U2864",
+      "@type": "Taxon",
+      "value": 100,
+      "codepoint": 10340,
+      "braille": "⡤",
+      "domain": "Psi",
+      "rank": 33
+    },
+    {
+      "@id": "uor:U2865",
+      "@type": "Taxon",
+      "value": 101,
+      "codepoint": 10341,
+      "braille": "⡥",
+      "domain": "Delta",
+      "rank": 33
+    },
+    {
+      "@id": "uor:U2866",
+      "@type": "Taxon",
+      "value": 102,
+      "codepoint": 10342,
+      "braille": "⡦",
+      "domain": "Theta",
+      "rank": 34
+    },
+    {
+      "@id": "uor:U2867",
+      "@type": "Taxon",
+      "value": 103,
+      "codepoint": 10343,
+      "braille": "⡧",
+      "domain": "Psi",
+      "rank": 34
+    },
+    {
+      "@id": "uor:U2868",
+      "@type": "Taxon",
+      "value": 104,
+      "codepoint": 10344,
+      "braille": "⡨",
+      "domain": "Delta",
+      "rank": 34
+    },
+    {
+      "@id": "uor:U2869",
+      "@type": "Taxon",
+      "value": 105,
+      "codepoint": 10345,
+      "braille": "⡩",
+      "domain": "Theta",
+      "rank": 35
+    },
+    {
+      "@id": "uor:U286A",
+      "@type": "Taxon",
+      "value": 106,
+      "codepoint": 10346,
+      "braille": "⡪",
+      "domain": "Psi",
+      "rank": 35
+    },
+    {
+      "@id": "uor:U286B",
+      "@type": "Taxon",
+      "value": 107,
+      "codepoint": 10347,
+      "braille": "⡫",
+      "domain": "Delta",
+      "rank": 35
+    },
+    {
+      "@id": "uor:U286C",
+      "@type": "Taxon",
+      "value": 108,
+      "codepoint": 10348,
+      "braille": "⡬",
+      "domain": "Theta",
+      "rank": 36
+    },
+    {
+      "@id": "uor:U286D",
+      "@type": "Taxon",
+      "value": 109,
+      "codepoint": 10349,
+      "braille": "⡭",
+      "domain": "Psi",
+      "rank": 36
+    },
+    {
+      "@id": "uor:U286E",
+      "@type": "Taxon",
+      "value": 110,
+      "codepoint": 10350,
+      "braille": "⡮",
+      "domain": "Delta",
+      "rank": 36
+    },
+    {
+      "@id": "uor:U286F",
+      "@type": "Taxon",
+      "value": 111,
+      "codepoint": 10351,
+      "braille": "⡯",
+      "domain": "Theta",
+      "rank": 37
+    },
+    {
+      "@id": "uor:U2870",
+      "@type": "Taxon",
+      "value": 112,
+      "codepoint": 10352,
+      "braille": "⡰",
+      "domain": "Psi",
+      "rank": 37
+    },
+    {
+      "@id": "uor:U2871",
+      "@type": "Taxon",
+      "value": 113,
+      "codepoint": 10353,
+      "braille": "⡱",
+      "domain": "Delta",
+      "rank": 37
+    },
+    {
+      "@id": "uor:U2872",
+      "@type": "Taxon",
+      "value": 114,
+      "codepoint": 10354,
+      "braille": "⡲",
+      "domain": "Theta",
+      "rank": 38
+    },
+    {
+      "@id": "uor:U2873",
+      "@type": "Taxon",
+      "value": 115,
+      "codepoint": 10355,
+      "braille": "⡳",
+      "domain": "Psi",
+      "rank": 38
+    },
+    {
+      "@id": "uor:U2874",
+      "@type": "Taxon",
+      "value": 116,
+      "codepoint": 10356,
+      "braille": "⡴",
+      "domain": "Delta",
+      "rank": 38
+    },
+    {
+      "@id": "uor:U2875",
+      "@type": "Taxon",
+      "value": 117,
+      "codepoint": 10357,
+      "braille": "⡵",
+      "domain": "Theta",
+      "rank": 39
+    },
+    {
+      "@id": "uor:U2876",
+      "@type": "Taxon",
+      "value": 118,
+      "codepoint": 10358,
+      "braille": "⡶",
+      "domain": "Psi",
+      "rank": 39
+    },
+    {
+      "@id": "uor:U2877",
+      "@type": "Taxon",
+      "value": 119,
+      "codepoint": 10359,
+      "braille": "⡷",
+      "domain": "Delta",
+      "rank": 39
+    },
+    {
+      "@id": "uor:U2878",
+      "@type": "Taxon",
+      "value": 120,
+      "codepoint": 10360,
+      "braille": "⡸",
+      "domain": "Theta",
+      "rank": 40
+    },
+    {
+      "@id": "uor:U2879",
+      "@type": "Taxon",
+      "value": 121,
+      "codepoint": 10361,
+      "braille": "⡹",
+      "domain": "Psi",
+      "rank": 40
+    },
+    {
+      "@id": "uor:U287A",
+      "@type": "Taxon",
+      "value": 122,
+      "codepoint": 10362,
+      "braille": "⡺",
+      "domain": "Delta",
+      "rank": 40
+    },
+    {
+      "@id": "uor:U287B",
+      "@type": "Taxon",
+      "value": 123,
+      "codepoint": 10363,
+      "braille": "⡻",
+      "domain": "Theta",
+      "rank": 41
+    },
+    {
+      "@id": "uor:U287C",
+      "@type": "Taxon",
+      "value": 124,
+      "codepoint": 10364,
+      "braille": "⡼",
+      "domain": "Psi",
+      "rank": 41
+    },
+    {
+      "@id": "uor:U287D",
+      "@type": "Taxon",
+      "value": 125,
+      "codepoint": 10365,
+      "braille": "⡽",
+      "domain": "Delta",
+      "rank": 41
+    },
+    {
+      "@id": "uor:U287E",
+      "@type": "Taxon",
+      "value": 126,
+      "codepoint": 10366,
+      "braille": "⡾",
+      "domain": "Theta",
+      "rank": 42
+    },
+    {
+      "@id": "uor:U287F",
+      "@type": "Taxon",
+      "value": 127,
+      "codepoint": 10367,
+      "braille": "⡿",
+      "domain": "Psi",
+      "rank": 42
+    },
+    {
+      "@id": "uor:U2880",
+      "@type": "Taxon",
+      "value": 128,
+      "codepoint": 10368,
+      "braille": "⢀",
+      "domain": "Delta",
+      "rank": 42
+    },
+    {
+      "@id": "uor:U2881",
+      "@type": "Taxon",
+      "value": 129,
+      "codepoint": 10369,
+      "braille": "⢁",
+      "domain": "Theta",
+      "rank": 43
+    },
+    {
+      "@id": "uor:U2882",
+      "@type": "Taxon",
+      "value": 130,
+      "codepoint": 10370,
+      "braille": "⢂",
+      "domain": "Psi",
+      "rank": 43
+    },
+    {
+      "@id": "uor:U2883",
+      "@type": "Taxon",
+      "value": 131,
+      "codepoint": 10371,
+      "braille": "⢃",
+      "domain": "Delta",
+      "rank": 43
+    },
+    {
+      "@id": "uor:U2884",
+      "@type": "Taxon",
+      "value": 132,
+      "codepoint": 10372,
+      "braille": "⢄",
+      "domain": "Theta",
+      "rank": 44
+    },
+    {
+      "@id": "uor:U2885",
+      "@type": "Taxon",
+      "value": 133,
+      "codepoint": 10373,
+      "braille": "⢅",
+      "domain": "Psi",
+      "rank": 44
+    },
+    {
+      "@id": "uor:U2886",
+      "@type": "Taxon",
+      "value": 134,
+      "codepoint": 10374,
+      "braille": "⢆",
+      "domain": "Delta",
+      "rank": 44
+    },
+    {
+      "@id": "uor:U2887",
+      "@type": "Taxon",
+      "value": 135,
+      "codepoint": 10375,
+      "braille": "⢇",
+      "domain": "Theta",
+      "rank": 45
+    },
+    {
+      "@id": "uor:U2888",
+      "@type": "Taxon",
+      "value": 136,
+      "codepoint": 10376,
+      "braille": "⢈",
+      "domain": "Psi",
+      "rank": 45
+    },
+    {
+      "@id": "uor:U2889",
+      "@type": "Taxon",
+      "value": 137,
+      "codepoint": 10377,
+      "braille": "⢉",
+      "domain": "Delta",
+      "rank": 45
+    },
+    {
+      "@id": "uor:U288A",
+      "@type": "Taxon",
+      "value": 138,
+      "codepoint": 10378,
+      "braille": "⢊",
+      "domain": "Theta",
+      "rank": 46
+    },
+    {
+      "@id": "uor:U288B",
+      "@type": "Taxon",
+      "value": 139,
+      "codepoint": 10379,
+      "braille": "⢋",
+      "domain": "Psi",
+      "rank": 46
+    },
+    {
+      "@id": "uor:U288C",
+      "@type": "Taxon",
+      "value": 140,
+      "codepoint": 10380,
+      "braille": "⢌",
+      "domain": "Delta",
+      "rank": 46
+    },
+    {
+      "@id": "uor:U288D",
+      "@type": "Taxon",
+      "value": 141,
+      "codepoint": 10381,
+      "braille": "⢍",
+      "domain": "Theta",
+      "rank": 47
+    },
+    {
+      "@id": "uor:U288E",
+      "@type": "Taxon",
+      "value": 142,
+      "codepoint": 10382,
+      "braille": "⢎",
+      "domain": "Psi",
+      "rank": 47
+    },
+    {
+      "@id": "uor:U288F",
+      "@type": "Taxon",
+      "value": 143,
+      "codepoint": 10383,
+      "braille": "⢏",
+      "domain": "Delta",
+      "rank": 47
+    },
+    {
+      "@id": "uor:U2890",
+      "@type": "Taxon",
+      "value": 144,
+      "codepoint": 10384,
+      "braille": "⢐",
+      "domain": "Theta",
+      "rank": 48
+    },
+    {
+      "@id": "uor:U2891",
+      "@type": "Taxon",
+      "value": 145,
+      "codepoint": 10385,
+      "braille": "⢑",
+      "domain": "Psi",
+      "rank": 48
+    },
+    {
+      "@id": "uor:U2892",
+      "@type": "Taxon",
+      "value": 146,
+      "codepoint": 10386,
+      "braille": "⢒",
+      "domain": "Delta",
+      "rank": 48
+    },
+    {
+      "@id": "uor:U2893",
+      "@type": "Taxon",
+      "value": 147,
+      "codepoint": 10387,
+      "braille": "⢓",
+      "domain": "Theta",
+      "rank": 49
+    },
+    {
+      "@id": "uor:U2894",
+      "@type": "Taxon",
+      "value": 148,
+      "codepoint": 10388,
+      "braille": "⢔",
+      "domain": "Psi",
+      "rank": 49
+    },
+    {
+      "@id": "uor:U2895",
+      "@type": "Taxon",
+      "value": 149,
+      "codepoint": 10389,
+      "braille": "⢕",
+      "domain": "Delta",
+      "rank": 49
+    },
+    {
+      "@id": "uor:U2896",
+      "@type": "Taxon",
+      "value": 150,
+      "codepoint": 10390,
+      "braille": "⢖",
+      "domain": "Theta",
+      "rank": 50
+    },
+    {
+      "@id": "uor:U2897",
+      "@type": "Taxon",
+      "value": 151,
+      "codepoint": 10391,
+      "braille": "⢗",
+      "domain": "Psi",
+      "rank": 50
+    },
+    {
+      "@id": "uor:U2898",
+      "@type": "Taxon",
+      "value": 152,
+      "codepoint": 10392,
+      "braille": "⢘",
+      "domain": "Delta",
+      "rank": 50
+    },
+    {
+      "@id": "uor:U2899",
+      "@type": "Taxon",
+      "value": 153,
+      "codepoint": 10393,
+      "braille": "⢙",
+      "domain": "Theta",
+      "rank": 51
+    },
+    {
+      "@id": "uor:U289A",
+      "@type": "Taxon",
+      "value": 154,
+      "codepoint": 10394,
+      "braille": "⢚",
+      "domain": "Psi",
+      "rank": 51
+    },
+    {
+      "@id": "uor:U289B",
+      "@type": "Taxon",
+      "value": 155,
+      "codepoint": 10395,
+      "braille": "⢛",
+      "domain": "Delta",
+      "rank": 51
+    },
+    {
+      "@id": "uor:U289C",
+      "@type": "Taxon",
+      "value": 156,
+      "codepoint": 10396,
+      "braille": "⢜",
+      "domain": "Theta",
+      "rank": 52
+    },
+    {
+      "@id": "uor:U289D",
+      "@type": "Taxon",
+      "value": 157,
+      "codepoint": 10397,
+      "braille": "⢝",
+      "domain": "Psi",
+      "rank": 52
+    },
+    {
+      "@id": "uor:U289E",
+      "@type": "Taxon",
+      "value": 158,
+      "codepoint": 10398,
+      "braille": "⢞",
+      "domain": "Delta",
+      "rank": 52
+    },
+    {
+      "@id": "uor:U289F",
+      "@type": "Taxon",
+      "value": 159,
+      "codepoint": 10399,
+      "braille": "⢟",
+      "domain": "Theta",
+      "rank": 53
+    },
+    {
+      "@id": "uor:U28A0",
+      "@type": "Taxon",
+      "value": 160,
+      "codepoint": 10400,
+      "braille": "⢠",
+      "domain": "Psi",
+      "rank": 53
+    },
+    {
+      "@id": "uor:U28A1",
+      "@type": "Taxon",
+      "value": 161,
+      "codepoint": 10401,
+      "braille": "⢡",
+      "domain": "Delta",
+      "rank": 53
+    },
+    {
+      "@id": "uor:U28A2",
+      "@type": "Taxon",
+      "value": 162,
+      "codepoint": 10402,
+      "braille": "⢢",
+      "domain": "Theta",
+      "rank": 54
+    },
+    {
+      "@id": "uor:U28A3",
+      "@type": "Taxon",
+      "value": 163,
+      "codepoint": 10403,
+      "braille": "⢣",
+      "domain": "Psi",
+      "rank": 54
+    },
+    {
+      "@id": "uor:U28A4",
+      "@type": "Taxon",
+      "value": 164,
+      "codepoint": 10404,
+      "braille": "⢤",
+      "domain": "Delta",
+      "rank": 54
+    },
+    {
+      "@id": "uor:U28A5",
+      "@type": "Taxon",
+      "value": 165,
+      "codepoint": 10405,
+      "braille": "⢥",
+      "domain": "Theta",
+      "rank": 55
+    },
+    {
+      "@id": "uor:U28A6",
+      "@type": "Taxon",
+      "value": 166,
+      "codepoint": 10406,
+      "braille": "⢦",
+      "domain": "Psi",
+      "rank": 55
+    },
+    {
+      "@id": "uor:U28A7",
+      "@type": "Taxon",
+      "value": 167,
+      "codepoint": 10407,
+      "braille": "⢧",
+      "domain": "Delta",
+      "rank": 55
+    },
+    {
+      "@id": "uor:U28A8",
+      "@type": "Taxon",
+      "value": 168,
+      "codepoint": 10408,
+      "braille": "⢨",
+      "domain": "Theta",
+      "rank": 56
+    },
+    {
+      "@id": "uor:U28A9",
+      "@type": "Taxon",
+      "value": 169,
+      "codepoint": 10409,
+      "braille": "⢩",
+      "domain": "Psi",
+      "rank": 56
+    },
+    {
+      "@id": "uor:U28AA",
+      "@type": "Taxon",
+      "value": 170,
+      "codepoint": 10410,
+      "braille": "⢪",
+      "domain": "Delta",
+      "rank": 56
+    },
+    {
+      "@id": "uor:U28AB",
+      "@type": "Taxon",
+      "value": 171,
+      "codepoint": 10411,
+      "braille": "⢫",
+      "domain": "Theta",
+      "rank": 57
+    },
+    {
+      "@id": "uor:U28AC",
+      "@type": "Taxon",
+      "value": 172,
+      "codepoint": 10412,
+      "braille": "⢬",
+      "domain": "Psi",
+      "rank": 57
+    },
+    {
+      "@id": "uor:U28AD",
+      "@type": "Taxon",
+      "value": 173,
+      "codepoint": 10413,
+      "braille": "⢭",
+      "domain": "Delta",
+      "rank": 57
+    },
+    {
+      "@id": "uor:U28AE",
+      "@type": "Taxon",
+      "value": 174,
+      "codepoint": 10414,
+      "braille": "⢮",
+      "domain": "Theta",
+      "rank": 58
+    },
+    {
+      "@id": "uor:U28AF",
+      "@type": "Taxon",
+      "value": 175,
+      "codepoint": 10415,
+      "braille": "⢯",
+      "domain": "Psi",
+      "rank": 58
+    },
+    {
+      "@id": "uor:U28B0",
+      "@type": "Taxon",
+      "value": 176,
+      "codepoint": 10416,
+      "braille": "⢰",
+      "domain": "Delta",
+      "rank": 58
+    },
+    {
+      "@id": "uor:U28B1",
+      "@type": "Taxon",
+      "value": 177,
+      "codepoint": 10417,
+      "braille": "⢱",
+      "domain": "Theta",
+      "rank": 59
+    },
+    {
+      "@id": "uor:U28B2",
+      "@type": "Taxon",
+      "value": 178,
+      "codepoint": 10418,
+      "braille": "⢲",
+      "domain": "Psi",
+      "rank": 59
+    },
+    {
+      "@id": "uor:U28B3",
+      "@type": "Taxon",
+      "value": 179,
+      "codepoint": 10419,
+      "braille": "⢳",
+      "domain": "Delta",
+      "rank": 59
+    },
+    {
+      "@id": "uor:U28B4",
+      "@type": "Taxon",
+      "value": 180,
+      "codepoint": 10420,
+      "braille": "⢴",
+      "domain": "Theta",
+      "rank": 60
+    },
+    {
+      "@id": "uor:U28B5",
+      "@type": "Taxon",
+      "value": 181,
+      "codepoint": 10421,
+      "braille": "⢵",
+      "domain": "Psi",
+      "rank": 60
+    },
+    {
+      "@id": "uor:U28B6",
+      "@type": "Taxon",
+      "value": 182,
+      "codepoint": 10422,
+      "braille": "⢶",
+      "domain": "Delta",
+      "rank": 60
+    },
+    {
+      "@id": "uor:U28B7",
+      "@type": "Taxon",
+      "value": 183,
+      "codepoint": 10423,
+      "braille": "⢷",
+      "domain": "Theta",
+      "rank": 61
+    },
+    {
+      "@id": "uor:U28B8",
+      "@type": "Taxon",
+      "value": 184,
+      "codepoint": 10424,
+      "braille": "⢸",
+      "domain": "Psi",
+      "rank": 61
+    },
+    {
+      "@id": "uor:U28B9",
+      "@type": "Taxon",
+      "value": 185,
+      "codepoint": 10425,
+      "braille": "⢹",
+      "domain": "Delta",
+      "rank": 61
+    },
+    {
+      "@id": "uor:U28BA",
+      "@type": "Taxon",
+      "value": 186,
+      "codepoint": 10426,
+      "braille": "⢺",
+      "domain": "Theta",
+      "rank": 62
+    },
+    {
+      "@id": "uor:U28BB",
+      "@type": "Taxon",
+      "value": 187,
+      "codepoint": 10427,
+      "braille": "⢻",
+      "domain": "Psi",
+      "rank": 62
+    },
+    {
+      "@id": "uor:U28BC",
+      "@type": "Taxon",
+      "value": 188,
+      "codepoint": 10428,
+      "braille": "⢼",
+      "domain": "Delta",
+      "rank": 62
+    },
+    {
+      "@id": "uor:U28BD",
+      "@type": "Taxon",
+      "value": 189,
+      "codepoint": 10429,
+      "braille": "⢽",
+      "domain": "Theta",
+      "rank": 63
+    },
+    {
+      "@id": "uor:U28BE",
+      "@type": "Taxon",
+      "value": 190,
+      "codepoint": 10430,
+      "braille": "⢾",
+      "domain": "Psi",
+      "rank": 63
+    },
+    {
+      "@id": "uor:U28BF",
+      "@type": "Taxon",
+      "value": 191,
+      "codepoint": 10431,
+      "braille": "⢿",
+      "domain": "Delta",
+      "rank": 63
+    },
+    {
+      "@id": "uor:U28C0",
+      "@type": "Taxon",
+      "value": 192,
+      "codepoint": 10432,
+      "braille": "⣀",
+      "domain": "Theta",
+      "rank": 64
+    },
+    {
+      "@id": "uor:U28C1",
+      "@type": "Taxon",
+      "value": 193,
+      "codepoint": 10433,
+      "braille": "⣁",
+      "domain": "Psi",
+      "rank": 64
+    },
+    {
+      "@id": "uor:U28C2",
+      "@type": "Taxon",
+      "value": 194,
+      "codepoint": 10434,
+      "braille": "⣂",
+      "domain": "Delta",
+      "rank": 64
+    },
+    {
+      "@id": "uor:U28C3",
+      "@type": "Taxon",
+      "value": 195,
+      "codepoint": 10435,
+      "braille": "⣃",
+      "domain": "Theta",
+      "rank": 65
+    },
+    {
+      "@id": "uor:U28C4",
+      "@type": "Taxon",
+      "value": 196,
+      "codepoint": 10436,
+      "braille": "⣄",
+      "domain": "Psi",
+      "rank": 65
+    },
+    {
+      "@id": "uor:U28C5",
+      "@type": "Taxon",
+      "value": 197,
+      "codepoint": 10437,
+      "braille": "⣅",
+      "domain": "Delta",
+      "rank": 65
+    },
+    {
+      "@id": "uor:U28C6",
+      "@type": "Taxon",
+      "value": 198,
+      "codepoint": 10438,
+      "braille": "⣆",
+      "domain": "Theta",
+      "rank": 66
+    },
+    {
+      "@id": "uor:U28C7",
+      "@type": "Taxon",
+      "value": 199,
+      "codepoint": 10439,
+      "braille": "⣇",
+      "domain": "Psi",
+      "rank": 66
+    },
+    {
+      "@id": "uor:U28C8",
+      "@type": "Taxon",
+      "value": 200,
+      "codepoint": 10440,
+      "braille": "⣈",
+      "domain": "Delta",
+      "rank": 66
+    },
+    {
+      "@id": "uor:U28C9",
+      "@type": "Taxon",
+      "value": 201,
+      "codepoint": 10441,
+      "braille": "⣉",
+      "domain": "Theta",
+      "rank": 67
+    },
+    {
+      "@id": "uor:U28CA",
+      "@type": "Taxon",
+      "value": 202,
+      "codepoint": 10442,
+      "braille": "⣊",
+      "domain": "Psi",
+      "rank": 67
+    },
+    {
+      "@id": "uor:U28CB",
+      "@type": "Taxon",
+      "value": 203,
+      "codepoint": 10443,
+      "braille": "⣋",
+      "domain": "Delta",
+      "rank": 67
+    },
+    {
+      "@id": "uor:U28CC",
+      "@type": "Taxon",
+      "value": 204,
+      "codepoint": 10444,
+      "braille": "⣌",
+      "domain": "Theta",
+      "rank": 68
+    },
+    {
+      "@id": "uor:U28CD",
+      "@type": "Taxon",
+      "value": 205,
+      "codepoint": 10445,
+      "braille": "⣍",
+      "domain": "Psi",
+      "rank": 68
+    },
+    {
+      "@id": "uor:U28CE",
+      "@type": "Taxon",
+      "value": 206,
+      "codepoint": 10446,
+      "braille": "⣎",
+      "domain": "Delta",
+      "rank": 68
+    },
+    {
+      "@id": "uor:U28CF",
+      "@type": "Taxon",
+      "value": 207,
+      "codepoint": 10447,
+      "braille": "⣏",
+      "domain": "Theta",
+      "rank": 69
+    },
+    {
+      "@id": "uor:U28D0",
+      "@type": "Taxon",
+      "value": 208,
+      "codepoint": 10448,
+      "braille": "⣐",
+      "domain": "Psi",
+      "rank": 69
+    },
+    {
+      "@id": "uor:U28D1",
+      "@type": "Taxon",
+      "value": 209,
+      "codepoint": 10449,
+      "braille": "⣑",
+      "domain": "Delta",
+      "rank": 69
+    },
+    {
+      "@id": "uor:U28D2",
+      "@type": "Taxon",
+      "value": 210,
+      "codepoint": 10450,
+      "braille": "⣒",
+      "domain": "Theta",
+      "rank": 70
+    },
+    {
+      "@id": "uor:U28D3",
+      "@type": "Taxon",
+      "value": 211,
+      "codepoint": 10451,
+      "braille": "⣓",
+      "domain": "Psi",
+      "rank": 70
+    },
+    {
+      "@id": "uor:U28D4",
+      "@type": "Taxon",
+      "value": 212,
+      "codepoint": 10452,
+      "braille": "⣔",
+      "domain": "Delta",
+      "rank": 70
+    },
+    {
+      "@id": "uor:U28D5",
+      "@type": "Taxon",
+      "value": 213,
+      "codepoint": 10453,
+      "braille": "⣕",
+      "domain": "Theta",
+      "rank": 71
+    },
+    {
+      "@id": "uor:U28D6",
+      "@type": "Taxon",
+      "value": 214,
+      "codepoint": 10454,
+      "braille": "⣖",
+      "domain": "Psi",
+      "rank": 71
+    },
+    {
+      "@id": "uor:U28D7",
+      "@type": "Taxon",
+      "value": 215,
+      "codepoint": 10455,
+      "braille": "⣗",
+      "domain": "Delta",
+      "rank": 71
+    },
+    {
+      "@id": "uor:U28D8",
+      "@type": "Taxon",
+      "value": 216,
+      "codepoint": 10456,
+      "braille": "⣘",
+      "domain": "Theta",
+      "rank": 72
+    },
+    {
+      "@id": "uor:U28D9",
+      "@type": "Taxon",
+      "value": 217,
+      "codepoint": 10457,
+      "braille": "⣙",
+      "domain": "Psi",
+      "rank": 72
+    },
+    {
+      "@id": "uor:U28DA",
+      "@type": "Taxon",
+      "value": 218,
+      "codepoint": 10458,
+      "braille": "⣚",
+      "domain": "Delta",
+      "rank": 72
+    },
+    {
+      "@id": "uor:U28DB",
+      "@type": "Taxon",
+      "value": 219,
+      "codepoint": 10459,
+      "braille": "⣛",
+      "domain": "Theta",
+      "rank": 73
+    },
+    {
+      "@id": "uor:U28DC",
+      "@type": "Taxon",
+      "value": 220,
+      "codepoint": 10460,
+      "braille": "⣜",
+      "domain": "Psi",
+      "rank": 73
+    },
+    {
+      "@id": "uor:U28DD",
+      "@type": "Taxon",
+      "value": 221,
+      "codepoint": 10461,
+      "braille": "⣝",
+      "domain": "Delta",
+      "rank": 73
+    },
+    {
+      "@id": "uor:U28DE",
+      "@type": "Taxon",
+      "value": 222,
+      "codepoint": 10462,
+      "braille": "⣞",
+      "domain": "Theta",
+      "rank": 74
+    },
+    {
+      "@id": "uor:U28DF",
+      "@type": "Taxon",
+      "value": 223,
+      "codepoint": 10463,
+      "braille": "⣟",
+      "domain": "Psi",
+      "rank": 74
+    },
+    {
+      "@id": "uor:U28E0",
+      "@type": "Taxon",
+      "value": 224,
+      "codepoint": 10464,
+      "braille": "⣠",
+      "domain": "Delta",
+      "rank": 74
+    },
+    {
+      "@id": "uor:U28E1",
+      "@type": "Taxon",
+      "value": 225,
+      "codepoint": 10465,
+      "braille": "⣡",
+      "domain": "Theta",
+      "rank": 75
+    },
+    {
+      "@id": "uor:U28E2",
+      "@type": "Taxon",
+      "value": 226,
+      "codepoint": 10466,
+      "braille": "⣢",
+      "domain": "Psi",
+      "rank": 75
+    },
+    {
+      "@id": "uor:U28E3",
+      "@type": "Taxon",
+      "value": 227,
+      "codepoint": 10467,
+      "braille": "⣣",
+      "domain": "Delta",
+      "rank": 75
+    },
+    {
+      "@id": "uor:U28E4",
+      "@type": "Taxon",
+      "value": 228,
+      "codepoint": 10468,
+      "braille": "⣤",
+      "domain": "Theta",
+      "rank": 76
+    },
+    {
+      "@id": "uor:U28E5",
+      "@type": "Taxon",
+      "value": 229,
+      "codepoint": 10469,
+      "braille": "⣥",
+      "domain": "Psi",
+      "rank": 76
+    },
+    {
+      "@id": "uor:U28E6",
+      "@type": "Taxon",
+      "value": 230,
+      "codepoint": 10470,
+      "braille": "⣦",
+      "domain": "Delta",
+      "rank": 76
+    },
+    {
+      "@id": "uor:U28E7",
+      "@type": "Taxon",
+      "value": 231,
+      "codepoint": 10471,
+      "braille": "⣧",
+      "domain": "Theta",
+      "rank": 77
+    },
+    {
+      "@id": "uor:U28E8",
+      "@type": "Taxon",
+      "value": 232,
+      "codepoint": 10472,
+      "braille": "⣨",
+      "domain": "Psi",
+      "rank": 77
+    },
+    {
+      "@id": "uor:U28E9",
+      "@type": "Taxon",
+      "value": 233,
+      "codepoint": 10473,
+      "braille": "⣩",
+      "domain": "Delta",
+      "rank": 77
+    },
+    {
+      "@id": "uor:U28EA",
+      "@type": "Taxon",
+      "value": 234,
+      "codepoint": 10474,
+      "braille": "⣪",
+      "domain": "Theta",
+      "rank": 78
+    },
+    {
+      "@id": "uor:U28EB",
+      "@type": "Taxon",
+      "value": 235,
+      "codepoint": 10475,
+      "braille": "⣫",
+      "domain": "Psi",
+      "rank": 78
+    },
+    {
+      "@id": "uor:U28EC",
+      "@type": "Taxon",
+      "value": 236,
+      "codepoint": 10476,
+      "braille": "⣬",
+      "domain": "Delta",
+      "rank": 78
+    },
+    {
+      "@id": "uor:U28ED",
+      "@type": "Taxon",
+      "value": 237,
+      "codepoint": 10477,
+      "braille": "⣭",
+      "domain": "Theta",
+      "rank": 79
+    },
+    {
+      "@id": "uor:U28EE",
+      "@type": "Taxon",
+      "value": 238,
+      "codepoint": 10478,
+      "braille": "⣮",
+      "domain": "Psi",
+      "rank": 79
+    },
+    {
+      "@id": "uor:U28EF",
+      "@type": "Taxon",
+      "value": 239,
+      "codepoint": 10479,
+      "braille": "⣯",
+      "domain": "Delta",
+      "rank": 79
+    },
+    {
+      "@id": "uor:U28F0",
+      "@type": "Taxon",
+      "value": 240,
+      "codepoint": 10480,
+      "braille": "⣰",
+      "domain": "Theta",
+      "rank": 80
+    },
+    {
+      "@id": "uor:U28F1",
+      "@type": "Taxon",
+      "value": 241,
+      "codepoint": 10481,
+      "braille": "⣱",
+      "domain": "Psi",
+      "rank": 80
+    },
+    {
+      "@id": "uor:U28F2",
+      "@type": "Taxon",
+      "value": 242,
+      "codepoint": 10482,
+      "braille": "⣲",
+      "domain": "Delta",
+      "rank": 80
+    },
+    {
+      "@id": "uor:U28F3",
+      "@type": "Taxon",
+      "value": 243,
+      "codepoint": 10483,
+      "braille": "⣳",
+      "domain": "Theta",
+      "rank": 81
+    },
+    {
+      "@id": "uor:U28F4",
+      "@type": "Taxon",
+      "value": 244,
+      "codepoint": 10484,
+      "braille": "⣴",
+      "domain": "Psi",
+      "rank": 81
+    },
+    {
+      "@id": "uor:U28F5",
+      "@type": "Taxon",
+      "value": 245,
+      "codepoint": 10485,
+      "braille": "⣵",
+      "domain": "Delta",
+      "rank": 81
+    },
+    {
+      "@id": "uor:U28F6",
+      "@type": "Taxon",
+      "value": 246,
+      "codepoint": 10486,
+      "braille": "⣶",
+      "domain": "Theta",
+      "rank": 82
+    },
+    {
+      "@id": "uor:U28F7",
+      "@type": "Taxon",
+      "value": 247,
+      "codepoint": 10487,
+      "braille": "⣷",
+      "domain": "Psi",
+      "rank": 82
+    },
+    {
+      "@id": "uor:U28F8",
+      "@type": "Taxon",
+      "value": 248,
+      "codepoint": 10488,
+      "braille": "⣸",
+      "domain": "Delta",
+      "rank": 82
+    },
+    {
+      "@id": "uor:U28F9",
+      "@type": "Taxon",
+      "value": 249,
+      "codepoint": 10489,
+      "braille": "⣹",
+      "domain": "Theta",
+      "rank": 83
+    },
+    {
+      "@id": "uor:U28FA",
+      "@type": "Taxon",
+      "value": 250,
+      "codepoint": 10490,
+      "braille": "⣺",
+      "domain": "Psi",
+      "rank": 83
+    },
+    {
+      "@id": "uor:U28FB",
+      "@type": "Taxon",
+      "value": 251,
+      "codepoint": 10491,
+      "braille": "⣻",
+      "domain": "Delta",
+      "rank": 83
+    },
+    {
+      "@id": "uor:U28FC",
+      "@type": "Taxon",
+      "value": 252,
+      "codepoint": 10492,
+      "braille": "⣼",
+      "domain": "Theta",
+      "rank": 84
+    },
+    {
+      "@id": "uor:U28FD",
+      "@type": "Taxon",
+      "value": 253,
+      "codepoint": 10493,
+      "braille": "⣽",
+      "domain": "Psi",
+      "rank": 84
+    },
+    {
+      "@id": "uor:U28FE",
+      "@type": "Taxon",
+      "value": 254,
+      "codepoint": 10494,
+      "braille": "⣾",
+      "domain": "Delta",
+      "rank": 84
+    },
+    {
+      "@id": "uor:U28FF",
+      "@type": "Taxon",
+      "value": 255,
+      "codepoint": 10495,
+      "braille": "⣿",
+      "domain": "Theta",
+      "rank": 85
+    }
+  ]
+}

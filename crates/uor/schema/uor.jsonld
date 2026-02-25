@@ -1,0 +1,40 @@
+{
+  "@context": {
+    "@vocab": "https://uor.foundation/schema/",
+    "uor": "https://uor.foundation/u/",
+    "xsd": "http://www.w3.org/2001/XMLSchema#",
+
+    "Taxon": {
+      "@id": "uor:Taxon",
+      "@context": {
+        "value": {"@id": "uor:value", "@type": "xsd:unsignedByte"},
+        "codepoint": {"@id": "uor:codepoint", "@type": "xsd:unsignedInt"},
+        "braille": {"@id": "uor:braille", "@type": "xsd:string"},
+        "domain": {"@id": "uor:domain", "@type": "@id"},
+        "rank": {"@id": "uor:rank", "@type": "xsd:unsignedByte"}
+      }
+    },
+
+    "Domain": {
+      "@id": "uor:Domain",
+      "@context": {
+        "residue": {"@id": "uor:residue", "@type": "xsd:unsignedByte"},
+        "symbol": {"@id": "uor:symbol", "@type": "xsd:string"},
+        "name": {"@id": "uor:name", "@type": "xsd:string"},
+        "cardinality": {"@id": "uor:cardinality", "@type": "xsd:unsignedInt"}
+      }
+    },
+
+    "Word": {
+      "@id": "uor:Word",
+      "@context": {
+        "taxons": {"@id": "uor:taxons", "@container": "@list"},
+        "size": {"@id": "uor:size", "@type": "xsd:unsignedInt"}
+      }
+    },
+
+    "Theta": "uor:Theta",
+    "Psi": "uor:Psi",
+    "Delta": "uor:Delta"
+  }
+}
