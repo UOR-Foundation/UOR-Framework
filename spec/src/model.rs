@@ -4,12 +4,15 @@
 //! data. All instances are built as owned `Vec`s and referenced via borrows.
 //! The top-level entry point is [`Ontology::full()`](crate::Ontology::full).
 
+use std::fmt;
+
 /// Kernel/user/bridge classification for each namespace module.
 ///
 /// - `Kernel`: compiled into ROM; immutable; `u/`, `schema/`, `op/`
 /// - `User`: parameterizable at runtime; `type/`, `state/`, `morphism/`
 /// - `Bridge`: kernel-computed, user-consumed; all remaining namespaces
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub enum Space {
     /// Immutable kernel-space: compiled into ROM.
     Kernel,
@@ -31,8 +34,15 @@ impl Space {
     }
 }
 
+impl fmt::Display for Space {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.as_str())
+    }
+}
+
 /// A UOR Foundation namespace (e.g., `u/`, `schema/`, `op/`).
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct Namespace {
     /// The prefix used in the `@context` (e.g., `"u"`).
     pub prefix: &'static str,
@@ -48,8 +58,15 @@ pub struct Namespace {
     pub imports: &'static [&'static str],
 }
 
+impl fmt::Display for Namespace {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}: <{}>", self.prefix, self.iri)
+    }
+}
+
 /// An OWL class definition.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct Class {
     /// Full IRI (e.g., `"https://uor.foundation/u/Address"`).
     pub id: &'static str,
@@ -63,8 +80,15 @@ pub struct Class {
     pub disjoint_with: &'static [&'static str],
 }
 
+impl fmt::Display for Class {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{} <{}>", self.label, self.id)
+    }
+}
+
 /// Whether a property is a datatype, object, or annotation property.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub enum PropertyKind {
     /// `owl:DatatypeProperty` — relates a resource to an XSD literal.
     Datatype,
@@ -74,8 +98,19 @@ pub enum PropertyKind {
     Annotation,
 }
 
+impl fmt::Display for PropertyKind {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            PropertyKind::Datatype => f.write_str("DatatypeProperty"),
+            PropertyKind::Object => f.write_str("ObjectProperty"),
+            PropertyKind::Annotation => f.write_str("AnnotationProperty"),
+        }
+    }
+}
+
 /// An OWL property definition.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct Property {
     /// Full IRI.
     pub id: &'static str,
@@ -93,8 +128,15 @@ pub struct Property {
     pub range: &'static str,
 }
 
+impl fmt::Display for Property {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{} <{}>", self.label, self.id)
+    }
+}
+
 /// A value in a named individual's property assertion.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub enum IndividualValue {
     /// A plain string literal.
     Str(&'static str),
@@ -108,8 +150,30 @@ pub enum IndividualValue {
     List(&'static [&'static str]),
 }
 
+impl fmt::Display for IndividualValue {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            IndividualValue::Str(s) => write!(f, "\"{s}\""),
+            IndividualValue::Int(n) => write!(f, "{n}"),
+            IndividualValue::Bool(b) => write!(f, "{b}"),
+            IndividualValue::IriRef(iri) => write!(f, "<{iri}>"),
+            IndividualValue::List(items) => {
+                f.write_str("[")?;
+                for (i, item) in items.iter().enumerate() {
+                    if i > 0 {
+                        f.write_str(", ")?;
+                    }
+                    write!(f, "<{item}>")?;
+                }
+                f.write_str("]")
+            }
+        }
+    }
+}
+
 /// A named individual (OWL `owl:NamedIndividual`).
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct Individual {
     /// Full IRI.
     pub id: &'static str,
@@ -123,8 +187,15 @@ pub struct Individual {
     pub properties: &'static [(&'static str, IndividualValue)],
 }
 
+impl fmt::Display for Individual {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{} <{}>", self.label, self.id)
+    }
+}
+
 /// A complete namespace module: namespace metadata + classes + properties + individuals.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct NamespaceModule {
     /// Namespace metadata.
     pub namespace: Namespace,
@@ -137,7 +208,8 @@ pub struct NamespaceModule {
 }
 
 /// An annotation property defined at the ontology root level.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct AnnotationProperty {
     /// Full IRI.
     pub id: &'static str,
@@ -150,7 +222,8 @@ pub struct AnnotationProperty {
 }
 
 /// The complete UOR Foundation ontology.
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct Ontology {
     /// Ontology version (e.g., `"1.1.0"`).
     pub version: &'static str,

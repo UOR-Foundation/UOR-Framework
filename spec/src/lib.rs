@@ -14,10 +14,24 @@
 //!
 //! # Serialization
 //!
+//! Requires the `serializers` feature (enabled by default).
+//!
 //! ```
 //! let ontology = uor_spec::Ontology::full();
-//! let json_ld = uor_spec::serializer::jsonld::to_json_ld(&ontology);
-//! let turtle  = uor_spec::serializer::turtle::to_turtle(&ontology);
+//! let json_ld = uor_spec::serializer::jsonld::to_json_ld(ontology);
+//! let turtle  = uor_spec::serializer::turtle::to_turtle(ontology);
+//! ```
+//!
+//! # Feature Flags
+//!
+//! | Feature | Default | Description |
+//! |---------|---------|-------------|
+//! | `serde` | yes | Adds `Serialize` derive to all model types |
+//! | `serializers` | yes | JSON-LD, Turtle, and N-Triples serializers (pulls in `serde_json`) |
+//!
+//! For types only (no extra dependencies):
+//! ```toml
+//! uor-spec = { version = "1.1", default-features = false }
 //! ```
 
 #![deny(
@@ -30,11 +44,13 @@
 
 pub mod model;
 pub mod namespaces;
+#[cfg(feature = "serializers")]
 pub mod serializer;
 
+pub use model::iris;
 pub use model::{
-    Class, Individual, IndividualValue, Namespace, NamespaceModule, Ontology, Property,
-    PropertyKind, Space,
+    AnnotationProperty, Class, Individual, IndividualValue, Namespace, NamespaceModule, Ontology,
+    Property, PropertyKind, Space,
 };
 
 impl Ontology {
@@ -69,6 +85,20 @@ impl Ontology {
             ],
             annotation_properties: vec![model::annotation_space_property()],
         })
+    }
+
+    /// Looks up a namespace module by its short prefix (e.g., `"u"`, `"schema"`).
+    #[must_use]
+    pub fn find_namespace(&self, prefix: &str) -> Option<&NamespaceModule> {
+        self.namespaces
+            .iter()
+            .find(|m| m.namespace.prefix == prefix)
+    }
+
+    /// Looks up a namespace module by its full IRI (e.g., `"https://uor.foundation/u/"`).
+    #[must_use]
+    pub fn find_namespace_by_iri(&self, iri: &str) -> Option<&NamespaceModule> {
+        self.namespaces.iter().find(|m| m.namespace.iri == iri)
     }
 }
 
@@ -147,5 +177,24 @@ mod tests {
             // Every namespace must have a space classification.
             let _ = &module.namespace.space; // Space is non-optional; this compiles only if present.
         }
+    }
+
+    #[test]
+    fn find_namespace_by_prefix() {
+        let ontology = Ontology::full();
+        let u = ontology.find_namespace("u");
+        assert!(u.is_some());
+        assert_eq!(
+            u.map(|m| m.namespace.iri),
+            Some("https://uor.foundation/u/")
+        );
+    }
+
+    #[test]
+    fn find_namespace_by_iri_works() {
+        let ontology = Ontology::full();
+        let schema = ontology.find_namespace_by_iri("https://uor.foundation/schema/");
+        assert!(schema.is_some());
+        assert_eq!(schema.map(|m| m.namespace.prefix), Some("schema"));
     }
 }

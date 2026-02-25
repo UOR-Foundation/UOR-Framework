@@ -15,19 +15,38 @@ N-Triples.
 ## Quick start
 
 ```rust
-use uor_spec::Ontology;
+use uor_spec::{Ontology, iris};
 
 let ontology = Ontology::full();
 assert_eq!(ontology.namespaces.len(), 14);
 assert_eq!(ontology.class_count(), 98);
 
-// Serialize to JSON-LD
+// Look up a class by IRI
+let address = ontology.find_class("https://uor.foundation/u/Address");
+assert!(address.is_some());
+
+// Look up a namespace by prefix
+let schema = ontology.find_namespace("schema");
+assert_eq!(schema.map(|m| m.namespace.iri), Some(iris::NS_SCHEMA));
+
+// Serialize to JSON-LD (requires `serializers` feature, enabled by default)
 let json_ld = uor_spec::serializer::jsonld::to_json_ld(ontology);
-println!("{}", serde_json::to_string_pretty(&json_ld).unwrap());
 
 // Serialize to Turtle
 let turtle = uor_spec::serializer::turtle::to_turtle(ontology);
-println!("{turtle}");
+```
+
+## Feature flags
+
+| Feature | Default | Description |
+|---------|---------|-------------|
+| `serde` | yes | Adds `Serialize` derive to all model types |
+| `serializers` | yes | JSON-LD, Turtle, and N-Triples serializers (pulls in `serde_json`) |
+
+For types only (no extra dependencies):
+
+```toml
+uor-spec = { version = "1.1", default-features = false }
 ```
 
 ## License

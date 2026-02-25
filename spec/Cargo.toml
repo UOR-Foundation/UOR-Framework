@@ -12,10 +12,11 @@ readme = "README.md"
 keywords = ["ontology", "rdf", "owl", "json-ld", "semantic-web"]
 categories = ["data-structures", "science", "encoding"]
 
+[features]
+default = ["serde", "serializers"]
+serde = ["dep:serde"]
+serializers = ["dep:serde_json"]
+
 [dependencies]
-serde = { workspace = true }
-serde_json = { workspace = true }
-sophia_api = { workspace = true }
-sophia_inmem = { workspace = true }
-sophia_turtle = { workspace = true }
-thiserror = { workspace = true }
+serde = { workspace = true, optional = true }
+serde_json = { workspace = true, optional = true }
