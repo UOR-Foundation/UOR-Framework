@@ -6,7 +6,7 @@ The UOR Framework is a Rust workspace with five member crates:
 
 | Crate | Type | Role |
 |-------|------|------|
-| `uor-spec` | Library | Ontology as typed Rust data + serializers |
+| `uor-foundation` | Library | Ontology as typed Rust data + serializers |
 | `uor-conformance` | Library | Workspace-wide conformance validators |
 | `uor-docs` | Library | Documentation generator |
 | `uor-website` | Library | Static site generator |
@@ -15,7 +15,7 @@ The UOR Framework is a Rust workspace with five member crates:
 ## Dependency Order
 
 ```
-uor-spec
+uor-foundation
   ↓
 uor-conformance (validates spec outputs)
   ↓
@@ -28,7 +28,7 @@ uor-clients (CLI for all of the above)
 
 ## spec/ Library
 
-`uor-spec` encodes the complete ontology as typed Rust static data:
+`uor-foundation` encodes the complete ontology as typed Rust static data:
 
 - **`model.rs`**: Core types — `Namespace`, `Class`, `Property`, `Individual`, `Ontology`
 - **`namespaces/*.rs`**: 14 modules, one per namespace (all 12 amendments applied)
@@ -54,7 +54,7 @@ The conformance suite is the **single gate** — all components must pass before
 
 `uor-docs` generates documentation with enforced accuracy:
 
-- Namespace reference pages are **100% auto-generated** from `uor_spec::Ontology::full()`
+- Namespace reference pages are **100% auto-generated** from `uor_foundation::Ontology::full()`
 - Prose pages use `{@class}`, `{@prop}`, `{@ind}` DSL, validated at build time
 - Every spec term must appear in at least one page (completeness check)
 

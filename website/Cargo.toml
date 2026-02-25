@@ -7,7 +7,7 @@ description = "UOR Foundation static site generator — produces the complete ht
 publish = false
 
 [dependencies]
-uor-spec = { path = "../spec" }
+uor-foundation = { path = "../spec" }
 uor-docs = { path = "../docs" }
 serde = { workspace = true }
 serde_json = { workspace = true }

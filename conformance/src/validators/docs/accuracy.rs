@@ -26,7 +26,7 @@ pub fn validate(artifacts: &Path) -> Result<ConformanceReport> {
         return Ok(report);
     }
 
-    let ontology = uor_spec::Ontology::full();
+    let ontology = uor_foundation::Ontology::full();
     let mut missing: Vec<String> = Vec::new();
     let mut inaccurate: Vec<String> = Vec::new();
 

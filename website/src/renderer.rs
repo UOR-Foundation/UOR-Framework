@@ -2,7 +2,7 @@
 //!
 //! All HTML is generated directly in Rust for determinism and zero dependencies.
 
-use uor_spec::{IndividualValue, NamespaceModule, PropertyKind};
+use uor_foundation::{IndividualValue, NamespaceModule, PropertyKind};
 
 use crate::model::{BreadcrumbItem, NamespaceSummary};
 

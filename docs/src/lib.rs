@@ -2,7 +2,7 @@
 //!
 //! Generates verified HTML documentation from the UOR spec and content files.
 //! Every ontology reference in prose (`{@class}`, `{@prop}`, `{@ind}`) is
-//! validated against `uor_spec::Ontology::full()` at build time.
+//! validated against `uor_foundation::Ontology::full()` at build time.
 //!
 //! # Entry Points
 //!
@@ -54,7 +54,7 @@ use anyhow::Result;
 
 use extractor::OntologyIndex;
 use renderer::{escape_html, render_docs_page};
-use uor_spec::{Individual, IndividualValue, NamespaceModule, Ontology, PropertyKind};
+use uor_foundation::{Individual, IndividualValue, NamespaceModule, Ontology, PropertyKind};
 
 /// Generates all documentation artifacts.
 ///

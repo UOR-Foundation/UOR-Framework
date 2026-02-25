@@ -37,7 +37,7 @@ jobs:
         run: |
           TAG="${GITHUB_REF_NAME#v}"
           CARGO_VERSION="$(cargo metadata --format-version 1 --no-deps \
-            | jq -r '.packages[] | select(.name == "uor-spec") | .version')"
+            | jq -r '.packages[] | select(.name == "uor-foundation") | .version')"
           if [ "$TAG" != "$CARGO_VERSION" ]; then
             echo "::error::Tag version ($TAG) does not match Cargo.toml version ($CARGO_VERSION)"
             exit 1
@@ -72,7 +72,7 @@ jobs:
           PUBLIC_BASE_PATH: /UOR-Framework
 
       - name: Verify crate packaging
-        run: cargo publish --dry-run -p uor-spec
+        run: cargo publish --dry-run -p uor-foundation
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
@@ -89,10 +89,10 @@ jobs:
             - `uor.foundation.ttl` — Turtle 1.1
             - `uor.foundation.nt` — N-Triples
 
-            **Rust crate:** [`uor-spec` on crates.io](https://crates.io/crates/uor-spec)
+            **Rust crate:** [`uor-foundation` on crates.io](https://crates.io/crates/uor-foundation)
             Documentation: https://uor-foundation.github.io/UOR-Framework/
 
       - name: Publish to crates.io
-        run: cargo publish -p uor-spec
+        run: cargo publish -p uor-foundation
         env:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}

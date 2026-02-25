@@ -988,7 +988,7 @@ dependencies = [
  "serde_json",
  "uor-conformance",
  "uor-docs",
- "uor-spec",
+ "uor-foundation",
  "uor-website",
 ]
 
@@ -1001,7 +1001,7 @@ dependencies = [
  "serde",
  "serde_json",
  "thiserror",
- "uor-spec",
+ "uor-foundation",
  "walkdir",
 ]
 
@@ -1015,12 +1015,12 @@ dependencies = [
  "serde_json",
  "thiserror",
  "toml",
- "uor-spec",
+ "uor-foundation",
  "walkdir",
 ]
 
 [[package]]
-name = "uor-spec"
+name = "uor-foundation"
 version = "1.1.0"
 dependencies = [
  "serde",
@@ -1037,7 +1037,7 @@ dependencies = [
  "tera",
  "thiserror",
  "uor-docs",
- "uor-spec",
+ "uor-foundation",
  "walkdir",
 ]
 

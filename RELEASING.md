@@ -30,7 +30,7 @@
    - Run all checks (fmt, clippy, test, conformance)
    - Verify crate packaging with `cargo publish --dry-run`
    - Create a GitHub Release with ontology artifacts
-   - Publish `uor-spec` to crates.io
+   - Publish `uor-foundation` to crates.io
 
 ## Troubleshooting
 
@@ -38,6 +38,6 @@
   does not match `Cargo.toml`. Fix the version and re-tag.
 - **crates.io publish failure**: The GitHub Release will already exist.
   Fix the issue, delete and re-create the tag, or manually run
-  `cargo publish -p uor-spec`.
+  `cargo publish -p uor-foundation`.
 - **Version already published**: crates.io does not allow re-publishing
   the same version. Bump the version and create a new tag.

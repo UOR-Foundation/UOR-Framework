@@ -7,7 +7,7 @@ description = "UOR Framework conformance suite — validates all artifacts again
 publish = false
 
 [dependencies]
-uor-spec = { path = "../spec" }
+uor-foundation = { path = "../spec" }
 serde = { workspace = true }
 serde_json = { workspace = true }
 anyhow = { workspace = true }
@@ -16,4 +16,4 @@ walkdir = { workspace = true }
 cssparser = { workspace = true }
 
 [dev-dependencies]
-uor-spec = { path = "../spec" }
+uor-foundation = { path = "../spec" }

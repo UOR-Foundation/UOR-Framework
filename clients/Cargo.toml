@@ -23,7 +23,7 @@ name = "uor-website"
 path = "src/bin/website.rs"
 
 [dependencies]
-uor-spec = { path = "../spec" }
+uor-foundation = { path = "../spec" }
 uor-conformance = { path = "../conformance" }
 uor-docs = { path = "../docs" }
 uor-website = { path = "../website" }

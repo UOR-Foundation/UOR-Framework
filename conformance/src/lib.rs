@@ -112,7 +112,7 @@ mod tests_unit {
 
     #[test]
     fn spec_inventory_passes() {
-        let ontology = uor_spec::Ontology::full();
+        let ontology = uor_foundation::Ontology::full();
         assert_eq!(ontology.namespaces.len(), 14);
         assert_eq!(ontology.class_count(), 98);
         assert_eq!(ontology.property_count(), 167);

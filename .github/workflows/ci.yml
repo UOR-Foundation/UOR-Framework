@@ -41,7 +41,7 @@ jobs:
         run: cargo test
 
       - name: Verify crate packaging (dry-run)
-        run: cargo publish --dry-run -p uor-spec
+        run: cargo publish --dry-run -p uor-foundation
 
       - name: Build ontology artifacts
         run: cargo run --bin uor-build

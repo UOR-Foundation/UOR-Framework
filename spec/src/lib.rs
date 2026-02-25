@@ -1,6 +1,6 @@
 //! UOR Foundation ontology encoded as typed Rust data.
 //!
-//! The `uor-spec` crate provides the complete UOR Foundation ontology —
+//! The `uor-foundation` crate provides the complete UOR Foundation ontology —
 //! 14 namespaces, 98 classes, 166 properties, and 18 named individuals —
 //! as static Rust data structures, along with serializers that produce
 //! JSON-LD, Turtle, and N-Triples output.
@@ -8,7 +8,7 @@
 //! # Entry Point
 //!
 //! ```
-//! let ontology = uor_spec::Ontology::full();
+//! let ontology = uor_foundation::Ontology::full();
 //! assert_eq!(ontology.namespaces.len(), 14);
 //! ```
 //!
@@ -17,9 +17,9 @@
 //! Requires the `serializers` feature (enabled by default).
 //!
 //! ```
-//! let ontology = uor_spec::Ontology::full();
-//! let json_ld = uor_spec::serializer::jsonld::to_json_ld(ontology);
-//! let turtle  = uor_spec::serializer::turtle::to_turtle(ontology);
+//! let ontology = uor_foundation::Ontology::full();
+//! let json_ld = uor_foundation::serializer::jsonld::to_json_ld(ontology);
+//! let turtle  = uor_foundation::serializer::turtle::to_turtle(ontology);
 //! ```
 //!
 //! # Feature Flags
@@ -31,7 +31,7 @@
 //!
 //! For types only (no extra dependencies):
 //! ```toml
-//! uor-spec = { version = "1.1", default-features = false }
+//! uor-foundation = { version = "1.1", default-features = false }
 //! ```
 
 #![deny(

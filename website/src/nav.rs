@@ -1,6 +1,6 @@
 //! Navigation tree builder.
 
-use uor_spec::Ontology;
+use uor_foundation::Ontology;
 
 use crate::model::NavItem;
 

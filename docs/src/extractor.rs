@@ -1,6 +1,6 @@
 //! Extracts all ontology terms from the spec for use in documentation generation.
 
-use uor_spec::{Class, Individual, Namespace, NamespaceModule, Ontology, Property};
+use uor_foundation::{Class, Individual, Namespace, NamespaceModule, Ontology, Property};
 
 /// A flattened index of all terms in the ontology.
 pub struct OntologyIndex {

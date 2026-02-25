@@ -21,7 +21,7 @@ Every ontology term must be documented:
 ## Accuracy
 
 Documentation accuracy is enforced at build time:
-- Namespace reference pages are 100% auto-generated from `uor_spec::Ontology::full()`.
+- Namespace reference pages are 100% auto-generated from `uor_foundation::Ontology::full()`.
 - Hand-written prose uses `{@class <iri>}`, `{@prop <iri>}`, `{@ind <iri>}` DSL for ontology references.
 - All DSL references are validated against the live spec — invalid IRIs cause build failure.
 

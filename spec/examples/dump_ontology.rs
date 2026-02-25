@@ -1,9 +1,9 @@
 //! Demonstrates loading the full UOR ontology and serializing it.
 //!
-//! Run with: `cargo run --example dump_ontology -p uor-spec`
+//! Run with: `cargo run --example dump_ontology -p uor-foundation`
 
 fn main() {
-    let ontology = uor_spec::Ontology::full();
+    let ontology = uor_foundation::Ontology::full();
 
     println!("UOR Foundation Ontology v{}", ontology.version);
     println!("  Namespaces:   {}", ontology.namespaces.len());
@@ -29,7 +29,7 @@ fn main() {
     println!();
 
     // Serialize to JSON-LD (show first 200 chars).
-    let json_ld = uor_spec::serializer::jsonld::to_json_ld(ontology);
+    let json_ld = uor_foundation::serializer::jsonld::to_json_ld(ontology);
     let json_str =
         serde_json::to_string_pretty(&json_ld).unwrap_or_else(|e| format!("JSON error: {e}"));
     println!("JSON-LD output ({} bytes):", json_str.len());

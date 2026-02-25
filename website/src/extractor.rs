@@ -1,6 +1,6 @@
-//! Builds the site model from `uor_spec::Ontology` and `uor_docs` content.
+//! Builds the site model from `uor_foundation::Ontology` and `uor_docs` content.
 
-use uor_spec::{NamespaceModule, Ontology};
+use uor_foundation::{NamespaceModule, Ontology};
 
 use crate::model::{BreadcrumbItem, NamespaceSummary, SearchEntry};
 

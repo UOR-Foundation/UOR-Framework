@@ -16,7 +16,7 @@ use crate::report::{ConformanceReport, TestResult};
 /// Returns an error only if an unexpected internal error occurs (never on constraint violations).
 pub fn validate() -> ConformanceReport {
     let mut report = ConformanceReport::new();
-    let ontology = uor_spec::Ontology::full();
+    let ontology = uor_foundation::Ontology::full();
 
     // Collect all known class IRIs
     let mut known_classes: std::collections::HashSet<&'static str> =
@@ -162,7 +162,7 @@ pub fn validate() -> ConformanceReport {
 }
 
 /// Checks for circular imports between namespace modules.
-fn check_circular_imports(ontology: &uor_spec::Ontology, report: &mut ConformanceReport) {
+fn check_circular_imports(ontology: &uor_foundation::Ontology, report: &mut ConformanceReport) {
     let mut circular: Vec<String> = Vec::new();
 
     // Build import map

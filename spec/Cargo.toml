@@ -1,5 +1,5 @@
 [package]
-name = "uor-spec"
+name = "uor-foundation"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -7,7 +7,7 @@ license.workspace = true
 repository.workspace = true
 homepage.workspace = true
 description = "UOR Foundation ontology — all 14 namespaces encoded as typed Rust data with JSON-LD, Turtle, and N-Triples serialization"
-documentation = "https://docs.rs/uor-spec"
+documentation = "https://docs.rs/uor-foundation"
 readme = "README.md"
 keywords = ["ontology", "rdf", "owl", "json-ld", "semantic-web"]
 categories = ["data-structures", "science", "encoding"]

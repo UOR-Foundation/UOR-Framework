@@ -50,7 +50,7 @@ The website must function without any external network requests:
 
 ## Namespace Pages
 
-- Every namespace page is 100% auto-generated from `uor_spec::Ontology::full()`.
+- Every namespace page is 100% auto-generated from `uor_foundation::Ontology::full()`.
 - Content is never hand-edited — always regenerated from spec.
 - Pages include: namespace IRI, label, comment, space classification, imports, classes table, properties table, individuals table.
 
