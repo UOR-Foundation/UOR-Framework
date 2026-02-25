@@ -1,8 +1,12 @@
-# uor-foundation
+# uor-ontology
 
-The complete [UOR Foundation](https://uor.foundation/) ontology encoded as
-typed Rust data structures, with serializers for JSON-LD, Turtle, and
-N-Triples.
+Internal crate encoding the complete [UOR Foundation](https://uor.foundation/)
+ontology as typed Rust data structures, with serializers for JSON-LD, Turtle,
+and N-Triples.
+
+**This crate is not published to crates.io** (`publish = false`). For the
+published Rust trait library, see
+[`uor-foundation`](https://crates.io/crates/uor-foundation).
 
 ## Contents
 
@@ -12,10 +16,10 @@ N-Triples.
 - 18 named individuals
 - Three serialization formats: JSON-LD 1.1, Turtle 1.1, N-Triples
 
-## Quick start
+## Usage
 
 ```rust
-use uor_foundation::{Ontology, iris};
+use uor_ontology::{Ontology, iris};
 
 let ontology = Ontology::full();
 assert_eq!(ontology.namespaces.len(), 14);
@@ -25,15 +29,11 @@ assert_eq!(ontology.class_count(), 98);
 let address = ontology.find_class("https://uor.foundation/u/Address");
 assert!(address.is_some());
 
-// Look up a namespace by prefix
-let schema = ontology.find_namespace("schema");
-assert_eq!(schema.map(|m| m.namespace.iri), Some(iris::NS_SCHEMA));
-
 // Serialize to JSON-LD (requires `serializers` feature, enabled by default)
-let json_ld = uor_foundation::serializer::jsonld::to_json_ld(ontology);
+let json_ld = uor_ontology::serializer::jsonld::to_json_ld(ontology);
 
 // Serialize to Turtle
-let turtle = uor_foundation::serializer::turtle::to_turtle(ontology);
+let turtle = uor_ontology::serializer::turtle::to_turtle(ontology);
 ```
 
 ## Feature flags
@@ -42,12 +42,6 @@ let turtle = uor_foundation::serializer::turtle::to_turtle(ontology);
 |---------|---------|-------------|
 | `serde` | yes | Adds `Serialize` derive to all model types |
 | `serializers` | yes | JSON-LD, Turtle, and N-Triples serializers (pulls in `serde_json`) |
-
-For types only (no extra dependencies):
-
-```toml
-uor-foundation = { version = "1.1", default-features = false }
-```
 
 ## License
 

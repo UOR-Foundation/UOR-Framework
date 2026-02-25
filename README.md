@@ -7,28 +7,34 @@ structure based on Z/(2^n)Z.
 
 ## Ontology
 
-Version 1.1.0: 14 namespaces · 98 classes · 167 properties · 18 named individuals
+Version 2.0.0: 14 namespaces · 98 classes · 167 properties · 18 named individuals
 
-All terms are encoded as typed Rust data in `spec/` and serialized to:
+All terms are encoded as typed Rust data in `spec/` (`uor-ontology`) and exported as:
+- `foundation/` (`uor-foundation`) — typed Rust traits (published to crates.io)
 - `public/uor.foundation.json` — JSON-LD 1.1
 - `public/uor.foundation.ttl` — Turtle 1.1
 - `public/uor.foundation.nt` — N-Triples
 
 ## Repository Structure
 
-| Directory | Role |
-|-----------|------|
-| `spec/` | Rust library: UOR ontology as typed static data + serializers |
-| `conformance/` | Rust library: workspace-wide conformance validators |
-| `docs/` | Rust library: documentation generator |
-| `website/` | Rust library: static site generator |
-| `clients/` | Rust binaries: build, conformance, docs, website |
+| Directory | Crate | Role |
+|-----------|-------|------|
+| `spec/` | `uor-ontology` | Ontology source of truth: typed static data + serializers |
+| `codegen/` | `uor-codegen` | Code generation logic for the Rust trait crate |
+| `foundation/` | `uor-foundation` | Generated Rust trait crate (published to crates.io) |
+| `conformance/` | `uor-conformance` | Workspace-wide conformance validators |
+| `docs/` | `uor-docs` | Documentation generator |
+| `website/` | `uor-website` | Static site generator |
+| `clients/` | `uor-clients` | Binaries: build, conformance, docs, website, crate |
 
 ## Building
 
 ```sh
 # Build ontology artifacts
 cargo run --bin uor-build
+
+# Generate Rust trait crate
+cargo run --bin uor-crate
 
 # Generate documentation
 cargo run --bin uor-docs

@@ -1,4 +1,4 @@
-//! `uor-build` — Assembles the UOR Foundation ontology from the `uor-foundation` library
+//! `uor-build` — Assembles the UOR Foundation ontology from the `uor-ontology` library
 //! and writes the artifacts to the output directory.
 //!
 //! **Outputs:**
@@ -24,8 +24,8 @@ use std::path::PathBuf;
 
 use anyhow::{Context, Result};
 use clap::Parser;
-use uor_foundation::serializer::{jsonld, ntriples, turtle};
-use uor_foundation::Ontology;
+use uor_ontology::serializer::{jsonld, ntriples, turtle};
+use uor_ontology::Ontology;
 
 /// Build the UOR Foundation ontology artifacts.
 #[derive(Parser)]

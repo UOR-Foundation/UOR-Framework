@@ -2,7 +2,7 @@
 //!
 //! Generates the complete https://uor.foundation/ website as a directory of
 //! static HTML, CSS, and JavaScript files. All namespace and class pages are
-//! 100% auto-generated from `uor_foundation::Ontology::full()`.
+//! 100% auto-generated from `uor_ontology::Ontology::full()`.
 //!
 //! # Entry Point
 //!
@@ -52,7 +52,7 @@ pub mod writer;
 use std::path::Path;
 
 use anyhow::Result;
-use uor_foundation::Ontology;
+use uor_ontology::Ontology;
 
 use extractor::{
     home_breadcrumbs, namespace_breadcrumbs, namespace_summaries, namespaces_index_breadcrumbs,

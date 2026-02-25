@@ -88,6 +88,9 @@ pub fn run_all(paths: &WorkspacePaths) -> anyhow::Result<ConformanceReport> {
     // 6. SHACL instance conformance
     report.extend(validators::ontology::shacl::validate());
 
+    // 6b. Generated crate conformance
+    report.extend(validators::ontology::crate_::validate(&paths.workspace)?);
+
     // 7. Documentation
     report.extend(validators::docs::completeness::validate(&paths.artifacts)?);
     report.extend(validators::docs::accuracy::validate(&paths.artifacts)?);
@@ -112,7 +115,7 @@ mod tests_unit {
 
     #[test]
     fn spec_inventory_passes() {
-        let ontology = uor_foundation::Ontology::full();
+        let ontology = uor_ontology::Ontology::full();
         assert_eq!(ontology.namespaces.len(), 14);
         assert_eq!(ontology.class_count(), 98);
         assert_eq!(ontology.property_count(), 167);

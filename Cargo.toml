@@ -1,9 +1,9 @@
 [workspace]
-members = ["spec", "conformance", "docs", "website", "clients"]
+members = ["spec", "codegen", "foundation", "conformance", "docs", "website", "clients"]
 resolver = "2"
 
 [workspace.package]
-version = "1.1.0"
+version = "2.0.0"
 edition = "2021"
 rust-version = "1.70"
 license = "Apache-2.0"

@@ -10,7 +10,7 @@ use std::path::Path;
 
 use anyhow::{Context, Result};
 use serde_json::Value;
-use uor_foundation::model::Space;
+use uor_ontology::model::Space;
 
 use crate::report::{ConformanceReport, TestResult};
 
@@ -60,7 +60,7 @@ pub fn validate(artifacts: &Path) -> Result<ConformanceReport> {
 
 /// Validates inventory counts directly from the spec (no file I/O).
 fn validate_spec_counts(report: &mut ConformanceReport) {
-    let ontology = uor_foundation::Ontology::full();
+    let ontology = uor_ontology::Ontology::full();
 
     let ns_count = ontology.namespaces.len();
     let class_count = ontology.class_count();
@@ -125,7 +125,7 @@ fn check_count(
 ///
 /// Expected: 3 Kernel (u, schema, op), 8 Bridge, 3 User (type, state, morphism).
 fn validate_space_classification(report: &mut ConformanceReport) {
-    let ontology = uor_foundation::Ontology::full();
+    let ontology = uor_ontology::Ontology::full();
     let validator = "ontology/inventory/space_classification";
 
     let kernel: Vec<_> = ontology
@@ -198,7 +198,7 @@ fn validate_space_classification(report: &mut ConformanceReport) {
 
 /// Validates that every named individual has the minimum required property assertions.
 fn validate_individual_completeness(report: &mut ConformanceReport) {
-    let ontology = uor_foundation::Ontology::full();
+    let ontology = uor_ontology::Ontology::full();
     let validator = "ontology/inventory/individual_completeness";
 
     // Define minimum required properties per individual

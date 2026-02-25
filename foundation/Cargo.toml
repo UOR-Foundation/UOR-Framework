@@ -1,0 +1,16 @@
+[package]
+name = "uor-foundation"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+description = "UOR Foundation — typed Rust traits for the complete ontology. Import and implement."
+documentation = "https://docs.rs/uor-foundation"
+readme = "README.md"
+keywords = ["ontology", "uor", "type-system", "traits", "semantic-web"]
+categories = ["data-structures", "science"]
+
+[features]
+default = []

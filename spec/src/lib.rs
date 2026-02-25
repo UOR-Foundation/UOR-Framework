@@ -1,6 +1,6 @@
 //! UOR Foundation ontology encoded as typed Rust data.
 //!
-//! The `uor-foundation` crate provides the complete UOR Foundation ontology —
+//! The `uor-ontology` crate provides the complete UOR Foundation ontology —
 //! 14 namespaces, 98 classes, 166 properties, and 18 named individuals —
 //! as static Rust data structures, along with serializers that produce
 //! JSON-LD, Turtle, and N-Triples output.
@@ -8,7 +8,7 @@
 //! # Entry Point
 //!
 //! ```
-//! let ontology = uor_foundation::Ontology::full();
+//! let ontology = uor_ontology::Ontology::full();
 //! assert_eq!(ontology.namespaces.len(), 14);
 //! ```
 //!
@@ -17,9 +17,9 @@
 //! Requires the `serializers` feature (enabled by default).
 //!
 //! ```
-//! let ontology = uor_foundation::Ontology::full();
-//! let json_ld = uor_foundation::serializer::jsonld::to_json_ld(ontology);
-//! let turtle  = uor_foundation::serializer::turtle::to_turtle(ontology);
+//! let ontology = uor_ontology::Ontology::full();
+//! let json_ld = uor_ontology::serializer::jsonld::to_json_ld(ontology);
+//! let turtle  = uor_ontology::serializer::turtle::to_turtle(ontology);
 //! ```
 //!
 //! # Feature Flags
@@ -29,10 +29,8 @@
 //! | `serde` | yes | Adds `Serialize` derive to all model types |
 //! | `serializers` | yes | JSON-LD, Turtle, and N-Triples serializers (pulls in `serde_json`) |
 //!
-//! For types only (no extra dependencies):
-//! ```toml
-//! uor-foundation = { version = "1.1", default-features = false }
-//! ```
+//! This crate is internal (not published). The published crate `uor-foundation`
+//! is generated from this data by the `uor-crate` client.
 
 #![deny(
     clippy::unwrap_used,
@@ -65,7 +63,7 @@ impl Ontology {
     pub fn full() -> &'static Ontology {
         static ONTOLOGY: std::sync::OnceLock<Ontology> = std::sync::OnceLock::new();
         ONTOLOGY.get_or_init(|| Ontology {
-            version: "1.1.0",
+            version: "2.0.0",
             base_iri: "https://uor.foundation/",
             namespaces: vec![
                 namespaces::u::module(),

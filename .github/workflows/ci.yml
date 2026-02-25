@@ -40,8 +40,17 @@ jobs:
       - name: Run tests
         run: cargo test
 
+      - name: Generate Rust crate
+        run: cargo run --bin uor-crate
+
+      - name: Verify no drift in generated code
+        run: git diff --exit-code foundation/src/
+
+      - name: Check generated crate (no deps)
+        run: cargo check -p uor-foundation --no-default-features
+
       - name: Verify crate packaging (dry-run)
-        run: cargo publish --dry-run -p uor-foundation
+        run: cargo publish --dry-run --allow-dirty -p uor-foundation
 
       - name: Build ontology artifacts
         run: cargo run --bin uor-build

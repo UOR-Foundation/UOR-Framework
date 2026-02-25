@@ -29,7 +29,7 @@ pub fn validate(artifacts: &Path) -> Result<ConformanceReport> {
 
 /// Checks that each namespace has a `public/namespaces/<prefix>/index.html`.
 fn check_namespace_pages(artifacts: &Path, report: &mut ConformanceReport) {
-    let ontology = uor_foundation::Ontology::full();
+    let ontology = uor_ontology::Ontology::full();
     let mut missing: Vec<String> = Vec::new();
 
     for module in &ontology.namespaces {
@@ -77,7 +77,7 @@ fn check_search_index(artifacts: &Path, report: &mut ConformanceReport) -> Resul
     let index: Value =
         serde_json::from_str(&content).with_context(|| "Failed to parse search-index.json")?;
 
-    let ontology = uor_foundation::Ontology::full();
+    let ontology = uor_ontology::Ontology::full();
     let mut missing: Vec<String> = Vec::new();
 
     let index_str = index.to_string();

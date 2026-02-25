@@ -22,8 +22,13 @@ path = "src/bin/docs.rs"
 name = "uor-website"
 path = "src/bin/website.rs"
 
+[[bin]]
+name = "uor-crate"
+path = "src/bin/crate_.rs"
+
 [dependencies]
-uor-foundation = { path = "../spec" }
+uor-ontology = { path = "../spec" }
+uor-codegen = { path = "../codegen" }
 uor-conformance = { path = "../conformance" }
 uor-docs = { path = "../docs" }
 uor-website = { path = "../website" }
