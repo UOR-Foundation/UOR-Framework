@@ -5,13 +5,15 @@
 //! traces record the execution of, and that `state/` transitions capture the
 //! cumulative effect of.
 //!
-//! **No named individuals:** specific transforms (e.g., the dihedral action on
-//! 𝒯_n, the level embedding Q0→Q2) are Prism-level declarations.
+//! Amendment 12 adds the composition primitive: the categorical backbone that
+//! turns transforms into a category with identity and associative composition.
 //!
 //! **Space classification:** `user` — transforms are instantiated by applications.
 
 use crate::model::iris::*;
-use crate::model::{Class, Namespace, NamespaceModule, Property, PropertyKind, Space};
+use crate::model::{
+    Class, Individual, IndividualValue, Namespace, NamespaceModule, Property, PropertyKind, Space,
+};
 
 /// Returns the `morphism/` namespace module.
 #[must_use]
@@ -36,7 +38,7 @@ pub fn module() -> NamespaceModule {
         },
         classes: classes(),
         properties: properties(),
-        individuals: vec![],
+        individuals: individuals(),
     }
 }
 
@@ -49,7 +51,7 @@ fn classes() -> Vec<Class> {
                       and optionally what structure (if any) is preserved. This is \
                       what cert:TransformCertificate certifies.",
             subclass_of: &[OWL_THING],
-            disjoint_with: &[],
+            disjoint_with: &["https://uor.foundation/morphism/CompositionLaw"],
         },
         Class {
             id: "https://uor.foundation/morphism/Isometry",
@@ -60,7 +62,7 @@ fn classes() -> Vec<Class> {
                       an isometry with respect to one metric but not the other. This \
                       is what cert:IsometryCertificate certifies.",
             subclass_of: &["https://uor.foundation/morphism/Transform"],
-            disjoint_with: &[],
+            disjoint_with: &["https://uor.foundation/morphism/Composition"],
         },
         Class {
             id: "https://uor.foundation/morphism/Embedding",
@@ -70,7 +72,7 @@ fn classes() -> Vec<Class> {
                       ι : R_n → R_{n'} (n < n'), which preserves addition, \
                       multiplication, and content addressing.",
             subclass_of: &["https://uor.foundation/morphism/Transform"],
-            disjoint_with: &[],
+            disjoint_with: &["https://uor.foundation/morphism/Composition"],
         },
         Class {
             id: "https://uor.foundation/morphism/Action",
@@ -81,6 +83,38 @@ fn classes() -> Vec<Class> {
                       every element of D_{2^n} produces an isometric transform of 𝒯_n.",
             subclass_of: &[OWL_THING],
             disjoint_with: &[],
+        },
+        // Amendment 12: Composition Primitive classes
+        Class {
+            id: "https://uor.foundation/morphism/Composition",
+            label: "Composition",
+            comment: "A transform formed by composing two or more transforms \
+                      sequentially. The categorical composition operation that \
+                      turns transforms into a category.",
+            subclass_of: &["https://uor.foundation/morphism/Transform"],
+            disjoint_with: &[
+                "https://uor.foundation/morphism/Isometry",
+                "https://uor.foundation/morphism/Embedding",
+                "https://uor.foundation/morphism/Identity",
+            ],
+        },
+        Class {
+            id: "https://uor.foundation/morphism/Identity",
+            label: "Identity",
+            comment: "The identity transform on a type: maps every element to itself. \
+                      The categorical identity morphism.",
+            subclass_of: &["https://uor.foundation/morphism/Transform"],
+            disjoint_with: &["https://uor.foundation/morphism/Composition"],
+        },
+        Class {
+            id: "https://uor.foundation/morphism/CompositionLaw",
+            label: "CompositionLaw",
+            comment: "A law governing how operations compose. Records whether the \
+                      composition is associative, commutative, and what the result \
+                      operation is. The critical composition law (neg ∘ bnot = succ) \
+                      is the foundational instance.",
+            subclass_of: &[OWL_THING],
+            disjoint_with: &["https://uor.foundation/morphism/Transform"],
         },
     ]
 }
@@ -186,5 +220,133 @@ fn properties() -> Vec<Property> {
             domain: Some("https://uor.foundation/morphism/Transform"),
             range: "https://uor.foundation/trace/ComputationTrace",
         },
+        // Amendment 12: Composition Primitive properties
+        Property {
+            id: "https://uor.foundation/morphism/composesWith",
+            label: "composesWith",
+            comment: "A transform that this transform can be composed with. \
+                      The target of this transform must match the source of \
+                      the composed transform.",
+            kind: PropertyKind::Object,
+            functional: false,
+            domain: Some("https://uor.foundation/morphism/Transform"),
+            range: "https://uor.foundation/morphism/Transform",
+        },
+        Property {
+            id: "https://uor.foundation/morphism/compositionResult",
+            label: "compositionResult",
+            comment: "The transform that results from this composition.",
+            kind: PropertyKind::Object,
+            functional: true,
+            domain: Some("https://uor.foundation/morphism/Composition"),
+            range: "https://uor.foundation/morphism/Transform",
+        },
+        Property {
+            id: "https://uor.foundation/morphism/compositionComponents",
+            label: "compositionComponents",
+            comment: "A component transform of this composition.",
+            kind: PropertyKind::Object,
+            functional: false,
+            domain: Some("https://uor.foundation/morphism/Composition"),
+            range: "https://uor.foundation/morphism/Transform",
+        },
+        Property {
+            id: "https://uor.foundation/morphism/identityOn",
+            label: "identityOn",
+            comment: "The type on which this identity transform acts.",
+            kind: PropertyKind::Object,
+            functional: true,
+            domain: Some("https://uor.foundation/morphism/Identity"),
+            range: "https://uor.foundation/type/TypeDefinition",
+        },
+        Property {
+            id: "https://uor.foundation/morphism/compositionOrder",
+            label: "compositionOrder",
+            comment: "The number of component transforms in a composition.",
+            kind: PropertyKind::Datatype,
+            functional: true,
+            domain: None,
+            range: XSD_NON_NEGATIVE_INTEGER,
+        },
+        Property {
+            id: "https://uor.foundation/morphism/isAssociative",
+            label: "isAssociative",
+            comment: "Whether this composition law is associative.",
+            kind: PropertyKind::Datatype,
+            functional: true,
+            domain: Some("https://uor.foundation/morphism/CompositionLaw"),
+            range: XSD_BOOLEAN,
+        },
+        Property {
+            id: "https://uor.foundation/morphism/isCommutative",
+            label: "isCommutative",
+            comment: "Whether this composition law is commutative.",
+            kind: PropertyKind::Datatype,
+            functional: true,
+            domain: Some("https://uor.foundation/morphism/CompositionLaw"),
+            range: XSD_BOOLEAN,
+        },
+        Property {
+            id: "https://uor.foundation/morphism/lawComponents",
+            label: "lawComponents",
+            comment: "An operation that is a component of this composition law.",
+            kind: PropertyKind::Object,
+            functional: false,
+            domain: Some("https://uor.foundation/morphism/CompositionLaw"),
+            range: "https://uor.foundation/op/Operation",
+        },
+        Property {
+            id: "https://uor.foundation/morphism/lawResult",
+            label: "lawResult",
+            comment: "The operation that results from this composition law.",
+            kind: PropertyKind::Object,
+            functional: true,
+            domain: Some("https://uor.foundation/morphism/CompositionLaw"),
+            range: "https://uor.foundation/op/Operation",
+        },
+        Property {
+            id: "https://uor.foundation/morphism/preservesStructure",
+            label: "preservesStructure",
+            comment: "A human-readable description of the structure this transform \
+                      preserves (e.g., 'ring homomorphism', 'metric isometry').",
+            kind: PropertyKind::Datatype,
+            functional: true,
+            domain: Some("https://uor.foundation/morphism/Transform"),
+            range: XSD_STRING,
+        },
     ]
+}
+
+fn individuals() -> Vec<Individual> {
+    vec![Individual {
+        id: "https://uor.foundation/morphism/criticalComposition",
+        type_: "https://uor.foundation/morphism/CompositionLaw",
+        label: "criticalComposition",
+        comment: "The critical composition law: neg ∘ bnot = succ. This is the \
+                      operational form of the critical identity theorem. The \
+                      composition of the two involutions (neg, bnot) yields the \
+                      successor operation. Non-associative and non-commutative.",
+        properties: &[
+            (
+                "https://uor.foundation/morphism/lawComponents",
+                IndividualValue::IriRef("https://uor.foundation/op/neg"),
+            ),
+            (
+                "https://uor.foundation/morphism/lawComponents",
+                IndividualValue::IriRef("https://uor.foundation/op/bnot"),
+            ),
+            (
+                "https://uor.foundation/morphism/lawResult",
+                IndividualValue::IriRef("https://uor.foundation/op/succ"),
+            ),
+            (
+                "https://uor.foundation/morphism/isAssociative",
+                IndividualValue::Bool(false),
+            ),
+            (
+                "https://uor.foundation/morphism/isCommutative",
+                IndividualValue::Bool(false),
+            ),
+        ],
+    }]
 }

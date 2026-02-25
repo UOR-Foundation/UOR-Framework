@@ -3,6 +3,10 @@
 //! Derivations record the step-by-step rewriting of terms to their canonical
 //! forms. They serve as verifiable computation witnesses.
 //!
+//! Amendment 11 adds `DerivationStep` as an abstract parent for `RewriteStep`
+//! (term-level) and `RefinementStep` (type-level), plus properties for tracking
+//! type refinement through the iterative resolution loop.
+//!
 //! **Space classification:** `bridge` — kernel-produced, user-consumed.
 
 use crate::model::iris::*;
@@ -19,7 +23,7 @@ pub fn module() -> NamespaceModule {
             comment: "Computation witnesses recording term rewriting sequences from \
                       original terms to their canonical forms.",
             space: Space::Bridge,
-            imports: &[NS_SCHEMA, NS_OP],
+            imports: &[NS_SCHEMA, NS_OP, NS_TYPE],
         },
         classes: classes(),
         properties: properties(),
@@ -38,12 +42,33 @@ fn classes() -> Vec<Class> {
             subclass_of: &[OWL_THING],
             disjoint_with: &[],
         },
+        // Amendment 11: DerivationStep abstract parent
+        Class {
+            id: "https://uor.foundation/derivation/DerivationStep",
+            label: "DerivationStep",
+            comment: "An abstract step in a derivation. Concrete subclasses are \
+                      RewriteStep (term-level rewriting) and RefinementStep \
+                      (type-level refinement).",
+            subclass_of: &[OWL_THING],
+            disjoint_with: &[],
+        },
         Class {
             id: "https://uor.foundation/derivation/RewriteStep",
             label: "RewriteStep",
             comment: "A single rewrite step in a derivation: the application of \
                       one rewrite rule to transform a term.",
-            subclass_of: &[OWL_THING],
+            subclass_of: &["https://uor.foundation/derivation/DerivationStep"],
+            disjoint_with: &[],
+        },
+        // Amendment 11: RefinementStep
+        Class {
+            id: "https://uor.foundation/derivation/RefinementStep",
+            label: "RefinementStep",
+            comment: "A type-level refinement step: the application of a constraint \
+                      to narrow a type, pinning additional fiber coordinates. \
+                      Complements RewriteStep (term-level) in the derivation \
+                      hierarchy.",
+            subclass_of: &["https://uor.foundation/derivation/DerivationStep"],
             disjoint_with: &[],
         },
         Class {
@@ -147,6 +172,43 @@ fn properties() -> Vec<Property> {
             kind: PropertyKind::Datatype,
             functional: true,
             domain: Some("https://uor.foundation/derivation/TermMetrics"),
+            range: XSD_NON_NEGATIVE_INTEGER,
+        },
+        // Amendment 11: RefinementStep properties
+        Property {
+            id: "https://uor.foundation/derivation/previousType",
+            label: "previousType",
+            comment: "The type before this refinement step was applied.",
+            kind: PropertyKind::Object,
+            functional: true,
+            domain: Some("https://uor.foundation/derivation/RefinementStep"),
+            range: "https://uor.foundation/type/TypeDefinition",
+        },
+        Property {
+            id: "https://uor.foundation/derivation/appliedConstraint",
+            label: "appliedConstraint",
+            comment: "The constraint that was applied in this refinement step.",
+            kind: PropertyKind::Object,
+            functional: true,
+            domain: Some("https://uor.foundation/derivation/RefinementStep"),
+            range: "https://uor.foundation/type/Constraint",
+        },
+        Property {
+            id: "https://uor.foundation/derivation/refinedType",
+            label: "refinedType",
+            comment: "The type after this refinement step was applied.",
+            kind: PropertyKind::Object,
+            functional: true,
+            domain: Some("https://uor.foundation/derivation/RefinementStep"),
+            range: "https://uor.foundation/type/TypeDefinition",
+        },
+        Property {
+            id: "https://uor.foundation/derivation/fibersClosed",
+            label: "fibersClosed",
+            comment: "The number of fiber coordinates pinned by this refinement step.",
+            kind: PropertyKind::Datatype,
+            functional: true,
+            domain: Some("https://uor.foundation/derivation/RefinementStep"),
             range: XSD_NON_NEGATIVE_INTEGER,
         },
     ]

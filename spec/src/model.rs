@@ -152,7 +152,7 @@ pub struct AnnotationProperty {
 /// The complete UOR Foundation ontology.
 #[derive(Debug)]
 pub struct Ontology {
-    /// Ontology version (e.g., `"1.0.0"`).
+    /// Ontology version (e.g., `"1.1.0"`).
     pub version: &'static str,
     /// Base IRI of the ontology (e.g., `"https://uor.foundation/"`).
     pub base_iri: &'static str,

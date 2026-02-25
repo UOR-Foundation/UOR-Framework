@@ -9,12 +9,11 @@ pub const TEST5_PARTITION: &str = r#"
 @prefix owl:        <http://www.w3.org/2002/07/owl#> .
 @prefix xsd:        <http://www.w3.org/2001/XMLSchema#> .
 @prefix partition:  <https://uor.foundation/partition/> .
-@prefix schema:     <https://uor.foundation/schema/> .
 
 # The partition of R_4 (Z/16Z) into irreducible components
 <https://uor.foundation/instance/partition-R4>
     a                   owl:NamedIndividual, partition:Partition ;
-    schema:ringQuantum  "4"^^xsd:nonNegativeInteger ;
+    partition:quantum   "4"^^xsd:nonNegativeInteger ;
     partition:irreducibles  <https://uor.foundation/instance/irred-set-R4> ;
     partition:reducibles    <https://uor.foundation/instance/red-set-R4> ;
     partition:units         <https://uor.foundation/instance/unit-set-R4> ;

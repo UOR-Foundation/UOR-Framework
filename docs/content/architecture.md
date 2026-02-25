@@ -31,7 +31,7 @@ uor-clients (CLI for all of the above)
 `uor-spec` encodes the complete ontology as typed Rust static data:
 
 - **`model.rs`**: Core types — `Namespace`, `Class`, `Property`, `Individual`, `Ontology`
-- **`namespaces/*.rs`**: 14 modules, one per namespace (all 8 amendments applied)
+- **`namespaces/*.rs`**: 14 modules, one per namespace (all 12 amendments applied)
 - **`serializer/jsonld.rs`**: Serializes to JSON-LD 1.1
 - **`serializer/turtle.rs`**: Serializes to Turtle 1.1
 - **`serializer/ntriples.rs`**: Serializes to N-Triples
@@ -44,7 +44,7 @@ The entry point `Ontology::full()` uses `OnceLock` for thread-safe lazy initiali
 
 1. **Rust source**: API documentation, style conventions
 2. **Ontology artifacts**: JSON-LD 1.1, OWL 2 DL constraints, RDF 1.1, Turtle 1.1, inventory counts
-3. **SHACL instances**: 7 test graphs validated against 82 NodeShapes
+3. **SHACL instances**: 15 test graphs validated against 98 NodeShapes
 4. **Documentation**: Diataxis structure, completeness, accuracy, links
 5. **Website**: HTML5, WCAG 2.1 AA, CSS, coverage, links
 
@@ -64,7 +64,7 @@ The conformance suite is the **single gate** — all components must pass before
 
 - Templates use the Tera template engine
 - Namespace pages are auto-generated (no hand-written HTML for spec terms)
-- Search index is generated from all 82 classes, 119 properties, 14 individuals
+- Search index is generated from all 98 classes, 166 properties, 18 individuals
 - No external dependencies (no CDN, no tracking, no third-party scripts)
 
 ## Build Pipeline
@@ -78,7 +78,7 @@ cargo run --bin uor-conformance → validates all of the above
 
 ## Amendment History
 
-The spec crate implements all 8 amendments from the UOR Foundation completion plan:
+The spec crate implements all 12 amendments from the UOR Foundation completion plan:
 
 | Amendment | Namespace | Key Additions |
 |-----------|-----------|---------------|
@@ -90,3 +90,7 @@ The spec crate implements all 8 amendments from the UOR Foundation completion pl
 | 6 | morphism/ (NEW) | 4 classes, 10 properties |
 | 7 | state/ (NEW) | 4 classes, 16 properties |
 | 8 | all | uor:space annotation property on all namespaces |
+| 9 | partition/ | FiberCoordinate, FiberBudget, FiberPinning; 11 properties |
+| 10 | type/ | Constraint hierarchy (6 classes), MetricAxis, 3 axis individuals |
+| 11 | resolver/, derivation/ | ResolutionState, RefinementSuggestion, DerivationStep/RefinementStep |
+| 12 | morphism/ | Composition, Identity, CompositionLaw; criticalComposition individual |

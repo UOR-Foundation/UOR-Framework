@@ -1089,7 +1089,7 @@ checksum = "b4ac048d71ede7ee76d585517add45da530660ef4390e49b098733c6e897f254"
 
 [[package]]
 name = "uor-clients"
-version = "1.0.0"
+version = "1.1.0"
 dependencies = [
  "anyhow",
  "clap",
@@ -1102,7 +1102,7 @@ dependencies = [
 
 [[package]]
 name = "uor-conformance"
-version = "1.0.0"
+version = "1.1.0"
 dependencies = [
  "anyhow",
  "cssparser",
@@ -1115,7 +1115,7 @@ dependencies = [
 
 [[package]]
 name = "uor-docs"
-version = "1.0.0"
+version = "1.1.0"
 dependencies = [
  "anyhow",
  "pulldown-cmark",
@@ -1129,7 +1129,7 @@ dependencies = [
 
 [[package]]
 name = "uor-spec"
-version = "1.0.0"
+version = "1.1.0"
 dependencies = [
  "serde",
  "serde_json",
@@ -1141,7 +1141,7 @@ dependencies = [
 
 [[package]]
 name = "uor-website"
-version = "1.0.0"
+version = "1.1.0"
 dependencies = [
  "anyhow",
  "serde",

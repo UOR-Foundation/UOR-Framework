@@ -1,23 +1,24 @@
 //! Ontology inventory validator.
 //!
 //! Verifies that the built ontology artifact contains the correct counts:
-//! - 14 namespaces
-//! - 82 classes
-//! - 119 namespace-level properties + 1 global annotation = 120 via property_count()
-//! - 14 named individuals
+//! - 14 namespaces (3 Kernel / 8 Bridge / 3 User)
+//! - 98 classes
+//! - 166 namespace-level properties + 1 global annotation = 167 via property_count()
+//! - 18 named individuals (each with required property assertions)
 
 use std::path::Path;
 
 use anyhow::{Context, Result};
 use serde_json::Value;
+use uor_spec::model::Space;
 
 use crate::report::{ConformanceReport, TestResult};
 
 /// Expected inventory counts for the UOR Foundation ontology.
 const EXPECTED_NAMESPACES: usize = 14;
-const EXPECTED_CLASSES: usize = 82;
-const EXPECTED_PROPERTIES: usize = 120;
-const EXPECTED_INDIVIDUALS: usize = 14;
+const EXPECTED_CLASSES: usize = 98;
+const EXPECTED_PROPERTIES: usize = 167;
+const EXPECTED_INDIVIDUALS: usize = 18;
 
 /// Validates the ontology inventory counts in the built JSON-LD artifact.
 ///
@@ -29,6 +30,12 @@ pub fn validate(artifacts: &Path) -> Result<ConformanceReport> {
 
     // Also validate against the live spec (no file I/O needed)
     validate_spec_counts(&mut report);
+
+    // Hardening: three-space classification
+    validate_space_classification(&mut report);
+
+    // Hardening: individual completeness
+    validate_individual_completeness(&mut report);
 
     // Validate the built JSON-LD artifact
     let json_path = artifacts.join("uor.foundation.json");
@@ -109,6 +116,161 @@ fn check_count(
             format!(
                 "Wrong {} count: expected {}, got {}",
                 label, expected, actual
+            ),
+        ));
+    }
+}
+
+/// Validates that namespace space annotations follow the 3/8/3 classification.
+///
+/// Expected: 3 Kernel (u, schema, op), 8 Bridge, 3 User (type, state, morphism).
+fn validate_space_classification(report: &mut ConformanceReport) {
+    let ontology = uor_spec::Ontology::full();
+    let validator = "ontology/inventory/space_classification";
+
+    let kernel: Vec<_> = ontology
+        .namespaces
+        .iter()
+        .filter(|m| m.namespace.space == Space::Kernel)
+        .map(|m| m.namespace.prefix)
+        .collect();
+    let bridge: Vec<_> = ontology
+        .namespaces
+        .iter()
+        .filter(|m| m.namespace.space == Space::Bridge)
+        .map(|m| m.namespace.prefix)
+        .collect();
+    let user: Vec<_> = ontology
+        .namespaces
+        .iter()
+        .filter(|m| m.namespace.space == Space::User)
+        .map(|m| m.namespace.prefix)
+        .collect();
+
+    if kernel.len() == 3 {
+        report.push(TestResult::pass(
+            validator,
+            format!("Correct kernel-space count: 3 ({:?})", kernel),
+        ));
+    } else {
+        report.push(TestResult::fail(
+            validator,
+            format!(
+                "Wrong kernel-space count: expected 3, got {} ({:?})",
+                kernel.len(),
+                kernel
+            ),
+        ));
+    }
+
+    if bridge.len() == 8 {
+        report.push(TestResult::pass(
+            validator,
+            format!("Correct bridge-space count: 8 ({:?})", bridge),
+        ));
+    } else {
+        report.push(TestResult::fail(
+            validator,
+            format!(
+                "Wrong bridge-space count: expected 8, got {} ({:?})",
+                bridge.len(),
+                bridge
+            ),
+        ));
+    }
+
+    if user.len() == 3 {
+        report.push(TestResult::pass(
+            validator,
+            format!("Correct user-space count: 3 ({:?})", user),
+        ));
+    } else {
+        report.push(TestResult::fail(
+            validator,
+            format!(
+                "Wrong user-space count: expected 3, got {} ({:?})",
+                user.len(),
+                user
+            ),
+        ));
+    }
+}
+
+/// Validates that every named individual has the minimum required property assertions.
+fn validate_individual_completeness(report: &mut ConformanceReport) {
+    let ontology = uor_spec::Ontology::full();
+    let validator = "ontology/inventory/individual_completeness";
+
+    // Define minimum required properties per individual
+    let requirements: &[(&str, &[&str])] = &[
+        // 10 operations: all require arity
+        ("https://uor.foundation/op/neg", &["op/arity"]),
+        ("https://uor.foundation/op/bnot", &["op/arity"]),
+        ("https://uor.foundation/op/succ", &["op/arity"]),
+        ("https://uor.foundation/op/pred", &["op/arity"]),
+        ("https://uor.foundation/op/add", &["op/arity"]),
+        ("https://uor.foundation/op/sub", &["op/arity"]),
+        ("https://uor.foundation/op/mul", &["op/arity"]),
+        ("https://uor.foundation/op/xor", &["op/arity"]),
+        ("https://uor.foundation/op/and", &["op/arity"]),
+        ("https://uor.foundation/op/or", &["op/arity"]),
+        // criticalIdentity: lhs, rhs, forAll
+        (
+            "https://uor.foundation/op/criticalIdentity",
+            &["op/lhs", "op/rhs", "op/forAll"],
+        ),
+        // D2n: generatedBy, presentation
+        (
+            "https://uor.foundation/op/D2n",
+            &["op/generatedBy", "op/presentation"],
+        ),
+        // pi1, zero: value
+        ("https://uor.foundation/schema/pi1", &["schema/value"]),
+        ("https://uor.foundation/schema/zero", &["schema/value"]),
+        // MetricAxis individuals: type assertion only (no required properties)
+        ("https://uor.foundation/type/verticalAxis", &[]),
+        ("https://uor.foundation/type/horizontalAxis", &[]),
+        ("https://uor.foundation/type/diagonalAxis", &[]),
+        // criticalComposition: lawComponents, lawResult
+        (
+            "https://uor.foundation/morphism/criticalComposition",
+            &["morphism/lawComponents", "morphism/lawResult"],
+        ),
+    ];
+
+    let mut all_found = true;
+
+    for (iri, required_props) in requirements {
+        match ontology.find_individual(iri) {
+            Some(individual) => {
+                for prop_suffix in *required_props {
+                    let full_prop = format!("https://uor.foundation/{prop_suffix}");
+                    let has_prop = individual.properties.iter().any(|(k, _)| *k == full_prop);
+                    if !has_prop {
+                        report.push(TestResult::fail(
+                            validator,
+                            format!("Individual {} missing required property {}", iri, full_prop),
+                        ));
+                        all_found = false;
+                    }
+                }
+            }
+            None => {
+                report.push(TestResult::fail(
+                    validator,
+                    format!("Named individual {} not found in ontology", iri),
+                ));
+                all_found = false;
+            }
+        }
+    }
+
+    if all_found {
+        report.push(TestResult::pass(
+            validator,
+            format!(
+                "All {} named individuals have required property assertions",
+                requirements.len()
             ),
         ));
     }

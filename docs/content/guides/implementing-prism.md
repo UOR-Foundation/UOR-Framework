@@ -90,7 +90,34 @@ Certificate types available:
     trace:certifiedBy   <my:cert> .
 ```
 
+## Iterative Resolution (Amendment 11)
+
+The single-pass pipeline above works when the type is fully determined. For
+partially-constrained types, PRISM supports an iterative resolution loop:
+
+1. **Declare** — create a {@class https://uor.foundation/type/ConstrainedType} with initial constraints
+2. **Resolve** — run the resolver to produce a partition with a {@class https://uor.foundation/partition/FiberBudget}
+3. **Observe** — check {@prop https://uor.foundation/partition/isClosed} on the budget
+4. **Refine** — if not closed, apply a {@class https://uor.foundation/resolver/RefinementSuggestion} to pin more fibers
+5. **Iterate** — repeat until the budget closes or convergence stalls
+
+The {@class https://uor.foundation/resolver/ResolutionState} tracks iteration count,
+fiber deficit, and {@prop https://uor.foundation/resolver/convergenceRate}. Each
+iteration produces a {@class https://uor.foundation/derivation/RefinementStep} recording
+the applied constraint and fibers closed.
+
+## Composition (Amendment 12)
+
+Transforms compose categorically via {@class https://uor.foundation/morphism/Composition}.
+The critical composition law {@ind https://uor.foundation/morphism/criticalComposition}
+asserts that `neg ∘ bnot = succ`, connecting the two involutions to cyclic rotation.
+
+Use {@class https://uor.foundation/morphism/Identity} for identity transforms and
+{@prop https://uor.foundation/morphism/composesWith} to declare composability.
+
 ## Complete Example
 
 See SHACL test `test7_end_to_end` in `conformance/src/tests/fixtures/test7_end_to_end.rs`
-for a complete end-to-end instance graph.
+for a complete single-pass pipeline, and `test12_factorization` for a full PRISM pipeline
+with fiber budget and certification using {@prop https://uor.foundation/cert/certifies}
+and {@prop https://uor.foundation/trace/certifiedBy}.

@@ -20,7 +20,7 @@ pub fn module() -> NamespaceModule {
             comment: "Execution traces recording the sequence of kernel operations, \
                       intermediate results, and accumulated metrics for a computation.",
             space: Space::Bridge,
-            imports: &[NS_SCHEMA, NS_OP],
+            imports: &[NS_SCHEMA, NS_OP, NS_CERT],
         },
         classes: classes(),
         properties: properties(),
@@ -158,6 +158,16 @@ fn properties() -> Vec<Property> {
             functional: true,
             domain: Some("https://uor.foundation/trace/TraceMetrics"),
             range: XSD_NON_NEGATIVE_INTEGER,
+        },
+        Property {
+            id: "https://uor.foundation/trace/certifiedBy",
+            label: "certifiedBy",
+            comment: "The certificate that attests to the correctness of this \
+                      computation trace.",
+            kind: PropertyKind::Object,
+            functional: true,
+            domain: Some("https://uor.foundation/trace/ComputationTrace"),
+            range: "https://uor.foundation/cert/Certificate",
         },
     ]
 }

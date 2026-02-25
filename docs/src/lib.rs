@@ -113,6 +113,14 @@ pub fn generate(out_dir: &Path, readme_path: &Path) -> Result<()> {
 <li><a href="resolution.html">Resolution — The PRISM resolution pipeline</a></li>
 <li><a href="type-system.html">Type System — Typed expressions and abstraction layers</a></li>
 <li><a href="state-model.html">State Model — Execution contexts and binding frames</a></li>
+<li><a href="fiber-budget.html">Fiber Budget — Completeness criterion for type declarations</a></li>
+<li><a href="constraint-algebra.html">Constraint Algebra — Composable predicates and metric axes</a></li>
+<li><a href="iterative-resolution.html">Iterative Resolution — The resolution-as-learning loop</a></li>
+<li><a href="composition.html">Composition — Categorical composition primitive</a></li>
+<li><a href="factorization.html">Factorization — Dihedral factorization oracle</a></li>
+<li><a href="canonical-form.html">Canonical Form — Term rewriting to normal form</a></li>
+<li><a href="observables.html">Observables — Tri-metric classification taxonomy</a></li>
+<li><a href="evaluation.html">Evaluation — Boolean SAT via ring arithmetic</a></li>
 </ul>"#,
         &site_nav_html,
         &docs_nav_html,
@@ -253,6 +261,14 @@ fn build_docs_sidebar_html(base_path: &str) -> String {
 <li><a href="{base_path}/docs/concepts/resolution.html">Resolution</a></li>
 <li><a href="{base_path}/docs/concepts/type-system.html">Type System</a></li>
 <li><a href="{base_path}/docs/concepts/state-model.html">State Model</a></li>
+<li><a href="{base_path}/docs/concepts/fiber-budget.html">Fiber Budget</a></li>
+<li><a href="{base_path}/docs/concepts/constraint-algebra.html">Constraint Algebra</a></li>
+<li><a href="{base_path}/docs/concepts/iterative-resolution.html">Iterative Resolution</a></li>
+<li><a href="{base_path}/docs/concepts/composition.html">Composition</a></li>
+<li><a href="{base_path}/docs/concepts/factorization.html">Factorization</a></li>
+<li><a href="{base_path}/docs/concepts/canonical-form.html">Canonical Form</a></li>
+<li><a href="{base_path}/docs/concepts/observables.html">Observables</a></li>
+<li><a href="{base_path}/docs/concepts/evaluation.html">Evaluation</a></li>
 </ul>
 </li>
 <li class="nav-group"><span>Guides</span>
@@ -290,7 +306,7 @@ fn generate_index_page(
 
     let content = format!(
         r#"<h1>UOR Foundation Ontology</h1>
-<p>Version 1.0.0 — 14 namespaces, 82 classes, 120 properties, 14 named individuals.</p>
+<p>Version 1.1.0 — 14 namespaces, 98 classes, 167 properties, 18 named individuals.</p>
 <table>
 <thead>
 <tr><th>Prefix</th><th>Label</th><th>Classes</th><th>Properties</th><th>Individuals</th><th>Space</th></tr>
@@ -601,9 +617,9 @@ mod tests {
     fn index_has_all_terms() {
         let index = OntologyIndex::from_spec();
         assert_eq!(index.modules.len(), 14);
-        assert_eq!(index.classes.len(), 82);
-        assert_eq!(index.properties.len(), 119);
-        assert_eq!(index.individuals.len(), 14);
+        assert_eq!(index.classes.len(), 98);
+        assert_eq!(index.properties.len(), 166);
+        assert_eq!(index.individuals.len(), 18);
     }
 
     #[test]

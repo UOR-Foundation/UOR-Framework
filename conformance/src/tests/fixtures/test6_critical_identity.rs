@@ -22,8 +22,9 @@ op:criticalIdentity
 <https://uor.foundation/instance/proof-critical-id>
     a                       owl:NamedIndividual, proof:CriticalIdentityProof, proof:Proof ;
     proof:provesIdentity    op:criticalIdentity ;
-    proof:statement         "neg(bnot(x)) = succ(x) for all x in R_n" ;
-    proof:valid             true .
+    proof:witness           <https://uor.foundation/instance/witness-succ> ;
+    proof:criticalIdentity  "neg(bnot(x)) = succ(x) for all x in R_n" ;
+    proof:verified          true .
 
 # op:succ is the composition
 op:succ
@@ -36,8 +37,7 @@ op:neg
 op:bnot
     a               owl:NamedIndividual, op:Involution, op:UnaryOp, op:Operation .
 
-# Witness data
+# Witness data — linked from the proof via proof:witness
 <https://uor.foundation/instance/witness-succ>
-    a                       owl:NamedIndividual, proof:WitnessData ;
-    proof:witnessFor        <https://uor.foundation/instance/proof-critical-id> .
+    a                       owl:NamedIndividual, proof:WitnessData .
 "#;

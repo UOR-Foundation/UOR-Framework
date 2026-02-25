@@ -24,6 +24,13 @@ The UOR Foundation ontology is expressed in OWL 2 DL. All OWL 2 DL restrictions 
 - `schema:Datum` and `schema:Term` are `owl:disjointWith`
 - `partition:IrreducibleSet`, `partition:ReducibleSet`, `partition:UnitSet`, `partition:ExteriorSet`
   are mutually `owl:disjointWith`
+- `partition:Component`, `partition:FiberCoordinate`, `partition:FiberBudget` are mutually `owl:disjointWith`
+- `type:TypeDefinition`, `type:Constraint`, `type:MetricAxis` are mutually `owl:disjointWith`
+- `type:ResidueConstraint`, `type:CarryConstraint`, `type:DepthConstraint`, `type:CompositeConstraint`
+  are mutually `owl:disjointWith`
+- `derivation:DerivationStep` is the superclass of `derivation:RewriteStep` and `derivation:RefinementStep`
+- `morphism:Composition`, `morphism:Identity`, `morphism:Isometry`, `morphism:Embedding`
+  are subclasses of `morphism:Transform`
 - `state:Context`, `state:Binding`, `state:Frame`, `state:Transition` are mutually `owl:disjointWith`
 
 ## Property Constraints
@@ -35,11 +42,13 @@ The UOR Foundation ontology is expressed in OWL 2 DL. All OWL 2 DL restrictions 
 
 ## Named Individuals
 
-All 14 named individuals must be typed with a known OWL class:
+All 18 named individuals must be typed with a known OWL class:
 - 10 operation individuals: `op:neg`, `op:bnot`, `op:succ`, `op:pred`, `op:add`, `op:sub`, `op:mul`, `op:xor`, `op:and`, `op:or`
 - 2 schema individuals: `schema:pi1`, `schema:zero`
 - 1 identity individual: `op:criticalIdentity`
 - 1 group individual: `op:D2n`
+- 3 metric axis individuals: `type:verticalAxis`, `type:horizontalAxis`, `type:diagonalAxis`
+- 1 composition law individual: `morphism:criticalComposition`
 
 ## References
 

@@ -14,7 +14,7 @@ pub const TEST3_TERM_GRAPH: &str = r#"
 # A datum: raw byte content
 <https://uor.foundation/instance/datum-hello>
     a               owl:NamedIndividual, schema:Datum ;
-    schema:byteLen  "5"^^xsd:nonNegativeInteger .
+    schema:value    "5"^^xsd:nonNegativeInteger .
 
 # A literal term that denotes the datum
 <https://uor.foundation/instance/literal-hello>
@@ -24,7 +24,7 @@ pub const TEST3_TERM_GRAPH: &str = r#"
 # An application: applying a function term to an argument
 <https://uor.foundation/instance/app-neg-x>
     a               owl:NamedIndividual, schema:Application ;
-    schema:function <https://uor.foundation/instance/term-neg> ;
+    schema:operator <https://uor.foundation/instance/term-neg> ;
     schema:argument <https://uor.foundation/instance/literal-hello> .
 
 <https://uor.foundation/instance/term-neg>
@@ -32,6 +32,5 @@ pub const TEST3_TERM_GRAPH: &str = r#"
 
 # A triad: (address, glyph, datum) triple
 <https://uor.foundation/instance/triad-1>
-    a               owl:NamedIndividual, schema:Triad ;
-    schema:datum    <https://uor.foundation/instance/datum-hello> .
+    a               owl:NamedIndividual, schema:Triad .
 "#;

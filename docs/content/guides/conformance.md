@@ -17,15 +17,15 @@ cargo run --bin uor-conformance
 |----------|----------|-----------|
 | `public/uor.foundation.json` | JSON-LD 1.1 | `validators/ontology/jsonld.rs` |
 | `public/uor.foundation.json` | OWL 2 DL | `validators/ontology/owl.rs` |
-| Inventory counts | 14/82/119/14 | `validators/ontology/inventory.rs` |
+| Inventory counts | 14/98/166/18 | `validators/ontology/inventory.rs` |
 | `public/uor.foundation.ttl` | RDF 1.1 / Turtle 1.1 | `validators/ontology/rdf.rs` |
-| 7 test instance graphs | SHACL | `validators/ontology/shacl.rs` |
+| 15 test instance graphs | SHACL | `validators/ontology/shacl.rs` |
 
 ### Documentation Conformance
 
 | Check | Validator |
 |-------|-----------|
-| All 82 classes documented | `validators/docs/completeness.rs` |
+| All 98 classes documented | `validators/docs/completeness.rs` |
 | Namespace pages accurate | `validators/docs/accuracy.rs` |
 | Diataxis structure present | `validators/docs/structure.rs` |
 | No broken internal links | `validators/docs/links.rs` |

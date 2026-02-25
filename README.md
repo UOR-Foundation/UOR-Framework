@@ -7,7 +7,7 @@ structure based on Z/(2^n)Z.
 
 ## Ontology
 
-Version 1.0.0: 14 namespaces · 82 classes · 120 properties · 14 named individuals
+Version 1.1.0: 14 namespaces · 98 classes · 167 properties · 18 named individuals
 
 All terms are encoded as typed Rust data in `spec/` and serialized to:
 - `public/uor.foundation.json` — JSON-LD 1.1

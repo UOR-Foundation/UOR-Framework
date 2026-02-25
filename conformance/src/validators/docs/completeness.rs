@@ -74,7 +74,7 @@ pub fn validate(artifacts: &Path) -> Result<ConformanceReport> {
     if missing_classes.is_empty() {
         report.push(TestResult::pass(
             "docs/completeness",
-            "All 82 ontology classes are documented",
+            "All 98 ontology classes are documented",
         ));
     } else {
         report.push(TestResult::fail_with_details(
@@ -90,7 +90,7 @@ pub fn validate(artifacts: &Path) -> Result<ConformanceReport> {
     if missing_properties.is_empty() {
         report.push(TestResult::pass(
             "docs/completeness",
-            "All 119 ontology properties are documented",
+            "All 166 ontology properties are documented",
         ));
     } else {
         report.push(TestResult::fail_with_details(
@@ -106,7 +106,7 @@ pub fn validate(artifacts: &Path) -> Result<ConformanceReport> {
     if missing_individuals.is_empty() {
         report.push(TestResult::pass(
             "docs/completeness",
-            "All 14 named individuals are documented",
+            "All 18 named individuals are documented",
         ));
     } else {
         report.push(TestResult::fail_with_details(

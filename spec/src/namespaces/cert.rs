@@ -125,5 +125,15 @@ fn properties() -> Vec<Property> {
             domain: Some("https://uor.foundation/cert/Certificate"),
             range: XSD_DATETIME,
         },
+        Property {
+            id: "https://uor.foundation/cert/certifies",
+            label: "certifies",
+            comment: "The resource this certificate attests to. Links a certificate \
+                      to the observable, transform, or other entity it covers.",
+            kind: PropertyKind::Object,
+            functional: true,
+            domain: Some("https://uor.foundation/cert/Certificate"),
+            range: OWL_THING,
+        },
     ]
 }

@@ -291,8 +291,8 @@ mod tests {
         let json = to_json_ld(ontology);
         let graph = json["@graph"].as_array().expect("@graph must be array");
         // root ontology + annotation property + 14 ns declarations +
-        // 82 classes + 119 properties + 14 individuals >= 231
-        assert!(graph.len() >= 231, "graph has {} nodes", graph.len());
+        // 98 classes + 166 properties + 18 individuals >= 298
+        assert!(graph.len() >= 298, "graph has {} nodes", graph.len());
     }
 
     #[test]

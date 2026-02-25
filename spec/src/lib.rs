@@ -1,7 +1,7 @@
 //! UOR Foundation ontology encoded as typed Rust data.
 //!
 //! The `uor-spec` crate provides the complete UOR Foundation ontology —
-//! 14 namespaces, 82 classes, 119 properties, and 14 named individuals —
+//! 14 namespaces, 98 classes, 166 properties, and 18 named individuals —
 //! as static Rust data structures, along with serializers that produce
 //! JSON-LD, Turtle, and N-Triples output.
 //!
@@ -39,7 +39,7 @@ pub use model::{
 
 impl Ontology {
     /// Returns the complete UOR Foundation ontology with all 14 namespaces
-    /// and all 8 amendments applied.
+    /// and all 12 amendments applied.
     ///
     /// Assembly order follows the dependency graph specified in the UOR Foundation
     /// completion plan:
@@ -49,7 +49,7 @@ impl Ontology {
     pub fn full() -> &'static Ontology {
         static ONTOLOGY: std::sync::OnceLock<Ontology> = std::sync::OnceLock::new();
         ONTOLOGY.get_or_init(|| Ontology {
-            version: "1.0.0",
+            version: "1.1.0",
             base_iri: "https://uor.foundation/",
             namespaces: vec![
                 namespaces::u::module(),
@@ -88,14 +88,14 @@ mod tests {
             .iter()
             .map(|m| m.classes.len())
             .sum();
-        // 82 classes across 14 namespaces per the UOR Foundation ontology spec.
-        assert_eq!(total, 82);
+        // 98 classes across 14 namespaces per the UOR Foundation ontology spec.
+        assert_eq!(total, 98);
     }
 
     #[test]
     fn property_count() {
-        // 120 = 119 namespace-level properties + 1 global uor:space annotation (Amendment 8).
-        assert_eq!(Ontology::full().property_count(), 120);
+        // 167 = 166 namespace-level properties + 1 global uor:space annotation (Amendment 8).
+        assert_eq!(Ontology::full().property_count(), 167);
     }
 
     #[test]
@@ -105,9 +105,10 @@ mod tests {
             .iter()
             .map(|m| m.individuals.len())
             .sum();
-        // 14 individuals: 10 operations (Amendment 1) + pi1, zero (Amendment 2)
-        // + criticalIdentity (Amendment 3) + D2n (Amendment 4).
-        assert_eq!(total, 14);
+        // 18 individuals: 10 operations (Amendment 1) + pi1, zero (Amendment 2)
+        // + criticalIdentity (Amendment 3) + D2n (Amendment 4) + 3 metric axes
+        // (Amendment 10) + criticalComposition (Amendment 12).
+        assert_eq!(total, 18);
     }
 
     #[test]

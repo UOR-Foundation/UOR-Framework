@@ -37,7 +37,7 @@ pub const TEST7_END_TO_END: &str = r#"
 # 4. Partition — the partition of R_8 produced by the resolver
 <https://uor.foundation/instance/e2e/partition>
     a                   owl:NamedIndividual, partition:Partition ;
-    schema:ringQuantum  "8"^^xsd:nonNegativeInteger .
+    partition:quantum   "8"^^xsd:nonNegativeInteger .
 
 # 5. Observable — a metric measurement on the resolved value
 <https://uor.foundation/instance/e2e/observable>
