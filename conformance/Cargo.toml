@@ -4,6 +4,7 @@ version.workspace = true
 edition.workspace = true
 license.workspace = true
 description = "UOR Framework conformance suite — validates all artifacts against professional standards"
+publish = false
 
 [dependencies]
 uor-spec = { path = "../spec" }

@@ -5,8 +5,10 @@ resolver = "2"
 [workspace.package]
 version = "1.1.0"
 edition = "2021"
+rust-version = "1.70"
 license = "Apache-2.0"
 repository = "https://github.com/UOR-Foundation/UOR-Framework"
+homepage = "https://uor.foundation/"
 
 [workspace.dependencies]
 # Serialization

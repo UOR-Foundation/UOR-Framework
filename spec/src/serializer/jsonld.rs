@@ -259,6 +259,7 @@ fn build_rdf_list_rest(items: &[&str]) -> Value {
 }
 
 #[cfg(test)]
+#[allow(clippy::expect_used)]
 mod tests {
     use super::*;
     use crate::Ontology;

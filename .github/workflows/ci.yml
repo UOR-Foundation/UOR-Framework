@@ -35,10 +35,13 @@ jobs:
         run: cargo fmt --check
 
       - name: Run Clippy
-        run: cargo clippy -- -D warnings
+        run: cargo clippy --all-targets -- -D warnings
 
       - name: Run tests
         run: cargo test
+
+      - name: Verify crate packaging (dry-run)
+        run: cargo publish --dry-run -p uor-spec
 
       - name: Build ontology artifacts
         run: cargo run --bin uor-build
