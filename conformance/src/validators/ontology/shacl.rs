@@ -435,7 +435,11 @@ fn validate_analytical_completeness(src: &str) -> Result<(), String> {
         "resolver:ConstraintNerve",
         "Missing resolver:ConstraintNerve",
     )?;
-    check_contains(src, "op:DC_1", "Missing differential calculus identity DC_1")?;
+    check_contains(
+        src,
+        "op:DC_1",
+        "Missing differential calculus identity DC_1",
+    )?;
     check_contains(src, "op:HA_1", "Missing homological identity HA_1")?;
     check_contains(src, "op:IT_7a", "Missing index theorem identity IT_7a")?;
     check_contains(src, "op:IT_7d", "Missing completeness criterion IT_7d")?;
