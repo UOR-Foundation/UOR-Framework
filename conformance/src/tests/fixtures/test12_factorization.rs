@@ -19,7 +19,7 @@ pub const TEST12_FACTORIZATION: &str = r#"
 # 1. Query — coordinate query for factorization
 <https://uor.foundation/instance/fact/query>
     a               owl:NamedIndividual, query:CoordinateQuery ;
-    query:coordinate "42"^^xsd:integer .
+    query:hasCoordinateKind query:StratumCoordinate .
 
 # 2. Resolver — dihedral factorization
 <https://uor.foundation/instance/fact/resolver>

@@ -104,14 +104,16 @@ pub trait ChainFunctor<P: Primitives> {}
 pub mod boundary_squared_zero {
     /// `forAll`
     pub const FOR_ALL: &str = "c ∈ C_{k+1}";
+    /// `hasVerificationStatus` -> `Derivable`
+    pub const HAS_VERIFICATION_STATUS: &str = "https://uor.foundation/op/Derivable";
     /// `lhs`
     pub const LHS: &str = "∂_k(∂_{k+1}(c))";
     /// `rhs`
     pub const RHS: &str = "0";
-    /// `verificationPath`
-    pub const VERIFICATION_PATH: &str = "ChainComplex → BoundaryOperator → ∂² = 0";
-    /// `verificationStatus`
-    pub const VERIFICATION_STATUS: &str = "derivable";
+    /// `verificationDomain` -> `Topological`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Topological";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str = "ChainComplex → BoundaryOperator → ∂² = 0";
 }
 
 /// The nerve functor N: constraints → simplicial complex.
@@ -124,27 +126,31 @@ pub mod chain_functor_c {}
 pub mod psi_4 {
     /// `forAll`
     pub const FOR_ALL: &str = "simplicial complex K";
+    /// `hasVerificationStatus` -> `Derivable`
+    pub const HAS_VERIFICATION_STATUS: &str = "https://uor.foundation/op/Derivable";
     /// `lhs`
     pub const LHS: &str = "β_k(K)";
     /// `rhs`
     pub const RHS: &str = "rank(H_k(K))";
-    /// `verificationPath`
-    pub const VERIFICATION_PATH: &str = "HomologyGroup → rank → BettiNumber";
-    /// `verificationStatus`
-    pub const VERIFICATION_STATUS: &str = "derivable";
+    /// `verificationDomain` -> `Topological`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Topological";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str = "HomologyGroup → rank → BettiNumber";
 }
 
 /// Index bridge: connects Euler characteristic to alternating Betti sum.
 pub mod index_bridge {
     /// `forAll`
     pub const FOR_ALL: &str = "finite simplicial complex K";
+    /// `hasVerificationStatus` -> `Derivable`
+    pub const HAS_VERIFICATION_STATUS: &str = "https://uor.foundation/op/Derivable";
     /// `lhs`
     pub const LHS: &str = "χ(K)";
     /// `rhs`
     pub const RHS: &str = "Σ_k (-1)^k β_k";
-    /// `verificationPath`
-    pub const VERIFICATION_PATH: &str =
+    /// `verificationDomain` -> `Topological`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Topological";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str =
         "SimplicialComplex → ChainComplex → HomologyGroup → BettiNumber → alternating sum";
-    /// `verificationStatus`
-    pub const VERIFICATION_STATUS: &str = "derivable";
 }

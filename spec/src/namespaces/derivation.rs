@@ -10,7 +10,9 @@
 //! **Space classification:** `bridge` — kernel-produced, user-consumed.
 
 use crate::model::iris::*;
-use crate::model::{Class, Namespace, NamespaceModule, Property, PropertyKind, Space};
+use crate::model::{
+    Class, Individual, IndividualValue, Namespace, NamespaceModule, Property, PropertyKind, Space,
+};
 
 /// Returns the `derivation/` namespace module.
 #[must_use]
@@ -27,7 +29,7 @@ pub fn module() -> NamespaceModule {
         },
         classes: classes(),
         properties: properties(),
-        individuals: vec![],
+        individuals: individuals(),
     }
 }
 
@@ -69,6 +71,16 @@ fn classes() -> Vec<Class> {
                       Complements RewriteStep (term-level) in the derivation \
                       hierarchy.",
             subclass_of: &["https://uor.foundation/derivation/DerivationStep"],
+            disjoint_with: &[],
+        },
+        // Amendment 23: Typed controlled vocabulary class
+        Class {
+            id: "https://uor.foundation/derivation/RewriteRule",
+            label: "RewriteRule",
+            comment: "A named rewrite rule that can be applied in a derivation step. \
+                      Each RewriteRule individual represents a specific algebraic law \
+                      or normalization strategy used during term rewriting.",
+            subclass_of: &[OWL_THING],
             disjoint_with: &[],
         },
         Class {
@@ -146,15 +158,29 @@ fn properties() -> Vec<Property> {
             domain: Some("https://uor.foundation/derivation/RewriteStep"),
             range: "https://uor.foundation/schema/Term",
         },
+        // derivation:rule property removed by Amendment 23 (replaced by hasRewriteRule)
+        // Amendment 23: Typed controlled vocabulary properties
         Property {
-            id: "https://uor.foundation/derivation/rule",
-            label: "rule",
-            comment: "The rewrite rule applied in this step (e.g., 'critical_identity', \
-                      'involution', 'associativity').",
-            kind: PropertyKind::Datatype,
+            id: "https://uor.foundation/derivation/hasRewriteRule",
+            label: "hasRewriteRule",
+            comment: "The typed rewrite rule applied in this step. Provides a \
+                      structured reference to a named RewriteRule individual, \
+                      complementing the string-valued derivation:rule property.",
+            kind: PropertyKind::Object,
             functional: true,
             domain: Some("https://uor.foundation/derivation/RewriteStep"),
-            range: XSD_STRING,
+            range: "https://uor.foundation/derivation/RewriteRule",
+        },
+        Property {
+            id: "https://uor.foundation/derivation/groundedIn",
+            label: "groundedIn",
+            comment: "The algebraic identity that grounds this rewrite rule. \
+                      Links a RewriteRule to the op:Identity individual that \
+                      justifies its application.",
+            kind: PropertyKind::Object,
+            functional: true,
+            domain: Some("https://uor.foundation/derivation/RewriteRule"),
+            range: "https://uor.foundation/op/Identity",
         },
         Property {
             id: "https://uor.foundation/derivation/stepCount",
@@ -210,6 +236,63 @@ fn properties() -> Vec<Property> {
             functional: true,
             domain: Some("https://uor.foundation/derivation/RefinementStep"),
             range: XSD_NON_NEGATIVE_INTEGER,
+        },
+    ]
+}
+
+// Amendment 23: Typed controlled vocabulary individuals
+fn individuals() -> Vec<Individual> {
+    vec![
+        Individual {
+            id: "https://uor.foundation/derivation/CriticalIdentityRule",
+            type_: "https://uor.foundation/derivation/RewriteRule",
+            label: "CriticalIdentityRule",
+            comment: "The rewrite rule applying the critical identity: \
+                      neg(bnot(x)) → succ(x). Grounded in op:criticalIdentity.",
+            properties: &[(
+                "https://uor.foundation/derivation/groundedIn",
+                IndividualValue::IriRef("https://uor.foundation/op/criticalIdentity"),
+            )],
+        },
+        Individual {
+            id: "https://uor.foundation/derivation/InvolutionRule",
+            type_: "https://uor.foundation/derivation/RewriteRule",
+            label: "InvolutionRule",
+            comment: "The rewrite rule applying involution cancellation: \
+                      f(f(x)) → x for any involution f.",
+            properties: &[],
+        },
+        Individual {
+            id: "https://uor.foundation/derivation/AssociativityRule",
+            type_: "https://uor.foundation/derivation/RewriteRule",
+            label: "AssociativityRule",
+            comment: "The rewrite rule applying associativity to re-bracket \
+                      nested binary operations.",
+            properties: &[],
+        },
+        Individual {
+            id: "https://uor.foundation/derivation/CommutativityRule",
+            type_: "https://uor.foundation/derivation/RewriteRule",
+            label: "CommutativityRule",
+            comment: "The rewrite rule applying commutativity to reorder operands \
+                      of commutative operations.",
+            properties: &[],
+        },
+        Individual {
+            id: "https://uor.foundation/derivation/IdentityElementRule",
+            type_: "https://uor.foundation/derivation/RewriteRule",
+            label: "IdentityElementRule",
+            comment: "The rewrite rule eliminating identity elements: \
+                      add(x, 0) → x, mul(x, 1) → x, xor(x, 0) → x.",
+            properties: &[],
+        },
+        Individual {
+            id: "https://uor.foundation/derivation/NormalizationRule",
+            type_: "https://uor.foundation/derivation/RewriteRule",
+            label: "NormalizationRule",
+            comment: "The rewrite rule normalizing compound expressions to \
+                      canonical ordering (e.g., sorting operands by address).",
+            properties: &[],
         },
     ]
 }

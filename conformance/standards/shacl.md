@@ -2,19 +2,19 @@
 
 ## Overview
 
-The UOR conformance suite validates 23 OWL instance graphs against SHACL NodeShapes
+The UOR conformance suite validates 29 OWL instance graphs against SHACL NodeShapes
 defined in `conformance/shapes/uor-shapes.ttl`. One NodeShape is defined per
-ontology class (123 total).
+ontology class (130 total).
 
 ## Shape File
 
 `conformance/shapes/uor-shapes.ttl` contains:
-- 123 `sh:NodeShape` declarations (one per class)
+- 130 `sh:NodeShape` declarations (one per class)
 - `sh:targetClass` targeting each OWL class
 - Cardinality constraints (`sh:minCount`, `sh:maxCount`) on required properties
 - Type constraints (`sh:class`, `sh:datatype`) on property values
 
-## The 23 Instance Tests
+## The 29 Instance Tests
 
 | Test | File | Validates |
 |------|------|-----------|
@@ -40,7 +40,13 @@ ontology class (123 total).
 | test20_sheaf_consistency | `tests/fixtures/test20_sheaf_consistency.rs` | `cohomology:Sheaf` → `Stalk` → `Section` → `GluingObstruction` |
 | test21_topological_delta | `tests/fixtures/test21_topological_delta.rs` | `morphism:TopologicalDelta` with Betti/Euler/nerve before+after |
 | test22_index_bridge | `tests/fixtures/test22_index_bridge.rs` | Full φ+ψ pipeline (6 phi_ + 6 psi_ individuals) |
-| test23_identity_grounding | `tests/fixtures/test23_identity_grounding.rs` | `op:verificationStatus`/`verificationPath` spot-check |
+| test23_identity_grounding | `tests/fixtures/test23_identity_grounding.rs` | `op:hasVerificationStatus`/`verificationDomain`/`verificationPathNote` spot-check |
+| test24_verification_domain | `tests/fixtures/test24_verification_domain.rs` | `VerificationDomain`/`VerificationStatus` vocabulary + typed identity grounding |
+| test25_geometric_character | `tests/fixtures/test25_geometric_character.rs` | `GeometricCharacter` vocabulary + typed operation links |
+| test26_complexity_class | `tests/fixtures/test26_complexity_class.rs` | `ComplexityClass` vocabulary + typed resolver links |
+| test27_rewrite_rule | `tests/fixtures/test27_rewrite_rule.rs` | `RewriteRule` vocabulary + `groundedIn` cross-reference |
+| test28_measurement_unit | `tests/fixtures/test28_measurement_unit.rs` | `MeasurementUnit` vocabulary + typed observable links |
+| test29_coordinate_kind | `tests/fixtures/test29_coordinate_kind.rs` | `CoordinateKind` vocabulary + typed coordinate queries |
 
 ## Structural Validation
 

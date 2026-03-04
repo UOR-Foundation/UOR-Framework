@@ -87,7 +87,8 @@ uor-sh:RingShape
 uor-sh:OperationShape
     a               sh:NodeShape ;
     sh:targetClass  op:Operation ;
-    rdfs:label      "OperationShape" .
+    rdfs:label      "OperationShape" ;
+    sh:property [ sh:path op:hasGeometricCharacter ; sh:minCount 1 ; sh:maxCount 1 ; sh:class op:GeometricCharacter ] .
 
 uor-sh:UnaryOpShape
     a               sh:NodeShape ;
@@ -115,7 +116,13 @@ uor-sh:InvolutionShape
 uor-sh:IdentityShape
     a               sh:NodeShape ;
     sh:targetClass  op:Identity ;
-    rdfs:label      "IdentityShape" .
+    rdfs:label      "IdentityShape" ;
+    sh:property [ sh:path op:lhs ; sh:minCount 1 ; sh:maxCount 1 ] ;
+    sh:property [ sh:path op:rhs ; sh:minCount 1 ; sh:maxCount 1 ] ;
+    sh:property [ sh:path op:forAll ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
+    sh:property [ sh:path op:verificationDomain ; sh:minCount 1 ; sh:class op:VerificationDomain ] ;
+    sh:property [ sh:path op:hasVerificationStatus ; sh:minCount 1 ; sh:maxCount 1 ; sh:class op:VerificationStatus ] ;
+    sh:property [ sh:path op:verificationPathNote ; sh:maxCount 1 ; sh:datatype xsd:string ] .
 
 uor-sh:GroupShape
     a               sh:NodeShape ;
@@ -1186,3 +1193,40 @@ uor-sh:GluingObstructionShape
         sh:maxCount 1 ;
         sh:class    cohomology:CohomologyGroup ;
     ] .
+
+# ── Amendment 23: Typed controlled vocabulary shapes (7) ────────────────────
+
+uor-sh:VerificationDomainShape
+    a               sh:NodeShape ;
+    sh:targetClass  op:VerificationDomain ;
+    rdfs:label      "VerificationDomainShape" .
+
+uor-sh:VerificationStatusShape
+    a               sh:NodeShape ;
+    sh:targetClass  op:VerificationStatus ;
+    rdfs:label      "VerificationStatusShape" .
+
+uor-sh:GeometricCharacterShape
+    a               sh:NodeShape ;
+    sh:targetClass  op:GeometricCharacter ;
+    rdfs:label      "GeometricCharacterShape" .
+
+uor-sh:ComplexityClassShape
+    a               sh:NodeShape ;
+    sh:targetClass  resolver:ComplexityClass ;
+    rdfs:label      "ComplexityClassShape" .
+
+uor-sh:RewriteRuleShape
+    a               sh:NodeShape ;
+    sh:targetClass  derivation:RewriteRule ;
+    rdfs:label      "RewriteRuleShape" .
+
+uor-sh:MeasurementUnitShape
+    a               sh:NodeShape ;
+    sh:targetClass  observable:MeasurementUnit ;
+    rdfs:label      "MeasurementUnitShape" .
+
+uor-sh:CoordinateKindShape
+    a               sh:NodeShape ;
+    sh:targetClass  query:CoordinateKind ;
+    rdfs:label      "CoordinateKindShape" .

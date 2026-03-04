@@ -109,23 +109,23 @@ impl fmt::Display for FiberState {
 /// The geometric character of an operation.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum GeometricCharacter {
-    /// ring_reflection geometric character.
+    /// Reflection through the origin of the additive ring: neg(x) = -x mod 2^n. One of the two generators of D_{2^n}.
     RingReflection,
-    /// hypercube_reflection geometric character.
+    /// Reflection through the centre of the hypercube: bnot(x) = (2^n-1) ⊕ x. The second generator of D_{2^n}.
     HypercubeReflection,
-    /// rotation geometric character.
+    /// Rotation by one step: succ(x) = (x+1) mod 2^n. The composition of the two reflections.
     Rotation,
-    /// rotation_inverse geometric character.
+    /// Rotation by one step in the reverse direction: pred(x) = (x-1) mod 2^n.
     RotationInverse,
-    /// translation geometric character.
+    /// Translation along the ring axis: add(x,y), sub(x,y). Preserves Hamming distance locally.
     Translation,
-    /// scaling geometric character.
+    /// Scaling along the ring axis: mul(x,y) = (x×y) mod 2^n.
     Scaling,
-    /// hypercube_translation geometric character.
+    /// Translation along the hypercube axis: xor(x,y) = x ⊕ y. Preserves ring distance locally.
     HypercubeTranslation,
-    /// hypercube_projection geometric character.
+    /// Projection onto a hypercube face: and(x,y) = x ∧ y. Idempotent; collapses dimensions.
     HypercubeProjection,
-    /// hypercube_join geometric character.
+    /// Join on the hypercube lattice: or(x,y) = x ∨ y. Idempotent; dual to projection.
     HypercubeJoin,
 }
 
@@ -141,6 +141,156 @@ impl fmt::Display for GeometricCharacter {
             Self::HypercubeTranslation => f.write_str("hypercube_translation"),
             Self::HypercubeProjection => f.write_str("hypercube_projection"),
             Self::HypercubeJoin => f.write_str("hypercube_join"),
+        }
+    }
+}
+
+/// The mathematical domain in which an identity is established.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum VerificationDomain {
+    /// Established by exhaustive traversal of R_n. Valid for all identities where the ring is finite.
+    Enumerative,
+    /// Established by equational reasoning from ring or group axioms. Covers derivations via associativity, commutativity, inverse laws, and group presentations.
+    Algebraic,
+    /// Established by isometry, symmetry, or GeometricCharacter arguments. Covers dihedral actions, fixed-point analysis, automorphism groups, and affine embeddings.
+    Geometric,
+    /// Established via discrete differential calculus or metric analysis. Covers ring/Hamming derivatives (DC_), metric divergence (AM_), and adiabatic scheduling (AR_).
+    Analytical,
+    /// Established via entropy, Landauer bounds, or Boltzmann distributions. Covers fiber entropy (TH_), reversible computation (RC_), and phase transitions.
+    Thermodynamic,
+    /// Established via simplicial homology, cohomology, or constraint nerve analysis. Covers homological algebra (HA_) and ψ-pipeline identities.
+    Topological,
+    /// Established by the inter-algebra map structure of the resolution pipeline. Covers φ-maps (phi_1–phi_6) and ψ-maps (psi_1–psi_6).
+    Pipeline,
+    /// Established by the composition of Analytical and Topological reasoning. The only domain requiring multiple op:verificationDomain assertions. Covers the UOR Index Theorem (IT_7a–IT_7d).
+    IndexTheoretic,
+}
+
+impl fmt::Display for VerificationDomain {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Enumerative => f.write_str("enumerative"),
+            Self::Algebraic => f.write_str("algebraic"),
+            Self::Geometric => f.write_str("geometric"),
+            Self::Analytical => f.write_str("analytical"),
+            Self::Thermodynamic => f.write_str("thermodynamic"),
+            Self::Topological => f.write_str("topological"),
+            Self::Pipeline => f.write_str("pipeline"),
+            Self::IndexTheoretic => f.write_str("index_theoretic"),
+        }
+    }
+}
+
+/// The verification status of an identity: verifiable or derivable.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum VerificationStatus {
+    /// The identity can be confirmed by exhaustive enumeration over R_n.
+    Verifiable,
+    /// The identity follows from previously established axioms or definitions by equational reasoning.
+    Derivable,
+}
+
+impl fmt::Display for VerificationStatus {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Verifiable => f.write_str("verifiable"),
+            Self::Derivable => f.write_str("derivable"),
+        }
+    }
+}
+
+/// The computational complexity classification of a resolver.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum ComplexityClass {
+    /// O(1) complexity — the resolver runs in constant time regardless of ring size.
+    Constant,
+    /// O(log n) complexity — the resolver runs in logarithmic time in the quantum level.
+    Logarithmic,
+    /// O(n) complexity — the resolver runs in time linear in the quantum level.
+    Linear,
+    /// O(2^n) complexity — the resolver runs in time exponential in the quantum level.
+    Exponential,
+}
+
+impl fmt::Display for ComplexityClass {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Constant => f.write_str("constant"),
+            Self::Logarithmic => f.write_str("logarithmic"),
+            Self::Linear => f.write_str("linear"),
+            Self::Exponential => f.write_str("exponential"),
+        }
+    }
+}
+
+/// A named rewrite rule used in term rewriting derivations.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum RewriteRule {
+    /// The rewrite rule applying the critical identity: neg(bnot(x)) → succ(x). Grounded in op:criticalIdentity.
+    CriticalIdentity,
+    /// The rewrite rule applying involution cancellation: f(f(x)) → x for any involution f.
+    Involution,
+    /// The rewrite rule applying associativity to re-bracket nested binary operations.
+    Associativity,
+    /// The rewrite rule applying commutativity to reorder operands of commutative operations.
+    Commutativity,
+    /// The rewrite rule eliminating identity elements: add(x, 0) → x, mul(x, 1) → x, xor(x, 0) → x.
+    IdentityElement,
+    /// The rewrite rule normalizing compound expressions to canonical ordering (e.g., sorting operands by address).
+    Normalization,
+}
+
+impl fmt::Display for RewriteRule {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::CriticalIdentity => f.write_str("critical_identity"),
+            Self::Involution => f.write_str("involution"),
+            Self::Associativity => f.write_str("associativity"),
+            Self::Commutativity => f.write_str("commutativity"),
+            Self::IdentityElement => f.write_str("identity_element"),
+            Self::Normalization => f.write_str("normalization"),
+        }
+    }
+}
+
+/// A unit of measurement for observable quantities.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum MeasurementUnit {
+    /// Information-theoretic unit: the measurement is in bits (e.g., Hamming weight, entropy).
+    Bits,
+    /// Ring-arithmetic unit: the measurement is in ring distance steps (|x - y| mod 2^n).
+    RingSteps,
+    /// Dimensionless unit: the measurement is a pure number (e.g., winding number, Betti number, spectral gap).
+    Dimensionless,
+}
+
+impl fmt::Display for MeasurementUnit {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Bits => f.write_str("bits"),
+            Self::RingSteps => f.write_str("ring_steps"),
+            Self::Dimensionless => f.write_str("dimensionless"),
+        }
+    }
+}
+
+/// A classification of coordinate types for coordinate queries.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum CoordinateKind {
+    /// The stratum coordinate: the layer position of a datum within the ring's stratification.
+    Stratum,
+    /// The spectrum coordinate: the spectral decomposition of a datum under the ring's Fourier analysis.
+    Spectrum,
+    /// The address coordinate: the content-addressable position of a datum in the Braille glyph encoding.
+    Address,
+}
+
+impl fmt::Display for CoordinateKind {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Stratum => f.write_str("stratum"),
+            Self::Spectrum => f.write_str("spectrum"),
+            Self::Address => f.write_str("address"),
         }
     }
 }

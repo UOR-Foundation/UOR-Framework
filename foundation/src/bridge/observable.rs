@@ -4,18 +4,19 @@
 //!
 //! Space: Bridge
 
+use crate::enums::MeasurementUnit;
 use crate::Primitives;
 
 /// A measurable quantity in the UOR Framework. All observables are kernel-computed and user-consumed.
 pub trait Observable<P: Primitives> {
     /// The numeric value of an observable measurement.
     fn value(&self) -> P::Decimal;
-    /// The unit of measurement for this observable (e.g., 'bits', 'ring_steps', 'dimensionless').
-    fn unit(&self) -> &P::String;
     /// The source object of this measurement (datum, partition, or path start point).
     fn source(&self) -> &P::String;
     /// The target object of this measurement (for metrics and path-end measurements).
     fn target(&self) -> &P::String;
+    /// The measurement unit of this observable. Replaces the string-valued observable:unit property with a typed reference to a MeasurementUnit individual.
+    fn has_unit(&self) -> MeasurementUnit;
 }
 
 /// An observable measuring stratum-level properties: position within the ring's layer structure.
@@ -112,3 +113,12 @@ pub trait BettiNumber<P: Primitives>: TopologicalObservable<P> {}
 
 /// The smallest positive eigenvalue of the constraint nerve Laplacian. Controls the convergence rate of iterative resolution: larger gap = faster convergence.
 pub trait SpectralGap<P: Primitives>: TopologicalObservable<P> {}
+
+/// Information-theoretic unit: the measurement is in bits (e.g., Hamming weight, entropy).
+pub mod bits {}
+
+/// Ring-arithmetic unit: the measurement is in ring distance steps (|x - y| mod 2^n).
+pub mod ring_steps {}
+
+/// Dimensionless unit: the measurement is a pure number (e.g., winding number, Betti number, spectral gap).
+pub mod dimensionless {}

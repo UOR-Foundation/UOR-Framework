@@ -42,7 +42,7 @@ The UOR Foundation ontology is expressed in OWL 2 DL. All OWL 2 DL restrictions 
 
 ## Named Individuals
 
-All 269 named individuals must be typed with a known OWL class:
+All 304 named individuals must be typed with a known OWL class:
 - 10 operation individuals: `op:neg`, `op:bnot`, `op:succ`, `op:pred`, `op:add`, `op:sub`, `op:mul`, `op:xor`, `op:and`, `op:or`
 - 2 schema individuals: `schema:pi1`, `schema:zero`
 - 1 identity individual: `op:criticalIdentity`
@@ -53,6 +53,13 @@ All 269 named individuals must be typed with a known OWL class:
 - 250 `op:Identity` individuals (algebraic identities across all algebra groups)
 - 2 homology functor individuals: `homology:nerveFunctorN`, `homology:chainFunctorC`
 - 4 cohomology identity individuals: `cohomology:coboundarySquaredZero`, `cohomology:deRhamDuality`, `cohomology:sheafCohomologyBridge`, `cohomology:localGlobalPrinciple`
+- 8 verification domain individuals: `op:Enumerative`, `op:Algebraic`, `op:Geometric`, `op:Analytical`, `op:Thermodynamic`, `op:Topological`, `op:Pipeline`, `op:IndexTheoretic`
+- 2 verification status individuals: `op:Verifiable`, `op:Derivable`
+- 9 geometric character individuals: `op:RingReflection`, `op:HypercubeReflection`, `op:Rotation`, `op:RotationInverse`, `op:Translation`, `op:Scaling`, `op:HypercubeTranslation`, `op:HypercubeProjection`, `op:HypercubeJoin`
+- 4 complexity class individuals: `resolver:ConstantTime`, `resolver:LogarithmicTime`, `resolver:LinearTime`, `resolver:ExponentialTime`
+- 6 rewrite rule individuals: `derivation:CriticalIdentityRule`, `derivation:InvolutionRule`, `derivation:AssociativityRule`, `derivation:CommutativityRule`, `derivation:IdentityElementRule`, `derivation:NormalizationRule`
+- 3 measurement unit individuals: `observable:Bits`, `observable:RingSteps`, `observable:Dimensionless`
+- 3 coordinate kind individuals: `query:StratumCoordinate`, `query:SpectrumCoordinate`, `query:AddressCoordinate`
 
 ## References
 

@@ -41,7 +41,7 @@ All observables share a common measurement interface:
 | Property | Range | Description |
 |----------|-------|-------------|
 | {@prop https://uor.foundation/observable/value} | xsd:decimal | Numeric measurement value |
-| {@prop https://uor.foundation/observable/unit} | xsd:string | Unit of measurement |
+| {@prop https://uor.foundation/observable/hasUnit} | xsd:string | Unit of measurement |
 | {@prop https://uor.foundation/observable/source} | owl:Thing | Source object of the measurement |
 | {@prop https://uor.foundation/observable/target} | owl:Thing | Target object (for pairwise metrics) |
 

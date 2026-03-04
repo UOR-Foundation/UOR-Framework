@@ -362,11 +362,15 @@ fn individuals() -> Vec<Individual> {
                     IndividualValue::Str("c \u{2208} C_{k+1}"),
                 ),
                 (
-                    "https://uor.foundation/op/verificationStatus",
-                    IndividualValue::Str("derivable"),
+                    "https://uor.foundation/op/hasVerificationStatus",
+                    IndividualValue::IriRef("https://uor.foundation/op/Derivable"),
                 ),
                 (
-                    "https://uor.foundation/op/verificationPath",
+                    "https://uor.foundation/op/verificationDomain",
+                    IndividualValue::IriRef("https://uor.foundation/op/Topological"),
+                ),
+                (
+                    "https://uor.foundation/op/verificationPathNote",
                     IndividualValue::Str("ChainComplex \u{2192} BoundaryOperator \u{2192} \u{2202}\u{00b2} = 0"),
                 ),
             ],
@@ -404,11 +408,15 @@ fn individuals() -> Vec<Individual> {
                     IndividualValue::Str("simplicial complex K"),
                 ),
                 (
-                    "https://uor.foundation/op/verificationStatus",
-                    IndividualValue::Str("derivable"),
+                    "https://uor.foundation/op/hasVerificationStatus",
+                    IndividualValue::IriRef("https://uor.foundation/op/Derivable"),
                 ),
                 (
-                    "https://uor.foundation/op/verificationPath",
+                    "https://uor.foundation/op/verificationDomain",
+                    IndividualValue::IriRef("https://uor.foundation/op/Topological"),
+                ),
+                (
+                    "https://uor.foundation/op/verificationPathNote",
                     IndividualValue::Str("HomologyGroup \u{2192} rank \u{2192} BettiNumber"),
                 ),
             ],
@@ -432,11 +440,15 @@ fn individuals() -> Vec<Individual> {
                     IndividualValue::Str("finite simplicial complex K"),
                 ),
                 (
-                    "https://uor.foundation/op/verificationStatus",
-                    IndividualValue::Str("derivable"),
+                    "https://uor.foundation/op/hasVerificationStatus",
+                    IndividualValue::IriRef("https://uor.foundation/op/Derivable"),
                 ),
                 (
-                    "https://uor.foundation/op/verificationPath",
+                    "https://uor.foundation/op/verificationDomain",
+                    IndividualValue::IriRef("https://uor.foundation/op/Topological"),
+                ),
+                (
+                    "https://uor.foundation/op/verificationPathNote",
                     IndividualValue::Str("SimplicialComplex \u{2192} ChainComplex \u{2192} HomologyGroup \u{2192} BettiNumber \u{2192} alternating sum"),
                 ),
             ],

@@ -7,7 +7,7 @@
 //! **Space classification:** `bridge` — kernel-computed, user-requested.
 
 use crate::model::iris::*;
-use crate::model::{Class, Namespace, NamespaceModule, Property, PropertyKind, Space};
+use crate::model::{Class, Individual, Namespace, NamespaceModule, Property, PropertyKind, Space};
 
 /// Returns the `observable/` namespace module.
 #[must_use]
@@ -25,7 +25,7 @@ pub fn module() -> NamespaceModule {
         },
         classes: classes(),
         properties: properties(),
-        individuals: vec![],
+        individuals: individuals(),
     }
 }
 
@@ -239,6 +239,17 @@ fn classes() -> Vec<Class> {
             subclass_of: &["https://uor.foundation/observable/HolonomyObservable"],
             disjoint_with: &[],
         },
+        // Amendment 23: Typed controlled vocabulary class
+        Class {
+            id: "https://uor.foundation/observable/MeasurementUnit",
+            label: "MeasurementUnit",
+            comment: "A unit of measurement for observable quantities. Each \
+                      MeasurementUnit individual names a specific unit (bits, \
+                      ring steps, dimensionless) replacing the string-valued \
+                      observable:unit property.",
+            subclass_of: &[OWL_THING],
+            disjoint_with: &[],
+        },
         // Amendment 18: Analytical Observables
         Class {
             id: "https://uor.foundation/observable/Jacobian",
@@ -291,16 +302,7 @@ fn properties() -> Vec<Property> {
             domain: Some("https://uor.foundation/observable/Observable"),
             range: XSD_DECIMAL,
         },
-        Property {
-            id: "https://uor.foundation/observable/unit",
-            label: "unit",
-            comment: "The unit of measurement for this observable (e.g., 'bits', \
-                      'ring_steps', 'dimensionless').",
-            kind: PropertyKind::Datatype,
-            functional: true,
-            domain: Some("https://uor.foundation/observable/Observable"),
-            range: XSD_STRING,
-        },
+        // observable:unit property removed by Amendment 23 (replaced by hasUnit)
         Property {
             id: "https://uor.foundation/observable/source",
             label: "source",
@@ -320,6 +322,18 @@ fn properties() -> Vec<Property> {
             functional: true,
             domain: Some("https://uor.foundation/observable/Observable"),
             range: OWL_THING,
+        },
+        // Amendment 23: Typed controlled vocabulary property
+        Property {
+            id: "https://uor.foundation/observable/hasUnit",
+            label: "hasUnit",
+            comment: "The measurement unit of this observable. Replaces the \
+                      string-valued observable:unit property with a typed \
+                      reference to a MeasurementUnit individual.",
+            kind: PropertyKind::Object,
+            functional: true,
+            domain: Some("https://uor.foundation/observable/Observable"),
+            range: "https://uor.foundation/observable/MeasurementUnit",
         },
         // Amendment 18: Analytical Observable properties
         Property {
@@ -349,6 +363,36 @@ fn properties() -> Vec<Property> {
             functional: true,
             domain: Some("https://uor.foundation/observable/TopologicalObservable"),
             range: XSD_NON_NEGATIVE_INTEGER,
+        },
+    ]
+}
+
+// Amendment 23: Typed controlled vocabulary individuals
+fn individuals() -> Vec<Individual> {
+    vec![
+        Individual {
+            id: "https://uor.foundation/observable/Bits",
+            type_: "https://uor.foundation/observable/MeasurementUnit",
+            label: "Bits",
+            comment: "Information-theoretic unit: the measurement is in bits \
+                      (e.g., Hamming weight, entropy).",
+            properties: &[],
+        },
+        Individual {
+            id: "https://uor.foundation/observable/RingSteps",
+            type_: "https://uor.foundation/observable/MeasurementUnit",
+            label: "RingSteps",
+            comment: "Ring-arithmetic unit: the measurement is in ring distance \
+                      steps (|x - y| mod 2^n).",
+            properties: &[],
+        },
+        Individual {
+            id: "https://uor.foundation/observable/Dimensionless",
+            type_: "https://uor.foundation/observable/MeasurementUnit",
+            label: "Dimensionless",
+            comment: "Dimensionless unit: the measurement is a pure number \
+                      (e.g., winding number, Betti number, spectral gap).",
+            properties: &[],
         },
     ]
 }

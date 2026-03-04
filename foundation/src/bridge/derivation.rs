@@ -4,6 +4,7 @@
 //!
 //! Space: Bridge
 
+use crate::enums::RewriteRule;
 use crate::Primitives;
 
 /// A complete term rewriting witness: the full sequence of rewrite steps transforming an original term into its canonical form.
@@ -39,8 +40,8 @@ pub trait RewriteStep<P: Primitives>: DerivationStep<P> {
     fn from(&self) -> &Self::Term;
     /// The term after this rewrite step.
     fn to(&self) -> &Self::Term;
-    /// The rewrite rule applied in this step (e.g., 'critical_identity', 'involution', 'associativity').
-    fn rule(&self) -> &P::String;
+    /// The typed rewrite rule applied in this step. Provides a structured reference to a named RewriteRule individual, complementing the string-valued derivation:rule property.
+    fn has_rewrite_rule(&self) -> RewriteRule;
 }
 
 /// A type-level refinement step: the application of a constraint to narrow a type, pinning additional fiber coordinates. Complements RewriteStep (term-level) in the derivation hierarchy.
@@ -66,3 +67,24 @@ pub trait TermMetrics<P: Primitives> {
     /// The number of nodes in the canonical term's syntax tree.
     fn term_size(&self) -> P::NonNegativeInteger;
 }
+
+/// The rewrite rule applying the critical identity: neg(bnot(x)) → succ(x). Grounded in op:criticalIdentity.
+pub mod critical_identity_rule {
+    /// `groundedIn` -> `criticalIdentity`
+    pub const GROUNDED_IN: &str = "https://uor.foundation/op/criticalIdentity";
+}
+
+/// The rewrite rule applying involution cancellation: f(f(x)) → x for any involution f.
+pub mod involution_rule {}
+
+/// The rewrite rule applying associativity to re-bracket nested binary operations.
+pub mod associativity_rule {}
+
+/// The rewrite rule applying commutativity to reorder operands of commutative operations.
+pub mod commutativity_rule {}
+
+/// The rewrite rule eliminating identity elements: add(x, 0) → x, mul(x, 1) → x, xor(x, 0) → x.
+pub mod identity_element_rule {}
+
+/// The rewrite rule normalizing compound expressions to canonical ordering (e.g., sorting operands by address).
+pub mod normalization_rule {}

@@ -42,7 +42,7 @@ pub const TEST13_CANONICAL_FORM: &str = r#"
     a                       owl:NamedIndividual, derivation:RewriteStep ;
     derivation:from         <https://uor.foundation/instance/canon/term-orig> ;
     derivation:to           <https://uor.foundation/instance/canon/term-mid> ;
-    derivation:rule         "critical_identity" .
+    derivation:hasRewriteRule  derivation:CriticalIdentityRule .
 
 <https://uor.foundation/instance/canon/term-mid>
     a               owl:NamedIndividual, schema:Application .
@@ -52,7 +52,7 @@ pub const TEST13_CANONICAL_FORM: &str = r#"
     a                       owl:NamedIndividual, derivation:RewriteStep ;
     derivation:from         <https://uor.foundation/instance/canon/term-mid> ;
     derivation:to           <https://uor.foundation/instance/canon/term-canon> ;
-    derivation:rule         "involution" .
+    derivation:hasRewriteRule  derivation:InvolutionRule .
 
 # Term metrics
 <https://uor.foundation/instance/canon/metrics>

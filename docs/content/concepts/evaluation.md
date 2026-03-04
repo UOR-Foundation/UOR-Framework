@@ -18,7 +18,7 @@ canonical form computation:
 | {@prop https://uor.foundation/resolver/inputType} | The type declaration to evaluate |
 | {@prop https://uor.foundation/resolver/outputType} | The resulting partition |
 | {@prop https://uor.foundation/resolver/strategy} | Direct enumeration and classification |
-| {@prop https://uor.foundation/resolver/complexity} | Computational complexity |
+| {@prop https://uor.foundation/resolver/hasComplexityClass} | Computational complexity |
 
 ## Evaluation Process
 

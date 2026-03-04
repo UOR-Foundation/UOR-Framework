@@ -62,9 +62,9 @@ pub fn generate_primitive_op_impls(ontology: &Ontology) -> String {
                         data.is_involution = Some(*b);
                     }
                 }
-                "geometricCharacter" => {
-                    if let IndividualValue::Str(s) = value {
-                        data.geometric_character = Some(s.to_string());
+                "hasGeometricCharacter" => {
+                    if let IndividualValue::IriRef(iri) = value {
+                        data.geometric_character = Some(local_name(iri).to_string());
                     }
                 }
                 _ => {}
@@ -128,18 +128,18 @@ pub fn generate_primitive_op_impls(ontology: &Ontology) -> String {
     f.line("    }");
     f.blank();
 
-    // Generate geometric_character method
+    // Generate has_geometric_character method
     f.indented_doc_comment("Returns the geometric character of this operation.");
     f.line("    #[must_use]");
-    f.line("    pub const fn geometric_character(self) -> crate::enums::GeometricCharacter {");
+    f.line("    pub const fn has_geometric_character(self) -> crate::enums::GeometricCharacter {");
     f.line("        match self {");
     let all_have_gc = ops.iter().all(|op| op.geometric_character.is_some());
     for op in &ops {
         if let Some(ref gc) = op.geometric_character {
-            let variant = snake_to_pascal(gc);
+            // gc is already PascalCase (IRI local name), no conversion needed
             let _ = writeln!(
                 f.buf,
-                "            Self::{} => crate::enums::GeometricCharacter::{variant},",
+                "            Self::{} => crate::enums::GeometricCharacter::{gc},",
                 op.variant
             );
         }
@@ -191,21 +191,4 @@ fn capitalize(s: &str) -> String {
             result
         }
     }
-}
-
-/// Converts a snake_case string to PascalCase (e.g., "ring_reflection" → "RingReflection").
-fn snake_to_pascal(s: &str) -> String {
-    s.split('_')
-        .map(|part| {
-            let mut chars = part.chars();
-            match chars.next() {
-                None => String::new(),
-                Some(c) => {
-                    let mut result = c.to_uppercase().to_string();
-                    result.push_str(chars.as_str());
-                    result
-                }
-            }
-        })
-        .collect()
 }

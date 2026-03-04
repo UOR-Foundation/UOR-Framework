@@ -17,7 +17,19 @@ use crate::mapping::{
 fn enum_class_names() -> HashSet<&'static str> {
     // These classes have their instances as enum variants, so we skip trait generation
     // MetricAxis is both a class and an enum — the enum takes priority
-    ["MetricAxis"].into_iter().collect()
+    // Amendment 23 adds 7 more vocabulary classes that become enums
+    [
+        "MetricAxis",
+        "GeometricCharacter",
+        "VerificationDomain",
+        "VerificationStatus",
+        "ComplexityClass",
+        "RewriteRule",
+        "MeasurementUnit",
+        "CoordinateKind",
+    ]
+    .into_iter()
+    .collect()
 }
 
 /// Maps an enum class local name to its enum type name.
@@ -26,6 +38,13 @@ fn enum_class_names() -> HashSet<&'static str> {
 fn object_property_enum_override(range_local: &str) -> Option<&'static str> {
     match range_local {
         "MetricAxis" => Some("MetricAxis"),
+        "GeometricCharacter" => Some("GeometricCharacter"),
+        "VerificationDomain" => Some("VerificationDomain"),
+        "VerificationStatus" => Some("VerificationStatus"),
+        "ComplexityClass" => Some("ComplexityClass"),
+        "RewriteRule" => Some("RewriteRule"),
+        "MeasurementUnit" => Some("MeasurementUnit"),
+        "CoordinateKind" => Some("CoordinateKind"),
         _ => None,
     }
 }
@@ -308,7 +327,7 @@ fn datatype_enum_override(prop: &Property) -> Option<&'static str> {
     let local = local_name(prop.id);
     match local {
         "fiberState" => Some("FiberState"),
-        "geometricCharacter" => Some("GeometricCharacter"),
+        // geometricCharacter removed by Amendment 23 (now an Object property)
         _ => None,
     }
 }

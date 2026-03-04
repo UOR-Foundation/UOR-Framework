@@ -303,13 +303,27 @@ fn properties() -> Vec<Property> {
             domain: Some("https://uor.foundation/type/Constraint"),
             range: "https://uor.foundation/partition/FiberCoordinate",
         },
+        // type:axisSignature property removed by Amendment 23 (replaced by affectsAxis + axisSignatureNote)
+        // Amendment 23: Typed controlled vocabulary properties
         Property {
-            id: "https://uor.foundation/type/axisSignature",
-            label: "axisSignature",
-            comment: "The metric axis signature of an operation: a string encoding \
-                      which axes the operation affects (e.g., 'V' for vertical, \
-                      'H' for horizontal, 'VH' for both).",
-            kind: PropertyKind::Datatype,
+            id: "https://uor.foundation/type/affectsAxis",
+            label: "affectsAxis",
+            comment: "The metric axis that this operation affects. Replaces \
+                      the string-valued type:axisSignature property with a typed \
+                      reference to MetricAxis individuals. Non-functional: an \
+                      operation may affect multiple axes.",
+            kind: PropertyKind::Object,
+            functional: false,
+            domain: Some("https://uor.foundation/op/Operation"),
+            range: "https://uor.foundation/type/MetricAxis",
+        },
+        Property {
+            id: "https://uor.foundation/type/axisSignatureNote",
+            label: "axisSignatureNote",
+            comment: "Human-readable annotation of the operation's axis signature \
+                      (e.g., 'V', 'H', 'VH'). Demoted from a datatype property to \
+                      an annotation property by Amendment 23.",
+            kind: PropertyKind::Annotation,
             functional: true,
             domain: Some("https://uor.foundation/op/Operation"),
             range: XSD_STRING,

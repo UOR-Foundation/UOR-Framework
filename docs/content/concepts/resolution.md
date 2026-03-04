@@ -35,7 +35,7 @@ Three specialized queries correspond to the three resolver strategies:
 
 ## Complexity
 
-The property {@prop https://uor.foundation/resolver/complexity} declares the
+The property {@prop https://uor.foundation/resolver/hasComplexityClass} declares the
 computational complexity of the resolver (e.g., `"O(n)"` or `"O(log n)"`).
 
 ## Output

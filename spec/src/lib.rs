@@ -1,7 +1,7 @@
 //! UOR Foundation ontology encoded as typed Rust data.
 //!
 //! The `uor-ontology` crate provides the complete UOR Foundation ontology —
-//! 16 namespaces, 123 classes, 230 properties, and 269 named individuals —
+//! 16 namespaces, 130 classes, 234 properties, and 304 named individuals —
 //! as static Rust data structures, along with serializers that produce
 //! JSON-LD, Turtle, and N-Triples output.
 //!
@@ -118,15 +118,14 @@ mod tests {
             .iter()
             .map(|m| m.classes.len())
             .sum();
-        // 123 classes: 103 v2.1.0 + 9 homology + 10 cohomology + 1 morphism.
-        assert_eq!(total, 123);
+        // 130 classes: 123 v3.0.0 + 7 Amendment 23 vocabulary classes.
+        assert_eq!(total, 130);
     }
 
     #[test]
     fn property_count() {
-        // 230 = 229 namespace-level properties + 1 global uor:space annotation.
-        // 229 = 176 v2.1.0 + 25 homology + 19 cohomology + 2 op + 6 morphism + 1 state.
-        assert_eq!(Ontology::full().property_count(), 230);
+        // 234 = 230 v3.0.0 + 12 new Amendment 23 properties − 8 removed properties.
+        assert_eq!(Ontology::full().property_count(), 234);
     }
 
     #[test]
@@ -136,8 +135,8 @@ mod tests {
             .iter()
             .map(|m| m.individuals.len())
             .sum();
-        // 269 individuals: 255 v2.1.0 + 5 homology + 4 cohomology + 5 op(ψ-pipeline).
-        assert_eq!(total, 269);
+        // 304 individuals: 269 v3.0.0 + 35 Amendment 23 vocabulary individuals.
+        assert_eq!(total, 304);
     }
 
     #[test]

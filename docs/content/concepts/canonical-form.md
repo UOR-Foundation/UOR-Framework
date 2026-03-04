@@ -35,14 +35,14 @@ rewrite sequence:
 | {@prop https://uor.foundation/derivation/step} | RewriteStep | Individual rewrite steps |
 
 Each {@class https://uor.foundation/derivation/RewriteStep} records a single
-rule application via {@prop https://uor.foundation/derivation/rule}:
+rule application via {@prop https://uor.foundation/derivation/hasRewriteRule}:
 
 ```turtle
 <https://uor.foundation/instance/step-1>
     a                   derivation:RewriteStep ;
     derivation:from     <term-neg-bnot-x> ;
     derivation:to       <term-succ-x> ;
-    derivation:rule     "critical_identity" .
+    derivation:hasRewriteRule  derivation:CriticalIdentityRule .
 ```
 
 ## Term Metrics

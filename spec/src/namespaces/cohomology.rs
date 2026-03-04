@@ -301,11 +301,15 @@ fn individuals() -> Vec<Individual> {
                 ("https://uor.foundation/op/rhs", IndividualValue::Str("0")),
                 ("https://uor.foundation/op/forAll", IndividualValue::Str("f ∈ C^k")),
                 (
-                    "https://uor.foundation/op/verificationStatus",
-                    IndividualValue::Str("derivable"),
+                    "https://uor.foundation/op/hasVerificationStatus",
+                    IndividualValue::IriRef("https://uor.foundation/op/Derivable"),
                 ),
                 (
-                    "https://uor.foundation/op/verificationPath",
+                    "https://uor.foundation/op/verificationDomain",
+                    IndividualValue::IriRef("https://uor.foundation/op/Topological"),
+                ),
+                (
+                    "https://uor.foundation/op/verificationPathNote",
                     IndividualValue::Str("CochainComplex → CoboundaryOperator → δ² = 0"),
                 ),
             ],
@@ -323,11 +327,15 @@ fn individuals() -> Vec<Individual> {
                     IndividualValue::Str("simplicial complex K, ring R"),
                 ),
                 (
-                    "https://uor.foundation/op/verificationStatus",
-                    IndividualValue::Str("derivable"),
+                    "https://uor.foundation/op/hasVerificationStatus",
+                    IndividualValue::IriRef("https://uor.foundation/op/Derivable"),
                 ),
                 (
-                    "https://uor.foundation/op/verificationPath",
+                    "https://uor.foundation/op/verificationDomain",
+                    IndividualValue::IriRef("https://uor.foundation/op/Topological"),
+                ),
+                (
+                    "https://uor.foundation/op/verificationPathNote",
                     IndividualValue::Str("CohomologyGroup ≅ dual(HomologyGroup)"),
                 ),
             ],
@@ -345,11 +353,15 @@ fn individuals() -> Vec<Individual> {
                     IndividualValue::Str("constant sheaf F_R over K"),
                 ),
                 (
-                    "https://uor.foundation/op/verificationStatus",
-                    IndividualValue::Str("derivable"),
+                    "https://uor.foundation/op/hasVerificationStatus",
+                    IndividualValue::IriRef("https://uor.foundation/op/Derivable"),
                 ),
                 (
-                    "https://uor.foundation/op/verificationPath",
+                    "https://uor.foundation/op/verificationDomain",
+                    IndividualValue::IriRef("https://uor.foundation/op/Topological"),
+                ),
+                (
+                    "https://uor.foundation/op/verificationPathNote",
                     IndividualValue::Str("Sheaf → constant coefficient → CochainComplex"),
                 ),
             ],
@@ -364,11 +376,15 @@ fn individuals() -> Vec<Individual> {
                 ("https://uor.foundation/op/rhs", IndividualValue::Str("all local sections glue")),
                 ("https://uor.foundation/op/forAll", IndividualValue::Str("sheaf F over K")),
                 (
-                    "https://uor.foundation/op/verificationStatus",
-                    IndividualValue::Str("derivable"),
+                    "https://uor.foundation/op/hasVerificationStatus",
+                    IndividualValue::IriRef("https://uor.foundation/op/Derivable"),
                 ),
                 (
-                    "https://uor.foundation/op/verificationPath",
+                    "https://uor.foundation/op/verificationDomain",
+                    IndividualValue::IriRef("https://uor.foundation/op/Topological"),
+                ),
+                (
+                    "https://uor.foundation/op/verificationPathNote",
                     IndividualValue::Str("CohomologyGroup → GluingObstruction → vanishing"),
                 ),
             ],

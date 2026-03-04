@@ -31,7 +31,7 @@ uor-ontology (spec/)
 `uor-ontology` encodes the complete ontology as typed Rust static data:
 
 - **`model.rs`**: Core types — `Namespace`, `Class`, `Property`, `Individual`, `Ontology`
-- **`namespaces/*.rs`**: 16 modules, one per namespace (all 22 amendments applied)
+- **`namespaces/*.rs`**: 16 modules, one per namespace (all 23 amendments applied)
 - **`serializer/jsonld.rs`**: Serializes to JSON-LD 1.1
 - **`serializer/turtle.rs`**: Serializes to Turtle 1.1
 - **`serializer/ntriples.rs`**: Serializes to N-Triples
@@ -46,7 +46,7 @@ This crate is the single source of truth. It is internal (`publish = false`).
 
 - **`mapping.rs`**: Namespace → module, XSD → Rust type, class IRI → path tables
 - **`traits.rs`**: Class → trait, property → method generation
-- **`enums.rs`**: Enum detection (PrimitiveOp, MetricAxis, Space, FiberState, GeometricCharacter)
+- **`enums.rs`**: Enum detection (PrimitiveOp, MetricAxis, Space, FiberState, GeometricCharacter, VerificationDomain, VerificationStatus, ComplexityClass, RewriteRule, MeasurementUnit, CoordinateKind)
 - **`individuals.rs`**: Named individual → const module / PrimitiveOp impl generation
 - **`emit.rs`**: Rust source code writer
 
@@ -55,10 +55,10 @@ This crate is the single source of truth. It is internal (`publish = false`).
 `uor-foundation` is the **generated** published crate. Every file in `foundation/src/`
 is produced by `uor-crate` — never hand-edited.
 
-- **123 traits** (one per OWL class, generic over `Primitives`)
+- **122 traits** (one per OWL class, generic over `Primitives`)
 - **226 methods** (one per property with a domain)
-- **5 enums** (Space, PrimitiveOp, MetricAxis, FiberState, GeometricCharacter)
-- **256 constant modules** (for named individuals)
+- **11 enums** (Space, PrimitiveOp, MetricAxis, FiberState, GeometricCharacter, VerificationDomain, VerificationStatus, ComplexityClass, RewriteRule, MeasurementUnit, CoordinateKind)
+- **291 constant modules** (for named individuals)
 - **Zero mandatory dependencies** — pure traits
 
 Module structure: `kernel/` (3 namespaces), `bridge/` (10 namespaces), `user/` (3 namespaces).
@@ -69,7 +69,7 @@ Module structure: `kernel/` (3 namespaces), `bridge/` (10 namespaces), `user/` (
 
 1. **Rust source**: API documentation, style conventions
 2. **Ontology artifacts**: JSON-LD 1.1, OWL 2 DL constraints, RDF 1.1, Turtle 1.1, inventory counts
-3. **SHACL instances**: 23 test graphs validated against 123 NodeShapes
+3. **SHACL instances**: 29 test graphs validated against 130 NodeShapes
 4. **Generated crate**: Trait completeness, method completeness, individual completeness
 5. **Documentation**: Diataxis structure, completeness, accuracy, links
 6. **Website**: HTML5, WCAG 2.1 AA, CSS, coverage, links
@@ -90,7 +90,7 @@ The conformance suite is the **single gate** — all components must pass before
 
 - Templates use the Tera template engine
 - Namespace pages are auto-generated (no hand-written HTML for spec terms)
-- Search index is generated from all 123 classes, 229 properties, 269 individuals
+- Search index is generated from all 130 classes, 233 properties, 304 individuals
 - No external dependencies (no CDN, no tracking, no third-party scripts)
 
 ## Build Pipeline
@@ -105,7 +105,7 @@ cargo run --bin uor-conformance → validates all of the above
 
 ## Amendment History
 
-The spec crate implements all 22 amendments from the UOR Foundation completion plan:
+The spec crate implements all 23 amendments from the UOR Foundation completion plan:
 
 | Amendment | Namespace | Key Additions |
 |-----------|-----------|---------------|
@@ -131,3 +131,4 @@ The spec crate implements all 22 amendments from the UOR Foundation completion p
 | 20 | op/ | 6 Differential calculus, Homological algebra, Index theorem identities |
 | 21 | op/, homology/, cohomology/ | Structural Reasoning namespaces, ψ-pipeline, identity grounding |
 | 22 | morphism/, state/ | TopologicalDelta class, topologicalSnapshot property |
+| 23 | op/, resolver/, derivation/, observable/, type/, query/ | Typed controlled vocabularies: 7 new classes, 35 individuals, 12 new properties |

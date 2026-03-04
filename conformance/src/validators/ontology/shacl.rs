@@ -1,6 +1,6 @@
 //! SHACL validator.
 //!
-//! Validates the 23 OWL instance test graphs against the UOR SHACL shapes.
+//! Validates the 29 OWL instance test graphs against the UOR SHACL shapes.
 //! Each test graph is defined as a Turtle string in `tests/fixtures/`.
 //! Validation checks structural constraints without a full SHACL engine:
 //! - Required properties are present
@@ -10,7 +10,7 @@
 use crate::report::{ConformanceReport, TestResult};
 use crate::tests;
 
-/// Runs all 23 SHACL instance conformance tests.
+/// Runs all 29 SHACL instance conformance tests.
 pub fn validate() -> ConformanceReport {
     let mut report = ConformanceReport::new();
 
@@ -125,6 +125,36 @@ pub fn validate() -> ConformanceReport {
         tests::fixtures::TEST23_IDENTITY_GROUNDING,
         &mut report,
     );
+    run_test(
+        "test24_verification_domain",
+        tests::fixtures::TEST24_VERIFICATION_DOMAIN,
+        &mut report,
+    );
+    run_test(
+        "test25_geometric_character",
+        tests::fixtures::TEST25_GEOMETRIC_CHARACTER,
+        &mut report,
+    );
+    run_test(
+        "test26_complexity_class",
+        tests::fixtures::TEST26_COMPLEXITY_CLASS,
+        &mut report,
+    );
+    run_test(
+        "test27_rewrite_rule",
+        tests::fixtures::TEST27_REWRITE_RULE,
+        &mut report,
+    );
+    run_test(
+        "test28_measurement_unit",
+        tests::fixtures::TEST28_MEASUREMENT_UNIT,
+        &mut report,
+    );
+    run_test(
+        "test29_coordinate_kind",
+        tests::fixtures::TEST29_COORDINATE_KIND,
+        &mut report,
+    );
 
     report
 }
@@ -175,6 +205,12 @@ fn run_test(name: &str, turtle_src: &str, report: &mut ConformanceReport) {
         "test21_topological_delta" => validate_topological_delta(turtle_src),
         "test22_index_bridge" => validate_index_bridge(turtle_src),
         "test23_identity_grounding" => validate_identity_grounding_shacl(turtle_src),
+        "test24_verification_domain" => validate_verification_domain_shacl(turtle_src),
+        "test25_geometric_character" => validate_geometric_character_shacl(turtle_src),
+        "test26_complexity_class" => validate_complexity_class_shacl(turtle_src),
+        "test27_rewrite_rule" => validate_rewrite_rule_shacl(turtle_src),
+        "test28_measurement_unit" => validate_measurement_unit_shacl(turtle_src),
+        "test29_coordinate_kind" => validate_coordinate_kind_shacl(turtle_src),
         _ => Ok(()),
     };
 
@@ -551,10 +587,14 @@ fn validate_index_bridge(src: &str) -> Result<(), String> {
     check_contains(src, "op:psi_6", "Missing psi_6")?;
     check_contains(
         src,
-        "op:verificationStatus",
-        "Missing op:verificationStatus",
+        "op:hasVerificationStatus",
+        "Missing op:hasVerificationStatus",
     )?;
-    check_contains(src, "op:verificationPath", "Missing op:verificationPath")?;
+    check_contains(
+        src,
+        "op:verificationDomain",
+        "Missing op:verificationDomain",
+    )?;
     Ok(())
 }
 
@@ -566,13 +606,124 @@ fn validate_identity_grounding_shacl(src: &str) -> Result<(), String> {
     check_contains(src, "op:psi_1", "Missing psi_1")?;
     check_contains(
         src,
-        "op:verificationStatus",
-        "Missing verificationStatus property",
+        "op:hasVerificationStatus",
+        "Missing hasVerificationStatus property",
     )?;
     check_contains(
         src,
-        "op:verificationPath",
-        "Missing verificationPath property",
+        "op:verificationDomain",
+        "Missing verificationDomain property",
+    )?;
+    check_contains(
+        src,
+        "op:verificationPathNote",
+        "Missing verificationPathNote property",
+    )?;
+    Ok(())
+}
+
+fn validate_verification_domain_shacl(src: &str) -> Result<(), String> {
+    check_contains(
+        src,
+        "op:VerificationDomain",
+        "Missing VerificationDomain type",
+    )?;
+    check_contains(
+        src,
+        "op:VerificationStatus",
+        "Missing VerificationStatus type",
+    )?;
+    check_contains(
+        src,
+        "op:hasVerificationStatus",
+        "Missing hasVerificationStatus",
+    )?;
+    check_contains(src, "op:verificationDomain", "Missing verificationDomain")?;
+    check_contains(src, "op:Enumerative", "Missing Enumerative individual")?;
+    check_contains(src, "op:Verifiable", "Missing Verifiable individual")?;
+    Ok(())
+}
+
+fn validate_geometric_character_shacl(src: &str) -> Result<(), String> {
+    check_contains(
+        src,
+        "op:GeometricCharacter",
+        "Missing GeometricCharacter type",
+    )?;
+    check_contains(
+        src,
+        "op:hasGeometricCharacter",
+        "Missing hasGeometricCharacter",
+    )?;
+    check_contains(
+        src,
+        "op:RingReflection",
+        "Missing RingReflection individual",
+    )?;
+    check_contains(
+        src,
+        "op:HypercubeReflection",
+        "Missing HypercubeReflection individual",
+    )?;
+    Ok(())
+}
+
+fn validate_complexity_class_shacl(src: &str) -> Result<(), String> {
+    check_contains(
+        src,
+        "resolver:ComplexityClass",
+        "Missing ComplexityClass type",
+    )?;
+    check_contains(
+        src,
+        "resolver:hasComplexityClass",
+        "Missing hasComplexityClass",
+    )?;
+    check_contains(
+        src,
+        "resolver:ConstantTime",
+        "Missing ConstantTime individual",
+    )?;
+    check_contains(src, "resolver:LinearTime", "Missing LinearTime individual")?;
+    Ok(())
+}
+
+fn validate_rewrite_rule_shacl(src: &str) -> Result<(), String> {
+    check_contains(src, "derivation:RewriteRule", "Missing RewriteRule type")?;
+    check_contains(src, "derivation:hasRewriteRule", "Missing hasRewriteRule")?;
+    check_contains(src, "derivation:groundedIn", "Missing groundedIn")?;
+    check_contains(
+        src,
+        "derivation:CriticalIdentityRule",
+        "Missing CriticalIdentityRule",
+    )?;
+    Ok(())
+}
+
+fn validate_measurement_unit_shacl(src: &str) -> Result<(), String> {
+    check_contains(
+        src,
+        "observable:MeasurementUnit",
+        "Missing MeasurementUnit type",
+    )?;
+    check_contains(src, "observable:hasUnit", "Missing hasUnit")?;
+    check_contains(src, "observable:Bits", "Missing Bits individual")?;
+    check_contains(src, "observable:RingSteps", "Missing RingSteps individual")?;
+    Ok(())
+}
+
+fn validate_coordinate_kind_shacl(src: &str) -> Result<(), String> {
+    check_contains(src, "query:CoordinateKind", "Missing CoordinateKind type")?;
+    check_contains(src, "query:hasCoordinateKind", "Missing hasCoordinateKind")?;
+    check_contains(
+        src,
+        "query:StratumCoordinate",
+        "Missing StratumCoordinate individual",
+    )?;
+    check_contains(
+        src,
+        "query:SpectrumCoordinate",
+        "Missing SpectrumCoordinate individual",
     )?;
     Ok(())
 }

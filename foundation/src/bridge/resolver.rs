@@ -4,6 +4,7 @@
 //!
 //! Space: Bridge
 
+use crate::enums::ComplexityClass;
 use crate::enums::MetricAxis;
 use crate::Primitives;
 
@@ -18,14 +19,12 @@ pub trait Resolver<P: Primitives> {
     type Partition: crate::bridge::partition::Partition<P>;
     /// The type of output this resolver produces. For all UOR resolvers, the output is a partition:Partition.
     fn output_type(&self) -> &Self::Partition;
-    /// A human-readable description of the resolution strategy this resolver implements.
-    fn strategy(&self) -> &P::String;
-    /// The computational complexity of this resolver, expressed as a big-O string (e.g., 'O(n)', 'O(2^n)').
-    fn complexity(&self) -> &P::String;
     /// Associated type for `ResolutionState`.
     type ResolutionState: ResolutionState<P>;
     /// The current resolution state of this resolver.
     fn resolution_state(&self) -> &Self::ResolutionState;
+    /// The computational complexity class of this resolver. Replaces the string-valued resolver:complexity property.
+    fn has_complexity_class(&self) -> ComplexityClass;
 }
 
 /// Resolves types by factoring the ring under dihedral group action. Identifies orbits under D_{2^n} to determine irreducibility boundaries.
@@ -79,3 +78,15 @@ pub trait RefinementSuggestion<P: Primitives> {
 
 /// The simplicial complex whose vertices are constraints and where a k-simplex exists iff the corresponding k+1 constraints have nonempty intersection. The nerve's topology governs resolution convergence: trivial homology ↔ smooth convergence, non-trivial homology ↔ potential stalls.
 pub trait ConstraintNerve<P: Primitives>: crate::bridge::homology::SimplicialComplex<P> {}
+
+/// O(1) complexity — the resolver runs in constant time regardless of ring size.
+pub mod constant_time {}
+
+/// O(log n) complexity — the resolver runs in logarithmic time in the quantum level.
+pub mod logarithmic_time {}
+
+/// O(n) complexity — the resolver runs in time linear in the quantum level.
+pub mod linear_time {}
+
+/// O(2^n) complexity — the resolver runs in time exponential in the quantum level.
+pub mod exponential_time {}

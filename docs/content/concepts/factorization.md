@@ -19,7 +19,7 @@ a partition ({@prop https://uor.foundation/resolver/outputType}):
 | Property | Description |
 |----------|-------------|
 | {@prop https://uor.foundation/resolver/strategy} | Dihedral orbit analysis |
-| {@prop https://uor.foundation/resolver/complexity} | Computational complexity |
+| {@prop https://uor.foundation/resolver/hasComplexityClass} | Computational complexity |
 
 ## Partition Output
 
@@ -53,7 +53,7 @@ dihedral orbits under the action of D_256:
     resolver:inputType      <https://uor.foundation/instance/type-u8> ;
     resolver:outputType     <https://uor.foundation/instance/partition-R8> ;
     resolver:strategy       "dihedral orbit analysis" ;
-    resolver:complexity     "O(n)" .
+    resolver:hasComplexityClass  resolver:LinearTime .
 ```
 
 ## Computation Trace

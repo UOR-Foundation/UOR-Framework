@@ -114,38 +114,132 @@ pub fn detect_enums(ontology: &Ontology) -> Vec<DetectedEnum> {
         ],
     });
 
-    // 5. GeometricCharacter enum — collected from actual individual property values
-    if let Some(op_module) = op_ns {
-        let mut gc_values: Vec<String> = Vec::new();
-        for ind in &op_module.individuals {
-            for (prop_iri, value) in ind.properties {
-                if local_name(prop_iri) == "geometricCharacter" {
-                    if let uor_ontology::IndividualValue::Str(s) = value {
-                        if !gc_values.contains(&s.to_string()) {
-                            gc_values.push(s.to_string());
-                        }
-                    }
+    // 5. GeometricCharacter enum — from named individuals of type op:GeometricCharacter
+    detect_vocabulary_enum(
+        ontology,
+        "op",
+        "GeometricCharacter",
+        "The geometric character of an operation.",
+        &mut enums,
+    );
+
+    // 6–11. Amendment 23: Six new vocabulary enums
+    detect_vocabulary_enum(
+        ontology,
+        "op",
+        "VerificationDomain",
+        "The mathematical domain in which an identity is established.",
+        &mut enums,
+    );
+    detect_vocabulary_enum(
+        ontology,
+        "op",
+        "VerificationStatus",
+        "The verification status of an identity: verifiable or derivable.",
+        &mut enums,
+    );
+    detect_vocabulary_enum(
+        ontology,
+        "resolver",
+        "ComplexityClass",
+        "The computational complexity classification of a resolver.",
+        &mut enums,
+    );
+    detect_vocabulary_enum(
+        ontology,
+        "derivation",
+        "RewriteRule",
+        "A named rewrite rule used in term rewriting derivations.",
+        &mut enums,
+    );
+    detect_vocabulary_enum(
+        ontology,
+        "observable",
+        "MeasurementUnit",
+        "A unit of measurement for observable quantities.",
+        &mut enums,
+    );
+    detect_vocabulary_enum(
+        ontology,
+        "query",
+        "CoordinateKind",
+        "A classification of coordinate types for coordinate queries.",
+        &mut enums,
+    );
+
+    enums
+}
+
+/// Detects a vocabulary enum from named individuals of a given class type.
+///
+/// Scans the specified namespace for individuals whose `type_` matches the
+/// class IRI `https://uor.foundation/{ns_prefix}/{class_name}`. Each individual
+/// becomes a variant, with the variant name taken from the IRI local name.
+fn detect_vocabulary_enum(
+    ontology: &Ontology,
+    ns_prefix: &str,
+    class_name: &'static str,
+    comment: &'static str,
+    enums: &mut Vec<DetectedEnum>,
+) {
+    if let Some(module) = ontology.find_namespace(ns_prefix) {
+        let class_iri_suffix = format!("/{class_name}");
+        let mut variants: Vec<(String, String)> = module
+            .individuals
+            .iter()
+            .filter(|ind| ind.type_.ends_with(&class_iri_suffix))
+            .map(|ind| {
+                let name = local_name(ind.id).to_string();
+                let doc = crate::emit::normalize_comment(ind.comment);
+                (name, doc)
+            })
+            .collect();
+
+        if !variants.is_empty() {
+            // Strip common suffix to avoid clippy::enum_variant_names
+            if let Some(suffix) = common_variant_suffix(&variants) {
+                for (name, _) in &mut variants {
+                    name.truncate(name.len() - suffix.len());
                 }
             }
-        }
-        if !gc_values.is_empty() {
-            let gc_variants: Vec<(String, String)> = gc_values
-                .iter()
-                .map(|v| {
-                    let variant = snake_to_pascal(v);
-                    let comment = format!("{v} geometric character.");
-                    (variant, comment)
-                })
-                .collect();
             enums.push(DetectedEnum {
-                name: "GeometricCharacter",
-                comment: "The geometric character of an operation.",
-                variants: gc_variants,
+                name: class_name,
+                comment,
+                variants,
             });
         }
     }
+}
 
-    enums
+/// Returns the longest common PascalCase-word suffix shared by all variant names,
+/// if all variants share it and removing it leaves a non-empty name.
+/// E.g., ["ConstantTime", "LinearTime", "ExponentialTime"] → Some("Time").
+fn common_variant_suffix(variants: &[(String, String)]) -> Option<String> {
+    if variants.len() < 2 {
+        return None;
+    }
+    let first = &variants[0].0;
+    // Find the last uppercase boundary in the first name
+    let mut boundary = first.len();
+    for (i, ch) in first.char_indices().rev() {
+        if ch.is_uppercase() && i > 0 {
+            boundary = i;
+            break;
+        }
+    }
+    if boundary == 0 || boundary >= first.len() {
+        return None;
+    }
+    let suffix = &first[boundary..];
+    // Check if all variants share this suffix and stripping it leaves a non-empty name
+    let all_share = variants
+        .iter()
+        .all(|(name, _)| name.ends_with(suffix) && name.len() > suffix.len());
+    if all_share {
+        Some(suffix.to_string())
+    } else {
+        None
+    }
 }
 
 /// Generates the `enums.rs` file content.
@@ -187,23 +281,6 @@ pub fn generate_enums_file(ontology: &Ontology) -> String {
     f.finish()
 }
 
-/// Converts a snake_case string to PascalCase (e.g., "ring_reflection" → "RingReflection").
-fn snake_to_pascal(s: &str) -> String {
-    s.split('_')
-        .map(|part| {
-            let mut chars = part.chars();
-            match chars.next() {
-                None => String::new(),
-                Some(c) => {
-                    let mut result = c.to_uppercase().to_string();
-                    result.push_str(chars.as_str());
-                    result
-                }
-            }
-        })
-        .collect()
-}
-
 /// Capitalizes the first character of a string.
 fn capitalize(s: &str) -> String {
     let mut chars = s.chars();
@@ -232,8 +309,8 @@ mod tests {
         let ontology = Ontology::full();
         let enums = detect_enums(ontology);
         assert!(
-            enums.len() >= 5,
-            "Expected at least 5 enums, got {}",
+            enums.len() >= 11,
+            "Expected at least 11 enums, got {}",
             enums.len()
         );
 
@@ -243,6 +320,12 @@ mod tests {
         assert!(names.contains(&"MetricAxis"));
         assert!(names.contains(&"FiberState"));
         assert!(names.contains(&"GeometricCharacter"));
+        assert!(names.contains(&"VerificationDomain"));
+        assert!(names.contains(&"VerificationStatus"));
+        assert!(names.contains(&"ComplexityClass"));
+        assert!(names.contains(&"RewriteRule"));
+        assert!(names.contains(&"MeasurementUnit"));
+        assert!(names.contains(&"CoordinateKind"));
     }
 
     #[test]

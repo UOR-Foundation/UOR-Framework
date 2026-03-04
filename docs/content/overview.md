@@ -120,12 +120,17 @@ Ring, Boolean, Cross-Structure, Dihedral, Unit, Affine, and Carry. Each identity
 {@class https://uor.foundation/op/Identity} individual with `lhs`, `rhs`, and `forAll`
 properties specifying the equation and its domain.
 
-Every identity carries two grounding properties:
-- {@prop https://uor.foundation/op/verificationStatus}: either `verifiable` (exhaustively
-  checkable over the finite ring) or `derivable` (follows from axioms via a trait-graph walk).
-- {@prop https://uor.foundation/op/verificationPath}: the specific verification route — an
-  enumeration domain or the chain of algebraic dependencies.
+Every identity carries typed grounding properties:
+- {@prop https://uor.foundation/op/hasVerificationStatus}: a reference to either
+  {@ind https://uor.foundation/op/Verifiable} (exhaustively checkable) or
+  {@ind https://uor.foundation/op/Derivable} (follows from axioms).
+- {@prop https://uor.foundation/op/verificationDomain}: one or more references to a
+  {@class https://uor.foundation/op/VerificationDomain} individual identifying the
+  mathematical discipline (Enumerative, Algebraic, Geometric, Analytical, Thermodynamic,
+  Topological, Pipeline, or IndexTheoretic).
+- {@prop https://uor.foundation/op/verificationPathNote}: a human-readable annotation
+  describing the specific verification route.
 
-Of the 250 identities, 51 are verifiable by exhaustive enumeration and 199 are derivable
+Of the 250 identities, 48 are verifiable by exhaustive enumeration and 202 are derivable
 from axioms. See [Algebraic Laws](concepts/algebraic-laws.html) for the seven algebras and
 their identities.

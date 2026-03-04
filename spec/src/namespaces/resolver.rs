@@ -11,7 +11,7 @@
 //! **Space classification:** `bridge` — user-requested, kernel-executed.
 
 use crate::model::iris::*;
-use crate::model::{Class, Namespace, NamespaceModule, Property, PropertyKind, Space};
+use crate::model::{Class, Individual, Namespace, NamespaceModule, Property, PropertyKind, Space};
 
 /// Returns the `resolver/` namespace module.
 #[must_use]
@@ -29,7 +29,7 @@ pub fn module() -> NamespaceModule {
         },
         classes: classes(),
         properties: properties(),
-        individuals: vec![],
+        individuals: individuals(),
     }
 }
 
@@ -99,6 +99,16 @@ fn classes() -> Vec<Class> {
                 "https://uor.foundation/resolver/ResolutionState",
             ],
         },
+        // Amendment 23: Typed controlled vocabulary class
+        Class {
+            id: "https://uor.foundation/resolver/ComplexityClass",
+            label: "ComplexityClass",
+            comment: "A computational complexity classification for resolvers. \
+                      Each resolver's asymptotic runtime is typed as a named \
+                      ComplexityClass individual rather than a free string.",
+            subclass_of: &[OWL_THING],
+            disjoint_with: &[],
+        },
         // Amendment 18: Constraint Nerve
         Class {
             id: "https://uor.foundation/resolver/ConstraintNerve",
@@ -143,21 +153,12 @@ fn properties() -> Vec<Property> {
             label: "strategy",
             comment: "A human-readable description of the resolution strategy \
                       this resolver implements.",
-            kind: PropertyKind::Datatype,
+            kind: PropertyKind::Annotation,
             functional: true,
             domain: Some("https://uor.foundation/resolver/Resolver"),
             range: XSD_STRING,
         },
-        Property {
-            id: "https://uor.foundation/resolver/complexity",
-            label: "complexity",
-            comment: "The computational complexity of this resolver, expressed as \
-                      a big-O string (e.g., 'O(n)', 'O(2^n)').",
-            kind: PropertyKind::Datatype,
-            functional: true,
-            domain: Some("https://uor.foundation/resolver/Resolver"),
-            range: XSD_STRING,
-        },
+        // complexity property removed by Amendment 23 (replaced by hasComplexityClass)
         // Amendment 11: Iterative Resolution properties
         Property {
             id: "https://uor.foundation/resolver/resolutionState",
@@ -245,6 +246,17 @@ fn properties() -> Vec<Property> {
             domain: Some("https://uor.foundation/resolver/ResolutionState"),
             range: XSD_DECIMAL,
         },
+        // Amendment 23: Typed controlled vocabulary property
+        Property {
+            id: "https://uor.foundation/resolver/hasComplexityClass",
+            label: "hasComplexityClass",
+            comment: "The computational complexity class of this resolver. \
+                      Replaces the string-valued resolver:complexity property.",
+            kind: PropertyKind::Object,
+            functional: true,
+            domain: Some("https://uor.foundation/resolver/Resolver"),
+            range: "https://uor.foundation/resolver/ComplexityClass",
+        },
         // Amendment 18: Analytical resolver properties
         Property {
             id: "https://uor.foundation/resolver/constraintNerve",
@@ -274,6 +286,44 @@ fn properties() -> Vec<Property> {
             functional: true,
             domain: Some("https://uor.foundation/resolver/ResolutionState"),
             range: XSD_BOOLEAN,
+        },
+    ]
+}
+
+// Amendment 23: Typed controlled vocabulary individuals
+fn individuals() -> Vec<Individual> {
+    vec![
+        Individual {
+            id: "https://uor.foundation/resolver/ConstantTime",
+            type_: "https://uor.foundation/resolver/ComplexityClass",
+            label: "ConstantTime",
+            comment: "O(1) complexity — the resolver runs in constant time \
+                      regardless of ring size.",
+            properties: &[],
+        },
+        Individual {
+            id: "https://uor.foundation/resolver/LogarithmicTime",
+            type_: "https://uor.foundation/resolver/ComplexityClass",
+            label: "LogarithmicTime",
+            comment: "O(log n) complexity — the resolver runs in logarithmic time \
+                      in the quantum level.",
+            properties: &[],
+        },
+        Individual {
+            id: "https://uor.foundation/resolver/LinearTime",
+            type_: "https://uor.foundation/resolver/ComplexityClass",
+            label: "LinearTime",
+            comment: "O(n) complexity — the resolver runs in time linear in the \
+                      quantum level.",
+            properties: &[],
+        },
+        Individual {
+            id: "https://uor.foundation/resolver/ExponentialTime",
+            type_: "https://uor.foundation/resolver/ComplexityClass",
+            label: "ExponentialTime",
+            comment: "O(2^n) complexity — the resolver runs in time exponential \
+                      in the quantum level.",
+            properties: &[],
         },
     ]
 }

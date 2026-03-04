@@ -4,6 +4,7 @@
 //!
 //! Space: Bridge
 
+use crate::enums::CoordinateKind;
 use crate::Primitives;
 
 /// A request for information from the UOR kernel. The root abstraction for all query types.
@@ -16,8 +17,8 @@ pub trait Query<P: Primitives> {
 
 /// A query for the ring-coordinate position of a datum: its stratum, spectrum, and address within the ring geometry.
 pub trait CoordinateQuery<P: Primitives>: Query<P> {
-    /// Which coordinate the query extracts.
-    fn coordinate(&self) -> &P::String;
+    /// The typed coordinate kind this query extracts. Replaces the string-valued query:coordinate property with a typed reference to a CoordinateKind individual.
+    fn has_coordinate_kind(&self) -> CoordinateKind;
 }
 
 /// A query for a metric value between two datums: ring distance, Hamming distance, or their divergence (curvature).
@@ -25,3 +26,12 @@ pub trait MetricQuery<P: Primitives>: Query<P> {}
 
 /// A query for the canonical representation of a datum or term: its normal form under the active resolver strategy.
 pub trait RepresentationQuery<P: Primitives>: Query<P> {}
+
+/// The stratum coordinate: the layer position of a datum within the ring's stratification.
+pub mod stratum_coordinate {}
+
+/// The spectrum coordinate: the spectral decomposition of a datum under the ring's Fourier analysis.
+pub mod spectrum_coordinate {}
+
+/// The address coordinate: the content-addressable position of a datum in the Braille glyph encoding.
+pub mod address_coordinate {}

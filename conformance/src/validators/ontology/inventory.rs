@@ -2,9 +2,9 @@
 //!
 //! Verifies that the built ontology artifact contains the correct counts:
 //! - 16 namespaces (3 Kernel / 10 Bridge / 3 User)
-//! - 123 classes
-//! - 229 namespace-level properties + 1 global annotation = 230 via property_count()
-//! - 269 named individuals (each with required property assertions)
+//! - 130 classes
+//! - 233 namespace-level properties + 1 global annotation = 234 via property_count()
+//! - 304 named individuals (each with required property assertions)
 
 use std::path::Path;
 
@@ -16,9 +16,9 @@ use crate::report::{ConformanceReport, TestResult};
 
 /// Expected inventory counts for the UOR Foundation ontology.
 const EXPECTED_NAMESPACES: usize = 16;
-const EXPECTED_CLASSES: usize = 123;
-const EXPECTED_PROPERTIES: usize = 230;
-const EXPECTED_INDIVIDUALS: usize = 269;
+const EXPECTED_CLASSES: usize = 130;
+const EXPECTED_PROPERTIES: usize = 234;
+const EXPECTED_INDIVIDUALS: usize = 304;
 
 /// Validates the ontology inventory counts in the built JSON-LD artifact.
 ///
@@ -40,8 +40,16 @@ pub fn validate(artifacts: &Path) -> Result<ConformanceReport> {
     // Hardening: identity completeness (all op:Identity individuals have lhs/rhs/forAll)
     validate_identity_completeness(&mut report);
 
-    // Hardening: identity grounding (all op:Identity individuals have verificationStatus/verificationPath)
+    // Hardening: identity grounding (all op:Identity individuals have typed verification properties)
     validate_identity_grounding(&mut report);
+
+    // Amendment 23: vocabulary individual validators
+    validate_verification_domain_individuals(&mut report);
+    validate_geometric_character_individuals(&mut report);
+    validate_complexity_class_individuals(&mut report);
+    validate_rewrite_rule_individuals(&mut report);
+    validate_measurement_unit_individuals(&mut report);
+    validate_coordinate_kind_individuals(&mut report);
 
     // Validate the built JSON-LD artifact
     let json_path = artifacts.join("uor.foundation.json");
@@ -366,15 +374,31 @@ fn validate_identity_completeness(report: &mut ConformanceReport) {
     }
 }
 
-/// Validates that all `op:Identity` individuals are grounded with
-/// `verificationStatus` ("verifiable" or "derivable") and `verificationPath`.
+/// Validates that all `op:Identity` individuals are grounded with typed
+/// verification properties: `hasVerificationStatus` (IriRef to op:Verifiable
+/// or op:Derivable), at least one `verificationDomain` (IriRef to a domain
+/// individual), and optionally `verificationPathNote`.
 fn validate_identity_grounding(report: &mut ConformanceReport) {
     let ontology = uor_ontology::Ontology::full();
     let validator = "ontology/inventory/identity_grounding";
 
     let identity_type = "https://uor.foundation/op/Identity";
-    let status_prop = "https://uor.foundation/op/verificationStatus";
-    let path_prop = "https://uor.foundation/op/verificationPath";
+    let status_prop = "https://uor.foundation/op/hasVerificationStatus";
+    let domain_prop = "https://uor.foundation/op/verificationDomain";
+    let valid_statuses = [
+        "https://uor.foundation/op/Verifiable",
+        "https://uor.foundation/op/Derivable",
+    ];
+    let valid_domains = [
+        "https://uor.foundation/op/Enumerative",
+        "https://uor.foundation/op/Algebraic",
+        "https://uor.foundation/op/Geometric",
+        "https://uor.foundation/op/Analytical",
+        "https://uor.foundation/op/Thermodynamic",
+        "https://uor.foundation/op/Topological",
+        "https://uor.foundation/op/Pipeline",
+        "https://uor.foundation/op/IndexTheoretic",
+    ];
 
     let mut total = 0usize;
     let mut verifiable = 0usize;
@@ -388,25 +412,28 @@ fn validate_identity_grounding(report: &mut ConformanceReport) {
             }
             total += 1;
 
+            // Check hasVerificationStatus
             let status = ind
                 .properties
                 .iter()
                 .find(|(k, _)| *k == status_prop)
                 .map(|(_, v)| v);
-            let has_path = ind.properties.iter().any(|(k, _)| *k == path_prop);
 
             match status {
-                Some(uor_ontology::IndividualValue::Str("verifiable")) => {
-                    verifiable += 1;
-                }
-                Some(uor_ontology::IndividualValue::Str("derivable")) => {
-                    derivable += 1;
+                Some(uor_ontology::IndividualValue::IriRef(iri))
+                    if valid_statuses.contains(iri) =>
+                {
+                    if *iri == "https://uor.foundation/op/Verifiable" {
+                        verifiable += 1;
+                    } else {
+                        derivable += 1;
+                    }
                 }
                 Some(_) => {
                     report.push(TestResult::fail(
                         validator,
                         format!(
-                            "Identity {} has invalid verificationStatus (must be 'verifiable' or 'derivable')",
+                            "Identity {} has invalid hasVerificationStatus (must be IriRef to op:Verifiable or op:Derivable)",
                             ind.id
                         ),
                     ));
@@ -415,18 +442,46 @@ fn validate_identity_grounding(report: &mut ConformanceReport) {
                 None => {
                     report.push(TestResult::fail(
                         validator,
-                        format!("Identity {} missing verificationStatus", ind.id),
+                        format!("Identity {} missing hasVerificationStatus", ind.id),
                     ));
                     all_valid = false;
                 }
             }
 
-            if !has_path {
+            // Check verificationDomain (at least one, each from closed set)
+            let domains: Vec<_> = ind
+                .properties
+                .iter()
+                .filter(|(k, _)| *k == domain_prop)
+                .collect();
+
+            if domains.is_empty() {
                 report.push(TestResult::fail(
                     validator,
-                    format!("Identity {} missing verificationPath", ind.id),
+                    format!("Identity {} missing verificationDomain", ind.id),
                 ));
                 all_valid = false;
+            } else {
+                for (_, v) in &domains {
+                    if let uor_ontology::IndividualValue::IriRef(iri) = v {
+                        if !valid_domains.contains(iri) {
+                            report.push(TestResult::fail(
+                                validator,
+                                format!(
+                                    "Identity {} has invalid verificationDomain: {}",
+                                    ind.id, iri
+                                ),
+                            ));
+                            all_valid = false;
+                        }
+                    } else {
+                        report.push(TestResult::fail(
+                            validator,
+                            format!("Identity {} verificationDomain is not an IriRef", ind.id),
+                        ));
+                        all_valid = false;
+                    }
+                }
             }
         }
     }
@@ -438,6 +493,257 @@ fn validate_identity_grounding(report: &mut ConformanceReport) {
                 "All {} identities grounded ({} verifiable, {} derivable)",
                 total, verifiable, derivable
             ),
+        ));
+    }
+}
+
+/// Validates the 8 VerificationDomain and 2 VerificationStatus vocabulary individuals.
+fn validate_verification_domain_individuals(report: &mut ConformanceReport) {
+    let ontology = uor_ontology::Ontology::full();
+    let validator = "ontology/inventory/verification_domain";
+
+    let domain_iris = [
+        "https://uor.foundation/op/Enumerative",
+        "https://uor.foundation/op/Algebraic",
+        "https://uor.foundation/op/Geometric",
+        "https://uor.foundation/op/Analytical",
+        "https://uor.foundation/op/Thermodynamic",
+        "https://uor.foundation/op/Topological",
+        "https://uor.foundation/op/Pipeline",
+        "https://uor.foundation/op/IndexTheoretic",
+    ];
+    let status_iris = [
+        "https://uor.foundation/op/Verifiable",
+        "https://uor.foundation/op/Derivable",
+    ];
+
+    let mut all_found = true;
+    for iri in &domain_iris {
+        if ontology.find_individual(iri).is_none() {
+            report.push(TestResult::fail(
+                validator,
+                format!("VerificationDomain individual {} not found", iri),
+            ));
+            all_found = false;
+        }
+    }
+    for iri in &status_iris {
+        if ontology.find_individual(iri).is_none() {
+            report.push(TestResult::fail(
+                validator,
+                format!("VerificationStatus individual {} not found", iri),
+            ));
+            all_found = false;
+        }
+    }
+
+    if all_found {
+        report.push(TestResult::pass(
+            validator,
+            "All 8 VerificationDomain + 2 VerificationStatus individuals present",
+        ));
+    }
+}
+
+/// Validates the 9 GeometricCharacter vocabulary individuals and that all
+/// 10 operation individuals have `hasGeometricCharacter`.
+fn validate_geometric_character_individuals(report: &mut ConformanceReport) {
+    let ontology = uor_ontology::Ontology::full();
+    let validator = "ontology/inventory/geometric_character";
+
+    let gc_iris = [
+        "https://uor.foundation/op/RingReflection",
+        "https://uor.foundation/op/HypercubeReflection",
+        "https://uor.foundation/op/Rotation",
+        "https://uor.foundation/op/RotationInverse",
+        "https://uor.foundation/op/Translation",
+        "https://uor.foundation/op/Scaling",
+        "https://uor.foundation/op/HypercubeTranslation",
+        "https://uor.foundation/op/HypercubeProjection",
+        "https://uor.foundation/op/HypercubeJoin",
+    ];
+
+    let mut all_valid = true;
+    for iri in &gc_iris {
+        if ontology.find_individual(iri).is_none() {
+            report.push(TestResult::fail(
+                validator,
+                format!("GeometricCharacter individual {} not found", iri),
+            ));
+            all_valid = false;
+        }
+    }
+
+    // Check all 10 operations have hasGeometricCharacter
+    let gc_prop = "https://uor.foundation/op/hasGeometricCharacter";
+    let op_types = ["Involution", "UnaryOp", "BinaryOp"];
+    if let Some(op_module) = ontology.find_namespace("op") {
+        for ind in &op_module.individuals {
+            let type_local = ind.type_.rsplit('/').next().unwrap_or("");
+            if op_types.contains(&type_local) {
+                let has_gc = ind.properties.iter().any(|(k, _)| *k == gc_prop);
+                if !has_gc {
+                    report.push(TestResult::fail(
+                        validator,
+                        format!("Operation {} missing hasGeometricCharacter", ind.id),
+                    ));
+                    all_valid = false;
+                }
+            }
+        }
+    }
+
+    if all_valid {
+        report.push(TestResult::pass(
+            validator,
+            "All 9 GeometricCharacter individuals + 10 operations validated",
+        ));
+    }
+}
+
+/// Validates the 4 ComplexityClass vocabulary individuals.
+fn validate_complexity_class_individuals(report: &mut ConformanceReport) {
+    let ontology = uor_ontology::Ontology::full();
+    let validator = "ontology/inventory/complexity_class";
+
+    let cc_iris = [
+        "https://uor.foundation/resolver/ConstantTime",
+        "https://uor.foundation/resolver/LogarithmicTime",
+        "https://uor.foundation/resolver/LinearTime",
+        "https://uor.foundation/resolver/ExponentialTime",
+    ];
+
+    let mut all_found = true;
+    for iri in &cc_iris {
+        if ontology.find_individual(iri).is_none() {
+            report.push(TestResult::fail(
+                validator,
+                format!("ComplexityClass individual {} not found", iri),
+            ));
+            all_found = false;
+        }
+    }
+
+    if all_found {
+        report.push(TestResult::pass(
+            validator,
+            "All 4 ComplexityClass individuals present",
+        ));
+    }
+}
+
+/// Validates the 6 RewriteRule vocabulary individuals and CriticalIdentityRule
+/// `groundedIn` assertion.
+fn validate_rewrite_rule_individuals(report: &mut ConformanceReport) {
+    let ontology = uor_ontology::Ontology::full();
+    let validator = "ontology/inventory/rewrite_rule";
+
+    let rr_iris = [
+        "https://uor.foundation/derivation/CriticalIdentityRule",
+        "https://uor.foundation/derivation/InvolutionRule",
+        "https://uor.foundation/derivation/AssociativityRule",
+        "https://uor.foundation/derivation/CommutativityRule",
+        "https://uor.foundation/derivation/IdentityElementRule",
+        "https://uor.foundation/derivation/NormalizationRule",
+    ];
+
+    let mut all_valid = true;
+    for iri in &rr_iris {
+        if ontology.find_individual(iri).is_none() {
+            report.push(TestResult::fail(
+                validator,
+                format!("RewriteRule individual {} not found", iri),
+            ));
+            all_valid = false;
+        }
+    }
+
+    // Check CriticalIdentityRule has groundedIn → criticalIdentity
+    if let Some(cir) =
+        ontology.find_individual("https://uor.foundation/derivation/CriticalIdentityRule")
+    {
+        let has_grounded = cir.properties.iter().any(|(k, v)| {
+            *k == "https://uor.foundation/derivation/groundedIn"
+                && matches!(
+                    v,
+                    uor_ontology::IndividualValue::IriRef(
+                        "https://uor.foundation/op/criticalIdentity"
+                    )
+                )
+        });
+        if !has_grounded {
+            report.push(TestResult::fail(
+                validator,
+                "CriticalIdentityRule missing groundedIn → op:criticalIdentity",
+            ));
+            all_valid = false;
+        }
+    }
+
+    if all_valid {
+        report.push(TestResult::pass(
+            validator,
+            "All 6 RewriteRule individuals + groundedIn assertion validated",
+        ));
+    }
+}
+
+/// Validates the 3 MeasurementUnit vocabulary individuals.
+fn validate_measurement_unit_individuals(report: &mut ConformanceReport) {
+    let ontology = uor_ontology::Ontology::full();
+    let validator = "ontology/inventory/measurement_unit";
+
+    let mu_iris = [
+        "https://uor.foundation/observable/Bits",
+        "https://uor.foundation/observable/RingSteps",
+        "https://uor.foundation/observable/Dimensionless",
+    ];
+
+    let mut all_found = true;
+    for iri in &mu_iris {
+        if ontology.find_individual(iri).is_none() {
+            report.push(TestResult::fail(
+                validator,
+                format!("MeasurementUnit individual {} not found", iri),
+            ));
+            all_found = false;
+        }
+    }
+
+    if all_found {
+        report.push(TestResult::pass(
+            validator,
+            "All 3 MeasurementUnit individuals present",
+        ));
+    }
+}
+
+/// Validates the 3 CoordinateKind vocabulary individuals.
+fn validate_coordinate_kind_individuals(report: &mut ConformanceReport) {
+    let ontology = uor_ontology::Ontology::full();
+    let validator = "ontology/inventory/coordinate_kind";
+
+    let ck_iris = [
+        "https://uor.foundation/query/StratumCoordinate",
+        "https://uor.foundation/query/SpectrumCoordinate",
+        "https://uor.foundation/query/AddressCoordinate",
+    ];
+
+    let mut all_found = true;
+    for iri in &ck_iris {
+        if ontology.find_individual(iri).is_none() {
+            report.push(TestResult::fail(
+                validator,
+                format!("CoordinateKind individual {} not found", iri),
+            ));
+            all_found = false;
+        }
+    }
+
+    if all_found {
+        report.push(TestResult::pass(
+            validator,
+            "All 3 CoordinateKind individuals present",
         ));
     }
 }

@@ -106,54 +106,62 @@ pub trait GluingObstruction<P: Primitives> {
 pub mod coboundary_squared_zero {
     /// `forAll`
     pub const FOR_ALL: &str = "f ∈ C^k";
+    /// `hasVerificationStatus` -> `Derivable`
+    pub const HAS_VERIFICATION_STATUS: &str = "https://uor.foundation/op/Derivable";
     /// `lhs`
     pub const LHS: &str = "δ^{k+1}(δ^k(f))";
     /// `rhs`
     pub const RHS: &str = "0";
-    /// `verificationPath`
-    pub const VERIFICATION_PATH: &str = "CochainComplex → CoboundaryOperator → δ² = 0";
-    /// `verificationStatus`
-    pub const VERIFICATION_STATUS: &str = "derivable";
+    /// `verificationDomain` -> `Topological`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Topological";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str = "CochainComplex → CoboundaryOperator → δ² = 0";
 }
 
 /// Discrete de Rham duality: H^k ≅ Hom(H_k, R).
 pub mod de_rham_duality {
     /// `forAll`
     pub const FOR_ALL: &str = "simplicial complex K, ring R";
+    /// `hasVerificationStatus` -> `Derivable`
+    pub const HAS_VERIFICATION_STATUS: &str = "https://uor.foundation/op/Derivable";
     /// `lhs`
     pub const LHS: &str = "H^k(K; R)";
     /// `rhs`
     pub const RHS: &str = "Hom(H_k(K), R)";
-    /// `verificationPath`
-    pub const VERIFICATION_PATH: &str = "CohomologyGroup ≅ dual(HomologyGroup)";
-    /// `verificationStatus`
-    pub const VERIFICATION_STATUS: &str = "derivable";
+    /// `verificationDomain` -> `Topological`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Topological";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str = "CohomologyGroup ≅ dual(HomologyGroup)";
 }
 
 /// Sheaf cohomology equals simplicial cohomology for constant sheaves.
 pub mod sheaf_cohomology_bridge {
     /// `forAll`
     pub const FOR_ALL: &str = "constant sheaf F_R over K";
+    /// `hasVerificationStatus` -> `Derivable`
+    pub const HAS_VERIFICATION_STATUS: &str = "https://uor.foundation/op/Derivable";
     /// `lhs`
     pub const LHS: &str = "H^k(K; F_R)";
     /// `rhs`
     pub const RHS: &str = "H^k(K; R)";
-    /// `verificationPath`
-    pub const VERIFICATION_PATH: &str = "Sheaf → constant coefficient → CochainComplex";
-    /// `verificationStatus`
-    pub const VERIFICATION_STATUS: &str = "derivable";
+    /// `verificationDomain` -> `Topological`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Topological";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str = "Sheaf → constant coefficient → CochainComplex";
 }
 
 /// Local-global principle: H^1(K; F) = 0 implies all local sections glue to global sections.
 pub mod local_global_principle {
     /// `forAll`
     pub const FOR_ALL: &str = "sheaf F over K";
+    /// `hasVerificationStatus` -> `Derivable`
+    pub const HAS_VERIFICATION_STATUS: &str = "https://uor.foundation/op/Derivable";
     /// `lhs`
     pub const LHS: &str = "H^1(K; F) = 0";
     /// `rhs`
     pub const RHS: &str = "all local sections glue";
-    /// `verificationPath`
-    pub const VERIFICATION_PATH: &str = "CohomologyGroup → GluingObstruction → vanishing";
-    /// `verificationStatus`
-    pub const VERIFICATION_STATUS: &str = "derivable";
+    /// `verificationDomain` -> `Topological`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Topological";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str = "CohomologyGroup → GluingObstruction → vanishing";
 }
