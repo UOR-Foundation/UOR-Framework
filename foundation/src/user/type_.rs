@@ -189,3 +189,9 @@ pub trait TwistedType<P: Primitives>: ConstrainedType<P> {}
 /// A ConstrainedType whose HolonomyGroup is trivial — all closed constraint paths have identity monodromy. The constraint configuration is topologically flat: resolution is path-independent.
 /// Disjoint with: TwistedType.
 pub trait FlatType<P: Primitives>: ConstrainedType<P> {}
+
+/// A type representing a superposition of fiber states where fibers carry complex amplitudes rather than binary pinned/free assignments. Ontological realisation of RC_5 (Amendment 32).
+pub trait SuperposedFiberState<P: Primitives>: TypeDefinition<P> {
+    /// The amplitude coefficient for this superposed fiber state.
+    fn amplitude(&self) -> P::Decimal;
+}

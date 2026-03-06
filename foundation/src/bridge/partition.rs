@@ -73,6 +73,10 @@ pub trait FiberCoordinate<P: Primitives> {
     fn fiber_position(&self) -> P::NonNegativeInteger;
     /// The current state of this fiber coordinate: 'pinned' if determined by a constraint, 'free' if still available for refinement.
     fn fiber_state(&self) -> FiberState;
+    /// Associated type for `FiberCoordinate`.
+    type FiberCoordinateTarget: FiberCoordinate<P>;
+    /// An ancilla fiber coordinate paired with this fiber for reversible computation (RC_1–RC_4 ancilla model).
+    fn ancilla_fiber(&self) -> &Self::FiberCoordinateTarget;
 }
 
 /// The fiber budget for a partition: an accounting of how many fibers are pinned (determined by constraints) versus free (still available for further refinement). A closed budget means all fibers are pinned and the type is fully resolved.
@@ -94,6 +98,8 @@ pub trait FiberBudget<P: Primitives> {
     type FiberPinning: FiberPinning<P>;
     /// A fiber pinning record in this budget.
     fn has_pinning(&self) -> &[Self::FiberPinning];
+    /// True when this fiber budget uses a reversible computation strategy preserving information through ancilla fibers.
+    fn reversible_strategy(&self) -> P::Boolean;
 }
 
 /// A record of a single fiber being pinned by a constraint. Links a specific fiber coordinate to the constraint that determined its value.

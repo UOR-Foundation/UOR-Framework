@@ -136,8 +136,8 @@ fn check_graph_structure(value: &Value, report: &mut ConformanceReport) {
         format!("@graph array present with {} nodes", graph.len()),
     ));
 
-    // Verify minimum node count (16 namespaces + 175 classes + 325 properties + 637 individuals + annotation properties)
-    let min_nodes = 16 + 175 + 325 + 637;
+    // Verify minimum node count (16 namespaces + 180 classes + 338 properties + 652 individuals + annotation properties)
+    let min_nodes = 16 + 180 + 338 + 652;
     if graph.len() >= min_nodes {
         report.push(TestResult::pass(
             "ontology/jsonld",

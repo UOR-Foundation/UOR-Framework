@@ -55,7 +55,7 @@ fn main() -> Result<()> {
     let report = run_all(&paths)?;
 
     // Verify total check count has not drifted
-    let expected_total_checks: usize = 115;
+    let expected_total_checks: usize = 122;
     let actual_checks = report.results.len();
     if actual_checks != expected_total_checks {
         eprintln!(

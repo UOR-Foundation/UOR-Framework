@@ -387,6 +387,16 @@ fn classes() -> Vec<Class> {
             subclass_of: &[OWL_THING],
             disjoint_with: &[],
         },
+        // Amendment 31: PhaseBoundaryType enum class
+        Class {
+            id: "https://uor.foundation/observable/PhaseBoundaryType",
+            label: "PhaseBoundaryType",
+            comment: "A classification of phase boundary in the catastrophe \
+                      diagram: period boundary (g divides 2^n − 1) or \
+                      power-of-two boundary (g = 2^k).",
+            subclass_of: &[OWL_THING],
+            disjoint_with: &[],
+        },
     ]
 }
 
@@ -625,6 +635,57 @@ fn properties() -> Vec<Property> {
             domain: Some("https://uor.foundation/observable/DihedralElement"),
             range: XSD_POSITIVE_INTEGER,
         },
+        // Amendment 31: Thermodynamic + Phase Diagram properties
+        Property {
+            id: "https://uor.foundation/observable/hardnessEstimate",
+            label: "hardnessEstimate",
+            comment: "An estimated computational hardness for a ThermoObservable, \
+                      connecting thermodynamic cost to complexity (TH_9 realisation).",
+            kind: PropertyKind::Datatype,
+            functional: true,
+            domain: Some("https://uor.foundation/observable/ThermoObservable"),
+            range: XSD_DECIMAL,
+        },
+        Property {
+            id: "https://uor.foundation/observable/phaseN",
+            label: "phaseN",
+            comment: "The ring dimension coordinate n in the (n, g) catastrophe \
+                      phase diagram (PD_1 n-coordinate).",
+            kind: PropertyKind::Datatype,
+            functional: true,
+            domain: Some("https://uor.foundation/observable/CatastropheObservable"),
+            range: XSD_POSITIVE_INTEGER,
+        },
+        Property {
+            id: "https://uor.foundation/observable/phaseG",
+            label: "phaseG",
+            comment: "The group-order coordinate g in the (n, g) catastrophe \
+                      phase diagram (PD_1 g-coordinate).",
+            kind: PropertyKind::Datatype,
+            functional: true,
+            domain: Some("https://uor.foundation/observable/CatastropheObservable"),
+            range: XSD_POSITIVE_INTEGER,
+        },
+        Property {
+            id: "https://uor.foundation/observable/onResonanceLine",
+            label: "onResonanceLine",
+            comment: "True when g divides 2^n − 1, placing this observable on \
+                      a resonance line in the phase diagram (PD_4).",
+            kind: PropertyKind::Datatype,
+            functional: true,
+            domain: Some("https://uor.foundation/observable/CatastropheObservable"),
+            range: XSD_BOOLEAN,
+        },
+        Property {
+            id: "https://uor.foundation/observable/phaseBoundaryType",
+            label: "phaseBoundaryType",
+            comment: "The type of phase boundary at this point in the catastrophe \
+                      diagram: PeriodBoundary or PowerOfTwoBoundary (PD_2).",
+            kind: PropertyKind::Object,
+            functional: true,
+            domain: Some("https://uor.foundation/observable/CatastropheObservable"),
+            range: "https://uor.foundation/observable/PhaseBoundaryType",
+        },
     ]
 }
 
@@ -662,6 +723,23 @@ fn individuals() -> Vec<Individual> {
             comment: "Natural information unit: entropy measured in nats (using natural \
                       logarithm). S_residual is expressed in nats when computed as \
                       (Σ κ_k − χ) × ln 2.",
+            properties: &[],
+        },
+        // Amendment 31: PhaseBoundaryType vocabulary individuals
+        Individual {
+            id: "https://uor.foundation/observable/PeriodBoundary",
+            type_: "https://uor.foundation/observable/PhaseBoundaryType",
+            label: "PeriodBoundary",
+            comment: "A phase boundary where g divides 2^n − 1, meaning g is \
+                      a period of the multiplicative structure of R_n.",
+            properties: &[],
+        },
+        Individual {
+            id: "https://uor.foundation/observable/PowerOfTwoBoundary",
+            type_: "https://uor.foundation/observable/PhaseBoundaryType",
+            label: "PowerOfTwoBoundary",
+            comment: "A phase boundary where g = 2^k, meaning g aligns with \
+                      the binary stratification of R_n.",
             properties: &[],
         },
     ]

@@ -1,6 +1,6 @@
 //! SHACL validator.
 //!
-//! Validates the 46 OWL instance test graphs against the UOR SHACL shapes.
+//! Validates the 53 OWL instance test graphs against the UOR SHACL shapes.
 //! Each test graph is defined as a Turtle string in `tests/fixtures/`.
 //! Validation checks structural constraints without a full SHACL engine:
 //! - Required properties are present
@@ -11,9 +11,9 @@ use crate::report::{ConformanceReport, TestResult};
 use crate::tests;
 
 /// Expected number of SHACL test fixtures.
-const EXPECTED_SHACL_TESTS: usize = 46;
+const EXPECTED_SHACL_TESTS: usize = 53;
 
-/// Runs all 46 SHACL instance conformance tests.
+/// Runs all 53 SHACL instance conformance tests.
 pub fn validate() -> ConformanceReport {
     let mut report = ConformanceReport::new();
     let before_tests = report.results.len();
@@ -244,6 +244,41 @@ pub fn validate() -> ConformanceReport {
         tests::fixtures::TEST46_MONODROMY_PIPELINE,
         &mut report,
     );
+    run_test(
+        "test47_thermo_pipeline",
+        tests::fixtures::TEST47_THERMO_PIPELINE,
+        &mut report,
+    );
+    run_test(
+        "test48_phase_diagram",
+        tests::fixtures::TEST48_PHASE_DIAGRAM,
+        &mut report,
+    );
+    run_test(
+        "test49_reversible_resolution",
+        tests::fixtures::TEST49_REVERSIBLE_RESOLUTION,
+        &mut report,
+    );
+    run_test(
+        "test50_jacobian_resolver",
+        tests::fixtures::TEST50_JACOBIAN_RESOLVER,
+        &mut report,
+    );
+    run_test(
+        "test51_product_type_pipeline",
+        tests::fixtures::TEST51_PRODUCT_TYPE_PIPELINE,
+        &mut report,
+    );
+    run_test(
+        "test52_sum_type_variant",
+        tests::fixtures::TEST52_SUM_TYPE_VARIANT,
+        &mut report,
+    );
+    run_test(
+        "test53_superposed_fiber",
+        tests::fixtures::TEST53_SUPERPOSED_FIBER,
+        &mut report,
+    );
 
     // Verify test fixture count matches expected
     let test_count = report.results.len() - before_tests;
@@ -337,6 +372,13 @@ fn run_test(name: &str, turtle_src: &str, report: &mut ConformanceReport) {
         "test44_monodromy_flat" => validate_monodromy_flat_shacl(turtle_src),
         "test45_monodromy_twisted" => validate_monodromy_twisted_shacl(turtle_src),
         "test46_monodromy_pipeline" => validate_monodromy_pipeline_shacl(turtle_src),
+        "test47_thermo_pipeline" => validate_thermo_pipeline_shacl(turtle_src),
+        "test48_phase_diagram" => validate_phase_diagram_shacl(turtle_src),
+        "test49_reversible_resolution" => validate_reversible_resolution_shacl(turtle_src),
+        "test50_jacobian_resolver" => validate_jacobian_resolver_shacl(turtle_src),
+        "test51_product_type_pipeline" => validate_product_type_pipeline_shacl(turtle_src),
+        "test52_sum_type_variant" => validate_sum_type_variant_shacl(turtle_src),
+        "test53_superposed_fiber" => validate_superposed_fiber_shacl(turtle_src),
         _ => Ok(()),
     };
 
@@ -1508,6 +1550,91 @@ fn validate_monodromy_pipeline_shacl(src: &str) -> Result<(), String> {
         src,
         "type:TwistedType",
         "Missing TwistedType type assertion",
+    )?;
+    Ok(())
+}
+
+fn validate_thermo_pipeline_shacl(src: &str) -> Result<(), String> {
+    check_contains(
+        src,
+        "observable:ThermoObservable",
+        "Missing ThermoObservable",
+    )?;
+    check_contains(src, "observable:ResidualEntropy", "Missing ResidualEntropy")?;
+    check_contains(
+        src,
+        "observable:hardnessEstimate",
+        "Missing hardnessEstimate",
+    )?;
+    check_contains(src, "trace:ComputationTrace", "Missing ComputationTrace")?;
+    check_contains(src, "trace:residualEntropy", "Missing residualEntropy link")?;
+    Ok(())
+}
+
+fn validate_phase_diagram_shacl(src: &str) -> Result<(), String> {
+    check_contains(
+        src,
+        "observable:CatastropheObservable",
+        "Missing CatastropheObservable",
+    )?;
+    check_contains(src, "observable:phaseN", "Missing phaseN coordinate")?;
+    check_contains(src, "observable:phaseG", "Missing phaseG coordinate")?;
+    check_contains(
+        src,
+        "observable:phaseBoundaryType",
+        "Missing phaseBoundaryType",
+    )?;
+    check_contains(src, "observable:onResonanceLine", "Missing onResonanceLine")?;
+    Ok(())
+}
+
+fn validate_reversible_resolution_shacl(src: &str) -> Result<(), String> {
+    check_contains(src, "partition:FiberBudget", "Missing FiberBudget")?;
+    check_contains(src, "partition:FiberCoordinate", "Missing FiberCoordinate")?;
+    check_contains(src, "partition:ancillaFiber", "Missing ancillaFiber")?;
+    check_contains(
+        src,
+        "partition:reversibleStrategy",
+        "Missing reversibleStrategy",
+    )?;
+    Ok(())
+}
+
+fn validate_jacobian_resolver_shacl(src: &str) -> Result<(), String> {
+    check_contains(
+        src,
+        "resolver:JacobianGuidedResolver",
+        "Missing JacobianGuidedResolver",
+    )?;
+    check_contains(src, "resolver:guidingJacobian", "Missing guidingJacobian")?;
+    check_contains(src, "observable:Jacobian", "Missing Jacobian observable")?;
+    Ok(())
+}
+
+fn validate_product_type_pipeline_shacl(src: &str) -> Result<(), String> {
+    check_contains(src, "type:ProductType", "Missing ProductType")?;
+    check_contains(src, "type:component", "Missing component property")?;
+    check_contains(src, "type:TypeDefinition", "Missing TypeDefinition")?;
+    Ok(())
+}
+
+fn validate_sum_type_variant_shacl(src: &str) -> Result<(), String> {
+    check_contains(src, "type:SumType", "Missing SumType")?;
+    check_contains(src, "type:component", "Missing component property")?;
+    Ok(())
+}
+
+fn validate_superposed_fiber_shacl(src: &str) -> Result<(), String> {
+    check_contains(
+        src,
+        "type:SuperposedFiberState",
+        "Missing SuperposedFiberState",
+    )?;
+    check_contains(src, "type:amplitude", "Missing amplitude property")?;
+    check_contains(
+        src,
+        "resolver:SuperpositionResolver",
+        "Missing SuperpositionResolver",
     )?;
     Ok(())
 }

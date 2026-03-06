@@ -2,19 +2,19 @@
 
 ## Overview
 
-The UOR conformance suite validates 46 OWL instance graphs against SHACL NodeShapes
+The UOR conformance suite validates 53 OWL instance graphs against SHACL NodeShapes
 defined in `conformance/shapes/uor-shapes.ttl`. One NodeShape is defined per
-ontology class (175 total).
+ontology class (180 total).
 
 ## Shape File
 
 `conformance/shapes/uor-shapes.ttl` contains:
-- 175 `sh:NodeShape` declarations (one per class)
+- 180 `sh:NodeShape` declarations (one per class)
 - `sh:targetClass` targeting each OWL class
 - Cardinality constraints (`sh:minCount`, `sh:maxCount`) on required properties
 - Type constraints (`sh:class`, `sh:datatype`) on property values
 
-## The 46 Instance Tests
+## The 53 Instance Tests
 
 | Test | File | Validates |
 |------|------|-----------|
@@ -64,6 +64,13 @@ ontology class (175 total).
 | test44_monodromy_flat | `tests/fixtures/test44_monodromy_flat.rs` | `type:FlatType` + trivial `HolonomyGroup` + `Monodromy` + `DihedralElement` (Amendment 30) |
 | test45_monodromy_twisted | `tests/fixtures/test45_monodromy_twisted.rs` | `type:TwistedType` + non-trivial `HolonomyGroup` + `Monodromy` + `LiftObstruction` (Amendment 30) |
 | test46_monodromy_pipeline | `tests/fixtures/test46_monodromy_pipeline.rs` | `resolver:MonodromyResolver` end-to-end pipeline: ConstrainedType → HolonomyGroup → MonodromyClass → TwistedType (Amendment 30) |
+| test47_thermo_pipeline | `tests/fixtures/test47_thermo_pipeline.rs` | `observable:ThermoObservable` + `hardnessEstimate` + `trace:residualEntropy` (Amendment 31) |
+| test48_phase_diagram | `tests/fixtures/test48_phase_diagram.rs` | `observable:CatastropheObservable` + `phaseN`/`phaseG` + `PhaseBoundaryType` + `onResonanceLine` (Amendment 31) |
+| test49_reversible_resolution | `tests/fixtures/test49_reversible_resolution.rs` | `partition:FiberBudget` + `ancillaFiber` + `reversibleStrategy` (Amendment 31) |
+| test50_jacobian_resolver | `tests/fixtures/test50_jacobian_resolver.rs` | `resolver:JacobianGuidedResolver` + `ResolutionState` + `guidingJacobian` (Amendment 31) |
+| test51_product_type_pipeline | `tests/fixtures/test51_product_type_pipeline.rs` | `type:ProductType` + component assertions + `FiberBudget` (Amendment 31) |
+| test52_sum_type_variant | `tests/fixtures/test52_sum_type_variant.rs` | `type:SumType` + variant assertions (Amendment 31) |
+| test53_superposed_fiber | `tests/fixtures/test53_superposed_fiber.rs` | `type:SuperposedFiberState` + `amplitude` + `resolver:SuperpositionResolver` (Amendment 32) |
 
 ## Structural Validation
 

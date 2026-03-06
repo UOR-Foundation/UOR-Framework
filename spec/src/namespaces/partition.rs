@@ -343,5 +343,26 @@ fn properties() -> Vec<Property> {
             domain: Some("https://uor.foundation/partition/FiberBudget"),
             range: "https://uor.foundation/partition/FiberPinning",
         },
+        // Amendment 31: Reversible computation properties (RC_1–RC_4)
+        Property {
+            id: "https://uor.foundation/partition/ancillaFiber",
+            label: "ancillaFiber",
+            comment: "An ancilla fiber coordinate paired with this fiber for \
+                      reversible computation (RC_1–RC_4 ancilla model).",
+            kind: PropertyKind::Object,
+            functional: true,
+            domain: Some("https://uor.foundation/partition/FiberCoordinate"),
+            range: "https://uor.foundation/partition/FiberCoordinate",
+        },
+        Property {
+            id: "https://uor.foundation/partition/reversibleStrategy",
+            label: "reversibleStrategy",
+            comment: "True when this fiber budget uses a reversible computation \
+                      strategy preserving information through ancilla fibers.",
+            kind: PropertyKind::Datatype,
+            functional: true,
+            domain: Some("https://uor.foundation/partition/FiberBudget"),
+            range: XSD_BOOLEAN,
+        },
     ]
 }

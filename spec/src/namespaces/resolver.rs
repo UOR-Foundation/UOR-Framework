@@ -217,6 +217,26 @@ fn classes() -> Vec<Class> {
             subclass_of: &["https://uor.foundation/resolver/Resolver"],
             disjoint_with: &[],
         },
+        // Amendment 31: Jacobian-guided resolver (DC_10)
+        Class {
+            id: "https://uor.foundation/resolver/JacobianGuidedResolver",
+            label: "JacobianGuidedResolver",
+            comment: "A resolver that uses the Jacobian matrix to guide \
+                      constraint selection, implementing DC_10: select the \
+                      constraint that maximises total curvature reduction.",
+            subclass_of: &["https://uor.foundation/resolver/Resolver"],
+            disjoint_with: &[],
+        },
+        // Amendment 32: Superposition resolver (RC_5)
+        Class {
+            id: "https://uor.foundation/resolver/SuperpositionResolver",
+            label: "SuperpositionResolver",
+            comment: "A resolver that handles superposed fiber states, computing \
+                      amplitudes and determining when superposition collapses to \
+                      a classical fiber assignment (Amendment 32).",
+            subclass_of: &["https://uor.foundation/resolver/Resolver"],
+            disjoint_with: &[],
+        },
     ]
 }
 
@@ -499,6 +519,17 @@ fn properties() -> Vec<Property> {
             functional: true,
             domain: Some("https://uor.foundation/resolver/MonodromyResolver"),
             range: "https://uor.foundation/observable/HolonomyGroup",
+        },
+        // Amendment 31: Jacobian-guided resolver property (DC_10)
+        Property {
+            id: "https://uor.foundation/resolver/guidingJacobian",
+            label: "guidingJacobian",
+            comment: "The Jacobian observable guiding constraint selection \
+                      at this resolution state (DC_10).",
+            kind: PropertyKind::Object,
+            functional: true,
+            domain: Some("https://uor.foundation/resolver/ResolutionState"),
+            range: "https://uor.foundation/observable/Jacobian",
         },
     ]
 }

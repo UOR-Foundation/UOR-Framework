@@ -175,7 +175,16 @@ pub fn detect_enums(ontology: &Ontology) -> Vec<DetectedEnum> {
         &mut enums,
     );
 
-    // 13. ProofModality enum (hardcoded — codegen enum, not an OWL class)
+    // 13. PhaseBoundaryType enum — Amendment 31: Phase Diagram
+    detect_vocabulary_enum(
+        ontology,
+        "observable",
+        "PhaseBoundaryType",
+        "A classification of phase boundary in the catastrophe diagram.",
+        &mut enums,
+    );
+
+    // 14. ProofModality enum (hardcoded — codegen enum, not an OWL class)
     enums.push(DetectedEnum {
         name: "ProofModality",
         comment: "The modality of a proof: computation (exhaustive verification at a \
@@ -190,6 +199,11 @@ pub fn detect_enums(ontology: &Ontology) -> Vec<DetectedEnum> {
             (
                 "Axiomatic".to_string(),
                 "A proof derived from ring axioms that holds at all quantum levels.".to_string(),
+            ),
+            (
+                "Empirical".to_string(),
+                "A proof verified empirically across a bounded range of quantum levels."
+                    .to_string(),
             ),
         ],
         non_exhaustive: false,

@@ -59,6 +59,16 @@ pub trait WitnessData<P: Primitives> {
     fn holds(&self) -> &[P::Boolean];
 }
 
+/// A proof grounded in empirical verification across a bounded range of quantum levels, rather than axiomatic derivation or exhaustive computation. Used for identities like AR_5 whose forAll quantifier is 'empirical, Q0--Q4'.
+pub trait EmpiricalVerification<P: Primitives>: Proof<P> {
+    /// The range of quantum levels over which this empirical verification was conducted (e.g., 'Q0-Q4').
+    fn quantum_level_range(&self) -> &P::String;
+    /// The empirical method used for verification (e.g., 'exhaustive enumeration over Z/(2^n)Z for n=8,16,32,64').
+    fn verification_method(&self) -> &P::String;
+    /// The timestamp at which empirical verification was conducted.
+    fn verified_at(&self) -> &P::String;
+}
+
 /// Computation certificate for the critical identity neg(bnot(x)) = succ(x) at Q0.
 pub mod prf_critical_identity {
     /// `atQuantumLevel` -> `Q0`
@@ -2129,12 +2139,14 @@ pub mod prf_ar_4 {
     pub const VERIFIED: bool = true;
 }
 
-/// Axiomatic derivation of AR_5. Holds at all quantum levels by definition of Z/(2^n)Z.
+/// Empirical verification of AR_5: greedy vs adiabatic cost difference is at most 5% for n ≤ 16. Verified by exhaustive enumeration at Q0 through Q4.
 pub mod prf_ar_5 {
     /// `provesIdentity` -> `AR_5`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/AR_5";
-    /// `universalScope`
-    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `quantumLevelRange`
+    pub const QUANTUM_LEVEL_RANGE: &str = "Q0-Q4";
+    /// `verificationMethod`
+    pub const VERIFICATION_METHOD: &str = "exhaustive enumeration over Z/(2^n)Z for n=8,16,32,64";
     /// `verified`
     pub const VERIFIED: bool = true;
 }
@@ -2943,6 +2955,66 @@ pub mod prf_mn_6 {
 pub mod prf_mn_7 {
     /// `provesIdentity` -> `MN_7`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/MN_7";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Proof of PT_1: product type fiber additivity. fiberBudget(A × B) = fiberBudget(A) + fiberBudget(B). Follows from the definition of ProductType as an independent concatenation of fiber spaces.
+pub mod prf_pt_1 {
+    /// `provesIdentity` -> `PT_1`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/PT_1";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Proof of PT_2: product type partition factorisation. partition(A × B) = partition(A) ⊗ partition(B). Follows from the tensor product structure of constraint nerves over independent fiber spaces.
+pub mod prf_pt_2 {
+    /// `provesIdentity` -> `PT_2`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/PT_2";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Proof of PT_3: product type Euler characteristic additivity. χ(N(C(A × B))) = χ(N(C(A))) + χ(N(C(B))). Follows from the Künneth formula applied to the join of constraint nerves.
+pub mod prf_pt_3 {
+    /// `provesIdentity` -> `PT_3`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/PT_3";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Proof of PT_4: product type entropy additivity. S(A × B) = S(A) + S(B). Follows from PT_1 (fiber additivity) and TH_1 (S = freeCount × ln 2).
+pub mod prf_pt_4 {
+    /// `provesIdentity` -> `PT_4`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/PT_4";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Proof of ST_1: sum type fiber budget maximum. fiberBudget(A + B) = max(fiberBudget(A), fiberBudget(B)). Follows from SumType requiring capacity for the larger variant.
+pub mod prf_st_1 {
+    /// `provesIdentity` -> `ST_1`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/ST_1";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Proof of ST_2: sum type entropy. S(A + B) = ln 2 + max(S(A), S(B)). The ln 2 term accounts for the variant discriminant bit; the max reflects that only one variant is active at a time.
+pub mod prf_st_2 {
+    /// `provesIdentity` -> `ST_2`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/ST_2";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`

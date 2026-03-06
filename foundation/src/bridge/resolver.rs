@@ -64,6 +64,10 @@ pub trait ResolutionState<P: Primitives> {
     fn topologically_complete(&self) -> P::Boolean;
     /// The Euler characteristic χ(N(C)) of the active constraint nerve at this resolution state. IT_7d requires this value to equal n (the quantum level) for resolution to be complete. Cached here to avoid recomputing the full ψ pipeline on each iteration check.
     fn nerve_euler_characteristic(&self) -> P::Integer;
+    /// Associated type for `Jacobian`.
+    type Jacobian: crate::bridge::observable::Jacobian<P>;
+    /// The Jacobian observable guiding constraint selection at this resolution state (DC_10).
+    fn guiding_jacobian(&self) -> &Self::Jacobian;
 }
 
 /// A suggestion from the resolver for how to refine an incomplete resolution: which metric axis to explore, which class to narrow to, and which fibers to target.
@@ -151,6 +155,12 @@ pub trait MonodromyResolver<P: Primitives>: Resolver<P> {
     /// The HolonomyGroup produced by this monodromy resolver run.
     fn holonomy_result(&self) -> &Self::HolonomyGroup;
 }
+
+/// A resolver that uses the Jacobian matrix to guide constraint selection, implementing DC_10: select the constraint that maximises total curvature reduction.
+pub trait JacobianGuidedResolver<P: Primitives>: Resolver<P> {}
+
+/// A resolver that handles superposed fiber states, computing amplitudes and determining when superposition collapses to a classical fiber assignment (Amendment 32).
+pub trait SuperpositionResolver<P: Primitives>: Resolver<P> {}
 
 /// O(1) complexity — the resolver runs in constant time regardless of ring size.
 pub mod constant_time {}

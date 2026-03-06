@@ -102,6 +102,9 @@ pub mod pipeline {}
 /// Established by the composition of Analytical and Topological reasoning. The only domain requiring multiple op:verificationDomain assertions. Covers the UOR Index Theorem (IT_7a–IT_7d).
 pub mod index_theoretic {}
 
+/// Established by superposition analysis of fiber states. Covers identities involving superposed (non-classical) fiber assignments where fibers carry complex amplitudes.
+pub mod superposition_domain {}
+
 /// Reflection through the origin of the additive ring: neg(x) = -x mod 2^n. One of the two generators of D_{2^n}.
 pub mod ring_reflection {}
 
@@ -4149,6 +4152,91 @@ pub mod mn_7 {
     /// `verificationPathNote`
     pub const VERIFICATION_PATH_NOTE: &str =
         "TwistedType → non-trivial LiftObstruction at every quantum level";
+}
+
+/// Product type fiber additivity: fiberBudget(A × B) = fiberBudget(A) + fiberBudget(B).
+pub mod pt_1 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "A, B: TypeDefinition";
+    /// `lhs`
+    pub const LHS: &str = "fiberBudget(A × B)";
+    /// `rhs`
+    pub const RHS: &str = "fiberBudget(A) + fiberBudget(B)";
+    /// `verificationDomain` -> `Algebraic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str = "ProductType → FiberBudget additivity";
+}
+
+/// Product type partition product: partition(A × B) = partition(A) ⊗ partition(B).
+pub mod pt_2 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "A, B: TypeDefinition";
+    /// `lhs`
+    pub const LHS: &str = "partition(A × B)";
+    /// `rhs`
+    pub const RHS: &str = "partition(A) ⊗ partition(B)";
+    /// `verificationDomain` -> `Topological`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Topological";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str = "ProductType → Partition tensor product";
+}
+
+/// Product type Euler additivity: χ(N(C(A × B))) = χ(N(C(A))) + χ(N(C(B))).
+pub mod pt_3 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "A, B: TypeDefinition";
+    /// `lhs`
+    pub const LHS: &str = "χ(N(C(A × B)))";
+    /// `rhs`
+    pub const RHS: &str = "χ(N(C(A))) + χ(N(C(B)))";
+    /// `verificationDomain` -> `IndexTheoretic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/IndexTheoretic";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str =
+        "ProductType → constraint nerve Euler characteristic additivity";
+}
+
+/// Product type entropy additivity: S(A × B) = S(A) + S(B).
+pub mod pt_4 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "A, B: TypeDefinition";
+    /// `lhs`
+    pub const LHS: &str = "S(A × B)";
+    /// `rhs`
+    pub const RHS: &str = "S(A) + S(B)";
+    /// `verificationDomain` -> `Thermodynamic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Thermodynamic";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str = "ProductType → fiber entropy additivity";
+}
+
+/// Sum type fiber budget: fiberBudget(A + B) = max(fiberBudget(A), fiberBudget(B)).
+pub mod st_1 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "A, B: TypeDefinition";
+    /// `lhs`
+    pub const LHS: &str = "fiberBudget(A + B)";
+    /// `rhs`
+    pub const RHS: &str = "max(fiberBudget(A), fiberBudget(B))";
+    /// `verificationDomain` -> `Algebraic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str = "SumType → FiberBudget max";
+}
+
+/// Sum type entropy: S(A + B) = ln 2 + max(S(A), S(B)).
+pub mod st_2 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "A, B: TypeDefinition";
+    /// `lhs`
+    pub const LHS: &str = "S(A + B)";
+    /// `rhs`
+    pub const RHS: &str = "ln 2 + max(S(A), S(B))";
+    /// `verificationDomain` -> `Thermodynamic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Thermodynamic";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str = "SumType → entropy with binary choice overhead";
 }
 
 use crate::enums::PrimitiveOp;

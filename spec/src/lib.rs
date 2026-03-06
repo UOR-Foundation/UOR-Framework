@@ -1,7 +1,7 @@
 //! UOR Foundation ontology encoded as typed Rust data.
 //!
 //! The `uor-ontology` crate provides the complete UOR Foundation ontology —
-//! 16 namespaces, 175 classes, 325 properties, and 637 named individuals —
+//! 16 namespaces, 180 classes, 338 properties, and 652 named individuals —
 //! as static Rust data structures, along with serializers that produce
 //! JSON-LD, Turtle, and N-Triples output.
 //!
@@ -53,7 +53,7 @@ pub use model::{
 
 impl Ontology {
     /// Returns the complete UOR Foundation ontology with all 16 namespaces
-    /// and all 30 amendments applied.
+    /// and all 32 amendments applied.
     ///
     /// Assembly order follows the dependency graph specified in the UOR Foundation
     /// completion plan:
@@ -63,7 +63,7 @@ impl Ontology {
     pub fn full() -> &'static Ontology {
         static ONTOLOGY: std::sync::OnceLock<Ontology> = std::sync::OnceLock::new();
         ONTOLOGY.get_or_init(|| Ontology {
-            version: "3.5.0",
+            version: "4.0.0",
             base_iri: "https://uor.foundation/",
             namespaces: vec![
                 namespaces::u::module(),
@@ -118,19 +118,16 @@ mod tests {
             .iter()
             .map(|m| m.classes.len())
             .sum();
-        // 175 classes: 155 v3.4.0 + 20 Amdt28-30 (TypeSynthesisGoal, TypeSynthesisResult,
-        // SynthesizedType, MinimalConstraintBasis, TypeSynthesisResolver, ConstraintSearchState,
-        // SynthesisStep, SynthesisSignature, QuantumLift, LiftObstruction, SpectralSequencePage,
-        // LiftObstructionClass, IncrementalCompletenessResolver, LiftRefinementSuggestion,
-        // MonodromyClass, HolonomyGroup, ClosedConstraintPath, TwistedType, FlatType,
-        // MonodromyResolver).
-        assert_eq!(total, 175);
+        // 180 classes: 175 v3.5.0 + 5 Amdt31-32 (EmpiricalVerification,
+        // PhaseBoundaryType, JacobianGuidedResolver, SuperpositionResolver,
+        // SuperposedFiberState).
+        assert_eq!(total, 180);
     }
 
     #[test]
     fn property_count() {
-        // 325 = 285 v3.4.0 + 40 Amdt28-30 (14 Amdt28 + 12 Amdt29 + 14 Amdt30).
-        assert_eq!(Ontology::full().property_count(), 325);
+        // 338 = 325 v3.5.0 + 13 Amdt31-32 (12 Amdt31 + 1 Amdt32).
+        assert_eq!(Ontology::full().property_count(), 338);
     }
 
     #[test]
@@ -140,9 +137,9 @@ mod tests {
             .iter()
             .map(|m| m.individuals.len())
             .sum();
-        // 637 individuals: 597 v3.4.0 + 40 Amdt28-30 (20 op identities: TS_1–7, QLS_1–6, MN_1–7)
-        //                + 20 proof individuals for TS_1–7, QLS_1–6, MN_1–7.
-        assert_eq!(total, 637);
+        // 652 = 637 v3.5.0 + 15 Amdt31-32 (1 SuperpositionDomain + 6 identities PT_1–4/ST_1–2
+        //       + 2 PhaseBoundaryType individuals + 6 proof individuals).
+        assert_eq!(total, 652);
     }
 
     #[test]

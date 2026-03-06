@@ -169,5 +169,16 @@ fn properties() -> Vec<Property> {
             domain: Some("https://uor.foundation/trace/ComputationTrace"),
             range: "https://uor.foundation/cert/Certificate",
         },
+        // Amendment 31: Residual entropy link (TH_9 connection)
+        Property {
+            id: "https://uor.foundation/trace/residualEntropy",
+            label: "residualEntropy",
+            comment: "The residual entropy observable remaining after this computation \
+                      trace, linking to the ThermoObservable taxonomy (TH_9 connection).",
+            kind: PropertyKind::Object,
+            functional: true,
+            domain: Some("https://uor.foundation/trace/ComputationTrace"),
+            range: "https://uor.foundation/observable/ResidualEntropy",
+        },
     ]
 }

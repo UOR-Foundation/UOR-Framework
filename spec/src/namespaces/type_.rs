@@ -283,6 +283,16 @@ fn classes() -> Vec<Class> {
             subclass_of: &["https://uor.foundation/type/ConstrainedType"],
             disjoint_with: &["https://uor.foundation/type/TwistedType"],
         },
+        // Amendment 32: Superposed fiber state (RC_5)
+        Class {
+            id: "https://uor.foundation/type/SuperposedFiberState",
+            label: "SuperposedFiberState",
+            comment: "A type representing a superposition of fiber states where fibers \
+                      carry complex amplitudes rather than binary pinned/free \
+                      assignments. Ontological realisation of RC_5 (Amendment 32).",
+            subclass_of: &["https://uor.foundation/type/TypeDefinition"],
+            disjoint_with: &[],
+        },
     ]
 }
 
@@ -623,6 +633,16 @@ fn properties() -> Vec<Property> {
             functional: true,
             domain: Some("https://uor.foundation/type/ConstrainedType"),
             range: "https://uor.foundation/observable/MonodromyClass",
+        },
+        // Amendment 32: Superposed fiber state amplitude (RC_5)
+        Property {
+            id: "https://uor.foundation/type/amplitude",
+            label: "amplitude",
+            comment: "The amplitude coefficient for this superposed fiber state.",
+            kind: PropertyKind::Datatype,
+            functional: true,
+            domain: Some("https://uor.foundation/type/SuperposedFiberState"),
+            range: XSD_DECIMAL,
         },
     ]
 }

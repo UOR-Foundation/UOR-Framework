@@ -113,6 +113,7 @@ fn validate_trait_completeness(
         "MeasurementUnit",
         "CoordinateKind",
         "SessionBoundaryType",
+        "PhaseBoundaryType",
     ];
 
     // Read all generated source files
@@ -177,6 +178,7 @@ fn validate_method_completeness(
         "MeasurementUnit",
         "CoordinateKind",
         "SessionBoundaryType",
+        "PhaseBoundaryType",
     ];
 
     let mut missing = Vec::new();
@@ -259,6 +261,7 @@ fn validate_individual_completeness(
         "MeasurementUnit",
         "CoordinateKind",
         "SessionBoundaryType",
+        "PhaseBoundaryType",
     ];
 
     let mut missing = Vec::new();
@@ -281,6 +284,7 @@ fn validate_individual_completeness(
                     "ComplexityClass" => Some("Time"),
                     "RewriteRule" => Some("Rule"),
                     "CoordinateKind" => Some("Coordinate"),
+                    "PhaseBoundaryType" => Some("Boundary"),
                     _ => None,
                 };
                 if let Some(sfx) = suffix {

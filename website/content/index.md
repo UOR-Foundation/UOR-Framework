@@ -31,12 +31,12 @@ in the dihedral group D_{2^n}.
 
 ## Formal Artifacts
 
-- **OWL 2 DL ontology**: 16 namespaces, 175 classes, 325 properties, 637
+- **OWL 2 DL ontology**: 16 namespaces, 180 classes, 338 properties, 652
   named individuals.
-- **SHACL shapes**: 175 NodeShapes validating instance data.
-- **Algebraic identities**: 288 machine-verified identities spanning 7
+- **SHACL shapes**: 180 NodeShapes validating instance data.
+- **Algebraic identities**: 294 machine-verified identities spanning 7
   algebras.
-- **Rust trait crate**: `uor-foundation` on crates.io — 166 traits generated
+- **Rust trait crate**: `uor-foundation` on crates.io — 170 traits generated
   directly from the ontology.
 
 ## Downloads

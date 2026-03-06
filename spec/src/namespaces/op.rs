@@ -106,7 +106,7 @@ fn classes() -> Vec<Class> {
             comment: "A named mathematical discipline through which an algebraic \
                       identity is established and grounded. Every op:Identity \
                       individual references at least one VerificationDomain via \
-                      op:verificationDomain. The eight canonical domain individuals \
+                      op:verificationDomain. The nine canonical domain individuals \
                       are kernel-level constants defined in op/.",
             subclass_of: &[OWL_THING],
             disjoint_with: &[],
@@ -414,6 +414,16 @@ fn individuals() -> Vec<Individual> {
             comment: "Established by the composition of Analytical and Topological \
                       reasoning. The only domain requiring multiple op:verificationDomain \
                       assertions. Covers the UOR Index Theorem (IT_7a–IT_7d).",
+            properties: &[],
+        },
+        // Amendment 32: SuperpositionDomain
+        Individual {
+            id: "https://uor.foundation/op/SuperpositionDomain",
+            type_: "https://uor.foundation/op/VerificationDomain",
+            label: "SuperpositionDomain",
+            comment: "Established by superposition analysis of fiber states. \
+                      Covers identities involving superposed (non-classical) \
+                      fiber assignments where fibers carry complex amplitudes.",
             properties: &[],
         },
         // Amendment 23: GeometricCharacter individuals (9)
@@ -4751,6 +4761,114 @@ fn individuals() -> Vec<Individual> {
                 ),
                 ("https://uor.foundation/op/verificationPathNote",
                  IndividualValue::Str("TwistedType → non-trivial LiftObstruction at every quantum level")),
+            ],
+        },
+        // Amendment 31: Product Type identities
+        Individual {
+            id: "https://uor.foundation/op/PT_1",
+            type_: "https://uor.foundation/op/Identity",
+            label: "PT_1",
+            comment: "Product type fiber additivity: fiberBudget(A × B) = \
+                      fiberBudget(A) + fiberBudget(B).",
+            properties: &[
+                ("https://uor.foundation/op/lhs", IndividualValue::Str("fiberBudget(A × B)")),
+                ("https://uor.foundation/op/rhs", IndividualValue::Str("fiberBudget(A) + fiberBudget(B)")),
+                ("https://uor.foundation/op/forAll", IndividualValue::Str("A, B: TypeDefinition")),
+                (
+                    "https://uor.foundation/op/verificationDomain",
+                    IndividualValue::IriRef("https://uor.foundation/op/Algebraic"),
+                ),
+                ("https://uor.foundation/op/verificationPathNote",
+                 IndividualValue::Str("ProductType → FiberBudget additivity")),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/op/PT_2",
+            type_: "https://uor.foundation/op/Identity",
+            label: "PT_2",
+            comment: "Product type partition product: partition(A × B) = \
+                      partition(A) ⊗ partition(B).",
+            properties: &[
+                ("https://uor.foundation/op/lhs", IndividualValue::Str("partition(A × B)")),
+                ("https://uor.foundation/op/rhs", IndividualValue::Str("partition(A) ⊗ partition(B)")),
+                ("https://uor.foundation/op/forAll", IndividualValue::Str("A, B: TypeDefinition")),
+                (
+                    "https://uor.foundation/op/verificationDomain",
+                    IndividualValue::IriRef("https://uor.foundation/op/Topological"),
+                ),
+                ("https://uor.foundation/op/verificationPathNote",
+                 IndividualValue::Str("ProductType → Partition tensor product")),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/op/PT_3",
+            type_: "https://uor.foundation/op/Identity",
+            label: "PT_3",
+            comment: "Product type Euler additivity: χ(N(C(A × B))) = \
+                      χ(N(C(A))) + χ(N(C(B))).",
+            properties: &[
+                ("https://uor.foundation/op/lhs", IndividualValue::Str("χ(N(C(A × B)))")),
+                ("https://uor.foundation/op/rhs", IndividualValue::Str("χ(N(C(A))) + χ(N(C(B)))")),
+                ("https://uor.foundation/op/forAll", IndividualValue::Str("A, B: TypeDefinition")),
+                (
+                    "https://uor.foundation/op/verificationDomain",
+                    IndividualValue::IriRef("https://uor.foundation/op/IndexTheoretic"),
+                ),
+                ("https://uor.foundation/op/verificationPathNote",
+                 IndividualValue::Str("ProductType → constraint nerve Euler characteristic additivity")),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/op/PT_4",
+            type_: "https://uor.foundation/op/Identity",
+            label: "PT_4",
+            comment: "Product type entropy additivity: S(A × B) = S(A) + S(B).",
+            properties: &[
+                ("https://uor.foundation/op/lhs", IndividualValue::Str("S(A × B)")),
+                ("https://uor.foundation/op/rhs", IndividualValue::Str("S(A) + S(B)")),
+                ("https://uor.foundation/op/forAll", IndividualValue::Str("A, B: TypeDefinition")),
+                (
+                    "https://uor.foundation/op/verificationDomain",
+                    IndividualValue::IriRef("https://uor.foundation/op/Thermodynamic"),
+                ),
+                ("https://uor.foundation/op/verificationPathNote",
+                 IndividualValue::Str("ProductType → fiber entropy additivity")),
+            ],
+        },
+        // Amendment 31: Sum Type identities
+        Individual {
+            id: "https://uor.foundation/op/ST_1",
+            type_: "https://uor.foundation/op/Identity",
+            label: "ST_1",
+            comment: "Sum type fiber budget: fiberBudget(A + B) = \
+                      max(fiberBudget(A), fiberBudget(B)).",
+            properties: &[
+                ("https://uor.foundation/op/lhs", IndividualValue::Str("fiberBudget(A + B)")),
+                ("https://uor.foundation/op/rhs", IndividualValue::Str("max(fiberBudget(A), fiberBudget(B))")),
+                ("https://uor.foundation/op/forAll", IndividualValue::Str("A, B: TypeDefinition")),
+                (
+                    "https://uor.foundation/op/verificationDomain",
+                    IndividualValue::IriRef("https://uor.foundation/op/Algebraic"),
+                ),
+                ("https://uor.foundation/op/verificationPathNote",
+                 IndividualValue::Str("SumType → FiberBudget max")),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/op/ST_2",
+            type_: "https://uor.foundation/op/Identity",
+            label: "ST_2",
+            comment: "Sum type entropy: S(A + B) = ln 2 + max(S(A), S(B)).",
+            properties: &[
+                ("https://uor.foundation/op/lhs", IndividualValue::Str("S(A + B)")),
+                ("https://uor.foundation/op/rhs", IndividualValue::Str("ln 2 + max(S(A), S(B))")),
+                ("https://uor.foundation/op/forAll", IndividualValue::Str("A, B: TypeDefinition")),
+                (
+                    "https://uor.foundation/op/verificationDomain",
+                    IndividualValue::IriRef("https://uor.foundation/op/Thermodynamic"),
+                ),
+                ("https://uor.foundation/op/verificationPathNote",
+                 IndividualValue::Str("SumType → entropy with binary choice overhead")),
             ],
         },
     ]

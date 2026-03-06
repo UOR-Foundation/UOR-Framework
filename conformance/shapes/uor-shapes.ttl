@@ -252,7 +252,8 @@ uor-sh:PrimitiveTypeShape
 uor-sh:ProductTypeShape
     a               sh:NodeShape ;
     sh:targetClass  type:ProductType ;
-    rdfs:label      "ProductTypeShape" .
+    rdfs:label      "ProductTypeShape" ;
+    sh:property [ sh:path type:component ; sh:minCount 2 ] .
 
 uor-sh:SumTypeShape
     a               sh:NodeShape ;
@@ -1541,3 +1542,36 @@ uor-sh:ClosedConstraintPathShape
     sh:targetClass  observable:ClosedConstraintPath ;
     rdfs:label      "ClosedConstraintPathShape" ;
     sh:property [ sh:path observable:pathLength ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:nonNegativeInteger ] .
+
+# Amendment 31: EmpiricalVerification
+uor-sh:EmpiricalVerificationShape
+    a               sh:NodeShape ;
+    sh:targetClass  proof:EmpiricalVerification ;
+    rdfs:label      "EmpiricalVerificationShape" ;
+    sh:property [ sh:path proof:quantumLevelRange ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
+    sh:property [ sh:path proof:verificationMethod ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string ] .
+
+# Amendment 31: PhaseBoundaryType vocabulary enum
+uor-sh:PhaseBoundaryTypeShape
+    a               sh:NodeShape ;
+    sh:targetClass  observable:PhaseBoundaryType ;
+    rdfs:label      "PhaseBoundaryTypeShape" .
+
+# Amendment 31: JacobianGuidedResolver
+uor-sh:JacobianGuidedResolverShape
+    a               sh:NodeShape ;
+    sh:targetClass  resolver:JacobianGuidedResolver ;
+    rdfs:label      "JacobianGuidedResolverShape" .
+
+# Amendment 32: SuperposedFiberState
+uor-sh:SuperposedFiberStateShape
+    a               sh:NodeShape ;
+    sh:targetClass  type:SuperposedFiberState ;
+    rdfs:label      "SuperposedFiberStateShape" ;
+    sh:property [ sh:path type:amplitude ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:decimal ] .
+
+# Amendment 32: SuperpositionResolver
+uor-sh:SuperpositionResolverShape
+    a               sh:NodeShape ;
+    sh:targetClass  resolver:SuperpositionResolver ;
+    rdfs:label      "SuperpositionResolverShape" .

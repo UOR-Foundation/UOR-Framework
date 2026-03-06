@@ -31,6 +31,7 @@ fn enum_class_names() -> HashSet<&'static str> {
         "MeasurementUnit",
         "CoordinateKind",
         "SessionBoundaryType",
+        "PhaseBoundaryType",
     ]
     .into_iter()
     .collect()
@@ -50,6 +51,7 @@ fn object_property_enum_override(range_local: &str) -> Option<&'static str> {
         "MeasurementUnit" => Some("MeasurementUnit"),
         "CoordinateKind" => Some("CoordinateKind"),
         "SessionBoundaryType" => Some("SessionBoundaryType"),
+        "PhaseBoundaryType" => Some("PhaseBoundaryType"),
         _ => None,
     }
 }

@@ -2,9 +2,9 @@
 //!
 //! Verifies that the built ontology artifact contains the correct counts:
 //! - 16 namespaces (3 Kernel / 10 Bridge / 3 User)
-//! - 175 classes
-//! - 324 namespace-level properties + 1 global annotation = 325 via property_count()
-//! - 637 named individuals (each with required property assertions)
+//! - 180 classes
+//! - 337 namespace-level properties + 1 global annotation = 338 via property_count()
+//! - 652 named individuals (each with required property assertions)
 
 use std::path::Path;
 
@@ -16,9 +16,9 @@ use crate::report::{ConformanceReport, TestResult};
 
 /// Expected inventory counts for the UOR Foundation ontology.
 const EXPECTED_NAMESPACES: usize = 16;
-const EXPECTED_CLASSES: usize = 175;
-const EXPECTED_PROPERTIES: usize = 325;
-const EXPECTED_INDIVIDUALS: usize = 637;
+const EXPECTED_CLASSES: usize = 180;
+const EXPECTED_PROPERTIES: usize = 338;
+const EXPECTED_INDIVIDUALS: usize = 652;
 
 /// Validates the ontology inventory counts in the built JSON-LD artifact.
 ///
@@ -365,7 +365,9 @@ fn validate_identity_completeness(report: &mut ConformanceReport) {
         "SR_",  // Amendment 28: Type Synthesis
         "TS_",  // Amendment 29: Quantum Level Spectral Sequence
         "QLS_", // Amendment 30: Monodromy Observables
-        "MN_",
+        "MN_",  // Amendment 31: Product/Sum Type identities
+        "PT_",  // Amendment 31: Sum Type identities
+        "ST_",
     ];
     for prefix in &expected_prefixes {
         let has = identities.iter().any(|i| i.label.starts_with(prefix));
@@ -462,7 +464,7 @@ fn validate_identity_grounding(report: &mut ConformanceReport) {
     }
 }
 
-/// Validates the 8 VerificationDomain vocabulary individuals.
+/// Validates the 9 VerificationDomain vocabulary individuals.
 fn validate_verification_domain_individuals(report: &mut ConformanceReport) {
     let ontology = uor_ontology::Ontology::full();
     let validator = "ontology/inventory/verification_domain";
@@ -476,6 +478,7 @@ fn validate_verification_domain_individuals(report: &mut ConformanceReport) {
         "https://uor.foundation/op/Topological",
         "https://uor.foundation/op/Pipeline",
         "https://uor.foundation/op/IndexTheoretic",
+        "https://uor.foundation/op/SuperpositionDomain",
     ];
 
     let mut all_found = true;
@@ -492,7 +495,7 @@ fn validate_verification_domain_individuals(report: &mut ConformanceReport) {
     if all_found {
         report.push(TestResult::pass(
             validator,
-            "All 8 VerificationDomain individuals present",
+            "All 9 VerificationDomain individuals present",
         ));
     }
 }

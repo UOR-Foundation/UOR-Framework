@@ -26,6 +26,10 @@ pub trait ComputationTrace<P: Primitives> {
     type Certificate: crate::bridge::cert::Certificate<P>;
     /// The certificate that attests to the correctness of this computation trace.
     fn certified_by(&self) -> &Self::Certificate;
+    /// Associated type for `ResidualEntropy`.
+    type ResidualEntropy: crate::bridge::observable::ResidualEntropy<P>;
+    /// The residual entropy observable remaining after this computation trace, linking to the ThermoObservable taxonomy (TH_9 connection).
+    fn residual_entropy(&self) -> &Self::ResidualEntropy;
 }
 
 /// A single step in a computation trace: one operation applied to produce one output from one or more inputs.

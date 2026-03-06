@@ -662,9 +662,9 @@ mod tests {
     fn index_has_all_terms() {
         let index = OntologyIndex::from_spec();
         assert_eq!(index.modules.len(), 16);
-        assert_eq!(index.classes.len(), 175);
-        assert_eq!(index.properties.len(), 324);
-        assert_eq!(index.individuals.len(), 637);
+        assert_eq!(index.classes.len(), 180);
+        assert_eq!(index.properties.len(), 337);
+        assert_eq!(index.individuals.len(), 652);
     }
 
     #[test]
@@ -702,8 +702,8 @@ mod tests {
         let src = "The ontology has {@count:classes} classes.";
         let expanded = renderer::expand_directives(src, &index);
         assert!(
-            expanded.contains("175"),
-            "Count directive should expand to 175, got: {}",
+            expanded.contains("180"),
+            "Count directive should expand to 180, got: {}",
             expanded
         );
     }

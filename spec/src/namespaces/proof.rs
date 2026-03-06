@@ -88,6 +88,17 @@ fn classes() -> Vec<Class> {
             subclass_of: &[OWL_THING],
             disjoint_with: &[],
         },
+        // Amendment 31: EmpiricalVerification proof class
+        Class {
+            id: "https://uor.foundation/proof/EmpiricalVerification",
+            label: "EmpiricalVerification",
+            comment: "A proof grounded in empirical verification across a bounded \
+                      range of quantum levels, rather than axiomatic derivation \
+                      or exhaustive computation. Used for identities like AR_5 \
+                      whose forAll quantifier is 'empirical, Q0--Q4'.",
+            subclass_of: &["https://uor.foundation/proof/Proof"],
+            disjoint_with: &[],
+        },
     ]
 }
 
@@ -241,6 +252,36 @@ fn properties() -> Vec<Property> {
             functional: false,
             domain: Some("https://uor.foundation/proof/AxiomaticDerivation"),
             range: "https://uor.foundation/derivation/Derivation",
+        },
+        // Amendment 31: EmpiricalVerification properties
+        Property {
+            id: "https://uor.foundation/proof/quantumLevelRange",
+            label: "quantumLevelRange",
+            comment: "The range of quantum levels over which this empirical \
+                      verification was conducted (e.g., 'Q0-Q4').",
+            kind: PropertyKind::Datatype,
+            functional: true,
+            domain: Some("https://uor.foundation/proof/EmpiricalVerification"),
+            range: XSD_STRING,
+        },
+        Property {
+            id: "https://uor.foundation/proof/verificationMethod",
+            label: "verificationMethod",
+            comment: "The empirical method used for verification (e.g., 'exhaustive \
+                      enumeration over Z/(2^n)Z for n=8,16,32,64').",
+            kind: PropertyKind::Datatype,
+            functional: true,
+            domain: Some("https://uor.foundation/proof/EmpiricalVerification"),
+            range: XSD_STRING,
+        },
+        Property {
+            id: "https://uor.foundation/proof/verifiedAt",
+            label: "verifiedAt",
+            comment: "The timestamp at which empirical verification was conducted.",
+            kind: PropertyKind::Datatype,
+            functional: true,
+            domain: Some("https://uor.foundation/proof/EmpiricalVerification"),
+            range: XSD_DATETIME,
         },
     ]
 }
@@ -4592,24 +4633,31 @@ fn individuals() -> Vec<Individual> {
                 ),
             ],
         },
+        // Amendment 31: prf_AR_5 retyped from AxiomaticDerivation to EmpiricalVerification
+        // AR_5's forAll is 'empirical, Q0--Q4' — a computationally-verified bound
         Individual {
             id: "https://uor.foundation/proof/prf_AR_5",
-            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            type_: "https://uor.foundation/proof/EmpiricalVerification",
             label: "prf_AR_5",
-            comment: "Axiomatic derivation of AR_5. Holds at all quantum levels \
-                      by definition of Z/(2^n)Z.",
+            comment: "Empirical verification of AR_5: greedy vs adiabatic cost \
+                      difference is at most 5% for n ≤ 16. Verified by exhaustive \
+                      enumeration at Q0 through Q4.",
             properties: &[
                 (
                     "https://uor.foundation/proof/provesIdentity",
                     IndividualValue::IriRef("https://uor.foundation/op/AR_5"),
                 ),
                 (
-                    "https://uor.foundation/proof/universalScope",
+                    "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
                 (
-                    "https://uor.foundation/proof/verified",
-                    IndividualValue::Bool(true),
+                    "https://uor.foundation/proof/quantumLevelRange",
+                    IndividualValue::Str("Q0-Q4"),
+                ),
+                (
+                    "https://uor.foundation/proof/verificationMethod",
+                    IndividualValue::Str("exhaustive enumeration over Z/(2^n)Z for n=8,16,32,64"),
                 ),
             ],
         },
@@ -6357,6 +6405,141 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/provesIdentity",
                     IndividualValue::IriRef("https://uor.foundation/op/MN_7"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        // Amendment 31: PT_ and ST_ proof individuals
+        Individual {
+            id: "https://uor.foundation/proof/prf_PT_1",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_PT_1",
+            comment: "Proof of PT_1: product type fiber additivity. fiberBudget(A × B) = \
+                      fiberBudget(A) + fiberBudget(B). Follows from the definition of \
+                      ProductType as an independent concatenation of fiber spaces.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/PT_1"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_PT_2",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_PT_2",
+            comment: "Proof of PT_2: product type partition factorisation. \
+                      partition(A × B) = partition(A) ⊗ partition(B). Follows from the \
+                      tensor product structure of constraint nerves over independent \
+                      fiber spaces.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/PT_2"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_PT_3",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_PT_3",
+            comment: "Proof of PT_3: product type Euler characteristic additivity. \
+                      χ(N(C(A × B))) = χ(N(C(A))) + χ(N(C(B))). Follows from the \
+                      Künneth formula applied to the join of constraint nerves.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/PT_3"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_PT_4",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_PT_4",
+            comment: "Proof of PT_4: product type entropy additivity. \
+                      S(A × B) = S(A) + S(B). Follows from PT_1 (fiber additivity) \
+                      and TH_1 (S = freeCount × ln 2).",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/PT_4"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_ST_1",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_ST_1",
+            comment: "Proof of ST_1: sum type fiber budget maximum. \
+                      fiberBudget(A + B) = max(fiberBudget(A), fiberBudget(B)). \
+                      Follows from SumType requiring capacity for the larger variant.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/ST_1"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_ST_2",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_ST_2",
+            comment: "Proof of ST_2: sum type entropy. \
+                      S(A + B) = ln 2 + max(S(A), S(B)). The ln 2 term accounts \
+                      for the variant discriminant bit; the max reflects that only \
+                      one variant is active at a time.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/ST_2"),
                 ),
                 (
                     "https://uor.foundation/proof/universalScope",

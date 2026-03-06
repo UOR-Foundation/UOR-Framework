@@ -164,6 +164,8 @@ pub enum VerificationDomain {
     Pipeline,
     /// Established by the composition of Analytical and Topological reasoning. The only domain requiring multiple op:verificationDomain assertions. Covers the UOR Index Theorem (IT_7a–IT_7d).
     IndexTheoretic,
+    /// Established by superposition analysis of fiber states. Covers identities involving superposed (non-classical) fiber assignments where fibers carry complex amplitudes.
+    SuperpositionDomain,
 }
 
 impl fmt::Display for VerificationDomain {
@@ -177,6 +179,7 @@ impl fmt::Display for VerificationDomain {
             Self::Topological => f.write_str("topological"),
             Self::Pipeline => f.write_str("pipeline"),
             Self::IndexTheoretic => f.write_str("index_theoretic"),
+            Self::SuperpositionDomain => f.write_str("superposition_domain"),
         }
     }
 }
@@ -301,6 +304,24 @@ impl fmt::Display for SessionBoundaryType {
     }
 }
 
+/// A classification of phase boundary in the catastrophe diagram.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum PhaseBoundaryType {
+    /// A phase boundary where g divides 2^n − 1, meaning g is a period of the multiplicative structure of R_n.
+    Period,
+    /// A phase boundary where g = 2^k, meaning g aligns with the binary stratification of R_n.
+    PowerOfTwo,
+}
+
+impl fmt::Display for PhaseBoundaryType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Period => f.write_str("period"),
+            Self::PowerOfTwo => f.write_str("power_of_two"),
+        }
+    }
+}
+
 /// The modality of a proof: computation (exhaustive verification at a specific quantum level) or axiomatic (derivation from ring axioms).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum ProofModality {
@@ -308,6 +329,8 @@ pub enum ProofModality {
     Computation,
     /// A proof derived from ring axioms that holds at all quantum levels.
     Axiomatic,
+    /// A proof verified empirically across a bounded range of quantum levels.
+    Empirical,
 }
 
 impl fmt::Display for ProofModality {
@@ -315,6 +338,7 @@ impl fmt::Display for ProofModality {
         match self {
             Self::Computation => f.write_str("computation"),
             Self::Axiomatic => f.write_str("axiomatic"),
+            Self::Empirical => f.write_str("empirical"),
         }
     }
 }

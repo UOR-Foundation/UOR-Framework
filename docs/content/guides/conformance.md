@@ -17,7 +17,7 @@ cargo run --bin uor-conformance
 |----------|----------|-----------|
 | `public/uor.foundation.json` | JSON-LD 1.1 | `validators/ontology/jsonld.rs` |
 | `public/uor.foundation.json` | OWL 2 DL | `validators/ontology/owl.rs` |
-| Inventory counts | 16/175/325/637 | `validators/ontology/inventory.rs` |
+| Inventory counts | 16/180/338/652 | `validators/ontology/inventory.rs` |
 | `public/uor.foundation.ttl` | RDF 1.1 / Turtle 1.1 | `validators/ontology/rdf.rs` |
 | {@count:shacl_tests} test instance graphs | SHACL | `validators/ontology/shacl.rs` |
 
@@ -25,7 +25,7 @@ cargo run --bin uor-conformance
 
 | Check | Validator |
 |-------|-----------|
-| All 175 classes documented | `validators/docs/completeness.rs` |
+| All 180 classes documented | `validators/docs/completeness.rs` |
 | Namespace pages accurate | `validators/docs/accuracy.rs` |
 | Diataxis structure present | `validators/docs/structure.rs` |
 | No broken internal links | `validators/docs/links.rs` |
@@ -40,7 +40,7 @@ cargo run --bin uor-conformance
 | CSS validity | CSS | `validators/website/css.rs` |
 | Internal links | — | `validators/website/links.rs` |
 
-### SHACL Tests 34–45 (v3.4.0–v3.5.0)
+### SHACL Tests 34–53 (v3.4.0–v4.0.0)
 
 | Test | What It Validates |
 |------|-------------------|
@@ -56,6 +56,14 @@ cargo run --bin uor-conformance
 | test43 | SpectralSequencePage: page 1 (differentialIsZero=false) → page 2 (convergedAt=2) (Amendment 29) |
 | test44 | FlatType + HolonomyGroup (order=1) + Monodromy (isTrivialMonodromy=true) + ClosedConstraintPath (Amendment 30) |
 | test45 | TwistedType + non-trivial HolonomyGroup + LiftObstruction (obstructionTrivial=false) + LiftObstructionClass + DihedralElement (Amendment 30) |
+| test46 | MonodromyResolver end-to-end pipeline: ConstrainedType → HolonomyGroup → MonodromyClass → TwistedType (Amendment 30) |
+| test47 | ThermoObservable + hardnessEstimate + ComputationTrace + residualEntropy (Amendment 31) |
+| test48 | CatastropheObservable + phaseN/phaseG + PhaseBoundaryType + onResonanceLine (Amendment 31) |
+| test49 | FiberBudget + FiberCoordinate + ancillaFiber + reversibleStrategy (Amendment 31) |
+| test50 | JacobianGuidedResolver + ResolutionState + guidingJacobian (Amendment 31) |
+| test51 | ProductType + component assertions + FiberBudget (Amendment 31) |
+| test52 | SumType + variant assertions (Amendment 31) |
+| test53 | SuperposedFiberState + amplitude + SuperpositionResolver (Amendment 32) |
 
 ## Adding a New SHACL Test
 

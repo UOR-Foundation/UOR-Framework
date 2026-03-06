@@ -5,6 +5,7 @@
 //! Space: Bridge
 
 use crate::enums::MeasurementUnit;
+use crate::enums::PhaseBoundaryType;
 use crate::Primitives;
 
 /// A measurable quantity in the UOR Framework. All observables are kernel-computed and user-consumed.
@@ -32,7 +33,16 @@ pub trait PathObservable<P: Primitives>: Observable<P> {}
 pub trait CascadeObservable<P: Primitives>: Observable<P> {}
 
 /// An observable measuring catastrophe-theoretic properties: thresholds at which qualitative changes occur in the partition.
-pub trait CatastropheObservable<P: Primitives>: Observable<P> {}
+pub trait CatastropheObservable<P: Primitives>: Observable<P> {
+    /// The ring dimension coordinate n in the (n, g) catastrophe phase diagram (PD_1 n-coordinate).
+    fn phase_n(&self) -> P::PositiveInteger;
+    /// The group-order coordinate g in the (n, g) catastrophe phase diagram (PD_1 g-coordinate).
+    fn phase_g(&self) -> P::PositiveInteger;
+    /// True when g divides 2^n − 1, placing this observable on a resonance line in the phase diagram (PD_4).
+    fn on_resonance_line(&self) -> P::Boolean;
+    /// The type of phase boundary at this point in the catastrophe diagram: PeriodBoundary or PowerOfTwoBoundary (PD_2).
+    fn phase_boundary_type(&self) -> PhaseBoundaryType;
+}
 
 /// An observable measuring the curvature of the UOR geometry: the gap between ring-isometry and Hamming-isometry for a given transform.
 pub trait CurvatureObservable<P: Primitives>: Observable<P> {}
@@ -135,7 +145,10 @@ pub trait BettiNumber<P: Primitives>: TopologicalObservable<P> {}
 pub trait SpectralGap<P: Primitives>: TopologicalObservable<P> {}
 
 /// An observable measuring thermodynamic properties of the resolution process: residual entropy, Landauer cost, and cascade distribution statistics.
-pub trait ThermoObservable<P: Primitives>: Observable<P> {}
+pub trait ThermoObservable<P: Primitives>: Observable<P> {
+    /// An estimated computational hardness for a ThermoObservable, connecting thermodynamic cost to complexity (TH_9 realisation).
+    fn hardness_estimate(&self) -> P::Decimal;
+}
 
 /// S_residual: the residual Shannon entropy of the fiber distribution after partial resolution. Computed as S = (Σ κ_k − χ(N(C))) × ln 2 (IT_7b). Unit: Nats.
 pub trait ResidualEntropy<P: Primitives>: ThermoObservable<P> {}
@@ -206,3 +219,9 @@ pub mod dimensionless {}
 
 /// Natural information unit: entropy measured in nats (using natural logarithm). S_residual is expressed in nats when computed as (Σ κ_k − χ) × ln 2.
 pub mod nats {}
+
+/// A phase boundary where g divides 2^n − 1, meaning g is a period of the multiplicative structure of R_n.
+pub mod period_boundary {}
+
+/// A phase boundary where g = 2^k, meaning g aligns with the binary stratification of R_n.
+pub mod power_of_two_boundary {}
