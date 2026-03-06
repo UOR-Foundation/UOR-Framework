@@ -13,9 +13,11 @@ use crate::mapping::{
     xsd_to_primitives_type, NamespaceMapping,
 };
 
-/// Set of class local names that are represented as enums, not traits.
+/// Set of class local names that skip trait generation.
+/// Most are enum classes; QuantumLevel is a struct but also skips trait generation.
 fn enum_class_names() -> HashSet<&'static str> {
-    // These classes have their instances as enum variants, so we skip trait generation
+    // These classes have their instances as enum variants (or struct constants),
+    // so we skip trait generation.
     // MetricAxis is both a class and an enum — the enum takes priority
     // Amendment 23 adds 7 more vocabulary classes that become enums
     // Amendment 27 adds SessionBoundaryType

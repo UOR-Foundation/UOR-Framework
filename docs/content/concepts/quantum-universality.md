@@ -15,8 +15,8 @@ example: it holds in Z/(2^n)Z for every n ≥ 1 and carries
 
 ## Quantum Levels
 
-The {@class https://uor.foundation/schema/QuantumLevel} vocabulary enum defines
-named levels:
+The {@class https://uor.foundation/schema/QuantumLevel} newtype struct defines
+an open class of quantum levels. Named levels include:
 
 - **Q0** — the base quantum level used for exhaustive verification (ring size
   = 2^16 in the UOR Foundation reference implementation).

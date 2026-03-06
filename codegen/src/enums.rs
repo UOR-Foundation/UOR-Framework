@@ -166,20 +166,7 @@ pub fn detect_enums(ontology: &Ontology) -> Vec<DetectedEnum> {
         &mut enums,
     );
 
-    // 12. QuantumLevel enum — from named individuals of type schema:QuantumLevel
-    detect_vocabulary_enum(
-        ontology,
-        "schema",
-        "QuantumLevel",
-        "A named quantum level Q_k at which the UOR ring operates.",
-        &mut enums,
-    );
-    // Mark QuantumLevel as non_exhaustive (open chain: Prism implementations may extend)
-    if let Some(ql) = enums.iter_mut().find(|e| e.name == "QuantumLevel") {
-        ql.non_exhaustive = true;
-    }
-
-    // 13. SessionBoundaryType enum — Amendment 27: Session-Scoped Resolution
+    // 12. SessionBoundaryType enum — Amendment 27: Session-Scoped Resolution
     detect_vocabulary_enum(
         ontology,
         "state",
@@ -188,7 +175,7 @@ pub fn detect_enums(ontology: &Ontology) -> Vec<DetectedEnum> {
         &mut enums,
     );
 
-    // 14. ProofModality enum (hardcoded — codegen enum, not an OWL class)
+    // 13. ProofModality enum (hardcoded — codegen enum, not an OWL class)
     enums.push(DetectedEnum {
         name: "ProofModality",
         comment: "The modality of a proof: computation (exhaustive verification at a \
@@ -323,6 +310,91 @@ pub fn generate_enums_file(ontology: &Ontology) -> String {
         f.blank();
     }
 
+    // QuantumLevel newtype struct — open-world representation of schema:QuantumLevel.
+    // Not an enum: any non-negative integer k identifies a valid level Q_k.
+    f.doc_comment("A quantum level Q_k at which the UOR ring R_k = Z/2^(8*(k+1))Z operates.");
+    f.doc_comment("");
+    f.doc_comment("Corresponds to `schema:QuantumLevel` in the uor.foundation ontology.");
+    f.doc_comment("The class is open: any non-negative integer k identifies a valid level.");
+    f.doc_comment("Named levels Q0 through Q3 are provided as associated constants.");
+    f.doc_comment("Arbitrary levels can be constructed with `QuantumLevel::new(k)`.");
+    f.line("#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]");
+    f.line("pub struct QuantumLevel {");
+    f.indented_doc_comment("The quantum index k in Q_k. Maps to `schema:quantumIndex`.");
+    f.line("    index: u32,");
+    f.line("}");
+    f.blank();
+    f.line("impl QuantumLevel {");
+    f.indented_doc_comment(
+        "Quantum level 0: 8-bit ring Z/256Z, 256 states. \
+         The reference level for all ComputationCertificate proofs in the spec.",
+    );
+    f.line("    pub const Q0: Self = Self { index: 0 };");
+    f.indented_doc_comment("Quantum level 1: 16-bit ring Z/65536Z, 65,536 states.");
+    f.line("    pub const Q1: Self = Self { index: 1 };");
+    f.indented_doc_comment("Quantum level 2: 24-bit ring Z/16777216Z, 16,777,216 states.");
+    f.line("    pub const Q2: Self = Self { index: 2 };");
+    f.indented_doc_comment(
+        "Quantum level 3: 32-bit ring Z/4294967296Z, 4,294,967,296 states. \
+         The highest named level in the spec.",
+    );
+    f.line("    pub const Q3: Self = Self { index: 3 };");
+    f.blank();
+    f.indented_doc_comment(
+        "Construct an arbitrary quantum level Q_k. \
+         `k` need not be one of the spec-named individuals; \
+         Prism implementations may use any level.",
+    );
+    f.line("    #[inline]");
+    f.line("    pub const fn new(index: u32) -> Self {");
+    f.line("        Self { index }");
+    f.line("    }");
+    f.blank();
+    f.indented_doc_comment("The quantum index k. Maps to `schema:quantumIndex`.");
+    f.line("    #[inline]");
+    f.line("    pub const fn index(self) -> u32 {");
+    f.line("        self.index");
+    f.line("    }");
+    f.blank();
+    f.indented_doc_comment(
+        "Bit width of the ring at this level: 8*(k+1). \
+         Maps to `schema:bitsWidth`. This is a derived property, \
+         not a stored field — the formula is definitional.",
+    );
+    f.line("    #[inline]");
+    f.line("    pub const fn bits_width(self) -> u32 {");
+    f.line("        8 * (self.index + 1)");
+    f.line("    }");
+    f.blank();
+    f.indented_doc_comment(
+        "Number of distinct ring states at this level: 2^(8*(k+1)). \
+         Maps to `schema:cycleSize`. Returns `None` if the result \
+         exceeds `u128` (i.e. for k >= 15).",
+    );
+    f.line("    #[inline]");
+    f.line("    pub const fn cycle_size(self) -> Option<u128> {");
+    f.line("        1u128.checked_shl(self.bits_width())");
+    f.line("    }");
+    f.blank();
+    f.indented_doc_comment(
+        "The next quantum level in the chain: Q_k -> Q_{k+1}. \
+         Maps to `schema:nextLevel`. Always well-defined; the chain is unbounded.",
+    );
+    f.line("    #[inline]");
+    f.line("    pub const fn next_level(self) -> Self {");
+    f.line("        Self {");
+    f.line("            index: self.index + 1,");
+    f.line("        }");
+    f.line("    }");
+    f.line("}");
+    f.blank();
+    f.line("impl fmt::Display for QuantumLevel {");
+    f.line("    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {");
+    f.line("        write!(f, \"q{}\", self.index)");
+    f.line("    }");
+    f.line("}");
+    f.blank();
+
     f.finish()
 }
 
@@ -354,8 +426,8 @@ mod tests {
         let ontology = Ontology::full();
         let enums = detect_enums(ontology);
         assert!(
-            enums.len() >= 13,
-            "Expected at least 13 enums, got {}",
+            enums.len() >= 12,
+            "Expected at least 12 enums, got {}",
             enums.len()
         );
 
@@ -370,7 +442,6 @@ mod tests {
         assert!(names.contains(&"RewriteRule"));
         assert!(names.contains(&"MeasurementUnit"));
         assert!(names.contains(&"CoordinateKind"));
-        assert!(names.contains(&"QuantumLevel"));
         assert!(names.contains(&"SessionBoundaryType"));
         assert!(names.contains(&"ProofModality"));
     }

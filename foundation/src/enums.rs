@@ -280,31 +280,6 @@ impl fmt::Display for CoordinateKind {
     }
 }
 
-/// A named quantum level Q_k at which the UOR ring operates.
-#[non_exhaustive]
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub enum QuantumLevel {
-    /// Quantum level 0: 8-bit ring Z/256Z, 256 states. The reference level for all ComputationCertificate proofs in the spec.
-    Q0,
-    /// Quantum level 1: 16-bit ring Z/65536Z, 65,536 states.
-    Q1,
-    /// Quantum level 2: 24-bit ring Z/16777216Z, 16,777,216 states.
-    Q2,
-    /// Quantum level 3: 32-bit ring Z/4294967296Z, 4,294,967,296 states. The highest named level in the spec. nextLevel is absent — Prism implementations may extend the chain.
-    Q3,
-}
-
-impl fmt::Display for QuantumLevel {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::Q0 => f.write_str("q0"),
-            Self::Q1 => f.write_str("q1"),
-            Self::Q2 => f.write_str("q2"),
-            Self::Q3 => f.write_str("q3"),
-        }
-    }
-}
-
 /// The reason type for a session context-reset boundary.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum SessionBoundaryType {
@@ -341,5 +316,65 @@ impl fmt::Display for ProofModality {
             Self::Computation => f.write_str("computation"),
             Self::Axiomatic => f.write_str("axiomatic"),
         }
+    }
+}
+
+/// A quantum level Q_k at which the UOR ring R_k = Z/2^(8*(k+1))Z operates.
+/// Corresponds to `schema:QuantumLevel` in the uor.foundation ontology.
+/// The class is open: any non-negative integer k identifies a valid level.
+/// Named levels Q0 through Q3 are provided as associated constants.
+/// Arbitrary levels can be constructed with `QuantumLevel::new(k)`.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct QuantumLevel {
+    /// The quantum index k in Q_k. Maps to `schema:quantumIndex`.
+    index: u32,
+}
+
+impl QuantumLevel {
+    /// Quantum level 0: 8-bit ring Z/256Z, 256 states. The reference level for all ComputationCertificate proofs in the spec.
+    pub const Q0: Self = Self { index: 0 };
+    /// Quantum level 1: 16-bit ring Z/65536Z, 65,536 states.
+    pub const Q1: Self = Self { index: 1 };
+    /// Quantum level 2: 24-bit ring Z/16777216Z, 16,777,216 states.
+    pub const Q2: Self = Self { index: 2 };
+    /// Quantum level 3: 32-bit ring Z/4294967296Z, 4,294,967,296 states. The highest named level in the spec.
+    pub const Q3: Self = Self { index: 3 };
+
+    /// Construct an arbitrary quantum level Q_k. `k` need not be one of the spec-named individuals; Prism implementations may use any level.
+    #[inline]
+    pub const fn new(index: u32) -> Self {
+        Self { index }
+    }
+
+    /// The quantum index k. Maps to `schema:quantumIndex`.
+    #[inline]
+    pub const fn index(self) -> u32 {
+        self.index
+    }
+
+    /// Bit width of the ring at this level: 8*(k+1). Maps to `schema:bitsWidth`. This is a derived property, not a stored field — the formula is definitional.
+    #[inline]
+    pub const fn bits_width(self) -> u32 {
+        8 * (self.index + 1)
+    }
+
+    /// Number of distinct ring states at this level: 2^(8*(k+1)). Maps to `schema:cycleSize`. Returns `None` if the result exceeds `u128` (i.e. for k >= 15).
+    #[inline]
+    pub const fn cycle_size(self) -> Option<u128> {
+        1u128.checked_shl(self.bits_width())
+    }
+
+    /// The next quantum level in the chain: Q_k -> Q_{k+1}. Maps to `schema:nextLevel`. Always well-defined; the chain is unbounded.
+    #[inline]
+    pub const fn next_level(self) -> Self {
+        Self {
+            index: self.index + 1,
+        }
+    }
+}
+
+impl fmt::Display for QuantumLevel {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "q{}", self.index)
     }
 }

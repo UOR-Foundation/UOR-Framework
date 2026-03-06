@@ -254,7 +254,6 @@ fn validate_individual_completeness(
         "MetricAxis",
         "GeometricCharacter",
         "VerificationDomain",
-        "QuantumLevel",
         "ComplexityClass",
         "RewriteRule",
         "MeasurementUnit",

@@ -46,7 +46,7 @@ This crate is the single source of truth. It is internal (`publish = false`).
 
 - **`mapping.rs`**: Namespace → module, XSD → Rust type, class IRI → path tables
 - **`traits.rs`**: Class → trait, property → method generation
-- **`enums.rs`**: Enum detection (PrimitiveOp, MetricAxis, Space, FiberState, GeometricCharacter, VerificationDomain, QuantumLevel, ComplexityClass, RewriteRule, MeasurementUnit, CoordinateKind, ProofModality)
+- **`enums.rs`**: Enum detection (PrimitiveOp, MetricAxis, Space, FiberState, GeometricCharacter, VerificationDomain, ComplexityClass, RewriteRule, MeasurementUnit, CoordinateKind, ProofModality) and QuantumLevel newtype struct generation
 - **`individuals.rs`**: Named individual → const module / PrimitiveOp impl generation
 - **`emit.rs`**: Rust source code writer
 
@@ -55,10 +55,10 @@ This crate is the single source of truth. It is internal (`publish = false`).
 `uor-foundation` is the **generated** published crate. Every file in `foundation/src/`
 is produced by `uor-crate` — never hand-edited.
 
-- **124 traits** (one per OWL class, generic over `Primitives`)
-- **231 methods** (one per property with a domain)
-- **12 enums** (Space, PrimitiveOp, MetricAxis, FiberState, GeometricCharacter, VerificationDomain, QuantumLevel, ComplexityClass, RewriteRule, MeasurementUnit, CoordinateKind, ProofModality)
-- **544 constant modules** (for named individuals)
+- **166 traits** (one per OWL class, generic over `Primitives`)
+- **315 methods** (one per property with a domain)
+- **12 enums** (Space, PrimitiveOp, MetricAxis, FiberState, GeometricCharacter, VerificationDomain, ComplexityClass, RewriteRule, MeasurementUnit, CoordinateKind, SessionBoundaryType, ProofModality) **+ 1 struct** (QuantumLevel)
+- **624 constant modules** (for named individuals)
 - **Zero mandatory dependencies** — pure traits
 
 Module structure: `kernel/` (3 namespaces), `bridge/` (10 namespaces), `user/` (3 namespaces).
@@ -69,7 +69,7 @@ Module structure: `kernel/` (3 namespaces), `bridge/` (10 namespaces), `user/` (
 
 1. **Rust source**: API documentation, style conventions
 2. **Ontology artifacts**: JSON-LD 1.1, OWL 2 DL constraints, RDF 1.1, Turtle 1.1, inventory counts
-3. **SHACL instances**: 29 test graphs validated against 130 NodeShapes
+3. **SHACL instances**: 45 test graphs validated against 175 NodeShapes
 4. **Generated crate**: Trait completeness, method completeness, individual completeness
 5. **Documentation**: Diataxis structure, completeness, accuracy, links
 6. **Website**: HTML5, WCAG 2.1 AA, CSS, coverage, links
@@ -90,7 +90,7 @@ The conformance suite is the **single gate** — all components must pass before
 
 - Templates use the Tera template engine
 - Namespace pages are auto-generated (no hand-written HTML for spec terms)
-- Search index is generated from all 130 classes, 233 properties, 304 individuals
+- Search index is generated from all 175 classes, 325 properties, 637 individuals
 - No external dependencies (no CDN, no tracking, no third-party scripts)
 
 ## Build Pipeline
@@ -105,7 +105,7 @@ cargo run --bin uor-conformance → validates all of the above
 
 ## Amendment History
 
-The spec crate implements all 23 amendments from the UOR Foundation completion plan:
+The spec crate implements all 30 amendments from the UOR Foundation completion plan:
 
 | Amendment | Namespace | Key Additions |
 |-----------|-----------|---------------|
@@ -132,3 +132,10 @@ The spec crate implements all 23 amendments from the UOR Foundation completion p
 | 21 | op/, homology/, cohomology/ | Structural Reasoning namespaces, ψ-pipeline, identity grounding |
 | 22 | morphism/, state/ | TopologicalDelta class, topologicalSnapshot property |
 | 23 | op/, resolver/, derivation/, observable/, type/, query/ | Typed controlled vocabularies: 7 new classes, 35 individuals, 12 new properties |
+| 24 | morphism/, query/, type/, cert/ | Surface Grounding Layer, GroundingMap, CompleteType, graph gap closures |
+| 25 | type/, resolver/, cert/ | Completeness Certification: CompletenessCandidate, CompletenessWitness, CompletenessResolver |
+| 26 | schema/, op/, resolver/ | Quantum Level Scaling: Q1Ring, QuantumLevelBinding, QuantumLevelResolver |
+| 27 | state/, resolver/, query/ | Session-Scoped Resolution: Session, SessionBoundary, SessionBoundaryType enum |
+| 28 | type/, resolver/, derivation/, observable/ | ψ-Pipeline Inversion (Type Synthesis): TypeSynthesisGoal, TypeSynthesisResult |
+| 29 | type/, observable/, resolver/ | Quantum Level Spectral Sequence: QuantumLift, LiftObstruction, SpectralSequencePage |
+| 30 | observable/, type/, resolver/ | Monodromy Observables: HolonomyGroup, Monodromy, FlatType, TwistedType |
