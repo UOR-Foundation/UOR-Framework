@@ -695,4 +695,16 @@ mod tests {
         // Unknown references render as code spans
         assert!(expanded.contains('`'));
     }
+
+    #[test]
+    fn directive_expansion_count() {
+        let index = OntologyIndex::from_spec();
+        let src = "The ontology has {@count:classes} classes.";
+        let expanded = renderer::expand_directives(src, &index);
+        assert!(
+            expanded.contains("175"),
+            "Count directive should expand to 175, got: {}",
+            expanded
+        );
+    }
 }

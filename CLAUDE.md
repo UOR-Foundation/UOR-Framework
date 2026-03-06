@@ -11,7 +11,7 @@ Rust workspace encoding the UOR Foundation ontology as typed data structures, a 
 | `uor-ontology` | `spec/` | no | Ontology source of truth (classes, properties, individuals, serializers) |
 | `uor-codegen` | `codegen/` | no | Ontology-to-Rust trait generator |
 | `uor-foundation` | `foundation/` | **crates.io** | Generated `#![no_std]` trait library — never edit manually |
-| `uor-conformance` | `conformance/` | no | 109-check conformance suite (OWL, SHACL, RDF, Rust API, docs, website) |
+| `uor-conformance` | `conformance/` | no | 115-check conformance suite (OWL, SHACL, RDF, Rust API, docs, website) |
 | `uor-docs` | `docs/` | no | Documentation generator |
 | `uor-website` | `website/` | no | Static site generator |
 | `uor-clients` | `clients/` | no | CLI binaries: `uor-build`, `uor-crate`, `uor-docs`, `uor-website`, `uor-conformance` |
@@ -22,7 +22,7 @@ Rust workspace encoding the UOR Foundation ontology as typed data structures, a 
 - **All clippy warnings are errors.** CI runs `cargo clippy --all-targets -- -D warnings`.
 - **Every crate denies:** `clippy::unwrap_used`, `clippy::expect_used`, `clippy::panic`, `missing_docs`, `clippy::missing_errors_doc`.
 - **Formatting is enforced.** CI runs `cargo fmt --check`.
-- **The conformance suite must pass.** `cargo run --bin uor-conformance` — 109 checks, zero failures allowed.
+- **The conformance suite must pass.** `cargo run --bin uor-conformance` — 115 checks, zero failures allowed.
 - **No `unsafe` code.** The `uor-foundation` crate is `#![no_std]` with zero dependencies.
 - **Bracket-escape doc comments.** Use `normalize_comment()` to prevent rustdoc intra-doc link warnings on `[text]` in comments.
 
@@ -71,7 +71,7 @@ Docs/website/conformance binaries accept `PUBLIC_BASE_PATH` env var for URL pref
 3. **JSON-LD 1.1** — `@context`, `@graph`, non-functional property arrays
 4. **OWL 2 DL** — disjointness, functionality, domain/range constraints
 5. **RDF / Turtle** — serialization format, prefixes, IRIs
-6. **SHACL** — 175 shapes (1:1 with classes), 45 instance test graphs
+6. **SHACL** — 175 shapes (1:1 with classes), 46 instance test graphs
 7. **Generated crate** — trait/method/enum/constant counts, `#![no_std]` build
 8. **Documentation + Website** — completeness, accessibility, broken links
 

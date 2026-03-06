@@ -1,6 +1,6 @@
 //! SHACL validator.
 //!
-//! Validates the 45 OWL instance test graphs against the UOR SHACL shapes.
+//! Validates the 46 OWL instance test graphs against the UOR SHACL shapes.
 //! Each test graph is defined as a Turtle string in `tests/fixtures/`.
 //! Validation checks structural constraints without a full SHACL engine:
 //! - Required properties are present
@@ -10,9 +10,13 @@
 use crate::report::{ConformanceReport, TestResult};
 use crate::tests;
 
-/// Runs all 45 SHACL instance conformance tests.
+/// Expected number of SHACL test fixtures.
+const EXPECTED_SHACL_TESTS: usize = 46;
+
+/// Runs all 46 SHACL instance conformance tests.
 pub fn validate() -> ConformanceReport {
     let mut report = ConformanceReport::new();
+    let before_tests = report.results.len();
 
     run_test("test1_ring", tests::fixtures::TEST1_RING, &mut report);
     run_test(
@@ -235,6 +239,31 @@ pub fn validate() -> ConformanceReport {
         tests::fixtures::TEST45_MONODROMY_TWISTED,
         &mut report,
     );
+    run_test(
+        "test46_monodromy_pipeline",
+        tests::fixtures::TEST46_MONODROMY_PIPELINE,
+        &mut report,
+    );
+
+    // Verify test fixture count matches expected
+    let test_count = report.results.len() - before_tests;
+    if test_count == EXPECTED_SHACL_TESTS {
+        report.push(TestResult::pass(
+            "ontology/shacl/test_count",
+            format!(
+                "SHACL test count matches expected: {}",
+                EXPECTED_SHACL_TESTS
+            ),
+        ));
+    } else {
+        report.push(TestResult::fail(
+            "ontology/shacl/test_count",
+            format!(
+                "Expected {} SHACL tests but ran {}",
+                EXPECTED_SHACL_TESTS, test_count
+            ),
+        ));
+    }
 
     report
 }
@@ -307,6 +336,7 @@ fn run_test(name: &str, turtle_src: &str, report: &mut ConformanceReport) {
         "test43_spectral_sequence" => validate_spectral_sequence_shacl(turtle_src),
         "test44_monodromy_flat" => validate_monodromy_flat_shacl(turtle_src),
         "test45_monodromy_twisted" => validate_monodromy_twisted_shacl(turtle_src),
+        "test46_monodromy_pipeline" => validate_monodromy_pipeline_shacl(turtle_src),
         _ => Ok(()),
     };
 
@@ -835,6 +865,16 @@ fn validate_proof_coverage_shacl(src: &str) -> Result<(), String> {
         "Missing universalScope property",
     )?;
     check_contains(src, "proof:verified", "Missing verified property")?;
+    check_contains(
+        src,
+        "op:MN_1",
+        "Missing MN_1 identity reference (Amendment 30 proof coverage)",
+    )?;
+    check_contains(
+        src,
+        "op:MN_7",
+        "Missing MN_7 identity reference (Amendment 30 proof coverage)",
+    )?;
     Ok(())
 }
 
@@ -846,6 +886,17 @@ fn validate_quantum_level_shacl(src: &str) -> Result<(), String> {
     check_contains(src, "schema:nextLevel", "Missing nextLevel property")?;
     check_contains(src, "schema:Q0", "Missing Q0 individual")?;
     check_contains(src, "schema:Q1", "Missing Q1 individual")?;
+    check_contains(src, "schema:Q2", "Missing Q2 individual")?;
+    check_contains(src, "schema:Q3", "Missing Q3 individual")?;
+    // Q3 terminal condition: must NOT have nextLevel
+    if let Some(q3_start) = src.find("schema:Q3") {
+        let q3_block = &src[q3_start..];
+        let q3_end = q3_block.find("\n\n").unwrap_or(q3_block.len());
+        let q3_section = &q3_block[..q3_end];
+        if q3_section.contains("nextLevel") {
+            return Err("Q3 must not have nextLevel (terminal condition)".to_string());
+        }
+    }
     Ok(())
 }
 
@@ -1218,6 +1269,12 @@ fn validate_spectral_sequence_shacl(src: &str) -> Result<(), String> {
 
 fn validate_monodromy_flat_shacl(src: &str) -> Result<(), String> {
     check_contains(src, "type:FlatType", "Missing FlatType type assertion")?;
+    check_contains(src, "type:holonomyGroup", "Missing holonomyGroup property")?;
+    check_contains(
+        src,
+        "type:monodromyClass",
+        "Missing monodromyClass property",
+    )?;
     check_contains(
         src,
         "observable:HolonomyGroup",
@@ -1235,13 +1292,33 @@ fn validate_monodromy_flat_shacl(src: &str) -> Result<(), String> {
     )?;
     check_contains(
         src,
+        "observable:monodromyLoop",
+        "Missing monodromyLoop property",
+    )?;
+    check_contains(
+        src,
+        "observable:monodromyElement",
+        "Missing monodromyElement property",
+    )?;
+    check_contains(
+        src,
         "observable:isTrivialMonodromy",
         "Missing isTrivialMonodromy property",
     )?;
     check_contains(
         src,
+        "observable:DihedralElement",
+        "Missing DihedralElement type assertion",
+    )?;
+    check_contains(
+        src,
         "observable:ClosedConstraintPath",
         "Missing ClosedConstraintPath type assertion",
+    )?;
+    check_contains(
+        src,
+        "observable:MonodromyClass",
+        "Missing MonodromyClass type assertion",
     )?;
     Ok(())
 }
@@ -1252,10 +1329,61 @@ fn validate_monodromy_twisted_shacl(src: &str) -> Result<(), String> {
         "type:TwistedType",
         "Missing TwistedType type assertion",
     )?;
+    check_contains(src, "type:holonomyGroup", "Missing holonomyGroup property")?;
+    check_contains(
+        src,
+        "type:monodromyClass",
+        "Missing monodromyClass property",
+    )?;
     check_contains(
         src,
         "observable:HolonomyGroup",
         "Missing HolonomyGroup type assertion",
+    )?;
+    check_contains(
+        src,
+        "observable:holonomyGroup",
+        "Missing holonomyGroup generator property",
+    )?;
+    check_contains(
+        src,
+        "observable:holonomyGroupOrder",
+        "Missing holonomyGroupOrder property",
+    )?;
+    check_contains(
+        src,
+        "observable:Monodromy",
+        "Missing Monodromy type assertion",
+    )?;
+    check_contains(
+        src,
+        "observable:monodromyLoop",
+        "Missing monodromyLoop property",
+    )?;
+    check_contains(
+        src,
+        "observable:monodromyElement",
+        "Missing monodromyElement property",
+    )?;
+    check_contains(
+        src,
+        "observable:isTrivialMonodromy",
+        "Missing isTrivialMonodromy property",
+    )?;
+    check_contains(
+        src,
+        "observable:DihedralElement",
+        "Missing DihedralElement type assertion",
+    )?;
+    check_contains(
+        src,
+        "observable:isIdentityElement",
+        "Missing isIdentityElement property",
+    )?;
+    check_contains(
+        src,
+        "observable:ClosedConstraintPath",
+        "Missing ClosedConstraintPath type assertion",
     )?;
     check_contains(
         src,
@@ -1274,6 +1402,74 @@ fn validate_monodromy_twisted_shacl(src: &str) -> Result<(), String> {
     )?;
     check_contains(
         src,
+        "observable:MonodromyClass",
+        "Missing MonodromyClass type assertion",
+    )?;
+    Ok(())
+}
+
+fn validate_monodromy_pipeline_shacl(src: &str) -> Result<(), String> {
+    // Resolver
+    check_contains(
+        src,
+        "resolver:MonodromyResolver",
+        "Missing MonodromyResolver type assertion",
+    )?;
+    check_contains(
+        src,
+        "resolver:monodromyTarget",
+        "Missing monodromyTarget property",
+    )?;
+    check_contains(
+        src,
+        "resolver:holonomyResult",
+        "Missing holonomyResult property",
+    )?;
+    // Input type
+    check_contains(
+        src,
+        "type:ConstrainedType",
+        "Missing ConstrainedType type assertion",
+    )?;
+    check_contains(
+        src,
+        "type:holonomyGroup",
+        "Missing holonomyGroup property on ConstrainedType",
+    )?;
+    check_contains(
+        src,
+        "type:monodromyClass",
+        "Missing monodromyClass property on ConstrainedType",
+    )?;
+    // Observables
+    check_contains(
+        src,
+        "observable:ClosedConstraintPath",
+        "Missing ClosedConstraintPath type assertion",
+    )?;
+    check_contains(src, "observable:pathLength", "Missing pathLength property")?;
+    check_contains(
+        src,
+        "observable:Monodromy",
+        "Missing Monodromy type assertion",
+    )?;
+    check_contains(
+        src,
+        "observable:monodromyLoop",
+        "Missing monodromyLoop property",
+    )?;
+    check_contains(
+        src,
+        "observable:monodromyElement",
+        "Missing monodromyElement property",
+    )?;
+    check_contains(
+        src,
+        "observable:isTrivialMonodromy",
+        "Missing isTrivialMonodromy property",
+    )?;
+    check_contains(
+        src,
         "observable:DihedralElement",
         "Missing DihedralElement type assertion",
     )?;
@@ -1281,6 +1477,37 @@ fn validate_monodromy_twisted_shacl(src: &str) -> Result<(), String> {
         src,
         "observable:isIdentityElement",
         "Missing isIdentityElement property",
+    )?;
+    check_contains(
+        src,
+        "observable:elementOrder",
+        "Missing elementOrder property",
+    )?;
+    check_contains(
+        src,
+        "observable:HolonomyGroup",
+        "Missing HolonomyGroup type assertion",
+    )?;
+    check_contains(
+        src,
+        "observable:holonomyGroup",
+        "Missing holonomyGroup generator property",
+    )?;
+    check_contains(
+        src,
+        "observable:holonomyGroupOrder",
+        "Missing holonomyGroupOrder property",
+    )?;
+    check_contains(
+        src,
+        "observable:MonodromyClass",
+        "Missing MonodromyClass type assertion",
+    )?;
+    // Output classification
+    check_contains(
+        src,
+        "type:TwistedType",
+        "Missing TwistedType type assertion",
     )?;
     Ok(())
 }

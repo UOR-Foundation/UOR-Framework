@@ -19,7 +19,7 @@ cargo run --bin uor-conformance
 | `public/uor.foundation.json` | OWL 2 DL | `validators/ontology/owl.rs` |
 | Inventory counts | 16/175/325/637 | `validators/ontology/inventory.rs` |
 | `public/uor.foundation.ttl` | RDF 1.1 / Turtle 1.1 | `validators/ontology/rdf.rs` |
-| 45 test instance graphs | SHACL | `validators/ontology/shacl.rs` |
+| {@count:shacl_tests} test instance graphs | SHACL | `validators/ontology/shacl.rs` |
 
 ### Documentation Conformance
 

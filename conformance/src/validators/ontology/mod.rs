@@ -6,3 +6,4 @@ pub mod jsonld;
 pub mod owl;
 pub mod rdf;
 pub mod shacl;
+pub mod standards;

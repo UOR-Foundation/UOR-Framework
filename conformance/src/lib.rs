@@ -59,7 +59,7 @@ pub struct WorkspacePaths {
 /// 3. Ontology JSON-LD 1.1
 /// 4. Ontology OWL 2 DL
 /// 5. Ontology RDF 1.1 / Turtle 1.1
-/// 6. SHACL instance conformance (45 test graphs)
+/// 6. SHACL instance conformance (46 test graphs)
 /// 7. Documentation completeness and accuracy
 /// 8. Website HTML5, WCAG, CSS, coverage
 ///
@@ -76,6 +76,11 @@ pub fn run_all(paths: &WorkspacePaths) -> anyhow::Result<ConformanceReport> {
     // 2. Ontology inventory
     report.extend(validators::ontology::inventory::validate(&paths.artifacts)?);
 
+    // 2b. Workspace-level inventory (shapes count)
+    report.extend(validators::ontology::inventory::validate_workspace(
+        &paths.workspace,
+    )?);
+
     // 3. JSON-LD 1.1
     report.extend(validators::ontology::jsonld::validate(&paths.artifacts)?);
 
@@ -90,6 +95,9 @@ pub fn run_all(paths: &WorkspacePaths) -> anyhow::Result<ConformanceReport> {
 
     // 6b. Generated crate conformance
     report.extend(validators::ontology::crate_::validate(&paths.workspace)?);
+
+    // 6c. Standards document counts
+    report.extend(validators::ontology::standards::validate(&paths.workspace)?);
 
     // 7. Documentation
     report.extend(validators::docs::completeness::validate(&paths.artifacts)?);

@@ -1,5 +1,5 @@
 # UOR Foundation SHACL Shapes
-# One NodeShape per class — 123 total.
+# One NodeShape per class — 175 total.
 # Defines cardinality and type constraints validated by the conformance suite.
 
 @prefix rdf:        <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
@@ -262,7 +262,9 @@ uor-sh:SumTypeShape
 uor-sh:ConstrainedTypeShape
     a               sh:NodeShape ;
     sh:targetClass  type:ConstrainedType ;
-    rdfs:label      "ConstrainedTypeShape" .
+    rdfs:label      "ConstrainedTypeShape" ;
+    sh:property [ sh:path type:holonomyGroup ; sh:maxCount 1 ; sh:class observable:HolonomyGroup ] ;
+    sh:property [ sh:path type:monodromyClass ; sh:maxCount 1 ; sh:class observable:MonodromyClass ] .
 
 uor-sh:ConstraintShape
     a               sh:NodeShape ;
@@ -454,7 +456,9 @@ uor-sh:MetricObservableShape
 uor-sh:DihedralElementShape
     a               sh:NodeShape ;
     sh:targetClass  observable:DihedralElement ;
-    rdfs:label      "DihedralElementShape" .
+    rdfs:label      "DihedralElementShape" ;
+    sh:property [ sh:path observable:isIdentityElement ; sh:maxCount 1 ; sh:datatype xsd:boolean ] ;
+    sh:property [ sh:path observable:elementOrder ; sh:maxCount 1 ; sh:datatype xsd:positiveInteger ] .
 
 # ── Tier 1: Primary Observable categories ──
 
@@ -605,7 +609,10 @@ uor-sh:JacobianShape
 uor-sh:MonodromyShape
     a               sh:NodeShape ;
     sh:targetClass  observable:Monodromy ;
-    rdfs:label      "MonodromyShape" .
+    rdfs:label      "MonodromyShape" ;
+    sh:property [ sh:path observable:monodromyLoop ; sh:maxCount 1 ; sh:class observable:ClosedConstraintPath ] ;
+    sh:property [ sh:path observable:monodromyElement ; sh:maxCount 1 ; sh:class observable:DihedralElement ] ;
+    sh:property [ sh:path observable:isTrivialMonodromy ; sh:maxCount 1 ; sh:datatype xsd:boolean ] .
 
 uor-sh:ParallelTransportShape
     a               sh:NodeShape ;
@@ -1193,17 +1200,12 @@ uor-sh:GluingObstructionShape
         sh:class    cohomology:CohomologyGroup ;
     ] .
 
-# ── Amendment 23: Typed controlled vocabulary shapes (7) ────────────────────
+# ── Amendment 23: Typed controlled vocabulary shapes (6) ────────────────────
 
 uor-sh:VerificationDomainShape
     a               sh:NodeShape ;
     sh:targetClass  op:VerificationDomain ;
     rdfs:label      "VerificationDomainShape" .
-
-uor-sh:VerificationStatusShape
-    a               sh:NodeShape ;
-    sh:targetClass  op:VerificationStatus ;
-    rdfs:label      "VerificationStatusShape" .
 
 uor-sh:GeometricCharacterShape
     a               sh:NodeShape ;
@@ -1229,3 +1231,313 @@ uor-sh:CoordinateKindShape
     a               sh:NodeShape ;
     sh:targetClass  query:CoordinateKind ;
     rdfs:label      "CoordinateKindShape" .
+
+# ── v3.2.0: Proof taxonomy shapes (2) ─────────────────────────────────────────
+
+uor-sh:ComputationCertificateShape
+    a               sh:NodeShape ;
+    sh:targetClass  proof:ComputationCertificate ;
+    rdfs:label      "ComputationCertificateShape" ;
+    sh:property [ sh:path proof:provesIdentity ; sh:minCount 1 ; sh:maxCount 1 ; sh:class op:Identity ] ;
+    sh:property [ sh:path proof:atQuantumLevel ; sh:minCount 1 ; sh:maxCount 1 ; sh:class schema:QuantumLevel ] ;
+    sh:property [ sh:path proof:verified ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:boolean ] .
+
+uor-sh:AxiomaticDerivationShape
+    a               sh:NodeShape ;
+    sh:targetClass  proof:AxiomaticDerivation ;
+    rdfs:label      "AxiomaticDerivationShape" ;
+    sh:property [ sh:path proof:provesIdentity ; sh:minCount 1 ; sh:maxCount 1 ; sh:class op:Identity ] ;
+    sh:property [ sh:path proof:universalScope ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:boolean ] ;
+    sh:property [ sh:path proof:verified ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:boolean ] .
+
+# ── v3.2.0: QuantumLevel shape (1) ───────────────────────────────────────────
+
+uor-sh:QuantumLevelShape
+    a               sh:NodeShape ;
+    sh:targetClass  schema:QuantumLevel ;
+    rdfs:label      "QuantumLevelShape" ;
+    sh:property [ sh:path schema:quantumIndex ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:nonNegativeInteger ] ;
+    sh:property [ sh:path schema:bitsWidth ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:positiveInteger ] ;
+    sh:property [ sh:path schema:cycleSize ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:positiveInteger ] ;
+    sh:property [ sh:path schema:nextLevel ; sh:maxCount 1 ; sh:class schema:QuantumLevel ] .
+
+# ── Amendment 24 + Gaps A-G shapes (10) ──────────────────────────────────────
+
+uor-sh:GroundingMapShape
+    a               sh:NodeShape ;
+    sh:targetClass  morphism:GroundingMap ;
+    rdfs:label      "GroundingMapShape" ;
+    sh:property [ sh:path morphism:surfaceSymbol ; sh:minCount 1 ; sh:maxCount 1 ; sh:class schema:Literal ] ;
+    sh:property [ sh:path morphism:groundedAddress ; sh:minCount 1 ; sh:maxCount 1 ; sh:class u:Address ] ;
+    sh:property [ sh:path morphism:groundingDerivation ; sh:maxCount 1 ; sh:class derivation:Derivation ] .
+
+uor-sh:ProjectionMapShape
+    a               sh:NodeShape ;
+    sh:targetClass  morphism:ProjectionMap ;
+    rdfs:label      "ProjectionMapShape" ;
+    sh:property [ sh:path morphism:projectionFrame ; sh:minCount 1 ; sh:maxCount 1 ; sh:class state:Frame ] ;
+    sh:property [ sh:path morphism:projectionSource ; sh:minCount 1 ; sh:maxCount 1 ; sh:class partition:Partition ] ;
+    sh:property [ sh:path morphism:roundTripCoherence ; sh:maxCount 1 ; sh:datatype xsd:boolean ] .
+
+uor-sh:GroundingCertificateShape
+    a               sh:NodeShape ;
+    sh:targetClass  morphism:GroundingCertificate ;
+    rdfs:label      "GroundingCertificateShape" ;
+    sh:property [ sh:path morphism:groundingCertMap ; sh:minCount 1 ; sh:maxCount 1 ; sh:class morphism:GroundingMap ] ;
+    sh:property [ sh:path morphism:groundingCertProjection ; sh:minCount 1 ; sh:maxCount 1 ; sh:class morphism:ProjectionMap ] .
+
+uor-sh:CompleteTypeShape
+    a               sh:NodeShape ;
+    sh:targetClass  type:CompleteType ;
+    rdfs:label      "CompleteTypeShape" .
+
+uor-sh:CompletenessCertificateShape
+    a               sh:NodeShape ;
+    sh:targetClass  cert:CompletenessCertificate ;
+    rdfs:label      "CompletenessCertificateShape" ;
+    sh:property [ sh:path cert:certifiedType ; sh:minCount 1 ; sh:maxCount 1 ; sh:class type:CompleteType ] .
+
+uor-sh:ThermoObservableShape
+    a               sh:NodeShape ;
+    sh:targetClass  observable:ThermoObservable ;
+    rdfs:label      "ThermoObservableShape" .
+
+uor-sh:ResidualEntropyShape
+    a               sh:NodeShape ;
+    sh:targetClass  observable:ResidualEntropy ;
+    rdfs:label      "ResidualEntropyShape" .
+
+uor-sh:LandauerCostShape
+    a               sh:NodeShape ;
+    sh:targetClass  observable:LandauerCost ;
+    rdfs:label      "LandauerCostShape" .
+
+uor-sh:CascadeEntropyShape
+    a               sh:NodeShape ;
+    sh:targetClass  observable:CascadeEntropy ;
+    rdfs:label      "CascadeEntropyShape" .
+
+uor-sh:RelationQueryShape
+    a               sh:NodeShape ;
+    sh:targetClass  query:RelationQuery ;
+    rdfs:label      "RelationQueryShape" ;
+    sh:property [ sh:path query:sourceAddress ; sh:minCount 1 ; sh:maxCount 1 ; sh:class u:Address ] ;
+    sh:property [ sh:path query:groundingMap ; sh:maxCount 1 ; sh:class morphism:GroundingMap ] .
+
+# ── Amendment 25: Completeness certification shapes (4) ──────────────────────
+
+uor-sh:CompletenessCandidateShape
+    a               sh:NodeShape ;
+    sh:targetClass  type:CompletenessCandidate ;
+    rdfs:label      "CompletenessCandidateShape" ;
+    sh:property [ sh:path type:candidateNerve ; sh:maxCount 1 ; sh:class resolver:ConstraintNerve ] .
+
+uor-sh:CompletenessWitnessShape
+    a               sh:NodeShape ;
+    sh:targetClass  type:CompletenessWitness ;
+    rdfs:label      "CompletenessWitnessShape" ;
+    sh:property [ sh:path type:witnessConstraint ; sh:minCount 1 ; sh:maxCount 1 ; sh:class type:Constraint ] ;
+    sh:property [ sh:path type:fibersClosed ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:nonNegativeInteger ] .
+
+uor-sh:CompletenessResolverShape
+    a               sh:NodeShape ;
+    sh:targetClass  resolver:CompletenessResolver ;
+    rdfs:label      "CompletenessResolverShape" ;
+    sh:property [ sh:path resolver:completenessTarget ; sh:minCount 1 ; sh:maxCount 1 ; sh:class type:CompletenessCandidate ] .
+
+uor-sh:CompletenessAuditTrailShape
+    a               sh:NodeShape ;
+    sh:targetClass  cert:CompletenessAuditTrail ;
+    rdfs:label      "CompletenessAuditTrailShape" ;
+    sh:property [ sh:path cert:witnessCount ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:nonNegativeInteger ] .
+
+# ── Amendment 26: Quantum level scaling shapes (3) ───────────────────────────
+
+uor-sh:Q1RingShape
+    a               sh:NodeShape ;
+    sh:targetClass  schema:Q1Ring ;
+    rdfs:label      "Q1RingShape" .
+
+uor-sh:QuantumLevelBindingShape
+    a               sh:NodeShape ;
+    sh:targetClass  op:QuantumLevelBinding ;
+    rdfs:label      "QuantumLevelBindingShape" .
+
+uor-sh:QuantumLevelResolverShape
+    a               sh:NodeShape ;
+    sh:targetClass  resolver:QuantumLevelResolver ;
+    rdfs:label      "QuantumLevelResolverShape" ;
+    sh:property [ sh:path resolver:quantumLevel ; sh:minCount 1 ; sh:maxCount 1 ; sh:class schema:QuantumLevel ] .
+
+# ── Amendment 27: Session-scoped resolution shapes (6) ───────────────────────
+
+uor-sh:SessionShape
+    a               sh:NodeShape ;
+    sh:targetClass  state:Session ;
+    rdfs:label      "SessionShape" ;
+    sh:property [ sh:path state:sessionBindings ; sh:minCount 1 ; sh:maxCount 1 ; sh:class state:Context ] ;
+    sh:property [ sh:path state:sessionQueries ; sh:maxCount 1 ; sh:datatype xsd:nonNegativeInteger ] .
+
+uor-sh:BindingAccumulatorShape
+    a               sh:NodeShape ;
+    sh:targetClass  state:BindingAccumulator ;
+    rdfs:label      "BindingAccumulatorShape" ;
+    sh:property [ sh:path state:aggregateFiberDeficit ; sh:minCount 1 ; sh:maxCount 1 ; sh:class partition:FiberBudget ] .
+
+uor-sh:SessionBoundaryShape
+    a               sh:NodeShape ;
+    sh:targetClass  state:SessionBoundary ;
+    rdfs:label      "SessionBoundaryShape" ;
+    sh:property [ sh:path state:boundaryType ; sh:minCount 1 ; sh:maxCount 1 ; sh:class state:SessionBoundaryType ] ;
+    sh:property [ sh:path state:priorContext ; sh:minCount 1 ; sh:maxCount 1 ; sh:class state:Context ] ;
+    sh:property [ sh:path state:freshContext ; sh:minCount 1 ; sh:maxCount 1 ; sh:class state:Context ] .
+
+uor-sh:SessionBoundaryTypeShape
+    a               sh:NodeShape ;
+    sh:targetClass  state:SessionBoundaryType ;
+    rdfs:label      "SessionBoundaryTypeShape" .
+
+uor-sh:SessionResolverShape
+    a               sh:NodeShape ;
+    sh:targetClass  resolver:SessionResolver ;
+    rdfs:label      "SessionResolverShape" ;
+    sh:property [ sh:path resolver:sessionAccumulator ; sh:minCount 1 ; sh:maxCount 1 ; sh:class state:BindingAccumulator ] .
+
+uor-sh:SessionQueryShape
+    a               sh:NodeShape ;
+    sh:targetClass  query:SessionQuery ;
+    rdfs:label      "SessionQueryShape" ;
+    sh:property [ sh:path query:sessionMembership ; sh:minCount 1 ; sh:maxCount 1 ; sh:class state:Session ] .
+
+# ── Amendment 28: Type synthesis shapes (8) ──────────────────────────────────
+
+uor-sh:TypeSynthesisGoalShape
+    a               sh:NodeShape ;
+    sh:targetClass  type:TypeSynthesisGoal ;
+    rdfs:label      "TypeSynthesisGoalShape" ;
+    sh:property [ sh:path type:targetEulerCharacteristic ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:integer ] .
+
+uor-sh:TypeSynthesisResultShape
+    a               sh:NodeShape ;
+    sh:targetClass  type:TypeSynthesisResult ;
+    rdfs:label      "TypeSynthesisResultShape" .
+
+uor-sh:SynthesizedTypeShape
+    a               sh:NodeShape ;
+    sh:targetClass  type:SynthesizedType ;
+    rdfs:label      "SynthesizedTypeShape" ;
+    sh:property [ sh:path type:synthesisResult ; sh:minCount 1 ; sh:maxCount 1 ; sh:class type:TypeSynthesisResult ] .
+
+uor-sh:MinimalConstraintBasisShape
+    a               sh:NodeShape ;
+    sh:targetClass  type:MinimalConstraintBasis ;
+    rdfs:label      "MinimalConstraintBasisShape" ;
+    sh:property [ sh:path type:basisSize ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:nonNegativeInteger ] .
+
+uor-sh:TypeSynthesisResolverShape
+    a               sh:NodeShape ;
+    sh:targetClass  resolver:TypeSynthesisResolver ;
+    rdfs:label      "TypeSynthesisResolverShape" ;
+    sh:property [ sh:path resolver:synthesisGoal ; sh:minCount 1 ; sh:maxCount 1 ; sh:class type:TypeSynthesisGoal ] .
+
+uor-sh:ConstraintSearchStateShape
+    a               sh:NodeShape ;
+    sh:targetClass  resolver:ConstraintSearchState ;
+    rdfs:label      "ConstraintSearchStateShape" ;
+    sh:property [ sh:path resolver:exploredCount ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:nonNegativeInteger ] ;
+    sh:property [ sh:path resolver:currentCandidate ; sh:maxCount 1 ; sh:class type:ConstrainedType ] .
+
+uor-sh:SynthesisSignatureShape
+    a               sh:NodeShape ;
+    sh:targetClass  observable:SynthesisSignature ;
+    rdfs:label      "SynthesisSignatureShape" ;
+    sh:property [ sh:path observable:realisedEuler ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:integer ] .
+
+uor-sh:SynthesisStepShape
+    a               sh:NodeShape ;
+    sh:targetClass  derivation:SynthesisStep ;
+    rdfs:label      "SynthesisStepShape" ;
+    sh:property [ sh:path derivation:stepIndex ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:nonNegativeInteger ] ;
+    sh:property [ sh:path derivation:addedConstraint ; sh:minCount 1 ; sh:maxCount 1 ; sh:class type:Constraint ] ;
+    sh:property [ sh:path derivation:signatureBefore ; sh:minCount 1 ; sh:maxCount 1 ; sh:class observable:SynthesisSignature ] ;
+    sh:property [ sh:path derivation:signatureAfter ; sh:minCount 1 ; sh:maxCount 1 ; sh:class observable:SynthesisSignature ] .
+
+# ── Amendment 29: Quantum level spectral sequence shapes (6) ─────────────────
+
+uor-sh:QuantumLiftShape
+    a               sh:NodeShape ;
+    sh:targetClass  type:QuantumLift ;
+    rdfs:label      "QuantumLiftShape" ;
+    sh:property [ sh:path type:liftBase ; sh:minCount 1 ; sh:maxCount 1 ; sh:class type:ConstrainedType ] ;
+    sh:property [ sh:path type:liftTargetLevel ; sh:minCount 1 ; sh:maxCount 1 ; sh:class schema:QuantumLevel ] ;
+    sh:property [ sh:path type:liftObstruction ; sh:maxCount 1 ; sh:class type:LiftObstruction ] .
+
+uor-sh:LiftObstructionShape
+    a               sh:NodeShape ;
+    sh:targetClass  type:LiftObstruction ;
+    rdfs:label      "LiftObstructionShape" ;
+    sh:property [ sh:path type:obstructionTrivial ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:boolean ] ;
+    sh:property [ sh:path type:obstructionFiber ; sh:maxCount 1 ; sh:class partition:FiberCoordinate ] .
+
+uor-sh:IncrementalCompletenessResolverShape
+    a               sh:NodeShape ;
+    sh:targetClass  resolver:IncrementalCompletenessResolver ;
+    rdfs:label      "IncrementalCompletenessResolverShape" ;
+    sh:property [ sh:path resolver:liftTarget ; sh:minCount 1 ; sh:maxCount 1 ; sh:class type:QuantumLift ] .
+
+uor-sh:LiftRefinementSuggestionShape
+    a               sh:NodeShape ;
+    sh:targetClass  resolver:LiftRefinementSuggestion ;
+    rdfs:label      "LiftRefinementSuggestionShape" ;
+    sh:property [ sh:path resolver:liftFiberPosition ; sh:maxCount 1 ; sh:class partition:FiberCoordinate ] ;
+    sh:property [ sh:path resolver:obstructionClass ; sh:maxCount 1 ; sh:class observable:LiftObstructionClass ] .
+
+uor-sh:SpectralSequencePageShape
+    a               sh:NodeShape ;
+    sh:targetClass  observable:SpectralSequencePage ;
+    rdfs:label      "SpectralSequencePageShape" ;
+    sh:property [ sh:path observable:pageIndex ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:nonNegativeInteger ] ;
+    sh:property [ sh:path observable:differentialIsZero ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:boolean ] ;
+    sh:property [ sh:path observable:convergedAt ; sh:maxCount 1 ; sh:datatype xsd:nonNegativeInteger ] .
+
+uor-sh:LiftObstructionClassShape
+    a               sh:NodeShape ;
+    sh:targetClass  observable:LiftObstructionClass ;
+    rdfs:label      "LiftObstructionClassShape" ;
+    sh:property [ sh:path observable:obstructionClass ; sh:maxCount 1 ; sh:class cohomology:CohomologyGroup ] .
+
+# ── Amendment 30: Monodromy observable shapes (6) ────────────────────────────
+
+uor-sh:TwistedTypeShape
+    a               sh:NodeShape ;
+    sh:targetClass  type:TwistedType ;
+    rdfs:label      "TwistedTypeShape" .
+
+uor-sh:FlatTypeShape
+    a               sh:NodeShape ;
+    sh:targetClass  type:FlatType ;
+    rdfs:label      "FlatTypeShape" .
+
+uor-sh:MonodromyResolverShape
+    a               sh:NodeShape ;
+    sh:targetClass  resolver:MonodromyResolver ;
+    rdfs:label      "MonodromyResolverShape" ;
+    sh:property [ sh:path resolver:monodromyTarget ; sh:minCount 1 ; sh:maxCount 1 ; sh:class type:ConstrainedType ] ;
+    sh:property [ sh:path resolver:holonomyResult ; sh:maxCount 1 ; sh:class observable:HolonomyGroup ] .
+
+uor-sh:HolonomyGroupShape
+    a               sh:NodeShape ;
+    sh:targetClass  observable:HolonomyGroup ;
+    rdfs:label      "HolonomyGroupShape" ;
+    sh:property [ sh:path observable:holonomyGroupOrder ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:positiveInteger ] .
+
+uor-sh:MonodromyClassShape
+    a               sh:NodeShape ;
+    sh:targetClass  observable:MonodromyClass ;
+    rdfs:label      "MonodromyClassShape" .
+
+uor-sh:ClosedConstraintPathShape
+    a               sh:NodeShape ;
+    sh:targetClass  observable:ClosedConstraintPath ;
+    rdfs:label      "ClosedConstraintPathShape" ;
+    sh:property [ sh:path observable:pathLength ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:nonNegativeInteger ] .

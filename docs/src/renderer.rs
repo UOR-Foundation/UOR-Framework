@@ -35,6 +35,12 @@ pub fn expand_directives(source: &str, index: &OntologyIndex) -> String {
         let directive = &remaining[2..end];
         remaining = &remaining[end + 1..];
 
+        // Handle {@count:KEY} directives (colon syntax, no space argument)
+        if let Some(count_key) = directive.strip_prefix("count:") {
+            result.push_str(&resolve_count(count_key, index));
+            continue;
+        }
+
         let parts: Vec<&str> = directive.splitn(2, ' ').collect();
         if parts.len() != 2 {
             result.push_str(&format!("{{@{}}}", directive));
@@ -85,6 +91,22 @@ fn resolve_ind_ref(iri: &str, index: &OntologyIndex) -> String {
         format!("[{}]({})", ind.label, href)
     } else {
         format!("`{}`", iri)
+    }
+}
+
+/// Resolves a `{@count:KEY}` directive to the current ontology count.
+fn resolve_count(key: &str, index: &OntologyIndex) -> String {
+    match key {
+        "namespaces" => index.modules.len().to_string(),
+        "classes" => index.classes.len().to_string(),
+        "properties" => index.properties.len().to_string(),
+        "individuals" => index.individuals.len().to_string(),
+        "amendments" => "30".to_string(),
+        "shacl_tests" => "46".to_string(),
+        "traits" => (index.classes.len() - 9).to_string(),
+        "shapes" => index.classes.len().to_string(),
+        "identities" => "288".to_string(),
+        _ => format!("{{@count:{}}}", key),
     }
 }
 

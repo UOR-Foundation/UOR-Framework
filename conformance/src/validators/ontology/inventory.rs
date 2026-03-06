@@ -117,7 +117,7 @@ fn validate_spec_counts(report: &mut ConformanceReport) {
 }
 
 /// Checks a count matches the expected value.
-fn check_count(
+pub(crate) fn check_count(
     report: &mut ConformanceReport,
     label: &str,
     actual: usize,
@@ -942,4 +942,35 @@ fn validate_surface_symmetry_identity(report: &mut ConformanceReport) {
             "op:surfaceSymmetry and proof:prf_surfaceSymmetry present",
         ));
     }
+}
+
+/// Validates workspace-level inventory invariants (requires workspace root path).
+///
+/// Currently checks that the SHACL shapes file has exactly one NodeShape per class.
+///
+/// # Errors
+///
+/// Returns an error if the shapes file cannot be read.
+pub fn validate_workspace(workspace: &Path) -> Result<ConformanceReport> {
+    let mut report = ConformanceReport::new();
+
+    let shapes_path = workspace.join("conformance/shapes/uor-shapes.ttl");
+    let content = std::fs::read_to_string(&shapes_path)
+        .with_context(|| format!("Failed to read {}", shapes_path.display()))?;
+
+    let shape_count = content
+        .lines()
+        .filter(|l| l.contains("sh:NodeShape"))
+        .count();
+    let expected = uor_ontology::Ontology::full().class_count();
+
+    check_count(
+        &mut report,
+        "SHACL shapes (NodeShape declarations)",
+        shape_count,
+        expected,
+        "ontology/inventory/shapes_count",
+    );
+
+    Ok(report)
 }

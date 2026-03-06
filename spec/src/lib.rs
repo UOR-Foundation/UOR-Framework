@@ -53,7 +53,7 @@ pub use model::{
 
 impl Ontology {
     /// Returns the complete UOR Foundation ontology with all 16 namespaces
-    /// and all 27 amendments applied.
+    /// and all 30 amendments applied.
     ///
     /// Assembly order follows the dependency graph specified in the UOR Foundation
     /// completion plan:

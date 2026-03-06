@@ -54,6 +54,18 @@ fn main() -> Result<()> {
 
     let report = run_all(&paths)?;
 
+    // Verify total check count has not drifted
+    let expected_total_checks: usize = 115;
+    let actual_checks = report.results.len();
+    if actual_checks != expected_total_checks {
+        eprintln!(
+            "CHECK COUNT DRIFT: expected {} checks but got {}. \
+             Update expected_total_checks in conformance.rs and CLAUDE.md.",
+            expected_total_checks, actual_checks
+        );
+        process::exit(2);
+    }
+
     // Print results
     println!("UOR Framework Conformance Report");
     println!("================================");

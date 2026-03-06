@@ -2,19 +2,19 @@
 
 ## Overview
 
-The UOR conformance suite validates 29 OWL instance graphs against SHACL NodeShapes
+The UOR conformance suite validates 46 OWL instance graphs against SHACL NodeShapes
 defined in `conformance/shapes/uor-shapes.ttl`. One NodeShape is defined per
-ontology class (130 total).
+ontology class (175 total).
 
 ## Shape File
 
 `conformance/shapes/uor-shapes.ttl` contains:
-- 130 `sh:NodeShape` declarations (one per class)
+- 175 `sh:NodeShape` declarations (one per class)
 - `sh:targetClass` targeting each OWL class
 - Cardinality constraints (`sh:minCount`, `sh:maxCount`) on required properties
 - Type constraints (`sh:class`, `sh:datatype`) on property values
 
-## The 29 Instance Tests
+## The 46 Instance Tests
 
 | Test | File | Validates |
 |------|------|-----------|
@@ -49,6 +49,21 @@ ontology class (130 total).
 | test29_coordinate_kind | `tests/fixtures/test29_coordinate_kind.rs` | `CoordinateKind` vocabulary + typed coordinate queries |
 | test30_proof_coverage | `tests/fixtures/test30_proof_coverage.rs` | `proof:ComputationCertificate`/`AxiomaticDerivation`/`CriticalIdentityProof` + `provesIdentity`/`atQuantumLevel`/`universalScope` |
 | test31_quantum_level | `tests/fixtures/test31_quantum_level.rs` | `schema:QuantumLevel` individuals Q0–Q3 with `quantumIndex`/`bitsWidth`/`cycleSize`/`nextLevel` |
+| test32_arc_grounding | `tests/fixtures/test32_arc_grounding.rs` | `morphism:GroundingMap` + `ProjectionMap` + `GroundingCertificate` |
+| test33_graph_gaps | `tests/fixtures/test33_graph_gaps.rs` | `type:CompleteType` + `cert:CompletenessCertificate` + thermodynamic observables |
+| test34_completeness_candidate | `tests/fixtures/test34_completeness_candidate.rs` | `type:CompletenessCandidate` + `CompletenessWitness` + `resolver:CompletenessResolver` |
+| test35_completeness_certificate | `tests/fixtures/test35_completeness_certificate.rs` | `cert:CompletenessAuditTrail` + completeness certification pipeline |
+| test36_q1_ring | `tests/fixtures/test36_q1_ring.rs` | `schema:Q1Ring` + `op:QuantumLevelBinding` + `resolver:QuantumLevelResolver` |
+| test37_quantum_level_binding | `tests/fixtures/test37_quantum_level_binding.rs` | Quantum level binding with QL_ identities |
+| test38_session_lifecycle | `tests/fixtures/test38_session_lifecycle.rs` | `state:Session` + `BindingAccumulator` + `SessionBoundary` lifecycle |
+| test39_session_boundary | `tests/fixtures/test39_session_boundary.rs` | `state:SessionBoundaryType` vocabulary + `resolver:SessionResolver` |
+| test40_type_synthesis_goal | `tests/fixtures/test40_type_synthesis_goal.rs` | `type:TypeSynthesisGoal` + `TypeSynthesisResult` + `SynthesizedType` (Amendment 28) |
+| test41_synthesis_result | `tests/fixtures/test41_synthesis_result.rs` | `resolver:TypeSynthesisResolver` + `ConstraintSearchState` + `derivation:SynthesisStep` (Amendment 28) |
+| test42_quantum_lift | `tests/fixtures/test42_quantum_lift.rs` | `type:QuantumLift` + `LiftObstruction` + `resolver:IncrementalCompletenessResolver` (Amendment 29) |
+| test43_spectral_sequence | `tests/fixtures/test43_spectral_sequence.rs` | `observable:SpectralSequencePage` + `LiftObstructionClass` (Amendment 29) |
+| test44_monodromy_flat | `tests/fixtures/test44_monodromy_flat.rs` | `type:FlatType` + trivial `HolonomyGroup` + `Monodromy` + `DihedralElement` (Amendment 30) |
+| test45_monodromy_twisted | `tests/fixtures/test45_monodromy_twisted.rs` | `type:TwistedType` + non-trivial `HolonomyGroup` + `Monodromy` + `LiftObstruction` (Amendment 30) |
+| test46_monodromy_pipeline | `tests/fixtures/test46_monodromy_pipeline.rs` | `resolver:MonodromyResolver` end-to-end pipeline: ConstrainedType → HolonomyGroup → MonodromyClass → TwistedType (Amendment 30) |
 
 ## Structural Validation
 

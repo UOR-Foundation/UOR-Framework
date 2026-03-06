@@ -31,7 +31,7 @@ uor-ontology (spec/)
 `uor-ontology` encodes the complete ontology as typed Rust static data:
 
 - **`model.rs`**: Core types — `Namespace`, `Class`, `Property`, `Individual`, `Ontology`
-- **`namespaces/*.rs`**: 16 modules, one per namespace (all 23 amendments applied)
+- **`namespaces/*.rs`**: 16 modules, one per namespace (all {@count:amendments} amendments applied)
 - **`serializer/jsonld.rs`**: Serializes to JSON-LD 1.1
 - **`serializer/turtle.rs`**: Serializes to Turtle 1.1
 - **`serializer/ntriples.rs`**: Serializes to N-Triples
@@ -46,7 +46,7 @@ This crate is the single source of truth. It is internal (`publish = false`).
 
 - **`mapping.rs`**: Namespace → module, XSD → Rust type, class IRI → path tables
 - **`traits.rs`**: Class → trait, property → method generation
-- **`enums.rs`**: Enum detection (PrimitiveOp, MetricAxis, Space, FiberState, GeometricCharacter, VerificationDomain, ComplexityClass, RewriteRule, MeasurementUnit, CoordinateKind, ProofModality) and QuantumLevel newtype struct generation
+- **`enums.rs`**: Enum detection (PrimitiveOp, MetricAxis, Space, FiberState, GeometricCharacter, VerificationDomain, ComplexityClass, RewriteRule, MeasurementUnit, CoordinateKind, SessionBoundaryType, ProofModality) and QuantumLevel newtype struct generation
 - **`individuals.rs`**: Named individual → const module / PrimitiveOp impl generation
 - **`emit.rs`**: Rust source code writer
 
@@ -55,7 +55,7 @@ This crate is the single source of truth. It is internal (`publish = false`).
 `uor-foundation` is the **generated** published crate. Every file in `foundation/src/`
 is produced by `uor-crate` — never hand-edited.
 
-- **166 traits** (one per OWL class, generic over `Primitives`)
+- **{@count:traits} traits** (one per OWL class, generic over `Primitives`)
 - **315 methods** (one per property with a domain)
 - **12 enums** (Space, PrimitiveOp, MetricAxis, FiberState, GeometricCharacter, VerificationDomain, ComplexityClass, RewriteRule, MeasurementUnit, CoordinateKind, SessionBoundaryType, ProofModality) **+ 1 struct** (QuantumLevel)
 - **624 constant modules** (for named individuals)
@@ -69,7 +69,7 @@ Module structure: `kernel/` (3 namespaces), `bridge/` (10 namespaces), `user/` (
 
 1. **Rust source**: API documentation, style conventions
 2. **Ontology artifacts**: JSON-LD 1.1, OWL 2 DL constraints, RDF 1.1, Turtle 1.1, inventory counts
-3. **SHACL instances**: 45 test graphs validated against 175 NodeShapes
+3. **SHACL instances**: {@count:shacl_tests} test graphs validated against {@count:shapes} NodeShapes
 4. **Generated crate**: Trait completeness, method completeness, individual completeness
 5. **Documentation**: Diataxis structure, completeness, accuracy, links
 6. **Website**: HTML5, WCAG 2.1 AA, CSS, coverage, links

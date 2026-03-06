@@ -30,4 +30,15 @@ proof:prf_R_A1 a owl:NamedIndividual, proof:AxiomaticDerivation ;
     proof:provesIdentity op:R_A1 ;
     proof:universalScope "true"^^xsd:boolean ;
     proof:verified       "true"^^xsd:boolean .
+
+# Amendment 30: Monodromy proof individuals (MN_1 and MN_7 boundary cases)
+proof:prf_MN_1 a owl:NamedIndividual, proof:AxiomaticDerivation ;
+    proof:provesIdentity op:MN_1 ;
+    proof:universalScope "true"^^xsd:boolean ;
+    proof:verified       "true"^^xsd:boolean .
+
+proof:prf_MN_7 a owl:NamedIndividual, proof:AxiomaticDerivation ;
+    proof:provesIdentity op:MN_7 ;
+    proof:universalScope "true"^^xsd:boolean ;
+    proof:verified       "true"^^xsd:boolean .
 "#;

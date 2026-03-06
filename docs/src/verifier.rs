@@ -82,6 +82,11 @@ fn check_refs_in_file(content: &str, path: &Path, index: &OntologyIndex, errors:
         let directive = &remaining[2..end];
         remaining = &remaining[end + 1..];
 
+        // Count directives use colon syntax ({@count:KEY}), not space
+        if directive.starts_with("count:") {
+            continue;
+        }
+
         let parts: Vec<&str> = directive.splitn(2, ' ').collect();
         if parts.len() != 2 {
             continue;
