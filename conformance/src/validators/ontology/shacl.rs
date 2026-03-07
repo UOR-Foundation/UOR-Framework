@@ -1,6 +1,6 @@
 //! SHACL validator.
 //!
-//! Validates the 84 OWL instance test graphs against the UOR SHACL shapes.
+//! Validates the 100 OWL instance test graphs against the UOR SHACL shapes.
 //! Each test graph is defined as a Turtle string in `tests/fixtures/`.
 //! Validation checks structural constraints without a full SHACL engine:
 //! - Required properties are present
@@ -11,9 +11,9 @@ use crate::report::{ConformanceReport, TestResult};
 use crate::tests;
 
 /// Expected number of SHACL test fixtures.
-const EXPECTED_SHACL_TESTS: usize = 84;
+const EXPECTED_SHACL_TESTS: usize = 100;
 
-/// Runs all 84 SHACL instance conformance tests.
+/// Runs all 100 SHACL instance conformance tests.
 pub fn validate() -> ConformanceReport {
     let mut report = ConformanceReport::new();
     let before_tests = report.results.len();
@@ -435,6 +435,89 @@ pub fn validate() -> ConformanceReport {
         tests::fixtures::TEST84_ENUM_VARIANT,
         &mut report,
     );
+    // Amendment 39: Q1 Lift fixtures
+    run_test(
+        "test85_q1_ring_grounding",
+        tests::fixtures::TEST85_Q1_RING_GROUNDING,
+        &mut report,
+    );
+    run_test(
+        "test86_quantum_lift_trivial",
+        tests::fixtures::TEST86_QUANTUM_LIFT_TRIVIAL,
+        &mut report,
+    );
+    run_test(
+        "test87_spectral_convergence",
+        tests::fixtures::TEST87_SPECTRAL_CONVERGENCE,
+        &mut report,
+    );
+    run_test(
+        "test88_lift_obstruction_nontrivial",
+        tests::fixtures::TEST88_LIFT_OBSTRUCTION_NONTRIVIAL,
+        &mut report,
+    );
+    run_test(
+        "test89_lift_refinement_suggestion",
+        tests::fixtures::TEST89_LIFT_REFINEMENT_SUGGESTION,
+        &mut report,
+    );
+    run_test(
+        "test90_resolved_lift",
+        tests::fixtures::TEST90_RESOLVED_LIFT,
+        &mut report,
+    );
+    // Amendment 39: Q1 Inverse Pipeline fixtures
+    run_test(
+        "test91_synthesis_goal_q1",
+        tests::fixtures::TEST91_SYNTHESIS_GOAL_Q1,
+        &mut report,
+    );
+    run_test(
+        "test92_synthesis_checkpoint",
+        tests::fixtures::TEST92_SYNTHESIS_CHECKPOINT,
+        &mut report,
+    );
+    run_test(
+        "test93_synthesis_signature",
+        tests::fixtures::TEST93_SYNTHESIS_SIGNATURE,
+        &mut report,
+    );
+    run_test(
+        "test94_synthesized_type",
+        tests::fixtures::TEST94_SYNTHESIZED_TYPE,
+        &mut report,
+    );
+    run_test(
+        "test95_unreachable_signature",
+        tests::fixtures::TEST95_UNREACHABLE_SIGNATURE,
+        &mut report,
+    );
+    // Amendment 40: Q1 Normative Certification fixtures
+    run_test(
+        "test96_geodesic_trace_q1",
+        tests::fixtures::TEST96_GEODESIC_TRACE_Q1,
+        &mut report,
+    );
+    run_test(
+        "test97_evidence_bundle_ar1",
+        tests::fixtures::TEST97_EVIDENCE_BUNDLE_AR1,
+        &mut report,
+    );
+    run_test(
+        "test98_evidence_bundle_dc10",
+        tests::fixtures::TEST98_EVIDENCE_BUNDLE_DC10,
+        &mut report,
+    );
+    run_test(
+        "test99_measurement_born_q1",
+        tests::fixtures::TEST99_MEASUREMENT_BORN_Q1,
+        &mut report,
+    );
+    run_test(
+        "test100_normative_chain",
+        tests::fixtures::TEST100_NORMATIVE_CHAIN,
+        &mut report,
+    );
 
     // Verify test fixture count matches expected
     let test_count = report.results.len() - before_tests;
@@ -566,6 +649,22 @@ fn run_test(name: &str, turtle_src: &str, report: &mut ConformanceReport) {
         "test82_level_successor" => validate_basic_turtle(turtle_src),
         "test83_amplitude_normalization" => validate_basic_turtle(turtle_src),
         "test84_enum_variant" => validate_basic_turtle(turtle_src),
+        "test85_q1_ring_grounding" => validate_basic_turtle(turtle_src),
+        "test86_quantum_lift_trivial" => validate_basic_turtle(turtle_src),
+        "test87_spectral_convergence" => validate_basic_turtle(turtle_src),
+        "test88_lift_obstruction_nontrivial" => validate_basic_turtle(turtle_src),
+        "test89_lift_refinement_suggestion" => validate_basic_turtle(turtle_src),
+        "test90_resolved_lift" => validate_basic_turtle(turtle_src),
+        "test91_synthesis_goal_q1" => validate_basic_turtle(turtle_src),
+        "test92_synthesis_checkpoint" => validate_basic_turtle(turtle_src),
+        "test93_synthesis_signature" => validate_basic_turtle(turtle_src),
+        "test94_synthesized_type" => validate_basic_turtle(turtle_src),
+        "test95_unreachable_signature" => validate_basic_turtle(turtle_src),
+        "test96_geodesic_trace_q1" => validate_basic_turtle(turtle_src),
+        "test97_evidence_bundle_ar1" => validate_basic_turtle(turtle_src),
+        "test98_evidence_bundle_dc10" => validate_basic_turtle(turtle_src),
+        "test99_measurement_born_q1" => validate_basic_turtle(turtle_src),
+        "test100_normative_chain" => validate_basic_turtle(turtle_src),
         _ => Ok(()),
     };
 

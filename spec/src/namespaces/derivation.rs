@@ -25,7 +25,7 @@ pub fn module() -> NamespaceModule {
             comment: "Computation witnesses recording term rewriting sequences from \
                       original terms to their canonical forms.",
             space: Space::Bridge,
-            imports: &[NS_OBSERVABLE, NS_OP, NS_SCHEMA, NS_TYPE],
+            imports: &[NS_OBSERVABLE, NS_OP, NS_RESOLVER, NS_SCHEMA, NS_TYPE],
         },
         classes: classes(),
         properties: properties(),
@@ -98,6 +98,18 @@ fn classes() -> Vec<Class> {
                       added to the synthesis candidate and the resulting change in the constraint \
                       nerve's topological signature. Ordered by derivation:stepIndex. Analogous \
                       to derivation:RewriteStep in the forward pipeline.",
+            subclass_of: &[OWL_THING],
+            disjoint_with: &[],
+        },
+        // Amendment 38: Synthesis checkpoint for resumable Q1+ synthesis
+        Class {
+            id: "https://uor.foundation/derivation/SynthesisCheckpoint",
+            label: "SynthesisCheckpoint",
+            comment: "A persistent snapshot of a ConstraintSearchState at a \
+                      specific SynthesisStep, allowing a TypeSynthesisResolver \
+                      to resume exploration after interruption. Essential at \
+                      Q1+ scale where exhaustive synthesis is computationally \
+                      significant.",
             subclass_of: &[OWL_THING],
             disjoint_with: &[],
         },
@@ -284,6 +296,26 @@ fn properties() -> Vec<Property> {
             functional: true,
             domain: Some("https://uor.foundation/derivation/SynthesisStep"),
             range: "https://uor.foundation/observable/SynthesisSignature",
+        },
+        // Amendment 38: SynthesisCheckpoint properties
+        Property {
+            id: "https://uor.foundation/derivation/checkpointStep",
+            label: "checkpointStep",
+            comment: "The SynthesisStep at which this checkpoint was taken.",
+            kind: PropertyKind::Object,
+            functional: true,
+            domain: Some("https://uor.foundation/derivation/SynthesisCheckpoint"),
+            range: "https://uor.foundation/derivation/SynthesisStep",
+        },
+        Property {
+            id: "https://uor.foundation/derivation/checkpointState",
+            label: "checkpointState",
+            comment: "The ConstraintSearchState snapshot captured by this \
+                      checkpoint.",
+            kind: PropertyKind::Object,
+            functional: true,
+            domain: Some("https://uor.foundation/derivation/SynthesisCheckpoint"),
+            range: "https://uor.foundation/resolver/ConstraintSearchState",
         },
     ]
 }

@@ -84,6 +84,18 @@ pub trait SynthesisStep<P: Primitives> {
     fn signature_after(&self) -> &Self::SynthesisSignature;
 }
 
+/// A persistent snapshot of a ConstraintSearchState at a specific SynthesisStep, allowing a TypeSynthesisResolver to resume exploration after interruption. Essential at Q1+ scale where exhaustive synthesis is computationally significant.
+pub trait SynthesisCheckpoint<P: Primitives> {
+    /// Associated type for `SynthesisStep`.
+    type SynthesisStep: SynthesisStep<P>;
+    /// The SynthesisStep at which this checkpoint was taken.
+    fn checkpoint_step(&self) -> &Self::SynthesisStep;
+    /// Associated type for `ConstraintSearchState`.
+    type ConstraintSearchState: crate::bridge::resolver::ConstraintSearchState<P>;
+    /// The ConstraintSearchState snapshot captured by this checkpoint.
+    fn checkpoint_state(&self) -> &Self::ConstraintSearchState;
+}
+
 /// The rewrite rule applying the critical identity: neg(bnot(x)) → succ(x). Grounded in op:criticalIdentity.
 pub mod critical_identity_rule {
     /// `groundedIn` -> `criticalIdentity`

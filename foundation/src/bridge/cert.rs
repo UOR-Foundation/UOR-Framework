@@ -94,7 +94,12 @@ pub trait MeasurementCertificate<P: Primitives>: Certificate<P> {
 }
 
 /// A structured evidence bundle attesting that each sub-predicate of the geodesic condition (GD_6) holds independently: isAR1Ordered and isDC10Selected. Linked from GeodesicCertificate via evidenceBundle.
-pub trait GeodesicEvidenceBundle<P: Primitives> {}
+pub trait GeodesicEvidenceBundle<P: Primitives> {
+    /// True iff the linked GeodesicTrace is ordered by the AR_1 canonical rewriting rule (smallest lexicographic representative first).
+    fn is_ar1_ordered(&self) -> P::Boolean;
+    /// True iff each constraint in the trace was selected by the DC_10 Jacobian oracle at the step where it was applied.
+    fn is_dc10_selected(&self) -> P::Boolean;
+}
 
 /// A certificate attesting that a MeasurementEvent outcome probability matches the Born rule: P(outcome k) = |α_k|² (QM_5). Linked from MeasurementCertificate to provide probability distribution verification.
 pub trait BornRuleVerification<P: Primitives>: Certificate<P> {

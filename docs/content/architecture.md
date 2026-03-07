@@ -90,7 +90,7 @@ The conformance suite is the **single gate** — all components must pass before
 
 - Templates use the Tera template engine
 - Namespace pages are auto-generated (no hand-written HTML for spec terms)
-- Search index is generated from all 205 classes, 408 properties, 740 individuals
+- Search index is generated from all 206 classes, 412 properties, 740 individuals
 - No external dependencies (no CDN, no tracking, no third-party scripts)
 
 ## Build Pipeline
@@ -105,7 +105,7 @@ cargo run --bin uor-conformance → validates all of the above
 
 ## Amendment History
 
-The spec crate implements all 36 amendments from the UOR Foundation completion plan:
+The spec crate implements all 40 amendments from the UOR Foundation completion plan:
 
 | Amendment | Namespace | Key Additions |
 |-----------|-----------|---------------|
@@ -145,3 +145,7 @@ The spec crate implements all 36 amendments from the UOR Foundation completion p
 | 34 | proof/, type/, observable/ | Morphospace Achievability: ImpossibilityWitness, MorphospaceRecord, AchievabilityStatus enum, MS\_1–MS\_5 |
 | 35 | trace/, cert/, resolver/ | Computational Geodesic: GeodesicTrace, GeodesicViolation, GeodesicCertificate, GD\_1–GD\_5 |
 | 36 | resolver/, trace/, cert/, type/, op/ | Measurement Boundary: MeasurementResolver, MeasurementEvent, CollapsedFiberState, QuantumThermodynamicDomain, QM\_1–QM\_4 |
+| 37 | partition/, trace/, cert/, type/, schema/, observable/, resolver/, op/ | Ontology Gap Closures: PartitionProduct, PartitionCoproduct, MeasurementOutcome, GeodesicEvidenceBundle, BornRuleVerification |
+| 38 | cert/, derivation/ | Q1 Vocabulary: SynthesisCheckpoint, isAR1Ordered, isDC10Selected, checkpointStep, checkpointState |
+| 39 | (SHACL only) | Q1 Lift + Inverse Pipeline Coverage: test85–test95 |
+| 40 | (SHACL only) | Q1 Normative Certification Coverage: test96–test100 |

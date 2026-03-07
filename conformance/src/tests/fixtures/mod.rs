@@ -3,6 +3,7 @@
 //! Each constant holds a Turtle 1.1 RDF graph that represents a valid
 //! instance of UOR ontology terms, used to verify SHACL shape constraints.
 
+mod test100_normative_chain;
 mod test10_iterative_resolution;
 mod test11_composition;
 mod test12_factorization;
@@ -85,9 +86,25 @@ mod test81_dihedral_algebra;
 mod test82_level_successor;
 mod test83_amplitude_normalization;
 mod test84_enum_variant;
+mod test85_q1_ring_grounding;
+mod test86_quantum_lift_trivial;
+mod test87_spectral_convergence;
+mod test88_lift_obstruction_nontrivial;
+mod test89_lift_refinement_suggestion;
 mod test8_fiber_budget;
+mod test90_resolved_lift;
+mod test91_synthesis_goal_q1;
+mod test92_synthesis_checkpoint;
+mod test93_synthesis_signature;
+mod test94_synthesized_type;
+mod test95_unreachable_signature;
+mod test96_geodesic_trace_q1;
+mod test97_evidence_bundle_ar1;
+mod test98_evidence_bundle_dc10;
+mod test99_measurement_born_q1;
 mod test9_constraint_algebra;
 
+pub use test100_normative_chain::TEST100_NORMATIVE_CHAIN;
 pub use test10_iterative_resolution::TEST10_ITERATIVE_RESOLUTION;
 pub use test11_composition::TEST11_COMPOSITION;
 pub use test12_factorization::TEST12_FACTORIZATION;
@@ -170,5 +187,20 @@ pub use test81_dihedral_algebra::TEST81_DIHEDRAL_ALGEBRA;
 pub use test82_level_successor::TEST82_LEVEL_SUCCESSOR;
 pub use test83_amplitude_normalization::TEST83_AMPLITUDE_NORMALIZATION;
 pub use test84_enum_variant::TEST84_ENUM_VARIANT;
+pub use test85_q1_ring_grounding::TEST85_Q1_RING_GROUNDING;
+pub use test86_quantum_lift_trivial::TEST86_QUANTUM_LIFT_TRIVIAL;
+pub use test87_spectral_convergence::TEST87_SPECTRAL_CONVERGENCE;
+pub use test88_lift_obstruction_nontrivial::TEST88_LIFT_OBSTRUCTION_NONTRIVIAL;
+pub use test89_lift_refinement_suggestion::TEST89_LIFT_REFINEMENT_SUGGESTION;
 pub use test8_fiber_budget::TEST8_FIBER_BUDGET;
+pub use test90_resolved_lift::TEST90_RESOLVED_LIFT;
+pub use test91_synthesis_goal_q1::TEST91_SYNTHESIS_GOAL_Q1;
+pub use test92_synthesis_checkpoint::TEST92_SYNTHESIS_CHECKPOINT;
+pub use test93_synthesis_signature::TEST93_SYNTHESIS_SIGNATURE;
+pub use test94_synthesized_type::TEST94_SYNTHESIZED_TYPE;
+pub use test95_unreachable_signature::TEST95_UNREACHABLE_SIGNATURE;
+pub use test96_geodesic_trace_q1::TEST96_GEODESIC_TRACE_Q1;
+pub use test97_evidence_bundle_ar1::TEST97_EVIDENCE_BUNDLE_AR1;
+pub use test98_evidence_bundle_dc10::TEST98_EVIDENCE_BUNDLE_DC10;
+pub use test99_measurement_born_q1::TEST99_MEASUREMENT_BORN_Q1;
 pub use test9_constraint_algebra::TEST9_CONSTRAINT_ALGEBRA;

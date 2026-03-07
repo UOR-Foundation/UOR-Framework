@@ -2,8 +2,8 @@
 //!
 //! Verifies that the built ontology artifact contains the correct counts:
 //! - 16 namespaces (3 Kernel / 10 Bridge / 3 User)
-//! - 205 classes
-//! - 407 namespace-level properties + 1 global annotation = 408 via property_count()
+//! - 206 classes
+//! - 411 namespace-level properties + 1 global annotation = 412 via property_count()
 //! - 740 named individuals (each with required property assertions)
 
 use std::path::Path;
@@ -16,8 +16,8 @@ use crate::report::{ConformanceReport, TestResult};
 
 /// Expected inventory counts for the UOR Foundation ontology.
 const EXPECTED_NAMESPACES: usize = 16;
-const EXPECTED_CLASSES: usize = 205;
-const EXPECTED_PROPERTIES: usize = 408;
+const EXPECTED_CLASSES: usize = 206;
+const EXPECTED_PROPERTIES: usize = 412;
 const EXPECTED_INDIVIDUALS: usize = 740;
 
 /// Validates the ontology inventory counts in the built JSON-LD artifact.
@@ -63,6 +63,12 @@ pub fn validate(artifacts: &Path) -> Result<ConformanceReport> {
     validate_geodesic_decomposition(&mut report);
     validate_born_rule_coverage(&mut report);
     validate_enum_variant_alignment(&mut report);
+    // Amendment 38-40: Q1 Conformance Coverage validators
+    validate_q1_ring_grounding(&mut report);
+    validate_lift_obstruction_paths(&mut report);
+    validate_synthesis_q1_coverage(&mut report);
+    validate_evidence_bundle_properties(&mut report);
+    validate_normative_chain_integrity(&mut report);
 
     // Validate the built JSON-LD artifact
     let json_path = artifacts.join("uor.foundation.json");
@@ -1149,6 +1155,122 @@ fn validate_enum_variant_alignment(report: &mut ConformanceReport) {
         report.push(TestResult::pass(
             validator,
             "All 10 VerificationDomain individuals have enumVariant",
+        ));
+    }
+}
+
+/// Validates Q1Ring class exists (Amendment 39).
+fn validate_q1_ring_grounding(report: &mut ConformanceReport) {
+    let ontology = uor_ontology::Ontology::full();
+    let validator = "ontology/inventory/q1_ring_grounding";
+    let q1ring = "https://uor.foundation/schema/Q1Ring";
+    if ontology.find_class(q1ring).is_some() {
+        report.push(TestResult::pass(validator, "Q1Ring class present"));
+    } else {
+        report.push(TestResult::fail(validator, "Q1Ring class not found"));
+    }
+}
+
+/// Validates QuantumLift and LiftObstruction classes exist (Amendment 39).
+fn validate_lift_obstruction_paths(report: &mut ConformanceReport) {
+    let ontology = uor_ontology::Ontology::full();
+    let validator = "ontology/inventory/lift_obstruction_paths";
+    let class_iris = [
+        "https://uor.foundation/type/QuantumLift",
+        "https://uor.foundation/type/LiftObstruction",
+    ];
+    let mut all_found = true;
+    for iri in &class_iris {
+        if ontology.find_class(iri).is_none() {
+            report.push(TestResult::fail(
+                validator,
+                format!("Class {} not found", iri),
+            ));
+            all_found = false;
+        }
+    }
+    if all_found {
+        report.push(TestResult::pass(
+            validator,
+            "QuantumLift and LiftObstruction classes present",
+        ));
+    }
+}
+
+/// Validates SynthesisCheckpoint class and properties exist (Amendment 38).
+fn validate_synthesis_q1_coverage(report: &mut ConformanceReport) {
+    let ontology = uor_ontology::Ontology::full();
+    let validator = "ontology/inventory/synthesis_q1_coverage";
+    let class_iri = "https://uor.foundation/derivation/SynthesisCheckpoint";
+    let prop_iris = [
+        "https://uor.foundation/derivation/checkpointStep",
+        "https://uor.foundation/derivation/checkpointState",
+    ];
+    let class_found = ontology.find_class(class_iri).is_some();
+    let props_found = prop_iris
+        .iter()
+        .all(|iri| ontology.find_property(iri).is_some());
+    if class_found && props_found {
+        report.push(TestResult::pass(
+            validator,
+            "SynthesisCheckpoint class and properties present",
+        ));
+    } else {
+        report.push(TestResult::fail(
+            validator,
+            "SynthesisCheckpoint class or properties missing",
+        ));
+    }
+}
+
+/// Validates isAR1Ordered and isDC10Selected properties exist (Amendment 38).
+fn validate_evidence_bundle_properties(report: &mut ConformanceReport) {
+    let ontology = uor_ontology::Ontology::full();
+    let validator = "ontology/inventory/evidence_bundle_properties";
+    let prop_iris = [
+        "https://uor.foundation/cert/isAR1Ordered",
+        "https://uor.foundation/cert/isDC10Selected",
+    ];
+    let mut all_found = true;
+    for iri in &prop_iris {
+        if ontology.find_property(iri).is_none() {
+            report.push(TestResult::fail(
+                validator,
+                format!("Property {} not found", iri),
+            ));
+            all_found = false;
+        }
+    }
+    if all_found {
+        report.push(TestResult::pass(
+            validator,
+            "isAR1Ordered and isDC10Selected properties present",
+        ));
+    }
+}
+
+/// Validates the normative cert chain is connected (Amendment 40).
+fn validate_normative_chain_integrity(report: &mut ConformanceReport) {
+    let ontology = uor_ontology::Ontology::full();
+    let validator = "ontology/inventory/normative_chain_integrity";
+    let required = [
+        "https://uor.foundation/cert/certifiedGeodesic",
+        "https://uor.foundation/cert/evidenceBundle",
+        "https://uor.foundation/cert/isAR1Ordered",
+        "https://uor.foundation/cert/isDC10Selected",
+    ];
+    let all_found = required
+        .iter()
+        .all(|iri| ontology.find_property(iri).is_some());
+    if all_found {
+        report.push(TestResult::pass(
+            validator,
+            "Normative chain properties all present",
+        ));
+    } else {
+        report.push(TestResult::fail(
+            validator,
+            "Normative chain incomplete: missing cert/ properties",
         ));
     }
 }

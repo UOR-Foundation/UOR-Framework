@@ -2,19 +2,19 @@
 
 ## Overview
 
-The UOR conformance suite validates 84 OWL instance graphs against SHACL NodeShapes
+The UOR conformance suite validates 100 OWL instance graphs against SHACL NodeShapes
 defined in `conformance/shapes/uor-shapes.ttl`. One NodeShape is defined per
-ontology class (205 total).
+ontology class (206 total).
 
 ## Shape File
 
 `conformance/shapes/uor-shapes.ttl` contains:
-- 205 `sh:NodeShape` declarations (one per class)
+- 206 `sh:NodeShape` declarations (one per class)
 - `sh:targetClass` targeting each OWL class
 - Cardinality constraints (`sh:minCount`, `sh:maxCount`) on required properties
 - Type constraints (`sh:class`, `sh:datatype`) on property values
 
-## The 84 Instance Tests
+## The 100 Instance Tests
 
 | Test | File | Validates |
 |------|------|-----------|

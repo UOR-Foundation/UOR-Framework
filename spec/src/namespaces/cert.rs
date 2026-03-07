@@ -346,5 +346,28 @@ fn properties() -> Vec<Property> {
             domain: Some("https://uor.foundation/cert/BornRuleVerification"),
             range: XSD_BOOLEAN,
         },
+        // Amendment 38: GeodesicEvidenceBundle sub-predicate properties
+        Property {
+            id: "https://uor.foundation/cert/isAR1Ordered",
+            label: "isAR1Ordered",
+            comment: "True iff the linked GeodesicTrace is ordered by the AR_1 \
+                      canonical rewriting rule (smallest lexicographic \
+                      representative first).",
+            kind: PropertyKind::Datatype,
+            functional: true,
+            domain: Some("https://uor.foundation/cert/GeodesicEvidenceBundle"),
+            range: XSD_BOOLEAN,
+        },
+        Property {
+            id: "https://uor.foundation/cert/isDC10Selected",
+            label: "isDC10Selected",
+            comment: "True iff each constraint in the trace was selected by \
+                      the DC_10 Jacobian oracle at the step where it was \
+                      applied.",
+            kind: PropertyKind::Datatype,
+            functional: true,
+            domain: Some("https://uor.foundation/cert/GeodesicEvidenceBundle"),
+            range: XSD_BOOLEAN,
+        },
     ]
 }

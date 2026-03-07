@@ -17,7 +17,7 @@ cargo run --bin uor-conformance
 |----------|----------|-----------|
 | `public/uor.foundation.json` | JSON-LD 1.1 | `validators/ontology/jsonld.rs` |
 | `public/uor.foundation.json` | OWL 2 DL | `validators/ontology/owl.rs` |
-| Inventory counts | 16/205/408/740 | `validators/ontology/inventory.rs` |
+| Inventory counts | 16/206/412/740 | `validators/ontology/inventory.rs` |
 | `public/uor.foundation.ttl` | RDF 1.1 / Turtle 1.1 | `validators/ontology/rdf.rs` |
 | {@count:shacl_tests} test instance graphs | SHACL | `validators/ontology/shacl.rs` |
 
@@ -25,7 +25,7 @@ cargo run --bin uor-conformance
 
 | Check | Validator |
 |-------|-----------|
-| All 205 classes documented | `validators/docs/completeness.rs` |
+| All 206 classes documented | `validators/docs/completeness.rs` |
 | Namespace pages accurate | `validators/docs/accuracy.rs` |
 | Diataxis structure present | `validators/docs/structure.rs` |
 | No broken internal links | `validators/docs/links.rs` |
@@ -65,7 +65,7 @@ cargo run --bin uor-conformance
 | test52 | SumType + variant assertions (Amendment 31) |
 | test53 | SuperposedFiberState + amplitude + SuperpositionResolver (Amendment 32) |
 
-### SHACL Tests 54–74 (v4.1.0)
+### SHACL Tests 54–100 (v4.1.0–v5.0.0)
 
 | Test | What It Validates |
 |------|-------------------|
@@ -90,6 +90,42 @@ cargo run --bin uor-conformance
 | test72 | MeasurementCertificate + certifiedMeasurement + vonNeumannEntropy + landauerCost (Amendment 36) |
 | test73 | CollapsedFiberState + collapsedFrom + survivingAmplitude (Amendment 36) |
 | test74 | QuantumThermodynamicDomain + QuantumThermodynamic verification domain (Amendment 36) |
+
+### SHACL Tests 75–84 (v4.2.0)
+
+| Test | What It Validates |
+|------|-------------------|
+| test75 | PartitionProduct + leftFactor + rightFactor + exteriorCriteria (Amendment 37) |
+| test76 | PartitionCoproduct + leftSummand + rightSummand + isExhaustive (Amendment 37) |
+| test77 | MeasurementOutcome + outcomeValue + outcomeProbability (Amendment 37) |
+| test78 | GeodesicEvidenceBundle + evidenceBundle + isAR1Ordered + isDC10Selected (Amendment 37) |
+| test79 | BornRuleVerification + bornRuleVerified (Amendment 37) |
+| test80 | NormativeComputationType + normalizationVerified + holonomyClassified (Amendment 37) |
+| test81 | SpectralSequencePage + levelSuccessor linkage (Amendment 37) |
+| test82 | amplitudeVector on resolver + priorAmplitudeVector (Amendment 37) |
+| test83 | amplitudeVector on trace + rotationExponent + reflectionBit (Amendment 37) |
+| test84 | VerificationDomain individual with enumVariant annotation (Amendment 37) |
+
+### SHACL Tests 85–100 (v5.0.0)
+
+| Test | What It Validates |
+|------|-------------------|
+| test85 | Q1Ring individual grounding at quantum level Q1 (Amendment 39) |
+| test86 | QuantumLift with trivial LiftObstruction — Q1 lift (Amendment 39) |
+| test87 | SpectralSequencePage convergence at E2 — Q1 scale (Amendment 39) |
+| test88 | Non-trivial LiftObstruction with TwistedType — Q1 scale (Amendment 39) |
+| test89 | LiftRefinementSuggestion with obstructionClass — Q1 failure path (Amendment 39) |
+| test90 | Resolved lift — SynthesizedType at Q1 with basisSize increment (Amendment 39) |
+| test91 | TypeSynthesisGoal with Q1 target signature (Amendment 39) |
+| test92 | SynthesisCheckpoint with checkpointStep and checkpointState (Amendment 38/39) |
+| test93 | SynthesisSignature with achievabilityStatus — Q1 scale (Amendment 39) |
+| test94 | SynthesizedType with TypeSynthesisResult + MinimalConstraintBasis (Amendment 39) |
+| test95 | Unreachable signature rejection — Forbidden status (Amendment 39) |
+| test96 | GeodesicTrace at Q1 ring scale with GeodesicCertificate (Amendment 40) |
+| test97 | GeodesicEvidenceBundle with isAR1Ordered (Amendment 40) |
+| test98 | GeodesicEvidenceBundle with isDC10Selected (Amendment 40) |
+| test99 | MeasurementCertificate with BornRuleVerification at Q1 (Amendment 40) |
+| test100 | Full normative chain — Trace → Certificate → EvidenceBundle (Amendment 40) |
 
 ## Adding a New SHACL Test
 

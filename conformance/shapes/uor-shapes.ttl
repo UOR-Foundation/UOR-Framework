@@ -1463,6 +1463,15 @@ uor-sh:SynthesisStepShape
     sh:property [ sh:path derivation:signatureBefore ; sh:minCount 1 ; sh:maxCount 1 ; sh:class observable:SynthesisSignature ] ;
     sh:property [ sh:path derivation:signatureAfter ; sh:minCount 1 ; sh:maxCount 1 ; sh:class observable:SynthesisSignature ] .
 
+# ── Amendment 38: Synthesis checkpoint shape ─────────────────────────────────
+
+uor-sh:SynthesisCheckpointShape
+    a               sh:NodeShape ;
+    sh:targetClass  derivation:SynthesisCheckpoint ;
+    rdfs:label      "SynthesisCheckpointShape" ;
+    sh:property [ sh:path derivation:checkpointStep ; sh:minCount 1 ; sh:maxCount 1 ; sh:class derivation:SynthesisStep ] ;
+    sh:property [ sh:path derivation:checkpointState ; sh:minCount 1 ; sh:maxCount 1 ] .
+
 # ── Amendment 29: Quantum level spectral sequence shapes (6) ─────────────────
 
 uor-sh:QuantumLiftShape
