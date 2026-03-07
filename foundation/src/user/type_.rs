@@ -135,6 +135,8 @@ pub trait TypeSynthesisGoal<P: Primitives> {
     fn target_euler_characteristic(&self) -> P::Integer;
     /// Non-functional. Each assertion specifies a target Betti number value for a given homological degree. Multiple assertions permitted, one per degree.
     fn target_betti_number(&self) -> &[P::NonNegativeInteger];
+    /// Whether the target signature of this TypeSynthesisGoal is a ForbiddenSignature. If true, synthesis is provably impossible.
+    fn target_forbidden(&self) -> P::Boolean;
 }
 
 /// The output of a TypeSynthesisResolver run. Contains the SynthesizedType, the realised topological signature (as a SynthesisSignature), and the SynthesisTrace recording the construction steps.
@@ -194,4 +196,17 @@ pub trait FlatType<P: Primitives>: ConstrainedType<P> {}
 pub trait SuperposedFiberState<P: Primitives>: TypeDefinition<P> {
     /// The amplitude coefficient for this superposed fiber state.
     fn amplitude(&self) -> P::Decimal;
+}
+
+/// A topological signature (χ, β_k) that is formally impossible to achieve for any ConstrainedType. Witnessed by an ImpossibilityWitness in proof/.
+pub trait ForbiddenSignature<P: Primitives> {}
+
+/// A fiber state that has undergone projective collapse from a SuperposedFiberState to a definitive classical value. Topologically equivalent to a classically pinned fiber (QM_2).
+pub trait CollapsedFiberState<P: Primitives> {
+    /// Associated type for `SuperposedFiberState`.
+    type SuperposedFiberState: SuperposedFiberState<P>;
+    /// The SuperposedFiberState from which this CollapsedFiberState was produced by projective measurement.
+    fn collapsed_from(&self) -> &Self::SuperposedFiberState;
+    /// The amplitude of the surviving branch after projective collapse. |α|² is the probability of this outcome under the Born rule.
+    fn surviving_amplitude(&self) -> P::Decimal;
 }

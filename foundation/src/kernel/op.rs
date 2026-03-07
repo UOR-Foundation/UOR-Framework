@@ -78,6 +78,9 @@ pub trait QuantumLevelBinding<P: Primitives> {
     fn binding_level(&self) -> QuantumLevel;
 }
 
+/// A verification domain at the intersection of quantum superposition and classical thermodynamics. Identities in this domain require both SuperpositionDomain and Thermodynamic reasoning simultaneously.
+pub trait QuantumThermodynamicDomain<P: Primitives> {}
+
 /// Established by exhaustive traversal of R_n. Valid for all identities where the ring is finite.
 pub mod enumerative {}
 
@@ -104,6 +107,9 @@ pub mod index_theoretic {}
 
 /// Established by superposition analysis of fiber states. Covers identities involving superposed (non-classical) fiber assignments where fibers carry complex amplitudes.
 pub mod superposition_domain {}
+
+/// Established by the intersection of quantum superposition analysis and classical thermodynamic reasoning. Covers identities relating von Neumann entropy of superposed states to Landauer costs of projective collapse (QM_).
+pub mod quantum_thermodynamic {}
 
 /// Reflection through the origin of the additive ring: neg(x) = -x mod 2^n. One of the two generators of D_{2^n}.
 pub mod ring_reflection {}
@@ -4237,6 +4243,313 @@ pub mod st_2 {
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Thermodynamic";
     /// `verificationPathNote`
     pub const VERIFICATION_PATH_NOTE: &str = "SumType → entropy with binary choice overhead";
+}
+
+/// Context temperature: T_ctx(C) = freeCount(C) × ln 2 / n.
+pub mod sc_1 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "C: Context, n = fiberBudget";
+    /// `lhs`
+    pub const LHS: &str = "T_ctx(C)";
+    /// `rhs`
+    pub const RHS: &str = "freeCount(C) × ln 2 / n";
+    /// `verificationDomain` -> `Thermodynamic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Thermodynamic";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str =
+        "TH_1 → normalized entropy per fiber → context temperature";
+}
+
+/// Saturation degree: σ(C) = (n − freeCount(C)) / n.
+pub mod sc_2 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "C: Context, n = fiberBudget";
+    /// `lhs`
+    pub const LHS: &str = "σ(C)";
+    /// `rhs`
+    pub const RHS: &str = "(n − freeCount(C)) / n";
+    /// `verificationDomain` -> `Algebraic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str = "Definitional: normalized coldness of context";
+}
+
+/// Saturation monotonicity: σ(B_{i+1}) ≥ σ(B_i) for all i in a Session.
+pub mod sc_3 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "i in Session S";
+    /// `lhs`
+    pub const LHS: &str = "σ(B_{i+1})";
+    /// `rhs`
+    pub const RHS: &str = "≥ σ(B_i)";
+    /// `verificationDomain` -> `Algebraic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str =
+        "SR_1 → order-reversing definition of SC_2 → monotone cooling";
+}
+
+/// Ground state equivalence: σ(C) = 1 ↔ freeCount(C) = 0 ↔ S(C) = 0 ↔ T_ctx(C) = 0.
+pub mod sc_4 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "C: Context";
+    /// `lhs`
+    pub const LHS: &str = "σ(C) = 1";
+    /// `rhs`
+    pub const RHS: &str = "freeCount(C) = 0 ↔ S(C) = 0 ↔ T_ctx(C) = 0";
+    /// `verificationDomain` -> `Thermodynamic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Thermodynamic";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str =
+        "SC_2 + TH_1 + SC_1 → four equivalent ground-state conditions";
+}
+
+/// O(1) resolution guarantee: freeCount(C) = 0 ∧ q.address ∈ bindings(C) → stepCount(q, C) = 0.
+pub mod sc_5 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "q: Query, C: SaturatedContext";
+    /// `lhs`
+    pub const LHS: &str = "stepCount(q, C) at freeCount(C) = 0";
+    /// `rhs`
+    pub const RHS: &str = "0";
+    /// `verificationDomain` -> `Pipeline`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str = "SR_2 + FiberBudget.isClosed → direct coordinate read";
+}
+
+/// Pre-reduction of effective budget: effectiveBudget(q, C) = max(0, fiberBudget(q.type) − |pinnedFibers(C) ∩ q.fiberSet|).
+pub mod sc_6 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "q: Query, C: Context";
+    /// `lhs`
+    pub const LHS: &str = "effectiveBudget(q, C)";
+    /// `rhs`
+    pub const RHS: &str = "max(0, fiberBudget(q.type) − |pinnedFibers(C) ∩ q.fiberSet|)";
+    /// `verificationDomain` -> `Algebraic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str =
+        "Session-scoped fiber reduction → partial saturation budget";
+}
+
+/// Thermodynamic cooling cost: Cost_saturation(C) = n × k_B T × ln 2.
+pub mod sc_7 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "C: SaturatedContext, n = fiberBudget";
+    /// `lhs`
+    pub const LHS: &str = "Cost_saturation(C)";
+    /// `rhs`
+    pub const RHS: &str = "n × k_B T × ln 2";
+    /// `verificationDomain` -> `Thermodynamic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Thermodynamic";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str = "SR_1 + TH_4 → n fiber-closures at Landauer cost each";
+}
+
+/// Connectivity lower bound: β₀(N(C)) ≥ 1 for all non-empty C.
+pub mod ms_1 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "C: non-empty ConstrainedType";
+    /// `lhs`
+    pub const LHS: &str = "β₀(N(C))";
+    /// `rhs`
+    pub const RHS: &str = "≥ 1";
+    /// `verificationDomain` -> `Pipeline`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str =
+        "TS_7 formalisation → constraint nerve always connected";
+}
+
+/// Euler capacity ceiling: χ(N(C)) ≤ n for all C at quantum level n.
+pub mod ms_2 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "C: ConstrainedType at quantum level n";
+    /// `lhs`
+    pub const LHS: &str = "χ(N(C))";
+    /// `rhs`
+    pub const RHS: &str = "≤ n";
+    /// `verificationDomain` -> `Algebraic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str = "TS_1 → constraint nerve dimension bound → χ ≤ n";
+}
+
+/// Betti monotonicity under addition: χ(N(C + c)) ≥ χ(N(C)) for any constraint c added to C.
+pub mod ms_3 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "C: ConstrainedType, c: Constraint";
+    /// `lhs`
+    pub const LHS: &str = "χ(N(C + c))";
+    /// `rhs`
+    pub const RHS: &str = "≥ χ(N(C))";
+    /// `verificationDomain` -> `Topological`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Topological";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str =
+        "TS_3 formalisation → monotone traversal of morphospace";
+}
+
+/// Level-relative achievability: a signature achievable at quantum level n remains achievable at level n+1.
+pub mod ms_4 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "(χ*, β_k*) achievable at level n";
+    /// `lhs`
+    pub const LHS: &str = "achievable(χ*, β_k*, n)";
+    /// `rhs`
+    pub const RHS: &str = "→ achievable(χ*, β_k*, n+1)";
+    /// `verificationDomain` -> `Pipeline`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str = "QuantumLift → morphospace grows with quantum level";
+}
+
+/// Empirical completeness convergence: verified SynthesisSignature individuals converge to the exact morphospace boundary.
+pub mod ms_5 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "all quantum levels";
+    /// `lhs`
+    pub const LHS: &str = "verified SynthesisSignature set";
+    /// `rhs`
+    pub const RHS: &str = "→ exact morphospace boundary in the limit";
+    /// `verificationDomain` -> `Pipeline`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str =
+        "EmpiricalVerification accumulation → convergence statement";
+}
+
+/// Geodesic condition: a ComputationTrace is a geodesic iff its steps are AR_1-ordered and each step selects the constraint maximising J_k over free fibers (DC_10).
+pub mod gd_1 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "T: ComputationTrace";
+    /// `lhs`
+    pub const LHS: &str = "isGeodesic(T)";
+    /// `rhs`
+    pub const RHS: &str = "AR_1-ordered(T) ∧ DC_10-selected(T)";
+    /// `verificationDomain` -> `Analytical`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Analytical";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str = "AR_1 + DC_10 → dual geodesic condition";
+}
+
+/// Geodesic entropy bound: ΔS_step(i) = ln 2 for every step i of a geodesic trace.
+pub mod gd_2 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "step i of GeodesicTrace T";
+    /// `lhs`
+    pub const LHS: &str = "ΔS_step(i) on geodesic";
+    /// `rhs`
+    pub const RHS: &str = "ln 2";
+    /// `verificationDomain` -> `Thermodynamic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Thermodynamic";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str =
+        "AR_1 minimum-cost step + TH_1 → constant ln 2 per step";
+}
+
+/// Total geodesic cost: Cost_geodesic(T) = freeCount_initial × k_B T ln 2 = TH_4.
+pub mod gd_3 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "T: GeodesicTrace";
+    /// `lhs`
+    pub const LHS: &str = "Cost_geodesic(T)";
+    /// `rhs`
+    pub const RHS: &str = "freeCount_initial × k_B T × ln 2";
+    /// `verificationDomain` -> `Thermodynamic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Thermodynamic";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str = "GD_2 × stepCount → Landauer bound TH_4 with equality";
+}
+
+/// Geodesic uniqueness up to step-order equivalence: all geodesics for the same ConstrainedType share stepCount and constraint set.
+pub mod gd_4 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "T, T': GeodesicTrace on same ConstrainedType";
+    /// `lhs`
+    pub const LHS: &str = "Cost(T) for geodesic T";
+    /// `rhs`
+    pub const RHS: &str = "= Cost(T') for any geodesic T' on same type";
+    /// `verificationDomain` -> `Analytical`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Analytical";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str = "Equal-J_k permutation → cost invariance";
+}
+
+/// Subgeodesic detectability: a trace is sub-geodesic iff ∃ step i where J_k(step_i) < max_{free fibers} J_k(state_i).
+pub mod gd_5 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "T: ComputationTrace";
+    /// `lhs`
+    pub const LHS: &str = "isSubgeodesic(T)";
+    /// `rhs`
+    pub const RHS: &str = "∃ i: J_k(step_i) < max_{free} J_k(state_i)";
+    /// `verificationDomain` -> `Pipeline`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str =
+        "GeodesicValidator → step-by-step J_k check → violation detection";
+}
+
+/// Von Neumann–Landauer bridge: S_vonNeumann(ψ) = Cost_Landauer(collapse(ψ)).
+pub mod qm_1 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "ψ: SuperposedFiberState";
+    /// `lhs`
+    pub const LHS: &str = "S_vonNeumann(ψ)";
+    /// `rhs`
+    pub const RHS: &str = "Cost_Landauer(collapse(ψ))";
+    /// `verificationDomain` -> `QuantumThermodynamic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/QuantumThermodynamic";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str =
+        "Von Neumann entropy = Landauer erasure cost at β* = ln 2";
+}
+
+/// Measurement as fiber topology change: projective collapse on a SuperposedFiberState is topologically equivalent to applying a ResidueConstraint that pins the collapsed fiber.
+pub mod qm_2 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "ψ: SuperposedFiberState";
+    /// `lhs`
+    pub const LHS: &str = "collapse(ψ)";
+    /// `rhs`
+    pub const RHS: &str = "apply(ResidueConstraint, collapsed_fiber)";
+    /// `verificationDomain` -> `Topological`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Topological";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str =
+        "Projective collapse ≅ classical fiber-pinning → ψ-pipeline applies";
+}
+
+/// Superposition entropy bound: 0 ≤ S_vN(ψ) ≤ ln 2 for any single-fiber SuperposedFiberState.
+pub mod qm_3 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "ψ: single-fiber SuperposedFiberState";
+    /// `lhs`
+    pub const LHS: &str = "S_vN(ψ)";
+    /// `rhs`
+    pub const RHS: &str = "∈ [0, ln 2]";
+    /// `verificationDomain` -> `QuantumThermodynamic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/QuantumThermodynamic";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str =
+        "Von Neumann entropy bounds → maximum at equal superposition";
+}
+
+/// Collapse idempotence: collapse(collapse(ψ)) = collapse(ψ). Measurement on an already-collapsed state is a no-op.
+pub mod qm_4 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "ψ: SuperposedFiberState";
+    /// `lhs`
+    pub const LHS: &str = "collapse(collapse(ψ))";
+    /// `rhs`
+    pub const RHS: &str = "collapse(ψ)";
+    /// `verificationDomain` -> `Algebraic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str =
+        "CollapsedFiberState → re-measurement is no-op → stepCount = 0";
 }
 
 use crate::enums::PrimitiveOp;

@@ -293,6 +293,26 @@ fn classes() -> Vec<Class> {
             subclass_of: &["https://uor.foundation/type/TypeDefinition"],
             disjoint_with: &[],
         },
+        // Amendment 34: Morphospace Achievability
+        Class {
+            id: "https://uor.foundation/type/ForbiddenSignature",
+            label: "ForbiddenSignature",
+            comment: "A topological signature (χ, β_k) that is formally impossible \
+                      to achieve for any ConstrainedType. Witnessed by an \
+                      ImpossibilityWitness in proof/.",
+            subclass_of: &[OWL_THING],
+            disjoint_with: &[],
+        },
+        // Amendment 36: Measurement Boundary
+        Class {
+            id: "https://uor.foundation/type/CollapsedFiberState",
+            label: "CollapsedFiberState",
+            comment: "A fiber state that has undergone projective collapse from a \
+                      SuperposedFiberState to a definitive classical value. \
+                      Topologically equivalent to a classically pinned fiber (QM_2).",
+            subclass_of: &[OWL_THING],
+            disjoint_with: &[],
+        },
     ]
 }
 
@@ -642,6 +662,39 @@ fn properties() -> Vec<Property> {
             kind: PropertyKind::Datatype,
             functional: true,
             domain: Some("https://uor.foundation/type/SuperposedFiberState"),
+            range: XSD_DECIMAL,
+        },
+        // Amendment 34: Morphospace Achievability
+        Property {
+            id: "https://uor.foundation/type/targetForbidden",
+            label: "targetForbidden",
+            comment: "Whether the target signature of this TypeSynthesisGoal is a \
+                      ForbiddenSignature. If true, synthesis is provably impossible.",
+            kind: PropertyKind::Datatype,
+            functional: true,
+            domain: Some("https://uor.foundation/type/TypeSynthesisGoal"),
+            range: XSD_BOOLEAN,
+        },
+        // Amendment 36: Measurement Boundary
+        Property {
+            id: "https://uor.foundation/type/collapsedFrom",
+            label: "collapsedFrom",
+            comment: "The SuperposedFiberState from which this CollapsedFiberState \
+                      was produced by projective measurement.",
+            kind: PropertyKind::Object,
+            functional: true,
+            domain: Some("https://uor.foundation/type/CollapsedFiberState"),
+            range: "https://uor.foundation/type/SuperposedFiberState",
+        },
+        Property {
+            id: "https://uor.foundation/type/survivingAmplitude",
+            label: "survivingAmplitude",
+            comment: "The amplitude of the surviving branch after projective \
+                      collapse. |α|² is the probability of this outcome under \
+                      the Born rule.",
+            kind: PropertyKind::Datatype,
+            functional: true,
+            domain: Some("https://uor.foundation/type/CollapsedFiberState"),
             range: XSD_DECIMAL,
         },
     ]

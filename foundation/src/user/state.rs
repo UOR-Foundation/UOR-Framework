@@ -4,6 +4,7 @@
 //!
 //! Space: User
 
+use crate::enums::SaturationPhase;
 use crate::enums::SessionBoundaryType;
 use crate::Primitives;
 
@@ -20,6 +21,16 @@ pub trait Context<P: Primitives> {
     fn content_address(&self) -> &P::String;
     /// The quantum level of this context's address space.
     fn quantum(&self) -> P::PositiveInteger;
+    /// The saturation degree σ ∈ \\[0, 1\\] of this context. Defined by SC_2: σ = (n − freeCount) / n.
+    fn saturation_degree(&self) -> P::Decimal;
+    /// The context temperature T_ctx ∈ \\[0, ln 2\\]. Defined by SC_1: T_ctx = freeCount × ln 2 / n. At σ = 1, T_ctx = 0.
+    fn context_temperature(&self) -> P::Decimal;
+    /// Whether this context has reached full saturation (σ = 1). Equivalent to freeCount = 0, S = 0, T_ctx = 0 per SC_4.
+    fn is_saturated(&self) -> P::Boolean;
+    /// The current saturation phase of this context: Unsaturated, PartialSaturation, or FullSaturation.
+    fn saturation_phase(&self) -> SaturationPhase;
+    /// The number of free (unbound) fibers remaining in this context. At saturation, residualFreeCount = 0.
+    fn residual_free_count(&self) -> P::NonNegativeInteger;
 }
 
 /// The association of a datum value with an address in a context. The write primitive: creating a binding populates an address.
@@ -119,6 +130,36 @@ pub trait SessionBoundary<P: Primitives> {
     fn fresh_context(&self) -> &Self::Context;
 }
 
+/// A context that has reached full saturation: σ = 1, freeCount = 0, S = 0, T_ctx = 0 (SC_4). The ground state of the type system. All subsequent queries resolve in O(1) via SC_5.
+pub trait SaturatedContext<P: Primitives>: Context<P> {
+    /// Associated type for `SaturationCertificate`.
+    type SaturationCertificate: crate::bridge::cert::SaturationCertificate<P>;
+    /// The SaturationCertificate attesting that this context has reached full saturation.
+    fn saturation_certificate(&self) -> &Self::SaturationCertificate;
+}
+
+/// Step-by-step evidence of the saturation process: records which bindings were applied, in what order, to reach full saturation.
+pub trait SaturationWitness<P: Primitives> {
+    /// Associated type for `Binding`.
+    type Binding: Binding<P>;
+    /// A binding that contributed to the saturation process, recorded in this SaturationWitness.
+    fn witness_binding(&self) -> &[Self::Binding];
+    /// The step index at which a particular binding was applied during the saturation process.
+    fn witness_step(&self) -> P::NonNegativeInteger;
+}
+
+/// An informational/monitoring record tracking the saturation progress of a specific domain within a context. Carries no formal authority — purely observational.
+pub trait DomainSaturationRecord<P: Primitives> {
+    /// Associated type for `SaturatedContext`.
+    type SaturatedContext: SaturatedContext<P>;
+    /// The SaturatedContext that this DomainSaturationRecord monitors.
+    fn saturated_context(&self) -> &Self::SaturatedContext;
+    /// The domain within the context being tracked by this DomainSaturationRecord.
+    fn saturated_domain(&self) -> &P::String;
+    /// The number of free fibers remaining in the specific domain tracked by this DomainSaturationRecord.
+    fn domain_free_count(&self) -> P::NonNegativeInteger;
+}
+
 /// The caller explicitly requested a context reset. All accumulated bindings are discarded.
 pub mod explicit_reset {}
 
@@ -127,3 +168,26 @@ pub mod convergence_boundary {}
 
 /// A new query produced a type contradiction with an accumulated binding. Context must reset before resolution can continue.
 pub mod contradiction_boundary {}
+
+/// The context has σ = 0: no bindings accumulated, all fibers are free. The initial phase of every session.
+pub mod unsaturated {}
+
+/// The context has 0 < σ < 1: some fibers are pinned by accumulated bindings, but free fibers remain. The accumulation phase.
+pub mod partial_saturation {}
+
+/// The context has σ = 1: all fibers are pinned, freeCount = 0. The ground state. All subsequent queries resolve in O(1) via SC_5.
+pub mod full_saturation {}
+
+/// The canonical ground-state witness: a SaturatedContext at σ = 1, freeCount = 0, T_ctx = 0, S = 0 (SC_4). Demonstrates that full saturation is achievable and O(1) resolution (SC_5) is realized.
+pub mod ground_state {
+    /// `contextTemperature`
+    pub const CONTEXT_TEMPERATURE: &str = "0.0";
+    /// `isSaturated`
+    pub const IS_SATURATED: bool = true;
+    /// `residualFreeCount`
+    pub const RESIDUAL_FREE_COUNT: i64 = 0;
+    /// `saturationDegree`
+    pub const SATURATION_DEGREE: &str = "1.0";
+    /// `saturationPhase` -> `FullSaturation`
+    pub const SATURATION_PHASE: &str = "https://uor.foundation/state/FullSaturation";
+}

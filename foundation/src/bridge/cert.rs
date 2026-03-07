@@ -54,3 +54,37 @@ pub trait CompletenessAuditTrail<P: Primitives> {
     /// Total number of witness steps in this audit trail.
     fn witness_count(&self) -> P::NonNegativeInteger;
 }
+
+/// A certificate attesting that a state:SaturatedContext has reached full saturation (σ = 1, freeCount = 0, S = 0, T_ctx = 0) per SC_4. The session-layer dual of CompletenessCertificate.
+pub trait SaturationCertificate<P: Primitives>: Certificate<P> {
+    /// Associated type for `SaturatedContext`.
+    type SaturatedContext: crate::user::state::SaturatedContext<P>;
+    /// The SaturatedContext whose full saturation this certificate attests. Uses IRI string (cert cannot import state).
+    fn certified_saturation(&self) -> &Self::SaturatedContext;
+    /// Associated type for `SaturationWitness`.
+    type SaturationWitness: crate::user::state::SaturationWitness<P>;
+    /// The SaturationWitness providing step-by-step evidence of the saturation process.
+    fn saturation_witness(&self) -> &Self::SaturationWitness;
+}
+
+/// A certificate attesting that a trace:GeodesicTrace satisfies both GD_1 conditions: AR_1-ordered and DC_10-selected. Transforms ComputationTrace from descriptive to normative.
+pub trait GeodesicCertificate<P: Primitives>: Certificate<P> {
+    /// Associated type for `GeodesicTrace`.
+    type GeodesicTrace: crate::bridge::trace::GeodesicTrace<P>;
+    /// The GeodesicTrace whose geodesic status this certificate attests. Uses IRI string (cert cannot import trace).
+    fn certified_geodesic(&self) -> &Self::GeodesicTrace;
+    /// The computation trace that this GeodesicCertificate covers. Redundant with certifiedGeodesic but expresses the inverse direction for queryability.
+    fn geodesic_trace(&self) -> &Self::GeodesicTrace;
+}
+
+/// A certificate attesting that a trace:MeasurementEvent respected the von Neumann–Landauer bridge (QM_1): preCollapseEntropy = postCollapseLandauerCost at β* = ln 2.
+pub trait MeasurementCertificate<P: Primitives>: Certificate<P> {
+    /// Associated type for `MeasurementEvent`.
+    type MeasurementEvent: crate::bridge::trace::MeasurementEvent<P>;
+    /// The MeasurementEvent whose QM_1 compliance this certificate attests. Uses IRI string (cert cannot import trace).
+    fn certified_measurement(&self) -> &Self::MeasurementEvent;
+    /// The von Neumann entropy S_vN of the pre-measurement SuperposedFiberState, recorded by this certificate.
+    fn von_neumann_entropy(&self) -> P::Decimal;
+    /// The Landauer cost incurred by the projective collapse, recorded by this certificate. Equals vonNeumannEntropy at β* = ln 2 per QM_1.
+    fn landauer_cost(&self) -> P::Decimal;
+}

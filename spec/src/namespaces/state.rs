@@ -12,7 +12,9 @@
 //! **Space classification:** `user` — state is managed by user-space (Prism).
 
 use crate::model::iris::*;
-use crate::model::{Class, Individual, Namespace, NamespaceModule, Property, PropertyKind, Space};
+use crate::model::{
+    Class, Individual, IndividualValue, Namespace, NamespaceModule, Property, PropertyKind, Space,
+};
 
 /// Returns the `state/` namespace module.
 #[must_use]
@@ -26,7 +28,7 @@ pub fn module() -> NamespaceModule {
                       lifecycle, and state transitions. The user-space overlay \
                       onto the kernel's read-only ring substrate.",
             space: Space::User,
-            imports: &[NS_U, NS_SCHEMA, NS_TYPE, NS_TRACE, NS_MORPHISM],
+            imports: &[NS_U, NS_SCHEMA, NS_TYPE, NS_TRACE, NS_MORPHISM, NS_CERT],
         },
         classes: classes(),
         properties: properties(),
@@ -121,6 +123,44 @@ fn classes() -> Vec<Class> {
             comment: "Marks a context-reset event within a session stream. \
                       Records why the context was reset and provides a clean \
                       state:Context for subsequent queries.",
+            subclass_of: &[OWL_THING],
+            disjoint_with: &[],
+        },
+        // Amendment 33: Saturated Context Limit
+        Class {
+            id: "https://uor.foundation/state/SaturatedContext",
+            label: "SaturatedContext",
+            comment: "A context that has reached full saturation: σ = 1, \
+                      freeCount = 0, S = 0, T_ctx = 0 (SC_4). The ground \
+                      state of the type system. All subsequent queries \
+                      resolve in O(1) via SC_5.",
+            subclass_of: &["https://uor.foundation/state/Context"],
+            disjoint_with: &[],
+        },
+        Class {
+            id: "https://uor.foundation/state/SaturationWitness",
+            label: "SaturationWitness",
+            comment: "Step-by-step evidence of the saturation process: records \
+                      which bindings were applied, in what order, to reach \
+                      full saturation.",
+            subclass_of: &[OWL_THING],
+            disjoint_with: &[],
+        },
+        Class {
+            id: "https://uor.foundation/state/DomainSaturationRecord",
+            label: "DomainSaturationRecord",
+            comment: "An informational/monitoring record tracking the saturation \
+                      progress of a specific domain within a context. Carries no \
+                      formal authority — purely observational.",
+            subclass_of: &[OWL_THING],
+            disjoint_with: &[],
+        },
+        Class {
+            id: "https://uor.foundation/state/SaturationPhase",
+            label: "SaturationPhase",
+            comment: "A typed controlled vocabulary for the three phases of \
+                      context saturation: Unsaturated (σ = 0), \
+                      PartialSaturation (0 < σ < 1), and FullSaturation (σ = 1).",
             subclass_of: &[OWL_THING],
             disjoint_with: &[],
         },
@@ -371,6 +411,117 @@ fn properties() -> Vec<Property> {
             domain: Some("https://uor.foundation/state/SessionBoundary"),
             range: "https://uor.foundation/state/Context",
         },
+        // Amendment 33: Saturated Context Limit properties
+        Property {
+            id: "https://uor.foundation/state/saturationDegree",
+            label: "saturationDegree",
+            comment: "The saturation degree σ ∈ \\[0, 1\\] of this context. \
+                      Defined by SC_2: σ = (n − freeCount) / n.",
+            kind: PropertyKind::Datatype,
+            functional: true,
+            domain: Some("https://uor.foundation/state/Context"),
+            range: XSD_DECIMAL,
+        },
+        Property {
+            id: "https://uor.foundation/state/contextTemperature",
+            label: "contextTemperature",
+            comment: "The context temperature T_ctx ∈ \\[0, ln 2\\]. Defined by \
+                      SC_1: T_ctx = freeCount × ln 2 / n. At σ = 1, T_ctx = 0.",
+            kind: PropertyKind::Datatype,
+            functional: true,
+            domain: Some("https://uor.foundation/state/Context"),
+            range: XSD_DECIMAL,
+        },
+        Property {
+            id: "https://uor.foundation/state/isSaturated",
+            label: "isSaturated",
+            comment: "Whether this context has reached full saturation (σ = 1). \
+                      Equivalent to freeCount = 0, S = 0, T_ctx = 0 per SC_4.",
+            kind: PropertyKind::Datatype,
+            functional: true,
+            domain: Some("https://uor.foundation/state/Context"),
+            range: XSD_BOOLEAN,
+        },
+        Property {
+            id: "https://uor.foundation/state/saturationPhase",
+            label: "saturationPhase",
+            comment: "The current saturation phase of this context: Unsaturated, \
+                      PartialSaturation, or FullSaturation.",
+            kind: PropertyKind::Object,
+            functional: true,
+            domain: Some("https://uor.foundation/state/Context"),
+            range: "https://uor.foundation/state/SaturationPhase",
+        },
+        Property {
+            id: "https://uor.foundation/state/saturationCertificate",
+            label: "saturationCertificate",
+            comment: "The SaturationCertificate attesting that this context has \
+                      reached full saturation.",
+            kind: PropertyKind::Object,
+            functional: true,
+            domain: Some("https://uor.foundation/state/SaturatedContext"),
+            range: "https://uor.foundation/cert/SaturationCertificate",
+        },
+        Property {
+            id: "https://uor.foundation/state/witnessBinding",
+            label: "witnessBinding",
+            comment: "A binding that contributed to the saturation process, \
+                      recorded in this SaturationWitness.",
+            kind: PropertyKind::Object,
+            functional: false,
+            domain: Some("https://uor.foundation/state/SaturationWitness"),
+            range: "https://uor.foundation/state/Binding",
+        },
+        Property {
+            id: "https://uor.foundation/state/witnessStep",
+            label: "witnessStep",
+            comment: "The step index at which a particular binding was applied \
+                      during the saturation process.",
+            kind: PropertyKind::Datatype,
+            functional: true,
+            domain: Some("https://uor.foundation/state/SaturationWitness"),
+            range: XSD_NON_NEGATIVE_INTEGER,
+        },
+        Property {
+            id: "https://uor.foundation/state/residualFreeCount",
+            label: "residualFreeCount",
+            comment: "The number of free (unbound) fibers remaining in this \
+                      context. At saturation, residualFreeCount = 0.",
+            kind: PropertyKind::Datatype,
+            functional: true,
+            domain: Some("https://uor.foundation/state/Context"),
+            range: XSD_NON_NEGATIVE_INTEGER,
+        },
+        Property {
+            id: "https://uor.foundation/state/saturatedContext",
+            label: "saturatedContext",
+            comment: "The SaturatedContext that this DomainSaturationRecord \
+                      monitors.",
+            kind: PropertyKind::Object,
+            functional: true,
+            domain: Some("https://uor.foundation/state/DomainSaturationRecord"),
+            range: "https://uor.foundation/state/SaturatedContext",
+        },
+        Property {
+            id: "https://uor.foundation/state/saturatedDomain",
+            label: "saturatedDomain",
+            comment: "The domain within the context being tracked by this \
+                      DomainSaturationRecord.",
+            kind: PropertyKind::Datatype,
+            functional: true,
+            domain: Some("https://uor.foundation/state/DomainSaturationRecord"),
+            range: XSD_STRING,
+        },
+        Property {
+            id: "https://uor.foundation/state/domainFreeCount",
+            label: "domainFreeCount",
+            comment: "The number of free fibers remaining in the specific domain \
+                      tracked by this DomainSaturationRecord.",
+            kind: PropertyKind::Datatype,
+            functional: true,
+            domain: Some("https://uor.foundation/state/DomainSaturationRecord"),
+            range: XSD_NON_NEGATIVE_INTEGER,
+        },
     ]
 }
 
@@ -401,6 +552,65 @@ fn individuals() -> Vec<Individual> {
                       accumulated binding. Context must reset before \
                       resolution can continue.",
             properties: &[],
+        },
+        // Amendment 33: SaturationPhase vocabulary individuals
+        Individual {
+            id: "https://uor.foundation/state/Unsaturated",
+            type_: "https://uor.foundation/state/SaturationPhase",
+            label: "Unsaturated",
+            comment: "The context has σ = 0: no bindings accumulated, all fibers \
+                      are free. The initial phase of every session.",
+            properties: &[],
+        },
+        Individual {
+            id: "https://uor.foundation/state/PartialSaturation",
+            type_: "https://uor.foundation/state/SaturationPhase",
+            label: "PartialSaturation",
+            comment: "The context has 0 < σ < 1: some fibers are pinned by \
+                      accumulated bindings, but free fibers remain. The \
+                      accumulation phase.",
+            properties: &[],
+        },
+        Individual {
+            id: "https://uor.foundation/state/FullSaturation",
+            type_: "https://uor.foundation/state/SaturationPhase",
+            label: "FullSaturation",
+            comment: "The context has σ = 1: all fibers are pinned, freeCount = 0. \
+                      The ground state. All subsequent queries resolve in O(1) \
+                      via SC_5.",
+            properties: &[],
+        },
+        // Amendment 33: Canonical ground-state witness
+        Individual {
+            id: "https://uor.foundation/state/ground_state",
+            type_: "https://uor.foundation/state/SaturatedContext",
+            label: "ground_state",
+            comment: "The canonical ground-state witness: a SaturatedContext at \
+                      σ = 1, freeCount = 0, T_ctx = 0, S = 0 (SC_4). Demonstrates \
+                      that full saturation is achievable and O(1) resolution (SC_5) \
+                      is realized.",
+            properties: &[
+                (
+                    "https://uor.foundation/state/saturationDegree",
+                    IndividualValue::Str("1.0"),
+                ),
+                (
+                    "https://uor.foundation/state/contextTemperature",
+                    IndividualValue::Str("0.0"),
+                ),
+                (
+                    "https://uor.foundation/state/isSaturated",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/state/residualFreeCount",
+                    IndividualValue::Int(0),
+                ),
+                (
+                    "https://uor.foundation/state/saturationPhase",
+                    IndividualValue::IriRef("https://uor.foundation/state/FullSaturation"),
+                ),
+            ],
         },
     ]
 }

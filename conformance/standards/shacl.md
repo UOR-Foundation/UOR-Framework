@@ -2,19 +2,19 @@
 
 ## Overview
 
-The UOR conformance suite validates 53 OWL instance graphs against SHACL NodeShapes
+The UOR conformance suite validates 74 OWL instance graphs against SHACL NodeShapes
 defined in `conformance/shapes/uor-shapes.ttl`. One NodeShape is defined per
-ontology class (180 total).
+ontology class (200 total).
 
 ## Shape File
 
 `conformance/shapes/uor-shapes.ttl` contains:
-- 180 `sh:NodeShape` declarations (one per class)
+- 200 `sh:NodeShape` declarations (one per class)
 - `sh:targetClass` targeting each OWL class
 - Cardinality constraints (`sh:minCount`, `sh:maxCount`) on required properties
 - Type constraints (`sh:class`, `sh:datatype`) on property values
 
-## The 53 Instance Tests
+## The 74 Instance Tests
 
 | Test | File | Validates |
 |------|------|-----------|
@@ -71,6 +71,27 @@ ontology class (180 total).
 | test51_product_type_pipeline | `tests/fixtures/test51_product_type_pipeline.rs` | `type:ProductType` + component assertions + `FiberBudget` (Amendment 31) |
 | test52_sum_type_variant | `tests/fixtures/test52_sum_type_variant.rs` | `type:SumType` + variant assertions (Amendment 31) |
 | test53_superposed_fiber | `tests/fixtures/test53_superposed_fiber.rs` | `type:SuperposedFiberState` + `amplitude` + `resolver:SuperpositionResolver` (Amendment 32) |
+| test54_saturated_context | `tests/fixtures/test54_saturated_context.rs` | `state:SaturatedContext` + `saturationDegree` + `contextTemperature` + `isSaturated` (Amendment 33) |
+| test55_saturation_witness | `tests/fixtures/test55_saturation_witness.rs` | `state:SaturationWitness` + `witnessBinding` + `witnessStep` + `residualFreeCount` (Amendment 33) |
+| test56_domain_saturation_record | `tests/fixtures/test56_domain_saturation_record.rs` | `state:DomainSaturationRecord` + `saturatedDomain` + `domainFreeCount` (Amendment 33) |
+| test57_saturation_phase | `tests/fixtures/test57_saturation_phase.rs` | `state:SaturationPhase` vocabulary: Unsaturated, PartialSaturation, FullSaturation (Amendment 33) |
+| test58_saturation_certificate | `tests/fixtures/test58_saturation_certificate.rs` | `cert:SaturationCertificate` + `certifiedSaturation` + `saturationWitness` (Amendment 33) |
+| test59_saturation_aware_resolver | `tests/fixtures/test59_saturation_aware_resolver.rs` | `resolver:SaturationAwareResolver` + `usedSaturation` (Amendment 33) |
+| test60_impossibility_witness | `tests/fixtures/test60_impossibility_witness.rs` | `proof:ImpossibilityWitness` + `forbidsSignature` + `impossibilityReason` (Amendment 34) |
+| test61_morphospace_record | `tests/fixtures/test61_morphospace_record.rs` | `proof:MorphospaceRecord` + `achievabilityStatus` + `verifiedAtLevel` (Amendment 34) |
+| test62_morphospace_boundary | `tests/fixtures/test62_morphospace_boundary.rs` | `proof:MorphospaceBoundary` + `boundaryType` (Amendment 34) |
+| test63_forbidden_signature | `tests/fixtures/test63_forbidden_signature.rs` | `type:ForbiddenSignature` + `targetForbidden` (Amendment 34) |
+| test64_achievability_status | `tests/fixtures/test64_achievability_status.rs` | `observable:AchievabilityStatus` vocabulary: Achievable, Forbidden (Amendment 34) |
+| test65_geodesic_trace | `tests/fixtures/test65_geodesic_trace.rs` | `trace:GeodesicTrace` + `isGeodesic` + `geodesicCertificate` + `stepEntropyCost` (Amendment 35) |
+| test66_geodesic_certificate | `tests/fixtures/test66_geodesic_certificate.rs` | `cert:GeodesicCertificate` + `certifiedGeodesic` + `geodesicTrace` (Amendment 35) |
+| test67_geodesic_violation | `tests/fixtures/test67_geodesic_violation.rs` | `trace:GeodesicViolation` + `violationReason` (Amendment 35) |
+| test68_geodesic_validator | `tests/fixtures/test68_geodesic_validator.rs` | `resolver:GeodesicValidator` + `validateGeodesic` (Amendment 35) |
+| test69_geodesic_ordered | `tests/fixtures/test69_geodesic_ordered.rs` | `trace:GeodesicTrace` + `adiabaticallyOrdered` + `jacobianAtStep` (Amendment 35) |
+| test70_measurement_resolver | `tests/fixtures/test70_measurement_resolver.rs` | `resolver:MeasurementResolver` + `collapseAmplitude` + `collapsedFiber` (Amendment 36) |
+| test71_measurement_event | `tests/fixtures/test71_measurement_event.rs` | `trace:MeasurementEvent` + `preCollapseEntropy` + `postCollapseLandauerCost` (Amendment 36) |
+| test72_measurement_certificate | `tests/fixtures/test72_measurement_certificate.rs` | `cert:MeasurementCertificate` + `certifiedMeasurement` + `vonNeumannEntropy` + `landauerCost` (Amendment 36) |
+| test73_collapsed_fiber_state | `tests/fixtures/test73_collapsed_fiber_state.rs` | `type:CollapsedFiberState` + `collapsedFrom` + `survivingAmplitude` (Amendment 36) |
+| test74_quantum_thermodynamic | `tests/fixtures/test74_quantum_thermodynamic.rs` | `op:QuantumThermodynamicDomain` + QuantumThermodynamic verification domain (Amendment 36) |
 
 ## Structural Validation
 

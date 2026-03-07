@@ -166,6 +166,8 @@ pub enum VerificationDomain {
     IndexTheoretic,
     /// Established by superposition analysis of fiber states. Covers identities involving superposed (non-classical) fiber assignments where fibers carry complex amplitudes.
     SuperpositionDomain,
+    /// Established by the intersection of quantum superposition analysis and classical thermodynamic reasoning. Covers identities relating von Neumann entropy of superposed states to Landauer costs of projective collapse (QM_).
+    QuantumThermodynamic,
 }
 
 impl fmt::Display for VerificationDomain {
@@ -180,6 +182,7 @@ impl fmt::Display for VerificationDomain {
             Self::Pipeline => f.write_str("pipeline"),
             Self::IndexTheoretic => f.write_str("index_theoretic"),
             Self::SuperpositionDomain => f.write_str("superposition_domain"),
+            Self::QuantumThermodynamic => f.write_str("quantum_thermodynamic"),
         }
     }
 }
@@ -318,6 +321,45 @@ impl fmt::Display for PhaseBoundaryType {
         match self {
             Self::Period => f.write_str("period"),
             Self::PowerOfTwo => f.write_str("power_of_two"),
+        }
+    }
+}
+
+/// The phase of context saturation towards the ground state.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum SaturationPhase {
+    /// The context has σ = 0: no bindings accumulated, all fibers are free. The initial phase of every session.
+    Unsaturated,
+    /// The context has 0 < σ < 1: some fibers are pinned by accumulated bindings, but free fibers remain. The accumulation phase.
+    PartialSaturation,
+    /// The context has σ = 1: all fibers are pinned, freeCount = 0. The ground state. All subsequent queries resolve in O(1) via SC_5.
+    FullSaturation,
+}
+
+impl fmt::Display for SaturationPhase {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Unsaturated => f.write_str("unsaturated"),
+            Self::PartialSaturation => f.write_str("partial_saturation"),
+            Self::FullSaturation => f.write_str("full_saturation"),
+        }
+    }
+}
+
+/// Whether a signature is achievable or forbidden in the morphospace.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum AchievabilityStatus {
+    /// The signature has been empirically verified as achievable at some quantum level by an EmpiricalVerification record.
+    Achievable,
+    /// The signature has been formally proven impossible by an ImpossibilityWitness deriving from MS_1, MS_2, or other impossibility theorems.
+    Forbidden,
+}
+
+impl fmt::Display for AchievabilityStatus {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Achievable => f.write_str("achievable"),
+            Self::Forbidden => f.write_str("forbidden"),
         }
     }
 }

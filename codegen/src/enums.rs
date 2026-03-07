@@ -184,7 +184,25 @@ pub fn detect_enums(ontology: &Ontology) -> Vec<DetectedEnum> {
         &mut enums,
     );
 
-    // 14. ProofModality enum (hardcoded — codegen enum, not an OWL class)
+    // 14. SaturationPhase enum — Amendment 33: Saturated Context Limit
+    detect_vocabulary_enum(
+        ontology,
+        "state",
+        "SaturationPhase",
+        "The phase of context saturation towards the ground state.",
+        &mut enums,
+    );
+
+    // 15. AchievabilityStatus enum — Amendment 34: Morphospace Achievability
+    detect_vocabulary_enum(
+        ontology,
+        "observable",
+        "AchievabilityStatus",
+        "Whether a signature is achievable or forbidden in the morphospace.",
+        &mut enums,
+    );
+
+    // 16. ProofModality enum (hardcoded — codegen enum, not an OWL class)
     enums.push(DetectedEnum {
         name: "ProofModality",
         comment: "The modality of a proof: computation (exhaustive verification at a \

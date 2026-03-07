@@ -4,6 +4,7 @@
 //!
 //! Space: Bridge
 
+use crate::enums::AchievabilityStatus;
 use crate::enums::MeasurementUnit;
 use crate::enums::PhaseBoundaryType;
 use crate::Primitives;
@@ -165,6 +166,16 @@ pub trait SynthesisSignature<P: Primitives> {
     fn realised_euler(&self) -> P::Integer;
     /// Non-functional. Realised Betti number values, one assertion per homological degree.
     fn realised_betti(&self) -> &[P::NonNegativeInteger];
+    /// The achievability classification of this observable's topological signature in the morphospace.
+    fn achievability_status(&self) -> AchievabilityStatus;
+    /// Whether this signature has been empirically verified as achievable at some quantum level.
+    fn is_achievable(&self) -> P::Boolean;
+    /// Whether this signature has been formally proven impossible by an ImpossibilityWitness.
+    fn is_forbidden(&self) -> P::Boolean;
+    /// Associated type for `Proof`.
+    type Proof: crate::bridge::proof::Proof<P>;
+    /// The proof individual (ImpossibilityWitness or EmpiricalVerification) that grounds this signature's achievability classification.
+    fn achievability_witness(&self) -> &Self::Proof;
 }
 
 /// A single page E_r of the quantum level spectral sequence. Carries the page index r and the differential d_r. The sequence converges when all differentials vanish — typically by E_3 for simple constraint configurations.
@@ -225,3 +236,9 @@ pub mod period_boundary {}
 
 /// A phase boundary where g = 2^k, meaning g aligns with the binary stratification of R_n.
 pub mod power_of_two_boundary {}
+
+/// The signature has been empirically verified as achievable at some quantum level by an EmpiricalVerification record.
+pub mod achievable {}
+
+/// The signature has been formally proven impossible by an ImpossibilityWitness deriving from MS_1, MS_2, or other impossibility theorems.
+pub mod forbidden {}

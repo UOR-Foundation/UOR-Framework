@@ -7,7 +7,9 @@
 //! **Space classification:** `bridge` — kernel-produced, user-consumed.
 
 use crate::model::iris::*;
-use crate::model::{Class, Namespace, NamespaceModule, Property, PropertyKind, Space};
+use crate::model::{
+    Class, Individual, IndividualValue, Namespace, NamespaceModule, Property, PropertyKind, Space,
+};
 
 /// Returns the `trace/` namespace module.
 #[must_use]
@@ -24,7 +26,7 @@ pub fn module() -> NamespaceModule {
         },
         classes: classes(),
         properties: properties(),
-        individuals: vec![],
+        individuals: individuals(),
     }
 }
 
@@ -52,6 +54,35 @@ fn classes() -> Vec<Class> {
             comment: "Summary metrics for a computation trace: total steps, \
                       accumulated ring distance, and accumulated Hamming distance.",
             subclass_of: &[OWL_THING],
+            disjoint_with: &[],
+        },
+        // Amendment 35: Computational Geodesic
+        Class {
+            id: "https://uor.foundation/trace/GeodesicTrace",
+            label: "GeodesicTrace",
+            comment: "A computation trace that satisfies the dual geodesic condition \
+                      (GD_1): AR_1-ordered and DC_10-selected. The path of least \
+                      dissipation through the resolution landscape.",
+            subclass_of: &["https://uor.foundation/trace/ComputationTrace"],
+            disjoint_with: &[],
+        },
+        Class {
+            id: "https://uor.foundation/trace/GeodesicViolation",
+            label: "GeodesicViolation",
+            comment: "A record of a geodesic condition violation at a specific step \
+                      of a computation trace. Produced by GeodesicValidator when \
+                      J_k(step_i) < max_\\{free\\} J_k(state_i).",
+            subclass_of: &[OWL_THING],
+            disjoint_with: &[],
+        },
+        // Amendment 36: Measurement Boundary
+        Class {
+            id: "https://uor.foundation/trace/MeasurementEvent",
+            label: "MeasurementEvent",
+            comment: "A specialized computation step recording a single projective \
+                      collapse of a SuperposedFiberState. Carries pre-collapse \
+                      entropy and post-collapse Landauer cost (QM_1).",
+            subclass_of: &["https://uor.foundation/trace/ComputationStep"],
             disjoint_with: &[],
         },
     ]
@@ -179,6 +210,256 @@ fn properties() -> Vec<Property> {
             functional: true,
             domain: Some("https://uor.foundation/trace/ComputationTrace"),
             range: "https://uor.foundation/observable/ResidualEntropy",
+        },
+        // Amendment 35: Computational Geodesic properties
+        Property {
+            id: "https://uor.foundation/trace/isGeodesic",
+            label: "isGeodesic",
+            comment: "Whether this computation trace satisfies the dual geodesic \
+                      condition (GD_1): AR_1-ordered and DC_10-selected.",
+            kind: PropertyKind::Datatype,
+            functional: true,
+            domain: Some("https://uor.foundation/trace/ComputationTrace"),
+            range: XSD_BOOLEAN,
+        },
+        Property {
+            id: "https://uor.foundation/trace/geodesicCertificate",
+            label: "geodesicCertificate",
+            comment: "The GeodesicCertificate attesting that this trace satisfied \
+                      both GD_1 conditions.",
+            kind: PropertyKind::Object,
+            functional: true,
+            domain: Some("https://uor.foundation/trace/GeodesicTrace"),
+            range: "https://uor.foundation/cert/GeodesicCertificate",
+        },
+        Property {
+            id: "https://uor.foundation/trace/geodesicViolation",
+            label: "geodesicViolation",
+            comment: "A GeodesicViolation record indicating where the trace \
+                      deviated from the geodesic condition.",
+            kind: PropertyKind::Object,
+            functional: false,
+            domain: Some("https://uor.foundation/trace/ComputationTrace"),
+            range: "https://uor.foundation/trace/GeodesicViolation",
+        },
+        Property {
+            id: "https://uor.foundation/trace/stepEntropyCost",
+            label: "stepEntropyCost",
+            comment: "The entropy cost of a single computation step. On a geodesic, \
+                      this equals ln 2 for every step (GD_2).",
+            kind: PropertyKind::Datatype,
+            functional: true,
+            domain: Some("https://uor.foundation/trace/ComputationStep"),
+            range: XSD_DECIMAL,
+        },
+        Property {
+            id: "https://uor.foundation/trace/cumulativeEntropyCost",
+            label: "cumulativeEntropyCost",
+            comment: "The total entropy cost accumulated across all steps of a trace. \
+                      On a geodesic, equals freeCount_initial × ln 2 (GD_3).",
+            kind: PropertyKind::Datatype,
+            functional: true,
+            domain: Some("https://uor.foundation/trace/ComputationTrace"),
+            range: XSD_DECIMAL,
+        },
+        Property {
+            id: "https://uor.foundation/trace/jacobianAtStep",
+            label: "jacobianAtStep",
+            comment: "The Jacobian value J_k at this step, used by the \
+                      GeodesicValidator to check DC_10 maximality.",
+            kind: PropertyKind::Datatype,
+            functional: true,
+            domain: Some("https://uor.foundation/trace/ComputationStep"),
+            range: XSD_DECIMAL,
+        },
+        Property {
+            id: "https://uor.foundation/trace/adiabaticallyOrdered",
+            label: "adiabaticallyOrdered",
+            comment: "Whether the step sequence of this trace follows the AR_1 \
+                      adiabatic ordering (decreasing freeCount × cost-per-fiber).",
+            kind: PropertyKind::Datatype,
+            functional: true,
+            domain: Some("https://uor.foundation/trace/ComputationTrace"),
+            range: XSD_BOOLEAN,
+        },
+        Property {
+            id: "https://uor.foundation/trace/violationReason",
+            label: "violationReason",
+            comment: "Human-readable description of why a geodesic violation \
+                      occurred, citing the step index and the unused higher-J_k option.",
+            kind: PropertyKind::Datatype,
+            functional: true,
+            domain: Some("https://uor.foundation/trace/GeodesicViolation"),
+            range: XSD_STRING,
+        },
+        // Amendment 36: Measurement Boundary properties
+        Property {
+            id: "https://uor.foundation/trace/measurementEvent",
+            label: "measurementEvent",
+            comment: "A MeasurementEvent step within this computation trace.",
+            kind: PropertyKind::Object,
+            functional: false,
+            domain: Some("https://uor.foundation/trace/ComputationTrace"),
+            range: "https://uor.foundation/trace/MeasurementEvent",
+        },
+        Property {
+            id: "https://uor.foundation/trace/preCollapseEntropy",
+            label: "preCollapseEntropy",
+            comment: "The von Neumann entropy S_vN of the SuperposedFiberState \
+                      before projective collapse.",
+            kind: PropertyKind::Datatype,
+            functional: true,
+            domain: Some("https://uor.foundation/trace/MeasurementEvent"),
+            range: XSD_DECIMAL,
+        },
+        Property {
+            id: "https://uor.foundation/trace/postCollapseLandauerCost",
+            label: "postCollapseLandauerCost",
+            comment: "The Landauer cost incurred by the projective collapse. \
+                      Equals preCollapseEntropy at β* = ln 2 (QM_1).",
+            kind: PropertyKind::Datatype,
+            functional: true,
+            domain: Some("https://uor.foundation/trace/MeasurementEvent"),
+            range: XSD_DECIMAL,
+        },
+        Property {
+            id: "https://uor.foundation/trace/collapseStep",
+            label: "collapseStep",
+            comment: "The step index within the enclosing ComputationTrace at \
+                      which this projective collapse occurred.",
+            kind: PropertyKind::Datatype,
+            functional: true,
+            domain: Some("https://uor.foundation/trace/MeasurementEvent"),
+            range: XSD_NON_NEGATIVE_INTEGER,
+        },
+    ]
+}
+
+fn individuals() -> Vec<Individual> {
+    vec![
+        // Amendment 35: Formal geodesic trace instances at each quantum level
+        Individual {
+            id: "https://uor.foundation/trace/geodesic_Q0",
+            type_: "https://uor.foundation/trace/GeodesicTrace",
+            label: "geodesic_Q0",
+            comment: "Canonical geodesic trace at quantum level Q0 (n=8). \
+                      Demonstrates GD_1 through GD_3 at the base level.",
+            properties: &[
+                (
+                    "https://uor.foundation/trace/isGeodesic",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/trace/adiabaticallyOrdered",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/trace/geodesic_Q1",
+            type_: "https://uor.foundation/trace/GeodesicTrace",
+            label: "geodesic_Q1",
+            comment: "Canonical geodesic trace at quantum level Q1 (n=16). \
+                      Demonstrates geodesic scaling from Q0 to Q1.",
+            properties: &[
+                (
+                    "https://uor.foundation/trace/isGeodesic",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/trace/adiabaticallyOrdered",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/trace/geodesic_Q2",
+            type_: "https://uor.foundation/trace/GeodesicTrace",
+            label: "geodesic_Q2",
+            comment: "Canonical geodesic trace at quantum level Q2 (n=32). \
+                      Demonstrates geodesic scaling from Q1 to Q2.",
+            properties: &[
+                (
+                    "https://uor.foundation/trace/isGeodesic",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/trace/adiabaticallyOrdered",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/trace/geodesic_Q3",
+            type_: "https://uor.foundation/trace/GeodesicTrace",
+            label: "geodesic_Q3",
+            comment: "Canonical geodesic trace at quantum level Q3 (n=64). \
+                      Demonstrates geodesic scaling from Q2 to Q3.",
+            properties: &[
+                (
+                    "https://uor.foundation/trace/isGeodesic",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/trace/adiabaticallyOrdered",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        // Amendment 36: Formal measurement event instances
+        Individual {
+            id: "https://uor.foundation/trace/collapse_equal_superposition",
+            type_: "https://uor.foundation/trace/MeasurementEvent",
+            label: "collapse_equal_superposition",
+            comment: "Canonical measurement event: collapse of an equal superposition \
+                      (|α|² = 0.5). Maximum von Neumann entropy S_vN = ln 2. \
+                      Maximum Landauer cost per QM_1.",
+            properties: &[
+                (
+                    "https://uor.foundation/trace/preCollapseEntropy",
+                    IndividualValue::Str("0.693147"),
+                ),
+                (
+                    "https://uor.foundation/trace/postCollapseLandauerCost",
+                    IndividualValue::Str("0.693147"),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/trace/collapse_biased",
+            type_: "https://uor.foundation/trace/MeasurementEvent",
+            label: "collapse_biased",
+            comment: "Canonical measurement event: collapse of a biased superposition \
+                      (|α|² = 0.9). Lower entropy than equal superposition. \
+                      Demonstrates QM_3 bound.",
+            properties: &[
+                (
+                    "https://uor.foundation/trace/preCollapseEntropy",
+                    IndividualValue::Str("0.325083"),
+                ),
+                (
+                    "https://uor.foundation/trace/postCollapseLandauerCost",
+                    IndividualValue::Str("0.325083"),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/trace/collapse_classical",
+            type_: "https://uor.foundation/trace/MeasurementEvent",
+            label: "collapse_classical",
+            comment: "Canonical measurement event: collapse of a classical state \
+                      (|α|² = 1). Zero entropy, zero Landauer cost. Demonstrates \
+                      QM_4 idempotence.",
+            properties: &[
+                (
+                    "https://uor.foundation/trace/preCollapseEntropy",
+                    IndividualValue::Str("0.0"),
+                ),
+                (
+                    "https://uor.foundation/trace/postCollapseLandauerCost",
+                    IndividualValue::Str("0.0"),
+                ),
+            ],
         },
     ]
 }

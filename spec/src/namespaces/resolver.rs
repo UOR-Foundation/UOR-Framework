@@ -237,6 +237,37 @@ fn classes() -> Vec<Class> {
             subclass_of: &["https://uor.foundation/resolver/Resolver"],
             disjoint_with: &[],
         },
+        // Amendment 33: Saturation-Aware Resolution
+        Class {
+            id: "https://uor.foundation/resolver/SaturationAwareResolver",
+            label: "SaturationAwareResolver",
+            comment: "A resolver that exploits accumulated session bindings at full \
+                      saturation (σ = 1) to provide O(1) resolution via direct \
+                      coordinate reads (SC_5).",
+            subclass_of: &["https://uor.foundation/resolver/Resolver"],
+            disjoint_with: &[],
+        },
+        // Amendment 35: Geodesic Validation
+        Class {
+            id: "https://uor.foundation/resolver/GeodesicValidator",
+            label: "GeodesicValidator",
+            comment: "A resolver that validates whether a ComputationTrace satisfies \
+                      the dual geodesic condition (AR_1-ordered and DC_10-selected). \
+                      Produces GeodesicViolation individuals on failure.",
+            subclass_of: &["https://uor.foundation/resolver/Resolver"],
+            disjoint_with: &[],
+        },
+        // Amendment 36: Measurement Resolution
+        Class {
+            id: "https://uor.foundation/resolver/MeasurementResolver",
+            label: "MeasurementResolver",
+            comment: "A resolver that handles projective collapse of \
+                      SuperposedFiberState components. Issues \
+                      MeasurementCertificate upon successful collapse with \
+                      QM_1 verification.",
+            subclass_of: &["https://uor.foundation/resolver/Resolver"],
+            disjoint_with: &[],
+        },
     ]
 }
 
@@ -530,6 +561,58 @@ fn properties() -> Vec<Property> {
             functional: true,
             domain: Some("https://uor.foundation/resolver/ResolutionState"),
             range: "https://uor.foundation/observable/Jacobian",
+        },
+        // Amendment 33: Saturation-Aware Resolution
+        Property {
+            id: "https://uor.foundation/resolver/usedSaturation",
+            label: "usedSaturation",
+            comment: "Whether this resolver used the saturation shortcut (SC_5) \
+                      to bypass the ψ-pipeline and return a direct coordinate read.",
+            kind: PropertyKind::Datatype,
+            functional: true,
+            domain: Some("https://uor.foundation/resolver/SaturationAwareResolver"),
+            range: XSD_BOOLEAN,
+        },
+        // Amendment 35: Geodesic Validation
+        Property {
+            id: "https://uor.foundation/resolver/validateGeodesic",
+            label: "validateGeodesic",
+            comment: "The GeodesicTrace being validated by this GeodesicValidator.",
+            kind: PropertyKind::Object,
+            functional: true,
+            domain: Some("https://uor.foundation/resolver/GeodesicValidator"),
+            range: "https://uor.foundation/trace/GeodesicTrace",
+        },
+        // Amendment 36: Measurement Resolution
+        Property {
+            id: "https://uor.foundation/resolver/collapseAmplitude",
+            label: "collapseAmplitude",
+            comment: "The amplitude of the SuperposedFiberState prior to projective \
+                      collapse by this MeasurementResolver.",
+            kind: PropertyKind::Datatype,
+            functional: true,
+            domain: Some("https://uor.foundation/resolver/MeasurementResolver"),
+            range: XSD_DECIMAL,
+        },
+        Property {
+            id: "https://uor.foundation/resolver/collapsedFiber",
+            label: "collapsedFiber",
+            comment: "The fiber index that was collapsed (pinned to a classical \
+                      value) by the projective measurement.",
+            kind: PropertyKind::Datatype,
+            functional: true,
+            domain: Some("https://uor.foundation/resolver/MeasurementResolver"),
+            range: XSD_NON_NEGATIVE_INTEGER,
+        },
+        Property {
+            id: "https://uor.foundation/resolver/measurementOutcome",
+            label: "measurementOutcome",
+            comment: "The classical value obtained from the projective collapse. \
+                      Either 0 or 1 for a single-fiber measurement.",
+            kind: PropertyKind::Datatype,
+            functional: true,
+            domain: Some("https://uor.foundation/resolver/MeasurementResolver"),
+            range: XSD_NON_NEGATIVE_INTEGER,
         },
     ]
 }

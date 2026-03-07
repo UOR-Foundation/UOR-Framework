@@ -30,6 +30,20 @@ pub trait ComputationTrace<P: Primitives> {
     type ResidualEntropy: crate::bridge::observable::ResidualEntropy<P>;
     /// The residual entropy observable remaining after this computation trace, linking to the ThermoObservable taxonomy (TH_9 connection).
     fn residual_entropy(&self) -> &Self::ResidualEntropy;
+    /// Whether this computation trace satisfies the dual geodesic condition (GD_1): AR_1-ordered and DC_10-selected.
+    fn is_geodesic(&self) -> P::Boolean;
+    /// Associated type for `GeodesicViolation`.
+    type GeodesicViolation: GeodesicViolation<P>;
+    /// A GeodesicViolation record indicating where the trace deviated from the geodesic condition.
+    fn geodesic_violation(&self) -> &[Self::GeodesicViolation];
+    /// The total entropy cost accumulated across all steps of a trace. On a geodesic, equals freeCount_initial × ln 2 (GD_3).
+    fn cumulative_entropy_cost(&self) -> P::Decimal;
+    /// Whether the step sequence of this trace follows the AR_1 adiabatic ordering (decreasing freeCount × cost-per-fiber).
+    fn adiabatically_ordered(&self) -> P::Boolean;
+    /// Associated type for `MeasurementEvent`.
+    type MeasurementEvent: MeasurementEvent<P>;
+    /// A MeasurementEvent step within this computation trace.
+    fn measurement_event(&self) -> &[Self::MeasurementEvent];
 }
 
 /// A single step in a computation trace: one operation applied to produce one output from one or more inputs.
@@ -46,6 +60,10 @@ pub trait ComputationStep<P: Primitives> {
     fn operation(&self) -> &Self::Operation;
     /// The zero-based sequential index of this step within its trace.
     fn index(&self) -> P::NonNegativeInteger;
+    /// The entropy cost of a single computation step. On a geodesic, this equals ln 2 for every step (GD_2).
+    fn step_entropy_cost(&self) -> P::Decimal;
+    /// The Jacobian value J_k at this step, used by the GeodesicValidator to check DC_10 maximality.
+    fn jacobian_at_step(&self) -> P::Decimal;
 }
 
 /// Summary metrics for a computation trace: total steps, accumulated ring distance, and accumulated Hamming distance.
@@ -56,4 +74,84 @@ pub trait TraceMetrics<P: Primitives> {
     fn total_ring_distance(&self) -> P::NonNegativeInteger;
     /// Total Hamming-metric distance accumulated across all steps.
     fn total_hamming_distance(&self) -> P::NonNegativeInteger;
+}
+
+/// A computation trace that satisfies the dual geodesic condition (GD_1): AR_1-ordered and DC_10-selected. The path of least dissipation through the resolution landscape.
+pub trait GeodesicTrace<P: Primitives>: ComputationTrace<P> {
+    /// Associated type for `GeodesicCertificate`.
+    type GeodesicCertificate: crate::bridge::cert::GeodesicCertificate<P>;
+    /// The GeodesicCertificate attesting that this trace satisfied both GD_1 conditions.
+    fn geodesic_certificate(&self) -> &Self::GeodesicCertificate;
+}
+
+/// A record of a geodesic condition violation at a specific step of a computation trace. Produced by GeodesicValidator when J_k(step_i) < max_\{free\} J_k(state_i).
+pub trait GeodesicViolation<P: Primitives> {
+    /// Human-readable description of why a geodesic violation occurred, citing the step index and the unused higher-J_k option.
+    fn violation_reason(&self) -> &P::String;
+}
+
+/// A specialized computation step recording a single projective collapse of a SuperposedFiberState. Carries pre-collapse entropy and post-collapse Landauer cost (QM_1).
+pub trait MeasurementEvent<P: Primitives>: ComputationStep<P> {
+    /// The von Neumann entropy S_vN of the SuperposedFiberState before projective collapse.
+    fn pre_collapse_entropy(&self) -> P::Decimal;
+    /// The Landauer cost incurred by the projective collapse. Equals preCollapseEntropy at β* = ln 2 (QM_1).
+    fn post_collapse_landauer_cost(&self) -> P::Decimal;
+    /// The step index within the enclosing ComputationTrace at which this projective collapse occurred.
+    fn collapse_step(&self) -> P::NonNegativeInteger;
+}
+
+/// Canonical geodesic trace at quantum level Q0 (n=8). Demonstrates GD_1 through GD_3 at the base level.
+pub mod geodesic_q0 {
+    /// `adiabaticallyOrdered`
+    pub const ADIABATICALLY_ORDERED: bool = true;
+    /// `isGeodesic`
+    pub const IS_GEODESIC: bool = true;
+}
+
+/// Canonical geodesic trace at quantum level Q1 (n=16). Demonstrates geodesic scaling from Q0 to Q1.
+pub mod geodesic_q1 {
+    /// `adiabaticallyOrdered`
+    pub const ADIABATICALLY_ORDERED: bool = true;
+    /// `isGeodesic`
+    pub const IS_GEODESIC: bool = true;
+}
+
+/// Canonical geodesic trace at quantum level Q2 (n=32). Demonstrates geodesic scaling from Q1 to Q2.
+pub mod geodesic_q2 {
+    /// `adiabaticallyOrdered`
+    pub const ADIABATICALLY_ORDERED: bool = true;
+    /// `isGeodesic`
+    pub const IS_GEODESIC: bool = true;
+}
+
+/// Canonical geodesic trace at quantum level Q3 (n=64). Demonstrates geodesic scaling from Q2 to Q3.
+pub mod geodesic_q3 {
+    /// `adiabaticallyOrdered`
+    pub const ADIABATICALLY_ORDERED: bool = true;
+    /// `isGeodesic`
+    pub const IS_GEODESIC: bool = true;
+}
+
+/// Canonical measurement event: collapse of an equal superposition (|α|² = 0.5). Maximum von Neumann entropy S_vN = ln 2. Maximum Landauer cost per QM_1.
+pub mod collapse_equal_superposition {
+    /// `postCollapseLandauerCost`
+    pub const POST_COLLAPSE_LANDAUER_COST: &str = "0.693147";
+    /// `preCollapseEntropy`
+    pub const PRE_COLLAPSE_ENTROPY: &str = "0.693147";
+}
+
+/// Canonical measurement event: collapse of a biased superposition (|α|² = 0.9). Lower entropy than equal superposition. Demonstrates QM_3 bound.
+pub mod collapse_biased {
+    /// `postCollapseLandauerCost`
+    pub const POST_COLLAPSE_LANDAUER_COST: &str = "0.325083";
+    /// `preCollapseEntropy`
+    pub const PRE_COLLAPSE_ENTROPY: &str = "0.325083";
+}
+
+/// Canonical measurement event: collapse of a classical state (|α|² = 1). Zero entropy, zero Landauer cost. Demonstrates QM_4 idempotence.
+pub mod collapse_classical {
+    /// `postCollapseLandauerCost`
+    pub const POST_COLLAPSE_LANDAUER_COST: &str = "0.0";
+    /// `preCollapseEntropy`
+    pub const PRE_COLLAPSE_ENTROPY: &str = "0.0";
 }

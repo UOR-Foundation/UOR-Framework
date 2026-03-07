@@ -1,6 +1,6 @@
 //! SHACL validator.
 //!
-//! Validates the 53 OWL instance test graphs against the UOR SHACL shapes.
+//! Validates the 74 OWL instance test graphs against the UOR SHACL shapes.
 //! Each test graph is defined as a Turtle string in `tests/fixtures/`.
 //! Validation checks structural constraints without a full SHACL engine:
 //! - Required properties are present
@@ -11,9 +11,9 @@ use crate::report::{ConformanceReport, TestResult};
 use crate::tests;
 
 /// Expected number of SHACL test fixtures.
-const EXPECTED_SHACL_TESTS: usize = 53;
+const EXPECTED_SHACL_TESTS: usize = 74;
 
-/// Runs all 53 SHACL instance conformance tests.
+/// Runs all 74 SHACL instance conformance tests.
 pub fn validate() -> ConformanceReport {
     let mut report = ConformanceReport::new();
     let before_tests = report.results.len();
@@ -279,6 +279,111 @@ pub fn validate() -> ConformanceReport {
         tests::fixtures::TEST53_SUPERPOSED_FIBER,
         &mut report,
     );
+    run_test(
+        "test54_saturated_context",
+        tests::fixtures::TEST54_SATURATED_CONTEXT,
+        &mut report,
+    );
+    run_test(
+        "test55_saturation_witness",
+        tests::fixtures::TEST55_SATURATION_WITNESS,
+        &mut report,
+    );
+    run_test(
+        "test56_domain_saturation_record",
+        tests::fixtures::TEST56_DOMAIN_SATURATION_RECORD,
+        &mut report,
+    );
+    run_test(
+        "test57_saturation_phase",
+        tests::fixtures::TEST57_SATURATION_PHASE,
+        &mut report,
+    );
+    run_test(
+        "test58_saturation_certificate",
+        tests::fixtures::TEST58_SATURATION_CERTIFICATE,
+        &mut report,
+    );
+    run_test(
+        "test59_saturation_aware_resolver",
+        tests::fixtures::TEST59_SATURATION_AWARE_RESOLVER,
+        &mut report,
+    );
+    run_test(
+        "test60_impossibility_witness",
+        tests::fixtures::TEST60_IMPOSSIBILITY_WITNESS,
+        &mut report,
+    );
+    run_test(
+        "test61_morphospace_record",
+        tests::fixtures::TEST61_MORPHOSPACE_RECORD,
+        &mut report,
+    );
+    run_test(
+        "test62_morphospace_boundary",
+        tests::fixtures::TEST62_MORPHOSPACE_BOUNDARY,
+        &mut report,
+    );
+    run_test(
+        "test63_forbidden_signature",
+        tests::fixtures::TEST63_FORBIDDEN_SIGNATURE,
+        &mut report,
+    );
+    run_test(
+        "test64_achievability_status",
+        tests::fixtures::TEST64_ACHIEVABILITY_STATUS,
+        &mut report,
+    );
+    run_test(
+        "test65_geodesic_trace",
+        tests::fixtures::TEST65_GEODESIC_TRACE,
+        &mut report,
+    );
+    run_test(
+        "test66_geodesic_certificate",
+        tests::fixtures::TEST66_GEODESIC_CERTIFICATE,
+        &mut report,
+    );
+    run_test(
+        "test67_geodesic_violation",
+        tests::fixtures::TEST67_GEODESIC_VIOLATION,
+        &mut report,
+    );
+    run_test(
+        "test68_geodesic_validator",
+        tests::fixtures::TEST68_GEODESIC_VALIDATOR,
+        &mut report,
+    );
+    run_test(
+        "test69_geodesic_ordered",
+        tests::fixtures::TEST69_GEODESIC_ORDERED,
+        &mut report,
+    );
+    run_test(
+        "test70_measurement_resolver",
+        tests::fixtures::TEST70_MEASUREMENT_RESOLVER,
+        &mut report,
+    );
+    run_test(
+        "test71_measurement_event",
+        tests::fixtures::TEST71_MEASUREMENT_EVENT,
+        &mut report,
+    );
+    run_test(
+        "test72_measurement_certificate",
+        tests::fixtures::TEST72_MEASUREMENT_CERTIFICATE,
+        &mut report,
+    );
+    run_test(
+        "test73_collapsed_fiber_state",
+        tests::fixtures::TEST73_COLLAPSED_FIBER_STATE,
+        &mut report,
+    );
+    run_test(
+        "test74_quantum_thermodynamic",
+        tests::fixtures::TEST74_QUANTUM_THERMODYNAMIC,
+        &mut report,
+    );
 
     // Verify test fixture count matches expected
     let test_count = report.results.len() - before_tests;
@@ -379,6 +484,27 @@ fn run_test(name: &str, turtle_src: &str, report: &mut ConformanceReport) {
         "test51_product_type_pipeline" => validate_product_type_pipeline_shacl(turtle_src),
         "test52_sum_type_variant" => validate_sum_type_variant_shacl(turtle_src),
         "test53_superposed_fiber" => validate_superposed_fiber_shacl(turtle_src),
+        "test54_saturated_context" => validate_saturated_context_shacl(turtle_src),
+        "test55_saturation_witness" => validate_saturation_witness_shacl(turtle_src),
+        "test56_domain_saturation_record" => validate_domain_saturation_record_shacl(turtle_src),
+        "test57_saturation_phase" => validate_saturation_phase_shacl(turtle_src),
+        "test58_saturation_certificate" => validate_saturation_certificate_shacl(turtle_src),
+        "test59_saturation_aware_resolver" => validate_saturation_aware_resolver_shacl(turtle_src),
+        "test60_impossibility_witness" => validate_impossibility_witness_shacl(turtle_src),
+        "test61_morphospace_record" => validate_morphospace_record_shacl(turtle_src),
+        "test62_morphospace_boundary" => validate_morphospace_boundary_shacl(turtle_src),
+        "test63_forbidden_signature" => validate_forbidden_signature_shacl(turtle_src),
+        "test64_achievability_status" => validate_achievability_status_shacl(turtle_src),
+        "test65_geodesic_trace" => validate_geodesic_trace_shacl(turtle_src),
+        "test66_geodesic_certificate" => validate_geodesic_certificate_shacl(turtle_src),
+        "test67_geodesic_violation" => validate_geodesic_violation_shacl(turtle_src),
+        "test68_geodesic_validator" => validate_geodesic_validator_shacl(turtle_src),
+        "test69_geodesic_ordered" => validate_geodesic_ordered_shacl(turtle_src),
+        "test70_measurement_resolver" => validate_measurement_resolver_shacl(turtle_src),
+        "test71_measurement_event" => validate_measurement_event_shacl(turtle_src),
+        "test72_measurement_certificate" => validate_measurement_certificate_shacl(turtle_src),
+        "test73_collapsed_fiber_state" => validate_collapsed_fiber_state_shacl(turtle_src),
+        "test74_quantum_thermodynamic" => validate_quantum_thermodynamic_shacl(turtle_src),
         _ => Ok(()),
     };
 
@@ -1635,6 +1761,412 @@ fn validate_superposed_fiber_shacl(src: &str) -> Result<(), String> {
         src,
         "resolver:SuperpositionResolver",
         "Missing SuperpositionResolver",
+    )?;
+    Ok(())
+}
+
+fn validate_saturated_context_shacl(src: &str) -> Result<(), String> {
+    check_contains(
+        src,
+        "state:SaturatedContext",
+        "Missing SaturatedContext type assertion",
+    )?;
+    check_contains(
+        src,
+        "state:saturationDegree",
+        "Missing saturationDegree property",
+    )?;
+    check_contains(
+        src,
+        "state:contextTemperature",
+        "Missing contextTemperature property",
+    )?;
+    check_contains(src, "state:isSaturated", "Missing isSaturated property")?;
+    check_contains(
+        src,
+        "state:saturationPhase",
+        "Missing saturationPhase property",
+    )?;
+    Ok(())
+}
+
+fn validate_saturation_witness_shacl(src: &str) -> Result<(), String> {
+    check_contains(
+        src,
+        "state:SaturationWitness",
+        "Missing SaturationWitness type assertion",
+    )?;
+    check_contains(
+        src,
+        "state:witnessBinding",
+        "Missing witnessBinding property",
+    )?;
+    check_contains(src, "state:witnessStep", "Missing witnessStep property")?;
+    check_contains(
+        src,
+        "state:residualFreeCount",
+        "Missing residualFreeCount property",
+    )?;
+    Ok(())
+}
+
+fn validate_domain_saturation_record_shacl(src: &str) -> Result<(), String> {
+    check_contains(
+        src,
+        "observable:DomainSaturationRecord",
+        "Missing DomainSaturationRecord type assertion",
+    )?;
+    check_contains(
+        src,
+        "observable:saturatedContext",
+        "Missing saturatedContext property",
+    )?;
+    check_contains(
+        src,
+        "observable:saturatedDomain",
+        "Missing saturatedDomain property",
+    )?;
+    check_contains(
+        src,
+        "observable:domainFreeCount",
+        "Missing domainFreeCount property",
+    )?;
+    Ok(())
+}
+
+fn validate_saturation_phase_shacl(src: &str) -> Result<(), String> {
+    check_contains(
+        src,
+        "observable:SaturationPhase",
+        "Missing SaturationPhase type assertion",
+    )?;
+    check_contains(
+        src,
+        "observable:Unsaturated",
+        "Missing Unsaturated individual",
+    )?;
+    check_contains(
+        src,
+        "observable:PartialSaturation",
+        "Missing PartialSaturation individual",
+    )?;
+    check_contains(
+        src,
+        "observable:FullSaturation",
+        "Missing FullSaturation individual",
+    )?;
+    Ok(())
+}
+
+fn validate_saturation_certificate_shacl(src: &str) -> Result<(), String> {
+    check_contains(
+        src,
+        "cert:SaturationCertificate",
+        "Missing SaturationCertificate type assertion",
+    )?;
+    check_contains(
+        src,
+        "cert:certifiedSaturation",
+        "Missing certifiedSaturation property",
+    )?;
+    check_contains(
+        src,
+        "cert:saturationWitness",
+        "Missing saturationWitness property",
+    )?;
+    Ok(())
+}
+
+fn validate_saturation_aware_resolver_shacl(src: &str) -> Result<(), String> {
+    check_contains(
+        src,
+        "resolver:SaturationAwareResolver",
+        "Missing SaturationAwareResolver type assertion",
+    )?;
+    check_contains(
+        src,
+        "resolver:usedSaturation",
+        "Missing usedSaturation property",
+    )?;
+    Ok(())
+}
+
+fn validate_impossibility_witness_shacl(src: &str) -> Result<(), String> {
+    check_contains(
+        src,
+        "proof:ImpossibilityWitness",
+        "Missing ImpossibilityWitness type assertion",
+    )?;
+    check_contains(
+        src,
+        "proof:forbidsSignature",
+        "Missing forbidsSignature property",
+    )?;
+    check_contains(
+        src,
+        "proof:impossibilityReason",
+        "Missing impossibilityReason property",
+    )?;
+    check_contains(
+        src,
+        "proof:impossibilityDomain",
+        "Missing impossibilityDomain property",
+    )?;
+    Ok(())
+}
+
+fn validate_morphospace_record_shacl(src: &str) -> Result<(), String> {
+    check_contains(
+        src,
+        "observable:MorphospaceRecord",
+        "Missing MorphospaceRecord type assertion",
+    )?;
+    check_contains(
+        src,
+        "observable:achievabilityStatus",
+        "Missing achievabilityStatus property",
+    )?;
+    check_contains(
+        src,
+        "observable:verifiedAtLevel",
+        "Missing verifiedAtLevel property",
+    )?;
+    check_contains(
+        src,
+        "observable:morphospaceRecord",
+        "Missing morphospaceRecord property",
+    )?;
+    Ok(())
+}
+
+fn validate_morphospace_boundary_shacl(src: &str) -> Result<(), String> {
+    check_contains(
+        src,
+        "observable:MorphospaceBoundary",
+        "Missing MorphospaceBoundary type assertion",
+    )?;
+    check_contains(
+        src,
+        "observable:boundaryType",
+        "Missing boundaryType property",
+    )?;
+    Ok(())
+}
+
+fn validate_forbidden_signature_shacl(src: &str) -> Result<(), String> {
+    check_contains(
+        src,
+        "observable:ForbiddenSignature",
+        "Missing ForbiddenSignature type assertion",
+    )?;
+    check_contains(
+        src,
+        "observable:targetForbidden",
+        "Missing targetForbidden property",
+    )?;
+    Ok(())
+}
+
+fn validate_achievability_status_shacl(src: &str) -> Result<(), String> {
+    check_contains(
+        src,
+        "observable:AchievabilityStatus",
+        "Missing AchievabilityStatus type assertion",
+    )?;
+    check_contains(
+        src,
+        "observable:Achievable",
+        "Missing Achievable individual",
+    )?;
+    check_contains(src, "observable:Forbidden", "Missing Forbidden individual")?;
+    Ok(())
+}
+
+fn validate_geodesic_trace_shacl(src: &str) -> Result<(), String> {
+    check_contains(
+        src,
+        "trace:GeodesicTrace",
+        "Missing GeodesicTrace type assertion",
+    )?;
+    check_contains(src, "trace:isGeodesic", "Missing isGeodesic property")?;
+    check_contains(
+        src,
+        "trace:geodesicCertificate",
+        "Missing geodesicCertificate property",
+    )?;
+    check_contains(
+        src,
+        "trace:stepEntropyCost",
+        "Missing stepEntropyCost property",
+    )?;
+    check_contains(
+        src,
+        "trace:cumulativeEntropyCost",
+        "Missing cumulativeEntropyCost property",
+    )?;
+    Ok(())
+}
+
+fn validate_geodesic_certificate_shacl(src: &str) -> Result<(), String> {
+    check_contains(
+        src,
+        "cert:GeodesicCertificate",
+        "Missing GeodesicCertificate type assertion",
+    )?;
+    check_contains(
+        src,
+        "cert:certifiedGeodesic",
+        "Missing certifiedGeodesic property",
+    )?;
+    check_contains(src, "cert:geodesicTrace", "Missing geodesicTrace property")?;
+    Ok(())
+}
+
+fn validate_geodesic_violation_shacl(src: &str) -> Result<(), String> {
+    check_contains(
+        src,
+        "observable:GeodesicViolation",
+        "Missing GeodesicViolation type assertion",
+    )?;
+    check_contains(
+        src,
+        "observable:violationReason",
+        "Missing violationReason property",
+    )?;
+    Ok(())
+}
+
+fn validate_geodesic_validator_shacl(src: &str) -> Result<(), String> {
+    check_contains(
+        src,
+        "resolver:GeodesicValidator",
+        "Missing GeodesicValidator type assertion",
+    )?;
+    check_contains(
+        src,
+        "resolver:validateGeodesic",
+        "Missing validateGeodesic property",
+    )?;
+    Ok(())
+}
+
+fn validate_geodesic_ordered_shacl(src: &str) -> Result<(), String> {
+    check_contains(
+        src,
+        "trace:GeodesicTrace",
+        "Missing GeodesicTrace type assertion",
+    )?;
+    check_contains(
+        src,
+        "trace:adiabaticallyOrdered",
+        "Missing adiabaticallyOrdered property",
+    )?;
+    check_contains(
+        src,
+        "trace:jacobianAtStep",
+        "Missing jacobianAtStep property",
+    )?;
+    Ok(())
+}
+
+fn validate_measurement_resolver_shacl(src: &str) -> Result<(), String> {
+    check_contains(
+        src,
+        "resolver:MeasurementResolver",
+        "Missing MeasurementResolver type assertion",
+    )?;
+    check_contains(
+        src,
+        "resolver:collapseAmplitude",
+        "Missing collapseAmplitude property",
+    )?;
+    check_contains(
+        src,
+        "resolver:collapsedFiber",
+        "Missing collapsedFiber property",
+    )?;
+    check_contains(
+        src,
+        "resolver:measurementOutcome",
+        "Missing measurementOutcome property",
+    )?;
+    Ok(())
+}
+
+fn validate_measurement_event_shacl(src: &str) -> Result<(), String> {
+    check_contains(
+        src,
+        "observable:MeasurementEvent",
+        "Missing MeasurementEvent type assertion",
+    )?;
+    check_contains(
+        src,
+        "observable:measurementEvent",
+        "Missing measurementEvent property",
+    )?;
+    check_contains(
+        src,
+        "observable:preCollapseEntropy",
+        "Missing preCollapseEntropy property",
+    )?;
+    check_contains(
+        src,
+        "observable:postCollapseLandauerCost",
+        "Missing postCollapseLandauerCost property",
+    )?;
+    check_contains(
+        src,
+        "observable:collapseStep",
+        "Missing collapseStep property",
+    )?;
+    Ok(())
+}
+
+fn validate_measurement_certificate_shacl(src: &str) -> Result<(), String> {
+    check_contains(
+        src,
+        "cert:MeasurementCertificate",
+        "Missing MeasurementCertificate type assertion",
+    )?;
+    check_contains(
+        src,
+        "cert:certifiedMeasurement",
+        "Missing certifiedMeasurement property",
+    )?;
+    check_contains(
+        src,
+        "cert:vonNeumannEntropy",
+        "Missing vonNeumannEntropy property",
+    )?;
+    check_contains(src, "cert:landauerCost", "Missing landauerCost property")?;
+    Ok(())
+}
+
+fn validate_collapsed_fiber_state_shacl(src: &str) -> Result<(), String> {
+    check_contains(
+        src,
+        "type:CollapsedFiberState",
+        "Missing CollapsedFiberState type assertion",
+    )?;
+    check_contains(src, "type:collapsedFrom", "Missing collapsedFrom property")?;
+    check_contains(
+        src,
+        "type:survivingAmplitude",
+        "Missing survivingAmplitude property",
+    )?;
+    Ok(())
+}
+
+fn validate_quantum_thermodynamic_shacl(src: &str) -> Result<(), String> {
+    check_contains(
+        src,
+        "observable:QuantumThermodynamicDomain",
+        "Missing QuantumThermodynamicDomain type assertion",
+    )?;
+    check_contains(
+        src,
+        "op:verificationDomain",
+        "Missing verificationDomain property",
     )?;
     Ok(())
 }

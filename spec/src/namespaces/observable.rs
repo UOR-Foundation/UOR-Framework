@@ -397,6 +397,17 @@ fn classes() -> Vec<Class> {
             subclass_of: &[OWL_THING],
             disjoint_with: &[],
         },
+        // Amendment 34: Morphospace Achievability
+        Class {
+            id: "https://uor.foundation/observable/AchievabilityStatus",
+            label: "AchievabilityStatus",
+            comment: "The achievability classification of a topological signature \
+                      in the morphospace. Either Achievable (verified by \
+                      EmpiricalVerification) or Forbidden (witnessed by \
+                      ImpossibilityWitness).",
+            subclass_of: &[OWL_THING],
+            disjoint_with: &[],
+        },
     ]
 }
 
@@ -686,6 +697,48 @@ fn properties() -> Vec<Property> {
             domain: Some("https://uor.foundation/observable/CatastropheObservable"),
             range: "https://uor.foundation/observable/PhaseBoundaryType",
         },
+        // Amendment 34: Morphospace Achievability
+        Property {
+            id: "https://uor.foundation/observable/achievabilityStatus",
+            label: "achievabilityStatus",
+            comment: "The achievability classification of this observable's \
+                      topological signature in the morphospace.",
+            kind: PropertyKind::Object,
+            functional: true,
+            domain: Some("https://uor.foundation/observable/SynthesisSignature"),
+            range: "https://uor.foundation/observable/AchievabilityStatus",
+        },
+        Property {
+            id: "https://uor.foundation/observable/isAchievable",
+            label: "isAchievable",
+            comment: "Whether this signature has been empirically verified as \
+                      achievable at some quantum level.",
+            kind: PropertyKind::Datatype,
+            functional: true,
+            domain: Some("https://uor.foundation/observable/SynthesisSignature"),
+            range: XSD_BOOLEAN,
+        },
+        Property {
+            id: "https://uor.foundation/observable/isForbidden",
+            label: "isForbidden",
+            comment: "Whether this signature has been formally proven impossible \
+                      by an ImpossibilityWitness.",
+            kind: PropertyKind::Datatype,
+            functional: true,
+            domain: Some("https://uor.foundation/observable/SynthesisSignature"),
+            range: XSD_BOOLEAN,
+        },
+        Property {
+            id: "https://uor.foundation/observable/achievabilityWitness",
+            label: "achievabilityWitness",
+            comment: "The proof individual (ImpossibilityWitness or \
+                      EmpiricalVerification) that grounds this signature's \
+                      achievability classification.",
+            kind: PropertyKind::Object,
+            functional: true,
+            domain: Some("https://uor.foundation/observable/SynthesisSignature"),
+            range: "https://uor.foundation/proof/Proof",
+        },
     ]
 }
 
@@ -740,6 +793,24 @@ fn individuals() -> Vec<Individual> {
             label: "PowerOfTwoBoundary",
             comment: "A phase boundary where g = 2^k, meaning g aligns with \
                       the binary stratification of R_n.",
+            properties: &[],
+        },
+        // Amendment 34: AchievabilityStatus vocabulary individuals
+        Individual {
+            id: "https://uor.foundation/observable/Achievable",
+            type_: "https://uor.foundation/observable/AchievabilityStatus",
+            label: "Achievable",
+            comment: "The signature has been empirically verified as achievable \
+                      at some quantum level by an EmpiricalVerification record.",
+            properties: &[],
+        },
+        Individual {
+            id: "https://uor.foundation/observable/Forbidden",
+            type_: "https://uor.foundation/observable/AchievabilityStatus",
+            label: "Forbidden",
+            comment: "The signature has been formally proven impossible by an \
+                      ImpossibilityWitness deriving from MS_1, MS_2, or other \
+                      impossibility theorems.",
             properties: &[],
         },
     ]

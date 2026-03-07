@@ -90,6 +90,37 @@ fn classes() -> Vec<Class> {
             subclass_of: &[OWL_THING],
             disjoint_with: &[],
         },
+        // Amendment 33: Saturation Certificate
+        Class {
+            id: "https://uor.foundation/cert/SaturationCertificate",
+            label: "SaturationCertificate",
+            comment: "A certificate attesting that a state:SaturatedContext has \
+                      reached full saturation (σ = 1, freeCount = 0, S = 0, \
+                      T_ctx = 0) per SC_4. The session-layer dual of \
+                      CompletenessCertificate.",
+            subclass_of: &["https://uor.foundation/cert/Certificate"],
+            disjoint_with: &[],
+        },
+        // Amendment 35: Geodesic Certificate
+        Class {
+            id: "https://uor.foundation/cert/GeodesicCertificate",
+            label: "GeodesicCertificate",
+            comment: "A certificate attesting that a trace:GeodesicTrace satisfies \
+                      both GD_1 conditions: AR_1-ordered and DC_10-selected. \
+                      Transforms ComputationTrace from descriptive to normative.",
+            subclass_of: &["https://uor.foundation/cert/Certificate"],
+            disjoint_with: &[],
+        },
+        // Amendment 36: Measurement Certificate
+        Class {
+            id: "https://uor.foundation/cert/MeasurementCertificate",
+            label: "MeasurementCertificate",
+            comment: "A certificate attesting that a trace:MeasurementEvent \
+                      respected the von Neumann–Landauer bridge (QM_1): \
+                      preCollapseEntropy = postCollapseLandauerCost at β* = ln 2.",
+            subclass_of: &["https://uor.foundation/cert/Certificate"],
+            disjoint_with: &[],
+        },
     ]
 }
 
@@ -193,6 +224,81 @@ fn properties() -> Vec<Property> {
             functional: true,
             domain: Some("https://uor.foundation/cert/CompletenessAuditTrail"),
             range: XSD_NON_NEGATIVE_INTEGER,
+        },
+        // Amendment 33: Saturation Certificate properties
+        Property {
+            id: "https://uor.foundation/cert/certifiedSaturation",
+            label: "certifiedSaturation",
+            comment: "The SaturatedContext whose full saturation this certificate \
+                      attests. Uses IRI string (cert cannot import state).",
+            kind: PropertyKind::Object,
+            functional: true,
+            domain: Some("https://uor.foundation/cert/SaturationCertificate"),
+            range: "https://uor.foundation/state/SaturatedContext",
+        },
+        Property {
+            id: "https://uor.foundation/cert/saturationWitness",
+            label: "saturationWitness",
+            comment: "The SaturationWitness providing step-by-step evidence \
+                      of the saturation process.",
+            kind: PropertyKind::Object,
+            functional: true,
+            domain: Some("https://uor.foundation/cert/SaturationCertificate"),
+            range: "https://uor.foundation/state/SaturationWitness",
+        },
+        // Amendment 35: Geodesic Certificate properties
+        Property {
+            id: "https://uor.foundation/cert/certifiedGeodesic",
+            label: "certifiedGeodesic",
+            comment: "The GeodesicTrace whose geodesic status this certificate \
+                      attests. Uses IRI string (cert cannot import trace).",
+            kind: PropertyKind::Object,
+            functional: true,
+            domain: Some("https://uor.foundation/cert/GeodesicCertificate"),
+            range: "https://uor.foundation/trace/GeodesicTrace",
+        },
+        Property {
+            id: "https://uor.foundation/cert/geodesicTrace",
+            label: "geodesicTrace",
+            comment: "The computation trace that this GeodesicCertificate covers. \
+                      Redundant with certifiedGeodesic but expresses the inverse \
+                      direction for queryability.",
+            kind: PropertyKind::Object,
+            functional: true,
+            domain: Some("https://uor.foundation/cert/GeodesicCertificate"),
+            range: "https://uor.foundation/trace/GeodesicTrace",
+        },
+        // Amendment 36: Measurement Certificate properties
+        Property {
+            id: "https://uor.foundation/cert/certifiedMeasurement",
+            label: "certifiedMeasurement",
+            comment: "The MeasurementEvent whose QM_1 compliance this certificate \
+                      attests. Uses IRI string (cert cannot import trace).",
+            kind: PropertyKind::Object,
+            functional: true,
+            domain: Some("https://uor.foundation/cert/MeasurementCertificate"),
+            range: "https://uor.foundation/trace/MeasurementEvent",
+        },
+        Property {
+            id: "https://uor.foundation/cert/vonNeumannEntropy",
+            label: "vonNeumannEntropy",
+            comment: "The von Neumann entropy S_vN of the pre-measurement \
+                      SuperposedFiberState, recorded by this certificate.",
+            kind: PropertyKind::Datatype,
+            functional: true,
+            domain: Some("https://uor.foundation/cert/MeasurementCertificate"),
+            range: XSD_DECIMAL,
+        },
+        Property {
+            id: "https://uor.foundation/cert/landauerCost",
+            label: "landauerCost",
+            comment: "The Landauer cost incurred by the projective collapse, \
+                      recorded by this certificate. Equals vonNeumannEntropy \
+                      at β* = ln 2 per QM_1.",
+            kind: PropertyKind::Datatype,
+            functional: true,
+            domain: Some("https://uor.foundation/cert/MeasurementCertificate"),
+            range: XSD_DECIMAL,
         },
     ]
 }

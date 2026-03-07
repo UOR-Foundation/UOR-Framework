@@ -7,6 +7,14 @@
 //! - **Amendment 25**: 5 `CC_` identity individuals (completeness certification algebra)
 //! - **Amendment 26**: `QuantumLevelBinding` class, 3 universality properties, 7 `QL_` identity individuals
 //! - **Amendment 27**: 5 `SR_` identity individuals (session-scoped resolution algebra)
+//! - **Amendments 28–30**: 20 identity families (TS_, QLS_, MN_) for type synthesis,
+//!   quantum spectral sequence, and monodromy observables
+//! - **Amendments 31–32**: Product/sum type identities (PT_, ST_) and superposition vocabulary
+//! - **Amendment 33**: 7 `SC_` identity individuals (saturated context limit algebra)
+//! - **Amendment 34**: 5 `MS_` identity individuals (morphospace achievability algebra)
+//! - **Amendment 35**: 5 `GD_` identity individuals (computational geodesic algebra)
+//! - **Amendment 36**: `QuantumThermodynamicDomain` class, `QuantumThermodynamic` domain individual,
+//!   4 `QM_` identity individuals (measurement boundary algebra)
 //!
 //! **Critical identity:** `neg(bnot(x)) = succ(x)` for all x in R_n.
 //!
@@ -129,6 +137,17 @@ fn classes() -> Vec<Class> {
             comment: "A record linking an op:Identity individual to a specific quantum \
                       level at which it has been verified. Non-functional: one \
                       QuantumLevelBinding per (Identity, QuantumLevel) pair verified.",
+            subclass_of: &[OWL_THING],
+            disjoint_with: &[],
+        },
+        // Amendment 36: Quantum Thermodynamic Domain
+        Class {
+            id: "https://uor.foundation/op/QuantumThermodynamicDomain",
+            label: "QuantumThermodynamicDomain",
+            comment: "A verification domain at the intersection of quantum \
+                      superposition and classical thermodynamics. Identities in \
+                      this domain require both SuperpositionDomain and \
+                      Thermodynamic reasoning simultaneously.",
             subclass_of: &[OWL_THING],
             disjoint_with: &[],
         },
@@ -424,6 +443,17 @@ fn individuals() -> Vec<Individual> {
             comment: "Established by superposition analysis of fiber states. \
                       Covers identities involving superposed (non-classical) \
                       fiber assignments where fibers carry complex amplitudes.",
+            properties: &[],
+        },
+        // Amendment 36: QuantumThermodynamic verification domain
+        Individual {
+            id: "https://uor.foundation/op/QuantumThermodynamic",
+            type_: "https://uor.foundation/op/VerificationDomain",
+            label: "QuantumThermodynamic",
+            comment: "Established by the intersection of quantum superposition \
+                      analysis and classical thermodynamic reasoning. Covers \
+                      identities relating von Neumann entropy of superposed \
+                      states to Landauer costs of projective collapse (QM_).",
             properties: &[],
         },
         // Amendment 23: GeometricCharacter individuals (9)
@@ -4869,6 +4899,384 @@ fn individuals() -> Vec<Individual> {
                 ),
                 ("https://uor.foundation/op/verificationPathNote",
                  IndividualValue::Str("SumType → entropy with binary choice overhead")),
+            ],
+        },
+        // Amendment 33: Saturated Context Limit algebra (SC_1–SC_7)
+        Individual {
+            id: "https://uor.foundation/op/SC_1",
+            type_: "https://uor.foundation/op/Identity",
+            label: "SC_1",
+            comment: "Context temperature: T_ctx(C) = freeCount(C) × ln 2 / n.",
+            properties: &[
+                ("https://uor.foundation/op/lhs", IndividualValue::Str("T_ctx(C)")),
+                ("https://uor.foundation/op/rhs", IndividualValue::Str("freeCount(C) × ln 2 / n")),
+                ("https://uor.foundation/op/forAll", IndividualValue::Str("C: Context, n = fiberBudget")),
+                (
+                    "https://uor.foundation/op/verificationDomain",
+                    IndividualValue::IriRef("https://uor.foundation/op/Thermodynamic"),
+                ),
+                ("https://uor.foundation/op/verificationPathNote",
+                 IndividualValue::Str("TH_1 → normalized entropy per fiber → context temperature")),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/op/SC_2",
+            type_: "https://uor.foundation/op/Identity",
+            label: "SC_2",
+            comment: "Saturation degree: σ(C) = (n − freeCount(C)) / n.",
+            properties: &[
+                ("https://uor.foundation/op/lhs", IndividualValue::Str("σ(C)")),
+                ("https://uor.foundation/op/rhs", IndividualValue::Str("(n − freeCount(C)) / n")),
+                ("https://uor.foundation/op/forAll", IndividualValue::Str("C: Context, n = fiberBudget")),
+                (
+                    "https://uor.foundation/op/verificationDomain",
+                    IndividualValue::IriRef("https://uor.foundation/op/Algebraic"),
+                ),
+                ("https://uor.foundation/op/verificationPathNote",
+                 IndividualValue::Str("Definitional: normalized coldness of context")),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/op/SC_3",
+            type_: "https://uor.foundation/op/Identity",
+            label: "SC_3",
+            comment: "Saturation monotonicity: σ(B_{i+1}) ≥ σ(B_i) for all i in a Session.",
+            properties: &[
+                ("https://uor.foundation/op/lhs", IndividualValue::Str("σ(B_{i+1})")),
+                ("https://uor.foundation/op/rhs", IndividualValue::Str("≥ σ(B_i)")),
+                ("https://uor.foundation/op/forAll", IndividualValue::Str("i in Session S")),
+                (
+                    "https://uor.foundation/op/verificationDomain",
+                    IndividualValue::IriRef("https://uor.foundation/op/Algebraic"),
+                ),
+                ("https://uor.foundation/op/verificationPathNote",
+                 IndividualValue::Str("SR_1 → order-reversing definition of SC_2 → monotone cooling")),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/op/SC_4",
+            type_: "https://uor.foundation/op/Identity",
+            label: "SC_4",
+            comment: "Ground state equivalence: σ(C) = 1 ↔ freeCount(C) = 0 \
+                      ↔ S(C) = 0 ↔ T_ctx(C) = 0.",
+            properties: &[
+                ("https://uor.foundation/op/lhs", IndividualValue::Str("σ(C) = 1")),
+                ("https://uor.foundation/op/rhs", IndividualValue::Str("freeCount(C) = 0 ↔ S(C) = 0 ↔ T_ctx(C) = 0")),
+                ("https://uor.foundation/op/forAll", IndividualValue::Str("C: Context")),
+                (
+                    "https://uor.foundation/op/verificationDomain",
+                    IndividualValue::IriRef("https://uor.foundation/op/Thermodynamic"),
+                ),
+                ("https://uor.foundation/op/verificationPathNote",
+                 IndividualValue::Str("SC_2 + TH_1 + SC_1 → four equivalent ground-state conditions")),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/op/SC_5",
+            type_: "https://uor.foundation/op/Identity",
+            label: "SC_5",
+            comment: "O(1) resolution guarantee: freeCount(C) = 0 ∧ q.address ∈ \
+                      bindings(C) → stepCount(q, C) = 0.",
+            properties: &[
+                ("https://uor.foundation/op/lhs", IndividualValue::Str("stepCount(q, C) at freeCount(C) = 0")),
+                ("https://uor.foundation/op/rhs", IndividualValue::Str("0")),
+                ("https://uor.foundation/op/forAll", IndividualValue::Str("q: Query, C: SaturatedContext")),
+                (
+                    "https://uor.foundation/op/verificationDomain",
+                    IndividualValue::IriRef("https://uor.foundation/op/Pipeline"),
+                ),
+                ("https://uor.foundation/op/verificationPathNote",
+                 IndividualValue::Str("SR_2 + FiberBudget.isClosed → direct coordinate read")),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/op/SC_6",
+            type_: "https://uor.foundation/op/Identity",
+            label: "SC_6",
+            comment: "Pre-reduction of effective budget: effectiveBudget(q, C) = \
+                      max(0, fiberBudget(q.type) − |pinnedFibers(C) ∩ q.fiberSet|).",
+            properties: &[
+                ("https://uor.foundation/op/lhs", IndividualValue::Str("effectiveBudget(q, C)")),
+                ("https://uor.foundation/op/rhs", IndividualValue::Str("max(0, fiberBudget(q.type) − |pinnedFibers(C) ∩ q.fiberSet|)")),
+                ("https://uor.foundation/op/forAll", IndividualValue::Str("q: Query, C: Context")),
+                (
+                    "https://uor.foundation/op/verificationDomain",
+                    IndividualValue::IriRef("https://uor.foundation/op/Algebraic"),
+                ),
+                ("https://uor.foundation/op/verificationPathNote",
+                 IndividualValue::Str("Session-scoped fiber reduction → partial saturation budget")),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/op/SC_7",
+            type_: "https://uor.foundation/op/Identity",
+            label: "SC_7",
+            comment: "Thermodynamic cooling cost: Cost_saturation(C) = n × k_B T × ln 2.",
+            properties: &[
+                ("https://uor.foundation/op/lhs", IndividualValue::Str("Cost_saturation(C)")),
+                ("https://uor.foundation/op/rhs", IndividualValue::Str("n × k_B T × ln 2")),
+                ("https://uor.foundation/op/forAll", IndividualValue::Str("C: SaturatedContext, n = fiberBudget")),
+                (
+                    "https://uor.foundation/op/verificationDomain",
+                    IndividualValue::IriRef("https://uor.foundation/op/Thermodynamic"),
+                ),
+                ("https://uor.foundation/op/verificationPathNote",
+                 IndividualValue::Str("SR_1 + TH_4 → n fiber-closures at Landauer cost each")),
+            ],
+        },
+        // Amendment 34: Morphospace Achievability algebra (MS_1–MS_5)
+        Individual {
+            id: "https://uor.foundation/op/MS_1",
+            type_: "https://uor.foundation/op/Identity",
+            label: "MS_1",
+            comment: "Connectivity lower bound: β₀(N(C)) ≥ 1 for all non-empty C.",
+            properties: &[
+                ("https://uor.foundation/op/lhs", IndividualValue::Str("β₀(N(C))")),
+                ("https://uor.foundation/op/rhs", IndividualValue::Str("≥ 1")),
+                ("https://uor.foundation/op/forAll", IndividualValue::Str("C: non-empty ConstrainedType")),
+                (
+                    "https://uor.foundation/op/verificationDomain",
+                    IndividualValue::IriRef("https://uor.foundation/op/Pipeline"),
+                ),
+                ("https://uor.foundation/op/verificationPathNote",
+                 IndividualValue::Str("TS_7 formalisation → constraint nerve always connected")),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/op/MS_2",
+            type_: "https://uor.foundation/op/Identity",
+            label: "MS_2",
+            comment: "Euler capacity ceiling: χ(N(C)) ≤ n for all C at quantum level n.",
+            properties: &[
+                ("https://uor.foundation/op/lhs", IndividualValue::Str("χ(N(C))")),
+                ("https://uor.foundation/op/rhs", IndividualValue::Str("≤ n")),
+                ("https://uor.foundation/op/forAll", IndividualValue::Str("C: ConstrainedType at quantum level n")),
+                (
+                    "https://uor.foundation/op/verificationDomain",
+                    IndividualValue::IriRef("https://uor.foundation/op/Algebraic"),
+                ),
+                ("https://uor.foundation/op/verificationPathNote",
+                 IndividualValue::Str("TS_1 → constraint nerve dimension bound → χ ≤ n")),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/op/MS_3",
+            type_: "https://uor.foundation/op/Identity",
+            label: "MS_3",
+            comment: "Betti monotonicity under addition: χ(N(C + c)) ≥ χ(N(C)) \
+                      for any constraint c added to C.",
+            properties: &[
+                ("https://uor.foundation/op/lhs", IndividualValue::Str("χ(N(C + c))")),
+                ("https://uor.foundation/op/rhs", IndividualValue::Str("≥ χ(N(C))")),
+                ("https://uor.foundation/op/forAll", IndividualValue::Str("C: ConstrainedType, c: Constraint")),
+                (
+                    "https://uor.foundation/op/verificationDomain",
+                    IndividualValue::IriRef("https://uor.foundation/op/Topological"),
+                ),
+                ("https://uor.foundation/op/verificationPathNote",
+                 IndividualValue::Str("TS_3 formalisation → monotone traversal of morphospace")),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/op/MS_4",
+            type_: "https://uor.foundation/op/Identity",
+            label: "MS_4",
+            comment: "Level-relative achievability: a signature achievable at quantum \
+                      level n remains achievable at level n+1.",
+            properties: &[
+                ("https://uor.foundation/op/lhs", IndividualValue::Str("achievable(χ*, β_k*, n)")),
+                ("https://uor.foundation/op/rhs", IndividualValue::Str("→ achievable(χ*, β_k*, n+1)")),
+                ("https://uor.foundation/op/forAll", IndividualValue::Str("(χ*, β_k*) achievable at level n")),
+                (
+                    "https://uor.foundation/op/verificationDomain",
+                    IndividualValue::IriRef("https://uor.foundation/op/Pipeline"),
+                ),
+                ("https://uor.foundation/op/verificationPathNote",
+                 IndividualValue::Str("QuantumLift → morphospace grows with quantum level")),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/op/MS_5",
+            type_: "https://uor.foundation/op/Identity",
+            label: "MS_5",
+            comment: "Empirical completeness convergence: verified SynthesisSignature \
+                      individuals converge to the exact morphospace boundary.",
+            properties: &[
+                ("https://uor.foundation/op/lhs", IndividualValue::Str("verified SynthesisSignature set")),
+                ("https://uor.foundation/op/rhs", IndividualValue::Str("→ exact morphospace boundary in the limit")),
+                ("https://uor.foundation/op/forAll", IndividualValue::Str("all quantum levels")),
+                (
+                    "https://uor.foundation/op/verificationDomain",
+                    IndividualValue::IriRef("https://uor.foundation/op/Pipeline"),
+                ),
+                ("https://uor.foundation/op/verificationPathNote",
+                 IndividualValue::Str("EmpiricalVerification accumulation → convergence statement")),
+            ],
+        },
+        // Amendment 35: Computational Geodesic algebra (GD_1–GD_5)
+        Individual {
+            id: "https://uor.foundation/op/GD_1",
+            type_: "https://uor.foundation/op/Identity",
+            label: "GD_1",
+            comment: "Geodesic condition: a ComputationTrace is a geodesic iff its \
+                      steps are AR_1-ordered and each step selects the constraint \
+                      maximising J_k over free fibers (DC_10).",
+            properties: &[
+                ("https://uor.foundation/op/lhs", IndividualValue::Str("isGeodesic(T)")),
+                ("https://uor.foundation/op/rhs", IndividualValue::Str("AR_1-ordered(T) ∧ DC_10-selected(T)")),
+                ("https://uor.foundation/op/forAll", IndividualValue::Str("T: ComputationTrace")),
+                (
+                    "https://uor.foundation/op/verificationDomain",
+                    IndividualValue::IriRef("https://uor.foundation/op/Analytical"),
+                ),
+                ("https://uor.foundation/op/verificationPathNote",
+                 IndividualValue::Str("AR_1 + DC_10 → dual geodesic condition")),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/op/GD_2",
+            type_: "https://uor.foundation/op/Identity",
+            label: "GD_2",
+            comment: "Geodesic entropy bound: ΔS_step(i) = ln 2 for every step i \
+                      of a geodesic trace.",
+            properties: &[
+                ("https://uor.foundation/op/lhs", IndividualValue::Str("ΔS_step(i) on geodesic")),
+                ("https://uor.foundation/op/rhs", IndividualValue::Str("ln 2")),
+                ("https://uor.foundation/op/forAll", IndividualValue::Str("step i of GeodesicTrace T")),
+                (
+                    "https://uor.foundation/op/verificationDomain",
+                    IndividualValue::IriRef("https://uor.foundation/op/Thermodynamic"),
+                ),
+                ("https://uor.foundation/op/verificationPathNote",
+                 IndividualValue::Str("AR_1 minimum-cost step + TH_1 → constant ln 2 per step")),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/op/GD_3",
+            type_: "https://uor.foundation/op/Identity",
+            label: "GD_3",
+            comment: "Total geodesic cost: Cost_geodesic(T) = freeCount_initial × \
+                      k_B T ln 2 = TH_4.",
+            properties: &[
+                ("https://uor.foundation/op/lhs", IndividualValue::Str("Cost_geodesic(T)")),
+                ("https://uor.foundation/op/rhs", IndividualValue::Str("freeCount_initial × k_B T × ln 2")),
+                ("https://uor.foundation/op/forAll", IndividualValue::Str("T: GeodesicTrace")),
+                (
+                    "https://uor.foundation/op/verificationDomain",
+                    IndividualValue::IriRef("https://uor.foundation/op/Thermodynamic"),
+                ),
+                ("https://uor.foundation/op/verificationPathNote",
+                 IndividualValue::Str("GD_2 × stepCount → Landauer bound TH_4 with equality")),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/op/GD_4",
+            type_: "https://uor.foundation/op/Identity",
+            label: "GD_4",
+            comment: "Geodesic uniqueness up to step-order equivalence: all geodesics \
+                      for the same ConstrainedType share stepCount and constraint set.",
+            properties: &[
+                ("https://uor.foundation/op/lhs", IndividualValue::Str("Cost(T) for geodesic T")),
+                ("https://uor.foundation/op/rhs", IndividualValue::Str("= Cost(T') for any geodesic T' on same type")),
+                ("https://uor.foundation/op/forAll", IndividualValue::Str("T, T': GeodesicTrace on same ConstrainedType")),
+                (
+                    "https://uor.foundation/op/verificationDomain",
+                    IndividualValue::IriRef("https://uor.foundation/op/Analytical"),
+                ),
+                ("https://uor.foundation/op/verificationPathNote",
+                 IndividualValue::Str("Equal-J_k permutation → cost invariance")),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/op/GD_5",
+            type_: "https://uor.foundation/op/Identity",
+            label: "GD_5",
+            comment: "Subgeodesic detectability: a trace is sub-geodesic iff ∃ step i \
+                      where J_k(step_i) < max_{free fibers} J_k(state_i).",
+            properties: &[
+                ("https://uor.foundation/op/lhs", IndividualValue::Str("isSubgeodesic(T)")),
+                ("https://uor.foundation/op/rhs", IndividualValue::Str("∃ i: J_k(step_i) < max_{free} J_k(state_i)")),
+                ("https://uor.foundation/op/forAll", IndividualValue::Str("T: ComputationTrace")),
+                (
+                    "https://uor.foundation/op/verificationDomain",
+                    IndividualValue::IriRef("https://uor.foundation/op/Pipeline"),
+                ),
+                ("https://uor.foundation/op/verificationPathNote",
+                 IndividualValue::Str("GeodesicValidator → step-by-step J_k check → violation detection")),
+            ],
+        },
+        // Amendment 36: Measurement Boundary algebra (QM_1–QM_4)
+        Individual {
+            id: "https://uor.foundation/op/QM_1",
+            type_: "https://uor.foundation/op/Identity",
+            label: "QM_1",
+            comment: "Von Neumann–Landauer bridge: S_vonNeumann(ψ) = \
+                      Cost_Landauer(collapse(ψ)).",
+            properties: &[
+                ("https://uor.foundation/op/lhs", IndividualValue::Str("S_vonNeumann(ψ)")),
+                ("https://uor.foundation/op/rhs", IndividualValue::Str("Cost_Landauer(collapse(ψ))")),
+                ("https://uor.foundation/op/forAll", IndividualValue::Str("ψ: SuperposedFiberState")),
+                (
+                    "https://uor.foundation/op/verificationDomain",
+                    IndividualValue::IriRef("https://uor.foundation/op/QuantumThermodynamic"),
+                ),
+                ("https://uor.foundation/op/verificationPathNote",
+                 IndividualValue::Str("Von Neumann entropy = Landauer erasure cost at β* = ln 2")),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/op/QM_2",
+            type_: "https://uor.foundation/op/Identity",
+            label: "QM_2",
+            comment: "Measurement as fiber topology change: projective collapse on a \
+                      SuperposedFiberState is topologically equivalent to applying a \
+                      ResidueConstraint that pins the collapsed fiber.",
+            properties: &[
+                ("https://uor.foundation/op/lhs", IndividualValue::Str("collapse(ψ)")),
+                ("https://uor.foundation/op/rhs", IndividualValue::Str("apply(ResidueConstraint, collapsed_fiber)")),
+                ("https://uor.foundation/op/forAll", IndividualValue::Str("ψ: SuperposedFiberState")),
+                (
+                    "https://uor.foundation/op/verificationDomain",
+                    IndividualValue::IriRef("https://uor.foundation/op/Topological"),
+                ),
+                ("https://uor.foundation/op/verificationPathNote",
+                 IndividualValue::Str("Projective collapse ≅ classical fiber-pinning → ψ-pipeline applies")),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/op/QM_3",
+            type_: "https://uor.foundation/op/Identity",
+            label: "QM_3",
+            comment: "Superposition entropy bound: 0 ≤ S_vN(ψ) ≤ ln 2 for any \
+                      single-fiber SuperposedFiberState.",
+            properties: &[
+                ("https://uor.foundation/op/lhs", IndividualValue::Str("S_vN(ψ)")),
+                ("https://uor.foundation/op/rhs", IndividualValue::Str("∈ [0, ln 2]")),
+                ("https://uor.foundation/op/forAll", IndividualValue::Str("ψ: single-fiber SuperposedFiberState")),
+                (
+                    "https://uor.foundation/op/verificationDomain",
+                    IndividualValue::IriRef("https://uor.foundation/op/QuantumThermodynamic"),
+                ),
+                ("https://uor.foundation/op/verificationPathNote",
+                 IndividualValue::Str("Von Neumann entropy bounds → maximum at equal superposition")),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/op/QM_4",
+            type_: "https://uor.foundation/op/Identity",
+            label: "QM_4",
+            comment: "Collapse idempotence: collapse(collapse(ψ)) = collapse(ψ). \
+                      Measurement on an already-collapsed state is a no-op.",
+            properties: &[
+                ("https://uor.foundation/op/lhs", IndividualValue::Str("collapse(collapse(ψ))")),
+                ("https://uor.foundation/op/rhs", IndividualValue::Str("collapse(ψ)")),
+                ("https://uor.foundation/op/forAll", IndividualValue::Str("ψ: SuperposedFiberState")),
+                (
+                    "https://uor.foundation/op/verificationDomain",
+                    IndividualValue::IriRef("https://uor.foundation/op/Algebraic"),
+                ),
+                ("https://uor.foundation/op/verificationPathNote",
+                 IndividualValue::Str("CollapsedFiberState → re-measurement is no-op → stepCount = 0")),
             ],
         },
     ]

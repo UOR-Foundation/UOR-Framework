@@ -4,7 +4,9 @@
 //!
 //! Space: Bridge
 
+use crate::enums::AchievabilityStatus;
 use crate::enums::QuantumLevel;
+use crate::enums::VerificationDomain;
 use crate::Primitives;
 
 /// A kernel-produced attestation that a given algebraic property holds. The root class for all proof types.
@@ -21,6 +23,8 @@ pub trait Proof<P: Primitives> {
     type Identity: crate::kernel::op::Identity<P>;
     /// The algebraic identity this proof establishes. Provides a canonical object reference alongside the existing proof:criticalIdentity string property, which remains for human readability.
     fn proves_identity(&self) -> &Self::Identity;
+    /// The specific quantum level at which an empirical verification or impossibility witness was established.
+    fn verified_at_level(&self) -> &[QuantumLevel];
 }
 
 /// A proof of coherence: the type system and ring structure are mutually consistent at a given quantum level.
@@ -67,6 +71,34 @@ pub trait EmpiricalVerification<P: Primitives>: Proof<P> {
     fn verification_method(&self) -> &P::String;
     /// The timestamp at which empirical verification was conducted.
     fn verified_at(&self) -> &P::String;
+    /// The achievability classification of a proof-linked observable signature: Achievable or Forbidden.
+    fn achievability_status(&self) -> AchievabilityStatus;
+}
+
+/// A formal witness that a topological signature (χ, β_k) is impossible to achieve for any ConstrainedType. Carries the algebraic reason and the verification domain grounding the impossibility.
+pub trait ImpossibilityWitness<P: Primitives>: Proof<P> {
+    /// Associated type for `SynthesisSignature`.
+    type SynthesisSignature: crate::bridge::observable::SynthesisSignature<P>;
+    /// The topological signature (χ, β_k) that this ImpossibilityWitness formally forbids.
+    fn forbids_signature(&self) -> &Self::SynthesisSignature;
+    /// Human-readable statement of the algebraic reason the signature is impossible (e.g., 'β₀ = 0 violates MS_1').
+    fn impossibility_reason(&self) -> &P::String;
+    /// The verification domain grounding the impossibility (e.g., Pipeline for β₀ = 0, Algebraic for χ > n).
+    fn impossibility_domain(&self) -> VerificationDomain;
+}
+
+/// A formal record of a morphospace boundary point — either an achievable or forbidden topological signature. Aggregated by MorphospaceBoundary to form the queryable morphospace map.
+pub trait MorphospaceRecord<P: Primitives> {
+    /// Whether this MorphospaceRecord represents an impossibility boundary (from below) or an achievability boundary (from above).
+    fn boundary_type(&self) -> AchievabilityStatus;
+}
+
+/// An aggregate of ImpossibilityWitness and EmpiricalVerification instances forming the queryable morphospace map. SPARQL over this structure answers achievability queries in O(1).
+pub trait MorphospaceBoundary<P: Primitives> {
+    /// Associated type for `MorphospaceRecord`.
+    type MorphospaceRecord: MorphospaceRecord<P>;
+    /// Links a MorphospaceBoundary to one of its constituent MorphospaceRecord individuals.
+    fn morphospace_record(&self) -> &[Self::MorphospaceRecord];
 }
 
 /// Computation certificate for the critical identity neg(bnot(x)) = succ(x) at Q0.
@@ -3017,6 +3049,258 @@ pub mod prf_st_2 {
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/ST_2";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Proof of SC_1: context temperature. T_ctx(C) = freeCount(C) × ln 2 / n. Derived from TH_1 normalized per fiber.
+pub mod prf_sc_1 {
+    /// `provesIdentity` -> `SC_1`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/SC_1";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Proof of SC_2: saturation degree. σ(C) = (n − freeCount(C)) / n. Definitional identity.
+pub mod prf_sc_2 {
+    /// `provesIdentity` -> `SC_2`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/SC_2";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Proof of SC_3: saturation monotonicity. Corollary of SR_1 through order-reversing SC_2.
+pub mod prf_sc_3 {
+    /// `provesIdentity` -> `SC_3`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/SC_3";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Proof of SC_4: ground state equivalence. Four equivalent conditions for full saturation derived from SC_2, TH_1, SC_1.
+pub mod prf_sc_4 {
+    /// `provesIdentity` -> `SC_4`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/SC_4";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Proof of SC_5: O(1) resolution guarantee at saturation. Derived from SR_2 and FiberBudget.isClosed at freeCount = 0.
+pub mod prf_sc_5 {
+    /// `provesIdentity` -> `SC_5`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/SC_5";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Proof of SC_6: pre-reduction of effective budget. Derived from session-scoped fiber reduction at partial saturation.
+pub mod prf_sc_6 {
+    /// `provesIdentity` -> `SC_6`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/SC_6";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Proof of SC_7: thermodynamic cooling cost. n fiber-closures at Landauer cost each via SR_1 + TH_4.
+pub mod prf_sc_7 {
+    /// `provesIdentity` -> `SC_7`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/SC_7";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Proof of MS_1: connectivity lower bound β₀ ≥ 1. Formalisation of TS_7.
+pub mod prf_ms_1 {
+    /// `provesIdentity` -> `MS_1`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/MS_1";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Proof of MS_2: Euler capacity ceiling χ ≤ n. Derived from TS_1 constraint nerve dimension bound.
+pub mod prf_ms_2 {
+    /// `provesIdentity` -> `MS_2`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/MS_2";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Proof of MS_3: Betti monotonicity under constraint addition. Formalisation of TS_3.
+pub mod prf_ms_3 {
+    /// `provesIdentity` -> `MS_3`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/MS_3";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Proof of MS_4: level-relative achievability. Derived from QuantumLift construction (Amendment 29).
+pub mod prf_ms_4 {
+    /// `provesIdentity` -> `MS_4`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/MS_4";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Proof of MS_5: empirical completeness convergence. Convergence statement for EmpiricalVerification accumulation.
+pub mod prf_ms_5 {
+    /// `provesIdentity` -> `MS_5`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/MS_5";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Proof of GD_1: geodesic condition. Dual condition from AR_1 ordering + DC_10 selection.
+pub mod prf_gd_1 {
+    /// `provesIdentity` -> `GD_1`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/GD_1";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Proof of GD_2: geodesic entropy bound. Each step on a geodesic erases exactly ln 2 nats.
+pub mod prf_gd_2 {
+    /// `provesIdentity` -> `GD_2`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/GD_2";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Proof of GD_3: total geodesic cost equals Landauer bound TH_4 with equality.
+pub mod prf_gd_3 {
+    /// `provesIdentity` -> `GD_3`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/GD_3";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Proof of GD_4: geodesic uniqueness up to step-order equivalence. Equal-J_k permutations are interchangeable.
+pub mod prf_gd_4 {
+    /// `provesIdentity` -> `GD_4`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/GD_4";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Proof of GD_5: subgeodesic detectability via step-by-step J_k check.
+pub mod prf_gd_5 {
+    /// `provesIdentity` -> `GD_5`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/GD_5";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Proof of QM_1: von Neumann–Landauer bridge. S_vN equals Landauer erasure cost at the Landauer temperature β* = ln 2.
+pub mod prf_qm_1 {
+    /// `provesIdentity` -> `QM_1`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/QM_1";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Proof of QM_2: measurement as fiber topology change. Projective collapse ≅ classical ResidueConstraint pinning.
+pub mod prf_qm_2 {
+    /// `provesIdentity` -> `QM_2`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/QM_2";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Proof of QM_3: superposition entropy bound. 0 ≤ S_vN ≤ ln 2 for single-fiber superpositions.
+pub mod prf_qm_3 {
+    /// `provesIdentity` -> `QM_3`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/QM_3";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Proof of QM_4: collapse idempotence. Re-measurement of a collapsed state is a no-op.
+pub mod prf_qm_4 {
+    /// `provesIdentity` -> `QM_4`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/QM_4";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Impossibility witness for MS_1: β₀ = 0 is forbidden for any non-empty ConstrainedType because the constraint nerve is always connected.
+pub mod iw_beta0_bound {
+    /// `forbidsSignature`
+    pub const FORBIDS_SIGNATURE: &str = "β₀ = 0";
+    /// `impossibilityDomain` -> `Pipeline`
+    pub const IMPOSSIBILITY_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
+    /// `impossibilityReason`
+    pub const IMPOSSIBILITY_REASON: &str =
+        "β₀ = 0 violates MS_1: constraint nerve of non-empty set is connected";
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Impossibility witness for MS_2: χ > n is forbidden at quantum level n. The Euler characteristic cannot exceed the quantum level.
+pub mod iw_chi_ceiling {
+    /// `forbidsSignature`
+    pub const FORBIDS_SIGNATURE: &str = "χ > n";
+    /// `impossibilityDomain` -> `Algebraic`
+    pub const IMPOSSIBILITY_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
+    /// `impossibilityReason`
+    pub const IMPOSSIBILITY_REASON: &str =
+        "χ > n violates MS_2: Euler characteristic bounded by quantum level";
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Morphospace record: the IT_7d completeness target χ = n is achievable (sits at the ceiling of MS_2).
+pub mod mr_completeness_target {
+    /// `boundaryType` -> `Achievable`
+    pub const BOUNDARY_TYPE: &str = "https://uor.foundation/observable/Achievable";
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Morphospace record: the connectivity lower bound β₀ ≥ 1 marks the forbidden region from below.
+pub mod mr_connectivity_lower {
+    /// `boundaryType` -> `Forbidden`
+    pub const BOUNDARY_TYPE: &str = "https://uor.foundation/observable/Forbidden";
     /// `verified`
     pub const VERIFIED: bool = true;
 }

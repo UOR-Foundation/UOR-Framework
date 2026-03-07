@@ -21,7 +21,7 @@ pub fn module() -> NamespaceModule {
             comment: "Kernel-produced verification proofs attesting to algebraic \
                       properties of UOR objects and operations.",
             space: Space::Bridge,
-            imports: &[NS_SCHEMA, NS_OP, NS_DERIVATION],
+            imports: &[NS_SCHEMA, NS_OP, NS_DERIVATION, NS_OBSERVABLE],
         },
         classes: classes(),
         properties: properties(),
@@ -97,6 +97,35 @@ fn classes() -> Vec<Class> {
                       or exhaustive computation. Used for identities like AR_5 \
                       whose forAll quantifier is 'empirical, Q0--Q4'.",
             subclass_of: &["https://uor.foundation/proof/Proof"],
+            disjoint_with: &[],
+        },
+        // Amendment 34: Morphospace Achievability
+        Class {
+            id: "https://uor.foundation/proof/ImpossibilityWitness",
+            label: "ImpossibilityWitness",
+            comment: "A formal witness that a topological signature (χ, β_k) is \
+                      impossible to achieve for any ConstrainedType. Carries the \
+                      algebraic reason and the verification domain grounding the \
+                      impossibility.",
+            subclass_of: &["https://uor.foundation/proof/Proof"],
+            disjoint_with: &[],
+        },
+        Class {
+            id: "https://uor.foundation/proof/MorphospaceRecord",
+            label: "MorphospaceRecord",
+            comment: "A formal record of a morphospace boundary point — either an \
+                      achievable or forbidden topological signature. Aggregated by \
+                      MorphospaceBoundary to form the queryable morphospace map.",
+            subclass_of: &[OWL_THING],
+            disjoint_with: &[],
+        },
+        Class {
+            id: "https://uor.foundation/proof/MorphospaceBoundary",
+            label: "MorphospaceBoundary",
+            comment: "An aggregate of ImpossibilityWitness and EmpiricalVerification \
+                      instances forming the queryable morphospace map. SPARQL over \
+                      this structure answers achievability queries in O(1).",
+            subclass_of: &[OWL_THING],
             disjoint_with: &[],
         },
     ]
@@ -282,6 +311,77 @@ fn properties() -> Vec<Property> {
             functional: true,
             domain: Some("https://uor.foundation/proof/EmpiricalVerification"),
             range: XSD_DATETIME,
+        },
+        // Amendment 34: Morphospace Achievability
+        Property {
+            id: "https://uor.foundation/proof/forbidsSignature",
+            label: "forbidsSignature",
+            comment: "The topological signature (χ, β_k) that this \
+                      ImpossibilityWitness formally forbids.",
+            kind: PropertyKind::Object,
+            functional: true,
+            domain: Some("https://uor.foundation/proof/ImpossibilityWitness"),
+            range: "https://uor.foundation/observable/SynthesisSignature",
+        },
+        Property {
+            id: "https://uor.foundation/proof/impossibilityReason",
+            label: "impossibilityReason",
+            comment: "Human-readable statement of the algebraic reason the \
+                      signature is impossible (e.g., 'β₀ = 0 violates MS_1').",
+            kind: PropertyKind::Datatype,
+            functional: true,
+            domain: Some("https://uor.foundation/proof/ImpossibilityWitness"),
+            range: XSD_STRING,
+        },
+        Property {
+            id: "https://uor.foundation/proof/impossibilityDomain",
+            label: "impossibilityDomain",
+            comment: "The verification domain grounding the impossibility \
+                      (e.g., Pipeline for β₀ = 0, Algebraic for χ > n).",
+            kind: PropertyKind::Object,
+            functional: true,
+            domain: Some("https://uor.foundation/proof/ImpossibilityWitness"),
+            range: "https://uor.foundation/op/VerificationDomain",
+        },
+        Property {
+            id: "https://uor.foundation/proof/achievabilityStatus",
+            label: "achievabilityStatus",
+            comment: "The achievability classification of a proof-linked observable \
+                      signature: Achievable or Forbidden.",
+            kind: PropertyKind::Object,
+            functional: true,
+            domain: Some("https://uor.foundation/proof/EmpiricalVerification"),
+            range: "https://uor.foundation/observable/AchievabilityStatus",
+        },
+        Property {
+            id: "https://uor.foundation/proof/verifiedAtLevel",
+            label: "verifiedAtLevel",
+            comment: "The specific quantum level at which an empirical verification \
+                      or impossibility witness was established.",
+            kind: PropertyKind::Object,
+            functional: false,
+            domain: Some("https://uor.foundation/proof/Proof"),
+            range: "https://uor.foundation/schema/QuantumLevel",
+        },
+        Property {
+            id: "https://uor.foundation/proof/morphospaceRecord",
+            label: "morphospaceRecord",
+            comment: "Links a MorphospaceBoundary to one of its constituent \
+                      MorphospaceRecord individuals.",
+            kind: PropertyKind::Object,
+            functional: false,
+            domain: Some("https://uor.foundation/proof/MorphospaceBoundary"),
+            range: "https://uor.foundation/proof/MorphospaceRecord",
+        },
+        Property {
+            id: "https://uor.foundation/proof/boundaryType",
+            label: "boundaryType",
+            comment: "Whether this MorphospaceRecord represents an impossibility \
+                      boundary (from below) or an achievability boundary (from above).",
+            kind: PropertyKind::Object,
+            functional: true,
+            domain: Some("https://uor.foundation/proof/MorphospaceRecord"),
+            range: "https://uor.foundation/observable/AchievabilityStatus",
         },
     ]
 }
@@ -6544,6 +6644,542 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/universalScope",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        // Amendment 33: Saturated Context Limit proof individuals
+        Individual {
+            id: "https://uor.foundation/proof/prf_SC_1",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_SC_1",
+            comment: "Proof of SC_1: context temperature. T_ctx(C) = \
+                      freeCount(C) × ln 2 / n. Derived from TH_1 normalized per fiber.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/SC_1"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_SC_2",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_SC_2",
+            comment: "Proof of SC_2: saturation degree. σ(C) = (n − freeCount(C)) / n. \
+                      Definitional identity.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/SC_2"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_SC_3",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_SC_3",
+            comment: "Proof of SC_3: saturation monotonicity. Corollary of SR_1 \
+                      through order-reversing SC_2.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/SC_3"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_SC_4",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_SC_4",
+            comment: "Proof of SC_4: ground state equivalence. Four equivalent \
+                      conditions for full saturation derived from SC_2, TH_1, SC_1.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/SC_4"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_SC_5",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_SC_5",
+            comment: "Proof of SC_5: O(1) resolution guarantee at saturation. \
+                      Derived from SR_2 and FiberBudget.isClosed at freeCount = 0.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/SC_5"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_SC_6",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_SC_6",
+            comment: "Proof of SC_6: pre-reduction of effective budget. Derived from \
+                      session-scoped fiber reduction at partial saturation.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/SC_6"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_SC_7",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_SC_7",
+            comment: "Proof of SC_7: thermodynamic cooling cost. n fiber-closures \
+                      at Landauer cost each via SR_1 + TH_4.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/SC_7"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        // Amendment 34: Morphospace Achievability proof individuals
+        Individual {
+            id: "https://uor.foundation/proof/prf_MS_1",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_MS_1",
+            comment: "Proof of MS_1: connectivity lower bound β₀ ≥ 1. \
+                      Formalisation of TS_7.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/MS_1"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_MS_2",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_MS_2",
+            comment: "Proof of MS_2: Euler capacity ceiling χ ≤ n. Derived from \
+                      TS_1 constraint nerve dimension bound.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/MS_2"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_MS_3",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_MS_3",
+            comment: "Proof of MS_3: Betti monotonicity under constraint addition. \
+                      Formalisation of TS_3.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/MS_3"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_MS_4",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_MS_4",
+            comment: "Proof of MS_4: level-relative achievability. Derived from \
+                      QuantumLift construction (Amendment 29).",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/MS_4"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_MS_5",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_MS_5",
+            comment: "Proof of MS_5: empirical completeness convergence. \
+                      Convergence statement for EmpiricalVerification accumulation.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/MS_5"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        // Amendment 35: Computational Geodesic proof individuals
+        Individual {
+            id: "https://uor.foundation/proof/prf_GD_1",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_GD_1",
+            comment: "Proof of GD_1: geodesic condition. Dual condition from \
+                      AR_1 ordering + DC_10 selection.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/GD_1"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_GD_2",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_GD_2",
+            comment: "Proof of GD_2: geodesic entropy bound. Each step on a \
+                      geodesic erases exactly ln 2 nats.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/GD_2"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_GD_3",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_GD_3",
+            comment: "Proof of GD_3: total geodesic cost equals Landauer bound \
+                      TH_4 with equality.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/GD_3"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_GD_4",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_GD_4",
+            comment: "Proof of GD_4: geodesic uniqueness up to step-order \
+                      equivalence. Equal-J_k permutations are interchangeable.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/GD_4"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_GD_5",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_GD_5",
+            comment: "Proof of GD_5: subgeodesic detectability via step-by-step \
+                      J_k check.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/GD_5"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        // Amendment 36: Measurement Boundary proof individuals
+        Individual {
+            id: "https://uor.foundation/proof/prf_QM_1",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_QM_1",
+            comment: "Proof of QM_1: von Neumann–Landauer bridge. S_vN equals \
+                      Landauer erasure cost at the Landauer temperature β* = ln 2.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/QM_1"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_QM_2",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_QM_2",
+            comment: "Proof of QM_2: measurement as fiber topology change. \
+                      Projective collapse ≅ classical ResidueConstraint pinning.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/QM_2"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_QM_3",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_QM_3",
+            comment: "Proof of QM_3: superposition entropy bound. 0 ≤ S_vN ≤ ln 2 \
+                      for single-fiber superpositions.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/QM_3"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_QM_4",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_QM_4",
+            comment: "Proof of QM_4: collapse idempotence. Re-measurement of a \
+                      collapsed state is a no-op.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/QM_4"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        // Amendment 34: Formal morphospace boundary individuals
+        Individual {
+            id: "https://uor.foundation/proof/iw_beta0_bound",
+            type_: "https://uor.foundation/proof/ImpossibilityWitness",
+            label: "iw_beta0_bound",
+            comment: "Impossibility witness for MS_1: β₀ = 0 is forbidden for \
+                      any non-empty ConstrainedType because the constraint nerve \
+                      is always connected.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/forbidsSignature",
+                    IndividualValue::Str("β₀ = 0"),
+                ),
+                (
+                    "https://uor.foundation/proof/impossibilityReason",
+                    IndividualValue::Str(
+                        "β₀ = 0 violates MS_1: constraint nerve of non-empty set is connected",
+                    ),
+                ),
+                (
+                    "https://uor.foundation/proof/impossibilityDomain",
+                    IndividualValue::IriRef("https://uor.foundation/op/Pipeline"),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/iw_chi_ceiling",
+            type_: "https://uor.foundation/proof/ImpossibilityWitness",
+            label: "iw_chi_ceiling",
+            comment: "Impossibility witness for MS_2: χ > n is forbidden at \
+                      quantum level n. The Euler characteristic cannot exceed \
+                      the quantum level.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/forbidsSignature",
+                    IndividualValue::Str("χ > n"),
+                ),
+                (
+                    "https://uor.foundation/proof/impossibilityReason",
+                    IndividualValue::Str(
+                        "χ > n violates MS_2: Euler characteristic bounded by quantum level",
+                    ),
+                ),
+                (
+                    "https://uor.foundation/proof/impossibilityDomain",
+                    IndividualValue::IriRef("https://uor.foundation/op/Algebraic"),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/mr_completeness_target",
+            type_: "https://uor.foundation/proof/MorphospaceRecord",
+            label: "mr_completeness_target",
+            comment: "Morphospace record: the IT_7d completeness target χ = n is \
+                      achievable (sits at the ceiling of MS_2).",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/boundaryType",
+                    IndividualValue::IriRef("https://uor.foundation/observable/Achievable"),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/mr_connectivity_lower",
+            type_: "https://uor.foundation/proof/MorphospaceRecord",
+            label: "mr_connectivity_lower",
+            comment: "Morphospace record: the connectivity lower bound β₀ ≥ 1 \
+                      marks the forbidden region from below.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/boundaryType",
+                    IndividualValue::IriRef("https://uor.foundation/observable/Forbidden"),
                 ),
                 (
                     "https://uor.foundation/proof/verified",

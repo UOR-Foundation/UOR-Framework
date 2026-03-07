@@ -162,6 +162,30 @@ pub trait JacobianGuidedResolver<P: Primitives>: Resolver<P> {}
 /// A resolver that handles superposed fiber states, computing amplitudes and determining when superposition collapses to a classical fiber assignment (Amendment 32).
 pub trait SuperpositionResolver<P: Primitives>: Resolver<P> {}
 
+/// A resolver that exploits accumulated session bindings at full saturation (σ = 1) to provide O(1) resolution via direct coordinate reads (SC_5).
+pub trait SaturationAwareResolver<P: Primitives>: Resolver<P> {
+    /// Whether this resolver used the saturation shortcut (SC_5) to bypass the ψ-pipeline and return a direct coordinate read.
+    fn used_saturation(&self) -> P::Boolean;
+}
+
+/// A resolver that validates whether a ComputationTrace satisfies the dual geodesic condition (AR_1-ordered and DC_10-selected). Produces GeodesicViolation individuals on failure.
+pub trait GeodesicValidator<P: Primitives>: Resolver<P> {
+    /// Associated type for `GeodesicTrace`.
+    type GeodesicTrace: crate::bridge::trace::GeodesicTrace<P>;
+    /// The GeodesicTrace being validated by this GeodesicValidator.
+    fn validate_geodesic(&self) -> &Self::GeodesicTrace;
+}
+
+/// A resolver that handles projective collapse of SuperposedFiberState components. Issues MeasurementCertificate upon successful collapse with QM_1 verification.
+pub trait MeasurementResolver<P: Primitives>: Resolver<P> {
+    /// The amplitude of the SuperposedFiberState prior to projective collapse by this MeasurementResolver.
+    fn collapse_amplitude(&self) -> P::Decimal;
+    /// The fiber index that was collapsed (pinned to a classical value) by the projective measurement.
+    fn collapsed_fiber(&self) -> P::NonNegativeInteger;
+    /// The classical value obtained from the projective collapse. Either 0 or 1 for a single-fiber measurement.
+    fn measurement_outcome(&self) -> P::NonNegativeInteger;
+}
+
 /// O(1) complexity — the resolver runs in constant time regardless of ring size.
 pub mod constant_time {}
 

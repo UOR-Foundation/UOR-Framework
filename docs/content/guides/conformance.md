@@ -17,7 +17,7 @@ cargo run --bin uor-conformance
 |----------|----------|-----------|
 | `public/uor.foundation.json` | JSON-LD 1.1 | `validators/ontology/jsonld.rs` |
 | `public/uor.foundation.json` | OWL 2 DL | `validators/ontology/owl.rs` |
-| Inventory counts | 16/180/338/652 | `validators/ontology/inventory.rs` |
+| Inventory counts | 16/200/387/712 | `validators/ontology/inventory.rs` |
 | `public/uor.foundation.ttl` | RDF 1.1 / Turtle 1.1 | `validators/ontology/rdf.rs` |
 | {@count:shacl_tests} test instance graphs | SHACL | `validators/ontology/shacl.rs` |
 
@@ -25,7 +25,7 @@ cargo run --bin uor-conformance
 
 | Check | Validator |
 |-------|-----------|
-| All 180 classes documented | `validators/docs/completeness.rs` |
+| All 200 classes documented | `validators/docs/completeness.rs` |
 | Namespace pages accurate | `validators/docs/accuracy.rs` |
 | Diataxis structure present | `validators/docs/structure.rs` |
 | No broken internal links | `validators/docs/links.rs` |
@@ -64,6 +64,32 @@ cargo run --bin uor-conformance
 | test51 | ProductType + component assertions + FiberBudget (Amendment 31) |
 | test52 | SumType + variant assertions (Amendment 31) |
 | test53 | SuperposedFiberState + amplitude + SuperpositionResolver (Amendment 32) |
+
+### SHACL Tests 54–74 (v4.1.0)
+
+| Test | What It Validates |
+|------|-------------------|
+| test54 | SaturatedContext + saturationDegree + contextTemperature + isSaturated (Amendment 33) |
+| test55 | SaturationWitness + witnessBinding + witnessStep + residualFreeCount (Amendment 33) |
+| test56 | DomainSaturationRecord + saturatedDomain + domainFreeCount (Amendment 33) |
+| test57 | SaturationPhase vocabulary: Unsaturated, PartialSaturation, FullSaturation (Amendment 33) |
+| test58 | SaturationCertificate + certifiedSaturation + saturationWitness (Amendment 33) |
+| test59 | SaturationAwareResolver + usedSaturation (Amendment 33) |
+| test60 | ImpossibilityWitness + forbidsSignature + impossibilityReason (Amendment 34) |
+| test61 | MorphospaceRecord + achievabilityStatus + verifiedAtLevel (Amendment 34) |
+| test62 | MorphospaceBoundary + boundaryType (Amendment 34) |
+| test63 | ForbiddenSignature + targetForbidden (Amendment 34) |
+| test64 | AchievabilityStatus vocabulary: Achievable, Forbidden (Amendment 34) |
+| test65 | GeodesicTrace + isGeodesic + geodesicCertificate + stepEntropyCost (Amendment 35) |
+| test66 | GeodesicCertificate + certifiedGeodesic + geodesicTrace (Amendment 35) |
+| test67 | GeodesicViolation + violationReason (Amendment 35) |
+| test68 | GeodesicValidator + validateGeodesic (Amendment 35) |
+| test69 | GeodesicTrace + adiabaticallyOrdered + jacobianAtStep (Amendment 35) |
+| test70 | MeasurementResolver + collapseAmplitude + collapsedFiber (Amendment 36) |
+| test71 | MeasurementEvent + preCollapseEntropy + postCollapseLandauerCost (Amendment 36) |
+| test72 | MeasurementCertificate + certifiedMeasurement + vonNeumannEntropy + landauerCost (Amendment 36) |
+| test73 | CollapsedFiberState + collapsedFrom + survivingAmplitude (Amendment 36) |
+| test74 | QuantumThermodynamicDomain + QuantumThermodynamic verification domain (Amendment 36) |
 
 ## Adding a New SHACL Test
 

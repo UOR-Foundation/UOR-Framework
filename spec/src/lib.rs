@@ -1,7 +1,7 @@
 //! UOR Foundation ontology encoded as typed Rust data.
 //!
 //! The `uor-ontology` crate provides the complete UOR Foundation ontology —
-//! 16 namespaces, 180 classes, 338 properties, and 652 named individuals —
+//! 16 namespaces, 200 classes, 387 properties, and 712 named individuals —
 //! as static Rust data structures, along with serializers that produce
 //! JSON-LD, Turtle, and N-Triples output.
 //!
@@ -53,7 +53,7 @@ pub use model::{
 
 impl Ontology {
     /// Returns the complete UOR Foundation ontology with all 16 namespaces
-    /// and all 32 amendments applied.
+    /// and all 36 amendments applied.
     ///
     /// Assembly order follows the dependency graph specified in the UOR Foundation
     /// completion plan:
@@ -63,7 +63,7 @@ impl Ontology {
     pub fn full() -> &'static Ontology {
         static ONTOLOGY: std::sync::OnceLock<Ontology> = std::sync::OnceLock::new();
         ONTOLOGY.get_or_init(|| Ontology {
-            version: "4.0.0",
+            version: "4.1.0",
             base_iri: "https://uor.foundation/",
             namespaces: vec![
                 namespaces::u::module(),
@@ -118,16 +118,14 @@ mod tests {
             .iter()
             .map(|m| m.classes.len())
             .sum();
-        // 180 classes: 175 v3.5.0 + 5 Amdt31-32 (EmpiricalVerification,
-        // PhaseBoundaryType, JacobianGuidedResolver, SuperpositionResolver,
-        // SuperposedFiberState).
-        assert_eq!(total, 180);
+        // 200 classes: 180 v4.0.0 + 20 Amdt33-36.
+        assert_eq!(total, 200);
     }
 
     #[test]
     fn property_count() {
-        // 338 = 325 v3.5.0 + 13 Amdt31-32 (12 Amdt31 + 1 Amdt32).
-        assert_eq!(Ontology::full().property_count(), 338);
+        // 387 = 338 v4.0.0 + 49 Amdt33-36.
+        assert_eq!(Ontology::full().property_count(), 387);
     }
 
     #[test]
@@ -137,9 +135,8 @@ mod tests {
             .iter()
             .map(|m| m.individuals.len())
             .sum();
-        // 652 = 637 v3.5.0 + 15 Amdt31-32 (1 SuperpositionDomain + 6 identities PT_1–4/ST_1–2
-        //       + 2 PhaseBoundaryType individuals + 6 proof individuals).
-        assert_eq!(total, 652);
+        // 712 = 652 v4.0.0 + 60 Amdt33-36.
+        assert_eq!(total, 712);
     }
 
     #[test]

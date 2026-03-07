@@ -1,5 +1,5 @@
 # UOR Foundation SHACL Shapes
-# One NodeShape per class — 175 total.
+# One NodeShape per class — 200 total.
 # Defines cardinality and type constraints validated by the conformance suite.
 
 @prefix rdf:        <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
@@ -1575,3 +1575,135 @@ uor-sh:SuperpositionResolverShape
     a               sh:NodeShape ;
     sh:targetClass  resolver:SuperpositionResolver ;
     rdfs:label      "SuperpositionResolverShape" .
+
+# ── Amendment 33: Saturated Context Limit ─────────────────────────────────
+
+uor-sh:SaturatedContextShape
+    a               sh:NodeShape ;
+    sh:targetClass  state:SaturatedContext ;
+    rdfs:label      "SaturatedContextShape" ;
+    sh:property [ sh:path state:saturationDegree ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:decimal ] ;
+    sh:property [ sh:path state:contextTemperature ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:decimal ] ;
+    sh:property [ sh:path state:isSaturated ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:boolean ] .
+
+uor-sh:SaturationWitnessShape
+    a               sh:NodeShape ;
+    sh:targetClass  state:SaturationWitness ;
+    rdfs:label      "SaturationWitnessShape" ;
+    sh:property [ sh:path state:witnessBinding ; sh:minCount 1 ; sh:maxCount 1 ] ;
+    sh:property [ sh:path state:witnessStep ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:nonNegativeInteger ] ;
+    sh:property [ sh:path state:residualFreeCount ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:nonNegativeInteger ] .
+
+uor-sh:DomainSaturationRecordShape
+    a               sh:NodeShape ;
+    sh:targetClass  state:DomainSaturationRecord ;
+    rdfs:label      "DomainSaturationRecordShape" ;
+    sh:property [ sh:path state:saturatedDomain ; sh:minCount 1 ; sh:maxCount 1 ] ;
+    sh:property [ sh:path state:domainFreeCount ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:nonNegativeInteger ] .
+
+uor-sh:SaturationPhaseShape
+    a               sh:NodeShape ;
+    sh:targetClass  state:SaturationPhase ;
+    rdfs:label      "SaturationPhaseShape" .
+
+uor-sh:SaturationCertificateShape
+    a               sh:NodeShape ;
+    sh:targetClass  cert:SaturationCertificate ;
+    rdfs:label      "SaturationCertificateShape" ;
+    sh:property [ sh:path cert:certifiedSaturation ; sh:minCount 1 ; sh:maxCount 1 ] ;
+    sh:property [ sh:path cert:saturationWitness ; sh:minCount 1 ; sh:maxCount 1 ] .
+
+uor-sh:SaturationAwareResolverShape
+    a               sh:NodeShape ;
+    sh:targetClass  resolver:SaturationAwareResolver ;
+    rdfs:label      "SaturationAwareResolverShape" .
+
+# ── Amendment 34: Morphospace Achievability ────────────────────────────────
+
+uor-sh:ImpossibilityWitnessShape
+    a               sh:NodeShape ;
+    sh:targetClass  proof:ImpossibilityWitness ;
+    rdfs:label      "ImpossibilityWitnessShape" ;
+    sh:property [ sh:path proof:forbidsSignature ; sh:minCount 1 ; sh:maxCount 1 ] ;
+    sh:property [ sh:path proof:impossibilityReason ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string ] .
+
+uor-sh:MorphospaceRecordShape
+    a               sh:NodeShape ;
+    sh:targetClass  proof:MorphospaceRecord ;
+    rdfs:label      "MorphospaceRecordShape" .
+
+uor-sh:MorphospaceBoundaryShape
+    a               sh:NodeShape ;
+    sh:targetClass  proof:MorphospaceBoundary ;
+    rdfs:label      "MorphospaceBoundaryShape" ;
+    sh:property [ sh:path proof:boundaryType ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string ] .
+
+uor-sh:ForbiddenSignatureShape
+    a               sh:NodeShape ;
+    sh:targetClass  type:ForbiddenSignature ;
+    rdfs:label      "ForbiddenSignatureShape" ;
+    sh:property [ sh:path type:targetForbidden ; sh:minCount 1 ; sh:maxCount 1 ] .
+
+uor-sh:AchievabilityStatusShape
+    a               sh:NodeShape ;
+    sh:targetClass  observable:AchievabilityStatus ;
+    rdfs:label      "AchievabilityStatusShape" .
+
+# ── Amendment 35: Computational Geodesic ───────────────────────────────────
+
+uor-sh:GeodesicTraceShape
+    a               sh:NodeShape ;
+    sh:targetClass  trace:GeodesicTrace ;
+    rdfs:label      "GeodesicTraceShape" ;
+    sh:property [ sh:path trace:isGeodesic ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:boolean ] .
+
+uor-sh:GeodesicViolationShape
+    a               sh:NodeShape ;
+    sh:targetClass  trace:GeodesicViolation ;
+    rdfs:label      "GeodesicViolationShape" ;
+    sh:property [ sh:path trace:violationReason ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string ] .
+
+uor-sh:GeodesicCertificateShape
+    a               sh:NodeShape ;
+    sh:targetClass  cert:GeodesicCertificate ;
+    rdfs:label      "GeodesicCertificateShape" ;
+    sh:property [ sh:path cert:certifiedGeodesic ; sh:minCount 1 ; sh:maxCount 1 ] .
+
+uor-sh:GeodesicValidatorShape
+    a               sh:NodeShape ;
+    sh:targetClass  resolver:GeodesicValidator ;
+    rdfs:label      "GeodesicValidatorShape" .
+
+# ── Amendment 36: Measurement Boundary ─────────────────────────────────────
+
+uor-sh:MeasurementResolverShape
+    a               sh:NodeShape ;
+    sh:targetClass  resolver:MeasurementResolver ;
+    rdfs:label      "MeasurementResolverShape" .
+
+uor-sh:MeasurementEventShape
+    a               sh:NodeShape ;
+    sh:targetClass  trace:MeasurementEvent ;
+    rdfs:label      "MeasurementEventShape" ;
+    sh:property [ sh:path trace:preCollapseEntropy ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:decimal ] ;
+    sh:property [ sh:path trace:postCollapseLandauerCost ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:decimal ] .
+
+uor-sh:MeasurementCertificateShape
+    a               sh:NodeShape ;
+    sh:targetClass  cert:MeasurementCertificate ;
+    rdfs:label      "MeasurementCertificateShape" ;
+    sh:property [ sh:path cert:certifiedMeasurement ; sh:minCount 1 ; sh:maxCount 1 ] ;
+    sh:property [ sh:path cert:vonNeumannEntropy ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:decimal ] ;
+    sh:property [ sh:path cert:landauerCost ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:decimal ] .
+
+uor-sh:CollapsedFiberStateShape
+    a               sh:NodeShape ;
+    sh:targetClass  type:CollapsedFiberState ;
+    rdfs:label      "CollapsedFiberStateShape" ;
+    sh:property [ sh:path type:collapsedFrom ; sh:minCount 1 ; sh:maxCount 1 ] ;
+    sh:property [ sh:path type:survivingAmplitude ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:decimal ] .
+
+uor-sh:QuantumThermodynamicDomainShape
+    a               sh:NodeShape ;
+    sh:targetClass  op:QuantumThermodynamicDomain ;
+    rdfs:label      "QuantumThermodynamicDomainShape" .

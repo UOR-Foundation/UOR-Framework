@@ -16,9 +16,9 @@ use crate::report::{ConformanceReport, TestResult};
 
 /// Expected inventory counts for the UOR Foundation ontology.
 const EXPECTED_NAMESPACES: usize = 16;
-const EXPECTED_CLASSES: usize = 180;
-const EXPECTED_PROPERTIES: usize = 338;
-const EXPECTED_INDIVIDUALS: usize = 652;
+const EXPECTED_CLASSES: usize = 200;
+const EXPECTED_PROPERTIES: usize = 387;
+const EXPECTED_INDIVIDUALS: usize = 712;
 
 /// Validates the ontology inventory counts in the built JSON-LD artifact.
 ///
@@ -55,6 +55,8 @@ pub fn validate(artifacts: &Path) -> Result<ConformanceReport> {
     validate_measurement_unit_individuals(&mut report);
     validate_coordinate_kind_individuals(&mut report);
     validate_surface_symmetry_identity(&mut report);
+    validate_saturation_phase_individuals(&mut report);
+    validate_achievability_status_individuals(&mut report);
 
     // Validate the built JSON-LD artifact
     let json_path = artifacts.join("uor.foundation.json");
@@ -367,7 +369,11 @@ fn validate_identity_completeness(report: &mut ConformanceReport) {
         "QLS_", // Amendment 30: Monodromy Observables
         "MN_",  // Amendment 31: Product/Sum Type identities
         "PT_",  // Amendment 31: Sum Type identities
-        "ST_",
+        "ST_",  // Amendment 33: Saturated Context Limit
+        "SC_",  // Amendment 34: Morphospace Achievability
+        "MS_",  // Amendment 35: Computational Geodesic
+        "GD_",  // Amendment 36: Measurement Boundary
+        "QM_",
     ];
     for prefix in &expected_prefixes {
         let has = identities.iter().any(|i| i.label.starts_with(prefix));
@@ -406,6 +412,8 @@ fn validate_identity_grounding(report: &mut ConformanceReport) {
         "https://uor.foundation/op/Topological",
         "https://uor.foundation/op/Pipeline",
         "https://uor.foundation/op/IndexTheoretic",
+        "https://uor.foundation/op/SuperpositionDomain",
+        "https://uor.foundation/op/QuantumThermodynamic",
     ];
 
     let mut total = 0usize;
@@ -479,6 +487,7 @@ fn validate_verification_domain_individuals(report: &mut ConformanceReport) {
         "https://uor.foundation/op/Pipeline",
         "https://uor.foundation/op/IndexTheoretic",
         "https://uor.foundation/op/SuperpositionDomain",
+        "https://uor.foundation/op/QuantumThermodynamic",
     ];
 
     let mut all_found = true;
@@ -495,7 +504,7 @@ fn validate_verification_domain_individuals(report: &mut ConformanceReport) {
     if all_found {
         report.push(TestResult::pass(
             validator,
-            "All 9 VerificationDomain individuals present",
+            "All 10 VerificationDomain individuals present",
         ));
     }
 }
@@ -943,6 +952,65 @@ fn validate_surface_symmetry_identity(report: &mut ConformanceReport) {
         report.push(TestResult::pass(
             validator,
             "op:surfaceSymmetry and proof:prf_surfaceSymmetry present",
+        ));
+    }
+}
+
+/// Validates the 3 SaturationPhase vocabulary individuals.
+fn validate_saturation_phase_individuals(report: &mut ConformanceReport) {
+    let ontology = uor_ontology::Ontology::full();
+    let validator = "ontology/inventory/saturation_phase";
+
+    let sp_iris = [
+        "https://uor.foundation/state/Unsaturated",
+        "https://uor.foundation/state/PartialSaturation",
+        "https://uor.foundation/state/FullSaturation",
+    ];
+
+    let mut all_found = true;
+    for iri in &sp_iris {
+        if ontology.find_individual(iri).is_none() {
+            report.push(TestResult::fail(
+                validator,
+                format!("SaturationPhase individual {} not found", iri),
+            ));
+            all_found = false;
+        }
+    }
+
+    if all_found {
+        report.push(TestResult::pass(
+            validator,
+            "All 3 SaturationPhase individuals present",
+        ));
+    }
+}
+
+/// Validates the 2 AchievabilityStatus vocabulary individuals.
+fn validate_achievability_status_individuals(report: &mut ConformanceReport) {
+    let ontology = uor_ontology::Ontology::full();
+    let validator = "ontology/inventory/achievability_status";
+
+    let as_iris = [
+        "https://uor.foundation/observable/Achievable",
+        "https://uor.foundation/observable/Forbidden",
+    ];
+
+    let mut all_found = true;
+    for iri in &as_iris {
+        if ontology.find_individual(iri).is_none() {
+            report.push(TestResult::fail(
+                validator,
+                format!("AchievabilityStatus individual {} not found", iri),
+            ));
+            all_found = false;
+        }
+    }
+
+    if all_found {
+        report.push(TestResult::pass(
+            validator,
+            "All 2 AchievabilityStatus individuals present",
         ));
     }
 }
