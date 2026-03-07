@@ -7096,6 +7096,301 @@ fn individuals() -> Vec<Individual> {
                 ),
             ],
         },
+        // Amendment 37: Gap closure proof individuals (14)
+        Individual {
+            id: "https://uor.foundation/proof/prf_QM_5",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_QM_5",
+            comment: "Proof of QM_5: amplitude normalization (Born rule). \
+                      Σ|αᵢ|² = 1 for well-formed SuperposedFiberState.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/QM_5"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_RC_6",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_RC_6",
+            comment: "Proof of RC_6: amplitude renormalization. Division by norm \
+                      yields a normalized SuperposedFiberState.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/RC_6"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_FPM_8",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_FPM_8",
+            comment: "Proof of FPM_8: partition exhaustiveness. The four component \
+                      cardinalities sum to 2ⁿ.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/FPM_8"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_FPM_9",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_FPM_9",
+            comment: "Proof of FPM_9: exterior membership criterion. x ∈ Ext(T) \
+                      iff x ∉ carrier(T).",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/FPM_9"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_MN_8",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_MN_8",
+            comment: "Proof of MN_8: holonomy classification covering. Every \
+                      ConstrainedType is flat xor twisted.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/MN_8"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_QL_8",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_QL_8",
+            comment: "Proof of QL_8: quantum level chain inverse. levelSuccessor \
+                      is the left inverse of nextLevel.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/QL_8"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_D_7",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_D_7",
+            comment: "Proof of D_7: dihedral composition rule from the semidirect \
+                      product presentation.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/D_7"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_SP_1",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_SP_1",
+            comment: "Proof of SP_1: classical embedding. Superposition resolution \
+                      of a classical datum reduces to classical resolution.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/SP_1"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_SP_2",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_SP_2",
+            comment: "Proof of SP_2: collapse–resolve commutativity. The collapse \
+                      and resolve operations commute.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/SP_2"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_SP_3",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_SP_3",
+            comment: "Proof of SP_3: amplitude preservation. The SuperpositionResolver \
+                      preserves the normalized amplitude vector.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/SP_3"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_SP_4",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_SP_4",
+            comment: "Proof of SP_4: Born rule outcome probability. P(collapse to \
+                      fiber k) = |α_k|².",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/SP_4"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_PT_2a",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_PT_2a",
+            comment: "Proof of PT_2a: product type partition tensor. Π(A × B) = \
+                      PartitionProduct(Π(A), Π(B)).",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/PT_2a"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_PT_2b",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_PT_2b",
+            comment: "Proof of PT_2b: sum type partition coproduct. Π(A + B) = \
+                      PartitionCoproduct(Π(A), Π(B)).",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/PT_2b"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_GD_6",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_GD_6",
+            comment: "Proof of GD_6: geodesic predicate decomposition. isGeodesic = \
+                      isAR1Ordered ∧ isDC10Selected.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/GD_6"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
         // Amendment 34: Formal morphospace boundary individuals
         Individual {
             id: "https://uor.foundation/proof/iw_beta0_bound",

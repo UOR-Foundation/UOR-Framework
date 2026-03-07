@@ -75,6 +75,10 @@ pub trait GeodesicCertificate<P: Primitives>: Certificate<P> {
     fn certified_geodesic(&self) -> &Self::GeodesicTrace;
     /// The computation trace that this GeodesicCertificate covers. Redundant with certifiedGeodesic but expresses the inverse direction for queryability.
     fn geodesic_trace(&self) -> &Self::GeodesicTrace;
+    /// Associated type for `GeodesicEvidenceBundle`.
+    type GeodesicEvidenceBundle: GeodesicEvidenceBundle<P>;
+    /// The GeodesicEvidenceBundle attesting to the decomposed sub-predicates (isAR1Ordered, isDC10Selected) of this GeodesicCertificate's geodesic claim.
+    fn evidence_bundle(&self) -> &Self::GeodesicEvidenceBundle;
 }
 
 /// A certificate attesting that a trace:MeasurementEvent respected the von Neumann–Landauer bridge (QM_1): preCollapseEntropy = postCollapseLandauerCost at β* = ln 2.
@@ -87,4 +91,13 @@ pub trait MeasurementCertificate<P: Primitives>: Certificate<P> {
     fn von_neumann_entropy(&self) -> P::Decimal;
     /// The Landauer cost incurred by the projective collapse, recorded by this certificate. Equals vonNeumannEntropy at β* = ln 2 per QM_1.
     fn landauer_cost(&self) -> P::Decimal;
+}
+
+/// A structured evidence bundle attesting that each sub-predicate of the geodesic condition (GD_6) holds independently: isAR1Ordered and isDC10Selected. Linked from GeodesicCertificate via evidenceBundle.
+pub trait GeodesicEvidenceBundle<P: Primitives> {}
+
+/// A certificate attesting that a MeasurementEvent outcome probability matches the Born rule: P(outcome k) = |α_k|² (QM_5). Linked from MeasurementCertificate to provide probability distribution verification.
+pub trait BornRuleVerification<P: Primitives>: Certificate<P> {
+    /// Whether this BornRuleVerification certificate confirms that all outcome probabilities match the Born rule (QM_5): P(k) = |α_k|² for every fiber k.
+    fn born_rule_verified(&self) -> P::Boolean;
 }

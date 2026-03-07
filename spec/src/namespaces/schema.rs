@@ -297,6 +297,19 @@ fn properties() -> Vec<Property> {
             domain: Some("https://uor.foundation/schema/QuantumLevel"),
             range: "https://uor.foundation/schema/QuantumLevel",
         },
+        // Amendment 37: Quantum level chain successor (Gap 5)
+        Property {
+            id: "https://uor.foundation/schema/levelSuccessor",
+            label: "levelSuccessor",
+            comment: "The predecessor quantum level in the chain: Q_(k+1) -> Q_k. \
+                      Inverse of nextLevel. If nextLevel(Q_k) = Q_(k+1), then \
+                      levelSuccessor(Q_(k+1)) = Q_k. Formalizes the chain extension \
+                      protocol (QL_8).",
+            kind: PropertyKind::Object,
+            functional: true,
+            domain: Some("https://uor.foundation/schema/QuantumLevel"),
+            range: "https://uor.foundation/schema/QuantumLevel",
+        },
         Property {
             id: "https://uor.foundation/schema/atQuantumLevel",
             label: "atQuantumLevel",
@@ -404,6 +417,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/schema/nextLevel",
                     IndividualValue::IriRef("https://uor.foundation/schema/Q2"),
                 ),
+                (
+                    "https://uor.foundation/schema/levelSuccessor",
+                    IndividualValue::IriRef("https://uor.foundation/schema/Q0"),
+                ),
             ],
         },
         Individual {
@@ -428,6 +445,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/schema/nextLevel",
                     IndividualValue::IriRef("https://uor.foundation/schema/Q3"),
                 ),
+                (
+                    "https://uor.foundation/schema/levelSuccessor",
+                    IndividualValue::IriRef("https://uor.foundation/schema/Q1"),
+                ),
             ],
         },
         Individual {
@@ -449,6 +470,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/schema/cycleSize",
                     IndividualValue::Int(4_294_967_296),
+                ),
+                (
+                    "https://uor.foundation/schema/levelSuccessor",
+                    IndividualValue::IriRef("https://uor.foundation/schema/Q2"),
                 ),
             ],
         },

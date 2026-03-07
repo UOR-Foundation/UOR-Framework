@@ -2,19 +2,19 @@
 
 ## Overview
 
-The UOR conformance suite validates 74 OWL instance graphs against SHACL NodeShapes
+The UOR conformance suite validates 84 OWL instance graphs against SHACL NodeShapes
 defined in `conformance/shapes/uor-shapes.ttl`. One NodeShape is defined per
-ontology class (200 total).
+ontology class (205 total).
 
 ## Shape File
 
 `conformance/shapes/uor-shapes.ttl` contains:
-- 200 `sh:NodeShape` declarations (one per class)
+- 205 `sh:NodeShape` declarations (one per class)
 - `sh:targetClass` targeting each OWL class
 - Cardinality constraints (`sh:minCount`, `sh:maxCount`) on required properties
 - Type constraints (`sh:class`, `sh:datatype`) on property values
 
-## The 74 Instance Tests
+## The 84 Instance Tests
 
 | Test | File | Validates |
 |------|------|-----------|
@@ -92,6 +92,16 @@ ontology class (200 total).
 | test72_measurement_certificate | `tests/fixtures/test72_measurement_certificate.rs` | `cert:MeasurementCertificate` + `certifiedMeasurement` + `vonNeumannEntropy` + `landauerCost` (Amendment 36) |
 | test73_collapsed_fiber_state | `tests/fixtures/test73_collapsed_fiber_state.rs` | `type:CollapsedFiberState` + `collapsedFrom` + `survivingAmplitude` (Amendment 36) |
 | test74_quantum_thermodynamic | `tests/fixtures/test74_quantum_thermodynamic.rs` | `op:QuantumThermodynamicDomain` + QuantumThermodynamic verification domain (Amendment 36) |
+| test75_partition_product | `tests/fixtures/test75_partition_product.rs` | `partition:PartitionProduct` + `leftFactor` + `rightFactor` (Amendment 37, Gap 8) |
+| test76_partition_coproduct | `tests/fixtures/test76_partition_coproduct.rs` | `partition:PartitionCoproduct` + `leftSummand` + `rightSummand` (Amendment 37, Gap 8) |
+| test77_geodesic_evidence | `tests/fixtures/test77_geodesic_evidence.rs` | `cert:GeodesicEvidenceBundle` + `evidenceBundle` (Amendment 37, Gap 9) |
+| test78_born_rule | `tests/fixtures/test78_born_rule.rs` | `cert:BornRuleVerification` + `bornRuleVerified` (Amendment 37, Gap 10) |
+| test79_measurement_outcome | `tests/fixtures/test79_measurement_outcome.rs` | `trace:MeasurementOutcome` + `outcomeValue` + `outcomeProbability` (Amendment 37, Gap 10) |
+| test80_partition_exhaustive | `tests/fixtures/test80_partition_exhaustive.rs` | `partition:Partition` + `isExhaustive` (Amendment 37, Gap 3) |
+| test81_dihedral_algebra | `tests/fixtures/test81_dihedral_algebra.rs` | `observable:DihedralElement` + `rotationExponent` + `reflectionBit` (Amendment 37, Gap 6) |
+| test82_level_successor | `tests/fixtures/test82_level_successor.rs` | `schema:QuantumLevel` + `levelSuccessor` (Amendment 37, Gap 5) |
+| test83_amplitude_normalization | `tests/fixtures/test83_amplitude_normalization.rs` | `type:SuperposedFiberState` + `normalizationVerified` (Amendment 37, Gap 1) |
+| test84_enum_variant | `tests/fixtures/test84_enum_variant.rs` | `op:VerificationDomain` + `enumVariant` (Amendment 37, Gap 11) |
 
 ## Structural Validation
 

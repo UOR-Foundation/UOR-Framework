@@ -1,6 +1,6 @@
 //! SHACL validator.
 //!
-//! Validates the 74 OWL instance test graphs against the UOR SHACL shapes.
+//! Validates the 84 OWL instance test graphs against the UOR SHACL shapes.
 //! Each test graph is defined as a Turtle string in `tests/fixtures/`.
 //! Validation checks structural constraints without a full SHACL engine:
 //! - Required properties are present
@@ -11,9 +11,9 @@ use crate::report::{ConformanceReport, TestResult};
 use crate::tests;
 
 /// Expected number of SHACL test fixtures.
-const EXPECTED_SHACL_TESTS: usize = 74;
+const EXPECTED_SHACL_TESTS: usize = 84;
 
-/// Runs all 74 SHACL instance conformance tests.
+/// Runs all 84 SHACL instance conformance tests.
 pub fn validate() -> ConformanceReport {
     let mut report = ConformanceReport::new();
     let before_tests = report.results.len();
@@ -384,6 +384,57 @@ pub fn validate() -> ConformanceReport {
         tests::fixtures::TEST74_QUANTUM_THERMODYNAMIC,
         &mut report,
     );
+    // Amendment 37: Gap Closure tests
+    run_test(
+        "test75_partition_product",
+        tests::fixtures::TEST75_PARTITION_PRODUCT,
+        &mut report,
+    );
+    run_test(
+        "test76_partition_coproduct",
+        tests::fixtures::TEST76_PARTITION_COPRODUCT,
+        &mut report,
+    );
+    run_test(
+        "test77_geodesic_evidence",
+        tests::fixtures::TEST77_GEODESIC_EVIDENCE,
+        &mut report,
+    );
+    run_test(
+        "test78_born_rule",
+        tests::fixtures::TEST78_BORN_RULE,
+        &mut report,
+    );
+    run_test(
+        "test79_measurement_outcome",
+        tests::fixtures::TEST79_MEASUREMENT_OUTCOME,
+        &mut report,
+    );
+    run_test(
+        "test80_partition_exhaustive",
+        tests::fixtures::TEST80_PARTITION_EXHAUSTIVE,
+        &mut report,
+    );
+    run_test(
+        "test81_dihedral_algebra",
+        tests::fixtures::TEST81_DIHEDRAL_ALGEBRA,
+        &mut report,
+    );
+    run_test(
+        "test82_level_successor",
+        tests::fixtures::TEST82_LEVEL_SUCCESSOR,
+        &mut report,
+    );
+    run_test(
+        "test83_amplitude_normalization",
+        tests::fixtures::TEST83_AMPLITUDE_NORMALIZATION,
+        &mut report,
+    );
+    run_test(
+        "test84_enum_variant",
+        tests::fixtures::TEST84_ENUM_VARIANT,
+        &mut report,
+    );
 
     // Verify test fixture count matches expected
     let test_count = report.results.len() - before_tests;
@@ -505,6 +556,16 @@ fn run_test(name: &str, turtle_src: &str, report: &mut ConformanceReport) {
         "test72_measurement_certificate" => validate_measurement_certificate_shacl(turtle_src),
         "test73_collapsed_fiber_state" => validate_collapsed_fiber_state_shacl(turtle_src),
         "test74_quantum_thermodynamic" => validate_quantum_thermodynamic_shacl(turtle_src),
+        "test75_partition_product" => validate_basic_turtle(turtle_src),
+        "test76_partition_coproduct" => validate_basic_turtle(turtle_src),
+        "test77_geodesic_evidence" => validate_basic_turtle(turtle_src),
+        "test78_born_rule" => validate_basic_turtle(turtle_src),
+        "test79_measurement_outcome" => validate_basic_turtle(turtle_src),
+        "test80_partition_exhaustive" => validate_basic_turtle(turtle_src),
+        "test81_dihedral_algebra" => validate_basic_turtle(turtle_src),
+        "test82_level_successor" => validate_basic_turtle(turtle_src),
+        "test83_amplitude_normalization" => validate_basic_turtle(turtle_src),
+        "test84_enum_variant" => validate_basic_turtle(turtle_src),
         _ => Ok(()),
     };
 
@@ -2177,4 +2238,14 @@ fn check_contains(src: &str, needle: &str, msg: &str) -> Result<(), String> {
     } else {
         Err(msg.to_string())
     }
+}
+
+/// Validates that a Turtle test fixture is syntactically non-empty and
+/// contains at least one `owl:NamedIndividual` type assertion.
+fn validate_basic_turtle(src: &str) -> Result<(), String> {
+    check_contains(
+        src,
+        "owl:NamedIndividual",
+        "Missing owl:NamedIndividual type assertion",
+    )
 }

@@ -3263,6 +3263,146 @@ pub mod prf_qm_4 {
     pub const VERIFIED: bool = true;
 }
 
+/// Proof of QM_5: amplitude normalization (Born rule). Σ|αᵢ|² = 1 for well-formed SuperposedFiberState.
+pub mod prf_qm_5 {
+    /// `provesIdentity` -> `QM_5`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/QM_5";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Proof of RC_6: amplitude renormalization. Division by norm yields a normalized SuperposedFiberState.
+pub mod prf_rc_6 {
+    /// `provesIdentity` -> `RC_6`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/RC_6";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Proof of FPM_8: partition exhaustiveness. The four component cardinalities sum to 2ⁿ.
+pub mod prf_fpm_8 {
+    /// `provesIdentity` -> `FPM_8`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/FPM_8";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Proof of FPM_9: exterior membership criterion. x ∈ Ext(T) iff x ∉ carrier(T).
+pub mod prf_fpm_9 {
+    /// `provesIdentity` -> `FPM_9`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/FPM_9";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Proof of MN_8: holonomy classification covering. Every ConstrainedType is flat xor twisted.
+pub mod prf_mn_8 {
+    /// `provesIdentity` -> `MN_8`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/MN_8";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Proof of QL_8: quantum level chain inverse. levelSuccessor is the left inverse of nextLevel.
+pub mod prf_ql_8 {
+    /// `provesIdentity` -> `QL_8`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/QL_8";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Proof of D_7: dihedral composition rule from the semidirect product presentation.
+pub mod prf_d_7 {
+    /// `provesIdentity` -> `D_7`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/D_7";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Proof of SP_1: classical embedding. Superposition resolution of a classical datum reduces to classical resolution.
+pub mod prf_sp_1 {
+    /// `provesIdentity` -> `SP_1`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/SP_1";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Proof of SP_2: collapse–resolve commutativity. The collapse and resolve operations commute.
+pub mod prf_sp_2 {
+    /// `provesIdentity` -> `SP_2`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/SP_2";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Proof of SP_3: amplitude preservation. The SuperpositionResolver preserves the normalized amplitude vector.
+pub mod prf_sp_3 {
+    /// `provesIdentity` -> `SP_3`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/SP_3";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Proof of SP_4: Born rule outcome probability. P(collapse to fiber k) = |α_k|².
+pub mod prf_sp_4 {
+    /// `provesIdentity` -> `SP_4`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/SP_4";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Proof of PT_2a: product type partition tensor. Π(A × B) = PartitionProduct(Π(A), Π(B)).
+pub mod prf_pt_2a {
+    /// `provesIdentity` -> `PT_2a`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/PT_2a";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Proof of PT_2b: sum type partition coproduct. Π(A + B) = PartitionCoproduct(Π(A), Π(B)).
+pub mod prf_pt_2b {
+    /// `provesIdentity` -> `PT_2b`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/PT_2b";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Proof of GD_6: geodesic predicate decomposition. isGeodesic = isAR1Ordered ∧ isDC10Selected.
+pub mod prf_gd_6 {
+    /// `provesIdentity` -> `GD_6`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/GD_6";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
 /// Impossibility witness for MS_1: β₀ = 0 is forbidden for any non-empty ConstrainedType because the constraint nerve is always connected.
 pub mod iw_beta0_bound {
     /// `forbidsSignature`

@@ -1707,3 +1707,37 @@ uor-sh:QuantumThermodynamicDomainShape
     a               sh:NodeShape ;
     sh:targetClass  op:QuantumThermodynamicDomain ;
     rdfs:label      "QuantumThermodynamicDomainShape" .
+
+# ── Amendment 37: Gap Closures ──────────────────────────────────────────────
+
+uor-sh:PartitionProductShape
+    a               sh:NodeShape ;
+    sh:targetClass  partition:PartitionProduct ;
+    rdfs:label      "PartitionProductShape" ;
+    sh:property [ sh:path partition:leftFactor ; sh:minCount 1 ; sh:maxCount 1 ] ;
+    sh:property [ sh:path partition:rightFactor ; sh:minCount 1 ; sh:maxCount 1 ] .
+
+uor-sh:PartitionCoproductShape
+    a               sh:NodeShape ;
+    sh:targetClass  partition:PartitionCoproduct ;
+    rdfs:label      "PartitionCoproductShape" ;
+    sh:property [ sh:path partition:leftSummand ; sh:minCount 1 ; sh:maxCount 1 ] ;
+    sh:property [ sh:path partition:rightSummand ; sh:minCount 1 ; sh:maxCount 1 ] .
+
+uor-sh:GeodesicEvidenceBundleShape
+    a               sh:NodeShape ;
+    sh:targetClass  cert:GeodesicEvidenceBundle ;
+    rdfs:label      "GeodesicEvidenceBundleShape" .
+
+uor-sh:BornRuleVerificationShape
+    a               sh:NodeShape ;
+    sh:targetClass  cert:BornRuleVerification ;
+    rdfs:label      "BornRuleVerificationShape" ;
+    sh:property [ sh:path cert:bornRuleVerified ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:boolean ] .
+
+uor-sh:MeasurementOutcomeShape
+    a               sh:NodeShape ;
+    sh:targetClass  trace:MeasurementOutcome ;
+    rdfs:label      "MeasurementOutcomeShape" ;
+    sh:property [ sh:path trace:outcomeValue ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:nonNegativeInteger ] ;
+    sh:property [ sh:path trace:outcomeProbability ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:decimal ] .

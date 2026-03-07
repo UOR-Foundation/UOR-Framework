@@ -54,6 +54,8 @@ pub trait ConstrainedType<P: Primitives>: TypeDefinition<P> {
     type MonodromyClass: crate::bridge::observable::MonodromyClass<P>;
     /// The MonodromyClass classifying this type as flat or twisted.
     fn monodromy_class(&self) -> &Self::MonodromyClass;
+    /// Whether this ConstrainedType has been classified as FlatType or TwistedType by the MonodromyResolver. The MN_8 identity guarantees this is a bivalent classification: holonomyClassified(T) iff isFlatType(T) xor isTwistedType(T).
+    fn holonomy_classified(&self) -> P::Boolean;
 }
 
 /// A composable predicate that refines a type by pinning one or more fiber coordinates. Constraints are the parameterization mechanism for ConstrainedType.
@@ -196,6 +198,8 @@ pub trait FlatType<P: Primitives>: ConstrainedType<P> {}
 pub trait SuperposedFiberState<P: Primitives>: TypeDefinition<P> {
     /// The amplitude coefficient for this superposed fiber state.
     fn amplitude(&self) -> P::Decimal;
+    /// Whether the amplitude vector of this SuperposedFiberState satisfies the normalization condition Σ|αᵢ|² = 1 (QM_5). Set by the SuperpositionResolver after verification.
+    fn normalization_verified(&self) -> P::Boolean;
 }
 
 /// A topological signature (χ, β_k) that is formally impossible to achieve for any ConstrainedType. Witnessed by an ImpossibilityWitness in proof/.

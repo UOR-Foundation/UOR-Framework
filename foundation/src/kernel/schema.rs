@@ -109,6 +109,8 @@ pub mod q1 {
     pub const BITS_WIDTH: i64 = 16;
     /// `cycleSize`
     pub const CYCLE_SIZE: i64 = 65536;
+    /// `levelSuccessor` -> `Q0`
+    pub const LEVEL_SUCCESSOR: &str = "https://uor.foundation/schema/Q0";
     /// `nextLevel` -> `Q2`
     pub const NEXT_LEVEL: &str = "https://uor.foundation/schema/Q2";
     /// `quantumIndex`
@@ -121,6 +123,8 @@ pub mod q2 {
     pub const BITS_WIDTH: i64 = 24;
     /// `cycleSize`
     pub const CYCLE_SIZE: i64 = 16777216;
+    /// `levelSuccessor` -> `Q1`
+    pub const LEVEL_SUCCESSOR: &str = "https://uor.foundation/schema/Q1";
     /// `nextLevel` -> `Q3`
     pub const NEXT_LEVEL: &str = "https://uor.foundation/schema/Q3";
     /// `quantumIndex`
@@ -133,6 +137,8 @@ pub mod q3 {
     pub const BITS_WIDTH: i64 = 32;
     /// `cycleSize`
     pub const CYCLE_SIZE: i64 = 4294967296;
+    /// `levelSuccessor` -> `Q2`
+    pub const LEVEL_SUCCESSOR: &str = "https://uor.foundation/schema/Q2";
     /// `quantumIndex`
     pub const QUANTUM_INDEX: i64 = 3;
 }

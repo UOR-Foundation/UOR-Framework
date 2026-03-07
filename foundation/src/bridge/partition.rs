@@ -37,6 +37,8 @@ pub trait Partition<P: Primitives> {
     type FiberBudget: FiberBudget<P>;
     /// The fiber budget associated with this partition.
     fn fiber_budget(&self) -> &Self::FiberBudget;
+    /// Whether the four components of this partition are exhaustive over R_n: |Irr| + |Red| + |Unit| + |Ext| = 2^n (FPM_8). Set by the kernel after verification.
+    fn is_exhaustive(&self) -> P::Boolean;
 }
 
 /// A single component of a partition: a set of datum values belonging to one of the four categories.
@@ -64,7 +66,10 @@ pub trait UnitSet<P: Primitives>: Component<P> {}
 
 /// Elements of R_n that fall outside the active carrier — i.e., outside the type's domain. These are ring elements that do not participate in the current type resolution.
 /// Disjoint with: IrreducibleSet, ReducibleSet, UnitSet.
-pub trait ExteriorSet<P: Primitives>: Component<P> {}
+pub trait ExteriorSet<P: Primitives>: Component<P> {
+    /// The formal membership criterion for this ExteriorSet: x ∈ Ext(T) iff x ∉ carrier(T). The ExteriorSet is context-dependent on the active type T (FPM_9).
+    fn exterior_criteria(&self) -> &P::String;
+}
 
 /// A single fiber coordinate in the iterated Z/2Z fibration. Each fiber represents one binary degree of freedom in the ring's structure. The total number of fibers equals the quantum level n.
 /// Disjoint with: FiberBudget, Component.
@@ -112,4 +117,26 @@ pub trait FiberPinning<P: Primitives> {
     type FiberCoordinate: FiberCoordinate<P>;
     /// The fiber coordinate that this pinning determines.
     fn pins_coordinate(&self) -> &Self::FiberCoordinate;
+}
+
+/// The tensor product of two partitions: partition(A × B) = partition(A) ⊗ partition(B). The four-component structure combines component-wise under the product type construction (PT_2a). Carries leftFactor and rightFactor links to the operand partitions.
+/// Disjoint with: PartitionCoproduct.
+pub trait PartitionProduct<P: Primitives> {
+    /// Associated type for `Partition`.
+    type Partition: Partition<P>;
+    /// The left operand partition of this tensor product.
+    fn left_factor(&self) -> &Self::Partition;
+    /// The right operand partition of this tensor product.
+    fn right_factor(&self) -> &Self::Partition;
+}
+
+/// The coproduct (disjoint union) of two partitions: partition(A + B) = partition(A) ⊕ partition(B). The four-component structure combines via disjoint union under the sum type construction (PT_2b). Carries leftSummand and rightSummand links to the operand partitions.
+/// Disjoint with: PartitionProduct.
+pub trait PartitionCoproduct<P: Primitives> {
+    /// Associated type for `Partition`.
+    type Partition: Partition<P>;
+    /// The left operand partition of this coproduct.
+    fn left_summand(&self) -> &Self::Partition;
+    /// The right operand partition of this coproduct.
+    fn right_summand(&self) -> &Self::Partition;
 }

@@ -144,6 +144,29 @@ fn classes() -> Vec<Class> {
             subclass_of: &[OWL_THING],
             disjoint_with: &[],
         },
+        // Amendment 37: Partition Tensor Product (Gap 8)
+        Class {
+            id: "https://uor.foundation/partition/PartitionProduct",
+            label: "PartitionProduct",
+            comment: "The tensor product of two partitions: partition(A × B) = \
+                      partition(A) ⊗ partition(B). The four-component structure \
+                      combines component-wise under the product type construction \
+                      (PT_2a). Carries leftFactor and rightFactor links to the \
+                      operand partitions.",
+            subclass_of: &[OWL_THING],
+            disjoint_with: &["https://uor.foundation/partition/PartitionCoproduct"],
+        },
+        Class {
+            id: "https://uor.foundation/partition/PartitionCoproduct",
+            label: "PartitionCoproduct",
+            comment: "The coproduct (disjoint union) of two partitions: \
+                      partition(A + B) = partition(A) ⊕ partition(B). The \
+                      four-component structure combines via disjoint union under \
+                      the sum type construction (PT_2b). Carries leftSummand and \
+                      rightSummand links to the operand partitions.",
+            subclass_of: &[OWL_THING],
+            disjoint_with: &["https://uor.foundation/partition/PartitionProduct"],
+        },
     ]
 }
 
@@ -363,6 +386,67 @@ fn properties() -> Vec<Property> {
             functional: true,
             domain: Some("https://uor.foundation/partition/FiberBudget"),
             range: XSD_BOOLEAN,
+        },
+        // Amendment 37: ExteriorSet formal criteria (Gap 2)
+        Property {
+            id: "https://uor.foundation/partition/exteriorCriteria",
+            label: "exteriorCriteria",
+            comment: "The formal membership criterion for this ExteriorSet: \
+                      x ∈ Ext(T) iff x ∉ carrier(T). The ExteriorSet is \
+                      context-dependent on the active type T (FPM_9).",
+            kind: PropertyKind::Datatype,
+            functional: true,
+            domain: Some("https://uor.foundation/partition/ExteriorSet"),
+            range: XSD_STRING,
+        },
+        // Amendment 37: Partition exhaustiveness (Gap 3)
+        Property {
+            id: "https://uor.foundation/partition/isExhaustive",
+            label: "isExhaustive",
+            comment: "Whether the four components of this partition are exhaustive \
+                      over R_n: |Irr| + |Red| + |Unit| + |Ext| = 2^n (FPM_8). \
+                      Set by the kernel after verification.",
+            kind: PropertyKind::Datatype,
+            functional: true,
+            domain: Some("https://uor.foundation/partition/Partition"),
+            range: XSD_BOOLEAN,
+        },
+        // Amendment 37: Partition tensor product properties (Gap 8)
+        Property {
+            id: "https://uor.foundation/partition/leftFactor",
+            label: "leftFactor",
+            comment: "The left operand partition of this tensor product.",
+            kind: PropertyKind::Object,
+            functional: true,
+            domain: Some("https://uor.foundation/partition/PartitionProduct"),
+            range: "https://uor.foundation/partition/Partition",
+        },
+        Property {
+            id: "https://uor.foundation/partition/rightFactor",
+            label: "rightFactor",
+            comment: "The right operand partition of this tensor product.",
+            kind: PropertyKind::Object,
+            functional: true,
+            domain: Some("https://uor.foundation/partition/PartitionProduct"),
+            range: "https://uor.foundation/partition/Partition",
+        },
+        Property {
+            id: "https://uor.foundation/partition/leftSummand",
+            label: "leftSummand",
+            comment: "The left operand partition of this coproduct.",
+            kind: PropertyKind::Object,
+            functional: true,
+            domain: Some("https://uor.foundation/partition/PartitionCoproduct"),
+            range: "https://uor.foundation/partition/Partition",
+        },
+        Property {
+            id: "https://uor.foundation/partition/rightSummand",
+            label: "rightSummand",
+            comment: "The right operand partition of this coproduct.",
+            kind: PropertyKind::Object,
+            functional: true,
+            domain: Some("https://uor.foundation/partition/PartitionCoproduct"),
+            range: "https://uor.foundation/partition/Partition",
         },
     ]
 }

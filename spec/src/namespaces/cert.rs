@@ -121,6 +121,28 @@ fn classes() -> Vec<Class> {
             subclass_of: &["https://uor.foundation/cert/Certificate"],
             disjoint_with: &[],
         },
+        // Amendment 37: Geodesic Evidence Bundle (Gap 9)
+        Class {
+            id: "https://uor.foundation/cert/GeodesicEvidenceBundle",
+            label: "GeodesicEvidenceBundle",
+            comment: "A structured evidence bundle attesting that each sub-predicate \
+                      of the geodesic condition (GD_6) holds independently: \
+                      isAR1Ordered and isDC10Selected. Linked from \
+                      GeodesicCertificate via evidenceBundle.",
+            subclass_of: &[OWL_THING],
+            disjoint_with: &[],
+        },
+        // Amendment 37: Born Rule Verification (Gap 10)
+        Class {
+            id: "https://uor.foundation/cert/BornRuleVerification",
+            label: "BornRuleVerification",
+            comment: "A certificate attesting that a MeasurementEvent outcome \
+                      probability matches the Born rule: P(outcome k) = |α_k|² \
+                      (QM_5). Linked from MeasurementCertificate to provide \
+                      probability distribution verification.",
+            subclass_of: &["https://uor.foundation/cert/Certificate"],
+            disjoint_with: &[],
+        },
     ]
 }
 
@@ -299,6 +321,30 @@ fn properties() -> Vec<Property> {
             functional: true,
             domain: Some("https://uor.foundation/cert/MeasurementCertificate"),
             range: XSD_DECIMAL,
+        },
+        // Amendment 37: Geodesic evidence bundle link (Gap 9)
+        Property {
+            id: "https://uor.foundation/cert/evidenceBundle",
+            label: "evidenceBundle",
+            comment: "The GeodesicEvidenceBundle attesting to the decomposed \
+                      sub-predicates (isAR1Ordered, isDC10Selected) of this \
+                      GeodesicCertificate's geodesic claim.",
+            kind: PropertyKind::Object,
+            functional: true,
+            domain: Some("https://uor.foundation/cert/GeodesicCertificate"),
+            range: "https://uor.foundation/cert/GeodesicEvidenceBundle",
+        },
+        // Amendment 37: Born rule verification flag (Gap 10)
+        Property {
+            id: "https://uor.foundation/cert/bornRuleVerified",
+            label: "bornRuleVerified",
+            comment: "Whether this BornRuleVerification certificate confirms \
+                      that all outcome probabilities match the Born rule \
+                      (QM_5): P(k) = |α_k|² for every fiber k.",
+            kind: PropertyKind::Datatype,
+            functional: true,
+            domain: Some("https://uor.foundation/cert/BornRuleVerification"),
+            range: XSD_BOOLEAN,
         },
     ]
 }

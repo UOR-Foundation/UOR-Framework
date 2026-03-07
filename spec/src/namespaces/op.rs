@@ -15,6 +15,8 @@
 //! - **Amendment 35**: 5 `GD_` identity individuals (computational geodesic algebra)
 //! - **Amendment 36**: `QuantumThermodynamicDomain` class, `QuantumThermodynamic` domain individual,
 //!   4 `QM_` identity individuals (measurement boundary algebra)
+//! - **Amendment 37**: `enumVariant` annotation property, 14 gap-closure identity individuals
+//!   (QM_5, RC_6, FPM_8–9, MN_8, QL_8, D_7, SP_1–4, PT_2a–2b, GD_6)
 //!
 //! **Critical identity:** `neg(bnot(x)) = succ(x)` for all x in R_n.
 //!
@@ -358,6 +360,18 @@ fn properties() -> Vec<Property> {
             domain: Some("https://uor.foundation/op/Identity"),
             range: XSD_BOOLEAN,
         },
+        // Amendment 37: Enum variant alignment (Gap 11)
+        Property {
+            id: "https://uor.foundation/op/enumVariant",
+            label: "enumVariant",
+            comment: "The canonical Rust enum variant name corresponding to this \
+                      VerificationDomain individual. Provides formal alignment \
+                      between the OWL individual and the generated Rust enum.",
+            kind: PropertyKind::Annotation,
+            functional: true,
+            domain: Some("https://uor.foundation/op/VerificationDomain"),
+            range: XSD_STRING,
+        },
     ]
 }
 
@@ -370,7 +384,9 @@ fn individuals() -> Vec<Individual> {
             label: "Enumerative",
             comment: "Established by exhaustive traversal of R_n. Valid for all \
                       identities where the ring is finite.",
-            properties: &[],
+            properties: &[
+                ("https://uor.foundation/op/enumVariant", IndividualValue::Str("Enumerative")),
+            ],
         },
         Individual {
             id: "https://uor.foundation/op/Algebraic",
@@ -379,7 +395,9 @@ fn individuals() -> Vec<Individual> {
             comment: "Established by equational reasoning from ring or group axioms. \
                       Covers derivations via associativity, commutativity, inverse \
                       laws, and group presentations.",
-            properties: &[],
+            properties: &[
+                ("https://uor.foundation/op/enumVariant", IndividualValue::Str("Algebraic")),
+            ],
         },
         Individual {
             id: "https://uor.foundation/op/Geometric",
@@ -388,7 +406,9 @@ fn individuals() -> Vec<Individual> {
             comment: "Established by isometry, symmetry, or GeometricCharacter \
                       arguments. Covers dihedral actions, fixed-point analysis, \
                       automorphism groups, and affine embeddings.",
-            properties: &[],
+            properties: &[
+                ("https://uor.foundation/op/enumVariant", IndividualValue::Str("Geometric")),
+            ],
         },
         Individual {
             id: "https://uor.foundation/op/Analytical",
@@ -397,7 +417,9 @@ fn individuals() -> Vec<Individual> {
             comment: "Established via discrete differential calculus or metric \
                       analysis. Covers ring/Hamming derivatives (DC_), metric \
                       divergence (AM_), and adiabatic scheduling (AR_).",
-            properties: &[],
+            properties: &[
+                ("https://uor.foundation/op/enumVariant", IndividualValue::Str("Analytical")),
+            ],
         },
         Individual {
             id: "https://uor.foundation/op/Thermodynamic",
@@ -406,7 +428,9 @@ fn individuals() -> Vec<Individual> {
             comment: "Established via entropy, Landauer bounds, or Boltzmann \
                       distributions. Covers fiber entropy (TH_), reversible \
                       computation (RC_), and phase transitions.",
-            properties: &[],
+            properties: &[
+                ("https://uor.foundation/op/enumVariant", IndividualValue::Str("Thermodynamic")),
+            ],
         },
         Individual {
             id: "https://uor.foundation/op/Topological",
@@ -415,7 +439,9 @@ fn individuals() -> Vec<Individual> {
             comment: "Established via simplicial homology, cohomology, or \
                       constraint nerve analysis. Covers homological algebra (HA_) \
                       and ψ-pipeline identities.",
-            properties: &[],
+            properties: &[
+                ("https://uor.foundation/op/enumVariant", IndividualValue::Str("Topological")),
+            ],
         },
         Individual {
             id: "https://uor.foundation/op/Pipeline",
@@ -424,7 +450,9 @@ fn individuals() -> Vec<Individual> {
             comment: "Established by the inter-algebra map structure of the \
                       resolution pipeline. Covers φ-maps (phi_1–phi_6) and \
                       ψ-maps (psi_1–psi_6).",
-            properties: &[],
+            properties: &[
+                ("https://uor.foundation/op/enumVariant", IndividualValue::Str("Pipeline")),
+            ],
         },
         Individual {
             id: "https://uor.foundation/op/IndexTheoretic",
@@ -433,7 +461,9 @@ fn individuals() -> Vec<Individual> {
             comment: "Established by the composition of Analytical and Topological \
                       reasoning. The only domain requiring multiple op:verificationDomain \
                       assertions. Covers the UOR Index Theorem (IT_7a–IT_7d).",
-            properties: &[],
+            properties: &[
+                ("https://uor.foundation/op/enumVariant", IndividualValue::Str("IndexTheoretic")),
+            ],
         },
         // Amendment 32: SuperpositionDomain
         Individual {
@@ -443,7 +473,9 @@ fn individuals() -> Vec<Individual> {
             comment: "Established by superposition analysis of fiber states. \
                       Covers identities involving superposed (non-classical) \
                       fiber assignments where fibers carry complex amplitudes.",
-            properties: &[],
+            properties: &[
+                ("https://uor.foundation/op/enumVariant", IndividualValue::Str("SuperpositionDomain")),
+            ],
         },
         // Amendment 36: QuantumThermodynamic verification domain
         Individual {
@@ -454,7 +486,9 @@ fn individuals() -> Vec<Individual> {
                       analysis and classical thermodynamic reasoning. Covers \
                       identities relating von Neumann entropy of superposed \
                       states to Landauer costs of projective collapse (QM_).",
-            properties: &[],
+            properties: &[
+                ("https://uor.foundation/op/enumVariant", IndividualValue::Str("QuantumThermodynamic")),
+            ],
         },
         // Amendment 23: GeometricCharacter individuals (9)
         Individual {
@@ -5277,6 +5311,273 @@ fn individuals() -> Vec<Individual> {
                 ),
                 ("https://uor.foundation/op/verificationPathNote",
                  IndividualValue::Str("CollapsedFiberState → re-measurement is no-op → stepCount = 0")),
+            ],
+        },
+        // Amendment 37: Gap Closure identities (QM_5, RC_6, FPM_8–9, MN_8, QL_8, D_7, SP_1–4, PT_2a–2b, GD_6)
+        Individual {
+            id: "https://uor.foundation/op/QM_5",
+            type_: "https://uor.foundation/op/Identity",
+            label: "QM_5",
+            comment: "Amplitude normalization (Born rule): the sum of squared \
+                      amplitudes equals 1 for any well-formed SuperposedFiberState.",
+            properties: &[
+                ("https://uor.foundation/op/lhs", IndividualValue::Str("Σᵢ |αᵢ|²")),
+                ("https://uor.foundation/op/rhs", IndividualValue::Str("1")),
+                ("https://uor.foundation/op/forAll", IndividualValue::Str("SuperposedFiberState ψ")),
+                (
+                    "https://uor.foundation/op/verificationDomain",
+                    IndividualValue::IriRef("https://uor.foundation/op/QuantumThermodynamic"),
+                ),
+                ("https://uor.foundation/op/universallyValid", IndividualValue::Bool(true)),
+                ("https://uor.foundation/op/verificationPathNote",
+                 IndividualValue::Str("Born rule → probability axioms → normalization")),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/op/RC_6",
+            type_: "https://uor.foundation/op/Identity",
+            label: "RC_6",
+            comment: "Amplitude renormalization: a SuperposedFiberState can always \
+                      be normalized to satisfy QM_5.",
+            properties: &[
+                ("https://uor.foundation/op/lhs", IndividualValue::Str("normalize(ψ)")),
+                ("https://uor.foundation/op/rhs", IndividualValue::Str("ψ / sqrt(Σ |αᵢ|²)")),
+                ("https://uor.foundation/op/forAll", IndividualValue::Str("SuperposedFiberState ψ")),
+                (
+                    "https://uor.foundation/op/verificationDomain",
+                    IndividualValue::IriRef("https://uor.foundation/op/SuperpositionDomain"),
+                ),
+                ("https://uor.foundation/op/universallyValid", IndividualValue::Bool(true)),
+                ("https://uor.foundation/op/verificationPathNote",
+                 IndividualValue::Str("Division by norm → idempotent normalization")),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/op/FPM_8",
+            type_: "https://uor.foundation/op/Identity",
+            label: "FPM_8",
+            comment: "Partition exhaustiveness: the four component cardinalities \
+                      sum to the ring size.",
+            properties: &[
+                ("https://uor.foundation/op/lhs", IndividualValue::Str("|Irr| + |Red| + |Unit| + |Ext|")),
+                ("https://uor.foundation/op/rhs", IndividualValue::Str("2ⁿ")),
+                ("https://uor.foundation/op/forAll", IndividualValue::Str("Partition P over R_n")),
+                (
+                    "https://uor.foundation/op/verificationDomain",
+                    IndividualValue::IriRef("https://uor.foundation/op/Enumerative"),
+                ),
+                ("https://uor.foundation/op/universallyValid", IndividualValue::Bool(true)),
+                ("https://uor.foundation/op/verificationPathNote",
+                 IndividualValue::Str("Exhaustive partition → cardinality sum → ring size")),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/op/FPM_9",
+            type_: "https://uor.foundation/op/Identity",
+            label: "FPM_9",
+            comment: "Exterior membership criterion: x is exterior iff x is not \
+                      in the carrier of T.",
+            properties: &[
+                ("https://uor.foundation/op/lhs", IndividualValue::Str("x ∈ Ext(T)")),
+                ("https://uor.foundation/op/rhs", IndividualValue::Str("x ∉ carrier(T)")),
+                ("https://uor.foundation/op/forAll", IndividualValue::Str("TypeDefinition T, Datum x")),
+                (
+                    "https://uor.foundation/op/verificationDomain",
+                    IndividualValue::IriRef("https://uor.foundation/op/Algebraic"),
+                ),
+                ("https://uor.foundation/op/universallyValid", IndividualValue::Bool(true)),
+                ("https://uor.foundation/op/verificationPathNote",
+                 IndividualValue::Str("Carrier complement → context-dependent exterior")),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/op/MN_8",
+            type_: "https://uor.foundation/op/Identity",
+            label: "MN_8",
+            comment: "Holonomy classification covering: every ConstrainedType with \
+                      a computed holonomy group is either flat or twisted, not both.",
+            properties: &[
+                ("https://uor.foundation/op/lhs", IndividualValue::Str("holonomyClassified(T)")),
+                ("https://uor.foundation/op/rhs", IndividualValue::Str("isFlatType(T) xor isTwistedType(T)")),
+                ("https://uor.foundation/op/forAll", IndividualValue::Str("ConstrainedType T with holonomyGroup")),
+                (
+                    "https://uor.foundation/op/verificationDomain",
+                    IndividualValue::IriRef("https://uor.foundation/op/Topological"),
+                ),
+                ("https://uor.foundation/op/universallyValid", IndividualValue::Bool(true)),
+                ("https://uor.foundation/op/verificationPathNote",
+                 IndividualValue::Str("Holonomy group → flat iff trivial → bivalent classification")),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/op/QL_8",
+            type_: "https://uor.foundation/op/Identity",
+            label: "QL_8",
+            comment: "Quantum level chain inverse: levelSuccessor is the left \
+                      inverse of nextLevel.",
+            properties: &[
+                ("https://uor.foundation/op/lhs", IndividualValue::Str("levelSuccessor(nextLevel(Q_k))")),
+                ("https://uor.foundation/op/rhs", IndividualValue::Str("Q_k")),
+                ("https://uor.foundation/op/forAll", IndividualValue::Str("QuantumLevel Q_k with nextLevel defined")),
+                (
+                    "https://uor.foundation/op/verificationDomain",
+                    IndividualValue::IriRef("https://uor.foundation/op/Algebraic"),
+                ),
+                ("https://uor.foundation/op/universallyValid", IndividualValue::Bool(true)),
+                ("https://uor.foundation/op/verificationPathNote",
+                 IndividualValue::Str("Chain successor → left inverse → Q_k recovery")),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/op/D_7",
+            type_: "https://uor.foundation/op/Identity",
+            label: "D_7",
+            comment: "Dihedral composition rule: (rᵃ sᵖ)(rᵇ sᵠ) = \
+                      r^(a + (-1)ᵖ b mod 2ⁿ) s^(p xor q).",
+            properties: &[
+                ("https://uor.foundation/op/lhs", IndividualValue::Str("compose(rᵃ sᵖ, rᵇ sᵠ)")),
+                ("https://uor.foundation/op/rhs", IndividualValue::Str("r^((a + (-1)ᵖ b) mod 2ⁿ) s^(p xor q)")),
+                ("https://uor.foundation/op/forAll", IndividualValue::Str("DihedralElement rᵃ sᵖ, rᵇ sᵠ in D_{2ⁿ}")),
+                (
+                    "https://uor.foundation/op/verificationDomain",
+                    IndividualValue::IriRef("https://uor.foundation/op/Geometric"),
+                ),
+                ("https://uor.foundation/op/universallyValid", IndividualValue::Bool(true)),
+                ("https://uor.foundation/op/verificationPathNote",
+                 IndividualValue::Str("Dihedral presentation → semidirect product → composition formula")),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/op/SP_1",
+            type_: "https://uor.foundation/op/Identity",
+            label: "SP_1",
+            comment: "Classical embedding: superposition resolution of a classical \
+                      (non-superposed) datum reduces to classical resolution.",
+            properties: &[
+                ("https://uor.foundation/op/lhs", IndividualValue::Str("resolve_superposition(classical(x))")),
+                ("https://uor.foundation/op/rhs", IndividualValue::Str("resolve_classical(x)")),
+                ("https://uor.foundation/op/forAll", IndividualValue::Str("Datum x")),
+                (
+                    "https://uor.foundation/op/verificationDomain",
+                    IndividualValue::IriRef("https://uor.foundation/op/SuperpositionDomain"),
+                ),
+                ("https://uor.foundation/op/universallyValid", IndividualValue::Bool(true)),
+                ("https://uor.foundation/op/verificationPathNote",
+                 IndividualValue::Str("Classical datum → single fiber with amplitude 1 → classical path")),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/op/SP_2",
+            type_: "https://uor.foundation/op/Identity",
+            label: "SP_2",
+            comment: "Collapse–resolve commutativity: collapsing then resolving \
+                      classically equals resolving in superposition then collapsing.",
+            properties: &[
+                ("https://uor.foundation/op/lhs", IndividualValue::Str("collapse(resolve_superposition(ψ))")),
+                ("https://uor.foundation/op/rhs", IndividualValue::Str("resolve_classical(collapse(ψ))")),
+                ("https://uor.foundation/op/forAll", IndividualValue::Str("SuperposedFiberState ψ")),
+                (
+                    "https://uor.foundation/op/verificationDomain",
+                    IndividualValue::IriRef("https://uor.foundation/op/QuantumThermodynamic"),
+                ),
+                ("https://uor.foundation/op/universallyValid", IndividualValue::Bool(true)),
+                ("https://uor.foundation/op/verificationPathNote",
+                 IndividualValue::Str("Projective collapse → classical fiber → resolution commutativity")),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/op/SP_3",
+            type_: "https://uor.foundation/op/Identity",
+            label: "SP_3",
+            comment: "Amplitude preservation: the SuperpositionResolver preserves \
+                      the normalized amplitude vector during ψ-pipeline traversal.",
+            properties: &[
+                ("https://uor.foundation/op/lhs", IndividualValue::Str("amplitudeVector(resolve_superposition(ψ))")),
+                ("https://uor.foundation/op/rhs", IndividualValue::Str("normalized")),
+                ("https://uor.foundation/op/forAll", IndividualValue::Str("SuperposedFiberState ψ")),
+                (
+                    "https://uor.foundation/op/verificationDomain",
+                    IndividualValue::IriRef("https://uor.foundation/op/SuperpositionDomain"),
+                ),
+                ("https://uor.foundation/op/universallyValid", IndividualValue::Bool(true)),
+                ("https://uor.foundation/op/verificationPathNote",
+                 IndividualValue::Str("ψ-pipeline → amplitude tracking → normalization invariant")),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/op/SP_4",
+            type_: "https://uor.foundation/op/Identity",
+            label: "SP_4",
+            comment: "Born rule outcome probability: the probability of collapsing \
+                      to fiber k equals the squared amplitude of that fiber.",
+            properties: &[
+                ("https://uor.foundation/op/lhs", IndividualValue::Str("P(collapse to fiber k)")),
+                ("https://uor.foundation/op/rhs", IndividualValue::Str("|α_k|²")),
+                ("https://uor.foundation/op/forAll", IndividualValue::Str("SuperposedFiberState ψ, fiber index k")),
+                (
+                    "https://uor.foundation/op/verificationDomain",
+                    IndividualValue::IriRef("https://uor.foundation/op/QuantumThermodynamic"),
+                ),
+                ("https://uor.foundation/op/universallyValid", IndividualValue::Bool(true)),
+                ("https://uor.foundation/op/verificationPathNote",
+                 IndividualValue::Str("Born rule → squared amplitude → outcome probability")),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/op/PT_2a",
+            type_: "https://uor.foundation/op/Identity",
+            label: "PT_2a",
+            comment: "Product type partition tensor: the partition of a product \
+                      type is the tensor product of the component partitions.",
+            properties: &[
+                ("https://uor.foundation/op/lhs", IndividualValue::Str("Π(A × B)")),
+                ("https://uor.foundation/op/rhs", IndividualValue::Str("PartitionProduct(Π(A), Π(B))")),
+                ("https://uor.foundation/op/forAll", IndividualValue::Str("ProductType A × B")),
+                (
+                    "https://uor.foundation/op/verificationDomain",
+                    IndividualValue::IriRef("https://uor.foundation/op/Algebraic"),
+                ),
+                ("https://uor.foundation/op/universallyValid", IndividualValue::Bool(true)),
+                ("https://uor.foundation/op/verificationPathNote",
+                 IndividualValue::Str("Product type → component-wise partition → tensor product")),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/op/PT_2b",
+            type_: "https://uor.foundation/op/Identity",
+            label: "PT_2b",
+            comment: "Sum type partition coproduct: the partition of a sum type \
+                      is the coproduct of the variant partitions.",
+            properties: &[
+                ("https://uor.foundation/op/lhs", IndividualValue::Str("Π(A + B)")),
+                ("https://uor.foundation/op/rhs", IndividualValue::Str("PartitionCoproduct(Π(A), Π(B))")),
+                ("https://uor.foundation/op/forAll", IndividualValue::Str("SumType A + B")),
+                (
+                    "https://uor.foundation/op/verificationDomain",
+                    IndividualValue::IriRef("https://uor.foundation/op/Algebraic"),
+                ),
+                ("https://uor.foundation/op/universallyValid", IndividualValue::Bool(true)),
+                ("https://uor.foundation/op/verificationPathNote",
+                 IndividualValue::Str("Sum type → variant partition → disjoint union coproduct")),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/op/GD_6",
+            type_: "https://uor.foundation/op/Identity",
+            label: "GD_6",
+            comment: "Geodesic predicate decomposition: a trace is geodesic iff \
+                      it is both AR_1-ordered and DC_10-selected.",
+            properties: &[
+                ("https://uor.foundation/op/lhs", IndividualValue::Str("isGeodesic(trace)")),
+                ("https://uor.foundation/op/rhs", IndividualValue::Str("isAR1Ordered(trace) ∧ isDC10Selected(trace)")),
+                ("https://uor.foundation/op/forAll", IndividualValue::Str("ComputationTrace trace")),
+                (
+                    "https://uor.foundation/op/verificationDomain",
+                    IndividualValue::IriRef("https://uor.foundation/op/Analytical"),
+                ),
+                ("https://uor.foundation/op/universallyValid", IndividualValue::Bool(true)),
+                ("https://uor.foundation/op/verificationPathNote",
+                 IndividualValue::Str("Geodesic condition → AR_1 ordering + DC_10 selection → conjunction")),
             ],
         },
     ]

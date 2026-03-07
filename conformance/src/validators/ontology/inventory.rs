@@ -2,9 +2,9 @@
 //!
 //! Verifies that the built ontology artifact contains the correct counts:
 //! - 16 namespaces (3 Kernel / 10 Bridge / 3 User)
-//! - 180 classes
-//! - 337 namespace-level properties + 1 global annotation = 338 via property_count()
-//! - 652 named individuals (each with required property assertions)
+//! - 205 classes
+//! - 407 namespace-level properties + 1 global annotation = 408 via property_count()
+//! - 740 named individuals (each with required property assertions)
 
 use std::path::Path;
 
@@ -16,9 +16,9 @@ use crate::report::{ConformanceReport, TestResult};
 
 /// Expected inventory counts for the UOR Foundation ontology.
 const EXPECTED_NAMESPACES: usize = 16;
-const EXPECTED_CLASSES: usize = 200;
-const EXPECTED_PROPERTIES: usize = 387;
-const EXPECTED_INDIVIDUALS: usize = 712;
+const EXPECTED_CLASSES: usize = 205;
+const EXPECTED_PROPERTIES: usize = 408;
+const EXPECTED_INDIVIDUALS: usize = 740;
 
 /// Validates the ontology inventory counts in the built JSON-LD artifact.
 ///
@@ -57,6 +57,12 @@ pub fn validate(artifacts: &Path) -> Result<ConformanceReport> {
     validate_surface_symmetry_identity(&mut report);
     validate_saturation_phase_individuals(&mut report);
     validate_achievability_status_individuals(&mut report);
+    // Amendment 37: Gap closure validators
+    validate_superposition_identity_coverage(&mut report);
+    validate_partition_tensor_product(&mut report);
+    validate_geodesic_decomposition(&mut report);
+    validate_born_rule_coverage(&mut report);
+    validate_enum_variant_alignment(&mut report);
 
     // Validate the built JSON-LD artifact
     let json_path = artifacts.join("uor.foundation.json");
@@ -373,7 +379,8 @@ fn validate_identity_completeness(report: &mut ConformanceReport) {
         "SC_",  // Amendment 34: Morphospace Achievability
         "MS_",  // Amendment 35: Computational Geodesic
         "GD_",  // Amendment 36: Measurement Boundary
-        "QM_",
+        "QM_",  // Amendment 37: SuperpositionResolver identities
+        "SP_",
     ];
     for prefix in &expected_prefixes {
         let has = identities.iter().any(|i| i.label.starts_with(prefix));
@@ -1011,6 +1018,137 @@ fn validate_achievability_status_individuals(report: &mut ConformanceReport) {
         report.push(TestResult::pass(
             validator,
             "All 2 AchievabilityStatus individuals present",
+        ));
+    }
+}
+
+fn validate_superposition_identity_coverage(report: &mut ConformanceReport) {
+    let ontology = uor_ontology::Ontology::full();
+    let validator = "ontology/inventory/superposition_identity";
+    let sp_ids = [
+        "https://uor.foundation/op/SP_1",
+        "https://uor.foundation/op/SP_2",
+        "https://uor.foundation/op/SP_3",
+        "https://uor.foundation/op/SP_4",
+    ];
+    let mut all_found = true;
+    for iri in &sp_ids {
+        if ontology.find_individual(iri).is_none() {
+            report.push(TestResult::fail(
+                validator,
+                format!("SP identity {} not found", iri),
+            ));
+            all_found = false;
+        }
+    }
+    if all_found {
+        report.push(TestResult::pass(validator, "All 4 SP_ identities present"));
+    }
+}
+
+fn validate_partition_tensor_product(report: &mut ConformanceReport) {
+    let ontology = uor_ontology::Ontology::full();
+    let validator = "ontology/inventory/partition_tensor";
+    let class_iris = [
+        "https://uor.foundation/partition/PartitionProduct",
+        "https://uor.foundation/partition/PartitionCoproduct",
+    ];
+    let mut all_found = true;
+    for iri in &class_iris {
+        if ontology.find_class(iri).is_none() {
+            report.push(TestResult::fail(
+                validator,
+                format!("Class {} not found", iri),
+            ));
+            all_found = false;
+        }
+    }
+    if all_found {
+        report.push(TestResult::pass(
+            validator,
+            "PartitionProduct and PartitionCoproduct classes present",
+        ));
+    }
+}
+
+fn validate_geodesic_decomposition(report: &mut ConformanceReport) {
+    let ontology = uor_ontology::Ontology::full();
+    let validator = "ontology/inventory/geodesic_decomposition";
+    if ontology
+        .find_individual("https://uor.foundation/op/GD_6")
+        .is_some()
+    {
+        report.push(TestResult::pass(
+            validator,
+            "GD_6 geodesic decomposition identity present",
+        ));
+    } else {
+        report.push(TestResult::fail(validator, "GD_6 identity not found"));
+    }
+}
+
+fn validate_born_rule_coverage(report: &mut ConformanceReport) {
+    let ontology = uor_ontology::Ontology::full();
+    let validator = "ontology/inventory/born_rule";
+    let mut all_found = true;
+    if ontology
+        .find_individual("https://uor.foundation/op/QM_5")
+        .is_none()
+    {
+        report.push(TestResult::fail(validator, "QM_5 identity not found"));
+        all_found = false;
+    }
+    if ontology
+        .find_class("https://uor.foundation/cert/BornRuleVerification")
+        .is_none()
+    {
+        report.push(TestResult::fail(
+            validator,
+            "BornRuleVerification class not found",
+        ));
+        all_found = false;
+    }
+    if all_found {
+        report.push(TestResult::pass(
+            validator,
+            "QM_5 identity and BornRuleVerification class present",
+        ));
+    }
+}
+
+fn validate_enum_variant_alignment(report: &mut ConformanceReport) {
+    let ontology = uor_ontology::Ontology::full();
+    let validator = "ontology/inventory/enum_variant";
+    let domain_iris = [
+        "https://uor.foundation/op/Enumerative",
+        "https://uor.foundation/op/Algebraic",
+        "https://uor.foundation/op/Geometric",
+        "https://uor.foundation/op/Analytical",
+        "https://uor.foundation/op/Thermodynamic",
+        "https://uor.foundation/op/Topological",
+        "https://uor.foundation/op/Pipeline",
+        "https://uor.foundation/op/IndexTheoretic",
+        "https://uor.foundation/op/SuperpositionDomain",
+        "https://uor.foundation/op/QuantumThermodynamic",
+    ];
+    let ev_prop = "https://uor.foundation/op/enumVariant";
+    let mut all_valid = true;
+    for iri in &domain_iris {
+        if let Some(ind) = ontology.find_individual(iri) {
+            let has_ev = ind.properties.iter().any(|(k, _)| *k == ev_prop);
+            if !has_ev {
+                report.push(TestResult::fail(
+                    validator,
+                    format!("VerificationDomain {} missing enumVariant", iri),
+                ));
+                all_valid = false;
+            }
+        }
+    }
+    if all_valid {
+        report.push(TestResult::pass(
+            validator,
+            "All 10 VerificationDomain individuals have enumVariant",
         ));
     }
 }

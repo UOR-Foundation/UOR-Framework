@@ -2,7 +2,7 @@
 
 ## Definition
 
-The UOR Foundation ontology formalizes **7 algebras** that govern computation
+The UOR Foundation ontology formalizes **7 core algebras** (with additional identity families from Amendments 23–37) that govern computation
 over the ring R_n = Z/(2^n)Z. Each algebra is encoded as a set of named
 {@class https://uor.foundation/op/Identity} individuals in the `op/` namespace,
 with `lhs`, `rhs`, and `forAll` properties specifying the algebraic equation

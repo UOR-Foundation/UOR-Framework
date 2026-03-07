@@ -123,6 +123,10 @@ pub trait DihedralElement<P: Primitives>: HolonomyObservable<P> {
     fn is_identity_element(&self) -> P::Boolean;
     /// The order of this element in D_{2^n}: the smallest k >= 1 such that g^k = id. For neg and bnot: order 2.
     fn element_order(&self) -> P::PositiveInteger;
+    /// The rotation exponent k ∈ \\[0, 2^n) of this dihedral element in the standard representation r^k s^s. Together with reflectionBit, uniquely identifies the element within D_\{2^n\}.
+    fn rotation_exponent(&self) -> P::NonNegativeInteger;
+    /// The reflection flag s ∈ \{0,1\} of this dihedral element. False = pure rotation (r^k), true = reflection (r^k·s). D_7 defines composition: (r^a s^p)(r^b s^q) = r^(a + (-1)^p b) s^(p XOR q).
+    fn reflection_bit(&self) -> P::Boolean;
 }
 
 /// Fiber-by-fiber curvature decomposition. J_k measures the discrete derivative of the incompatibility metric at fiber position k: J_k = |d_R(x, succ(x)) - d_H(x, succ(x))| restricted to position k.

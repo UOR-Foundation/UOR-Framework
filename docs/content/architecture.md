@@ -90,7 +90,7 @@ The conformance suite is the **single gate** — all components must pass before
 
 - Templates use the Tera template engine
 - Namespace pages are auto-generated (no hand-written HTML for spec terms)
-- Search index is generated from all 200 classes, 387 properties, 712 individuals
+- Search index is generated from all 205 classes, 408 properties, 740 individuals
 - No external dependencies (no CDN, no tracking, no third-party scripts)
 
 ## Build Pipeline

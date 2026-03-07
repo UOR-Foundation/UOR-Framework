@@ -697,6 +697,31 @@ fn properties() -> Vec<Property> {
             domain: Some("https://uor.foundation/type/CollapsedFiberState"),
             range: XSD_DECIMAL,
         },
+        // Amendment 37: Amplitude normalization verification (Gap 1)
+        Property {
+            id: "https://uor.foundation/type/normalizationVerified",
+            label: "normalizationVerified",
+            comment: "Whether the amplitude vector of this SuperposedFiberState \
+                      satisfies the normalization condition Σ|αᵢ|² = 1 (QM_5). \
+                      Set by the SuperpositionResolver after verification.",
+            kind: PropertyKind::Datatype,
+            functional: true,
+            domain: Some("https://uor.foundation/type/SuperposedFiberState"),
+            range: XSD_BOOLEAN,
+        },
+        // Amendment 37: Holonomy classification flag (Gap 4)
+        Property {
+            id: "https://uor.foundation/type/holonomyClassified",
+            label: "holonomyClassified",
+            comment: "Whether this ConstrainedType has been classified as FlatType \
+                      or TwistedType by the MonodromyResolver. The MN_8 identity \
+                      guarantees this is a bivalent classification: \
+                      holonomyClassified(T) iff isFlatType(T) xor isTwistedType(T).",
+            kind: PropertyKind::Datatype,
+            functional: true,
+            domain: Some("https://uor.foundation/type/ConstrainedType"),
+            range: XSD_BOOLEAN,
+        },
     ]
 }
 

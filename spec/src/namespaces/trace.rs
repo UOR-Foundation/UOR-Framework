@@ -85,6 +85,18 @@ fn classes() -> Vec<Class> {
             subclass_of: &["https://uor.foundation/trace/ComputationStep"],
             disjoint_with: &[],
         },
+        // Amendment 37: Measurement Outcome (Gap 10)
+        Class {
+            id: "https://uor.foundation/trace/MeasurementOutcome",
+            label: "MeasurementOutcome",
+            comment: "A single outcome of a projective measurement on a \
+                      SuperposedFiberState, recording the classical fiber \
+                      index (outcomeValue) and its Born-rule probability \
+                      |α_k|² (outcomeProbability). Multiple outcomes form \
+                      the probability distribution of a measurement.",
+            subclass_of: &[OWL_THING],
+            disjoint_with: &[],
+        },
     ]
 }
 
@@ -331,6 +343,62 @@ fn properties() -> Vec<Property> {
             functional: true,
             domain: Some("https://uor.foundation/trace/MeasurementEvent"),
             range: XSD_NON_NEGATIVE_INTEGER,
+        },
+        // Amendment 37: Amplitude vector on MeasurementEvent (Gap 1)
+        Property {
+            id: "https://uor.foundation/trace/amplitudeVector",
+            label: "amplitudeVector",
+            comment: "The full pre-collapse amplitude vector of all branches \
+                      at the time of measurement. Enables Born rule verification \
+                      (QM_5): P(outcome k) = |α_k|² / Σ|αᵢ|².",
+            kind: PropertyKind::Datatype,
+            functional: true,
+            domain: Some("https://uor.foundation/trace/MeasurementEvent"),
+            range: XSD_STRING,
+        },
+        // Amendment 37: Geodesic predicate decomposition (Gap 9)
+        Property {
+            id: "https://uor.foundation/trace/isAR1Ordered",
+            label: "isAR1Ordered",
+            comment: "Whether this computation trace has steps ordered by the \
+                      AR_1 adiabatic metric (decreasing freeCount × cost-per-fiber). \
+                      One of the two sub-predicates of isGeodesic (GD_6).",
+            kind: PropertyKind::Datatype,
+            functional: true,
+            domain: Some("https://uor.foundation/trace/ComputationTrace"),
+            range: XSD_BOOLEAN,
+        },
+        Property {
+            id: "https://uor.foundation/trace/isDC10Selected",
+            label: "isDC10Selected",
+            comment: "Whether each step of this computation trace was selected by \
+                      the DC_10 Jacobian criterion (maximal J_k among free fibers). \
+                      One of the two sub-predicates of isGeodesic (GD_6).",
+            kind: PropertyKind::Datatype,
+            functional: true,
+            domain: Some("https://uor.foundation/trace/ComputationTrace"),
+            range: XSD_BOOLEAN,
+        },
+        // Amendment 37: MeasurementOutcome properties (Gap 10)
+        Property {
+            id: "https://uor.foundation/trace/outcomeValue",
+            label: "outcomeValue",
+            comment: "The classical fiber index selected by projective collapse \
+                      in this measurement outcome.",
+            kind: PropertyKind::Datatype,
+            functional: true,
+            domain: Some("https://uor.foundation/trace/MeasurementOutcome"),
+            range: XSD_NON_NEGATIVE_INTEGER,
+        },
+        Property {
+            id: "https://uor.foundation/trace/outcomeProbability",
+            label: "outcomeProbability",
+            comment: "The Born-rule probability of this measurement outcome: \
+                      |α_k|² where α_k is the amplitude of the collapsed fiber.",
+            kind: PropertyKind::Datatype,
+            functional: true,
+            domain: Some("https://uor.foundation/trace/MeasurementOutcome"),
+            range: XSD_DECIMAL,
         },
     ]
 }

@@ -101,11 +101,11 @@ fn resolve_count(key: &str, index: &OntologyIndex) -> String {
         "classes" => index.classes.len().to_string(),
         "properties" => index.properties.len().to_string(),
         "individuals" => index.individuals.len().to_string(),
-        "amendments" => "36".to_string(),
-        "shacl_tests" => "74".to_string(),
+        "amendments" => "37".to_string(),
+        "shacl_tests" => "84".to_string(),
         "traits" => (index.classes.len() - 12).to_string(),
         "shapes" => index.classes.len().to_string(),
-        "identities" => "315".to_string(),
+        "identities" => "329".to_string(),
         _ => format!("{{@count:{}}}", key),
     }
 }

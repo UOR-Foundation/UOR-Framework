@@ -614,6 +614,31 @@ fn properties() -> Vec<Property> {
             domain: Some("https://uor.foundation/resolver/MeasurementResolver"),
             range: XSD_NON_NEGATIVE_INTEGER,
         },
+        // Amendment 37: Amplitude vector for SuperpositionResolver (Gap 1)
+        Property {
+            id: "https://uor.foundation/resolver/amplitudeVector",
+            label: "amplitudeVector",
+            comment: "The amplitude vector of all branches maintained by this \
+                      SuperpositionResolver during ψ-pipeline traversal. \
+                      Encoded as a comma-separated list of decimal amplitudes. \
+                      Must satisfy Σ|αᵢ|² = 1 (QM_5) after normalization.",
+            kind: PropertyKind::Datatype,
+            functional: true,
+            domain: Some("https://uor.foundation/resolver/SuperpositionResolver"),
+            range: XSD_STRING,
+        },
+        // Amendment 37: Prior amplitude vector for MeasurementResolver (Gap 10)
+        Property {
+            id: "https://uor.foundation/resolver/priorAmplitudeVector",
+            label: "priorAmplitudeVector",
+            comment: "The full vector of all branch amplitudes before projective \
+                      collapse. Recorded by the MeasurementResolver to enable \
+                      Born rule verification (QM_5): P(outcome k) = |α_k|².",
+            kind: PropertyKind::Datatype,
+            functional: true,
+            domain: Some("https://uor.foundation/resolver/MeasurementResolver"),
+            range: XSD_STRING,
+        },
     ]
 }
 

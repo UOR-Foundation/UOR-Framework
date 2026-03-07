@@ -44,6 +44,10 @@ pub trait ComputationTrace<P: Primitives> {
     type MeasurementEvent: MeasurementEvent<P>;
     /// A MeasurementEvent step within this computation trace.
     fn measurement_event(&self) -> &[Self::MeasurementEvent];
+    /// Whether this computation trace has steps ordered by the AR_1 adiabatic metric (decreasing freeCount × cost-per-fiber). One of the two sub-predicates of isGeodesic (GD_6).
+    fn is_ar1_ordered(&self) -> P::Boolean;
+    /// Whether each step of this computation trace was selected by the DC_10 Jacobian criterion (maximal J_k among free fibers). One of the two sub-predicates of isGeodesic (GD_6).
+    fn is_dc10_selected(&self) -> P::Boolean;
 }
 
 /// A single step in a computation trace: one operation applied to produce one output from one or more inputs.
@@ -98,6 +102,16 @@ pub trait MeasurementEvent<P: Primitives>: ComputationStep<P> {
     fn post_collapse_landauer_cost(&self) -> P::Decimal;
     /// The step index within the enclosing ComputationTrace at which this projective collapse occurred.
     fn collapse_step(&self) -> P::NonNegativeInteger;
+    /// The full pre-collapse amplitude vector of all branches at the time of measurement. Enables Born rule verification (QM_5): P(outcome k) = |α_k|² / Σ|αᵢ|².
+    fn amplitude_vector(&self) -> &P::String;
+}
+
+/// A single outcome of a projective measurement on a SuperposedFiberState, recording the classical fiber index (outcomeValue) and its Born-rule probability |α_k|² (outcomeProbability). Multiple outcomes form the probability distribution of a measurement.
+pub trait MeasurementOutcome<P: Primitives> {
+    /// The classical fiber index selected by projective collapse in this measurement outcome.
+    fn outcome_value(&self) -> P::NonNegativeInteger;
+    /// The Born-rule probability of this measurement outcome: |α_k|² where α_k is the amplitude of the collapsed fiber.
+    fn outcome_probability(&self) -> P::Decimal;
 }
 
 /// Canonical geodesic trace at quantum level Q0 (n=8). Demonstrates GD_1 through GD_3 at the base level.

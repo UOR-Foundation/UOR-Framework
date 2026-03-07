@@ -82,34 +82,64 @@ pub trait QuantumLevelBinding<P: Primitives> {
 pub trait QuantumThermodynamicDomain<P: Primitives> {}
 
 /// Established by exhaustive traversal of R_n. Valid for all identities where the ring is finite.
-pub mod enumerative {}
+pub mod enumerative {
+    /// `enumVariant`
+    pub const ENUM_VARIANT: &str = "Enumerative";
+}
 
 /// Established by equational reasoning from ring or group axioms. Covers derivations via associativity, commutativity, inverse laws, and group presentations.
-pub mod algebraic {}
+pub mod algebraic {
+    /// `enumVariant`
+    pub const ENUM_VARIANT: &str = "Algebraic";
+}
 
 /// Established by isometry, symmetry, or GeometricCharacter arguments. Covers dihedral actions, fixed-point analysis, automorphism groups, and affine embeddings.
-pub mod geometric {}
+pub mod geometric {
+    /// `enumVariant`
+    pub const ENUM_VARIANT: &str = "Geometric";
+}
 
 /// Established via discrete differential calculus or metric analysis. Covers ring/Hamming derivatives (DC_), metric divergence (AM_), and adiabatic scheduling (AR_).
-pub mod analytical {}
+pub mod analytical {
+    /// `enumVariant`
+    pub const ENUM_VARIANT: &str = "Analytical";
+}
 
 /// Established via entropy, Landauer bounds, or Boltzmann distributions. Covers fiber entropy (TH_), reversible computation (RC_), and phase transitions.
-pub mod thermodynamic {}
+pub mod thermodynamic {
+    /// `enumVariant`
+    pub const ENUM_VARIANT: &str = "Thermodynamic";
+}
 
 /// Established via simplicial homology, cohomology, or constraint nerve analysis. Covers homological algebra (HA_) and ψ-pipeline identities.
-pub mod topological {}
+pub mod topological {
+    /// `enumVariant`
+    pub const ENUM_VARIANT: &str = "Topological";
+}
 
 /// Established by the inter-algebra map structure of the resolution pipeline. Covers φ-maps (phi_1–phi_6) and ψ-maps (psi_1–psi_6).
-pub mod pipeline {}
+pub mod pipeline {
+    /// `enumVariant`
+    pub const ENUM_VARIANT: &str = "Pipeline";
+}
 
 /// Established by the composition of Analytical and Topological reasoning. The only domain requiring multiple op:verificationDomain assertions. Covers the UOR Index Theorem (IT_7a–IT_7d).
-pub mod index_theoretic {}
+pub mod index_theoretic {
+    /// `enumVariant`
+    pub const ENUM_VARIANT: &str = "IndexTheoretic";
+}
 
 /// Established by superposition analysis of fiber states. Covers identities involving superposed (non-classical) fiber assignments where fibers carry complex amplitudes.
-pub mod superposition_domain {}
+pub mod superposition_domain {
+    /// `enumVariant`
+    pub const ENUM_VARIANT: &str = "SuperpositionDomain";
+}
 
 /// Established by the intersection of quantum superposition analysis and classical thermodynamic reasoning. Covers identities relating von Neumann entropy of superposed states to Landauer costs of projective collapse (QM_).
-pub mod quantum_thermodynamic {}
+pub mod quantum_thermodynamic {
+    /// `enumVariant`
+    pub const ENUM_VARIANT: &str = "QuantumThermodynamic";
+}
 
 /// Reflection through the origin of the additive ring: neg(x) = -x mod 2^n. One of the two generators of D_{2^n}.
 pub mod ring_reflection {}
@@ -4550,6 +4580,238 @@ pub mod qm_4 {
     /// `verificationPathNote`
     pub const VERIFICATION_PATH_NOTE: &str =
         "CollapsedFiberState → re-measurement is no-op → stepCount = 0";
+}
+
+/// Amplitude normalization (Born rule): the sum of squared amplitudes equals 1 for any well-formed SuperposedFiberState.
+pub mod qm_5 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "SuperposedFiberState ψ";
+    /// `lhs`
+    pub const LHS: &str = "Σᵢ |αᵢ|²";
+    /// `rhs`
+    pub const RHS: &str = "1";
+    /// `universallyValid`
+    pub const UNIVERSALLY_VALID: bool = true;
+    /// `verificationDomain` -> `QuantumThermodynamic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/QuantumThermodynamic";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str = "Born rule → probability axioms → normalization";
+}
+
+/// Amplitude renormalization: a SuperposedFiberState can always be normalized to satisfy QM_5.
+pub mod rc_6 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "SuperposedFiberState ψ";
+    /// `lhs`
+    pub const LHS: &str = "normalize(ψ)";
+    /// `rhs`
+    pub const RHS: &str = "ψ / sqrt(Σ |αᵢ|²)";
+    /// `universallyValid`
+    pub const UNIVERSALLY_VALID: bool = true;
+    /// `verificationDomain` -> `SuperpositionDomain`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/SuperpositionDomain";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str = "Division by norm → idempotent normalization";
+}
+
+/// Partition exhaustiveness: the four component cardinalities sum to the ring size.
+pub mod fpm_8 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "Partition P over R_n";
+    /// `lhs`
+    pub const LHS: &str = "|Irr| + |Red| + |Unit| + |Ext|";
+    /// `rhs`
+    pub const RHS: &str = "2ⁿ";
+    /// `universallyValid`
+    pub const UNIVERSALLY_VALID: bool = true;
+    /// `verificationDomain` -> `Enumerative`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Enumerative";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str = "Exhaustive partition → cardinality sum → ring size";
+}
+
+/// Exterior membership criterion: x is exterior iff x is not in the carrier of T.
+pub mod fpm_9 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "TypeDefinition T, Datum x";
+    /// `lhs`
+    pub const LHS: &str = "x ∈ Ext(T)";
+    /// `rhs`
+    pub const RHS: &str = "x ∉ carrier(T)";
+    /// `universallyValid`
+    pub const UNIVERSALLY_VALID: bool = true;
+    /// `verificationDomain` -> `Algebraic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str = "Carrier complement → context-dependent exterior";
+}
+
+/// Holonomy classification covering: every ConstrainedType with a computed holonomy group is either flat or twisted, not both.
+pub mod mn_8 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "ConstrainedType T with holonomyGroup";
+    /// `lhs`
+    pub const LHS: &str = "holonomyClassified(T)";
+    /// `rhs`
+    pub const RHS: &str = "isFlatType(T) xor isTwistedType(T)";
+    /// `universallyValid`
+    pub const UNIVERSALLY_VALID: bool = true;
+    /// `verificationDomain` -> `Topological`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Topological";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str =
+        "Holonomy group → flat iff trivial → bivalent classification";
+}
+
+/// Quantum level chain inverse: levelSuccessor is the left inverse of nextLevel.
+pub mod ql_8 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "QuantumLevel Q_k with nextLevel defined";
+    /// `lhs`
+    pub const LHS: &str = "levelSuccessor(nextLevel(Q_k))";
+    /// `rhs`
+    pub const RHS: &str = "Q_k";
+    /// `universallyValid`
+    pub const UNIVERSALLY_VALID: bool = true;
+    /// `verificationDomain` -> `Algebraic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str = "Chain successor → left inverse → Q_k recovery";
+}
+
+/// Dihedral composition rule: (rᵃ sᵖ)(rᵇ sᵠ) = r^(a + (-1)ᵖ b mod 2ⁿ) s^(p xor q).
+pub mod d_7 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "DihedralElement rᵃ sᵖ, rᵇ sᵠ in D_{2ⁿ}";
+    /// `lhs`
+    pub const LHS: &str = "compose(rᵃ sᵖ, rᵇ sᵠ)";
+    /// `rhs`
+    pub const RHS: &str = "r^((a + (-1)ᵖ b) mod 2ⁿ) s^(p xor q)";
+    /// `universallyValid`
+    pub const UNIVERSALLY_VALID: bool = true;
+    /// `verificationDomain` -> `Geometric`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Geometric";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str =
+        "Dihedral presentation → semidirect product → composition formula";
+}
+
+/// Classical embedding: superposition resolution of a classical (non-superposed) datum reduces to classical resolution.
+pub mod sp_1 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "Datum x";
+    /// `lhs`
+    pub const LHS: &str = "resolve_superposition(classical(x))";
+    /// `rhs`
+    pub const RHS: &str = "resolve_classical(x)";
+    /// `universallyValid`
+    pub const UNIVERSALLY_VALID: bool = true;
+    /// `verificationDomain` -> `SuperpositionDomain`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/SuperpositionDomain";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str =
+        "Classical datum → single fiber with amplitude 1 → classical path";
+}
+
+/// Collapse–resolve commutativity: collapsing then resolving classically equals resolving in superposition then collapsing.
+pub mod sp_2 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "SuperposedFiberState ψ";
+    /// `lhs`
+    pub const LHS: &str = "collapse(resolve_superposition(ψ))";
+    /// `rhs`
+    pub const RHS: &str = "resolve_classical(collapse(ψ))";
+    /// `universallyValid`
+    pub const UNIVERSALLY_VALID: bool = true;
+    /// `verificationDomain` -> `QuantumThermodynamic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/QuantumThermodynamic";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str =
+        "Projective collapse → classical fiber → resolution commutativity";
+}
+
+/// Amplitude preservation: the SuperpositionResolver preserves the normalized amplitude vector during ψ-pipeline traversal.
+pub mod sp_3 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "SuperposedFiberState ψ";
+    /// `lhs`
+    pub const LHS: &str = "amplitudeVector(resolve_superposition(ψ))";
+    /// `rhs`
+    pub const RHS: &str = "normalized";
+    /// `universallyValid`
+    pub const UNIVERSALLY_VALID: bool = true;
+    /// `verificationDomain` -> `SuperpositionDomain`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/SuperpositionDomain";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str =
+        "ψ-pipeline → amplitude tracking → normalization invariant";
+}
+
+/// Born rule outcome probability: the probability of collapsing to fiber k equals the squared amplitude of that fiber.
+pub mod sp_4 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "SuperposedFiberState ψ, fiber index k";
+    /// `lhs`
+    pub const LHS: &str = "P(collapse to fiber k)";
+    /// `rhs`
+    pub const RHS: &str = "|α_k|²";
+    /// `universallyValid`
+    pub const UNIVERSALLY_VALID: bool = true;
+    /// `verificationDomain` -> `QuantumThermodynamic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/QuantumThermodynamic";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str = "Born rule → squared amplitude → outcome probability";
+}
+
+/// Product type partition tensor: the partition of a product type is the tensor product of the component partitions.
+pub mod pt_2a {
+    /// `forAll`
+    pub const FOR_ALL: &str = "ProductType A × B";
+    /// `lhs`
+    pub const LHS: &str = "Π(A × B)";
+    /// `rhs`
+    pub const RHS: &str = "PartitionProduct(Π(A), Π(B))";
+    /// `universallyValid`
+    pub const UNIVERSALLY_VALID: bool = true;
+    /// `verificationDomain` -> `Algebraic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str =
+        "Product type → component-wise partition → tensor product";
+}
+
+/// Sum type partition coproduct: the partition of a sum type is the coproduct of the variant partitions.
+pub mod pt_2b {
+    /// `forAll`
+    pub const FOR_ALL: &str = "SumType A + B";
+    /// `lhs`
+    pub const LHS: &str = "Π(A + B)";
+    /// `rhs`
+    pub const RHS: &str = "PartitionCoproduct(Π(A), Π(B))";
+    /// `universallyValid`
+    pub const UNIVERSALLY_VALID: bool = true;
+    /// `verificationDomain` -> `Algebraic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str =
+        "Sum type → variant partition → disjoint union coproduct";
+}
+
+/// Geodesic predicate decomposition: a trace is geodesic iff it is both AR_1-ordered and DC_10-selected.
+pub mod gd_6 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "ComputationTrace trace";
+    /// `lhs`
+    pub const LHS: &str = "isGeodesic(trace)";
+    /// `rhs`
+    pub const RHS: &str = "isAR1Ordered(trace) ∧ isDC10Selected(trace)";
+    /// `universallyValid`
+    pub const UNIVERSALLY_VALID: bool = true;
+    /// `verificationDomain` -> `Analytical`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Analytical";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str =
+        "Geodesic condition → AR_1 ordering + DC_10 selection → conjunction";
 }
 
 use crate::enums::PrimitiveOp;

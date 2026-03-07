@@ -739,6 +739,31 @@ fn properties() -> Vec<Property> {
             domain: Some("https://uor.foundation/observable/SynthesisSignature"),
             range: "https://uor.foundation/proof/Proof",
         },
+        // Amendment 37: DihedralElement internal algebra (Gap 6)
+        Property {
+            id: "https://uor.foundation/observable/rotationExponent",
+            label: "rotationExponent",
+            comment: "The rotation exponent k ∈ \\[0, 2^n) of this dihedral element \
+                      in the standard representation r^k s^s. Together with \
+                      reflectionBit, uniquely identifies the element within \
+                      D_\\{2^n\\}.",
+            kind: PropertyKind::Datatype,
+            functional: true,
+            domain: Some("https://uor.foundation/observable/DihedralElement"),
+            range: XSD_NON_NEGATIVE_INTEGER,
+        },
+        Property {
+            id: "https://uor.foundation/observable/reflectionBit",
+            label: "reflectionBit",
+            comment: "The reflection flag s ∈ \\{0,1\\} of this dihedral element. \
+                      False = pure rotation (r^k), true = reflection (r^k·s). \
+                      D_7 defines composition: (r^a s^p)(r^b s^q) = \
+                      r^(a + (-1)^p b) s^(p XOR q).",
+            kind: PropertyKind::Datatype,
+            functional: true,
+            domain: Some("https://uor.foundation/observable/DihedralElement"),
+            range: XSD_BOOLEAN,
+        },
     ]
 }
 

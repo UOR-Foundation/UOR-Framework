@@ -115,7 +115,7 @@ See [Homology](concepts/homology.html), [Cohomology](concepts/cohomology.html),
 
 ## Algebraic Verification
 
-The framework includes **250 named algebraic identities** spanning 7 algebras:
+The framework includes **{@count:identities} named algebraic identities** spanning 7 core algebras (with additional identity families from Amendments 23–37):
 Ring, Boolean, Cross-Structure, Dihedral, Unit, Affine, and Carry. Each identity is a named
 {@class https://uor.foundation/op/Identity} individual with `lhs`, `rhs`, and `forAll`
 properties specifying the equation and its domain.
@@ -124,10 +124,11 @@ Every identity carries typed grounding properties:
 - {@prop https://uor.foundation/op/verificationDomain}: one or more references to a
   {@class https://uor.foundation/op/VerificationDomain} individual identifying the
   mathematical discipline (Enumerative, Algebraic, Geometric, Analytical, Thermodynamic,
-  Topological, Pipeline, or IndexTheoretic).
+  Topological, Pipeline, IndexTheoretic, SuperpositionDomain, or QuantumThermodynamic).
 - {@prop https://uor.foundation/op/verificationPathNote}: a human-readable annotation
   describing the specific verification route.
 
-Of the 250 identities, 48 are verifiable by exhaustive enumeration and 202 are derivable
-from axioms. See [Algebraic Laws](concepts/algebraic-laws.html) for the seven algebras and
+Of the {@count:identities} identities, those with `universallyValid = true` are derivable
+from axioms; the remainder are verifiable by exhaustive enumeration at Q0.
+See [Algebraic Laws](concepts/algebraic-laws.html) for the core algebras and
 their identities.
