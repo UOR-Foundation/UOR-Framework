@@ -76,6 +76,8 @@ pub fn validate() -> ConformanceReport {
         "http://www.w3.org/2001/XMLSchema#double",
         "http://www.w3.org/2001/XMLSchema#decimal",
         "xsd:decimal",
+        "http://www.w3.org/2001/XMLSchema#hexBinary",
+        "xsd:hexBinary",
         "http://www.w3.org/2002/07/owl#Thing",
         "http://www.w3.org/2002/07/owl#Class",
         "http://www.w3.org/1999/02/22-rdf-syntax-ns#List",

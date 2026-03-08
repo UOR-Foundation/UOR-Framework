@@ -568,6 +568,17 @@ pub fn validate() -> ConformanceReport {
         tests::fixtures::TEST110_TOWER_ROUNDTRIP,
         &mut report,
     );
+    // Amendment 43: Cryptographic Primitive Pinning
+    run_test(
+        "test111_address_crypto_pinning",
+        tests::fixtures::TEST111_ADDRESS_CRYPTO_PINNING,
+        &mut report,
+    );
+    run_test(
+        "test112_address_canonical_bytes",
+        tests::fixtures::TEST112_ADDRESS_CANONICAL_BYTES,
+        &mut report,
+    );
 
     // Verify test fixture count matches expected
     let test_count = report.results.len() - before_tests;
@@ -723,6 +734,8 @@ fn run_test(name: &str, turtle_src: &str, report: &mut ConformanceReport) {
         "test108_inductive_proof" => validate_basic_turtle(turtle_src),
         "test109_validity_scope" => validate_basic_turtle(turtle_src),
         "test110_tower_roundtrip" => validate_basic_turtle(turtle_src),
+        "test111_address_crypto_pinning" => validate_basic_turtle(turtle_src),
+        "test112_address_canonical_bytes" => validate_basic_turtle(turtle_src),
         _ => Ok(()),
     };
 

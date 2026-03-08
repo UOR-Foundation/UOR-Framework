@@ -14,8 +14,12 @@ pub trait Address<P: Primitives> {
     fn length(&self) -> P::NonNegativeInteger;
     /// The datum that this address references. Inverse of schema:glyph.
     fn addresses(&self) -> &P::String;
-    /// The content hash string extracted from this address.
+    /// The content hash of this address. Format: (blake3|sha256) colon followed by 64 lowercase hex characters. The algorithm prefix must match u:digestAlgorithm.
     fn digest(&self) -> &P::String;
+    /// The hash algorithm used to produce u:digest. Allowed values: 'blake3' (primary), 'sha256' (secondary).
+    fn digest_algorithm(&self) -> &P::String;
+    /// The canonical byte serialisation of the addressed datum, per Amendment 43 section 2: header(k) || le_bytes(x, k+1). This is the exact byte string hashed to produce u:digest.
+    fn canonical_bytes(&self) -> &P::String;
     /// The quantum level n of this address. The address encodes a datum in R_n = Z/(2^n)Z.
     fn quantum(&self) -> P::PositiveInteger;
 }

@@ -1,6 +1,7 @@
-//! Ontology artifact validators (JSON-LD, OWL, RDF, SHACL, inventory, generated crate).
+//! Ontology artifact validators (EBNF, JSON-LD, OWL, RDF, SHACL, inventory, generated crate).
 
 pub mod crate_;
+pub mod ebnf;
 pub mod inventory;
 pub mod jsonld;
 pub mod owl;

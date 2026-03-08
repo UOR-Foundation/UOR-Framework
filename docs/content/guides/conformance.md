@@ -19,6 +19,7 @@ cargo run --bin uor-conformance
 | `public/uor.foundation.json` | OWL 2 DL | `validators/ontology/owl.rs` |
 | Inventory counts | {@count:namespaces}/{@count:classes}/{@count:properties}/{@count:individuals} | `validators/ontology/inventory.rs` |
 | `public/uor.foundation.ttl` | RDF 1.1 / Turtle 1.1 | `validators/ontology/rdf.rs` |
+| `public/uor.term.ebnf` | ISO/IEC 14977 EBNF | `validators/ontology/ebnf.rs` |
 | {@count:shacl_tests} test instance graphs | SHACL | `validators/ontology/shacl.rs` |
 
 ### Documentation Conformance
@@ -141,6 +142,13 @@ cargo run --bin uor-conformance
 | test108 | InductiveProof with baseCase, inductiveStep, validForKAtLeast (Amendment 41) |
 | test109 | Identity with validityKind=ParametricLower, validKMin=3 (Amendment 41) |
 | test110 | Full tower round-trip: Q0 → LiftChain → LiftChainCertificate → Q\_k (Amendment 41) |
+
+### SHACL Tests 111–112 (v5.2.0)
+
+| Test | What It Validates |
+|------|-------------------|
+| test111 | Address with digestAlgorithm, canonicalBytes, blake3-prefixed digest (Amendment 43) |
+| test112 | Address at Q1 with 6-byte canonical form and sha256 algorithm (Amendment 43) |
 
 ## Adding a New SHACL Test
 

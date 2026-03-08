@@ -16,6 +16,7 @@ The website follows a clear hierarchy:
 /uor.foundation.json    ← from uor-build
 /uor.foundation.ttl     ← from uor-build
 /uor.foundation.nt      ← from uor-build
+/uor.term.ebnf          ← from uor-build (Amendment 42)
 ```
 
 ## Navigation
@@ -43,7 +44,7 @@ The website must function without any external network requests:
 
 ## Search
 
-- `search-index.json` contains all 213 class labels, 436 property labels, 758 individual labels.
+- `search-index.json` contains all 213 class labels, 438 property labels, 758 individual labels.
 - Client-side search parses `search-index.json` and filters on input.
 - Search results link to the relevant namespace page.
 - Search works without JavaScript disabled (falls back to sitemap).

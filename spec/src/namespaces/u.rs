@@ -107,11 +107,35 @@ fn properties() -> Vec<Property> {
         Property {
             id: "https://uor.foundation/u/digest",
             label: "digest",
-            comment: "The content hash string extracted from this address.",
+            comment: "The content hash of this address. Format: \
+                      (blake3|sha256) colon followed by 64 lowercase hex characters. \
+                      The algorithm prefix must match u:digestAlgorithm.",
             kind: PropertyKind::Datatype,
             functional: true,
             domain: Some("https://uor.foundation/u/Address"),
             range: XSD_STRING,
+        },
+        // Amendment 43: Cryptographic Primitive Pinning
+        Property {
+            id: "https://uor.foundation/u/digestAlgorithm",
+            label: "digestAlgorithm",
+            comment: "The hash algorithm used to produce u:digest. \
+                      Allowed values: 'blake3' (primary), 'sha256' (secondary).",
+            kind: PropertyKind::Datatype,
+            functional: true,
+            domain: Some("https://uor.foundation/u/Address"),
+            range: XSD_STRING,
+        },
+        Property {
+            id: "https://uor.foundation/u/canonicalBytes",
+            label: "canonicalBytes",
+            comment: "The canonical byte serialisation of the addressed datum, \
+                      per Amendment 43 section 2: header(k) || le_bytes(x, k+1). \
+                      This is the exact byte string hashed to produce u:digest.",
+            kind: PropertyKind::Datatype,
+            functional: true,
+            domain: Some("https://uor.foundation/u/Address"),
+            range: XSD_HEX_BINARY,
         },
         Property {
             id: "https://uor.foundation/u/quantum",

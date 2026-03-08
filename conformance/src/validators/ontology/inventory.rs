@@ -64,6 +64,10 @@ pub fn validate(artifacts: &Path) -> Result<ConformanceReport> {
     // Amendment 41: Tower chain vocabulary validators
     validate_validity_scope_individuals(&mut report);
     validate_tower_chain_vocabulary(&mut report);
+    // Amendment 42: EBNF grammar alignment
+    validate_ebnf_grammar_alignment(&mut report);
+    // Amendment 43: Cryptographic Primitive Pinning
+    validate_crypto_pinning_vocabulary(&mut report);
 
     // Validate the built JSON-LD artifact
     let json_path = artifacts.join("uor.foundation.json");
@@ -1411,6 +1415,168 @@ fn validate_tower_chain_vocabulary(report: &mut ConformanceReport) {
         report.push(TestResult::pass(
             validator,
             "All Amendment 41 tower chain vocabulary present (7 classes, 7 QT_ identities)",
+        ));
+    }
+}
+
+/// Validates that the EBNF grammar operations align with the ontology's
+/// PrimitiveOp individuals and QuantumLevel individuals.
+fn validate_ebnf_grammar_alignment(report: &mut ConformanceReport) {
+    let ontology = uor_ontology::Ontology::full();
+    let validator = "ontology/inventory/ebnf_grammar_alignment";
+
+    // The EBNF grammar references 10 PrimitiveOp operations and 4 quantum levels.
+    let expected_ops = [
+        "neg", "bnot", "succ", "pred", "add", "sub", "mul", "xor", "and", "or",
+    ];
+    let expected_levels = ["Q0", "Q1", "Q2", "Q3"];
+
+    let op_ns = ontology
+        .namespaces
+        .iter()
+        .find(|m| m.namespace.prefix == "op");
+    let schema_ns = ontology
+        .namespaces
+        .iter()
+        .find(|m| m.namespace.prefix == "schema");
+
+    let mut all_found = true;
+
+    if let Some(op_mod) = op_ns {
+        for op_name in &expected_ops {
+            let iri = format!("https://uor.foundation/op/{}", op_name);
+            if !op_mod.individuals.iter().any(|ind| ind.id == iri.as_str()) {
+                report.push(TestResult::fail(
+                    validator,
+                    format!(
+                        "EBNF grammar references op:{} but individual not found",
+                        op_name
+                    ),
+                ));
+                all_found = false;
+            }
+        }
+    } else {
+        report.push(TestResult::fail(validator, "op/ namespace not found"));
+        return;
+    }
+
+    if let Some(schema_mod) = schema_ns {
+        for level in &expected_levels {
+            let iri = format!("https://uor.foundation/schema/{}", level);
+            if !schema_mod
+                .individuals
+                .iter()
+                .any(|ind| ind.id == iri.as_str())
+            {
+                report.push(TestResult::fail(
+                    validator,
+                    format!(
+                        "EBNF grammar references schema:{} but individual not found",
+                        level
+                    ),
+                ));
+                all_found = false;
+            }
+        }
+    } else {
+        report.push(TestResult::fail(validator, "schema/ namespace not found"));
+        return;
+    }
+
+    if all_found {
+        report.push(TestResult::pass(
+            validator,
+            "EBNF grammar operations and quantum levels align with ontology (10 ops, 4 levels)",
+        ));
+    }
+}
+
+/// Validates that Amendment 43 cryptographic primitive pinning properties
+/// exist with correct domain, range, and functionality.
+fn validate_crypto_pinning_vocabulary(report: &mut ConformanceReport) {
+    let ontology = uor_ontology::Ontology::full();
+    let validator = "ontology/inventory/crypto_pinning_vocabulary";
+
+    let u_ns = ontology
+        .namespaces
+        .iter()
+        .find(|m| m.namespace.prefix == "u");
+
+    let Some(u_mod) = u_ns else {
+        report.push(TestResult::fail(validator, "u/ namespace not found"));
+        return;
+    };
+
+    let mut all_valid = true;
+
+    // Check u:digestAlgorithm
+    let digest_alg = u_mod
+        .properties
+        .iter()
+        .find(|p| p.id == "https://uor.foundation/u/digestAlgorithm");
+    if let Some(prop) = digest_alg {
+        if prop.domain != Some("https://uor.foundation/u/Address") {
+            report.push(TestResult::fail(
+                validator,
+                "u:digestAlgorithm has incorrect domain",
+            ));
+            all_valid = false;
+        }
+        if !prop.functional {
+            report.push(TestResult::fail(
+                validator,
+                "u:digestAlgorithm must be functional",
+            ));
+            all_valid = false;
+        }
+    } else {
+        report.push(TestResult::fail(
+            validator,
+            "u:digestAlgorithm property not found",
+        ));
+        all_valid = false;
+    }
+
+    // Check u:canonicalBytes
+    let canonical = u_mod
+        .properties
+        .iter()
+        .find(|p| p.id == "https://uor.foundation/u/canonicalBytes");
+    if let Some(prop) = canonical {
+        if prop.domain != Some("https://uor.foundation/u/Address") {
+            report.push(TestResult::fail(
+                validator,
+                "u:canonicalBytes has incorrect domain",
+            ));
+            all_valid = false;
+        }
+        if prop.range != "http://www.w3.org/2001/XMLSchema#hexBinary" {
+            report.push(TestResult::fail(
+                validator,
+                "u:canonicalBytes must have range xsd:hexBinary",
+            ));
+            all_valid = false;
+        }
+        if !prop.functional {
+            report.push(TestResult::fail(
+                validator,
+                "u:canonicalBytes must be functional",
+            ));
+            all_valid = false;
+        }
+    } else {
+        report.push(TestResult::fail(
+            validator,
+            "u:canonicalBytes property not found",
+        ));
+        all_valid = false;
+    }
+
+    if all_valid {
+        report.push(TestResult::pass(
+            validator,
+            "Amendment 43 crypto pinning vocabulary present (digestAlgorithm, canonicalBytes)",
         ));
     }
 }

@@ -19,7 +19,7 @@ The UOR Framework is a Rust workspace with seven member crates:
 ```
 uor-ontology (spec/)
   ↓ Ontology::full()
-  ├── uor-build      → public/uor.foundation.{json,ttl,nt}   (RDF/OWL export)
+  ├── uor-build      → public/uor.foundation.{json,ttl,nt}, uor.term.ebnf
   ├── uor-docs       → public/docs/                           (documentation export)
   ├── uor-website    → public/                                 (website export)
   ├── uor-crate      → foundation/src/                         (Rust export)
@@ -105,7 +105,7 @@ cargo run --bin uor-conformance → validates all of the above
 
 ## Amendment History
 
-The spec crate implements all 41 amendments from the UOR Foundation completion plan:
+The spec crate implements all {@count:amendments} amendments from the UOR Foundation completion plan:
 
 | Amendment | Namespace | Key Additions |
 |-----------|-----------|---------------|
@@ -150,3 +150,5 @@ The spec crate implements all 41 amendments from the UOR Foundation completion p
 | 39 | (SHACL only) | Q1 Lift + Inverse Pipeline Coverage: test85–test95 |
 | 40 | (SHACL only) | Q1 Normative Certification Coverage: test96–test100 |
 | 41 | op/, type/, proof/, resolver/, derivation/, cert/ | Arbitrary Qₙ Scaling: ValidityScopeKind enum, LiftChain, ObstructionChain, InductiveProof, TowerCompletenessResolver, LiftChainCertificate, QT\_1–QT\_7 |
+| 42 | (grammar) | UOR Term Grammar Formalization: machine-generated EBNF grammar from ontology |
+| 43 | u/ | Cryptographic Primitive Pinning: digestAlgorithm, canonicalBytes, BLAKE3/SHA-256 |

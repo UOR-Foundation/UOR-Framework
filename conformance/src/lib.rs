@@ -11,6 +11,7 @@
 //! | Rust source | Rust API Guidelines, edition 2021, clippy deny list |
 //! | Ontology (JSON-LD) | JSON-LD 1.1, OWL 2 DL |
 //! | Ontology (Turtle/N-Triples) | RDF 1.1, Turtle 1.1 |
+//! | Ontology (EBNF) | ISO/IEC 14977 EBNF |
 //! | Instance graphs | SHACL W3C spec |
 //! | Documentation | Diataxis framework, completeness, accuracy |
 //! | Website | HTML5, WCAG 2.1 AA, CSS |
@@ -59,9 +60,10 @@ pub struct WorkspacePaths {
 /// 3. Ontology JSON-LD 1.1
 /// 4. Ontology OWL 2 DL
 /// 5. Ontology RDF 1.1 / Turtle 1.1
-/// 6. SHACL instance conformance
-/// 7. Documentation completeness and accuracy
-/// 8. Website HTML5, WCAG, CSS, coverage
+/// 6. Ontology EBNF grammar
+/// 7. SHACL instance conformance
+/// 8. Documentation completeness and accuracy
+/// 9. Website HTML5, WCAG, CSS, coverage
 ///
 /// # Errors
 ///
@@ -89,6 +91,9 @@ pub fn run_all(paths: &WorkspacePaths) -> anyhow::Result<ConformanceReport> {
 
     // 5. RDF 1.1 / Turtle 1.1
     report.extend(validators::ontology::rdf::validate(&paths.artifacts)?);
+
+    // 5b. EBNF grammar (Amendment 42)
+    report.extend(validators::ontology::ebnf::validate(&paths.artifacts)?);
 
     // 6. SHACL instance conformance
     report.extend(validators::ontology::shacl::validate());

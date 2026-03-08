@@ -162,13 +162,14 @@ pub fn xsd_to_primitives_type(xsd_iri: &str) -> Option<&'static str> {
         XSD_BOOLEAN => Some("P::Boolean"),
         XSD_DECIMAL => Some("P::Decimal"),
         XSD_DATETIME => Some("P::String"), // DateTime mapped to String for flexibility
+        XSD_HEX_BINARY => Some("P::String"), // HexBinary mapped to String
         _ => None,
     }
 }
 
 /// Returns true if the XSD type is `?Sized` (i.e., String which maps to `str`).
 pub fn xsd_is_unsized(xsd_iri: &str) -> bool {
-    xsd_iri == XSD_STRING || xsd_iri == XSD_DATETIME
+    xsd_iri == XSD_STRING || xsd_iri == XSD_DATETIME || xsd_iri == XSD_HEX_BINARY
 }
 
 /// Converts a camelCase or PascalCase label into a snake_case Rust identifier.

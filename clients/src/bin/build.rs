@@ -5,6 +5,7 @@
 //! - `<out>/uor.foundation.json` — JSON-LD 1.1
 //! - `<out>/uor.foundation.ttl` — Turtle 1.1
 //! - `<out>/uor.foundation.nt` — N-Triples
+//! - `<out>/uor.term.ebnf` — EBNF grammar (Amendment 42)
 //!
 //! **Usage:**
 //! ```
@@ -24,7 +25,7 @@ use std::path::PathBuf;
 
 use anyhow::{Context, Result};
 use clap::Parser;
-use uor_ontology::serializer::{jsonld, ntriples, turtle};
+use uor_ontology::serializer::{ebnf, jsonld, ntriples, turtle};
 use uor_ontology::Ontology;
 
 /// Build the UOR Foundation ontology artifacts.
@@ -77,6 +78,13 @@ fn main() -> Result<()> {
     fs::write(&nt_path, &nt_str)
         .with_context(|| format!("Failed to write {}", nt_path.display()))?;
     println!("  Written: {}", nt_path.display());
+
+    // EBNF grammar (Amendment 42)
+    let ebnf_path = out.join("uor.term.ebnf");
+    let ebnf_str = ebnf::to_ebnf(ontology);
+    fs::write(&ebnf_path, &ebnf_str)
+        .with_context(|| format!("Failed to write {}", ebnf_path.display()))?;
+    println!("  Written: {}", ebnf_path.display());
 
     println!("Build complete.");
     Ok(())

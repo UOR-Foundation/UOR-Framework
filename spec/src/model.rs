@@ -393,6 +393,8 @@ pub mod iris {
     pub const XSD_DECIMAL: &str = "http://www.w3.org/2001/XMLSchema#decimal";
     /// `xsd:dateTime`.
     pub const XSD_DATETIME: &str = "http://www.w3.org/2001/XMLSchema#dateTime";
+    /// `xsd:hexBinary`.
+    pub const XSD_HEX_BINARY: &str = "http://www.w3.org/2001/XMLSchema#hexBinary";
     /// `owl:Thing`.
     pub const OWL_THING: &str = "http://www.w3.org/2002/07/owl#Thing";
     /// `owl:Class`.

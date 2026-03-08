@@ -33,6 +33,23 @@ Properties in the `u/` namespace:
 | {@prop https://uor.foundation/u/codepoint} | Unicode code point |
 | {@prop https://uor.foundation/u/byteValue} | Byte value in R_n |
 | {@prop https://uor.foundation/u/length} | Length in bytes |
+| {@prop https://uor.foundation/u/digest} | Content hash (algorithm-prefixed) |
+| {@prop https://uor.foundation/u/digestAlgorithm} | Hash algorithm ('blake3' or 'sha256') |
+| {@prop https://uor.foundation/u/canonicalBytes} | Canonical byte pre-image for hashing |
+
+## Cryptographic Primitive Pinning (Amendment 43)
+
+The {@prop https://uor.foundation/u/digest} property is pinned to two allowed hash algorithms:
+BLAKE3 (primary) and SHA-256 (secondary). The digest value is prefixed with the algorithm
+identifier and a colon, e.g. `blake3:af13...` or `sha256:e3b0...`.
+
+The hash input is a deterministic byte string stored in
+{@prop https://uor.foundation/u/canonicalBytes}. This canonical form consists of a 4-byte
+header (magic `UR` + quantum level + reserved byte) followed by the datum value in
+little-endian byte order. At quantum level k, the total length is `4 + (k + 1)` bytes.
+
+The {@prop https://uor.foundation/u/digestAlgorithm} property records which algorithm was
+used, ensuring that the algorithm prefix in the digest can be cross-checked.
 
 ## Resolution
 
