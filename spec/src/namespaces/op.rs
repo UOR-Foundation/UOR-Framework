@@ -5831,5 +5831,598 @@ fn individuals() -> Vec<Individual> {
                  IndividualValue::Str("Flat LiftChain → zero obstruction cost → linear basis growth")),
             ],
         },
+        // Amendment 44: Structural Gap Closures (G1--G11)
+        // G7: CarryConstraint fiber-pinning map
+        Individual {
+            id: "https://uor.foundation/op/CC_PINS",
+            type_: "https://uor.foundation/op/Identity",
+            label: "CC_PINS",
+            comment: "Carry-constraint fiber-pinning map: \
+                      pinsFibers(CarryConstraint(p)) equals the set of bit \
+                      positions where p has a 1 plus the first-zero stopping \
+                      position.",
+            properties: &[
+                ("https://uor.foundation/op/lhs",
+                 IndividualValue::Str("pinsFibers(CarryConstraint(p))")),
+                ("https://uor.foundation/op/rhs",
+                 IndividualValue::Str("{k : p(k)=1} union {first-zero(p)}")),
+                ("https://uor.foundation/op/forAll",
+                 IndividualValue::Str("bit-pattern p in CarryConstraint")),
+                (
+                    "https://uor.foundation/op/verificationDomain",
+                    IndividualValue::IriRef("https://uor.foundation/op/Algebraic"),
+                ),
+                ("https://uor.foundation/op/universallyValid", IndividualValue::Bool(true)),
+                ("https://uor.foundation/op/validityKind",
+                 IndividualValue::IriRef("https://uor.foundation/op/Universal")),
+                ("https://uor.foundation/op/verificationPathNote",
+                 IndividualValue::Str("Ring carry propagation rule; exhaustive enum at Q0")),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/op/CC_COST_FIBER",
+            type_: "https://uor.foundation/op/Identity",
+            label: "CC_COST_FIBER",
+            comment: "Carry-constraint cost-to-fiber count: the number of \
+                      fibers pinned by a CarryConstraint equals popcount plus \
+                      one for the stopping position.",
+            properties: &[
+                ("https://uor.foundation/op/lhs",
+                 IndividualValue::Str("|pinsFibers(CarryConstraint(p))|")),
+                ("https://uor.foundation/op/rhs",
+                 IndividualValue::Str("popcount(p) + 1")),
+                ("https://uor.foundation/op/forAll",
+                 IndividualValue::Str("bit-pattern p in CarryConstraint")),
+                (
+                    "https://uor.foundation/op/verificationDomain",
+                    IndividualValue::IriRef("https://uor.foundation/op/Enumerative"),
+                ),
+                ("https://uor.foundation/op/universallyValid", IndividualValue::Bool(true)),
+                ("https://uor.foundation/op/validityKind",
+                 IndividualValue::IriRef("https://uor.foundation/op/Universal")),
+                ("https://uor.foundation/op/verificationPathNote",
+                 IndividualValue::Str("Exhaustive enumeration at Q0; refines cr_2")),
+            ],
+        },
+        // G1: Nerve joint satisfiability decision procedure
+        Individual {
+            id: "https://uor.foundation/op/jsat_RR",
+            type_: "https://uor.foundation/op/Identity",
+            label: "jsat_RR",
+            comment: "CRT joint satisfiability: two ResidueConstraints are \
+                      jointly satisfiable iff the gcd of their moduli divides \
+                      the difference of their residues.",
+            properties: &[
+                ("https://uor.foundation/op/lhs",
+                 IndividualValue::Str("jointSat(Res(m1,r1), Res(m2,r2))")),
+                ("https://uor.foundation/op/rhs",
+                 IndividualValue::Str("gcd(m1,m2) | (r1 - r2)")),
+                ("https://uor.foundation/op/forAll",
+                 IndividualValue::Str("ResidueConstraint pairs over R_n")),
+                (
+                    "https://uor.foundation/op/verificationDomain",
+                    IndividualValue::IriRef("https://uor.foundation/op/Algebraic"),
+                ),
+                ("https://uor.foundation/op/universallyValid", IndividualValue::Bool(true)),
+                ("https://uor.foundation/op/validityKind",
+                 IndividualValue::IriRef("https://uor.foundation/op/Universal")),
+                ("https://uor.foundation/op/verificationPathNote",
+                 IndividualValue::Str("Chinese Remainder Theorem; exhaustive enum at Q0")),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/op/jsat_CR",
+            type_: "https://uor.foundation/op/Identity",
+            label: "jsat_CR",
+            comment: "Carry-residue joint satisfiability: a CarryConstraint \
+                      and ResidueConstraint are jointly satisfiable iff the \
+                      carry-pinned fibers are compatible with the residue \
+                      class.",
+            properties: &[
+                ("https://uor.foundation/op/lhs",
+                 IndividualValue::Str("jointSat(Carry(p), Res(m,r))")),
+                ("https://uor.foundation/op/rhs",
+                 IndividualValue::Str("pin-fiber intersection residue-class compatible")),
+                ("https://uor.foundation/op/forAll",
+                 IndividualValue::Str("CarryConstraint, ResidueConstraint pairs")),
+                (
+                    "https://uor.foundation/op/verificationDomain",
+                    IndividualValue::IriRef("https://uor.foundation/op/Algebraic"),
+                ),
+                ("https://uor.foundation/op/universallyValid", IndividualValue::Bool(true)),
+                ("https://uor.foundation/op/validityKind",
+                 IndividualValue::IriRef("https://uor.foundation/op/Universal")),
+                ("https://uor.foundation/op/verificationPathNote",
+                 IndividualValue::Str("Carry stopping rule + residue class intersection")),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/op/jsat_CC",
+            type_: "https://uor.foundation/op/Identity",
+            label: "jsat_CC",
+            comment: "Carry-carry joint satisfiability: two CarryConstraints \
+                      are jointly satisfiable iff their bit-patterns have no \
+                      conflicting positions.",
+            properties: &[
+                ("https://uor.foundation/op/lhs",
+                 IndividualValue::Str("jointSat(Carry(p1), Carry(p2))")),
+                ("https://uor.foundation/op/rhs",
+                 IndividualValue::Str("p1 AND p2 conflict-free")),
+                ("https://uor.foundation/op/forAll",
+                 IndividualValue::Str("CarryConstraint pairs over R_n")),
+                (
+                    "https://uor.foundation/op/verificationDomain",
+                    IndividualValue::IriRef("https://uor.foundation/op/Enumerative"),
+                ),
+                ("https://uor.foundation/op/universallyValid", IndividualValue::Bool(true)),
+                ("https://uor.foundation/op/validityKind",
+                 IndividualValue::IriRef("https://uor.foundation/op/Universal")),
+                ("https://uor.foundation/op/verificationPathNote",
+                 IndividualValue::Str("Bit-pattern exhaustive enumeration at Q0")),
+            ],
+        },
+        // G2: DihedralElement inverse and order
+        Individual {
+            id: "https://uor.foundation/op/D_8",
+            type_: "https://uor.foundation/op/Identity",
+            label: "D_8",
+            comment: "Dihedral inverse formula: the inverse of r^a s^p in \
+                      D_(2^n) is r^(-(−1)^p a mod 2^n) s^p.",
+            properties: &[
+                ("https://uor.foundation/op/lhs",
+                 IndividualValue::Str("(r^a s^p)^(-1)")),
+                ("https://uor.foundation/op/rhs",
+                 IndividualValue::Str("r^(-(−1)^p a mod 2^n) s^p")),
+                ("https://uor.foundation/op/forAll",
+                 IndividualValue::Str("a in 0..2^n, p in {0,1}")),
+                (
+                    "https://uor.foundation/op/verificationDomain",
+                    IndividualValue::IriRef("https://uor.foundation/op/Algebraic"),
+                ),
+                ("https://uor.foundation/op/universallyValid", IndividualValue::Bool(true)),
+                ("https://uor.foundation/op/validityKind",
+                 IndividualValue::IriRef("https://uor.foundation/op/Universal")),
+                ("https://uor.foundation/op/verificationPathNote",
+                 IndividualValue::Str("D_5 group presentation + D_7 composition")),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/op/D_9",
+            type_: "https://uor.foundation/op/Identity",
+            label: "D_9",
+            comment: "Dihedral reflection order: every reflection element \
+                      r^k s^1 in D_(2^n) has order 2.",
+            properties: &[
+                ("https://uor.foundation/op/lhs",
+                 IndividualValue::Str("ord(r^k s^1)")),
+                ("https://uor.foundation/op/rhs",
+                 IndividualValue::Str("2")),
+                ("https://uor.foundation/op/forAll",
+                 IndividualValue::Str("k in Z/(2^n)Z")),
+                (
+                    "https://uor.foundation/op/verificationDomain",
+                    IndividualValue::IriRef("https://uor.foundation/op/Algebraic"),
+                ),
+                ("https://uor.foundation/op/universallyValid", IndividualValue::Bool(true)),
+                ("https://uor.foundation/op/validityKind",
+                 IndividualValue::IriRef("https://uor.foundation/op/Universal")),
+                ("https://uor.foundation/op/verificationPathNote",
+                 IndividualValue::Str("D_7: (r^k s)(r^k s) = r^0 s^0 = identity")),
+            ],
+        },
+        // G5: Constraint language expressiveness boundary
+        Individual {
+            id: "https://uor.foundation/op/EXP_1",
+            type_: "https://uor.foundation/op/Identity",
+            label: "EXP_1",
+            comment: "Monotone carrier characterization: a ConstrainedType \
+                      has an upward-closed carrier iff every \
+                      ResidueConstraint has residue = modulus - 1 and no \
+                      CarryConstraint or DepthConstraint appears.",
+            properties: &[
+                ("https://uor.foundation/op/lhs",
+                 IndividualValue::Str("carrier(C) is monotone")),
+                ("https://uor.foundation/op/rhs",
+                 IndividualValue::Str("all residues of C = modulus - 1, no Carry/Depth")),
+                ("https://uor.foundation/op/forAll",
+                 IndividualValue::Str("ConstrainedType C over R_n")),
+                (
+                    "https://uor.foundation/op/verificationDomain",
+                    IndividualValue::IriRef("https://uor.foundation/op/Algebraic"),
+                ),
+                ("https://uor.foundation/op/universallyValid", IndividualValue::Bool(true)),
+                ("https://uor.foundation/op/validityKind",
+                 IndividualValue::IriRef("https://uor.foundation/op/Universal")),
+                ("https://uor.foundation/op/verificationPathNote",
+                 IndividualValue::Str("Fiber lattice monotonicity + R_n bit structure")),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/op/EXP_2",
+            type_: "https://uor.foundation/op/Identity",
+            label: "EXP_2",
+            comment: "Monotone constraint count: the number of expressible \
+                      monotone ConstrainedTypes at quantum level Q_n is 2^n, \
+                      corresponding to the principal filter count.",
+            properties: &[
+                ("https://uor.foundation/op/lhs",
+                 IndividualValue::Str("count of monotone ConstrainedTypes at Q_n")),
+                ("https://uor.foundation/op/rhs",
+                 IndividualValue::Str("2^n")),
+                ("https://uor.foundation/op/forAll",
+                 IndividualValue::Str("QuantumLevel Q_n, n >= 1")),
+                (
+                    "https://uor.foundation/op/verificationDomain",
+                    IndividualValue::IriRef("https://uor.foundation/op/Enumerative"),
+                ),
+                ("https://uor.foundation/op/universallyValid", IndividualValue::Bool(true)),
+                ("https://uor.foundation/op/validityKind",
+                 IndividualValue::IriRef("https://uor.foundation/op/Universal")),
+                ("https://uor.foundation/op/verificationPathNote",
+                 IndividualValue::Str("Principal filter count; exhaustive enum at Q0")),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/op/EXP_3",
+            type_: "https://uor.foundation/op/Identity",
+            label: "EXP_3",
+            comment: "SumType carrier semantics: the carrier of a SumType is \
+                      the coproduct (disjoint union) of component carriers, \
+                      not the set-theoretic union.",
+            properties: &[
+                ("https://uor.foundation/op/lhs",
+                 IndividualValue::Str("carrier(SumType(A,B))")),
+                ("https://uor.foundation/op/rhs",
+                 IndividualValue::Str("coproduct(carrier(A), carrier(B))")),
+                ("https://uor.foundation/op/forAll",
+                 IndividualValue::Str("SumType A + B")),
+                (
+                    "https://uor.foundation/op/verificationDomain",
+                    IndividualValue::IriRef("https://uor.foundation/op/Algebraic"),
+                ),
+                ("https://uor.foundation/op/universallyValid", IndividualValue::Bool(true)),
+                ("https://uor.foundation/op/validityKind",
+                 IndividualValue::IriRef("https://uor.foundation/op/Universal")),
+                ("https://uor.foundation/op/verificationPathNote",
+                 IndividualValue::Str("Definitional; architectural decision identity")),
+            ],
+        },
+        // G4: SumType topological identity algebra
+        Individual {
+            id: "https://uor.foundation/op/ST_3",
+            type_: "https://uor.foundation/op/Identity",
+            label: "ST_3",
+            comment: "SumType Euler characteristic additivity: for a SumType \
+                      with topologically disjoint component nerves, the Euler \
+                      characteristic is additive.",
+            properties: &[
+                ("https://uor.foundation/op/lhs",
+                 IndividualValue::Str("chi(N(C(A+B)))")),
+                ("https://uor.foundation/op/rhs",
+                 IndividualValue::Str("chi(N(C(A))) + chi(N(C(B)))")),
+                ("https://uor.foundation/op/forAll",
+                 IndividualValue::Str("disjoint SumType A + B")),
+                (
+                    "https://uor.foundation/op/verificationDomain",
+                    IndividualValue::IriRef("https://uor.foundation/op/IndexTheoretic"),
+                ),
+                ("https://uor.foundation/op/universallyValid", IndividualValue::Bool(true)),
+                ("https://uor.foundation/op/validityKind",
+                 IndividualValue::IriRef("https://uor.foundation/op/Universal")),
+                ("https://uor.foundation/op/verificationPathNote",
+                 IndividualValue::Str("Disjoint simplicial complex Euler formula")),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/op/ST_4",
+            type_: "https://uor.foundation/op/Identity",
+            label: "ST_4",
+            comment: "SumType Betti number additivity: for disjoint component \
+                      nerves, all Betti numbers are additive.",
+            properties: &[
+                ("https://uor.foundation/op/lhs",
+                 IndividualValue::Str("beta_k(N(C(A+B)))")),
+                ("https://uor.foundation/op/rhs",
+                 IndividualValue::Str("beta_k(N(C(A))) + beta_k(N(C(B)))")),
+                ("https://uor.foundation/op/forAll",
+                 IndividualValue::Str("disjoint SumType A + B, k >= 0")),
+                (
+                    "https://uor.foundation/op/verificationDomain",
+                    IndividualValue::IriRef("https://uor.foundation/op/Topological"),
+                ),
+                ("https://uor.foundation/op/universallyValid", IndividualValue::Bool(true)),
+                ("https://uor.foundation/op/validityKind",
+                 IndividualValue::IriRef("https://uor.foundation/op/Universal")),
+                ("https://uor.foundation/op/verificationPathNote",
+                 IndividualValue::Str("Mayer-Vietoris for disjoint union")),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/op/ST_5",
+            type_: "https://uor.foundation/op/Identity",
+            label: "ST_5",
+            comment: "SumType completeness transfer: a SumType A+B is \
+                      CompleteType iff both A and B are CompleteType and they \
+                      have equal quantum levels.",
+            properties: &[
+                ("https://uor.foundation/op/lhs",
+                 IndividualValue::Str("CompleteType(A + B)")),
+                ("https://uor.foundation/op/rhs",
+                 IndividualValue::Str("CompleteType(A) and CompleteType(B) and Q(A)=Q(B)")),
+                ("https://uor.foundation/op/forAll",
+                 IndividualValue::Str("SumType A + B")),
+                (
+                    "https://uor.foundation/op/verificationDomain",
+                    IndividualValue::IriRef("https://uor.foundation/op/IndexTheoretic"),
+                ),
+                ("https://uor.foundation/op/universallyValid", IndividualValue::Bool(true)),
+                ("https://uor.foundation/op/validityKind",
+                 IndividualValue::IriRef("https://uor.foundation/op/Universal")),
+                ("https://uor.foundation/op/verificationPathNote",
+                 IndividualValue::Str("ST_3 + ST_4 + IT_7d")),
+            ],
+        },
+        // G3: TypeSynthesis reachability domain completeness
+        Individual {
+            id: "https://uor.foundation/op/TS_8",
+            type_: "https://uor.foundation/op/Identity",
+            label: "TS_8",
+            comment: "Betti-1 minimum constraint count: the minimum number \
+                      of constraints needed to achieve first Betti number \
+                      beta_1 = k in the constraint nerve is 2k + 1.",
+            properties: &[
+                ("https://uor.foundation/op/lhs",
+                 IndividualValue::Str("min constraints for beta_1 = k")),
+                ("https://uor.foundation/op/rhs",
+                 IndividualValue::Str("2k + 1")),
+                ("https://uor.foundation/op/forAll",
+                 IndividualValue::Str("first Betti number k >= 1, n-fiber type")),
+                (
+                    "https://uor.foundation/op/verificationDomain",
+                    IndividualValue::IriRef("https://uor.foundation/op/Pipeline"),
+                ),
+                ("https://uor.foundation/op/universallyValid", IndividualValue::Bool(true)),
+                ("https://uor.foundation/op/validityKind",
+                 IndividualValue::IriRef("https://uor.foundation/op/Universal")),
+                ("https://uor.foundation/op/verificationPathNote",
+                 IndividualValue::Str("Simplicial cycle construction; inductive on k")),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/op/TS_9",
+            type_: "https://uor.foundation/op/Identity",
+            label: "TS_9",
+            comment: "TypeSynthesisResolver termination: the resolver \
+                      terminates in at most 2^n steps for any target \
+                      signature at quantum level Q_n, returning either a \
+                      ConstrainedType or a ForbiddenSignature certificate.",
+            properties: &[
+                ("https://uor.foundation/op/lhs",
+                 IndividualValue::Str("TypeSynthesisResolver terminates")),
+                ("https://uor.foundation/op/rhs",
+                 IndividualValue::Str("within 2^n steps")),
+                ("https://uor.foundation/op/forAll",
+                 IndividualValue::Str("QuantumLevel Q_n, any target signature")),
+                (
+                    "https://uor.foundation/op/verificationDomain",
+                    IndividualValue::IriRef("https://uor.foundation/op/Pipeline"),
+                ),
+                ("https://uor.foundation/op/universallyValid", IndividualValue::Bool(true)),
+                ("https://uor.foundation/op/validityKind",
+                 IndividualValue::IriRef("https://uor.foundation/op/Universal")),
+                ("https://uor.foundation/op/verificationPathNote",
+                 IndividualValue::Str("Finite constraint combination space; inductive on n")),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/op/TS_10",
+            type_: "https://uor.foundation/op/Identity",
+            label: "TS_10",
+            comment: "ForbiddenSignature membership criterion: a topological \
+                      signature is a ForbiddenSignature iff no \
+                      ConstrainedType with at most n constraints realises it \
+                      at quantum level Q_n.",
+            properties: &[
+                ("https://uor.foundation/op/lhs",
+                 IndividualValue::Str("ForbiddenSignature(sigma)")),
+                ("https://uor.foundation/op/rhs",
+                 IndividualValue::Str("no ConstrainedType with <= n constraints realises sigma")),
+                ("https://uor.foundation/op/forAll",
+                 IndividualValue::Str("topological signature sigma at Q_n")),
+                (
+                    "https://uor.foundation/op/verificationDomain",
+                    IndividualValue::IriRef("https://uor.foundation/op/Algebraic"),
+                ),
+                ("https://uor.foundation/op/universallyValid", IndividualValue::Bool(true)),
+                ("https://uor.foundation/op/validityKind",
+                 IndividualValue::IriRef("https://uor.foundation/op/Universal")),
+                ("https://uor.foundation/op/verificationPathNote",
+                 IndividualValue::Str("Exhaustive enum at Q0; combinatorial bound")),
+            ],
+        },
+        // G6: ObstructionChain termination guarantee
+        Individual {
+            id: "https://uor.foundation/op/QT_8",
+            type_: "https://uor.foundation/op/Identity",
+            label: "QT_8",
+            comment: "ObstructionChain length bound: the length of the \
+                      ObstructionChain from Q_j to Q_k is at most \
+                      (k-j) times C(basisSize(Q_j), 3).",
+            properties: &[
+                ("https://uor.foundation/op/lhs",
+                 IndividualValue::Str("ObstructionChain length from Q_j to Q_k")),
+                ("https://uor.foundation/op/rhs",
+                 IndividualValue::Str("<= (k-j) * C(basisSize(Q_j), 3)")),
+                ("https://uor.foundation/op/forAll",
+                 IndividualValue::Str("LiftChain from Q_j to Q_k")),
+                (
+                    "https://uor.foundation/op/verificationDomain",
+                    IndividualValue::IriRef("https://uor.foundation/op/IndexTheoretic"),
+                ),
+                ("https://uor.foundation/op/universallyValid", IndividualValue::Bool(true)),
+                ("https://uor.foundation/op/validityKind",
+                 IndividualValue::IriRef("https://uor.foundation/op/Universal")),
+                ("https://uor.foundation/op/verificationPathNote",
+                 IndividualValue::Str("QLS_2 + spectral sequence convergence bound")),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/op/QT_9",
+            type_: "https://uor.foundation/op/Identity",
+            label: "QT_9",
+            comment: "TowerCompletenessResolver termination: the resolver \
+                      terminates for any finite LiftChain within the QT_8 \
+                      bound, producing a CompleteType certificate or a \
+                      bounded ObstructionChain.",
+            properties: &[
+                ("https://uor.foundation/op/lhs",
+                 IndividualValue::Str("TowerCompletenessResolver terminates")),
+                ("https://uor.foundation/op/rhs",
+                 IndividualValue::Str("within QT_8 bound")),
+                ("https://uor.foundation/op/forAll",
+                 IndividualValue::Str("LiftChain of finite length")),
+                (
+                    "https://uor.foundation/op/verificationDomain",
+                    IndividualValue::IriRef("https://uor.foundation/op/Pipeline"),
+                ),
+                ("https://uor.foundation/op/universallyValid", IndividualValue::Bool(true)),
+                ("https://uor.foundation/op/validityKind",
+                 IndividualValue::IriRef("https://uor.foundation/op/Universal")),
+                ("https://uor.foundation/op/verificationPathNote",
+                 IndividualValue::Str("Finite chain + QT_8 bound")),
+            ],
+        },
+        // G11: Sheaf coefficient ring grounding
+        Individual {
+            id: "https://uor.foundation/op/COEFF_1",
+            type_: "https://uor.foundation/op/Identity",
+            label: "COEFF_1",
+            comment: "Standard coefficient ring: the coefficient ring for \
+                      all psi-pipeline cohomology computations in \
+                      uor.foundation is Z/2Z, consistent with MN_7.",
+            properties: &[
+                ("https://uor.foundation/op/lhs",
+                 IndividualValue::Str("standard coefficient ring for psi-pipeline")),
+                ("https://uor.foundation/op/rhs",
+                 IndividualValue::Str("Z/2Z")),
+                ("https://uor.foundation/op/forAll",
+                 IndividualValue::Str("ConstraintNerve N(C) at any quantum level")),
+                (
+                    "https://uor.foundation/op/verificationDomain",
+                    IndividualValue::IriRef("https://uor.foundation/op/Algebraic"),
+                ),
+                ("https://uor.foundation/op/universallyValid", IndividualValue::Bool(true)),
+                ("https://uor.foundation/op/validityKind",
+                 IndividualValue::IriRef("https://uor.foundation/op/Universal")),
+                ("https://uor.foundation/op/verificationPathNote",
+                 IndividualValue::Str("Definitional; MN_7 consistency requirement")),
+            ],
+        },
+        // G9: GluingObstruction resolver feedback
+        Individual {
+            id: "https://uor.foundation/op/GO_1",
+            type_: "https://uor.foundation/op/Identity",
+            label: "GO_1",
+            comment: "GluingObstruction feedback: given a \
+                      GluingObstruction class in H^1(N(C)), the killing \
+                      RefinementSuggestion adds a constraint whose pinned \
+                      fibers contain the intersection of the \
+                      cycle-generating pair.",
+            properties: &[
+                ("https://uor.foundation/op/lhs",
+                 IndividualValue::Str("pinsFibers(killing constraint for obstruction c)")),
+                ("https://uor.foundation/op/rhs",
+                 IndividualValue::Str("superset of pinsFibers(C_i) cap pinsFibers(C_j)")),
+                ("https://uor.foundation/op/forAll",
+                 IndividualValue::Str("GluingObstruction c, cycle pair (C_i, C_j)")),
+                (
+                    "https://uor.foundation/op/verificationDomain",
+                    IndividualValue::IriRef("https://uor.foundation/op/Topological"),
+                ),
+                ("https://uor.foundation/op/universallyValid", IndividualValue::Bool(true)),
+                ("https://uor.foundation/op/validityKind",
+                 IndividualValue::IriRef("https://uor.foundation/op/Universal")),
+                ("https://uor.foundation/op/verificationPathNote",
+                 IndividualValue::Str("Cohomology killing lemma; psi_6 output")),
+            ],
+        },
+        // G8: Session saturation lifecycle bridge
+        Individual {
+            id: "https://uor.foundation/op/SR_6",
+            type_: "https://uor.foundation/op/Identity",
+            label: "SR_6",
+            comment: "Saturation re-entry free count: for a session at full \
+                      saturation, a new query q has freeCount equal to the \
+                      number of q's fiber coordinates not already bound.",
+            properties: &[
+                ("https://uor.foundation/op/lhs",
+                 IndividualValue::Str("freeCount(q) after saturation")),
+                ("https://uor.foundation/op/rhs",
+                 IndividualValue::Str("fibers of q not in BindingAccumulator")),
+                ("https://uor.foundation/op/forAll",
+                 IndividualValue::Str("saturated Session, new RelationQuery q")),
+                (
+                    "https://uor.foundation/op/verificationDomain",
+                    IndividualValue::IriRef("https://uor.foundation/op/Algebraic"),
+                ),
+                ("https://uor.foundation/op/universallyValid", IndividualValue::Bool(true)),
+                ("https://uor.foundation/op/validityKind",
+                 IndividualValue::IriRef("https://uor.foundation/op/Universal")),
+                ("https://uor.foundation/op/verificationPathNote",
+                 IndividualValue::Str("SR_1 monotone accumulation + SC_2 formula")),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/op/SR_7",
+            type_: "https://uor.foundation/op/Identity",
+            label: "SR_7",
+            comment: "Saturation degree degradation: after re-entry with \
+                      query q, the saturation degree becomes \
+                      min(current sigma, 1 - freeCount(q)/n).",
+            properties: &[
+                ("https://uor.foundation/op/lhs",
+                 IndividualValue::Str("sigma after re-entry with query q")),
+                ("https://uor.foundation/op/rhs",
+                 IndividualValue::Str("min(sigma, 1 - freeCount(q)/n)")),
+                ("https://uor.foundation/op/forAll",
+                 IndividualValue::Str("SessionResolver, new query q")),
+                (
+                    "https://uor.foundation/op/verificationDomain",
+                    IndividualValue::IriRef("https://uor.foundation/op/Algebraic"),
+                ),
+                ("https://uor.foundation/op/universallyValid", IndividualValue::Bool(true)),
+                ("https://uor.foundation/op/validityKind",
+                 IndividualValue::IriRef("https://uor.foundation/op/Universal")),
+                ("https://uor.foundation/op/verificationPathNote",
+                 IndividualValue::Str("SC_2 definition + SR_1 monotonicity")),
+            ],
+        },
+        // G10: SuperposedFiberState amplitude index set
+        Individual {
+            id: "https://uor.foundation/op/QM_6",
+            type_: "https://uor.foundation/op/Identity",
+            label: "QM_6",
+            comment: "Amplitude index set characterization: the amplitude \
+                      index set of a SuperposedFiberState over \
+                      ConstrainedType T at Q_n is the set of monotone \
+                      pinning trajectories consistent with T's constraints.",
+            properties: &[
+                ("https://uor.foundation/op/lhs",
+                 IndividualValue::Str("amplitude index set of SuperposedFiberState over T")),
+                ("https://uor.foundation/op/rhs",
+                 IndividualValue::Str("monotone pinning trajectories consistent with T")),
+                ("https://uor.foundation/op/forAll",
+                 IndividualValue::Str("SuperposedFiberState over ConstrainedType T at Q_n")),
+                (
+                    "https://uor.foundation/op/verificationDomain",
+                    IndividualValue::IriRef("https://uor.foundation/op/SuperpositionDomain"),
+                ),
+                ("https://uor.foundation/op/universallyValid", IndividualValue::Bool(true)),
+                ("https://uor.foundation/op/validityKind",
+                 IndividualValue::IriRef("https://uor.foundation/op/Universal")),
+                ("https://uor.foundation/op/verificationPathNote",
+                 IndividualValue::Str("Fiber lattice + constraint filter; enum at Q0-Q3")),
+            ],
+        },
     ]
 }

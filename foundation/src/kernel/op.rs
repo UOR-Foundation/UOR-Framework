@@ -5031,6 +5031,420 @@ pub mod qt_7 {
         "Flat LiftChain → zero obstruction cost → linear basis growth";
 }
 
+/// Carry-constraint fiber-pinning map: pinsFibers(CarryConstraint(p)) equals the set of bit positions where p has a 1 plus the first-zero stopping position.
+pub mod cc_pins {
+    /// `forAll`
+    pub const FOR_ALL: &str = "bit-pattern p in CarryConstraint";
+    /// `lhs`
+    pub const LHS: &str = "pinsFibers(CarryConstraint(p))";
+    /// `rhs`
+    pub const RHS: &str = "{k : p(k)=1} union {first-zero(p)}";
+    /// `universallyValid`
+    pub const UNIVERSALLY_VALID: bool = true;
+    /// `validityKind` -> `Universal`
+    pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
+    /// `verificationDomain` -> `Algebraic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str = "Ring carry propagation rule; exhaustive enum at Q0";
+}
+
+/// Carry-constraint cost-to-fiber count: the number of fibers pinned by a CarryConstraint equals popcount plus one for the stopping position.
+pub mod cc_cost_fiber {
+    /// `forAll`
+    pub const FOR_ALL: &str = "bit-pattern p in CarryConstraint";
+    /// `lhs`
+    pub const LHS: &str = "|pinsFibers(CarryConstraint(p))|";
+    /// `rhs`
+    pub const RHS: &str = "popcount(p) + 1";
+    /// `universallyValid`
+    pub const UNIVERSALLY_VALID: bool = true;
+    /// `validityKind` -> `Universal`
+    pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
+    /// `verificationDomain` -> `Enumerative`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Enumerative";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str = "Exhaustive enumeration at Q0; refines cr_2";
+}
+
+/// CRT joint satisfiability: two ResidueConstraints are jointly satisfiable iff the gcd of their moduli divides the difference of their residues.
+pub mod jsat_rr {
+    /// `forAll`
+    pub const FOR_ALL: &str = "ResidueConstraint pairs over R_n";
+    /// `lhs`
+    pub const LHS: &str = "jointSat(Res(m1,r1), Res(m2,r2))";
+    /// `rhs`
+    pub const RHS: &str = "gcd(m1,m2) | (r1 - r2)";
+    /// `universallyValid`
+    pub const UNIVERSALLY_VALID: bool = true;
+    /// `validityKind` -> `Universal`
+    pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
+    /// `verificationDomain` -> `Algebraic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str = "Chinese Remainder Theorem; exhaustive enum at Q0";
+}
+
+/// Carry-residue joint satisfiability: a CarryConstraint and ResidueConstraint are jointly satisfiable iff the carry-pinned fibers are compatible with the residue class.
+pub mod jsat_cr {
+    /// `forAll`
+    pub const FOR_ALL: &str = "CarryConstraint, ResidueConstraint pairs";
+    /// `lhs`
+    pub const LHS: &str = "jointSat(Carry(p), Res(m,r))";
+    /// `rhs`
+    pub const RHS: &str = "pin-fiber intersection residue-class compatible";
+    /// `universallyValid`
+    pub const UNIVERSALLY_VALID: bool = true;
+    /// `validityKind` -> `Universal`
+    pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
+    /// `verificationDomain` -> `Algebraic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str = "Carry stopping rule + residue class intersection";
+}
+
+/// Carry-carry joint satisfiability: two CarryConstraints are jointly satisfiable iff their bit-patterns have no conflicting positions.
+pub mod jsat_cc {
+    /// `forAll`
+    pub const FOR_ALL: &str = "CarryConstraint pairs over R_n";
+    /// `lhs`
+    pub const LHS: &str = "jointSat(Carry(p1), Carry(p2))";
+    /// `rhs`
+    pub const RHS: &str = "p1 AND p2 conflict-free";
+    /// `universallyValid`
+    pub const UNIVERSALLY_VALID: bool = true;
+    /// `validityKind` -> `Universal`
+    pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
+    /// `verificationDomain` -> `Enumerative`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Enumerative";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str = "Bit-pattern exhaustive enumeration at Q0";
+}
+
+/// Dihedral inverse formula: the inverse of r^a s^p in D_(2^n) is r^(-(−1)^p a mod 2^n) s^p.
+pub mod d_8 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "a in 0..2^n, p in {0,1}";
+    /// `lhs`
+    pub const LHS: &str = "(r^a s^p)^(-1)";
+    /// `rhs`
+    pub const RHS: &str = "r^(-(−1)^p a mod 2^n) s^p";
+    /// `universallyValid`
+    pub const UNIVERSALLY_VALID: bool = true;
+    /// `validityKind` -> `Universal`
+    pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
+    /// `verificationDomain` -> `Algebraic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str = "D_5 group presentation + D_7 composition";
+}
+
+/// Dihedral reflection order: every reflection element r^k s^1 in D_(2^n) has order 2.
+pub mod d_9 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "k in Z/(2^n)Z";
+    /// `lhs`
+    pub const LHS: &str = "ord(r^k s^1)";
+    /// `rhs`
+    pub const RHS: &str = "2";
+    /// `universallyValid`
+    pub const UNIVERSALLY_VALID: bool = true;
+    /// `validityKind` -> `Universal`
+    pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
+    /// `verificationDomain` -> `Algebraic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str = "D_7: (r^k s)(r^k s) = r^0 s^0 = identity";
+}
+
+/// Monotone carrier characterization: a ConstrainedType has an upward-closed carrier iff every ResidueConstraint has residue = modulus - 1 and no CarryConstraint or DepthConstraint appears.
+pub mod exp_1 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "ConstrainedType C over R_n";
+    /// `lhs`
+    pub const LHS: &str = "carrier(C) is monotone";
+    /// `rhs`
+    pub const RHS: &str = "all residues of C = modulus - 1, no Carry/Depth";
+    /// `universallyValid`
+    pub const UNIVERSALLY_VALID: bool = true;
+    /// `validityKind` -> `Universal`
+    pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
+    /// `verificationDomain` -> `Algebraic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str = "Fiber lattice monotonicity + R_n bit structure";
+}
+
+/// Monotone constraint count: the number of expressible monotone ConstrainedTypes at quantum level Q_n is 2^n, corresponding to the principal filter count.
+pub mod exp_2 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "QuantumLevel Q_n, n >= 1";
+    /// `lhs`
+    pub const LHS: &str = "count of monotone ConstrainedTypes at Q_n";
+    /// `rhs`
+    pub const RHS: &str = "2^n";
+    /// `universallyValid`
+    pub const UNIVERSALLY_VALID: bool = true;
+    /// `validityKind` -> `Universal`
+    pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
+    /// `verificationDomain` -> `Enumerative`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Enumerative";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str = "Principal filter count; exhaustive enum at Q0";
+}
+
+/// SumType carrier semantics: the carrier of a SumType is the coproduct (disjoint union) of component carriers, not the set-theoretic union.
+pub mod exp_3 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "SumType A + B";
+    /// `lhs`
+    pub const LHS: &str = "carrier(SumType(A,B))";
+    /// `rhs`
+    pub const RHS: &str = "coproduct(carrier(A), carrier(B))";
+    /// `universallyValid`
+    pub const UNIVERSALLY_VALID: bool = true;
+    /// `validityKind` -> `Universal`
+    pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
+    /// `verificationDomain` -> `Algebraic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str = "Definitional; architectural decision identity";
+}
+
+/// SumType Euler characteristic additivity: for a SumType with topologically disjoint component nerves, the Euler characteristic is additive.
+pub mod st_3 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "disjoint SumType A + B";
+    /// `lhs`
+    pub const LHS: &str = "chi(N(C(A+B)))";
+    /// `rhs`
+    pub const RHS: &str = "chi(N(C(A))) + chi(N(C(B)))";
+    /// `universallyValid`
+    pub const UNIVERSALLY_VALID: bool = true;
+    /// `validityKind` -> `Universal`
+    pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
+    /// `verificationDomain` -> `IndexTheoretic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/IndexTheoretic";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str = "Disjoint simplicial complex Euler formula";
+}
+
+/// SumType Betti number additivity: for disjoint component nerves, all Betti numbers are additive.
+pub mod st_4 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "disjoint SumType A + B, k >= 0";
+    /// `lhs`
+    pub const LHS: &str = "beta_k(N(C(A+B)))";
+    /// `rhs`
+    pub const RHS: &str = "beta_k(N(C(A))) + beta_k(N(C(B)))";
+    /// `universallyValid`
+    pub const UNIVERSALLY_VALID: bool = true;
+    /// `validityKind` -> `Universal`
+    pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
+    /// `verificationDomain` -> `Topological`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Topological";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str = "Mayer-Vietoris for disjoint union";
+}
+
+/// SumType completeness transfer: a SumType A+B is CompleteType iff both A and B are CompleteType and they have equal quantum levels.
+pub mod st_5 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "SumType A + B";
+    /// `lhs`
+    pub const LHS: &str = "CompleteType(A + B)";
+    /// `rhs`
+    pub const RHS: &str = "CompleteType(A) and CompleteType(B) and Q(A)=Q(B)";
+    /// `universallyValid`
+    pub const UNIVERSALLY_VALID: bool = true;
+    /// `validityKind` -> `Universal`
+    pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
+    /// `verificationDomain` -> `IndexTheoretic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/IndexTheoretic";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str = "ST_3 + ST_4 + IT_7d";
+}
+
+/// Betti-1 minimum constraint count: the minimum number of constraints needed to achieve first Betti number beta_1 = k in the constraint nerve is 2k + 1.
+pub mod ts_8 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "first Betti number k >= 1, n-fiber type";
+    /// `lhs`
+    pub const LHS: &str = "min constraints for beta_1 = k";
+    /// `rhs`
+    pub const RHS: &str = "2k + 1";
+    /// `universallyValid`
+    pub const UNIVERSALLY_VALID: bool = true;
+    /// `validityKind` -> `Universal`
+    pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
+    /// `verificationDomain` -> `Pipeline`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str = "Simplicial cycle construction; inductive on k";
+}
+
+/// TypeSynthesisResolver termination: the resolver terminates in at most 2^n steps for any target signature at quantum level Q_n, returning either a ConstrainedType or a ForbiddenSignature certificate.
+pub mod ts_9 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "QuantumLevel Q_n, any target signature";
+    /// `lhs`
+    pub const LHS: &str = "TypeSynthesisResolver terminates";
+    /// `rhs`
+    pub const RHS: &str = "within 2^n steps";
+    /// `universallyValid`
+    pub const UNIVERSALLY_VALID: bool = true;
+    /// `validityKind` -> `Universal`
+    pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
+    /// `verificationDomain` -> `Pipeline`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str = "Finite constraint combination space; inductive on n";
+}
+
+/// ForbiddenSignature membership criterion: a topological signature is a ForbiddenSignature iff no ConstrainedType with at most n constraints realises it at quantum level Q_n.
+pub mod ts_10 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "topological signature sigma at Q_n";
+    /// `lhs`
+    pub const LHS: &str = "ForbiddenSignature(sigma)";
+    /// `rhs`
+    pub const RHS: &str = "no ConstrainedType with <= n constraints realises sigma";
+    /// `universallyValid`
+    pub const UNIVERSALLY_VALID: bool = true;
+    /// `validityKind` -> `Universal`
+    pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
+    /// `verificationDomain` -> `Algebraic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str = "Exhaustive enum at Q0; combinatorial bound";
+}
+
+/// ObstructionChain length bound: the length of the ObstructionChain from Q_j to Q_k is at most (k-j) times C(basisSize(Q_j), 3).
+pub mod qt_8 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "LiftChain from Q_j to Q_k";
+    /// `lhs`
+    pub const LHS: &str = "ObstructionChain length from Q_j to Q_k";
+    /// `rhs`
+    pub const RHS: &str = "<= (k-j) * C(basisSize(Q_j), 3)";
+    /// `universallyValid`
+    pub const UNIVERSALLY_VALID: bool = true;
+    /// `validityKind` -> `Universal`
+    pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
+    /// `verificationDomain` -> `IndexTheoretic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/IndexTheoretic";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str = "QLS_2 + spectral sequence convergence bound";
+}
+
+/// TowerCompletenessResolver termination: the resolver terminates for any finite LiftChain within the QT_8 bound, producing a CompleteType certificate or a bounded ObstructionChain.
+pub mod qt_9 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "LiftChain of finite length";
+    /// `lhs`
+    pub const LHS: &str = "TowerCompletenessResolver terminates";
+    /// `rhs`
+    pub const RHS: &str = "within QT_8 bound";
+    /// `universallyValid`
+    pub const UNIVERSALLY_VALID: bool = true;
+    /// `validityKind` -> `Universal`
+    pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
+    /// `verificationDomain` -> `Pipeline`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str = "Finite chain + QT_8 bound";
+}
+
+/// Standard coefficient ring: the coefficient ring for all psi-pipeline cohomology computations in uor.foundation is Z/2Z, consistent with MN_7.
+pub mod coeff_1 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "ConstraintNerve N(C) at any quantum level";
+    /// `lhs`
+    pub const LHS: &str = "standard coefficient ring for psi-pipeline";
+    /// `rhs`
+    pub const RHS: &str = "Z/2Z";
+    /// `universallyValid`
+    pub const UNIVERSALLY_VALID: bool = true;
+    /// `validityKind` -> `Universal`
+    pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
+    /// `verificationDomain` -> `Algebraic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str = "Definitional; MN_7 consistency requirement";
+}
+
+/// GluingObstruction feedback: given a GluingObstruction class in H^1(N(C)), the killing RefinementSuggestion adds a constraint whose pinned fibers contain the intersection of the cycle-generating pair.
+pub mod go_1 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "GluingObstruction c, cycle pair (C_i, C_j)";
+    /// `lhs`
+    pub const LHS: &str = "pinsFibers(killing constraint for obstruction c)";
+    /// `rhs`
+    pub const RHS: &str = "superset of pinsFibers(C_i) cap pinsFibers(C_j)";
+    /// `universallyValid`
+    pub const UNIVERSALLY_VALID: bool = true;
+    /// `validityKind` -> `Universal`
+    pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
+    /// `verificationDomain` -> `Topological`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Topological";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str = "Cohomology killing lemma; psi_6 output";
+}
+
+/// Saturation re-entry free count: for a session at full saturation, a new query q has freeCount equal to the number of q's fiber coordinates not already bound.
+pub mod sr_6 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "saturated Session, new RelationQuery q";
+    /// `lhs`
+    pub const LHS: &str = "freeCount(q) after saturation";
+    /// `rhs`
+    pub const RHS: &str = "fibers of q not in BindingAccumulator";
+    /// `universallyValid`
+    pub const UNIVERSALLY_VALID: bool = true;
+    /// `validityKind` -> `Universal`
+    pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
+    /// `verificationDomain` -> `Algebraic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str = "SR_1 monotone accumulation + SC_2 formula";
+}
+
+/// Saturation degree degradation: after re-entry with query q, the saturation degree becomes min(current sigma, 1 - freeCount(q)/n).
+pub mod sr_7 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "SessionResolver, new query q";
+    /// `lhs`
+    pub const LHS: &str = "sigma after re-entry with query q";
+    /// `rhs`
+    pub const RHS: &str = "min(sigma, 1 - freeCount(q)/n)";
+    /// `universallyValid`
+    pub const UNIVERSALLY_VALID: bool = true;
+    /// `validityKind` -> `Universal`
+    pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
+    /// `verificationDomain` -> `Algebraic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str = "SC_2 definition + SR_1 monotonicity";
+}
+
+/// Amplitude index set characterization: the amplitude index set of a SuperposedFiberState over ConstrainedType T at Q_n is the set of monotone pinning trajectories consistent with T's constraints.
+pub mod qm_6 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "SuperposedFiberState over ConstrainedType T at Q_n";
+    /// `lhs`
+    pub const LHS: &str = "amplitude index set of SuperposedFiberState over T";
+    /// `rhs`
+    pub const RHS: &str = "monotone pinning trajectories consistent with T";
+    /// `universallyValid`
+    pub const UNIVERSALLY_VALID: bool = true;
+    /// `validityKind` -> `Universal`
+    pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
+    /// `verificationDomain` -> `SuperpositionDomain`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/SuperpositionDomain";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str = "Fiber lattice + constraint filter; enum at Q0-Q3";
+}
+
 use crate::enums::PrimitiveOp;
 
 impl PrimitiveOp {

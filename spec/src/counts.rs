@@ -17,22 +17,22 @@ pub const PROPERTIES: usize = 438;
 pub const NAMESPACE_PROPERTIES: usize = 437;
 
 /// Total named individuals across all namespaces.
-pub const INDIVIDUALS: usize = 758;
+pub const INDIVIDUALS: usize = 804;
 
 /// Number of SHACL test instance graphs.
-pub const SHACL_TESTS: usize = 112;
+pub const SHACL_TESTS: usize = 123;
 
 /// Total conformance checks in the full suite.
-pub const CONFORMANCE_CHECKS: usize = 198;
+pub const CONFORMANCE_CHECKS: usize = 220;
 
 /// Number of amendments applied to the base ontology.
-pub const AMENDMENTS: usize = 43;
+pub const AMENDMENTS: usize = 44;
 
 /// Number of classes that become Rust enums/structs (not traits).
 pub const ENUM_CLASSES: usize = 13;
 
 /// Number of `op:Identity` individuals (and corresponding proofs).
-pub const IDENTITY_COUNT: usize = 336;
+pub const IDENTITY_COUNT: usize = 359;
 
 /// Kernel-space namespace count.
 pub const KERNEL_NAMESPACES: usize = 3;
@@ -48,4 +48,4 @@ pub const USER_NAMESPACES: usize = 3;
 pub const METHODS: usize = 367;
 
 /// Number of individual constant modules generated.
-pub const CONSTANT_MODULES: usize = 699;
+pub const CONSTANT_MODULES: usize = 791;

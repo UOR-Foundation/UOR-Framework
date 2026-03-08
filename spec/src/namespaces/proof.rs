@@ -7774,5 +7774,533 @@ fn individuals() -> Vec<Individual> {
                 ),
             ],
         },
+        // Amendment 44: Structural Gap Closure proofs
+        // G7: CarryConstraint fiber-pinning map
+        Individual {
+            id: "https://uor.foundation/proof/prf_CC_PINS",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_CC_PINS",
+            comment: "Proof of CC_PINS: carry-constraint fiber-pinning map \
+                      follows from ring carry propagation rule.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/CC_PINS"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_CC_COST_FIBER",
+            type_: "https://uor.foundation/proof/ComputationCertificate",
+            label: "prf_CC_COST_FIBER",
+            comment: "Computation certificate for CC_COST_FIBER: exhaustive \
+                      enumeration at Q0 confirms |pinsFibers| = popcount + 1.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/CC_COST_FIBER"),
+                ),
+                (
+                    "https://uor.foundation/proof/atQuantumLevel",
+                    IndividualValue::IriRef("https://uor.foundation/schema/Q0"),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        // G1: Nerve joint satisfiability
+        Individual {
+            id: "https://uor.foundation/proof/prf_jsat_RR",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_jsat_RR",
+            comment: "Proof of jsat_RR: CRT joint satisfiability follows \
+                      from the Chinese Remainder Theorem.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/jsat_RR"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_jsat_CR",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_jsat_CR",
+            comment: "Proof of jsat_CR: carry-residue joint satisfiability \
+                      follows from the carry stopping rule and residue class \
+                      intersection.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/jsat_CR"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_jsat_CC",
+            type_: "https://uor.foundation/proof/ComputationCertificate",
+            label: "prf_jsat_CC",
+            comment: "Computation certificate for jsat_CC: bit-pattern \
+                      exhaustive enumeration at Q0.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/jsat_CC"),
+                ),
+                (
+                    "https://uor.foundation/proof/atQuantumLevel",
+                    IndividualValue::IriRef("https://uor.foundation/schema/Q0"),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        // G2: DihedralElement inverse and order
+        Individual {
+            id: "https://uor.foundation/proof/prf_D_8",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_D_8",
+            comment: "Proof of D_8: dihedral inverse formula follows from \
+                      D_5 group presentation and D_7 composition rule.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/D_8"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_D_9",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_D_9",
+            comment: "Proof of D_9: reflection order 2 follows from D_7 \
+                      composition: (r^k s)(r^k s) = identity.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/D_9"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        // G5: Constraint language expressiveness
+        Individual {
+            id: "https://uor.foundation/proof/prf_EXP_1",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_EXP_1",
+            comment: "Proof of EXP_1: monotone carrier characterization \
+                      follows from fiber lattice monotonicity.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/EXP_1"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_EXP_2",
+            type_: "https://uor.foundation/proof/ComputationCertificate",
+            label: "prf_EXP_2",
+            comment: "Computation certificate for EXP_2: principal filter \
+                      count verified by exhaustive enumeration at Q0.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/EXP_2"),
+                ),
+                (
+                    "https://uor.foundation/proof/atQuantumLevel",
+                    IndividualValue::IriRef("https://uor.foundation/schema/Q0"),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_EXP_3",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_EXP_3",
+            comment: "Proof of EXP_3: SumType carrier is coproduct by \
+                      definitional architectural decision.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/EXP_3"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        // G4: SumType topology
+        Individual {
+            id: "https://uor.foundation/proof/prf_ST_3",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_ST_3",
+            comment: "Proof of ST_3: Euler characteristic additivity for \
+                      disjoint simplicial complexes.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/ST_3"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_ST_4",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_ST_4",
+            comment: "Proof of ST_4: Betti number additivity via \
+                      Mayer-Vietoris for disjoint union.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/ST_4"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_ST_5",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_ST_5",
+            comment: "Proof of ST_5: SumType completeness transfer follows \
+                      from ST_3 + ST_4 + IT_7d.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/ST_5"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        // G3: TypeSynthesis reachability
+        Individual {
+            id: "https://uor.foundation/proof/prf_TS_8",
+            type_: "https://uor.foundation/proof/InductiveProof",
+            label: "prf_TS_8",
+            comment: "Inductive proof of TS_8: minimum constraint count for \
+                      beta_1 = k is 2k + 1. Base case at k=1 requires 3 \
+                      mutually overlapping constraints.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/TS_8"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/baseCase",
+                    IndividualValue::IriRef("https://uor.foundation/proof/prf_HA_1"),
+                ),
+                (
+                    "https://uor.foundation/proof/inductiveStep",
+                    IndividualValue::IriRef("https://uor.foundation/proof/prf_TS_4"),
+                ),
+                (
+                    "https://uor.foundation/proof/validForKAtLeast",
+                    IndividualValue::Int(1),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_TS_9",
+            type_: "https://uor.foundation/proof/InductiveProof",
+            label: "prf_TS_9",
+            comment: "Inductive proof of TS_9: TypeSynthesisResolver \
+                      terminates in at most 2^n steps. Base case at n=1 has \
+                      2 constraint combinations.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/TS_9"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/baseCase",
+                    IndividualValue::IriRef("https://uor.foundation/proof/prf_TS_1"),
+                ),
+                (
+                    "https://uor.foundation/proof/inductiveStep",
+                    IndividualValue::IriRef("https://uor.foundation/proof/prf_TS_4"),
+                ),
+                (
+                    "https://uor.foundation/proof/validForKAtLeast",
+                    IndividualValue::Int(1),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_TS_10",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_TS_10",
+            comment: "Proof of TS_10: ForbiddenSignature membership follows \
+                      from exhaustive enumeration bound.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/TS_10"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        // G6: ObstructionChain termination
+        Individual {
+            id: "https://uor.foundation/proof/prf_QT_8",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_QT_8",
+            comment: "Proof of QT_8: ObstructionChain length bound follows \
+                      from QLS_2 and spectral sequence convergence.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/QT_8"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_QT_9",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_QT_9",
+            comment: "Proof of QT_9: TowerCompletenessResolver termination \
+                      follows from finite chain length and QT_8 bound.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/QT_9"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        // G11: Coefficient ring
+        Individual {
+            id: "https://uor.foundation/proof/prf_COEFF_1",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_COEFF_1",
+            comment: "Proof of COEFF_1: Z/2Z coefficient ring is \
+                      definitional, consistent with MN_7.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/COEFF_1"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        // G9: GluingObstruction feedback
+        Individual {
+            id: "https://uor.foundation/proof/prf_GO_1",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_GO_1",
+            comment: "Proof of GO_1: cohomology killing lemma for \
+                      GluingObstruction feedback.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/GO_1"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        // G8: Session saturation lifecycle bridge
+        Individual {
+            id: "https://uor.foundation/proof/prf_SR_6",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_SR_6",
+            comment: "Proof of SR_6: saturation re-entry free count follows \
+                      from SR_1 monotone accumulation and SC_2.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/SR_6"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_SR_7",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_SR_7",
+            comment: "Proof of SR_7: saturation degree degradation follows \
+                      from SC_2 definition and SR_1 monotonicity.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/SR_7"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        // G10: Amplitude index set
+        Individual {
+            id: "https://uor.foundation/proof/prf_QM_6",
+            type_: "https://uor.foundation/proof/EmpiricalVerification",
+            label: "prf_QM_6",
+            comment: "Empirical verification of QM_6: amplitude index set \
+                      equals monotone pinning trajectories consistent with \
+                      constraints. Verified by exhaustive enumeration at Q0 \
+                      through Q3.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/QM_6"),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/quantumLevelRange",
+                    IndividualValue::Str("Q0-Q3"),
+                ),
+                (
+                    "https://uor.foundation/proof/verificationMethod",
+                    IndividualValue::Str("exhaustive trajectory enumeration over fiber lattice"),
+                ),
+            ],
+        },
     ]
 }

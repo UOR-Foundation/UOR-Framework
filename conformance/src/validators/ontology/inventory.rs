@@ -68,6 +68,18 @@ pub fn validate(artifacts: &Path) -> Result<ConformanceReport> {
     validate_ebnf_grammar_alignment(&mut report);
     // Amendment 43: Cryptographic Primitive Pinning
     validate_crypto_pinning_vocabulary(&mut report);
+    // Amendment 44: Structural Gap Closures
+    validate_carry_constraint_pinning(&mut report);
+    validate_joint_satisfiability_coverage(&mut report);
+    validate_dihedral_algebra_completeness(&mut report);
+    validate_constraint_expressiveness(&mut report);
+    validate_sumtype_topology(&mut report);
+    validate_synthesis_reachability(&mut report);
+    validate_obstruction_termination(&mut report);
+    validate_coefficient_ring_grounding(&mut report);
+    validate_gluing_feedback(&mut report);
+    validate_session_saturation_bridge(&mut report);
+    validate_amplitude_index_characterization(&mut report);
 
     // Validate the built JSON-LD artifact
     let json_path = artifacts.join("uor.foundation.json");
@@ -401,7 +413,8 @@ fn validate_identity_completeness(report: &mut ConformanceReport) {
         "GD_",  // Amendment 36: Measurement Boundary
         "QM_",  // Amendment 37: SuperpositionResolver identities
         "SP_",  // Amendment 41: Tower identities
-        "QT_",
+        "QT_",  // Amendment 44: Structural Gap Closures
+        "jsat_", "EXP_", "GO_", "COEFF_",
     ];
     for prefix in &expected_prefixes {
         let has = identities.iter().any(|i| i.label.starts_with(prefix));
@@ -1577,6 +1590,340 @@ fn validate_crypto_pinning_vocabulary(report: &mut ConformanceReport) {
         report.push(TestResult::pass(
             validator,
             "Amendment 43 crypto pinning vocabulary present (digestAlgorithm, canonicalBytes)",
+        ));
+    }
+}
+
+/// Validates carry constraint fiber-pinning identities (Amendment 44, G7).
+fn validate_carry_constraint_pinning(report: &mut ConformanceReport) {
+    let ontology = uor_ontology::Ontology::full();
+    let validator = "ontology/inventory/carry_constraint_pinning";
+    let op_ns = ontology
+        .namespaces
+        .iter()
+        .find(|m| m.namespace.prefix == "op");
+    let Some(op_mod) = op_ns else {
+        report.push(TestResult::fail(validator, "op/ namespace not found"));
+        return;
+    };
+    let expected = ["CC_PINS", "CC_COST_FIBER"];
+    let mut all_found = true;
+    for label in &expected {
+        let has = op_mod.individuals.iter().any(|ind| ind.label == *label);
+        if !has {
+            report.push(TestResult::fail(
+                validator,
+                format!("Missing carry constraint pinning identity: {}", label),
+            ));
+            all_found = false;
+        }
+    }
+    if all_found {
+        report.push(TestResult::pass(
+            validator,
+            "Amendment 44 carry constraint pinning identities present (CC_PINS, CC_COST_FIBER)",
+        ));
+    }
+}
+
+/// Validates nerve joint satisfiability identities (Amendment 44, G1).
+fn validate_joint_satisfiability_coverage(report: &mut ConformanceReport) {
+    let ontology = uor_ontology::Ontology::full();
+    let validator = "ontology/inventory/joint_satisfiability_coverage";
+    let op_ns = ontology
+        .namespaces
+        .iter()
+        .find(|m| m.namespace.prefix == "op");
+    let Some(op_mod) = op_ns else {
+        report.push(TestResult::fail(validator, "op/ namespace not found"));
+        return;
+    };
+    let expected = ["jsat_RR", "jsat_CR", "jsat_CC"];
+    let mut all_found = true;
+    for label in &expected {
+        let has = op_mod.individuals.iter().any(|ind| ind.label == *label);
+        if !has {
+            report.push(TestResult::fail(
+                validator,
+                format!("Missing joint satisfiability identity: {}", label),
+            ));
+            all_found = false;
+        }
+    }
+    if all_found {
+        report.push(TestResult::pass(
+            validator,
+            "Amendment 44 joint satisfiability identities present (jsat_RR, jsat_CR, jsat_CC)",
+        ));
+    }
+}
+
+/// Validates dihedral algebra completeness (Amendment 44, G2).
+fn validate_dihedral_algebra_completeness(report: &mut ConformanceReport) {
+    let ontology = uor_ontology::Ontology::full();
+    let validator = "ontology/inventory/dihedral_algebra_completeness";
+    let op_ns = ontology
+        .namespaces
+        .iter()
+        .find(|m| m.namespace.prefix == "op");
+    let Some(op_mod) = op_ns else {
+        report.push(TestResult::fail(validator, "op/ namespace not found"));
+        return;
+    };
+    let expected = ["D_7", "D_8", "D_9"];
+    let mut all_found = true;
+    for label in &expected {
+        let has = op_mod.individuals.iter().any(|ind| ind.label == *label);
+        if !has {
+            report.push(TestResult::fail(
+                validator,
+                format!("Missing dihedral algebra identity: {}", label),
+            ));
+            all_found = false;
+        }
+    }
+    if all_found {
+        report.push(TestResult::pass(
+            validator,
+            "Amendment 44 dihedral algebra identities present (D_7, D_8, D_9)",
+        ));
+    }
+}
+
+/// Validates constraint expressiveness boundary identities (Amendment 44, G5).
+fn validate_constraint_expressiveness(report: &mut ConformanceReport) {
+    let ontology = uor_ontology::Ontology::full();
+    let validator = "ontology/inventory/constraint_expressiveness";
+    let op_ns = ontology
+        .namespaces
+        .iter()
+        .find(|m| m.namespace.prefix == "op");
+    let Some(op_mod) = op_ns else {
+        report.push(TestResult::fail(validator, "op/ namespace not found"));
+        return;
+    };
+    let expected = ["EXP_1", "EXP_2", "EXP_3"];
+    let mut all_found = true;
+    for label in &expected {
+        let has = op_mod.individuals.iter().any(|ind| ind.label == *label);
+        if !has {
+            report.push(TestResult::fail(
+                validator,
+                format!("Missing constraint expressiveness identity: {}", label),
+            ));
+            all_found = false;
+        }
+    }
+    if all_found {
+        report.push(TestResult::pass(
+            validator,
+            "Amendment 44 constraint expressiveness identities present (EXP_1, EXP_2, EXP_3)",
+        ));
+    }
+}
+
+/// Validates SumType topological identity algebra (Amendment 44, G4).
+fn validate_sumtype_topology(report: &mut ConformanceReport) {
+    let ontology = uor_ontology::Ontology::full();
+    let validator = "ontology/inventory/sumtype_topology";
+    let op_ns = ontology
+        .namespaces
+        .iter()
+        .find(|m| m.namespace.prefix == "op");
+    let Some(op_mod) = op_ns else {
+        report.push(TestResult::fail(validator, "op/ namespace not found"));
+        return;
+    };
+    let expected = ["ST_3", "ST_4", "ST_5"];
+    let mut all_found = true;
+    for label in &expected {
+        let has = op_mod.individuals.iter().any(|ind| ind.label == *label);
+        if !has {
+            report.push(TestResult::fail(
+                validator,
+                format!("Missing SumType topology identity: {}", label),
+            ));
+            all_found = false;
+        }
+    }
+    if all_found {
+        report.push(TestResult::pass(
+            validator,
+            "Amendment 44 SumType topology identities present (ST_3, ST_4, ST_5)",
+        ));
+    }
+}
+
+/// Validates TypeSynthesis reachability domain completeness (Amendment 44, G3).
+fn validate_synthesis_reachability(report: &mut ConformanceReport) {
+    let ontology = uor_ontology::Ontology::full();
+    let validator = "ontology/inventory/synthesis_reachability";
+    let op_ns = ontology
+        .namespaces
+        .iter()
+        .find(|m| m.namespace.prefix == "op");
+    let Some(op_mod) = op_ns else {
+        report.push(TestResult::fail(validator, "op/ namespace not found"));
+        return;
+    };
+    let expected = ["TS_8", "TS_9", "TS_10"];
+    let mut all_found = true;
+    for label in &expected {
+        let has = op_mod.individuals.iter().any(|ind| ind.label == *label);
+        if !has {
+            report.push(TestResult::fail(
+                validator,
+                format!("Missing synthesis reachability identity: {}", label),
+            ));
+            all_found = false;
+        }
+    }
+    if all_found {
+        report.push(TestResult::pass(
+            validator,
+            "Amendment 44 synthesis reachability identities present (TS_8, TS_9, TS_10)",
+        ));
+    }
+}
+
+/// Validates ObstructionChain termination guarantee (Amendment 44, G6).
+fn validate_obstruction_termination(report: &mut ConformanceReport) {
+    let ontology = uor_ontology::Ontology::full();
+    let validator = "ontology/inventory/obstruction_termination";
+    let op_ns = ontology
+        .namespaces
+        .iter()
+        .find(|m| m.namespace.prefix == "op");
+    let Some(op_mod) = op_ns else {
+        report.push(TestResult::fail(validator, "op/ namespace not found"));
+        return;
+    };
+    let expected = ["QT_8", "QT_9"];
+    let mut all_found = true;
+    for label in &expected {
+        let has = op_mod.individuals.iter().any(|ind| ind.label == *label);
+        if !has {
+            report.push(TestResult::fail(
+                validator,
+                format!("Missing obstruction termination identity: {}", label),
+            ));
+            all_found = false;
+        }
+    }
+    if all_found {
+        report.push(TestResult::pass(
+            validator,
+            "Amendment 44 obstruction termination identities present (QT_8, QT_9)",
+        ));
+    }
+}
+
+/// Validates sheaf coefficient ring grounding (Amendment 44, G11).
+fn validate_coefficient_ring_grounding(report: &mut ConformanceReport) {
+    let ontology = uor_ontology::Ontology::full();
+    let validator = "ontology/inventory/coefficient_ring_grounding";
+    let op_ns = ontology
+        .namespaces
+        .iter()
+        .find(|m| m.namespace.prefix == "op");
+    let Some(op_mod) = op_ns else {
+        report.push(TestResult::fail(validator, "op/ namespace not found"));
+        return;
+    };
+    let has = op_mod.individuals.iter().any(|ind| ind.label == "COEFF_1");
+    if has {
+        report.push(TestResult::pass(
+            validator,
+            "Amendment 44 coefficient ring identity present (COEFF_1)",
+        ));
+    } else {
+        report.push(TestResult::fail(
+            validator,
+            "Missing coefficient ring identity: COEFF_1",
+        ));
+    }
+}
+
+/// Validates GluingObstruction resolver feedback (Amendment 44, G9).
+fn validate_gluing_feedback(report: &mut ConformanceReport) {
+    let ontology = uor_ontology::Ontology::full();
+    let validator = "ontology/inventory/gluing_feedback";
+    let op_ns = ontology
+        .namespaces
+        .iter()
+        .find(|m| m.namespace.prefix == "op");
+    let Some(op_mod) = op_ns else {
+        report.push(TestResult::fail(validator, "op/ namespace not found"));
+        return;
+    };
+    let has = op_mod.individuals.iter().any(|ind| ind.label == "GO_1");
+    if has {
+        report.push(TestResult::pass(
+            validator,
+            "Amendment 44 gluing feedback identity present (GO_1)",
+        ));
+    } else {
+        report.push(TestResult::fail(
+            validator,
+            "Missing gluing feedback identity: GO_1",
+        ));
+    }
+}
+
+/// Validates session saturation lifecycle bridge (Amendment 44, G8).
+fn validate_session_saturation_bridge(report: &mut ConformanceReport) {
+    let ontology = uor_ontology::Ontology::full();
+    let validator = "ontology/inventory/session_saturation_bridge";
+    let op_ns = ontology
+        .namespaces
+        .iter()
+        .find(|m| m.namespace.prefix == "op");
+    let Some(op_mod) = op_ns else {
+        report.push(TestResult::fail(validator, "op/ namespace not found"));
+        return;
+    };
+    let expected = ["SR_6", "SR_7"];
+    let mut all_found = true;
+    for label in &expected {
+        let has = op_mod.individuals.iter().any(|ind| ind.label == *label);
+        if !has {
+            report.push(TestResult::fail(
+                validator,
+                format!("Missing session saturation identity: {}", label),
+            ));
+            all_found = false;
+        }
+    }
+    if all_found {
+        report.push(TestResult::pass(
+            validator,
+            "Amendment 44 session saturation identities present (SR_6, SR_7)",
+        ));
+    }
+}
+
+/// Validates SuperposedFiberState amplitude index characterization (Amendment 44, G10).
+fn validate_amplitude_index_characterization(report: &mut ConformanceReport) {
+    let ontology = uor_ontology::Ontology::full();
+    let validator = "ontology/inventory/amplitude_index_characterization";
+    let op_ns = ontology
+        .namespaces
+        .iter()
+        .find(|m| m.namespace.prefix == "op");
+    let Some(op_mod) = op_ns else {
+        report.push(TestResult::fail(validator, "op/ namespace not found"));
+        return;
+    };
+    let has = op_mod.individuals.iter().any(|ind| ind.label == "QM_6");
+    if has {
+        report.push(TestResult::pass(
+            validator,
+            "Amendment 44 amplitude index identity present (QM_6)",
+        ));
+    } else {
+        report.push(TestResult::fail(
+            validator,
+            "Missing amplitude index identity: QM_6",
         ));
     }
 }

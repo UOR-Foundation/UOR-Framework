@@ -3580,3 +3580,247 @@ pub mod prf_qt_7 {
     /// `verified`
     pub const VERIFIED: bool = true;
 }
+
+/// Proof of CC_PINS: carry-constraint fiber-pinning map follows from ring carry propagation rule.
+pub mod prf_cc_pins {
+    /// `provesIdentity` -> `CC_PINS`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/CC_PINS";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Computation certificate for CC_COST_FIBER: exhaustive enumeration at Q0 confirms |pinsFibers| = popcount + 1.
+pub mod prf_cc_cost_fiber {
+    /// `atQuantumLevel` -> `Q0`
+    pub const AT_QUANTUM_LEVEL: &str = "https://uor.foundation/schema/Q0";
+    /// `provesIdentity` -> `CC_COST_FIBER`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/CC_COST_FIBER";
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Proof of jsat_RR: CRT joint satisfiability follows from the Chinese Remainder Theorem.
+pub mod prf_jsat_rr {
+    /// `provesIdentity` -> `jsat_RR`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/jsat_RR";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Proof of jsat_CR: carry-residue joint satisfiability follows from the carry stopping rule and residue class intersection.
+pub mod prf_jsat_cr {
+    /// `provesIdentity` -> `jsat_CR`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/jsat_CR";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Computation certificate for jsat_CC: bit-pattern exhaustive enumeration at Q0.
+pub mod prf_jsat_cc {
+    /// `atQuantumLevel` -> `Q0`
+    pub const AT_QUANTUM_LEVEL: &str = "https://uor.foundation/schema/Q0";
+    /// `provesIdentity` -> `jsat_CC`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/jsat_CC";
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Proof of D_8: dihedral inverse formula follows from D_5 group presentation and D_7 composition rule.
+pub mod prf_d_8 {
+    /// `provesIdentity` -> `D_8`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/D_8";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Proof of D_9: reflection order 2 follows from D_7 composition: (r^k s)(r^k s) = identity.
+pub mod prf_d_9 {
+    /// `provesIdentity` -> `D_9`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/D_9";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Proof of EXP_1: monotone carrier characterization follows from fiber lattice monotonicity.
+pub mod prf_exp_1 {
+    /// `provesIdentity` -> `EXP_1`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/EXP_1";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Computation certificate for EXP_2: principal filter count verified by exhaustive enumeration at Q0.
+pub mod prf_exp_2 {
+    /// `atQuantumLevel` -> `Q0`
+    pub const AT_QUANTUM_LEVEL: &str = "https://uor.foundation/schema/Q0";
+    /// `provesIdentity` -> `EXP_2`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/EXP_2";
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Proof of EXP_3: SumType carrier is coproduct by definitional architectural decision.
+pub mod prf_exp_3 {
+    /// `provesIdentity` -> `EXP_3`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/EXP_3";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Proof of ST_3: Euler characteristic additivity for disjoint simplicial complexes.
+pub mod prf_st_3 {
+    /// `provesIdentity` -> `ST_3`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/ST_3";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Proof of ST_4: Betti number additivity via Mayer-Vietoris for disjoint union.
+pub mod prf_st_4 {
+    /// `provesIdentity` -> `ST_4`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/ST_4";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Proof of ST_5: SumType completeness transfer follows from ST_3 + ST_4 + IT_7d.
+pub mod prf_st_5 {
+    /// `provesIdentity` -> `ST_5`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/ST_5";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Inductive proof of TS_8: minimum constraint count for beta_1 = k is 2k + 1. Base case at k=1 requires 3 mutually overlapping constraints.
+pub mod prf_ts_8 {
+    /// `baseCase` -> `prf_HA_1`
+    pub const BASE_CASE: &str = "https://uor.foundation/proof/prf_HA_1";
+    /// `inductiveStep` -> `prf_TS_4`
+    pub const INDUCTIVE_STEP: &str = "https://uor.foundation/proof/prf_TS_4";
+    /// `provesIdentity` -> `TS_8`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/TS_8";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `validForKAtLeast`
+    pub const VALID_FOR_KAT_LEAST: i64 = 1;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Inductive proof of TS_9: TypeSynthesisResolver terminates in at most 2^n steps. Base case at n=1 has 2 constraint combinations.
+pub mod prf_ts_9 {
+    /// `baseCase` -> `prf_TS_1`
+    pub const BASE_CASE: &str = "https://uor.foundation/proof/prf_TS_1";
+    /// `inductiveStep` -> `prf_TS_4`
+    pub const INDUCTIVE_STEP: &str = "https://uor.foundation/proof/prf_TS_4";
+    /// `provesIdentity` -> `TS_9`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/TS_9";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `validForKAtLeast`
+    pub const VALID_FOR_KAT_LEAST: i64 = 1;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Proof of TS_10: ForbiddenSignature membership follows from exhaustive enumeration bound.
+pub mod prf_ts_10 {
+    /// `provesIdentity` -> `TS_10`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/TS_10";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Proof of QT_8: ObstructionChain length bound follows from QLS_2 and spectral sequence convergence.
+pub mod prf_qt_8 {
+    /// `provesIdentity` -> `QT_8`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/QT_8";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Proof of QT_9: TowerCompletenessResolver termination follows from finite chain length and QT_8 bound.
+pub mod prf_qt_9 {
+    /// `provesIdentity` -> `QT_9`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/QT_9";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Proof of COEFF_1: Z/2Z coefficient ring is definitional, consistent with MN_7.
+pub mod prf_coeff_1 {
+    /// `provesIdentity` -> `COEFF_1`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/COEFF_1";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Proof of GO_1: cohomology killing lemma for GluingObstruction feedback.
+pub mod prf_go_1 {
+    /// `provesIdentity` -> `GO_1`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/GO_1";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Proof of SR_6: saturation re-entry free count follows from SR_1 monotone accumulation and SC_2.
+pub mod prf_sr_6 {
+    /// `provesIdentity` -> `SR_6`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/SR_6";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Proof of SR_7: saturation degree degradation follows from SC_2 definition and SR_1 monotonicity.
+pub mod prf_sr_7 {
+    /// `provesIdentity` -> `SR_7`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/SR_7";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Empirical verification of QM_6: amplitude index set equals monotone pinning trajectories consistent with constraints. Verified by exhaustive enumeration at Q0 through Q3.
+pub mod prf_qm_6 {
+    /// `provesIdentity` -> `QM_6`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/QM_6";
+    /// `quantumLevelRange`
+    pub const QUANTUM_LEVEL_RANGE: &str = "Q0-Q3";
+    /// `verificationMethod`
+    pub const VERIFICATION_METHOD: &str = "exhaustive trajectory enumeration over fiber lattice";
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}

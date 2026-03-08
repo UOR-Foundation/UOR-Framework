@@ -579,6 +579,62 @@ pub fn validate() -> ConformanceReport {
         tests::fixtures::TEST112_ADDRESS_CANONICAL_BYTES,
         &mut report,
     );
+    // Amendment 44: Structural Gap Closure SHACL tests
+    run_test(
+        "test113_carry_constraint_pinning",
+        tests::fixtures::TEST113_CARRY_CONSTRAINT_PINNING,
+        &mut report,
+    );
+    run_test(
+        "test114_joint_satisfiability",
+        tests::fixtures::TEST114_JOINT_SATISFIABILITY,
+        &mut report,
+    );
+    run_test(
+        "test115_dihedral_inverse_order",
+        tests::fixtures::TEST115_DIHEDRAL_INVERSE_ORDER,
+        &mut report,
+    );
+    run_test(
+        "test116_constraint_expressiveness",
+        tests::fixtures::TEST116_CONSTRAINT_EXPRESSIVENESS,
+        &mut report,
+    );
+    run_test(
+        "test117_sumtype_topology",
+        tests::fixtures::TEST117_SUMTYPE_TOPOLOGY,
+        &mut report,
+    );
+    run_test(
+        "test118_synthesis_reachability",
+        tests::fixtures::TEST118_SYNTHESIS_REACHABILITY,
+        &mut report,
+    );
+    run_test(
+        "test119_obstruction_termination",
+        tests::fixtures::TEST119_OBSTRUCTION_TERMINATION,
+        &mut report,
+    );
+    run_test(
+        "test120_coefficient_ring",
+        tests::fixtures::TEST120_COEFFICIENT_RING,
+        &mut report,
+    );
+    run_test(
+        "test121_gluing_feedback",
+        tests::fixtures::TEST121_GLUING_FEEDBACK,
+        &mut report,
+    );
+    run_test(
+        "test122_session_saturation",
+        tests::fixtures::TEST122_SESSION_SATURATION,
+        &mut report,
+    );
+    run_test(
+        "test123_amplitude_index",
+        tests::fixtures::TEST123_AMPLITUDE_INDEX,
+        &mut report,
+    );
 
     // Verify test fixture count matches expected
     let test_count = report.results.len() - before_tests;
@@ -736,6 +792,17 @@ fn run_test(name: &str, turtle_src: &str, report: &mut ConformanceReport) {
         "test110_tower_roundtrip" => validate_basic_turtle(turtle_src),
         "test111_address_crypto_pinning" => validate_basic_turtle(turtle_src),
         "test112_address_canonical_bytes" => validate_basic_turtle(turtle_src),
+        "test113_carry_constraint_pinning" => validate_basic_turtle(turtle_src),
+        "test114_joint_satisfiability" => validate_basic_turtle(turtle_src),
+        "test115_dihedral_inverse_order" => validate_basic_turtle(turtle_src),
+        "test116_constraint_expressiveness" => validate_basic_turtle(turtle_src),
+        "test117_sumtype_topology" => validate_basic_turtle(turtle_src),
+        "test118_synthesis_reachability" => validate_basic_turtle(turtle_src),
+        "test119_obstruction_termination" => validate_basic_turtle(turtle_src),
+        "test120_coefficient_ring" => validate_basic_turtle(turtle_src),
+        "test121_gluing_feedback" => validate_basic_turtle(turtle_src),
+        "test122_session_saturation" => validate_basic_turtle(turtle_src),
+        "test123_amplitude_index" => validate_basic_turtle(turtle_src),
         _ => Ok(()),
     };
 
