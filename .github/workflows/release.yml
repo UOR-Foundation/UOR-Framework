@@ -90,6 +90,7 @@ jobs:
             public/uor.foundation.json
             public/uor.foundation.ttl
             public/uor.foundation.nt
+            public/uor.term.ebnf
           body: |
             UOR Foundation ontology release ${{ github.ref_name }}.
 
@@ -97,6 +98,7 @@ jobs:
             - `uor.foundation.json` — JSON-LD 1.1
             - `uor.foundation.ttl` — Turtle 1.1
             - `uor.foundation.nt` — N-Triples
+            - `uor.term.ebnf` — ISO/IEC 14977 EBNF grammar
 
             **Rust crate:** [`uor-foundation` on crates.io](https://crates.io/crates/uor-foundation)
             Documentation: https://uor-foundation.github.io/UOR-Framework/
