@@ -1,5 +1,5 @@
 # UOR Foundation SHACL Shapes
-# One NodeShape per class — 213 total.
+# One NodeShape per class — 218 total.
 # Defines cardinality and type constraints validated by the conformance suite.
 
 @prefix rdf:        <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
@@ -1804,3 +1804,34 @@ uor-sh:TowerCompletenessResolverShape
     rdfs:label      "TowerCompletenessResolverShape" ;
     sh:property [ sh:path resolver:towerSourceLevel ; sh:minCount 1 ; sh:maxCount 1 ; sh:class schema:QuantumLevel ] ;
     sh:property [ sh:path resolver:towerTargetLevel ; sh:minCount 1 ; sh:maxCount 1 ; sh:class schema:QuantumLevel ] .
+
+# ── Amendment 48: Multi-Session Coordination (5) ──────────────────────────────
+
+uor-sh:SharedContextShape
+    a               sh:NodeShape ;
+    sh:targetClass  state:SharedContext ;
+    rdfs:label      "SharedContextShape" .
+
+uor-sh:ContextLeaseShape
+    a               sh:NodeShape ;
+    sh:targetClass  state:ContextLease ;
+    rdfs:label      "ContextLeaseShape" ;
+    sh:property [ sh:path state:leasedFibers ; sh:minCount 1 ; sh:maxCount 1 ; sh:class partition:FiberBudget ] ;
+    sh:property [ sh:path state:leaseHolder ; sh:minCount 1 ; sh:maxCount 1 ; sh:class state:Session ] .
+
+uor-sh:SessionCompositionShape
+    a               sh:NodeShape ;
+    sh:targetClass  state:SessionComposition ;
+    rdfs:label      "SessionCompositionShape" ;
+    sh:property [ sh:path state:composedFrom ; sh:minCount 1 ; sh:class state:Session ] ;
+    sh:property [ sh:path state:compositionCompatible ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:boolean ] .
+
+uor-sh:ExecutionPolicyShape
+    a               sh:NodeShape ;
+    sh:targetClass  resolver:ExecutionPolicy ;
+    rdfs:label      "ExecutionPolicyShape" .
+
+uor-sh:ExecutionPolicyKindShape
+    a               sh:NodeShape ;
+    sh:targetClass  resolver:ExecutionPolicyKind ;
+    rdfs:label      "ExecutionPolicyKindShape" .

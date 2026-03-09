@@ -5589,6 +5589,223 @@ pub mod gc_1 {
     pub const VERIFICATION_PATH_NOTE: &str = "surfaceSymmetry → GroundingCertificate issuance";
 }
 
+/// Session composition validity: compose(S_A, S_B) is valid at Q_k iff all pinned-fiber intersections agree at every tower level Q_0 through Q_k.
+pub mod sr_8 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "S_A, S_B: Session at quantum level Q_k (k ≥ 0)";
+    /// `lhs`
+    pub const LHS: &str = "compose(S_A, S_B) valid at Q_k";
+    /// `rhs`
+    pub const RHS: &str =
+        "∀ j ≤ k: ∀ a ∈ pinnedFibers(S_A, Q_j) ∩ pinnedFibers(S_B, Q_j): datum(S_A, a, Q_j) = datum(S_B, a, Q_j)";
+    /// `universallyValid`
+    pub const UNIVERSALLY_VALID: bool = false;
+    /// `validKMin`
+    pub const VALID_KMIN: i64 = 0;
+    /// `validityKind` -> `ParametricLower`
+    pub const VALIDITY_KIND: &str = "https://uor.foundation/op/ParametricLower";
+    /// `verificationDomain` -> `Algebraic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str =
+        "SR_5 contradiction criterion extended over LiftChain tower Q_0…Q_k; base case k=0 is standard SR_5";
+}
+
+/// ContextLease disjointness: two distinct leases on the same SharedContext have non-overlapping fiber sets.
+pub mod sr_9 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "L_A, L_B: ContextLease on SharedContext C, L_A ≠ L_B";
+    /// `lhs`
+    pub const LHS: &str = "leasedFibers(L_A) ∩ leasedFibers(L_B)";
+    /// `rhs`
+    pub const RHS: &str = "= ∅";
+    /// `universallyValid`
+    pub const UNIVERSALLY_VALID: bool = true;
+    /// `validityKind` -> `Universal`
+    pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
+    /// `verificationDomain` -> `Algebraic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str =
+        "ContextLease disjointness → FiberBudget partition → SR_1 per-session soundness";
+}
+
+/// ExecutionPolicy confluence: different execution policies on the same pending query set produce the same final resolved state (Church-Rosser for session resolution).
+pub mod sr_10 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "SessionResolver R with ExecutionPolicy P, pending query set Q";
+    /// `lhs`
+    pub const LHS: &str = "finalState(R, P_1, Q)";
+    /// `rhs`
+    pub const RHS: &str = "= finalState(R, P_2, Q) for any P_1, P_2: ExecutionPolicy";
+    /// `universallyValid`
+    pub const UNIVERSALLY_VALID: bool = true;
+    /// `validityKind` -> `Universal`
+    pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
+    /// `verificationDomain` -> `Algebraic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str =
+        "SR_1 monotonicity + SR_2 binding soundness → policy-invariant convergence";
+}
+
+/// Lease partition conserves total budget: the sum of freeCount over all leases equals the SharedContext freeCount.
+pub mod mc_1 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "SharedContext C; leaseSet {L_1, …, L_k} covering all fibers of C";
+    /// `lhs`
+    pub const LHS: &str = "Σᵢ freeCount(leasedFibers(L_i))";
+    /// `rhs`
+    pub const RHS: &str = "= freeCount(C)";
+    /// `universallyValid`
+    pub const UNIVERSALLY_VALID: bool = true;
+    /// `validityKind` -> `Universal`
+    pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
+    /// `verificationDomain` -> `Algebraic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str =
+        "SR_9 (pairwise disjoint leasedFibers) + F_3 (pinnedCount + freeCount = n) → partition additivity";
+}
+
+/// Per-lease binding monotonicity: within a leased sub-domain, freeCount decreases monotonically (SR_1 restricted to lease).
+pub mod mc_2 {
+    /// `forAll`
+    pub const FOR_ALL: &str =
+        "ContextLease L held by Session S; binding step i within S restricted to leasedFibers(L)";
+    /// `lhs`
+    pub const LHS: &str = "freeCount(B_{i+1} |_L)";
+    /// `rhs`
+    pub const RHS: &str = "≤ freeCount(B_i |_L)";
+    /// `universallyValid`
+    pub const UNIVERSALLY_VALID: bool = true;
+    /// `validityKind` -> `Universal`
+    pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
+    /// `verificationDomain` -> `Algebraic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str =
+        "SR_9 → lease is fiber-disjoint → SR_1 holds within leasedFibers(L)";
+}
+
+/// General composition freeCount via inclusion-exclusion.
+pub mod mc_3 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "S_A, S_B: Session; compose(S_A, S_B) valid (SR_8 satisfied)";
+    /// `lhs`
+    pub const LHS: &str = "freeCount(compose(S_A, S_B))";
+    /// `rhs`
+    pub const RHS: &str =
+        "freeCount(S_A) + freeCount(S_B) − |pinnedFibers(S_A) ∩ pinnedFibers(S_B)|";
+    /// `universallyValid`
+    pub const UNIVERSALLY_VALID: bool = true;
+    /// `validityKind` -> `Universal`
+    pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
+    /// `verificationDomain` -> `Algebraic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str =
+        "FL_3 (join = union of pinnings) + F_3 + inclusion-exclusion; SR_8 ensures datum consistency";
+}
+
+/// Disjoint-lease composition is additive: the intersection term vanishes when leases are fiber-disjoint (SR_9).
+pub mod mc_4 {
+    /// `forAll`
+    pub const FOR_ALL: &str =
+        "S_A, S_B on ContextLeases L_A, L_B within SharedContext C; SR_9 holds";
+    /// `lhs`
+    pub const LHS: &str = "freeCount(compose(S_A, S_B))";
+    /// `rhs`
+    pub const RHS: &str = "= freeCount(S_A) + freeCount(S_B)";
+    /// `universallyValid`
+    pub const UNIVERSALLY_VALID: bool = true;
+    /// `validityKind` -> `Universal`
+    pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
+    /// `verificationDomain` -> `Algebraic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str =
+        "MC_3 with |pinnedFibers(S_A) ∩ pinnedFibers(S_B)| = 0 by SR_9";
+}
+
+/// Policy-invariant final binding set: different execution policies produce identical FiberPinning records.
+pub mod mc_5 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "SessionResolver R; pending query set Q; ExecutionPolicy P_1, P_2";
+    /// `lhs`
+    pub const LHS: &str = "finalBindings(R, P_1, Q)";
+    /// `rhs`
+    pub const RHS: &str = "= finalBindings(R, P_2, Q)";
+    /// `universallyValid`
+    pub const UNIVERSALLY_VALID: bool = true;
+    /// `validityKind` -> `Universal`
+    pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
+    /// `verificationDomain` -> `Algebraic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str =
+        "SR_10 (finalState equal) + SR_1 (idempotent pinning on FL_3) → binding-set equality";
+}
+
+/// Full lease coverage implies composed saturation: k sessions on disjoint covering leases, each locally converged, produce a SaturatedContext via composition.
+pub mod mc_6 {
+    /// `forAll`
+    pub const FOR_ALL: &str =
+        "SharedContext C; leases {L_1, …, L_k} pairwise disjoint (SR_9) and fully covering C; each S_i with freeCount = 0 within L_i";
+    /// `lhs`
+    pub const LHS: &str = "σ(compose(S_1, …, S_k))";
+    /// `rhs`
+    pub const RHS: &str = "= 1 (FullSaturation)";
+    /// `universallyValid`
+    pub const UNIVERSALLY_VALID: bool = true;
+    /// `validityKind` -> `Universal`
+    pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
+    /// `verificationDomain` -> `Algebraic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str =
+        "SR_9 + MC_4 (inductive) + F_4 (isClosed) + SC_4 (σ = 1 ↔ freeCount = 0)";
+}
+
+/// Distributed O(1) resolution: a query against a composed SaturatedContext resolves in zero steps.
+pub mod mc_7 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "q: RelationQuery; C* = compose(S_1, …, S_k) with σ(C*) = 1 by MC_6";
+    /// `lhs`
+    pub const LHS: &str = "stepCount(q, C*)";
+    /// `rhs`
+    pub const RHS: &str = "= 0";
+    /// `universallyValid`
+    pub const UNIVERSALLY_VALID: bool = true;
+    /// `validityKind` -> `Universal`
+    pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
+    /// `verificationDomain` -> `Pipeline`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str =
+        "MC_6 (σ = 1) → SC_4 (freeCount = 0) → SC_5 (stepCount = 0); O(1) is substrate-agnostic";
+}
+
+/// Parallelism bound: per-session resolution work is bounded by lease size, not by total fiber count n.
+pub mod mc_8 {
+    /// `forAll`
+    pub const FOR_ALL: &str =
+        "SharedContext C with totalFibers = n; uniform partition into k leases";
+    /// `lhs`
+    pub const LHS: &str = "max_i stepCount(S_i to convergence within L_i)";
+    /// `rhs`
+    pub const RHS: &str = "≤ ⌈n/k⌉";
+    /// `universallyValid`
+    pub const UNIVERSALLY_VALID: bool = true;
+    /// `validityKind` -> `Universal`
+    pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
+    /// `verificationDomain` -> `Algebraic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str =
+        "F_2 (pin ops ≤ fiber count) + SR_9 (|leasedFibers(L_i)| = ⌈n/k⌉) → per-session bound";
+}
+
 use crate::enums::PrimitiveOp;
 
 impl PrimitiveOp {

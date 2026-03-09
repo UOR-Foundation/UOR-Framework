@@ -812,6 +812,26 @@ pub fn validate() -> ConformanceReport {
         tests::fixtures::TEST159_CHAIN_AUDIT_TRAIL,
         &mut report,
     );
+    run_test(
+        "test160_shared_context",
+        tests::fixtures::TEST160_SHARED_CONTEXT,
+        &mut report,
+    );
+    run_test(
+        "test161_execution_policy",
+        tests::fixtures::TEST161_EXECUTION_POLICY,
+        &mut report,
+    );
+    run_test(
+        "test162_session_composition",
+        tests::fixtures::TEST162_SESSION_COMPOSITION,
+        &mut report,
+    );
+    run_test(
+        "test163_distributed_saturation",
+        tests::fixtures::TEST163_DISTRIBUTED_SATURATION,
+        &mut report,
+    );
 
     // Verify test fixture count matches expected
     let test_count = report.results.len() - before_tests;
@@ -1017,6 +1037,10 @@ fn run_test(name: &str, turtle_src: &str, report: &mut ConformanceReport) {
         "test157_isometry_certificate" => validate_basic_turtle(turtle_src),
         "test158_lift_chain_certificate" => validate_basic_turtle(turtle_src),
         "test159_chain_audit_trail" => validate_basic_turtle(turtle_src),
+        "test160_shared_context" => validate_basic_turtle(turtle_src),
+        "test161_execution_policy" => validate_basic_turtle(turtle_src),
+        "test162_session_composition" => validate_basic_turtle(turtle_src),
+        "test163_distributed_saturation" => validate_basic_turtle(turtle_src),
         _ => Ok(()),
     };
 

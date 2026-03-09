@@ -8,31 +8,31 @@
 pub const NAMESPACES: usize = 16;
 
 /// Total OWL classes across all namespaces.
-pub const CLASSES: usize = 213;
+pub const CLASSES: usize = 218;
 
 /// Total properties including the global `uor:space` annotation.
-pub const PROPERTIES: usize = 438;
+pub const PROPERTIES: usize = 446;
 
 /// Namespace-level properties only (excludes global annotation).
-pub const NAMESPACE_PROPERTIES: usize = 437;
+pub const NAMESPACE_PROPERTIES: usize = 445;
 
 /// Total named individuals across all namespaces.
-pub const INDIVIDUALS: usize = 820;
+pub const INDIVIDUALS: usize = 846;
 
 /// Number of SHACL test instance graphs.
-pub const SHACL_TESTS: usize = 159;
+pub const SHACL_TESTS: usize = 163;
 
 /// Total conformance checks in the full suite.
-pub const CONFORMANCE_CHECKS: usize = 256;
+pub const CONFORMANCE_CHECKS: usize = 260;
 
 /// Number of amendments applied to the base ontology.
-pub const AMENDMENTS: usize = 47;
+pub const AMENDMENTS: usize = 48;
 
 /// Number of classes that become Rust enums/structs (not traits).
-pub const ENUM_CLASSES: usize = 13;
+pub const ENUM_CLASSES: usize = 14;
 
 /// Number of `op:Identity` individuals (and corresponding proofs).
-pub const IDENTITY_COUNT: usize = 367;
+pub const IDENTITY_COUNT: usize = 378;
 
 /// Kernel-space namespace count.
 pub const KERNEL_NAMESPACES: usize = 3;
@@ -45,7 +45,7 @@ pub const USER_NAMESPACES: usize = 3;
 
 /// Number of trait methods generated (properties with domains,
 /// excluding enum-class-domain and cross-namespace-domain properties).
-pub const METHODS: usize = 415;
+pub const METHODS: usize = 423;
 
 /// Number of individual constant modules generated.
-pub const CONSTANT_MODULES: usize = 791;
+pub const CONSTANT_MODULES: usize = 817;

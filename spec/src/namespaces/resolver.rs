@@ -18,6 +18,11 @@
 //! `BindingAccumulator` across multiple `RelationQuery` evaluations for
 //! multi-turn Prism deployments.
 //!
+//! Amendment 48 adds `ExecutionPolicy` and `ExecutionPolicyKind` — a typed
+//! controlled vocabulary for scheduling strategies (FifoPolicy,
+//! MinFreeCountFirst, MaxFreeCountFirst, DisjointFirst) bound to a
+//! SessionResolver.
+//!
 //! **Space classification:** `bridge` — user-requested, kernel-executed.
 
 use crate::model::iris::*;
@@ -276,6 +281,31 @@ fn classes() -> Vec<Class> {
                       to an arbitrary liftTargetLevel Q_k by iterating \
                       IncrementalCompletenessResolver step by step.",
             subclass_of: &["https://uor.foundation/resolver/Resolver"],
+            disjoint_with: &[],
+        },
+        // Amendment 48: Multi-Session Coordination classes
+        Class {
+            id: "https://uor.foundation/resolver/ExecutionPolicy",
+            label: "ExecutionPolicy",
+            comment: "A strategy class that defines how a SessionResolver orders \
+                      pending RelationQuery instances for dispatch. The policy \
+                      reads the targetFiber.freeCount of each pending query and \
+                      applies an ordering function.",
+            subclass_of: &[OWL_THING],
+            disjoint_with: &[
+                "https://uor.foundation/resolver/Resolver",
+                "https://uor.foundation/resolver/ResolutionState",
+                "https://uor.foundation/resolver/RefinementSuggestion",
+            ],
+        },
+        Class {
+            id: "https://uor.foundation/resolver/ExecutionPolicyKind",
+            label: "ExecutionPolicyKind",
+            comment: "A typed controlled vocabulary for ExecutionPolicy \
+                      individuals. Follows the SessionBoundaryType pattern: \
+                      a single class with named individuals rather than a \
+                      subclass hierarchy.",
+            subclass_of: &[OWL_THING],
             disjoint_with: &[],
         },
     ]
@@ -687,6 +717,17 @@ fn properties() -> Vec<Property> {
             domain: Some("https://uor.foundation/resolver/TowerCompletenessResolver"),
             range: "https://uor.foundation/resolver/IncrementalCompletenessResolver",
         },
+        // Amendment 48: Multi-Session Coordination
+        Property {
+            id: "https://uor.foundation/resolver/executionPolicy",
+            label: "executionPolicy",
+            comment: "The ordering strategy this resolver applies to pending \
+                      queries. Defaults to FifoPolicy if unset.",
+            kind: PropertyKind::Object,
+            functional: true,
+            domain: Some("https://uor.foundation/resolver/SessionResolver"),
+            range: "https://uor.foundation/resolver/ExecutionPolicy",
+        },
     ]
 }
 
@@ -723,6 +764,42 @@ fn individuals() -> Vec<Individual> {
             label: "ExponentialTime",
             comment: "O(2^n) complexity — the resolver runs in time exponential \
                       in the quantum level.",
+            properties: &[],
+        },
+        // Amendment 48: ExecutionPolicyKind vocabulary
+        Individual {
+            id: "https://uor.foundation/resolver/FifoPolicy",
+            type_: "https://uor.foundation/resolver/ExecutionPolicyKind",
+            label: "FifoPolicy",
+            comment: "Process queries in arrival order. The implicit \
+                      pre-Amendment 48 behavior.",
+            properties: &[],
+        },
+        Individual {
+            id: "https://uor.foundation/resolver/MinFreeCountFirst",
+            type_: "https://uor.foundation/resolver/ExecutionPolicyKind",
+            label: "MinFreeCountFirst",
+            comment: "Process the query with the smallest targetFiber.freeCount \
+                      first. Favors cheapest resolutions, accelerating early \
+                      saturation gain.",
+            properties: &[],
+        },
+        Individual {
+            id: "https://uor.foundation/resolver/MaxFreeCountFirst",
+            type_: "https://uor.foundation/resolver/ExecutionPolicyKind",
+            label: "MaxFreeCountFirst",
+            comment: "Process the query with the largest targetFiber.freeCount \
+                      first. Favors hardest resolutions, maximizing information \
+                      gain per step.",
+            properties: &[],
+        },
+        Individual {
+            id: "https://uor.foundation/resolver/DisjointFirst",
+            type_: "https://uor.foundation/resolver/ExecutionPolicyKind",
+            label: "DisjointFirst",
+            comment: "Process queries whose targetFiber is disjoint from all \
+                      other pending queries' fiber sets first. Minimizes \
+                      contention when operating against a SharedContext.",
             properties: &[],
         },
     ]

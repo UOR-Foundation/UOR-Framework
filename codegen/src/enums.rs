@@ -211,7 +211,16 @@ pub fn detect_enums(ontology: &Ontology) -> Vec<DetectedEnum> {
         &mut enums,
     );
 
-    // 17. ProofModality enum (hardcoded — codegen enum, not an OWL class)
+    // 17. ExecutionPolicyKind enum — Amendment 48: Multi-Session Coordination
+    detect_vocabulary_enum(
+        ontology,
+        "resolver",
+        "ExecutionPolicyKind",
+        "A typed controlled vocabulary for ExecutionPolicy scheduling strategies.",
+        &mut enums,
+    );
+
+    // 18. ProofModality enum (hardcoded — codegen enum, not an OWL class)
     enums.push(DetectedEnum {
         name: "ProofModality",
         comment: "The modality of a proof: computation (exhaustive verification at a \

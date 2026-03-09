@@ -69,6 +69,10 @@ mod test157_isometry_certificate;
 mod test158_lift_chain_certificate;
 mod test159_chain_audit_trail;
 mod test15_boolean_sat;
+mod test160_shared_context;
+mod test161_execution_policy;
+mod test162_session_composition;
+mod test163_distributed_saturation;
 mod test16_algebraic_identities;
 mod test17_inter_algebra_maps;
 mod test18_analytical_completeness;
@@ -229,6 +233,10 @@ pub use test157_isometry_certificate::TEST157_ISOMETRY_CERTIFICATE;
 pub use test158_lift_chain_certificate::TEST158_LIFT_CHAIN_CERTIFICATE;
 pub use test159_chain_audit_trail::TEST159_CHAIN_AUDIT_TRAIL;
 pub use test15_boolean_sat::TEST15_BOOLEAN_SAT;
+pub use test160_shared_context::TEST160_SHARED_CONTEXT;
+pub use test161_execution_policy::TEST161_EXECUTION_POLICY;
+pub use test162_session_composition::TEST162_SESSION_COMPOSITION;
+pub use test163_distributed_saturation::TEST163_DISTRIBUTED_SATURATION;
 pub use test16_algebraic_identities::TEST16_ALGEBRAIC_IDENTITIES;
 pub use test17_inter_algebra_maps::TEST17_INTER_ALGEBRA_MAPS;
 pub use test18_analytical_completeness::TEST18_ANALYTICAL_COMPLETENESS;
@@ -486,5 +494,9 @@ pub fn all_fixture_sources() -> Vec<&'static str> {
         TEST157_ISOMETRY_CERTIFICATE,
         TEST158_LIFT_CHAIN_CERTIFICATE,
         TEST159_CHAIN_AUDIT_TRAIL,
+        TEST160_SHARED_CONTEXT,
+        TEST161_EXECUTION_POLICY,
+        TEST162_SESSION_COMPOSITION,
+        TEST163_DISTRIBUTED_SATURATION,
     ]
 }

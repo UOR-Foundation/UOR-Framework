@@ -160,6 +160,43 @@ pub trait DomainSaturationRecord<P: Primitives> {
     fn domain_free_count(&self) -> P::NonNegativeInteger;
 }
 
+/// A Context visible to more than one Session simultaneously. Holds a set of ContextLease instances that partition its fiber coordinates among active sessions. Lease disjointness (SR_9) prevents concurrent write conflicts.
+pub trait SharedContext<P: Primitives>: Context<P> {
+    /// Associated type for `ContextLease`.
+    type ContextLease: ContextLease<P>;
+    /// A currently active ContextLease on this SharedContext.
+    fn lease_set(&self) -> &[Self::ContextLease];
+}
+
+/// A bounded, exclusive claim on a set of fiber coordinates within a SharedContext, held by exactly one Session. When the session closes or hits a SessionBoundary, the lease is released and its fibers become available for re-leasing.
+/// Disjoint with: Context, Binding, Frame, Transition.
+pub trait ContextLease<P: Primitives> {
+    /// Associated type for `FiberBudget`.
+    type FiberBudget: crate::bridge::partition::FiberBudget<P>;
+    /// The subset of fibers claimed by this lease. Must be disjoint from all other active leases on the same SharedContext (SR_9).
+    fn leased_fibers(&self) -> &Self::FiberBudget;
+    /// Associated type for `Session`.
+    type Session: Session<P>;
+    /// The Session that holds this lease.
+    fn lease_holder(&self) -> &Self::Session;
+}
+
+/// Records that a Session was formed by merging the binding sets of two or more predecessor sessions. Valid only if all predecessor binding sets pass the cross-session consistency check (SR_8). An invalid composition attempt produces a ContradictionBoundary on the target session.
+pub trait SessionComposition<P: Primitives> {
+    /// Associated type for `Session`.
+    type Session: Session<P>;
+    /// A predecessor session contributing bindings to this composition. Non-functional: one composition may merge two or more sessions.
+    fn composed_from(&self) -> &[Self::Session];
+    /// Whether all predecessor binding sets passed the SR_8 consistency check. If false, the composition is invalid and must not be used as a session context.
+    fn composition_compatible(&self) -> P::Boolean;
+    /// Associated type for `Context`.
+    type Context: Context<P>;
+    /// The merged Context produced by a valid composition. Only present when compositionCompatible = true.
+    fn composition_result(&self) -> &Self::Context;
+    /// Whether the LiftChain tower consistency check (SR_8 parametric extension) was performed across all Q_0 through Q_k levels. Required for compositions involving sessions at Q_1 or higher.
+    fn tower_consistency_verified(&self) -> P::Boolean;
+}
+
 /// The caller explicitly requested a context reset. All accumulated bindings are discarded.
 pub mod explicit_reset {}
 

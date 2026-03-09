@@ -212,6 +212,15 @@ cargo run --bin uor-conformance
 | test158 | cert:LiftChainCertificate with verified + chainStepCount (Amendment 46) |
 | test159 | cert:ChainAuditTrail class (Amendment 46) |
 
+### SHACL Tests 160–163 (v5.6.0)
+
+| Test | What It Validates |
+|------|-------------------|
+| test160 | state:SharedContext + state:ContextLease multi-session leasing with two fiber-disjoint leases (Amendment 48) |
+| test161 | resolver:ExecutionPolicy + resolver:ExecutionPolicyKind scheduling vocabulary (MinFreeCountFirst individual) (Amendment 48) |
+| test162 | state:SessionComposition with composedFrom, compositionCompatible, compositionResult, towerConsistencyVerified (Amendment 48) |
+| test163 | Distributed saturation: SharedContext → two ContextLeases → SessionComposition → SaturatedContext (Amendment 48) |
+
 ## Adding a New SHACL Test
 
 1. Create `conformance/src/tests/fixtures/test<n>_<name>.rs`

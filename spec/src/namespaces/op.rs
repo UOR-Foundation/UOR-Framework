@@ -19,6 +19,7 @@
 //!   (QM_5, RC_6, FPM_8–9, MN_8, QL_8, D_7, SP_1–4, PT_2a–2b, GD_6)
 //! - **Amendment 41**: `ValidityScopeKind` class and 4 scope individuals,
 //!   `validityKind`/`validKMin`/`validKMax` properties, 7 `QT_` tower identity individuals
+//! - **Amendment 48**: 3 `SR_` + 8 `MC_` identity individuals (multi-session coordination algebra)
 //!
 //! **Critical identity:** `neg(bnot(x)) = succ(x)` for all x in R_n.
 //!
@@ -6620,6 +6621,275 @@ fn individuals() -> Vec<Individual> {
                  IndividualValue::IriRef("https://uor.foundation/op/Universal")),
                 ("https://uor.foundation/op/verificationPathNote",
                  IndividualValue::Str("surfaceSymmetry \u{2192} GroundingCertificate issuance")),
+            ],
+        },
+        // Amendment 48: Multi-Session Coordination — axiomatic identities
+        Individual {
+            id: "https://uor.foundation/op/SR_8",
+            type_: "https://uor.foundation/op/Identity",
+            label: "SR_8",
+            comment: "Session composition validity: compose(S_A, S_B) is valid at \
+                      Q_k iff all pinned-fiber intersections agree at every tower \
+                      level Q_0 through Q_k.",
+            properties: &[
+                ("https://uor.foundation/op/lhs",
+                 IndividualValue::Str("compose(S_A, S_B) valid at Q_k")),
+                ("https://uor.foundation/op/rhs",
+                 IndividualValue::Str("\u{2200} j \u{2264} k: \u{2200} a \u{2208} pinnedFibers(S_A, Q_j) \u{2229} pinnedFibers(S_B, Q_j): datum(S_A, a, Q_j) = datum(S_B, a, Q_j)")),
+                ("https://uor.foundation/op/forAll",
+                 IndividualValue::Str("S_A, S_B: Session at quantum level Q_k (k \u{2265} 0)")),
+                (
+                    "https://uor.foundation/op/verificationDomain",
+                    IndividualValue::IriRef("https://uor.foundation/op/Algebraic"),
+                ),
+                ("https://uor.foundation/op/universallyValid", IndividualValue::Bool(false)),
+                ("https://uor.foundation/op/validityKind",
+                 IndividualValue::IriRef("https://uor.foundation/op/ParametricLower")),
+                ("https://uor.foundation/op/validKMin", IndividualValue::Int(0)),
+                ("https://uor.foundation/op/verificationPathNote",
+                 IndividualValue::Str("SR_5 contradiction criterion extended over LiftChain tower Q_0\u{2026}Q_k; base case k=0 is standard SR_5")),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/op/SR_9",
+            type_: "https://uor.foundation/op/Identity",
+            label: "SR_9",
+            comment: "ContextLease disjointness: two distinct leases on the same \
+                      SharedContext have non-overlapping fiber sets.",
+            properties: &[
+                ("https://uor.foundation/op/lhs",
+                 IndividualValue::Str("leasedFibers(L_A) \u{2229} leasedFibers(L_B)")),
+                ("https://uor.foundation/op/rhs",
+                 IndividualValue::Str("= \u{2205}")),
+                ("https://uor.foundation/op/forAll",
+                 IndividualValue::Str("L_A, L_B: ContextLease on SharedContext C, L_A \u{2260} L_B")),
+                (
+                    "https://uor.foundation/op/verificationDomain",
+                    IndividualValue::IriRef("https://uor.foundation/op/Algebraic"),
+                ),
+                ("https://uor.foundation/op/universallyValid", IndividualValue::Bool(true)),
+                ("https://uor.foundation/op/validityKind",
+                 IndividualValue::IriRef("https://uor.foundation/op/Universal")),
+                ("https://uor.foundation/op/verificationPathNote",
+                 IndividualValue::Str("ContextLease disjointness \u{2192} FiberBudget partition \u{2192} SR_1 per-session soundness")),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/op/SR_10",
+            type_: "https://uor.foundation/op/Identity",
+            label: "SR_10",
+            comment: "ExecutionPolicy confluence: different execution policies on \
+                      the same pending query set produce the same final resolved \
+                      state (Church-Rosser for session resolution).",
+            properties: &[
+                ("https://uor.foundation/op/lhs",
+                 IndividualValue::Str("finalState(R, P_1, Q)")),
+                ("https://uor.foundation/op/rhs",
+                 IndividualValue::Str("= finalState(R, P_2, Q) for any P_1, P_2: ExecutionPolicy")),
+                ("https://uor.foundation/op/forAll",
+                 IndividualValue::Str("SessionResolver R with ExecutionPolicy P, pending query set Q")),
+                (
+                    "https://uor.foundation/op/verificationDomain",
+                    IndividualValue::IriRef("https://uor.foundation/op/Algebraic"),
+                ),
+                ("https://uor.foundation/op/universallyValid", IndividualValue::Bool(true)),
+                ("https://uor.foundation/op/validityKind",
+                 IndividualValue::IriRef("https://uor.foundation/op/Universal")),
+                ("https://uor.foundation/op/verificationPathNote",
+                 IndividualValue::Str("SR_1 monotonicity + SR_2 binding soundness \u{2192} policy-invariant convergence")),
+            ],
+        },
+        // Amendment 48: Multi-Session Coordination — derivational identities
+        Individual {
+            id: "https://uor.foundation/op/MC_1",
+            type_: "https://uor.foundation/op/Identity",
+            label: "MC_1",
+            comment: "Lease partition conserves total budget: the sum of \
+                      freeCount over all leases equals the SharedContext freeCount.",
+            properties: &[
+                ("https://uor.foundation/op/lhs",
+                 IndividualValue::Str("\u{03a3}\u{1d62} freeCount(leasedFibers(L_i))")),
+                ("https://uor.foundation/op/rhs",
+                 IndividualValue::Str("= freeCount(C)")),
+                ("https://uor.foundation/op/forAll",
+                 IndividualValue::Str("SharedContext C; leaseSet {L_1, \u{2026}, L_k} covering all fibers of C")),
+                (
+                    "https://uor.foundation/op/verificationDomain",
+                    IndividualValue::IriRef("https://uor.foundation/op/Algebraic"),
+                ),
+                ("https://uor.foundation/op/universallyValid", IndividualValue::Bool(true)),
+                ("https://uor.foundation/op/validityKind",
+                 IndividualValue::IriRef("https://uor.foundation/op/Universal")),
+                ("https://uor.foundation/op/verificationPathNote",
+                 IndividualValue::Str("SR_9 (pairwise disjoint leasedFibers) + F_3 (pinnedCount + freeCount = n) \u{2192} partition additivity")),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/op/MC_2",
+            type_: "https://uor.foundation/op/Identity",
+            label: "MC_2",
+            comment: "Per-lease binding monotonicity: within a leased sub-domain, \
+                      freeCount decreases monotonically (SR_1 restricted to lease).",
+            properties: &[
+                ("https://uor.foundation/op/lhs",
+                 IndividualValue::Str("freeCount(B_{i+1} |_L)")),
+                ("https://uor.foundation/op/rhs",
+                 IndividualValue::Str("\u{2264} freeCount(B_i |_L)")),
+                ("https://uor.foundation/op/forAll",
+                 IndividualValue::Str("ContextLease L held by Session S; binding step i within S restricted to leasedFibers(L)")),
+                (
+                    "https://uor.foundation/op/verificationDomain",
+                    IndividualValue::IriRef("https://uor.foundation/op/Algebraic"),
+                ),
+                ("https://uor.foundation/op/universallyValid", IndividualValue::Bool(true)),
+                ("https://uor.foundation/op/validityKind",
+                 IndividualValue::IriRef("https://uor.foundation/op/Universal")),
+                ("https://uor.foundation/op/verificationPathNote",
+                 IndividualValue::Str("SR_9 \u{2192} lease is fiber-disjoint \u{2192} SR_1 holds within leasedFibers(L)")),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/op/MC_3",
+            type_: "https://uor.foundation/op/Identity",
+            label: "MC_3",
+            comment: "General composition freeCount via inclusion-exclusion.",
+            properties: &[
+                ("https://uor.foundation/op/lhs",
+                 IndividualValue::Str("freeCount(compose(S_A, S_B))")),
+                ("https://uor.foundation/op/rhs",
+                 IndividualValue::Str("freeCount(S_A) + freeCount(S_B) \u{2212} |pinnedFibers(S_A) \u{2229} pinnedFibers(S_B)|")),
+                ("https://uor.foundation/op/forAll",
+                 IndividualValue::Str("S_A, S_B: Session; compose(S_A, S_B) valid (SR_8 satisfied)")),
+                (
+                    "https://uor.foundation/op/verificationDomain",
+                    IndividualValue::IriRef("https://uor.foundation/op/Algebraic"),
+                ),
+                ("https://uor.foundation/op/universallyValid", IndividualValue::Bool(true)),
+                ("https://uor.foundation/op/validityKind",
+                 IndividualValue::IriRef("https://uor.foundation/op/Universal")),
+                ("https://uor.foundation/op/verificationPathNote",
+                 IndividualValue::Str("FL_3 (join = union of pinnings) + F_3 + inclusion-exclusion; SR_8 ensures datum consistency")),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/op/MC_4",
+            type_: "https://uor.foundation/op/Identity",
+            label: "MC_4",
+            comment: "Disjoint-lease composition is additive: the intersection \
+                      term vanishes when leases are fiber-disjoint (SR_9).",
+            properties: &[
+                ("https://uor.foundation/op/lhs",
+                 IndividualValue::Str("freeCount(compose(S_A, S_B))")),
+                ("https://uor.foundation/op/rhs",
+                 IndividualValue::Str("= freeCount(S_A) + freeCount(S_B)")),
+                ("https://uor.foundation/op/forAll",
+                 IndividualValue::Str("S_A, S_B on ContextLeases L_A, L_B within SharedContext C; SR_9 holds")),
+                (
+                    "https://uor.foundation/op/verificationDomain",
+                    IndividualValue::IriRef("https://uor.foundation/op/Algebraic"),
+                ),
+                ("https://uor.foundation/op/universallyValid", IndividualValue::Bool(true)),
+                ("https://uor.foundation/op/validityKind",
+                 IndividualValue::IriRef("https://uor.foundation/op/Universal")),
+                ("https://uor.foundation/op/verificationPathNote",
+                 IndividualValue::Str("MC_3 with |pinnedFibers(S_A) \u{2229} pinnedFibers(S_B)| = 0 by SR_9")),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/op/MC_5",
+            type_: "https://uor.foundation/op/Identity",
+            label: "MC_5",
+            comment: "Policy-invariant final binding set: different execution \
+                      policies produce identical FiberPinning records.",
+            properties: &[
+                ("https://uor.foundation/op/lhs",
+                 IndividualValue::Str("finalBindings(R, P_1, Q)")),
+                ("https://uor.foundation/op/rhs",
+                 IndividualValue::Str("= finalBindings(R, P_2, Q)")),
+                ("https://uor.foundation/op/forAll",
+                 IndividualValue::Str("SessionResolver R; pending query set Q; ExecutionPolicy P_1, P_2")),
+                (
+                    "https://uor.foundation/op/verificationDomain",
+                    IndividualValue::IriRef("https://uor.foundation/op/Algebraic"),
+                ),
+                ("https://uor.foundation/op/universallyValid", IndividualValue::Bool(true)),
+                ("https://uor.foundation/op/validityKind",
+                 IndividualValue::IriRef("https://uor.foundation/op/Universal")),
+                ("https://uor.foundation/op/verificationPathNote",
+                 IndividualValue::Str("SR_10 (finalState equal) + SR_1 (idempotent pinning on FL_3) \u{2192} binding-set equality")),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/op/MC_6",
+            type_: "https://uor.foundation/op/Identity",
+            label: "MC_6",
+            comment: "Full lease coverage implies composed saturation: k sessions \
+                      on disjoint covering leases, each locally converged, produce \
+                      a SaturatedContext via composition.",
+            properties: &[
+                ("https://uor.foundation/op/lhs",
+                 IndividualValue::Str("\u{03c3}(compose(S_1, \u{2026}, S_k))")),
+                ("https://uor.foundation/op/rhs",
+                 IndividualValue::Str("= 1 (FullSaturation)")),
+                ("https://uor.foundation/op/forAll",
+                 IndividualValue::Str("SharedContext C; leases {L_1, \u{2026}, L_k} pairwise disjoint (SR_9) and fully covering C; each S_i with freeCount = 0 within L_i")),
+                (
+                    "https://uor.foundation/op/verificationDomain",
+                    IndividualValue::IriRef("https://uor.foundation/op/Algebraic"),
+                ),
+                ("https://uor.foundation/op/universallyValid", IndividualValue::Bool(true)),
+                ("https://uor.foundation/op/validityKind",
+                 IndividualValue::IriRef("https://uor.foundation/op/Universal")),
+                ("https://uor.foundation/op/verificationPathNote",
+                 IndividualValue::Str("SR_9 + MC_4 (inductive) + F_4 (isClosed) + SC_4 (\u{03c3} = 1 \u{2194} freeCount = 0)")),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/op/MC_7",
+            type_: "https://uor.foundation/op/Identity",
+            label: "MC_7",
+            comment: "Distributed O(1) resolution: a query against a composed \
+                      SaturatedContext resolves in zero steps.",
+            properties: &[
+                ("https://uor.foundation/op/lhs",
+                 IndividualValue::Str("stepCount(q, C*)")),
+                ("https://uor.foundation/op/rhs",
+                 IndividualValue::Str("= 0")),
+                ("https://uor.foundation/op/forAll",
+                 IndividualValue::Str("q: RelationQuery; C* = compose(S_1, \u{2026}, S_k) with \u{03c3}(C*) = 1 by MC_6")),
+                (
+                    "https://uor.foundation/op/verificationDomain",
+                    IndividualValue::IriRef("https://uor.foundation/op/Pipeline"),
+                ),
+                ("https://uor.foundation/op/universallyValid", IndividualValue::Bool(true)),
+                ("https://uor.foundation/op/validityKind",
+                 IndividualValue::IriRef("https://uor.foundation/op/Universal")),
+                ("https://uor.foundation/op/verificationPathNote",
+                 IndividualValue::Str("MC_6 (\u{03c3} = 1) \u{2192} SC_4 (freeCount = 0) \u{2192} SC_5 (stepCount = 0); O(1) is substrate-agnostic")),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/op/MC_8",
+            type_: "https://uor.foundation/op/Identity",
+            label: "MC_8",
+            comment: "Parallelism bound: per-session resolution work is bounded \
+                      by lease size, not by total fiber count n.",
+            properties: &[
+                ("https://uor.foundation/op/lhs",
+                 IndividualValue::Str("max_i stepCount(S_i to convergence within L_i)")),
+                ("https://uor.foundation/op/rhs",
+                 IndividualValue::Str("\u{2264} \u{2308}n/k\u{2309}")),
+                ("https://uor.foundation/op/forAll",
+                 IndividualValue::Str("SharedContext C with totalFibers = n; uniform partition into k leases")),
+                (
+                    "https://uor.foundation/op/verificationDomain",
+                    IndividualValue::IriRef("https://uor.foundation/op/Algebraic"),
+                ),
+                ("https://uor.foundation/op/universallyValid", IndividualValue::Bool(true)),
+                ("https://uor.foundation/op/validityKind",
+                 IndividualValue::IriRef("https://uor.foundation/op/Universal")),
+                ("https://uor.foundation/op/verificationPathNote",
+                 IndividualValue::Str("F_2 (pin ops \u{2264} fiber count) + SR_9 (|leasedFibers(L_i)| = \u{2308}n/k\u{2309}) \u{2192} per-session bound")),
             ],
         },
     ]

@@ -3,6 +3,9 @@
 //! Proofs are kernel-produced attestations of algebraic properties. The
 //! critical proof asserts the foundational theorem `neg(bnot(x)) = succ(x)`.
 //!
+//! Amendment 48 adds 11 proofs: prf_SR_8–10 (multi-session coordination axioms)
+//! and prf_MC_1–8 (derivational scaling theorem proofs).
+//!
 //! **Space classification:** `bridge` — kernel-produced, user-consumed.
 
 use crate::model::iris::*;
@@ -8456,6 +8459,227 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/provesIdentity",
                     IndividualValue::IriRef("https://uor.foundation/op/GC_1"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        // Amendment 48: Multi-Session Coordination proofs
+        Individual {
+            id: "https://uor.foundation/proof/prf_SR_8",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_SR_8",
+            comment: "Proof of SR_8: session composition tower consistency.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/SR_8"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(false),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_SR_9",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_SR_9",
+            comment: "Proof of SR_9: ContextLease fiber disjointness.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/SR_9"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_SR_10",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_SR_10",
+            comment: "Proof of SR_10: ExecutionPolicy confluence.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/SR_10"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_MC_1",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_MC_1",
+            comment: "Proof of MC_1: lease partition conserves total budget.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/MC_1"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_MC_2",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_MC_2",
+            comment: "Proof of MC_2: per-lease binding monotonicity.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/MC_2"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_MC_3",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_MC_3",
+            comment: "Proof of MC_3: composition freeCount inclusion-exclusion.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/MC_3"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_MC_4",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_MC_4",
+            comment: "Proof of MC_4: disjoint-lease composition additivity.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/MC_4"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_MC_5",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_MC_5",
+            comment: "Proof of MC_5: policy-invariant final binding set.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/MC_5"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_MC_6",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_MC_6",
+            comment: "Proof of MC_6: full lease coverage implies composed saturation.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/MC_6"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_MC_7",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_MC_7",
+            comment: "Proof of MC_7: distributed O(1) resolution.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/MC_7"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_MC_8",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_MC_8",
+            comment: "Proof of MC_8: parallelism bound on per-session resolution work.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/MC_8"),
                 ),
                 (
                     "https://uor.foundation/proof/universalScope",

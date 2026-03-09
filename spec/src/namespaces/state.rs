@@ -9,6 +9,10 @@
 //! `SessionBoundary`, and `SessionBoundaryType` (a typed controlled vocabulary for
 //! boundary reasons — ExplicitReset, ConvergenceBoundary, ContradictionBoundary).
 //!
+//! Amendment 48 adds the multi-session coordination layer: `SharedContext`,
+//! `ContextLease`, and `SessionComposition` — enabling concurrent sessions on
+//! disjoint fiber leases and composition of completed sessions.
+//!
 //! **Space classification:** `user` — state is managed by user-space (Prism).
 
 use crate::model::iris::*;
@@ -28,7 +32,15 @@ pub fn module() -> NamespaceModule {
                       lifecycle, and state transitions. The user-space overlay \
                       onto the kernel's read-only ring substrate.",
             space: Space::User,
-            imports: &[NS_U, NS_SCHEMA, NS_TYPE, NS_TRACE, NS_MORPHISM, NS_CERT],
+            imports: &[
+                NS_U,
+                NS_SCHEMA,
+                NS_TYPE,
+                NS_PARTITION,
+                NS_TRACE,
+                NS_MORPHISM,
+                NS_CERT,
+            ],
         },
         classes: classes(),
         properties: properties(),
@@ -161,6 +173,43 @@ fn classes() -> Vec<Class> {
             comment: "A typed controlled vocabulary for the three phases of \
                       context saturation: Unsaturated (σ = 0), \
                       PartialSaturation (0 < σ < 1), and FullSaturation (σ = 1).",
+            subclass_of: &[OWL_THING],
+            disjoint_with: &[],
+        },
+        // Amendment 48: Multi-Session Coordination classes
+        Class {
+            id: "https://uor.foundation/state/SharedContext",
+            label: "SharedContext",
+            comment: "A Context visible to more than one Session simultaneously. \
+                      Holds a set of ContextLease instances that partition its \
+                      fiber coordinates among active sessions. Lease disjointness \
+                      (SR_9) prevents concurrent write conflicts.",
+            subclass_of: &["https://uor.foundation/state/Context"],
+            disjoint_with: &[],
+        },
+        Class {
+            id: "https://uor.foundation/state/ContextLease",
+            label: "ContextLease",
+            comment: "A bounded, exclusive claim on a set of fiber coordinates \
+                      within a SharedContext, held by exactly one Session. When \
+                      the session closes or hits a SessionBoundary, the lease is \
+                      released and its fibers become available for re-leasing.",
+            subclass_of: &[OWL_THING],
+            disjoint_with: &[
+                "https://uor.foundation/state/Context",
+                "https://uor.foundation/state/Binding",
+                "https://uor.foundation/state/Frame",
+                "https://uor.foundation/state/Transition",
+            ],
+        },
+        Class {
+            id: "https://uor.foundation/state/SessionComposition",
+            label: "SessionComposition",
+            comment: "Records that a Session was formed by merging the binding \
+                      sets of two or more predecessor sessions. Valid only if all \
+                      predecessor binding sets pass the cross-session consistency \
+                      check (SR_8). An invalid composition attempt produces a \
+                      ContradictionBoundary on the target session.",
             subclass_of: &[OWL_THING],
             disjoint_with: &[],
         },
@@ -521,6 +570,79 @@ fn properties() -> Vec<Property> {
             functional: true,
             domain: Some("https://uor.foundation/state/DomainSaturationRecord"),
             range: XSD_NON_NEGATIVE_INTEGER,
+        },
+        // Amendment 48: Multi-Session Coordination properties
+        Property {
+            id: "https://uor.foundation/state/leasedFibers",
+            label: "leasedFibers",
+            comment: "The subset of fibers claimed by this lease. Must be disjoint \
+                      from all other active leases on the same SharedContext (SR_9).",
+            kind: PropertyKind::Object,
+            functional: true,
+            domain: Some("https://uor.foundation/state/ContextLease"),
+            range: "https://uor.foundation/partition/FiberBudget",
+        },
+        Property {
+            id: "https://uor.foundation/state/leaseHolder",
+            label: "leaseHolder",
+            comment: "The Session that holds this lease.",
+            kind: PropertyKind::Object,
+            functional: true,
+            domain: Some("https://uor.foundation/state/ContextLease"),
+            range: "https://uor.foundation/state/Session",
+        },
+        Property {
+            id: "https://uor.foundation/state/leaseSet",
+            label: "leaseSet",
+            comment: "A currently active ContextLease on this SharedContext.",
+            kind: PropertyKind::Object,
+            functional: false,
+            domain: Some("https://uor.foundation/state/SharedContext"),
+            range: "https://uor.foundation/state/ContextLease",
+        },
+        Property {
+            id: "https://uor.foundation/state/composedFrom",
+            label: "composedFrom",
+            comment: "A predecessor session contributing bindings to this \
+                      composition. Non-functional: one composition may merge \
+                      two or more sessions.",
+            kind: PropertyKind::Object,
+            functional: false,
+            domain: Some("https://uor.foundation/state/SessionComposition"),
+            range: "https://uor.foundation/state/Session",
+        },
+        Property {
+            id: "https://uor.foundation/state/compositionCompatible",
+            label: "compositionCompatible",
+            comment: "Whether all predecessor binding sets passed the SR_8 \
+                      consistency check. If false, the composition is invalid \
+                      and must not be used as a session context.",
+            kind: PropertyKind::Datatype,
+            functional: true,
+            domain: Some("https://uor.foundation/state/SessionComposition"),
+            range: XSD_BOOLEAN,
+        },
+        Property {
+            id: "https://uor.foundation/state/compositionResult",
+            label: "compositionResult",
+            comment: "The merged Context produced by a valid composition. Only \
+                      present when compositionCompatible = true.",
+            kind: PropertyKind::Object,
+            functional: true,
+            domain: Some("https://uor.foundation/state/SessionComposition"),
+            range: "https://uor.foundation/state/Context",
+        },
+        Property {
+            id: "https://uor.foundation/state/towerConsistencyVerified",
+            label: "towerConsistencyVerified",
+            comment: "Whether the LiftChain tower consistency check (SR_8 \
+                      parametric extension) was performed across all Q_0 \
+                      through Q_k levels. Required for compositions involving \
+                      sessions at Q_1 or higher.",
+            kind: PropertyKind::Datatype,
+            functional: true,
+            domain: Some("https://uor.foundation/state/SessionComposition"),
+            range: XSD_BOOLEAN,
         },
     ]
 }

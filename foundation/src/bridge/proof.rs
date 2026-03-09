@@ -3906,3 +3906,113 @@ pub mod prf_gc_1 {
     /// `verified`
     pub const VERIFIED: bool = true;
 }
+
+/// Proof of SR_8: session composition tower consistency.
+pub mod prf_sr_8 {
+    /// `provesIdentity` -> `SR_8`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/SR_8";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = false;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Proof of SR_9: ContextLease fiber disjointness.
+pub mod prf_sr_9 {
+    /// `provesIdentity` -> `SR_9`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/SR_9";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Proof of SR_10: ExecutionPolicy confluence.
+pub mod prf_sr_10 {
+    /// `provesIdentity` -> `SR_10`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/SR_10";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Proof of MC_1: lease partition conserves total budget.
+pub mod prf_mc_1 {
+    /// `provesIdentity` -> `MC_1`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/MC_1";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Proof of MC_2: per-lease binding monotonicity.
+pub mod prf_mc_2 {
+    /// `provesIdentity` -> `MC_2`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/MC_2";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Proof of MC_3: composition freeCount inclusion-exclusion.
+pub mod prf_mc_3 {
+    /// `provesIdentity` -> `MC_3`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/MC_3";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Proof of MC_4: disjoint-lease composition additivity.
+pub mod prf_mc_4 {
+    /// `provesIdentity` -> `MC_4`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/MC_4";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Proof of MC_5: policy-invariant final binding set.
+pub mod prf_mc_5 {
+    /// `provesIdentity` -> `MC_5`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/MC_5";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Proof of MC_6: full lease coverage implies composed saturation.
+pub mod prf_mc_6 {
+    /// `provesIdentity` -> `MC_6`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/MC_6";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Proof of MC_7: distributed O(1) resolution.
+pub mod prf_mc_7 {
+    /// `provesIdentity` -> `MC_7`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/MC_7";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Proof of MC_8: parallelism bound on per-session resolution work.
+pub mod prf_mc_8 {
+    /// `provesIdentity` -> `MC_8`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/MC_8";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}

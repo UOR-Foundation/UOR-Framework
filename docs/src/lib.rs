@@ -705,8 +705,8 @@ mod tests {
         let src = "The ontology has {@count:classes} classes.";
         let expanded = renderer::expand_directives(src, &index);
         assert!(
-            expanded.contains("213"),
-            "Count directive should expand to 213, got: {}",
+            expanded.contains("218"),
+            "Count directive should expand to 218, got: {}",
             expanded
         );
     }

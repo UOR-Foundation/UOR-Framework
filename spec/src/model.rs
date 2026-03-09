@@ -300,6 +300,7 @@ impl Ontology {
             "AchievabilityStatus",
             "CoordinateKind",
             "ComplexityClass",
+            "ExecutionPolicyKind",
             "GeometricCharacter",
             "MeasurementUnit",
             "MetricAxis",

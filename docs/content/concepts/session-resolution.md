@@ -67,6 +67,78 @@ resolution algebra:
 | SR\_4 | Disjoint bindings compose without fiber conflict |
 | SR\_5 | ContradictionBoundary fires iff ∃ conflicting bindings at same address |
 
+Amendment 44 adds two more SR\_ identities for session-level coherence:
+
+| Identity | Statement |
+|----------|-----------|
+| SR\_6 | Session join monotonicity: freeCount(join(S\_A, S\_B)) ≤ freeCount(S\_A) + freeCount(S\_B) |
+| SR\_7 | Session inclusion: S\_A ⊆ S\_B implies freeCount(S\_A) ≥ freeCount(S\_B) |
+
+Amendment 48 adds three axiomatic and eight derivational identities for multi-session coordination:
+
+| Identity | Statement |
+|----------|-----------|
+| SR\_8 | Composition validity: compose(S\_A, S\_B) valid at Q\_k iff datum agreement holds at every tower level Q\_0…Q\_k |
+| SR\_9 | ContextLease disjointness: leasedFibers(L\_A) ∩ leasedFibers(L\_B) = ∅ for distinct leases on the same SharedContext |
+| SR\_10 | ExecutionPolicy confluence: different policies produce the same final resolved state (Church–Rosser) |
+| MC\_1 | Lease partition conserves budget: Σᵢ freeCount(L\_i) = freeCount(C) |
+| MC\_2 | Per-lease binding monotonicity: SR\_1 holds within each leased sub-domain |
+| MC\_3 | Composition freeCount via inclusion-exclusion |
+| MC\_4 | Disjoint-lease additivity: freeCount(compose(S\_A, S\_B)) = freeCount(S\_A) + freeCount(S\_B) when SR\_9 holds |
+| MC\_5 | Policy-invariant final binding set |
+| MC\_6 | Full lease coverage implies composed saturation (σ = 1) |
+| MC\_7 | Distributed O(1) resolution: stepCount = 0 on a fully saturated composed context |
+| MC\_8 | Parallelism bound: per-session work ≤ ⌈n/k⌉ for k uniform-partition leases |
+
+## Multi-Session Coordination (Amendment 48)
+
+### SharedContext and ContextLease
+
+A {@class https://uor.foundation/state/SharedContext} is a Context visible to more
+than one Session simultaneously. Concurrent write conflicts are prevented by
+partitioning its fibers across {@class https://uor.foundation/state/ContextLease}
+instances.
+
+Each ContextLease holds:
+- {@prop https://uor.foundation/state/leasedFibers} — exclusive fiber sub-domain (a {@class https://uor.foundation/partition/FiberBudget})
+- {@prop https://uor.foundation/state/leaseHolder} — the owning Session
+
+The SharedContext links active leases via
+{@prop https://uor.foundation/state/leaseSet}. Lease disjointness (SR\_9)
+is enforced structurally: each lease claims a non-overlapping FiberBudget.
+
+### SessionComposition
+
+A {@class https://uor.foundation/state/SessionComposition} records that a Session
+was formed by merging the binding sets of two or more predecessor sessions:
+
+- {@prop https://uor.foundation/state/composedFrom} — predecessor sessions (non-functional, multiple allowed)
+- {@prop https://uor.foundation/state/compositionCompatible} — `true` iff datum agreement holds at all tower levels (SR\_8)
+- {@prop https://uor.foundation/state/compositionResult} — the merged Context produced on success
+- {@prop https://uor.foundation/state/towerConsistencyVerified} — `true` iff tower check was run for Q\_1+ sessions
+
+An invalid composition (compositionCompatible = false) triggers a ContradictionBoundary on
+the target session.
+
+### ExecutionPolicy
+
+A {@class https://uor.foundation/resolver/ExecutionPolicy} defines how a
+{@class https://uor.foundation/resolver/SessionResolver} orders pending
+RelationQuery instances, linked via
+{@prop https://uor.foundation/resolver/executionPolicy}.
+
+The {@class https://uor.foundation/resolver/ExecutionPolicyKind} enum provides
+four scheduling strategies:
+
+| Individual | Strategy |
+|------------|----------|
+| `resolver:FifoPolicy` | Arrival order (pre-Amendment 48 implicit default) |
+| `resolver:MinFreeCountFirst` | Cheapest resolutions first — favours early saturation gain |
+| `resolver:MaxFreeCountFirst` | Hardest resolutions first — maximises information gain per step |
+| `resolver:DisjointFirst` | Fiber-disjoint queries first — minimises SharedContext contention |
+
+All four strategies are policy-confluent (SR\_10): they converge to identical final binding sets.
+
 ## Related
 
 - {@class https://uor.foundation/state/Session}

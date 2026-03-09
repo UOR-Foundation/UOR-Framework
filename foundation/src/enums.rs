@@ -388,6 +388,30 @@ impl fmt::Display for ValidityScopeKind {
     }
 }
 
+/// A typed controlled vocabulary for ExecutionPolicy scheduling strategies.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum ExecutionPolicyKind {
+    /// Process queries in arrival order. The implicit pre-Amendment 48 behavior.
+    FifoPolicy,
+    /// Process the query with the smallest targetFiber.freeCount first. Favors cheapest resolutions, accelerating early saturation gain.
+    MinFreeCountFirst,
+    /// Process the query with the largest targetFiber.freeCount first. Favors hardest resolutions, maximizing information gain per step.
+    MaxFreeCountFirst,
+    /// Process queries whose targetFiber is disjoint from all other pending queries' fiber sets first. Minimizes contention when operating against a SharedContext.
+    DisjointFirst,
+}
+
+impl fmt::Display for ExecutionPolicyKind {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::FifoPolicy => f.write_str("fifo_policy"),
+            Self::MinFreeCountFirst => f.write_str("min_free_count_first"),
+            Self::MaxFreeCountFirst => f.write_str("max_free_count_first"),
+            Self::DisjointFirst => f.write_str("disjoint_first"),
+        }
+    }
+}
+
 /// The modality of a proof: computation (exhaustive verification at a specific quantum level) or axiomatic (derivation from ring axioms).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum ProofModality {

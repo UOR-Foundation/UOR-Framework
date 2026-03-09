@@ -106,6 +106,10 @@ pub trait SessionResolver<P: Primitives>: Resolver<P> {
     type BindingAccumulator: crate::user::state::BindingAccumulator<P>;
     /// The BindingAccumulator this session resolver maintains across multiple RelationQuery evaluations.
     fn session_accumulator(&self) -> &Self::BindingAccumulator;
+    /// Associated type for `ExecutionPolicy`.
+    type ExecutionPolicy: ExecutionPolicy<P>;
+    /// The ordering strategy this resolver applies to pending queries. Defaults to FifoPolicy if unset.
+    fn execution_policy(&self) -> &Self::ExecutionPolicy;
 }
 
 /// A Resolver that runs the ψ-pipeline in inverse mode. Accepts a TypeSynthesisGoal and returns a TypeSynthesisResult. Internally maintains a ConstraintSearchState tracking which constraint combinations have been explored and which Betti profiles they realise.
@@ -207,6 +211,10 @@ pub trait TowerCompletenessResolver<P: Primitives>: Resolver<P> {
     fn tower_step_resolver(&self) -> &Self::IncrementalCompletenessResolver;
 }
 
+/// A strategy class that defines how a SessionResolver orders pending RelationQuery instances for dispatch. The policy reads the targetFiber.freeCount of each pending query and applies an ordering function.
+/// Disjoint with: Resolver, ResolutionState, RefinementSuggestion.
+pub trait ExecutionPolicy<P: Primitives> {}
+
 /// O(1) complexity — the resolver runs in constant time regardless of ring size.
 pub mod constant_time {}
 
@@ -218,3 +226,15 @@ pub mod linear_time {}
 
 /// O(2^n) complexity — the resolver runs in time exponential in the quantum level.
 pub mod exponential_time {}
+
+/// Process queries in arrival order. The implicit pre-Amendment 48 behavior.
+pub mod fifo_policy {}
+
+/// Process the query with the smallest targetFiber.freeCount first. Favors cheapest resolutions, accelerating early saturation gain.
+pub mod min_free_count_first {}
+
+/// Process the query with the largest targetFiber.freeCount first. Favors hardest resolutions, maximizing information gain per step.
+pub mod max_free_count_first {}
+
+/// Process queries whose targetFiber is disjoint from all other pending queries' fiber sets first. Minimizes contention when operating against a SharedContext.
+pub mod disjoint_first {}
