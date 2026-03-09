@@ -30,9 +30,9 @@ pub fn validate(artifacts: &Path) -> Result<ConformanceReport> {
 fn check_prism_structure(artifacts: &Path, report: &mut ConformanceReport) -> Result<()> {
     let pipeline_page = artifacts.join("pipeline").join("index.html");
     if !pipeline_page.exists() {
-        report.push(TestResult::warn(
+        report.push(TestResult::fail(
             "website/nav/prism-structure",
-            "pipeline/index.html not yet generated; skipping prism-structure check",
+            "pipeline/index.html not found in generated website",
         ));
         return Ok(());
     }
@@ -90,9 +90,9 @@ fn check_space_group_labels(artifacts: &Path, report: &mut ConformanceReport) ->
     let pipeline_page = artifacts.join("pipeline").join("index.html");
     let explore_page = artifacts.join("explore").join("index.html");
     if !pipeline_page.exists() || !explore_page.exists() {
-        report.push(TestResult::warn(
+        report.push(TestResult::fail(
             "website/nav/space-groups",
-            "pipeline/index.html or explore/index.html not yet generated; skipping space-groups check",
+            "pipeline/index.html or explore/index.html not found in generated website",
         ));
         return Ok(());
     }

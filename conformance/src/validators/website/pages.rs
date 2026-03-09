@@ -31,9 +31,9 @@ pub fn validate(artifacts: &Path) -> Result<ConformanceReport> {
 fn check_concepts_page(artifacts: &Path, report: &mut ConformanceReport) -> Result<()> {
     let page = artifacts.join("concepts").join("index.html");
     if !page.exists() {
-        report.push(TestResult::warn(
+        report.push(TestResult::fail(
             "website/pages/concepts",
-            "concepts/index.html not yet generated; skipping concepts check",
+            "concepts/index.html not found in generated website",
         ));
         return Ok(());
     }
@@ -78,9 +78,9 @@ fn count_concept_hrefs(html: &str) -> usize {
 fn check_explore_page(artifacts: &Path, report: &mut ConformanceReport) -> Result<()> {
     let page = artifacts.join("explore").join("index.html");
     if !page.exists() {
-        report.push(TestResult::warn(
+        report.push(TestResult::fail(
             "website/pages/explore",
-            "explore/index.html not yet generated; skipping explore check",
+            "explore/index.html not found in generated website",
         ));
         return Ok(());
     }
@@ -106,9 +106,9 @@ fn check_explore_page(artifacts: &Path, report: &mut ConformanceReport) -> Resul
 fn check_pipeline_page(artifacts: &Path, report: &mut ConformanceReport) -> Result<()> {
     let page = artifacts.join("pipeline").join("index.html");
     if !page.exists() {
-        report.push(TestResult::warn(
+        report.push(TestResult::fail(
             "website/pages/pipeline",
-            "pipeline/index.html not yet generated; skipping pipeline check",
+            "pipeline/index.html not found in generated website",
         ));
         return Ok(());
     }
@@ -145,9 +145,9 @@ fn check_pipeline_page(artifacts: &Path, report: &mut ConformanceReport) -> Resu
 fn check_identities_page(artifacts: &Path, report: &mut ConformanceReport) -> Result<()> {
     let page = artifacts.join("identities").join("index.html");
     if !page.exists() {
-        report.push(TestResult::warn(
+        report.push(TestResult::fail(
             "website/pages/identities",
-            "identities/index.html not yet generated; skipping identities check",
+            "identities/index.html not found in generated website",
         ));
         return Ok(());
     }
@@ -173,9 +173,9 @@ fn check_identities_page(artifacts: &Path, report: &mut ConformanceReport) -> Re
 fn check_download_page(artifacts: &Path, report: &mut ConformanceReport) -> Result<()> {
     let page = artifacts.join("download").join("index.html");
     if !page.exists() {
-        report.push(TestResult::warn(
+        report.push(TestResult::fail(
             "website/pages/download",
-            "download/index.html not yet generated; skipping download check",
+            "download/index.html not found in generated website",
         ));
         return Ok(());
     }

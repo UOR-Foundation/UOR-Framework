@@ -28,9 +28,9 @@ pub fn validate(artifacts: &Path) -> Result<ConformanceReport> {
 fn check_css_custom_properties(artifacts: &Path, report: &mut ConformanceReport) -> Result<()> {
     let css_path = artifacts.join("css").join("style.css");
     if !css_path.exists() {
-        report.push(TestResult::warn(
+        report.push(TestResult::fail(
             "website/design/css-custom-properties",
-            "css/style.css not found; skipping css-custom-properties check",
+            "css/style.css not found in generated website",
         ));
         return Ok(());
     }
@@ -68,9 +68,9 @@ fn check_css_custom_properties(artifacts: &Path, report: &mut ConformanceReport)
 fn check_kind_badges(artifacts: &Path, report: &mut ConformanceReport) -> Result<()> {
     let search_path = artifacts.join("search.html");
     if !search_path.exists() {
-        report.push(TestResult::warn(
+        report.push(TestResult::fail(
             "website/design/kind-badges",
-            "search.html not found; skipping kind-badges check",
+            "search.html not found in generated website",
         ));
         return Ok(());
     }
@@ -103,9 +103,9 @@ fn check_kind_badges(artifacts: &Path, report: &mut ConformanceReport) -> Result
 fn check_print_stylesheet(artifacts: &Path, report: &mut ConformanceReport) -> Result<()> {
     let css_path = artifacts.join("css").join("style.css");
     if !css_path.exists() {
-        report.push(TestResult::warn(
+        report.push(TestResult::fail(
             "website/design/print-stylesheet",
-            "css/style.css not found; skipping print-stylesheet check",
+            "css/style.css not found in generated website",
         ));
         return Ok(());
     }

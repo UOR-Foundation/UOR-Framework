@@ -121,17 +121,33 @@ fn build_namespace_nav(ontology: &Ontology, base_path: &str) -> Vec<NavItem> {
 
 /// Renders the navigation tree as an HTML string.
 pub fn render_nav(nav: &[NavItem], current_path: &str) -> String {
+    // Home is always the first item; its URL is the deployment root (e.g. "/" or
+    // "/UOR-Framework/"). Prefix-matching against the root would mark Home as current
+    // on every page, so it is used only as an exact-match guard in render_nav_item.
+    let root_url = nav.first().map(|i| i.url.as_str()).unwrap_or("/");
     let mut html = String::from("<ul>\n");
     for item in nav {
-        render_nav_item(&mut html, item, current_path, 1);
+        render_nav_item(&mut html, item, current_path, root_url, 1);
     }
     html.push_str("</ul>\n");
     html
 }
 
 /// Recursively renders a navigation item.
-fn render_nav_item(html: &mut String, item: &NavItem, current_path: &str, depth: usize) {
-    let is_current = !item.url.is_empty() && current_path.starts_with(&item.url);
+fn render_nav_item(
+    html: &mut String,
+    item: &NavItem,
+    current_path: &str,
+    root_url: &str,
+    depth: usize,
+) {
+    // Exact match always marks an item current.
+    // Prefix match marks parent items current when on a child page (e.g. Namespaces
+    // highlighted when on /namespaces/op/, Concepts when on /concepts/ring.html),
+    // but is suppressed for the root URL to prevent Home from matching every page.
+    let is_current = !item.url.is_empty()
+        && (current_path == item.url
+            || (item.url != root_url && current_path.starts_with(&item.url)));
     let class = if is_current { " class=\"current\"" } else { "" };
     let indent = "  ".repeat(depth);
 
@@ -155,7 +171,7 @@ fn render_nav_item(html: &mut String, item: &NavItem, current_path: &str, depth:
             label = escape_html(&item.label),
         ));
         for child in &item.children {
-            render_nav_item(html, child, current_path, depth + 1);
+            render_nav_item(html, child, current_path, root_url, depth + 1);
         }
         html.push_str(&format!("{indent}</ul>\n{indent}</li>\n"));
     }

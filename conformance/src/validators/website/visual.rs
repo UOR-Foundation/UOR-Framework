@@ -29,9 +29,9 @@ pub fn validate(artifacts: &Path) -> Result<ConformanceReport> {
 fn check_pipeline_svg(artifacts: &Path, report: &mut ConformanceReport) -> Result<()> {
     let page = artifacts.join("pipeline").join("index.html");
     if !page.exists() {
-        report.push(TestResult::warn(
+        report.push(TestResult::fail(
             "website/visual/svg-pipeline",
-            "pipeline/index.html not yet generated; skipping svg-pipeline check",
+            "pipeline/index.html not found in generated website",
         ));
         return Ok(());
     }
@@ -61,9 +61,9 @@ fn check_pipeline_svg(artifacts: &Path, report: &mut ConformanceReport) -> Resul
 fn check_namespace_graph_svg(artifacts: &Path, report: &mut ConformanceReport) -> Result<()> {
     let page = artifacts.join("explore").join("index.html");
     if !page.exists() {
-        report.push(TestResult::warn(
+        report.push(TestResult::fail(
             "website/visual/svg-namespace-graph",
-            "explore/index.html not yet generated; skipping svg-namespace-graph check",
+            "explore/index.html not found in generated website",
         ));
         return Ok(());
     }
@@ -156,9 +156,9 @@ fn check_class_hierarchy_svgs(artifacts: &Path, report: &mut ConformanceReport) 
 fn check_identity_distribution_svg(artifacts: &Path, report: &mut ConformanceReport) -> Result<()> {
     let page = artifacts.join("identities").join("index.html");
     if !page.exists() {
-        report.push(TestResult::warn(
+        report.push(TestResult::fail(
             "website/visual/identity-distribution",
-            "identities/index.html not yet generated; skipping identity-distribution check",
+            "identities/index.html not found in generated website",
         ));
         return Ok(());
     }
