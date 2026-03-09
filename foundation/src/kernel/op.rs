@@ -5445,6 +5445,150 @@ pub mod qm_6 {
     pub const VERIFICATION_PATH_NOTE: &str = "Fiber lattice + constraint filter; enum at Q0-Q3";
 }
 
+/// Certificate issuance: every valid Transform admits a TransformCertificate attesting correct source-to-target mapping.
+pub mod cic_1 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "Transform T";
+    /// `lhs`
+    pub const LHS: &str = "valid(T) ∧ T: Transform";
+    /// `rhs`
+    pub const RHS: &str = "∃ c: TransformCertificate. certifies(c, T)";
+    /// `universallyValid`
+    pub const UNIVERSALLY_VALID: bool = true;
+    /// `validityKind` -> `Universal`
+    pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
+    /// `verificationDomain` -> `Pipeline`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str = "Transform → TransformCertificate issuance";
+}
+
+/// Certificate issuance: every metric-preserving Transform admits an IsometryCertificate attesting distance preservation.
+pub mod cic_2 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "Isometry T";
+    /// `lhs`
+    pub const LHS: &str = "isometry(T) ∧ metric-preserving(T)";
+    /// `rhs`
+    pub const RHS: &str = "∃ c: IsometryCertificate. certifies(c, T)";
+    /// `universallyValid`
+    pub const UNIVERSALLY_VALID: bool = true;
+    /// `validityKind` -> `Universal`
+    pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
+    /// `verificationDomain` -> `Geometric`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Geometric";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str = "Isometry → IsometryCertificate issuance";
+}
+
+/// Certificate issuance: every involutive operation f where f(f(x)) = x admits an InvolutionCertificate.
+pub mod cic_3 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "Involution f";
+    /// `lhs`
+    pub const LHS: &str = "f(f(x)) = x ∀ x ∈ R_n";
+    /// `rhs`
+    pub const RHS: &str = "∃ c: InvolutionCertificate. certifies(c, f)";
+    /// `universallyValid`
+    pub const UNIVERSALLY_VALID: bool = true;
+    /// `validityKind` -> `Universal`
+    pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
+    /// `verificationDomain` -> `Algebraic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str = "Involution → InvolutionCertificate issuance";
+}
+
+/// Certificate issuance: full saturation (σ = 1, freeCount = 0) admits a SaturationCertificate.
+pub mod cic_4 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "SaturatedContext C";
+    /// `lhs`
+    pub const LHS: &str = "σ(C) = 1 ∧ freeCount = 0";
+    /// `rhs`
+    pub const RHS: &str = "∃ c: SaturationCertificate. certifies(c, C)";
+    /// `universallyValid`
+    pub const UNIVERSALLY_VALID: bool = true;
+    /// `validityKind` -> `Universal`
+    pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
+    /// `verificationDomain` -> `Thermodynamic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Thermodynamic";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str = "SC_4 → SaturationCertificate issuance";
+}
+
+/// Certificate issuance: an AR_1-ordered and DC_10-selected trace admits a GeodesicCertificate.
+pub mod cic_5 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "GeodesicTrace";
+    /// `lhs`
+    pub const LHS: &str = "AR_1-ordered ∧ DC_10-selected trace";
+    /// `rhs`
+    pub const RHS: &str = "∃ c: GeodesicCertificate. certifies(c, trace)";
+    /// `universallyValid`
+    pub const UNIVERSALLY_VALID: bool = true;
+    /// `validityKind` -> `Universal`
+    pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
+    /// `verificationDomain` -> `Pipeline`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str = "GD_1 → GeodesicCertificate issuance";
+}
+
+/// Certificate issuance: a MeasurementEvent verifying the von Neumann–Landauer bridge at β* = ln 2 admits a MeasurementCertificate.
+pub mod cic_6 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "MeasurementEvent";
+    /// `lhs`
+    pub const LHS: &str = "S_vN = L_cost at β* = ln 2";
+    /// `rhs`
+    pub const RHS: &str = "∃ c: MeasurementCertificate. certifies(c, event)";
+    /// `universallyValid`
+    pub const UNIVERSALLY_VALID: bool = true;
+    /// `validityKind` -> `Universal`
+    pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
+    /// `verificationDomain` -> `QuantumThermodynamic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/QuantumThermodynamic";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str = "QM_1 → MeasurementCertificate issuance";
+}
+
+/// Certificate issuance: a MeasurementEvent verifying P(outcome k) = |α_k|² admits a BornRuleVerification certificate.
+pub mod cic_7 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "MeasurementEvent with amplitude vector";
+    /// `lhs`
+    pub const LHS: &str = "P(k) = |α_k|² verified";
+    /// `rhs`
+    pub const RHS: &str = "∃ c: BornRuleVerification. certifies(c, event)";
+    /// `universallyValid`
+    pub const UNIVERSALLY_VALID: bool = true;
+    /// `validityKind` -> `Universal`
+    pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
+    /// `verificationDomain` -> `QuantumThermodynamic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/QuantumThermodynamic";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str = "QM_5 → BornRuleVerification issuance";
+}
+
+/// Certificate issuance: shared-frame grounding that lands in the type-equivalent neighbourhood admits a GroundingCertificate.
+pub mod gc_1 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "GroundingMap with valid ProjectionMap";
+    /// `lhs`
+    pub const LHS: &str = "shared-frame grounding of symbol s";
+    /// `rhs`
+    pub const RHS: &str = "∃ c: GroundingCertificate. certifies(c, map)";
+    /// `universallyValid`
+    pub const UNIVERSALLY_VALID: bool = true;
+    /// `validityKind` -> `Universal`
+    pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
+    /// `verificationDomain` -> `Pipeline`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str = "surfaceSymmetry → GroundingCertificate issuance";
+}
+
 use crate::enums::PrimitiveOp;
 
 impl PrimitiveOp {

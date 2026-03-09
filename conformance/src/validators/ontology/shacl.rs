@@ -635,6 +635,183 @@ pub fn validate() -> ConformanceReport {
         tests::fixtures::TEST123_AMPLITUDE_INDEX,
         &mut report,
     );
+    // Amendment 46: SHACL fixture coverage gap closure
+    run_test("test124_glyph", tests::fixtures::TEST124_GLYPH, &mut report);
+    run_test(
+        "test125_dihedral_group",
+        tests::fixtures::TEST125_DIHEDRAL_GROUP,
+        &mut report,
+    );
+    run_test(
+        "test126_validity_scope_kind",
+        tests::fixtures::TEST126_VALIDITY_SCOPE_KIND,
+        &mut report,
+    );
+    run_test(
+        "test127_quantum_level_resolver",
+        tests::fixtures::TEST127_QUANTUM_LEVEL_RESOLVER,
+        &mut report,
+    );
+    run_test(
+        "test128_stratum_observable",
+        tests::fixtures::TEST128_STRATUM_OBSERVABLE,
+        &mut report,
+    );
+    run_test(
+        "test129_metric_observable",
+        tests::fixtures::TEST129_METRIC_OBSERVABLE,
+        &mut report,
+    );
+    run_test(
+        "test130_path_observable",
+        tests::fixtures::TEST130_PATH_OBSERVABLE,
+        &mut report,
+    );
+    run_test(
+        "test131_cascade_observable",
+        tests::fixtures::TEST131_CASCADE_OBSERVABLE,
+        &mut report,
+    );
+    run_test(
+        "test132_holonomy_observable",
+        tests::fixtures::TEST132_HOLONOMY_OBSERVABLE,
+        &mut report,
+    );
+    run_test(
+        "test133_incompatibility_metric",
+        tests::fixtures::TEST133_INCOMPATIBILITY_METRIC,
+        &mut report,
+    );
+    run_test(
+        "test134_stratum_value",
+        tests::fixtures::TEST134_STRATUM_VALUE,
+        &mut report,
+    );
+    run_test(
+        "test135_stratum_delta",
+        tests::fixtures::TEST135_STRATUM_DELTA,
+        &mut report,
+    );
+    run_test(
+        "test136_stratum_trajectory",
+        tests::fixtures::TEST136_STRATUM_TRAJECTORY,
+        &mut report,
+    );
+    run_test(
+        "test137_path_length",
+        tests::fixtures::TEST137_PATH_LENGTH,
+        &mut report,
+    );
+    run_test(
+        "test138_total_variation",
+        tests::fixtures::TEST138_TOTAL_VARIATION,
+        &mut report,
+    );
+    run_test(
+        "test139_winding_number",
+        tests::fixtures::TEST139_WINDING_NUMBER,
+        &mut report,
+    );
+    run_test(
+        "test140_cascade_length",
+        tests::fixtures::TEST140_CASCADE_LENGTH,
+        &mut report,
+    );
+    run_test(
+        "test141_cascade_count",
+        tests::fixtures::TEST141_CASCADE_COUNT,
+        &mut report,
+    );
+    run_test(
+        "test142_catastrophe_threshold",
+        tests::fixtures::TEST142_CATASTROPHE_THRESHOLD,
+        &mut report,
+    );
+    run_test(
+        "test143_catastrophe_count",
+        tests::fixtures::TEST143_CATASTROPHE_COUNT,
+        &mut report,
+    );
+    run_test(
+        "test144_commutator",
+        tests::fixtures::TEST144_COMMUTATOR,
+        &mut report,
+    );
+    run_test(
+        "test145_curvature_flux",
+        tests::fixtures::TEST145_CURVATURE_FLUX,
+        &mut report,
+    );
+    run_test(
+        "test146_parallel_transport",
+        tests::fixtures::TEST146_PARALLEL_TRANSPORT,
+        &mut report,
+    );
+    run_test(
+        "test147_cascade_entropy",
+        tests::fixtures::TEST147_CASCADE_ENTROPY,
+        &mut report,
+    );
+    run_test(
+        "test148_phase_boundary_type",
+        tests::fixtures::TEST148_PHASE_BOUNDARY_TYPE,
+        &mut report,
+    );
+    run_test(
+        "test149_face_map",
+        tests::fixtures::TEST149_FACE_MAP,
+        &mut report,
+    );
+    run_test(
+        "test150_nerve_functor",
+        tests::fixtures::TEST150_NERVE_FUNCTOR,
+        &mut report,
+    );
+    run_test(
+        "test151_chain_functor",
+        tests::fixtures::TEST151_CHAIN_FUNCTOR,
+        &mut report,
+    );
+    run_test(
+        "test152_restriction_map",
+        tests::fixtures::TEST152_RESTRICTION_MAP,
+        &mut report,
+    );
+    run_test(
+        "test153_coherence_proof",
+        tests::fixtures::TEST153_COHERENCE_PROOF,
+        &mut report,
+    );
+    run_test(
+        "test154_derivation_step",
+        tests::fixtures::TEST154_DERIVATION_STEP,
+        &mut report,
+    );
+    run_test(
+        "test155_computation_step",
+        tests::fixtures::TEST155_COMPUTATION_STEP,
+        &mut report,
+    );
+    run_test(
+        "test156_trace_metrics",
+        tests::fixtures::TEST156_TRACE_METRICS,
+        &mut report,
+    );
+    run_test(
+        "test157_isometry_certificate",
+        tests::fixtures::TEST157_ISOMETRY_CERTIFICATE,
+        &mut report,
+    );
+    run_test(
+        "test158_lift_chain_certificate",
+        tests::fixtures::TEST158_LIFT_CHAIN_CERTIFICATE,
+        &mut report,
+    );
+    run_test(
+        "test159_chain_audit_trail",
+        tests::fixtures::TEST159_CHAIN_AUDIT_TRAIL,
+        &mut report,
+    );
 
     // Verify test fixture count matches expected
     let test_count = report.results.len() - before_tests;
@@ -803,6 +980,43 @@ fn run_test(name: &str, turtle_src: &str, report: &mut ConformanceReport) {
         "test121_gluing_feedback" => validate_basic_turtle(turtle_src),
         "test122_session_saturation" => validate_basic_turtle(turtle_src),
         "test123_amplitude_index" => validate_basic_turtle(turtle_src),
+        // Amendment 46: SHACL fixture coverage gap closure
+        "test124_glyph" => validate_basic_turtle(turtle_src),
+        "test125_dihedral_group" => validate_basic_turtle(turtle_src),
+        "test126_validity_scope_kind" => validate_basic_turtle(turtle_src),
+        "test127_quantum_level_resolver" => validate_basic_turtle(turtle_src),
+        "test128_stratum_observable" => validate_basic_turtle(turtle_src),
+        "test129_metric_observable" => validate_basic_turtle(turtle_src),
+        "test130_path_observable" => validate_basic_turtle(turtle_src),
+        "test131_cascade_observable" => validate_basic_turtle(turtle_src),
+        "test132_holonomy_observable" => validate_basic_turtle(turtle_src),
+        "test133_incompatibility_metric" => validate_basic_turtle(turtle_src),
+        "test134_stratum_value" => validate_basic_turtle(turtle_src),
+        "test135_stratum_delta" => validate_basic_turtle(turtle_src),
+        "test136_stratum_trajectory" => validate_basic_turtle(turtle_src),
+        "test137_path_length" => validate_basic_turtle(turtle_src),
+        "test138_total_variation" => validate_basic_turtle(turtle_src),
+        "test139_winding_number" => validate_basic_turtle(turtle_src),
+        "test140_cascade_length" => validate_basic_turtle(turtle_src),
+        "test141_cascade_count" => validate_basic_turtle(turtle_src),
+        "test142_catastrophe_threshold" => validate_basic_turtle(turtle_src),
+        "test143_catastrophe_count" => validate_basic_turtle(turtle_src),
+        "test144_commutator" => validate_basic_turtle(turtle_src),
+        "test145_curvature_flux" => validate_basic_turtle(turtle_src),
+        "test146_parallel_transport" => validate_basic_turtle(turtle_src),
+        "test147_cascade_entropy" => validate_basic_turtle(turtle_src),
+        "test148_phase_boundary_type" => validate_basic_turtle(turtle_src),
+        "test149_face_map" => validate_basic_turtle(turtle_src),
+        "test150_nerve_functor" => validate_basic_turtle(turtle_src),
+        "test151_chain_functor" => validate_basic_turtle(turtle_src),
+        "test152_restriction_map" => validate_basic_turtle(turtle_src),
+        "test153_coherence_proof" => validate_basic_turtle(turtle_src),
+        "test154_derivation_step" => validate_basic_turtle(turtle_src),
+        "test155_computation_step" => validate_basic_turtle(turtle_src),
+        "test156_trace_metrics" => validate_basic_turtle(turtle_src),
+        "test157_isometry_certificate" => validate_basic_turtle(turtle_src),
+        "test158_lift_chain_certificate" => validate_basic_turtle(turtle_src),
+        "test159_chain_audit_trail" => validate_basic_turtle(turtle_src),
         _ => Ok(()),
     };
 

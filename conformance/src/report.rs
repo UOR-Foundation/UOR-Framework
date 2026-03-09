@@ -80,6 +80,9 @@ impl TestResult {
 pub struct ConformanceReport {
     /// All individual test results across all validators.
     pub results: Vec<TestResult>,
+    /// Results from ontology-derived meta-validators (Amendment 45).
+    /// These are not counted against `CONFORMANCE_CHECKS`.
+    pub meta_results: Vec<TestResult>,
 }
 
 impl ConformanceReport {
@@ -87,6 +90,7 @@ impl ConformanceReport {
     pub fn new() -> Self {
         Self {
             results: Vec::new(),
+            meta_results: Vec::new(),
         }
     }
 
@@ -95,9 +99,20 @@ impl ConformanceReport {
         self.results.push(result);
     }
 
+    /// Appends a meta-validator result (not counted against `CONFORMANCE_CHECKS`).
+    pub fn push_meta(&mut self, result: TestResult) {
+        self.meta_results.push(result);
+    }
+
     /// Extends this report with results from another report.
     pub fn extend(&mut self, other: ConformanceReport) {
         self.results.extend(other.results);
+        self.meta_results.extend(other.meta_results);
+    }
+
+    /// Returns the count of failed meta-validator checks.
+    pub fn meta_failure_count(&self) -> usize {
+        self.meta_results.iter().filter(|r| r.is_failure()).count()
     }
 
     /// Returns the count of failed checks.

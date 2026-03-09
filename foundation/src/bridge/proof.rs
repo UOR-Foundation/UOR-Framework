@@ -3824,3 +3824,83 @@ pub mod prf_qm_6 {
     /// `verified`
     pub const VERIFIED: bool = true;
 }
+
+/// Proof of CIC_1: TransformCertificate issuance coverage.
+pub mod prf_cic_1 {
+    /// `provesIdentity` -> `CIC_1`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/CIC_1";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Proof of CIC_2: IsometryCertificate issuance coverage.
+pub mod prf_cic_2 {
+    /// `provesIdentity` -> `CIC_2`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/CIC_2";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Proof of CIC_3: InvolutionCertificate issuance coverage.
+pub mod prf_cic_3 {
+    /// `provesIdentity` -> `CIC_3`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/CIC_3";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Proof of CIC_4: SaturationCertificate issuance coverage.
+pub mod prf_cic_4 {
+    /// `provesIdentity` -> `CIC_4`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/CIC_4";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Proof of CIC_5: GeodesicCertificate issuance coverage.
+pub mod prf_cic_5 {
+    /// `provesIdentity` -> `CIC_5`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/CIC_5";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Proof of CIC_6: MeasurementCertificate issuance coverage.
+pub mod prf_cic_6 {
+    /// `provesIdentity` -> `CIC_6`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/CIC_6";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Proof of CIC_7: BornRuleVerification issuance coverage.
+pub mod prf_cic_7 {
+    /// `provesIdentity` -> `CIC_7`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/CIC_7";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Proof of GC_1: GroundingCertificate issuance coverage.
+pub mod prf_gc_1 {
+    /// `provesIdentity` -> `GC_1`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/GC_1";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}

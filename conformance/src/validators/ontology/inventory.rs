@@ -3,12 +3,13 @@
 //! Verifies that the built ontology artifact contains the correct counts
 //! as defined in [`uor_ontology::counts`].
 
+use std::collections::HashSet;
 use std::path::Path;
 
 use anyhow::{Context, Result};
 use serde_json::Value;
 use uor_ontology::counts;
-use uor_ontology::model::Space;
+use uor_ontology::model::{IndividualValue, Space};
 
 use crate::report::{ConformanceReport, TestResult};
 
@@ -80,6 +81,11 @@ pub fn validate(artifacts: &Path) -> Result<ConformanceReport> {
     validate_gluing_feedback(&mut report);
     validate_session_saturation_bridge(&mut report);
     validate_amplitude_index_characterization(&mut report);
+
+    // Amendment 45: Self-Auditing Meta-Validators
+    validate_certificate_issuance_coverage(&mut report);
+    validate_identity_proof_bijection(&mut report);
+    validate_shacl_fixture_coverage(&mut report);
 
     // Validate the built JSON-LD artifact
     let json_path = artifacts.join("uor.foundation.json");
@@ -415,6 +421,8 @@ fn validate_identity_completeness(report: &mut ConformanceReport) {
         "SP_",  // Amendment 41: Tower identities
         "QT_",  // Amendment 44: Structural Gap Closures
         "jsat_", "EXP_", "GO_", "COEFF_",
+        // Amendment 46: Certificate Issuance Coverage
+        "CIC_", "GC_",
     ];
     for prefix in &expected_prefixes {
         let has = identities.iter().any(|i| i.label.starts_with(prefix));
@@ -774,7 +782,7 @@ fn validate_proof_coverage(report: &mut ConformanceReport) {
     }
 
     // Collect all IRIs that are targets of proof:provesIdentity
-    let mut proved_iris: std::collections::HashSet<&str> = std::collections::HashSet::new();
+    let mut proved_iris: HashSet<&str> = HashSet::new();
     if let Some(proof_module) = ontology.find_namespace("proof") {
         for ind in &proof_module.individuals {
             for (k, v) in ind.properties {
@@ -1953,4 +1961,186 @@ pub fn validate_workspace(workspace: &Path) -> Result<ConformanceReport> {
     );
 
     Ok(report)
+}
+
+/// Amendment 45, Rule 1: Every direct `cert:Certificate` subclass must have
+/// a governing `op:Identity` individual that references it.
+fn validate_certificate_issuance_coverage(report: &mut ConformanceReport) {
+    let ontology = uor_ontology::Ontology::full();
+    let validator = "meta/certificate_issuance_coverage";
+    let cert_root = "https://uor.foundation/cert/Certificate";
+
+    // Collect ALL direct cert:Certificate subclasses across all namespaces
+    let cert_subclasses: Vec<_> = ontology
+        .namespaces
+        .iter()
+        .flat_map(|m| m.classes.iter())
+        .filter(|c| c.subclass_of.contains(&cert_root))
+        .collect();
+
+    // Collect all op:Identity individuals
+    let identity_type = "https://uor.foundation/op/Identity";
+    let identities: Vec<_> = ontology
+        .namespaces
+        .iter()
+        .flat_map(|m| m.individuals.iter())
+        .filter(|i| i.type_ == identity_type)
+        .collect();
+
+    let mut all_governed = true;
+    for cert_class in &cert_subclasses {
+        let governed = identities.iter().any(|id| {
+            id.properties.iter().any(|(_, v)| match v {
+                IndividualValue::Str(s) => {
+                    s.contains(cert_class.label) || s.contains(cert_class.id)
+                }
+                IndividualValue::IriRef(iri) => iri.contains(cert_class.id),
+                IndividualValue::List(iris) => iris.iter().any(|iri| iri.contains(cert_class.id)),
+                _ => false,
+            })
+        });
+
+        if !governed {
+            report.push_meta(TestResult::fail(
+                validator,
+                format!(
+                    "cert:Certificate subclass {} has no governing Identity",
+                    cert_class.label
+                ),
+            ));
+            all_governed = false;
+        }
+    }
+
+    if all_governed {
+        report.push_meta(TestResult::pass(
+            validator,
+            format!(
+                "All {} Certificate subclasses governed by Identities",
+                cert_subclasses.len()
+            ),
+        ));
+    }
+}
+
+/// Amendment 45, Rule 2: Strict bijection between `op:Identity` individuals
+/// and proof individuals via `provesIdentity`.
+fn validate_identity_proof_bijection(report: &mut ConformanceReport) {
+    let ontology = uor_ontology::Ontology::full();
+    let validator = "meta/identity_proof_bijection";
+
+    let identity_type = "https://uor.foundation/op/Identity";
+    let proves_prop = "https://uor.foundation/proof/provesIdentity";
+
+    // All op:Identity IRIs
+    let identity_iris: HashSet<&str> = ontology
+        .namespaces
+        .iter()
+        .flat_map(|m| m.individuals.iter())
+        .filter(|i| i.type_ == identity_type)
+        .map(|i| i.id)
+        .collect();
+
+    // All provesIdentity targets from proof individuals
+    let proved_iris: HashSet<&str> = ontology
+        .namespaces
+        .iter()
+        .flat_map(|m| m.individuals.iter())
+        .flat_map(|i| i.properties.iter())
+        .filter(|(k, _)| *k == proves_prop)
+        .filter_map(|(_, v)| {
+            if let IndividualValue::IriRef(iri) = v {
+                Some(*iri)
+            } else {
+                None
+            }
+        })
+        .collect();
+
+    let mut all_ok = true;
+
+    // Direction 1: every Identity must be proved
+    for iri in &identity_iris {
+        if !proved_iris.contains(iri) {
+            report.push_meta(TestResult::fail(
+                validator,
+                format!("Identity {} has no proof individual", iri),
+            ));
+            all_ok = false;
+        }
+    }
+
+    // Direction 2: every proof target must be a valid Identity
+    for iri in &proved_iris {
+        if !identity_iris.contains(iri) {
+            report.push_meta(TestResult::fail(
+                validator,
+                format!("Proof targets nonexistent Identity {}", iri),
+            ));
+            all_ok = false;
+        }
+    }
+
+    if all_ok {
+        report.push_meta(TestResult::pass(
+            validator,
+            format!(
+                "Identity-proof bijection holds: {} identities, {} proofs",
+                identity_iris.len(),
+                proved_iris.len()
+            ),
+        ));
+    }
+}
+
+/// Amendment 45, Rule 3: Every kernel/bridge class must appear in at least
+/// one SHACL fixture.
+fn validate_shacl_fixture_coverage(report: &mut ConformanceReport) {
+    let ontology = uor_ontology::Ontology::full();
+    let validator = "meta/shacl_fixture_coverage";
+
+    // Classes in kernel and bridge spaces only
+    let required_classes: Vec<_> = ontology
+        .namespaces
+        .iter()
+        .filter(|m| matches!(m.namespace.space, Space::Kernel | Space::Bridge))
+        .flat_map(|m| {
+            let prefix = m.namespace.prefix;
+            m.classes.iter().map(move |c| (prefix, c))
+        })
+        .collect();
+
+    let all_fixtures = crate::tests::fixtures::all_fixture_sources();
+
+    let mut all_covered = true;
+    for (prefix, class) in &required_classes {
+        // Extract local name from IRI (everything after last '/')
+        let local_name = class.id.rsplit('/').next().unwrap_or("");
+        let prefixed_form = format!("{}:{}", prefix, local_name);
+
+        let covered = all_fixtures.iter().any(|src| {
+            src.contains(&prefixed_form) || src.contains(class.id) || src.contains(class.label)
+        });
+
+        if !covered {
+            report.push_meta(TestResult::fail(
+                validator,
+                format!(
+                    "Kernel/bridge class {} has no SHACL fixture coverage",
+                    class.label
+                ),
+            ));
+            all_covered = false;
+        }
+    }
+
+    if all_covered {
+        report.push_meta(TestResult::pass(
+            validator,
+            format!(
+                "All {} kernel/bridge classes have SHACL fixture coverage",
+                required_classes.len()
+            ),
+        ));
+    }
 }

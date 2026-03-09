@@ -6424,5 +6424,203 @@ fn individuals() -> Vec<Individual> {
                  IndividualValue::Str("Fiber lattice + constraint filter; enum at Q0-Q3")),
             ],
         },
+        // Amendment 46: Certificate Issuance Coverage identities
+        Individual {
+            id: "https://uor.foundation/op/CIC_1",
+            type_: "https://uor.foundation/op/Identity",
+            label: "CIC_1",
+            comment: "Certificate issuance: every valid Transform admits a \
+                      TransformCertificate attesting correct source-to-target \
+                      mapping.",
+            properties: &[
+                ("https://uor.foundation/op/lhs",
+                 IndividualValue::Str("valid(T) \u{2227} T: Transform")),
+                ("https://uor.foundation/op/rhs",
+                 IndividualValue::Str("\u{2203} c: TransformCertificate. certifies(c, T)")),
+                ("https://uor.foundation/op/forAll",
+                 IndividualValue::Str("Transform T")),
+                (
+                    "https://uor.foundation/op/verificationDomain",
+                    IndividualValue::IriRef("https://uor.foundation/op/Pipeline"),
+                ),
+                ("https://uor.foundation/op/universallyValid", IndividualValue::Bool(true)),
+                ("https://uor.foundation/op/validityKind",
+                 IndividualValue::IriRef("https://uor.foundation/op/Universal")),
+                ("https://uor.foundation/op/verificationPathNote",
+                 IndividualValue::Str("Transform \u{2192} TransformCertificate issuance")),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/op/CIC_2",
+            type_: "https://uor.foundation/op/Identity",
+            label: "CIC_2",
+            comment: "Certificate issuance: every metric-preserving Transform \
+                      admits an IsometryCertificate attesting distance \
+                      preservation.",
+            properties: &[
+                ("https://uor.foundation/op/lhs",
+                 IndividualValue::Str("isometry(T) \u{2227} metric-preserving(T)")),
+                ("https://uor.foundation/op/rhs",
+                 IndividualValue::Str("\u{2203} c: IsometryCertificate. certifies(c, T)")),
+                ("https://uor.foundation/op/forAll",
+                 IndividualValue::Str("Isometry T")),
+                (
+                    "https://uor.foundation/op/verificationDomain",
+                    IndividualValue::IriRef("https://uor.foundation/op/Geometric"),
+                ),
+                ("https://uor.foundation/op/universallyValid", IndividualValue::Bool(true)),
+                ("https://uor.foundation/op/validityKind",
+                 IndividualValue::IriRef("https://uor.foundation/op/Universal")),
+                ("https://uor.foundation/op/verificationPathNote",
+                 IndividualValue::Str("Isometry \u{2192} IsometryCertificate issuance")),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/op/CIC_3",
+            type_: "https://uor.foundation/op/Identity",
+            label: "CIC_3",
+            comment: "Certificate issuance: every involutive operation f where \
+                      f(f(x)) = x admits an InvolutionCertificate.",
+            properties: &[
+                ("https://uor.foundation/op/lhs",
+                 IndividualValue::Str("f(f(x)) = x \u{2200} x \u{2208} R_n")),
+                ("https://uor.foundation/op/rhs",
+                 IndividualValue::Str("\u{2203} c: InvolutionCertificate. certifies(c, f)")),
+                ("https://uor.foundation/op/forAll",
+                 IndividualValue::Str("Involution f")),
+                (
+                    "https://uor.foundation/op/verificationDomain",
+                    IndividualValue::IriRef("https://uor.foundation/op/Algebraic"),
+                ),
+                ("https://uor.foundation/op/universallyValid", IndividualValue::Bool(true)),
+                ("https://uor.foundation/op/validityKind",
+                 IndividualValue::IriRef("https://uor.foundation/op/Universal")),
+                ("https://uor.foundation/op/verificationPathNote",
+                 IndividualValue::Str("Involution \u{2192} InvolutionCertificate issuance")),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/op/CIC_4",
+            type_: "https://uor.foundation/op/Identity",
+            label: "CIC_4",
+            comment: "Certificate issuance: full saturation (\u{03c3} = 1, \
+                      freeCount = 0) admits a SaturationCertificate.",
+            properties: &[
+                ("https://uor.foundation/op/lhs",
+                 IndividualValue::Str("\u{03c3}(C) = 1 \u{2227} freeCount = 0")),
+                ("https://uor.foundation/op/rhs",
+                 IndividualValue::Str("\u{2203} c: SaturationCertificate. certifies(c, C)")),
+                ("https://uor.foundation/op/forAll",
+                 IndividualValue::Str("SaturatedContext C")),
+                (
+                    "https://uor.foundation/op/verificationDomain",
+                    IndividualValue::IriRef("https://uor.foundation/op/Thermodynamic"),
+                ),
+                ("https://uor.foundation/op/universallyValid", IndividualValue::Bool(true)),
+                ("https://uor.foundation/op/validityKind",
+                 IndividualValue::IriRef("https://uor.foundation/op/Universal")),
+                ("https://uor.foundation/op/verificationPathNote",
+                 IndividualValue::Str("SC_4 \u{2192} SaturationCertificate issuance")),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/op/CIC_5",
+            type_: "https://uor.foundation/op/Identity",
+            label: "CIC_5",
+            comment: "Certificate issuance: an AR_1-ordered and DC_10-selected \
+                      trace admits a GeodesicCertificate.",
+            properties: &[
+                ("https://uor.foundation/op/lhs",
+                 IndividualValue::Str("AR_1-ordered \u{2227} DC_10-selected trace")),
+                ("https://uor.foundation/op/rhs",
+                 IndividualValue::Str("\u{2203} c: GeodesicCertificate. certifies(c, trace)")),
+                ("https://uor.foundation/op/forAll",
+                 IndividualValue::Str("GeodesicTrace")),
+                (
+                    "https://uor.foundation/op/verificationDomain",
+                    IndividualValue::IriRef("https://uor.foundation/op/Pipeline"),
+                ),
+                ("https://uor.foundation/op/universallyValid", IndividualValue::Bool(true)),
+                ("https://uor.foundation/op/validityKind",
+                 IndividualValue::IriRef("https://uor.foundation/op/Universal")),
+                ("https://uor.foundation/op/verificationPathNote",
+                 IndividualValue::Str("GD_1 \u{2192} GeodesicCertificate issuance")),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/op/CIC_6",
+            type_: "https://uor.foundation/op/Identity",
+            label: "CIC_6",
+            comment: "Certificate issuance: a MeasurementEvent verifying the \
+                      von Neumann\u{2013}Landauer bridge at \u{03b2}* = ln 2 admits \
+                      a MeasurementCertificate.",
+            properties: &[
+                ("https://uor.foundation/op/lhs",
+                 IndividualValue::Str("S_vN = L_cost at \u{03b2}* = ln 2")),
+                ("https://uor.foundation/op/rhs",
+                 IndividualValue::Str("\u{2203} c: MeasurementCertificate. certifies(c, event)")),
+                ("https://uor.foundation/op/forAll",
+                 IndividualValue::Str("MeasurementEvent")),
+                (
+                    "https://uor.foundation/op/verificationDomain",
+                    IndividualValue::IriRef("https://uor.foundation/op/QuantumThermodynamic"),
+                ),
+                ("https://uor.foundation/op/universallyValid", IndividualValue::Bool(true)),
+                ("https://uor.foundation/op/validityKind",
+                 IndividualValue::IriRef("https://uor.foundation/op/Universal")),
+                ("https://uor.foundation/op/verificationPathNote",
+                 IndividualValue::Str("QM_1 \u{2192} MeasurementCertificate issuance")),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/op/CIC_7",
+            type_: "https://uor.foundation/op/Identity",
+            label: "CIC_7",
+            comment: "Certificate issuance: a MeasurementEvent verifying \
+                      P(outcome k) = |\u{03b1}_k|\u{00b2} admits a \
+                      BornRuleVerification certificate.",
+            properties: &[
+                ("https://uor.foundation/op/lhs",
+                 IndividualValue::Str("P(k) = |\u{03b1}_k|\u{00b2} verified")),
+                ("https://uor.foundation/op/rhs",
+                 IndividualValue::Str("\u{2203} c: BornRuleVerification. certifies(c, event)")),
+                ("https://uor.foundation/op/forAll",
+                 IndividualValue::Str("MeasurementEvent with amplitude vector")),
+                (
+                    "https://uor.foundation/op/verificationDomain",
+                    IndividualValue::IriRef("https://uor.foundation/op/QuantumThermodynamic"),
+                ),
+                ("https://uor.foundation/op/universallyValid", IndividualValue::Bool(true)),
+                ("https://uor.foundation/op/validityKind",
+                 IndividualValue::IriRef("https://uor.foundation/op/Universal")),
+                ("https://uor.foundation/op/verificationPathNote",
+                 IndividualValue::Str("QM_5 \u{2192} BornRuleVerification issuance")),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/op/GC_1",
+            type_: "https://uor.foundation/op/Identity",
+            label: "GC_1",
+            comment: "Certificate issuance: shared-frame grounding that lands \
+                      in the type-equivalent neighbourhood admits a \
+                      GroundingCertificate.",
+            properties: &[
+                ("https://uor.foundation/op/lhs",
+                 IndividualValue::Str("shared-frame grounding of symbol s")),
+                ("https://uor.foundation/op/rhs",
+                 IndividualValue::Str("\u{2203} c: GroundingCertificate. certifies(c, map)")),
+                ("https://uor.foundation/op/forAll",
+                 IndividualValue::Str("GroundingMap with valid ProjectionMap")),
+                (
+                    "https://uor.foundation/op/verificationDomain",
+                    IndividualValue::IriRef("https://uor.foundation/op/Pipeline"),
+                ),
+                ("https://uor.foundation/op/universallyValid", IndividualValue::Bool(true)),
+                ("https://uor.foundation/op/validityKind",
+                 IndividualValue::IriRef("https://uor.foundation/op/Universal")),
+                ("https://uor.foundation/op/verificationPathNote",
+                 IndividualValue::Str("surfaceSymmetry \u{2192} GroundingCertificate issuance")),
+            ],
+        },
     ]
 }

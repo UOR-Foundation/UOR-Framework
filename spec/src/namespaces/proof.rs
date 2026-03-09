@@ -8302,5 +8302,166 @@ fn individuals() -> Vec<Individual> {
                 ),
             ],
         },
+        // Amendment 46: Certificate Issuance Coverage proofs
+        Individual {
+            id: "https://uor.foundation/proof/prf_CIC_1",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_CIC_1",
+            comment: "Proof of CIC_1: TransformCertificate issuance coverage.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/CIC_1"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_CIC_2",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_CIC_2",
+            comment: "Proof of CIC_2: IsometryCertificate issuance coverage.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/CIC_2"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_CIC_3",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_CIC_3",
+            comment: "Proof of CIC_3: InvolutionCertificate issuance coverage.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/CIC_3"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_CIC_4",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_CIC_4",
+            comment: "Proof of CIC_4: SaturationCertificate issuance coverage.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/CIC_4"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_CIC_5",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_CIC_5",
+            comment: "Proof of CIC_5: GeodesicCertificate issuance coverage.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/CIC_5"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_CIC_6",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_CIC_6",
+            comment: "Proof of CIC_6: MeasurementCertificate issuance coverage.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/CIC_6"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_CIC_7",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_CIC_7",
+            comment: "Proof of CIC_7: BornRuleVerification issuance coverage.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/CIC_7"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_GC_1",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_GC_1",
+            comment: "Proof of GC_1: GroundingCertificate issuance coverage.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/GC_1"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
     ]
 }

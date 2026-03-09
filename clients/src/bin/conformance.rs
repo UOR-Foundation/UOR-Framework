@@ -102,6 +102,44 @@ fn main() -> Result<()> {
         passed, warned, failed
     );
 
+    // Meta-audit results (Amendment 45: self-auditing validators)
+    if !report.meta_results.is_empty() {
+        println!();
+        println!("Meta-Audit Results (ontology-derived)");
+        println!("=====================================");
+        println!();
+
+        let mut meta_passed = 0usize;
+        let mut meta_failed = 0usize;
+
+        for result in &report.meta_results {
+            let status = match result.severity {
+                uor_conformance::Severity::Pass => {
+                    meta_passed += 1;
+                    "PASS"
+                }
+                uor_conformance::Severity::Warning => "WARN",
+                uor_conformance::Severity::Failure => {
+                    meta_failed += 1;
+                    "FAIL"
+                }
+            };
+            println!(
+                "[{}] {} \u{2014} {}",
+                status, result.validator, result.message
+            );
+            for detail in &result.details {
+                println!("       {}", detail);
+            }
+        }
+
+        println!();
+        println!(
+            "Meta-audit: {} passed, {} gaps detected (informational)",
+            meta_passed, meta_failed
+        );
+    }
+
     if failed > 0 {
         eprintln!("Conformance FAILED: {} check(s) did not pass.", failed);
         process::exit(1);

@@ -29,9 +29,45 @@ mod test120_coefficient_ring;
 mod test121_gluing_feedback;
 mod test122_session_saturation;
 mod test123_amplitude_index;
+mod test124_glyph;
+mod test125_dihedral_group;
+mod test126_validity_scope_kind;
+mod test127_quantum_level_resolver;
+mod test128_stratum_observable;
+mod test129_metric_observable;
 mod test12_factorization;
+mod test130_path_observable;
+mod test131_cascade_observable;
+mod test132_holonomy_observable;
+mod test133_incompatibility_metric;
+mod test134_stratum_value;
+mod test135_stratum_delta;
+mod test136_stratum_trajectory;
+mod test137_path_length;
+mod test138_total_variation;
+mod test139_winding_number;
 mod test13_canonical_form;
+mod test140_cascade_length;
+mod test141_cascade_count;
+mod test142_catastrophe_threshold;
+mod test143_catastrophe_count;
+mod test144_commutator;
+mod test145_curvature_flux;
+mod test146_parallel_transport;
+mod test147_cascade_entropy;
+mod test148_phase_boundary_type;
+mod test149_face_map;
 mod test14_content_addressing;
+mod test150_nerve_functor;
+mod test151_chain_functor;
+mod test152_restriction_map;
+mod test153_coherence_proof;
+mod test154_derivation_step;
+mod test155_computation_step;
+mod test156_trace_metrics;
+mod test157_isometry_certificate;
+mod test158_lift_chain_certificate;
+mod test159_chain_audit_trail;
 mod test15_boolean_sat;
 mod test16_algebraic_identities;
 mod test17_inter_algebra_maps;
@@ -153,9 +189,45 @@ pub use test120_coefficient_ring::TEST120_COEFFICIENT_RING;
 pub use test121_gluing_feedback::TEST121_GLUING_FEEDBACK;
 pub use test122_session_saturation::TEST122_SESSION_SATURATION;
 pub use test123_amplitude_index::TEST123_AMPLITUDE_INDEX;
+pub use test124_glyph::TEST124_GLYPH;
+pub use test125_dihedral_group::TEST125_DIHEDRAL_GROUP;
+pub use test126_validity_scope_kind::TEST126_VALIDITY_SCOPE_KIND;
+pub use test127_quantum_level_resolver::TEST127_QUANTUM_LEVEL_RESOLVER;
+pub use test128_stratum_observable::TEST128_STRATUM_OBSERVABLE;
+pub use test129_metric_observable::TEST129_METRIC_OBSERVABLE;
 pub use test12_factorization::TEST12_FACTORIZATION;
+pub use test130_path_observable::TEST130_PATH_OBSERVABLE;
+pub use test131_cascade_observable::TEST131_CASCADE_OBSERVABLE;
+pub use test132_holonomy_observable::TEST132_HOLONOMY_OBSERVABLE;
+pub use test133_incompatibility_metric::TEST133_INCOMPATIBILITY_METRIC;
+pub use test134_stratum_value::TEST134_STRATUM_VALUE;
+pub use test135_stratum_delta::TEST135_STRATUM_DELTA;
+pub use test136_stratum_trajectory::TEST136_STRATUM_TRAJECTORY;
+pub use test137_path_length::TEST137_PATH_LENGTH;
+pub use test138_total_variation::TEST138_TOTAL_VARIATION;
+pub use test139_winding_number::TEST139_WINDING_NUMBER;
 pub use test13_canonical_form::TEST13_CANONICAL_FORM;
+pub use test140_cascade_length::TEST140_CASCADE_LENGTH;
+pub use test141_cascade_count::TEST141_CASCADE_COUNT;
+pub use test142_catastrophe_threshold::TEST142_CATASTROPHE_THRESHOLD;
+pub use test143_catastrophe_count::TEST143_CATASTROPHE_COUNT;
+pub use test144_commutator::TEST144_COMMUTATOR;
+pub use test145_curvature_flux::TEST145_CURVATURE_FLUX;
+pub use test146_parallel_transport::TEST146_PARALLEL_TRANSPORT;
+pub use test147_cascade_entropy::TEST147_CASCADE_ENTROPY;
+pub use test148_phase_boundary_type::TEST148_PHASE_BOUNDARY_TYPE;
+pub use test149_face_map::TEST149_FACE_MAP;
 pub use test14_content_addressing::TEST14_CONTENT_ADDRESSING;
+pub use test150_nerve_functor::TEST150_NERVE_FUNCTOR;
+pub use test151_chain_functor::TEST151_CHAIN_FUNCTOR;
+pub use test152_restriction_map::TEST152_RESTRICTION_MAP;
+pub use test153_coherence_proof::TEST153_COHERENCE_PROOF;
+pub use test154_derivation_step::TEST154_DERIVATION_STEP;
+pub use test155_computation_step::TEST155_COMPUTATION_STEP;
+pub use test156_trace_metrics::TEST156_TRACE_METRICS;
+pub use test157_isometry_certificate::TEST157_ISOMETRY_CERTIFICATE;
+pub use test158_lift_chain_certificate::TEST158_LIFT_CHAIN_CERTIFICATE;
+pub use test159_chain_audit_trail::TEST159_CHAIN_AUDIT_TRAIL;
 pub use test15_boolean_sat::TEST15_BOOLEAN_SAT;
 pub use test16_algebraic_identities::TEST16_ALGEBRAIC_IDENTITIES;
 pub use test17_inter_algebra_maps::TEST17_INTER_ALGEBRA_MAPS;
@@ -250,3 +322,169 @@ pub use test97_evidence_bundle_ar1::TEST97_EVIDENCE_BUNDLE_AR1;
 pub use test98_evidence_bundle_dc10::TEST98_EVIDENCE_BUNDLE_DC10;
 pub use test99_measurement_born_q1::TEST99_MEASUREMENT_BORN_Q1;
 pub use test9_constraint_algebra::TEST9_CONSTRAINT_ALGEBRA;
+
+/// Returns all compiled SHACL fixture source strings for meta-validator
+/// scanning (Amendment 45, Rule 3).
+pub fn all_fixture_sources() -> Vec<&'static str> {
+    vec![
+        TEST1_RING,
+        TEST2_PRIMITIVES,
+        TEST3_TERM_GRAPH,
+        TEST4_STATE_LIFECYCLE,
+        TEST5_PARTITION,
+        TEST6_CRITICAL_IDENTITY,
+        TEST7_END_TO_END,
+        TEST8_FIBER_BUDGET,
+        TEST9_CONSTRAINT_ALGEBRA,
+        TEST10_ITERATIVE_RESOLUTION,
+        TEST11_COMPOSITION,
+        TEST12_FACTORIZATION,
+        TEST13_CANONICAL_FORM,
+        TEST14_CONTENT_ADDRESSING,
+        TEST15_BOOLEAN_SAT,
+        TEST16_ALGEBRAIC_IDENTITIES,
+        TEST17_INTER_ALGEBRA_MAPS,
+        TEST18_ANALYTICAL_COMPLETENESS,
+        TEST19_HOMOLOGICAL_PIPELINE,
+        TEST20_SHEAF_CONSISTENCY,
+        TEST21_TOPOLOGICAL_DELTA,
+        TEST22_INDEX_BRIDGE,
+        TEST23_IDENTITY_GROUNDING,
+        TEST24_VERIFICATION_DOMAIN,
+        TEST25_GEOMETRIC_CHARACTER,
+        TEST26_COMPLEXITY_CLASS,
+        TEST27_REWRITE_RULE,
+        TEST28_MEASUREMENT_UNIT,
+        TEST29_COORDINATE_KIND,
+        TEST30_PROOF_COVERAGE,
+        TEST31_QUANTUM_LEVEL,
+        TEST32_ARC_GROUNDING,
+        TEST33_GRAPH_GAPS,
+        TEST34_COMPLETENESS_CANDIDATE,
+        TEST35_COMPLETENESS_CERTIFICATE,
+        TEST36_Q1_RING,
+        TEST37_QUANTUM_LEVEL_BINDING,
+        TEST38_SESSION_LIFECYCLE,
+        TEST39_SESSION_BOUNDARY,
+        TEST40_TYPE_SYNTHESIS_GOAL,
+        TEST41_SYNTHESIS_RESULT,
+        TEST42_QUANTUM_LIFT,
+        TEST43_SPECTRAL_SEQUENCE,
+        TEST44_MONODROMY_FLAT,
+        TEST45_MONODROMY_TWISTED,
+        TEST46_MONODROMY_PIPELINE,
+        TEST47_THERMO_PIPELINE,
+        TEST48_PHASE_DIAGRAM,
+        TEST49_REVERSIBLE_RESOLUTION,
+        TEST50_JACOBIAN_RESOLVER,
+        TEST51_PRODUCT_TYPE_PIPELINE,
+        TEST52_SUM_TYPE_VARIANT,
+        TEST53_SUPERPOSED_FIBER,
+        TEST54_SATURATED_CONTEXT,
+        TEST55_SATURATION_WITNESS,
+        TEST56_DOMAIN_SATURATION_RECORD,
+        TEST57_SATURATION_PHASE,
+        TEST58_SATURATION_CERTIFICATE,
+        TEST59_SATURATION_AWARE_RESOLVER,
+        TEST60_IMPOSSIBILITY_WITNESS,
+        TEST61_MORPHOSPACE_RECORD,
+        TEST62_MORPHOSPACE_BOUNDARY,
+        TEST63_FORBIDDEN_SIGNATURE,
+        TEST64_ACHIEVABILITY_STATUS,
+        TEST65_GEODESIC_TRACE,
+        TEST66_GEODESIC_CERTIFICATE,
+        TEST67_GEODESIC_VIOLATION,
+        TEST68_GEODESIC_VALIDATOR,
+        TEST69_GEODESIC_ORDERED,
+        TEST70_MEASUREMENT_RESOLVER,
+        TEST71_MEASUREMENT_EVENT,
+        TEST72_MEASUREMENT_CERTIFICATE,
+        TEST73_COLLAPSED_FIBER_STATE,
+        TEST74_QUANTUM_THERMODYNAMIC,
+        TEST75_PARTITION_PRODUCT,
+        TEST76_PARTITION_COPRODUCT,
+        TEST77_GEODESIC_EVIDENCE,
+        TEST78_BORN_RULE,
+        TEST79_MEASUREMENT_OUTCOME,
+        TEST80_PARTITION_EXHAUSTIVE,
+        TEST81_DIHEDRAL_ALGEBRA,
+        TEST82_LEVEL_SUCCESSOR,
+        TEST83_AMPLITUDE_NORMALIZATION,
+        TEST84_ENUM_VARIANT,
+        TEST85_Q1_RING_GROUNDING,
+        TEST86_QUANTUM_LIFT_TRIVIAL,
+        TEST87_SPECTRAL_CONVERGENCE,
+        TEST88_LIFT_OBSTRUCTION_NONTRIVIAL,
+        TEST89_LIFT_REFINEMENT_SUGGESTION,
+        TEST90_RESOLVED_LIFT,
+        TEST91_SYNTHESIS_GOAL_Q1,
+        TEST92_SYNTHESIS_CHECKPOINT,
+        TEST93_SYNTHESIS_SIGNATURE,
+        TEST94_SYNTHESIZED_TYPE,
+        TEST95_UNREACHABLE_SIGNATURE,
+        TEST96_GEODESIC_TRACE_Q1,
+        TEST97_EVIDENCE_BUNDLE_AR1,
+        TEST98_EVIDENCE_BUNDLE_DC10,
+        TEST99_MEASUREMENT_BORN_Q1,
+        TEST100_NORMATIVE_CHAIN,
+        TEST101_LIFT_CHAIN_FLAT,
+        TEST102_LIFT_CHAIN_TWISTED,
+        TEST103_OBSTRUCTION_CHAIN_EMPTY,
+        TEST104_OBSTRUCTION_CHAIN_NONTRIVIAL,
+        TEST105_LIFT_CHAIN_CERTIFICATE,
+        TEST106_CHAIN_AUDIT_TRAIL,
+        TEST107_TOWER_RESOLVER,
+        TEST108_INDUCTIVE_PROOF,
+        TEST109_VALIDITY_SCOPE,
+        TEST110_TOWER_ROUNDTRIP,
+        TEST111_ADDRESS_CRYPTO_PINNING,
+        TEST112_ADDRESS_CANONICAL_BYTES,
+        TEST113_CARRY_CONSTRAINT_PINNING,
+        TEST114_JOINT_SATISFIABILITY,
+        TEST115_DIHEDRAL_INVERSE_ORDER,
+        TEST116_CONSTRAINT_EXPRESSIVENESS,
+        TEST117_SUMTYPE_TOPOLOGY,
+        TEST118_SYNTHESIS_REACHABILITY,
+        TEST119_OBSTRUCTION_TERMINATION,
+        TEST120_COEFFICIENT_RING,
+        TEST121_GLUING_FEEDBACK,
+        TEST122_SESSION_SATURATION,
+        TEST123_AMPLITUDE_INDEX,
+        TEST124_GLYPH,
+        TEST125_DIHEDRAL_GROUP,
+        TEST126_VALIDITY_SCOPE_KIND,
+        TEST127_QUANTUM_LEVEL_RESOLVER,
+        TEST128_STRATUM_OBSERVABLE,
+        TEST129_METRIC_OBSERVABLE,
+        TEST130_PATH_OBSERVABLE,
+        TEST131_CASCADE_OBSERVABLE,
+        TEST132_HOLONOMY_OBSERVABLE,
+        TEST133_INCOMPATIBILITY_METRIC,
+        TEST134_STRATUM_VALUE,
+        TEST135_STRATUM_DELTA,
+        TEST136_STRATUM_TRAJECTORY,
+        TEST137_PATH_LENGTH,
+        TEST138_TOTAL_VARIATION,
+        TEST139_WINDING_NUMBER,
+        TEST140_CASCADE_LENGTH,
+        TEST141_CASCADE_COUNT,
+        TEST142_CATASTROPHE_THRESHOLD,
+        TEST143_CATASTROPHE_COUNT,
+        TEST144_COMMUTATOR,
+        TEST145_CURVATURE_FLUX,
+        TEST146_PARALLEL_TRANSPORT,
+        TEST147_CASCADE_ENTROPY,
+        TEST148_PHASE_BOUNDARY_TYPE,
+        TEST149_FACE_MAP,
+        TEST150_NERVE_FUNCTOR,
+        TEST151_CHAIN_FUNCTOR,
+        TEST152_RESTRICTION_MAP,
+        TEST153_COHERENCE_PROOF,
+        TEST154_DERIVATION_STEP,
+        TEST155_COMPUTATION_STEP,
+        TEST156_TRACE_METRICS,
+        TEST157_ISOMETRY_CERTIFICATE,
+        TEST158_LIFT_CHAIN_CERTIFICATE,
+        TEST159_CHAIN_AUDIT_TRAIL,
+    ]
+}

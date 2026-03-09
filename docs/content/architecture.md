@@ -152,3 +152,6 @@ The spec crate implements all {@count:amendments} amendments from the UOR Founda
 | 41 | op/, type/, proof/, resolver/, derivation/, cert/ | Arbitrary Qₙ Scaling: ValidityScopeKind enum, LiftChain, ObstructionChain, InductiveProof, TowerCompletenessResolver, LiftChainCertificate, QT\_1–QT\_7 |
 | 42 | (grammar) | UOR Term Grammar Formalization: machine-generated EBNF grammar from ontology |
 | 43 | u/ | Cryptographic Primitive Pinning: digestAlgorithm, canonicalBytes, BLAKE3/SHA-256 |
+| 44 | op/, type/, observable/, resolver/, proof/, derivation/, trace/, cert/, state/ | Structural Gap Closures (G1–G11): CarryConstraint pinning, joint satisfiability, dihedral algebra, constraint expressiveness, SumType topology, synthesis reachability, obstruction termination, coefficient ring, gluing feedback, session saturation bridge, amplitude index characterization |
+| 45 | (conformance) | Self-Auditing Conformance Infrastructure: Three derived meta-validators — certificate issuance coverage (Rule 1), identity-proof bijection (Rule 2), SHACL fixture coverage (Rule 3). Zero new ontology terms. |
+| 46 | op/, proof/, conformance/ | Gap Closure: 8 certificate issuance identities (CIC\_1–7, GC\_1) + 36 SHACL fixtures covering all kernel/bridge classes. Zero new ontology classes or properties. |
