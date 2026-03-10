@@ -87,7 +87,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            public/uor.foundation.json
+            public/uor.foundation.jsonld
             public/uor.foundation.ttl
             public/uor.foundation.nt
             public/uor.foundation.owl
@@ -98,7 +98,7 @@ jobs:
             UOR Foundation ontology release ${{ github.ref_name }}.
 
             **Artifacts:**
-            - `uor.foundation.json` — JSON-LD 1.1
+            - `uor.foundation.jsonld` — JSON-LD 1.1
             - `uor.foundation.ttl` — Turtle 1.1
             - `uor.foundation.nt` — N-Triples
             - `uor.foundation.owl` — OWL 2 RDF/XML

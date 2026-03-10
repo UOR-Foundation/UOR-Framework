@@ -42,7 +42,7 @@ in the dihedral group D_{2^n}.
 ## Downloads
 
 - [JSON-LD](https://github.com/UOR-Framework/UOR-Framework/releases) —
-  `uor.foundation.json`
+  `uor.foundation.jsonld`
 - [Turtle](https://github.com/UOR-Framework/UOR-Framework/releases) —
   `uor.foundation.ttl`
 - [N-Triples](https://github.com/UOR-Framework/UOR-Framework/releases) —

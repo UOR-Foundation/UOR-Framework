@@ -2,7 +2,7 @@
 //! and writes the artifacts to the output directory.
 //!
 //! **Outputs:**
-//! - `<out>/uor.foundation.json` — JSON-LD 1.1
+//! - `<out>/uor.foundation.jsonld` — JSON-LD 1.1
 //! - `<out>/uor.foundation.ttl` — Turtle 1.1
 //! - `<out>/uor.foundation.nt` — N-Triples
 //! - `<out>/uor.foundation.owl` — OWL 2 RDF/XML
@@ -60,7 +60,7 @@ fn main() -> Result<()> {
     );
 
     // JSON-LD
-    let json_path = out.join("uor.foundation.json");
+    let json_path = out.join("uor.foundation.jsonld");
     let json_value = jsonld::to_json_ld(ontology);
     let json_str = serde_json::to_string_pretty(&json_value)
         .context("Failed to serialize ontology to JSON-LD")?;

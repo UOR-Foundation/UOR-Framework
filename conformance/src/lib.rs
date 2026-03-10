@@ -51,7 +51,7 @@ pub use report::{ConformanceReport, Severity, TestResult};
 pub struct WorkspacePaths {
     /// Root of the Rust workspace (contains Cargo.toml, spec/, clients/, etc.)
     pub workspace: std::path::PathBuf,
-    /// Directory containing built artifacts (uor.foundation.json, docs/, etc.)
+    /// Directory containing built artifacts (uor.foundation.jsonld, docs/, etc.)
     pub artifacts: std::path::PathBuf,
 }
 

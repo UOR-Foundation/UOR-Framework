@@ -13,7 +13,7 @@ The website follows a clear hierarchy:
 /js/search.js
 /search-index.json
 /sitemap.xml
-/uor.foundation.json    ← from uor-build
+/uor.foundation.jsonld    ← from uor-build
 /uor.foundation.ttl     ← from uor-build
 /uor.foundation.nt      ← from uor-build
 /uor.term.ebnf          ← from uor-build (Amendment 42)

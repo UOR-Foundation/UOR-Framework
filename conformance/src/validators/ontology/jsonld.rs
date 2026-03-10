@@ -1,6 +1,6 @@
 //! JSON-LD 1.1 validator.
 //!
-//! Verifies that `public/uor.foundation.json` is a well-formed JSON-LD 1.1 document:
+//! Verifies that `public/uor.foundation.jsonld` is a well-formed JSON-LD 1.1 document:
 //! - Has `@context` with all 16 namespace prefixes and standard prefixes
 //! - Has `@graph` containing the expected node types
 //! - All `@id` values are IRIs (not relative references)
@@ -47,11 +47,11 @@ const REQUIRED_PREFIXES: &[&str] = &[
 pub fn validate(artifacts: &Path) -> Result<ConformanceReport> {
     let mut report = ConformanceReport::new();
 
-    let json_path = artifacts.join("uor.foundation.json");
+    let json_path = artifacts.join("uor.foundation.jsonld");
     if !json_path.exists() {
         report.push(TestResult::fail(
             "ontology/jsonld",
-            "uor.foundation.json not found",
+            "uor.foundation.jsonld not found",
         ));
         return Ok(report);
     }

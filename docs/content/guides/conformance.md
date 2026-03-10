@@ -15,8 +15,8 @@ cargo run --bin uor-conformance
 
 | Artifact | Standard | Validator |
 |----------|----------|-----------|
-| `public/uor.foundation.json` | JSON-LD 1.1 | `validators/ontology/jsonld.rs` |
-| `public/uor.foundation.json` | OWL 2 DL | `validators/ontology/owl.rs` |
+| `public/uor.foundation.jsonld` | JSON-LD 1.1 | `validators/ontology/jsonld.rs` |
+| `public/uor.foundation.jsonld` | OWL 2 DL | `validators/ontology/owl.rs` |
 | Inventory counts | {@count:namespaces}/{@count:classes}/{@count:properties}/{@count:individuals} | `validators/ontology/inventory.rs` |
 | `public/uor.foundation.ttl` | RDF 1.1 / Turtle 1.1 | `validators/ontology/rdf.rs` |
 | `public/uor.term.ebnf` | ISO/IEC 14977 EBNF | `validators/ontology/ebnf.rs` |

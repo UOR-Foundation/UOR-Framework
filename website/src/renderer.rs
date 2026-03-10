@@ -409,7 +409,7 @@ pub fn render_sitemap(base_url: &str, paths: &[String]) -> String {
 
 /// Renders the download page body.
 pub fn render_download_page(base_path: &str) -> String {
-    let json_url = format!("{base_path}/uor.foundation.json");
+    let json_url = format!("{base_path}/uor.foundation.jsonld");
     let ttl_url = format!("{base_path}/uor.foundation.ttl");
     let nt_url = format!("{base_path}/uor.foundation.nt");
     let owl_url = format!("{base_path}/uor.foundation.owl");
@@ -425,9 +425,9 @@ pub fn render_download_page(base_path: &str) -> String {
          <thead><tr><th>Format</th><th>Description</th><th>Download</th></tr></thead>\n\
          <tbody>\n\
          <tr>\n\
-         <td><span class=\"format-badge\">.json</span></td>\n\
+         <td><span class=\"format-badge\">.jsonld</span></td>\n\
          <td>JSON-LD 1.1 — linked data with <code>@context</code> and <code>@graph</code></td>\n\
-         <td><a href=\"{json_url}\">uor.foundation.json</a></td>\n\
+         <td><a href=\"{json_url}\">uor.foundation.jsonld</a></td>\n\
          </tr>\n\
          <tr>\n\
          <td><span class=\"format-badge\">.ttl</span></td>\n\

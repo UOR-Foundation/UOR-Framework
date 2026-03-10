@@ -3,7 +3,7 @@
 ## Overview
 
 The UOR Foundation ontology is published as a JSON-LD 1.1 document
-(`public/uor.foundation.json`). This document must conform to the
+(`public/uor.foundation.jsonld`). This document must conform to the
 W3C JSON-LD 1.1 specification.
 
 ## Required Structure

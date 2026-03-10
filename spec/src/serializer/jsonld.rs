@@ -2,7 +2,7 @@
 //!
 //! Produces a single JSON-LD document containing the complete `@context`
 //! and `@graph` array with all namespace modules in dependency order.
-//! The output matches the structure of the reference `uor.foundation.json`.
+//! The output matches the structure of the reference `uor.foundation.jsonld`.
 
 use serde_json::{json, Map, Value};
 

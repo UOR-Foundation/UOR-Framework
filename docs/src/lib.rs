@@ -560,7 +560,7 @@ Version {version}: {ns} namespaces · {classes} classes · {props} properties ·
 
 All terms are encoded as typed Rust data in `spec/` (`uor-ontology`) and exported as:
 - `foundation/` (`uor-foundation`) — typed Rust traits (published to crates.io)
-- `public/uor.foundation.json` — JSON-LD 1.1
+- `public/uor.foundation.jsonld` — JSON-LD 1.1
 - `public/uor.foundation.ttl` — Turtle 1.1
 - `public/uor.foundation.nt` — N-Triples
 - `public/uor.foundation.owl` — OWL 2 RDF/XML

@@ -2,7 +2,7 @@
 //!
 //! Seven serialization formats are supported:
 //! - **EBNF** ([`ebnf`]) — the UOR Term Language grammar, output to `public/uor.term.ebnf`
-//! - **JSON-LD** ([`jsonld`]) — the canonical format, output to `public/uor.foundation.json`
+//! - **JSON-LD** ([`jsonld`]) — the canonical format, output to `public/uor.foundation.jsonld`
 //! - **JSON Schema** ([`json_schema`]) — type definitions, output to `public/uor.foundation.schema.json`
 //! - **N-Triples** ([`ntriples`]) — for streaming/bulk processing, output to `public/uor.foundation.nt`
 //! - **OWL RDF/XML** ([`owl_xml`]) — ontology interchange, output to `public/uor.foundation.owl`

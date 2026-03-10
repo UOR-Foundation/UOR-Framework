@@ -98,11 +98,11 @@ pub fn validate(artifacts: &Path) -> Result<ConformanceReport> {
     validate_forall_scope_alignment(&mut report);
 
     // Validate the built JSON-LD artifact
-    let json_path = artifacts.join("uor.foundation.json");
+    let json_path = artifacts.join("uor.foundation.jsonld");
     if !json_path.exists() {
         report.push(TestResult::fail(
             "ontology/inventory",
-            "uor.foundation.json not found in artifacts directory",
+            "uor.foundation.jsonld not found in artifacts directory",
         ));
         return Ok(report);
     }
