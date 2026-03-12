@@ -4012,3 +4012,175 @@ pub mod prf_mc_8 {
     /// `verified`
     pub const VERIFIED: bool = true;
 }
+
+/// Axiomatic derivation of WC_1: Witt coordinate = bit coordinate at p=2.
+pub mod prf_wc_1 {
+    /// `provesIdentity` -> `WC_1`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/WC_1";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of WC_2: Witt sum correction = carry.
+pub mod prf_wc_2 {
+    /// `provesIdentity` -> `WC_2`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/WC_2";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of WC_3: carry recurrence = Witt polynomial recurrence.
+pub mod prf_wc_3 {
+    /// `provesIdentity` -> `WC_3`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/WC_3";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of WC_4: δ-correction = single-level carry.
+pub mod prf_wc_4 {
+    /// `provesIdentity` -> `WC_4`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/WC_4";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of WC_5: LiftObstruction = δ nonvanishing.
+pub mod prf_wc_5 {
+    /// `provesIdentity` -> `WC_5`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/WC_5";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of WC_6: metric discrepancy = Witt defect.
+pub mod prf_wc_6 {
+    /// `provesIdentity` -> `WC_6`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/WC_6";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of WC_7: D_1 = Witt truncation order.
+pub mod prf_wc_7 {
+    /// `provesIdentity` -> `WC_7`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/WC_7";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of WC_8: D_3 = Witt-Burnside conjugation.
+pub mod prf_wc_8 {
+    /// `provesIdentity` -> `WC_8`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/WC_8";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of WC_9: D_4 = reflection composition.
+pub mod prf_wc_9 {
+    /// `provesIdentity` -> `WC_9`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/WC_9";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of WC_10: Frobenius = identity on W_n(F_2).
+pub mod prf_wc_10 {
+    /// `provesIdentity` -> `WC_10`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/WC_10";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of WC_11: Verschiebung = doubling.
+pub mod prf_wc_11 {
+    /// `provesIdentity` -> `WC_11`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/WC_11";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of WC_12: δ = squaring defect / 2.
+pub mod prf_wc_12 {
+    /// `provesIdentity` -> `WC_12`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/WC_12";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of OA_1: Ostrowski product formula at p=2.
+pub mod prf_oa_1 {
+    /// `provesIdentity` -> `OA_1`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/OA_1";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of OA_2: crossing cost = ln 2.
+pub mod prf_oa_2 {
+    /// `provesIdentity` -> `OA_2`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/OA_2";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of OA_3: Landauer cost grounding via product formula.
+pub mod prf_oa_3 {
+    /// `provesIdentity` -> `OA_3`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/OA_3";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Empirical verification of OA_4: Born rule bridge conditional on amplitude rationality.
+pub mod prf_oa_4 {
+    /// `provesIdentity` -> `OA_4`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/OA_4";
+    /// `quantumLevelRange`
+    pub const QUANTUM_LEVEL_RANGE: &str = "Q0-Q3";
+    /// `verificationMethod`
+    pub const VERIFICATION_METHOD: &str = "empirical verification with rational fiber amplitudes";
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of OA_5: entropy per δ-level = crossing cost.
+pub mod prf_oa_5 {
+    /// `provesIdentity` -> `OA_5`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/OA_5";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}

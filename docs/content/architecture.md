@@ -46,7 +46,7 @@ This crate is the single source of truth. It is internal (`publish = false`).
 
 - **`mapping.rs`**: Namespace → module, XSD → Rust type, class IRI → path tables
 - **`traits.rs`**: Class → trait, property → method generation
-- **`enums.rs`**: Enum detection (PrimitiveOp, MetricAxis, Space, FiberState, GeometricCharacter, VerificationDomain, ComplexityClass, RewriteRule, MeasurementUnit, CoordinateKind, SessionBoundaryType, PhaseBoundaryType, SaturationPhase, AchievabilityStatus, ValidityScopeKind, ProofModality) and QuantumLevel newtype struct generation
+- **`enums.rs`**: Enum detection (PrimitiveOp, MetricAxis, Space, FiberState, ExecutionPolicyKind, GeometricCharacter, VerificationDomain, ComplexityClass, RewriteRule, MeasurementUnit, CoordinateKind, SessionBoundaryType, PhaseBoundaryType, SaturationPhase, AchievabilityStatus, ValidityScopeKind, ProofModality) and QuantumLevel newtype struct generation
 - **`individuals.rs`**: Named individual → const module / PrimitiveOp impl generation
 - **`emit.rs`**: Rust source code writer
 
@@ -57,7 +57,7 @@ is produced by `uor-crate` — never hand-edited.
 
 - **{@count:traits} traits** (one per OWL class, generic over `Primitives`)
 - **{@count:methods} methods** (one per property with a domain)
-- **{@count:enums} enums** (Space, PrimitiveOp, MetricAxis, FiberState, GeometricCharacter, VerificationDomain, ComplexityClass, RewriteRule, MeasurementUnit, CoordinateKind, SessionBoundaryType, PhaseBoundaryType, SaturationPhase, AchievabilityStatus, ValidityScopeKind, ProofModality) **+ 1 struct** (QuantumLevel)
+- **{@count:enums} enums** (Space, PrimitiveOp, MetricAxis, FiberState, ExecutionPolicyKind, GeometricCharacter, VerificationDomain, ComplexityClass, RewriteRule, MeasurementUnit, CoordinateKind, SessionBoundaryType, PhaseBoundaryType, SaturationPhase, AchievabilityStatus, ValidityScopeKind, ProofModality) **+ 1 struct** (QuantumLevel)
 - **{@count:constant_modules} constant modules** (for named individuals)
 - **Zero mandatory dependencies** — pure traits
 
@@ -158,3 +158,7 @@ The spec crate implements all {@count:amendments} amendments from the UOR Founda
 | 47 | (conformance) | Model-Derived Validation + Meta-Validator Hardening: 5 model-derived meta-validators (property IRI validity, kind/value-type conformance, functional cardinality, IriRef target resolution, datatype range conformance). Harden Rules 1–3, quantum\_scope EmpiricalVerification + exhaustive type guard, crate\_ count cross-checks, prf\_CIC\_7 retype. |
 | 48 | resolver/, state/ | Multi-Session Coordination: SharedContext, ContextLease, SessionComposition, ExecutionPolicy, ExecutionPolicyKind enum (FifoPolicy/MinFreeCountFirst/MaxFreeCountFirst/DisjointFirst), SR\_8–SR\_10 + MC\_1–MC\_8 identities |
 | 49 | conformance/ | Conformance Gap Closure: `op:lhs`/`op:rhs`/`proof:forbidsSignature` reclassified to AnnotationProperty; Rule 3 SHACL mandate extended to User-space (type/, morphism/, state/); `MC_` prefix added to identity guard; website class count made dynamic; `validate_forall_scope_alignment` cross-check added; test164–167 fixtures covering Embedding, Action, SessionBoundaryType, MetricAxis |
+| 50 | website/ | PRISM Website Refactor: responsive design, pipeline visualization |
+| 51 | docs/ | Uniform Navigation: single source of truth in uor-docs |
+| 52 | spec/serializer/ | Seven-Format Artifact Suite: OWL RDF/XML, JSON Schema, SHACL Shapes serializers |
+| 53 | op/, proof/ | Witt–Carry Formalization: 12 `WC_` Witt-carry bridge identities, 5 `OA_` Ostrowski–Archimedean bridge identities, `ArithmeticValuation` verification domain, CA\_1–CA\_6 reclassified Enumerative → Algebraic |

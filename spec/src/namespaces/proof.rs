@@ -6,6 +6,9 @@
 //! Amendment 48 adds 11 proofs: prf_SR_8–10 (multi-session coordination axioms)
 //! and prf_MC_1–8 (derivational scaling theorem proofs).
 //!
+//! Amendment 53 adds 17 proofs: prf_WC_1–12 (Witt-carry bridge) and
+//! prf_OA_1–5 (Ostrowski-Archimedean bridge).
+//!
 //! **Space classification:** `bridge` — kernel-produced, user-consumed.
 
 use crate::model::iris::*;
@@ -8681,6 +8684,368 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/provesIdentity",
                     IndividualValue::IriRef("https://uor.foundation/op/MC_8"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        // Amendment 53: Witt\u{2013}Carry Formalization proofs \u{2014} WC_ series (12)
+        Individual {
+            id: "https://uor.foundation/proof/prf_WC_1",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_WC_1",
+            comment: "Axiomatic derivation of WC_1: Witt coordinate = bit \
+                      coordinate at p=2.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/WC_1"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_WC_2",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_WC_2",
+            comment: "Axiomatic derivation of WC_2: Witt sum correction = \
+                      carry.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/WC_2"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_WC_3",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_WC_3",
+            comment: "Axiomatic derivation of WC_3: carry recurrence = Witt \
+                      polynomial recurrence.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/WC_3"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_WC_4",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_WC_4",
+            comment: "Axiomatic derivation of WC_4: \u{03b4}-correction = \
+                      single-level carry.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/WC_4"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_WC_5",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_WC_5",
+            comment: "Axiomatic derivation of WC_5: LiftObstruction = \
+                      \u{03b4} nonvanishing.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/WC_5"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_WC_6",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_WC_6",
+            comment: "Axiomatic derivation of WC_6: metric discrepancy = \
+                      Witt defect.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/WC_6"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_WC_7",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_WC_7",
+            comment: "Axiomatic derivation of WC_7: D_1 = Witt truncation \
+                      order.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/WC_7"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_WC_8",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_WC_8",
+            comment: "Axiomatic derivation of WC_8: D_3 = Witt-Burnside \
+                      conjugation.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/WC_8"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_WC_9",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_WC_9",
+            comment: "Axiomatic derivation of WC_9: D_4 = reflection \
+                      composition.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/WC_9"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_WC_10",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_WC_10",
+            comment: "Axiomatic derivation of WC_10: Frobenius = identity \
+                      on W_n(F_2).",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/WC_10"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_WC_11",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_WC_11",
+            comment: "Axiomatic derivation of WC_11: Verschiebung = \
+                      doubling.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/WC_11"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_WC_12",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_WC_12",
+            comment: "Axiomatic derivation of WC_12: \u{03b4} = squaring \
+                      defect / 2.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/WC_12"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        // Amendment 53: Ostrowski\u{2013}Archimedean bridge proofs \u{2014} OA_ series (5)
+        Individual {
+            id: "https://uor.foundation/proof/prf_OA_1",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_OA_1",
+            comment: "Axiomatic derivation of OA_1: Ostrowski product \
+                      formula at p=2.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/OA_1"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_OA_2",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_OA_2",
+            comment: "Axiomatic derivation of OA_2: crossing cost = ln 2.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/OA_2"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_OA_3",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_OA_3",
+            comment: "Axiomatic derivation of OA_3: Landauer cost grounding \
+                      via product formula.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/OA_3"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_OA_4",
+            type_: "https://uor.foundation/proof/EmpiricalVerification",
+            label: "prf_OA_4",
+            comment: "Empirical verification of OA_4: Born rule bridge \
+                      conditional on amplitude rationality.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/OA_4"),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/quantumLevelRange",
+                    IndividualValue::Str("Q0-Q3"),
+                ),
+                (
+                    "https://uor.foundation/proof/verificationMethod",
+                    IndividualValue::Str("empirical verification with rational fiber amplitudes"),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_OA_5",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_OA_5",
+            comment: "Axiomatic derivation of OA_5: entropy per \u{03b4}-level \
+                      = crossing cost.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/OA_5"),
                 ),
                 (
                     "https://uor.foundation/proof/universalScope",

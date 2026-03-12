@@ -115,7 +115,7 @@ See [Homology](concepts/homology.html), [Cohomology](concepts/cohomology.html),
 
 ## Algebraic Verification
 
-The framework includes **{@count:identities} named algebraic identities** spanning 7 core algebras (with additional identity families from Amendments 23–37):
+The framework includes **{@count:identities} named algebraic identities** spanning 7 core algebras (with additional identity families from Amendments 23–53):
 Ring, Boolean, Cross-Structure, Dihedral, Unit, Affine, and Carry. Each identity is a named
 {@class https://uor.foundation/op/Identity} individual with `lhs`, `rhs`, and `forAll`
 properties specifying the equation and its domain.
@@ -124,7 +124,8 @@ Every identity carries typed grounding properties:
 - {@prop https://uor.foundation/op/verificationDomain}: one or more references to a
   {@class https://uor.foundation/op/VerificationDomain} individual identifying the
   mathematical discipline (Enumerative, Algebraic, Geometric, Analytical, Thermodynamic,
-  Topological, Pipeline, IndexTheoretic, SuperpositionDomain, or QuantumThermodynamic).
+  Topological, Pipeline, IndexTheoretic, SuperpositionDomain, QuantumThermodynamic,
+  or ArithmeticValuation).
 - {@prop https://uor.foundation/op/verificationPathNote}: a human-readable annotation
   describing the specific verification route.
 

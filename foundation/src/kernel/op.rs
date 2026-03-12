@@ -142,6 +142,12 @@ pub mod quantum_thermodynamic {
     pub const ENUM_VARIANT: &str = "QuantumThermodynamic";
 }
 
+/// Established by number-theoretic valuation arguments including p-adic absolute values, the Ostrowski product formula, and the arithmetic of global fields. Covers identities grounded in the product formula |x|_p · |x|_∞ = 1 and the Witt–Ostrowski derivation chain.
+pub mod arithmetic_valuation {
+    /// `enumVariant`
+    pub const ENUM_VARIANT: &str = "ArithmeticValuation";
+}
+
 /// Holds for all k in N. No minimum k constraint.
 pub mod universal {
     /// `enumVariant`
@@ -208,10 +214,10 @@ pub mod critical_identity {
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
-    /// `verificationDomain` -> `Enumerative`
-    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Enumerative";
+    /// `verificationDomain` -> `Algebraic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
     /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "exhaustive_enumeration(R_n)";
+    pub const VERIFICATION_PATH_NOTE: &str = "Witt polynomial identification at p=2 (Theorem 1)";
 }
 
 /// Addressing bijection: addresses(glyph(d)) = d. Round-trip from datum through glyph and back is identity.
@@ -250,10 +256,10 @@ pub mod r_a1 {
     pub const LHS: &str = "add(x, add(y, z))";
     /// `rhs`
     pub const RHS: &str = "add(add(x, y), z)";
-    /// `verificationDomain` -> `Enumerative`
-    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Enumerative";
+    /// `verificationDomain` -> `Algebraic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
     /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "exhaustive_enumeration(R_n)";
+    pub const VERIFICATION_PATH_NOTE: &str = "Witt polynomial identification at p=2 (Theorem 1)";
 }
 
 /// Additive identity: add(x, 0) = x.
@@ -264,10 +270,10 @@ pub mod r_a2 {
     pub const LHS: &str = "add(x, 0)";
     /// `rhs`
     pub const RHS: &str = "x";
-    /// `verificationDomain` -> `Enumerative`
-    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Enumerative";
+    /// `verificationDomain` -> `Algebraic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
     /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "exhaustive_enumeration(R_n)";
+    pub const VERIFICATION_PATH_NOTE: &str = "Witt polynomial identification at p=2 (Theorem 1)";
 }
 
 /// Additive inverse: add(x, neg(x)) = 0.
@@ -278,10 +284,10 @@ pub mod r_a3 {
     pub const LHS: &str = "add(x, neg(x))";
     /// `rhs`
     pub const RHS: &str = "0";
-    /// `verificationDomain` -> `Enumerative`
-    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Enumerative";
+    /// `verificationDomain` -> `Algebraic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
     /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "exhaustive_enumeration(R_n)";
+    pub const VERIFICATION_PATH_NOTE: &str = "Witt polynomial identification at p=2 (Theorem 1)";
 }
 
 /// Additive commutativity: add(x, y) = add(y, x).
@@ -292,10 +298,10 @@ pub mod r_a4 {
     pub const LHS: &str = "add(x, y)";
     /// `rhs`
     pub const RHS: &str = "add(y, x)";
-    /// `verificationDomain` -> `Enumerative`
-    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Enumerative";
+    /// `verificationDomain` -> `Algebraic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
     /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "exhaustive_enumeration(R_n)";
+    pub const VERIFICATION_PATH_NOTE: &str = "Witt polynomial identification at p=2 (Theorem 1)";
 }
 
 /// Subtraction definition: sub(x, y) = add(x, neg(y)).
@@ -306,10 +312,10 @@ pub mod r_a5 {
     pub const LHS: &str = "sub(x, y)";
     /// `rhs`
     pub const RHS: &str = "add(x, neg(y))";
-    /// `verificationDomain` -> `Enumerative`
-    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Enumerative";
+    /// `verificationDomain` -> `Algebraic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
     /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "exhaustive_enumeration(R_n)";
+    pub const VERIFICATION_PATH_NOTE: &str = "Witt polynomial identification at p=2 (Theorem 1)";
 }
 
 /// Negation involution: neg(neg(x)) = x.
@@ -320,10 +326,10 @@ pub mod r_a6 {
     pub const LHS: &str = "neg(neg(x))";
     /// `rhs`
     pub const RHS: &str = "x";
-    /// `verificationDomain` -> `Enumerative`
-    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Enumerative";
+    /// `verificationDomain` -> `Algebraic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
     /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "exhaustive_enumeration(R_n)";
+    pub const VERIFICATION_PATH_NOTE: &str = "Witt polynomial identification at p=2 (Theorem 1)";
 }
 
 /// Multiplicative associativity: mul(x, mul(y, z)) = mul(mul(x, y), z).
@@ -334,10 +340,10 @@ pub mod r_m1 {
     pub const LHS: &str = "mul(x, mul(y, z))";
     /// `rhs`
     pub const RHS: &str = "mul(mul(x, y), z)";
-    /// `verificationDomain` -> `Enumerative`
-    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Enumerative";
+    /// `verificationDomain` -> `Algebraic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
     /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "exhaustive_enumeration(R_n)";
+    pub const VERIFICATION_PATH_NOTE: &str = "Witt polynomial identification at p=2 (Theorem 1)";
 }
 
 /// Multiplicative identity: mul(x, 1) = x.
@@ -348,10 +354,10 @@ pub mod r_m2 {
     pub const LHS: &str = "mul(x, 1)";
     /// `rhs`
     pub const RHS: &str = "x";
-    /// `verificationDomain` -> `Enumerative`
-    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Enumerative";
+    /// `verificationDomain` -> `Algebraic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
     /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "exhaustive_enumeration(R_n)";
+    pub const VERIFICATION_PATH_NOTE: &str = "Witt polynomial identification at p=2 (Theorem 1)";
 }
 
 /// Multiplicative commutativity: mul(x, y) = mul(y, x).
@@ -362,10 +368,10 @@ pub mod r_m3 {
     pub const LHS: &str = "mul(x, y)";
     /// `rhs`
     pub const RHS: &str = "mul(y, x)";
-    /// `verificationDomain` -> `Enumerative`
-    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Enumerative";
+    /// `verificationDomain` -> `Algebraic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
     /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "exhaustive_enumeration(R_n)";
+    pub const VERIFICATION_PATH_NOTE: &str = "Witt polynomial identification at p=2 (Theorem 1)";
 }
 
 /// Distributivity: mul(x, add(y, z)) = add(mul(x, y), mul(x, z)).
@@ -376,10 +382,10 @@ pub mod r_m4 {
     pub const LHS: &str = "mul(x, add(y, z))";
     /// `rhs`
     pub const RHS: &str = "add(mul(x, y), mul(x, z))";
-    /// `verificationDomain` -> `Enumerative`
-    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Enumerative";
+    /// `verificationDomain` -> `Algebraic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
     /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "exhaustive_enumeration(R_n)";
+    pub const VERIFICATION_PATH_NOTE: &str = "Witt polynomial identification at p=2 (Theorem 1)";
 }
 
 /// Annihilation: mul(x, 0) = 0.
@@ -390,10 +396,10 @@ pub mod r_m5 {
     pub const LHS: &str = "mul(x, 0)";
     /// `rhs`
     pub const RHS: &str = "0";
-    /// `verificationDomain` -> `Enumerative`
-    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Enumerative";
+    /// `verificationDomain` -> `Algebraic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
     /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "exhaustive_enumeration(R_n)";
+    pub const VERIFICATION_PATH_NOTE: &str = "Witt polynomial identification at p=2 (Theorem 1)";
 }
 
 /// XOR associativity: xor(x, xor(y, z)) = xor(xor(x, y), z).
@@ -404,10 +410,10 @@ pub mod b_1 {
     pub const LHS: &str = "xor(x, xor(y, z))";
     /// `rhs`
     pub const RHS: &str = "xor(xor(x, y), z)";
-    /// `verificationDomain` -> `Enumerative`
-    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Enumerative";
+    /// `verificationDomain` -> `Algebraic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
     /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "exhaustive_enumeration(R_n)";
+    pub const VERIFICATION_PATH_NOTE: &str = "Witt polynomial identification at p=2 (Theorem 1)";
 }
 
 /// XOR identity: xor(x, 0) = x.
@@ -418,10 +424,10 @@ pub mod b_2 {
     pub const LHS: &str = "xor(x, 0)";
     /// `rhs`
     pub const RHS: &str = "x";
-    /// `verificationDomain` -> `Enumerative`
-    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Enumerative";
+    /// `verificationDomain` -> `Algebraic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
     /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "exhaustive_enumeration(R_n)";
+    pub const VERIFICATION_PATH_NOTE: &str = "Witt polynomial identification at p=2 (Theorem 1)";
 }
 
 /// XOR self-inverse: xor(x, x) = 0.
@@ -432,10 +438,10 @@ pub mod b_3 {
     pub const LHS: &str = "xor(x, x)";
     /// `rhs`
     pub const RHS: &str = "0";
-    /// `verificationDomain` -> `Enumerative`
-    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Enumerative";
+    /// `verificationDomain` -> `Algebraic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
     /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "exhaustive_enumeration(R_n)";
+    pub const VERIFICATION_PATH_NOTE: &str = "Witt polynomial identification at p=2 (Theorem 1)";
 }
 
 /// AND associativity: and(x, and(y, z)) = and(and(x, y), z).
@@ -446,10 +452,10 @@ pub mod b_4 {
     pub const LHS: &str = "and(x, and(y, z))";
     /// `rhs`
     pub const RHS: &str = "and(and(x, y), z)";
-    /// `verificationDomain` -> `Enumerative`
-    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Enumerative";
+    /// `verificationDomain` -> `Algebraic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
     /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "exhaustive_enumeration(R_n)";
+    pub const VERIFICATION_PATH_NOTE: &str = "Witt polynomial identification at p=2 (Theorem 1)";
 }
 
 /// AND identity: and(x, 2^n - 1) = x.
@@ -460,10 +466,10 @@ pub mod b_5 {
     pub const LHS: &str = "and(x, 2^n - 1)";
     /// `rhs`
     pub const RHS: &str = "x";
-    /// `verificationDomain` -> `Enumerative`
-    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Enumerative";
+    /// `verificationDomain` -> `Algebraic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
     /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "exhaustive_enumeration(R_n)";
+    pub const VERIFICATION_PATH_NOTE: &str = "Witt polynomial identification at p=2 (Theorem 1)";
 }
 
 /// AND annihilation: and(x, 0) = 0.
@@ -474,10 +480,10 @@ pub mod b_6 {
     pub const LHS: &str = "and(x, 0)";
     /// `rhs`
     pub const RHS: &str = "0";
-    /// `verificationDomain` -> `Enumerative`
-    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Enumerative";
+    /// `verificationDomain` -> `Algebraic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
     /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "exhaustive_enumeration(R_n)";
+    pub const VERIFICATION_PATH_NOTE: &str = "Witt polynomial identification at p=2 (Theorem 1)";
 }
 
 /// OR associativity: or(x, or(y, z)) = or(or(x, y), z).
@@ -488,10 +494,10 @@ pub mod b_7 {
     pub const LHS: &str = "or(x, or(y, z))";
     /// `rhs`
     pub const RHS: &str = "or(or(x, y), z)";
-    /// `verificationDomain` -> `Enumerative`
-    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Enumerative";
+    /// `verificationDomain` -> `Algebraic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
     /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "exhaustive_enumeration(R_n)";
+    pub const VERIFICATION_PATH_NOTE: &str = "Witt polynomial identification at p=2 (Theorem 1)";
 }
 
 /// OR identity: or(x, 0) = x.
@@ -502,10 +508,10 @@ pub mod b_8 {
     pub const LHS: &str = "or(x, 0)";
     /// `rhs`
     pub const RHS: &str = "x";
-    /// `verificationDomain` -> `Enumerative`
-    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Enumerative";
+    /// `verificationDomain` -> `Algebraic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
     /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "exhaustive_enumeration(R_n)";
+    pub const VERIFICATION_PATH_NOTE: &str = "Witt polynomial identification at p=2 (Theorem 1)";
 }
 
 /// Absorption: and(x, or(x, y)) = x.
@@ -516,10 +522,10 @@ pub mod b_9 {
     pub const LHS: &str = "and(x, or(x, y))";
     /// `rhs`
     pub const RHS: &str = "x";
-    /// `verificationDomain` -> `Enumerative`
-    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Enumerative";
+    /// `verificationDomain` -> `Algebraic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
     /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "exhaustive_enumeration(R_n)";
+    pub const VERIFICATION_PATH_NOTE: &str = "Witt polynomial identification at p=2 (Theorem 1)";
 }
 
 /// AND distributes over OR: and(x, or(y, z)) = or(and(x, y), and(x, z)).
@@ -530,10 +536,10 @@ pub mod b_10 {
     pub const LHS: &str = "and(x, or(y, z))";
     /// `rhs`
     pub const RHS: &str = "or(and(x, y), and(x, z))";
-    /// `verificationDomain` -> `Enumerative`
-    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Enumerative";
+    /// `verificationDomain` -> `Algebraic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
     /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "exhaustive_enumeration(R_n)";
+    pub const VERIFICATION_PATH_NOTE: &str = "Witt polynomial identification at p=2 (Theorem 1)";
 }
 
 /// De Morgan 1: bnot(and(x, y)) = or(bnot(x), bnot(y)).
@@ -544,10 +550,10 @@ pub mod b_11 {
     pub const LHS: &str = "bnot(and(x, y))";
     /// `rhs`
     pub const RHS: &str = "or(bnot(x), bnot(y))";
-    /// `verificationDomain` -> `Enumerative`
-    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Enumerative";
+    /// `verificationDomain` -> `Algebraic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
     /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "exhaustive_enumeration(R_n)";
+    pub const VERIFICATION_PATH_NOTE: &str = "Witt polynomial identification at p=2 (Theorem 1)";
 }
 
 /// De Morgan 2: bnot(or(x, y)) = and(bnot(x), bnot(y)).
@@ -558,10 +564,10 @@ pub mod b_12 {
     pub const LHS: &str = "bnot(or(x, y))";
     /// `rhs`
     pub const RHS: &str = "and(bnot(x), bnot(y))";
-    /// `verificationDomain` -> `Enumerative`
-    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Enumerative";
+    /// `verificationDomain` -> `Algebraic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
     /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "exhaustive_enumeration(R_n)";
+    pub const VERIFICATION_PATH_NOTE: &str = "Witt polynomial identification at p=2 (Theorem 1)";
 }
 
 /// Bnot involution: bnot(bnot(x)) = x.
@@ -572,10 +578,10 @@ pub mod b_13 {
     pub const LHS: &str = "bnot(bnot(x))";
     /// `rhs`
     pub const RHS: &str = "x";
-    /// `verificationDomain` -> `Enumerative`
-    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Enumerative";
+    /// `verificationDomain` -> `Algebraic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
     /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "exhaustive_enumeration(R_n)";
+    pub const VERIFICATION_PATH_NOTE: &str = "Witt polynomial identification at p=2 (Theorem 1)";
 }
 
 /// Neg via subtraction: neg(x) = sub(0, x).
@@ -586,10 +592,10 @@ pub mod x_1 {
     pub const LHS: &str = "neg(x)";
     /// `rhs`
     pub const RHS: &str = "sub(0, x)";
-    /// `verificationDomain` -> `Enumerative`
-    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Enumerative";
+    /// `verificationDomain` -> `Algebraic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
     /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "exhaustive_enumeration(R_n)";
+    pub const VERIFICATION_PATH_NOTE: &str = "Witt polynomial identification at p=2 (Theorem 1)";
 }
 
 /// Complement via XOR: bnot(x) = xor(x, 2^n - 1).
@@ -600,10 +606,10 @@ pub mod x_2 {
     pub const LHS: &str = "bnot(x)";
     /// `rhs`
     pub const RHS: &str = "xor(x, 2^n - 1)";
-    /// `verificationDomain` -> `Enumerative`
-    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Enumerative";
+    /// `verificationDomain` -> `Algebraic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
     /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "exhaustive_enumeration(R_n)";
+    pub const VERIFICATION_PATH_NOTE: &str = "Witt polynomial identification at p=2 (Theorem 1)";
 }
 
 /// Succ via addition: succ(x) = add(x, 1).
@@ -614,10 +620,10 @@ pub mod x_3 {
     pub const LHS: &str = "succ(x)";
     /// `rhs`
     pub const RHS: &str = "add(x, 1)";
-    /// `verificationDomain` -> `Enumerative`
-    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Enumerative";
+    /// `verificationDomain` -> `Algebraic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
     /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "exhaustive_enumeration(R_n)";
+    pub const VERIFICATION_PATH_NOTE: &str = "Witt polynomial identification at p=2 (Theorem 1)";
 }
 
 /// Pred via subtraction: pred(x) = sub(x, 1).
@@ -628,10 +634,10 @@ pub mod x_4 {
     pub const LHS: &str = "pred(x)";
     /// `rhs`
     pub const RHS: &str = "sub(x, 1)";
-    /// `verificationDomain` -> `Enumerative`
-    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Enumerative";
+    /// `verificationDomain` -> `Algebraic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
     /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "exhaustive_enumeration(R_n)";
+    pub const VERIFICATION_PATH_NOTE: &str = "Witt polynomial identification at p=2 (Theorem 1)";
 }
 
 /// Neg-bnot bridge: neg(x) = add(bnot(x), 1).
@@ -642,10 +648,10 @@ pub mod x_5 {
     pub const LHS: &str = "neg(x)";
     /// `rhs`
     pub const RHS: &str = "add(bnot(x), 1)";
-    /// `verificationDomain` -> `Enumerative`
-    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Enumerative";
+    /// `verificationDomain` -> `Algebraic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
     /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "exhaustive_enumeration(R_n)";
+    pub const VERIFICATION_PATH_NOTE: &str = "Witt polynomial identification at p=2 (Theorem 1)";
 }
 
 /// Complement predecessor: bnot(x) = pred(neg(x)).
@@ -656,10 +662,10 @@ pub mod x_6 {
     pub const LHS: &str = "bnot(x)";
     /// `rhs`
     pub const RHS: &str = "pred(neg(x))";
-    /// `verificationDomain` -> `Enumerative`
-    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Enumerative";
+    /// `verificationDomain` -> `Algebraic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
     /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "exhaustive_enumeration(R_n)";
+    pub const VERIFICATION_PATH_NOTE: &str = "Witt polynomial identification at p=2 (Theorem 1)";
 }
 
 /// XOR-add bridge: xor(x, y) = add(x, y) - 2 * and(x, y) (in Z before mod).
@@ -670,10 +676,10 @@ pub mod x_7 {
     pub const LHS: &str = "xor(x, y)";
     /// `rhs`
     pub const RHS: &str = "add(x, y) - 2 * and(x, y)";
-    /// `verificationDomain` -> `Enumerative`
-    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Enumerative";
+    /// `verificationDomain` -> `Algebraic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
     /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "exhaustive_enumeration(R_n)";
+    pub const VERIFICATION_PATH_NOTE: &str = "Witt polynomial identification at p=2 (Theorem 1)";
 }
 
 /// Rotation order: succ^\[2^n\](x) = x.
@@ -684,10 +690,10 @@ pub mod d_1 {
     pub const LHS: &str = "succ^{2^n}(x)";
     /// `rhs`
     pub const RHS: &str = "x";
-    /// `verificationDomain` -> `Enumerative`
-    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Enumerative";
+    /// `verificationDomain` -> `Algebraic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
     /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "exhaustive_enumeration(R_n)";
+    pub const VERIFICATION_PATH_NOTE: &str = "Witt polynomial identification at p=2 (Theorem 1)";
 }
 
 /// Conjugation: neg(succ(neg(x))) = pred(x).
@@ -698,10 +704,10 @@ pub mod d_3 {
     pub const LHS: &str = "neg(succ(neg(x)))";
     /// `rhs`
     pub const RHS: &str = "pred(x)";
-    /// `verificationDomain` -> `Enumerative`
-    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Enumerative";
+    /// `verificationDomain` -> `Algebraic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
     /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "exhaustive_enumeration(R_n)";
+    pub const VERIFICATION_PATH_NOTE: &str = "Witt polynomial identification at p=2 (Theorem 1)";
 }
 
 /// Reverse composition: bnot(neg(x)) = pred(x).
@@ -712,10 +718,10 @@ pub mod d_4 {
     pub const LHS: &str = "bnot(neg(x))";
     /// `rhs`
     pub const RHS: &str = "pred(x)";
-    /// `verificationDomain` -> `Enumerative`
-    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Enumerative";
+    /// `verificationDomain` -> `Algebraic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
     /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "exhaustive_enumeration(R_n)";
+    pub const VERIFICATION_PATH_NOTE: &str = "Witt polynomial identification at p=2 (Theorem 1)";
 }
 
 /// Group closure: D_\[2^n\] = \[succ^k, neg ∘ succ^k : 0 ≤ k < 2^n\].
@@ -726,10 +732,10 @@ pub mod d_5 {
     pub const LHS: &str = "D_{2^n}";
     /// `rhs`
     pub const RHS: &str = "{succ^k, neg ∘ succ^k : 0 ≤ k < 2^n}";
-    /// `verificationDomain` -> `Enumerative`
-    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Enumerative";
+    /// `verificationDomain` -> `Algebraic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
     /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "exhaustive_enumeration(R_n)";
+    pub const VERIFICATION_PATH_NOTE: &str = "Witt polynomial identification at p=2 (Theorem 1)";
 }
 
 /// Unit group decomposition: R_n× ≅ Z/2 × Z/2^\[n-2\] for n ≥ 3.
@@ -866,10 +872,10 @@ pub mod ca_1 {
     pub const LHS: &str = "add(x,y)_k";
     /// `rhs`
     pub const RHS: &str = "xor(x_k, xor(y_k, c_k(x,y)))";
-    /// `verificationDomain` -> `Enumerative`
-    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Enumerative";
+    /// `verificationDomain` -> `Algebraic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
     /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "exhaustive_enumeration(R_n)";
+    pub const VERIFICATION_PATH_NOTE: &str = "Witt polynomial identification at p=2 (Theorem 1)";
 }
 
 /// Carry recurrence: c_\[k+1\](x,y) = or(and(x_k,y_k), and(xor(x_k,y_k), c_k)).
@@ -880,10 +886,10 @@ pub mod ca_2 {
     pub const LHS: &str = "c_{k+1}(x,y)";
     /// `rhs`
     pub const RHS: &str = "or(and(x_k,y_k), and(xor(x_k,y_k), c_k))";
-    /// `verificationDomain` -> `Enumerative`
-    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Enumerative";
+    /// `verificationDomain` -> `Algebraic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
     /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "exhaustive_enumeration(R_n)";
+    pub const VERIFICATION_PATH_NOTE: &str = "Witt polynomial identification at p=2 (Theorem 1)";
 }
 
 /// Carry commutativity: c(x, y) = c(y, x).
@@ -894,10 +900,10 @@ pub mod ca_3 {
     pub const LHS: &str = "c(x, y)";
     /// `rhs`
     pub const RHS: &str = "c(y, x)";
-    /// `verificationDomain` -> `Enumerative`
-    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Enumerative";
+    /// `verificationDomain` -> `Algebraic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
     /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "exhaustive_enumeration(R_n)";
+    pub const VERIFICATION_PATH_NOTE: &str = "Witt polynomial identification at p=2 (Theorem 1)";
 }
 
 /// Zero carry: c(x, 0) = 0 at all positions.
@@ -908,10 +914,10 @@ pub mod ca_4 {
     pub const LHS: &str = "c(x, 0)";
     /// `rhs`
     pub const RHS: &str = "0";
-    /// `verificationDomain` -> `Enumerative`
-    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Enumerative";
+    /// `verificationDomain` -> `Algebraic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
     /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "exhaustive_enumeration(R_n)";
+    pub const VERIFICATION_PATH_NOTE: &str = "Witt polynomial identification at p=2 (Theorem 1)";
 }
 
 /// Negation carry: c(x, neg(x))_k = 1 for k > v_2(x).
@@ -922,10 +928,10 @@ pub mod ca_5 {
     pub const LHS: &str = "c(x, neg(x))_k";
     /// `rhs`
     pub const RHS: &str = "1";
-    /// `verificationDomain` -> `Enumerative`
-    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Enumerative";
+    /// `verificationDomain` -> `Algebraic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
     /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "exhaustive_enumeration(R_n)";
+    pub const VERIFICATION_PATH_NOTE: &str = "Witt polynomial identification at p=2 (Theorem 1)";
 }
 
 /// Carry-incompatibility link: d_Δ(x, y) > 0 iff ∃ k : c_k(x,y) = 1.
@@ -936,10 +942,10 @@ pub mod ca_6 {
     pub const LHS: &str = "d_Δ(x, y) > 0";
     /// `rhs`
     pub const RHS: &str = "∃ k : c_k(x,y) = 1";
-    /// `verificationDomain` -> `Enumerative`
-    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Enumerative";
+    /// `verificationDomain` -> `Algebraic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
     /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "exhaustive_enumeration(R_n)";
+    pub const VERIFICATION_PATH_NOTE: &str = "Witt polynomial identification at p=2 (Theorem 1)";
 }
 
 /// Constraint pin union: pins of a composite constraint equal the union of component pins.
@@ -5798,6 +5804,321 @@ pub mod mc_8 {
     /// `verificationPathNote`
     pub const VERIFICATION_PATH_NOTE: &str =
         "F_2 (pin ops ≤ fiber count) + SR_9 (|leasedFibers(L_i)| = ⌈n/k⌉) → per-session bound";
+}
+
+/// Witt coordinate identification: the bit coordinates (x_0, …, x_\[n−1\]) of x ∈ Z/(2ⁿ)Z are exactly its Witt coordinates under the canonical isomorphism W_n(F_2) ≅ Z/(2ⁿ)Z.
+pub mod wc_1 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "x ∈ R_n, 0 ≤ k < n";
+    /// `lhs`
+    pub const LHS: &str = "a_k(x)";
+    /// `rhs`
+    pub const RHS: &str = "x_k (k-th bit of x)";
+    /// `universallyValid`
+    pub const UNIVERSALLY_VALID: bool = true;
+    /// `validityKind` -> `Universal`
+    pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
+    /// `verificationDomain` -> `Algebraic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str =
+        "Ghost map bijectivity at p=2 over F_2 → coordinate identification";
+}
+
+/// Witt sum correction equals carry: the k-th Witt addition polynomial correction term S_k − x_k − y_k (mod 2) is exactly the carry c_k(x,y).
+pub mod wc_2 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "x, y ∈ R_n, 0 ≤ k < n";
+    /// `lhs`
+    pub const LHS: &str = "S_k − x_k − y_k (mod 2)";
+    /// `rhs`
+    pub const RHS: &str = "c_k(x,y)";
+    /// `universallyValid`
+    pub const UNIVERSALLY_VALID: bool = true;
+    /// `validityKind` -> `Universal`
+    pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
+    /// `verificationDomain` -> `Algebraic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str =
+        "CA_1 decomposition + ghost map linearity → correction = carry";
+}
+
+/// Carry recurrence is the Witt polynomial recurrence: CA_2 implements the ghost equation for S_\[k+1\] at p=2.
+pub mod wc_3 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "x, y ∈ R_n";
+    /// `lhs`
+    pub const LHS: &str = "CA_2 recurrence";
+    /// `rhs`
+    pub const RHS: &str = "S_{k+1} ghost equation at p=2";
+    /// `universallyValid`
+    pub const UNIVERSALLY_VALID: bool = true;
+    /// `validityKind` -> `Universal`
+    pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
+    /// `verificationDomain` -> `Algebraic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str =
+        "Induction on ghost equation w_{k+1}(S) = w_{k+1}(a) + w_{k+1}(b)";
+}
+
+/// The δ-correction at level k equals the single-level carry c_\[k+1\](x,y). Each application of δ divides by 2, consuming one unit of 2-adic valuation.
+pub mod wc_4 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "x, y ∈ R_n";
+    /// `lhs`
+    pub const LHS: &str = "δ_k(x+y) correction";
+    /// `rhs`
+    pub const RHS: &str = "c_{k+1}(x,y)";
+    /// `universallyValid`
+    pub const UNIVERSALLY_VALID: bool = true;
+    /// `validityKind` -> `Universal`
+    pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
+    /// `verificationDomain` -> `Algebraic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str = "δ(x+y) = δ(x) + δ(y) − xy; lowest bit of −xy = carry";
+}
+
+/// LiftObstruction is equivalent to δ-nonvanishing: a nontrivial LiftObstruction at Q_\[k+1\] means δ_k ≠ 0 for some element pair.
+pub mod wc_5 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "Q_k, k ≥ 1";
+    /// `lhs`
+    pub const LHS: &str = "obstruction_trivial = false";
+    /// `rhs`
+    pub const RHS: &str = "δ_k ≠ 0 for some pair";
+    /// `universallyValid`
+    pub const UNIVERSALLY_VALID: bool = true;
+    /// `validityKind` -> `Universal`
+    pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
+    /// `verificationDomain` -> `IndexTheoretic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/IndexTheoretic";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str =
+        "LiftObstruction = Witt tower truncation defect = δ-correction";
+}
+
+/// Metric discrepancy equals Witt defect: d_Δ(x,y) > 0 iff the ghost map correction (carry) is nonzero.
+pub mod wc_6 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "x, y ∈ R_n";
+    /// `lhs`
+    pub const LHS: &str = "d_Δ(x,y) > 0";
+    /// `rhs`
+    pub const RHS: &str = "ghost defect nonzero";
+    /// `universallyValid`
+    pub const UNIVERSALLY_VALID: bool = true;
+    /// `validityKind` -> `Universal`
+    pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
+    /// `verificationDomain` -> `Analytical`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Analytical";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str =
+        "CA_6 restatement: carry nonzero ⇔ ring/Hamming metric diverge";
+}
+
+/// D_1 is the Witt truncation order relation: succ^\[2ⁿ\](x) = x is the group relation r^\[2ⁿ\] = 1 in the Witt-Burnside ring of D_\[2∞\].
+pub mod wc_7 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "x ∈ R_n, n ≥ 1";
+    /// `lhs`
+    pub const LHS: &str = "succ^{2ⁿ}(x) = x";
+    /// `rhs`
+    pub const RHS: &str = "r^{2ⁿ} = 1 in Witt-Burnside ring";
+    /// `universallyValid`
+    pub const UNIVERSALLY_VALID: bool = true;
+    /// `validityKind` -> `Universal`
+    pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
+    /// `verificationDomain` -> `Algebraic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str =
+        "Dress–Siebeneicher: cyclic subgroup C_{2ⁿ} ghost component";
+}
+
+/// D_3 is the Witt-Burnside conjugation relation: neg(succ(neg(x))) = pred(x) is srs = r⁻¹ in the pro-dihedral group.
+pub mod wc_8 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "x ∈ R_n, n ≥ 1";
+    /// `lhs`
+    pub const LHS: &str = "neg(succ(neg(x)))";
+    /// `rhs`
+    pub const RHS: &str = "srs = r⁻¹ relation";
+    /// `universallyValid`
+    pub const UNIVERSALLY_VALID: bool = true;
+    /// `validityKind` -> `Universal`
+    pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
+    /// `verificationDomain` -> `Algebraic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str =
+        "Witt-Burnside compatibility: reflection ghost inverts rotation ghost";
+}
+
+/// D_4 is a Witt-Burnside reflection composition: bnot(neg(x)) = pred(x) is the product of two reflections yielding inverse rotation.
+pub mod wc_9 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "x ∈ R_n, n ≥ 1";
+    /// `lhs`
+    pub const LHS: &str = "bnot(neg(x)) = pred(x)";
+    /// `rhs`
+    pub const RHS: &str = "Product of Witt-Burnside reflections";
+    /// `universallyValid`
+    pub const UNIVERSALLY_VALID: bool = true;
+    /// `validityKind` -> `Universal`
+    pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
+    /// `verificationDomain` -> `Algebraic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str = "bnot = pred ∘ neg → bnot ∘ neg = pred ∘ id = pred";
+}
+
+/// The δ-ring Frobenius lift on W_n(F_2) is the identity map because F_2 is a perfect field of characteristic 2 (a² = a for a ∈ F_2).
+pub mod wc_10 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "x ∈ R_n, n ≥ 1";
+    /// `lhs`
+    pub const LHS: &str = "φ(x) on W_n(F_2)";
+    /// `rhs`
+    pub const RHS: &str = "x (identity, F_2 perfect)";
+    /// `universallyValid`
+    pub const UNIVERSALLY_VALID: bool = true;
+    /// `validityKind` -> `Universal`
+    pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
+    /// `verificationDomain` -> `Algebraic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str = "Witt Frobenius F(a_i) = a_i² = a_i in F_2 → F = id";
+}
+
+/// The Verschiebung on W_n(F_2) is multiplication by 2: V(x) = 2x = add(x,x). This is a coordinate shift with zero Witt defect.
+pub mod wc_11 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "x ∈ R_n, n ≥ 1";
+    /// `lhs`
+    pub const LHS: &str = "V(x) on W_n(F_2)";
+    /// `rhs`
+    pub const RHS: &str = "add(x, x) in Z/(2ⁿ)Z";
+    /// `universallyValid`
+    pub const UNIVERSALLY_VALID: bool = true;
+    /// `validityKind` -> `Universal`
+    pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
+    /// `verificationDomain` -> `Algebraic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str = "Ghost map: w_n(V(a)) = 2 · w_{n-1}(a) = 2x";
+}
+
+/// The δ-operator on W_n(F_2) is the squaring defect divided by 2: δ(x) = (x − mul(x,x)) / 2. Expressible entirely in existing op/ primitives (sub, mul, arithmetic right shift).
+pub mod wc_12 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "x ∈ R_n, n ≥ 2";
+    /// `lhs`
+    pub const LHS: &str = "δ(x) on W_n(F_2)";
+    /// `rhs`
+    pub const RHS: &str = "(x − mul(x,x)) / 2";
+    /// `universallyValid`
+    pub const UNIVERSALLY_VALID: bool = true;
+    /// `validityKind` -> `Universal`
+    pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
+    /// `verificationDomain` -> `Algebraic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str = "φ(x) = x² + 2δ(x) with φ = id → δ(x) = (x − x²)/2";
+}
+
+/// Ostrowski product formula at p=2: |2|_2 · |2|_∞ = 1. The 2-adic and Archimedean absolute values of 2 are multiplicative inverses.
+pub mod oa_1 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "p = 2";
+    /// `lhs`
+    pub const LHS: &str = "|2|_2 · |2|_∞";
+    /// `rhs`
+    pub const RHS: &str = "1 in Q×";
+    /// `universallyValid`
+    pub const UNIVERSALLY_VALID: bool = true;
+    /// `validityKind` -> `Universal`
+    pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
+    /// `verificationDomain` -> `ArithmeticValuation`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/ArithmeticValuation";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str = "Ostrowski classification of absolute values on Q";
+}
+
+/// Crossing cost equals ln 2: the Archimedean image of one unit of 2-adic valuation, under the product formula, is ln 2 nats.
+pub mod oa_2 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "p = 2";
+    /// `lhs`
+    pub const LHS: &str = "CrossingCost(p=2)";
+    /// `rhs`
+    pub const RHS: &str = "ln 2 = −ln|2|_2";
+    /// `universallyValid`
+    pub const UNIVERSALLY_VALID: bool = true;
+    /// `validityKind` -> `Universal`
+    pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
+    /// `verificationDomain` -> `ArithmeticValuation`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/ArithmeticValuation";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str = "OA_1 → |2|_∞ = 2 → ln|2|_∞ = ln 2";
+}
+
+/// QM_1 grounding: the Landauer cost β* = ln 2 is the crossing cost from OA_2, derived from the prime p=2 that structures the Witt tower.
+pub mod oa_3 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "p = 2";
+    /// `lhs`
+    pub const LHS: &str = "β* in Cost_Landauer";
+    /// `rhs`
+    pub const RHS: &str = "CrossingCost(p=2)";
+    /// `universallyValid`
+    pub const UNIVERSALLY_VALID: bool = true;
+    /// `validityKind` -> `Universal`
+    pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
+    /// `verificationDomain` -> `ArithmeticValuation`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/ArithmeticValuation";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str = "WC_4 → OA_1 → OA_2 → β* = ln 2";
+}
+
+/// Born rule bridge (conditional on amplitude rationality): P(outcome k) = |α_k|_∞², where |·|_∞ is the Archimedean image of the 2-adic amplitude via the product formula.
+pub mod oa_4 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "rational amplitudes";
+    /// `lhs`
+    pub const LHS: &str = "P(outcome k) = |α_k|_∞²";
+    /// `rhs`
+    pub const RHS: &str = "Archimedean image of 2-adic amplitude";
+    /// `universallyValid`
+    pub const UNIVERSALLY_VALID: bool = true;
+    /// `validityKind` -> `Universal`
+    pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
+    /// `verificationDomain` -> `ArithmeticValuation`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/ArithmeticValuation";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str =
+        "Conditional: requires rational fiber amplitudes (schema-level)";
+}
+
+/// Entropy per δ-level equals the crossing cost: each application of the δ-operator (division by 2) costs ln 2 nats in the Archimedean completion, which is the per-bit Landauer cost.
+pub mod oa_5 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "p = 2";
+    /// `lhs`
+    pub const LHS: &str = "Information cost of δ (division by 2)";
+    /// `rhs`
+    pub const RHS: &str = "ln 2 nats";
+    /// `universallyValid`
+    pub const UNIVERSALLY_VALID: bool = true;
+    /// `validityKind` -> `Universal`
+    pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
+    /// `verificationDomain` -> `ArithmeticValuation`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/ArithmeticValuation";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str =
+        "QL_3 (β* = ln 2) + WC_4 (δ divides by 2) → per-δ cost = ln 2";
 }
 
 use crate::enums::PrimitiveOp;

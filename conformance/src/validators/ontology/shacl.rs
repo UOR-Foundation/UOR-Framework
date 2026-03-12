@@ -853,6 +853,16 @@ pub fn validate() -> ConformanceReport {
         tests::fixtures::TEST167_METRIC_AXIS,
         &mut report,
     );
+    run_test(
+        "test168_witt_carry",
+        tests::fixtures::TEST168_WITT_CARRY,
+        &mut report,
+    );
+    run_test(
+        "test169_arithmetic_valuation",
+        tests::fixtures::TEST169_ARITHMETIC_VALUATION,
+        &mut report,
+    );
 
     // Verify test fixture count matches expected
     let test_count = report.results.len() - before_tests;
@@ -1062,6 +1072,12 @@ fn run_test(name: &str, turtle_src: &str, report: &mut ConformanceReport) {
         "test161_execution_policy" => validate_basic_turtle(turtle_src),
         "test162_session_composition" => validate_basic_turtle(turtle_src),
         "test163_distributed_saturation" => validate_basic_turtle(turtle_src),
+        "test164_embedding" => validate_basic_turtle(turtle_src),
+        "test165_action" => validate_basic_turtle(turtle_src),
+        "test166_session_boundary_type" => validate_basic_turtle(turtle_src),
+        "test167_metric_axis" => validate_basic_turtle(turtle_src),
+        "test168_witt_carry" => validate_basic_turtle(turtle_src),
+        "test169_arithmetic_valuation" => validate_basic_turtle(turtle_src),
         _ => Ok(()),
     };
 

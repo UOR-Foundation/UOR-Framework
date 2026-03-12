@@ -77,6 +77,8 @@ mod test164_embedding;
 mod test165_action;
 mod test166_session_boundary_type;
 mod test167_metric_axis;
+mod test168_witt_carry;
+mod test169_arithmetic_valuation;
 mod test16_algebraic_identities;
 mod test17_inter_algebra_maps;
 mod test18_analytical_completeness;
@@ -245,6 +247,8 @@ pub use test164_embedding::TEST164_EMBEDDING;
 pub use test165_action::TEST165_ACTION;
 pub use test166_session_boundary_type::TEST166_SESSION_BOUNDARY_TYPE;
 pub use test167_metric_axis::TEST167_METRIC_AXIS;
+pub use test168_witt_carry::TEST168_WITT_CARRY;
+pub use test169_arithmetic_valuation::TEST169_ARITHMETIC_VALUATION;
 pub use test16_algebraic_identities::TEST16_ALGEBRAIC_IDENTITIES;
 pub use test17_inter_algebra_maps::TEST17_INTER_ALGEBRA_MAPS;
 pub use test18_analytical_completeness::TEST18_ANALYTICAL_COMPLETENESS;
@@ -510,5 +514,7 @@ pub fn all_fixture_sources() -> Vec<&'static str> {
         TEST165_ACTION,
         TEST166_SESSION_BOUNDARY_TYPE,
         TEST167_METRIC_AXIS,
+        TEST168_WITT_CARRY,
+        TEST169_ARITHMETIC_VALUATION,
     ]
 }

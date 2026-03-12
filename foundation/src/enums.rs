@@ -168,6 +168,8 @@ pub enum VerificationDomain {
     SuperpositionDomain,
     /// Established by the intersection of quantum superposition analysis and classical thermodynamic reasoning. Covers identities relating von Neumann entropy of superposed states to Landauer costs of projective collapse (QM_).
     QuantumThermodynamic,
+    /// Established by number-theoretic valuation arguments including p-adic absolute values, the Ostrowski product formula, and the arithmetic of global fields. Covers identities grounded in the product formula |x|_p · |x|_∞ = 1 and the Witt–Ostrowski derivation chain.
+    ArithmeticValuation,
 }
 
 impl fmt::Display for VerificationDomain {
@@ -183,6 +185,7 @@ impl fmt::Display for VerificationDomain {
             Self::IndexTheoretic => f.write_str("index_theoretic"),
             Self::SuperpositionDomain => f.write_str("superposition_domain"),
             Self::QuantumThermodynamic => f.write_str("quantum_thermodynamic"),
+            Self::ArithmeticValuation => f.write_str("arithmetic_valuation"),
         }
     }
 }

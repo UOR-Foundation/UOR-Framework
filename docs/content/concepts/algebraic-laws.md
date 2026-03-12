@@ -2,7 +2,7 @@
 
 ## Definition
 
-The UOR Foundation ontology formalizes **7 core algebras** (with additional identity families from Amendments 23–37) that govern computation
+The UOR Foundation ontology formalizes **7 core algebras** (with additional identity families from Amendments 23–53) that govern computation
 over the ring R_n = Z/(2^n)Z. Each algebra is encoded as a set of named
 {@class https://uor.foundation/op/Identity} individuals in the `op/` namespace,
 with `lhs`, `rhs`, and `forAll` properties specifying the algebraic equation
@@ -40,8 +40,10 @@ which extends the dihedral group by non-trivial unit multiplications.
 
 ### 7. Carry Algebra (CA_)
 Six identities (CA_1–CA_6) encoding the carry propagation rules that govern
-how ring addition differs from Boolean XOR. The carry algebra is the source
-of all curvature in the UOR framework.
+how ring addition differs from Boolean XOR. The Witt identification (WC_1–WC_12)
+proves these are the 2-typical Witt addition polynomials over F_2. The Ostrowski–
+Archimedean bridge (OA_1–OA_5) grounds the Landauer temperature β* = ln 2 via the
+product formula at p=2.
 
 ## Cross-Algebra Maps
 

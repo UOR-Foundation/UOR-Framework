@@ -97,6 +97,10 @@ pub fn validate(artifacts: &Path) -> Result<ConformanceReport> {
     // Amendment 49: Scope binding cross-checks
     validate_forall_scope_alignment(&mut report);
 
+    // Amendment 53: Witt-Carry Formalization
+    validate_witt_carry_vocabulary(&mut report);
+    validate_ostrowski_derivation_chain(&mut report);
+
     // Validate the built JSON-LD artifact
     let json_path = artifacts.join("uor.foundation.jsonld");
     if !json_path.exists() {
@@ -433,7 +437,8 @@ fn validate_identity_completeness(report: &mut ConformanceReport) {
         "jsat_", "EXP_", "GO_", "COEFF_",
         // Amendment 46: Certificate Issuance Coverage
         "CIC_", "GC_", // Amendment 48: Multi-Session Coordination
-        "MC_",
+        "MC_", // Amendment 53: Witt-Carry Formalization
+        "WC_", "OA_",
     ];
     for prefix in &expected_prefixes {
         let has = identities.iter().any(|i| i.label.starts_with(prefix));
@@ -474,6 +479,7 @@ fn validate_identity_grounding(report: &mut ConformanceReport) {
         "https://uor.foundation/op/IndexTheoretic",
         "https://uor.foundation/op/SuperpositionDomain",
         "https://uor.foundation/op/QuantumThermodynamic",
+        "https://uor.foundation/op/ArithmeticValuation",
     ];
 
     let mut total = 0usize;
@@ -548,6 +554,7 @@ fn validate_verification_domain_individuals(report: &mut ConformanceReport) {
         "https://uor.foundation/op/IndexTheoretic",
         "https://uor.foundation/op/SuperpositionDomain",
         "https://uor.foundation/op/QuantumThermodynamic",
+        "https://uor.foundation/op/ArithmeticValuation",
     ];
 
     let mut all_found = true;
@@ -564,7 +571,7 @@ fn validate_verification_domain_individuals(report: &mut ConformanceReport) {
     if all_found {
         report.push(TestResult::pass(
             validator,
-            "All 10 VerificationDomain individuals present",
+            "All 11 VerificationDomain individuals present",
         ));
     }
 }
@@ -1291,6 +1298,7 @@ fn validate_enum_variant_alignment(report: &mut ConformanceReport) {
         "https://uor.foundation/op/IndexTheoretic",
         "https://uor.foundation/op/SuperpositionDomain",
         "https://uor.foundation/op/QuantumThermodynamic",
+        "https://uor.foundation/op/ArithmeticValuation",
     ];
     let ev_prop = "https://uor.foundation/op/enumVariant";
     let mut all_valid = true;
@@ -1309,7 +1317,7 @@ fn validate_enum_variant_alignment(report: &mut ConformanceReport) {
     if all_valid {
         report.push(TestResult::pass(
             validator,
-            "All 10 VerificationDomain individuals have enumVariant",
+            "All 11 VerificationDomain individuals have enumVariant",
         ));
     }
 }
@@ -2681,5 +2689,190 @@ fn validate_forall_scope_alignment(report: &mut ConformanceReport) {
         for v in violations {
             report.push(TestResult::fail(validator, v));
         }
+    }
+}
+
+/// Amendment 53: Validates the WC_ and OA_ identity families exist with
+/// correct verification domains.
+fn validate_witt_carry_vocabulary(report: &mut ConformanceReport) {
+    let ontology = uor_ontology::Ontology::full();
+    let validator = "ontology/inventory/witt_carry_vocabulary";
+
+    let wc_ids: &[(&str, &str)] = &[
+        (
+            "https://uor.foundation/op/WC_1",
+            "https://uor.foundation/op/Algebraic",
+        ),
+        (
+            "https://uor.foundation/op/WC_2",
+            "https://uor.foundation/op/Algebraic",
+        ),
+        (
+            "https://uor.foundation/op/WC_3",
+            "https://uor.foundation/op/Algebraic",
+        ),
+        (
+            "https://uor.foundation/op/WC_4",
+            "https://uor.foundation/op/Algebraic",
+        ),
+        (
+            "https://uor.foundation/op/WC_5",
+            "https://uor.foundation/op/IndexTheoretic",
+        ),
+        (
+            "https://uor.foundation/op/WC_6",
+            "https://uor.foundation/op/Analytical",
+        ),
+        (
+            "https://uor.foundation/op/WC_7",
+            "https://uor.foundation/op/Algebraic",
+        ),
+        (
+            "https://uor.foundation/op/WC_8",
+            "https://uor.foundation/op/Algebraic",
+        ),
+        (
+            "https://uor.foundation/op/WC_9",
+            "https://uor.foundation/op/Algebraic",
+        ),
+        (
+            "https://uor.foundation/op/WC_10",
+            "https://uor.foundation/op/Algebraic",
+        ),
+        (
+            "https://uor.foundation/op/WC_11",
+            "https://uor.foundation/op/Algebraic",
+        ),
+        (
+            "https://uor.foundation/op/WC_12",
+            "https://uor.foundation/op/Algebraic",
+        ),
+        (
+            "https://uor.foundation/op/OA_1",
+            "https://uor.foundation/op/ArithmeticValuation",
+        ),
+        (
+            "https://uor.foundation/op/OA_2",
+            "https://uor.foundation/op/ArithmeticValuation",
+        ),
+        (
+            "https://uor.foundation/op/OA_3",
+            "https://uor.foundation/op/ArithmeticValuation",
+        ),
+        (
+            "https://uor.foundation/op/OA_4",
+            "https://uor.foundation/op/ArithmeticValuation",
+        ),
+        (
+            "https://uor.foundation/op/OA_5",
+            "https://uor.foundation/op/ArithmeticValuation",
+        ),
+    ];
+
+    let domain_prop = "https://uor.foundation/op/verificationDomain";
+    let mut all_valid = true;
+
+    for (iri, expected_domain) in wc_ids {
+        match ontology.find_individual(iri) {
+            Some(ind) => {
+                let has_domain = ind.properties.iter().any(|(k, v)| {
+                    *k == domain_prop
+                        && matches!(
+                            v,
+                            IndividualValue::IriRef(d) if *d == *expected_domain
+                        )
+                });
+                if !has_domain {
+                    report.push(TestResult::fail(
+                        validator,
+                        format!("{} missing verificationDomain {}", iri, expected_domain),
+                    ));
+                    all_valid = false;
+                }
+            }
+            None => {
+                report.push(TestResult::fail(
+                    validator,
+                    format!("Identity {} not found", iri),
+                ));
+                all_valid = false;
+            }
+        }
+    }
+
+    if all_valid {
+        report.push(TestResult::pass(
+            validator,
+            "All 17 WC_/OA_ identities present with correct verificationDomains",
+        ));
+    }
+}
+
+/// Amendment 53: Validates the Witt\u{2013}Ostrowski\u{2013}Landauer
+/// derivation chain: WC_4 \u{2192} OA_1 \u{2192} OA_2 \u{2192} OA_3 all
+/// exist with AxiomaticDerivation proofs.
+fn validate_ostrowski_derivation_chain(report: &mut ConformanceReport) {
+    let ontology = uor_ontology::Ontology::full();
+    let validator = "ontology/inventory/ostrowski_derivation_chain";
+
+    let chain = [
+        (
+            "https://uor.foundation/op/WC_4",
+            "https://uor.foundation/proof/prf_WC_4",
+        ),
+        (
+            "https://uor.foundation/op/OA_1",
+            "https://uor.foundation/proof/prf_OA_1",
+        ),
+        (
+            "https://uor.foundation/op/OA_2",
+            "https://uor.foundation/proof/prf_OA_2",
+        ),
+        (
+            "https://uor.foundation/op/OA_3",
+            "https://uor.foundation/proof/prf_OA_3",
+        ),
+    ];
+
+    let ad_type = "https://uor.foundation/proof/AxiomaticDerivation";
+    let mut all_valid = true;
+
+    for (identity_iri, proof_iri) in &chain {
+        if ontology.find_individual(identity_iri).is_none() {
+            report.push(TestResult::fail(
+                validator,
+                format!("Chain identity {} not found", identity_iri),
+            ));
+            all_valid = false;
+            continue;
+        }
+        match ontology.find_individual(proof_iri) {
+            Some(proof) => {
+                if proof.type_ != ad_type {
+                    report.push(TestResult::fail(
+                        validator,
+                        format!(
+                            "Proof {} is {} (expected AxiomaticDerivation)",
+                            proof_iri, proof.type_
+                        ),
+                    ));
+                    all_valid = false;
+                }
+            }
+            None => {
+                report.push(TestResult::fail(
+                    validator,
+                    format!("Chain proof {} not found", proof_iri),
+                ));
+                all_valid = false;
+            }
+        }
+    }
+
+    if all_valid {
+        report.push(TestResult::pass(
+            validator,
+            "Witt\u{2013}Ostrowski\u{2013}Landauer derivation chain complete",
+        ));
     }
 }

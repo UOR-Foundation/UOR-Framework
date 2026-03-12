@@ -20,6 +20,9 @@
 //! - **Amendment 41**: `ValidityScopeKind` class and 4 scope individuals,
 //!   `validityKind`/`validKMin`/`validKMax` properties, 7 `QT_` tower identity individuals
 //! - **Amendment 48**: 3 `SR_` + 8 `MC_` identity individuals (multi-session coordination algebra)
+//! - **Amendment 53**: 12 `WC_` Witt\u{2013}carry bridge identities, 5 `OA_`
+//!   Ostrowski\u{2013}Archimedean bridge identities, `ArithmeticValuation`
+//!   verification domain, CA_1\u{2013}CA_6 reclassified Enumerative \u{2192} Algebraic
 //!
 //! **Critical identity:** `neg(bnot(x)) = succ(x)` for all x in R_n.
 //!
@@ -537,6 +540,20 @@ fn individuals() -> Vec<Individual> {
                 ("https://uor.foundation/op/enumVariant", IndividualValue::Str("QuantumThermodynamic")),
             ],
         },
+        // Amendment 53: ArithmeticValuation verification domain
+        Individual {
+            id: "https://uor.foundation/op/ArithmeticValuation",
+            type_: "https://uor.foundation/op/VerificationDomain",
+            label: "ArithmeticValuation",
+            comment: "Established by number-theoretic valuation arguments including \
+                      p-adic absolute values, the Ostrowski product formula, and \
+                      the arithmetic of global fields. Covers identities grounded \
+                      in the product formula |x|_p \u{00b7} |x|_\u{221e} = 1 and \
+                      the Witt\u{2013}Ostrowski derivation chain.",
+            properties: &[
+                ("https://uor.foundation/op/enumVariant", IndividualValue::Str("ArithmeticValuation")),
+            ],
+        },
         // Amendment 41: ValidityScopeKind individuals (4)
         Individual {
             id: "https://uor.foundation/op/Universal",
@@ -900,8 +917,8 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/op/forAll",
                     IndividualValue::Str("x ∈ R_n"),
                 ),
-                ("https://uor.foundation/op/verificationDomain", IndividualValue::IriRef("https://uor.foundation/op/Enumerative")),
-                ("https://uor.foundation/op/verificationPathNote", IndividualValue::Str("exhaustive_enumeration(R_n)")),
+                ("https://uor.foundation/op/verificationDomain", IndividualValue::IriRef("https://uor.foundation/op/Algebraic")),
+                ("https://uor.foundation/op/verificationPathNote", IndividualValue::Str("Witt polynomial identification at p=2 (Theorem 1)")),
                 // Amendment 26: universally valid across all quantum levels
                 ("https://uor.foundation/op/universallyValid", IndividualValue::Bool(true)),
                 ("https://uor.foundation/op/validityKind", IndividualValue::IriRef("https://uor.foundation/op/Universal")),
@@ -964,8 +981,8 @@ fn individuals() -> Vec<Individual> {
                 ("https://uor.foundation/op/lhs", IndividualValue::Str("add(x, add(y, z))")),
                 ("https://uor.foundation/op/rhs", IndividualValue::Str("add(add(x, y), z)")),
                 ("https://uor.foundation/op/forAll", IndividualValue::Str("x, y, z ∈ R_n")),
-                ("https://uor.foundation/op/verificationDomain", IndividualValue::IriRef("https://uor.foundation/op/Enumerative")),
-                ("https://uor.foundation/op/verificationPathNote", IndividualValue::Str("exhaustive_enumeration(R_n)")),
+                ("https://uor.foundation/op/verificationDomain", IndividualValue::IriRef("https://uor.foundation/op/Algebraic")),
+                ("https://uor.foundation/op/verificationPathNote", IndividualValue::Str("Witt polynomial identification at p=2 (Theorem 1)")),
             ],
         },
         Individual {
@@ -977,8 +994,8 @@ fn individuals() -> Vec<Individual> {
                 ("https://uor.foundation/op/lhs", IndividualValue::Str("add(x, 0)")),
                 ("https://uor.foundation/op/rhs", IndividualValue::Str("x")),
                 ("https://uor.foundation/op/forAll", IndividualValue::Str("x ∈ R_n")),
-                ("https://uor.foundation/op/verificationDomain", IndividualValue::IriRef("https://uor.foundation/op/Enumerative")),
-                ("https://uor.foundation/op/verificationPathNote", IndividualValue::Str("exhaustive_enumeration(R_n)")),
+                ("https://uor.foundation/op/verificationDomain", IndividualValue::IriRef("https://uor.foundation/op/Algebraic")),
+                ("https://uor.foundation/op/verificationPathNote", IndividualValue::Str("Witt polynomial identification at p=2 (Theorem 1)")),
             ],
         },
         Individual {
@@ -990,8 +1007,8 @@ fn individuals() -> Vec<Individual> {
                 ("https://uor.foundation/op/lhs", IndividualValue::Str("add(x, neg(x))")),
                 ("https://uor.foundation/op/rhs", IndividualValue::Str("0")),
                 ("https://uor.foundation/op/forAll", IndividualValue::Str("x ∈ R_n")),
-                ("https://uor.foundation/op/verificationDomain", IndividualValue::IriRef("https://uor.foundation/op/Enumerative")),
-                ("https://uor.foundation/op/verificationPathNote", IndividualValue::Str("exhaustive_enumeration(R_n)")),
+                ("https://uor.foundation/op/verificationDomain", IndividualValue::IriRef("https://uor.foundation/op/Algebraic")),
+                ("https://uor.foundation/op/verificationPathNote", IndividualValue::Str("Witt polynomial identification at p=2 (Theorem 1)")),
             ],
         },
         Individual {
@@ -1003,8 +1020,8 @@ fn individuals() -> Vec<Individual> {
                 ("https://uor.foundation/op/lhs", IndividualValue::Str("add(x, y)")),
                 ("https://uor.foundation/op/rhs", IndividualValue::Str("add(y, x)")),
                 ("https://uor.foundation/op/forAll", IndividualValue::Str("x, y ∈ R_n")),
-                ("https://uor.foundation/op/verificationDomain", IndividualValue::IriRef("https://uor.foundation/op/Enumerative")),
-                ("https://uor.foundation/op/verificationPathNote", IndividualValue::Str("exhaustive_enumeration(R_n)")),
+                ("https://uor.foundation/op/verificationDomain", IndividualValue::IriRef("https://uor.foundation/op/Algebraic")),
+                ("https://uor.foundation/op/verificationPathNote", IndividualValue::Str("Witt polynomial identification at p=2 (Theorem 1)")),
             ],
         },
         Individual {
@@ -1016,8 +1033,8 @@ fn individuals() -> Vec<Individual> {
                 ("https://uor.foundation/op/lhs", IndividualValue::Str("sub(x, y)")),
                 ("https://uor.foundation/op/rhs", IndividualValue::Str("add(x, neg(y))")),
                 ("https://uor.foundation/op/forAll", IndividualValue::Str("x, y ∈ R_n")),
-                ("https://uor.foundation/op/verificationDomain", IndividualValue::IriRef("https://uor.foundation/op/Enumerative")),
-                ("https://uor.foundation/op/verificationPathNote", IndividualValue::Str("exhaustive_enumeration(R_n)")),
+                ("https://uor.foundation/op/verificationDomain", IndividualValue::IriRef("https://uor.foundation/op/Algebraic")),
+                ("https://uor.foundation/op/verificationPathNote", IndividualValue::Str("Witt polynomial identification at p=2 (Theorem 1)")),
             ],
         },
         Individual {
@@ -1029,8 +1046,8 @@ fn individuals() -> Vec<Individual> {
                 ("https://uor.foundation/op/lhs", IndividualValue::Str("neg(neg(x))")),
                 ("https://uor.foundation/op/rhs", IndividualValue::Str("x")),
                 ("https://uor.foundation/op/forAll", IndividualValue::Str("x ∈ R_n")),
-                ("https://uor.foundation/op/verificationDomain", IndividualValue::IriRef("https://uor.foundation/op/Enumerative")),
-                ("https://uor.foundation/op/verificationPathNote", IndividualValue::Str("exhaustive_enumeration(R_n)")),
+                ("https://uor.foundation/op/verificationDomain", IndividualValue::IriRef("https://uor.foundation/op/Algebraic")),
+                ("https://uor.foundation/op/verificationPathNote", IndividualValue::Str("Witt polynomial identification at p=2 (Theorem 1)")),
             ],
         },
         // Amendment 14: Multiplicative monoid (5)
@@ -1043,8 +1060,8 @@ fn individuals() -> Vec<Individual> {
                 ("https://uor.foundation/op/lhs", IndividualValue::Str("mul(x, mul(y, z))")),
                 ("https://uor.foundation/op/rhs", IndividualValue::Str("mul(mul(x, y), z)")),
                 ("https://uor.foundation/op/forAll", IndividualValue::Str("x, y, z ∈ R_n")),
-                ("https://uor.foundation/op/verificationDomain", IndividualValue::IriRef("https://uor.foundation/op/Enumerative")),
-                ("https://uor.foundation/op/verificationPathNote", IndividualValue::Str("exhaustive_enumeration(R_n)")),
+                ("https://uor.foundation/op/verificationDomain", IndividualValue::IriRef("https://uor.foundation/op/Algebraic")),
+                ("https://uor.foundation/op/verificationPathNote", IndividualValue::Str("Witt polynomial identification at p=2 (Theorem 1)")),
             ],
         },
         Individual {
@@ -1056,8 +1073,8 @@ fn individuals() -> Vec<Individual> {
                 ("https://uor.foundation/op/lhs", IndividualValue::Str("mul(x, 1)")),
                 ("https://uor.foundation/op/rhs", IndividualValue::Str("x")),
                 ("https://uor.foundation/op/forAll", IndividualValue::Str("x ∈ R_n")),
-                ("https://uor.foundation/op/verificationDomain", IndividualValue::IriRef("https://uor.foundation/op/Enumerative")),
-                ("https://uor.foundation/op/verificationPathNote", IndividualValue::Str("exhaustive_enumeration(R_n)")),
+                ("https://uor.foundation/op/verificationDomain", IndividualValue::IriRef("https://uor.foundation/op/Algebraic")),
+                ("https://uor.foundation/op/verificationPathNote", IndividualValue::Str("Witt polynomial identification at p=2 (Theorem 1)")),
             ],
         },
         Individual {
@@ -1069,8 +1086,8 @@ fn individuals() -> Vec<Individual> {
                 ("https://uor.foundation/op/lhs", IndividualValue::Str("mul(x, y)")),
                 ("https://uor.foundation/op/rhs", IndividualValue::Str("mul(y, x)")),
                 ("https://uor.foundation/op/forAll", IndividualValue::Str("x, y ∈ R_n")),
-                ("https://uor.foundation/op/verificationDomain", IndividualValue::IriRef("https://uor.foundation/op/Enumerative")),
-                ("https://uor.foundation/op/verificationPathNote", IndividualValue::Str("exhaustive_enumeration(R_n)")),
+                ("https://uor.foundation/op/verificationDomain", IndividualValue::IriRef("https://uor.foundation/op/Algebraic")),
+                ("https://uor.foundation/op/verificationPathNote", IndividualValue::Str("Witt polynomial identification at p=2 (Theorem 1)")),
             ],
         },
         Individual {
@@ -1082,8 +1099,8 @@ fn individuals() -> Vec<Individual> {
                 ("https://uor.foundation/op/lhs", IndividualValue::Str("mul(x, add(y, z))")),
                 ("https://uor.foundation/op/rhs", IndividualValue::Str("add(mul(x, y), mul(x, z))")),
                 ("https://uor.foundation/op/forAll", IndividualValue::Str("x, y, z ∈ R_n")),
-                ("https://uor.foundation/op/verificationDomain", IndividualValue::IriRef("https://uor.foundation/op/Enumerative")),
-                ("https://uor.foundation/op/verificationPathNote", IndividualValue::Str("exhaustive_enumeration(R_n)")),
+                ("https://uor.foundation/op/verificationDomain", IndividualValue::IriRef("https://uor.foundation/op/Algebraic")),
+                ("https://uor.foundation/op/verificationPathNote", IndividualValue::Str("Witt polynomial identification at p=2 (Theorem 1)")),
             ],
         },
         Individual {
@@ -1095,8 +1112,8 @@ fn individuals() -> Vec<Individual> {
                 ("https://uor.foundation/op/lhs", IndividualValue::Str("mul(x, 0)")),
                 ("https://uor.foundation/op/rhs", IndividualValue::Str("0")),
                 ("https://uor.foundation/op/forAll", IndividualValue::Str("x ∈ R_n")),
-                ("https://uor.foundation/op/verificationDomain", IndividualValue::IriRef("https://uor.foundation/op/Enumerative")),
-                ("https://uor.foundation/op/verificationPathNote", IndividualValue::Str("exhaustive_enumeration(R_n)")),
+                ("https://uor.foundation/op/verificationDomain", IndividualValue::IriRef("https://uor.foundation/op/Algebraic")),
+                ("https://uor.foundation/op/verificationPathNote", IndividualValue::Str("Witt polynomial identification at p=2 (Theorem 1)")),
             ],
         },
         // Amendment 14: Boolean algebra (13)
@@ -1109,8 +1126,8 @@ fn individuals() -> Vec<Individual> {
                 ("https://uor.foundation/op/lhs", IndividualValue::Str("xor(x, xor(y, z))")),
                 ("https://uor.foundation/op/rhs", IndividualValue::Str("xor(xor(x, y), z)")),
                 ("https://uor.foundation/op/forAll", IndividualValue::Str("x, y, z ∈ R_n")),
-                ("https://uor.foundation/op/verificationDomain", IndividualValue::IriRef("https://uor.foundation/op/Enumerative")),
-                ("https://uor.foundation/op/verificationPathNote", IndividualValue::Str("exhaustive_enumeration(R_n)")),
+                ("https://uor.foundation/op/verificationDomain", IndividualValue::IriRef("https://uor.foundation/op/Algebraic")),
+                ("https://uor.foundation/op/verificationPathNote", IndividualValue::Str("Witt polynomial identification at p=2 (Theorem 1)")),
             ],
         },
         Individual {
@@ -1122,8 +1139,8 @@ fn individuals() -> Vec<Individual> {
                 ("https://uor.foundation/op/lhs", IndividualValue::Str("xor(x, 0)")),
                 ("https://uor.foundation/op/rhs", IndividualValue::Str("x")),
                 ("https://uor.foundation/op/forAll", IndividualValue::Str("x ∈ R_n")),
-                ("https://uor.foundation/op/verificationDomain", IndividualValue::IriRef("https://uor.foundation/op/Enumerative")),
-                ("https://uor.foundation/op/verificationPathNote", IndividualValue::Str("exhaustive_enumeration(R_n)")),
+                ("https://uor.foundation/op/verificationDomain", IndividualValue::IriRef("https://uor.foundation/op/Algebraic")),
+                ("https://uor.foundation/op/verificationPathNote", IndividualValue::Str("Witt polynomial identification at p=2 (Theorem 1)")),
             ],
         },
         Individual {
@@ -1135,8 +1152,8 @@ fn individuals() -> Vec<Individual> {
                 ("https://uor.foundation/op/lhs", IndividualValue::Str("xor(x, x)")),
                 ("https://uor.foundation/op/rhs", IndividualValue::Str("0")),
                 ("https://uor.foundation/op/forAll", IndividualValue::Str("x ∈ R_n")),
-                ("https://uor.foundation/op/verificationDomain", IndividualValue::IriRef("https://uor.foundation/op/Enumerative")),
-                ("https://uor.foundation/op/verificationPathNote", IndividualValue::Str("exhaustive_enumeration(R_n)")),
+                ("https://uor.foundation/op/verificationDomain", IndividualValue::IriRef("https://uor.foundation/op/Algebraic")),
+                ("https://uor.foundation/op/verificationPathNote", IndividualValue::Str("Witt polynomial identification at p=2 (Theorem 1)")),
             ],
         },
         Individual {
@@ -1148,8 +1165,8 @@ fn individuals() -> Vec<Individual> {
                 ("https://uor.foundation/op/lhs", IndividualValue::Str("and(x, and(y, z))")),
                 ("https://uor.foundation/op/rhs", IndividualValue::Str("and(and(x, y), z)")),
                 ("https://uor.foundation/op/forAll", IndividualValue::Str("x, y, z ∈ R_n")),
-                ("https://uor.foundation/op/verificationDomain", IndividualValue::IriRef("https://uor.foundation/op/Enumerative")),
-                ("https://uor.foundation/op/verificationPathNote", IndividualValue::Str("exhaustive_enumeration(R_n)")),
+                ("https://uor.foundation/op/verificationDomain", IndividualValue::IriRef("https://uor.foundation/op/Algebraic")),
+                ("https://uor.foundation/op/verificationPathNote", IndividualValue::Str("Witt polynomial identification at p=2 (Theorem 1)")),
             ],
         },
         Individual {
@@ -1161,8 +1178,8 @@ fn individuals() -> Vec<Individual> {
                 ("https://uor.foundation/op/lhs", IndividualValue::Str("and(x, 2^n - 1)")),
                 ("https://uor.foundation/op/rhs", IndividualValue::Str("x")),
                 ("https://uor.foundation/op/forAll", IndividualValue::Str("x ∈ R_n")),
-                ("https://uor.foundation/op/verificationDomain", IndividualValue::IriRef("https://uor.foundation/op/Enumerative")),
-                ("https://uor.foundation/op/verificationPathNote", IndividualValue::Str("exhaustive_enumeration(R_n)")),
+                ("https://uor.foundation/op/verificationDomain", IndividualValue::IriRef("https://uor.foundation/op/Algebraic")),
+                ("https://uor.foundation/op/verificationPathNote", IndividualValue::Str("Witt polynomial identification at p=2 (Theorem 1)")),
             ],
         },
         Individual {
@@ -1174,8 +1191,8 @@ fn individuals() -> Vec<Individual> {
                 ("https://uor.foundation/op/lhs", IndividualValue::Str("and(x, 0)")),
                 ("https://uor.foundation/op/rhs", IndividualValue::Str("0")),
                 ("https://uor.foundation/op/forAll", IndividualValue::Str("x ∈ R_n")),
-                ("https://uor.foundation/op/verificationDomain", IndividualValue::IriRef("https://uor.foundation/op/Enumerative")),
-                ("https://uor.foundation/op/verificationPathNote", IndividualValue::Str("exhaustive_enumeration(R_n)")),
+                ("https://uor.foundation/op/verificationDomain", IndividualValue::IriRef("https://uor.foundation/op/Algebraic")),
+                ("https://uor.foundation/op/verificationPathNote", IndividualValue::Str("Witt polynomial identification at p=2 (Theorem 1)")),
             ],
         },
         Individual {
@@ -1187,8 +1204,8 @@ fn individuals() -> Vec<Individual> {
                 ("https://uor.foundation/op/lhs", IndividualValue::Str("or(x, or(y, z))")),
                 ("https://uor.foundation/op/rhs", IndividualValue::Str("or(or(x, y), z)")),
                 ("https://uor.foundation/op/forAll", IndividualValue::Str("x, y, z ∈ R_n")),
-                ("https://uor.foundation/op/verificationDomain", IndividualValue::IriRef("https://uor.foundation/op/Enumerative")),
-                ("https://uor.foundation/op/verificationPathNote", IndividualValue::Str("exhaustive_enumeration(R_n)")),
+                ("https://uor.foundation/op/verificationDomain", IndividualValue::IriRef("https://uor.foundation/op/Algebraic")),
+                ("https://uor.foundation/op/verificationPathNote", IndividualValue::Str("Witt polynomial identification at p=2 (Theorem 1)")),
             ],
         },
         Individual {
@@ -1200,8 +1217,8 @@ fn individuals() -> Vec<Individual> {
                 ("https://uor.foundation/op/lhs", IndividualValue::Str("or(x, 0)")),
                 ("https://uor.foundation/op/rhs", IndividualValue::Str("x")),
                 ("https://uor.foundation/op/forAll", IndividualValue::Str("x ∈ R_n")),
-                ("https://uor.foundation/op/verificationDomain", IndividualValue::IriRef("https://uor.foundation/op/Enumerative")),
-                ("https://uor.foundation/op/verificationPathNote", IndividualValue::Str("exhaustive_enumeration(R_n)")),
+                ("https://uor.foundation/op/verificationDomain", IndividualValue::IriRef("https://uor.foundation/op/Algebraic")),
+                ("https://uor.foundation/op/verificationPathNote", IndividualValue::Str("Witt polynomial identification at p=2 (Theorem 1)")),
             ],
         },
         Individual {
@@ -1213,8 +1230,8 @@ fn individuals() -> Vec<Individual> {
                 ("https://uor.foundation/op/lhs", IndividualValue::Str("and(x, or(x, y))")),
                 ("https://uor.foundation/op/rhs", IndividualValue::Str("x")),
                 ("https://uor.foundation/op/forAll", IndividualValue::Str("x, y ∈ R_n")),
-                ("https://uor.foundation/op/verificationDomain", IndividualValue::IriRef("https://uor.foundation/op/Enumerative")),
-                ("https://uor.foundation/op/verificationPathNote", IndividualValue::Str("exhaustive_enumeration(R_n)")),
+                ("https://uor.foundation/op/verificationDomain", IndividualValue::IriRef("https://uor.foundation/op/Algebraic")),
+                ("https://uor.foundation/op/verificationPathNote", IndividualValue::Str("Witt polynomial identification at p=2 (Theorem 1)")),
             ],
         },
         Individual {
@@ -1226,8 +1243,8 @@ fn individuals() -> Vec<Individual> {
                 ("https://uor.foundation/op/lhs", IndividualValue::Str("and(x, or(y, z))")),
                 ("https://uor.foundation/op/rhs", IndividualValue::Str("or(and(x, y), and(x, z))")),
                 ("https://uor.foundation/op/forAll", IndividualValue::Str("x, y, z ∈ R_n")),
-                ("https://uor.foundation/op/verificationDomain", IndividualValue::IriRef("https://uor.foundation/op/Enumerative")),
-                ("https://uor.foundation/op/verificationPathNote", IndividualValue::Str("exhaustive_enumeration(R_n)")),
+                ("https://uor.foundation/op/verificationDomain", IndividualValue::IriRef("https://uor.foundation/op/Algebraic")),
+                ("https://uor.foundation/op/verificationPathNote", IndividualValue::Str("Witt polynomial identification at p=2 (Theorem 1)")),
             ],
         },
         Individual {
@@ -1239,8 +1256,8 @@ fn individuals() -> Vec<Individual> {
                 ("https://uor.foundation/op/lhs", IndividualValue::Str("bnot(and(x, y))")),
                 ("https://uor.foundation/op/rhs", IndividualValue::Str("or(bnot(x), bnot(y))")),
                 ("https://uor.foundation/op/forAll", IndividualValue::Str("x, y ∈ R_n")),
-                ("https://uor.foundation/op/verificationDomain", IndividualValue::IriRef("https://uor.foundation/op/Enumerative")),
-                ("https://uor.foundation/op/verificationPathNote", IndividualValue::Str("exhaustive_enumeration(R_n)")),
+                ("https://uor.foundation/op/verificationDomain", IndividualValue::IriRef("https://uor.foundation/op/Algebraic")),
+                ("https://uor.foundation/op/verificationPathNote", IndividualValue::Str("Witt polynomial identification at p=2 (Theorem 1)")),
             ],
         },
         Individual {
@@ -1252,8 +1269,8 @@ fn individuals() -> Vec<Individual> {
                 ("https://uor.foundation/op/lhs", IndividualValue::Str("bnot(or(x, y))")),
                 ("https://uor.foundation/op/rhs", IndividualValue::Str("and(bnot(x), bnot(y))")),
                 ("https://uor.foundation/op/forAll", IndividualValue::Str("x, y ∈ R_n")),
-                ("https://uor.foundation/op/verificationDomain", IndividualValue::IriRef("https://uor.foundation/op/Enumerative")),
-                ("https://uor.foundation/op/verificationPathNote", IndividualValue::Str("exhaustive_enumeration(R_n)")),
+                ("https://uor.foundation/op/verificationDomain", IndividualValue::IriRef("https://uor.foundation/op/Algebraic")),
+                ("https://uor.foundation/op/verificationPathNote", IndividualValue::Str("Witt polynomial identification at p=2 (Theorem 1)")),
             ],
         },
         Individual {
@@ -1265,8 +1282,8 @@ fn individuals() -> Vec<Individual> {
                 ("https://uor.foundation/op/lhs", IndividualValue::Str("bnot(bnot(x))")),
                 ("https://uor.foundation/op/rhs", IndividualValue::Str("x")),
                 ("https://uor.foundation/op/forAll", IndividualValue::Str("x ∈ R_n")),
-                ("https://uor.foundation/op/verificationDomain", IndividualValue::IriRef("https://uor.foundation/op/Enumerative")),
-                ("https://uor.foundation/op/verificationPathNote", IndividualValue::Str("exhaustive_enumeration(R_n)")),
+                ("https://uor.foundation/op/verificationDomain", IndividualValue::IriRef("https://uor.foundation/op/Algebraic")),
+                ("https://uor.foundation/op/verificationPathNote", IndividualValue::Str("Witt polynomial identification at p=2 (Theorem 1)")),
             ],
         },
         // Amendment 14: Cross-structure (7)
@@ -1279,8 +1296,8 @@ fn individuals() -> Vec<Individual> {
                 ("https://uor.foundation/op/lhs", IndividualValue::Str("neg(x)")),
                 ("https://uor.foundation/op/rhs", IndividualValue::Str("sub(0, x)")),
                 ("https://uor.foundation/op/forAll", IndividualValue::Str("x ∈ R_n")),
-                ("https://uor.foundation/op/verificationDomain", IndividualValue::IriRef("https://uor.foundation/op/Enumerative")),
-                ("https://uor.foundation/op/verificationPathNote", IndividualValue::Str("exhaustive_enumeration(R_n)")),
+                ("https://uor.foundation/op/verificationDomain", IndividualValue::IriRef("https://uor.foundation/op/Algebraic")),
+                ("https://uor.foundation/op/verificationPathNote", IndividualValue::Str("Witt polynomial identification at p=2 (Theorem 1)")),
             ],
         },
         Individual {
@@ -1292,8 +1309,8 @@ fn individuals() -> Vec<Individual> {
                 ("https://uor.foundation/op/lhs", IndividualValue::Str("bnot(x)")),
                 ("https://uor.foundation/op/rhs", IndividualValue::Str("xor(x, 2^n - 1)")),
                 ("https://uor.foundation/op/forAll", IndividualValue::Str("x ∈ R_n")),
-                ("https://uor.foundation/op/verificationDomain", IndividualValue::IriRef("https://uor.foundation/op/Enumerative")),
-                ("https://uor.foundation/op/verificationPathNote", IndividualValue::Str("exhaustive_enumeration(R_n)")),
+                ("https://uor.foundation/op/verificationDomain", IndividualValue::IriRef("https://uor.foundation/op/Algebraic")),
+                ("https://uor.foundation/op/verificationPathNote", IndividualValue::Str("Witt polynomial identification at p=2 (Theorem 1)")),
             ],
         },
         Individual {
@@ -1305,8 +1322,8 @@ fn individuals() -> Vec<Individual> {
                 ("https://uor.foundation/op/lhs", IndividualValue::Str("succ(x)")),
                 ("https://uor.foundation/op/rhs", IndividualValue::Str("add(x, 1)")),
                 ("https://uor.foundation/op/forAll", IndividualValue::Str("x ∈ R_n")),
-                ("https://uor.foundation/op/verificationDomain", IndividualValue::IriRef("https://uor.foundation/op/Enumerative")),
-                ("https://uor.foundation/op/verificationPathNote", IndividualValue::Str("exhaustive_enumeration(R_n)")),
+                ("https://uor.foundation/op/verificationDomain", IndividualValue::IriRef("https://uor.foundation/op/Algebraic")),
+                ("https://uor.foundation/op/verificationPathNote", IndividualValue::Str("Witt polynomial identification at p=2 (Theorem 1)")),
             ],
         },
         Individual {
@@ -1318,8 +1335,8 @@ fn individuals() -> Vec<Individual> {
                 ("https://uor.foundation/op/lhs", IndividualValue::Str("pred(x)")),
                 ("https://uor.foundation/op/rhs", IndividualValue::Str("sub(x, 1)")),
                 ("https://uor.foundation/op/forAll", IndividualValue::Str("x ∈ R_n")),
-                ("https://uor.foundation/op/verificationDomain", IndividualValue::IriRef("https://uor.foundation/op/Enumerative")),
-                ("https://uor.foundation/op/verificationPathNote", IndividualValue::Str("exhaustive_enumeration(R_n)")),
+                ("https://uor.foundation/op/verificationDomain", IndividualValue::IriRef("https://uor.foundation/op/Algebraic")),
+                ("https://uor.foundation/op/verificationPathNote", IndividualValue::Str("Witt polynomial identification at p=2 (Theorem 1)")),
             ],
         },
         Individual {
@@ -1331,8 +1348,8 @@ fn individuals() -> Vec<Individual> {
                 ("https://uor.foundation/op/lhs", IndividualValue::Str("neg(x)")),
                 ("https://uor.foundation/op/rhs", IndividualValue::Str("add(bnot(x), 1)")),
                 ("https://uor.foundation/op/forAll", IndividualValue::Str("x ∈ R_n")),
-                ("https://uor.foundation/op/verificationDomain", IndividualValue::IriRef("https://uor.foundation/op/Enumerative")),
-                ("https://uor.foundation/op/verificationPathNote", IndividualValue::Str("exhaustive_enumeration(R_n)")),
+                ("https://uor.foundation/op/verificationDomain", IndividualValue::IriRef("https://uor.foundation/op/Algebraic")),
+                ("https://uor.foundation/op/verificationPathNote", IndividualValue::Str("Witt polynomial identification at p=2 (Theorem 1)")),
             ],
         },
         Individual {
@@ -1344,8 +1361,8 @@ fn individuals() -> Vec<Individual> {
                 ("https://uor.foundation/op/lhs", IndividualValue::Str("bnot(x)")),
                 ("https://uor.foundation/op/rhs", IndividualValue::Str("pred(neg(x))")),
                 ("https://uor.foundation/op/forAll", IndividualValue::Str("x ∈ R_n")),
-                ("https://uor.foundation/op/verificationDomain", IndividualValue::IriRef("https://uor.foundation/op/Enumerative")),
-                ("https://uor.foundation/op/verificationPathNote", IndividualValue::Str("exhaustive_enumeration(R_n)")),
+                ("https://uor.foundation/op/verificationDomain", IndividualValue::IriRef("https://uor.foundation/op/Algebraic")),
+                ("https://uor.foundation/op/verificationPathNote", IndividualValue::Str("Witt polynomial identification at p=2 (Theorem 1)")),
             ],
         },
         Individual {
@@ -1357,8 +1374,8 @@ fn individuals() -> Vec<Individual> {
                 ("https://uor.foundation/op/lhs", IndividualValue::Str("xor(x, y)")),
                 ("https://uor.foundation/op/rhs", IndividualValue::Str("add(x, y) - 2 * and(x, y)")),
                 ("https://uor.foundation/op/forAll", IndividualValue::Str("x, y ∈ Z (before mod)")),
-                ("https://uor.foundation/op/verificationDomain", IndividualValue::IriRef("https://uor.foundation/op/Enumerative")),
-                ("https://uor.foundation/op/verificationPathNote", IndividualValue::Str("exhaustive_enumeration(R_n)")),
+                ("https://uor.foundation/op/verificationDomain", IndividualValue::IriRef("https://uor.foundation/op/Algebraic")),
+                ("https://uor.foundation/op/verificationPathNote", IndividualValue::Str("Witt polynomial identification at p=2 (Theorem 1)")),
             ],
         },
         // Amendment 14: Dihedral group (4, D-2 omitted as duplicate of R-A6)
@@ -1371,8 +1388,8 @@ fn individuals() -> Vec<Individual> {
                 ("https://uor.foundation/op/lhs", IndividualValue::Str("succ^{2^n}(x)")),
                 ("https://uor.foundation/op/rhs", IndividualValue::Str("x")),
                 ("https://uor.foundation/op/forAll", IndividualValue::Str("x ∈ R_n")),
-                ("https://uor.foundation/op/verificationDomain", IndividualValue::IriRef("https://uor.foundation/op/Enumerative")),
-                ("https://uor.foundation/op/verificationPathNote", IndividualValue::Str("exhaustive_enumeration(R_n)")),
+                ("https://uor.foundation/op/verificationDomain", IndividualValue::IriRef("https://uor.foundation/op/Algebraic")),
+                ("https://uor.foundation/op/verificationPathNote", IndividualValue::Str("Witt polynomial identification at p=2 (Theorem 1)")),
             ],
         },
         Individual {
@@ -1384,8 +1401,8 @@ fn individuals() -> Vec<Individual> {
                 ("https://uor.foundation/op/lhs", IndividualValue::Str("neg(succ(neg(x)))")),
                 ("https://uor.foundation/op/rhs", IndividualValue::Str("pred(x)")),
                 ("https://uor.foundation/op/forAll", IndividualValue::Str("x ∈ R_n")),
-                ("https://uor.foundation/op/verificationDomain", IndividualValue::IriRef("https://uor.foundation/op/Enumerative")),
-                ("https://uor.foundation/op/verificationPathNote", IndividualValue::Str("exhaustive_enumeration(R_n)")),
+                ("https://uor.foundation/op/verificationDomain", IndividualValue::IriRef("https://uor.foundation/op/Algebraic")),
+                ("https://uor.foundation/op/verificationPathNote", IndividualValue::Str("Witt polynomial identification at p=2 (Theorem 1)")),
             ],
         },
         Individual {
@@ -1397,8 +1414,8 @@ fn individuals() -> Vec<Individual> {
                 ("https://uor.foundation/op/lhs", IndividualValue::Str("bnot(neg(x))")),
                 ("https://uor.foundation/op/rhs", IndividualValue::Str("pred(x)")),
                 ("https://uor.foundation/op/forAll", IndividualValue::Str("x ∈ R_n")),
-                ("https://uor.foundation/op/verificationDomain", IndividualValue::IriRef("https://uor.foundation/op/Enumerative")),
-                ("https://uor.foundation/op/verificationPathNote", IndividualValue::Str("exhaustive_enumeration(R_n)")),
+                ("https://uor.foundation/op/verificationDomain", IndividualValue::IriRef("https://uor.foundation/op/Algebraic")),
+                ("https://uor.foundation/op/verificationPathNote", IndividualValue::Str("Witt polynomial identification at p=2 (Theorem 1)")),
             ],
         },
         Individual {
@@ -1410,8 +1427,8 @@ fn individuals() -> Vec<Individual> {
                 ("https://uor.foundation/op/lhs", IndividualValue::Str("D_{2^n}")),
                 ("https://uor.foundation/op/rhs", IndividualValue::Str("{succ^k, neg ∘ succ^k : 0 ≤ k < 2^n}")),
                 ("https://uor.foundation/op/forAll", IndividualValue::Str("n ≥ 1")),
-                ("https://uor.foundation/op/verificationDomain", IndividualValue::IriRef("https://uor.foundation/op/Enumerative")),
-                ("https://uor.foundation/op/verificationPathNote", IndividualValue::Str("exhaustive_enumeration(R_n)")),
+                ("https://uor.foundation/op/verificationDomain", IndividualValue::IriRef("https://uor.foundation/op/Algebraic")),
+                ("https://uor.foundation/op/verificationPathNote", IndividualValue::Str("Witt polynomial identification at p=2 (Theorem 1)")),
             ],
         },
         // Amendment 14: Unit group (5)
@@ -1543,8 +1560,8 @@ fn individuals() -> Vec<Individual> {
                 ("https://uor.foundation/op/lhs", IndividualValue::Str("add(x,y)_k")),
                 ("https://uor.foundation/op/rhs", IndividualValue::Str("xor(x_k, xor(y_k, c_k(x,y)))")),
                 ("https://uor.foundation/op/forAll", IndividualValue::Str("x, y ∈ R_n, 0 ≤ k < n")),
-                ("https://uor.foundation/op/verificationDomain", IndividualValue::IriRef("https://uor.foundation/op/Enumerative")),
-                ("https://uor.foundation/op/verificationPathNote", IndividualValue::Str("exhaustive_enumeration(R_n)")),
+                ("https://uor.foundation/op/verificationDomain", IndividualValue::IriRef("https://uor.foundation/op/Algebraic")),
+                ("https://uor.foundation/op/verificationPathNote", IndividualValue::Str("Witt polynomial identification at p=2 (Theorem 1)")),
             ],
         },
         Individual {
@@ -1556,8 +1573,8 @@ fn individuals() -> Vec<Individual> {
                 ("https://uor.foundation/op/lhs", IndividualValue::Str("c_{k+1}(x,y)")),
                 ("https://uor.foundation/op/rhs", IndividualValue::Str("or(and(x_k,y_k), and(xor(x_k,y_k), c_k))")),
                 ("https://uor.foundation/op/forAll", IndividualValue::Str("x, y ∈ R_n")),
-                ("https://uor.foundation/op/verificationDomain", IndividualValue::IriRef("https://uor.foundation/op/Enumerative")),
-                ("https://uor.foundation/op/verificationPathNote", IndividualValue::Str("exhaustive_enumeration(R_n)")),
+                ("https://uor.foundation/op/verificationDomain", IndividualValue::IriRef("https://uor.foundation/op/Algebraic")),
+                ("https://uor.foundation/op/verificationPathNote", IndividualValue::Str("Witt polynomial identification at p=2 (Theorem 1)")),
             ],
         },
         Individual {
@@ -1569,8 +1586,8 @@ fn individuals() -> Vec<Individual> {
                 ("https://uor.foundation/op/lhs", IndividualValue::Str("c(x, y)")),
                 ("https://uor.foundation/op/rhs", IndividualValue::Str("c(y, x)")),
                 ("https://uor.foundation/op/forAll", IndividualValue::Str("x, y ∈ R_n")),
-                ("https://uor.foundation/op/verificationDomain", IndividualValue::IriRef("https://uor.foundation/op/Enumerative")),
-                ("https://uor.foundation/op/verificationPathNote", IndividualValue::Str("exhaustive_enumeration(R_n)")),
+                ("https://uor.foundation/op/verificationDomain", IndividualValue::IriRef("https://uor.foundation/op/Algebraic")),
+                ("https://uor.foundation/op/verificationPathNote", IndividualValue::Str("Witt polynomial identification at p=2 (Theorem 1)")),
             ],
         },
         Individual {
@@ -1582,8 +1599,8 @@ fn individuals() -> Vec<Individual> {
                 ("https://uor.foundation/op/lhs", IndividualValue::Str("c(x, 0)")),
                 ("https://uor.foundation/op/rhs", IndividualValue::Str("0")),
                 ("https://uor.foundation/op/forAll", IndividualValue::Str("x ∈ R_n, all positions")),
-                ("https://uor.foundation/op/verificationDomain", IndividualValue::IriRef("https://uor.foundation/op/Enumerative")),
-                ("https://uor.foundation/op/verificationPathNote", IndividualValue::Str("exhaustive_enumeration(R_n)")),
+                ("https://uor.foundation/op/verificationDomain", IndividualValue::IriRef("https://uor.foundation/op/Algebraic")),
+                ("https://uor.foundation/op/verificationPathNote", IndividualValue::Str("Witt polynomial identification at p=2 (Theorem 1)")),
             ],
         },
         Individual {
@@ -1595,8 +1612,8 @@ fn individuals() -> Vec<Individual> {
                 ("https://uor.foundation/op/lhs", IndividualValue::Str("c(x, neg(x))_k")),
                 ("https://uor.foundation/op/rhs", IndividualValue::Str("1")),
                 ("https://uor.foundation/op/forAll", IndividualValue::Str("x ∈ R_n, k > v_2(x)")),
-                ("https://uor.foundation/op/verificationDomain", IndividualValue::IriRef("https://uor.foundation/op/Enumerative")),
-                ("https://uor.foundation/op/verificationPathNote", IndividualValue::Str("exhaustive_enumeration(R_n)")),
+                ("https://uor.foundation/op/verificationDomain", IndividualValue::IriRef("https://uor.foundation/op/Algebraic")),
+                ("https://uor.foundation/op/verificationPathNote", IndividualValue::Str("Witt polynomial identification at p=2 (Theorem 1)")),
             ],
         },
         Individual {
@@ -1608,8 +1625,8 @@ fn individuals() -> Vec<Individual> {
                 ("https://uor.foundation/op/lhs", IndividualValue::Str("d_Δ(x, y) > 0")),
                 ("https://uor.foundation/op/rhs", IndividualValue::Str("∃ k : c_k(x,y) = 1")),
                 ("https://uor.foundation/op/forAll", IndividualValue::Str("x, y ∈ R_n")),
-                ("https://uor.foundation/op/verificationDomain", IndividualValue::IriRef("https://uor.foundation/op/Enumerative")),
-                ("https://uor.foundation/op/verificationPathNote", IndividualValue::Str("exhaustive_enumeration(R_n)")),
+                ("https://uor.foundation/op/verificationDomain", IndividualValue::IriRef("https://uor.foundation/op/Algebraic")),
+                ("https://uor.foundation/op/verificationPathNote", IndividualValue::Str("Witt polynomial identification at p=2 (Theorem 1)")),
             ],
         },
         // Amendment 15: Constraint, Fiber & Partition Laws — Constraint composition (6)
@@ -6892,6 +6909,455 @@ fn individuals() -> Vec<Individual> {
                  IndividualValue::IriRef("https://uor.foundation/op/Universal")),
                 ("https://uor.foundation/op/verificationPathNote",
                  IndividualValue::Str("F_2 (pin ops \u{2264} fiber count) + SR_9 (|leasedFibers(L_i)| = \u{2308}n/k\u{2309}) \u{2192} per-session bound")),
+            ],
+        },
+        // Amendment 53: Witt\u{2013}Carry Formalization \u{2014} WC_ series (12)
+        Individual {
+            id: "https://uor.foundation/op/WC_1",
+            type_: "https://uor.foundation/op/Identity",
+            label: "WC_1",
+            comment: "Witt coordinate identification: the bit coordinates \
+                      (x_0, \u{2026}, x_[n\u{2212}1]) of x \u{2208} \
+                      Z/(2\u{207f})Z are exactly its Witt coordinates under \
+                      the canonical isomorphism W_n(F_2) \u{2245} Z/(2\u{207f})Z.",
+            properties: &[
+                ("https://uor.foundation/op/lhs",
+                 IndividualValue::Str("a_k(x)")),
+                ("https://uor.foundation/op/rhs",
+                 IndividualValue::Str("x_k (k-th bit of x)")),
+                ("https://uor.foundation/op/forAll",
+                 IndividualValue::Str("x \u{2208} R_n, 0 \u{2264} k < n")),
+                (
+                    "https://uor.foundation/op/verificationDomain",
+                    IndividualValue::IriRef("https://uor.foundation/op/Algebraic"),
+                ),
+                ("https://uor.foundation/op/universallyValid",
+                 IndividualValue::Bool(true)),
+                ("https://uor.foundation/op/validityKind",
+                 IndividualValue::IriRef("https://uor.foundation/op/Universal")),
+                ("https://uor.foundation/op/verificationPathNote",
+                 IndividualValue::Str("Ghost map bijectivity at p=2 over F_2 \u{2192} coordinate identification")),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/op/WC_2",
+            type_: "https://uor.foundation/op/Identity",
+            label: "WC_2",
+            comment: "Witt sum correction equals carry: the k-th Witt \
+                      addition polynomial correction term S_k \u{2212} x_k \
+                      \u{2212} y_k (mod 2) is exactly the carry c_k(x,y).",
+            properties: &[
+                ("https://uor.foundation/op/lhs",
+                 IndividualValue::Str("S_k \u{2212} x_k \u{2212} y_k (mod 2)")),
+                ("https://uor.foundation/op/rhs",
+                 IndividualValue::Str("c_k(x,y)")),
+                ("https://uor.foundation/op/forAll",
+                 IndividualValue::Str("x, y \u{2208} R_n, 0 \u{2264} k < n")),
+                (
+                    "https://uor.foundation/op/verificationDomain",
+                    IndividualValue::IriRef("https://uor.foundation/op/Algebraic"),
+                ),
+                ("https://uor.foundation/op/universallyValid",
+                 IndividualValue::Bool(true)),
+                ("https://uor.foundation/op/validityKind",
+                 IndividualValue::IriRef("https://uor.foundation/op/Universal")),
+                ("https://uor.foundation/op/verificationPathNote",
+                 IndividualValue::Str("CA_1 decomposition + ghost map linearity \u{2192} correction = carry")),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/op/WC_3",
+            type_: "https://uor.foundation/op/Identity",
+            label: "WC_3",
+            comment: "Carry recurrence is the Witt polynomial recurrence: \
+                      CA_2 implements the ghost equation for S_[k+1] at p=2.",
+            properties: &[
+                ("https://uor.foundation/op/lhs",
+                 IndividualValue::Str("CA_2 recurrence")),
+                ("https://uor.foundation/op/rhs",
+                 IndividualValue::Str("S_{k+1} ghost equation at p=2")),
+                ("https://uor.foundation/op/forAll",
+                 IndividualValue::Str("x, y \u{2208} R_n")),
+                (
+                    "https://uor.foundation/op/verificationDomain",
+                    IndividualValue::IriRef("https://uor.foundation/op/Algebraic"),
+                ),
+                ("https://uor.foundation/op/universallyValid",
+                 IndividualValue::Bool(true)),
+                ("https://uor.foundation/op/validityKind",
+                 IndividualValue::IriRef("https://uor.foundation/op/Universal")),
+                ("https://uor.foundation/op/verificationPathNote",
+                 IndividualValue::Str("Induction on ghost equation w_{k+1}(S) = w_{k+1}(a) + w_{k+1}(b)")),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/op/WC_4",
+            type_: "https://uor.foundation/op/Identity",
+            label: "WC_4",
+            comment: "The \u{03b4}-correction at level k equals the \
+                      single-level carry c_[k+1](x,y). Each application of \
+                      \u{03b4} divides by 2, consuming one unit of 2-adic \
+                      valuation.",
+            properties: &[
+                ("https://uor.foundation/op/lhs",
+                 IndividualValue::Str("\u{03b4}_k(x+y) correction")),
+                ("https://uor.foundation/op/rhs",
+                 IndividualValue::Str("c_{k+1}(x,y)")),
+                ("https://uor.foundation/op/forAll",
+                 IndividualValue::Str("x, y \u{2208} R_n")),
+                (
+                    "https://uor.foundation/op/verificationDomain",
+                    IndividualValue::IriRef("https://uor.foundation/op/Algebraic"),
+                ),
+                ("https://uor.foundation/op/universallyValid",
+                 IndividualValue::Bool(true)),
+                ("https://uor.foundation/op/validityKind",
+                 IndividualValue::IriRef("https://uor.foundation/op/Universal")),
+                ("https://uor.foundation/op/verificationPathNote",
+                 IndividualValue::Str("\u{03b4}(x+y) = \u{03b4}(x) + \u{03b4}(y) \u{2212} xy; lowest bit of \u{2212}xy = carry")),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/op/WC_5",
+            type_: "https://uor.foundation/op/Identity",
+            label: "WC_5",
+            comment: "LiftObstruction is equivalent to \u{03b4}-nonvanishing: \
+                      a nontrivial LiftObstruction at Q_[k+1] means \
+                      \u{03b4}_k \u{2260} 0 for some element pair.",
+            properties: &[
+                ("https://uor.foundation/op/lhs",
+                 IndividualValue::Str("obstruction_trivial = false")),
+                ("https://uor.foundation/op/rhs",
+                 IndividualValue::Str("\u{03b4}_k \u{2260} 0 for some pair")),
+                ("https://uor.foundation/op/forAll",
+                 IndividualValue::Str("Q_k, k \u{2265} 1")),
+                (
+                    "https://uor.foundation/op/verificationDomain",
+                    IndividualValue::IriRef("https://uor.foundation/op/IndexTheoretic"),
+                ),
+                ("https://uor.foundation/op/universallyValid",
+                 IndividualValue::Bool(true)),
+                ("https://uor.foundation/op/validityKind",
+                 IndividualValue::IriRef("https://uor.foundation/op/Universal")),
+                ("https://uor.foundation/op/verificationPathNote",
+                 IndividualValue::Str("LiftObstruction = Witt tower truncation defect = \u{03b4}-correction")),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/op/WC_6",
+            type_: "https://uor.foundation/op/Identity",
+            label: "WC_6",
+            comment: "Metric discrepancy equals Witt defect: \
+                      d_\u{0394}(x,y) > 0 iff the ghost map correction \
+                      (carry) is nonzero.",
+            properties: &[
+                ("https://uor.foundation/op/lhs",
+                 IndividualValue::Str("d_\u{0394}(x,y) > 0")),
+                ("https://uor.foundation/op/rhs",
+                 IndividualValue::Str("ghost defect nonzero")),
+                ("https://uor.foundation/op/forAll",
+                 IndividualValue::Str("x, y \u{2208} R_n")),
+                (
+                    "https://uor.foundation/op/verificationDomain",
+                    IndividualValue::IriRef("https://uor.foundation/op/Analytical"),
+                ),
+                ("https://uor.foundation/op/universallyValid",
+                 IndividualValue::Bool(true)),
+                ("https://uor.foundation/op/validityKind",
+                 IndividualValue::IriRef("https://uor.foundation/op/Universal")),
+                ("https://uor.foundation/op/verificationPathNote",
+                 IndividualValue::Str("CA_6 restatement: carry nonzero \u{21d4} ring/Hamming metric diverge")),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/op/WC_7",
+            type_: "https://uor.foundation/op/Identity",
+            label: "WC_7",
+            comment: "D_1 is the Witt truncation order relation: \
+                      succ\u{005e}[2\u{207f}](x) = x is the group relation \
+                      r\u{005e}[2\u{207f}] = 1 in the Witt-Burnside ring of \
+                      D_[2\u{221e}].",
+            properties: &[
+                ("https://uor.foundation/op/lhs",
+                 IndividualValue::Str("succ^{2\u{207f}}(x) = x")),
+                ("https://uor.foundation/op/rhs",
+                 IndividualValue::Str("r^{2\u{207f}} = 1 in Witt-Burnside ring")),
+                ("https://uor.foundation/op/forAll",
+                 IndividualValue::Str("x \u{2208} R_n, n \u{2265} 1")),
+                (
+                    "https://uor.foundation/op/verificationDomain",
+                    IndividualValue::IriRef("https://uor.foundation/op/Algebraic"),
+                ),
+                ("https://uor.foundation/op/universallyValid",
+                 IndividualValue::Bool(true)),
+                ("https://uor.foundation/op/validityKind",
+                 IndividualValue::IriRef("https://uor.foundation/op/Universal")),
+                ("https://uor.foundation/op/verificationPathNote",
+                 IndividualValue::Str("Dress\u{2013}Siebeneicher: cyclic subgroup C_{2\u{207f}} ghost component")),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/op/WC_8",
+            type_: "https://uor.foundation/op/Identity",
+            label: "WC_8",
+            comment: "D_3 is the Witt-Burnside conjugation relation: \
+                      neg(succ(neg(x))) = pred(x) is srs = \
+                      r\u{207b}\u{00b9} in the pro-dihedral group.",
+            properties: &[
+                ("https://uor.foundation/op/lhs",
+                 IndividualValue::Str("neg(succ(neg(x)))")),
+                ("https://uor.foundation/op/rhs",
+                 IndividualValue::Str("srs = r\u{207b}\u{00b9} relation")),
+                ("https://uor.foundation/op/forAll",
+                 IndividualValue::Str("x \u{2208} R_n, n \u{2265} 1")),
+                (
+                    "https://uor.foundation/op/verificationDomain",
+                    IndividualValue::IriRef("https://uor.foundation/op/Algebraic"),
+                ),
+                ("https://uor.foundation/op/universallyValid",
+                 IndividualValue::Bool(true)),
+                ("https://uor.foundation/op/validityKind",
+                 IndividualValue::IriRef("https://uor.foundation/op/Universal")),
+                ("https://uor.foundation/op/verificationPathNote",
+                 IndividualValue::Str("Witt-Burnside compatibility: reflection ghost inverts rotation ghost")),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/op/WC_9",
+            type_: "https://uor.foundation/op/Identity",
+            label: "WC_9",
+            comment: "D_4 is a Witt-Burnside reflection composition: \
+                      bnot(neg(x)) = pred(x) is the product of two \
+                      reflections yielding inverse rotation.",
+            properties: &[
+                ("https://uor.foundation/op/lhs",
+                 IndividualValue::Str("bnot(neg(x)) = pred(x)")),
+                ("https://uor.foundation/op/rhs",
+                 IndividualValue::Str("Product of Witt-Burnside reflections")),
+                ("https://uor.foundation/op/forAll",
+                 IndividualValue::Str("x \u{2208} R_n, n \u{2265} 1")),
+                (
+                    "https://uor.foundation/op/verificationDomain",
+                    IndividualValue::IriRef("https://uor.foundation/op/Algebraic"),
+                ),
+                ("https://uor.foundation/op/universallyValid",
+                 IndividualValue::Bool(true)),
+                ("https://uor.foundation/op/validityKind",
+                 IndividualValue::IriRef("https://uor.foundation/op/Universal")),
+                ("https://uor.foundation/op/verificationPathNote",
+                 IndividualValue::Str("bnot = pred \u{2218} neg \u{2192} bnot \u{2218} neg = pred \u{2218} id = pred")),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/op/WC_10",
+            type_: "https://uor.foundation/op/Identity",
+            label: "WC_10",
+            comment: "The \u{03b4}-ring Frobenius lift on W_n(F_2) is the \
+                      identity map because F_2 is a perfect field of \
+                      characteristic 2 (a\u{00b2} = a for a \u{2208} F_2).",
+            properties: &[
+                ("https://uor.foundation/op/lhs",
+                 IndividualValue::Str("\u{03c6}(x) on W_n(F_2)")),
+                ("https://uor.foundation/op/rhs",
+                 IndividualValue::Str("x (identity, F_2 perfect)")),
+                ("https://uor.foundation/op/forAll",
+                 IndividualValue::Str("x \u{2208} R_n, n \u{2265} 1")),
+                (
+                    "https://uor.foundation/op/verificationDomain",
+                    IndividualValue::IriRef("https://uor.foundation/op/Algebraic"),
+                ),
+                ("https://uor.foundation/op/universallyValid",
+                 IndividualValue::Bool(true)),
+                ("https://uor.foundation/op/validityKind",
+                 IndividualValue::IriRef("https://uor.foundation/op/Universal")),
+                ("https://uor.foundation/op/verificationPathNote",
+                 IndividualValue::Str("Witt Frobenius F(a_i) = a_i\u{00b2} = a_i in F_2 \u{2192} F = id")),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/op/WC_11",
+            type_: "https://uor.foundation/op/Identity",
+            label: "WC_11",
+            comment: "The Verschiebung on W_n(F_2) is multiplication by 2: \
+                      V(x) = 2x = add(x,x). This is a coordinate shift with \
+                      zero Witt defect.",
+            properties: &[
+                ("https://uor.foundation/op/lhs",
+                 IndividualValue::Str("V(x) on W_n(F_2)")),
+                ("https://uor.foundation/op/rhs",
+                 IndividualValue::Str("add(x, x) in Z/(2\u{207f})Z")),
+                ("https://uor.foundation/op/forAll",
+                 IndividualValue::Str("x \u{2208} R_n, n \u{2265} 1")),
+                (
+                    "https://uor.foundation/op/verificationDomain",
+                    IndividualValue::IriRef("https://uor.foundation/op/Algebraic"),
+                ),
+                ("https://uor.foundation/op/universallyValid",
+                 IndividualValue::Bool(true)),
+                ("https://uor.foundation/op/validityKind",
+                 IndividualValue::IriRef("https://uor.foundation/op/Universal")),
+                ("https://uor.foundation/op/verificationPathNote",
+                 IndividualValue::Str("Ghost map: w_n(V(a)) = 2 \u{00b7} w_{n-1}(a) = 2x")),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/op/WC_12",
+            type_: "https://uor.foundation/op/Identity",
+            label: "WC_12",
+            comment: "The \u{03b4}-operator on W_n(F_2) is the squaring \
+                      defect divided by 2: \u{03b4}(x) = (x \u{2212} \
+                      mul(x,x)) / 2. Expressible entirely in existing op/ \
+                      primitives (sub, mul, arithmetic right shift).",
+            properties: &[
+                ("https://uor.foundation/op/lhs",
+                 IndividualValue::Str("\u{03b4}(x) on W_n(F_2)")),
+                ("https://uor.foundation/op/rhs",
+                 IndividualValue::Str("(x \u{2212} mul(x,x)) / 2")),
+                ("https://uor.foundation/op/forAll",
+                 IndividualValue::Str("x \u{2208} R_n, n \u{2265} 2")),
+                (
+                    "https://uor.foundation/op/verificationDomain",
+                    IndividualValue::IriRef("https://uor.foundation/op/Algebraic"),
+                ),
+                ("https://uor.foundation/op/universallyValid",
+                 IndividualValue::Bool(true)),
+                ("https://uor.foundation/op/validityKind",
+                 IndividualValue::IriRef("https://uor.foundation/op/Universal")),
+                ("https://uor.foundation/op/verificationPathNote",
+                 IndividualValue::Str("\u{03c6}(x) = x\u{00b2} + 2\u{03b4}(x) with \u{03c6} = id \u{2192} \u{03b4}(x) = (x \u{2212} x\u{00b2})/2")),
+            ],
+        },
+        // Amendment 53: Ostrowski\u{2013}Archimedean bridge \u{2014} OA_ series (5)
+        Individual {
+            id: "https://uor.foundation/op/OA_1",
+            type_: "https://uor.foundation/op/Identity",
+            label: "OA_1",
+            comment: "Ostrowski product formula at p=2: |2|_2 \u{00b7} \
+                      |2|_\u{221e} = 1. The 2-adic and Archimedean absolute \
+                      values of 2 are multiplicative inverses.",
+            properties: &[
+                ("https://uor.foundation/op/lhs",
+                 IndividualValue::Str("|2|_2 \u{00b7} |2|_\u{221e}")),
+                ("https://uor.foundation/op/rhs",
+                 IndividualValue::Str("1 in Q\u{00d7}")),
+                ("https://uor.foundation/op/forAll",
+                 IndividualValue::Str("p = 2")),
+                (
+                    "https://uor.foundation/op/verificationDomain",
+                    IndividualValue::IriRef("https://uor.foundation/op/ArithmeticValuation"),
+                ),
+                ("https://uor.foundation/op/universallyValid",
+                 IndividualValue::Bool(true)),
+                ("https://uor.foundation/op/validityKind",
+                 IndividualValue::IriRef("https://uor.foundation/op/Universal")),
+                ("https://uor.foundation/op/verificationPathNote",
+                 IndividualValue::Str("Ostrowski classification of absolute values on Q")),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/op/OA_2",
+            type_: "https://uor.foundation/op/Identity",
+            label: "OA_2",
+            comment: "Crossing cost equals ln 2: the Archimedean image of \
+                      one unit of 2-adic valuation, under the product formula, \
+                      is ln 2 nats.",
+            properties: &[
+                ("https://uor.foundation/op/lhs",
+                 IndividualValue::Str("CrossingCost(p=2)")),
+                ("https://uor.foundation/op/rhs",
+                 IndividualValue::Str("ln 2 = \u{2212}ln|2|_2")),
+                ("https://uor.foundation/op/forAll",
+                 IndividualValue::Str("p = 2")),
+                (
+                    "https://uor.foundation/op/verificationDomain",
+                    IndividualValue::IriRef("https://uor.foundation/op/ArithmeticValuation"),
+                ),
+                ("https://uor.foundation/op/universallyValid",
+                 IndividualValue::Bool(true)),
+                ("https://uor.foundation/op/validityKind",
+                 IndividualValue::IriRef("https://uor.foundation/op/Universal")),
+                ("https://uor.foundation/op/verificationPathNote",
+                 IndividualValue::Str("OA_1 \u{2192} |2|_\u{221e} = 2 \u{2192} ln|2|_\u{221e} = ln 2")),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/op/OA_3",
+            type_: "https://uor.foundation/op/Identity",
+            label: "OA_3",
+            comment: "QM_1 grounding: the Landauer cost \u{03b2}* = ln 2 is \
+                      the crossing cost from OA_2, derived from the prime p=2 \
+                      that structures the Witt tower.",
+            properties: &[
+                ("https://uor.foundation/op/lhs",
+                 IndividualValue::Str("\u{03b2}* in Cost_Landauer")),
+                ("https://uor.foundation/op/rhs",
+                 IndividualValue::Str("CrossingCost(p=2)")),
+                ("https://uor.foundation/op/forAll",
+                 IndividualValue::Str("p = 2")),
+                (
+                    "https://uor.foundation/op/verificationDomain",
+                    IndividualValue::IriRef("https://uor.foundation/op/ArithmeticValuation"),
+                ),
+                ("https://uor.foundation/op/universallyValid",
+                 IndividualValue::Bool(true)),
+                ("https://uor.foundation/op/validityKind",
+                 IndividualValue::IriRef("https://uor.foundation/op/Universal")),
+                ("https://uor.foundation/op/verificationPathNote",
+                 IndividualValue::Str("WC_4 \u{2192} OA_1 \u{2192} OA_2 \u{2192} \u{03b2}* = ln 2")),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/op/OA_4",
+            type_: "https://uor.foundation/op/Identity",
+            label: "OA_4",
+            comment: "Born rule bridge (conditional on amplitude rationality): \
+                      P(outcome k) = |\u{03b1}_k|_\u{221e}\u{00b2}, where \
+                      |\u{00b7}|_\u{221e} is the Archimedean image of the \
+                      2-adic amplitude via the product formula.",
+            properties: &[
+                ("https://uor.foundation/op/lhs",
+                 IndividualValue::Str("P(outcome k) = |\u{03b1}_k|_\u{221e}\u{00b2}")),
+                ("https://uor.foundation/op/rhs",
+                 IndividualValue::Str("Archimedean image of 2-adic amplitude")),
+                ("https://uor.foundation/op/forAll",
+                 IndividualValue::Str("rational amplitudes")),
+                (
+                    "https://uor.foundation/op/verificationDomain",
+                    IndividualValue::IriRef("https://uor.foundation/op/ArithmeticValuation"),
+                ),
+                ("https://uor.foundation/op/universallyValid",
+                 IndividualValue::Bool(true)),
+                ("https://uor.foundation/op/validityKind",
+                 IndividualValue::IriRef("https://uor.foundation/op/Universal")),
+                ("https://uor.foundation/op/verificationPathNote",
+                 IndividualValue::Str("Conditional: requires rational fiber amplitudes (schema-level)")),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/op/OA_5",
+            type_: "https://uor.foundation/op/Identity",
+            label: "OA_5",
+            comment: "Entropy per \u{03b4}-level equals the crossing cost: \
+                      each application of the \u{03b4}-operator (division by \
+                      2) costs ln 2 nats in the Archimedean completion, which \
+                      is the per-bit Landauer cost.",
+            properties: &[
+                ("https://uor.foundation/op/lhs",
+                 IndividualValue::Str("Information cost of \u{03b4} (division by 2)")),
+                ("https://uor.foundation/op/rhs",
+                 IndividualValue::Str("ln 2 nats")),
+                ("https://uor.foundation/op/forAll",
+                 IndividualValue::Str("p = 2")),
+                (
+                    "https://uor.foundation/op/verificationDomain",
+                    IndividualValue::IriRef("https://uor.foundation/op/ArithmeticValuation"),
+                ),
+                ("https://uor.foundation/op/universallyValid",
+                 IndividualValue::Bool(true)),
+                ("https://uor.foundation/op/validityKind",
+                 IndividualValue::IriRef("https://uor.foundation/op/Universal")),
+                ("https://uor.foundation/op/verificationPathNote",
+                 IndividualValue::Str("QL_3 (\u{03b2}* = ln 2) + WC_4 (\u{03b4} divides by 2) \u{2192} per-\u{03b4} cost = ln 2")),
             ],
         },
     ]

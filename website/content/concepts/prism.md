@@ -77,12 +77,12 @@ is awaiting or holding a certification.
 
 The Certify stage answers: *has this been verified to the required standard?*
 
-## The 49 Amendments
+## The 53 Amendments
 
-The UOR ontology has evolved through 49 amendments, each adding or refining structure.
+The UOR ontology has evolved through 53 amendments, each adding or refining structure.
 The amendments are not arbitrary patches — each one closes a gap identified through
 conformance testing. The progression from 97 conformance checks (Amendment 24) to
-280 checks (Amendment 49) reflects the tightening of the conformance net around the
+287 checks (Amendment 53) reflects the tightening of the conformance net around the
 PRISM pipeline.
 
 Key milestones:
@@ -94,10 +94,11 @@ Key milestones:
 - Amendments 37–40: Further gap analysis and tooling
 - Amendments 41–44: Quantum level scaling, arbitrary-Q generalization
 - Amendments 45–49: Self-auditing conformance, meta-validation, gap closure, multi-session coordination, conformance release
+- Amendments 50–53: PRISM website refactor, uniform navigation, seven-format artifact suite, Witt–carry formalization
 
 ## Conformance as Truth
 
-The 280 conformance checks are not tests — they are the specification. Every check
+The 287 conformance checks are not tests — they are the specification. Every check
 defines a property that the ontology must have. When a check passes, it is a proof that
 the pipeline is correctly implemented in that dimension.
 

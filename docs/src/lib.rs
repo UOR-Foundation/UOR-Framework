@@ -27,7 +27,7 @@
 //!   concepts/
 //!     ring.html
 //!     content-addressing.html
-//!     ... (22 pages)
+//!     ... (28 pages)
 //!   guides/
 //!     implementing-prism.html
 //!     conformance.html

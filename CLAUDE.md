@@ -49,16 +49,16 @@ Docs/website/conformance binaries accept `PUBLIC_BASE_PATH` env var for URL pref
 
 - **16 namespaces**, assembly order: `u → schema → op → query → resolver → type → partition → observable → homology → cohomology → proof → derivation → trace → cert → morphism → state`
 - **Space classification:** Kernel (`u`, `schema`, `op`), Bridge (10 namespaces), User (`type`, `morphism`, `state`)
-- **213 classes** → 193 traits + 12 enum classes + 1 struct (QuantumLevel)
-- **436 properties** → trait methods (generic over `P: Primitives`)
-- **758 named individuals** → constant modules
-- **12 enum classes:** `MetricAxis`, `GeometricCharacter`, `VerificationDomain`, `ComplexityClass`, `RewriteRule`, `MeasurementUnit`, `CoordinateKind`, `SessionBoundaryType`, `PhaseBoundaryType`, `SaturationPhase`, `AchievabilityStatus`, `ValidityScopeKind`
+- **218 classes** → 204 traits + 14 enum classes (includes QuantumLevel newtype struct)
+- **446 properties** → trait methods (generic over `P: Primitives`)
+- **881 named individuals** → constant modules
+- **14 enum classes:** `MetricAxis`, `GeometricCharacter`, `VerificationDomain`, `ComplexityClass`, `RewriteRule`, `MeasurementUnit`, `CoordinateKind`, `SessionBoundaryType`, `PhaseBoundaryType`, `SaturationPhase`, `AchievabilityStatus`, `ValidityScopeKind`, `ExecutionPolicyKind`, `QuantumLevel`
 
 ## Code generation patterns
 
 - All traits are generic over `P: Primitives` (no hardcoded XSD types)
 - Enum classes are detected by `detect_vocabulary_enum()` and skip trait generation; QuantumLevel is a struct (not enum) but also skips trait generation
-- `object_property_enum_override()` maps 13 ObjectProperties to enum/struct return types
+- `object_property_enum_override()` maps ObjectProperties to enum/struct return types (delegates to `enum_class_names()`)
 - Multi-value IriRef properties on individuals → `&[&str]` slices via `BTreeMap` grouping
 - `RustFile::finish()` trims trailing whitespace to match `cargo fmt`
 - Module declarations in `mod.rs` are sorted alphabetically
