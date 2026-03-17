@@ -477,7 +477,7 @@ pub fn render_citation_page() -> String {
      <code>CITATION.cff</code></a> at the root of the repository.</p>\n\
      <h2>BibTeX</h2>\n\
      <pre><code>@software{uor-framework,\n\
-     \x20 author       = {Flom, Alexander},\n\
+     \x20 author       = {{The UOR Foundation}},\n\
      \x20 title        = {{UOR Framework}},\n\
      \x20 url          = {https://github.com/UOR-Foundation/UOR-Framework},\n\
      \x20 license      = {Apache-2.0},\n\
