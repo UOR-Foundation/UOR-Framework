@@ -557,6 +557,8 @@ fn generate_readme(ontology: &Ontology) -> String {
     format!(
         r#"# UOR Framework
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.19068826.svg)](https://doi.org/10.5281/zenodo.19068826)
+
 The Universal Object Reference (UOR) Framework is a Rust workspace implementing
 the [UOR Foundation](https://uor.foundation/) ontology — a mathematical framework
 for content-addressed, symmetric, multi-metric object spaces with algebraic

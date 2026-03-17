@@ -488,9 +488,10 @@ pub fn render_citation_page() -> String {
      }</code></pre>\n\
      <h2>Zenodo</h2>\n\
      <p>Each tagged release is automatically archived by \
-     <a href=\"https://zenodo.org/\">Zenodo</a>, which mints a persistent DOI. \
-     After the first release, the DOI will be added here and to \
-     <code>CITATION.cff</code>.</p>\n\
+     <a href=\"https://zenodo.org/\">Zenodo</a> with a persistent DOI:</p>\n\
+     <p><a href=\"https://doi.org/10.5281/zenodo.19068826\">\
+     <img src=\"https://zenodo.org/badge/DOI/10.5281/zenodo.19068826.svg\" \
+     alt=\"DOI\"></a></p>\n\
      <h2>GitHub</h2>\n\
      <p>GitHub renders a <strong>Cite this repository</strong> button on the \
      repository page using the <code>CITATION.cff</code> file.</p>"

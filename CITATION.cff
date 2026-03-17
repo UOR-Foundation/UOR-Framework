@@ -4,6 +4,7 @@ title: "UOR Framework"
 type: software
 authors:
   - name: "The UOR Foundation"
+doi: "10.5281/zenodo.19068826"
 repository-code: "https://github.com/UOR-Foundation/UOR-Framework"
 url: "https://uor.foundation/"
 license: Apache-2.0
