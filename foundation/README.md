@@ -5,16 +5,16 @@ typed Rust traits. Import and implement.
 
 ## Contents
 
-- 16 namespaces
-- 234 OWL classes (one trait each)
-- 479 OWL properties (one method each)
-- 939 named individuals (constants and enums)
+- 23 namespaces
+- 310 OWL classes (one trait each)
+- 704 OWL properties (one method each)
+- 1292 named individuals (constants and enums)
 
 ## Quick start
 
 ```toml
 [dependencies]
-uor-foundation = "0.1.0"
+uor-foundation = "0.1.1"
 ```
 
 ```rust

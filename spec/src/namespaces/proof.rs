@@ -6,8 +6,39 @@
 //! Amendment 48 adds 11 proofs: prf_SR_8–10 (multi-session coordination axioms)
 //! and prf_MC_1–8 (derivational scaling theorem proofs).
 //!
-//! Amendment 53 adds 17 proofs: prf_WC_1–12 (Witt-carry bridge) and
-//! prf_OA_1–5 (Ostrowski-Archimedean bridge).
+//! Amendment 53 adds 17 proofs: prf_WC_1\u{2013}12 (Witt-carry bridge) and
+//! prf_OA_1\u{2013}5 (Ostrowski\u{2013}Archimedean bridge).
+//!
+//! Amendment 58 adds 7 proofs: prf_CY_1\u{2013}7 (carry algebra).
+//!
+//! Amendment 59 adds 6 proofs: prf_BM_1\u{2013}6 (named base metrics).
+//!
+//! Amendment 60 adds 8 proofs: prf_GL_1\u{2013}4 (Galois connection) and
+//! prf_NV_1\u{2013}4 (nerve operations).
+//!
+//! Amendment 61 adds 8 proofs: prf_SD_1\u{2013}8 (structural types).
+//!
+//! Amendment 62 adds 18 proofs: prf_DD_1\u{2013}2, prf_PI_1\u{2013}5,
+//! prf_PA_1\u{2013}5, prf_PL_1\u{2013}3, prf_PK_1\u{2013}2, prf_PP_1
+//! (composed operations).
+//!
+//! Amendment 63 adds 16 proofs: prf_PE_1\u{2013}7 (pipeline evaluation),
+//! prf_PM_1\u{2013}7 (machine execution), prf_ER_1\u{2013}2 (execution rules).
+//!
+//! Amendment 64 adds 16 proofs: prf_ER_3\u{2013}4 (execution rules),
+//! prf_EA_1\u{2013}4 (epoch admission), prf_OE_1\u{2013}3 (optimization
+//! equivalences), prf_OE_4a\u{2013}4c (sub-lemmas), prf_CS_1\u{2013}4
+//! (cost semantics).
+//!
+//! Amendment 65 adds 16 proofs: prf_CS_5 (cost bound), prf_FA_1\u{2013}3
+//! (scheduler fairness), prf_SW_1\u{2013}4 (service window), prf_LS_1\u{2013}4
+//! (lease suspension), prf_TJ_1\u{2013}3 (transaction), prf_AP_1\u{2013}3
+//! (approximation).
+//!
+//! Amendment 66 adds 8 proofs: prf_EC_1\u{2013}5, prf_EC_4a\u{2013}4c
+//! (convergence tower).
+//!
+//! Amendment 67 adds 7 proofs: prf_DA_1\u{2013}7 (division algebras).
 //!
 //! **Space classification:** `bridge` — kernel-produced, user-consumed.
 
@@ -9659,6 +9690,2734 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/provesIdentity",
                     IndividualValue::IriRef("https://uor.foundation/op/MR_4"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        // ── Amendment 58: Carry Algebra proofs ──────────────────────────
+        Individual {
+            id: "https://uor.foundation/proof/prf_CY_1",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_CY_1",
+            comment: "Axiomatic derivation of CY_1: carry generation condition.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/CY_1"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_CY_2",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_CY_2",
+            comment: "Axiomatic derivation of CY_2: carry propagation condition.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/CY_2"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_CY_3",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_CY_3",
+            comment: "Axiomatic derivation of CY_3: carry kill condition.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/CY_3"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_CY_4",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_CY_4",
+            comment: "Axiomatic derivation of CY_4: d_\u{0394} as \
+                      carry\u{2013}Hamming discrepancy.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/CY_4"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_CY_5",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_CY_5",
+            comment: "Axiomatic derivation of CY_5: optimal encoding theorem.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/CY_5"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_CY_6",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_CY_6",
+            comment: "Axiomatic derivation of CY_6: fiber ordering theorem.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/CY_6"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_CY_7",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_CY_7",
+            comment: "Axiomatic derivation of CY_7: carry lookahead via \
+                      prefix computation.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/CY_7"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        // ── Amendment 59: Named Base Metrics proofs ─────────────────────
+        Individual {
+            id: "https://uor.foundation/proof/prf_BM_1",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_BM_1",
+            comment: "Axiomatic derivation of BM_1: saturation metric definition.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/BM_1"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_BM_2",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_BM_2",
+            comment: "Axiomatic derivation of BM_2: Euler characteristic formula.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/BM_2"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_BM_3",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_BM_3",
+            comment: "Axiomatic derivation of BM_3: index theorem linking all six metrics.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/BM_3"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_BM_4",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_BM_4",
+            comment: "Axiomatic derivation of BM_4: Jacobian vanishes on pinned fibers.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/BM_4"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_BM_5",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_BM_5",
+            comment: "Axiomatic derivation of BM_5: d_delta equals Witt defect.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/BM_5"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_BM_6",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_BM_6",
+            comment: "Axiomatic derivation of BM_6: metric composition tower.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/BM_6"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        // ── Amendment 60: Galois Connection proofs ────────────────────────
+        Individual {
+            id: "https://uor.foundation/proof/prf_GL_1",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_GL_1",
+            comment: "Axiomatic derivation of GL_1: \u{03c3} as lower adjoint.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/GL_1"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_GL_2",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_GL_2",
+            comment: "Axiomatic derivation of GL_2: r as complement of upper adjoint.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/GL_2"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_GL_3",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_GL_3",
+            comment: "Axiomatic derivation of GL_3: completeness as Galois fixpoint.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/GL_3"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_GL_4",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_GL_4",
+            comment: "Axiomatic derivation of GL_4: Galois order reversal.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/GL_4"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        // ── Amendment 60: Nerve Operations proofs ─────────────────────────
+        Individual {
+            id: "https://uor.foundation/proof/prf_NV_1",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_NV_1",
+            comment: "Axiomatic derivation of NV_1: nerve additivity for disjoint domains.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/NV_1"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_NV_2",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_NV_2",
+            comment: "Axiomatic derivation of NV_2: Mayer\u{2013}Vietoris for constraint nerves.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/NV_2"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_NV_3",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_NV_3",
+            comment: "Axiomatic derivation of NV_3: Betti number bounded change.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/NV_3"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_NV_4",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_NV_4",
+            comment: "Axiomatic derivation of NV_4: accumulation monotonicity.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/NV_4"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        // ── Amendment 61: Structural Type proofs ─────────────────────────
+        Individual {
+            id: "https://uor.foundation/proof/prf_SD_1",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_SD_1",
+            comment: "Axiomatic derivation of SD_1: scalar grounding identity.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/SD_1"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_SD_2",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_SD_2",
+            comment: "Axiomatic derivation of SD_2: symbol grounding identity.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/SD_2"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_SD_3",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_SD_3",
+            comment: "Axiomatic derivation of SD_3: sequence free monoid identity.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/SD_3"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_SD_4",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_SD_4",
+            comment: "Axiomatic derivation of SD_4: tuple fiber additivity.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/SD_4"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_SD_5",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_SD_5",
+            comment: "Axiomatic derivation of SD_5: graph nerve equality.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/SD_5"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_SD_6",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_SD_6",
+            comment: "Axiomatic derivation of SD_6: set permutation invariance.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/SD_6"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_SD_7",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_SD_7",
+            comment: "Axiomatic derivation of SD_7: tree acyclicity constraint.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/SD_7"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_SD_8",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_SD_8",
+            comment: "Axiomatic derivation of SD_8: table functorial decomposition.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/SD_8"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        // Amendment 62: Composed Operations proofs (18)
+        Individual {
+            id: "https://uor.foundation/proof/prf_DD_1",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_DD_1",
+            comment: "Axiomatic derivation of DD_1: dispatch determinism.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/DD_1"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_DD_2",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_DD_2",
+            comment: "Axiomatic derivation of DD_2: dispatch coverage.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/DD_2"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_PI_1",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_PI_1",
+            comment: "Axiomatic derivation of PI_1: inference idempotence.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/PI_1"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_PI_2",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_PI_2",
+            comment: "Axiomatic derivation of PI_2: inference soundness.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/PI_2"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_PI_3",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_PI_3",
+            comment: "Axiomatic derivation of PI_3: inference composition.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/PI_3"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_PI_4",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_PI_4",
+            comment: "Axiomatic derivation of PI_4: inference complexity.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/PI_4"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_PI_5",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_PI_5",
+            comment: "Axiomatic derivation of PI_5: inference coherence.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/PI_5"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_PA_1",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_PA_1",
+            comment: "Axiomatic derivation of PA_1: accumulation permutation invariance.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/PA_1"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_PA_2",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_PA_2",
+            comment: "Axiomatic derivation of PA_2: accumulation monotonicity.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/PA_2"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_PA_3",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_PA_3",
+            comment: "Axiomatic derivation of PA_3: accumulation soundness.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/PA_3"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_PA_4",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_PA_4",
+            comment: "Axiomatic derivation of PA_4: accumulation base preservation.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/PA_4"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_PA_5",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_PA_5",
+            comment: "Axiomatic derivation of PA_5: accumulation identity element.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/PA_5"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_PL_1",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_PL_1",
+            comment: "Axiomatic derivation of PL_1: lease disjointness.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/PL_1"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_PL_2",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_PL_2",
+            comment: "Axiomatic derivation of PL_2: lease conservation.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/PL_2"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_PL_3",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_PL_3",
+            comment: "Axiomatic derivation of PL_3: lease coverage.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/PL_3"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_PK_1",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_PK_1",
+            comment: "Axiomatic derivation of PK_1: composition validity.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/PK_1"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_PK_2",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_PK_2",
+            comment: "Axiomatic derivation of PK_2: distributed resolution.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/PK_2"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_PP_1",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_PP_1",
+            comment: "Axiomatic derivation of PP_1: pipeline unification.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/PP_1"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        // Amendment 63: Cascade Core proofs (16)
+        Individual {
+            id: "https://uor.foundation/proof/prf_PE_1",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_PE_1",
+            comment: "Axiomatic derivation of PE_1: state initialization.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/PE_1"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_PE_2",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_PE_2",
+            comment: "Axiomatic derivation of PE_2: resolver dispatch.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/PE_2"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_PE_3",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_PE_3",
+            comment: "Axiomatic derivation of PE_3: ring address grounding.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/PE_3"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_PE_4",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_PE_4",
+            comment: "Axiomatic derivation of PE_4: constraint resolution.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/PE_4"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_PE_5",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_PE_5",
+            comment: "Axiomatic derivation of PE_5: consistent accumulation.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/PE_5"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_PE_6",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_PE_6",
+            comment: "Axiomatic derivation of PE_6: coherent extraction.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/PE_6"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_PE_7",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_PE_7",
+            comment: "Axiomatic derivation of PE_7: full pipeline composition.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/PE_7"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_PM_1",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_PM_1",
+            comment: "Axiomatic derivation of PM_1: phase rotation.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/PM_1"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_PM_2",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_PM_2",
+            comment: "Axiomatic derivation of PM_2: phase gate check.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/PM_2"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_PM_3",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_PM_3",
+            comment: "Axiomatic derivation of PM_3: conjugate rollback.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/PM_3"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_PM_4",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_PM_4",
+            comment: "Axiomatic derivation of PM_4: rollback involution.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/PM_4"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_PM_5",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_PM_5",
+            comment: "Axiomatic derivation of PM_5: epoch saturation preservation.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/PM_5"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_PM_6",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_PM_6",
+            comment: "Axiomatic derivation of PM_6: service window context.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/PM_6"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_PM_7",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_PM_7",
+            comment: "Axiomatic derivation of PM_7: machine determinism.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/PM_7"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_ER_1",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_ER_1",
+            comment: "Axiomatic derivation of ER_1: guard satisfaction.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/ER_1"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_ER_2",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_ER_2",
+            comment: "Axiomatic derivation of ER_2: effect atomicity.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/ER_2"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        // Amendment 64: Cascade Expansion proofs (16)
+        Individual {
+            id: "https://uor.foundation/proof/prf_ER_3",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_ER_3",
+            comment: "Axiomatic derivation of ER_3: guard purity.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/ER_3"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_ER_4",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_ER_4",
+            comment: "Axiomatic derivation of ER_4: intra-stage commutativity.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/ER_4"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_EA_1",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_EA_1",
+            comment: "Axiomatic derivation of EA_1: epoch boundary reset.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/EA_1"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_EA_2",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_EA_2",
+            comment: "Axiomatic derivation of EA_2: saturation monotonicity.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/EA_2"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_EA_3",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_EA_3",
+            comment: "Axiomatic derivation of EA_3: service window bound.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/EA_3"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_EA_4",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_EA_4",
+            comment: "Axiomatic derivation of EA_4: epoch admission exclusivity.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/EA_4"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_OE_1",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_OE_1",
+            comment: "Axiomatic derivation of OE_1: stage fusion.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/OE_1"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_OE_2",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_OE_2",
+            comment: "Axiomatic derivation of OE_2: effect commutativity.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/OE_2"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_OE_3",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_OE_3",
+            comment: "Axiomatic derivation of OE_3: lease parallelism.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/OE_3"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_OE_4a",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_OE_4a",
+            comment: "Axiomatic derivation of OE_4a: fusion semantics preservation.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/OE_4a"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_OE_4b",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_OE_4b",
+            comment: "Axiomatic derivation of OE_4b: commutation outcome preservation.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/OE_4b"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_OE_4c",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_OE_4c",
+            comment: "Axiomatic derivation of OE_4c: parallelism coverage preservation.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/OE_4c"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_CS_1",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_CS_1",
+            comment: "Axiomatic derivation of CS_1: bounded stage cost.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/CS_1"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_CS_2",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_CS_2",
+            comment: "Axiomatic derivation of CS_2: additive pipeline cost.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/CS_2"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_CS_3",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_CS_3",
+            comment: "Axiomatic derivation of CS_3: bounded rollback cost.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/CS_3"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_CS_4",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_CS_4",
+            comment: "Axiomatic derivation of CS_4: constant preflight cost.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/CS_4"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        // Amendment 65: Cascade Completion proofs (16)
+        Individual {
+            id: "https://uor.foundation/proof/prf_CS_5",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_CS_5",
+            comment: "Axiomatic derivation of CS_5: total cascade cost bound.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/CS_5"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_FA_1",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_FA_1",
+            comment: "Axiomatic derivation of FA_1: query liveness.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/FA_1"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_FA_2",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_FA_2",
+            comment: "Axiomatic derivation of FA_2: no starvation.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/FA_2"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_FA_3",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_FA_3",
+            comment: "Axiomatic derivation of FA_3: fair lease allocation.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/FA_3"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_SW_1",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_SW_1",
+            comment: "Axiomatic derivation of SW_1: memory boundedness.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/SW_1"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_SW_2",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_SW_2",
+            comment: "Axiomatic derivation of SW_2: saturation invariance.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/SW_2"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_SW_3",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_SW_3",
+            comment: "Axiomatic derivation of SW_3: eviction releases resources.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/SW_3"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_SW_4",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_SW_4",
+            comment: "Axiomatic derivation of SW_4: non-empty window.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/SW_4"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_LS_1",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_LS_1",
+            comment: "Axiomatic derivation of LS_1: suspension preserves pinned state.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/LS_1"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_LS_2",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_LS_2",
+            comment: "Axiomatic derivation of LS_2: expiry releases resources.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/LS_2"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_LS_3",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_LS_3",
+            comment: "Axiomatic derivation of LS_3: checkpoint restore idempotence.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/LS_3"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_LS_4",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_LS_4",
+            comment: "Axiomatic derivation of LS_4: suspend-resume round-trip.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/LS_4"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_TJ_1",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_TJ_1",
+            comment: "Axiomatic derivation of TJ_1: AllOrNothing rollback.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/TJ_1"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_TJ_2",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_TJ_2",
+            comment: "Axiomatic derivation of TJ_2: BestEffort partial commit.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/TJ_2"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_TJ_3",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_TJ_3",
+            comment: "Axiomatic derivation of TJ_3: epoch-scoped atomicity.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/TJ_3"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_AP_1",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_AP_1",
+            comment: "Axiomatic derivation of AP_1: saturation monotonicity.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/AP_1"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_AP_2",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_AP_2",
+            comment: "Axiomatic derivation of AP_2: quality improvement.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/AP_2"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_AP_3",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_AP_3",
+            comment: "Axiomatic derivation of AP_3: deferred query liveness.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/AP_3"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        // Amendment 66: Convergence Tower (EC_)
+        Individual {
+            id: "https://uor.foundation/proof/prf_EC_1",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_EC_1",
+            comment: "Axiomatic derivation of EC_1: phase half-turn convergence.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/EC_1"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_EC_2",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_EC_2",
+            comment: "Axiomatic derivation of EC_2: conjugate involution.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/EC_2"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_EC_3",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_EC_3",
+            comment: "Axiomatic derivation of EC_3: pairwise commutator convergence.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/EC_3"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_EC_4",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_EC_4",
+            comment: "Axiomatic derivation of EC_4: triple associator convergence.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/EC_4"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_EC_4a",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_EC_4a",
+            comment: "Axiomatic derivation of EC_4a: associator monotonicity.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/EC_4a"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_EC_4b",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_EC_4b",
+            comment: "Axiomatic derivation of EC_4b: associator finiteness.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/EC_4b"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_EC_4c",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_EC_4c",
+            comment: "Axiomatic derivation of EC_4c: vanishing implies associativity.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/EC_4c"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_EC_5",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_EC_5",
+            comment: "Axiomatic derivation of EC_5: Adams termination.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/EC_5"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        // ── Amendment 67: Division Algebras (prf_DA_) ───────────────────
+        Individual {
+            id: "https://uor.foundation/proof/prf_DA_1",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_DA_1",
+            comment: "Axiomatic derivation of DA_1: Cayley-Dickson R\u{2192}C.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/DA_1"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_DA_2",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_DA_2",
+            comment: "Axiomatic derivation of DA_2: Cayley-Dickson C\u{2192}H.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/DA_2"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_DA_3",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_DA_3",
+            comment: "Axiomatic derivation of DA_3: Cayley-Dickson H\u{2192}O.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/DA_3"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_DA_4",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_DA_4",
+            comment: "Axiomatic derivation of DA_4: Adams dimension restriction.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/DA_4"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_DA_5",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_DA_5",
+            comment: "Axiomatic derivation of DA_5: convergence-level algebra \
+                      correspondence.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/DA_5"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_DA_6",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_DA_6",
+            comment: "Axiomatic derivation of DA_6: commutator-commutativity \
+                      equivalence.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/DA_6"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_DA_7",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_DA_7",
+            comment: "Axiomatic derivation of DA_7: associator-associativity \
+                      equivalence.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/DA_7"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        // ── Amendment 68: Interaction Algebra proofs (IN_, AS_) ──────────
+        Individual {
+            id: "https://uor.foundation/proof/prf_IN_1",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_IN_1",
+            comment: "Axiomatic derivation of IN_1: interaction cost.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/IN_1"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_IN_2",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_IN_2",
+            comment: "Axiomatic derivation of IN_2: disjoint leases commute.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/IN_2"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_IN_3",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_IN_3",
+            comment: "Axiomatic derivation of IN_3: shared fibers nonzero \
+                      commutator.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/IN_3"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_IN_4",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_IN_4",
+            comment: "Axiomatic derivation of IN_4: negotiation convergence.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/IN_4"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_IN_5",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_IN_5",
+            comment: "Axiomatic derivation of IN_5: commutative subspace \
+                      selection.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/IN_5"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_IN_6",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_IN_6",
+            comment: "Axiomatic derivation of IN_6: pairwise outcome space.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/IN_6"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_IN_7",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_IN_7",
+            comment: "Axiomatic derivation of IN_7: associative subalgebra \
+                      selection.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/IN_7"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_IN_8",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_IN_8",
+            comment: "Axiomatic derivation of IN_8: nerve Betti coupling \
+                      bound.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/IN_8"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_IN_9",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_IN_9",
+            comment: "Axiomatic derivation of IN_9: Betti-disagreement \
+                      associator bound.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/IN_9"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_AS_1",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_AS_1",
+            comment: "Axiomatic derivation of AS_1: \u{03b4}-\u{03b9}-\u{03ba} \
+                      non-associativity.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/AS_1"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_AS_2",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_AS_2",
+            comment: "Axiomatic derivation of AS_2: \u{03b9}-\u{03b1}-\u{03bb} \
+                      non-associativity.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/AS_2"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_AS_3",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_AS_3",
+            comment: "Axiomatic derivation of AS_3: \u{03bb}-\u{03ba}-\u{03b4} \
+                      non-associativity.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/AS_3"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_AS_4",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_AS_4",
+            comment: "Axiomatic derivation of AS_4: non-associativity root \
+                      cause.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/AS_4"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        // ── Amendment 69: Monoidal Composition proofs (MO_) ──────────────
+        Individual {
+            id: "https://uor.foundation/proof/prf_MO_1",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_MO_1",
+            comment: "Axiomatic derivation of MO_1: monoidal unit law.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/MO_1"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_MO_2",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_MO_2",
+            comment: "Axiomatic derivation of MO_2: monoidal associativity.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/MO_2"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_MO_3",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_MO_3",
+            comment: "Axiomatic derivation of MO_3: certificate composition.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/MO_3"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_MO_4",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_MO_4",
+            comment: "Axiomatic derivation of MO_4: saturation monotonicity.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/MO_4"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_MO_5",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_MO_5",
+            comment: "Axiomatic derivation of MO_5: residual monotonicity.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/MO_5"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        // ── Amendment 70: Operad Composition proofs (OP_) ───────────────────
+        Individual {
+            id: "https://uor.foundation/proof/prf_OP_1",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_OP_1",
+            comment: "Axiomatic derivation of OP_1: fiber additivity.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/OP_1"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_OP_2",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_OP_2",
+            comment: "Axiomatic derivation of OP_2: grounding distributivity.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/OP_2"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_OP_3",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_OP_3",
+            comment: "Axiomatic derivation of OP_3: d_\u{0394} decomposition.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/OP_3"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_OP_4",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_OP_4",
+            comment: "Axiomatic derivation of OP_4: tabular data decomposition.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/OP_4"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_OP_5",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_OP_5",
+            comment: "Axiomatic derivation of OP_5: hierarchical data structure.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/OP_5"),
                 ),
                 (
                     "https://uor.foundation/proof/universalScope",

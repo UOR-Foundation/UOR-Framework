@@ -5,7 +5,8 @@
 use core::fmt;
 
 /// Kernel/user/bridge classification for each namespace module.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[repr(u8)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum Space {
     /// Immutable kernel-space: compiled into ROM.
     Kernel,
@@ -26,7 +27,8 @@ impl fmt::Display for Space {
 }
 
 /// The 10 primitive operations defined in the UOR Foundation.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[repr(u8)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum PrimitiveOp {
     /// Ring reflection: neg(x) = (-x) mod 2^n. One of the two generators of the dihedral group D_{2^n}. neg(neg(x)) = x (involution property).
     Neg,
@@ -68,7 +70,8 @@ impl fmt::Display for PrimitiveOp {
 }
 
 /// The three metric axes in the UOR tri-metric classification.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[repr(u8)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum MetricAxis {
     /// The vertical (ring/additive) metric axis. Constraints on this axis operate through ring arithmetic: residue classes, divisibility, and additive structure.
     Vertical,
@@ -89,7 +92,8 @@ impl fmt::Display for MetricAxis {
 }
 
 /// The state of a fiber coordinate: pinned or free.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[repr(u8)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum FiberState {
     /// Fiber is determined by a constraint.
     Pinned,
@@ -107,7 +111,8 @@ impl fmt::Display for FiberState {
 }
 
 /// The geometric character of an operation.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[repr(u8)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum GeometricCharacter {
     /// Reflection through the origin of the additive ring: neg(x) = -x mod 2^n. One of the two generators of D_{2^n}.
     RingReflection,
@@ -127,6 +132,16 @@ pub enum GeometricCharacter {
     HypercubeProjection,
     /// Join on the hypercube lattice: or(x,y) = x ∨ y. Idempotent; dual to projection.
     HypercubeJoin,
+    /// Geometric character of dispatch: constraint-guided selection over the resolver registry lattice.
+    ConstraintSelection,
+    /// Geometric character of inference: traversal through the φ-pipeline resolution graph P ∘ Π ∘ G.
+    ResolutionTraversal,
+    /// Geometric character of accumulation: progressive pinning of fiber states in the context lattice.
+    FiberPinning,
+    /// Geometric character of lease partition: splitting a shared context into disjoint fiber-set leases.
+    FiberPartition,
+    /// Geometric character of session composition: merging disjoint lease sessions into a unified resolution context.
+    SessionMerge,
 }
 
 impl fmt::Display for GeometricCharacter {
@@ -141,12 +156,18 @@ impl fmt::Display for GeometricCharacter {
             Self::HypercubeTranslation => f.write_str("hypercube_translation"),
             Self::HypercubeProjection => f.write_str("hypercube_projection"),
             Self::HypercubeJoin => f.write_str("hypercube_join"),
+            Self::ConstraintSelection => f.write_str("constraint_selection"),
+            Self::ResolutionTraversal => f.write_str("resolution_traversal"),
+            Self::FiberPinning => f.write_str("fiber_pinning"),
+            Self::FiberPartition => f.write_str("fiber_partition"),
+            Self::SessionMerge => f.write_str("session_merge"),
         }
     }
 }
 
 /// The mathematical domain in which an identity is established.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[repr(u8)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum VerificationDomain {
     /// Established by exhaustive traversal of R_n. Valid for all identities where the ring is finite.
     Enumerative,
@@ -170,6 +191,8 @@ pub enum VerificationDomain {
     QuantumThermodynamic,
     /// Established by number-theoretic valuation arguments including p-adic absolute values, the Ostrowski product formula, and the arithmetic of global fields. Covers identities grounded in the product formula |x|_p · |x|_∞ = 1 and the Witt–Ostrowski derivation chain.
     ArithmeticValuation,
+    /// Verification domain for composed operation identities — algebraic properties of operator compositions including dispatch, inference, accumulation, lease, and session composition operations.
+    ComposedAlgebraic,
 }
 
 impl fmt::Display for VerificationDomain {
@@ -186,12 +209,14 @@ impl fmt::Display for VerificationDomain {
             Self::SuperpositionDomain => f.write_str("superposition_domain"),
             Self::QuantumThermodynamic => f.write_str("quantum_thermodynamic"),
             Self::ArithmeticValuation => f.write_str("arithmetic_valuation"),
+            Self::ComposedAlgebraic => f.write_str("composed_algebraic"),
         }
     }
 }
 
 /// The computational complexity classification of a resolver.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[repr(u8)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum ComplexityClass {
     /// O(1) complexity — the resolver runs in constant time regardless of ring size.
     Constant,
@@ -215,7 +240,8 @@ impl fmt::Display for ComplexityClass {
 }
 
 /// A named rewrite rule used in term rewriting derivations.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[repr(u8)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum RewriteRule {
     /// The rewrite rule applying the critical identity: neg(bnot(x)) → succ(x). Grounded in op:criticalIdentity.
     CriticalIdentity,
@@ -245,7 +271,8 @@ impl fmt::Display for RewriteRule {
 }
 
 /// A unit of measurement for observable quantities.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[repr(u8)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum MeasurementUnit {
     /// Information-theoretic unit: the measurement is in bits (e.g., Hamming weight, entropy).
     Bits,
@@ -269,7 +296,8 @@ impl fmt::Display for MeasurementUnit {
 }
 
 /// A classification of coordinate types for coordinate queries.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[repr(u8)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum CoordinateKind {
     /// The stratum coordinate: the layer position of a datum within the ring's stratification.
     Stratum,
@@ -290,7 +318,8 @@ impl fmt::Display for CoordinateKind {
 }
 
 /// The reason type for a session context-reset boundary.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[repr(u8)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum SessionBoundaryType {
     /// The caller explicitly requested a context reset. All accumulated bindings are discarded.
     ExplicitReset,
@@ -311,7 +340,8 @@ impl fmt::Display for SessionBoundaryType {
 }
 
 /// A classification of phase boundary in the catastrophe diagram.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[repr(u8)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum PhaseBoundaryType {
     /// A phase boundary where g divides 2^n − 1, meaning g is a period of the multiplicative structure of R_n.
     Period,
@@ -329,7 +359,8 @@ impl fmt::Display for PhaseBoundaryType {
 }
 
 /// The phase of context saturation towards the ground state.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[repr(u8)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum SaturationPhase {
     /// The context has σ = 0: no bindings accumulated, all fibers are free. The initial phase of every session.
     Unsaturated,
@@ -350,7 +381,8 @@ impl fmt::Display for SaturationPhase {
 }
 
 /// Whether a signature is achievable or forbidden in the morphospace.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[repr(u8)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum AchievabilityStatus {
     /// The signature has been empirically verified as achievable at some quantum level by an EmpiricalVerification record.
     Achievable,
@@ -368,7 +400,8 @@ impl fmt::Display for AchievabilityStatus {
 }
 
 /// The scope of validity for an identity across quantum levels.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[repr(u8)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum ValidityScopeKind {
     /// Holds for all k in N. No minimum k constraint.
     Universal,
@@ -392,7 +425,8 @@ impl fmt::Display for ValidityScopeKind {
 }
 
 /// A typed controlled vocabulary for ExecutionPolicy scheduling strategies.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[repr(u8)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum ExecutionPolicyKind {
     /// Process queries in arrival order. The implicit pre-Amendment 48 behavior.
     FifoPolicy,
@@ -416,7 +450,8 @@ impl fmt::Display for ExecutionPolicyKind {
 }
 
 /// The modality of a proof: computation (exhaustive verification at a specific quantum level) or axiomatic (derivation from ring axioms).
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[repr(u8)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum ProofModality {
     /// A proof confirmed by exhaustive execution over R_n at a specific quantum level.
     Computation,

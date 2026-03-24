@@ -27,6 +27,8 @@ pub fn to_json_ld(ontology: &Ontology) -> Value {
 
 fn build_context(ontology: &Ontology) -> Value {
     let mut ctx = Map::new();
+    // JSON-LD 1.1 processing mode
+    ctx.insert("@version".to_owned(), json!(1.1));
     // Standard semantic web prefixes
     ctx.insert("owl".to_owned(), json!("http://www.w3.org/2002/07/owl#"));
     ctx.insert(
@@ -296,6 +298,20 @@ mod tests {
         // root ontology + annotation property + 16 ns declarations +
         // 123 classes + 229 properties + 269 individuals >= 639
         assert!(graph.len() >= 639, "graph has {} nodes", graph.len());
+    }
+
+    #[test]
+    fn context_has_version_1_1() {
+        let ontology = Ontology::full();
+        let json = to_json_ld(ontology);
+        let version = json["@context"]["@version"]
+            .as_f64()
+            .expect("@version must be a number");
+        assert!(
+            (version - 1.1).abs() < f64::EPSILON,
+            "@version should be 1.1, got {}",
+            version
+        );
     }
 
     #[test]

@@ -125,7 +125,7 @@ fn build_class_def(class: &crate::model::Class, ontology: &Ontology) -> Value {
             .map(|iri| {
                 json!({"$ref": format!(
                     "#/$defs/{}",
-                    iri_to_qualified_name(iri, ontology)
+                    ref_escape(&iri_to_qualified_name(iri, ontology))
                 )})
             })
             .collect();
@@ -178,7 +178,7 @@ fn range_to_schema(range: &str, ontology: &Ontology) -> Value {
             // UOR class IRI → $ref with qualified name
             json!({"$ref": format!(
                 "#/$defs/{}",
-                iri_to_qualified_name(range, ontology)
+                ref_escape(&iri_to_qualified_name(range, ontology))
             )})
         }
     }
@@ -210,6 +210,15 @@ fn iri_to_qualified_name(iri: &str, ontology: &Ontology) -> String {
     }
     // Fallback: just use local name.
     local_name(iri).to_owned()
+}
+
+/// Escapes a `$defs` key for use inside a JSON Pointer `$ref`.
+///
+/// Per RFC 6901, `/` is the token delimiter and must be escaped as `~1`.
+/// The key `"op/Identity"` becomes `"op~1Identity"` in the `$ref` path
+/// `"#/$defs/op~1Identity"`.
+fn ref_escape(key: &str) -> String {
+    key.replace('~', "~0").replace('/', "~1")
 }
 
 /// Extracts the local name (part after the last `/`) from a full IRI.
@@ -297,6 +306,48 @@ mod tests {
             defs.contains_key("morphism/Identity"),
             "Missing morphism/Identity"
         );
+    }
+
+    #[test]
+    fn all_refs_resolve() {
+        let ontology = Ontology::full();
+        let schema = to_json_schema(ontology);
+        let defs = schema["$defs"].as_object().expect("$defs must be object");
+        let mut refs: Vec<String> = Vec::new();
+        collect_refs(&schema, &mut refs);
+        assert!(!refs.is_empty(), "Schema should contain at least one $ref");
+        for r in &refs {
+            let escaped_key = r
+                .strip_prefix("#/$defs/")
+                .unwrap_or_else(|| panic!("Unexpected $ref format: {}", r));
+            // Unescape JSON Pointer per RFC 6901: ~1 -> /, ~0 -> ~
+            let key = escaped_key.replace("~1", "/").replace("~0", "~");
+            assert!(
+                defs.contains_key(&key),
+                "$ref '{}' resolves to key '{}' which does not exist in $defs",
+                r,
+                key
+            );
+        }
+    }
+
+    fn collect_refs(value: &Value, refs: &mut Vec<String>) {
+        match value {
+            Value::Object(map) => {
+                if let Some(Value::String(r)) = map.get("$ref") {
+                    refs.push(r.clone());
+                }
+                for v in map.values() {
+                    collect_refs(v, refs);
+                }
+            }
+            Value::Array(arr) => {
+                for v in arr {
+                    collect_refs(v, refs);
+                }
+            }
+            _ => {}
+        }
     }
 
     #[test]

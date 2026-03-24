@@ -286,9 +286,15 @@ fn generate_property_method(
                             let _ = writeln!(f.buf, "    fn {method_name}(&self) -> {t};");
                         }
                     } else if xsd_is_unsized(prop.range) {
-                        // Non-functional unsized: can't have &[str], use iterator count instead
-                        // Emit a count method and an indexed getter
+                        // Non-functional unsized: can't have &[str], emit count + indexed getter
                         let _ = writeln!(f.buf, "    fn {method_name}_count(&self) -> usize;");
+                        f.indented_doc_comment(&format!(
+                            "Returns the item at `index`. Must satisfy `index < self.{method_name}_count()`."
+                        ));
+                        let _ = writeln!(
+                            f.buf,
+                            "    fn {method_name}_at(&self, index: usize) -> &{t};"
+                        );
                     } else {
                         // Non-functional sized: return slice
                         let _ = writeln!(f.buf, "    fn {method_name}(&self) -> &[{t}];");
@@ -321,8 +327,15 @@ fn generate_property_method(
                 if prop.functional {
                     let _ = writeln!(f.buf, "    fn {method_name}(&self) -> &P::String;");
                 } else {
-                    // Non-functional unsized: emit count method
+                    // Non-functional unsized: emit count + indexed getter
                     let _ = writeln!(f.buf, "    fn {method_name}_count(&self) -> usize;");
+                    f.indented_doc_comment(&format!(
+                        "Returns the item at `index`. Must satisfy `index < self.{method_name}_count()`."
+                    ));
+                    let _ = writeln!(
+                        f.buf,
+                        "    fn {method_name}_at(&self, index: usize) -> &P::String;"
+                    );
                 }
             } else {
                 // Generate associated type + method

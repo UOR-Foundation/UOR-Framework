@@ -1,0 +1,115 @@
+//! `operad/` namespace — Operad composition.
+//!
+//! The `operad/` namespace formalizes structural type nesting via operad
+//! composition. Governs how types compose: Table(Tuple(Sequence(Symbol(...)))).
+//!
+//! - **Amendment 70**: 2 classes, 6 properties
+//!
+//! **Space classification:** `kernel` — immutable algebra.
+
+use crate::model::iris::*;
+use crate::model::{Class, Individual, Namespace, NamespaceModule, Property, PropertyKind, Space};
+
+/// Returns the `operad/` namespace module.
+#[must_use]
+pub fn module() -> NamespaceModule {
+    NamespaceModule {
+        namespace: Namespace {
+            prefix: "operad",
+            iri: NS_OPERAD,
+            label: "UOR Operad Composition",
+            comment: "Structural type nesting via operad composition. Governs \
+                      how types compose: Table(Tuple(Sequence(Symbol(...)))).",
+            space: Space::Kernel,
+            imports: &[NS_TYPE, NS_CARRY],
+        },
+        classes: classes(),
+        properties: properties(),
+        individuals: individuals(),
+    }
+}
+
+fn classes() -> Vec<Class> {
+    vec![
+        Class {
+            id: "https://uor.foundation/operad/StructuralOperad",
+            label: "StructuralOperad",
+            comment: "The composition structure on the eight structural types. \
+                      Governs how types nest.",
+            subclass_of: &[OWL_THING],
+            disjoint_with: &[],
+        },
+        Class {
+            id: "https://uor.foundation/operad/OperadComposition",
+            label: "OperadComposition",
+            comment: "A specific nesting: outer type F applied to inner type G.",
+            subclass_of: &[OWL_THING],
+            disjoint_with: &[],
+        },
+    ]
+}
+
+fn properties() -> Vec<Property> {
+    vec![
+        // StructuralOperad property
+        Property {
+            id: "https://uor.foundation/operad/operadDescription",
+            label: "operadDescription",
+            comment: "Description of the operad composition structure.",
+            kind: PropertyKind::Datatype,
+            functional: true,
+            domain: Some("https://uor.foundation/operad/StructuralOperad"),
+            range: XSD_STRING,
+        },
+        // OperadComposition properties
+        Property {
+            id: "https://uor.foundation/operad/outerType",
+            label: "outerType",
+            comment: "The outer type F in the nesting F(G).",
+            kind: PropertyKind::Datatype,
+            functional: true,
+            domain: Some("https://uor.foundation/operad/OperadComposition"),
+            range: XSD_STRING,
+        },
+        Property {
+            id: "https://uor.foundation/operad/innerType",
+            label: "innerType",
+            comment: "The inner type G in the nesting F(G).",
+            kind: PropertyKind::Datatype,
+            functional: true,
+            domain: Some("https://uor.foundation/operad/OperadComposition"),
+            range: XSD_STRING,
+        },
+        Property {
+            id: "https://uor.foundation/operad/composedType",
+            label: "composedType",
+            comment: "The resulting composed type F(G).",
+            kind: PropertyKind::Datatype,
+            functional: true,
+            domain: Some("https://uor.foundation/operad/OperadComposition"),
+            range: XSD_STRING,
+        },
+        Property {
+            id: "https://uor.foundation/operad/composedFiberCount",
+            label: "composedFiberCount",
+            comment: "Fiber count of the composed type F(G).",
+            kind: PropertyKind::Datatype,
+            functional: true,
+            domain: Some("https://uor.foundation/operad/OperadComposition"),
+            range: XSD_STRING,
+        },
+        Property {
+            id: "https://uor.foundation/operad/composedGrounding",
+            label: "composedGrounding",
+            comment: "Grounding of the composed type F(G).",
+            kind: PropertyKind::Datatype,
+            functional: true,
+            domain: Some("https://uor.foundation/operad/OperadComposition"),
+            range: XSD_STRING,
+        },
+    ]
+}
+
+fn individuals() -> Vec<Individual> {
+    vec![]
+}

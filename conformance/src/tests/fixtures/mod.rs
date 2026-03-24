@@ -96,14 +96,81 @@ mod test181_stratification_record;
 mod test182_whitehead_product;
 mod test183_deformation_family;
 mod test184_versal_deformation;
+mod test185_carry_chain;
+mod test186_carry_event;
+mod test187_carry_profile;
+mod test188_encoding_configuration;
+mod test189_encoding_quality;
 mod test18_analytical_completeness;
+mod test190_base_metric;
+mod test191_saturation_observable;
+mod test192_euler_characteristic;
+mod test193_galois_connection;
+mod test194_nerve_operations;
+mod test195_scalar_symbol_type;
+mod test196_sequence_tuple_type;
+mod test197_graph_tree_type;
+mod test198_composed_operation;
+mod test199_dispatch_operation;
 mod test19_homological_pipeline;
 mod test1_ring;
+mod test200_inference_operation;
+mod test201_accumulation_operation;
+mod test202_lease_partition_operation;
+mod test203_session_composition_operation;
+mod test204_euler_cascade;
+mod test205_cascade_stage;
+mod test206_cascade_state;
+mod test207_phase_gate;
+mod test208_epoch;
+mod test209_predicate_expression;
 mod test20_sheaf_consistency;
+mod test210_guard_expression;
+mod test211_transition_effect;
+mod test212_service_window;
+mod test213_cascade_transaction;
+mod test214_feasibility_result;
+mod test215_lease_state;
+mod test216_managed_lease;
+mod test217_back_pressure;
+mod test218_deferred_query;
+mod test219_convergence_level;
 mod test21_topological_delta;
+mod test220_hopf_fiber;
+mod test221_convergence_residual;
+mod test222_commutative_subspace;
+mod test223_associative_subalgebra;
+mod test224_normed_division_algebra;
+mod test225_cayley_dickson;
+mod test226_multiplication_table;
+mod test227_algebra_commutator;
+mod test228_algebra_associator;
+mod test229_interaction_context;
 mod test22_index_bridge;
+mod test230_commutator_state;
+mod test231_associator_state;
+mod test232_three_way_fiber;
+mod test233_negotiation_trace;
+mod test234_interaction_nerve;
+mod test235_monoidal_product;
+mod test236_monoidal_unit;
+mod test237_monoidal_associator;
+mod test238_structural_operad;
+mod test239_operad_composition;
 mod test23_identity_grounding;
+mod test240_operad_end_to_end;
+mod test241_associator_triple;
+mod test242_mutual_model_trace;
+mod test243_interaction_composition;
+mod test244_sublease_transfer;
+mod test245_predicate_subclasses;
+mod test246_phase_rotation;
+mod test247_rollback_transition;
+mod test248_epoch_boundary;
+mod test249_property_bind_advance;
 mod test24_verification_domain;
+mod test250_pipeline_outcome;
+mod test251_preflight_checkpoint;
 mod test25_geometric_character;
 mod test26_complexity_class;
 mod test27_rewrite_rule;
@@ -281,14 +348,81 @@ pub use test181_stratification_record::TEST181_STRATIFICATION_RECORD;
 pub use test182_whitehead_product::TEST182_WHITEHEAD_PRODUCT;
 pub use test183_deformation_family::TEST183_DEFORMATION_FAMILY;
 pub use test184_versal_deformation::TEST184_VERSAL_DEFORMATION;
+pub use test185_carry_chain::TEST185_CARRY_CHAIN;
+pub use test186_carry_event::TEST186_CARRY_EVENT;
+pub use test187_carry_profile::TEST187_CARRY_PROFILE;
+pub use test188_encoding_configuration::TEST188_ENCODING_CONFIGURATION;
+pub use test189_encoding_quality::TEST189_ENCODING_QUALITY;
 pub use test18_analytical_completeness::TEST18_ANALYTICAL_COMPLETENESS;
+pub use test190_base_metric::TEST190_BASE_METRIC;
+pub use test191_saturation_observable::TEST191_SATURATION_OBSERVABLE;
+pub use test192_euler_characteristic::TEST192_EULER_CHARACTERISTIC;
+pub use test193_galois_connection::TEST193_GALOIS_CONNECTION;
+pub use test194_nerve_operations::TEST194_NERVE_OPERATIONS;
+pub use test195_scalar_symbol_type::TEST195_SCALAR_SYMBOL_TYPE;
+pub use test196_sequence_tuple_type::TEST196_SEQUENCE_TUPLE_TYPE;
+pub use test197_graph_tree_type::TEST197_GRAPH_TREE_TYPE;
+pub use test198_composed_operation::TEST198_COMPOSED_OPERATION;
+pub use test199_dispatch_operation::TEST199_DISPATCH_OPERATION;
 pub use test19_homological_pipeline::TEST19_HOMOLOGICAL_PIPELINE;
 pub use test1_ring::TEST1_RING;
+pub use test200_inference_operation::TEST200_INFERENCE_OPERATION;
+pub use test201_accumulation_operation::TEST201_ACCUMULATION_OPERATION;
+pub use test202_lease_partition_operation::TEST202_LEASE_PARTITION_OPERATION;
+pub use test203_session_composition_operation::TEST203_SESSION_COMPOSITION_OPERATION;
+pub use test204_euler_cascade::TEST204_EULER_CASCADE;
+pub use test205_cascade_stage::TEST205_CASCADE_STAGE;
+pub use test206_cascade_state::TEST206_CASCADE_STATE;
+pub use test207_phase_gate::TEST207_PHASE_GATE;
+pub use test208_epoch::TEST208_EPOCH;
+pub use test209_predicate_expression::TEST209_PREDICATE_EXPRESSION;
 pub use test20_sheaf_consistency::TEST20_SHEAF_CONSISTENCY;
+pub use test210_guard_expression::TEST210_GUARD_EXPRESSION;
+pub use test211_transition_effect::TEST211_TRANSITION_EFFECT;
+pub use test212_service_window::TEST212_SERVICE_WINDOW;
+pub use test213_cascade_transaction::TEST213_CASCADE_TRANSACTION;
+pub use test214_feasibility_result::TEST214_FEASIBILITY_RESULT;
+pub use test215_lease_state::TEST215_LEASE_STATE;
+pub use test216_managed_lease::TEST216_MANAGED_LEASE;
+pub use test217_back_pressure::TEST217_BACK_PRESSURE;
+pub use test218_deferred_query::TEST218_DEFERRED_QUERY;
+pub use test219_convergence_level::TEST219_CONVERGENCE_LEVEL;
 pub use test21_topological_delta::TEST21_TOPOLOGICAL_DELTA;
+pub use test220_hopf_fiber::TEST220_HOPF_FIBER;
+pub use test221_convergence_residual::TEST221_CONVERGENCE_RESIDUAL;
+pub use test222_commutative_subspace::TEST222_COMMUTATIVE_SUBSPACE;
+pub use test223_associative_subalgebra::TEST223_ASSOCIATIVE_SUBALGEBRA;
+pub use test224_normed_division_algebra::TEST224_NORMED_DIVISION_ALGEBRA;
+pub use test225_cayley_dickson::TEST225_CAYLEY_DICKSON;
+pub use test226_multiplication_table::TEST226_MULTIPLICATION_TABLE;
+pub use test227_algebra_commutator::TEST227_ALGEBRA_COMMUTATOR;
+pub use test228_algebra_associator::TEST228_ALGEBRA_ASSOCIATOR;
+pub use test229_interaction_context::TEST229_INTERACTION_CONTEXT;
 pub use test22_index_bridge::TEST22_INDEX_BRIDGE;
+pub use test230_commutator_state::TEST230_COMMUTATOR_STATE;
+pub use test231_associator_state::TEST231_ASSOCIATOR_STATE;
+pub use test232_three_way_fiber::TEST232_THREE_WAY_FIBER;
+pub use test233_negotiation_trace::TEST233_NEGOTIATION_TRACE;
+pub use test234_interaction_nerve::TEST234_INTERACTION_NERVE;
+pub use test235_monoidal_product::TEST235_MONOIDAL_PRODUCT;
+pub use test236_monoidal_unit::TEST236_MONOIDAL_UNIT;
+pub use test237_monoidal_associator::TEST237_MONOIDAL_ASSOCIATOR;
+pub use test238_structural_operad::TEST238_STRUCTURAL_OPERAD;
+pub use test239_operad_composition::TEST239_OPERAD_COMPOSITION;
 pub use test23_identity_grounding::TEST23_IDENTITY_GROUNDING;
+pub use test240_operad_end_to_end::TEST240_OPERAD_END_TO_END;
+pub use test241_associator_triple::TEST241_ASSOCIATOR_TRIPLE;
+pub use test242_mutual_model_trace::TEST242_MUTUAL_MODEL_TRACE;
+pub use test243_interaction_composition::TEST243_INTERACTION_COMPOSITION;
+pub use test244_sublease_transfer::TEST244_SUBLEASE_TRANSFER;
+pub use test245_predicate_subclasses::TEST245_PREDICATE_SUBCLASSES;
+pub use test246_phase_rotation::TEST246_PHASE_ROTATION;
+pub use test247_rollback_transition::TEST247_ROLLBACK_TRANSITION;
+pub use test248_epoch_boundary::TEST248_EPOCH_BOUNDARY;
+pub use test249_property_bind_advance::TEST249_PROPERTY_BIND_ADVANCE;
 pub use test24_verification_domain::TEST24_VERIFICATION_DOMAIN;
+pub use test250_pipeline_outcome::TEST250_PIPELINE_OUTCOME;
+pub use test251_preflight_checkpoint::TEST251_PREFLIGHT_CHECKPOINT;
 pub use test25_geometric_character::TEST25_GEOMETRIC_CHARACTER;
 pub use test26_complexity_class::TEST26_COMPLEXITY_CLASS;
 pub use test27_rewrite_rule::TEST27_REWRITE_RULE;
@@ -561,5 +695,72 @@ pub fn all_fixture_sources() -> Vec<&'static str> {
         TEST182_WHITEHEAD_PRODUCT,
         TEST183_DEFORMATION_FAMILY,
         TEST184_VERSAL_DEFORMATION,
+        TEST185_CARRY_CHAIN,
+        TEST186_CARRY_EVENT,
+        TEST187_CARRY_PROFILE,
+        TEST188_ENCODING_CONFIGURATION,
+        TEST189_ENCODING_QUALITY,
+        TEST190_BASE_METRIC,
+        TEST191_SATURATION_OBSERVABLE,
+        TEST192_EULER_CHARACTERISTIC,
+        TEST193_GALOIS_CONNECTION,
+        TEST194_NERVE_OPERATIONS,
+        TEST195_SCALAR_SYMBOL_TYPE,
+        TEST196_SEQUENCE_TUPLE_TYPE,
+        TEST197_GRAPH_TREE_TYPE,
+        TEST198_COMPOSED_OPERATION,
+        TEST199_DISPATCH_OPERATION,
+        TEST200_INFERENCE_OPERATION,
+        TEST201_ACCUMULATION_OPERATION,
+        TEST202_LEASE_PARTITION_OPERATION,
+        TEST203_SESSION_COMPOSITION_OPERATION,
+        TEST204_EULER_CASCADE,
+        TEST205_CASCADE_STAGE,
+        TEST206_CASCADE_STATE,
+        TEST207_PHASE_GATE,
+        TEST208_EPOCH,
+        TEST209_PREDICATE_EXPRESSION,
+        TEST210_GUARD_EXPRESSION,
+        TEST211_TRANSITION_EFFECT,
+        TEST212_SERVICE_WINDOW,
+        TEST213_CASCADE_TRANSACTION,
+        TEST214_FEASIBILITY_RESULT,
+        TEST215_LEASE_STATE,
+        TEST216_MANAGED_LEASE,
+        TEST217_BACK_PRESSURE,
+        TEST218_DEFERRED_QUERY,
+        TEST219_CONVERGENCE_LEVEL,
+        TEST220_HOPF_FIBER,
+        TEST221_CONVERGENCE_RESIDUAL,
+        TEST222_COMMUTATIVE_SUBSPACE,
+        TEST223_ASSOCIATIVE_SUBALGEBRA,
+        TEST224_NORMED_DIVISION_ALGEBRA,
+        TEST225_CAYLEY_DICKSON,
+        TEST226_MULTIPLICATION_TABLE,
+        TEST227_ALGEBRA_COMMUTATOR,
+        TEST228_ALGEBRA_ASSOCIATOR,
+        TEST229_INTERACTION_CONTEXT,
+        TEST230_COMMUTATOR_STATE,
+        TEST231_ASSOCIATOR_STATE,
+        TEST232_THREE_WAY_FIBER,
+        TEST233_NEGOTIATION_TRACE,
+        TEST234_INTERACTION_NERVE,
+        TEST235_MONOIDAL_PRODUCT,
+        TEST236_MONOIDAL_UNIT,
+        TEST237_MONOIDAL_ASSOCIATOR,
+        TEST238_STRUCTURAL_OPERAD,
+        TEST239_OPERAD_COMPOSITION,
+        TEST240_OPERAD_END_TO_END,
+        TEST241_ASSOCIATOR_TRIPLE,
+        TEST242_MUTUAL_MODEL_TRACE,
+        TEST243_INTERACTION_COMPOSITION,
+        TEST244_SUBLEASE_TRANSFER,
+        TEST245_PREDICATE_SUBCLASSES,
+        TEST246_PHASE_ROTATION,
+        TEST247_ROLLBACK_TRANSITION,
+        TEST248_EPOCH_BOUNDARY,
+        TEST249_PROPERTY_BIND_ADVANCE,
+        TEST250_PIPELINE_OUTCOME,
+        TEST251_PREFLIGHT_CHECKPOINT,
     ]
 }

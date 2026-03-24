@@ -15,6 +15,8 @@ anyhow = { workspace = true }
 thiserror = { workspace = true }
 walkdir = { workspace = true }
 cssparser = { workspace = true }
+sophia_turtle = { workspace = true }
+sophia_api = { workspace = true }
 
 [dev-dependencies]
 uor-ontology = { path = "../spec" }

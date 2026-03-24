@@ -15,6 +15,8 @@ pub trait Transform<P: Primitives> {
     fn target(&self) -> &P::String;
     /// The structure preserved by this transform (if any). E.g., a ring homomorphism preserves addition and multiplication.
     fn preserves_count(&self) -> usize;
+    /// Returns the item at `index`. Must satisfy `index < self.preserves_count()`.
+    fn preserves_at(&self, index: usize) -> &P::String;
     /// Associated type for `ComputationTrace`.
     type ComputationTrace: crate::bridge::trace::ComputationTrace<P>;
     /// The computation trace that realized this transform at runtime. A Transform is an abstraction; a trace is the kernel's record of how it was executed via concrete operations.

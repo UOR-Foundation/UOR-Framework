@@ -102,17 +102,25 @@ fn check_context(value: &Value, report: &mut ConformanceReport) {
         ));
     }
 
-    // Check @version is 1.1
-    if let Some(version) = context.get("@version") {
-        if version.as_f64().map(|v| (v - 1.1).abs() < f64::EPSILON) == Some(true) {
-            report.push(TestResult::pass(
-                "ontology/jsonld",
-                "JSON-LD @version is 1.1",
-            ));
-        } else {
+    // Check @version is 1.1 (mandatory for JSON-LD 1.1 processing mode)
+    match context.get("@version") {
+        Some(version) => {
+            if version.as_f64().map(|v| (v - 1.1).abs() < f64::EPSILON) == Some(true) {
+                report.push(TestResult::pass(
+                    "ontology/jsonld",
+                    "JSON-LD @version is 1.1",
+                ));
+            } else {
+                report.push(TestResult::fail(
+                    "ontology/jsonld",
+                    format!("JSON-LD @version should be 1.1, got: {}", version),
+                ));
+            }
+        }
+        None => {
             report.push(TestResult::fail(
                 "ontology/jsonld",
-                format!("JSON-LD @version should be 1.1, got: {}", version),
+                "JSON-LD @context missing required @version (must be 1.1)",
             ));
         }
     }

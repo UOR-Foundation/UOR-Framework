@@ -3,5 +3,11 @@
 //! `kernel` space modules.
 
 pub mod address;
+pub mod carry;
+pub mod cascade;
+pub mod convergence;
+pub mod division;
+pub mod monoidal;
 pub mod op;
+pub mod operad;
 pub mod schema;

@@ -1,9 +1,9 @@
 //! RDF 1.1 / Turtle 1.1 validator.
 //!
 //! Validates that the Turtle and N-Triples artifacts are well-formed:
-//! - Turtle file parses without errors
+//! - Turtle file parses without errors (structural + spec-compliant parse-back)
 //! - N-Triples file parses without errors
-//! - Triple counts are consistent between formats
+//! - Triple counts meet minimum thresholds derived from the ontology
 
 use std::path::Path;
 
@@ -101,7 +101,47 @@ fn validate_turtle(artifacts: &Path, report: &mut ConformanceReport) -> Result<(
         ));
     }
 
+    // Parse-back validation: parse the Turtle file with a spec-compliant parser
+    match parse_turtle_triples(&content) {
+        Ok(triple_count) => {
+            report.push(TestResult::pass(
+                "ontology/rdf",
+                format!(
+                    "uor.foundation.ttl parses as valid Turtle ({} triples)",
+                    triple_count
+                ),
+            ));
+        }
+        Err(e) => {
+            report.push(TestResult::fail(
+                "ontology/rdf",
+                format!("uor.foundation.ttl fails Turtle parse-back: {}", e),
+            ));
+        }
+    }
+
     Ok(())
+}
+
+/// Parses a Turtle string using `sophia_turtle` and returns the triple count.
+///
+/// # Errors
+///
+/// Returns an error string if parsing fails.
+fn parse_turtle_triples(content: &str) -> std::result::Result<usize, String> {
+    use sophia_api::parser::TripleParser;
+    use sophia_api::source::TripleSource;
+    use sophia_turtle::parser::turtle::TurtleParser;
+
+    let parser = TurtleParser::default();
+    let mut source = parser.parse(std::io::Cursor::new(content.as_bytes()));
+    let mut count = 0usize;
+    source
+        .for_each_triple(|_| {
+            count += 1;
+        })
+        .map_err(|e| format!("{e}"))?;
+    Ok(count)
 }
 
 /// Validates the N-Triples file structure.
@@ -162,6 +202,32 @@ fn validate_ntriples(artifacts: &Path, report: &mut ConformanceReport) -> Result
             "ontology/rdf",
             "uor.foundation.nt has malformed lines",
             issues,
+        ));
+    }
+
+    // Triple count threshold: verify the N-Triples output is not lossy
+    let ontology = uor_ontology::Ontology::full();
+    // Conservative minimum: 3 triples per class (type, label, comment),
+    // 4 per property (type, label, comment, range), 4 per individual
+    // (type*2, label, comment).
+    let min_expected = ontology.class_count() * 3
+        + ontology.property_count() * 4
+        + ontology.individual_count() * 4;
+    if triple_count >= min_expected {
+        report.push(TestResult::pass(
+            "ontology/rdf",
+            format!(
+                "N-Triples triple count ({}) meets minimum threshold ({})",
+                triple_count, min_expected
+            ),
+        ));
+    } else {
+        report.push(TestResult::fail(
+            "ontology/rdf",
+            format!(
+                "N-Triples triple count ({}) below minimum threshold ({})",
+                triple_count, min_expected
+            ),
         ));
     }
 

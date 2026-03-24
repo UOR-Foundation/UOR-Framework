@@ -12,10 +12,17 @@
 //! (a ConstrainedType undergoing certification) and `CompletenessWitness` (a single
 //! fiber-closing event), with four new properties supporting the certification loop.
 //!
+//! Amendment 61 adds 8 structural type individuals (ScalarType, SymbolType,
+//! SequenceType, TupleType, GraphType, SetType, TreeType, TableType) as
+//! instances of existing type classes with annotation properties describing
+//! fiber count formulas, grounding rules, and structural constraints.
+//!
 //! **Space classification:** `user` — parameterizable at runtime.
 
 use crate::model::iris::*;
-use crate::model::{Class, Individual, Namespace, NamespaceModule, Property, PropertyKind, Space};
+use crate::model::{
+    Class, Individual, IndividualValue, Namespace, NamespaceModule, Property, PropertyKind, Space,
+};
 
 /// Returns the `type/` namespace module.
 ///
@@ -366,6 +373,17 @@ fn classes() -> Vec<Class> {
             id: "https://uor.foundation/type/ModuliTowerMap",
             label: "ModuliTowerMap",
             comment: "The map induced by QuantumLift from one moduli space to the next.",
+            subclass_of: &[OWL_THING],
+            disjoint_with: &[],
+        },
+        // Amendment 60: Galois Connection
+        Class {
+            id: "https://uor.foundation/type/GaloisConnection",
+            label: "GaloisConnection",
+            comment: "The adjunction between the type lattice and the fiber lattice. \
+                      The upper adjoint is type closure; the lower adjoint is fiber \
+                      interior. \u{03c3} = lower adjoint evaluation; r = complement \
+                      of upper adjoint image.",
             subclass_of: &[OWL_THING],
             disjoint_with: &[],
         },
@@ -957,6 +975,205 @@ fn properties() -> Vec<Property> {
             domain: Some("https://uor.foundation/type/ModuliTowerMap"),
             range: "https://uor.foundation/type/ModuliSpace",
         },
+        // Amendment 60: GaloisConnection properties
+        Property {
+            id: "https://uor.foundation/type/upperAdjoint",
+            label: "upperAdjoint",
+            comment: "The upper adjoint (type closure) of the Galois connection, \
+                      expressed as a symbolic formula string.",
+            kind: PropertyKind::Datatype,
+            functional: true,
+            domain: Some("https://uor.foundation/type/GaloisConnection"),
+            range: XSD_STRING,
+        },
+        Property {
+            id: "https://uor.foundation/type/lowerAdjoint",
+            label: "lowerAdjoint",
+            comment: "The lower adjoint (fiber interior) of the Galois connection, \
+                      expressed as a symbolic formula string.",
+            kind: PropertyKind::Datatype,
+            functional: true,
+            domain: Some("https://uor.foundation/type/GaloisConnection"),
+            range: XSD_STRING,
+        },
+        Property {
+            id: "https://uor.foundation/type/fixpointCondition",
+            label: "fixpointCondition",
+            comment: "The fixpoint condition for the Galois connection: when \
+                      upper(lower(T)) = T, the type is complete.",
+            kind: PropertyKind::Datatype,
+            functional: true,
+            domain: Some("https://uor.foundation/type/GaloisConnection"),
+            range: XSD_STRING,
+        },
+        Property {
+            id: "https://uor.foundation/type/refinementDirection",
+            label: "refinementDirection",
+            comment: "Description of the refinement direction: ascending in type \
+                      lattice corresponds to descending in fiber freedom.",
+            kind: PropertyKind::Datatype,
+            functional: true,
+            domain: Some("https://uor.foundation/type/GaloisConnection"),
+            range: XSD_STRING,
+        },
+        // Amendment 61: Structural Type annotation properties
+        Property {
+            id: "https://uor.foundation/type/structuralFiberCount",
+            label: "structuralFiberCount",
+            comment: "Formula or description of the fiber count for a structural \
+                      type individual.",
+            kind: PropertyKind::Annotation,
+            functional: true,
+            domain: None,
+            range: XSD_STRING,
+        },
+        Property {
+            id: "https://uor.foundation/type/structuralGrounding",
+            label: "structuralGrounding",
+            comment: "Description of the grounding rule that maps values of this \
+                      structural type onto the UOR ring.",
+            kind: PropertyKind::Annotation,
+            functional: true,
+            domain: None,
+            range: XSD_STRING,
+        },
+        Property {
+            id: "https://uor.foundation/type/structuralConstraint",
+            label: "structuralConstraint",
+            comment: "Description of the constraint characterizing this structural \
+                      type, if applicable.",
+            kind: PropertyKind::Annotation,
+            functional: true,
+            domain: None,
+            range: XSD_STRING,
+        },
+        // Amendment 71: Missing type properties (14)
+        Property {
+            id: "https://uor.foundation/type/galoisClosureProperty",
+            label: "galoisClosureProperty",
+            comment: "The closure property of a Galois connection.",
+            kind: PropertyKind::Datatype,
+            functional: true,
+            domain: Some("https://uor.foundation/type/GaloisConnection"),
+            range: XSD_STRING,
+        },
+        Property {
+            id: "https://uor.foundation/type/galoisInteriorProperty",
+            label: "galoisInteriorProperty",
+            comment: "The interior property of a Galois connection.",
+            kind: PropertyKind::Datatype,
+            functional: true,
+            domain: Some("https://uor.foundation/type/GaloisConnection"),
+            range: XSD_STRING,
+        },
+        Property {
+            id: "https://uor.foundation/type/groundingMapRef",
+            label: "groundingMapRef",
+            comment: "Reference to the grounding map used for this type.",
+            kind: PropertyKind::Annotation,
+            functional: true,
+            domain: None,
+            range: XSD_STRING,
+        },
+        Property {
+            id: "https://uor.foundation/type/compositionLaw",
+            label: "compositionLaw",
+            comment: "The algebraic composition law governing this type.",
+            kind: PropertyKind::Annotation,
+            functional: true,
+            domain: None,
+            range: XSD_STRING,
+        },
+        Property {
+            id: "https://uor.foundation/type/decompositionRule",
+            label: "decompositionRule",
+            comment: "The rule for decomposing values of this type.",
+            kind: PropertyKind::Annotation,
+            functional: true,
+            domain: None,
+            range: XSD_STRING,
+        },
+        Property {
+            id: "https://uor.foundation/type/fiberOrderingConstraint",
+            label: "fiberOrderingConstraint",
+            comment: "Constraint on the ordering of fibers for this type.",
+            kind: PropertyKind::Annotation,
+            functional: true,
+            domain: None,
+            range: XSD_STRING,
+        },
+        Property {
+            id: "https://uor.foundation/type/backboneThreshold",
+            label: "backboneThreshold",
+            comment: "The threshold for backbone inclusion in the type lattice.",
+            kind: PropertyKind::Annotation,
+            functional: true,
+            domain: None,
+            range: XSD_STRING,
+        },
+        Property {
+            id: "https://uor.foundation/type/permutationGroup",
+            label: "permutationGroup",
+            comment: "The permutation group acting on fibers of this type.",
+            kind: PropertyKind::Annotation,
+            functional: true,
+            domain: None,
+            range: XSD_STRING,
+        },
+        Property {
+            id: "https://uor.foundation/type/acyclicityWitness",
+            label: "acyclicityWitness",
+            comment: "Witness certifying acyclicity of the type dependency graph.",
+            kind: PropertyKind::Annotation,
+            functional: true,
+            domain: None,
+            range: XSD_STRING,
+        },
+        Property {
+            id: "https://uor.foundation/type/connectivityWitness",
+            label: "connectivityWitness",
+            comment: "Witness certifying connectivity of the type graph.",
+            kind: PropertyKind::Annotation,
+            functional: true,
+            domain: None,
+            range: XSD_STRING,
+        },
+        Property {
+            id: "https://uor.foundation/type/schemaConstraint",
+            label: "schemaConstraint",
+            comment: "Constraint imposed by the schema on this type.",
+            kind: PropertyKind::Annotation,
+            functional: true,
+            domain: None,
+            range: XSD_STRING,
+        },
+        Property {
+            id: "https://uor.foundation/type/alphabetSize",
+            label: "alphabetSize",
+            comment: "The size of the alphabet for symbol-based types.",
+            kind: PropertyKind::Annotation,
+            functional: true,
+            domain: None,
+            range: XSD_NON_NEGATIVE_INTEGER,
+        },
+        Property {
+            id: "https://uor.foundation/type/quantizationRange",
+            label: "quantizationRange",
+            comment: "The range specification for quantized types.",
+            kind: PropertyKind::Annotation,
+            functional: true,
+            domain: None,
+            range: XSD_STRING,
+        },
+        Property {
+            id: "https://uor.foundation/type/elementTypeRef",
+            label: "elementTypeRef",
+            comment: "Reference to the element type within a composite type.",
+            kind: PropertyKind::Annotation,
+            functional: true,
+            domain: None,
+            range: XSD_STRING,
+        },
     ]
 }
 
@@ -985,9 +1202,162 @@ fn individuals() -> Vec<Individual> {
             type_: "https://uor.foundation/type/MetricAxis",
             label: "diagonalAxis",
             comment: "The diagonal (incompatibility) metric axis. Constraints on \
-                      this axis measure the gap between ring and Hamming metrics — \
+                      this axis measure the gap between ring and Hamming metrics \u{2014} \
                       the curvature of UOR geometry.",
             properties: &[],
+        },
+        // ── Amendment 61: Structural Type individuals ────────────────────
+        Individual {
+            id: "https://uor.foundation/type/ScalarType",
+            type_: "https://uor.foundation/type/PrimitiveType",
+            label: "ScalarType",
+            comment: "A single value from an ordered domain. fiberCount = n \
+                      (quantization bits).",
+            properties: &[
+                (
+                    "https://uor.foundation/type/structuralFiberCount",
+                    IndividualValue::Str("n (quantization bits)"),
+                ),
+                (
+                    "https://uor.foundation/type/structuralGrounding",
+                    IndividualValue::Str("quantize(value, range, bits) produces ring element where d_R reflects value proximity"),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/type/SymbolType",
+            type_: "https://uor.foundation/type/PrimitiveType",
+            label: "SymbolType",
+            comment: "A value from a finite unordered set. fiberCount = \
+                      ceil(log2(|alphabet|)).",
+            properties: &[
+                (
+                    "https://uor.foundation/type/structuralFiberCount",
+                    IndividualValue::Str("ceil(log2(|alphabet|))"),
+                ),
+                (
+                    "https://uor.foundation/type/structuralGrounding",
+                    IndividualValue::Str("argmin_{encoding} sum d_delta over observed pairs (CY_5)"),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/type/SequenceType",
+            type_: "https://uor.foundation/type/ProductType",
+            label: "SequenceType",
+            comment: "An ordered list of elements with backbone constraint. The \
+                      free monoid on the element type.",
+            properties: &[
+                (
+                    "https://uor.foundation/type/structuralFiberCount",
+                    IndividualValue::Str("sum of element fiber counts"),
+                ),
+                (
+                    "https://uor.foundation/type/structuralGrounding",
+                    IndividualValue::Str("free monoid on element type, backbone constraint"),
+                ),
+                (
+                    "https://uor.foundation/type/structuralConstraint",
+                    IndividualValue::Str("backbone ordering: elements indexed by position"),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/type/TupleType",
+            type_: "https://uor.foundation/type/ProductType",
+            label: "TupleType",
+            comment: "A fixed collection of named fields.",
+            properties: &[
+                (
+                    "https://uor.foundation/type/structuralFiberCount",
+                    IndividualValue::Str("sum of field fiber counts"),
+                ),
+                (
+                    "https://uor.foundation/type/structuralGrounding",
+                    IndividualValue::Str("fiber ordering follows CY_6 (optimal fiber ordering)"),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/type/GraphType",
+            type_: "https://uor.foundation/type/ConstrainedType",
+            label: "GraphType",
+            comment: "Nodes with edge constraints. Constraint nerve = graph topology.",
+            properties: &[
+                (
+                    "https://uor.foundation/type/structuralFiberCount",
+                    IndividualValue::Str("sum of node fiber counts + edge overhead"),
+                ),
+                (
+                    "https://uor.foundation/type/structuralGrounding",
+                    IndividualValue::Str("constraint nerve = graph nerve, beta_k equality"),
+                ),
+                (
+                    "https://uor.foundation/type/structuralConstraint",
+                    IndividualValue::Str("edge constraints: adjacency preserved under grounding"),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/type/SetType",
+            type_: "https://uor.foundation/type/ConstrainedType",
+            label: "SetType",
+            comment: "Unordered collection. d_delta is permutation-invariant.",
+            properties: &[
+                (
+                    "https://uor.foundation/type/structuralFiberCount",
+                    IndividualValue::Str("sum of element fiber counts"),
+                ),
+                (
+                    "https://uor.foundation/type/structuralGrounding",
+                    IndividualValue::Str("d_delta invariant under element permutation, D_{2n} symmetry"),
+                ),
+                (
+                    "https://uor.foundation/type/structuralConstraint",
+                    IndividualValue::Str("permutation invariance: encoding is order-independent"),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/type/TreeType",
+            type_: "https://uor.foundation/type/ConstrainedType",
+            label: "TreeType",
+            comment: "Hierarchical structure. beta_1=0 (acyclic), beta_0=1 (connected).",
+            properties: &[
+                (
+                    "https://uor.foundation/type/structuralFiberCount",
+                    IndividualValue::Str("sum of node fiber counts"),
+                ),
+                (
+                    "https://uor.foundation/type/structuralGrounding",
+                    IndividualValue::Str("parent-child encoding with acyclicity constraint"),
+                ),
+                (
+                    "https://uor.foundation/type/structuralConstraint",
+                    IndividualValue::Str("beta_1=0 (acyclic), beta_0=1 (connected)"),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/type/TableType",
+            type_: "https://uor.foundation/type/ProductType",
+            label: "TableType",
+            comment: "Collection of tuples sharing a schema = Sequence(Tuple(S)). \
+                      Functorial decomposition.",
+            properties: &[
+                (
+                    "https://uor.foundation/type/structuralFiberCount",
+                    IndividualValue::Str("row_count * tuple_fiber_count"),
+                ),
+                (
+                    "https://uor.foundation/type/structuralGrounding",
+                    IndividualValue::Str("Sequence(Tuple(S)), functorial decomposition"),
+                ),
+                (
+                    "https://uor.foundation/type/structuralConstraint",
+                    IndividualValue::Str("shared schema: all rows conform to tuple type S"),
+                ),
+            ],
         },
     ]
 }

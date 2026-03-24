@@ -126,6 +126,62 @@ pub fn namespace_mappings() -> HashMap<&'static str, NamespaceMapping> {
         },
     );
     m.insert(
+        NS_CARRY,
+        NamespaceMapping {
+            space: Space::Kernel,
+            space_module: "kernel",
+            file_module: "carry",
+        },
+    );
+    m.insert(
+        NS_CASCADE,
+        NamespaceMapping {
+            space: Space::Kernel,
+            space_module: "kernel",
+            file_module: "cascade",
+        },
+    );
+    m.insert(
+        NS_CONVERGENCE,
+        NamespaceMapping {
+            space: Space::Kernel,
+            space_module: "kernel",
+            file_module: "convergence",
+        },
+    );
+    m.insert(
+        NS_DIVISION,
+        NamespaceMapping {
+            space: Space::Kernel,
+            space_module: "kernel",
+            file_module: "division",
+        },
+    );
+    m.insert(
+        NS_INTERACTION,
+        NamespaceMapping {
+            space: Space::Bridge,
+            space_module: "bridge",
+            file_module: "interaction",
+        },
+    );
+    m.insert(
+        NS_MONOIDAL,
+        NamespaceMapping {
+            space: Space::Kernel,
+            space_module: "kernel",
+            file_module: "monoidal",
+        },
+    );
+    m.insert(
+        NS_OPERAD,
+        NamespaceMapping {
+            space: Space::Kernel,
+            space_module: "kernel",
+            file_module: "operad",
+        },
+    );
+    m.insert(
         NS_TYPE,
         NamespaceMapping {
             space: Space::User,

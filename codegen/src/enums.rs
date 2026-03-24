@@ -338,7 +338,8 @@ pub fn generate_enums_file(ontology: &Ontology) -> String {
         if e.non_exhaustive {
             f.line("#[non_exhaustive]");
         }
-        f.line("#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]");
+        f.line("#[repr(u8)]");
+        f.line("#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]");
         let _ = writeln!(f.buf, "pub enum {} {{", e.name);
         for (variant, comment) in &e.variants {
             f.indented_doc_comment(comment);

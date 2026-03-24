@@ -229,7 +229,7 @@ pub struct Ontology {
     pub version: &'static str,
     /// Base IRI of the ontology (e.g., `"https://uor.foundation/"`).
     pub base_iri: &'static str,
-    /// All 16 namespace modules in dependency order.
+    /// All 23 namespace modules in dependency order.
     pub namespaces: Vec<NamespaceModule>,
     /// Root-level annotation properties (Amendment 8: `uor:space`).
     pub annotation_properties: Vec<AnnotationProperty>,
@@ -377,6 +377,20 @@ pub mod iris {
     pub const NS_HOMOLOGY: &str = "https://uor.foundation/homology/";
     /// Cohomology namespace.
     pub const NS_COHOMOLOGY: &str = "https://uor.foundation/cohomology/";
+    /// Carry algebra namespace.
+    pub const NS_CARRY: &str = "https://uor.foundation/carry/";
+    /// Cascade namespace.
+    pub const NS_CASCADE: &str = "https://uor.foundation/cascade/";
+    /// Convergence namespace.
+    pub const NS_CONVERGENCE: &str = "https://uor.foundation/convergence/";
+    /// Division algebras namespace.
+    pub const NS_DIVISION: &str = "https://uor.foundation/division/";
+    /// Interaction algebra namespace.
+    pub const NS_INTERACTION: &str = "https://uor.foundation/interaction/";
+    /// Monoidal composition namespace.
+    pub const NS_MONOIDAL: &str = "https://uor.foundation/monoidal/";
+    /// Operad composition namespace.
+    pub const NS_OPERAD: &str = "https://uor.foundation/operad/";
 
     // XSD datatypes
     /// `xsd:string`.

@@ -4474,3 +4474,1353 @@ pub mod prf_mr_4 {
     /// `verified`
     pub const VERIFIED: bool = true;
 }
+
+/// Axiomatic derivation of CY_1: carry generation condition.
+pub mod prf_cy_1 {
+    /// `provesIdentity` -> `CY_1`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/CY_1";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of CY_2: carry propagation condition.
+pub mod prf_cy_2 {
+    /// `provesIdentity` -> `CY_2`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/CY_2";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of CY_3: carry kill condition.
+pub mod prf_cy_3 {
+    /// `provesIdentity` -> `CY_3`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/CY_3";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of CY_4: d_Δ as carry–Hamming discrepancy.
+pub mod prf_cy_4 {
+    /// `provesIdentity` -> `CY_4`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/CY_4";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of CY_5: optimal encoding theorem.
+pub mod prf_cy_5 {
+    /// `provesIdentity` -> `CY_5`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/CY_5";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of CY_6: fiber ordering theorem.
+pub mod prf_cy_6 {
+    /// `provesIdentity` -> `CY_6`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/CY_6";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of CY_7: carry lookahead via prefix computation.
+pub mod prf_cy_7 {
+    /// `provesIdentity` -> `CY_7`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/CY_7";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of BM_1: saturation metric definition.
+pub mod prf_bm_1 {
+    /// `provesIdentity` -> `BM_1`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/BM_1";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of BM_2: Euler characteristic formula.
+pub mod prf_bm_2 {
+    /// `provesIdentity` -> `BM_2`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/BM_2";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of BM_3: index theorem linking all six metrics.
+pub mod prf_bm_3 {
+    /// `provesIdentity` -> `BM_3`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/BM_3";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of BM_4: Jacobian vanishes on pinned fibers.
+pub mod prf_bm_4 {
+    /// `provesIdentity` -> `BM_4`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/BM_4";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of BM_5: d_delta equals Witt defect.
+pub mod prf_bm_5 {
+    /// `provesIdentity` -> `BM_5`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/BM_5";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of BM_6: metric composition tower.
+pub mod prf_bm_6 {
+    /// `provesIdentity` -> `BM_6`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/BM_6";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of GL_1: σ as lower adjoint.
+pub mod prf_gl_1 {
+    /// `provesIdentity` -> `GL_1`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/GL_1";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of GL_2: r as complement of upper adjoint.
+pub mod prf_gl_2 {
+    /// `provesIdentity` -> `GL_2`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/GL_2";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of GL_3: completeness as Galois fixpoint.
+pub mod prf_gl_3 {
+    /// `provesIdentity` -> `GL_3`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/GL_3";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of GL_4: Galois order reversal.
+pub mod prf_gl_4 {
+    /// `provesIdentity` -> `GL_4`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/GL_4";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of NV_1: nerve additivity for disjoint domains.
+pub mod prf_nv_1 {
+    /// `provesIdentity` -> `NV_1`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/NV_1";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of NV_2: Mayer–Vietoris for constraint nerves.
+pub mod prf_nv_2 {
+    /// `provesIdentity` -> `NV_2`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/NV_2";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of NV_3: Betti number bounded change.
+pub mod prf_nv_3 {
+    /// `provesIdentity` -> `NV_3`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/NV_3";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of NV_4: accumulation monotonicity.
+pub mod prf_nv_4 {
+    /// `provesIdentity` -> `NV_4`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/NV_4";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of SD_1: scalar grounding identity.
+pub mod prf_sd_1 {
+    /// `provesIdentity` -> `SD_1`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/SD_1";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of SD_2: symbol grounding identity.
+pub mod prf_sd_2 {
+    /// `provesIdentity` -> `SD_2`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/SD_2";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of SD_3: sequence free monoid identity.
+pub mod prf_sd_3 {
+    /// `provesIdentity` -> `SD_3`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/SD_3";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of SD_4: tuple fiber additivity.
+pub mod prf_sd_4 {
+    /// `provesIdentity` -> `SD_4`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/SD_4";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of SD_5: graph nerve equality.
+pub mod prf_sd_5 {
+    /// `provesIdentity` -> `SD_5`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/SD_5";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of SD_6: set permutation invariance.
+pub mod prf_sd_6 {
+    /// `provesIdentity` -> `SD_6`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/SD_6";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of SD_7: tree acyclicity constraint.
+pub mod prf_sd_7 {
+    /// `provesIdentity` -> `SD_7`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/SD_7";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of SD_8: table functorial decomposition.
+pub mod prf_sd_8 {
+    /// `provesIdentity` -> `SD_8`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/SD_8";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of DD_1: dispatch determinism.
+pub mod prf_dd_1 {
+    /// `provesIdentity` -> `DD_1`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/DD_1";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of DD_2: dispatch coverage.
+pub mod prf_dd_2 {
+    /// `provesIdentity` -> `DD_2`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/DD_2";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of PI_1: inference idempotence.
+pub mod prf_pi_1 {
+    /// `provesIdentity` -> `PI_1`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/PI_1";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of PI_2: inference soundness.
+pub mod prf_pi_2 {
+    /// `provesIdentity` -> `PI_2`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/PI_2";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of PI_3: inference composition.
+pub mod prf_pi_3 {
+    /// `provesIdentity` -> `PI_3`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/PI_3";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of PI_4: inference complexity.
+pub mod prf_pi_4 {
+    /// `provesIdentity` -> `PI_4`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/PI_4";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of PI_5: inference coherence.
+pub mod prf_pi_5 {
+    /// `provesIdentity` -> `PI_5`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/PI_5";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of PA_1: accumulation permutation invariance.
+pub mod prf_pa_1 {
+    /// `provesIdentity` -> `PA_1`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/PA_1";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of PA_2: accumulation monotonicity.
+pub mod prf_pa_2 {
+    /// `provesIdentity` -> `PA_2`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/PA_2";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of PA_3: accumulation soundness.
+pub mod prf_pa_3 {
+    /// `provesIdentity` -> `PA_3`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/PA_3";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of PA_4: accumulation base preservation.
+pub mod prf_pa_4 {
+    /// `provesIdentity` -> `PA_4`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/PA_4";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of PA_5: accumulation identity element.
+pub mod prf_pa_5 {
+    /// `provesIdentity` -> `PA_5`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/PA_5";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of PL_1: lease disjointness.
+pub mod prf_pl_1 {
+    /// `provesIdentity` -> `PL_1`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/PL_1";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of PL_2: lease conservation.
+pub mod prf_pl_2 {
+    /// `provesIdentity` -> `PL_2`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/PL_2";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of PL_3: lease coverage.
+pub mod prf_pl_3 {
+    /// `provesIdentity` -> `PL_3`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/PL_3";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of PK_1: composition validity.
+pub mod prf_pk_1 {
+    /// `provesIdentity` -> `PK_1`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/PK_1";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of PK_2: distributed resolution.
+pub mod prf_pk_2 {
+    /// `provesIdentity` -> `PK_2`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/PK_2";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of PP_1: pipeline unification.
+pub mod prf_pp_1 {
+    /// `provesIdentity` -> `PP_1`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/PP_1";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of PE_1: state initialization.
+pub mod prf_pe_1 {
+    /// `provesIdentity` -> `PE_1`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/PE_1";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of PE_2: resolver dispatch.
+pub mod prf_pe_2 {
+    /// `provesIdentity` -> `PE_2`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/PE_2";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of PE_3: ring address grounding.
+pub mod prf_pe_3 {
+    /// `provesIdentity` -> `PE_3`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/PE_3";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of PE_4: constraint resolution.
+pub mod prf_pe_4 {
+    /// `provesIdentity` -> `PE_4`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/PE_4";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of PE_5: consistent accumulation.
+pub mod prf_pe_5 {
+    /// `provesIdentity` -> `PE_5`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/PE_5";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of PE_6: coherent extraction.
+pub mod prf_pe_6 {
+    /// `provesIdentity` -> `PE_6`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/PE_6";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of PE_7: full pipeline composition.
+pub mod prf_pe_7 {
+    /// `provesIdentity` -> `PE_7`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/PE_7";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of PM_1: phase rotation.
+pub mod prf_pm_1 {
+    /// `provesIdentity` -> `PM_1`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/PM_1";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of PM_2: phase gate check.
+pub mod prf_pm_2 {
+    /// `provesIdentity` -> `PM_2`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/PM_2";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of PM_3: conjugate rollback.
+pub mod prf_pm_3 {
+    /// `provesIdentity` -> `PM_3`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/PM_3";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of PM_4: rollback involution.
+pub mod prf_pm_4 {
+    /// `provesIdentity` -> `PM_4`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/PM_4";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of PM_5: epoch saturation preservation.
+pub mod prf_pm_5 {
+    /// `provesIdentity` -> `PM_5`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/PM_5";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of PM_6: service window context.
+pub mod prf_pm_6 {
+    /// `provesIdentity` -> `PM_6`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/PM_6";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of PM_7: machine determinism.
+pub mod prf_pm_7 {
+    /// `provesIdentity` -> `PM_7`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/PM_7";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of ER_1: guard satisfaction.
+pub mod prf_er_1 {
+    /// `provesIdentity` -> `ER_1`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/ER_1";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of ER_2: effect atomicity.
+pub mod prf_er_2 {
+    /// `provesIdentity` -> `ER_2`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/ER_2";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of ER_3: guard purity.
+pub mod prf_er_3 {
+    /// `provesIdentity` -> `ER_3`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/ER_3";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of ER_4: intra-stage commutativity.
+pub mod prf_er_4 {
+    /// `provesIdentity` -> `ER_4`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/ER_4";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of EA_1: epoch boundary reset.
+pub mod prf_ea_1 {
+    /// `provesIdentity` -> `EA_1`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/EA_1";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of EA_2: saturation monotonicity.
+pub mod prf_ea_2 {
+    /// `provesIdentity` -> `EA_2`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/EA_2";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of EA_3: service window bound.
+pub mod prf_ea_3 {
+    /// `provesIdentity` -> `EA_3`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/EA_3";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of EA_4: epoch admission exclusivity.
+pub mod prf_ea_4 {
+    /// `provesIdentity` -> `EA_4`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/EA_4";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of OE_1: stage fusion.
+pub mod prf_oe_1 {
+    /// `provesIdentity` -> `OE_1`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/OE_1";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of OE_2: effect commutativity.
+pub mod prf_oe_2 {
+    /// `provesIdentity` -> `OE_2`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/OE_2";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of OE_3: lease parallelism.
+pub mod prf_oe_3 {
+    /// `provesIdentity` -> `OE_3`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/OE_3";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of OE_4a: fusion semantics preservation.
+pub mod prf_oe_4a {
+    /// `provesIdentity` -> `OE_4a`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/OE_4a";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of OE_4b: commutation outcome preservation.
+pub mod prf_oe_4b {
+    /// `provesIdentity` -> `OE_4b`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/OE_4b";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of OE_4c: parallelism coverage preservation.
+pub mod prf_oe_4c {
+    /// `provesIdentity` -> `OE_4c`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/OE_4c";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of CS_1: bounded stage cost.
+pub mod prf_cs_1 {
+    /// `provesIdentity` -> `CS_1`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/CS_1";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of CS_2: additive pipeline cost.
+pub mod prf_cs_2 {
+    /// `provesIdentity` -> `CS_2`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/CS_2";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of CS_3: bounded rollback cost.
+pub mod prf_cs_3 {
+    /// `provesIdentity` -> `CS_3`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/CS_3";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of CS_4: constant preflight cost.
+pub mod prf_cs_4 {
+    /// `provesIdentity` -> `CS_4`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/CS_4";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of CS_5: total cascade cost bound.
+pub mod prf_cs_5 {
+    /// `provesIdentity` -> `CS_5`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/CS_5";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of FA_1: query liveness.
+pub mod prf_fa_1 {
+    /// `provesIdentity` -> `FA_1`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/FA_1";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of FA_2: no starvation.
+pub mod prf_fa_2 {
+    /// `provesIdentity` -> `FA_2`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/FA_2";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of FA_3: fair lease allocation.
+pub mod prf_fa_3 {
+    /// `provesIdentity` -> `FA_3`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/FA_3";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of SW_1: memory boundedness.
+pub mod prf_sw_1 {
+    /// `provesIdentity` -> `SW_1`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/SW_1";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of SW_2: saturation invariance.
+pub mod prf_sw_2 {
+    /// `provesIdentity` -> `SW_2`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/SW_2";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of SW_3: eviction releases resources.
+pub mod prf_sw_3 {
+    /// `provesIdentity` -> `SW_3`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/SW_3";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of SW_4: non-empty window.
+pub mod prf_sw_4 {
+    /// `provesIdentity` -> `SW_4`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/SW_4";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of LS_1: suspension preserves pinned state.
+pub mod prf_ls_1 {
+    /// `provesIdentity` -> `LS_1`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/LS_1";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of LS_2: expiry releases resources.
+pub mod prf_ls_2 {
+    /// `provesIdentity` -> `LS_2`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/LS_2";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of LS_3: checkpoint restore idempotence.
+pub mod prf_ls_3 {
+    /// `provesIdentity` -> `LS_3`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/LS_3";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of LS_4: suspend-resume round-trip.
+pub mod prf_ls_4 {
+    /// `provesIdentity` -> `LS_4`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/LS_4";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of TJ_1: AllOrNothing rollback.
+pub mod prf_tj_1 {
+    /// `provesIdentity` -> `TJ_1`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/TJ_1";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of TJ_2: BestEffort partial commit.
+pub mod prf_tj_2 {
+    /// `provesIdentity` -> `TJ_2`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/TJ_2";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of TJ_3: epoch-scoped atomicity.
+pub mod prf_tj_3 {
+    /// `provesIdentity` -> `TJ_3`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/TJ_3";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of AP_1: saturation monotonicity.
+pub mod prf_ap_1 {
+    /// `provesIdentity` -> `AP_1`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/AP_1";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of AP_2: quality improvement.
+pub mod prf_ap_2 {
+    /// `provesIdentity` -> `AP_2`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/AP_2";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of AP_3: deferred query liveness.
+pub mod prf_ap_3 {
+    /// `provesIdentity` -> `AP_3`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/AP_3";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of EC_1: phase half-turn convergence.
+pub mod prf_ec_1 {
+    /// `provesIdentity` -> `EC_1`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/EC_1";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of EC_2: conjugate involution.
+pub mod prf_ec_2 {
+    /// `provesIdentity` -> `EC_2`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/EC_2";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of EC_3: pairwise commutator convergence.
+pub mod prf_ec_3 {
+    /// `provesIdentity` -> `EC_3`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/EC_3";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of EC_4: triple associator convergence.
+pub mod prf_ec_4 {
+    /// `provesIdentity` -> `EC_4`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/EC_4";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of EC_4a: associator monotonicity.
+pub mod prf_ec_4a {
+    /// `provesIdentity` -> `EC_4a`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/EC_4a";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of EC_4b: associator finiteness.
+pub mod prf_ec_4b {
+    /// `provesIdentity` -> `EC_4b`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/EC_4b";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of EC_4c: vanishing implies associativity.
+pub mod prf_ec_4c {
+    /// `provesIdentity` -> `EC_4c`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/EC_4c";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of EC_5: Adams termination.
+pub mod prf_ec_5 {
+    /// `provesIdentity` -> `EC_5`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/EC_5";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of DA_1: Cayley-Dickson R→C.
+pub mod prf_da_1 {
+    /// `provesIdentity` -> `DA_1`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/DA_1";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of DA_2: Cayley-Dickson C→H.
+pub mod prf_da_2 {
+    /// `provesIdentity` -> `DA_2`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/DA_2";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of DA_3: Cayley-Dickson H→O.
+pub mod prf_da_3 {
+    /// `provesIdentity` -> `DA_3`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/DA_3";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of DA_4: Adams dimension restriction.
+pub mod prf_da_4 {
+    /// `provesIdentity` -> `DA_4`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/DA_4";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of DA_5: convergence-level algebra correspondence.
+pub mod prf_da_5 {
+    /// `provesIdentity` -> `DA_5`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/DA_5";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of DA_6: commutator-commutativity equivalence.
+pub mod prf_da_6 {
+    /// `provesIdentity` -> `DA_6`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/DA_6";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of DA_7: associator-associativity equivalence.
+pub mod prf_da_7 {
+    /// `provesIdentity` -> `DA_7`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/DA_7";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of IN_1: interaction cost.
+pub mod prf_in_1 {
+    /// `provesIdentity` -> `IN_1`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/IN_1";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of IN_2: disjoint leases commute.
+pub mod prf_in_2 {
+    /// `provesIdentity` -> `IN_2`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/IN_2";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of IN_3: shared fibers nonzero commutator.
+pub mod prf_in_3 {
+    /// `provesIdentity` -> `IN_3`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/IN_3";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of IN_4: negotiation convergence.
+pub mod prf_in_4 {
+    /// `provesIdentity` -> `IN_4`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/IN_4";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of IN_5: commutative subspace selection.
+pub mod prf_in_5 {
+    /// `provesIdentity` -> `IN_5`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/IN_5";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of IN_6: pairwise outcome space.
+pub mod prf_in_6 {
+    /// `provesIdentity` -> `IN_6`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/IN_6";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of IN_7: associative subalgebra selection.
+pub mod prf_in_7 {
+    /// `provesIdentity` -> `IN_7`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/IN_7";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of IN_8: nerve Betti coupling bound.
+pub mod prf_in_8 {
+    /// `provesIdentity` -> `IN_8`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/IN_8";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of IN_9: Betti-disagreement associator bound.
+pub mod prf_in_9 {
+    /// `provesIdentity` -> `IN_9`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/IN_9";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of AS_1: δ-ι-κ non-associativity.
+pub mod prf_as_1 {
+    /// `provesIdentity` -> `AS_1`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/AS_1";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of AS_2: ι-α-λ non-associativity.
+pub mod prf_as_2 {
+    /// `provesIdentity` -> `AS_2`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/AS_2";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of AS_3: λ-κ-δ non-associativity.
+pub mod prf_as_3 {
+    /// `provesIdentity` -> `AS_3`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/AS_3";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of AS_4: non-associativity root cause.
+pub mod prf_as_4 {
+    /// `provesIdentity` -> `AS_4`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/AS_4";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of MO_1: monoidal unit law.
+pub mod prf_mo_1 {
+    /// `provesIdentity` -> `MO_1`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/MO_1";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of MO_2: monoidal associativity.
+pub mod prf_mo_2 {
+    /// `provesIdentity` -> `MO_2`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/MO_2";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of MO_3: certificate composition.
+pub mod prf_mo_3 {
+    /// `provesIdentity` -> `MO_3`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/MO_3";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of MO_4: saturation monotonicity.
+pub mod prf_mo_4 {
+    /// `provesIdentity` -> `MO_4`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/MO_4";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of MO_5: residual monotonicity.
+pub mod prf_mo_5 {
+    /// `provesIdentity` -> `MO_5`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/MO_5";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of OP_1: fiber additivity.
+pub mod prf_op_1 {
+    /// `provesIdentity` -> `OP_1`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/OP_1";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of OP_2: grounding distributivity.
+pub mod prf_op_2 {
+    /// `provesIdentity` -> `OP_2`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/OP_2";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of OP_3: d_Δ decomposition.
+pub mod prf_op_3 {
+    /// `provesIdentity` -> `OP_3`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/OP_3";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of OP_4: tabular data decomposition.
+pub mod prf_op_4 {
+    /// `provesIdentity` -> `OP_4`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/OP_4";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of OP_5: hierarchical data structure.
+pub mod prf_op_5 {
+    /// `provesIdentity` -> `OP_5`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/OP_5";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}

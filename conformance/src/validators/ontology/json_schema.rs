@@ -116,5 +116,53 @@ pub fn validate(artifacts: &Path) -> Result<ConformanceReport> {
         ));
     }
 
+    // $ref resolution: every $ref must point to an existing $defs key
+    if let Some(defs) = json.get("$defs").and_then(|v| v.as_object()) {
+        let mut broken_refs: Vec<String> = Vec::new();
+        collect_and_check_refs(&json, defs, &mut broken_refs);
+        if broken_refs.is_empty() {
+            report.push(TestResult::pass(
+                validator,
+                "All $ref pointers resolve to existing $defs entries",
+            ));
+        } else {
+            report.push(TestResult::fail_with_details(
+                validator,
+                "Broken $ref pointers found in JSON Schema",
+                broken_refs,
+            ));
+        }
+    }
+
     Ok(report)
+}
+
+/// Recursively collects all `$ref` values and checks they resolve against `$defs`.
+fn collect_and_check_refs(
+    value: &serde_json::Value,
+    defs: &serde_json::Map<String, serde_json::Value>,
+    broken: &mut Vec<String>,
+) {
+    match value {
+        serde_json::Value::Object(map) => {
+            if let Some(serde_json::Value::String(r)) = map.get("$ref") {
+                if let Some(escaped_key) = r.strip_prefix("#/$defs/") {
+                    // Unescape JSON Pointer per RFC 6901: ~1 -> /, ~0 -> ~
+                    let key = escaped_key.replace("~1", "/").replace("~0", "~");
+                    if !defs.contains_key(&key) {
+                        broken.push(format!("$ref '{}' -> key '{}' not found", r, key));
+                    }
+                }
+            }
+            for v in map.values() {
+                collect_and_check_refs(v, defs, broken);
+            }
+        }
+        serde_json::Value::Array(arr) => {
+            for v in arr {
+                collect_and_check_refs(v, defs, broken);
+            }
+        }
+        _ => {}
+    }
 }

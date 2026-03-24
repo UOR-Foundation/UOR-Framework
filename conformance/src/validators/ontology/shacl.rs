@@ -942,6 +942,341 @@ pub fn validate() -> ConformanceReport {
         tests::fixtures::TEST184_VERSAL_DEFORMATION,
         &mut report,
     );
+    // Amendment 58: Carry Algebra
+    run_test(
+        "test185_carry_chain",
+        tests::fixtures::TEST185_CARRY_CHAIN,
+        &mut report,
+    );
+    run_test(
+        "test186_carry_event",
+        tests::fixtures::TEST186_CARRY_EVENT,
+        &mut report,
+    );
+    run_test(
+        "test187_carry_profile",
+        tests::fixtures::TEST187_CARRY_PROFILE,
+        &mut report,
+    );
+    run_test(
+        "test188_encoding_configuration",
+        tests::fixtures::TEST188_ENCODING_CONFIGURATION,
+        &mut report,
+    );
+    run_test(
+        "test189_encoding_quality",
+        tests::fixtures::TEST189_ENCODING_QUALITY,
+        &mut report,
+    );
+    run_test(
+        "test190_base_metric",
+        tests::fixtures::TEST190_BASE_METRIC,
+        &mut report,
+    );
+    run_test(
+        "test191_saturation_observable",
+        tests::fixtures::TEST191_SATURATION_OBSERVABLE,
+        &mut report,
+    );
+    run_test(
+        "test192_euler_characteristic",
+        tests::fixtures::TEST192_EULER_CHARACTERISTIC,
+        &mut report,
+    );
+    run_test(
+        "test193_galois_connection",
+        tests::fixtures::TEST193_GALOIS_CONNECTION,
+        &mut report,
+    );
+    run_test(
+        "test194_nerve_operations",
+        tests::fixtures::TEST194_NERVE_OPERATIONS,
+        &mut report,
+    );
+    // Amendment 61: Structural Types
+    run_test(
+        "test195_scalar_symbol_type",
+        tests::fixtures::TEST195_SCALAR_SYMBOL_TYPE,
+        &mut report,
+    );
+    run_test(
+        "test196_sequence_tuple_type",
+        tests::fixtures::TEST196_SEQUENCE_TUPLE_TYPE,
+        &mut report,
+    );
+    run_test(
+        "test197_graph_tree_type",
+        tests::fixtures::TEST197_GRAPH_TREE_TYPE,
+        &mut report,
+    );
+    // Amendment 62: Composed Operations
+    run_test(
+        "test198_composed_operation",
+        tests::fixtures::TEST198_COMPOSED_OPERATION,
+        &mut report,
+    );
+    run_test(
+        "test199_dispatch_operation",
+        tests::fixtures::TEST199_DISPATCH_OPERATION,
+        &mut report,
+    );
+    run_test(
+        "test200_inference_operation",
+        tests::fixtures::TEST200_INFERENCE_OPERATION,
+        &mut report,
+    );
+    run_test(
+        "test201_accumulation_operation",
+        tests::fixtures::TEST201_ACCUMULATION_OPERATION,
+        &mut report,
+    );
+    run_test(
+        "test202_lease_partition_operation",
+        tests::fixtures::TEST202_LEASE_PARTITION_OPERATION,
+        &mut report,
+    );
+    run_test(
+        "test203_session_composition_operation",
+        tests::fixtures::TEST203_SESSION_COMPOSITION_OPERATION,
+        &mut report,
+    );
+    // Amendment 63: Cascade Core
+    run_test(
+        "test204_euler_cascade",
+        tests::fixtures::TEST204_EULER_CASCADE,
+        &mut report,
+    );
+    run_test(
+        "test205_cascade_stage",
+        tests::fixtures::TEST205_CASCADE_STAGE,
+        &mut report,
+    );
+    run_test(
+        "test206_cascade_state",
+        tests::fixtures::TEST206_CASCADE_STATE,
+        &mut report,
+    );
+    run_test(
+        "test207_phase_gate",
+        tests::fixtures::TEST207_PHASE_GATE,
+        &mut report,
+    );
+    run_test("test208_epoch", tests::fixtures::TEST208_EPOCH, &mut report);
+    run_test(
+        "test209_predicate_expression",
+        tests::fixtures::TEST209_PREDICATE_EXPRESSION,
+        &mut report,
+    );
+    run_test(
+        "test210_guard_expression",
+        tests::fixtures::TEST210_GUARD_EXPRESSION,
+        &mut report,
+    );
+    run_test(
+        "test211_transition_effect",
+        tests::fixtures::TEST211_TRANSITION_EFFECT,
+        &mut report,
+    );
+    run_test(
+        "test212_service_window",
+        tests::fixtures::TEST212_SERVICE_WINDOW,
+        &mut report,
+    );
+    run_test(
+        "test213_cascade_transaction",
+        tests::fixtures::TEST213_CASCADE_TRANSACTION,
+        &mut report,
+    );
+    run_test(
+        "test214_feasibility_result",
+        tests::fixtures::TEST214_FEASIBILITY_RESULT,
+        &mut report,
+    );
+    run_test(
+        "test215_lease_state",
+        tests::fixtures::TEST215_LEASE_STATE,
+        &mut report,
+    );
+    run_test(
+        "test216_managed_lease",
+        tests::fixtures::TEST216_MANAGED_LEASE,
+        &mut report,
+    );
+    run_test(
+        "test217_back_pressure",
+        tests::fixtures::TEST217_BACK_PRESSURE,
+        &mut report,
+    );
+    run_test(
+        "test218_deferred_query",
+        tests::fixtures::TEST218_DEFERRED_QUERY,
+        &mut report,
+    );
+    run_test(
+        "test219_convergence_level",
+        tests::fixtures::TEST219_CONVERGENCE_LEVEL,
+        &mut report,
+    );
+    run_test(
+        "test220_hopf_fiber",
+        tests::fixtures::TEST220_HOPF_FIBER,
+        &mut report,
+    );
+    run_test(
+        "test221_convergence_residual",
+        tests::fixtures::TEST221_CONVERGENCE_RESIDUAL,
+        &mut report,
+    );
+    run_test(
+        "test222_commutative_subspace",
+        tests::fixtures::TEST222_COMMUTATIVE_SUBSPACE,
+        &mut report,
+    );
+    run_test(
+        "test223_associative_subalgebra",
+        tests::fixtures::TEST223_ASSOCIATIVE_SUBALGEBRA,
+        &mut report,
+    );
+    run_test(
+        "test224_normed_division_algebra",
+        tests::fixtures::TEST224_NORMED_DIVISION_ALGEBRA,
+        &mut report,
+    );
+    run_test(
+        "test225_cayley_dickson",
+        tests::fixtures::TEST225_CAYLEY_DICKSON,
+        &mut report,
+    );
+    run_test(
+        "test226_multiplication_table",
+        tests::fixtures::TEST226_MULTIPLICATION_TABLE,
+        &mut report,
+    );
+    run_test(
+        "test227_algebra_commutator",
+        tests::fixtures::TEST227_ALGEBRA_COMMUTATOR,
+        &mut report,
+    );
+    run_test(
+        "test228_algebra_associator",
+        tests::fixtures::TEST228_ALGEBRA_ASSOCIATOR,
+        &mut report,
+    );
+    run_test(
+        "test229_interaction_context",
+        tests::fixtures::TEST229_INTERACTION_CONTEXT,
+        &mut report,
+    );
+    run_test(
+        "test230_commutator_state",
+        tests::fixtures::TEST230_COMMUTATOR_STATE,
+        &mut report,
+    );
+    run_test(
+        "test231_associator_state",
+        tests::fixtures::TEST231_ASSOCIATOR_STATE,
+        &mut report,
+    );
+    run_test(
+        "test232_three_way_fiber",
+        tests::fixtures::TEST232_THREE_WAY_FIBER,
+        &mut report,
+    );
+    run_test(
+        "test233_negotiation_trace",
+        tests::fixtures::TEST233_NEGOTIATION_TRACE,
+        &mut report,
+    );
+    run_test(
+        "test234_interaction_nerve",
+        tests::fixtures::TEST234_INTERACTION_NERVE,
+        &mut report,
+    );
+    run_test(
+        "test235_monoidal_product",
+        tests::fixtures::TEST235_MONOIDAL_PRODUCT,
+        &mut report,
+    );
+    run_test(
+        "test236_monoidal_unit",
+        tests::fixtures::TEST236_MONOIDAL_UNIT,
+        &mut report,
+    );
+    run_test(
+        "test237_monoidal_associator",
+        tests::fixtures::TEST237_MONOIDAL_ASSOCIATOR,
+        &mut report,
+    );
+    run_test(
+        "test238_structural_operad",
+        tests::fixtures::TEST238_STRUCTURAL_OPERAD,
+        &mut report,
+    );
+    run_test(
+        "test239_operad_composition",
+        tests::fixtures::TEST239_OPERAD_COMPOSITION,
+        &mut report,
+    );
+    run_test(
+        "test240_operad_end_to_end",
+        tests::fixtures::TEST240_OPERAD_END_TO_END,
+        &mut report,
+    );
+    run_test(
+        "test241_associator_triple",
+        tests::fixtures::TEST241_ASSOCIATOR_TRIPLE,
+        &mut report,
+    );
+    run_test(
+        "test242_mutual_model_trace",
+        tests::fixtures::TEST242_MUTUAL_MODEL_TRACE,
+        &mut report,
+    );
+    run_test(
+        "test243_interaction_composition",
+        tests::fixtures::TEST243_INTERACTION_COMPOSITION,
+        &mut report,
+    );
+    run_test(
+        "test244_sublease_transfer",
+        tests::fixtures::TEST244_SUBLEASE_TRANSFER,
+        &mut report,
+    );
+    run_test(
+        "test245_predicate_subclasses",
+        tests::fixtures::TEST245_PREDICATE_SUBCLASSES,
+        &mut report,
+    );
+    run_test(
+        "test246_phase_rotation",
+        tests::fixtures::TEST246_PHASE_ROTATION,
+        &mut report,
+    );
+    run_test(
+        "test247_rollback_transition",
+        tests::fixtures::TEST247_ROLLBACK_TRANSITION,
+        &mut report,
+    );
+    run_test(
+        "test248_epoch_boundary",
+        tests::fixtures::TEST248_EPOCH_BOUNDARY,
+        &mut report,
+    );
+    run_test(
+        "test249_property_bind_advance",
+        tests::fixtures::TEST249_PROPERTY_BIND_ADVANCE,
+        &mut report,
+    );
+    run_test(
+        "test250_pipeline_outcome",
+        tests::fixtures::TEST250_PIPELINE_OUTCOME,
+        &mut report,
+    );
+    run_test(
+        "test251_preflight_checkpoint",
+        tests::fixtures::TEST251_PREFLIGHT_CHECKPOINT,
+        &mut report,
+    );
 
     // Verify test fixture count matches expected
     let test_count = report.results.len() - before_tests;
@@ -1204,6 +1539,70 @@ fn run_test(name: &str, turtle_src: &str, report: &mut ConformanceReport) {
         "test182_whitehead_product" => validate_basic_turtle(turtle_src),
         "test183_deformation_family" => validate_basic_turtle(turtle_src),
         "test184_versal_deformation" => validate_basic_turtle(turtle_src),
+        "test185_carry_chain" => validate_basic_turtle(turtle_src),
+        "test186_carry_event" => validate_basic_turtle(turtle_src),
+        "test187_carry_profile" => validate_basic_turtle(turtle_src),
+        "test188_encoding_configuration" => validate_basic_turtle(turtle_src),
+        "test189_encoding_quality" => validate_basic_turtle(turtle_src),
+        "test190_base_metric" => validate_basic_turtle(turtle_src),
+        "test191_saturation_observable" => validate_basic_turtle(turtle_src),
+        "test192_euler_characteristic" => validate_basic_turtle(turtle_src),
+        "test193_galois_connection" => validate_basic_turtle(turtle_src),
+        "test194_nerve_operations" => validate_basic_turtle(turtle_src),
+        "test198_composed_operation" => validate_basic_turtle(turtle_src),
+        "test199_dispatch_operation" => validate_basic_turtle(turtle_src),
+        "test200_inference_operation" => validate_basic_turtle(turtle_src),
+        "test201_accumulation_operation" => validate_basic_turtle(turtle_src),
+        "test202_lease_partition_operation" => validate_basic_turtle(turtle_src),
+        "test203_session_composition_operation" => validate_basic_turtle(turtle_src),
+        "test204_euler_cascade" => validate_basic_turtle(turtle_src),
+        "test205_cascade_stage" => validate_basic_turtle(turtle_src),
+        "test206_cascade_state" => validate_basic_turtle(turtle_src),
+        "test207_phase_gate" => validate_basic_turtle(turtle_src),
+        "test208_epoch" => validate_basic_turtle(turtle_src),
+        "test209_predicate_expression" => validate_basic_turtle(turtle_src),
+        "test210_guard_expression" => validate_basic_turtle(turtle_src),
+        "test211_transition_effect" => validate_basic_turtle(turtle_src),
+        "test212_service_window" => validate_basic_turtle(turtle_src),
+        "test213_cascade_transaction" => validate_basic_turtle(turtle_src),
+        "test214_feasibility_result" => validate_basic_turtle(turtle_src),
+        "test215_lease_state" => validate_basic_turtle(turtle_src),
+        "test216_managed_lease" => validate_basic_turtle(turtle_src),
+        "test217_back_pressure" => validate_basic_turtle(turtle_src),
+        "test218_deferred_query" => validate_basic_turtle(turtle_src),
+        "test219_convergence_level" => validate_basic_turtle(turtle_src),
+        "test220_hopf_fiber" => validate_basic_turtle(turtle_src),
+        "test221_convergence_residual" => validate_basic_turtle(turtle_src),
+        "test222_commutative_subspace" => validate_basic_turtle(turtle_src),
+        "test223_associative_subalgebra" => validate_basic_turtle(turtle_src),
+        "test224_normed_division_algebra" => validate_basic_turtle(turtle_src),
+        "test225_cayley_dickson" => validate_basic_turtle(turtle_src),
+        "test226_multiplication_table" => validate_basic_turtle(turtle_src),
+        "test227_algebra_commutator" => validate_basic_turtle(turtle_src),
+        "test228_algebra_associator" => validate_basic_turtle(turtle_src),
+        "test229_interaction_context" => validate_basic_turtle(turtle_src),
+        "test230_commutator_state" => validate_basic_turtle(turtle_src),
+        "test231_associator_state" => validate_basic_turtle(turtle_src),
+        "test232_three_way_fiber" => validate_basic_turtle(turtle_src),
+        "test233_negotiation_trace" => validate_basic_turtle(turtle_src),
+        "test234_interaction_nerve" => validate_basic_turtle(turtle_src),
+        "test235_monoidal_product" => validate_basic_turtle(turtle_src),
+        "test236_monoidal_unit" => validate_basic_turtle(turtle_src),
+        "test237_monoidal_associator" => validate_basic_turtle(turtle_src),
+        "test238_structural_operad" => validate_basic_turtle(turtle_src),
+        "test239_operad_composition" => validate_basic_turtle(turtle_src),
+        "test240_operad_end_to_end" => validate_basic_turtle(turtle_src),
+        "test241_associator_triple" => validate_basic_turtle(turtle_src),
+        "test242_mutual_model_trace" => validate_basic_turtle(turtle_src),
+        "test243_interaction_composition" => validate_basic_turtle(turtle_src),
+        "test244_sublease_transfer" => validate_basic_turtle(turtle_src),
+        "test245_predicate_subclasses" => validate_basic_turtle(turtle_src),
+        "test246_phase_rotation" => validate_basic_turtle(turtle_src),
+        "test247_rollback_transition" => validate_basic_turtle(turtle_src),
+        "test248_epoch_boundary" => validate_basic_turtle(turtle_src),
+        "test249_property_bind_advance" => validate_basic_turtle(turtle_src),
+        "test250_pipeline_outcome" => validate_basic_turtle(turtle_src),
+        "test251_preflight_checkpoint" => validate_basic_turtle(turtle_src),
         _ => Ok(()),
     };
 

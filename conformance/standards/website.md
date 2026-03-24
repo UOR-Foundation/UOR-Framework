@@ -6,7 +6,7 @@ The website follows a clear hierarchy:
 
 ```
 / (homepage)
-/namespaces/<prefix>/   ← 16 namespace landing pages
+/namespaces/<prefix>/   ← 23 namespace landing pages
 /search.html            ← full-text search
 /docs/                  ← documentation (from uor-docs)
 /css/style.css
@@ -44,7 +44,7 @@ The website must function without any external network requests:
 
 ## Search
 
-- `search-index.json` contains all 234 class labels, 479 property labels, 939 individual labels.
+- `search-index.json` contains all 310 class labels, 704 property labels, 1292 individual labels.
 - Client-side search parses `search-index.json` and filters on input.
 - Search results link to the relevant namespace page.
 - Search works without JavaScript disabled (falls back to sitemap).

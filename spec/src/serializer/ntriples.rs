@@ -21,6 +21,9 @@ const RDFS_SUBCLASS_OF: &str = "http://www.w3.org/2000/01/rdf-schema#subClassOf"
 const RDFS_DOMAIN: &str = "http://www.w3.org/2000/01/rdf-schema#domain";
 const RDFS_RANGE: &str = "http://www.w3.org/2000/01/rdf-schema#range";
 const RDF_TYPE: &str = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type";
+const RDF_FIRST: &str = "http://www.w3.org/1999/02/22-rdf-syntax-ns#first";
+const RDF_REST: &str = "http://www.w3.org/1999/02/22-rdf-syntax-ns#rest";
+const RDF_NIL: &str = "http://www.w3.org/1999/02/22-rdf-syntax-ns#nil";
 const XSD_STRING: &str = "http://www.w3.org/2001/XMLSchema#string";
 const XSD_INTEGER: &str = "http://www.w3.org/2001/XMLSchema#integer";
 const XSD_BOOLEAN: &str = "http://www.w3.org/2001/XMLSchema#boolean";
@@ -34,6 +37,7 @@ const UOR_SPACE: &str = "https://uor.foundation/space";
 #[must_use]
 pub fn to_ntriples(ontology: &Ontology) -> String {
     let mut out = String::with_capacity(256 * 1024);
+    let mut bnode_counter: usize = 0;
 
     // Root ontology
     triple(&mut out, ontology.base_iri, RDF_TYPE, &iri(OWL_ONTOLOGY));
@@ -136,8 +140,12 @@ pub fn to_ntriples(ontology: &Ontology) -> String {
                 &lit(ind.comment, XSD_STRING),
             );
             for (prop_iri, value) in ind.properties {
-                let obj = individual_value_to_object(value);
-                triple(&mut out, ind.id, prop_iri, &obj);
+                if let IndividualValue::List(items) = value {
+                    emit_rdf_list(&mut out, ind.id, prop_iri, items, &mut bnode_counter);
+                } else {
+                    let obj = individual_value_to_object(value);
+                    triple(&mut out, ind.id, prop_iri, &obj);
+                }
             }
         }
     }
@@ -173,18 +181,62 @@ fn individual_value_to_object(value: &IndividualValue) -> String {
         IndividualValue::Int(i) => format!("\"{}\"^^<{}>", i, XSD_INTEGER),
         IndividualValue::Bool(b) => format!("\"{}\"^^<{}>", b, XSD_BOOLEAN),
         IndividualValue::IriRef(iri_ref) => iri(iri_ref),
-        IndividualValue::List(items) => {
-            // For N-Triples, encode the first element as the object and
-            // note the list structure via comment (full rdf:List encoding
-            // would require blank nodes, which are not used in this serializer).
-            // The Turtle serializer provides the full list encoding.
-            if let Some(first) = items.first() {
-                iri(first)
-            } else {
-                iri("http://www.w3.org/1999/02/22-rdf-syntax-ns#nil")
-            }
+        // Lists are handled by emit_rdf_list at the call site.
+        IndividualValue::List(_) => iri(RDF_NIL),
+    }
+}
+
+/// Emits a proper `rdf:List` blank-node chain in N-Triples format.
+///
+/// For a list `[A, B]` linked from `<subj> <pred>`, this produces:
+/// ```text
+/// <subj> <pred> _:list0 .
+/// _:list0 <rdf:first> <A> .
+/// _:list0 <rdf:rest> _:list1 .
+/// _:list1 <rdf:first> <B> .
+/// _:list1 <rdf:rest> <rdf:nil> .
+/// ```
+fn emit_rdf_list(
+    out: &mut String,
+    subject: &str,
+    predicate: &str,
+    items: &[&str],
+    counter: &mut usize,
+) {
+    if items.is_empty() {
+        triple(out, subject, predicate, &iri(RDF_NIL));
+        return;
+    }
+
+    let head_label = format!("_:list{}", *counter);
+    *counter += 1;
+    // Link subject to the head of the list
+    triple(out, subject, predicate, &head_label);
+
+    let mut current_label = head_label;
+    for (i, item) in items.iter().enumerate() {
+        // rdf:first
+        bnode_triple(out, &current_label, RDF_FIRST, &iri(item));
+        // rdf:rest
+        if i + 1 < items.len() {
+            let next_label = format!("_:list{}", *counter);
+            *counter += 1;
+            bnode_triple(out, &current_label, RDF_REST, &next_label);
+            current_label = next_label;
+        } else {
+            bnode_triple(out, &current_label, RDF_REST, &iri(RDF_NIL));
         }
     }
+}
+
+/// Writes a triple where the subject is a blank node label.
+fn bnode_triple(out: &mut String, bnode: &str, pred: &str, obj: &str) {
+    out.push_str(bnode);
+    out.push_str(" <");
+    out.push_str(pred);
+    out.push_str("> ");
+    out.push_str(obj);
+    out.push_str(" .\n");
 }
 
 #[cfg(test)]
@@ -215,5 +267,25 @@ mod tests {
         let ontology = Ontology::full();
         let nt = to_ntriples(ontology);
         assert!(nt.contains(&format!("<{}>", OWL_CLASS)));
+    }
+
+    #[test]
+    fn lists_produce_rdf_first_rest() {
+        let ontology = Ontology::full();
+        let nt = to_ntriples(ontology);
+        // 3 lists in the ontology (succ, pred, CA_1), each with 2 elements.
+        // Each 2-element list produces 2 rdf:first and 2 rdf:rest triples.
+        let rdf_first_count = nt.matches(RDF_FIRST).count();
+        let rdf_rest_count = nt.matches(RDF_REST).count();
+        assert!(
+            rdf_first_count >= 6,
+            "Expected at least 6 rdf:first triples, got {}",
+            rdf_first_count
+        );
+        assert_eq!(
+            rdf_first_count, rdf_rest_count,
+            "rdf:first count ({}) should equal rdf:rest count ({})",
+            rdf_first_count, rdf_rest_count
+        );
     }
 }

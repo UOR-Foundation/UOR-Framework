@@ -111,6 +111,32 @@ pub fn validate(artifacts: &Path) -> Result<ConformanceReport> {
     validate_deformation_complex(&mut report);
     // Amendment 57: Moduli Resolver
     validate_moduli_resolver_vocabulary(&mut report);
+    // Amendment 58: Carry Algebra
+    validate_carry_algebra_vocabulary(&mut report);
+    // Amendment 59: Named Base Metrics
+    validate_named_base_metrics(&mut report);
+    // Amendment 60: Galois Connection + Nerve Operations
+    validate_galois_nerve_vocabulary(&mut report);
+    // Amendment 61: Structural Types
+    validate_structural_types_vocabulary(&mut report);
+    // Amendment 62: Composed Operations
+    validate_composed_ops_vocabulary(&mut report);
+    // Amendment 63: Cascade Core
+    validate_cascade_core_vocabulary(&mut report);
+    // Amendment 64: Cascade Expansion
+    validate_cascade_expansion_vocabulary(&mut report);
+    // Amendment 65: Cascade Completion
+    validate_cascade_completion_vocabulary(&mut report);
+    // Amendment 66: Convergence Tower
+    validate_convergence_tower_vocabulary(&mut report);
+    // Amendment 67: Division Algebras
+    validate_division_algebras_vocabulary(&mut report);
+    // Amendment 68: Interaction Algebra
+    validate_interaction_algebra_vocabulary(&mut report);
+    // Amendment 69: Monoidal Composition
+    validate_monoidal_composition_vocabulary(&mut report);
+    // Amendment 70: Operad Composition
+    validate_operad_composition_vocabulary(&mut report);
 
     // Validate the built JSON-LD artifact
     let json_path = artifacts.join("uor.foundation.jsonld");
@@ -453,7 +479,20 @@ fn validate_identity_completeness(report: &mut ConformanceReport) {
         "HT_", // Amendment 55: Homotopy Pipeline
         "HP_", // Amendment 56: Moduli Space
         "MD_", // Amendment 57: Moduli Resolver
-        "MR_",
+        "MR_", // Amendment 58: Carry Algebra
+        "CY_", // Amendment 59: Named Base Metrics
+        "BM_", // Amendment 60: Galois Connection + Nerve Operations
+        "GL_", "NV_", // Amendment 61: Structural Types
+        "SD_", // Amendment 62: Composed Operations
+        "DD_", "PI_", "PA_", "PL_", "PK_", "PP_", // Amendment 63: Cascade Core
+        "PE_", "PM_", "ER_", // Amendment 64: Cascade Expansion
+        "EA_", "OE_", "CS_", // Amendment 65: Cascade Completion
+        "FA_", "SW_", "LS_", "TJ_", "AP_", // Amendment 66: Convergence Tower
+        "EC_", // Amendment 67: Division Algebras
+        "DA_", // Amendment 68: Interaction Algebra
+        "IN_", "AS_", // Amendment 69: Monoidal Composition
+        "MO_", // Amendment 70: Operad Composition
+        "OP_",
     ];
     for prefix in &expected_prefixes {
         let has = identities.iter().any(|i| i.label.starts_with(prefix));
@@ -495,6 +534,7 @@ fn validate_identity_grounding(report: &mut ConformanceReport) {
         "https://uor.foundation/op/SuperpositionDomain",
         "https://uor.foundation/op/QuantumThermodynamic",
         "https://uor.foundation/op/ArithmeticValuation",
+        "https://uor.foundation/op/ComposedAlgebraic",
     ];
 
     let mut total = 0usize;
@@ -3258,6 +3298,1190 @@ fn validate_moduli_resolver_vocabulary(report: &mut ConformanceReport) {
         report.push(TestResult::pass(
             validator,
             "All 4 MR_ identities present with correct verificationDomains",
+        ));
+    }
+}
+
+/// Validates the carry algebra vocabulary (Amendment 58).
+fn validate_carry_algebra_vocabulary(report: &mut ConformanceReport) {
+    let ontology = uor_ontology::Ontology::full();
+    let validator = "ontology/inventory/carry_algebra_vocabulary";
+
+    let cy_ids: &[(&str, &str)] = &[
+        (
+            "https://uor.foundation/op/CY_1",
+            "https://uor.foundation/op/Algebraic",
+        ),
+        (
+            "https://uor.foundation/op/CY_2",
+            "https://uor.foundation/op/Algebraic",
+        ),
+        (
+            "https://uor.foundation/op/CY_3",
+            "https://uor.foundation/op/Algebraic",
+        ),
+        (
+            "https://uor.foundation/op/CY_4",
+            "https://uor.foundation/op/Algebraic",
+        ),
+        (
+            "https://uor.foundation/op/CY_5",
+            "https://uor.foundation/op/Algebraic",
+        ),
+        (
+            "https://uor.foundation/op/CY_6",
+            "https://uor.foundation/op/Algebraic",
+        ),
+        (
+            "https://uor.foundation/op/CY_7",
+            "https://uor.foundation/op/Algebraic",
+        ),
+    ];
+
+    let domain_prop = "https://uor.foundation/op/verificationDomain";
+    let mut all_valid = true;
+
+    for (iri, expected_domain) in cy_ids {
+        match ontology.find_individual(iri) {
+            Some(ind) => {
+                let has_domain = ind.properties.iter().any(|(k, v)| {
+                    *k == domain_prop
+                        && matches!(
+                            v,
+                            IndividualValue::IriRef(d) if *d == *expected_domain
+                        )
+                });
+                if !has_domain {
+                    report.push(TestResult::fail(
+                        validator,
+                        format!("{} missing verificationDomain {}", iri, expected_domain),
+                    ));
+                    all_valid = false;
+                }
+            }
+            None => {
+                report.push(TestResult::fail(
+                    validator,
+                    format!("Identity {} not found", iri),
+                ));
+                all_valid = false;
+            }
+        }
+    }
+
+    if all_valid {
+        report.push(TestResult::pass(
+            validator,
+            "All 7 CY_ identities present with correct verificationDomains",
+        ));
+    }
+}
+
+/// Validates the named base metrics vocabulary (Amendment 59).
+fn validate_named_base_metrics(report: &mut ConformanceReport) {
+    let ontology = uor_ontology::Ontology::full();
+    let validator = "ontology/inventory/named_base_metrics";
+
+    let bm_ids: &[(&str, &str)] = &[
+        (
+            "https://uor.foundation/op/BM_1",
+            "https://uor.foundation/op/IndexTheoretic",
+        ),
+        (
+            "https://uor.foundation/op/BM_2",
+            "https://uor.foundation/op/IndexTheoretic",
+        ),
+        (
+            "https://uor.foundation/op/BM_3",
+            "https://uor.foundation/op/IndexTheoretic",
+        ),
+        (
+            "https://uor.foundation/op/BM_4",
+            "https://uor.foundation/op/IndexTheoretic",
+        ),
+        (
+            "https://uor.foundation/op/BM_5",
+            "https://uor.foundation/op/IndexTheoretic",
+        ),
+        (
+            "https://uor.foundation/op/BM_6",
+            "https://uor.foundation/op/IndexTheoretic",
+        ),
+    ];
+
+    let domain_prop = "https://uor.foundation/op/verificationDomain";
+    let mut all_valid = true;
+
+    for (iri, expected_domain) in bm_ids {
+        match ontology.find_individual(iri) {
+            Some(ind) => {
+                let has_domain = ind.properties.iter().any(|(k, v)| {
+                    *k == domain_prop
+                        && matches!(
+                            v,
+                            IndividualValue::IriRef(d) if *d == *expected_domain
+                        )
+                });
+                if !has_domain {
+                    report.push(TestResult::fail(
+                        validator,
+                        format!("{} missing verificationDomain {}", iri, expected_domain),
+                    ));
+                    all_valid = false;
+                }
+            }
+            None => {
+                report.push(TestResult::fail(
+                    validator,
+                    format!("Identity {} not found", iri),
+                ));
+                all_valid = false;
+            }
+        }
+    }
+
+    if all_valid {
+        report.push(TestResult::pass(
+            validator,
+            "All 6 BM_ identities present with correct verificationDomains",
+        ));
+    }
+}
+
+/// Validates the Galois connection and nerve operations vocabulary (Amendment 60).
+fn validate_galois_nerve_vocabulary(report: &mut ConformanceReport) {
+    let ontology = uor_ontology::Ontology::full();
+    let validator = "ontology/inventory/galois_nerve_vocabulary";
+
+    let ids: &[(&str, &str)] = &[
+        (
+            "https://uor.foundation/op/GL_1",
+            "https://uor.foundation/op/Topological",
+        ),
+        (
+            "https://uor.foundation/op/GL_2",
+            "https://uor.foundation/op/Topological",
+        ),
+        (
+            "https://uor.foundation/op/GL_3",
+            "https://uor.foundation/op/Topological",
+        ),
+        (
+            "https://uor.foundation/op/GL_4",
+            "https://uor.foundation/op/Topological",
+        ),
+        (
+            "https://uor.foundation/op/NV_1",
+            "https://uor.foundation/op/Topological",
+        ),
+        (
+            "https://uor.foundation/op/NV_2",
+            "https://uor.foundation/op/Topological",
+        ),
+        (
+            "https://uor.foundation/op/NV_3",
+            "https://uor.foundation/op/Topological",
+        ),
+        (
+            "https://uor.foundation/op/NV_4",
+            "https://uor.foundation/op/Topological",
+        ),
+    ];
+
+    let domain_prop = "https://uor.foundation/op/verificationDomain";
+    let mut all_valid = true;
+
+    for (iri, expected_domain) in ids {
+        match ontology.find_individual(iri) {
+            Some(ind) => {
+                let has_domain = ind.properties.iter().any(|(k, v)| {
+                    *k == domain_prop
+                        && matches!(
+                            v,
+                            IndividualValue::IriRef(d) if *d == *expected_domain
+                        )
+                });
+                if !has_domain {
+                    report.push(TestResult::fail(
+                        validator,
+                        format!("{} missing verificationDomain {}", iri, expected_domain),
+                    ));
+                    all_valid = false;
+                }
+            }
+            None => {
+                report.push(TestResult::fail(
+                    validator,
+                    format!("Identity {} not found", iri),
+                ));
+                all_valid = false;
+            }
+        }
+    }
+
+    if all_valid {
+        report.push(TestResult::pass(
+            validator,
+            "All 8 GL_/NV_ identities present with correct verificationDomains",
+        ));
+    }
+}
+
+/// Validates that all 8 SD_ structural type identities are present with
+/// correct Algebraic verification domain.
+fn validate_structural_types_vocabulary(report: &mut ConformanceReport) {
+    let ontology = uor_ontology::Ontology::full();
+    let validator = "ontology/inventory/structural_types_vocabulary";
+
+    let ids: &[(&str, &str)] = &[
+        (
+            "https://uor.foundation/op/SD_1",
+            "https://uor.foundation/op/Algebraic",
+        ),
+        (
+            "https://uor.foundation/op/SD_2",
+            "https://uor.foundation/op/Algebraic",
+        ),
+        (
+            "https://uor.foundation/op/SD_3",
+            "https://uor.foundation/op/Algebraic",
+        ),
+        (
+            "https://uor.foundation/op/SD_4",
+            "https://uor.foundation/op/Algebraic",
+        ),
+        (
+            "https://uor.foundation/op/SD_5",
+            "https://uor.foundation/op/Algebraic",
+        ),
+        (
+            "https://uor.foundation/op/SD_6",
+            "https://uor.foundation/op/Algebraic",
+        ),
+        (
+            "https://uor.foundation/op/SD_7",
+            "https://uor.foundation/op/Algebraic",
+        ),
+        (
+            "https://uor.foundation/op/SD_8",
+            "https://uor.foundation/op/Algebraic",
+        ),
+    ];
+
+    let domain_prop = "https://uor.foundation/op/verificationDomain";
+    let mut all_valid = true;
+
+    for (iri, expected_domain) in ids {
+        match ontology.find_individual(iri) {
+            Some(ind) => {
+                let has_domain = ind.properties.iter().any(|(k, v)| {
+                    *k == domain_prop
+                        && matches!(
+                            v,
+                            IndividualValue::IriRef(d) if *d == *expected_domain
+                        )
+                });
+                if !has_domain {
+                    report.push(TestResult::fail(
+                        validator,
+                        format!("{} missing verificationDomain {}", iri, expected_domain),
+                    ));
+                    all_valid = false;
+                }
+            }
+            None => {
+                report.push(TestResult::fail(
+                    validator,
+                    format!("Identity {} not found", iri),
+                ));
+                all_valid = false;
+            }
+        }
+    }
+
+    if all_valid {
+        report.push(TestResult::pass(
+            validator,
+            "All 8 SD_ identities present with correct verificationDomains",
+        ));
+    }
+}
+
+/// Validates that all 18 DD_/PI_/PA_/PL_/PK_/PP_ composed operation identities
+/// are present with correct ComposedAlgebraic verification domain.
+fn validate_composed_ops_vocabulary(report: &mut ConformanceReport) {
+    let ontology = uor_ontology::Ontology::full();
+    let validator = "ontology/inventory/composed_ops_vocabulary";
+
+    let ids: &[(&str, &str)] = &[
+        (
+            "https://uor.foundation/op/DD_1",
+            "https://uor.foundation/op/ComposedAlgebraic",
+        ),
+        (
+            "https://uor.foundation/op/DD_2",
+            "https://uor.foundation/op/ComposedAlgebraic",
+        ),
+        (
+            "https://uor.foundation/op/PI_1",
+            "https://uor.foundation/op/ComposedAlgebraic",
+        ),
+        (
+            "https://uor.foundation/op/PI_2",
+            "https://uor.foundation/op/ComposedAlgebraic",
+        ),
+        (
+            "https://uor.foundation/op/PI_3",
+            "https://uor.foundation/op/ComposedAlgebraic",
+        ),
+        (
+            "https://uor.foundation/op/PI_4",
+            "https://uor.foundation/op/ComposedAlgebraic",
+        ),
+        (
+            "https://uor.foundation/op/PI_5",
+            "https://uor.foundation/op/ComposedAlgebraic",
+        ),
+        (
+            "https://uor.foundation/op/PA_1",
+            "https://uor.foundation/op/ComposedAlgebraic",
+        ),
+        (
+            "https://uor.foundation/op/PA_2",
+            "https://uor.foundation/op/ComposedAlgebraic",
+        ),
+        (
+            "https://uor.foundation/op/PA_3",
+            "https://uor.foundation/op/ComposedAlgebraic",
+        ),
+        (
+            "https://uor.foundation/op/PA_4",
+            "https://uor.foundation/op/ComposedAlgebraic",
+        ),
+        (
+            "https://uor.foundation/op/PA_5",
+            "https://uor.foundation/op/ComposedAlgebraic",
+        ),
+        (
+            "https://uor.foundation/op/PL_1",
+            "https://uor.foundation/op/ComposedAlgebraic",
+        ),
+        (
+            "https://uor.foundation/op/PL_2",
+            "https://uor.foundation/op/ComposedAlgebraic",
+        ),
+        (
+            "https://uor.foundation/op/PL_3",
+            "https://uor.foundation/op/ComposedAlgebraic",
+        ),
+        (
+            "https://uor.foundation/op/PK_1",
+            "https://uor.foundation/op/ComposedAlgebraic",
+        ),
+        (
+            "https://uor.foundation/op/PK_2",
+            "https://uor.foundation/op/ComposedAlgebraic",
+        ),
+        (
+            "https://uor.foundation/op/PP_1",
+            "https://uor.foundation/op/ComposedAlgebraic",
+        ),
+    ];
+
+    let domain_prop = "https://uor.foundation/op/verificationDomain";
+    let mut all_valid = true;
+
+    for (iri, expected_domain) in ids {
+        match ontology.find_individual(iri) {
+            Some(ind) => {
+                let has_domain = ind.properties.iter().any(|(k, v)| {
+                    *k == domain_prop
+                        && matches!(
+                            v,
+                            IndividualValue::IriRef(d) if *d == *expected_domain
+                        )
+                });
+                if !has_domain {
+                    report.push(TestResult::fail(
+                        validator,
+                        format!("{} missing verificationDomain {}", iri, expected_domain),
+                    ));
+                    all_valid = false;
+                }
+            }
+            None => {
+                report.push(TestResult::fail(
+                    validator,
+                    format!("Identity {} not found", iri),
+                ));
+                all_valid = false;
+            }
+        }
+    }
+
+    if all_valid {
+        report.push(TestResult::pass(
+            validator,
+            "All 18 DD_/PI_/PA_/PL_/PK_/PP_ identities present with correct verificationDomains",
+        ));
+    }
+}
+
+/// Validates the cascade core vocabulary (Amendment 63).
+fn validate_cascade_core_vocabulary(report: &mut ConformanceReport) {
+    let ontology = uor_ontology::Ontology::full();
+    let validator = "ontology/inventory/cascade_core_vocabulary";
+
+    let ids: &[(&str, &str)] = &[
+        (
+            "https://uor.foundation/op/PE_1",
+            "https://uor.foundation/op/Pipeline",
+        ),
+        (
+            "https://uor.foundation/op/PE_2",
+            "https://uor.foundation/op/Pipeline",
+        ),
+        (
+            "https://uor.foundation/op/PE_3",
+            "https://uor.foundation/op/Pipeline",
+        ),
+        (
+            "https://uor.foundation/op/PE_4",
+            "https://uor.foundation/op/Pipeline",
+        ),
+        (
+            "https://uor.foundation/op/PE_5",
+            "https://uor.foundation/op/Pipeline",
+        ),
+        (
+            "https://uor.foundation/op/PE_6",
+            "https://uor.foundation/op/Pipeline",
+        ),
+        (
+            "https://uor.foundation/op/PE_7",
+            "https://uor.foundation/op/Pipeline",
+        ),
+        (
+            "https://uor.foundation/op/PM_1",
+            "https://uor.foundation/op/Pipeline",
+        ),
+        (
+            "https://uor.foundation/op/PM_2",
+            "https://uor.foundation/op/Pipeline",
+        ),
+        (
+            "https://uor.foundation/op/PM_3",
+            "https://uor.foundation/op/Pipeline",
+        ),
+        (
+            "https://uor.foundation/op/PM_4",
+            "https://uor.foundation/op/Pipeline",
+        ),
+        (
+            "https://uor.foundation/op/PM_5",
+            "https://uor.foundation/op/Pipeline",
+        ),
+        (
+            "https://uor.foundation/op/PM_6",
+            "https://uor.foundation/op/Pipeline",
+        ),
+        (
+            "https://uor.foundation/op/PM_7",
+            "https://uor.foundation/op/Pipeline",
+        ),
+        (
+            "https://uor.foundation/op/ER_1",
+            "https://uor.foundation/op/Pipeline",
+        ),
+        (
+            "https://uor.foundation/op/ER_2",
+            "https://uor.foundation/op/Pipeline",
+        ),
+    ];
+
+    let domain_prop = "https://uor.foundation/op/verificationDomain";
+    let mut all_valid = true;
+
+    for (iri, expected_domain) in ids {
+        match ontology.find_individual(iri) {
+            Some(ind) => {
+                let has_domain = ind.properties.iter().any(|(k, v)| {
+                    *k == domain_prop
+                        && matches!(
+                            v,
+                            IndividualValue::IriRef(d) if *d == *expected_domain
+                        )
+                });
+                if !has_domain {
+                    report.push(TestResult::fail(
+                        validator,
+                        format!("{} missing verificationDomain {}", iri, expected_domain),
+                    ));
+                    all_valid = false;
+                }
+            }
+            None => {
+                report.push(TestResult::fail(
+                    validator,
+                    format!("Identity {} not found", iri),
+                ));
+                all_valid = false;
+            }
+        }
+    }
+
+    if all_valid {
+        report.push(TestResult::pass(
+            validator,
+            "All 16 PE_/PM_/ER_ cascade core identities present with correct verificationDomains",
+        ));
+    }
+}
+
+/// Validates the cascade expansion vocabulary (Amendment 64).
+fn validate_cascade_expansion_vocabulary(report: &mut ConformanceReport) {
+    let ontology = uor_ontology::Ontology::full();
+    let validator = "ontology/inventory/cascade_expansion_vocabulary";
+
+    let ids: &[(&str, &str)] = &[
+        (
+            "https://uor.foundation/op/ER_3",
+            "https://uor.foundation/op/Pipeline",
+        ),
+        (
+            "https://uor.foundation/op/ER_4",
+            "https://uor.foundation/op/Pipeline",
+        ),
+        (
+            "https://uor.foundation/op/EA_1",
+            "https://uor.foundation/op/Pipeline",
+        ),
+        (
+            "https://uor.foundation/op/EA_2",
+            "https://uor.foundation/op/Pipeline",
+        ),
+        (
+            "https://uor.foundation/op/EA_3",
+            "https://uor.foundation/op/Pipeline",
+        ),
+        (
+            "https://uor.foundation/op/EA_4",
+            "https://uor.foundation/op/Pipeline",
+        ),
+        (
+            "https://uor.foundation/op/OE_1",
+            "https://uor.foundation/op/Pipeline",
+        ),
+        (
+            "https://uor.foundation/op/OE_2",
+            "https://uor.foundation/op/Pipeline",
+        ),
+        (
+            "https://uor.foundation/op/OE_3",
+            "https://uor.foundation/op/Pipeline",
+        ),
+        (
+            "https://uor.foundation/op/OE_4a",
+            "https://uor.foundation/op/Pipeline",
+        ),
+        (
+            "https://uor.foundation/op/OE_4b",
+            "https://uor.foundation/op/Pipeline",
+        ),
+        (
+            "https://uor.foundation/op/OE_4c",
+            "https://uor.foundation/op/Pipeline",
+        ),
+        (
+            "https://uor.foundation/op/CS_1",
+            "https://uor.foundation/op/Pipeline",
+        ),
+        (
+            "https://uor.foundation/op/CS_2",
+            "https://uor.foundation/op/Pipeline",
+        ),
+        (
+            "https://uor.foundation/op/CS_3",
+            "https://uor.foundation/op/Pipeline",
+        ),
+        (
+            "https://uor.foundation/op/CS_4",
+            "https://uor.foundation/op/Pipeline",
+        ),
+    ];
+
+    let domain_prop = "https://uor.foundation/op/verificationDomain";
+    let mut all_valid = true;
+
+    for (iri, expected_domain) in ids {
+        match ontology.find_individual(iri) {
+            Some(ind) => {
+                let has_domain = ind.properties.iter().any(|(k, v)| {
+                    *k == domain_prop
+                        && matches!(
+                            v,
+                            IndividualValue::IriRef(d) if *d == *expected_domain
+                        )
+                });
+                if !has_domain {
+                    report.push(TestResult::fail(
+                        validator,
+                        format!("{} missing verificationDomain {}", iri, expected_domain),
+                    ));
+                    all_valid = false;
+                }
+            }
+            None => {
+                report.push(TestResult::fail(
+                    validator,
+                    format!("Identity {} not found", iri),
+                ));
+                all_valid = false;
+            }
+        }
+    }
+
+    if all_valid {
+        report.push(TestResult::pass(
+            validator,
+            "All 16 ER_/EA_/OE_/CS_ cascade expansion identities present with correct verificationDomains",
+        ));
+    }
+}
+
+/// Validates the cascade completion vocabulary (Amendment 65).
+fn validate_cascade_completion_vocabulary(report: &mut ConformanceReport) {
+    let ontology = uor_ontology::Ontology::full();
+    let validator = "ontology/inventory/cascade_completion_vocabulary";
+
+    let ids: &[(&str, &str)] = &[
+        (
+            "https://uor.foundation/op/CS_5",
+            "https://uor.foundation/op/Pipeline",
+        ),
+        (
+            "https://uor.foundation/op/FA_1",
+            "https://uor.foundation/op/Pipeline",
+        ),
+        (
+            "https://uor.foundation/op/FA_2",
+            "https://uor.foundation/op/Pipeline",
+        ),
+        (
+            "https://uor.foundation/op/FA_3",
+            "https://uor.foundation/op/Pipeline",
+        ),
+        (
+            "https://uor.foundation/op/SW_1",
+            "https://uor.foundation/op/Pipeline",
+        ),
+        (
+            "https://uor.foundation/op/SW_2",
+            "https://uor.foundation/op/Pipeline",
+        ),
+        (
+            "https://uor.foundation/op/SW_3",
+            "https://uor.foundation/op/Pipeline",
+        ),
+        (
+            "https://uor.foundation/op/SW_4",
+            "https://uor.foundation/op/Pipeline",
+        ),
+        (
+            "https://uor.foundation/op/LS_1",
+            "https://uor.foundation/op/Pipeline",
+        ),
+        (
+            "https://uor.foundation/op/LS_2",
+            "https://uor.foundation/op/Pipeline",
+        ),
+        (
+            "https://uor.foundation/op/LS_3",
+            "https://uor.foundation/op/Pipeline",
+        ),
+        (
+            "https://uor.foundation/op/LS_4",
+            "https://uor.foundation/op/Pipeline",
+        ),
+        (
+            "https://uor.foundation/op/TJ_1",
+            "https://uor.foundation/op/Pipeline",
+        ),
+        (
+            "https://uor.foundation/op/TJ_2",
+            "https://uor.foundation/op/Pipeline",
+        ),
+        (
+            "https://uor.foundation/op/TJ_3",
+            "https://uor.foundation/op/Pipeline",
+        ),
+        (
+            "https://uor.foundation/op/AP_1",
+            "https://uor.foundation/op/Pipeline",
+        ),
+        (
+            "https://uor.foundation/op/AP_2",
+            "https://uor.foundation/op/Pipeline",
+        ),
+        (
+            "https://uor.foundation/op/AP_3",
+            "https://uor.foundation/op/Pipeline",
+        ),
+    ];
+
+    let domain_prop = "https://uor.foundation/op/verificationDomain";
+    let mut all_valid = true;
+
+    for (iri, expected_domain) in ids {
+        match ontology.find_individual(iri) {
+            Some(ind) => {
+                let has_domain = ind.properties.iter().any(|(k, v)| {
+                    *k == domain_prop
+                        && matches!(
+                            v,
+                            IndividualValue::IriRef(d) if *d == *expected_domain
+                        )
+                });
+                if !has_domain {
+                    report.push(TestResult::fail(
+                        validator,
+                        format!("{} missing verificationDomain {}", iri, expected_domain),
+                    ));
+                    all_valid = false;
+                }
+            }
+            None => {
+                report.push(TestResult::fail(
+                    validator,
+                    format!("Identity {} not found", iri),
+                ));
+                all_valid = false;
+            }
+        }
+    }
+
+    if all_valid {
+        report.push(TestResult::pass(
+            validator,
+            "All 18 CS_5/FA_/SW_/LS_/TJ_/AP_ cascade completion identities present with correct verificationDomains",
+        ));
+    }
+}
+
+/// Validates the convergence tower vocabulary (Amendment 66).
+fn validate_convergence_tower_vocabulary(report: &mut ConformanceReport) {
+    let ontology = uor_ontology::Ontology::full();
+    let validator = "ontology/inventory/convergence_tower_vocabulary";
+
+    let ids: &[(&str, &str)] = &[
+        (
+            "https://uor.foundation/op/EC_1",
+            "https://uor.foundation/op/Topological",
+        ),
+        (
+            "https://uor.foundation/op/EC_2",
+            "https://uor.foundation/op/Topological",
+        ),
+        (
+            "https://uor.foundation/op/EC_3",
+            "https://uor.foundation/op/Topological",
+        ),
+        (
+            "https://uor.foundation/op/EC_4",
+            "https://uor.foundation/op/Topological",
+        ),
+        (
+            "https://uor.foundation/op/EC_4a",
+            "https://uor.foundation/op/Topological",
+        ),
+        (
+            "https://uor.foundation/op/EC_4b",
+            "https://uor.foundation/op/Topological",
+        ),
+        (
+            "https://uor.foundation/op/EC_4c",
+            "https://uor.foundation/op/Topological",
+        ),
+        (
+            "https://uor.foundation/op/EC_5",
+            "https://uor.foundation/op/Topological",
+        ),
+    ];
+
+    let domain_prop = "https://uor.foundation/op/verificationDomain";
+    let mut all_valid = true;
+
+    for (iri, expected_domain) in ids {
+        match ontology.find_individual(iri) {
+            Some(ind) => {
+                let has_domain = ind.properties.iter().any(|(k, v)| {
+                    *k == domain_prop
+                        && matches!(
+                            v,
+                            IndividualValue::IriRef(d) if *d == *expected_domain
+                        )
+                });
+                if !has_domain {
+                    report.push(TestResult::fail(
+                        validator,
+                        format!("{} missing verificationDomain {}", iri, expected_domain),
+                    ));
+                    all_valid = false;
+                }
+            }
+            None => {
+                report.push(TestResult::fail(
+                    validator,
+                    format!("Identity {} not found", iri),
+                ));
+                all_valid = false;
+            }
+        }
+    }
+
+    if all_valid {
+        report.push(TestResult::pass(
+            validator,
+            "All 8 EC_ convergence tower identities present with correct verificationDomains",
+        ));
+    }
+}
+
+fn validate_division_algebras_vocabulary(report: &mut ConformanceReport) {
+    let ontology = uor_ontology::Ontology::full();
+    let validator = "ontology/inventory/division_algebras_vocabulary";
+
+    let ids: &[(&str, &str)] = &[
+        (
+            "https://uor.foundation/op/DA_1",
+            "https://uor.foundation/op/Algebraic",
+        ),
+        (
+            "https://uor.foundation/op/DA_2",
+            "https://uor.foundation/op/Algebraic",
+        ),
+        (
+            "https://uor.foundation/op/DA_3",
+            "https://uor.foundation/op/Algebraic",
+        ),
+        (
+            "https://uor.foundation/op/DA_4",
+            "https://uor.foundation/op/Algebraic",
+        ),
+        (
+            "https://uor.foundation/op/DA_5",
+            "https://uor.foundation/op/Algebraic",
+        ),
+        (
+            "https://uor.foundation/op/DA_6",
+            "https://uor.foundation/op/Algebraic",
+        ),
+        (
+            "https://uor.foundation/op/DA_7",
+            "https://uor.foundation/op/Algebraic",
+        ),
+    ];
+
+    let domain_prop = "https://uor.foundation/op/verificationDomain";
+    let mut all_valid = true;
+
+    for (iri, expected_domain) in ids {
+        match ontology.find_individual(iri) {
+            Some(ind) => {
+                let has_domain = ind.properties.iter().any(|(k, v)| {
+                    *k == domain_prop
+                        && matches!(
+                            v,
+                            IndividualValue::IriRef(d) if *d == *expected_domain
+                        )
+                });
+                if !has_domain {
+                    report.push(TestResult::fail(
+                        validator,
+                        format!("{} missing verificationDomain {}", iri, expected_domain),
+                    ));
+                    all_valid = false;
+                }
+            }
+            None => {
+                report.push(TestResult::fail(
+                    validator,
+                    format!("Identity {} not found", iri),
+                ));
+                all_valid = false;
+            }
+        }
+    }
+
+    if all_valid {
+        report.push(TestResult::pass(
+            validator,
+            "All 7 DA_ division algebra identities present with correct verificationDomains",
+        ));
+    }
+}
+
+fn validate_interaction_algebra_vocabulary(report: &mut ConformanceReport) {
+    let ontology = uor_ontology::Ontology::full();
+    let validator = "ontology/inventory/interaction_algebra_vocabulary";
+
+    let ids: &[(&str, &str)] = &[
+        (
+            "https://uor.foundation/op/IN_1",
+            "https://uor.foundation/op/ComposedAlgebraic",
+        ),
+        (
+            "https://uor.foundation/op/IN_2",
+            "https://uor.foundation/op/ComposedAlgebraic",
+        ),
+        (
+            "https://uor.foundation/op/IN_3",
+            "https://uor.foundation/op/ComposedAlgebraic",
+        ),
+        (
+            "https://uor.foundation/op/IN_4",
+            "https://uor.foundation/op/ComposedAlgebraic",
+        ),
+        (
+            "https://uor.foundation/op/IN_5",
+            "https://uor.foundation/op/ComposedAlgebraic",
+        ),
+        (
+            "https://uor.foundation/op/IN_6",
+            "https://uor.foundation/op/ComposedAlgebraic",
+        ),
+        (
+            "https://uor.foundation/op/IN_7",
+            "https://uor.foundation/op/ComposedAlgebraic",
+        ),
+        (
+            "https://uor.foundation/op/IN_8",
+            "https://uor.foundation/op/ComposedAlgebraic",
+        ),
+        (
+            "https://uor.foundation/op/IN_9",
+            "https://uor.foundation/op/ComposedAlgebraic",
+        ),
+        (
+            "https://uor.foundation/op/AS_1",
+            "https://uor.foundation/op/ComposedAlgebraic",
+        ),
+        (
+            "https://uor.foundation/op/AS_2",
+            "https://uor.foundation/op/ComposedAlgebraic",
+        ),
+        (
+            "https://uor.foundation/op/AS_3",
+            "https://uor.foundation/op/ComposedAlgebraic",
+        ),
+        (
+            "https://uor.foundation/op/AS_4",
+            "https://uor.foundation/op/ComposedAlgebraic",
+        ),
+    ];
+
+    let domain_prop = "https://uor.foundation/op/verificationDomain";
+    let mut all_valid = true;
+
+    for (iri, expected_domain) in ids {
+        match ontology.find_individual(iri) {
+            Some(ind) => {
+                let has_domain = ind.properties.iter().any(|(k, v)| {
+                    *k == domain_prop
+                        && matches!(
+                            v,
+                            IndividualValue::IriRef(d) if *d == *expected_domain
+                        )
+                });
+                if !has_domain {
+                    report.push(TestResult::fail(
+                        validator,
+                        format!("{} missing verificationDomain {}", iri, expected_domain),
+                    ));
+                    all_valid = false;
+                }
+            }
+            None => {
+                report.push(TestResult::fail(
+                    validator,
+                    format!("Identity {} not found", iri),
+                ));
+                all_valid = false;
+            }
+        }
+    }
+
+    if all_valid {
+        report.push(TestResult::pass(
+            validator,
+            "All 13 IN_/AS_ interaction algebra identities present with correct verificationDomains",
+        ));
+    }
+}
+
+fn validate_monoidal_composition_vocabulary(report: &mut ConformanceReport) {
+    let ontology = uor_ontology::Ontology::full();
+    let validator = "ontology/inventory/monoidal_composition_vocabulary";
+
+    // Verify 3 monoidal classes exist
+    let expected_classes = [
+        "https://uor.foundation/monoidal/MonoidalProduct",
+        "https://uor.foundation/monoidal/MonoidalUnit",
+        "https://uor.foundation/monoidal/MonoidalAssociator",
+    ];
+
+    let mut all_valid = true;
+    for class_iri in &expected_classes {
+        if ontology.find_class(class_iri).is_none() {
+            report.push(TestResult::fail(
+                validator,
+                format!("Missing monoidal class: {}", class_iri),
+            ));
+            all_valid = false;
+        }
+    }
+
+    // Verify 5 MO_ identities with Algebraic verification domain
+    let ids = [
+        (
+            "https://uor.foundation/op/MO_1",
+            "https://uor.foundation/op/Algebraic",
+        ),
+        (
+            "https://uor.foundation/op/MO_2",
+            "https://uor.foundation/op/Algebraic",
+        ),
+        (
+            "https://uor.foundation/op/MO_3",
+            "https://uor.foundation/op/Algebraic",
+        ),
+        (
+            "https://uor.foundation/op/MO_4",
+            "https://uor.foundation/op/Algebraic",
+        ),
+        (
+            "https://uor.foundation/op/MO_5",
+            "https://uor.foundation/op/Algebraic",
+        ),
+    ];
+
+    let domain_prop = "https://uor.foundation/op/verificationDomain";
+
+    for (iri, expected_domain) in ids {
+        match ontology.find_individual(iri) {
+            Some(ind) => {
+                let has_domain = ind.properties.iter().any(|(k, v)| {
+                    *k == domain_prop
+                        && matches!(
+                            v,
+                            IndividualValue::IriRef(d) if *d == expected_domain
+                        )
+                });
+                if !has_domain {
+                    report.push(TestResult::fail(
+                        validator,
+                        format!("{} missing verificationDomain {}", iri, expected_domain),
+                    ));
+                    all_valid = false;
+                }
+            }
+            None => {
+                report.push(TestResult::fail(
+                    validator,
+                    format!("Identity {} not found", iri),
+                ));
+                all_valid = false;
+            }
+        }
+    }
+
+    if all_valid {
+        report.push(TestResult::pass(
+            validator,
+            "All 3 monoidal classes and 5 MO_ identities present with correct verificationDomains",
+        ));
+    }
+}
+
+fn validate_operad_composition_vocabulary(report: &mut ConformanceReport) {
+    let ontology = uor_ontology::Ontology::full();
+    let validator = "ontology/inventory/operad_composition_vocabulary";
+
+    // Verify 2 operad classes exist
+    let expected_classes = [
+        "https://uor.foundation/operad/StructuralOperad",
+        "https://uor.foundation/operad/OperadComposition",
+    ];
+
+    let mut all_valid = true;
+    for class_iri in &expected_classes {
+        if ontology.find_class(class_iri).is_none() {
+            report.push(TestResult::fail(
+                validator,
+                format!("Missing operad class: {}", class_iri),
+            ));
+            all_valid = false;
+        }
+    }
+
+    // Verify 5 OP_ identities with Algebraic verification domain
+    let ids = [
+        (
+            "https://uor.foundation/op/OP_1",
+            "https://uor.foundation/op/Algebraic",
+        ),
+        (
+            "https://uor.foundation/op/OP_2",
+            "https://uor.foundation/op/Algebraic",
+        ),
+        (
+            "https://uor.foundation/op/OP_3",
+            "https://uor.foundation/op/Algebraic",
+        ),
+        (
+            "https://uor.foundation/op/OP_4",
+            "https://uor.foundation/op/Algebraic",
+        ),
+        (
+            "https://uor.foundation/op/OP_5",
+            "https://uor.foundation/op/Algebraic",
+        ),
+    ];
+
+    let domain_prop = "https://uor.foundation/op/verificationDomain";
+
+    for (iri, expected_domain) in ids {
+        match ontology.find_individual(iri) {
+            Some(ind) => {
+                let has_domain = ind.properties.iter().any(|(k, v)| {
+                    *k == domain_prop
+                        && matches!(
+                            v,
+                            IndividualValue::IriRef(d) if *d == expected_domain
+                        )
+                });
+                if !has_domain {
+                    report.push(TestResult::fail(
+                        validator,
+                        format!("{} missing verificationDomain {}", iri, expected_domain),
+                    ));
+                    all_valid = false;
+                }
+            }
+            None => {
+                report.push(TestResult::fail(
+                    validator,
+                    format!("Identity {} not found", iri),
+                ));
+                all_valid = false;
+            }
+        }
+    }
+
+    if all_valid {
+        report.push(TestResult::pass(
+            validator,
+            "All 2 operad classes and 5 OP_ identities present with correct verificationDomains",
         ));
     }
 }

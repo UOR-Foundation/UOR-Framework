@@ -262,6 +262,48 @@ pub trait StratificationRecord<P: Primitives> {
     fn stratification_stratum(&self) -> &[Self::HolonomyStratum];
 }
 
+/// Superclass for the six universal measurements. Every computation on the ring produces these six quantities: d_Δ, σ, J_k, β_k, χ, r.
+pub trait BaseMetric<P: Primitives>: Observable<P> {
+    /// The mathematical domain of this base metric.
+    fn metric_domain(&self) -> &P::String;
+    /// The mathematical range (codomain) of this base metric.
+    fn metric_range(&self) -> &P::String;
+    /// How this metric composes with others in the measurement tower.
+    fn metric_composition(&self) -> &P::String;
+    /// The existing observable class that this base metric references.
+    fn references_class(&self) -> &P::String;
+    /// The existing identity that defines this base metric.
+    fn references_identity(&self) -> &P::String;
+    /// The unit of measurement for this base metric.
+    fn metric_unit(&self) -> &P::String;
+    /// The precision or resolution of this base metric.
+    fn metric_precision(&self) -> &P::String;
+    /// Monotonicity property of this metric (e.g., non-decreasing).
+    fn metric_monotonicity(&self) -> &P::String;
+    /// The decomposition rule for this metric into sub-metrics.
+    fn metric_decomposition(&self) -> &P::String;
+    /// The position of this metric in the metric tower.
+    fn metric_tower_position(&self) -> P::NonNegativeInteger;
+    /// The computational cost of evaluating this metric.
+    fn metric_computation_cost(&self) -> &P::String;
+    /// Upper or lower bound on the metric value.
+    fn metric_bound(&self) -> &P::String;
+}
+
+/// The saturation metric σ = pinned fibers / total fibers. Ranges from 0 (no fibers pinned) to 1 (fully saturated).
+pub trait SaturationObservable<P: Primitives>: Observable<P> {
+    /// The count of pinned fibers (numerator of σ).
+    fn saturation_numerator(&self) -> P::NonNegativeInteger;
+    /// The total fiber count (denominator of σ).
+    fn saturation_denominator(&self) -> P::PositiveInteger;
+}
+
+/// The Euler characteristic χ = Σ(−1)^k β_k of the constraint nerve. An integer-valued topological invariant.
+pub trait EulerCharacteristicObservable<P: Primitives>: Observable<P> {
+    /// The alternating sum formula for Euler characteristic.
+    fn alternating_sum(&self) -> &P::String;
+}
+
 /// Information-theoretic unit: the measurement is in bits (e.g., Hamming weight, entropy).
 pub mod bits {}
 
@@ -285,3 +327,65 @@ pub mod achievable {}
 
 /// The signature has been formally proven impossible by an ImpossibilityWitness deriving from MS_1, MS_2, or other impossibility theorems.
 pub mod forbidden {}
+
+/// d_Δ: the incompatibility metric |d_R − d_H| per fiber pair.
+pub mod d_delta_metric {
+    /// `metricDomain`
+    pub const METRIC_DOMAIN: &str = "pair of ring elements";
+    /// `metricRange`
+    pub const METRIC_RANGE: &str = "non-negative integer";
+    /// `referencesClass`
+    pub const REFERENCES_CLASS: &str = "IncompatibilityMetric";
+}
+
+/// σ: the saturation metric, pinned fibers / total fibers.
+pub mod sigma_metric {
+    /// `metricDomain`
+    pub const METRIC_DOMAIN: &str = "computation state";
+    /// `metricRange`
+    pub const METRIC_RANGE: &str = "decimal in [0, 1]";
+    /// `referencesIdentity`
+    pub const REFERENCES_IDENTITY: &str = "SC_2";
+}
+
+/// J_k: per-fiber curvature, ∂_R f_k.
+pub mod jacobian_metric {
+    /// `metricDomain`
+    pub const METRIC_DOMAIN: &str = "computation state × fiber index";
+    /// `metricRange`
+    pub const METRIC_RANGE: &str = "decimal";
+    /// `referencesClass`
+    pub const REFERENCES_CLASS: &str = "Jacobian";
+    /// `referencesIdentity`
+    pub const REFERENCES_IDENTITY: &str = "DC_6";
+}
+
+/// β_k: per-dimension Betti number of the constraint nerve.
+pub mod betti_metric {
+    /// `metricDomain`
+    pub const METRIC_DOMAIN: &str = "simplicial complex × dimension";
+    /// `metricRange`
+    pub const METRIC_RANGE: &str = "non-negative integer";
+    /// `referencesClass`
+    pub const REFERENCES_CLASS: &str = "BettiNumber";
+}
+
+/// χ: Euler characteristic, Σ(−1)^k β_k.
+pub mod euler_metric {
+    /// `metricDomain`
+    pub const METRIC_DOMAIN: &str = "simplicial complex";
+    /// `metricRange`
+    pub const METRIC_RANGE: &str = "integer";
+    /// `referencesIdentity`
+    pub const REFERENCES_IDENTITY: &str = "IT_2";
+}
+
+/// r: count of free (unpinned) fibers, the residual entropy.
+pub mod residual_metric {
+    /// `metricDomain`
+    pub const METRIC_DOMAIN: &str = "computation state";
+    /// `metricRange`
+    pub const METRIC_RANGE: &str = "non-negative integer";
+    /// `referencesClass`
+    pub const REFERENCES_CLASS: &str = "ResidualEntropy";
+}

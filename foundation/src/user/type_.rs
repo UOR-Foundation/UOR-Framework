@@ -42,6 +42,8 @@ pub trait ConstrainedType<P: Primitives>: TypeDefinition<P> {
     fn base_type(&self) -> &Self::TypeDefinition;
     /// The constraint predicate applied to the base type. Expressed as a string in the Prism constraint language. Deprecated in favor of type:hasConstraint (Amendment 10), which provides typed object references to Constraint individuals. Retained for backwards compatibility.
     fn constraint_count(&self) -> usize;
+    /// Returns the item at `index`. Must satisfy `index < self.constraint_count()`.
+    fn constraint_at(&self, index: usize) -> &P::String;
     /// Associated type for `Constraint`.
     type Constraint: Constraint<P>;
     /// A typed constraint object applied to this constrained type. Replaces the deprecated string-based type:constraint property.
@@ -297,4 +299,97 @@ pub trait ModuliTowerMap<P: Primitives> {
     type ModuliSpace: ModuliSpace<P>;
     /// The source moduli space of this tower map.
     fn tower_map_source(&self) -> &Self::ModuliSpace;
+}
+
+/// The adjunction between the type lattice and the fiber lattice. The upper adjoint is type closure; the lower adjoint is fiber interior. σ = lower adjoint evaluation; r = complement of upper adjoint image.
+pub trait GaloisConnection<P: Primitives> {
+    /// The upper adjoint (type closure) of the Galois connection, expressed as a symbolic formula string.
+    fn upper_adjoint(&self) -> &P::String;
+    /// The lower adjoint (fiber interior) of the Galois connection, expressed as a symbolic formula string.
+    fn lower_adjoint(&self) -> &P::String;
+    /// The fixpoint condition for the Galois connection: when upper(lower(T)) = T, the type is complete.
+    fn fixpoint_condition(&self) -> &P::String;
+    /// Description of the refinement direction: ascending in type lattice corresponds to descending in fiber freedom.
+    fn refinement_direction(&self) -> &P::String;
+    /// The closure property of a Galois connection.
+    fn galois_closure_property(&self) -> &P::String;
+    /// The interior property of a Galois connection.
+    fn galois_interior_property(&self) -> &P::String;
+}
+
+/// A single value from an ordered domain. fiberCount = n (quantization bits).
+pub mod scalar_type {
+    /// `structuralFiberCount`
+    pub const STRUCTURAL_FIBER_COUNT: &str = "n (quantization bits)";
+    /// `structuralGrounding`
+    pub const STRUCTURAL_GROUNDING: &str =
+        "quantize(value, range, bits) produces ring element where d_R reflects value proximity";
+}
+
+/// A value from a finite unordered set. fiberCount = ceil(log2(|alphabet|)).
+pub mod symbol_type {
+    /// `structuralFiberCount`
+    pub const STRUCTURAL_FIBER_COUNT: &str = "ceil(log2(|alphabet|))";
+    /// `structuralGrounding`
+    pub const STRUCTURAL_GROUNDING: &str =
+        "argmin_{encoding} sum d_delta over observed pairs (CY_5)";
+}
+
+/// An ordered list of elements with backbone constraint. The free monoid on the element type.
+pub mod sequence_type {
+    /// `structuralConstraint`
+    pub const STRUCTURAL_CONSTRAINT: &str = "backbone ordering: elements indexed by position";
+    /// `structuralFiberCount`
+    pub const STRUCTURAL_FIBER_COUNT: &str = "sum of element fiber counts";
+    /// `structuralGrounding`
+    pub const STRUCTURAL_GROUNDING: &str = "free monoid on element type, backbone constraint";
+}
+
+/// A fixed collection of named fields.
+pub mod tuple_type {
+    /// `structuralFiberCount`
+    pub const STRUCTURAL_FIBER_COUNT: &str = "sum of field fiber counts";
+    /// `structuralGrounding`
+    pub const STRUCTURAL_GROUNDING: &str = "fiber ordering follows CY_6 (optimal fiber ordering)";
+}
+
+/// Nodes with edge constraints. Constraint nerve = graph topology.
+pub mod graph_type {
+    /// `structuralConstraint`
+    pub const STRUCTURAL_CONSTRAINT: &str = "edge constraints: adjacency preserved under grounding";
+    /// `structuralFiberCount`
+    pub const STRUCTURAL_FIBER_COUNT: &str = "sum of node fiber counts + edge overhead";
+    /// `structuralGrounding`
+    pub const STRUCTURAL_GROUNDING: &str = "constraint nerve = graph nerve, beta_k equality";
+}
+
+/// Unordered collection. d_delta is permutation-invariant.
+pub mod set_type {
+    /// `structuralConstraint`
+    pub const STRUCTURAL_CONSTRAINT: &str = "permutation invariance: encoding is order-independent";
+    /// `structuralFiberCount`
+    pub const STRUCTURAL_FIBER_COUNT: &str = "sum of element fiber counts";
+    /// `structuralGrounding`
+    pub const STRUCTURAL_GROUNDING: &str =
+        "d_delta invariant under element permutation, D_{2n} symmetry";
+}
+
+/// Hierarchical structure. beta_1=0 (acyclic), beta_0=1 (connected).
+pub mod tree_type {
+    /// `structuralConstraint`
+    pub const STRUCTURAL_CONSTRAINT: &str = "beta_1=0 (acyclic), beta_0=1 (connected)";
+    /// `structuralFiberCount`
+    pub const STRUCTURAL_FIBER_COUNT: &str = "sum of node fiber counts";
+    /// `structuralGrounding`
+    pub const STRUCTURAL_GROUNDING: &str = "parent-child encoding with acyclicity constraint";
+}
+
+/// Collection of tuples sharing a schema = Sequence(Tuple(S)). Functorial decomposition.
+pub mod table_type {
+    /// `structuralConstraint`
+    pub const STRUCTURAL_CONSTRAINT: &str = "shared schema: all rows conform to tuple type S";
+    /// `structuralFiberCount`
+    pub const STRUCTURAL_FIBER_COUNT: &str = "row_count * tuple_fiber_count";
+    /// `structuralGrounding`
+    pub const STRUCTURAL_GROUNDING: &str = "Sequence(Tuple(S)), functorial decomposition";
 }

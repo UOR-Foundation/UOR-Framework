@@ -6,6 +6,7 @@ pub mod cert;
 pub mod cohomology;
 pub mod derivation;
 pub mod homology;
+pub mod interaction;
 pub mod observable;
 pub mod partition;
 pub mod proof;

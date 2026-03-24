@@ -7,7 +7,9 @@
 //! **Space classification:** `bridge` — kernel-computed, user-requested.
 
 use crate::model::iris::*;
-use crate::model::{Class, Individual, Namespace, NamespaceModule, Property, PropertyKind, Space};
+use crate::model::{
+    Class, Individual, IndividualValue, Namespace, NamespaceModule, Property, PropertyKind, Space,
+};
 
 /// Returns the `observable/` namespace module.
 #[must_use]
@@ -443,6 +445,32 @@ fn classes() -> Vec<Class> {
             subclass_of: &[OWL_THING],
             disjoint_with: &[],
         },
+        // Amendment 59: Named Base Metrics
+        Class {
+            id: "https://uor.foundation/observable/BaseMetric",
+            label: "BaseMetric",
+            comment: "Superclass for the six universal measurements. Every computation \
+                      on the ring produces these six quantities: d_\u{0394}, \u{03c3}, \
+                      J_k, \u{03b2}_k, \u{03c7}, r.",
+            subclass_of: &["https://uor.foundation/observable/Observable"],
+            disjoint_with: &[],
+        },
+        Class {
+            id: "https://uor.foundation/observable/SaturationObservable",
+            label: "SaturationObservable",
+            comment: "The saturation metric \u{03c3} = pinned fibers / total fibers. \
+                      Ranges from 0 (no fibers pinned) to 1 (fully saturated).",
+            subclass_of: &["https://uor.foundation/observable/Observable"],
+            disjoint_with: &[],
+        },
+        Class {
+            id: "https://uor.foundation/observable/EulerCharacteristicObservable",
+            label: "EulerCharacteristicObservable",
+            comment: "The Euler characteristic \u{03c7} = \u{03a3}(\u{2212}1)^k \u{03b2}_k \
+                      of the constraint nerve. An integer-valued topological invariant.",
+            subclass_of: &["https://uor.foundation/observable/Observable"],
+            disjoint_with: &[],
+        },
     ]
 }
 
@@ -873,6 +901,143 @@ fn properties() -> Vec<Property> {
             domain: Some("https://uor.foundation/observable/StratificationRecord"),
             range: "https://uor.foundation/type/HolonomyStratum",
         },
+        // Amendment 59: Named Base Metrics properties
+        Property {
+            id: "https://uor.foundation/observable/metricDomain",
+            label: "metricDomain",
+            comment: "The mathematical domain of this base metric.",
+            kind: PropertyKind::Datatype,
+            functional: true,
+            domain: Some("https://uor.foundation/observable/BaseMetric"),
+            range: XSD_STRING,
+        },
+        Property {
+            id: "https://uor.foundation/observable/metricRange",
+            label: "metricRange",
+            comment: "The mathematical range (codomain) of this base metric.",
+            kind: PropertyKind::Datatype,
+            functional: true,
+            domain: Some("https://uor.foundation/observable/BaseMetric"),
+            range: XSD_STRING,
+        },
+        Property {
+            id: "https://uor.foundation/observable/metricComposition",
+            label: "metricComposition",
+            comment: "How this metric composes with others in the measurement tower.",
+            kind: PropertyKind::Datatype,
+            functional: true,
+            domain: Some("https://uor.foundation/observable/BaseMetric"),
+            range: XSD_STRING,
+        },
+        Property {
+            id: "https://uor.foundation/observable/referencesClass",
+            label: "referencesClass",
+            comment: "The existing observable class that this base metric references.",
+            kind: PropertyKind::Datatype,
+            functional: true,
+            domain: Some("https://uor.foundation/observable/BaseMetric"),
+            range: XSD_STRING,
+        },
+        Property {
+            id: "https://uor.foundation/observable/referencesIdentity",
+            label: "referencesIdentity",
+            comment: "The existing identity that defines this base metric.",
+            kind: PropertyKind::Datatype,
+            functional: true,
+            domain: Some("https://uor.foundation/observable/BaseMetric"),
+            range: XSD_STRING,
+        },
+        Property {
+            id: "https://uor.foundation/observable/saturationNumerator",
+            label: "saturationNumerator",
+            comment: "The count of pinned fibers (numerator of \u{03c3}).",
+            kind: PropertyKind::Datatype,
+            functional: true,
+            domain: Some("https://uor.foundation/observable/SaturationObservable"),
+            range: XSD_NON_NEGATIVE_INTEGER,
+        },
+        Property {
+            id: "https://uor.foundation/observable/saturationDenominator",
+            label: "saturationDenominator",
+            comment: "The total fiber count (denominator of \u{03c3}).",
+            kind: PropertyKind::Datatype,
+            functional: true,
+            domain: Some("https://uor.foundation/observable/SaturationObservable"),
+            range: XSD_POSITIVE_INTEGER,
+        },
+        Property {
+            id: "https://uor.foundation/observable/alternatingSum",
+            label: "alternatingSum",
+            comment: "The alternating sum formula for Euler characteristic.",
+            kind: PropertyKind::Datatype,
+            functional: true,
+            domain: Some("https://uor.foundation/observable/EulerCharacteristicObservable"),
+            range: XSD_STRING,
+        },
+        // Amendment 71: Missing BaseMetric properties (7)
+        Property {
+            id: "https://uor.foundation/observable/metricUnit",
+            label: "metricUnit",
+            comment: "The unit of measurement for this base metric.",
+            kind: PropertyKind::Datatype,
+            functional: true,
+            domain: Some("https://uor.foundation/observable/BaseMetric"),
+            range: XSD_STRING,
+        },
+        Property {
+            id: "https://uor.foundation/observable/metricPrecision",
+            label: "metricPrecision",
+            comment: "The precision or resolution of this base metric.",
+            kind: PropertyKind::Datatype,
+            functional: true,
+            domain: Some("https://uor.foundation/observable/BaseMetric"),
+            range: XSD_STRING,
+        },
+        Property {
+            id: "https://uor.foundation/observable/metricMonotonicity",
+            label: "metricMonotonicity",
+            comment: "Monotonicity property of this metric (e.g., non-decreasing).",
+            kind: PropertyKind::Datatype,
+            functional: true,
+            domain: Some("https://uor.foundation/observable/BaseMetric"),
+            range: XSD_STRING,
+        },
+        Property {
+            id: "https://uor.foundation/observable/metricDecomposition",
+            label: "metricDecomposition",
+            comment: "The decomposition rule for this metric into sub-metrics.",
+            kind: PropertyKind::Datatype,
+            functional: true,
+            domain: Some("https://uor.foundation/observable/BaseMetric"),
+            range: XSD_STRING,
+        },
+        Property {
+            id: "https://uor.foundation/observable/metricTowerPosition",
+            label: "metricTowerPosition",
+            comment: "The position of this metric in the metric tower.",
+            kind: PropertyKind::Datatype,
+            functional: true,
+            domain: Some("https://uor.foundation/observable/BaseMetric"),
+            range: XSD_NON_NEGATIVE_INTEGER,
+        },
+        Property {
+            id: "https://uor.foundation/observable/metricComputationCost",
+            label: "metricComputationCost",
+            comment: "The computational cost of evaluating this metric.",
+            kind: PropertyKind::Datatype,
+            functional: true,
+            domain: Some("https://uor.foundation/observable/BaseMetric"),
+            range: XSD_STRING,
+        },
+        Property {
+            id: "https://uor.foundation/observable/metricBound",
+            label: "metricBound",
+            comment: "Upper or lower bound on the metric value.",
+            kind: PropertyKind::Datatype,
+            functional: true,
+            domain: Some("https://uor.foundation/observable/BaseMetric"),
+            range: XSD_STRING,
+        },
     ]
 }
 
@@ -946,6 +1111,131 @@ fn individuals() -> Vec<Individual> {
                       ImpossibilityWitness deriving from MS_1, MS_2, or other \
                       impossibility theorems.",
             properties: &[],
+        },
+        // Amendment 59: Named Base Metric individuals
+        Individual {
+            id: "https://uor.foundation/observable/d_delta_metric",
+            type_: "https://uor.foundation/observable/BaseMetric",
+            label: "d_delta_metric",
+            comment: "d_\u{0394}: the incompatibility metric |d_R \u{2212} d_H| per fiber pair.",
+            properties: &[
+                (
+                    "https://uor.foundation/observable/metricDomain",
+                    IndividualValue::Str("pair of ring elements"),
+                ),
+                (
+                    "https://uor.foundation/observable/metricRange",
+                    IndividualValue::Str("non-negative integer"),
+                ),
+                (
+                    "https://uor.foundation/observable/referencesClass",
+                    IndividualValue::Str("IncompatibilityMetric"),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/observable/sigma_metric",
+            type_: "https://uor.foundation/observable/BaseMetric",
+            label: "sigma_metric",
+            comment: "\u{03c3}: the saturation metric, pinned fibers / total fibers.",
+            properties: &[
+                (
+                    "https://uor.foundation/observable/metricDomain",
+                    IndividualValue::Str("computation state"),
+                ),
+                (
+                    "https://uor.foundation/observable/metricRange",
+                    IndividualValue::Str("decimal in \u{005b}0, 1\u{005d}"),
+                ),
+                (
+                    "https://uor.foundation/observable/referencesIdentity",
+                    IndividualValue::Str("SC_2"),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/observable/jacobian_metric",
+            type_: "https://uor.foundation/observable/BaseMetric",
+            label: "jacobian_metric",
+            comment: "J_k: per-fiber curvature, \u{2202}_R f_k.",
+            properties: &[
+                (
+                    "https://uor.foundation/observable/metricDomain",
+                    IndividualValue::Str("computation state \u{00d7} fiber index"),
+                ),
+                (
+                    "https://uor.foundation/observable/metricRange",
+                    IndividualValue::Str("decimal"),
+                ),
+                (
+                    "https://uor.foundation/observable/referencesClass",
+                    IndividualValue::Str("Jacobian"),
+                ),
+                (
+                    "https://uor.foundation/observable/referencesIdentity",
+                    IndividualValue::Str("DC_6"),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/observable/betti_metric",
+            type_: "https://uor.foundation/observable/BaseMetric",
+            label: "betti_metric",
+            comment: "\u{03b2}_k: per-dimension Betti number of the constraint nerve.",
+            properties: &[
+                (
+                    "https://uor.foundation/observable/metricDomain",
+                    IndividualValue::Str("simplicial complex \u{00d7} dimension"),
+                ),
+                (
+                    "https://uor.foundation/observable/metricRange",
+                    IndividualValue::Str("non-negative integer"),
+                ),
+                (
+                    "https://uor.foundation/observable/referencesClass",
+                    IndividualValue::Str("BettiNumber"),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/observable/euler_metric",
+            type_: "https://uor.foundation/observable/BaseMetric",
+            label: "euler_metric",
+            comment: "\u{03c7}: Euler characteristic, \u{03a3}(\u{2212}1)^k \u{03b2}_k.",
+            properties: &[
+                (
+                    "https://uor.foundation/observable/metricDomain",
+                    IndividualValue::Str("simplicial complex"),
+                ),
+                (
+                    "https://uor.foundation/observable/metricRange",
+                    IndividualValue::Str("integer"),
+                ),
+                (
+                    "https://uor.foundation/observable/referencesIdentity",
+                    IndividualValue::Str("IT_2"),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/observable/residual_metric",
+            type_: "https://uor.foundation/observable/BaseMetric",
+            label: "residual_metric",
+            comment: "r: count of free (unpinned) fibers, the residual entropy.",
+            properties: &[
+                (
+                    "https://uor.foundation/observable/metricDomain",
+                    IndividualValue::Str("computation state"),
+                ),
+                (
+                    "https://uor.foundation/observable/metricRange",
+                    IndividualValue::Str("non-negative integer"),
+                ),
+                (
+                    "https://uor.foundation/observable/referencesClass",
+                    IndividualValue::Str("ResidualEntropy"),
+                ),
+            ],
         },
     ]
 }

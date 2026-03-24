@@ -1,5 +1,5 @@
 # UOR Foundation SHACL Shapes
-# One NodeShape per class — 234 total.
+# One NodeShape per class — 292 total.
 # Defines cardinality and type constraints validated by the conformance suite.
 
 @prefix rdf:        <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
@@ -23,6 +23,13 @@
 @prefix state:      <https://uor.foundation/state/> .
 @prefix homology:   <https://uor.foundation/homology/> .
 @prefix cohomology: <https://uor.foundation/cohomology/> .
+@prefix carry:      <https://uor.foundation/carry/> .
+@prefix cascade:    <https://uor.foundation/cascade/> .
+@prefix convergence: <https://uor.foundation/convergence/> .
+@prefix division:   <https://uor.foundation/division/> .
+@prefix interaction: <https://uor.foundation/interaction/> .
+@prefix monoidal:   <https://uor.foundation/monoidal/> .
+@prefix operad:     <https://uor.foundation/operad/> .
 @prefix uor-sh:     <https://uor.foundation/shapes/> .
 
 # ── u/ namespace (2) ────────────────────────────────────────────────────────
@@ -1758,6 +1765,39 @@ uor-sh:ValidityScopeKindShape
     sh:targetClass  op:ValidityScopeKind ;
     rdfs:label      "ValidityScopeKindShape" .
 
+# ── Amendment 62: Composed Operations (6) ────────────────────────────────────
+
+uor-sh:ComposedOperationShape
+    a               sh:NodeShape ;
+    sh:targetClass  op:ComposedOperation ;
+    rdfs:label      "ComposedOperationShape" ;
+    sh:property [ sh:path op:operatorSignature ; sh:maxCount 1 ; sh:datatype xsd:string ] .
+
+uor-sh:DispatchOperationShape
+    a               sh:NodeShape ;
+    sh:targetClass  op:DispatchOperation ;
+    rdfs:label      "DispatchOperationShape" .
+
+uor-sh:InferenceOperationShape
+    a               sh:NodeShape ;
+    sh:targetClass  op:InferenceOperation ;
+    rdfs:label      "InferenceOperationShape" .
+
+uor-sh:AccumulationOperationShape
+    a               sh:NodeShape ;
+    sh:targetClass  op:AccumulationOperation ;
+    rdfs:label      "AccumulationOperationShape" .
+
+uor-sh:LeasePartitionOperationShape
+    a               sh:NodeShape ;
+    sh:targetClass  op:LeasePartitionOperation ;
+    rdfs:label      "LeasePartitionOperationShape" .
+
+uor-sh:SessionCompositionOperationShape
+    a               sh:NodeShape ;
+    sh:targetClass  op:SessionCompositionOperation ;
+    rdfs:label      "SessionCompositionOperationShape" .
+
 uor-sh:LiftChainShape
     a               sh:NodeShape ;
     sh:targetClass  type:LiftChain ;
@@ -1921,6 +1961,15 @@ uor-sh:ModuliTowerMapShape
     rdfs:label      "ModuliTowerMapShape" ;
     sh:property [ sh:path type:towerMapSource ; sh:minCount 1 ; sh:maxCount 1 ; sh:class type:ModuliSpace ] .
 
+uor-sh:GaloisConnectionShape
+    a               sh:NodeShape ;
+    sh:targetClass  type:GaloisConnection ;
+    rdfs:label      "GaloisConnectionShape" ;
+    sh:property [ sh:path type:upperAdjoint ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
+    sh:property [ sh:path type:lowerAdjoint ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
+    sh:property [ sh:path type:fixpointCondition ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
+    sh:property [ sh:path type:refinementDirection ; sh:maxCount 1 ; sh:datatype xsd:string ] .
+
 uor-sh:DeformationComplexShape
     a               sh:NodeShape ;
     sh:targetClass  homology:DeformationComplex ;
@@ -1940,3 +1989,498 @@ uor-sh:StratificationRecordShape
     sh:targetClass  observable:StratificationRecord ;
     rdfs:label      "StratificationRecordShape" ;
     sh:property [ sh:path observable:stratificationLevel ; sh:minCount 1 ; sh:maxCount 1 ; sh:class schema:QuantumLevel ] .
+
+# ── Amendment 58: Carry Algebra (5) ───────────────────────────────────────────
+
+uor-sh:CarryChainShape
+    a               sh:NodeShape ;
+    sh:targetClass  carry:CarryChain ;
+    rdfs:label      "CarryChainShape" ;
+    sh:property [ sh:path carry:chainLength ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:nonNegativeInteger ] .
+
+uor-sh:CarryEventShape
+    a               sh:NodeShape ;
+    sh:targetClass  carry:CarryEvent ;
+    rdfs:label      "CarryEventShape" ;
+    sh:property [ sh:path carry:eventKind ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string ] .
+
+uor-sh:CarryProfileShape
+    a               sh:NodeShape ;
+    sh:targetClass  carry:CarryProfile ;
+    rdfs:label      "CarryProfileShape" ;
+    sh:property [ sh:path carry:carryCount ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:nonNegativeInteger ] .
+
+uor-sh:EncodingConfigurationShape
+    a               sh:NodeShape ;
+    sh:targetClass  carry:EncodingConfiguration ;
+    rdfs:label      "EncodingConfigurationShape" ;
+    sh:property [ sh:path carry:symbolSetSize ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:positiveInteger ] .
+
+uor-sh:EncodingQualityShape
+    a               sh:NodeShape ;
+    sh:targetClass  carry:EncodingQuality ;
+    rdfs:label      "EncodingQualityShape" ;
+    sh:property [ sh:path carry:meanDelta ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:decimal ] .
+
+# ── Amendment 59: Named Base Metrics (3) ─────────────────────────────────────
+
+uor-sh:BaseMetricShape
+    a               sh:NodeShape ;
+    sh:targetClass  observable:BaseMetric ;
+    rdfs:label      "BaseMetricShape" ;
+    sh:property [ sh:path observable:metricDomain ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
+    sh:property [ sh:path observable:metricRange ; sh:maxCount 1 ; sh:datatype xsd:string ] .
+
+uor-sh:SaturationObservableShape
+    a               sh:NodeShape ;
+    sh:targetClass  observable:SaturationObservable ;
+    rdfs:label      "SaturationObservableShape" ;
+    sh:property [ sh:path observable:saturationNumerator ; sh:maxCount 1 ; sh:datatype xsd:nonNegativeInteger ] ;
+    sh:property [ sh:path observable:saturationDenominator ; sh:maxCount 1 ; sh:datatype xsd:positiveInteger ] .
+
+uor-sh:EulerCharacteristicObservableShape
+    a               sh:NodeShape ;
+    sh:targetClass  observable:EulerCharacteristicObservable ;
+    rdfs:label      "EulerCharacteristicObservableShape" ;
+    sh:property [ sh:path observable:alternatingSum ; sh:maxCount 1 ; sh:datatype xsd:string ] .
+
+# ── Amendment 63: Cascade Core (10) ──────────────────────────────────────────
+
+uor-sh:EulerCascadeShape
+    a               sh:NodeShape ;
+    sh:targetClass  cascade:EulerCascade ;
+    rdfs:label      "EulerCascadeShape" ;
+    sh:property [ sh:path cascade:phaseParameter ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
+    sh:property [ sh:path cascade:stageCount ; sh:maxCount 1 ; sh:datatype xsd:nonNegativeInteger ] .
+
+uor-sh:PhaseRotationSchedulerShape
+    a               sh:NodeShape ;
+    sh:targetClass  cascade:PhaseRotationScheduler ;
+    rdfs:label      "PhaseRotationSchedulerShape" ;
+    sh:property [ sh:path cascade:rotationSchedule ; sh:maxCount 1 ; sh:datatype xsd:string ] .
+
+uor-sh:TargetConvergenceAngleShape
+    a               sh:NodeShape ;
+    sh:targetClass  cascade:TargetConvergenceAngle ;
+    rdfs:label      "TargetConvergenceAngleShape" ;
+    sh:property [ sh:path cascade:targetAngle ; sh:maxCount 1 ; sh:datatype xsd:string ] .
+
+uor-sh:PhaseGateAttestationShape
+    a               sh:NodeShape ;
+    sh:targetClass  cascade:PhaseGateAttestation ;
+    rdfs:label      "PhaseGateAttestationShape" ;
+    sh:property [ sh:path cascade:gateStage ; sh:maxCount 1 ; sh:class cascade:CascadeStage ] ;
+    sh:property [ sh:path cascade:gateResult ; sh:maxCount 1 ; sh:datatype xsd:boolean ] .
+
+uor-sh:ComplexConjugateRollbackShape
+    a               sh:NodeShape ;
+    sh:targetClass  cascade:ComplexConjugateRollback ;
+    rdfs:label      "ComplexConjugateRollbackShape" ;
+    sh:property [ sh:path cascade:rollbackTarget ; sh:maxCount 1 ; sh:class cascade:CascadeStage ] .
+
+uor-sh:CascadeStageShape
+    a               sh:NodeShape ;
+    sh:targetClass  cascade:CascadeStage ;
+    rdfs:label      "CascadeStageShape" ;
+    sh:property [ sh:path cascade:stageIndex ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:nonNegativeInteger ] ;
+    sh:property [ sh:path cascade:stageName ; sh:maxCount 1 ; sh:datatype xsd:string ] .
+
+uor-sh:CascadeStateShape
+    a               sh:NodeShape ;
+    sh:targetClass  cascade:CascadeState ;
+    rdfs:label      "CascadeStateShape" ;
+    sh:property [ sh:path cascade:currentStage ; sh:maxCount 1 ; sh:class cascade:CascadeStage ] ;
+    sh:property [ sh:path cascade:phaseAngle ; sh:maxCount 1 ; sh:datatype xsd:string ] .
+
+uor-sh:CascadeTransitionRuleShape
+    a               sh:NodeShape ;
+    sh:targetClass  cascade:CascadeTransitionRule ;
+    rdfs:label      "CascadeTransitionRuleShape" ;
+    sh:property [ sh:path cascade:transitionGuard ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
+    sh:property [ sh:path cascade:transitionEffect ; sh:maxCount 1 ; sh:datatype xsd:string ] .
+
+uor-sh:EpochShape
+    a               sh:NodeShape ;
+    sh:targetClass  cascade:Epoch ;
+    rdfs:label      "EpochShape" ;
+    sh:property [ sh:path cascade:epochIndex ; sh:maxCount 1 ; sh:datatype xsd:nonNegativeInteger ] .
+
+uor-sh:EpochBoundaryShape
+    a               sh:NodeShape ;
+    sh:targetClass  cascade:EpochBoundary ;
+    rdfs:label      "EpochBoundaryShape" ;
+    sh:property [ sh:path cascade:epochBoundaryType ; sh:maxCount 1 ; sh:datatype xsd:string ] .
+
+# ── Amendment 64: Cascade Expansion (10) ─────────────────────────────────────
+
+uor-sh:PredicateExpressionShape
+    a               sh:NodeShape ;
+    sh:targetClass  cascade:PredicateExpression ;
+    rdfs:label      "PredicateExpressionShape" ;
+    sh:property [ sh:path cascade:predicateField ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
+    sh:property [ sh:path cascade:predicateOperator ; sh:maxCount 1 ; sh:datatype xsd:string ] .
+
+uor-sh:GuardExpressionShape
+    a               sh:NodeShape ;
+    sh:targetClass  cascade:GuardExpression ;
+    rdfs:label      "GuardExpressionShape" ;
+    sh:property [ sh:path cascade:guardPredicates ; sh:class cascade:PredicateExpression ] .
+
+uor-sh:TransitionEffectShape
+    a               sh:NodeShape ;
+    sh:targetClass  cascade:TransitionEffect ;
+    rdfs:label      "TransitionEffectShape" ;
+    sh:property [ sh:path cascade:effectBindings ; sh:class cascade:PropertyBind ] .
+
+uor-sh:PropertyBindShape
+    a               sh:NodeShape ;
+    sh:targetClass  cascade:PropertyBind ;
+    rdfs:label      "PropertyBindShape" ;
+    sh:property [ sh:path cascade:bindTarget ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
+    sh:property [ sh:path cascade:bindValue ; sh:maxCount 1 ; sh:datatype xsd:string ] .
+
+uor-sh:StageAdvanceShape
+    a               sh:NodeShape ;
+    sh:targetClass  cascade:StageAdvance ;
+    rdfs:label      "StageAdvanceShape" ;
+    sh:property [ sh:path cascade:advanceFrom ; sh:maxCount 1 ; sh:class cascade:CascadeStage ] ;
+    sh:property [ sh:path cascade:advanceTo ; sh:maxCount 1 ; sh:class cascade:CascadeStage ] .
+
+uor-sh:ServiceWindowShape
+    a               sh:NodeShape ;
+    sh:targetClass  cascade:ServiceWindow ;
+    rdfs:label      "ServiceWindowShape" ;
+    sh:property [ sh:path cascade:windowSize ; sh:maxCount 1 ; sh:datatype xsd:nonNegativeInteger ] ;
+    sh:property [ sh:path cascade:windowOffset ; sh:maxCount 1 ; sh:datatype xsd:nonNegativeInteger ] .
+
+uor-sh:CascadeTransactionShape
+    a               sh:NodeShape ;
+    sh:targetClass  cascade:CascadeTransaction ;
+    rdfs:label      "CascadeTransactionShape" ;
+    sh:property [ sh:path cascade:transactionPolicy ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
+    sh:property [ sh:path cascade:transactionOutcome ; sh:maxCount 1 ; sh:datatype xsd:string ] .
+
+uor-sh:PipelineSuccessShape
+    a               sh:NodeShape ;
+    sh:targetClass  cascade:PipelineSuccess ;
+    rdfs:label      "PipelineSuccessShape" ;
+    sh:property [ sh:path cascade:successOutcome ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
+    sh:property [ sh:path cascade:saturationReached ; sh:maxCount 1 ; sh:datatype xsd:boolean ] .
+
+uor-sh:PipelineFailureReasonShape
+    a               sh:NodeShape ;
+    sh:targetClass  cascade:PipelineFailureReason ;
+    rdfs:label      "PipelineFailureReasonShape" ;
+    sh:property [ sh:path cascade:failureKind ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
+    sh:property [ sh:path cascade:failureDetail ; sh:maxCount 1 ; sh:datatype xsd:string ] .
+
+uor-sh:PreflightCheckShape
+    a               sh:NodeShape ;
+    sh:targetClass  cascade:PreflightCheck ;
+    rdfs:label      "PreflightCheckShape" ;
+    sh:property [ sh:path cascade:preflightKind ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
+    sh:property [ sh:path cascade:preflightResult ; sh:maxCount 1 ; sh:datatype xsd:string ] .
+
+uor-sh:FeasibilityResultShape
+    a               sh:NodeShape ;
+    sh:targetClass  cascade:FeasibilityResult ;
+    rdfs:label      "FeasibilityResultShape" ;
+    sh:property [ sh:path cascade:feasibilityKind ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
+    sh:property [ sh:path cascade:feasibilityWitness ; sh:maxCount 1 ; sh:datatype xsd:string ] .
+
+uor-sh:LeaseStateShape
+    a               sh:NodeShape ;
+    sh:targetClass  cascade:LeaseState ;
+    rdfs:label      "LeaseStateShape" ;
+    sh:property [ sh:path cascade:leasePhase ; sh:maxCount 1 ; sh:datatype xsd:string ] .
+
+uor-sh:ManagedLeaseShape
+    a               sh:NodeShape ;
+    sh:targetClass  cascade:ManagedLease ;
+    rdfs:label      "ManagedLeaseShape" ;
+    sh:property [ sh:path cascade:managedLeaseId ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
+    sh:property [ sh:path cascade:leaseLifecycle ; sh:maxCount 1 ; sh:class cascade:LeaseState ] .
+
+uor-sh:LeaseCheckpointShape
+    a               sh:NodeShape ;
+    sh:targetClass  cascade:LeaseCheckpoint ;
+    rdfs:label      "LeaseCheckpointShape" ;
+    sh:property [ sh:path cascade:checkpointEpoch ; sh:maxCount 1 ; sh:datatype xsd:nonNegativeInteger ] ;
+    sh:property [ sh:path cascade:checkpointState ; sh:maxCount 1 ; sh:class cascade:CascadeState ] .
+
+uor-sh:BackPressureSignalShape
+    a               sh:NodeShape ;
+    sh:targetClass  cascade:BackPressureSignal ;
+    rdfs:label      "BackPressureSignalShape" ;
+    sh:property [ sh:path cascade:pressureLevel ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
+    sh:property [ sh:path cascade:pressureThreshold ; sh:maxCount 1 ; sh:datatype xsd:string ] .
+
+uor-sh:DeferredQuerySetShape
+    a               sh:NodeShape ;
+    sh:targetClass  cascade:DeferredQuerySet ;
+    rdfs:label      "DeferredQuerySetShape" ;
+    sh:property [ sh:path cascade:deferredCount ; sh:maxCount 1 ; sh:datatype xsd:nonNegativeInteger ] ;
+    sh:property [ sh:path cascade:deferralEpoch ; sh:maxCount 1 ; sh:datatype xsd:nonNegativeInteger ] .
+
+# ── convergence/ namespace (5) ───────────────────────────────────────────────
+
+uor-sh:ConvergenceLevelShape
+    a               sh:NodeShape ;
+    sh:targetClass  convergence:ConvergenceLevel ;
+    rdfs:label      "ConvergenceLevelShape" ;
+    sh:property [ sh:path convergence:algebraDimension ; sh:maxCount 1 ; sh:datatype xsd:nonNegativeInteger ] ;
+    sh:property [ sh:path convergence:bettiSignature ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
+    sh:property [ sh:path convergence:fiberType ; sh:maxCount 1 ; sh:class convergence:HopfFiber ] ;
+    sh:property [ sh:path convergence:characteristicIdentity ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
+    sh:property [ sh:path convergence:levelName ; sh:maxCount 1 ; sh:datatype xsd:string ] .
+
+uor-sh:HopfFiberShape
+    a               sh:NodeShape ;
+    sh:targetClass  convergence:HopfFiber ;
+    rdfs:label      "HopfFiberShape" ;
+    sh:property [ sh:path convergence:fiberDimension ; sh:maxCount 1 ; sh:datatype xsd:nonNegativeInteger ] ;
+    sh:property [ sh:path convergence:totalSpace ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
+    sh:property [ sh:path convergence:baseSpace ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
+    sh:property [ sh:path convergence:fiberSphere ; sh:maxCount 1 ; sh:datatype xsd:string ] .
+
+uor-sh:ConvergenceResidualShape
+    a               sh:NodeShape ;
+    sh:targetClass  convergence:ConvergenceResidual ;
+    rdfs:label      "ConvergenceResidualShape" ;
+    sh:property [ sh:path convergence:residualBetti ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
+    sh:property [ sh:path convergence:residualDimension ; sh:maxCount 1 ; sh:datatype xsd:nonNegativeInteger ] .
+
+uor-sh:CommutativeSubspaceShape
+    a               sh:NodeShape ;
+    sh:targetClass  convergence:CommutativeSubspace ;
+    rdfs:label      "CommutativeSubspaceShape" ;
+    sh:property [ sh:path convergence:subspaceDescription ; sh:maxCount 1 ; sh:datatype xsd:string ] .
+
+uor-sh:AssociativeSubalgebraShape
+    a               sh:NodeShape ;
+    sh:targetClass  convergence:AssociativeSubalgebra ;
+    rdfs:label      "AssociativeSubalgebraShape" ;
+    sh:property [ sh:path convergence:subalgebraDescription ; sh:maxCount 1 ; sh:datatype xsd:string ] .
+
+# ── division/ namespace (5) ──────────────────────────────────────────────────
+
+uor-sh:NormedDivisionAlgebraShape
+    a               sh:NodeShape ;
+    sh:targetClass  division:NormedDivisionAlgebra ;
+    rdfs:label      "NormedDivisionAlgebraShape" ;
+    sh:property [ sh:path division:algebraDimension ; sh:maxCount 1 ; sh:datatype xsd:nonNegativeInteger ] ;
+    sh:property [ sh:path division:isCommutative ; sh:maxCount 1 ; sh:datatype xsd:boolean ] ;
+    sh:property [ sh:path division:isAssociative ; sh:maxCount 1 ; sh:datatype xsd:boolean ] ;
+    sh:property [ sh:path division:basisElements ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
+    sh:property [ sh:path division:algebraMultiplicationTable ; sh:maxCount 1 ; sh:class division:MultiplicationTable ] .
+
+uor-sh:CayleyDicksonConstructionShape
+    a               sh:NodeShape ;
+    sh:targetClass  division:CayleyDicksonConstruction ;
+    rdfs:label      "CayleyDicksonConstructionShape" ;
+    sh:property [ sh:path division:cayleyDicksonSource ; sh:maxCount 1 ; sh:class division:NormedDivisionAlgebra ] ;
+    sh:property [ sh:path division:cayleyDicksonTarget ; sh:maxCount 1 ; sh:class division:NormedDivisionAlgebra ] ;
+    sh:property [ sh:path division:adjoinedElement ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
+    sh:property [ sh:path division:conjugationRule ; sh:maxCount 1 ; sh:datatype xsd:string ] .
+
+uor-sh:MultiplicationTableShape
+    a               sh:NodeShape ;
+    sh:targetClass  division:MultiplicationTable ;
+    rdfs:label      "MultiplicationTableShape" .
+
+uor-sh:AlgebraCommutatorShape
+    a               sh:NodeShape ;
+    sh:targetClass  division:AlgebraCommutator ;
+    rdfs:label      "AlgebraCommutatorShape" ;
+    sh:property [ sh:path division:commutatorFormula ; sh:maxCount 1 ; sh:datatype xsd:string ] .
+
+uor-sh:AlgebraAssociatorShape
+    a               sh:NodeShape ;
+    sh:targetClass  division:AlgebraAssociator ;
+    rdfs:label      "AlgebraAssociatorShape" ;
+    sh:property [ sh:path division:associatorFormula ; sh:maxCount 1 ; sh:datatype xsd:string ] .
+
+# ── interaction/ namespace (9) ───────────────────────────────────────────────
+
+uor-sh:InteractionContextShape
+    a               sh:NodeShape ;
+    sh:targetClass  interaction:InteractionContext ;
+    rdfs:label      "InteractionContextShape" ;
+    sh:property [ sh:path interaction:entityA ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
+    sh:property [ sh:path interaction:entityB ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
+    sh:property [ sh:path interaction:sharedFiberMask ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
+    sh:property [ sh:path interaction:commutatorNorm ; sh:maxCount 1 ; sh:datatype xsd:decimal ] .
+
+uor-sh:CommutatorStateShape
+    a               sh:NodeShape ;
+    sh:targetClass  interaction:CommutatorState ;
+    rdfs:label      "CommutatorStateShape" ;
+    sh:property [ sh:path interaction:commutatorValue ; sh:maxCount 1 ; sh:datatype xsd:decimal ] .
+
+uor-sh:AssociatorStateShape
+    a               sh:NodeShape ;
+    sh:targetClass  interaction:AssociatorState ;
+    rdfs:label      "AssociatorStateShape" ;
+    sh:property [ sh:path interaction:associatorNorm ; sh:maxCount 1 ; sh:datatype xsd:string ] .
+
+uor-sh:AssociatorTripleShape
+    a               sh:NodeShape ;
+    sh:targetClass  interaction:AssociatorTriple ;
+    rdfs:label      "AssociatorTripleShape" ;
+    sh:property [ sh:path interaction:tripleEntityA ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
+    sh:property [ sh:path interaction:tripleEntityB ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
+    sh:property [ sh:path interaction:tripleEntityC ; sh:maxCount 1 ; sh:datatype xsd:string ] .
+
+uor-sh:ThreeWayFiberShape
+    a               sh:NodeShape ;
+    sh:targetClass  interaction:ThreeWayFiber ;
+    rdfs:label      "ThreeWayFiberShape" ;
+    sh:property [ sh:path interaction:fiberPosition ; sh:maxCount 1 ; sh:datatype xsd:nonNegativeInteger ] ;
+    sh:property [ sh:path interaction:leftGroupingValue ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
+    sh:property [ sh:path interaction:rightGroupingValue ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
+    sh:property [ sh:path interaction:isPinned ; sh:maxCount 1 ; sh:datatype xsd:boolean ] ;
+    sh:property [ sh:path interaction:pinningPair ; sh:maxCount 1 ; sh:datatype xsd:string ] .
+
+uor-sh:NegotiationTraceShape
+    a               sh:NodeShape ;
+    sh:targetClass  interaction:NegotiationTrace ;
+    rdfs:label      "NegotiationTraceShape" ;
+    sh:property [ sh:path interaction:negotiationSteps ; sh:maxCount 1 ; sh:datatype xsd:nonNegativeInteger ] ;
+    sh:property [ sh:path interaction:isConvergent ; sh:maxCount 1 ; sh:datatype xsd:boolean ] .
+
+uor-sh:MutualModelTraceShape
+    a               sh:NodeShape ;
+    sh:targetClass  interaction:MutualModelTrace ;
+    rdfs:label      "MutualModelTraceShape" ;
+    sh:property [ sh:path interaction:modelConvergent ; sh:maxCount 1 ; sh:datatype xsd:boolean ] .
+
+uor-sh:InteractionNerveShape
+    a               sh:NodeShape ;
+    sh:targetClass  interaction:InteractionNerve ;
+    rdfs:label      "InteractionNerveShape" ;
+    sh:property [ sh:path interaction:nerveDimension ; sh:maxCount 1 ; sh:datatype xsd:nonNegativeInteger ] ;
+    sh:property [ sh:path interaction:nerveBettiNumbers ; sh:maxCount 1 ; sh:datatype xsd:string ] .
+
+uor-sh:InteractionCompositionShape
+    a               sh:NodeShape ;
+    sh:targetClass  interaction:InteractionComposition ;
+    rdfs:label      "InteractionCompositionShape" ;
+    sh:property [ sh:path interaction:reificationDepth ; sh:maxCount 1 ; sh:datatype xsd:nonNegativeInteger ] .
+
+# ── monoidal/ namespace (3) ─────────────────────────────────────────────────
+
+uor-sh:MonoidalProductShape
+    a               sh:NodeShape ;
+    sh:targetClass  monoidal:MonoidalProduct ;
+    rdfs:label      "MonoidalProductShape" ;
+    sh:property [ sh:path monoidal:leftComponent ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
+    sh:property [ sh:path monoidal:rightComponent ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
+    sh:property [ sh:path monoidal:composedEndpoint ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
+    sh:property [ sh:path monoidal:monoidalSaturation ; sh:maxCount 1 ; sh:datatype xsd:string ] .
+
+uor-sh:MonoidalUnitShape
+    a               sh:NodeShape ;
+    sh:targetClass  monoidal:MonoidalUnit ;
+    rdfs:label      "MonoidalUnitShape" ;
+    sh:property [ sh:path monoidal:unitWitness ; sh:maxCount 1 ; sh:datatype xsd:string ] .
+
+uor-sh:MonoidalAssociatorShape
+    a               sh:NodeShape ;
+    sh:targetClass  monoidal:MonoidalAssociator ;
+    rdfs:label      "MonoidalAssociatorShape" ;
+    sh:property [ sh:path monoidal:associatorLeftTriple ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
+    sh:property [ sh:path monoidal:associatorRightTriple ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
+    sh:property [ sh:path monoidal:associatorWitness ; sh:maxCount 1 ; sh:datatype xsd:string ] .
+
+# ── operad/ namespace (2) ───────────────────────────────────────────────────
+
+uor-sh:StructuralOperadShape
+    a               sh:NodeShape ;
+    sh:targetClass  operad:StructuralOperad ;
+    rdfs:label      "StructuralOperadShape" ;
+    sh:property [ sh:path operad:operadDescription ; sh:maxCount 1 ; sh:datatype xsd:string ] .
+
+uor-sh:OperadCompositionShape
+    a               sh:NodeShape ;
+    sh:targetClass  operad:OperadComposition ;
+    rdfs:label      "OperadCompositionShape" ;
+    sh:property [ sh:path operad:outerType ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
+    sh:property [ sh:path operad:innerType ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
+    sh:property [ sh:path operad:composedType ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
+    sh:property [ sh:path operad:composedFiberCount ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
+    sh:property [ sh:path operad:composedGrounding ; sh:maxCount 1 ; sh:datatype xsd:string ] .
+
+# Amendment 71: SubleaseTransfer + Predicate subclasses
+
+uor-sh:SubleaseTransferShape
+    a               sh:NodeShape ;
+    sh:targetClass  cascade:SubleaseTransfer ;
+    rdfs:label      "SubleaseTransferShape" ;
+    sh:property [ sh:path cascade:sourceLeaseRef ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
+    sh:property [ sh:path cascade:targetLeaseRef ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
+    sh:property [ sh:path cascade:transferredBudget ; sh:maxCount 1 ; sh:datatype xsd:nonNegativeInteger ] ;
+    sh:property [ sh:path cascade:transferCompleted ; sh:maxCount 1 ; sh:datatype xsd:boolean ] .
+
+uor-sh:ComparisonPredicateShape
+    a               sh:NodeShape ;
+    sh:targetClass  cascade:ComparisonPredicate ;
+    rdfs:label      "ComparisonPredicateShape" ;
+    sh:property [ sh:path cascade:comparisonField ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
+    sh:property [ sh:path cascade:comparisonOperator ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
+    sh:property [ sh:path cascade:comparisonValue ; sh:maxCount 1 ; sh:datatype xsd:string ] .
+
+uor-sh:ConjunctionPredicateShape
+    a               sh:NodeShape ;
+    sh:targetClass  cascade:ConjunctionPredicate ;
+    rdfs:label      "ConjunctionPredicateShape" ;
+    sh:property [ sh:path cascade:conjuncts ; sh:datatype xsd:string ] .
+
+uor-sh:DisjunctionPredicateShape
+    a               sh:NodeShape ;
+    sh:targetClass  cascade:DisjunctionPredicate ;
+    rdfs:label      "DisjunctionPredicateShape" ;
+    sh:property [ sh:path cascade:disjuncts ; sh:datatype xsd:string ] .
+
+uor-sh:NegationPredicateShape
+    a               sh:NodeShape ;
+    sh:targetClass  cascade:NegationPredicate ;
+    rdfs:label      "NegationPredicateShape" ;
+    sh:property [ sh:path cascade:negatedPredicate ; sh:maxCount 1 ; sh:datatype xsd:string ] .
+
+uor-sh:MembershipPredicateShape
+    a               sh:NodeShape ;
+    sh:targetClass  cascade:MembershipPredicate ;
+    rdfs:label      "MembershipPredicateShape" ;
+    sh:property [ sh:path cascade:membershipSet ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
+    sh:property [ sh:path cascade:membershipElement ; sh:maxCount 1 ; sh:datatype xsd:string ] .
+
+uor-sh:SaturationPredicateShape
+    a               sh:NodeShape ;
+    sh:targetClass  cascade:SaturationPredicate ;
+    rdfs:label      "SaturationPredicateShape" ;
+    sh:property [ sh:path cascade:saturationThreshold ; sh:maxCount 1 ; sh:datatype xsd:string ] .
+
+uor-sh:FiberCoveragePredicateShape
+    a               sh:NodeShape ;
+    sh:targetClass  cascade:FiberCoveragePredicate ;
+    rdfs:label      "FiberCoveragePredicateShape" ;
+    sh:property [ sh:path cascade:coverageTarget ; sh:maxCount 1 ; sh:datatype xsd:string ] .
+
+uor-sh:EqualsPredicateShape
+    a               sh:NodeShape ;
+    sh:targetClass  cascade:EqualsPredicate ;
+    rdfs:label      "EqualsPredicateShape" ;
+    sh:property [ sh:path cascade:equalityLeft ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
+    sh:property [ sh:path cascade:equalityRight ; sh:maxCount 1 ; sh:datatype xsd:string ] .
+
+uor-sh:NonNullPredicateShape
+    a               sh:NodeShape ;
+    sh:targetClass  cascade:NonNullPredicate ;
+    rdfs:label      "NonNullPredicateShape" ;
+    sh:property [ sh:path cascade:nonNullField ; sh:maxCount 1 ; sh:datatype xsd:string ] .
+
+uor-sh:QuerySubtypePredicateShape
+    a               sh:NodeShape ;
+    sh:targetClass  cascade:QuerySubtypePredicate ;
+    rdfs:label      "QuerySubtypePredicateShape" ;
+    sh:property [ sh:path cascade:queryTypeRef ; sh:maxCount 1 ; sh:datatype xsd:string ] .
