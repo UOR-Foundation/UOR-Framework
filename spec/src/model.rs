@@ -229,7 +229,7 @@ pub struct Ontology {
     pub version: &'static str,
     /// Base IRI of the ontology (e.g., `"https://uor.foundation/"`).
     pub base_iri: &'static str,
-    /// All 23 namespace modules in dependency order.
+    /// All namespace modules in dependency order.
     pub namespaces: Vec<NamespaceModule>,
     /// Root-level annotation properties (Amendment 8: `uor:space`).
     pub annotation_properties: Vec<AnnotationProperty>,
@@ -310,6 +310,7 @@ impl Ontology {
             "SaturationPhase",
             "SessionBoundaryType",
             "ValidityScopeKind",
+            "VarianceAnnotation",
             "VerificationDomain",
         ]
     }
@@ -391,6 +392,29 @@ pub mod iris {
     pub const NS_MONOIDAL: &str = "https://uor.foundation/monoidal/";
     /// Operad composition namespace.
     pub const NS_OPERAD: &str = "https://uor.foundation/operad/";
+    /// Predicate and dispatch namespace.
+    pub const NS_PREDICATE: &str = "https://uor.foundation/predicate/";
+    /// Parallel composition namespace.
+    pub const NS_PARALLEL: &str = "https://uor.foundation/parallel/";
+    /// Productive streams namespace.
+    pub const NS_STREAM: &str = "https://uor.foundation/stream/";
+    /// Failure algebra namespace.
+    pub const NS_FAILURE: &str = "https://uor.foundation/failure/";
+    /// Linear resources namespace.
+    pub const NS_LINEAR: &str = "https://uor.foundation/linear/";
+    /// Bounded recursion namespace.
+    pub const NS_RECURSION: &str = "https://uor.foundation/recursion/";
+    /// Address regions namespace.
+    pub const NS_REGION: &str = "https://uor.foundation/region/";
+    /// IO boundary namespace.
+    pub const NS_BOUNDARY: &str = "https://uor.foundation/boundary/";
+    /// Conformance shapes namespace.
+    pub const NS_CONFORMANCE: &str = "https://uor.foundation/conformance/";
+
+    // ── New namespaces (Amendments 71+) ──────────────────────────────
+
+    /// Effect algebra namespace.
+    pub const NS_EFFECT: &str = "https://uor.foundation/effect/";
 
     // XSD datatypes
     /// `xsd:string`.

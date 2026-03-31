@@ -449,6 +449,31 @@ impl fmt::Display for ExecutionPolicyKind {
     }
 }
 
+/// The variance of a structural type position under operad composition.
+#[repr(u8)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub enum VarianceAnnotation {
+    /// The structural position preserves TypeInclusion: if T₁ ≤ T₂, then F(T₁) ≤ F(T₂).
+    Covariant,
+    /// The structural position reverses TypeInclusion: if T₁ ≤ T₂, then F(T₂) ≤ F(T₁).
+    Contravariant,
+    /// The structural position requires exact type equality: F(T₁) ≤ F(T₂) only if T₁ = T₂.
+    Invariant,
+    /// The structural position ignores the type parameter: F(T₁) ≤ F(T₂) for all T₁, T₂.
+    Bivariant,
+}
+
+impl fmt::Display for VarianceAnnotation {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Covariant => f.write_str("covariant"),
+            Self::Contravariant => f.write_str("contravariant"),
+            Self::Invariant => f.write_str("invariant"),
+            Self::Bivariant => f.write_str("bivariant"),
+        }
+    }
+}
+
 /// The modality of a proof: computation (exhaustive verification at a specific quantum level) or axiomatic (derivation from ring axioms).
 #[repr(u8)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]

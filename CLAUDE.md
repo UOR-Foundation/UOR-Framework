@@ -47,12 +47,12 @@ Docs/website/conformance binaries accept `PUBLIC_BASE_PATH` env var for URL pref
 
 ## Ontology architecture
 
-- **16 namespaces**, assembly order: `u → schema → op → query → resolver → type → partition → observable → homology → cohomology → proof → derivation → trace → cert → morphism → state`
-- **Space classification:** Kernel (`u`, `schema`, `op`), Bridge (10 namespaces), User (`type`, `morphism`, `state`)
-- **234 classes** → 220 traits + 14 enum classes (includes QuantumLevel newtype struct)
-- **479 properties** → trait methods (generic over `P: Primitives`)
-- **939 named individuals** → constant modules
-- **14 enum classes:** `MetricAxis`, `GeometricCharacter`, `VerificationDomain`, `ComplexityClass`, `RewriteRule`, `MeasurementUnit`, `CoordinateKind`, `SessionBoundaryType`, `PhaseBoundaryType`, `SaturationPhase`, `AchievabilityStatus`, `ValidityScopeKind`, `ExecutionPolicyKind`, `QuantumLevel`
+- **33 namespaces**, assembly order: `u → schema → op → query → resolver → type → partition → observable → carry → homology → cohomology → proof → derivation → trace → cert → morphism → state → cascade → convergence → division → interaction → monoidal → operad → effect → predicate → parallel → stream → failure → linear → recursion → region → boundary → conformance`
+- **Space classification:** Kernel (17: `u`, `schema`, `op`, `carry`, `cascade`, `convergence`, `division`, `monoidal`, `operad`, `effect`, `predicate`, `parallel`, `stream`, `failure`, `linear`, `recursion`, `region`), Bridge (13: `query`, `resolver`, `partition`, `observable`, `homology`, `cohomology`, `proof`, `derivation`, `trace`, `cert`, `interaction`, `boundary`, `conformance`), User (`type`, `morphism`, `state`)
+- **395 classes** → 380 traits + 15 enum classes (includes QuantumLevel newtype struct)
+- **831 properties** → trait methods (generic over `P: Primitives`)
+- **1422 named individuals** → constant modules
+- **15 enum classes:** `AchievabilityStatus`, `CoordinateKind`, `ComplexityClass`, `ExecutionPolicyKind`, `GeometricCharacter`, `MeasurementUnit`, `MetricAxis`, `PhaseBoundaryType`, `QuantumLevel`, `RewriteRule`, `SaturationPhase`, `SessionBoundaryType`, `ValidityScopeKind`, `VarianceAnnotation`, `VerificationDomain`
 
 ## Code generation patterns
 

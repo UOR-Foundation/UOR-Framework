@@ -8,28 +8,38 @@ use crate::Primitives;
 
 /// A ⊗ B: the sequential composition of two computations. Output of A feeds input of B.
 pub trait MonoidalProduct<P: Primitives> {
+    /// Associated type for `ComputationDatum`.
+    type ComputationDatum: crate::user::morphism::ComputationDatum<P>;
     /// The left operand in the monoidal product A ⊗ B.
-    fn left_component(&self) -> &P::String;
+    fn left_operand(&self) -> &Self::ComputationDatum;
     /// The right operand in the monoidal product A ⊗ B.
-    fn right_component(&self) -> &P::String;
-    /// The endpoint of the composed computation A ⊗ B.
-    fn composed_endpoint(&self) -> &P::String;
+    fn right_operand(&self) -> &Self::ComputationDatum;
+    /// Associated type for `Datum`.
+    type Datum: crate::kernel::schema::Datum<P>;
+    /// The result datum of the composed computation A ⊗ B.
+    fn composed_result(&self) -> &Self::Datum;
     /// σ(A⊗B) relationship: saturation of the sequential composition.
-    fn monoidal_saturation(&self) -> &P::String;
+    fn saturation_value(&self) -> P::Decimal;
 }
 
 /// The identity computation I: passes input through unchanged. I ⊗ A ≅ A ≅ A ⊗ I.
 pub trait MonoidalUnit<P: Primitives> {
-    /// Witness that I ⊗ A ≅ A ≅ A ⊗ I.
-    fn unit_witness(&self) -> &P::String;
+    /// Associated type for `Certificate`.
+    type Certificate: crate::bridge::cert::Certificate<P>;
+    /// Certificate witnessing I ⊗ A ≅ A ≅ A ⊗ I.
+    fn unit_witness_ref(&self) -> &Self::Certificate;
 }
 
 /// The witness that (A⊗B)⊗C ≅ A⊗(B⊗C). The associativity isomorphism.
 pub trait MonoidalAssociator<P: Primitives> {
-    /// The left-grouped triple (A⊗B)⊗C.
-    fn associator_left_triple(&self) -> &P::String;
-    /// The right-grouped triple A⊗(B⊗C).
-    fn associator_right_triple(&self) -> &P::String;
-    /// Witness of the associativity isomorphism (A⊗B)⊗C ≅ A⊗(B⊗C).
-    fn associator_witness(&self) -> &P::String;
+    /// Associated type for `MonoidalProduct`.
+    type MonoidalProduct: MonoidalProduct<P>;
+    /// The left-grouped product (A⊗B)⊗C.
+    fn associator_left(&self) -> &Self::MonoidalProduct;
+    /// The right-grouped product A⊗(B⊗C).
+    fn associator_right(&self) -> &Self::MonoidalProduct;
+    /// Associated type for `Certificate`.
+    type Certificate: crate::bridge::cert::Certificate<P>;
+    /// Certificate witnessing the associativity isomorphism (A⊗B)⊗C ≅ A⊗(B⊗C).
+    fn associator_witness_ref(&self) -> &Self::Certificate;
 }

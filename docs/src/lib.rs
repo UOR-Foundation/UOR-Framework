@@ -23,11 +23,11 @@
 //!   namespaces/
 //!     u.html                ← Auto-generated from spec (100% accurate)
 //!     schema.html
-//!     ... (16 total)
+//!     ... (33 total)
 //!   concepts/
 //!     ring.html
 //!     content-addressing.html
-//!     ... (28 pages)
+//!     ... (30 pages)
 //!   guides/
 //!     implementing-prism.html
 //!     conformance.html
@@ -528,13 +528,8 @@ fn generate_single_page(
     docs_nav_html: &str,
     base_path: &str,
 ) -> Result<()> {
-    let markdown = if src.exists() {
-        std::fs::read_to_string(src)
-            .map_err(|e| anyhow::anyhow!("Cannot read {}: {}", src.display(), e))?
-    } else {
-        // Generate a placeholder page if the source doesn't exist
-        format!("# {}\n\nThis page is coming soon.\n", title)
-    };
+    let markdown = std::fs::read_to_string(src)
+        .map_err(|e| anyhow::anyhow!("Cannot read {}: {}", src.display(), e))?;
 
     let content_html = renderer::render_markdown(&markdown, index);
     let page = render_docs_page(

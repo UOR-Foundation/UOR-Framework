@@ -42,7 +42,7 @@ The UOR Foundation ontology is expressed in OWL 2 DL. All OWL 2 DL restrictions 
 
 ## Named Individuals
 
-All 939 named individuals must be typed with a known OWL class:
+All 1422 named individuals must be typed with a known OWL class:
 - 10 operation individuals: `op:neg`, `op:bnot`, `op:succ`, `op:pred`, `op:add`, `op:sub`, `op:mul`, `op:xor`, `op:and`, `op:or`
 - 2 schema individuals: `schema:pi1`, `schema:zero`
 - 1 identity individual: `op:criticalIdentity`

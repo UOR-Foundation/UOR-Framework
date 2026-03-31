@@ -6,7 +6,7 @@ rust-version.workspace = true
 license.workspace = true
 repository.workspace = true
 homepage.workspace = true
-description = "UOR Foundation ontology source of truth — all 16 namespaces encoded as typed Rust data with seven serialization formats"
+description = "UOR Foundation ontology source of truth — all 33 namespaces encoded as typed Rust data with seven serialization formats"
 publish = false
 
 [features]

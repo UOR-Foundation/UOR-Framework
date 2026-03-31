@@ -108,9 +108,16 @@ pub fn generate_namespace_module(
         }
     }
 
-    // Collect enum imports needed
+    // Collect enum imports needed (only for properties that generate methods,
+    // i.e., properties whose domain is in the current namespace)
     let mut enum_imports: Vec<&str> = Vec::new();
     for prop in &module.properties {
+        // Skip cross-namespace domain properties — they don't generate methods
+        if let Some(domain) = prop.domain {
+            if !domain.starts_with(ns.iri) {
+                continue;
+            }
+        }
         if let Some(override_name) = datatype_enum_override(prop) {
             if !enum_imports.contains(&override_name) {
                 enum_imports.push(override_name);

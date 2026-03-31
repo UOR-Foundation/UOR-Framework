@@ -40,16 +40,10 @@ pub trait CayleyDicksonConstruction<P: Primitives> {
 pub trait MultiplicationTable<P: Primitives> {}
 
 /// The commutator \[a,b\] = ab − ba. Zero for R and C; non-zero for H and O.
-pub trait AlgebraCommutator<P: Primitives> {
-    /// The formula for the commutator in this algebra.
-    fn commutator_formula(&self) -> &P::String;
-}
+pub trait AlgebraCommutator<P: Primitives> {}
 
 /// The associator \[a,b,c\] = (ab)c − a(bc). Zero for R, C, H; non-zero for O.
-pub trait AlgebraAssociator<P: Primitives> {
-    /// The formula for the associator in this algebra.
-    fn associator_formula(&self) -> &P::String;
-}
+pub trait AlgebraAssociator<P: Primitives> {}
 
 /// The real numbers R: dimension 1, commutative, associative.
 pub mod real_algebra {

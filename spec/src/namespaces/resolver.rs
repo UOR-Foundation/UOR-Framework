@@ -40,7 +40,7 @@ pub fn module() -> NamespaceModule {
                       Π : T_n → Part(R_n). Resolvers transform type declarations \
                       into ring partitions.",
             space: Space::Bridge,
-            imports: &[NS_SCHEMA, NS_QUERY, NS_PARTITION, NS_TYPE],
+            imports: &[NS_SCHEMA, NS_QUERY, NS_PARTITION, NS_TYPE, NS_PREDICATE],
         },
         classes: classes(),
         properties: properties(),
@@ -788,6 +788,28 @@ fn properties() -> Vec<Property> {
             functional: true,
             domain: Some("https://uor.foundation/resolver/ModuliResolver"),
             range: "https://uor.foundation/homology/DeformationComplex",
+        },
+        // Amendment 73: Dispatch formalization
+        Property {
+            id: "https://uor.foundation/resolver/dispatchTable",
+            label: "dispatchTable",
+            comment: "The dispatch table governing resolver selection for \
+                      this resolver class.",
+            kind: PropertyKind::Object,
+            functional: true,
+            domain: Some("https://uor.foundation/resolver/Resolver"),
+            range: "https://uor.foundation/predicate/DispatchTable",
+        },
+        Property {
+            id: "https://uor.foundation/resolver/resolverPredicate",
+            label: "resolverPredicate",
+            comment: "The predicate that selects this specific resolver. \
+                      When the predicate evaluates to true on an input type, \
+                      this resolver is chosen.",
+            kind: PropertyKind::Object,
+            functional: true,
+            domain: Some("https://uor.foundation/resolver/Resolver"),
+            range: "https://uor.foundation/predicate/TypePredicate",
         },
     ]
 }

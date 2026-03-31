@@ -182,6 +182,86 @@ pub fn namespace_mappings() -> HashMap<&'static str, NamespaceMapping> {
         },
     );
     m.insert(
+        NS_EFFECT,
+        NamespaceMapping {
+            space: Space::Kernel,
+            space_module: "kernel",
+            file_module: "effect",
+        },
+    );
+    m.insert(
+        NS_PARALLEL,
+        NamespaceMapping {
+            space: Space::Kernel,
+            space_module: "kernel",
+            file_module: "parallel",
+        },
+    );
+    m.insert(
+        NS_CONFORMANCE,
+        NamespaceMapping {
+            space: Space::Bridge,
+            space_module: "bridge",
+            file_module: "conformance_",
+        },
+    );
+    m.insert(
+        NS_BOUNDARY,
+        NamespaceMapping {
+            space: Space::Bridge,
+            space_module: "bridge",
+            file_module: "boundary",
+        },
+    );
+    m.insert(
+        NS_REGION,
+        NamespaceMapping {
+            space: Space::Kernel,
+            space_module: "kernel",
+            file_module: "region",
+        },
+    );
+    m.insert(
+        NS_RECURSION,
+        NamespaceMapping {
+            space: Space::Kernel,
+            space_module: "kernel",
+            file_module: "recursion",
+        },
+    );
+    m.insert(
+        NS_LINEAR,
+        NamespaceMapping {
+            space: Space::Kernel,
+            space_module: "kernel",
+            file_module: "linear",
+        },
+    );
+    m.insert(
+        NS_FAILURE,
+        NamespaceMapping {
+            space: Space::Kernel,
+            space_module: "kernel",
+            file_module: "failure",
+        },
+    );
+    m.insert(
+        NS_STREAM,
+        NamespaceMapping {
+            space: Space::Kernel,
+            space_module: "kernel",
+            file_module: "stream",
+        },
+    );
+    m.insert(
+        NS_PREDICATE,
+        NamespaceMapping {
+            space: Space::Kernel,
+            space_module: "kernel",
+            file_module: "predicate",
+        },
+    );
+    m.insert(
         NS_TYPE,
         NamespaceMapping {
             space: Space::User,

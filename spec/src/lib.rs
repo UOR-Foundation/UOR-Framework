@@ -11,7 +11,7 @@
 //!
 //! ```
 //! let ontology = uor_ontology::Ontology::full();
-//! assert_eq!(ontology.namespaces.len(), 23);
+//! assert_eq!(ontology.namespaces.len(), 33);
 //! ```
 //!
 //! # Serialization
@@ -61,7 +61,7 @@ impl Ontology {
     /// Assembly order follows the dependency graph specified in the UOR Foundation
     /// completion plan:
     /// `u → schema → op → query → resolver → type → partition →
-    ///  observable → carry → homology → cohomology → proof → derivation → trace → cert → morphism → state → cascade → convergence → division → interaction → monoidal → operad`
+    ///  observable → carry → homology → cohomology → proof → derivation → trace → cert → morphism → state → cascade → convergence → division → interaction → monoidal → operad → effect → predicate → parallel → stream → failure → linear → recursion → region → boundary → conformance`
     #[must_use]
     pub fn full() -> &'static Ontology {
         static ONTOLOGY: std::sync::OnceLock<Ontology> = std::sync::OnceLock::new();
@@ -92,6 +92,16 @@ impl Ontology {
                 namespaces::interaction::module(),
                 namespaces::monoidal::module(),
                 namespaces::operad::module(),
+                namespaces::effect::module(),
+                namespaces::predicate::module(),
+                namespaces::parallel::module(),
+                namespaces::stream::module(),
+                namespaces::failure::module(),
+                namespaces::linear::module(),
+                namespaces::recursion::module(),
+                namespaces::region::module(),
+                namespaces::boundary::module(),
+                namespaces::conformance_::module(),
             ],
             annotation_properties: vec![model::annotation_space_property()],
         })

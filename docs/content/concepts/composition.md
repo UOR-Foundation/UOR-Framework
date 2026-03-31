@@ -65,9 +65,9 @@ morphism:criticalComposition
 
 ## Structure Preservation
 
-The property {@prop https://uor.foundation/morphism/preservesStructure} records
-what structure a transform preserves (e.g., "ring homomorphism", "metric isometry").
-This connects composition to the certification layer: a
+The property {@prop https://uor.foundation/morphism/preservedInvariant} records
+which identity a transform preserves (linking to the op:Identity that the
+transform commutes with). This connects composition to the certification layer: a
 {@class https://uor.foundation/morphism/Isometry} preserves metric structure
 via {@prop https://uor.foundation/morphism/preservesMetric}.
 

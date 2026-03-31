@@ -9266,6 +9266,1140 @@ pub mod op_5 {
     pub const VERIFICATION_PATH_NOTE: &str = "Operad: hierarchical data structure";
 }
 
+/// Pinning decrements free count by exactly 1.
+pub mod fx_1 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "PinningEffect e";
+    /// `lhs`
+    pub const LHS: &str = "freeCount(postContext(e))";
+    /// `rhs`
+    pub const RHS: &str = "freeCount(preContext(e)) − 1";
+    /// `universallyValid`
+    pub const UNIVERSALLY_VALID: bool = true;
+    /// `validityKind` -> `Universal`
+    pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
+    /// `verificationDomain` -> `Algebraic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str = "Effect: pinning fiber budget decrement";
+}
+
+/// Unbinding increments free count by exactly 1.
+pub mod fx_2 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "UnbindingEffect e";
+    /// `lhs`
+    pub const LHS: &str = "freeCount(postContext(e))";
+    /// `rhs`
+    pub const RHS: &str = "freeCount(preContext(e)) + 1";
+    /// `universallyValid`
+    pub const UNIVERSALLY_VALID: bool = true;
+    /// `validityKind` -> `Universal`
+    pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
+    /// `verificationDomain` -> `Algebraic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str = "Effect: unbinding fiber budget increment";
+}
+
+/// Phase effects preserve fiber budget.
+pub mod fx_3 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "PhaseEffect e";
+    /// `lhs`
+    pub const LHS: &str = "freeCount(postContext(e))";
+    /// `rhs`
+    pub const RHS: &str = "freeCount(preContext(e))";
+    /// `universallyValid`
+    pub const UNIVERSALLY_VALID: bool = true;
+    /// `validityKind` -> `Universal`
+    pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
+    /// `verificationDomain` -> `Algebraic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str = "Effect: phase budget invariance";
+}
+
+/// Disjoint effects commute.
+pub mod fx_4 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "Effects A, B with DisjointnessWitness(target(A), target(B))";
+    /// `lhs`
+    pub const LHS: &str = "apply(A ; B, ctx)";
+    /// `rhs`
+    pub const RHS: &str = "apply(B ; A, ctx)";
+    /// `universallyValid`
+    pub const UNIVERSALLY_VALID: bool = true;
+    /// `validityKind` -> `Universal`
+    pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
+    /// `verificationDomain` -> `Algebraic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str = "Effect: disjoint commutativity";
+}
+
+/// Composite free-count delta is additive.
+pub mod fx_5 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "CompositeEffect (E₁ ; E₂)";
+    /// `lhs`
+    pub const LHS: &str = "freeCountDelta(E₁ ; E₂)";
+    /// `rhs`
+    pub const RHS: &str = "freeCountDelta(E₁) + freeCountDelta(E₂)";
+    /// `universallyValid`
+    pub const UNIVERSALLY_VALID: bool = true;
+    /// `validityKind` -> `Universal`
+    pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
+    /// `verificationDomain` -> `Algebraic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str = "Effect: composite delta additivity";
+}
+
+/// Every ReversibleEffect has an inverse (PinningEffect⁻¹ = UnbindingEffect on same fiber, PhaseEffect⁻¹ = conjugate phase).
+pub mod fx_6 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "ReversibleEffect e";
+    /// `lhs`
+    pub const LHS: &str = "apply(e, apply(e⁻¹, ctx))";
+    /// `rhs`
+    pub const RHS: &str = "ctx";
+    /// `universallyValid`
+    pub const UNIVERSALLY_VALID: bool = true;
+    /// `validityKind` -> `Universal`
+    pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
+    /// `verificationDomain` -> `Algebraic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str = "Effect: reversible inverse";
+}
+
+/// External effects must match their declared shape.
+pub mod fx_7 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "ExternalEffect e satisfying conformance:EffectShape";
+    /// `lhs`
+    pub const LHS: &str = "freeCountDelta(e)";
+    /// `rhs`
+    pub const RHS: &str = "declared freeCountDelta in EffectShape";
+    /// `universallyValid`
+    pub const UNIVERSALLY_VALID: bool = true;
+    /// `validityKind` -> `Universal`
+    pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
+    /// `verificationDomain` -> `Pipeline`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str = "Effect: external shape compliance";
+}
+
+/// Every predicate is total: evaluation terminates for all inputs.
+pub mod pr_1 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "Predicate p, input x";
+    /// `lhs`
+    pub const LHS: &str = "eval(p, x)";
+    /// `rhs`
+    pub const RHS: &str = "∈ {true, false}";
+    /// `universallyValid`
+    pub const UNIVERSALLY_VALID: bool = true;
+    /// `validityKind` -> `Universal`
+    pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
+    /// `verificationDomain` -> `Pipeline`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str = "Predicate: totality";
+}
+
+/// Every predicate is pure: evaluation does not modify state.
+pub mod pr_2 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "Predicate p, input x, state s";
+    /// `lhs`
+    pub const LHS: &str = "state(eval(p, x, s))";
+    /// `rhs`
+    pub const RHS: &str = "s";
+    /// `universallyValid`
+    pub const UNIVERSALLY_VALID: bool = true;
+    /// `validityKind` -> `Universal`
+    pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
+    /// `verificationDomain` -> `Pipeline`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str = "Predicate: purity";
+}
+
+/// Exhaustive + mutually exclusive dispatch is deterministic.
+pub mod pr_3 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "DispatchTable D with isExhaustive=true, isMutuallyExclusive=true";
+    /// `lhs`
+    pub const LHS: &str = "dispatch(D, x)";
+    /// `rhs`
+    pub const RHS: &str = "exactly one DispatchRule";
+    /// `universallyValid`
+    pub const UNIVERSALLY_VALID: bool = true;
+    /// `validityKind` -> `Universal`
+    pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
+    /// `verificationDomain` -> `Pipeline`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str = "Predicate: deterministic dispatch";
+}
+
+/// Match evaluation is deterministic given exhaustive, ordered arms.
+pub mod pr_4 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "MatchExpression M with exhaustive arms";
+    /// `lhs`
+    pub const LHS: &str = "eval(M)";
+    /// `rhs`
+    pub const RHS: &str = "armResult(first matching arm)";
+    /// `universallyValid`
+    pub const UNIVERSALLY_VALID: bool = true;
+    /// `validityKind` -> `Universal`
+    pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
+    /// `verificationDomain` -> `Pipeline`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str = "Predicate: deterministic match";
+}
+
+/// Stage transition requires typed guard satisfaction.
+pub mod pr_5 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "GuardedTransition g at cascade stage k";
+    /// `lhs`
+    pub const LHS: &str = "advance(k, guardTarget(g))";
+    /// `rhs`
+    pub const RHS: &str = "requires guardPredicate(g) = true";
+    /// `universallyValid`
+    pub const UNIVERSALLY_VALID: bool = true;
+    /// `validityKind` -> `Universal`
+    pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
+    /// `verificationDomain` -> `Pipeline`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str = "Predicate: typed guard transition";
+}
+
+/// Entry guard must be satisfied to enter a stage.
+pub mod cg_1 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "CascadeStage s with entryGuard g";
+    /// `lhs`
+    pub const LHS: &str = "advance_to(s)";
+    /// `rhs`
+    pub const RHS: &str = "requires eval(g, currentState) = true";
+    /// `universallyValid`
+    pub const UNIVERSALLY_VALID: bool = true;
+    /// `validityKind` -> `Universal`
+    pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
+    /// `verificationDomain` -> `Pipeline`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str = "Cascade: typed entry guard";
+}
+
+/// Exit guard must be satisfied, then the stage effect is applied.
+pub mod cg_2 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "CascadeStage s with exitGuard g and stageEffect e";
+    /// `lhs`
+    pub const LHS: &str = "advance_from(s)";
+    /// `rhs`
+    pub const RHS: &str = "requires eval(g, currentState) = true, then apply(e)";
+    /// `universallyValid`
+    pub const UNIVERSALLY_VALID: bool = true;
+    /// `validityKind` -> `Universal`
+    pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
+    /// `verificationDomain` -> `Pipeline`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str = "Cascade: typed exit guard with effect";
+}
+
+/// The root resolver dispatch table is exhaustive and mutually exclusive over all TypeDefinitions.
+pub mod dis_1 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "Root DispatchTable D";
+    /// `lhs`
+    pub const LHS: &str = "isExhaustive(D) ∧ isMutuallyExclusive(D)";
+    /// `rhs`
+    pub const RHS: &str = "true";
+    /// `universallyValid`
+    pub const UNIVERSALLY_VALID: bool = true;
+    /// `validityKind` -> `Universal`
+    pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
+    /// `verificationDomain` -> `Pipeline`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str = "Dispatch: exhaustive exclusive table";
+}
+
+/// Resolver dispatch is deterministic for every type.
+pub mod dis_2 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "TypeDefinition T, DispatchTable D";
+    /// `lhs`
+    pub const LHS: &str = "dispatch(D, T)";
+    /// `rhs`
+    pub const RHS: &str = "exactly one Resolver";
+    /// `universallyValid`
+    pub const UNIVERSALLY_VALID: bool = true;
+    /// `validityKind` -> `Universal`
+    pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
+    /// `verificationDomain` -> `Pipeline`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str = "Dispatch: deterministic resolver selection";
+}
+
+/// Disjoint parallel computations commute: A ⊗ B = B ⊗ A when fiber targets are disjoint.
+pub mod par_1 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "ParallelProduct A ∥ B with DisjointnessCertificate";
+    /// `lhs`
+    pub const LHS: &str = "apply(A ⊗ B, ctx)";
+    /// `rhs`
+    pub const RHS: &str = "apply(B ⊗ A, ctx)";
+    /// `universallyValid`
+    pub const UNIVERSALLY_VALID: bool = true;
+    /// `validityKind` -> `Universal`
+    pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
+    /// `verificationDomain` -> `Algebraic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str = "Parallel: disjoint commutativity";
+}
+
+/// Parallel free-count deltas are additive.
+pub mod par_2 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "ParallelProduct A ∥ B";
+    /// `lhs`
+    pub const LHS: &str = "freeCountDelta(A ∥ B)";
+    /// `rhs`
+    pub const RHS: &str = "freeCountDelta(A) + freeCountDelta(B)";
+    /// `universallyValid`
+    pub const UNIVERSALLY_VALID: bool = true;
+    /// `validityKind` -> `Universal`
+    pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
+    /// `verificationDomain` -> `Algebraic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str = "Parallel: delta additivity";
+}
+
+/// Partitioning is exhaustive: component cardinalities sum to total fiber budget.
+pub mod par_3 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "FiberPartitioning P over n fibers";
+    /// `lhs`
+    pub const LHS: &str = "Σ |component_i|";
+    /// `rhs`
+    pub const RHS: &str = "n";
+    /// `universallyValid`
+    pub const UNIVERSALLY_VALID: bool = true;
+    /// `validityKind` -> `Universal`
+    pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
+    /// `verificationDomain` -> `Algebraic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str = "Parallel: exhaustive partitioning";
+}
+
+/// All interleavings of disjoint parallel computations yield the same final context.
+pub mod par_4 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "ParallelProduct A ∥ B, any interleaving σ";
+    /// `lhs`
+    pub const LHS: &str = "finalContext(σ(A, B))";
+    /// `rhs`
+    pub const RHS: &str = "finalContext(A ⊗ B)";
+    /// `universallyValid`
+    pub const UNIVERSALLY_VALID: bool = true;
+    /// `validityKind` -> `Universal`
+    pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
+    /// `verificationDomain` -> `Algebraic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str = "Parallel: interleaving invariance";
+}
+
+/// Parallel certificate is the conjunction of component certificates plus disjointness.
+pub mod par_5 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "cert(A ∥ B)";
+    /// `lhs`
+    pub const LHS: &str = "cert(A ∥ B)";
+    /// `rhs`
+    pub const RHS: &str = "cert(A) ∧ cert(B) ∧ DisjointnessCertificate(A, B)";
+    /// `universallyValid`
+    pub const UNIVERSALLY_VALID: bool = true;
+    /// `validityKind` -> `Universal`
+    pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
+    /// `verificationDomain` -> `Pipeline`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str = "Parallel: certificate conjunction";
+}
+
+/// A ComputationDatum’s ring value is the content hash of its certificate.
+pub mod ho_1 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "ComputationDatum c";
+    /// `lhs`
+    pub const LHS: &str = "value(c)";
+    /// `rhs`
+    pub const RHS: &str = "contentHash(referencedCertificate(c))";
+    /// `universallyValid`
+    pub const UNIVERSALLY_VALID: bool = true;
+    /// `validityKind` -> `Universal`
+    pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
+    /// `verificationDomain` -> `Algebraic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str = "Higher-order: content-addressed certification";
+}
+
+/// Application preserves certification.
+pub mod ho_2 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "ApplicationMorphism app";
+    /// `lhs`
+    pub const LHS: &str = "cert(output(app))";
+    /// `rhs`
+    pub const RHS: &str = "cert(applicationTarget(app))";
+    /// `universallyValid`
+    pub const UNIVERSALLY_VALID: bool = true;
+    /// `validityKind` -> `Universal`
+    pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
+    /// `verificationDomain` -> `Pipeline`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str = "Higher-order: application certification";
+}
+
+/// Composition certification requires both components certified and type-compatible.
+pub mod ho_3 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "TransformComposition f ∘ g";
+    /// `lhs`
+    pub const LHS: &str = "cert(f ∘ g)";
+    /// `rhs`
+    pub const RHS: &str = "cert(f) ∧ cert(g) ∧ range(g) = domain(f)";
+    /// `universallyValid`
+    pub const UNIVERSALLY_VALID: bool = true;
+    /// `validityKind` -> `Universal`
+    pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
+    /// `verificationDomain` -> `Pipeline`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str = "Higher-order: composition certification";
+}
+
+/// Fully saturated partial application equals direct application.
+pub mod ho_4 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "PartialApplication p with remainingArity = 0";
+    /// `lhs`
+    pub const LHS: &str = "p";
+    /// `rhs`
+    pub const RHS: &str = "ApplicationMorphism(partialBase(p), boundArguments(p))";
+    /// `universallyValid`
+    pub const UNIVERSALLY_VALID: bool = true;
+    /// `validityKind` -> `Universal`
+    pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
+    /// `verificationDomain` -> `Algebraic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str = "Higher-order: saturation equivalence";
+}
+
+/// Every epoch terminates: the cascade within each epoch reaches convergence angle π.
+pub mod str_1 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "Epoch e_k in ProductiveStream";
+    /// `lhs`
+    pub const LHS: &str = "cascade(e_k) converges to π";
+    /// `rhs`
+    pub const RHS: &str = "true";
+    /// `universallyValid`
+    pub const UNIVERSALLY_VALID: bool = true;
+    /// `validityKind` -> `Universal`
+    pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
+    /// `verificationDomain` -> `Pipeline`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str = "Stream: epoch termination";
+}
+
+/// Saturation preservation across epoch boundaries.
+pub mod str_2 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "EpochBoundary b between e_k and e_{k+1}";
+    /// `lhs`
+    pub const LHS: &str = "saturation(continuationContext(b))";
+    /// `rhs`
+    pub const RHS: &str = "saturation(postContext(e_k))";
+    /// `universallyValid`
+    pub const UNIVERSALLY_VALID: bool = true;
+    /// `validityKind` -> `Universal`
+    pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
+    /// `verificationDomain` -> `Pipeline`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str = "Stream: saturation preservation";
+}
+
+/// Every finite prefix computes in finite time.
+pub mod str_3 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "StreamPrefix P of length k";
+    /// `lhs`
+    pub const LHS: &str = "computationTime(P)";
+    /// `rhs`
+    pub const RHS: &str = "Σ_{i=0}^{k−1} computationTime(epoch_i)";
+    /// `universallyValid`
+    pub const UNIVERSALLY_VALID: bool = true;
+    /// `validityKind` -> `Universal`
+    pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
+    /// `verificationDomain` -> `Pipeline`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str = "Stream: finite prefix computability";
+}
+
+/// The first epoch starts from the unfold seed context.
+pub mod str_4 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "Unfold(seed, step)";
+    /// `lhs`
+    pub const LHS: &str = "epoch_0.context";
+    /// `rhs`
+    pub const RHS: &str = "seed";
+    /// `universallyValid`
+    pub const UNIVERSALLY_VALID: bool = true;
+    /// `validityKind` -> `Universal`
+    pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
+    /// `verificationDomain` -> `Algebraic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str = "Stream: unfold seed initialization";
+}
+
+/// Each subsequent epoch starts from the previous boundary’s continuation context.
+pub mod str_5 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "Unfold(seed, step), epoch e_k";
+    /// `lhs`
+    pub const LHS: &str = "epoch_{k+1}.context";
+    /// `rhs`
+    pub const RHS: &str = "continuationContext(boundary(e_k))";
+    /// `universallyValid`
+    pub const UNIVERSALLY_VALID: bool = true;
+    /// `validityKind` -> `Universal`
+    pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
+    /// `verificationDomain` -> `Algebraic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str = "Stream: continuation chaining";
+}
+
+/// Lease expiry at an epoch boundary returns claimed fibers to the next epoch’s linear budget.
+pub mod str_6 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "EpochBoundary b with LeaseAllocation L expiring at b";
+    /// `lhs`
+    pub const LHS: &str = "linearBudget(epoch_{k+1})";
+    /// `rhs`
+    pub const RHS: &str = "linearBudget(epoch_k) + leaseCardinality(L)";
+    /// `universallyValid`
+    pub const UNIVERSALLY_VALID: bool = true;
+    /// `validityKind` -> `Universal`
+    pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
+    /// `verificationDomain` -> `Algebraic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str = "Stream: lease expiry budget return";
+}
+
+/// Every partial computation produces exactly one of Success or Failure.
+pub mod flr_1 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "PartialComputation P";
+    /// `lhs`
+    pub const LHS: &str = "result(P)";
+    /// `rhs`
+    pub const RHS: &str = "∈ {Success, Failure}";
+    /// `universallyValid`
+    pub const UNIVERSALLY_VALID: bool = true;
+    /// `validityKind` -> `Universal`
+    pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
+    /// `verificationDomain` -> `Algebraic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str = "Failure: coproduct exhaustiveness";
+}
+
+/// A total computation always succeeds.
+pub mod flr_2 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "TotalComputation T";
+    /// `lhs`
+    pub const LHS: &str = "result(T)";
+    /// `rhs`
+    pub const RHS: &str = "Success";
+    /// `universallyValid`
+    pub const UNIVERSALLY_VALID: bool = true;
+    /// `validityKind` -> `Universal`
+    pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
+    /// `verificationDomain` -> `Pipeline`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str = "Failure: total computation guarantee";
+}
+
+/// Sequential failure propagation: if A fails, B is not evaluated.
+pub mod flr_3 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "A ⊗ B where result(A) = Failure";
+    /// `lhs`
+    pub const LHS: &str = "result(A ⊗ B)";
+    /// `rhs`
+    pub const RHS: &str = "Failure(A)";
+    /// `universallyValid`
+    pub const UNIVERSALLY_VALID: bool = true;
+    /// `validityKind` -> `Universal`
+    pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
+    /// `verificationDomain` -> `Algebraic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str = "Failure: sequential propagation";
+}
+
+/// Parallel failure independence: one component’s failure does not prevent the other’s success.
+pub mod flr_4 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "A ∥ B where result(A) = Failure, result(B) = Success";
+    /// `lhs`
+    pub const LHS: &str = "result(A ∥ B)";
+    /// `rhs`
+    pub const RHS: &str = "Failure(A) (left component)";
+    /// `universallyValid`
+    pub const UNIVERSALLY_VALID: bool = true;
+    /// `validityKind` -> `Universal`
+    pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
+    /// `verificationDomain` -> `Algebraic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str = "Failure: parallel independence";
+}
+
+/// Recovery produces a new ComputationResult.
+pub mod flr_5 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "Recovery r on Failure f";
+    /// `lhs`
+    pub const LHS: &str = "result(apply(recoveryEffect(r), failureState(f)))";
+    /// `rhs`
+    pub const RHS: &str = "ComputationResult";
+    /// `universallyValid`
+    pub const UNIVERSALLY_VALID: bool = true;
+    /// `validityKind` -> `Universal`
+    pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
+    /// `verificationDomain` -> `Pipeline`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str = "Failure: recovery result";
+}
+
+/// The cascade’s existing rollback mechanism is a Recovery whose effect is the conjugate phase rotation.
+pub mod flr_6 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "ComplexConjugateRollback on Failure f";
+    /// `lhs`
+    pub const LHS: &str = "recoveryEffect(rollback(f))";
+    /// `rhs`
+    pub const RHS: &str = "PhaseEffect(conjugate)";
+    /// `universallyValid`
+    pub const UNIVERSALLY_VALID: bool = true;
+    /// `validityKind` -> `Universal`
+    pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
+    /// `verificationDomain` -> `Pipeline`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str = "Failure: conjugate rollback";
+}
+
+/// In a linear trace, every fiber is targeted exactly once. Total effect count equals fiber budget.
+pub mod ln_1 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "LinearTrace T over n-bit type";
+    /// `lhs`
+    pub const LHS: &str = "Σ targetCount(fiber_i)";
+    /// `rhs`
+    pub const RHS: &str = "n";
+    /// `universallyValid`
+    pub const UNIVERSALLY_VALID: bool = true;
+    /// `validityKind` -> `Universal`
+    pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
+    /// `verificationDomain` -> `Algebraic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str = "Linear: exact coverage";
+}
+
+/// After a LinearEffect, the target fiber is pinned.
+pub mod ln_2 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "LinearEffect e on fiber f";
+    /// `lhs`
+    pub const LHS: &str = "status(f, postContext(e))";
+    /// `rhs`
+    pub const RHS: &str = "pinned";
+    /// `universallyValid`
+    pub const UNIVERSALLY_VALID: bool = true;
+    /// `validityKind` -> `Universal`
+    pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
+    /// `verificationDomain` -> `Algebraic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str = "Linear: pinning effect";
+}
+
+/// A consumed LinearFiber cannot be targeted again.
+pub mod ln_3 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "LinearEffect e on fiber f, any subsequent effect e′";
+    /// `lhs`
+    pub const LHS: &str = "target(e′) = f";
+    /// `rhs`
+    pub const RHS: &str = "forbidden";
+    /// `universallyValid`
+    pub const UNIVERSALLY_VALID: bool = true;
+    /// `validityKind` -> `Universal`
+    pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
+    /// `verificationDomain` -> `Algebraic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str = "Linear: consumption linearity";
+}
+
+/// Lease allocation decrements the linear budget by the lease cardinality.
+pub mod ln_4 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "LeaseAllocation L with leaseCardinality k";
+    /// `lhs`
+    pub const LHS: &str = "remainingCount(budget after L)";
+    /// `rhs`
+    pub const RHS: &str = "remainingCount(budget before L) − k";
+    /// `universallyValid`
+    pub const UNIVERSALLY_VALID: bool = true;
+    /// `validityKind` -> `Universal`
+    pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
+    /// `verificationDomain` -> `Algebraic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str = "Linear: lease budget decrement";
+}
+
+/// Lease expiry returns claimed fibers to the budget.
+pub mod ln_5 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "Lease expiry on LeaseAllocation L";
+    /// `lhs`
+    pub const LHS: &str = "remainingCount(budget after expiry)";
+    /// `rhs`
+    pub const RHS: &str = "remainingCount(budget before expiry) + leaseCardinality(L)";
+    /// `universallyValid`
+    pub const UNIVERSALLY_VALID: bool = true;
+    /// `validityKind` -> `Universal`
+    pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
+    /// `verificationDomain` -> `Pipeline`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str = "Linear: lease expiry return";
+}
+
+/// Every geodesic trace is a linear trace.
+pub mod ln_6 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "GeodesicTrace G";
+    /// `lhs`
+    pub const LHS: &str = "G";
+    /// `rhs`
+    pub const RHS: &str = "LinearTrace";
+    /// `universallyValid`
+    pub const UNIVERSALLY_VALID: bool = true;
+    /// `validityKind` -> `Universal`
+    pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
+    /// `verificationDomain` -> `Topological`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Topological";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str = "Linear: geodesic linearity";
+}
+
+/// Subtyping is constraint superset: more constraints = more specific.
+pub mod sb_1 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "TypeInclusion T₁ ≤ T₂";
+    /// `lhs`
+    pub const LHS: &str = "constraints(T₁)";
+    /// `rhs`
+    pub const RHS: &str = "⊇ constraints(T₂)";
+    /// `universallyValid`
+    pub const UNIVERSALLY_VALID: bool = true;
+    /// `validityKind` -> `Universal`
+    pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
+    /// `verificationDomain` -> `Algebraic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str = "Subtyping: constraint superset";
+}
+
+/// Subtype has fewer valid resolutions.
+pub mod sb_2 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "TypeInclusion T₁ ≤ T₂, resolution R";
+    /// `lhs`
+    pub const LHS: &str = "resolutions(T₁)";
+    /// `rhs`
+    pub const RHS: &str = "⊆ resolutions(T₂)";
+    /// `universallyValid`
+    pub const UNIVERSALLY_VALID: bool = true;
+    /// `validityKind` -> `Universal`
+    pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
+    /// `verificationDomain` -> `Algebraic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str = "Subtyping: resolution subset";
+}
+
+/// The constraint nerve of the supertype is a sub-complex of the subtype’s nerve.
+pub mod sb_3 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "TypeInclusion T₁ ≤ T₂";
+    /// `lhs`
+    pub const LHS: &str = "N(C(T₂))";
+    /// `rhs`
+    pub const RHS: &str = "sub-complex of N(C(T₁))";
+    /// `universallyValid`
+    pub const UNIVERSALLY_VALID: bool = true;
+    /// `validityKind` -> `Universal`
+    pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
+    /// `verificationDomain` -> `Topological`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Topological";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str = "Subtyping: nerve sub-complex";
+}
+
+/// Covariance preserves inclusion.
+pub mod sb_4 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "Covariant position F(_), T₁ ≤ T₂";
+    /// `lhs`
+    pub const LHS: &str = "F(T₁)";
+    /// `rhs`
+    pub const RHS: &str = "≤ F(T₂)";
+    /// `universallyValid`
+    pub const UNIVERSALLY_VALID: bool = true;
+    /// `validityKind` -> `Universal`
+    pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
+    /// `verificationDomain` -> `Algebraic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str = "Subtyping: covariance";
+}
+
+/// Contravariance reverses inclusion.
+pub mod sb_5 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "Contravariant position F(_), T₁ ≤ T₂";
+    /// `lhs`
+    pub const LHS: &str = "F(T₂)";
+    /// `rhs`
+    pub const RHS: &str = "≤ F(T₁)";
+    /// `universallyValid`
+    pub const UNIVERSALLY_VALID: bool = true;
+    /// `validityKind` -> `Universal`
+    pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
+    /// `verificationDomain` -> `Algebraic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str = "Subtyping: contravariance";
+}
+
+/// Lattice depth equals fiber budget.
+pub mod sb_6 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "SubtypingLattice at quantum level n";
+    /// `lhs`
+    pub const LHS: &str = "latticeDepth";
+    /// `rhs`
+    pub const RHS: &str = "n";
+    /// `universallyValid`
+    pub const UNIVERSALLY_VALID: bool = true;
+    /// `validityKind` -> `Universal`
+    pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
+    /// `verificationDomain` -> `Algebraic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str = "Subtyping: lattice depth";
+}
+
+/// Every recursive step strictly decreases the descent measure.
+pub mod br_1 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "RecursiveStep s";
+    /// `lhs`
+    pub const LHS: &str = "measureValue(stepMeasurePost(s))";
+    /// `rhs`
+    pub const RHS: &str = "< measureValue(stepMeasurePre(s))";
+    /// `universallyValid`
+    pub const UNIVERSALLY_VALID: bool = true;
+    /// `validityKind` -> `Universal`
+    pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
+    /// `verificationDomain` -> `Algebraic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str = "Recursion: strict descent";
+}
+
+/// Recursion depth is bounded by the initial measure value.
+pub mod br_2 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "BoundedRecursion R with initialMeasure m";
+    /// `lhs`
+    pub const LHS: &str = "depth(RecursionTrace(R))";
+    /// `rhs`
+    pub const RHS: &str = "≤ m";
+    /// `universallyValid`
+    pub const UNIVERSALLY_VALID: bool = true;
+    /// `validityKind` -> `Universal`
+    pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
+    /// `verificationDomain` -> `Pipeline`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str = "Recursion: depth bound";
+}
+
+/// Every bounded recursion terminates.
+pub mod br_3 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "BoundedRecursion R";
+    /// `lhs`
+    pub const LHS: &str = "terminates(R)";
+    /// `rhs`
+    pub const RHS: &str = "true";
+    /// `universallyValid`
+    pub const UNIVERSALLY_VALID: bool = true;
+    /// `validityKind` -> `Universal`
+    pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
+    /// `verificationDomain` -> `Pipeline`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str = "Recursion: termination guarantee";
+}
+
+/// Structural recursion’s measure is the input type’s structural size.
+pub mod br_4 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "StructuralRecursion R on type T";
+    /// `lhs`
+    pub const LHS: &str = "initialMeasure(R)";
+    /// `rhs`
+    pub const RHS: &str = "structuralSize(T)";
+    /// `universallyValid`
+    pub const UNIVERSALLY_VALID: bool = true;
+    /// `validityKind` -> `Universal`
+    pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
+    /// `verificationDomain` -> `Algebraic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str = "Recursion: structural measure";
+}
+
+/// The base predicate is satisfied exactly when the measure reaches zero.
+pub mod br_5 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "BoundedRecursion R with basePredicate p";
+    /// `lhs`
+    pub const LHS: &str = "eval(p, state) = true";
+    /// `rhs`
+    pub const RHS: &str = "measureValue = 0";
+    /// `universallyValid`
+    pub const UNIVERSALLY_VALID: bool = true;
+    /// `validityKind` -> `Universal`
+    pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
+    /// `verificationDomain` -> `Pipeline`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str = "Recursion: base predicate zero";
+}
+
+/// The working set is determined by the constraint nerve and the stage’s fiber targets.
+pub mod rg_1 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "WorkingSet W for type T at stage k";
+    /// `lhs`
+    pub const LHS: &str = "workingSetRegions(W)";
+    /// `rhs`
+    pub const RHS: &str = "computable from N(C(T)) and stage k fiber targets";
+    /// `universallyValid`
+    pub const UNIVERSALLY_VALID: bool = true;
+    /// `validityKind` -> `Universal`
+    pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
+    /// `verificationDomain` -> `Topological`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Topological";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str = "Region: nerve-determined working set";
+}
+
+/// All addresses within a region are within the region’s diameter under the chosen metric.
+pub mod rg_2 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "AddressRegion R with LocalityMetric d_R";
+    /// `lhs`
+    pub const LHS: &str = "∀ a, b ∈ R: d_R(a, b)";
+    /// `rhs`
+    pub const RHS: &str = "≤ diameter(R)";
+    /// `universallyValid`
+    pub const UNIVERSALLY_VALID: bool = true;
+    /// `validityKind` -> `Universal`
+    pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
+    /// `verificationDomain` -> `Analytical`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Analytical";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str = "Region: diameter bound";
+}
+
+/// Total working set size is bounded by the addressable space at the quantum level.
+pub mod rg_3 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "RegionAllocation A for computation C";
+    /// `lhs`
+    pub const LHS: &str = "Σ workingSetSize(stage_k)";
+    /// `rhs`
+    pub const RHS: &str = "≤ totalAddressableSpace(quantumLevel)";
+    /// `universallyValid`
+    pub const UNIVERSALLY_VALID: bool = true;
+    /// `validityKind` -> `Universal`
+    pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
+    /// `verificationDomain` -> `Algebraic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str = "Region: addressable space bound";
+}
+
+/// The resolver at stage k accesses only addresses within its working set.
+pub mod rg_4 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "Cascade stage k with WorkingSet W_k";
+    /// `lhs`
+    pub const LHS: &str = "addresses accessed by resolver at stage k";
+    /// `rhs`
+    pub const RHS: &str = "⊆ addresses(W_k)";
+    /// `universallyValid`
+    pub const UNIVERSALLY_VALID: bool = true;
+    /// `validityKind` -> `Universal`
+    pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
+    /// `verificationDomain` -> `Pipeline`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str = "Region: working set containment";
+}
+
+/// Ingested data conforms to the source’s declared type.
+pub mod io_1 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "IngestEffect e from Source s";
+    /// `lhs`
+    pub const LHS: &str = "type(resultDatum(e))";
+    /// `rhs`
+    pub const RHS: &str = "conformsTo(sourceType(s))";
+    /// `universallyValid`
+    pub const UNIVERSALLY_VALID: bool = true;
+    /// `validityKind` -> `Universal`
+    pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
+    /// `verificationDomain` -> `Pipeline`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str = "Boundary: ingest type conformance";
+}
+
+/// Emitted data conforms to the sink’s declared type.
+pub mod io_2 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "EmitEffect e to Sink s";
+    /// `lhs`
+    pub const LHS: &str = "type(emittedDatum(e))";
+    /// `rhs`
+    pub const RHS: &str = "conformsTo(sinkType(s))";
+    /// `universallyValid`
+    pub const UNIVERSALLY_VALID: bool = true;
+    /// `validityKind` -> `Universal`
+    pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
+    /// `verificationDomain` -> `Pipeline`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str = "Boundary: emit type conformance";
+}
+
+/// Every ingestion through a source produces a valid ring datum via grounding.
+pub mod io_3 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "Source s with GroundingMap g";
+    /// `lhs`
+    pub const LHS: &str = "apply(g, ingest(s))";
+    /// `rhs`
+    pub const RHS: &str = "Datum in R_n";
+    /// `universallyValid`
+    pub const UNIVERSALLY_VALID: bool = true;
+    /// `validityKind` -> `Universal`
+    pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
+    /// `verificationDomain` -> `Pipeline`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str = "Boundary: grounding validity";
+}
+
+/// Every emission through a sink produces a valid surface symbol via projection.
+pub mod io_4 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "Sink s with ProjectionMap p, Datum d";
+    /// `lhs`
+    pub const LHS: &str = "apply(p, d)";
+    /// `rhs`
+    pub const RHS: &str = "surface symbol conforming to sinkType(s)";
+    /// `universallyValid`
+    pub const UNIVERSALLY_VALID: bool = true;
+    /// `validityKind` -> `Universal`
+    pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
+    /// `verificationDomain` -> `Pipeline`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str = "Boundary: projection validity";
+}
+
+/// Every boundary effect touches at least one fiber.
+pub mod io_5 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "BoundaryEffect e";
+    /// `lhs`
+    pub const LHS: &str = "effect:effectTarget(e)";
+    /// `rhs`
+    pub const RHS: &str = "non-empty EffectTarget";
+    /// `universallyValid`
+    pub const UNIVERSALLY_VALID: bool = true;
+    /// `validityKind` -> `Universal`
+    pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
+    /// `verificationDomain` -> `Algebraic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str = "Boundary: non-vacuous crossing";
+}
+
 use crate::enums::PrimitiveOp;
 
 impl PrimitiveOp {

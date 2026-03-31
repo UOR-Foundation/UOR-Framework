@@ -44,14 +44,26 @@ pub trait ConvergenceResidual<P: Primitives> {
 
 /// The subspace U(1) ⊂ SU(2) selected when pairwise interaction converges.
 pub trait CommutativeSubspace<P: Primitives> {
-    /// Description of the commutative subspace selected by pairwise convergence.
-    fn subspace_description(&self) -> &P::String;
+    /// Associated type for `CommutativeSubspace`.
+    type CommutativeSubspaceTarget: CommutativeSubspace<P>;
+    /// The commutative subspace selected by pairwise convergence.
+    fn subspace_ref(&self) -> &Self::CommutativeSubspaceTarget;
+    /// Associated type for `Commutator`.
+    type Commutator: crate::bridge::observable::Commutator<P>;
+    /// Reference to the commutator pair for this convergence.
+    fn commutator_ref(&self) -> &Self::Commutator;
 }
 
 /// The subspace H ⊂ O selected when triple interaction converges.
 pub trait AssociativeSubalgebra<P: Primitives> {
-    /// Description of the associative subalgebra selected by triple convergence.
-    fn subalgebra_description(&self) -> &P::String;
+    /// Associated type for `AssociativeSubalgebra`.
+    type AssociativeSubalgebraTarget: AssociativeSubalgebra<P>;
+    /// The associative subalgebra selected by triple convergence.
+    fn subalgebra_ref(&self) -> &Self::AssociativeSubalgebraTarget;
+    /// Associated type for `AssociatorTriple`.
+    type AssociatorTriple: crate::bridge::interaction::AssociatorTriple<P>;
+    /// Reference to the associator triple for this convergence.
+    fn associator_ref(&self) -> &Self::AssociatorTriple;
 }
 
 /// Level 0: R (reals), dimension 1, existence.

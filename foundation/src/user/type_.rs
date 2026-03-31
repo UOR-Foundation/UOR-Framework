@@ -317,6 +317,24 @@ pub trait GaloisConnection<P: Primitives> {
     fn galois_interior_property(&self) -> &P::String;
 }
 
+/// A morphism T₁ → T₂ witnessing that T₁ is a subtype of T₂: the constraint set of T₁ is a superset of the constraint set of T₂.
+pub trait TypeInclusion<P: Primitives>: crate::user::morphism::Transform<P> {
+    /// Associated type for `ConstrainedType`.
+    type ConstrainedType: ConstrainedType<P>;
+    /// The subtype (more constraints).
+    fn inclusion_source(&self) -> &Self::ConstrainedType;
+    /// The supertype (fewer constraints).
+    fn inclusion_target(&self) -> &Self::ConstrainedType;
+    /// True iff constraints(source) ⊇ constraints(target). Computed, not asserted.
+    fn inclusion_witness(&self) -> P::Boolean;
+}
+
+/// The partial order on types induced by TypeInclusion. The top element is PrimitiveType (no constraints); the bottom elements are CompleteTypes (all fibers pinned).
+pub trait SubtypingLattice<P: Primitives> {
+    /// Maximum chain length from PrimitiveType (top) to any CompleteType (bottom). Equals the fiber budget n at quantum level Q_k.
+    fn lattice_depth(&self) -> P::NonNegativeInteger;
+}
+
 /// A single value from an ordered domain. fiberCount = n (quantization bits).
 pub mod scalar_type {
     /// `structuralFiberCount`
@@ -392,4 +410,28 @@ pub mod table_type {
     pub const STRUCTURAL_FIBER_COUNT: &str = "row_count * tuple_fiber_count";
     /// `structuralGrounding`
     pub const STRUCTURAL_GROUNDING: &str = "Sequence(Tuple(S)), functorial decomposition";
+}
+
+/// The structural position preserves TypeInclusion: if T₁ ≤ T₂, then F(T₁) ≤ F(T₂).
+pub mod covariant {
+    /// `enumVariant`
+    pub const ENUM_VARIANT: &str = "Covariant";
+}
+
+/// The structural position reverses TypeInclusion: if T₁ ≤ T₂, then F(T₂) ≤ F(T₁).
+pub mod contravariant {
+    /// `enumVariant`
+    pub const ENUM_VARIANT: &str = "Contravariant";
+}
+
+/// The structural position requires exact type equality: F(T₁) ≤ F(T₂) only if T₁ = T₂.
+pub mod invariant {
+    /// `enumVariant`
+    pub const ENUM_VARIANT: &str = "Invariant";
+}
+
+/// The structural position ignores the type parameter: F(T₁) ≤ F(T₂) for all T₁, T₂.
+pub mod bivariant {
+    /// `enumVariant`
+    pub const ENUM_VARIANT: &str = "Bivariant";
 }

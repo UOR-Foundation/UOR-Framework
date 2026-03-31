@@ -22,7 +22,7 @@ pub fn module() -> NamespaceModule {
             comment: "Sequential composition of computations via monoidal \
                       product A \u{2297} B.",
             space: Space::Kernel,
-            imports: &[NS_OP, NS_CASCADE, NS_CERT],
+            imports: &[NS_OP, NS_CASCADE, NS_CERT, NS_MORPHISM, NS_SCHEMA],
         },
         classes: classes(),
         properties: properties(),
@@ -62,83 +62,83 @@ fn classes() -> Vec<Class> {
 
 fn properties() -> Vec<Property> {
     vec![
-        // MonoidalProduct properties
+        // Amendment 80: typed replacements for MonoidalProduct string props
         Property {
-            id: "https://uor.foundation/monoidal/leftComponent",
-            label: "leftComponent",
+            id: "https://uor.foundation/monoidal/leftOperand",
+            label: "leftOperand",
             comment: "The left operand in the monoidal product A \u{2297} B.",
-            kind: PropertyKind::Datatype,
+            kind: PropertyKind::Object,
             functional: true,
             domain: Some("https://uor.foundation/monoidal/MonoidalProduct"),
-            range: XSD_STRING,
+            range: "https://uor.foundation/morphism/ComputationDatum",
         },
         Property {
-            id: "https://uor.foundation/monoidal/rightComponent",
-            label: "rightComponent",
+            id: "https://uor.foundation/monoidal/rightOperand",
+            label: "rightOperand",
             comment: "The right operand in the monoidal product A \u{2297} B.",
-            kind: PropertyKind::Datatype,
+            kind: PropertyKind::Object,
             functional: true,
             domain: Some("https://uor.foundation/monoidal/MonoidalProduct"),
-            range: XSD_STRING,
+            range: "https://uor.foundation/morphism/ComputationDatum",
         },
         Property {
-            id: "https://uor.foundation/monoidal/composedEndpoint",
-            label: "composedEndpoint",
-            comment: "The endpoint of the composed computation A \u{2297} B.",
-            kind: PropertyKind::Datatype,
+            id: "https://uor.foundation/monoidal/composedResult",
+            label: "composedResult",
+            comment: "The result datum of the composed computation A \u{2297} B.",
+            kind: PropertyKind::Object,
             functional: true,
             domain: Some("https://uor.foundation/monoidal/MonoidalProduct"),
-            range: XSD_STRING,
+            range: "https://uor.foundation/schema/Datum",
         },
         Property {
-            id: "https://uor.foundation/monoidal/monoidalSaturation",
-            label: "monoidalSaturation",
+            id: "https://uor.foundation/monoidal/saturationValue",
+            label: "saturationValue",
             comment: "\u{03c3}(A\u{2297}B) relationship: saturation of the \
                       sequential composition.",
             kind: PropertyKind::Datatype,
             functional: true,
             domain: Some("https://uor.foundation/monoidal/MonoidalProduct"),
-            range: XSD_STRING,
+            range: XSD_DECIMAL,
         },
-        // MonoidalUnit property
+        // MonoidalUnit property (typed replacement)
         Property {
-            id: "https://uor.foundation/monoidal/unitWitness",
-            label: "unitWitness",
-            comment: "Witness that I \u{2297} A \u{2245} A \u{2245} A \
+            id: "https://uor.foundation/monoidal/unitWitnessRef",
+            label: "unitWitnessRef",
+            comment: "Certificate witnessing I \u{2297} A \u{2245} A \u{2245} A \
                       \u{2297} I.",
-            kind: PropertyKind::Datatype,
+            kind: PropertyKind::Object,
             functional: true,
             domain: Some("https://uor.foundation/monoidal/MonoidalUnit"),
-            range: XSD_STRING,
+            range: "https://uor.foundation/cert/Certificate",
         },
-        // MonoidalAssociator properties
+        // MonoidalAssociator properties (typed replacements)
         Property {
-            id: "https://uor.foundation/monoidal/associatorLeftTriple",
-            label: "associatorLeftTriple",
-            comment: "The left-grouped triple (A\u{2297}B)\u{2297}C.",
-            kind: PropertyKind::Datatype,
+            id: "https://uor.foundation/monoidal/associatorLeft",
+            label: "associatorLeft",
+            comment: "The left-grouped product (A\u{2297}B)\u{2297}C.",
+            kind: PropertyKind::Object,
             functional: true,
             domain: Some("https://uor.foundation/monoidal/MonoidalAssociator"),
-            range: XSD_STRING,
+            range: "https://uor.foundation/monoidal/MonoidalProduct",
         },
         Property {
-            id: "https://uor.foundation/monoidal/associatorRightTriple",
-            label: "associatorRightTriple",
-            comment: "The right-grouped triple A\u{2297}(B\u{2297}C).",
-            kind: PropertyKind::Datatype,
+            id: "https://uor.foundation/monoidal/associatorRight",
+            label: "associatorRight",
+            comment: "The right-grouped product A\u{2297}(B\u{2297}C).",
+            kind: PropertyKind::Object,
             functional: true,
             domain: Some("https://uor.foundation/monoidal/MonoidalAssociator"),
-            range: XSD_STRING,
+            range: "https://uor.foundation/monoidal/MonoidalProduct",
         },
         Property {
-            id: "https://uor.foundation/monoidal/associatorWitness",
-            label: "associatorWitness",
-            comment: "Witness of the associativity isomorphism \
+            id: "https://uor.foundation/monoidal/associatorWitnessRef",
+            label: "associatorWitnessRef",
+            comment: "Certificate witnessing the associativity isomorphism \
                       (A\u{2297}B)\u{2297}C \u{2245} A\u{2297}(B\u{2297}C).",
-            kind: PropertyKind::Datatype,
+            kind: PropertyKind::Object,
             functional: true,
             domain: Some("https://uor.foundation/monoidal/MonoidalAssociator"),
-            range: XSD_STRING,
+            range: "https://uor.foundation/cert/Certificate",
         },
     ]
 }

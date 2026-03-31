@@ -8,8 +8,10 @@ use crate::Primitives;
 
 /// The composition structure on the eight structural types. Governs how types nest.
 pub trait StructuralOperad<P: Primitives> {
-    /// Description of the operad composition structure.
-    fn operad_description(&self) -> &P::String;
+    /// Associated type for `StructuralOperad`.
+    type StructuralOperadTarget: StructuralOperad<P>;
+    /// The structural operad defining this composition.
+    fn operad_structure(&self) -> &Self::StructuralOperadTarget;
 }
 
 /// A specific nesting: outer type F applied to inner type G.

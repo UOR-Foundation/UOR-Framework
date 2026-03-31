@@ -26,6 +26,14 @@ pub trait Resolver<P: Primitives> {
     fn resolution_state(&self) -> &Self::ResolutionState;
     /// The computational complexity class of this resolver. Replaces the string-valued resolver:complexity property.
     fn has_complexity_class(&self) -> ComplexityClass;
+    /// Associated type for `DispatchTable`.
+    type DispatchTable: crate::kernel::predicate::DispatchTable<P>;
+    /// The dispatch table governing resolver selection for this resolver class.
+    fn dispatch_table(&self) -> &Self::DispatchTable;
+    /// Associated type for `TypePredicate`.
+    type TypePredicate: crate::kernel::predicate::TypePredicate<P>;
+    /// The predicate that selects this specific resolver. When the predicate evaluates to true on an input type, this resolver is chosen.
+    fn resolver_predicate(&self) -> &Self::TypePredicate;
 }
 
 /// Resolves types by factoring the ring under dihedral group action. Identifies orbits under D_{2^n} to determine irreducibility boundaries.

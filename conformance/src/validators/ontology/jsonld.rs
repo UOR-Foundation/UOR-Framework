@@ -1,7 +1,7 @@
 //! JSON-LD 1.1 validator.
 //!
 //! Verifies that `public/uor.foundation.jsonld` is a well-formed JSON-LD 1.1 document:
-//! - Has `@context` with all 16 namespace prefixes and standard prefixes
+//! - Has `@context` with all 23 namespace prefixes and standard prefixes
 //! - Has `@graph` containing the expected node types
 //! - All `@id` values are IRIs (not relative references)
 //! - Context entries map to valid IRI prefixes
@@ -23,6 +23,7 @@ const REQUIRED_PREFIXES: &[&str] = &[
     "type",
     "partition",
     "observable",
+    "carry",
     "homology",
     "cohomology",
     "proof",
@@ -31,6 +32,22 @@ const REQUIRED_PREFIXES: &[&str] = &[
     "cert",
     "morphism",
     "state",
+    "cascade",
+    "convergence",
+    "division",
+    "interaction",
+    "monoidal",
+    "operad",
+    "effect",
+    "predicate",
+    "parallel",
+    "stream",
+    "failure",
+    "linear",
+    "recursion",
+    "region",
+    "boundary",
+    "conformance",
     "owl",
     "rdf",
     "rdfs",
@@ -144,8 +161,11 @@ fn check_graph_structure(value: &Value, report: &mut ConformanceReport) {
         format!("@graph array present with {} nodes", graph.len()),
     ));
 
-    // Verify minimum node count (16 namespaces + 180 classes + 338 properties + 652 individuals + annotation properties)
-    let min_nodes = 16 + 180 + 338 + 652;
+    // Verify minimum node count (namespaces + classes + properties + individuals)
+    let min_nodes = uor_ontology::counts::NAMESPACES
+        + uor_ontology::counts::CLASSES
+        + uor_ontology::counts::NAMESPACE_PROPERTIES
+        + uor_ontology::counts::INDIVIDUALS;
     if graph.len() >= min_nodes {
         report.push(TestResult::pass(
             "ontology/jsonld",

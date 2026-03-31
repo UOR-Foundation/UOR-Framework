@@ -220,7 +220,16 @@ pub fn detect_enums(ontology: &Ontology) -> Vec<DetectedEnum> {
         &mut enums,
     );
 
-    // 18. ProofModality enum (hardcoded — codegen enum, not an OWL class)
+    // 18. VarianceAnnotation enum — Amendment 77: Subtyping and Variance
+    detect_vocabulary_enum(
+        ontology,
+        "type",
+        "VarianceAnnotation",
+        "The variance of a structural type position under operad composition.",
+        &mut enums,
+    );
+
+    // 19. ProofModality enum (hardcoded — codegen enum, not an OWL class)
     enums.push(DetectedEnum {
         name: "ProofModality",
         comment: "The modality of a proof: computation (exhaustive verification at a \

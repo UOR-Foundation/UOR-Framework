@@ -52,6 +52,13 @@ pub fn to_ebnf(ontology: &Ontology) -> String {
     emit_assertions(&mut out);
     emit_rewrite_rules(&mut out, ontology);
     emit_quantum_generalisation(&mut out, ontology);
+    // Amendment 83: completion plan grammar extensions
+    emit_match_expr(&mut out);
+    emit_stream_expr(&mut out);
+    emit_effect_decl(&mut out);
+    emit_try_expr(&mut out);
+    emit_recurse_expr(&mut out);
+    emit_boundary_decl(&mut out);
     emit_whitespace(&mut out);
     emit_end(&mut out);
 
@@ -98,6 +105,8 @@ statement
     ::= type-decl
       | binding
       | assertion
+      | effect-decl
+      | boundary-decl
       | expression \";\" ;
 
 expression
@@ -120,7 +129,11 @@ fn emit_terms(out: &mut String) {
 term
     ::= literal
       | application
-      | variable ;
+      | variable
+      | match-expr
+      | try-expr
+      | recurse-expr
+      | stream-expr ;
 
 (* schema:Literal — a leaf term that directly denotes a Datum via schema:denotes *)
 literal
@@ -383,6 +396,127 @@ fn emit_quantum_generalisation(out: &mut String, ontology: &Ontology) {
     }
 
     out.push_str("   All grammar constructs are parametric in the quantum level. *)\n\n");
+}
+
+// ── Amendment 83: Completion plan grammar extensions ─────────────────────
+
+/// Emits match expression rules.
+fn emit_match_expr(out: &mut String) {
+    out.push_str(
+        "\
+(* ── Match expressions ───────────────────────────────────────────────────────
+   Deterministic conditional evaluation via ordered pattern matching.
+   Each arm is a (predicate, result) pair. The match evaluates predicates
+   in order and returns the result of the first matching arm. *)
+
+match-expr
+    ::= \"match\" , term , \"{\" , { match-arm } , \"}\" ;
+
+match-arm
+    ::= predicate-ref , \"=>\" , term , \";\" ;
+
+predicate-ref
+    ::= identifier ;  (* refers to a predicate:Predicate individual *)
+
+",
+    );
+}
+
+/// Emits stream constructor rules.
+fn emit_stream_expr(out: &mut String) {
+    out.push_str(
+        "\
+(* ── Stream constructors ─────────────────────────────────────────────────────
+   Coinductive stream construction via unfold. *)
+
+stream-expr
+    ::= \"unfold\" , identifier , \":\" , identifier , \"from\" , term ;
+
+",
+    );
+}
+
+/// Emits effect declaration rules.
+fn emit_effect_decl(out: &mut String) {
+    out.push_str(
+        "\
+(* ── Effect declarations ─────────────────────────────────────────────────────
+   Typed effect declarations for external effects. *)
+
+effect-decl
+    ::= \"effect\" , identifier , \"{\" , { effect-prop } , \"}\" ;
+
+effect-prop
+    ::= \"target\" , \":\" , fiber-set , \";\"
+      | \"delta\"  , \":\" , integer-literal , \";\"
+      | \"commutes\" , \":\" , (\"true\" | \"false\") , \";\" ;
+
+fiber-set
+    ::= \"{\" , integer-literal , { \",\" , integer-literal } , \"}\" ;
+
+",
+    );
+}
+
+/// Emits failure and recovery rules.
+fn emit_try_expr(out: &mut String) {
+    out.push_str(
+        "\
+(* ── Failure and recovery ────────────────────────────────────────────────────
+   Partial computation with typed failure reasons and recovery paths. *)
+
+try-expr
+    ::= \"try\" , term , \"{\" , { recover-arm } , \"}\" ;
+
+recover-arm
+    ::= \"recover\" , failure-kind , \"=>\" , term , \";\" ;
+
+failure-kind
+    ::= \"guard\"
+      | \"contradiction\"
+      | \"exhaustion\"
+      | \"obstruction\"
+      | identifier ;
+
+",
+    );
+}
+
+/// Emits bounded recursion rules.
+fn emit_recurse_expr(out: &mut String) {
+    out.push_str(
+        "\
+(* ── Bounded recursion ───────────────────────────────────────────────────────
+   Self-referential computation with a descent measure. *)
+
+recurse-expr
+    ::= \"recurse\" , identifier , \"(\" , term , \")\"
+      , \"measure\" , term
+      , \"base\" , predicate-ref , \"=>\" , term
+      , \"step\" , \"=>\" , term ;
+
+",
+    );
+}
+
+/// Emits IO boundary declaration rules.
+fn emit_boundary_decl(out: &mut String) {
+    out.push_str(
+        "\
+(* ── IO boundary declarations ────────────────────────────────────────────────
+   Source and sink declarations for data crossing the kernel boundary. *)
+
+boundary-decl
+    ::= source-decl | sink-decl ;
+
+source-decl
+    ::= \"source\" , identifier , \":\" , identifier , \"via\" , identifier , \";\" ;
+
+sink-decl
+    ::= \"sink\" , identifier , \":\" , identifier , \"via\" , identifier , \";\" ;
+
+",
+    );
 }
 
 /// Emits whitespace and comment rules.

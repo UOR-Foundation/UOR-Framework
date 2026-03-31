@@ -25,8 +25,10 @@ pub trait Transform<P: Primitives> {
     type TransformTarget: Transform<P>;
     /// A transform that this transform can be composed with. The target of this transform must match the source of the composed transform.
     fn composes_with(&self) -> &[Self::TransformTarget];
-    /// A human-readable description of the structure this transform preserves (e.g., 'ring homomorphism', 'metric isometry').
-    fn preserves_structure(&self) -> &P::String;
+    /// Associated type for `Identity`.
+    type Identity: crate::kernel::op::Identity<P>;
+    /// The identity preserved by this transform (reference to the op:Identity that the transform commutes with).
+    fn preserved_invariant(&self) -> &Self::Identity;
 }
 
 /// A transform that preserves metric structure with respect to a specified metric. In UOR, isometry is metric-relative: neg is a ring isometry, bnot is a Hamming isometry. A transform can be an isometry with respect to one metric but not the other. This is what cert:IsometryCertificate certifies.
@@ -45,8 +47,6 @@ pub trait Embedding<P: Primitives>: Transform<P> {
     fn source_quantum(&self) -> P::PositiveInteger;
     /// The quantum level n' of the target ring for an embedding. Must satisfy n' > n (embeddings go to larger rings).
     fn target_quantum(&self) -> P::PositiveInteger;
-    /// Associated type for `Identity`.
-    type Identity: crate::kernel::op::Identity<P>;
     /// Certificate that this embedding's addressing diagram commutes: glyph ∘ ι ∘ addresses is well-defined and injective.
     fn address_coherence(&self) -> &Self::Identity;
 }
@@ -176,6 +176,52 @@ pub trait TopologicalDelta<P: Primitives> {
     fn nerve_before(&self) -> &Self::SimplicialComplex;
     /// Constraint nerve (simplicial complex) after the morphism.
     fn nerve_after(&self) -> &Self::SimplicialComplex;
+}
+
+/// A datum whose ring value is the content address of a cert:TransformCertificate. Represents a certified computation as a first-class value within the ring.
+pub trait ComputationDatum<P: Primitives>: crate::kernel::schema::Datum<P> {
+    /// Associated type for `TransformCertificate`.
+    type TransformCertificate: crate::bridge::cert::TransformCertificate<P>;
+    /// The certificate this computation datum encodes.
+    fn referenced_certificate(&self) -> &Self::TransformCertificate;
+    /// The content address of the referenced certificate.
+    fn computation_address(&self) -> &Self::Address;
+}
+
+/// A transform that applies a ComputationDatum to an input datum, producing an output datum. The output inherits the certificate of the ComputationDatum.
+pub trait ApplicationMorphism<P: Primitives>: Transform<P> {
+    /// Associated type for `ComputationDatum`.
+    type ComputationDatum: ComputationDatum<P>;
+    /// The computation being applied.
+    fn application_target(&self) -> &Self::ComputationDatum;
+    /// Associated type for `Datum`.
+    type Datum: crate::kernel::schema::Datum<P>;
+    /// The input datum to the application.
+    fn application_input(&self) -> &Self::Datum;
+}
+
+/// A ComputationDatum formed by fixing some but not all inputs of a multi-argument transform.
+pub trait PartialApplication<P: Primitives>: ComputationDatum<P> {
+    /// Associated type for `ComputationDatum`.
+    type ComputationDatum: ComputationDatum<P>;
+    /// The base computation being partially applied.
+    fn partial_base(&self) -> &Self::ComputationDatum;
+    /// Associated type for `Datum`.
+    type Datum: crate::kernel::schema::Datum<P>;
+    /// The arguments already bound.
+    fn bound_arguments(&self) -> &[Self::Datum];
+    /// Number of unbound arguments remaining.
+    fn remaining_arity(&self) -> P::PositiveInteger;
+}
+
+/// A ComputationDatum representing the composition f ∘ g of two ComputationDatums. Certified iff both components are certified and range(g) = domain(f).
+pub trait TransformComposition<P: Primitives>: ComputationDatum<P> {
+    /// Associated type for `ComputationDatum`.
+    type ComputationDatum: ComputationDatum<P>;
+    /// The outer function f in f ∘ g.
+    fn composition_left(&self) -> &Self::ComputationDatum;
+    /// The inner function g in f ∘ g.
+    fn composition_right(&self) -> &Self::ComputationDatum;
 }
 
 /// The critical composition law: neg ∘ bnot = succ. This is the operational form of the critical identity theorem. The composition of the two involutions (neg, bnot) yields the successor operation. Non-associative and non-commutative.

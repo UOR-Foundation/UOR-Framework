@@ -492,7 +492,17 @@ fn validate_identity_completeness(report: &mut ConformanceReport) {
         "DA_", // Amendment 68: Interaction Algebra
         "IN_", "AS_", // Amendment 69: Monoidal Composition
         "MO_", // Amendment 70: Operad Composition
-        "OP_",
+        "OP_", // Amendment 71: Effect Algebra
+        "FX_", // Amendment 72: Predicate & Dispatch
+        "PR_", // Amendment 73: Cascade Guard + Resolver Dispatch
+        "CG_", "DIS_", // Amendment 74: Parallel Composition
+        "PAR_", // Amendment 75: Higher-Order + Streams
+        "HO_", "STR_", // Amendment 76: Failure Algebra
+        "FLR_", // Amendment 77: Linear + Subtyping
+        "LN_", "SB_", // Amendment 78: Bounded Recursion
+        "BR_", // Amendment 79: Address Regions
+        "RG_", // Amendment 81: IO Boundary
+        "IO_",
     ];
     for prefix in &expected_prefixes {
         let has = identities.iter().any(|i| i.label.starts_with(prefix));

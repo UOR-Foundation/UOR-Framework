@@ -170,6 +170,42 @@ fn classes() -> Vec<Class> {
             subclass_of: &[OWL_THING],
             disjoint_with: &[],
         },
+        // Amendment 75: Higher-Order Computation classes
+        Class {
+            id: "https://uor.foundation/morphism/ComputationDatum",
+            label: "ComputationDatum",
+            comment: "A datum whose ring value is the content address of a \
+                      cert:TransformCertificate. Represents a certified \
+                      computation as a first-class value within the ring.",
+            subclass_of: &["https://uor.foundation/schema/Datum"],
+            disjoint_with: &[],
+        },
+        Class {
+            id: "https://uor.foundation/morphism/ApplicationMorphism",
+            label: "ApplicationMorphism",
+            comment: "A transform that applies a ComputationDatum to an \
+                      input datum, producing an output datum. The output \
+                      inherits the certificate of the ComputationDatum.",
+            subclass_of: &["https://uor.foundation/morphism/Transform"],
+            disjoint_with: &[],
+        },
+        Class {
+            id: "https://uor.foundation/morphism/PartialApplication",
+            label: "PartialApplication",
+            comment: "A ComputationDatum formed by fixing some but not all \
+                      inputs of a multi-argument transform.",
+            subclass_of: &["https://uor.foundation/morphism/ComputationDatum"],
+            disjoint_with: &[],
+        },
+        Class {
+            id: "https://uor.foundation/morphism/TransformComposition",
+            label: "TransformComposition",
+            comment: "A ComputationDatum representing the composition f \
+                      \u{2218} g of two ComputationDatums. Certified iff \
+                      both components are certified and range(g) = domain(f).",
+            subclass_of: &["https://uor.foundation/morphism/ComputationDatum"],
+            disjoint_with: &[],
+        },
     ]
 }
 
@@ -358,15 +394,16 @@ fn properties() -> Vec<Property> {
             domain: Some("https://uor.foundation/morphism/CompositionLaw"),
             range: "https://uor.foundation/op/Operation",
         },
+        // Amendment 75: preservesStructure replaced by preservedInvariant
         Property {
-            id: "https://uor.foundation/morphism/preservesStructure",
-            label: "preservesStructure",
-            comment: "A human-readable description of the structure this transform \
-                      preserves (e.g., 'ring homomorphism', 'metric isometry').",
-            kind: PropertyKind::Datatype,
+            id: "https://uor.foundation/morphism/preservedInvariant",
+            label: "preservedInvariant",
+            comment: "The identity preserved by this transform (reference \
+                      to the op:Identity that the transform commutes with).",
+            kind: PropertyKind::Object,
             functional: true,
             domain: Some("https://uor.foundation/morphism/Transform"),
-            range: XSD_STRING,
+            range: "https://uor.foundation/op/Identity",
         },
         // Amendment 13: Address Resolution
         Property {
@@ -553,6 +590,88 @@ fn properties() -> Vec<Property> {
             functional: true,
             domain: Some("https://uor.foundation/morphism/GroundingCertificate"),
             range: "https://uor.foundation/u/Address",
+        },
+        // Amendment 75: Higher-Order Computation properties
+        Property {
+            id: "https://uor.foundation/morphism/referencedCertificate",
+            label: "referencedCertificate",
+            comment: "The certificate this computation datum encodes.",
+            kind: PropertyKind::Object,
+            functional: true,
+            domain: Some("https://uor.foundation/morphism/ComputationDatum"),
+            range: "https://uor.foundation/cert/TransformCertificate",
+        },
+        Property {
+            id: "https://uor.foundation/morphism/computationAddress",
+            label: "computationAddress",
+            comment: "The content address of the referenced certificate.",
+            kind: PropertyKind::Object,
+            functional: true,
+            domain: Some("https://uor.foundation/morphism/ComputationDatum"),
+            range: "https://uor.foundation/u/Address",
+        },
+        Property {
+            id: "https://uor.foundation/morphism/applicationTarget",
+            label: "applicationTarget",
+            comment: "The computation being applied.",
+            kind: PropertyKind::Object,
+            functional: true,
+            domain: Some("https://uor.foundation/morphism/ApplicationMorphism"),
+            range: "https://uor.foundation/morphism/ComputationDatum",
+        },
+        Property {
+            id: "https://uor.foundation/morphism/applicationInput",
+            label: "applicationInput",
+            comment: "The input datum to the application.",
+            kind: PropertyKind::Object,
+            functional: true,
+            domain: Some("https://uor.foundation/morphism/ApplicationMorphism"),
+            range: "https://uor.foundation/schema/Datum",
+        },
+        Property {
+            id: "https://uor.foundation/morphism/partialBase",
+            label: "partialBase",
+            comment: "The base computation being partially applied.",
+            kind: PropertyKind::Object,
+            functional: true,
+            domain: Some("https://uor.foundation/morphism/PartialApplication"),
+            range: "https://uor.foundation/morphism/ComputationDatum",
+        },
+        Property {
+            id: "https://uor.foundation/morphism/boundArguments",
+            label: "boundArguments",
+            comment: "The arguments already bound.",
+            kind: PropertyKind::Object,
+            functional: false,
+            domain: Some("https://uor.foundation/morphism/PartialApplication"),
+            range: "https://uor.foundation/schema/Datum",
+        },
+        Property {
+            id: "https://uor.foundation/morphism/compositionLeft",
+            label: "compositionLeft",
+            comment: "The outer function f in f \u{2218} g.",
+            kind: PropertyKind::Object,
+            functional: true,
+            domain: Some("https://uor.foundation/morphism/TransformComposition"),
+            range: "https://uor.foundation/morphism/ComputationDatum",
+        },
+        Property {
+            id: "https://uor.foundation/morphism/compositionRight",
+            label: "compositionRight",
+            comment: "The inner function g in f \u{2218} g.",
+            kind: PropertyKind::Object,
+            functional: true,
+            domain: Some("https://uor.foundation/morphism/TransformComposition"),
+            range: "https://uor.foundation/morphism/ComputationDatum",
+        },
+        Property {
+            id: "https://uor.foundation/morphism/remainingArity",
+            label: "remainingArity",
+            comment: "Number of unbound arguments remaining.",
+            kind: PropertyKind::Datatype,
+            functional: true,
+            domain: Some("https://uor.foundation/morphism/PartialApplication"),
+            range: XSD_POSITIVE_INTEGER,
         },
     ]
 }

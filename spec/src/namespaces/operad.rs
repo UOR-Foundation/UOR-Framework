@@ -51,15 +51,15 @@ fn classes() -> Vec<Class> {
 
 fn properties() -> Vec<Property> {
     vec![
-        // StructuralOperad property
+        // Amendment 80: typed replacement for operadDescription
         Property {
-            id: "https://uor.foundation/operad/operadDescription",
-            label: "operadDescription",
-            comment: "Description of the operad composition structure.",
-            kind: PropertyKind::Datatype,
+            id: "https://uor.foundation/operad/operadStructure",
+            label: "operadStructure",
+            comment: "The structural operad defining this composition.",
+            kind: PropertyKind::Object,
             functional: true,
             domain: Some("https://uor.foundation/operad/StructuralOperad"),
-            range: XSD_STRING,
+            range: "https://uor.foundation/operad/StructuralOperad",
         },
         // OperadComposition properties
         Property {

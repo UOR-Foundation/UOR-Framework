@@ -1,7 +1,7 @@
 //! Documentation structure validator.
 //!
 //! Verifies that the generated documentation follows the Diataxis framework:
-//! - Reference section: `public/docs/namespaces/` (16 pages, one per namespace)
+//! - Reference section: `public/docs/namespaces/` (one page per namespace)
 //! - Explanation section: `public/docs/concepts/` (concept pages)
 //! - How-to section: `public/docs/guides/` (guide pages)
 //! - Entry point: `public/docs/index.html`
@@ -24,26 +24,6 @@ const REQUIRED_SECTIONS: &[(&str, &str)] = &[
         "Concept explanation section (Diataxis: explanation)",
     ),
     ("docs/guides", "How-to guide section (Diataxis: how-to)"),
-];
-
-/// Expected namespace pages (one per namespace prefix).
-const NAMESPACE_PREFIXES: &[&str] = &[
-    "u",
-    "schema",
-    "op",
-    "query",
-    "resolver",
-    "type",
-    "partition",
-    "observable",
-    "homology",
-    "cohomology",
-    "proof",
-    "derivation",
-    "trace",
-    "cert",
-    "morphism",
-    "state",
 ];
 
 /// Validates the Diataxis documentation structure.
@@ -70,22 +50,26 @@ pub fn validate(artifacts: &Path) -> Result<ConformanceReport> {
         }
     }
 
-    // Check all 16 namespace reference pages
+    // Check all namespace reference pages (derived from live ontology)
+    let ontology = uor_ontology::Ontology::full();
     let mut missing_namespaces: Vec<String> = Vec::new();
-    for prefix in NAMESPACE_PREFIXES {
+    for module in &ontology.namespaces {
         let page = artifacts
             .join("docs")
             .join("namespaces")
-            .join(format!("{}.html", prefix));
+            .join(format!("{}.html", module.namespace.prefix));
         if !page.exists() {
-            missing_namespaces.push(format!("{}.html", prefix));
+            missing_namespaces.push(format!("{}.html", module.namespace.prefix));
         }
     }
 
     if missing_namespaces.is_empty() {
         report.push(TestResult::pass(
             "docs/structure",
-            "All 16 namespace reference pages present",
+            format!(
+                "All {} namespace reference pages present",
+                ontology.namespaces.len()
+            ),
         ));
     } else {
         report.push(TestResult::fail_with_details(

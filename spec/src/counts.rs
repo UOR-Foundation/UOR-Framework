@@ -5,19 +5,19 @@
 //! [`Ontology::full()`](crate::Ontology::full) produces exactly these counts.
 
 /// Number of namespace modules.
-pub const NAMESPACES: usize = 23;
+pub const NAMESPACES: usize = 33;
 
 /// Total OWL classes across all namespaces.
-pub const CLASSES: usize = 310;
+pub const CLASSES: usize = 395;
 
 /// Total properties including the global `uor:space` annotation.
-pub const PROPERTIES: usize = 704;
+pub const PROPERTIES: usize = 831;
 
 /// Namespace-level properties only (excludes global annotation).
-pub const NAMESPACE_PROPERTIES: usize = 703;
+pub const NAMESPACE_PROPERTIES: usize = 830;
 
 /// Total named individuals across all namespaces.
-pub const INDIVIDUALS: usize = 1292;
+pub const INDIVIDUALS: usize = 1422;
 
 /// Number of SHACL test instance graphs.
 pub const SHACL_TESTS: usize = 251;
@@ -26,32 +26,32 @@ pub const SHACL_TESTS: usize = 251;
 pub const CONFORMANCE_CHECKS: usize = 393;
 
 /// Number of amendments applied to the base ontology.
-pub const AMENDMENTS: usize = 70;
+pub const AMENDMENTS: usize = 83;
 
 /// Number of classes that become Rust enums/structs (not traits).
-pub const ENUM_CLASSES: usize = 14;
+pub const ENUM_CLASSES: usize = 15;
 
 /// Number of `op:Identity` individuals (and corresponding proofs).
-pub const IDENTITY_COUNT: usize = 559;
+pub const IDENTITY_COUNT: usize = 622;
 
 /// Kernel-space namespace count.
-pub const KERNEL_NAMESPACES: usize = 9;
+pub const KERNEL_NAMESPACES: usize = 17;
 
 /// Bridge-space namespace count.
-pub const BRIDGE_NAMESPACES: usize = 11;
+pub const BRIDGE_NAMESPACES: usize = 13;
 
 /// User-space namespace count.
 pub const USER_NAMESPACES: usize = 3;
 
 /// Number of trait methods generated (properties with domains,
 /// excluding enum-class-domain and cross-namespace-domain properties).
-pub const METHODS: usize = 657;
+pub const METHODS: usize = 784;
 
 /// Number of individual constant modules generated.
-pub const CONSTANT_MODULES: usize = 1279;
+pub const CONSTANT_MODULES: usize = 1442;
 
 /// Number of concept pages on the website (one per content/concepts/*.md file).
-pub const CONCEPT_PAGES: usize = 10;
+pub const CONCEPT_PAGES: usize = 23;
 
 /// Number of PRISM pipeline stages (Define / Resolve / Certify).
 pub const PIPELINE_STAGES: usize = 3;

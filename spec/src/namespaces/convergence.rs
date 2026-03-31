@@ -188,27 +188,44 @@ fn properties() -> Vec<Property> {
             domain: Some("https://uor.foundation/convergence/ConvergenceResidual"),
             range: XSD_NON_NEGATIVE_INTEGER,
         },
-        // CommutativeSubspace property
+        // Amendment 80: typed replacements for string properties
         Property {
-            id: "https://uor.foundation/convergence/subspaceDescription",
-            label: "subspaceDescription",
-            comment: "Description of the commutative subspace selected \
-                      by pairwise convergence.",
-            kind: PropertyKind::Datatype,
+            id: "https://uor.foundation/convergence/subspaceRef",
+            label: "subspaceRef",
+            comment: "The commutative subspace selected by pairwise \
+                      convergence.",
+            kind: PropertyKind::Object,
             functional: true,
             domain: Some("https://uor.foundation/convergence/CommutativeSubspace"),
-            range: XSD_STRING,
+            range: "https://uor.foundation/convergence/CommutativeSubspace",
         },
-        // AssociativeSubalgebra property
         Property {
-            id: "https://uor.foundation/convergence/subalgebraDescription",
-            label: "subalgebraDescription",
-            comment: "Description of the associative subalgebra selected \
-                      by triple convergence.",
-            kind: PropertyKind::Datatype,
+            id: "https://uor.foundation/convergence/subalgebraRef",
+            label: "subalgebraRef",
+            comment: "The associative subalgebra selected by triple \
+                      convergence.",
+            kind: PropertyKind::Object,
             functional: true,
             domain: Some("https://uor.foundation/convergence/AssociativeSubalgebra"),
-            range: XSD_STRING,
+            range: "https://uor.foundation/convergence/AssociativeSubalgebra",
+        },
+        Property {
+            id: "https://uor.foundation/convergence/commutatorRef",
+            label: "commutatorRef",
+            comment: "Reference to the commutator pair for this convergence.",
+            kind: PropertyKind::Object,
+            functional: true,
+            domain: Some("https://uor.foundation/convergence/CommutativeSubspace"),
+            range: "https://uor.foundation/observable/Commutator",
+        },
+        Property {
+            id: "https://uor.foundation/convergence/associatorRef",
+            label: "associatorRef",
+            comment: "Reference to the associator triple for this convergence.",
+            kind: PropertyKind::Object,
+            functional: true,
+            domain: Some("https://uor.foundation/convergence/AssociativeSubalgebra"),
+            range: "https://uor.foundation/interaction/AssociatorTriple",
         },
     ]
 }

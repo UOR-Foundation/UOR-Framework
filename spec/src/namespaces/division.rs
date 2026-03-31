@@ -165,26 +165,8 @@ fn properties() -> Vec<Property> {
             domain: Some("https://uor.foundation/division/CayleyDicksonConstruction"),
             range: XSD_STRING,
         },
-        // AlgebraCommutator property
-        Property {
-            id: "https://uor.foundation/division/commutatorFormula",
-            label: "commutatorFormula",
-            comment: "The formula for the commutator in this algebra.",
-            kind: PropertyKind::Datatype,
-            functional: true,
-            domain: Some("https://uor.foundation/division/AlgebraCommutator"),
-            range: XSD_STRING,
-        },
-        // AlgebraAssociator property
-        Property {
-            id: "https://uor.foundation/division/associatorFormula",
-            label: "associatorFormula",
-            comment: "The formula for the associator in this algebra.",
-            kind: PropertyKind::Datatype,
-            functional: true,
-            domain: Some("https://uor.foundation/division/AlgebraAssociator"),
-            range: XSD_STRING,
-        },
+        // Amendment 80: commutatorFormula/associatorFormula removed
+        // (typed replacements in convergence/ as commutatorRef/associatorRef)
     ]
 }
 

@@ -59,6 +59,16 @@ pub trait CascadeStage<P: Primitives> {
     fn stage_name(&self) -> &P::String;
     /// The expected phase angle Ω^k at this stage.
     fn expected_phase(&self) -> &P::String;
+    /// Associated type for `StatePredicate`.
+    type StatePredicate: crate::kernel::predicate::StatePredicate<P>;
+    /// A typed predicate evaluated on the current CascadeState. Must be satisfied to enter this stage.
+    fn entry_guard(&self) -> &Self::StatePredicate;
+    /// A typed predicate that must be satisfied before the cascade advances past this stage.
+    fn exit_guard(&self) -> &Self::StatePredicate;
+    /// Associated type for `Effect`.
+    type Effect: crate::kernel::effect::Effect<P>;
+    /// The effect applied by this stage upon successful exit.
+    fn stage_effect(&self) -> &Self::Effect;
 }
 
 /// State of cascade execution at a specific point, including the current stage, phase angle, and pinned mask.
@@ -79,8 +89,10 @@ pub trait CascadeState<P: Primitives> {
 
 /// Guard-effect pair governing stage transitions in the cascade. The guard must be satisfied before the effect is applied.
 pub trait CascadeTransitionRule<P: Primitives> {
-    /// The predicate that must be satisfied for this transition.
-    fn transition_guard(&self) -> &P::String;
+    /// Associated type for `GuardedTransition`.
+    type GuardedTransition: crate::kernel::predicate::GuardedTransition<P>;
+    /// A typed GuardedTransition from predicate/ governing the stage transition.
+    fn transition_guard(&self) -> &Self::GuardedTransition;
     /// The effect applied when this transition fires.
     fn transition_effect(&self) -> &P::String;
     /// Whether this transition advances to the next stage.
@@ -169,8 +181,6 @@ pub trait CascadeTransaction<P: Primitives> {
 
 /// Successful termination (FullSaturation).
 pub trait PipelineSuccess<P: Primitives> {
-    /// Description of the successful pipeline termination.
-    fn success_outcome(&self) -> &P::String;
     /// Whether full saturation was achieved.
     fn saturation_reached(&self) -> P::Boolean;
     /// The final saturation level achieved on pipeline success.
@@ -181,8 +191,6 @@ pub trait PipelineSuccess<P: Primitives> {
 pub trait PipelineFailureReason<P: Primitives> {
     /// The kind of pipeline failure (e.g., DispatchMiss, ConvergenceStall).
     fn failure_kind(&self) -> &P::String;
-    /// Detailed description of the pipeline failure.
-    fn failure_detail(&self) -> &P::String;
     /// The cascade stage at which the pipeline failure occurred.
     fn failure_stage(&self) -> &P::String;
 }
@@ -203,8 +211,6 @@ pub trait FeasibilityResult<P: Primitives> {
     fn feasibility_witness(&self) -> &P::String;
     /// The kind of infeasibility detected.
     fn infeasibility_kind(&self) -> &P::String;
-    /// Detailed description of why infeasibility was detected.
-    fn infeasibility_detail(&self) -> &P::String;
 }
 
 /// Lifecycle of a partitioned context lease: Pending → Active → Released/Expired/Suspended.
@@ -347,10 +353,6 @@ pub trait QuerySubtypePredicate<P: Primitives>: PredicateExpression<P> {
 
 /// Stage 0: initialize state vector to identity.
 pub mod stage_initialization {
-    /// `entryCondition`
-    pub const ENTRY_CONDITION: &str = "true (initial stage)";
-    /// `exitCondition`
-    pub const EXIT_CONDITION: &str = "state vector is 1";
     /// `expectedPhase`
     pub const EXPECTED_PHASE: &str = "Ω⁰";
     /// `stageIndex`
@@ -361,10 +363,6 @@ pub mod stage_initialization {
 
 /// Stage 1: dispatch resolver (δ selects).
 pub mod stage_declare {
-    /// `entryCondition`
-    pub const ENTRY_CONDITION: &str = "state vector initialized";
-    /// `exitCondition`
-    pub const EXIT_CONDITION: &str = "resolver dispatched";
     /// `expectedPhase`
     pub const EXPECTED_PHASE: &str = "Ω¹";
     /// `stageIndex`
@@ -375,10 +373,6 @@ pub mod stage_declare {
 
 /// Stage 2: produce valid ring address (G grounds).
 pub mod stage_factorize {
-    /// `entryCondition`
-    pub const ENTRY_CONDITION: &str = "resolver dispatched";
-    /// `exitCondition`
-    pub const EXIT_CONDITION: &str = "ring address valid";
     /// `expectedPhase`
     pub const EXPECTED_PHASE: &str = "Ω²";
     /// `stageIndex`
@@ -389,10 +383,6 @@ pub mod stage_factorize {
 
 /// Stage 3: resolve constraints (Π terminates).
 pub mod stage_resolve {
-    /// `entryCondition`
-    pub const ENTRY_CONDITION: &str = "ring address valid";
-    /// `exitCondition`
-    pub const EXIT_CONDITION: &str = "constraints resolved";
     /// `expectedPhase`
     pub const EXPECTED_PHASE: &str = "Ω³";
     /// `stageIndex`
@@ -403,10 +393,6 @@ pub mod stage_resolve {
 
 /// Stage 4: accumulate without contradiction (α consistent).
 pub mod stage_attest {
-    /// `entryCondition`
-    pub const ENTRY_CONDITION: &str = "constraints resolved";
-    /// `exitCondition`
-    pub const EXIT_CONDITION: &str = "accumulation consistent";
     /// `expectedPhase`
     pub const EXPECTED_PHASE: &str = "Ω⁴";
     /// `stageIndex`
@@ -417,10 +403,6 @@ pub mod stage_attest {
 
 /// Stage 5: extract coherent output (P projects).
 pub mod stage_extract {
-    /// `entryCondition`
-    pub const ENTRY_CONDITION: &str = "accumulation consistent";
-    /// `exitCondition`
-    pub const EXIT_CONDITION: &str = "output projected";
     /// `expectedPhase`
     pub const EXPECTED_PHASE: &str = "Ω⁵";
     /// `stageIndex`
@@ -431,10 +413,6 @@ pub mod stage_extract {
 
 /// Terminal stage: cascade has reached the convergence angle π.
 pub mod stage_convergence {
-    /// `entryCondition`
-    pub const ENTRY_CONDITION: &str = "output projected";
-    /// `exitCondition`
-    pub const EXIT_CONDITION: &str = "convergence achieved";
     /// `expectedPhase`
     pub const EXPECTED_PHASE: &str = "π";
     /// `stageIndex`
@@ -567,8 +545,6 @@ pub mod coherence_violation {
 pub mod full_saturation_success {
     /// `saturationReached`
     pub const SATURATION_REACHED: bool = true;
-    /// `successOutcome`
-    pub const SUCCESS_OUTCOME: &str = "FullSaturation";
 }
 
 /// Preflight: checks that the cascade can reach convergence.

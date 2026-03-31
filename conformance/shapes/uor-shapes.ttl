@@ -1,5 +1,5 @@
 # UOR Foundation SHACL Shapes
-# One NodeShape per class — 292 total.
+# One NodeShape per class — 395 total.
 # Defines cardinality and type constraints validated by the conformance suite.
 
 @prefix rdf:        <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
@@ -30,6 +30,16 @@
 @prefix interaction: <https://uor.foundation/interaction/> .
 @prefix monoidal:   <https://uor.foundation/monoidal/> .
 @prefix operad:     <https://uor.foundation/operad/> .
+@prefix effect:     <https://uor.foundation/effect/> .
+@prefix predicate:  <https://uor.foundation/predicate/> .
+@prefix parallel:   <https://uor.foundation/parallel/> .
+@prefix stream:     <https://uor.foundation/stream/> .
+@prefix failure:    <https://uor.foundation/failure/> .
+@prefix linear:     <https://uor.foundation/linear/> .
+@prefix recursion:  <https://uor.foundation/recursion/> .
+@prefix region:     <https://uor.foundation/region/> .
+@prefix boundary:   <https://uor.foundation/boundary/> .
+@prefix conformance: <https://uor.foundation/conformance/> .
 @prefix uor-sh:     <https://uor.foundation/shapes/> .
 
 # ── u/ namespace (2) ────────────────────────────────────────────────────────
@@ -2484,3 +2494,538 @@ uor-sh:QuerySubtypePredicateShape
     sh:targetClass  cascade:QuerySubtypePredicate ;
     rdfs:label      "QuerySubtypePredicateShape" ;
     sh:property [ sh:path cascade:queryTypeRef ; sh:maxCount 1 ; sh:datatype xsd:string ] .
+
+# ── effect/ namespace (9) — Amendment 71 ──────────────────────────────────
+
+uor-sh:EffectShape
+    a               sh:NodeShape ;
+    sh:targetClass  effect:Effect ;
+    rdfs:label      "EffectShape" ;
+    sh:property [ sh:path effect:effectTarget ; sh:maxCount 1 ] ;
+    sh:property [ sh:path effect:freeCountDelta ; sh:maxCount 1 ; sh:datatype xsd:integer ] .
+
+uor-sh:ReversibleEffectShape
+    a               sh:NodeShape ;
+    sh:targetClass  effect:ReversibleEffect ;
+    rdfs:label      "ReversibleEffectShape" .
+
+uor-sh:PinningEffectShape
+    a               sh:NodeShape ;
+    sh:targetClass  effect:PinningEffect ;
+    rdfs:label      "PinningEffectShape" ;
+    sh:property [ sh:path effect:freeCountDelta ; sh:maxCount 1 ; sh:datatype xsd:integer ] .
+
+uor-sh:UnbindingEffectShape
+    a               sh:NodeShape ;
+    sh:targetClass  effect:UnbindingEffect ;
+    rdfs:label      "UnbindingEffectShape" ;
+    sh:property [ sh:path effect:freeCountDelta ; sh:maxCount 1 ; sh:datatype xsd:integer ] .
+
+uor-sh:PhaseEffectShape
+    a               sh:NodeShape ;
+    sh:targetClass  effect:PhaseEffect ;
+    rdfs:label      "PhaseEffectShape" ;
+    sh:property [ sh:path effect:phaseAngleDelta ; sh:maxCount 1 ; sh:datatype xsd:string ] .
+
+uor-sh:CompositeEffectShape
+    a               sh:NodeShape ;
+    sh:targetClass  effect:CompositeEffect ;
+    rdfs:label      "CompositeEffectShape" ;
+    sh:property [ sh:path effect:compositeHead ; sh:maxCount 1 ] .
+
+uor-sh:ExternalEffectShape
+    a               sh:NodeShape ;
+    sh:targetClass  effect:ExternalEffect ;
+    rdfs:label      "ExternalEffectShape" .
+
+uor-sh:EffectTargetShape
+    a               sh:NodeShape ;
+    sh:targetClass  effect:EffectTarget ;
+    rdfs:label      "EffectTargetShape" ;
+    sh:property [ sh:path effect:targetCardinality ; sh:maxCount 1 ; sh:datatype xsd:nonNegativeInteger ] .
+
+uor-sh:DisjointnessWitnessShape
+    a               sh:NodeShape ;
+    sh:targetClass  effect:DisjointnessWitness ;
+    rdfs:label      "DisjointnessWitnessShape" ;
+    sh:property [ sh:path effect:disjointnessLeft ; sh:maxCount 1 ] ;
+    sh:property [ sh:path effect:disjointnessRight ; sh:maxCount 1 ] .
+
+# ── predicate/ namespace (9) — Amendment 72 ───────────────────────────────
+
+uor-sh:PredicateShape_
+    a               sh:NodeShape ;
+    sh:targetClass  predicate:Predicate ;
+    rdfs:label      "PredicateShape_" .
+
+uor-sh:TypePredicateShape
+    a               sh:NodeShape ;
+    sh:targetClass  predicate:TypePredicate ;
+    rdfs:label      "TypePredicateShape" .
+
+uor-sh:StatePredicateShape
+    a               sh:NodeShape ;
+    sh:targetClass  predicate:StatePredicate ;
+    rdfs:label      "StatePredicateShape" .
+
+uor-sh:FiberPredicateShape
+    a               sh:NodeShape ;
+    sh:targetClass  predicate:FiberPredicate ;
+    rdfs:label      "FiberPredicateShape" .
+
+uor-sh:DispatchRuleShape
+    a               sh:NodeShape ;
+    sh:targetClass  predicate:DispatchRule ;
+    rdfs:label      "DispatchRuleShape" ;
+    sh:property [ sh:path predicate:dispatchPredicate ; sh:maxCount 1 ] ;
+    sh:property [ sh:path predicate:dispatchTarget ; sh:maxCount 1 ] ;
+    sh:property [ sh:path predicate:dispatchIndex ; sh:maxCount 1 ; sh:datatype xsd:nonNegativeInteger ] .
+
+uor-sh:DispatchTableShape
+    a               sh:NodeShape ;
+    sh:targetClass  predicate:DispatchTable ;
+    rdfs:label      "DispatchTableShape" ;
+    sh:property [ sh:path predicate:isExhaustive ; sh:maxCount 1 ; sh:datatype xsd:boolean ] ;
+    sh:property [ sh:path predicate:isMutuallyExclusive ; sh:maxCount 1 ; sh:datatype xsd:boolean ] .
+
+uor-sh:GuardedTransitionShape
+    a               sh:NodeShape ;
+    sh:targetClass  predicate:GuardedTransition ;
+    rdfs:label      "GuardedTransitionShape" ;
+    sh:property [ sh:path predicate:guardPredicate ; sh:maxCount 1 ] ;
+    sh:property [ sh:path predicate:guardEffect ; sh:maxCount 1 ] ;
+    sh:property [ sh:path predicate:guardTarget ; sh:maxCount 1 ] .
+
+uor-sh:MatchArmShape
+    a               sh:NodeShape ;
+    sh:targetClass  predicate:MatchArm ;
+    rdfs:label      "MatchArmShape" ;
+    sh:property [ sh:path predicate:armPredicate ; sh:maxCount 1 ] ;
+    sh:property [ sh:path predicate:armResult ; sh:maxCount 1 ] ;
+    sh:property [ sh:path predicate:armIndex ; sh:maxCount 1 ; sh:datatype xsd:nonNegativeInteger ] .
+
+uor-sh:MatchExpressionShape
+    a               sh:NodeShape ;
+    sh:targetClass  predicate:MatchExpression ;
+    rdfs:label      "MatchExpressionShape" .
+
+# ── parallel/ namespace (5) — Amendment 74 ─────────────────────────────────
+
+uor-sh:ParallelProductShape
+    a               sh:NodeShape ;
+    sh:targetClass  parallel:ParallelProduct ;
+    rdfs:label      "ParallelProductShape" ;
+    sh:property [ sh:path parallel:leftComputation ; sh:maxCount 1 ] ;
+    sh:property [ sh:path parallel:rightComputation ; sh:maxCount 1 ] ;
+    sh:property [ sh:path parallel:disjointnessCert ; sh:maxCount 1 ] .
+
+uor-sh:DisjointnessCertificateShape
+    a               sh:NodeShape ;
+    sh:targetClass  parallel:DisjointnessCertificate ;
+    rdfs:label      "DisjointnessCertificateShape" ;
+    sh:property [ sh:path parallel:certLeftTarget ; sh:maxCount 1 ] ;
+    sh:property [ sh:path parallel:certRightTarget ; sh:maxCount 1 ] .
+
+uor-sh:SynchronizationPointShape
+    a               sh:NodeShape ;
+    sh:targetClass  parallel:SynchronizationPoint ;
+    rdfs:label      "SynchronizationPointShape" .
+
+uor-sh:ParallelTraceShape
+    a               sh:NodeShape ;
+    sh:targetClass  parallel:ParallelTrace ;
+    rdfs:label      "ParallelTraceShape" .
+
+uor-sh:FiberPartitioningShape
+    a               sh:NodeShape ;
+    sh:targetClass  parallel:FiberPartitioning ;
+    rdfs:label      "FiberPartitioningShape" ;
+    sh:property [ sh:path parallel:componentCount ; sh:maxCount 1 ; sh:datatype xsd:positiveInteger ] .
+
+# ── morphism/ extension (4) — Amendment 75 ─────────────────────────────────
+
+uor-sh:ComputationDatumShape
+    a               sh:NodeShape ;
+    sh:targetClass  morphism:ComputationDatum ;
+    rdfs:label      "ComputationDatumShape" ;
+    sh:property [ sh:path morphism:referencedCertificate ; sh:maxCount 1 ] ;
+    sh:property [ sh:path morphism:computationAddress ; sh:maxCount 1 ] .
+
+uor-sh:ApplicationMorphismShape
+    a               sh:NodeShape ;
+    sh:targetClass  morphism:ApplicationMorphism ;
+    rdfs:label      "ApplicationMorphismShape" ;
+    sh:property [ sh:path morphism:applicationTarget ; sh:maxCount 1 ] ;
+    sh:property [ sh:path morphism:applicationInput ; sh:maxCount 1 ] .
+
+uor-sh:PartialApplicationShape
+    a               sh:NodeShape ;
+    sh:targetClass  morphism:PartialApplication ;
+    rdfs:label      "PartialApplicationShape" ;
+    sh:property [ sh:path morphism:partialBase ; sh:maxCount 1 ] ;
+    sh:property [ sh:path morphism:remainingArity ; sh:maxCount 1 ; sh:datatype xsd:positiveInteger ] .
+
+uor-sh:TransformCompositionShape
+    a               sh:NodeShape ;
+    sh:targetClass  morphism:TransformComposition ;
+    rdfs:label      "TransformCompositionShape" ;
+    sh:property [ sh:path morphism:compositionLeft ; sh:maxCount 1 ] ;
+    sh:property [ sh:path morphism:compositionRight ; sh:maxCount 1 ] .
+
+# ── stream/ namespace (6) — Amendment 75 ───────────────────────────────────
+
+uor-sh:ProductiveStreamShape
+    a               sh:NodeShape ;
+    sh:targetClass  stream:ProductiveStream ;
+    rdfs:label      "ProductiveStreamShape" ;
+    sh:property [ sh:path stream:isProductive ; sh:maxCount 1 ; sh:datatype xsd:boolean ] .
+
+uor-sh:EpochShape
+    a               sh:NodeShape ;
+    sh:targetClass  stream:Epoch ;
+    rdfs:label      "EpochShape" ;
+    sh:property [ sh:path stream:epochCascade ; sh:maxCount 1 ] ;
+    sh:property [ sh:path stream:epochIndex ; sh:maxCount 1 ; sh:datatype xsd:nonNegativeInteger ] .
+
+uor-sh:EpochBoundaryShape
+    a               sh:NodeShape ;
+    sh:targetClass  stream:EpochBoundary ;
+    rdfs:label      "EpochBoundaryShape" ;
+    sh:property [ sh:path stream:boundaryFrom ; sh:maxCount 1 ] ;
+    sh:property [ sh:path stream:boundaryTo ; sh:maxCount 1 ] .
+
+uor-sh:StreamPrefixShape
+    a               sh:NodeShape ;
+    sh:targetClass  stream:StreamPrefix ;
+    rdfs:label      "StreamPrefixShape" ;
+    sh:property [ sh:path stream:prefixLength ; sh:maxCount 1 ; sh:datatype xsd:positiveInteger ] .
+
+uor-sh:StreamMorphismShape
+    a               sh:NodeShape ;
+    sh:targetClass  stream:StreamMorphism ;
+    rdfs:label      "StreamMorphismShape" .
+
+uor-sh:UnfoldShape
+    a               sh:NodeShape ;
+    sh:targetClass  stream:Unfold ;
+    rdfs:label      "UnfoldShape" ;
+    sh:property [ sh:path stream:unfoldSeed ; sh:maxCount 1 ] ;
+    sh:property [ sh:path stream:unfoldStep ; sh:maxCount 1 ] ;
+    sh:property [ sh:path stream:unfoldResult ; sh:maxCount 1 ] .
+
+# ── failure/ namespace (12) — Amendment 76 ─────────────────────────────────
+
+uor-sh:ComputationResultShape
+    a               sh:NodeShape ;
+    sh:targetClass  failure:ComputationResult ;
+    rdfs:label      "ComputationResultShape" .
+
+uor-sh:SuccessShape
+    a               sh:NodeShape ;
+    sh:targetClass  failure:Success ;
+    rdfs:label      "SuccessShape" ;
+    sh:property [ sh:path failure:resultDatum ; sh:maxCount 1 ] ;
+    sh:property [ sh:path failure:resultCertificate ; sh:maxCount 1 ] .
+
+uor-sh:FailureShape_
+    a               sh:NodeShape ;
+    sh:targetClass  failure:Failure ;
+    rdfs:label      "FailureShape_" ;
+    sh:property [ sh:path failure:failureReason ; sh:maxCount 1 ] ;
+    sh:property [ sh:path failure:failureDepth ; sh:maxCount 1 ; sh:datatype xsd:nonNegativeInteger ] .
+
+uor-sh:FailureReasonShape
+    a               sh:NodeShape ;
+    sh:targetClass  failure:FailureReason ;
+    rdfs:label      "FailureReasonShape" .
+
+uor-sh:GuardFailureShape
+    a               sh:NodeShape ;
+    sh:targetClass  failure:GuardFailure ;
+    rdfs:label      "GuardFailureShape" .
+
+uor-sh:ConstraintContradictionShape
+    a               sh:NodeShape ;
+    sh:targetClass  failure:ConstraintContradiction ;
+    rdfs:label      "ConstraintContradictionShape" .
+
+uor-sh:FiberExhaustionShape
+    a               sh:NodeShape ;
+    sh:targetClass  failure:FiberExhaustion ;
+    rdfs:label      "FiberExhaustionShape" .
+
+uor-sh:LiftObstructionFailureShape
+    a               sh:NodeShape ;
+    sh:targetClass  failure:LiftObstructionFailure ;
+    rdfs:label      "LiftObstructionFailureShape" .
+
+uor-sh:PartialComputationShape
+    a               sh:NodeShape ;
+    sh:targetClass  failure:PartialComputation ;
+    rdfs:label      "PartialComputationShape" ;
+    sh:property [ sh:path failure:isTotal ; sh:maxCount 1 ; sh:datatype xsd:boolean ] .
+
+uor-sh:TotalComputationShape
+    a               sh:NodeShape ;
+    sh:targetClass  failure:TotalComputation ;
+    rdfs:label      "TotalComputationShape" .
+
+uor-sh:RecoveryShape
+    a               sh:NodeShape ;
+    sh:targetClass  failure:Recovery ;
+    rdfs:label      "RecoveryShape" ;
+    sh:property [ sh:path failure:recoveryEffect ; sh:maxCount 1 ] ;
+    sh:property [ sh:path failure:recoveryTarget ; sh:maxCount 1 ] .
+
+uor-sh:FailurePropagationShape
+    a               sh:NodeShape ;
+    sh:targetClass  failure:FailurePropagation ;
+    rdfs:label      "FailurePropagationShape" .
+
+# ── linear/ namespace (6) — Amendment 77 ───────────────────────────────────
+
+uor-sh:LinearFiberShape
+    a               sh:NodeShape ;
+    sh:targetClass  linear:LinearFiber ;
+    rdfs:label      "LinearFiberShape" .
+
+uor-sh:LinearEffectShape
+    a               sh:NodeShape ;
+    sh:targetClass  linear:LinearEffect ;
+    rdfs:label      "LinearEffectShape" ;
+    sh:property [ sh:path linear:linearTarget ; sh:maxCount 1 ] .
+
+uor-sh:LinearTraceShape
+    a               sh:NodeShape ;
+    sh:targetClass  linear:LinearTrace ;
+    rdfs:label      "LinearTraceShape" .
+
+uor-sh:LinearBudgetShape
+    a               sh:NodeShape ;
+    sh:targetClass  linear:LinearBudget ;
+    rdfs:label      "LinearBudgetShape" ;
+    sh:property [ sh:path linear:budgetContext ; sh:maxCount 1 ] ;
+    sh:property [ sh:path linear:remainingCount ; sh:maxCount 1 ; sh:datatype xsd:nonNegativeInteger ] .
+
+uor-sh:LeaseAllocationShape
+    a               sh:NodeShape ;
+    sh:targetClass  linear:LeaseAllocation ;
+    rdfs:label      "LeaseAllocationShape" ;
+    sh:property [ sh:path linear:leaseSource ; sh:maxCount 1 ] ;
+    sh:property [ sh:path linear:leaseCardinality ; sh:maxCount 1 ; sh:datatype xsd:positiveInteger ] .
+
+uor-sh:AffineFiberShape
+    a               sh:NodeShape ;
+    sh:targetClass  linear:AffineFiber ;
+    rdfs:label      "AffineFiberShape" .
+
+# ── type/ extension (3) — Amendment 77 ─────────────────────────────────────
+
+uor-sh:TypeInclusionShape
+    a               sh:NodeShape ;
+    sh:targetClass  type:TypeInclusion ;
+    rdfs:label      "TypeInclusionShape" ;
+    sh:property [ sh:path type:inclusionSource ; sh:maxCount 1 ] ;
+    sh:property [ sh:path type:inclusionTarget ; sh:maxCount 1 ] .
+
+uor-sh:VarianceAnnotationShape
+    a               sh:NodeShape ;
+    sh:targetClass  type:VarianceAnnotation ;
+    rdfs:label      "VarianceAnnotationShape" .
+
+uor-sh:SubtypingLatticeShape
+    a               sh:NodeShape ;
+    sh:targetClass  type:SubtypingLattice ;
+    rdfs:label      "SubtypingLatticeShape" ;
+    sh:property [ sh:path type:latticeDepth ; sh:maxCount 1 ; sh:datatype xsd:nonNegativeInteger ] .
+
+# ── recursion/ namespace (7) — Amendment 78 ────────────────────────────────
+
+uor-sh:BoundedRecursionShape
+    a               sh:NodeShape ;
+    sh:targetClass  recursion:BoundedRecursion ;
+    rdfs:label      "BoundedRecursionShape" ;
+    sh:property [ sh:path recursion:measure ; sh:maxCount 1 ] ;
+    sh:property [ sh:path recursion:baseCase ; sh:maxCount 1 ] ;
+    sh:property [ sh:path recursion:recursiveCase ; sh:maxCount 1 ] ;
+    sh:property [ sh:path recursion:initialMeasure ; sh:maxCount 1 ; sh:datatype xsd:nonNegativeInteger ] .
+
+uor-sh:DescentMeasureShape
+    a               sh:NodeShape ;
+    sh:targetClass  recursion:DescentMeasure ;
+    rdfs:label      "DescentMeasureShape" ;
+    sh:property [ sh:path recursion:measureValue ; sh:maxCount 1 ; sh:datatype xsd:nonNegativeInteger ] .
+
+uor-sh:BaseCaseShape
+    a               sh:NodeShape ;
+    sh:targetClass  recursion:BaseCase ;
+    rdfs:label      "BaseCaseShape" .
+
+uor-sh:RecursiveCaseShape
+    a               sh:NodeShape ;
+    sh:targetClass  recursion:RecursiveCase ;
+    rdfs:label      "RecursiveCaseShape" .
+
+uor-sh:RecursiveStepShape
+    a               sh:NodeShape ;
+    sh:targetClass  recursion:RecursiveStep ;
+    rdfs:label      "RecursiveStepShape" ;
+    sh:property [ sh:path recursion:stepDecomposition ; sh:maxCount 1 ] .
+
+uor-sh:RecursionTraceShape
+    a               sh:NodeShape ;
+    sh:targetClass  recursion:RecursionTrace ;
+    rdfs:label      "RecursionTraceShape" .
+
+uor-sh:StructuralRecursionShape
+    a               sh:NodeShape ;
+    sh:targetClass  recursion:StructuralRecursion ;
+    rdfs:label      "StructuralRecursionShape" .
+
+# ── region/ namespace (5) — Amendment 79 ───────────────────────────────────
+
+uor-sh:AddressRegionShape
+    a               sh:NodeShape ;
+    sh:targetClass  region:AddressRegion ;
+    rdfs:label      "AddressRegionShape" ;
+    sh:property [ sh:path region:regionBound ; sh:maxCount 1 ] ;
+    sh:property [ sh:path region:regionCardinality ; sh:maxCount 1 ; sh:datatype xsd:nonNegativeInteger ] .
+
+uor-sh:RegionBoundShape
+    a               sh:NodeShape ;
+    sh:targetClass  region:RegionBound ;
+    rdfs:label      "RegionBoundShape" ;
+    sh:property [ sh:path region:regionLower ; sh:maxCount 1 ] ;
+    sh:property [ sh:path region:regionUpper ; sh:maxCount 1 ] .
+
+uor-sh:LocalityMetricShape
+    a               sh:NodeShape ;
+    sh:targetClass  region:LocalityMetric ;
+    rdfs:label      "LocalityMetricShape" .
+
+uor-sh:WorkingSetShape
+    a               sh:NodeShape ;
+    sh:targetClass  region:WorkingSet ;
+    rdfs:label      "WorkingSetShape" ;
+    sh:property [ sh:path region:workingSetStage ; sh:maxCount 1 ] ;
+    sh:property [ sh:path region:workingSetType ; sh:maxCount 1 ] ;
+    sh:property [ sh:path region:workingSetSize ; sh:maxCount 1 ; sh:datatype xsd:nonNegativeInteger ] .
+
+uor-sh:RegionAllocationShape
+    a               sh:NodeShape ;
+    sh:targetClass  region:RegionAllocation ;
+    rdfs:label      "RegionAllocationShape" .
+
+# ── boundary/ namespace (8) — Amendment 81 ─────────────────────────────────
+
+uor-sh:IOBoundaryShape
+    a               sh:NodeShape ;
+    sh:targetClass  boundary:IOBoundary ;
+    rdfs:label      "IOBoundaryShape" .
+
+uor-sh:SourceShape
+    a               sh:NodeShape ;
+    sh:targetClass  boundary:Source ;
+    rdfs:label      "SourceShape" ;
+    sh:property [ sh:path boundary:sourceType ; sh:maxCount 1 ] ;
+    sh:property [ sh:path boundary:sourceGrounding ; sh:maxCount 1 ] .
+
+uor-sh:SinkShape
+    a               sh:NodeShape ;
+    sh:targetClass  boundary:Sink ;
+    rdfs:label      "SinkShape" ;
+    sh:property [ sh:path boundary:sinkType ; sh:maxCount 1 ] ;
+    sh:property [ sh:path boundary:sinkProjection ; sh:maxCount 1 ] .
+
+uor-sh:BoundaryEffectShape_
+    a               sh:NodeShape ;
+    sh:targetClass  boundary:BoundaryEffect ;
+    rdfs:label      "BoundaryEffectShape_" ;
+    sh:property [ sh:path boundary:effectBoundary ; sh:maxCount 1 ] ;
+    sh:property [ sh:path boundary:isIdempotent ; sh:maxCount 1 ; sh:datatype xsd:boolean ] .
+
+uor-sh:IngestEffectShape
+    a               sh:NodeShape ;
+    sh:targetClass  boundary:IngestEffect ;
+    rdfs:label      "IngestEffectShape" ;
+    sh:property [ sh:path boundary:ingestSource ; sh:maxCount 1 ] .
+
+uor-sh:EmitEffectShape
+    a               sh:NodeShape ;
+    sh:targetClass  boundary:EmitEffect ;
+    rdfs:label      "EmitEffectShape" ;
+    sh:property [ sh:path boundary:emitSink ; sh:maxCount 1 ] .
+
+uor-sh:BoundaryProtocolShape
+    a               sh:NodeShape ;
+    sh:targetClass  boundary:BoundaryProtocol ;
+    rdfs:label      "BoundaryProtocolShape" ;
+    sh:property [ sh:path boundary:protocolType ; sh:maxCount 1 ] .
+
+uor-sh:BoundarySessionShape
+    a               sh:NodeShape ;
+    sh:targetClass  boundary:BoundarySession ;
+    rdfs:label      "BoundarySessionShape" ;
+    sh:property [ sh:path boundary:crossingCount ; sh:maxCount 1 ; sh:datatype xsd:nonNegativeInteger ] .
+
+# ── conformance/ namespace (11) — Amendment 82 ────────────────────────────
+
+uor-sh:ShapeShape
+    a               sh:NodeShape ;
+    sh:targetClass  conformance:Shape ;
+    rdfs:label      "ShapeShape" ;
+    sh:property [ sh:path conformance:targetClass ; sh:maxCount 1 ] .
+
+uor-sh:PropertyConstraintShape
+    a               sh:NodeShape ;
+    sh:targetClass  conformance:PropertyConstraint ;
+    rdfs:label      "PropertyConstraintShape" ;
+    sh:property [ sh:path conformance:constraintProperty ; sh:maxCount 1 ] ;
+    sh:property [ sh:path conformance:minCount ; sh:maxCount 1 ; sh:datatype xsd:nonNegativeInteger ] ;
+    sh:property [ sh:path conformance:maxCount ; sh:maxCount 1 ; sh:datatype xsd:nonNegativeInteger ] .
+
+uor-sh:QuantumLevelShapeShape
+    a               sh:NodeShape ;
+    sh:targetClass  conformance:QuantumLevelShape ;
+    rdfs:label      "QuantumLevelShapeShape" .
+
+uor-sh:EffectShapeShape
+    a               sh:NodeShape ;
+    sh:targetClass  conformance:EffectShape ;
+    rdfs:label      "EffectShapeShape" .
+
+uor-sh:ParallelShapeShape
+    a               sh:NodeShape ;
+    sh:targetClass  conformance:ParallelShape ;
+    rdfs:label      "ParallelShapeShape" .
+
+uor-sh:StreamShapeShape
+    a               sh:NodeShape ;
+    sh:targetClass  conformance:StreamShape ;
+    rdfs:label      "StreamShapeShape" .
+
+uor-sh:DispatchShapeShape
+    a               sh:NodeShape ;
+    sh:targetClass  conformance:DispatchShape ;
+    rdfs:label      "DispatchShapeShape" .
+
+uor-sh:LeaseShapeShape
+    a               sh:NodeShape ;
+    sh:targetClass  conformance:LeaseShape ;
+    rdfs:label      "LeaseShapeShape" .
+
+uor-sh:GroundingShapeShape
+    a               sh:NodeShape ;
+    sh:targetClass  conformance:GroundingShape ;
+    rdfs:label      "GroundingShapeShape" .
+
+uor-sh:ValidationResultShape
+    a               sh:NodeShape ;
+    sh:targetClass  conformance:ValidationResult ;
+    rdfs:label      "ValidationResultShape" ;
+    sh:property [ sh:path conformance:conforms ; sh:maxCount 1 ; sh:datatype xsd:boolean ] .
+
+uor-sh:PredicateShapeShape
+    a               sh:NodeShape ;
+    sh:targetClass  conformance:PredicateShape ;
+    rdfs:label      "PredicateShapeShape" .

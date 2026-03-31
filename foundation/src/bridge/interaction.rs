@@ -32,16 +32,20 @@ pub trait AssociatorState<P: Primitives> {
 
 /// Three entities whose interaction exhibits non-associativity due to read-write interleaving.
 pub trait AssociatorTriple<P: Primitives> {
-    /// First entity in the associator triple.
-    fn triple_entity_a(&self) -> &P::String;
-    /// Second entity in the associator triple.
-    fn triple_entity_b(&self) -> &P::String;
-    /// Third entity in the associator triple.
-    fn triple_entity_c(&self) -> &P::String;
-    /// The associativity profile of the triple.
-    fn associator_profile(&self) -> &P::String;
+    /// Associated type for `Datum`.
+    type Datum: crate::kernel::schema::Datum<P>;
+    /// First component datum in the associator triple.
+    fn triple_component_a(&self) -> &Self::Datum;
+    /// Second component datum in the associator triple.
+    fn triple_component_b(&self) -> &Self::Datum;
+    /// Third component datum in the associator triple.
+    fn triple_component_c(&self) -> &Self::Datum;
+    /// Associated type for `Observable`.
+    type Observable: crate::bridge::observable::Observable<P>;
+    /// Reference to the observable describing the associativity profile.
+    fn associator_profile_ref(&self) -> &Self::Observable;
     /// The maximum norm of the associator for this triple.
-    fn max_associator_norm(&self) -> &P::String;
+    fn associator_norm_value(&self) -> P::Decimal;
 }
 
 /// A fiber shared by all three entities in an AssociatorTriple.

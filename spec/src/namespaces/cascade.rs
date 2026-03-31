@@ -39,6 +39,8 @@ pub fn module() -> NamespaceModule {
                 NS_RESOLVER,
                 NS_MORPHISM,
                 NS_OBSERVABLE,
+                NS_PREDICATE,
+                NS_EFFECT,
             ],
         },
         classes: classes(),
@@ -471,23 +473,35 @@ fn properties() -> Vec<Property> {
             domain: Some("https://uor.foundation/cascade/CascadeStage"),
             range: XSD_STRING,
         },
+        // Amendment 73: typed guards replacing entryCondition/exitCondition
         Property {
-            id: "https://uor.foundation/cascade/entryCondition",
-            label: "entryCondition",
-            comment: "The condition that must hold to enter this stage.",
-            kind: PropertyKind::Annotation,
+            id: "https://uor.foundation/cascade/entryGuard",
+            label: "entryGuard",
+            comment: "A typed predicate evaluated on the current \
+                      CascadeState. Must be satisfied to enter this stage.",
+            kind: PropertyKind::Object,
             functional: true,
             domain: Some("https://uor.foundation/cascade/CascadeStage"),
-            range: XSD_STRING,
+            range: "https://uor.foundation/predicate/StatePredicate",
         },
         Property {
-            id: "https://uor.foundation/cascade/exitCondition",
-            label: "exitCondition",
-            comment: "The condition that must hold to exit this stage.",
-            kind: PropertyKind::Annotation,
+            id: "https://uor.foundation/cascade/exitGuard",
+            label: "exitGuard",
+            comment: "A typed predicate that must be satisfied before the \
+                      cascade advances past this stage.",
+            kind: PropertyKind::Object,
             functional: true,
             domain: Some("https://uor.foundation/cascade/CascadeStage"),
-            range: XSD_STRING,
+            range: "https://uor.foundation/predicate/StatePredicate",
+        },
+        Property {
+            id: "https://uor.foundation/cascade/stageEffect",
+            label: "stageEffect",
+            comment: "The effect applied by this stage upon successful exit.",
+            kind: PropertyKind::Object,
+            functional: true,
+            domain: Some("https://uor.foundation/cascade/CascadeStage"),
+            range: "https://uor.foundation/effect/Effect",
         },
         // CascadeState properties
         Property {
@@ -530,11 +544,12 @@ fn properties() -> Vec<Property> {
         Property {
             id: "https://uor.foundation/cascade/transitionGuard",
             label: "transitionGuard",
-            comment: "The predicate that must be satisfied for this transition.",
-            kind: PropertyKind::Datatype,
+            comment: "A typed GuardedTransition from predicate/ governing \
+                      the stage transition.",
+            kind: PropertyKind::Object,
             functional: true,
             domain: Some("https://uor.foundation/cascade/CascadeTransitionRule"),
-            range: XSD_STRING,
+            range: "https://uor.foundation/predicate/GuardedTransition",
         },
         Property {
             id: "https://uor.foundation/cascade/transitionEffect",
@@ -717,15 +732,7 @@ fn properties() -> Vec<Property> {
             domain: Some("https://uor.foundation/cascade/PipelineFailureReason"),
             range: XSD_STRING,
         },
-        Property {
-            id: "https://uor.foundation/cascade/failureDetail",
-            label: "failureDetail",
-            comment: "Detailed description of the pipeline failure.",
-            kind: PropertyKind::Datatype,
-            functional: true,
-            domain: Some("https://uor.foundation/cascade/PipelineFailureReason"),
-            range: XSD_STRING,
-        },
+        // Amendment 76: failureDetail removed (replaced by failure:failureReason)
         // PreflightCheck properties
         Property {
             id: "https://uor.foundation/cascade/preflightKind",
@@ -746,15 +753,7 @@ fn properties() -> Vec<Property> {
             range: XSD_STRING,
         },
         // PipelineSuccess properties
-        Property {
-            id: "https://uor.foundation/cascade/successOutcome",
-            label: "successOutcome",
-            comment: "Description of the successful pipeline termination.",
-            kind: PropertyKind::Datatype,
-            functional: true,
-            domain: Some("https://uor.foundation/cascade/PipelineSuccess"),
-            range: XSD_STRING,
-        },
+        // Amendment 76: successOutcome removed (replaced by failure:resultDatum)
         Property {
             id: "https://uor.foundation/cascade/saturationReached",
             label: "saturationReached",
@@ -1134,15 +1133,7 @@ fn properties() -> Vec<Property> {
             domain: Some("https://uor.foundation/cascade/FeasibilityResult"),
             range: XSD_STRING,
         },
-        Property {
-            id: "https://uor.foundation/cascade/infeasibilityDetail",
-            label: "infeasibilityDetail",
-            comment: "Detailed description of why infeasibility was detected.",
-            kind: PropertyKind::Datatype,
-            functional: true,
-            domain: Some("https://uor.foundation/cascade/FeasibilityResult"),
-            range: XSD_STRING,
-        },
+        // Amendment 76: infeasibilityDetail removed (replaced by failure:failureReason)
         Property {
             id: "https://uor.foundation/cascade/failureStage",
             label: "failureStage",
@@ -1194,14 +1185,6 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/cascade/expectedPhase",
                     IndividualValue::Str("\u{03a9}\u{2070}"),
                 ),
-                (
-                    "https://uor.foundation/cascade/entryCondition",
-                    IndividualValue::Str("true (initial stage)"),
-                ),
-                (
-                    "https://uor.foundation/cascade/exitCondition",
-                    IndividualValue::Str("state vector is 1"),
-                ),
             ],
         },
         Individual {
@@ -1221,14 +1204,6 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/cascade/expectedPhase",
                     IndividualValue::Str("\u{03a9}\u{00b9}"),
-                ),
-                (
-                    "https://uor.foundation/cascade/entryCondition",
-                    IndividualValue::Str("state vector initialized"),
-                ),
-                (
-                    "https://uor.foundation/cascade/exitCondition",
-                    IndividualValue::Str("resolver dispatched"),
                 ),
             ],
         },
@@ -1250,14 +1225,6 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/cascade/expectedPhase",
                     IndividualValue::Str("\u{03a9}\u{00b2}"),
                 ),
-                (
-                    "https://uor.foundation/cascade/entryCondition",
-                    IndividualValue::Str("resolver dispatched"),
-                ),
-                (
-                    "https://uor.foundation/cascade/exitCondition",
-                    IndividualValue::Str("ring address valid"),
-                ),
             ],
         },
         Individual {
@@ -1277,14 +1244,6 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/cascade/expectedPhase",
                     IndividualValue::Str("\u{03a9}\u{00b3}"),
-                ),
-                (
-                    "https://uor.foundation/cascade/entryCondition",
-                    IndividualValue::Str("ring address valid"),
-                ),
-                (
-                    "https://uor.foundation/cascade/exitCondition",
-                    IndividualValue::Str("constraints resolved"),
                 ),
             ],
         },
@@ -1306,14 +1265,6 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/cascade/expectedPhase",
                     IndividualValue::Str("\u{03a9}\u{2074}"),
                 ),
-                (
-                    "https://uor.foundation/cascade/entryCondition",
-                    IndividualValue::Str("constraints resolved"),
-                ),
-                (
-                    "https://uor.foundation/cascade/exitCondition",
-                    IndividualValue::Str("accumulation consistent"),
-                ),
             ],
         },
         Individual {
@@ -1334,14 +1285,6 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/cascade/expectedPhase",
                     IndividualValue::Str("\u{03a9}\u{2075}"),
                 ),
-                (
-                    "https://uor.foundation/cascade/entryCondition",
-                    IndividualValue::Str("accumulation consistent"),
-                ),
-                (
-                    "https://uor.foundation/cascade/exitCondition",
-                    IndividualValue::Str("output projected"),
-                ),
             ],
         },
         Individual {
@@ -1361,14 +1304,6 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/cascade/expectedPhase",
                     IndividualValue::Str("\u{03c0}"),
-                ),
-                (
-                    "https://uor.foundation/cascade/entryCondition",
-                    IndividualValue::Str("output projected"),
-                ),
-                (
-                    "https://uor.foundation/cascade/exitCondition",
-                    IndividualValue::Str("convergence achieved"),
                 ),
             ],
         },
@@ -1637,10 +1572,6 @@ fn individuals() -> Vec<Individual> {
             label: "FullSaturationSuccess",
             comment: "Successful termination: all fibers saturated.",
             properties: &[
-                (
-                    "https://uor.foundation/cascade/successOutcome",
-                    IndividualValue::Str("FullSaturation"),
-                ),
                 (
                     "https://uor.foundation/cascade/saturationReached",
                     IndividualValue::Bool(true),

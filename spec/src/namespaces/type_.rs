@@ -387,6 +387,37 @@ fn classes() -> Vec<Class> {
             subclass_of: &[OWL_THING],
             disjoint_with: &[],
         },
+        // Amendment 77: Subtyping and Variance classes
+        Class {
+            id: "https://uor.foundation/type/TypeInclusion",
+            label: "TypeInclusion",
+            comment: "A morphism T\u{2081} \u{2192} T\u{2082} witnessing \
+                      that T\u{2081} is a subtype of T\u{2082}: the \
+                      constraint set of T\u{2081} is a superset of the \
+                      constraint set of T\u{2082}.",
+            // Full IRI string: type/ cannot import morphism/
+            subclass_of: &["https://uor.foundation/morphism/Transform"],
+            disjoint_with: &[],
+        },
+        Class {
+            id: "https://uor.foundation/type/VarianceAnnotation",
+            label: "VarianceAnnotation",
+            comment: "The variance of a structural type position under \
+                      operad composition. One of Covariant, Contravariant, \
+                      Invariant, or Bivariant.",
+            subclass_of: &[OWL_THING],
+            disjoint_with: &[],
+        },
+        Class {
+            id: "https://uor.foundation/type/SubtypingLattice",
+            label: "SubtypingLattice",
+            comment: "The partial order on types induced by TypeInclusion. \
+                      The top element is PrimitiveType (no constraints); \
+                      the bottom elements are CompleteTypes (all fibers \
+                      pinned).",
+            subclass_of: &[OWL_THING],
+            disjoint_with: &[],
+        },
     ]
 }
 
@@ -1174,6 +1205,56 @@ fn properties() -> Vec<Property> {
             domain: None,
             range: XSD_STRING,
         },
+        // Amendment 77: Subtyping and Variance properties
+        Property {
+            id: "https://uor.foundation/type/inclusionSource",
+            label: "inclusionSource",
+            comment: "The subtype (more constraints).",
+            kind: PropertyKind::Object,
+            functional: true,
+            domain: Some("https://uor.foundation/type/TypeInclusion"),
+            range: "https://uor.foundation/type/ConstrainedType",
+        },
+        Property {
+            id: "https://uor.foundation/type/inclusionTarget",
+            label: "inclusionTarget",
+            comment: "The supertype (fewer constraints).",
+            kind: PropertyKind::Object,
+            functional: true,
+            domain: Some("https://uor.foundation/type/TypeInclusion"),
+            range: "https://uor.foundation/type/ConstrainedType",
+        },
+        Property {
+            id: "https://uor.foundation/type/positionVariance",
+            label: "positionVariance",
+            comment: "The variance of each operand position.",
+            kind: PropertyKind::Object,
+            functional: true,
+            // Cross-namespace domain: operad:StructuralOperad
+            domain: Some("https://uor.foundation/operad/StructuralOperad"),
+            range: "https://uor.foundation/type/VarianceAnnotation",
+        },
+        Property {
+            id: "https://uor.foundation/type/inclusionWitness",
+            label: "inclusionWitness",
+            comment: "True iff constraints(source) \u{2287} constraints(target). \
+                      Computed, not asserted.",
+            kind: PropertyKind::Datatype,
+            functional: true,
+            domain: Some("https://uor.foundation/type/TypeInclusion"),
+            range: XSD_BOOLEAN,
+        },
+        Property {
+            id: "https://uor.foundation/type/latticeDepth",
+            label: "latticeDepth",
+            comment: "Maximum chain length from PrimitiveType (top) to any \
+                      CompleteType (bottom). Equals the fiber budget n at \
+                      quantum level Q_k.",
+            kind: PropertyKind::Datatype,
+            functional: true,
+            domain: Some("https://uor.foundation/type/SubtypingLattice"),
+            range: XSD_NON_NEGATIVE_INTEGER,
+        },
     ]
 }
 
@@ -1358,6 +1439,55 @@ fn individuals() -> Vec<Individual> {
                     IndividualValue::Str("shared schema: all rows conform to tuple type S"),
                 ),
             ],
+        },
+        // Amendment 77: VarianceAnnotation individuals
+        Individual {
+            id: "https://uor.foundation/type/Covariant",
+            type_: "https://uor.foundation/type/VarianceAnnotation",
+            label: "Covariant",
+            comment: "The structural position preserves TypeInclusion: \
+                      if T\u{2081} \u{2264} T\u{2082}, then \
+                      F(T\u{2081}) \u{2264} F(T\u{2082}).",
+            properties: &[(
+                "https://uor.foundation/op/enumVariant",
+                IndividualValue::Str("Covariant"),
+            )],
+        },
+        Individual {
+            id: "https://uor.foundation/type/Contravariant",
+            type_: "https://uor.foundation/type/VarianceAnnotation",
+            label: "Contravariant",
+            comment: "The structural position reverses TypeInclusion: \
+                      if T\u{2081} \u{2264} T\u{2082}, then \
+                      F(T\u{2082}) \u{2264} F(T\u{2081}).",
+            properties: &[(
+                "https://uor.foundation/op/enumVariant",
+                IndividualValue::Str("Contravariant"),
+            )],
+        },
+        Individual {
+            id: "https://uor.foundation/type/Invariant",
+            type_: "https://uor.foundation/type/VarianceAnnotation",
+            label: "Invariant",
+            comment: "The structural position requires exact type equality: \
+                      F(T\u{2081}) \u{2264} F(T\u{2082}) only if \
+                      T\u{2081} = T\u{2082}.",
+            properties: &[(
+                "https://uor.foundation/op/enumVariant",
+                IndividualValue::Str("Invariant"),
+            )],
+        },
+        Individual {
+            id: "https://uor.foundation/type/Bivariant",
+            type_: "https://uor.foundation/type/VarianceAnnotation",
+            label: "Bivariant",
+            comment: "The structural position ignores the type parameter: \
+                      F(T\u{2081}) \u{2264} F(T\u{2082}) for all \
+                      T\u{2081}, T\u{2082}.",
+            properties: &[(
+                "https://uor.foundation/op/enumVariant",
+                IndividualValue::Str("Bivariant"),
+            )],
         },
     ]
 }
