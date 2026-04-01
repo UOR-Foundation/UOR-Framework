@@ -142,7 +142,7 @@ pub fn namespace_breadcrumbs(label: &str, base_path: &str) -> Vec<BreadcrumbItem
             url: format!("{}/", base_path),
         },
         BreadcrumbItem {
-            label: "Namespaces".to_string(),
+            label: "Reference".to_string(),
             url: format!("{}/namespaces/", base_path),
         },
         BreadcrumbItem {
@@ -168,7 +168,7 @@ pub fn namespaces_index_breadcrumbs(base_path: &str) -> Vec<BreadcrumbItem> {
             url: format!("{}/", base_path),
         },
         BreadcrumbItem {
-            label: "Namespaces".to_string(),
+            label: "Reference".to_string(),
             url: String::new(),
         },
     ]
@@ -188,12 +188,52 @@ pub fn simple_breadcrumbs(label: &str, base_path: &str) -> Vec<BreadcrumbItem> {
     ]
 }
 
+/// Builds breadcrumbs for pages in the Learn section.
+pub fn learn_breadcrumbs(label: &str, base_path: &str) -> Vec<BreadcrumbItem> {
+    vec![
+        BreadcrumbItem {
+            label: "Home".to_string(),
+            url: format!("{}/", base_path),
+        },
+        BreadcrumbItem {
+            label: "Learn".to_string(),
+            url: format!("{}/learn/", base_path),
+        },
+        BreadcrumbItem {
+            label: label.to_string(),
+            url: String::new(),
+        },
+    ]
+}
+
+/// Builds breadcrumbs for pages in the Reference section.
+pub fn reference_breadcrumbs(label: &str, base_path: &str) -> Vec<BreadcrumbItem> {
+    vec![
+        BreadcrumbItem {
+            label: "Home".to_string(),
+            url: format!("{}/", base_path),
+        },
+        BreadcrumbItem {
+            label: "Reference".to_string(),
+            url: format!("{}/namespaces/", base_path),
+        },
+        BreadcrumbItem {
+            label: label.to_string(),
+            url: String::new(),
+        },
+    ]
+}
+
 /// Builds breadcrumbs for a concept detail page.
 pub fn concept_breadcrumbs(title: &str, base_path: &str) -> Vec<BreadcrumbItem> {
     vec![
         BreadcrumbItem {
             label: "Home".to_string(),
             url: format!("{}/", base_path),
+        },
+        BreadcrumbItem {
+            label: "Learn".to_string(),
+            url: format!("{}/learn/", base_path),
         },
         BreadcrumbItem {
             label: "Concepts".to_string(),

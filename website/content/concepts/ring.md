@@ -62,7 +62,7 @@ the {@ns proof} namespace. See {@concept proof-system} for the certification pat
 
 ## Connection to the PRISM Pipeline
 
-The ring substrate flows through all three {@concept prism} stages:
+The ring substrate flows through all three [PRISM](../pipeline/) stages:
 
 - **Define (Kernel)**: The {@ns schema} namespace defines the ring itself and its quantum levels.
   The {@ns op} namespace defines operations over ring elements.

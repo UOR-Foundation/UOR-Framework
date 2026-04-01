@@ -82,7 +82,7 @@ certifies that the collapse event followed Born rule probabilities.
 ## Partition Decomposition and the PRISM Pipeline
 
 The partition structure mediates between the Kernel (Define stage) and the User types
-(Resolve stage) of the {@concept prism} pipeline:
+(Resolve stage) of the [PRISM](../pipeline/) pipeline:
 
 - **Kernel** defines the address space and {@concept ring} arithmetic
 - **{@concept partition}** (Bridge) decomposes the address space into fibers

@@ -27,6 +27,7 @@
 //!   identities/index.html
 //!   download/index.html
 //!   citation/index.html
+//!   learn/index.html
 //!   concepts/index.html
 //!   concepts/<slug>.html   (one per content/concepts/*.md file)
 //!   namespaces/
@@ -65,15 +66,15 @@ use anyhow::Result;
 use uor_ontology::Ontology;
 
 use extractor::{
-    concept_breadcrumbs, home_breadcrumbs, namespace_breadcrumbs, namespace_summaries,
-    namespaces_index_breadcrumbs, simple_breadcrumbs,
+    concept_breadcrumbs, home_breadcrumbs, learn_breadcrumbs, namespace_breadcrumbs,
+    namespace_summaries, namespaces_index_breadcrumbs, reference_breadcrumbs, simple_breadcrumbs,
 };
 use nav::{build_nav, render_nav};
 use renderer::{
     render_about_page, render_citation_page, render_concept_page_body, render_concepts_index,
     render_download_page, render_explore, render_homepage, render_identities_page,
-    render_namespace_page, render_namespaces_index, render_page, render_pipeline_page,
-    render_search_page, render_sitemap,
+    render_learn_landing, render_namespace_page, render_namespaces_index, render_page,
+    render_pipeline_page, render_search_page, render_sitemap,
 };
 
 const BASE_URL: &str = "https://uor.foundation";
@@ -93,6 +94,13 @@ pub fn generate(out_dir: &Path) -> Result<()> {
     let nav = build_nav(base_path);
     let summaries = namespace_summaries(base_path);
     let ontology = Ontology::full();
+
+    // Content directory (shared by about page, concept pages, and pipeline narrative)
+    let content_dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("content");
+
+    // Discover concept pages early (needed by about page, concept rendering, and
+    // pipeline narrative directive expansion)
+    let concept_list = concepts::concept_page_list(&content_dir, base_path)?;
 
     // Track all pages for sitemap
     let mut sitemap_paths: Vec<String> = Vec::new();
@@ -126,7 +134,7 @@ pub fn generate(out_dir: &Path) -> Result<()> {
 
     // Namespaces index page
     let ns_index_nav = render_nav(&nav, &format!("{}/namespaces/", base_path));
-    let ns_index_body = render_namespaces_index(&summaries);
+    let ns_index_body = render_namespaces_index(&summaries, base_path);
     let ns_index_html = render_page(
         "Namespaces",
         &ns_index_body,
@@ -160,14 +168,30 @@ pub fn generate(out_dir: &Path) -> Result<()> {
         sitemap_paths.push(page_path);
     }
 
-    // Pipeline page
-    let pipeline_body = render_pipeline_page(&summaries, base_path);
+    // Pipeline page — includes merged PRISM concept narrative from prism.md
+    let prism_narrative = {
+        let prism_path = content_dir.join("concepts").join("prism.md");
+        if prism_path.exists() {
+            let raw = std::fs::read_to_string(&prism_path).unwrap_or_default();
+            // Strip the `# Title` heading (the pipeline page has its own h1)
+            let body = raw
+                .lines()
+                .skip_while(|l| l.starts_with('#') || l.trim().is_empty())
+                .collect::<Vec<_>>()
+                .join("\n");
+            let expanded = concepts::expand_directives(&body, ontology, &concept_list, base_path);
+            concepts::markdown_to_html(&expanded)
+        } else {
+            String::new()
+        }
+    };
+    let pipeline_body = render_pipeline_page(&summaries, base_path, &prism_narrative);
     let pipeline_nav = render_nav(&nav, &format!("{}/pipeline/", base_path));
     let pipeline_html = render_page(
         "Pipeline",
         &pipeline_body,
         &pipeline_nav,
-        &simple_breadcrumbs("Pipeline", base_path),
+        &learn_breadcrumbs("Pipeline", base_path),
         base_path,
     );
     writer::write(&out_dir.join("pipeline").join("index.html"), &pipeline_html)?;
@@ -180,7 +204,7 @@ pub fn generate(out_dir: &Path) -> Result<()> {
         "Explore",
         &explore_body,
         &explore_nav,
-        &simple_breadcrumbs("Explore", base_path),
+        &reference_breadcrumbs("Explore", base_path),
         base_path,
     );
     writer::write(&out_dir.join("explore").join("index.html"), &explore_html)?;
@@ -193,7 +217,7 @@ pub fn generate(out_dir: &Path) -> Result<()> {
         "Identities",
         &identities_body,
         &identities_nav,
-        &simple_breadcrumbs("Identities", base_path),
+        &reference_breadcrumbs("Identities", base_path),
         base_path,
     );
     writer::write(
@@ -228,12 +252,6 @@ pub fn generate(out_dir: &Path) -> Result<()> {
     writer::write(&out_dir.join("citation").join("index.html"), &citation_html)?;
     sitemap_paths.push("/citation/".to_string());
 
-    // Content directory (shared by about page and concept pages)
-    let content_dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("content");
-
-    // Discover concept pages early (needed by about page and concept rendering)
-    let concept_list = concepts::concept_page_list(&content_dir, base_path)?;
-
     // About page
     let about_body = render_about_page(&content_dir, ontology, &concept_list, base_path)?;
     let about_nav = render_nav(&nav, &format!("{}/about/", base_path));
@@ -247,6 +265,19 @@ pub fn generate(out_dir: &Path) -> Result<()> {
     writer::write(&out_dir.join("about").join("index.html"), &about_html)?;
     sitemap_paths.push("/about/".to_string());
 
+    // Learn landing page
+    let learn_body = render_learn_landing(&concept_list, &summaries, base_path);
+    let learn_nav = render_nav(&nav, &format!("{}/learn/", base_path));
+    let learn_html = render_page(
+        "Learn",
+        &learn_body,
+        &learn_nav,
+        &simple_breadcrumbs("Learn", base_path),
+        base_path,
+    );
+    writer::write(&out_dir.join("learn").join("index.html"), &learn_html)?;
+    sitemap_paths.push("/learn/".to_string());
+
     // Concepts index
     let concepts_body = render_concepts_index(&concept_list, base_path);
     let concepts_nav = render_nav(&nav, &format!("{}/concepts/", base_path));
@@ -254,7 +285,7 @@ pub fn generate(out_dir: &Path) -> Result<()> {
         "Concepts",
         &concepts_body,
         &concepts_nav,
-        &simple_breadcrumbs("Concepts", base_path),
+        &learn_breadcrumbs("Concepts", base_path),
         base_path,
     );
     writer::write(&out_dir.join("concepts").join("index.html"), &concepts_html)?;

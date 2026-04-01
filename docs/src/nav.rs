@@ -32,6 +32,9 @@ pub struct NavItem {
 }
 
 /// Builds the primary site navigation tree.
+///
+/// Five top-level groups (Learn, Reference, Resources) consolidate the former
+/// 11 flat items. All existing URLs are preserved — only the grouping changes.
 pub fn build_nav(base_path: &str) -> Vec<NavItem> {
     let ontology = Ontology::full();
 
@@ -55,49 +58,10 @@ pub fn build_nav(base_path: &str) -> Vec<NavItem> {
             url: format!("{base_path}/"),
             children: Vec::new(),
         },
+        // Learn: narrative/conceptual content
         NavItem {
-            label: "Explore".to_string(),
-            url: format!("{base_path}/explore/"),
-            children: Vec::new(),
-        },
-        NavItem {
-            label: "Pipeline".to_string(),
-            url: format!("{base_path}/pipeline/"),
-            children: pipeline_children,
-        },
-        NavItem {
-            label: "Namespaces".to_string(),
-            url: format!("{base_path}/namespaces/"),
-            children: namespace_children,
-        },
-        NavItem {
-            label: "Identities".to_string(),
-            url: format!("{base_path}/identities/"),
-            children: Vec::new(),
-        },
-        NavItem {
-            label: "Concepts".to_string(),
-            url: format!("{base_path}/concepts/"),
-            children: Vec::new(),
-        },
-        NavItem {
-            label: "Download".to_string(),
-            url: format!("{base_path}/download/"),
-            children: Vec::new(),
-        },
-        NavItem {
-            label: "Citation".to_string(),
-            url: format!("{base_path}/citation/"),
-            children: Vec::new(),
-        },
-        NavItem {
-            label: "About".to_string(),
-            url: format!("{base_path}/about/"),
-            children: Vec::new(),
-        },
-        NavItem {
-            label: "Documentation".to_string(),
-            url: format!("{base_path}/docs/"),
+            label: "Learn".to_string(),
+            url: format!("{base_path}/learn/"),
             children: vec![
                 NavItem {
                     label: "Overview".to_string(),
@@ -109,7 +73,61 @@ pub fn build_nav(base_path: &str) -> Vec<NavItem> {
                     url: format!("{base_path}/docs/architecture.html"),
                     children: Vec::new(),
                 },
+                NavItem {
+                    label: "Pipeline".to_string(),
+                    url: format!("{base_path}/pipeline/"),
+                    children: pipeline_children,
+                },
+                NavItem {
+                    label: "Concepts".to_string(),
+                    url: format!("{base_path}/concepts/"),
+                    children: Vec::new(),
+                },
             ],
+        },
+        // Reference: auto-generated ontology reference material
+        NavItem {
+            label: "Reference".to_string(),
+            url: String::new(), // group heading
+            children: vec![
+                NavItem {
+                    label: "Namespaces".to_string(),
+                    url: format!("{base_path}/namespaces/"),
+                    children: namespace_children,
+                },
+                NavItem {
+                    label: "Identities".to_string(),
+                    url: format!("{base_path}/identities/"),
+                    children: Vec::new(),
+                },
+                NavItem {
+                    label: "Explore".to_string(),
+                    url: format!("{base_path}/explore/"),
+                    children: Vec::new(),
+                },
+            ],
+        },
+        // Resources: downloads, citation, tooling
+        NavItem {
+            label: "Resources".to_string(),
+            url: String::new(), // group heading
+            children: vec![
+                NavItem {
+                    label: "Download".to_string(),
+                    url: format!("{base_path}/download/"),
+                    children: Vec::new(),
+                },
+                NavItem {
+                    label: "Citation".to_string(),
+                    url: format!("{base_path}/citation/"),
+                    children: Vec::new(),
+                },
+            ],
+        },
+        NavItem {
+            label: "About".to_string(),
+            url: format!("{base_path}/about/"),
+            children: Vec::new(),
         },
         NavItem {
             label: "Search".to_string(),
@@ -200,12 +218,21 @@ fn render_nav_item(
             label = escape_html(&item.label)
         ));
     } else {
-        html.push_str(&format!(
-            "{indent}<li{class}><a href=\"{url}\">{label}</a>\n\
-             {indent}<ul>\n",
-            url = escape_html(&item.url),
-            label = escape_html(&item.label),
-        ));
+        // Items with children: render as a link if url is non-empty, otherwise
+        // as a non-clickable group heading (e.g. Reference, Resources).
+        let tag = if item.url.is_empty() {
+            format!(
+                "<span class=\"nav-group-label\">{}</span>",
+                escape_html(&item.label)
+            )
+        } else {
+            format!(
+                "<a href=\"{}\">{}</a>",
+                escape_html(&item.url),
+                escape_html(&item.label)
+            )
+        };
+        html.push_str(&format!("{indent}<li{class}>{tag}\n{indent}<ul>\n",));
         for child in &item.children {
             render_nav_item(html, child, current_path, root_url, depth + 1);
         }

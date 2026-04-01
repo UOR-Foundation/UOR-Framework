@@ -1,6 +1,6 @@
 # Resolution & Queries
 
-Resolution is the core operation of the {@concept prism} pipeline's Resolve stage.
+Resolution is the core operation of the [PRISM](../pipeline/) pipeline's Resolve stage.
 A {@class https://uor.foundation/query/Query} specifies what to resolve; a
 {@class https://uor.foundation/resolver/Resolver} computes the answer by factorizing
 the input under the dihedral group D_{2^n}.

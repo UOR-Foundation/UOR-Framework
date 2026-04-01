@@ -692,3 +692,120 @@ pub fn space_display_name(space: &Space) -> &'static str {
         Space::User => "User",
     }
 }
+
+// ── Concept map ─────────────────────────────────────────────────────────────
+
+/// Renders a concept relationship graph as an SVG.
+///
+/// Nodes are grouped by space classification into rows (kernel top, bridge
+/// middle, user bottom). Edges connect related concepts with gray lines.
+pub fn render_concept_map_svg(concepts: &[crate::model::ConceptPage], base_path: &str) -> String {
+    use crate::concepts::CONCEPT_RELATIONS;
+
+    if concepts.is_empty() {
+        return String::new();
+    }
+
+    let node_w: f64 = 140.0;
+    let node_h: f64 = 32.0;
+    let h_gap: f64 = 30.0;
+    let v_gap: f64 = 70.0;
+    let margin: f64 = 30.0;
+
+    // Group concepts by space
+    let kernel: Vec<&crate::model::ConceptPage> =
+        concepts.iter().filter(|c| c.space == "kernel").collect();
+    let bridge: Vec<&crate::model::ConceptPage> =
+        concepts.iter().filter(|c| c.space == "bridge").collect();
+    let user: Vec<&crate::model::ConceptPage> = concepts
+        .iter()
+        .filter(|c| c.space != "kernel" && c.space != "bridge")
+        .collect();
+
+    let rows: Vec<&Vec<&crate::model::ConceptPage>> = vec![&kernel, &bridge, &user];
+
+    let max_row = rows.iter().map(|r| r.len()).max().unwrap_or(1);
+    let svg_w = margin * 2.0 + (max_row as f64) * node_w + ((max_row as f64) - 1.0) * h_gap;
+    let svg_h = margin * 2.0 + 3.0 * node_h + 2.0 * v_gap;
+
+    // Compute node positions: (slug -> (cx, cy))
+    let mut positions: HashMap<String, (f64, f64)> = HashMap::new();
+    for (row_idx, row) in rows.iter().enumerate() {
+        let row_width = (row.len() as f64) * node_w + ((row.len() as f64) - 1.0) * h_gap;
+        let start_x = (svg_w - row_width) / 2.0;
+        let y = margin + (row_idx as f64) * (node_h + v_gap);
+        for (col, concept) in row.iter().enumerate() {
+            let x = start_x + (col as f64) * (node_w + h_gap);
+            positions.insert(concept.slug.clone(), (x + node_w / 2.0, y + node_h / 2.0));
+        }
+    }
+
+    // Draw edges
+    let mut edges = String::new();
+    for (slug, _, related_slugs) in CONCEPT_RELATIONS {
+        if let Some(&(x1, y1)) = positions.get(*slug) {
+            for rel in *related_slugs {
+                if let Some(&(x2, y2)) = positions.get(*rel) {
+                    // Only draw each edge once (alphabetically first slug draws it)
+                    if *slug < *rel {
+                        edges.push_str(&format!(
+                            "<line x1=\"{x1:.0}\" y1=\"{y1:.0}\" \
+                             x2=\"{x2:.0}\" y2=\"{y2:.0}\" \
+                             stroke=\"#94a3b8\" stroke-width=\"1\" opacity=\"0.6\"/>\n"
+                        ));
+                    }
+                }
+            }
+        }
+    }
+
+    // Draw nodes
+    let mut nodes = String::new();
+    let space_colors: &[(&str, &str, &str)] = &[
+        ("kernel", "#7c3aed", "#ede9fe"),
+        ("bridge", "#059669", "#d1fae5"),
+        ("user", "#0891b2", "#cffafe"),
+    ];
+    for concept in concepts {
+        if let Some(&(cx, cy)) = positions.get(&concept.slug) {
+            let (fill, _text_bg) = space_colors
+                .iter()
+                .find(|(s, _, _)| *s == concept.space)
+                .map(|(_, f, t)| (*f, *t))
+                .unwrap_or(("#7c3aed", "#ede9fe"));
+
+            let x = cx - node_w / 2.0;
+            let y = cy - node_h / 2.0;
+            let label = crate::renderer::escape_html(&concept.title);
+            // Truncate long titles for the SVG node
+            let short_label = if label.len() > 20 {
+                format!("{}\u{2026}", &label[..19])
+            } else {
+                label.clone()
+            };
+
+            nodes.push_str(&format!(
+                "<a href=\"{base_path}/concepts/{slug}.html\">\
+                 <rect x=\"{x:.0}\" y=\"{y:.0}\" width=\"{node_w:.0}\" height=\"{node_h:.0}\" \
+                 rx=\"4\" fill=\"{fill}\" opacity=\"0.9\"/>\
+                 <text x=\"{cx:.0}\" y=\"{ty:.0}\" text-anchor=\"middle\" \
+                 fill=\"#fff\" font-size=\"11\" font-family=\"system-ui, sans-serif\">\
+                 {short_label}</text></a>\n",
+                slug = concept.slug,
+                ty = cy + 4.0,
+            ));
+        }
+    }
+
+    format!(
+        "<svg xmlns=\"http://www.w3.org/2000/svg\" role=\"img\" \
+         aria-labelledby=\"concept-map-title\" \
+         viewBox=\"0 0 {w:.0} {h:.0}\" width=\"{w:.0}\" height=\"{h:.0}\">\n\
+         <title id=\"concept-map-title\">Concept relationship map</title>\n\
+         {edges}\
+         {nodes}\
+         </svg>",
+        w = svg_w,
+        h = svg_h,
+    )
+}

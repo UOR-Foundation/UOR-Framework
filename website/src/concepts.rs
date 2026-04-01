@@ -24,17 +24,12 @@ pub const CONCEPT_RELATIONS: &[(&str, &[&str], &[&str])] = &[
     (
         "ring",
         &["schema", "op"],
-        &["quantum-levels", "content-addressing", "prism"],
+        &["quantum-levels", "content-addressing", "partition"],
     ),
     (
         "quantum-levels",
         &["schema", "op"],
         &["ring", "proof-system", "observables"],
-    ),
-    (
-        "prism",
-        &["u", "schema", "op", "cert"],
-        &["ring", "resolution", "proof-system"],
     ),
     (
         "fiber",
@@ -54,7 +49,7 @@ pub const CONCEPT_RELATIONS: &[(&str, &[&str], &[&str])] = &[
     (
         "resolution",
         &["resolver", "query", "state"],
-        &["prism", "partition", "observables"],
+        &["proof-system", "partition", "observables"],
     ),
     (
         "observables",
@@ -69,7 +64,18 @@ pub const CONCEPT_RELATIONS: &[(&str, &[&str], &[&str])] = &[
     (
         "proof-system",
         &["proof", "derivation", "trace"],
-        &["prism", "quantum-levels", "resolution"],
+        &["ring", "quantum-levels", "resolution"],
+    ),
+    (
+        "certification",
+        &["cert", "proof", "derivation"],
+        &["proof-system", "resolution"],
+    ),
+    ("morphisms", &["morphism", "type"], &["fiber", "partition"]),
+    (
+        "state-management",
+        &["state", "resolver"],
+        &["resolution", "certification"],
     ),
 ];
 
@@ -110,6 +116,14 @@ pub fn concept_page_list(content_dir: &Path, base_path: &str) -> Result<Vec<Conc
         .with_context(|| format!("Failed to read {}", concepts_dir.display()))?
         .filter_map(|e| e.ok())
         .filter(|e| e.path().extension().map(|x| x == "md").unwrap_or(false))
+        // prism.md is merged into the pipeline page — skip it as a standalone concept
+        .filter(|e| {
+            e.path()
+                .file_stem()
+                .and_then(|s| s.to_str())
+                .map(|s| s != "prism")
+                .unwrap_or(true)
+        })
         .collect();
 
     entries.sort_by_key(|e| e.file_name());
@@ -435,10 +449,10 @@ fn first_paragraph(md: &str) -> Option<String> {
 /// This is editorial metadata for color-coding cards — not a strict ontology rule.
 fn infer_space(slug: &str) -> String {
     match slug {
-        "ring" | "quantum-levels" | "prism" | "content-addressing" => "kernel".to_string(),
-        "fiber" | "partition" | "resolution" | "observables" | "homology" | "proof-system" => {
-            "bridge".to_string()
-        }
+        "ring" | "quantum-levels" | "content-addressing" => "kernel".to_string(),
+        "fiber" | "partition" | "resolution" | "observables" | "homology" | "proof-system"
+        | "certification" => "bridge".to_string(),
+        "morphisms" | "state-management" => "user".to_string(),
         _ => "kernel".to_string(),
     }
 }

@@ -31,6 +31,7 @@ pub fn render_page(
 <a href="#main-content" class="skip-link">Skip to main content</a>
 <header class="site-header">
 <a href="{home_url}" class="site-logo">UOR Foundation</a>
+<button class="hamburger-toggle" aria-label="Toggle navigation" aria-expanded="false">&#9776;</button>
 <nav aria-label="Site navigation" class="site-nav">
 {nav_html}
 </nav>
@@ -82,6 +83,10 @@ pub fn render_breadcrumbs(crumbs: &[BreadcrumbItem]) -> String {
 }
 
 /// Renders the homepage body with namespace grid.
+/// Featured namespace prefixes for the homepage (representative sample).
+const FEATURED_PREFIXES: &[&str] = &["u", "schema", "op", "partition", "proof", "cert"];
+
+/// Renders the homepage body with hero, inventory, pipeline steps, and featured namespaces.
 pub fn render_homepage(summaries: &[NamespaceSummary], base_path: &str) -> String {
     let total_ns = summaries.len();
     let total_classes: usize = summaries.iter().map(|s| s.class_count).sum();
@@ -89,7 +94,10 @@ pub fn render_homepage(summaries: &[NamespaceSummary], base_path: &str) -> Strin
     let total_inds: usize = summaries.iter().map(|s| s.individual_count).sum();
 
     let mut grid = String::new();
-    for ns in summaries {
+    for ns in summaries
+        .iter()
+        .filter(|ns| FEATURED_PREFIXES.contains(&ns.prefix.as_str()))
+    {
         grid.push_str(&format!(
             r#"<article class="ns-card ns-space-{space}">
 <h3><a href="{url}">{label}</a></h3>
@@ -113,7 +121,7 @@ pub fn render_homepage(summaries: &[NamespaceSummary], base_path: &str) -> Strin
         ));
     }
 
-    let docs_url = format!("{}/docs/overview.html", base_path);
+    let learn_url = format!("{}/learn/", base_path);
     let ns_url = format!("{}/namespaces/", base_path);
     let search_url = format!("{}/search.html", base_path);
     let concepts_url = format!("{}/concepts", base_path);
@@ -127,7 +135,7 @@ pub fn render_homepage(summaries: &[NamespaceSummary], base_path: &str) -> Strin
 <h1>UOR Foundation</h1>
 <p class="tagline">Universal Object Reference — a formal ontology for content-addressed, algebraically-structured object spaces.</p>
 <p>
-<a href="{docs_url}" class="btn-primary">Get Started</a>
+<a href="{learn_url}" class="btn-primary">Start Learning</a>
 <a href="{ns_url}" class="btn-secondary">Browse Namespaces</a>
 <a href="{search_url}" class="btn-secondary">Search</a>
 </p>
@@ -179,8 +187,7 @@ pub fn render_homepage(summaries: &[NamespaceSummary], base_path: &str) -> Strin
 <h3>See the Pipeline</h3>
 <p>Understand how the Define \u{{2192}} Resolve \u{{2192}} Certify pipeline works end to end.</p>
 <ol class="pathway-steps">
-<li><a href="{concepts_url}/prism.html">The PRISM Pipeline</a></li>
-<li><a href="{pipeline_url}">Pipeline Stages</a></li>
+<li><a href="{pipeline_url}">The PRISM Pipeline</a></li>
 <li><a href="{explore_url}">Explore Dependencies</a></li>
 </ol>
 </article>
@@ -197,12 +204,13 @@ pub fn render_homepage(summaries: &[NamespaceSummary], base_path: &str) -> Strin
 </section>
 
 <section class="namespace-grid">
-<h2>Namespaces</h2>
+<h2>Featured Namespaces</h2>
 <div class="grid">
 {grid}
 </div>
+<p><a href="{ns_url}">View all {total_ns} namespaces &rarr;</a></p>
 </section>"#,
-        docs_url = escape_html(&docs_url),
+        learn_url = escape_html(&learn_url),
         ns_url = escape_html(&ns_url),
         search_url = escape_html(&search_url),
         concepts_url = escape_html(&concepts_url),
@@ -218,8 +226,15 @@ pub fn render_homepage(summaries: &[NamespaceSummary], base_path: &str) -> Strin
     )
 }
 
-/// Renders the namespaces index page listing all namespaces.
-pub fn render_namespaces_index(summaries: &[NamespaceSummary]) -> String {
+/// Renders the namespaces index page (Reference section landing).
+pub fn render_namespaces_index(summaries: &[NamespaceSummary], base_path: &str) -> String {
+    let kernel_count = summaries.iter().filter(|s| s.space == "kernel").count();
+    let bridge_count = summaries.iter().filter(|s| s.space == "bridge").count();
+    let user_count = summaries.iter().filter(|s| s.space == "user").count();
+    let identity_count = uor_ontology::counts::IDENTITY_COUNT;
+    let identities_url = format!("{base_path}/identities/");
+    let explore_url = format!("{base_path}/explore/");
+
     let mut rows = String::new();
     for ns in summaries {
         rows.push_str(&format!(
@@ -243,8 +258,24 @@ pub fn render_namespaces_index(summaries: &[NamespaceSummary]) -> String {
     }
 
     format!(
-        r#"<h1>Namespaces</h1>
-<p>The UOR Foundation ontology is organized into {ns_count} namespaces spanning three space classifications: kernel, bridge, and user.</p>
+        r#"<h1>Ontology Reference</h1>
+<p class="reference-summary">{ns_count} namespaces in 3 spaces:
+<span class="badge badge-kernel">Kernel ({kernel_count})</span>
+<span class="badge badge-bridge">Bridge ({bridge_count})</span>
+<span class="badge badge-user">User ({user_count})</span></p>
+
+<div class="reference-quick-links">
+<a href="{identities_url}" class="quick-link-card">
+<h3>Algebraic Identities</h3>
+<p>Browse {identity_count} verified identities across all verification domains.</p>
+</a>
+<a href="{explore_url}" class="quick-link-card">
+<h3>Dependency Explorer</h3>
+<p>Interactive graph of namespace import relationships.</p>
+</a>
+</div>
+
+<h2>All Namespaces</h2>
 <table>
 <thead>
 <tr><th>Prefix</th><th>Label</th><th>Classes</th><th>Properties</th><th>Individuals</th><th>Space</th></tr>
@@ -599,13 +630,31 @@ pub fn render_citation_page() -> String {
 }
 
 /// Renders the pipeline page body with stage sections and inline SVG.
-pub fn render_pipeline_page(summaries: &[NamespaceSummary], base_path: &str) -> String {
+/// Renders the pipeline page body.
+///
+/// If `narrative_html` is non-empty, it is injected between the heading and the
+/// pipeline SVG diagram to provide narrative context from the merged PRISM concept.
+pub fn render_pipeline_page(
+    summaries: &[NamespaceSummary],
+    base_path: &str,
+    narrative_html: &str,
+) -> String {
     use crate::pipeline::PRISM_STAGES;
 
     let pipeline_svg = crate::svg::render_prism_pipeline_svg(summaries);
 
+    let narrative_block = if narrative_html.is_empty() {
+        String::new()
+    } else {
+        format!(
+            "<section class=\"pipeline-narrative\">\n{}\n</section>\n",
+            narrative_html
+        )
+    };
+
     let mut body = format!(
         "<h1>The PRISM Pipeline</h1>\n\
+         {narrative_block}\
          <p>The UOR Foundation resolution pipeline transforms a content-addressed reference \
          through three stages: <strong>Define</strong> (kernel-space declarations), \
          <strong>Resolve</strong> (bridge-space factorization), and \
@@ -828,7 +877,7 @@ pub fn render_explore(
     let dep_svg = crate::svg::render_namespace_dependency_graph_svg(ontology, base_path);
     let explore_data = crate::extractor::generate_explore_data(summaries);
 
-    let prism_url = format!("{base_path}/concepts/prism.html");
+    let pipeline_url = format!("{base_path}/pipeline/");
     let ns_list_url = format!("{base_path}/namespaces/");
 
     let mut body = format!(
@@ -842,7 +891,7 @@ pub fn render_explore(
          namespace below for a summary, or visit its \
          <a href=\"{ns_list_url}\">full reference page</a>. \
          For a conceptual overview, start with \
-         <a href=\"{prism_url}\">The PRISM Pipeline</a>.</p>\n\
+         <a href=\"{pipeline_url}\">The PRISM Pipeline</a>.</p>\n\
          <figure class=\"diagram-container\" aria-label=\"Namespace dependency graph\">\n\
          <figcaption>Namespace import dependencies (assembly order, left to right)</figcaption>\n\
          {dep_svg}\n\
@@ -898,6 +947,135 @@ pub fn render_explore(
 }
 
 /// Suggested reading order: `(slug, title, space)`.
+/// Renders the Learn landing page.
+///
+/// Provides an orientation page for first-time visitors with persona-aware
+/// reading paths, a concept overview, and links to the pipeline and reference.
+pub fn render_learn_landing(
+    concepts: &[ConceptPage],
+    summaries: &[NamespaceSummary],
+    base_path: &str,
+) -> String {
+    let pipeline_svg = crate::svg::render_prism_pipeline_svg(summaries);
+    let concepts_url = format!("{base_path}/concepts");
+    let pipeline_url = format!("{base_path}/pipeline/");
+    let ns_url = format!("{base_path}/namespaces/");
+    let identities_url = format!("{base_path}/identities/");
+    let explore_url = format!("{base_path}/explore/");
+    let overview_url = format!("{base_path}/docs/overview.html");
+    let arch_url = format!("{base_path}/docs/architecture.html");
+    let download_url = format!("{base_path}/download/");
+
+    let mut concept_cards = String::new();
+    for c in concepts {
+        concept_cards.push_str(&format!(
+            "<li><a href=\"{url}\"><span class=\"badge badge-{space}\">{space}</span> \
+             {title}</a> — {desc}</li>\n",
+            url = escape_html(&c.url),
+            space = escape_html(&c.space),
+            title = escape_html(&c.title),
+            desc = escape_html(&c.description),
+        ));
+    }
+
+    format!(
+        r#"<section class="learn-hero">
+<h1>Understanding UOR</h1>
+<p>The Universal Object Reference is a formal ontology built on ring theory.
+Every computable object lives in the ring Z/(2<sup>n</sup>)Z &mdash; integers modulo a
+power of two. The framework specifies how objects are uniquely identified
+(content-addressed), decomposed (factorized under the dihedral group), and
+verified (certified by algebraic proofs).</p>
+</section>
+
+<section class="reading-guide" aria-labelledby="paths-heading">
+<h2 id="paths-heading">Choose Your Path</h2>
+<p>The ontology spans algebraic foundations, computational pipelines, and formal
+verification. Start with the path closest to your background:</p>
+<div class="persona-grid">
+<article class="persona-card pathway-kernel">
+<h3>For Mathematicians</h3>
+<p>Begin with the algebraic substrate and build up to the full proof system.</p>
+<ol>
+<li><a href="{concepts_url}/ring.html">The Ring Substrate</a></li>
+<li><a href="{concepts_url}/quantum-levels.html">Quantum Levels</a></li>
+<li><a href="{identities_url}">Algebraic Identities</a></li>
+<li><a href="{concepts_url}/homology.html">Homological Analysis</a></li>
+<li><a href="{pipeline_url}">The PRISM Pipeline</a></li>
+</ol>
+</article>
+<article class="persona-card pathway-bridge">
+<h3>For Engineers</h3>
+<p>Understand the pipeline, then dive into serialization formats and tooling.</p>
+<ol>
+<li><a href="{pipeline_url}">The PRISM Pipeline</a></li>
+<li><a href="{concepts_url}/content-addressing.html">Content Addressing</a></li>
+<li><a href="{download_url}">Download Artifacts</a></li>
+<li><a href="{ns_url}">Browse Namespaces</a></li>
+</ol>
+</article>
+<article class="persona-card pathway-user">
+<h3>For Ontologists</h3>
+<p>Start with the specification, then explore the formal structure.</p>
+<ol>
+<li><a href="{overview_url}">Overview</a></li>
+<li><a href="{arch_url}">Architecture</a></li>
+<li><a href="{ns_url}">All Namespaces</a></li>
+<li><a href="{concepts_url}/fiber.html">Fiber Bundles</a></li>
+<li><a href="{concepts_url}/partition.html">Partitions</a></li>
+</ol>
+</article>
+</div>
+</section>
+
+<section class="pipeline-overview">
+<h2>The Resolution Pipeline</h2>
+<figure class="diagram-container" aria-label="PRISM pipeline overview">
+{pipeline_svg}
+</figure>
+<p>Every resolution passes through three stages:
+<strong>Define</strong> (kernel-space declarations),
+<strong>Resolve</strong> (bridge-space factorization), and
+<strong>Certify</strong> (attestation).
+<a href="{pipeline_url}">Read the full pipeline guide &rarr;</a></p>
+</section>
+
+<section class="concept-overview">
+<h2>Core Concepts</h2>
+<figure class="diagram-container" aria-label="Concept relationship map">
+{concept_map_svg}
+<figcaption>Concept relationships — kernel (purple), bridge (green), user (cyan)</figcaption>
+</figure>
+<p>Deep-dive explanations connecting formal ontology definitions to the
+intuitions behind the framework:</p>
+<ul class="concept-list">
+{concept_cards}
+</ul>
+<p><a href="{concepts_url}/">View all concepts &rarr;</a></p>
+</section>
+
+<section class="reference-links">
+<h2>Reference</h2>
+<ul>
+<li><a href="{ns_url}">Namespaces</a> &mdash; auto-generated reference for every namespace</li>
+<li><a href="{identities_url}">Identities</a> &mdash; searchable browser for algebraic identities</li>
+<li><a href="{explore_url}">Dependency Graph</a> &mdash; interactive namespace dependency explorer</li>
+</ul>
+</section>"#,
+        pipeline_svg = pipeline_svg,
+        concepts_url = escape_html(&concepts_url),
+        pipeline_url = escape_html(&pipeline_url),
+        ns_url = escape_html(&ns_url),
+        identities_url = escape_html(&identities_url),
+        explore_url = escape_html(&explore_url),
+        overview_url = escape_html(&overview_url),
+        arch_url = escape_html(&arch_url),
+        download_url = escape_html(&download_url),
+        concept_cards = concept_cards,
+        concept_map_svg = crate::svg::render_concept_map_svg(concepts, base_path),
+    )
+}
+
 const READING_ORDER: &[(&str, &str, &str)] = &[
     ("ring", "The Ring Substrate", "kernel"),
     ("quantum-levels", "Quantum Levels", "kernel"),
@@ -908,7 +1086,13 @@ const READING_ORDER: &[(&str, &str, &str)] = &[
     ("observables", "Observables &amp; Measurement", "bridge"),
     ("proof-system", "Proofs, Derivations &amp; Traces", "bridge"),
     ("homology", "Homological Analysis", "bridge"),
-    ("prism", "The PRISM Pipeline", "kernel"),
+    ("certification", "Certification and Verification", "bridge"),
+    ("morphisms", "Morphisms and Transformations", "user"),
+    (
+        "state-management",
+        "State, Sessions, and Accumulation",
+        "user",
+    ),
 ];
 
 /// Renders the concepts index page.
@@ -1111,10 +1295,7 @@ fn stage_concept_links(section_id: &str, base_path: &str) -> String {
             ("homology", "Homological Analysis"),
             ("fiber", "Fiber Bundle Semantics"),
         ],
-        "stage-certify" => &[
-            ("proof-system", "Proofs, Derivations &amp; Traces"),
-            ("prism", "The PRISM Pipeline"),
-        ],
+        "stage-certify" => &[("proof-system", "Proofs, Derivations &amp; Traces")],
         _ => &[],
     };
 

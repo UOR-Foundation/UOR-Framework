@@ -44,7 +44,7 @@ structures the space of all content-addressed objects.
 
 ## Connection to the PRISM Pipeline
 
-Content addressing lives in the **Define** stage of the {@concept prism} pipeline.
+Content addressing lives in the **Define** stage of the [PRISM](../pipeline/) pipeline.
 The {@ns u} namespace is a kernel-space namespace that establishes *what exists*
 before the Resolve stage determines *what type it has*. The {@concept fiber} bundle
 structure overlays typed meaning onto the address space defined here, and the

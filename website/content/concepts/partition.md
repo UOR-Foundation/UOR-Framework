@@ -3,7 +3,7 @@
 The {@ns partition} namespace decomposes the address space into disjoint subsets.
 Every ring element is classified as irreducible, reducible, a unit, or exterior. This
 four-way decomposition is the structural backbone of the Resolve stage in the
-{@concept prism} pipeline.
+[PRISM](../pipeline/) pipeline.
 
 ## Four-Component Partition
 

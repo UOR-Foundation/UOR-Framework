@@ -1,7 +1,7 @@
 # Proofs, Derivations & Traces
 
 The {@ns proof}, {@ns derivation}, and {@ns trace} namespaces implement the
-certification pathway of the {@concept prism} pipeline. Every algebraic identity
+certification pathway of the [PRISM](../pipeline/) pipeline. Every algebraic identity
 must be *proved*, every proof must be *derived* from axioms, and every derivation
 must be *traced* for reproducibility.
 

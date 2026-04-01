@@ -13,7 +13,5 @@ pub type SvgHookFn = fn(&Ontology) -> String;
 /// When generating a concept page, if a `(slug, fn)` entry exists for the concept's
 /// slug, the generator is called and its SVG is injected after the page `<h1>`.
 /// This eliminates `match` expressions on hard-coded slug strings in `generate()`.
-pub const CONCEPT_SVG_HOOKS: &[(&str, SvgHookFn)] = &[
-    ("quantum-levels", crate::svg::render_quantum_levels_svg),
-    ("prism", crate::svg::render_prism_pipeline_svg_for_concept),
-];
+pub const CONCEPT_SVG_HOOKS: &[(&str, SvgHookFn)] =
+    &[("quantum-levels", crate::svg::render_quantum_levels_svg)];

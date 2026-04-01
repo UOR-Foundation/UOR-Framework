@@ -51,7 +51,7 @@ pub const METHODS: usize = 790;
 pub const CONSTANT_MODULES: usize = 1452;
 
 /// Number of concept pages on the website (one per content/concepts/*.md file).
-pub const CONCEPT_PAGES: usize = 23;
+pub const CONCEPT_PAGES: usize = 27;
 
 /// Number of PRISM pipeline stages (Define / Resolve / Certify).
 pub const PIPELINE_STAGES: usize = 3;
