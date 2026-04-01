@@ -8269,6 +8269,44 @@ pub mod cs_5 {
     pub const VERIFICATION_PATH_NOTE: &str = "Bounded: total cascade cost <= n * stage_max_cost";
 }
 
+/// Budget solvency rejection: a CompileUnit whose declared thermodynamicBudget is strictly less than the Landauer minimum (bitsWidth(Q_k) × ln 2) is rejected at the BudgetSolvencyCheck preflight.
+pub mod cs_6 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "CompileUnit U";
+    /// `lhs`
+    pub const LHS: &str = "thermodynamicBudget(U) < bitsWidth(unitQuantumLevel(U)) × ln 2";
+    /// `rhs`
+    pub const RHS: &str = "reject(U) at BudgetSolvencyCheck";
+    /// `universallyValid`
+    pub const UNIVERSALLY_VALID: bool = true;
+    /// `validityKind` -> `Universal`
+    pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
+    /// `verificationDomain` -> `Pipeline`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str =
+        "AR_3 + TH_4 → minimum budget = fiberBudget × ln 2; BudgetSolvencyCheck enforces at preflight";
+}
+
+/// Unit address identity: the unitAddress of a CompileUnit is the u:Address computed by hashing the canonical byte serialization of the root term’s transitive closure.
+pub mod cs_7 {
+    /// `forAll`
+    pub const FOR_ALL: &str = "CompileUnit U";
+    /// `lhs`
+    pub const LHS: &str = "unitAddress(U)";
+    /// `rhs`
+    pub const RHS: &str = "address(canonicalBytes(transitiveClosure(rootTerm(U))))";
+    /// `universallyValid`
+    pub const UNIVERSALLY_VALID: bool = true;
+    /// `validityKind` -> `Universal`
+    pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
+    /// `verificationDomain` -> `Algebraic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
+    /// `verificationPathNote`
+    pub const VERIFICATION_PATH_NOTE: &str =
+        "u:canonicalBytes + u:digest → content-addressed identity of computation graph";
+}
+
 /// Every pending query eventually reaches a stage gate.
 pub mod fa_1 {
     /// `forAll`

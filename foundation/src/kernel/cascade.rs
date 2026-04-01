@@ -5,6 +5,8 @@
 //! Space: Kernel
 
 use crate::enums::FiberState;
+use crate::enums::QuantumLevel;
+use crate::enums::VerificationDomain;
 use crate::Primitives;
 
 /// The composite endofunctor ψ = ψ_9 ∘ … ∘ ψ_1, parameterized by Ω = e^{iπ/6}.
@@ -201,6 +203,8 @@ pub trait PreflightCheck<P: Primitives> {
     fn preflight_kind(&self) -> &P::String;
     /// The result of the preflight check (e.g., pass, fail).
     fn preflight_result(&self) -> &P::String;
+    /// Zero-based execution order for preflight checks. Lower indices execute first. BudgetSolvencyCheck (order 0) must precede all others.
+    fn preflight_order(&self) -> P::NonNegativeInteger;
 }
 
 /// Result of a preflight check: feasibility witness or infeasibility witness.
@@ -349,6 +353,24 @@ pub trait NonNullPredicate<P: Primitives>: PredicateExpression<P> {
 pub trait QuerySubtypePredicate<P: Primitives>: PredicateExpression<P> {
     /// The query type reference for subtype testing.
     fn query_type_ref(&self) -> &P::String;
+}
+
+/// The typed input graph submitted to the cascade pipeline. Packages a root Term, target quantum level, verification domains, and thermodynamic budget. Stage 0 accepts exactly one CompileUnit and initializes the cascade state vector from it.
+pub trait CompileUnit<P: Primitives> {
+    /// Associated type for `Term`.
+    type Term: crate::kernel::schema::Term<P>;
+    /// The top-level term to be evaluated by the cascade pipeline. The transitive closure of this term defines the complete computation graph.
+    fn root_term(&self) -> &Self::Term;
+    /// The quantum level Q_k at which this compile unit operates. Determines the ring modulus 2^(8*(k+1)), bit width, and fiber budget.
+    fn unit_quantum_level(&self) -> QuantumLevel;
+    /// The verification domains the submitter requires the cascade to check. Non-functional: a compile unit may target multiple domains. Identities with universallyValid=true are enforced regardless.
+    fn target_domains(&self) -> &[VerificationDomain];
+    /// Maximum Landauer cost authorized for this computation, in units of k_B T. Minimum viable budget = bitsWidth(Q_k) × ln 2.
+    fn thermodynamic_budget(&self) -> P::Decimal;
+    /// Associated type for `Address`.
+    type Address: crate::kernel::address::Address<P>;
+    /// Content-addressable identifier computed as the u:Address of the root term’s transitive closure. Computed by stage_initialization, not declared by the submitter. Excludes budget, domains, and quantum level to enable memoization.
+    fn unit_address(&self) -> &Self::Address;
 }
 
 /// Stage 0: initialize state vector to identity.
@@ -551,18 +573,24 @@ pub mod full_saturation_success {
 pub mod feasibility_check {
     /// `preflightKind`
     pub const PREFLIGHT_KIND: &str = "Feasibility";
+    /// `preflightOrder`
+    pub const PREFLIGHT_ORDER: i64 = 1;
 }
 
 /// Preflight: checks that every dispatch query has a resolver.
 pub mod dispatch_coverage_check {
     /// `preflightKind`
     pub const PREFLIGHT_KIND: &str = "DispatchCoverage";
+    /// `preflightOrder`
+    pub const PREFLIGHT_ORDER: i64 = 2;
 }
 
 /// Preflight: checks package-level coherence constraints.
 pub mod package_coherence_check {
     /// `preflightKind`
     pub const PREFLIGHT_KIND: &str = "PackageCoherence";
+    /// `preflightOrder`
+    pub const PREFLIGHT_ORDER: i64 = 3;
 }
 
 /// The default service window: 3 epochs, zero offset.
@@ -659,12 +687,24 @@ pub mod infeasibility_witness {
 pub mod preflight_timing {
     /// `preflightKind`
     pub const PREFLIGHT_KIND: &str = "Timing";
+    /// `preflightOrder`
+    pub const PREFLIGHT_ORDER: i64 = 4;
 }
 
 /// Preflight: runtime timing bounds check.
 pub mod runtime_timing {
     /// `preflightKind`
     pub const PREFLIGHT_KIND: &str = "RuntimeTiming";
+    /// `preflightOrder`
+    pub const PREFLIGHT_ORDER: i64 = 5;
+}
+
+/// Preflight: verifies thermodynamicBudget ≥ bitsWidth(unitQuantumLevel) × ln 2. Rejects the CompileUnit if the budget is absent or insufficient. Must execute before all other preflights (preflightOrder 0). Cost is O(1) per CS_4.
+pub mod budget_solvency_check {
+    /// `preflightKind`
+    pub const PREFLIGHT_KIND: &str = "BudgetSolvency";
+    /// `preflightOrder`
+    pub const PREFLIGHT_ORDER: i64 = 0;
 }
 
 /// Default back-pressure signal with medium threshold.

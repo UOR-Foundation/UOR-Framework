@@ -49,9 +49,9 @@ Docs/website/conformance binaries accept `PUBLIC_BASE_PATH` env var for URL pref
 
 - **33 namespaces**, assembly order: `u → schema → op → query → resolver → type → partition → observable → carry → homology → cohomology → proof → derivation → trace → cert → morphism → state → cascade → convergence → division → interaction → monoidal → operad → effect → predicate → parallel → stream → failure → linear → recursion → region → boundary → conformance`
 - **Space classification:** Kernel (17: `u`, `schema`, `op`, `carry`, `cascade`, `convergence`, `division`, `monoidal`, `operad`, `effect`, `predicate`, `parallel`, `stream`, `failure`, `linear`, `recursion`, `region`), Bridge (13: `query`, `resolver`, `partition`, `observable`, `homology`, `cohomology`, `proof`, `derivation`, `trace`, `cert`, `interaction`, `boundary`, `conformance`), User (`type`, `morphism`, `state`)
-- **395 classes** → 380 traits + 15 enum classes (includes QuantumLevel newtype struct)
-- **831 properties** → trait methods (generic over `P: Primitives`)
-- **1422 named individuals** → constant modules
+- **396 classes** → 381 traits + 15 enum classes (includes QuantumLevel newtype struct)
+- **837 properties** → trait methods (generic over `P: Primitives`)
+- **1432 named individuals** → constant modules
 - **15 enum classes:** `AchievabilityStatus`, `CoordinateKind`, `ComplexityClass`, `ExecutionPolicyKind`, `GeometricCharacter`, `MeasurementUnit`, `MetricAxis`, `PhaseBoundaryType`, `QuantumLevel`, `RewriteRule`, `SaturationPhase`, `SessionBoundaryType`, `ValidityScopeKind`, `VarianceAnnotation`, `VerificationDomain`
 
 ## Code generation patterns

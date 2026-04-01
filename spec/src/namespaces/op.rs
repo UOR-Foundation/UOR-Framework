@@ -68,6 +68,8 @@
 //!   identities (non-associativity from read-write interleaving)
 //! - **Amendment 69**: 5 `MO_` monoidal composition identities (unit law,
 //!   associativity, certificate composition, saturation and residual monotonicity)
+//! - **Amendment 84**: 2 `CS_` compile unit identities (CS_6 budget
+//!   solvency rejection, CS_7 unit address computation)
 //!
 //! **Critical identity:** `neg(bnot(x)) = succ(x)` for all x in R_n.
 //!
@@ -10247,6 +10249,95 @@ fn individuals() -> Vec<Individual> {
                  IndividualValue::IriRef("https://uor.foundation/op/Universal")),
                 ("https://uor.foundation/op/verificationPathNote",
                  IndividualValue::Str("Bounded: total cascade cost <= n * stage_max_cost")),
+            ],
+        },
+        // CS_6 — Budget solvency rejection (Amendment 84)
+        Individual {
+            id: "https://uor.foundation/op/CS_6",
+            type_: "https://uor.foundation/op/Identity",
+            label: "CS_6",
+            comment: "Budget solvency rejection: a CompileUnit whose declared \
+                      thermodynamicBudget is strictly less than the Landauer \
+                      minimum (bitsWidth(Q_k) \u{00d7} ln 2) is rejected at \
+                      the BudgetSolvencyCheck preflight.",
+            properties: &[
+                (
+                    "https://uor.foundation/op/lhs",
+                    IndividualValue::Str(
+                        "thermodynamicBudget(U) < bitsWidth(unitQuantumLevel(U)) \u{00d7} ln 2",
+                    ),
+                ),
+                (
+                    "https://uor.foundation/op/rhs",
+                    IndividualValue::Str("reject(U) at BudgetSolvencyCheck"),
+                ),
+                (
+                    "https://uor.foundation/op/forAll",
+                    IndividualValue::Str("CompileUnit U"),
+                ),
+                (
+                    "https://uor.foundation/op/verificationDomain",
+                    IndividualValue::IriRef("https://uor.foundation/op/Pipeline"),
+                ),
+                (
+                    "https://uor.foundation/op/universallyValid",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/op/validityKind",
+                    IndividualValue::IriRef("https://uor.foundation/op/Universal"),
+                ),
+                (
+                    "https://uor.foundation/op/verificationPathNote",
+                    IndividualValue::Str(
+                        "AR_3 + TH_4 \u{2192} minimum budget = fiberBudget \u{00d7} ln 2; \
+                         BudgetSolvencyCheck enforces at preflight",
+                    ),
+                ),
+            ],
+        },
+        // CS_7 — Unit address computation (Amendment 84)
+        Individual {
+            id: "https://uor.foundation/op/CS_7",
+            type_: "https://uor.foundation/op/Identity",
+            label: "CS_7",
+            comment: "Unit address identity: the unitAddress of a CompileUnit \
+                      is the u:Address computed by hashing the canonical byte \
+                      serialization of the root term\u{2019}s transitive closure.",
+            properties: &[
+                (
+                    "https://uor.foundation/op/lhs",
+                    IndividualValue::Str("unitAddress(U)"),
+                ),
+                (
+                    "https://uor.foundation/op/rhs",
+                    IndividualValue::Str(
+                        "address(canonicalBytes(transitiveClosure(rootTerm(U))))",
+                    ),
+                ),
+                (
+                    "https://uor.foundation/op/forAll",
+                    IndividualValue::Str("CompileUnit U"),
+                ),
+                (
+                    "https://uor.foundation/op/verificationDomain",
+                    IndividualValue::IriRef("https://uor.foundation/op/Algebraic"),
+                ),
+                (
+                    "https://uor.foundation/op/universallyValid",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/op/validityKind",
+                    IndividualValue::IriRef("https://uor.foundation/op/Universal"),
+                ),
+                (
+                    "https://uor.foundation/op/verificationPathNote",
+                    IndividualValue::Str(
+                        "u:canonicalBytes + u:digest \u{2192} content-addressed \
+                         identity of computation graph",
+                    ),
+                ),
             ],
         },
         // FA_ — Scheduler fairness (3, Amendment 65)

@@ -40,6 +40,8 @@
 //!
 //! Amendment 67 adds 7 proofs: prf_DA_1\u{2013}7 (division algebras).
 //!
+//! Amendment 84 adds 2 proofs: prf_CS_6\u{2013}7 (compile unit identities).
+//!
 //! **Space classification:** `bridge` — kernel-produced, user-consumed.
 
 use crate::model::iris::*;
@@ -13689,6 +13691,47 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/provesIdentity",
                     IndividualValue::IriRef("https://uor.foundation/op/IO_5"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        // Amendment 84: CompileUnit proofs (2)
+        Individual {
+            id: "https://uor.foundation/proof/prf_CS_6",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_CS_6",
+            comment: "Axiomatic derivation of CS_6: budget solvency rejection.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/CS_6"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_CS_7",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_CS_7",
+            comment: "Axiomatic derivation of CS_7: unit address computation.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/CS_7"),
                 ),
                 (
                     "https://uor.foundation/proof/universalScope",

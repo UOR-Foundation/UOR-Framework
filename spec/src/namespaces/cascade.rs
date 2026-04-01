@@ -12,6 +12,8 @@
 //!   preflight checks, pipeline termination)
 //! - **Amendment 65**: 6 classes, 11 properties, cascade completion
 //!   (feasibility results, lease lifecycle, back-pressure, deferred queries)
+//! - **Amendment 84**: 1 class, 6 properties, 1 individual (CompileUnit,
+//!   cascade admission, preflight ordering, budget solvency)
 //!
 //! **Space classification:** `kernel` — immutable algebra.
 
@@ -41,6 +43,8 @@ pub fn module() -> NamespaceModule {
                 NS_OBSERVABLE,
                 NS_PREDICATE,
                 NS_EFFECT,
+                NS_SCHEMA,
+                NS_U,
             ],
         },
         classes: classes(),
@@ -332,6 +336,18 @@ fn classes() -> Vec<Class> {
             label: "QuerySubtypePredicate",
             comment: "Predicate testing whether a query is a subtype of a given type.",
             subclass_of: &["https://uor.foundation/cascade/PredicateExpression"],
+            disjoint_with: &[],
+        },
+        // Amendment 84: CompileUnit
+        Class {
+            id: "https://uor.foundation/cascade/CompileUnit",
+            label: "CompileUnit",
+            comment: "The typed input graph submitted to the cascade pipeline. \
+                      Packages a root Term, target quantum level, verification \
+                      domains, and thermodynamic budget. Stage 0 accepts exactly \
+                      one CompileUnit and initializes the cascade state vector \
+                      from it.",
+            subclass_of: &[OWL_THING],
             disjoint_with: &[],
         },
     ]
@@ -1161,6 +1177,76 @@ fn properties() -> Vec<Property> {
             domain: Some("https://uor.foundation/cascade/EpochBoundary"),
             range: XSD_BOOLEAN,
         },
+        // Amendment 84: CompileUnit properties
+        Property {
+            id: "https://uor.foundation/cascade/rootTerm",
+            label: "rootTerm",
+            comment: "The top-level term to be evaluated by the cascade pipeline. \
+                      The transitive closure of this term defines the complete \
+                      computation graph.",
+            kind: PropertyKind::Object,
+            functional: true,
+            domain: Some("https://uor.foundation/cascade/CompileUnit"),
+            range: "https://uor.foundation/schema/Term",
+        },
+        Property {
+            id: "https://uor.foundation/cascade/unitQuantumLevel",
+            label: "unitQuantumLevel",
+            comment: "The quantum level Q_k at which this compile unit operates. \
+                      Determines the ring modulus 2^(8*(k+1)), bit width, and \
+                      fiber budget.",
+            kind: PropertyKind::Object,
+            functional: true,
+            domain: Some("https://uor.foundation/cascade/CompileUnit"),
+            range: "https://uor.foundation/schema/QuantumLevel",
+        },
+        Property {
+            id: "https://uor.foundation/cascade/targetDomains",
+            label: "targetDomains",
+            comment: "The verification domains the submitter requires the cascade \
+                      to check. Non-functional: a compile unit may target multiple \
+                      domains. Identities with universallyValid=true are enforced \
+                      regardless.",
+            kind: PropertyKind::Object,
+            functional: false,
+            domain: Some("https://uor.foundation/cascade/CompileUnit"),
+            range: "https://uor.foundation/op/VerificationDomain",
+        },
+        Property {
+            id: "https://uor.foundation/cascade/thermodynamicBudget",
+            label: "thermodynamicBudget",
+            comment: "Maximum Landauer cost authorized for this computation, in \
+                      units of k_B T. Minimum viable budget = bitsWidth(Q_k) \
+                      \u{00d7} ln 2.",
+            kind: PropertyKind::Datatype,
+            functional: true,
+            domain: Some("https://uor.foundation/cascade/CompileUnit"),
+            range: XSD_DECIMAL,
+        },
+        Property {
+            id: "https://uor.foundation/cascade/unitAddress",
+            label: "unitAddress",
+            comment: "Content-addressable identifier computed as the u:Address \
+                      of the root term\u{2019}s transitive closure. Computed by \
+                      stage_initialization, not declared by the submitter. \
+                      Excludes budget, domains, and quantum level to enable \
+                      memoization.",
+            kind: PropertyKind::Object,
+            functional: true,
+            domain: Some("https://uor.foundation/cascade/CompileUnit"),
+            range: "https://uor.foundation/u/Address",
+        },
+        Property {
+            id: "https://uor.foundation/cascade/preflightOrder",
+            label: "preflightOrder",
+            comment: "Zero-based execution order for preflight checks. Lower \
+                      indices execute first. BudgetSolvencyCheck (order 0) must \
+                      precede all others.",
+            kind: PropertyKind::Datatype,
+            functional: true,
+            domain: Some("https://uor.foundation/cascade/PreflightCheck"),
+            range: XSD_NON_NEGATIVE_INTEGER,
+        },
     ]
 }
 
@@ -1589,6 +1675,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/cascade/preflightKind",
                     IndividualValue::Str("Feasibility"),
                 ),
+                (
+                    "https://uor.foundation/cascade/preflightOrder",
+                    IndividualValue::Int(1),
+                ),
             ],
         },
         Individual {
@@ -1601,6 +1691,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/cascade/preflightKind",
                     IndividualValue::Str("DispatchCoverage"),
                 ),
+                (
+                    "https://uor.foundation/cascade/preflightOrder",
+                    IndividualValue::Int(2),
+                ),
             ],
         },
         Individual {
@@ -1612,6 +1706,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/cascade/preflightKind",
                     IndividualValue::Str("PackageCoherence"),
+                ),
+                (
+                    "https://uor.foundation/cascade/preflightOrder",
+                    IndividualValue::Int(3),
                 ),
             ],
         },
@@ -1821,6 +1919,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/cascade/preflightKind",
                     IndividualValue::Str("Timing"),
                 ),
+                (
+                    "https://uor.foundation/cascade/preflightOrder",
+                    IndividualValue::Int(4),
+                ),
             ],
         },
         Individual {
@@ -1832,6 +1934,31 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/cascade/preflightKind",
                     IndividualValue::Str("RuntimeTiming"),
+                ),
+                (
+                    "https://uor.foundation/cascade/preflightOrder",
+                    IndividualValue::Int(5),
+                ),
+            ],
+        },
+        // Amendment 84: BudgetSolvencyCheck
+        Individual {
+            id: "https://uor.foundation/cascade/BudgetSolvencyCheck",
+            type_: "https://uor.foundation/cascade/PreflightCheck",
+            label: "BudgetSolvencyCheck",
+            comment: "Preflight: verifies thermodynamicBudget \u{2265} \
+                      bitsWidth(unitQuantumLevel) \u{00d7} ln 2. Rejects \
+                      the CompileUnit if the budget is absent or insufficient. \
+                      Must execute before all other preflights (preflightOrder 0). \
+                      Cost is O(1) per CS_4.",
+            properties: &[
+                (
+                    "https://uor.foundation/cascade/preflightKind",
+                    IndividualValue::Str("BudgetSolvency"),
+                ),
+                (
+                    "https://uor.foundation/cascade/preflightOrder",
+                    IndividualValue::Int(0),
                 ),
             ],
         },

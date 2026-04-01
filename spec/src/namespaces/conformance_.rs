@@ -5,11 +5,15 @@
 //! point. Machine-verifiable contracts.
 //!
 //! - **Amendment 82**: 11 classes, 9 properties, 0 individuals
+//! - **Amendment 84**: 0 classes, 0 properties, 5 individuals
+//!   (CompileUnitShape + 4 PropertyConstraint)
 //!
 //! **Space classification:** `bridge` — kernel-computed, user-consumed.
 
 use crate::model::iris::*;
-use crate::model::{Class, Namespace, NamespaceModule, Property, PropertyKind, Space};
+use crate::model::{
+    Class, Individual, IndividualValue, Namespace, NamespaceModule, Property, PropertyKind, Space,
+};
 
 /// Returns the `conformance/` namespace module.
 #[must_use]
@@ -45,7 +49,7 @@ pub fn module() -> NamespaceModule {
         },
         classes: classes(),
         properties: properties(),
-        individuals: vec![],
+        individuals: individuals(),
     }
 }
 
@@ -228,6 +232,169 @@ fn properties() -> Vec<Property> {
             functional: true,
             domain: Some("https://uor.foundation/conformance/ValidationResult"),
             range: XSD_BOOLEAN,
+        },
+    ]
+}
+
+fn individuals() -> Vec<Individual> {
+    vec![
+        // Amendment 84: CompileUnit admission shape
+        Individual {
+            id: "https://uor.foundation/conformance/CompileUnitShape",
+            type_: "https://uor.foundation/conformance/Shape",
+            label: "CompileUnitShape",
+            comment: "Shape validating that a CompileUnit carries all required \
+                      properties before cascade admission. The unitAddress \
+                      property is NOT required \u{2014} it is computed by \
+                      stage_initialization after shape validation passes.",
+            properties: &[
+                (
+                    "https://uor.foundation/conformance/targetClass",
+                    IndividualValue::IriRef(
+                        "https://uor.foundation/cascade/CompileUnit",
+                    ),
+                ),
+                (
+                    "https://uor.foundation/conformance/requiredProperty",
+                    IndividualValue::IriRef(
+                        "https://uor.foundation/conformance/compileUnit_rootTerm_constraint",
+                    ),
+                ),
+                (
+                    "https://uor.foundation/conformance/requiredProperty",
+                    IndividualValue::IriRef(
+                        "https://uor.foundation/conformance/compileUnit_unitQuantumLevel_constraint",
+                    ),
+                ),
+                (
+                    "https://uor.foundation/conformance/requiredProperty",
+                    IndividualValue::IriRef(
+                        "https://uor.foundation/conformance/compileUnit_thermodynamicBudget_constraint",
+                    ),
+                ),
+                (
+                    "https://uor.foundation/conformance/requiredProperty",
+                    IndividualValue::IriRef(
+                        "https://uor.foundation/conformance/compileUnit_targetDomains_constraint",
+                    ),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/conformance/compileUnit_rootTerm_constraint",
+            type_: "https://uor.foundation/conformance/PropertyConstraint",
+            label: "compileUnit_rootTerm_constraint",
+            comment: "Exactly one root term is required. Range is schema:Term.",
+            properties: &[
+                (
+                    "https://uor.foundation/conformance/constraintProperty",
+                    IndividualValue::IriRef(
+                        "https://uor.foundation/cascade/rootTerm",
+                    ),
+                ),
+                (
+                    "https://uor.foundation/conformance/constraintRange",
+                    IndividualValue::IriRef(
+                        "https://uor.foundation/schema/Term",
+                    ),
+                ),
+                (
+                    "https://uor.foundation/conformance/minCount",
+                    IndividualValue::Int(1),
+                ),
+                (
+                    "https://uor.foundation/conformance/maxCount",
+                    IndividualValue::Int(1),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/conformance/compileUnit_unitQuantumLevel_constraint",
+            type_: "https://uor.foundation/conformance/PropertyConstraint",
+            label: "compileUnit_unitQuantumLevel_constraint",
+            comment: "Exactly one quantum level is required. Range is \
+                      schema:QuantumLevel.",
+            properties: &[
+                (
+                    "https://uor.foundation/conformance/constraintProperty",
+                    IndividualValue::IriRef(
+                        "https://uor.foundation/cascade/unitQuantumLevel",
+                    ),
+                ),
+                (
+                    "https://uor.foundation/conformance/constraintRange",
+                    IndividualValue::IriRef(
+                        "https://uor.foundation/schema/QuantumLevel",
+                    ),
+                ),
+                (
+                    "https://uor.foundation/conformance/minCount",
+                    IndividualValue::Int(1),
+                ),
+                (
+                    "https://uor.foundation/conformance/maxCount",
+                    IndividualValue::Int(1),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/conformance/compileUnit_thermodynamicBudget_constraint",
+            type_: "https://uor.foundation/conformance/PropertyConstraint",
+            label: "compileUnit_thermodynamicBudget_constraint",
+            comment: "Exactly one thermodynamic budget is required. Shape \
+                      validates presence and type; the BudgetSolvencyCheck \
+                      preflight validates the value against the Landauer bound.",
+            properties: &[
+                (
+                    "https://uor.foundation/conformance/constraintProperty",
+                    IndividualValue::IriRef(
+                        "https://uor.foundation/cascade/thermodynamicBudget",
+                    ),
+                ),
+                (
+                    "https://uor.foundation/conformance/constraintRange",
+                    IndividualValue::IriRef(
+                        "http://www.w3.org/2001/XMLSchema#decimal",
+                    ),
+                ),
+                (
+                    "https://uor.foundation/conformance/minCount",
+                    IndividualValue::Int(1),
+                ),
+                (
+                    "https://uor.foundation/conformance/maxCount",
+                    IndividualValue::Int(1),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/conformance/compileUnit_targetDomains_constraint",
+            type_: "https://uor.foundation/conformance/PropertyConstraint",
+            label: "compileUnit_targetDomains_constraint",
+            comment: "At least one target verification domain is required. \
+                      maxCount 0 means unbounded.",
+            properties: &[
+                (
+                    "https://uor.foundation/conformance/constraintProperty",
+                    IndividualValue::IriRef(
+                        "https://uor.foundation/cascade/targetDomains",
+                    ),
+                ),
+                (
+                    "https://uor.foundation/conformance/constraintRange",
+                    IndividualValue::IriRef(
+                        "https://uor.foundation/op/VerificationDomain",
+                    ),
+                ),
+                (
+                    "https://uor.foundation/conformance/minCount",
+                    IndividualValue::Int(1),
+                ),
+                (
+                    "https://uor.foundation/conformance/maxCount",
+                    IndividualValue::Int(0),
+                ),
+            ],
         },
     ]
 }

@@ -171,6 +171,7 @@ mod test249_property_bind_advance;
 mod test24_verification_domain;
 mod test250_pipeline_outcome;
 mod test251_preflight_checkpoint;
+mod test252_compile_unit;
 mod test25_geometric_character;
 mod test26_complexity_class;
 mod test27_rewrite_rule;
@@ -423,6 +424,7 @@ pub use test249_property_bind_advance::TEST249_PROPERTY_BIND_ADVANCE;
 pub use test24_verification_domain::TEST24_VERIFICATION_DOMAIN;
 pub use test250_pipeline_outcome::TEST250_PIPELINE_OUTCOME;
 pub use test251_preflight_checkpoint::TEST251_PREFLIGHT_CHECKPOINT;
+pub use test252_compile_unit::TEST252_COMPILE_UNIT;
 pub use test25_geometric_character::TEST25_GEOMETRIC_CHARACTER;
 pub use test26_complexity_class::TEST26_COMPLEXITY_CLASS;
 pub use test27_rewrite_rule::TEST27_REWRITE_RULE;
@@ -762,5 +764,6 @@ pub fn all_fixture_sources() -> Vec<&'static str> {
         TEST249_PROPERTY_BIND_ADVANCE,
         TEST250_PIPELINE_OUTCOME,
         TEST251_PREFLIGHT_CHECKPOINT,
+        TEST252_COMPILE_UNIT,
     ]
 }

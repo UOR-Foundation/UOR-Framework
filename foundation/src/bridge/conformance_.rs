@@ -63,3 +63,64 @@ pub trait ValidationResult<P: Primitives> {
 
 /// Shape for user-declared predicates. Requires a bounded evaluator (termination witness) and input type declaration.
 pub trait PredicateShape<P: Primitives>: Shape<P> {}
+
+/// Shape validating that a CompileUnit carries all required properties before cascade admission. The unitAddress property is NOT required — it is computed by stage_initialization after shape validation passes.
+pub mod compile_unit_shape {
+    /// `requiredProperty`
+    pub const REQUIRED_PROPERTY: &[&str] = &[
+        "https://uor.foundation/conformance/compileUnit_rootTerm_constraint",
+        "https://uor.foundation/conformance/compileUnit_unitQuantumLevel_constraint",
+        "https://uor.foundation/conformance/compileUnit_thermodynamicBudget_constraint",
+        "https://uor.foundation/conformance/compileUnit_targetDomains_constraint",
+    ];
+    /// `targetClass` -> `CompileUnit`
+    pub const TARGET_CLASS: &str = "https://uor.foundation/cascade/CompileUnit";
+}
+
+/// Exactly one root term is required. Range is schema:Term.
+pub mod compile_unit_root_term_constraint {
+    /// `constraintProperty` -> `rootTerm`
+    pub const CONSTRAINT_PROPERTY: &str = "https://uor.foundation/cascade/rootTerm";
+    /// `constraintRange` -> `Term`
+    pub const CONSTRAINT_RANGE: &str = "https://uor.foundation/schema/Term";
+    /// `maxCount`
+    pub const MAX_COUNT: i64 = 1;
+    /// `minCount`
+    pub const MIN_COUNT: i64 = 1;
+}
+
+/// Exactly one quantum level is required. Range is schema:QuantumLevel.
+pub mod compile_unit_unit_quantum_level_constraint {
+    /// `constraintProperty` -> `unitQuantumLevel`
+    pub const CONSTRAINT_PROPERTY: &str = "https://uor.foundation/cascade/unitQuantumLevel";
+    /// `constraintRange` -> `QuantumLevel`
+    pub const CONSTRAINT_RANGE: &str = "https://uor.foundation/schema/QuantumLevel";
+    /// `maxCount`
+    pub const MAX_COUNT: i64 = 1;
+    /// `minCount`
+    pub const MIN_COUNT: i64 = 1;
+}
+
+/// Exactly one thermodynamic budget is required. Shape validates presence and type; the BudgetSolvencyCheck preflight validates the value against the Landauer bound.
+pub mod compile_unit_thermodynamic_budget_constraint {
+    /// `constraintProperty` -> `thermodynamicBudget`
+    pub const CONSTRAINT_PROPERTY: &str = "https://uor.foundation/cascade/thermodynamicBudget";
+    /// `constraintRange` -> `decimal`
+    pub const CONSTRAINT_RANGE: &str = "http://www.w3.org/2001/XMLSchema#decimal";
+    /// `maxCount`
+    pub const MAX_COUNT: i64 = 1;
+    /// `minCount`
+    pub const MIN_COUNT: i64 = 1;
+}
+
+/// At least one target verification domain is required. maxCount 0 means unbounded.
+pub mod compile_unit_target_domains_constraint {
+    /// `constraintProperty` -> `targetDomains`
+    pub const CONSTRAINT_PROPERTY: &str = "https://uor.foundation/cascade/targetDomains";
+    /// `constraintRange` -> `VerificationDomain`
+    pub const CONSTRAINT_RANGE: &str = "https://uor.foundation/op/VerificationDomain";
+    /// `maxCount`
+    pub const MAX_COUNT: i64 = 0;
+    /// `minCount`
+    pub const MIN_COUNT: i64 = 1;
+}

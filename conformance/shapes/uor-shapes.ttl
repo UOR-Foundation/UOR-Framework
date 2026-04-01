@@ -2495,6 +2495,16 @@ uor-sh:QuerySubtypePredicateShape
     rdfs:label      "QuerySubtypePredicateShape" ;
     sh:property [ sh:path cascade:queryTypeRef ; sh:maxCount 1 ; sh:datatype xsd:string ] .
 
+uor-sh:CompileUnitShape
+    a               sh:NodeShape ;
+    sh:targetClass  cascade:CompileUnit ;
+    rdfs:label      "CompileUnitShape" ;
+    sh:property [ sh:path cascade:rootTerm ; sh:maxCount 1 ; sh:minCount 1 ] ;
+    sh:property [ sh:path cascade:unitQuantumLevel ; sh:maxCount 1 ; sh:minCount 1 ] ;
+    sh:property [ sh:path cascade:targetDomains ; sh:minCount 1 ] ;
+    sh:property [ sh:path cascade:thermodynamicBudget ; sh:maxCount 1 ; sh:minCount 1 ; sh:datatype xsd:decimal ] ;
+    sh:property [ sh:path cascade:unitAddress ; sh:maxCount 1 ] .
+
 # ── effect/ namespace (9) — Amendment 71 ──────────────────────────────────
 
 uor-sh:EffectShape

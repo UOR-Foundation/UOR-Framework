@@ -1277,6 +1277,11 @@ pub fn validate() -> ConformanceReport {
         tests::fixtures::TEST251_PREFLIGHT_CHECKPOINT,
         &mut report,
     );
+    run_test(
+        "test252_compile_unit",
+        tests::fixtures::TEST252_COMPILE_UNIT,
+        &mut report,
+    );
 
     // Verify test fixture count matches expected
     let test_count = report.results.len() - before_tests;
@@ -1603,6 +1608,7 @@ fn run_test(name: &str, turtle_src: &str, report: &mut ConformanceReport) {
         "test249_property_bind_advance" => validate_basic_turtle(turtle_src),
         "test250_pipeline_outcome" => validate_basic_turtle(turtle_src),
         "test251_preflight_checkpoint" => validate_basic_turtle(turtle_src),
+        "test252_compile_unit" => validate_basic_turtle(turtle_src),
         _ => Ok(()),
     };
 

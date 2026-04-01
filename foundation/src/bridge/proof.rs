@@ -6454,3 +6454,23 @@ pub mod prf_io_5 {
     /// `verified`
     pub const VERIFIED: bool = true;
 }
+
+/// Axiomatic derivation of CS_6: budget solvency rejection.
+pub mod prf_cs_6 {
+    /// `provesIdentity` -> `CS_6`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/CS_6";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of CS_7: unit address computation.
+pub mod prf_cs_7 {
+    /// `provesIdentity` -> `CS_7`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/CS_7";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}

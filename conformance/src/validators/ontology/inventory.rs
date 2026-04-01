@@ -138,6 +138,10 @@ pub fn validate(artifacts: &Path) -> Result<ConformanceReport> {
     // Amendment 70: Operad Composition
     validate_operad_composition_vocabulary(&mut report);
 
+    // Amendment 84: CompileUnit
+    validate_compile_unit_vocabulary(&mut report);
+    validate_compile_unit_identities(&mut report);
+
     // Validate the built JSON-LD artifact
     let json_path = artifacts.join("uor.foundation.jsonld");
     if !json_path.exists() {
@@ -4492,6 +4496,147 @@ fn validate_operad_composition_vocabulary(report: &mut ConformanceReport) {
         report.push(TestResult::pass(
             validator,
             "All 2 operad classes and 5 OP_ identities present with correct verificationDomains",
+        ));
+    }
+}
+
+fn validate_compile_unit_vocabulary(report: &mut ConformanceReport) {
+    let ontology = uor_ontology::Ontology::full();
+    let validator = "ontology/inventory/compile_unit_vocabulary";
+
+    let mut all_valid = true;
+
+    // Check CompileUnit class
+    if ontology
+        .find_class("https://uor.foundation/cascade/CompileUnit")
+        .is_none()
+    {
+        report.push(TestResult::fail(
+            validator,
+            "cascade:CompileUnit class not found",
+        ));
+        all_valid = false;
+    }
+
+    // Check 6 new properties
+    let prop_iris = [
+        "https://uor.foundation/cascade/rootTerm",
+        "https://uor.foundation/cascade/unitQuantumLevel",
+        "https://uor.foundation/cascade/targetDomains",
+        "https://uor.foundation/cascade/thermodynamicBudget",
+        "https://uor.foundation/cascade/unitAddress",
+        "https://uor.foundation/cascade/preflightOrder",
+    ];
+    for iri in &prop_iris {
+        if ontology.find_property(iri).is_none() {
+            report.push(TestResult::fail(
+                validator,
+                format!("Property {} not found", iri),
+            ));
+            all_valid = false;
+        }
+    }
+
+    // Check BudgetSolvencyCheck individual
+    if ontology
+        .find_individual("https://uor.foundation/cascade/BudgetSolvencyCheck")
+        .is_none()
+    {
+        report.push(TestResult::fail(
+            validator,
+            "cascade:BudgetSolvencyCheck individual not found",
+        ));
+        all_valid = false;
+    }
+
+    // Check all 6 PreflightCheck individuals have preflightOrder
+    let preflight_iris = [
+        "https://uor.foundation/cascade/BudgetSolvencyCheck",
+        "https://uor.foundation/cascade/FeasibilityCheck",
+        "https://uor.foundation/cascade/DispatchCoverageCheck",
+        "https://uor.foundation/cascade/PackageCoherenceCheck",
+        "https://uor.foundation/cascade/PreflightTiming",
+        "https://uor.foundation/cascade/RuntimeTiming",
+    ];
+    let order_prop = "https://uor.foundation/cascade/preflightOrder";
+    for iri in &preflight_iris {
+        match ontology.find_individual(iri) {
+            Some(ind) => {
+                let has_order = ind.properties.iter().any(|(k, _)| *k == order_prop);
+                if !has_order {
+                    report.push(TestResult::fail(
+                        validator,
+                        format!("{} missing preflightOrder", iri),
+                    ));
+                    all_valid = false;
+                }
+            }
+            None => {
+                report.push(TestResult::fail(
+                    validator,
+                    format!("PreflightCheck {} not found", iri),
+                ));
+                all_valid = false;
+            }
+        }
+    }
+
+    if all_valid {
+        report.push(TestResult::pass(
+            validator,
+            "CompileUnit class, 6 properties, BudgetSolvencyCheck, and \
+             preflightOrder on all 6 PreflightCheck individuals verified",
+        ));
+    }
+}
+
+fn validate_compile_unit_identities(report: &mut ConformanceReport) {
+    let ontology = uor_ontology::Ontology::full();
+    let validator = "ontology/inventory/compile_unit_identities";
+
+    let ids: &[(&str, &str)] = &[
+        (
+            "https://uor.foundation/op/CS_6",
+            "https://uor.foundation/op/Pipeline",
+        ),
+        (
+            "https://uor.foundation/op/CS_7",
+            "https://uor.foundation/op/Algebraic",
+        ),
+    ];
+
+    let domain_prop = "https://uor.foundation/op/verificationDomain";
+    let mut all_valid = true;
+
+    for (iri, expected_domain) in ids {
+        match ontology.find_individual(iri) {
+            Some(ind) => {
+                let has_domain = ind.properties.iter().any(|(k, v)| {
+                    *k == domain_prop
+                        && matches!(v, IndividualValue::IriRef(d) if *d == *expected_domain)
+                });
+                if !has_domain {
+                    report.push(TestResult::fail(
+                        validator,
+                        format!("{} missing verificationDomain {}", iri, expected_domain),
+                    ));
+                    all_valid = false;
+                }
+            }
+            None => {
+                report.push(TestResult::fail(
+                    validator,
+                    format!("Identity {} not found", iri),
+                ));
+                all_valid = false;
+            }
+        }
+    }
+
+    if all_valid {
+        report.push(TestResult::pass(
+            validator,
+            "CS_6 (Pipeline) and CS_7 (Algebraic) compile unit identities verified",
         ));
     }
 }

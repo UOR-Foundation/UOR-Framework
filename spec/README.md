@@ -11,9 +11,9 @@ published Rust trait library, see
 ## Contents
 
 - 33 namespaces in dependency order
-- 395 OWL classes
-- 831 OWL properties (830 namespace-level + 1 global annotation)
-- 1422 named individuals
+- 396 OWL classes
+- 837 OWL properties (836 namespace-level + 1 global annotation)
+- 1432 named individuals
 - Seven serialization formats: JSON-LD 1.1, Turtle 1.1, N-Triples, OWL 2 RDF/XML, JSON Schema (Draft 2020-12), SHACL Shapes, EBNF
 
 ## Usage
