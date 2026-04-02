@@ -4,6 +4,7 @@
 //!
 //! Space: Kernel
 
+use crate::enums::QuantifierKind;
 use crate::enums::QuantumLevel;
 use crate::Primitives;
 
@@ -17,7 +18,7 @@ pub trait Datum<P: Primitives> {
     /// The ring-layer index of a datum, indicating its position in the stratification of Z/(2^n)Z.
     fn stratum(&self) -> P::NonNegativeInteger;
     /// The bit-pattern representation of a datum, encoding its position in the hypercube geometry of Z/(2^n)Z.
-    fn spectrum(&self) -> &P::String;
+    fn spectrum(&self) -> P::NonNegativeInteger;
     /// Associated type for `Address`.
     type Address: crate::kernel::address::Address<P>;
     /// The Braille address associated with this datum, linking the algebraic value to its content-addressable identifier.
@@ -78,6 +79,69 @@ pub trait Q1Ring<P: Primitives>: Ring<P> {
     /// Carrier set size of the Q1 ring: 65,536 elements.
     fn q1capacity(&self) -> P::PositiveInteger;
 }
+
+/// Root AST node for parsed EBNF term expressions. Identity lhs/rhs values are instances of TermExpression subtypes. Maps to the `term` production in the EBNF grammar.
+pub trait TermExpression<P: Primitives> {}
+
+/// A leaf AST node: an integer literal, variable reference, or named constant.
+pub trait LiteralExpression<P: Primitives>: TermExpression<P> {
+    /// The string representation of a literal expression value (e.g., '42', 'x', 'pi1').
+    fn literal_value(&self) -> &P::String;
+}
+
+/// An AST node representing operator application: an operator applied to an argument list (e.g., add(x, y)).
+pub trait ApplicationExpression<P: Primitives>: TermExpression<P> {
+    /// Associated type for `Operation`.
+    type Operation: crate::kernel::op::Operation<P>;
+    /// The operator in an application expression (e.g., op:add, op:neg).
+    fn expression_operator(&self) -> &Self::Operation;
+    /// Associated type for `TermExpression`.
+    type TermExpression: TermExpression<P>;
+    /// The argument list of an application expression. Non-functional: an application may take multiple arguments.
+    fn arguments(&self) -> &[Self::TermExpression];
+}
+
+/// An AST node for infix relations and logical connectives (e.g., x <= y, P -> Q, a = b).
+pub trait InfixExpression<P: Primitives>: TermExpression<P> {
+    /// Associated type for `TermExpression`.
+    type TermExpression: TermExpression<P>;
+    /// The left operand of an infix expression.
+    fn left_operand(&self) -> &Self::TermExpression;
+    /// The right operand of an infix expression.
+    fn right_operand(&self) -> &Self::TermExpression;
+    /// The operator symbol in an infix expression (e.g., '=', '\u{2264}', '\u{2192}').
+    fn infix_operator(&self) -> &P::String;
+}
+
+/// An AST node for set-builder notation (e.g., {x : P(x)}).
+pub trait SetExpression<P: Primitives>: TermExpression<P> {}
+
+/// An AST node for function composition (f compose g).
+pub trait CompositionExpression<P: Primitives>: TermExpression<P> {}
+
+/// A structured quantifier binding: typed variable declarations with a domain and quantifier kind (universal or existential). Replaces the string-valued op:forAll property.
+pub trait ForAllDeclaration<P: Primitives> {
+    /// Associated type for `VariableBinding`.
+    type VariableBinding: VariableBinding<P>;
+    /// The variable bindings in a quantifier declaration. Non-functional: a ForAllDeclaration may bind multiple variables.
+    fn bound_variables(&self) -> &[Self::VariableBinding];
+    /// The kind of quantifier: Universal or Existential.
+    fn quantifier_kind(&self) -> QuantifierKind;
+}
+
+/// A single variable binding: a variable name bound to a domain type (e.g., x in R_n).
+pub trait VariableBinding<P: Primitives> {
+    /// The domain type of a variable binding (e.g., schema:Ring, type:ConstrainedType).
+    fn variable_domain(&self) -> &P::String;
+    /// The name of a bound variable (e.g., 'x', 'y', 'n').
+    fn variable_name(&self) -> &P::String;
+}
+
+/// Universal quantification (forall).
+pub mod universal {}
+
+/// Existential quantification (exists).
+pub mod existential {}
 
 /// The unique generator of R_n under successor. Value = 1 at every quantum level. Under iterated application of succ, π₁ generates every element of the ring.
 pub mod pi1 {
@@ -141,4 +205,9367 @@ pub mod q3 {
     pub const LEVEL_SUCCESSOR: &str = "https://uor.foundation/schema/Q2";
     /// `quantumIndex`
     pub const QUANTUM_INDEX: i64 = 3;
+}
+
+pub mod term_critical_identity_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "x ∈ R_n";
+}
+
+pub mod term_ad_1_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "addresses(glyph(d))";
+}
+
+pub mod term_ad_1_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "d";
+}
+
+pub mod term_ad_1_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "d ∈ R_n";
+}
+
+pub mod term_ad_2_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "glyph(ι(addresses(a)))";
+}
+
+pub mod term_ad_2_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "ι_addr(a)";
+}
+
+pub mod term_ad_2_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "a ∈ Addr(R_n), ι : R_n → R_{n'}";
+}
+
+pub mod term_r_a1_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "add(x, add(y, z))";
+}
+
+pub mod term_r_a1_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "add(add(x, y), z)";
+}
+
+pub mod term_r_a1_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "x, y, z ∈ R_n";
+}
+
+pub mod term_r_a2_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "add(x, 0)";
+}
+
+pub mod term_r_a2_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "x";
+}
+
+pub mod term_r_a2_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "x ∈ R_n";
+}
+
+pub mod term_r_a3_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "add(x, neg(x))";
+}
+
+pub mod term_r_a3_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "0";
+}
+
+pub mod term_r_a3_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "x ∈ R_n";
+}
+
+pub mod term_r_a4_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "add(x, y)";
+}
+
+pub mod term_r_a4_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "add(y, x)";
+}
+
+pub mod term_r_a4_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "x, y ∈ R_n";
+}
+
+pub mod term_r_a5_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "sub(x, y)";
+}
+
+pub mod term_r_a5_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "add(x, neg(y))";
+}
+
+pub mod term_r_a5_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "x, y ∈ R_n";
+}
+
+pub mod term_r_a6_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "neg(neg(x))";
+}
+
+pub mod term_r_a6_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "x";
+}
+
+pub mod term_r_a6_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "x ∈ R_n";
+}
+
+pub mod term_r_m1_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "mul(x, mul(y, z))";
+}
+
+pub mod term_r_m1_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "mul(mul(x, y), z)";
+}
+
+pub mod term_r_m1_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "x, y, z ∈ R_n";
+}
+
+pub mod term_r_m2_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "mul(x, 1)";
+}
+
+pub mod term_r_m2_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "x";
+}
+
+pub mod term_r_m2_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "x ∈ R_n";
+}
+
+pub mod term_r_m3_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "mul(x, y)";
+}
+
+pub mod term_r_m3_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "mul(y, x)";
+}
+
+pub mod term_r_m3_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "x, y ∈ R_n";
+}
+
+pub mod term_r_m4_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "mul(x, add(y, z))";
+}
+
+pub mod term_r_m4_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "add(mul(x, y), mul(x, z))";
+}
+
+pub mod term_r_m4_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "x, y, z ∈ R_n";
+}
+
+pub mod term_r_m5_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "mul(x, 0)";
+}
+
+pub mod term_r_m5_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "0";
+}
+
+pub mod term_r_m5_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "x ∈ R_n";
+}
+
+pub mod term_b_1_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "xor(x, xor(y, z))";
+}
+
+pub mod term_b_1_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "xor(xor(x, y), z)";
+}
+
+pub mod term_b_1_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "x, y, z ∈ R_n";
+}
+
+pub mod term_b_2_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "xor(x, 0)";
+}
+
+pub mod term_b_2_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "x";
+}
+
+pub mod term_b_2_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "x ∈ R_n";
+}
+
+pub mod term_b_3_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "xor(x, x)";
+}
+
+pub mod term_b_3_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "0";
+}
+
+pub mod term_b_3_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "x ∈ R_n";
+}
+
+pub mod term_b_4_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "and(x, and(y, z))";
+}
+
+pub mod term_b_4_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "and(and(x, y), z)";
+}
+
+pub mod term_b_4_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "x, y, z ∈ R_n";
+}
+
+pub mod term_b_5_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "and(x, 2^n - 1)";
+}
+
+pub mod term_b_5_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "x";
+}
+
+pub mod term_b_5_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "x ∈ R_n";
+}
+
+pub mod term_b_6_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "and(x, 0)";
+}
+
+pub mod term_b_6_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "0";
+}
+
+pub mod term_b_6_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "x ∈ R_n";
+}
+
+pub mod term_b_7_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "or(x, or(y, z))";
+}
+
+pub mod term_b_7_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "or(or(x, y), z)";
+}
+
+pub mod term_b_7_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "x, y, z ∈ R_n";
+}
+
+pub mod term_b_8_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "or(x, 0)";
+}
+
+pub mod term_b_8_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "x";
+}
+
+pub mod term_b_8_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "x ∈ R_n";
+}
+
+pub mod term_b_9_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "and(x, or(x, y))";
+}
+
+pub mod term_b_9_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "x";
+}
+
+pub mod term_b_9_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "x, y ∈ R_n";
+}
+
+pub mod term_b_10_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "and(x, or(y, z))";
+}
+
+pub mod term_b_10_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "or(and(x, y), and(x, z))";
+}
+
+pub mod term_b_10_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "x, y, z ∈ R_n";
+}
+
+pub mod term_b_11_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "bnot(and(x, y))";
+}
+
+pub mod term_b_11_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "or(bnot(x), bnot(y))";
+}
+
+pub mod term_b_11_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "x, y ∈ R_n";
+}
+
+pub mod term_b_12_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "bnot(or(x, y))";
+}
+
+pub mod term_b_12_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "and(bnot(x), bnot(y))";
+}
+
+pub mod term_b_12_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "x, y ∈ R_n";
+}
+
+pub mod term_b_13_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "bnot(bnot(x))";
+}
+
+pub mod term_b_13_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "x";
+}
+
+pub mod term_b_13_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "x ∈ R_n";
+}
+
+pub mod term_x_1_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "neg(x)";
+}
+
+pub mod term_x_1_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "sub(0, x)";
+}
+
+pub mod term_x_1_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "x ∈ R_n";
+}
+
+pub mod term_x_2_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "bnot(x)";
+}
+
+pub mod term_x_2_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "xor(x, 2^n - 1)";
+}
+
+pub mod term_x_2_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "x ∈ R_n";
+}
+
+pub mod term_x_3_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "succ(x)";
+}
+
+pub mod term_x_3_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "add(x, 1)";
+}
+
+pub mod term_x_3_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "x ∈ R_n";
+}
+
+pub mod term_x_4_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "pred(x)";
+}
+
+pub mod term_x_4_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "sub(x, 1)";
+}
+
+pub mod term_x_4_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "x ∈ R_n";
+}
+
+pub mod term_x_5_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "neg(x)";
+}
+
+pub mod term_x_5_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "add(bnot(x), 1)";
+}
+
+pub mod term_x_5_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "x ∈ R_n";
+}
+
+pub mod term_x_6_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "bnot(x)";
+}
+
+pub mod term_x_6_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "pred(neg(x))";
+}
+
+pub mod term_x_6_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "x ∈ R_n";
+}
+
+pub mod term_x_7_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "xor(x, y)";
+}
+
+pub mod term_x_7_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "add(x, y) - 2 * and(x, y)";
+}
+
+pub mod term_x_7_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "x, y ∈ Z (before mod)";
+}
+
+pub mod term_d_1_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "succ^{2^n}(x)";
+}
+
+pub mod term_d_1_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "x";
+}
+
+pub mod term_d_1_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "x ∈ R_n";
+}
+
+pub mod term_d_3_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "neg(succ(neg(x)))";
+}
+
+pub mod term_d_3_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "pred(x)";
+}
+
+pub mod term_d_3_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "x ∈ R_n";
+}
+
+pub mod term_d_4_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "bnot(neg(x))";
+}
+
+pub mod term_d_4_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "pred(x)";
+}
+
+pub mod term_d_4_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "x ∈ R_n";
+}
+
+pub mod term_d_5_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "D_{2^n}";
+}
+
+pub mod term_d_5_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "{succ^k, neg ∘ succ^k : 0 ≤ k < 2^n}";
+}
+
+pub mod term_d_5_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "n ≥ 1";
+}
+
+pub mod term_u_1_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "R_n×";
+}
+
+pub mod term_u_1_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "Z/2 × Z/2^{n-2}";
+}
+
+pub mod term_u_1_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "n ≥ 3";
+}
+
+pub mod term_u_2_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "R_1× ≅ {1}; R_2× ≅ Z/2";
+}
+
+pub mod term_u_2_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "special cases for small n";
+}
+
+pub mod term_u_2_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "n ∈ {1, 2}";
+}
+
+pub mod term_u_3_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "ord(u)";
+}
+
+pub mod term_u_3_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "lcm(ord((-1)^a), ord(3^b))";
+}
+
+pub mod term_u_3_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "u = (-1)^a · 3^b ∈ R_n×";
+}
+
+pub mod term_u_4_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "ord_g(2)";
+}
+
+pub mod term_u_4_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "divides φ(g)";
+}
+
+pub mod term_u_4_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "g odd";
+}
+
+pub mod term_u_5_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "step_g";
+}
+
+pub mod term_u_5_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "2 * ((g - (2^n mod g)) mod g) + 1";
+}
+
+pub mod term_u_5_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "g odd, g > 1";
+}
+
+pub mod term_ag_1_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "μ_u";
+}
+
+pub mod term_ag_1_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "∉ D_{2^n}";
+}
+
+pub mod term_ag_1_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "u ∈ R_n×, u ≠ ±1";
+}
+
+pub mod term_ag_2_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "Aff(R_n)";
+}
+
+pub mod term_ag_2_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "R_n× ⋉ R_n";
+}
+
+pub mod term_ag_2_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "n ≥ 1";
+}
+
+pub mod term_ag_3_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "|Aff(R_n)|";
+}
+
+pub mod term_ag_3_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "2^{2n-1}";
+}
+
+pub mod term_ag_3_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "n ≥ 1";
+}
+
+pub mod term_ag_4_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "D_{2^n}";
+}
+
+pub mod term_ag_4_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "⊂ Aff(R_n), u ∈ {±1}";
+}
+
+pub mod term_ag_4_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "n ≥ 1";
+}
+
+pub mod term_ca_1_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "add(x,y)_k";
+}
+
+pub mod term_ca_1_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "xor(x_k, xor(y_k, c_k(x,y)))";
+}
+
+pub mod term_ca_1_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "x, y ∈ R_n, 0 ≤ k < n";
+}
+
+pub mod term_ca_2_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "c_{k+1}(x,y)";
+}
+
+pub mod term_ca_2_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "or(and(x_k,y_k), and(xor(x_k,y_k), c_k))";
+}
+
+pub mod term_ca_2_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "x, y ∈ R_n";
+}
+
+pub mod term_ca_3_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "c(x, y)";
+}
+
+pub mod term_ca_3_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "c(y, x)";
+}
+
+pub mod term_ca_3_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "x, y ∈ R_n";
+}
+
+pub mod term_ca_4_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "c(x, 0)";
+}
+
+pub mod term_ca_4_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "0";
+}
+
+pub mod term_ca_4_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "x ∈ R_n, all positions";
+}
+
+pub mod term_ca_5_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "c(x, neg(x))_k";
+}
+
+pub mod term_ca_5_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "1";
+}
+
+pub mod term_ca_5_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "x ∈ R_n, k > v_2(x)";
+}
+
+pub mod term_ca_6_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "d_Δ(x, y) > 0";
+}
+
+pub mod term_ca_6_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "∃ k : c_k(x,y) = 1";
+}
+
+pub mod term_ca_6_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "x, y ∈ R_n";
+}
+
+pub mod term_c_1_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "pins(compose(A, B))";
+}
+
+pub mod term_c_1_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "pins(A) ∪ pins(B)";
+}
+
+pub mod term_c_1_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "constraints A, B";
+}
+
+pub mod term_c_2_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "compose(A, B)";
+}
+
+pub mod term_c_2_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "compose(B, A)";
+}
+
+pub mod term_c_2_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "constraints A, B";
+}
+
+pub mod term_c_3_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "compose(compose(A,B), C)";
+}
+
+pub mod term_c_3_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "compose(A, compose(B,C))";
+}
+
+pub mod term_c_3_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "constraints A, B, C";
+}
+
+pub mod term_c_4_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "compose(A, A)";
+}
+
+pub mod term_c_4_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "A";
+}
+
+pub mod term_c_4_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "constraint A";
+}
+
+pub mod term_c_5_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "compose(A, ε)";
+}
+
+pub mod term_c_5_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "A";
+}
+
+pub mod term_c_5_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "constraint A, identity ε";
+}
+
+pub mod term_c_6_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "compose(A, Ω)";
+}
+
+pub mod term_c_6_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "Ω";
+}
+
+pub mod term_c_6_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "constraint A, annihilator Ω";
+}
+
+pub mod term_cdi_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "carry(residue(T))";
+}
+
+pub mod term_cdi_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "depth(T)";
+}
+
+pub mod term_cdi_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "T ∈ T_n";
+}
+
+pub mod term_cl_1_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "Constraint/≡";
+}
+
+pub mod term_cl_1_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "2^{[n]}";
+}
+
+pub mod term_cl_1_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "constraint equivalence classes";
+}
+
+pub mod term_cl_2_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "A ∨ B";
+}
+
+pub mod term_cl_2_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "compose(A, B)";
+}
+
+pub mod term_cl_2_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "constraints A, B";
+}
+
+pub mod term_cl_3_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "pins(A ∧ B)";
+}
+
+pub mod term_cl_3_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "pins(A) ∩ pins(B)";
+}
+
+pub mod term_cl_3_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "constraints A, B";
+}
+
+pub mod term_cl_4_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "(A ∨ B) ∧ C";
+}
+
+pub mod term_cl_4_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "(A ∧ C) ∨ (B ∧ C)";
+}
+
+pub mod term_cl_4_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "constraints A, B, C";
+}
+
+pub mod term_cl_5_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "A ∧ A̅ = ε, A ∨ A̅ = Ω";
+}
+
+pub mod term_cl_5_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "∃ A̅ (complement)";
+}
+
+pub mod term_cl_5_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "constraint A";
+}
+
+pub mod term_cm_1_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "C_i redundant in {C_1,...,C_k}";
+}
+
+pub mod term_cm_1_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "pins(C_i) ⊆ ∪_{j≠i} pins(C_j)";
+}
+
+pub mod term_cm_1_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "constraint set {C_1,...,C_k}";
+}
+
+pub mod term_cm_2_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "minimal cover";
+}
+
+pub mod term_cm_2_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "irredundant sub-collection (greedy removal)";
+}
+
+pub mod term_cm_2_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "CompositeConstraint";
+}
+
+pub mod term_cm_3_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "min constraints to cover n fibers";
+}
+
+pub mod term_cm_3_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "⌈n / max_k pins_per_constraint_k⌉";
+}
+
+pub mod term_cm_3_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "n fibers, constraint set";
+}
+
+pub mod term_cr_1_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "cost(ResidueConstraint(m, r))";
+}
+
+pub mod term_cr_1_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "step_m = 2 × ((−2^n) mod m) + 1";
+}
+
+pub mod term_cr_1_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "ResidueConstraint";
+}
+
+pub mod term_cr_2_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "cost(CarryConstraint(p))";
+}
+
+pub mod term_cr_2_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "popcount(p)";
+}
+
+pub mod term_cr_2_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "CarryConstraint";
+}
+
+pub mod term_cr_3_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "cost(DepthConstraint(d_min, d_max))";
+}
+
+pub mod term_cr_3_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "cost(residue) + cost(carry)";
+}
+
+pub mod term_cr_3_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "DepthConstraint";
+}
+
+pub mod term_cr_4_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "cost(compose(A, B))";
+}
+
+pub mod term_cr_4_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "≤ cost(A) + cost(B)";
+}
+
+pub mod term_cr_4_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "constraints A, B";
+}
+
+pub mod term_cr_5_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "optimal resolution order";
+}
+
+pub mod term_cr_5_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "increasing cost order";
+}
+
+pub mod term_cr_5_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "constraint set";
+}
+
+pub mod term_f_1_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "pinned fiber";
+}
+
+pub mod term_f_1_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "cannot be unpinned";
+}
+
+pub mod term_f_1_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "FiberCoordinate";
+}
+
+pub mod term_f_2_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "pin operations to close";
+}
+
+pub mod term_f_2_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "≤ n";
+}
+
+pub mod term_f_2_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "FiberBudget";
+}
+
+pub mod term_f_3_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "pinnedCount + freeCount";
+}
+
+pub mod term_f_3_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "totalFibers = n";
+}
+
+pub mod term_f_3_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "FiberBudget";
+}
+
+pub mod term_f_4_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "isClosed";
+}
+
+pub mod term_f_4_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "freeCount = 0 ⇔ pinnedCount = n";
+}
+
+pub mod term_f_4_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "FiberBudget";
+}
+
+pub mod term_fl_1_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "⊥";
+}
+
+pub mod term_fl_1_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "all fibers free (freeCount = n)";
+}
+
+pub mod term_fl_1_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "FiberBudget lattice";
+}
+
+pub mod term_fl_2_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "⊤";
+}
+
+pub mod term_fl_2_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "all fibers pinned (pinnedCount = n)";
+}
+
+pub mod term_fl_2_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "FiberBudget lattice";
+}
+
+pub mod term_fl_3_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "join(S₁, S₂)";
+}
+
+pub mod term_fl_3_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "union of pinnings from S₁ and S₂";
+}
+
+pub mod term_fl_3_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "FiberBudget states S₁, S₂";
+}
+
+pub mod term_fl_4_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "lattice height";
+}
+
+pub mod term_fl_4_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "n";
+}
+
+pub mod term_fl_4_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "FiberBudget lattice";
+}
+
+pub mod term_fpm_1_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "x ∈ Unit";
+}
+
+pub mod term_fpm_1_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "fiber_0(x) = 1 (x is odd)";
+}
+
+pub mod term_fpm_1_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "x ∈ R_n";
+}
+
+pub mod term_fpm_2_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "x ∈ Exterior";
+}
+
+pub mod term_fpm_2_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "x ∉ carrier(T)";
+}
+
+pub mod term_fpm_2_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "x ∈ R_n, type T";
+}
+
+pub mod term_fpm_3_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "x ∈ Irreducible";
+}
+
+pub mod term_fpm_3_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "x ∉ Unit ∪ Exterior AND no non-trivial factorization";
+}
+
+pub mod term_fpm_3_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "x ∈ R_n";
+}
+
+pub mod term_fpm_4_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "x ∈ Reducible";
+}
+
+pub mod term_fpm_4_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "x ∉ Unit ∪ Exterior ∪ Irreducible";
+}
+
+pub mod term_fpm_4_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "x ∈ R_n";
+}
+
+pub mod term_fpm_5_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "x = 2^{v(x)} ⋅ u";
+}
+
+pub mod term_fpm_5_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "u odd, v(x) = min position of 1-bit";
+}
+
+pub mod term_fpm_5_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "x ∈ R_n";
+}
+
+pub mod term_fpm_6_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "|{x: v(x) = k}|";
+}
+
+pub mod term_fpm_6_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "2^{n−k−1} for 0 < k < n; 1 for k = n";
+}
+
+pub mod term_fpm_6_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "R_n";
+}
+
+pub mod term_fpm_7_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "base type partition";
+}
+
+pub mod term_fpm_7_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "|Unit| = 2^{n−1}; |Irr| = 2^{n−2}; |Red| = 2^{n−2}";
+}
+
+pub mod term_fpm_7_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "R_n, n ≥ 3";
+}
+
+pub mod term_fs_1_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "fiber_k(x)";
+}
+
+pub mod term_fs_1_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "(x >> k) AND 1";
+}
+
+pub mod term_fs_1_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "x ∈ R_n, 0 ≤ k < n";
+}
+
+pub mod term_fs_2_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "fiber_0(x)";
+}
+
+pub mod term_fs_2_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "x mod 2 (parity)";
+}
+
+pub mod term_fs_2_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "x ∈ R_n";
+}
+
+pub mod term_fs_3_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "fiber_k(x) given fibers 0..k−1";
+}
+
+pub mod term_fs_3_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "determines x mod 2^{k+1}";
+}
+
+pub mod term_fs_3_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "x ∈ R_n";
+}
+
+pub mod term_fs_4_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "fibers 0..k together";
+}
+
+pub mod term_fs_4_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "determine x mod 2^{k+1}";
+}
+
+pub mod term_fs_4_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "x ∈ R_n";
+}
+
+pub mod term_fs_5_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "all n fibers";
+}
+
+pub mod term_fs_5_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "determine x uniquely";
+}
+
+pub mod term_fs_5_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "x ∈ R_n";
+}
+
+pub mod term_fs_6_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "stratum(x)";
+}
+
+pub mod term_fs_6_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "v_2(x) = min{k : fiber_k(x) = 1}";
+}
+
+pub mod term_fs_6_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "x ∈ R_n";
+}
+
+pub mod term_fs_7_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "depth(x)";
+}
+
+pub mod term_fs_7_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "≤ v_2(x) for irreducible elements";
+}
+
+pub mod term_fs_7_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "x ∈ R_n, base type";
+}
+
+pub mod term_re_1_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "Π_D(T)";
+}
+
+pub mod term_re_1_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "Π_C(T) = Π_E(T)";
+}
+
+pub mod term_re_1_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "T ∈ T_n";
+}
+
+pub mod term_ir_1_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "pinnedCount(state_{i+1})";
+}
+
+pub mod term_ir_1_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "≥ pinnedCount(state_i)";
+}
+
+pub mod term_ir_1_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "resolution states";
+}
+
+pub mod term_ir_2_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "iterations to converge";
+}
+
+pub mod term_ir_2_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "≤ n";
+}
+
+pub mod term_ir_2_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "resolution loop";
+}
+
+pub mod term_ir_3_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "convergenceRate";
+}
+
+pub mod term_ir_3_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "pinnedCount / iterationCount";
+}
+
+pub mod term_ir_3_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "ResolutionState";
+}
+
+pub mod term_ir_4_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "constraint set spans all fibers";
+}
+
+pub mod term_ir_4_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "loop terminates";
+}
+
+pub mod term_ir_4_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "complete constraint set";
+}
+
+pub mod term_sf_1_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "n ≡ 0 (mod ord_g(2))";
+}
+
+pub mod term_sf_1_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "factor g has optimal resolution at level n";
+}
+
+pub mod term_sf_1_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "factor g, quantum n";
+}
+
+pub mod term_sf_2_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "constraints with smaller step_g";
+}
+
+pub mod term_sf_2_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "are more constraining, apply first";
+}
+
+pub mod term_sf_2_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "constraint ordering";
+}
+
+pub mod term_rd_1_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "same type T and constraint sequence";
+}
+
+pub mod term_rd_1_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "unique resolved partition";
+}
+
+pub mod term_rd_1_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "T ∈ T_n, [C₁,...,Cₖ]";
+}
+
+pub mod term_rd_2_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "complete constraint set, any order";
+}
+
+pub mod term_rd_2_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "same final partition";
+}
+
+pub mod term_rd_2_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "closing constraint set";
+}
+
+pub mod term_se_1_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "EvaluationResolver";
+}
+
+pub mod term_se_1_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "directly computes set-theoretic partition";
+}
+
+pub mod term_se_1_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "T ∈ T_n";
+}
+
+pub mod term_se_2_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "DihedralFactorizationResolver";
+}
+
+pub mod term_se_2_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "orbit decomposition yields same partition";
+}
+
+pub mod term_se_2_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "T ∈ T_n";
+}
+
+pub mod term_se_3_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "CanonicalFormResolver";
+}
+
+pub mod term_se_3_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "confluent rewrite → same partition";
+}
+
+pub mod term_se_3_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "T ∈ T_n";
+}
+
+pub mod term_se_4_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "Π_D(T) = Π_C(T) = Π_E(T)";
+}
+
+pub mod term_se_4_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "all compute same set-theoretic partition";
+}
+
+pub mod term_se_4_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "T ∈ T_n";
+}
+
+pub mod term_oo_1_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "benefit(C_i, S)";
+}
+
+pub mod term_oo_1_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "|pins(C_i) ∖ S|";
+}
+
+pub mod term_oo_1_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "constraint C_i, pinned set S";
+}
+
+pub mod term_oo_2_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "cost(C_i)";
+}
+
+pub mod term_oo_2_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "step_{m_i} or popcount(p_i)";
+}
+
+pub mod term_oo_2_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "ResidueConstraint or CarryConstraint";
+}
+
+pub mod term_oo_3_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "greedy selection";
+}
+
+pub mod term_oo_3_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "argmax benefit(C_i, S) / cost(C_i)";
+}
+
+pub mod term_oo_3_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "each resolution step";
+}
+
+pub mod term_oo_4_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "greedy approximation";
+}
+
+pub mod term_oo_4_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "(1 − 1/e) ≈ 63% of optimal";
+}
+
+pub mod term_oo_4_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "weighted set cover";
+}
+
+pub mod term_oo_5_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "equal cost tiebreaker";
+}
+
+pub mod term_oo_5_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "prefer vertical (residue) before horizontal (carry)";
+}
+
+pub mod term_oo_5_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "cost-tied constraints";
+}
+
+pub mod term_cb_1_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "min convergenceRate";
+}
+
+pub mod term_cb_1_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "1 fiber per iteration";
+}
+
+pub mod term_cb_1_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "worst case";
+}
+
+pub mod term_cb_2_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "max convergenceRate";
+}
+
+pub mod term_cb_2_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "n fibers in 1 iteration";
+}
+
+pub mod term_cb_2_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "best case";
+}
+
+pub mod term_cb_3_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "expected rate (residue)";
+}
+
+pub mod term_cb_3_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "⌊log_2(m)⌋ fibers per constraint";
+}
+
+pub mod term_cb_3_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "ResidueConstraint(m, r)";
+}
+
+pub mod term_cb_4_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "convergenceRate < 1 for 2 iterations";
+}
+
+pub mod term_cb_4_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "constraint set may be insufficient";
+}
+
+pub mod term_cb_4_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "stall detection";
+}
+
+pub mod term_cb_5_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "∪_i pins(C_i) = {0,...,n−1}";
+}
+
+pub mod term_cb_5_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "constraint set closes budget";
+}
+
+pub mod term_cb_5_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "sufficiency criterion";
+}
+
+pub mod term_cb_6_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "iterations for k constraints";
+}
+
+pub mod term_cb_6_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "≤ min(k, n)";
+}
+
+pub mod term_cb_6_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "well-formed model";
+}
+
+pub mod term_ob_m1_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "d_R(x, z)";
+}
+
+pub mod term_ob_m1_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "≤ d_R(x, y) + d_R(y, z)";
+}
+
+pub mod term_ob_m1_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "x, y, z ∈ R_n";
+}
+
+pub mod term_ob_m2_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "d_H(x, z)";
+}
+
+pub mod term_ob_m2_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "≤ d_H(x, y) + d_H(y, z)";
+}
+
+pub mod term_ob_m2_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "x, y, z ∈ R_n";
+}
+
+pub mod term_ob_m3_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "d_Δ(x, y)";
+}
+
+pub mod term_ob_m3_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "|d_R(x, y) − d_H(x, y)|";
+}
+
+pub mod term_ob_m3_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "x, y ∈ R_n";
+}
+
+pub mod term_ob_m4_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "d_R(neg(x), neg(y))";
+}
+
+pub mod term_ob_m4_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "d_R(x, y)";
+}
+
+pub mod term_ob_m4_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "x, y ∈ R_n";
+}
+
+pub mod term_ob_m5_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "d_H(bnot(x), bnot(y))";
+}
+
+pub mod term_ob_m5_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "d_H(x, y)";
+}
+
+pub mod term_ob_m5_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "x, y ∈ R_n";
+}
+
+pub mod term_ob_m6_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "d_R(succ(x), succ(y))";
+}
+
+pub mod term_ob_m6_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "d_R(x, y) but d_H may differ";
+}
+
+pub mod term_ob_m6_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "x, y ∈ R_n";
+}
+
+pub mod term_ob_c1_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "[neg, bnot](x)";
+}
+
+pub mod term_ob_c1_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "2";
+}
+
+pub mod term_ob_c1_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "x ∈ R_n";
+}
+
+pub mod term_ob_c2_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "[neg, add(•,k)](x)";
+}
+
+pub mod term_ob_c2_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "−2k mod 2^n";
+}
+
+pub mod term_ob_c2_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "x ∈ R_n, constant k";
+}
+
+pub mod term_ob_c3_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "[bnot, xor(•,k)](x)";
+}
+
+pub mod term_ob_c3_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "0";
+}
+
+pub mod term_ob_c3_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "x ∈ R_n, constant k";
+}
+
+pub mod term_ob_h1_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "closed additive path monodromy";
+}
+
+pub mod term_ob_h1_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "trivial (abelian ⇒ path-independent)";
+}
+
+pub mod term_ob_h1_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "additive group";
+}
+
+pub mod term_ob_h2_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "closed {neg,bnot} path monodromy";
+}
+
+pub mod term_ob_h2_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "∈ D_{2^n}";
+}
+
+pub mod term_ob_h2_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "dihedral generators";
+}
+
+pub mod term_ob_h3_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "succ-only path WindingNumber";
+}
+
+pub mod term_ob_h3_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "path length / 2^n";
+}
+
+pub mod term_ob_h3_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "closed succ path";
+}
+
+pub mod term_ob_p1_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "PathLength(p₁ ⋅ p₂)";
+}
+
+pub mod term_ob_p1_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "PathLength(p₁) + PathLength(p₂)";
+}
+
+pub mod term_ob_p1_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "paths p₁, p₂";
+}
+
+pub mod term_ob_p2_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "TotalVariation(p₁ ⋅ p₂)";
+}
+
+pub mod term_ob_p2_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "≤ TotalVariation(p₁) + TotalVariation(p₂)";
+}
+
+pub mod term_ob_p2_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "paths p₁, p₂";
+}
+
+pub mod term_ob_p3_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "CascadeLength(c₁ ; c₂)";
+}
+
+pub mod term_ob_p3_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "CascadeLength(c₁) + CascadeLength(c₂)";
+}
+
+pub mod term_ob_p3_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "cascades c₁, c₂";
+}
+
+pub mod term_ct_1_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "catastrophe boundaries";
+}
+
+pub mod term_ct_1_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "g = 2^k for 1 ≤ k ≤ n−1";
+}
+
+pub mod term_ct_1_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "stratum transitions";
+}
+
+pub mod term_ct_2_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "odd prime catastrophe";
+}
+
+pub mod term_ct_2_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "ResidueConstraint(p, •) transitions visibility";
+}
+
+pub mod term_ct_2_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "odd prime p";
+}
+
+pub mod term_ct_3_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "CatastropheThreshold(g)";
+}
+
+pub mod term_ct_3_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "step_g / n";
+}
+
+pub mod term_ct_3_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "factor g";
+}
+
+pub mod term_ct_4_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "composite catastrophe g = p⋅q";
+}
+
+pub mod term_ct_4_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "max(step_p, step_q) / n";
+}
+
+pub mod term_ct_4_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "composite g";
+}
+
+pub mod term_cf_1_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "CurvatureFlux(γ)";
+}
+
+pub mod term_cf_1_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "Σ |d_R(x_i, x_{i+1}) − d_H(x_i, x_{i+1})|";
+}
+
+pub mod term_cf_1_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "path γ";
+}
+
+pub mod term_cf_2_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "ResolutionCost(T)";
+}
+
+pub mod term_cf_2_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "≥ CurvatureFlux(γ_opt)";
+}
+
+pub mod term_cf_2_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "type T";
+}
+
+pub mod term_cf_3_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "CurvatureFlux(x, succ(x))";
+}
+
+pub mod term_cf_3_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "trailing_ones(x) for t < n; n−1 for x = 2^n−1";
+}
+
+pub mod term_cf_3_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "x ∈ R_n";
+}
+
+pub mod term_cf_4_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "Σ_{x ∈ R_n} CurvatureFlux(x, succ(x))";
+}
+
+pub mod term_cf_4_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "2^n − 2";
+}
+
+pub mod term_cf_4_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "n ≥ 1";
+}
+
+pub mod term_hg_1_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "additive holonomy";
+}
+
+pub mod term_hg_1_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "trivial (abelian ⇒ path-independent)";
+}
+
+pub mod term_hg_1_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "additive group";
+}
+
+pub mod term_hg_2_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "{neg, bnot, succ, pred} holonomy";
+}
+
+pub mod term_hg_2_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "D_{2^n}";
+}
+
+pub mod term_hg_2_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "dihedral generators";
+}
+
+pub mod term_hg_3_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "{mul(•, u) : u ∈ R_n×} holonomy";
+}
+
+pub mod term_hg_3_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "R_n× ≅ Z/2 × Z/2^{n−2}";
+}
+
+pub mod term_hg_3_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "unit group";
+}
+
+pub mod term_hg_4_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "Hol(R_n)";
+}
+
+pub mod term_hg_4_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "Aff(R_n) = R_n× ⋉ R_n";
+}
+
+pub mod term_hg_4_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "n ≥ 1";
+}
+
+pub mod term_hg_5_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "Hol(R_n) decomposition";
+}
+
+pub mod term_hg_5_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "D_{2^n} ⋅ {mul(•,u) : u ∈ R_n×, u ≠ ±1}";
+}
+
+pub mod term_hg_5_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "n ≥ 1";
+}
+
+pub mod term_t_c1_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "compose(id, f)";
+}
+
+pub mod term_t_c1_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "f";
+}
+
+pub mod term_t_c1_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "f ∈ Transform";
+}
+
+pub mod term_t_c2_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "compose(f, id)";
+}
+
+pub mod term_t_c2_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "f";
+}
+
+pub mod term_t_c2_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "f ∈ Transform";
+}
+
+pub mod term_t_c3_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "compose(f, compose(g, h))";
+}
+
+pub mod term_t_c3_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "compose(compose(f, g), h)";
+}
+
+pub mod term_t_c3_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "f, g, h ∈ Transform";
+}
+
+pub mod term_t_c4_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "f composesWith g";
+}
+
+pub mod term_t_c4_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "target(f) = source(g)";
+}
+
+pub mod term_t_c4_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "f, g ∈ Transform";
+}
+
+pub mod term_t_i1_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "d_R(neg(x), neg(y))";
+}
+
+pub mod term_t_i1_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "d_R(x, y)";
+}
+
+pub mod term_t_i1_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "x, y ∈ R_n";
+}
+
+pub mod term_t_i2_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "d_H(bnot(x), bnot(y))";
+}
+
+pub mod term_t_i2_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "d_H(x, y)";
+}
+
+pub mod term_t_i2_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "x, y ∈ R_n";
+}
+
+pub mod term_t_i3_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "succ = neg ∘ bnot";
+}
+
+pub mod term_t_i3_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "preserves d_R but not d_H";
+}
+
+pub mod term_t_i3_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "x ∈ R_n";
+}
+
+pub mod term_t_i4_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "ring isometries";
+}
+
+pub mod term_t_i4_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "form a group under composition";
+}
+
+pub mod term_t_i4_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "Isometry";
+}
+
+pub mod term_t_i5_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "CurvatureObservable";
+}
+
+pub mod term_t_i5_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "measures failure of ring isometry to be Hamming isometry";
+}
+
+pub mod term_t_i5_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "Isometry";
+}
+
+pub mod term_t_e1_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "ι(x) = ι(y)";
+}
+
+pub mod term_t_e1_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "x = y";
+}
+
+pub mod term_t_e1_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "x, y ∈ R_n (injectivity)";
+}
+
+pub mod term_t_e2_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "ι(add(x,y))";
+}
+
+pub mod term_t_e2_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "add(ι(x), ι(y)); ι(mul(x,y)) = mul(ι(x), ι(y))";
+}
+
+pub mod term_t_e2_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "x, y ∈ R_n";
+}
+
+pub mod term_t_e3_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "ι₂ ∘ ι₁ : R_n → R_k";
+}
+
+pub mod term_t_e3_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "is an embedding (transitivity)";
+}
+
+pub mod term_t_e3_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "ι₁: R_n → R_m, ι₂: R_m → R_k";
+}
+
+pub mod term_t_e4_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "glyph ∘ ι ∘ addresses";
+}
+
+pub mod term_t_e4_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "well-defined";
+}
+
+pub mod term_t_e4_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "embedding ι";
+}
+
+pub mod term_t_a1_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "g ∈ D_{2^n} on Constraint C";
+}
+
+pub mod term_t_a1_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "g⋅C (transformed constraint)";
+}
+
+pub mod term_t_a1_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "g ∈ D_{2^n}, C ∈ Constraint";
+}
+
+pub mod term_t_a2_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "g ∈ D_{2^n} on Partition";
+}
+
+pub mod term_t_a2_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "permutes components";
+}
+
+pub mod term_t_a2_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "g ∈ D_{2^n}";
+}
+
+pub mod term_t_a3_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "D_{2^n} orbits on R_n";
+}
+
+pub mod term_t_a3_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "determine irreducibility boundaries";
+}
+
+pub mod term_t_a3_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "DihedralFactorizationResolver";
+}
+
+pub mod term_t_a4_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "fixed points of neg";
+}
+
+pub mod term_t_a4_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "{0, 2^{n−1}}; bnot has none (n > 0)";
+}
+
+pub mod term_t_a4_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "R_n";
+}
+
+pub mod term_au_1_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "Aut(R_n)";
+}
+
+pub mod term_au_1_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "{μ_u : x ↦ mul(u, x) | u ∈ R_n×}";
+}
+
+pub mod term_au_1_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "n ≥ 1";
+}
+
+pub mod term_au_2_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "Aut(R_n)";
+}
+
+pub mod term_au_2_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "≅ R_n× ≅ Z/2 × Z/2^{n−2}";
+}
+
+pub mod term_au_2_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "n ≥ 3";
+}
+
+pub mod term_au_3_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "|Aut(R_n)|";
+}
+
+pub mod term_au_3_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "2^{n−1}";
+}
+
+pub mod term_au_3_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "n ≥ 1";
+}
+
+pub mod term_au_4_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "Aut(R_n) ∩ D_{2^n}";
+}
+
+pub mod term_au_4_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "{id, neg}";
+}
+
+pub mod term_au_4_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "n ≥ 1";
+}
+
+pub mod term_au_5_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "Aff(R_n)";
+}
+
+pub mod term_au_5_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "⟨D_{2^n}, μ_3⟩";
+}
+
+pub mod term_au_5_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "n ≥ 1";
+}
+
+pub mod term_ef_1_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "F_ι(f)";
+}
+
+pub mod term_ef_1_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "ι ∘ f ∘ ι⁻¹ on Im(ι)";
+}
+
+pub mod term_ef_1_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "ι: R_n → R_m, f ∈ Cat(R_n)";
+}
+
+pub mod term_ef_2_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "F_ι(f ∘ g)";
+}
+
+pub mod term_ef_2_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "F_ι(f) ∘ F_ι(g)";
+}
+
+pub mod term_ef_2_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "ι: R_n → R_m";
+}
+
+pub mod term_ef_3_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "F_ι(id_{R_n})";
+}
+
+pub mod term_ef_3_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "id_{Im(ι)}";
+}
+
+pub mod term_ef_3_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "ι: R_n → R_m";
+}
+
+pub mod term_ef_4_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "F_{ι₂ ∘ ι₁}";
+}
+
+pub mod term_ef_4_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "F_{ι₂} ∘ F_{ι₁}";
+}
+
+pub mod term_ef_4_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "ι₁: R_n → R_m, ι₂: R_m → R_k";
+}
+
+pub mod term_ef_5_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "F_ι(ring isometry)";
+}
+
+pub mod term_ef_5_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "ring isometry at level m";
+}
+
+pub mod term_ef_5_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "ι: R_n → R_m";
+}
+
+pub mod term_ef_6_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "F_ι(D_{2^n})";
+}
+
+pub mod term_ef_6_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "⊆ D_{2^m} as subgroup";
+}
+
+pub mod term_ef_6_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "ι: R_n → R_m";
+}
+
+pub mod term_ef_7_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "F_ι(R_n×)";
+}
+
+pub mod term_ef_7_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "⊆ R_m× as subgroup";
+}
+
+pub mod term_ef_7_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "ι: R_n → R_m";
+}
+
+pub mod term_aa_1_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "glyph(x)";
+}
+
+pub mod term_aa_1_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "[braille(x[0:5]), braille(x[6:11]), ...]";
+}
+
+pub mod term_aa_1_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "x ∈ R_n (6-bit blocks)";
+}
+
+pub mod term_aa_2_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "braille(a ⊕ b)";
+}
+
+pub mod term_aa_2_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "braille(a) ⊕ braille(b)";
+}
+
+pub mod term_aa_2_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "a, b ∈ {0,1}^6";
+}
+
+pub mod term_aa_3_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "glyph(bnot(x))";
+}
+
+pub mod term_aa_3_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "complement each Braille character of glyph(x)";
+}
+
+pub mod term_aa_3_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "x ∈ R_n";
+}
+
+pub mod term_aa_4_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "glyph(add(x, y))";
+}
+
+pub mod term_aa_4_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "≠ f(glyph(x), glyph(y)) in general";
+}
+
+pub mod term_aa_4_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "x, y ∈ R_n";
+}
+
+pub mod term_aa_5_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "liftable operations";
+}
+
+pub mod term_aa_5_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "{xor, and, or, bnot}; NOT {add, sub, mul, neg, succ, pred}";
+}
+
+pub mod term_aa_5_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "operations on R_n";
+}
+
+pub mod term_aa_6_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "neg(x) = succ(bnot(x))";
+}
+
+pub mod term_aa_6_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "bnot lifts, succ does not";
+}
+
+pub mod term_aa_6_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "x ∈ R_n";
+}
+
+pub mod term_am_1_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "d_addr(a, b)";
+}
+
+pub mod term_am_1_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "Σ_i popcount(braille_i(a) ⊕ braille_i(b))";
+}
+
+pub mod term_am_1_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "addresses a, b";
+}
+
+pub mod term_am_2_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "d_addr(glyph(x), glyph(y))";
+}
+
+pub mod term_am_2_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "d_H(x, y)";
+}
+
+pub mod term_am_2_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "x, y ∈ R_n";
+}
+
+pub mod term_am_3_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "d_addr";
+}
+
+pub mod term_am_3_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "does NOT preserve d_R in general";
+}
+
+pub mod term_am_3_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "addresses";
+}
+
+pub mod term_am_4_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "d_Δ(x, y)";
+}
+
+pub mod term_am_4_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "|d_R(x,y) − d_addr(glyph(x), glyph(y))|";
+}
+
+pub mod term_am_4_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "x, y ∈ R_n";
+}
+
+pub mod term_th_1_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "S(state)";
+}
+
+pub mod term_th_1_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "freeCount × ln 2";
+}
+
+pub mod term_th_1_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "state ∈ FiberBudget";
+}
+
+pub mod term_th_2_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "S(⊥)";
+}
+
+pub mod term_th_2_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "n × ln 2";
+}
+
+pub mod term_th_2_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "unconstrained type";
+}
+
+pub mod term_th_3_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "S(⊤)";
+}
+
+pub mod term_th_3_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "0";
+}
+
+pub mod term_th_3_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "fully resolved type";
+}
+
+pub mod term_th_4_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "total resolution cost";
+}
+
+pub mod term_th_4_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "n × k_B T × ln 2";
+}
+
+pub mod term_th_4_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "Landauer bound";
+}
+
+pub mod term_th_5_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "β*";
+}
+
+pub mod term_th_5_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "ln 2";
+}
+
+pub mod term_th_5_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "UOR fiber system";
+}
+
+pub mod term_th_6_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "constraint application";
+}
+
+pub mod term_th_6_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "removes entropy; convergenceRate = cooling rate";
+}
+
+pub mod term_th_6_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "resolution loop";
+}
+
+pub mod term_th_7_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "CatastropheThreshold";
+}
+
+pub mod term_th_7_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "temperature of partition phase transition";
+}
+
+pub mod term_th_7_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "partition bifurcation";
+}
+
+pub mod term_th_8_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "step_g";
+}
+
+pub mod term_th_8_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "free-energy cost of constraint boundary";
+}
+
+pub mod term_th_8_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "constraint boundary g";
+}
+
+pub mod term_th_9_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "computational hardness";
+}
+
+pub mod term_th_9_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "type incompleteness (high temperature)";
+}
+
+pub mod term_th_9_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "type specification";
+}
+
+pub mod term_th_10_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "type resolution";
+}
+
+pub mod term_th_10_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "measurement; cost ≥ entropy removed";
+}
+
+pub mod term_th_10_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "resolution process";
+}
+
+pub mod term_ar_1_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "adiabatic schedule";
+}
+
+pub mod term_ar_1_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "decreasing freeCount × cost-per-fiber order";
+}
+
+pub mod term_ar_1_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "constraint ordering";
+}
+
+pub mod term_ar_2_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "Cost_adiabatic";
+}
+
+pub mod term_ar_2_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "Σ_i cost(C_{σ(i)}) where σ is optimal";
+}
+
+pub mod term_ar_2_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "optimal ordering";
+}
+
+pub mod term_ar_3_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "Cost_adiabatic";
+}
+
+pub mod term_ar_3_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "≥ n × k_B T × ln 2";
+}
+
+pub mod term_ar_3_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "Landauer bound";
+}
+
+pub mod term_ar_4_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "η = (n × ln 2) / Cost_adiabatic";
+}
+
+pub mod term_ar_4_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "≤ 1";
+}
+
+pub mod term_ar_4_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "adiabatic efficiency";
+}
+
+pub mod term_ar_5_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "greedy vs adiabatic difference";
+}
+
+pub mod term_ar_5_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "≤ 5% for n ≤ 16";
+}
+
+pub mod term_ar_5_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "empirical, Q0–Q4";
+}
+
+pub mod term_pd_1_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "phase space";
+}
+
+pub mod term_pd_1_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "{(n, g) : n ∈ Z₊, g constraint boundary}";
+}
+
+pub mod term_pd_1_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "UOR phase diagram";
+}
+
+pub mod term_pd_2_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "phase boundaries";
+}
+
+pub mod term_pd_2_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "g | (2^n − 1) or g = 2^k";
+}
+
+pub mod term_pd_2_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "(n, g) plane";
+}
+
+pub mod term_pd_3_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "parity boundary";
+}
+
+pub mod term_pd_3_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "|Unit| = 2^{n−1}, |non-Unit| = 2^{n−1}";
+}
+
+pub mod term_pd_3_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "g = 2";
+}
+
+pub mod term_pd_4_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "resonance lines";
+}
+
+pub mod term_pd_4_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "n = k ⋅ ord_g(2)";
+}
+
+pub mod term_pd_4_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "(n, g) plane";
+}
+
+pub mod term_pd_5_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "phase count at level n";
+}
+
+pub mod term_pd_5_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "≤ 2^n (typical O(n))";
+}
+
+pub mod term_pd_5_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "quantum level n";
+}
+
+pub mod term_rc_1_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "reversible pinning of fiber k";
+}
+
+pub mod term_rc_1_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "store prior state in ancilla fiber k'";
+}
+
+pub mod term_rc_1_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "FiberCoordinate k";
+}
+
+pub mod term_rc_2_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "reversible pinning entropy";
+}
+
+pub mod term_rc_2_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "ΔS_total = 0";
+}
+
+pub mod term_rc_2_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "reversible strategy";
+}
+
+pub mod term_rc_3_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "deferred Landauer cost";
+}
+
+pub mod term_rc_3_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "n × k_B T × ln 2 at ancilla erasure";
+}
+
+pub mod term_rc_3_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "ancilla cleanup";
+}
+
+pub mod term_rc_4_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "reversible total cost";
+}
+
+pub mod term_rc_4_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "= irreversible total cost (redistributed)";
+}
+
+pub mod term_rc_4_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "reversible strategy";
+}
+
+pub mod term_rc_5_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "quantum UOR";
+}
+
+pub mod term_rc_5_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "superposed fibers, cost ∝ winning path";
+}
+
+pub mod term_rc_5_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "hypothetical quantum";
+}
+
+pub mod term_dc_1_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "∂_R f(x)";
+}
+
+pub mod term_dc_1_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "f(succ(x)) - f(x)";
+}
+
+pub mod term_dc_1_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "f : R_n → R_n, x ∈ R_n";
+}
+
+pub mod term_dc_2_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "∂_H f(x)";
+}
+
+pub mod term_dc_2_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "f(bnot(x)) - f(x)";
+}
+
+pub mod term_dc_2_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "f : R_n → R_n, x ∈ R_n";
+}
+
+pub mod term_dc_3_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "∂_H id(x)";
+}
+
+pub mod term_dc_3_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "bnot(x) - x = -(2x + 1) mod 2^n";
+}
+
+pub mod term_dc_3_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "x ∈ R_n";
+}
+
+pub mod term_dc_4_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "[neg, bnot](x)";
+}
+
+pub mod term_dc_4_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "∂_R neg(x) - ∂_H neg(x)";
+}
+
+pub mod term_dc_4_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "x ∈ R_n";
+}
+
+pub mod term_dc_5_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "∂_R f - ∂_H f";
+}
+
+pub mod term_dc_5_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "Σ carry contributions";
+}
+
+pub mod term_dc_5_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "f : R_n → R_n";
+}
+
+pub mod term_dc_6_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "J_k(x)";
+}
+
+pub mod term_dc_6_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "∂_R f_k(x) where f_k = fiber_k";
+}
+
+pub mod term_dc_6_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "x ∈ R_n, 0 ≤ k < n";
+}
+
+pub mod term_dc_7_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "J_{n-1}(x)";
+}
+
+pub mod term_dc_7_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "may differ from lower fibers";
+}
+
+pub mod term_dc_7_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "x ∈ R_n";
+}
+
+pub mod term_dc_8_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "rank(J(x))";
+}
+
+pub mod term_dc_8_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "= d_H(x, succ(x)) - 1 for generic x";
+}
+
+pub mod term_dc_8_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "x ∈ R_n";
+}
+
+pub mod term_dc_9_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "κ(x)";
+}
+
+pub mod term_dc_9_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "Σ_k J_k(x)";
+}
+
+pub mod term_dc_9_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "x ∈ R_n";
+}
+
+pub mod term_dc_10_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "optimal next constraint";
+}
+
+pub mod term_dc_10_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "argmax J_k over free fibers";
+}
+
+pub mod term_dc_10_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "resolution step";
+}
+
+pub mod term_dc_11_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "Σ_{x} J_k(x)";
+}
+
+pub mod term_dc_11_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "≈ (2^n - 2)/n for each k";
+}
+
+pub mod term_dc_11_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "0 ≤ k < n";
+}
+
+pub mod term_ha_1_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "N(C)";
+}
+
+pub mod term_ha_1_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "simplicial complex on constraints";
+}
+
+pub mod term_ha_1_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "constraint set C";
+}
+
+pub mod term_ha_2_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "resolution stalls";
+}
+
+pub mod term_ha_2_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "⟺ H_k(N(C)) ≠ 0 for some k > 0";
+}
+
+pub mod term_ha_2_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "constraint set C";
+}
+
+pub mod term_ha_3_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "S_residual";
+}
+
+pub mod term_ha_3_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "≥ Σ_k β_k × ln 2";
+}
+
+pub mod term_ha_3_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "constraint configuration C";
+}
+
+pub mod term_it_2_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "χ(N(C))";
+}
+
+pub mod term_it_2_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "Σ_k (-1)^k β_k";
+}
+
+pub mod term_it_2_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "constraint nerve N(C)";
+}
+
+pub mod term_it_3_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "χ(N(C))";
+}
+
+pub mod term_it_3_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "Σ_k (-1)^k dim(H_k)";
+}
+
+pub mod term_it_3_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "constraint nerve N(C)";
+}
+
+pub mod term_it_6_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "λ_1(N(C))";
+}
+
+pub mod term_it_6_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "lower bounds convergence rate";
+}
+
+pub mod term_it_6_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "constraint nerve N(C)";
+}
+
+pub mod term_it_7a_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "Σ κ_k - χ(N(C))";
+}
+
+pub mod term_it_7a_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "= S_residual / ln 2";
+}
+
+pub mod term_it_7a_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "constraint configuration C";
+}
+
+pub mod term_it_7b_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "S_residual";
+}
+
+pub mod term_it_7b_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "= (Σ κ_k - χ) × ln 2";
+}
+
+pub mod term_it_7b_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "constraint configuration C";
+}
+
+pub mod term_it_7c_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "resolution cost";
+}
+
+pub mod term_it_7c_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "≥ n - χ(N(C))";
+}
+
+pub mod term_it_7c_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "constraint configuration C";
+}
+
+pub mod term_it_7d_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "resolution complete";
+}
+
+pub mod term_it_7d_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "⟺ χ(N(C)) = n and all β_k = 0";
+}
+
+pub mod term_it_7d_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "constraint nerve N(C)";
+}
+
+pub mod term_phi_1_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "φ₁(neg, ResidueConstraint(m,r))";
+}
+
+pub mod term_phi_1_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "ResidueConstraint(m, m-r)";
+}
+
+pub mod term_phi_1_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "ring op, constraint";
+}
+
+pub mod term_phi_2_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "φ₂(compose(A,B))";
+}
+
+pub mod term_phi_2_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "φ₂(A) ∪ φ₂(B)";
+}
+
+pub mod term_phi_2_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "constraints A, B";
+}
+
+pub mod term_phi_3_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "φ₃(closed fiber state)";
+}
+
+pub mod term_phi_3_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "unique 4-component partition";
+}
+
+pub mod term_phi_3_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "closed FiberBudget";
+}
+
+pub mod term_phi_4_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "φ₄(T, x)";
+}
+
+pub mod term_phi_4_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "φ₃(φ₂(φ₁(T, x)))";
+}
+
+pub mod term_phi_4_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "T ∈ T_n, x ∈ R_n";
+}
+
+pub mod term_phi_5_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "φ₅(neg)";
+}
+
+pub mod term_phi_5_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "preserves d_R, may change d_H";
+}
+
+pub mod term_phi_5_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "op ∈ Operation";
+}
+
+pub mod term_phi_6_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "φ₆(state, observables)";
+}
+
+pub mod term_phi_6_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "RefinementSuggestion";
+}
+
+pub mod term_phi_6_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "ResolutionState";
+}
+
+pub mod term_psi_1_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "N(constraints)";
+}
+
+pub mod term_psi_1_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "SimplicialComplex";
+}
+
+pub mod term_psi_1_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "constraint set";
+}
+
+pub mod term_psi_2_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "C(K)";
+}
+
+pub mod term_psi_2_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "ChainComplex";
+}
+
+pub mod term_psi_2_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "simplicial complex K";
+}
+
+pub mod term_psi_3_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "H_k(C)";
+}
+
+pub mod term_psi_3_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "ker(∂_k) / im(∂_{k+1})";
+}
+
+pub mod term_psi_3_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "chain complex C";
+}
+
+pub mod term_psi_5_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "C^k";
+}
+
+pub mod term_psi_5_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "Hom(C_k, R)";
+}
+
+pub mod term_psi_5_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "chain complex C, ring R";
+}
+
+pub mod term_psi_6_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "H^k(C)";
+}
+
+pub mod term_psi_6_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "ker(δ^k) / im(δ^{k-1})";
+}
+
+pub mod term_psi_6_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "cochain complex C";
+}
+
+pub mod term_surface_symmetry_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "P(Π(G(s)))";
+}
+
+pub mod term_surface_symmetry_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "s' where type(s') ≡ type(s) under F.constraint";
+}
+
+pub mod term_surface_symmetry_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str =
+        "G: GroundingMap, P: ProjectionMap, F: Frame, s: Literal, G.symbolConstraints = P.projectionOrder";
+}
+
+pub mod term_cc_1_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "resolution(x, T)";
+}
+
+pub mod term_cc_1_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "O(1) for CompleteType T";
+}
+
+pub mod term_cc_1_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "x ∈ R_n, T: CompleteType";
+}
+
+pub mod term_cc_2_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "completeness(T)";
+}
+
+pub mod term_cc_2_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "implies completeness(T')";
+}
+
+pub mod term_cc_2_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "T, T': ConstrainedType, T ⊆ T'";
+}
+
+pub mod term_cc_3_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "fibersClosed(W₁) + fibersClosed(W₂)";
+}
+
+pub mod term_cc_3_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "= n for valid concat(W₁, W₂)";
+}
+
+pub mod term_cc_3_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "W₁, W₂: CompletenessWitness";
+}
+
+pub mod term_cc_4_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "CompletenessResolver";
+}
+
+pub mod term_cc_4_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "fix(ψ-pipeline, CompletenessCandidate)";
+}
+
+pub mod term_cc_4_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "CompletenessCandidate";
+}
+
+pub mod term_cc_5_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "cert.verified = true";
+}
+
+pub mod term_cc_5_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "implies χ(N(C)) = n ∧ ∀k: β_k = 0";
+}
+
+pub mod term_cc_5_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "cert: CompletenessCertificate";
+}
+
+pub mod term_ql_1_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "neg(bnot(x))";
+}
+
+pub mod term_ql_1_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "succ(x) in Z/(2ⁿ)Z";
+}
+
+pub mod term_ql_1_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "x ∈ R_n, n ≥ 1";
+}
+
+pub mod term_ql_2_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "|D_{2ⁿ}|";
+}
+
+pub mod term_ql_2_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "2ⁿ⁺¹ for all n ≥ 1";
+}
+
+pub mod term_ql_2_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "n ≥ 1";
+}
+
+pub mod term_ql_3_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "P(j) = 2^{-j}";
+}
+
+pub mod term_ql_3_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "Boltzmann distribution at β* = ln 2, all n ≥ 1";
+}
+
+pub mod term_ql_3_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "j ∈ R_n, n ≥ 1";
+}
+
+pub mod term_ql_4_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "fiberBudget(PrimitiveType, n)";
+}
+
+pub mod term_ql_4_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "= n (one fiber per bit)";
+}
+
+pub mod term_ql_4_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "PrimitiveType, n ≥ 1";
+}
+
+pub mod term_ql_5_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "resolution(CompleteType, n)";
+}
+
+pub mod term_ql_5_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "O(1) for all n ≥ 1";
+}
+
+pub mod term_ql_5_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "CompleteType, n ≥ 1";
+}
+
+pub mod term_ql_6_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "contentAddress(x, n)";
+}
+
+pub mod term_ql_6_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "bijection for all n ≥ 1";
+}
+
+pub mod term_ql_6_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "x ∈ R_n, n ≥ 1";
+}
+
+pub mod term_ql_7_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "ψ-pipeline(ConstrainedType, n)";
+}
+
+pub mod term_ql_7_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "valid ChainComplex for all n ≥ 1";
+}
+
+pub mod term_ql_7_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "ConstrainedType, n ≥ 1";
+}
+
+pub mod term_sr_1_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "freeCount(B_{i+1})";
+}
+
+pub mod term_sr_1_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "≤ freeCount(B_i)";
+}
+
+pub mod term_sr_1_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "i in Session S";
+}
+
+pub mod term_sr_2_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "b.datum resolves under b.constraint";
+}
+
+pub mod term_sr_2_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "in O(1) iff Binding b is sound";
+}
+
+pub mod term_sr_2_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "b: Binding";
+}
+
+pub mod term_sr_3_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "∃ i: freeCount(B_i) = 0";
+}
+
+pub mod term_sr_3_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "Session S converges";
+}
+
+pub mod term_sr_3_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "Session S";
+}
+
+pub mod term_sr_4_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "bindings(C_fresh) ∩ bindings(C_prior)";
+}
+
+pub mod term_sr_4_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "= ∅ after SessionBoundary";
+}
+
+pub mod term_sr_4_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "C_prior, C_fresh: Context, SessionBoundary event";
+}
+
+pub mod term_sr_5_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "ContradictionBoundary";
+}
+
+pub mod term_sr_5_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "iff ∃ b, b': same address, different datum, same constraint";
+}
+
+pub mod term_sr_5_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "b, b': Binding in same Context";
+}
+
+pub mod term_ts_1_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "nerve(T, target)";
+}
+
+pub mod term_ts_1_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "∃ ConstrainedType T over R_n realising target";
+}
+
+pub mod term_ts_1_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "target: χ* ≤ n, β₀* = 1, β_k* = 0 for k ≥ 1";
+}
+
+pub mod term_ts_2_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "basisSize(T, IT_7d target)";
+}
+
+pub mod term_ts_2_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "n";
+}
+
+pub mod term_ts_2_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "IT_7d target, n-fiber types";
+}
+
+pub mod term_ts_3_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "χ(N(C + constraint))";
+}
+
+pub mod term_ts_3_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "≥ χ(N(C))";
+}
+
+pub mod term_ts_3_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "C: synthesis candidate constraint set";
+}
+
+pub mod term_ts_4_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "steps(TypeSynthesisResolver, target)";
+}
+
+pub mod term_ts_4_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "≤ n";
+}
+
+pub mod term_ts_4_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "target: realisable n-fiber type synthesis goal";
+}
+
+pub mod term_ts_5_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "SynthesizedType achieves IT_7d";
+}
+
+pub mod term_ts_5_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "iff CompletenessResolver certifies CompleteType";
+}
+
+pub mod term_ts_5_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "T: SynthesizedType";
+}
+
+pub mod term_ts_6_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "E[steps, Jacobian-guided synthesis]";
+}
+
+pub mod term_ts_6_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "O(n log n) vs O(n²) uninformed";
+}
+
+pub mod term_ts_6_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "T: n-fiber type synthesis goal";
+}
+
+pub mod term_ts_7_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "β₀(N(C)) for non-empty C";
+}
+
+pub mod term_ts_7_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "≥ 1";
+}
+
+pub mod term_ts_7_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "C: non-empty constraint set";
+}
+
+pub mod term_qls_1_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "QuantumLift T' is CompleteType";
+}
+
+pub mod term_qls_1_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "iff spectral sequence collapses at E_2";
+}
+
+pub mod term_qls_1_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "T: CompleteType at Q_n, T': QuantumLift to Q_{n+1}";
+}
+
+pub mod term_qls_2_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "non-trivial LiftObstruction location";
+}
+
+pub mod term_qls_2_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "specific fiber at bit position n+1";
+}
+
+pub mod term_qls_2_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "non-trivial LiftObstruction";
+}
+
+pub mod term_qls_3_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "basisSize(T') for trivial lift";
+}
+
+pub mod term_qls_3_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "basisSize(T) + 1";
+}
+
+pub mod term_qls_3_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "T: CompleteType at Q_n with closed constraint set";
+}
+
+pub mod term_qls_4_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "spectral sequence convergence page";
+}
+
+pub mod term_qls_4_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "≤ E_{d+2}";
+}
+
+pub mod term_qls_4_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "depth-d constraint configuration";
+}
+
+pub mod term_qls_5_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "universallyValid identity in R_{n+1}";
+}
+
+pub mod term_qls_5_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "holds with lifted constraint set";
+}
+
+pub mod term_qls_5_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "every op:universallyValid identity, QuantumLift T'";
+}
+
+pub mod term_qls_6_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "ψ-pipeline ChainComplex(T')";
+}
+
+pub mod term_qls_6_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "valid and restricts to ChainComplex(T) on base nerve";
+}
+
+pub mod term_qls_6_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "T': any QuantumLift of a CompleteType T";
+}
+
+pub mod term_mn_1_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "HolonomyGroup(T)";
+}
+
+pub mod term_mn_1_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "≤ D_{2^n}";
+}
+
+pub mod term_mn_1_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "T: ConstrainedType over R_n";
+}
+
+pub mod term_mn_2_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "HolonomyGroup(T) for additive constraints";
+}
+
+pub mod term_mn_2_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "{id} (trivial: T is FlatType)";
+}
+
+pub mod term_mn_2_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "T: all ResidueConstraint or DepthConstraint";
+}
+
+pub mod term_mn_3_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "HolonomyGroup(T) with neg + bnot in closed path";
+}
+
+pub mod term_mn_3_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "D_{2^n} (full dihedral holonomy)";
+}
+
+pub mod term_mn_3_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str =
+        "T: ConstrainedType with neg-related and bnot-related constraints in closed path";
+}
+
+pub mod term_mn_4_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "HolonomyGroup(T) ≠ {id}";
+}
+
+pub mod term_mn_4_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "⟹ β₁(N(C(T))) ≥ 1";
+}
+
+pub mod term_mn_4_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "T: ConstrainedType";
+}
+
+pub mod term_mn_5_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "CompleteType (IT_7d) ⟹ β₁ = 0 ⟹ holonomy";
+}
+
+pub mod term_mn_5_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "trivial ⟹ FlatType";
+}
+
+pub mod term_mn_5_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "T: CompleteType";
+}
+
+pub mod term_mn_6_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "monodromy(p₁ · p₂)";
+}
+
+pub mod term_mn_6_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "monodromy(p₁) · monodromy(p₂) in D_{2^n}";
+}
+
+pub mod term_mn_6_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "p₁, p₂: ClosedConstraintPath";
+}
+
+pub mod term_mn_7_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "TwistedType T ⟹ H²(N(C(T')); ℤ/2ℤ)";
+}
+
+pub mod term_mn_7_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "non-zero class (non-trivial LiftObstruction)";
+}
+
+pub mod term_mn_7_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "T': any QuantumLift of TwistedType T";
+}
+
+pub mod term_pt_1_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "fiberBudget(A × B)";
+}
+
+pub mod term_pt_1_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "fiberBudget(A) + fiberBudget(B)";
+}
+
+pub mod term_pt_1_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "A, B: TypeDefinition";
+}
+
+pub mod term_pt_2_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "partition(A × B)";
+}
+
+pub mod term_pt_2_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "partition(A) ⊗ partition(B)";
+}
+
+pub mod term_pt_2_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "A, B: TypeDefinition";
+}
+
+pub mod term_pt_3_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "χ(N(C(A × B)))";
+}
+
+pub mod term_pt_3_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "χ(N(C(A))) + χ(N(C(B)))";
+}
+
+pub mod term_pt_3_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "A, B: TypeDefinition";
+}
+
+pub mod term_pt_4_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "S(A × B)";
+}
+
+pub mod term_pt_4_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "S(A) + S(B)";
+}
+
+pub mod term_pt_4_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "A, B: TypeDefinition";
+}
+
+pub mod term_st_1_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "fiberBudget(A + B)";
+}
+
+pub mod term_st_1_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "max(fiberBudget(A), fiberBudget(B))";
+}
+
+pub mod term_st_1_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "A, B: TypeDefinition";
+}
+
+pub mod term_st_2_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "S(A + B)";
+}
+
+pub mod term_st_2_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "ln 2 + max(S(A), S(B))";
+}
+
+pub mod term_st_2_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "A, B: TypeDefinition";
+}
+
+pub mod term_sc_1_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "T_ctx(C)";
+}
+
+pub mod term_sc_1_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "freeCount(C) × ln 2 / n";
+}
+
+pub mod term_sc_1_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "C: Context, n = fiberBudget";
+}
+
+pub mod term_sc_2_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "σ(C)";
+}
+
+pub mod term_sc_2_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "(n − freeCount(C)) / n";
+}
+
+pub mod term_sc_2_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "C: Context, n = fiberBudget";
+}
+
+pub mod term_sc_3_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "σ(B_{i+1})";
+}
+
+pub mod term_sc_3_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "≥ σ(B_i)";
+}
+
+pub mod term_sc_3_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "i in Session S";
+}
+
+pub mod term_sc_4_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "σ(C) = 1";
+}
+
+pub mod term_sc_4_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "freeCount(C) = 0 ↔ S(C) = 0 ↔ T_ctx(C) = 0";
+}
+
+pub mod term_sc_4_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "C: Context";
+}
+
+pub mod term_sc_5_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "stepCount(q, C) at freeCount(C) = 0";
+}
+
+pub mod term_sc_5_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "0";
+}
+
+pub mod term_sc_5_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "q: Query, C: SaturatedContext";
+}
+
+pub mod term_sc_6_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "effectiveBudget(q, C)";
+}
+
+pub mod term_sc_6_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "max(0, fiberBudget(q.type) − |pinnedFibers(C) ∩ q.fiberSet|)";
+}
+
+pub mod term_sc_6_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "q: Query, C: Context";
+}
+
+pub mod term_sc_7_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "Cost_saturation(C)";
+}
+
+pub mod term_sc_7_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "n × k_B T × ln 2";
+}
+
+pub mod term_sc_7_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "C: SaturatedContext, n = fiberBudget";
+}
+
+pub mod term_ms_1_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "β₀(N(C))";
+}
+
+pub mod term_ms_1_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "≥ 1";
+}
+
+pub mod term_ms_1_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "C: non-empty ConstrainedType";
+}
+
+pub mod term_ms_2_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "χ(N(C))";
+}
+
+pub mod term_ms_2_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "≤ n";
+}
+
+pub mod term_ms_2_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "C: ConstrainedType at quantum level n";
+}
+
+pub mod term_ms_3_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "χ(N(C + c))";
+}
+
+pub mod term_ms_3_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "≥ χ(N(C))";
+}
+
+pub mod term_ms_3_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "C: ConstrainedType, c: Constraint";
+}
+
+pub mod term_ms_4_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "achievable(χ*, β_k*, n)";
+}
+
+pub mod term_ms_4_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "→ achievable(χ*, β_k*, n+1)";
+}
+
+pub mod term_ms_4_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "(χ*, β_k*) achievable at level n";
+}
+
+pub mod term_ms_5_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "verified SynthesisSignature set";
+}
+
+pub mod term_ms_5_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "→ exact morphospace boundary in the limit";
+}
+
+pub mod term_ms_5_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "all quantum levels";
+}
+
+pub mod term_gd_1_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "isGeodesic(T)";
+}
+
+pub mod term_gd_1_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "AR_1-ordered(T) ∧ DC_10-selected(T)";
+}
+
+pub mod term_gd_1_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "T: ComputationTrace";
+}
+
+pub mod term_gd_2_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "ΔS_step(i) on geodesic";
+}
+
+pub mod term_gd_2_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "ln 2";
+}
+
+pub mod term_gd_2_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "step i of GeodesicTrace T";
+}
+
+pub mod term_gd_3_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "Cost_geodesic(T)";
+}
+
+pub mod term_gd_3_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "freeCount_initial × k_B T × ln 2";
+}
+
+pub mod term_gd_3_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "T: GeodesicTrace";
+}
+
+pub mod term_gd_4_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "Cost(T) for geodesic T";
+}
+
+pub mod term_gd_4_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "= Cost(T') for any geodesic T' on same type";
+}
+
+pub mod term_gd_4_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "T, T': GeodesicTrace on same ConstrainedType";
+}
+
+pub mod term_gd_5_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "isSubgeodesic(T)";
+}
+
+pub mod term_gd_5_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "∃ i: J_k(step_i) < max_{free} J_k(state_i)";
+}
+
+pub mod term_gd_5_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "T: ComputationTrace";
+}
+
+pub mod term_qm_1_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "S_vonNeumann(ψ)";
+}
+
+pub mod term_qm_1_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "Cost_Landauer(collapse(ψ))";
+}
+
+pub mod term_qm_1_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "ψ: SuperposedFiberState";
+}
+
+pub mod term_qm_2_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "collapse(ψ)";
+}
+
+pub mod term_qm_2_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "apply(ResidueConstraint, collapsed_fiber)";
+}
+
+pub mod term_qm_2_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "ψ: SuperposedFiberState";
+}
+
+pub mod term_qm_3_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "S_vN(ψ)";
+}
+
+pub mod term_qm_3_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "∈ [0, ln 2]";
+}
+
+pub mod term_qm_3_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "ψ: single-fiber SuperposedFiberState";
+}
+
+pub mod term_qm_4_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "collapse(collapse(ψ))";
+}
+
+pub mod term_qm_4_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "collapse(ψ)";
+}
+
+pub mod term_qm_4_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "ψ: SuperposedFiberState";
+}
+
+pub mod term_qm_5_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "Σᵢ |αᵢ|²";
+}
+
+pub mod term_qm_5_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "1";
+}
+
+pub mod term_qm_5_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "SuperposedFiberState ψ";
+}
+
+pub mod term_rc_6_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "normalize(ψ)";
+}
+
+pub mod term_rc_6_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "ψ / sqrt(Σ |αᵢ|²)";
+}
+
+pub mod term_rc_6_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "SuperposedFiberState ψ";
+}
+
+pub mod term_fpm_8_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "|Irr| + |Red| + |Unit| + |Ext|";
+}
+
+pub mod term_fpm_8_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "2ⁿ";
+}
+
+pub mod term_fpm_8_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "Partition P over R_n";
+}
+
+pub mod term_fpm_9_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "x ∈ Ext(T)";
+}
+
+pub mod term_fpm_9_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "x ∉ carrier(T)";
+}
+
+pub mod term_fpm_9_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "TypeDefinition T, Datum x";
+}
+
+pub mod term_mn_8_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "holonomyClassified(T)";
+}
+
+pub mod term_mn_8_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "isFlatType(T) xor isTwistedType(T)";
+}
+
+pub mod term_mn_8_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "ConstrainedType T with holonomyGroup";
+}
+
+pub mod term_ql_8_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "levelSuccessor(nextLevel(Q_k))";
+}
+
+pub mod term_ql_8_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "Q_k";
+}
+
+pub mod term_ql_8_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "QuantumLevel Q_k with nextLevel defined";
+}
+
+pub mod term_d_7_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "compose(rᵃ sᵖ, rᵇ sᵠ)";
+}
+
+pub mod term_d_7_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "r^((a + (-1)ᵖ b) mod 2ⁿ) s^(p xor q)";
+}
+
+pub mod term_d_7_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "DihedralElement rᵃ sᵖ, rᵇ sᵠ in D_{2ⁿ}";
+}
+
+pub mod term_sp_1_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "resolve_superposition(classical(x))";
+}
+
+pub mod term_sp_1_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "resolve_classical(x)";
+}
+
+pub mod term_sp_1_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "Datum x";
+}
+
+pub mod term_sp_2_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "collapse(resolve_superposition(ψ))";
+}
+
+pub mod term_sp_2_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "resolve_classical(collapse(ψ))";
+}
+
+pub mod term_sp_2_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "SuperposedFiberState ψ";
+}
+
+pub mod term_sp_3_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "amplitudeVector(resolve_superposition(ψ))";
+}
+
+pub mod term_sp_3_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "normalized";
+}
+
+pub mod term_sp_3_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "SuperposedFiberState ψ";
+}
+
+pub mod term_sp_4_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "P(collapse to fiber k)";
+}
+
+pub mod term_sp_4_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "|α_k|²";
+}
+
+pub mod term_sp_4_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "SuperposedFiberState ψ, fiber index k";
+}
+
+pub mod term_pt_2a_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "Π(A × B)";
+}
+
+pub mod term_pt_2a_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "PartitionProduct(Π(A), Π(B))";
+}
+
+pub mod term_pt_2a_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "ProductType A × B";
+}
+
+pub mod term_pt_2b_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "Π(A + B)";
+}
+
+pub mod term_pt_2b_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "PartitionCoproduct(Π(A), Π(B))";
+}
+
+pub mod term_pt_2b_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "SumType A + B";
+}
+
+pub mod term_gd_6_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "isGeodesic(trace)";
+}
+
+pub mod term_gd_6_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "isAR1Ordered(trace) ∧ isDC10Selected(trace)";
+}
+
+pub mod term_gd_6_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "ComputationTrace trace";
+}
+
+pub mod term_qt_1_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "LiftChain(Q_j, Q_k) valid";
+}
+
+pub mod term_qt_1_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "every chainStep has trivial or resolved LiftObstruction";
+}
+
+pub mod term_qt_1_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "LiftChain from Q_j to Q_k";
+}
+
+pub mod term_qt_2_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "obstructionCount(chain)";
+}
+
+pub mod term_qt_2_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "<= chainLength(chain)";
+}
+
+pub mod term_qt_2_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "LiftChain";
+}
+
+pub mod term_qt_3_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "resolvedBasisSize(Q_k)";
+}
+
+pub mod term_qt_3_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "basisSize(Q_j) + chainLength + obstructionResolutionCost";
+}
+
+pub mod term_qt_3_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "LiftChain with source Q_j, target Q_k";
+}
+
+pub mod term_qt_4_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "isFlat(chain)";
+}
+
+pub mod term_qt_4_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "obstructionCount = 0 iff HolonomyGroup trivial at every step";
+}
+
+pub mod term_qt_4_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "LiftChain";
+}
+
+pub mod term_qt_5_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "LiftChainCertificate exists";
+}
+
+pub mod term_qt_5_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "CompleteType at Q_k satisfies IT_7d with witness chain";
+}
+
+pub mod term_qt_5_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "Q_k for arbitrary k";
+}
+
+pub mod term_qt_6_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "QT_3 with chainLength=1, cost=0";
+}
+
+pub mod term_qt_6_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "reduces to QLS_3";
+}
+
+pub mod term_qt_6_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "Single-step chains";
+}
+
+pub mod term_qt_7_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "flat chain resolvedBasisSize(Q_k)";
+}
+
+pub mod term_qt_7_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "basisSize(Q_j) + (k - j)";
+}
+
+pub mod term_qt_7_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "LiftChain with isFlat = true";
+}
+
+pub mod term_cc_pins_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "pinsFibers(CarryConstraint(p))";
+}
+
+pub mod term_cc_pins_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "{k : p(k)=1} union {first-zero(p)}";
+}
+
+pub mod term_cc_pins_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "bit-pattern p in CarryConstraint";
+}
+
+pub mod term_cc_cost_fiber_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "|pinsFibers(CarryConstraint(p))|";
+}
+
+pub mod term_cc_cost_fiber_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "popcount(p) + 1";
+}
+
+pub mod term_cc_cost_fiber_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "bit-pattern p in CarryConstraint";
+}
+
+pub mod term_jsat_rr_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "jointSat(Res(m1,r1), Res(m2,r2))";
+}
+
+pub mod term_jsat_rr_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "gcd(m1,m2) | (r1 - r2)";
+}
+
+pub mod term_jsat_rr_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "ResidueConstraint pairs over R_n";
+}
+
+pub mod term_jsat_cr_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "jointSat(Carry(p), Res(m,r))";
+}
+
+pub mod term_jsat_cr_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "pin-fiber intersection residue-class compatible";
+}
+
+pub mod term_jsat_cr_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "CarryConstraint, ResidueConstraint pairs";
+}
+
+pub mod term_jsat_cc_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "jointSat(Carry(p1), Carry(p2))";
+}
+
+pub mod term_jsat_cc_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "p1 AND p2 conflict-free";
+}
+
+pub mod term_jsat_cc_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "CarryConstraint pairs over R_n";
+}
+
+pub mod term_d_8_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "(r^a s^p)^(-1)";
+}
+
+pub mod term_d_8_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "r^(-(−1)^p a mod 2^n) s^p";
+}
+
+pub mod term_d_8_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "a in 0..2^n, p in {0,1}";
+}
+
+pub mod term_d_9_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "ord(r^k s^1)";
+}
+
+pub mod term_d_9_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "2";
+}
+
+pub mod term_d_9_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "k in Z/(2^n)Z";
+}
+
+pub mod term_exp_1_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "carrier(C) is monotone";
+}
+
+pub mod term_exp_1_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "all residues of C = modulus - 1, no Carry/Depth";
+}
+
+pub mod term_exp_1_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "ConstrainedType C over R_n";
+}
+
+pub mod term_exp_2_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "count of monotone ConstrainedTypes at Q_n";
+}
+
+pub mod term_exp_2_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "2^n";
+}
+
+pub mod term_exp_2_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "QuantumLevel Q_n, n >= 1";
+}
+
+pub mod term_exp_3_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "carrier(SumType(A,B))";
+}
+
+pub mod term_exp_3_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "coproduct(carrier(A), carrier(B))";
+}
+
+pub mod term_exp_3_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "SumType A + B";
+}
+
+pub mod term_st_3_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "chi(N(C(A+B)))";
+}
+
+pub mod term_st_3_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "chi(N(C(A))) + chi(N(C(B)))";
+}
+
+pub mod term_st_3_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "disjoint SumType A + B";
+}
+
+pub mod term_st_4_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "beta_k(N(C(A+B)))";
+}
+
+pub mod term_st_4_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "beta_k(N(C(A))) + beta_k(N(C(B)))";
+}
+
+pub mod term_st_4_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "disjoint SumType A + B, k >= 0";
+}
+
+pub mod term_st_5_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "CompleteType(A + B)";
+}
+
+pub mod term_st_5_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "CompleteType(A) and CompleteType(B) and Q(A)=Q(B)";
+}
+
+pub mod term_st_5_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "SumType A + B";
+}
+
+pub mod term_ts_8_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "min constraints for beta_1 = k";
+}
+
+pub mod term_ts_8_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "2k + 1";
+}
+
+pub mod term_ts_8_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "first Betti number k >= 1, n-fiber type";
+}
+
+pub mod term_ts_9_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "TypeSynthesisResolver terminates";
+}
+
+pub mod term_ts_9_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "within 2^n steps";
+}
+
+pub mod term_ts_9_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "QuantumLevel Q_n, any target signature";
+}
+
+pub mod term_ts_10_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "ForbiddenSignature(sigma)";
+}
+
+pub mod term_ts_10_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "no ConstrainedType with <= n constraints realises sigma";
+}
+
+pub mod term_ts_10_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "topological signature sigma at Q_n";
+}
+
+pub mod term_qt_8_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "ObstructionChain length from Q_j to Q_k";
+}
+
+pub mod term_qt_8_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "<= (k-j) * C(basisSize(Q_j), 3)";
+}
+
+pub mod term_qt_8_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "LiftChain from Q_j to Q_k";
+}
+
+pub mod term_qt_9_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "TowerCompletenessResolver terminates";
+}
+
+pub mod term_qt_9_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "within QT_8 bound";
+}
+
+pub mod term_qt_9_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "LiftChain of finite length";
+}
+
+pub mod term_coeff_1_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "standard coefficient ring for psi-pipeline";
+}
+
+pub mod term_coeff_1_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "Z/2Z";
+}
+
+pub mod term_coeff_1_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "ConstraintNerve N(C) at any quantum level";
+}
+
+pub mod term_go_1_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "pinsFibers(killing constraint for obstruction c)";
+}
+
+pub mod term_go_1_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "superset of pinsFibers(C_i) cap pinsFibers(C_j)";
+}
+
+pub mod term_go_1_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "GluingObstruction c, cycle pair (C_i, C_j)";
+}
+
+pub mod term_sr_6_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "freeCount(q) after saturation";
+}
+
+pub mod term_sr_6_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "fibers of q not in BindingAccumulator";
+}
+
+pub mod term_sr_6_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "saturated Session, new RelationQuery q";
+}
+
+pub mod term_sr_7_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "sigma after re-entry with query q";
+}
+
+pub mod term_sr_7_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "min(sigma, 1 - freeCount(q)/n)";
+}
+
+pub mod term_sr_7_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "SessionResolver, new query q";
+}
+
+pub mod term_qm_6_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "amplitude index set of SuperposedFiberState over T";
+}
+
+pub mod term_qm_6_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "monotone pinning trajectories consistent with T";
+}
+
+pub mod term_qm_6_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "SuperposedFiberState over ConstrainedType T at Q_n";
+}
+
+pub mod term_cic_1_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "valid(T) ∧ T: Transform";
+}
+
+pub mod term_cic_1_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "∃ c: TransformCertificate. certifies(c, T)";
+}
+
+pub mod term_cic_1_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "Transform T";
+}
+
+pub mod term_cic_2_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "isometry(T) ∧ metric-preserving(T)";
+}
+
+pub mod term_cic_2_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "∃ c: IsometryCertificate. certifies(c, T)";
+}
+
+pub mod term_cic_2_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "Isometry T";
+}
+
+pub mod term_cic_3_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "f(f(x)) = x ∀ x ∈ R_n";
+}
+
+pub mod term_cic_3_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "∃ c: InvolutionCertificate. certifies(c, f)";
+}
+
+pub mod term_cic_3_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "Involution f";
+}
+
+pub mod term_cic_4_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "σ(C) = 1 ∧ freeCount = 0";
+}
+
+pub mod term_cic_4_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "∃ c: SaturationCertificate. certifies(c, C)";
+}
+
+pub mod term_cic_4_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "SaturatedContext C";
+}
+
+pub mod term_cic_5_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "AR_1-ordered ∧ DC_10-selected trace";
+}
+
+pub mod term_cic_5_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "∃ c: GeodesicCertificate. certifies(c, trace)";
+}
+
+pub mod term_cic_5_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "GeodesicTrace";
+}
+
+pub mod term_cic_6_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "S_vN = L_cost at β* = ln 2";
+}
+
+pub mod term_cic_6_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "∃ c: MeasurementCertificate. certifies(c, event)";
+}
+
+pub mod term_cic_6_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "MeasurementEvent";
+}
+
+pub mod term_cic_7_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "P(k) = |α_k|² verified";
+}
+
+pub mod term_cic_7_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "∃ c: BornRuleVerification. certifies(c, event)";
+}
+
+pub mod term_cic_7_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "MeasurementEvent with amplitude vector";
+}
+
+pub mod term_gc_1_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "shared-frame grounding of symbol s";
+}
+
+pub mod term_gc_1_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "∃ c: GroundingCertificate. certifies(c, map)";
+}
+
+pub mod term_gc_1_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "GroundingMap with valid ProjectionMap";
+}
+
+pub mod term_sr_8_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "compose(S_A, S_B) valid at Q_k";
+}
+
+pub mod term_sr_8_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str =
+        "∀ j ≤ k: ∀ a ∈ pinnedFibers(S_A, Q_j) ∩ pinnedFibers(S_B, Q_j): datum(S_A, a, Q_j) = datum(S_B, a, Q_j)";
+}
+
+pub mod term_sr_8_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "S_A, S_B: Session at quantum level Q_k (k ≥ 0)";
+}
+
+pub mod term_sr_9_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "leasedFibers(L_A) ∩ leasedFibers(L_B)";
+}
+
+pub mod term_sr_9_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "= ∅";
+}
+
+pub mod term_sr_9_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "L_A, L_B: ContextLease on SharedContext C, L_A ≠ L_B";
+}
+
+pub mod term_sr_10_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "finalState(R, P_1, Q)";
+}
+
+pub mod term_sr_10_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "= finalState(R, P_2, Q) for any P_1, P_2: ExecutionPolicy";
+}
+
+pub mod term_sr_10_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "SessionResolver R with ExecutionPolicy P, pending query set Q";
+}
+
+pub mod term_mc_1_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "Σᵢ freeCount(leasedFibers(L_i))";
+}
+
+pub mod term_mc_1_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "= freeCount(C)";
+}
+
+pub mod term_mc_1_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str =
+        "SharedContext C; leaseSet {L_1, …, L_k} covering all fibers of C";
+}
+
+pub mod term_mc_2_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "freeCount(B_{i+1} |_L)";
+}
+
+pub mod term_mc_2_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "≤ freeCount(B_i |_L)";
+}
+
+pub mod term_mc_2_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str =
+        "ContextLease L held by Session S; binding step i within S restricted to leasedFibers(L)";
+}
+
+pub mod term_mc_3_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "freeCount(compose(S_A, S_B))";
+}
+
+pub mod term_mc_3_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str =
+        "freeCount(S_A) + freeCount(S_B) − |pinnedFibers(S_A) ∩ pinnedFibers(S_B)|";
+}
+
+pub mod term_mc_3_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "S_A, S_B: Session; compose(S_A, S_B) valid (SR_8 satisfied)";
+}
+
+pub mod term_mc_4_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "freeCount(compose(S_A, S_B))";
+}
+
+pub mod term_mc_4_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "= freeCount(S_A) + freeCount(S_B)";
+}
+
+pub mod term_mc_4_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str =
+        "S_A, S_B on ContextLeases L_A, L_B within SharedContext C; SR_9 holds";
+}
+
+pub mod term_mc_5_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "finalBindings(R, P_1, Q)";
+}
+
+pub mod term_mc_5_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "= finalBindings(R, P_2, Q)";
+}
+
+pub mod term_mc_5_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str =
+        "SessionResolver R; pending query set Q; ExecutionPolicy P_1, P_2";
+}
+
+pub mod term_mc_6_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "σ(compose(S_1, …, S_k))";
+}
+
+pub mod term_mc_6_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "= 1 (FullSaturation)";
+}
+
+pub mod term_mc_6_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str =
+        "SharedContext C; leases {L_1, …, L_k} pairwise disjoint (SR_9) and fully covering C; each S_i with freeCount = 0 within L_i";
+}
+
+pub mod term_mc_7_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "stepCount(q, C*)";
+}
+
+pub mod term_mc_7_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "= 0";
+}
+
+pub mod term_mc_7_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str =
+        "q: RelationQuery; C* = compose(S_1, …, S_k) with σ(C*) = 1 by MC_6";
+}
+
+pub mod term_mc_8_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "max_i stepCount(S_i to convergence within L_i)";
+}
+
+pub mod term_mc_8_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "≤ ⌈n/k⌉";
+}
+
+pub mod term_mc_8_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str =
+        "SharedContext C with totalFibers = n; uniform partition into k leases";
+}
+
+pub mod term_wc_1_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "a_k(x)";
+}
+
+pub mod term_wc_1_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "x_k (k-th bit of x)";
+}
+
+pub mod term_wc_1_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "x ∈ R_n, 0 ≤ k < n";
+}
+
+pub mod term_wc_2_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "S_k − x_k − y_k (mod 2)";
+}
+
+pub mod term_wc_2_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "c_k(x,y)";
+}
+
+pub mod term_wc_2_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "x, y ∈ R_n, 0 ≤ k < n";
+}
+
+pub mod term_wc_3_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "CA_2 recurrence";
+}
+
+pub mod term_wc_3_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "S_{k+1} ghost equation at p=2";
+}
+
+pub mod term_wc_3_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "x, y ∈ R_n";
+}
+
+pub mod term_wc_4_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "δ_k(x+y) correction";
+}
+
+pub mod term_wc_4_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "c_{k+1}(x,y)";
+}
+
+pub mod term_wc_4_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "x, y ∈ R_n";
+}
+
+pub mod term_wc_5_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "obstruction_trivial = false";
+}
+
+pub mod term_wc_5_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "δ_k ≠ 0 for some pair";
+}
+
+pub mod term_wc_5_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "Q_k, k ≥ 1";
+}
+
+pub mod term_wc_6_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "d_Δ(x,y) > 0";
+}
+
+pub mod term_wc_6_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "ghost defect nonzero";
+}
+
+pub mod term_wc_6_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "x, y ∈ R_n";
+}
+
+pub mod term_wc_7_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "succ^{2ⁿ}(x) = x";
+}
+
+pub mod term_wc_7_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "r^{2ⁿ} = 1 in Witt-Burnside ring";
+}
+
+pub mod term_wc_7_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "x ∈ R_n, n ≥ 1";
+}
+
+pub mod term_wc_8_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "neg(succ(neg(x)))";
+}
+
+pub mod term_wc_8_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "srs = r⁻¹ relation";
+}
+
+pub mod term_wc_8_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "x ∈ R_n, n ≥ 1";
+}
+
+pub mod term_wc_9_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "bnot(neg(x)) = pred(x)";
+}
+
+pub mod term_wc_9_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "Product of Witt-Burnside reflections";
+}
+
+pub mod term_wc_9_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "x ∈ R_n, n ≥ 1";
+}
+
+pub mod term_wc_10_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "φ(x) on W_n(F_2)";
+}
+
+pub mod term_wc_10_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "x (identity, F_2 perfect)";
+}
+
+pub mod term_wc_10_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "x ∈ R_n, n ≥ 1";
+}
+
+pub mod term_wc_11_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "V(x) on W_n(F_2)";
+}
+
+pub mod term_wc_11_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "add(x, x) in Z/(2ⁿ)Z";
+}
+
+pub mod term_wc_11_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "x ∈ R_n, n ≥ 1";
+}
+
+pub mod term_wc_12_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "δ(x) on W_n(F_2)";
+}
+
+pub mod term_wc_12_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "(x − mul(x,x)) / 2";
+}
+
+pub mod term_wc_12_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "x ∈ R_n, n ≥ 2";
+}
+
+pub mod term_oa_1_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "|2|_2 · |2|_∞";
+}
+
+pub mod term_oa_1_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "1 in Q×";
+}
+
+pub mod term_oa_1_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "p = 2";
+}
+
+pub mod term_oa_2_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "CrossingCost(p=2)";
+}
+
+pub mod term_oa_2_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "ln 2 = −ln|2|_2";
+}
+
+pub mod term_oa_2_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "p = 2";
+}
+
+pub mod term_oa_3_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "β* in Cost_Landauer";
+}
+
+pub mod term_oa_3_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "CrossingCost(p=2)";
+}
+
+pub mod term_oa_3_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "p = 2";
+}
+
+pub mod term_oa_4_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "P(outcome k) = |α_k|_∞²";
+}
+
+pub mod term_oa_4_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "Archimedean image of 2-adic amplitude";
+}
+
+pub mod term_oa_4_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "rational amplitudes";
+}
+
+pub mod term_oa_5_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "Information cost of δ (division by 2)";
+}
+
+pub mod term_oa_5_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "ln 2 nats";
+}
+
+pub mod term_oa_5_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "p = 2";
+}
+
+pub mod term_ht_1_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "N(C)";
+}
+
+pub mod term_ht_1_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "KanComplex";
+}
+
+pub mod term_ht_1_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "constraint configuration C";
+}
+
+pub mod term_ht_2_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "π₀(N(C))";
+}
+
+pub mod term_ht_2_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "Z^{β₀}";
+}
+
+pub mod term_ht_2_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "constraint configuration C";
+}
+
+pub mod term_ht_3_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "π₁(N(C)) → D_{2^n}";
+}
+
+pub mod term_ht_3_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "HolonomyGroup factorization";
+}
+
+pub mod term_ht_3_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "constraint configuration C";
+}
+
+pub mod term_ht_4_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "π_k(N(C)) for k > dim(N(C))";
+}
+
+pub mod term_ht_4_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "0";
+}
+
+pub mod term_ht_4_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "constraint configuration C, k > dim(N(C))";
+}
+
+pub mod term_ht_5_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "τ_{≤1}(N(C))";
+}
+
+pub mod term_ht_5_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "FlatType/TwistedType classification";
+}
+
+pub mod term_ht_5_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "constraint configuration C";
+}
+
+pub mod term_ht_6_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "κ_k trivial for all k > d";
+}
+
+pub mod term_ht_6_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "spectral sequence collapses at E_{d+2}";
+}
+
+pub mod term_ht_6_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "constraint configuration C, d = max simplex dim";
+}
+
+pub mod term_ht_7_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "[α, β] ≠ 0 in π_{p+q−1}";
+}
+
+pub mod term_ht_7_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "LiftObstruction non-trivial";
+}
+
+pub mod term_ht_7_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "α ∈ π_p, β ∈ π_q";
+}
+
+pub mod term_ht_8_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "π_k(N(C)) ⊗ Z";
+}
+
+pub mod term_ht_8_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "H_k(N(C); Z) for smallest k with π_k ≠ 0";
+}
+
+pub mod term_ht_8_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "constraint configuration C";
+}
+
+pub mod term_psi_7_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "KanComplex(N(C))";
+}
+
+pub mod term_psi_7_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "PostnikovTower";
+}
+
+pub mod term_psi_7_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "constraint configuration C";
+}
+
+pub mod term_psi_8_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "PostnikovTower(τ≤k)";
+}
+
+pub mod term_psi_8_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "HomotopyGroups(π_k)";
+}
+
+pub mod term_psi_8_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "constraint configuration C";
+}
+
+pub mod term_psi_9_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "HomotopyGroups(π_k)";
+}
+
+pub mod term_psi_9_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "KInvariants(κ_k)";
+}
+
+pub mod term_psi_9_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "constraint configuration C";
+}
+
+pub mod term_hp_1_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "ψ_7 ∘ ψ_1";
+}
+
+pub mod term_hp_1_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "Kan promotion of nerve";
+}
+
+pub mod term_hp_1_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "constraint configuration C";
+}
+
+pub mod term_hp_2_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "ψ_8(τ≤k) restricted";
+}
+
+pub mod term_hp_2_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "ψ_3(C≤k)";
+}
+
+pub mod term_hp_2_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "constraint configuration C, truncation level k";
+}
+
+pub mod term_hp_3_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "ψ_9 detects convergence";
+}
+
+pub mod term_hp_3_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "spectral sequence converges at E_{d+2}";
+}
+
+pub mod term_hp_3_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "constraint configuration C";
+}
+
+pub mod term_hp_4_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "HomotopyResolver time";
+}
+
+pub mod term_hp_4_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "O(n^{d+1})";
+}
+
+pub mod term_hp_4_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "d = max simplex dimension";
+}
+
+pub mod term_md_1_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "dim(M_n)";
+}
+
+pub mod term_md_1_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "basisSize(T)";
+}
+
+pub mod term_md_1_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "T in M_n";
+}
+
+pub mod term_md_2_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "H^0(Def(T))";
+}
+
+pub mod term_md_2_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "Aut(T) ∩ D_{2^n}";
+}
+
+pub mod term_md_2_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "CompleteType T";
+}
+
+pub mod term_md_3_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "H^1(Def(T))";
+}
+
+pub mod term_md_3_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "T_T(M_n)";
+}
+
+pub mod term_md_3_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "CompleteType T";
+}
+
+pub mod term_md_4_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "H^2(Def(T))";
+}
+
+pub mod term_md_4_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "LiftObstruction space";
+}
+
+pub mod term_md_4_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "CompleteType T";
+}
+
+pub mod term_md_5_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "FlatType stratum codimension";
+}
+
+pub mod term_md_5_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "0";
+}
+
+pub mod term_md_5_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "M_n at any quantum level";
+}
+
+pub mod term_md_6_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "TwistedType stratum codimension";
+}
+
+pub mod term_md_6_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "≥ 1";
+}
+
+pub mod term_md_6_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "M_n at any quantum level";
+}
+
+pub mod term_md_7_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "VersalDeformation existence";
+}
+
+pub mod term_md_7_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "guaranteed when H^2 = 0";
+}
+
+pub mod term_md_7_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "CompleteType T";
+}
+
+pub mod term_md_8_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "familyPreservesCompleteness";
+}
+
+pub mod term_md_8_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "H^2(Def(T_t)) = 0 along path";
+}
+
+pub mod term_md_8_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "DeformationFamily {C_t}";
+}
+
+pub mod term_md_9_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "fiber(ModuliTowerMap, T) dimension";
+}
+
+pub mod term_md_9_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "1 when obstructionTrivial";
+}
+
+pub mod term_md_9_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "CompleteType T, obstruction = 0";
+}
+
+pub mod term_md_10_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "fiber(ModuliTowerMap, T)";
+}
+
+pub mod term_md_10_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "empty iff TwistedType at every level";
+}
+
+pub mod term_md_10_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "CompleteType T";
+}
+
+pub mod term_mr_1_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "ModuliResolver boundary";
+}
+
+pub mod term_mr_1_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "MorphospaceBoundary";
+}
+
+pub mod term_mr_1_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "M_n";
+}
+
+pub mod term_mr_2_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "StratificationRecord coverage";
+}
+
+pub mod term_mr_2_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "every CompleteType in exactly one stratum";
+}
+
+pub mod term_mr_2_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "M_n";
+}
+
+pub mod term_mr_3_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "ModuliResolver complexity";
+}
+
+pub mod term_mr_3_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "O(n × basisSize²)";
+}
+
+pub mod term_mr_3_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "CompleteType T";
+}
+
+pub mod term_mr_4_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "achievabilityStatus = Achievable";
+}
+
+pub mod term_mr_4_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "signature in some HolonomyStratum";
+}
+
+pub mod term_mr_4_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "MorphospaceRecord";
+}
+
+pub mod term_cy_1_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "generate(k)";
+}
+
+pub mod term_cy_1_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "and(x_k, y_k) = 1";
+}
+
+pub mod term_cy_1_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "x, y ∈ R_n, 0 ≤ k < n";
+}
+
+pub mod term_cy_2_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "propagate(k)";
+}
+
+pub mod term_cy_2_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "xor(x_k, y_k) = 1 ∧ c_k = 1";
+}
+
+pub mod term_cy_2_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "x, y ∈ R_n, 0 ≤ k < n";
+}
+
+pub mod term_cy_3_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "kill(k)";
+}
+
+pub mod term_cy_3_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "and(x_k, y_k) = 0 ∧ xor(x_k, y_k) = 0";
+}
+
+pub mod term_cy_3_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "x, y ∈ R_n, 0 ≤ k < n";
+}
+
+pub mod term_cy_4_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "d_Δ(x, y)";
+}
+
+pub mod term_cy_4_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "|carryCount(x+y) − hammingDistance(x, y)|";
+}
+
+pub mod term_cy_4_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "x, y ∈ R_n";
+}
+
+pub mod term_cy_5_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "argmin_enc Σ d_Δ(enc(s_i), enc(s_j))";
+}
+
+pub mod term_cy_5_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "enc where carry significance ≅ domain dependency";
+}
+
+pub mod term_cy_5_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "finite symbol set S, observed pairs (s_i, s_j)";
+}
+
+pub mod term_cy_6_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "min d_Δ fiber ordering";
+}
+
+pub mod term_cy_6_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "high-significance fibers → most informative observables";
+}
+
+pub mod term_cy_6_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "EncodingConfiguration over ordered domain";
+}
+
+pub mod term_cy_7_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "T(carry_chain(n))";
+}
+
+pub mod term_cy_7_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "O(log n) via prefix computation on (g_k, p_k) pairs";
+}
+
+pub mod term_cy_7_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "CarryChain of length n";
+}
+
+pub mod term_bm_1_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "σ(C)";
+}
+
+pub mod term_bm_1_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "(n − freeCount(C)) / n";
+}
+
+pub mod term_bm_1_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "Context C with n fibers";
+}
+
+pub mod term_bm_2_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "χ(nerve(C))";
+}
+
+pub mod term_bm_2_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "Σ(−1)^k β_k(nerve(C))";
+}
+
+pub mod term_bm_2_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "constraint set C";
+}
+
+pub mod term_bm_3_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "Σκ_k − χ";
+}
+
+pub mod term_bm_3_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "S_residual / ln 2";
+}
+
+pub mod term_bm_3_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "computation state";
+}
+
+pub mod term_bm_4_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "J_k (pinned fiber k)";
+}
+
+pub mod term_bm_4_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "0";
+}
+
+pub mod term_bm_4_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "pinned fiber k";
+}
+
+pub mod term_bm_5_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "d_Δ(x, y) > 0";
+}
+
+pub mod term_bm_5_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "carry(x + y) ≠ 0";
+}
+
+pub mod term_bm_5_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "x, y ∈ R_n";
+}
+
+pub mod term_bm_6_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "metric tower";
+}
+
+pub mod term_bm_6_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "d_Δ → {σ, J_k} → β_k → χ → r";
+}
+
+pub mod term_bm_6_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "computation state";
+}
+
+pub mod term_gl_1_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "σ(T)";
+}
+
+pub mod term_gl_1_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "lower_adjoint(T)";
+}
+
+pub mod term_gl_1_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "type T in type lattice";
+}
+
+pub mod term_gl_2_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "r(T)";
+}
+
+pub mod term_gl_2_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "1 − upper_adjoint(T)";
+}
+
+pub mod term_gl_2_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "type T in type lattice";
+}
+
+pub mod term_gl_3_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "upper(lower(T))";
+}
+
+pub mod term_gl_3_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "T (fixpoint: σ=1, r=0)";
+}
+
+pub mod term_gl_3_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "CompleteType T";
+}
+
+pub mod term_gl_4_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "T₁ ≤ T₂ in type lattice";
+}
+
+pub mod term_gl_4_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "fiber(T₂) ⊆ fiber(T₁)";
+}
+
+pub mod term_gl_4_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "types T₁, T₂";
+}
+
+pub mod term_nv_1_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "nerve(C₁ ∪ C₂)";
+}
+
+pub mod term_nv_1_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "nerve(C₁) ∪ nerve(C₂)";
+}
+
+pub mod term_nv_1_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "disjoint constraint domains C₁, C₂";
+}
+
+pub mod term_nv_2_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "β_k(C₁ ∪ C₂)";
+}
+
+pub mod term_nv_2_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "β_k(C₁) + β_k(C₂) − β_k(C₁ ∩ C₂)";
+}
+
+pub mod term_nv_2_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "constraint sets C₁, C₂";
+}
+
+pub mod term_nv_3_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "Δβ_k";
+}
+
+pub mod term_nv_3_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "∈ {−1, 0, +1}";
+}
+
+pub mod term_nv_3_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "single constraint addition, dimension k";
+}
+
+pub mod term_nv_4_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "β_k(C ∪ {c})";
+}
+
+pub mod term_nv_4_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "≤ β_k(C)";
+}
+
+pub mod term_nv_4_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "constraint set C, new constraint c";
+}
+
+pub mod term_sd_1_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "quantize(value, range, bits)";
+}
+
+pub mod term_sd_1_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "ring element with d_R ∝ |v₁ − v₂|";
+}
+
+pub mod term_sd_1_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "values v in ordered domain";
+}
+
+pub mod term_sd_2_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "encoding(alphabet)";
+}
+
+pub mod term_sd_2_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "argmin_{e} Σ d_Δ(e(a), e(b))";
+}
+
+pub mod term_sd_2_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "symbol pairs (a,b) in alphabet";
+}
+
+pub mod term_sd_3_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "Seq(T)";
+}
+
+pub mod term_sd_3_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "Free(T) with backbone ordering";
+}
+
+pub mod term_sd_3_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "element type T";
+}
+
+pub mod term_sd_4_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "fibers(Tuple(f₁,...,fₖ))";
+}
+
+pub mod term_sd_4_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "Σᵢ fibers(fᵢ)";
+}
+
+pub mod term_sd_4_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "fields f_1,...,f_k of tuple type";
+}
+
+pub mod term_sd_5_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "nerve(Graph(V,E))";
+}
+
+pub mod term_sd_5_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "constraint_nerve(Graph(V,E))";
+}
+
+pub mod term_sd_5_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "graph (V,E) with typed nodes";
+}
+
+pub mod term_sd_6_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "d_Δ(Set(a,b,c))";
+}
+
+pub mod term_sd_6_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "d_Δ(Set(σ(a,b,c)))";
+}
+
+pub mod term_sd_6_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "permutation σ of set elements";
+}
+
+pub mod term_sd_7_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "β_1(Tree(V,E))";
+}
+
+pub mod term_sd_7_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "0";
+}
+
+pub mod term_sd_7_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "tree (V,E) with beta_0=1";
+}
+
+pub mod term_sd_8_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "Table(S)";
+}
+
+pub mod term_sd_8_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "Seq(Tuple(S))";
+}
+
+pub mod term_sd_8_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "schema S defining tuple fields";
+}
+
+pub mod term_dd_1_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "δ(q, R)";
+}
+
+pub mod term_dd_1_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "δ(q, R)";
+}
+
+pub mod term_dd_1_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "query q, registry R";
+}
+
+pub mod term_dd_2_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "dom(R)";
+}
+
+pub mod term_dd_2_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "{q | ∃r. δ(q,R)=r}";
+}
+
+pub mod term_dd_2_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "registry R";
+}
+
+pub mod term_pi_1_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "ι(ι(s,C),C)";
+}
+
+pub mod term_pi_1_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "ι(s,C)";
+}
+
+pub mod term_pi_1_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "symbol s, SaturatedContext C";
+}
+
+pub mod term_pi_2_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "type(ι(s,C))";
+}
+
+pub mod term_pi_2_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "consistent(C)";
+}
+
+pub mod term_pi_2_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "symbol s, context C";
+}
+
+pub mod term_pi_3_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "ι(s,C)";
+}
+
+pub mod term_pi_3_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "P(Π(G(s,C)))";
+}
+
+pub mod term_pi_3_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "symbol s, context C";
+}
+
+pub mod term_pi_4_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "complexity(ι(s,C))";
+}
+
+pub mod term_pi_4_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "O(|C|)";
+}
+
+pub mod term_pi_4_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "symbol s, context C";
+}
+
+pub mod term_pi_5_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "roundTrip(P(Π(G(s))))";
+}
+
+pub mod term_pi_5_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "s";
+}
+
+pub mod term_pi_5_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "symbol s";
+}
+
+pub mod term_pa_1_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "α(b₁,α(b₂,C))";
+}
+
+pub mod term_pa_1_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "α(b₂,α(b₁,C))";
+}
+
+pub mod term_pa_1_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "bindings b₁,b₂, context C at saturation";
+}
+
+pub mod term_pa_2_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "fibers(α(b,C))";
+}
+
+pub mod term_pa_2_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "fibers(C) ∪ {b.fiber}";
+}
+
+pub mod term_pa_2_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "binding b, context C";
+}
+
+pub mod term_pa_3_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "constraints(α(b,C))";
+}
+
+pub mod term_pa_3_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "constraints(C) ∪ constraints(b)";
+}
+
+pub mod term_pa_3_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "binding b, context C";
+}
+
+pub mod term_pa_4_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "α(b,C)|_{pinned(C)}";
+}
+
+pub mod term_pa_4_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "C|_{pinned(C)}";
+}
+
+pub mod term_pa_4_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "binding b, context C";
+}
+
+pub mod term_pa_5_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "α(∅, C)";
+}
+
+pub mod term_pa_5_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "C";
+}
+
+pub mod term_pa_5_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "context C";
+}
+
+pub mod term_pl_1_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "Lᵢ ∩ Lⱼ";
+}
+
+pub mod term_pl_1_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "∅";
+}
+
+pub mod term_pl_1_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "leases Lᵢ, Lⱼ with i ≠ j";
+}
+
+pub mod term_pl_2_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "⋃ᵢ Lᵢ";
+}
+
+pub mod term_pl_2_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "S";
+}
+
+pub mod term_pl_2_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "shared context S, leases Lᵢ";
+}
+
+pub mod term_pl_3_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "|{i | f ∈ Lᵢ}|";
+}
+
+pub mod term_pl_3_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "1";
+}
+
+pub mod term_pl_3_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "fiber f in shared context S";
+}
+
+pub mod term_pk_1_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "valid(κ(S₁,S₂))";
+}
+
+pub mod term_pk_1_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "disjoint(S₁,S₂)";
+}
+
+pub mod term_pk_1_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "sessions S₁,S₂";
+}
+
+pub mod term_pk_2_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "resolve(s, κ(S₁,S₂))";
+}
+
+pub mod term_pk_2_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "resolve(s, S₁) ∨ resolve(s, S₂)";
+}
+
+pub mod term_pk_2_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "symbol s, sessions S₁,S₂";
+}
+
+pub mod term_pp_1_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "κ(λₖ(α*(ι(s,·))), C)";
+}
+
+pub mod term_pp_1_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "resolve(s, C)";
+}
+
+pub mod term_pp_1_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "symbol s, context C";
+}
+
+pub mod term_pe_1_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "state(ψ, 0)";
+}
+
+pub mod term_pe_1_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "1";
+}
+
+pub mod term_pe_1_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "cascade ψ";
+}
+
+pub mod term_pe_2_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "ψ_1(q)";
+}
+
+pub mod term_pe_2_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "δ(q, R)";
+}
+
+pub mod term_pe_2_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "query q, registry R";
+}
+
+pub mod term_pe_3_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "ψ_2(r)";
+}
+
+pub mod term_pe_3_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "G(r)";
+}
+
+pub mod term_pe_3_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "resolver r";
+}
+
+pub mod term_pe_4_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "ψ_3(a)";
+}
+
+pub mod term_pe_4_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "Π(a)";
+}
+
+pub mod term_pe_4_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "address a";
+}
+
+pub mod term_pe_5_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "ψ_4(c)";
+}
+
+pub mod term_pe_5_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "α*(c)";
+}
+
+pub mod term_pe_5_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "constraint set c";
+}
+
+pub mod term_pe_6_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "ψ_5(b)";
+}
+
+pub mod term_pe_6_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "P(b)";
+}
+
+pub mod term_pe_6_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "binding b";
+}
+
+pub mod term_pe_7_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "ψ_5 ∘ ψ_4 ∘ ψ_3 ∘ ψ_2 ∘ ψ_1 ∘ ψ_0";
+}
+
+pub mod term_pe_7_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "ψ";
+}
+
+pub mod term_pe_7_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "cascade ψ";
+}
+
+pub mod term_pm_1_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "phase(stage_k)";
+}
+
+pub mod term_pm_1_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "Ω^k";
+}
+
+pub mod term_pm_1_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "stage index k in 0..5";
+}
+
+pub mod term_pm_2_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "gate(k)";
+}
+
+pub mod term_pm_2_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "phase(k) == Ω^k";
+}
+
+pub mod term_pm_2_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "stage boundary k";
+}
+
+pub mod term_pm_3_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "fail(gate(k))";
+}
+
+pub mod term_pm_3_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "rollback(z → z̄)";
+}
+
+pub mod term_pm_3_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "stage k with gate failure";
+}
+
+pub mod term_pm_4_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "conj(conj(z))";
+}
+
+pub mod term_pm_4_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "z";
+}
+
+pub mod term_pm_4_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "complex value z";
+}
+
+pub mod term_pm_5_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "sat(epoch_n)";
+}
+
+pub mod term_pm_5_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "sat(epoch_{n+1})";
+}
+
+pub mod term_pm_5_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "consecutive epochs n, n+1";
+}
+
+pub mod term_pm_6_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "context(window)";
+}
+
+pub mod term_pm_6_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "base_context";
+}
+
+pub mod term_pm_6_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "service window";
+}
+
+pub mod term_pm_7_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "ψ(s₀)";
+}
+
+pub mod term_pm_7_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "ψ(s₀)";
+}
+
+pub mod term_pm_7_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "initial state s₀";
+}
+
+pub mod term_er_1_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "advance(k, k+1)";
+}
+
+pub mod term_er_1_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "guard(k) = true";
+}
+
+pub mod term_er_1_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "stage transition k to k+1";
+}
+
+pub mod term_er_2_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "apply(effect(k))";
+}
+
+pub mod term_er_2_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "atomic(effect(k))";
+}
+
+pub mod term_er_2_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "transition effect at stage k";
+}
+
+pub mod term_er_3_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "eval(guard(k), s)";
+}
+
+pub mod term_er_3_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "s (state unchanged)";
+}
+
+pub mod term_er_3_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "guard evaluation at stage k with state s";
+}
+
+pub mod term_er_4_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "apply(e1; e2)";
+}
+
+pub mod term_er_4_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "apply(e2; e1)";
+}
+
+pub mod term_er_4_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "effects e1, e2 within same stage";
+}
+
+pub mod term_ea_1_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "free(epoch(n+1))";
+}
+
+pub mod term_ea_1_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "free(epoch(0))";
+}
+
+pub mod term_ea_1_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "epoch boundary n to n+1";
+}
+
+pub mod term_ea_2_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "saturated(epoch(n))";
+}
+
+pub mod term_ea_2_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "saturated(epoch(n+1))";
+}
+
+pub mod term_ea_2_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "saturated fibers across epoch boundary";
+}
+
+pub mod term_ea_3_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "|context(w)|";
+}
+
+pub mod term_ea_3_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "windowSize(w)";
+}
+
+pub mod term_ea_3_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "service window w";
+}
+
+pub mod term_ea_4_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "admit(epoch(n))";
+}
+
+pub mod term_ea_4_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "datum | refinement";
+}
+
+pub mod term_ea_4_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "epoch admission at epoch n";
+}
+
+pub mod term_oe_1_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "stage(k); stage(k+1)";
+}
+
+pub mod term_oe_1_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "fused(k, k+1)";
+}
+
+pub mod term_oe_1_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "adjacent stages k, k+1 with compatible guards";
+}
+
+pub mod term_oe_2_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "effect(a); effect(b)";
+}
+
+pub mod term_oe_2_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "effect(b); effect(a)";
+}
+
+pub mod term_oe_2_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "independent effects a, b";
+}
+
+pub mod term_oe_3_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "lease(A); lease(B)";
+}
+
+pub mod term_oe_3_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "lease(A) || lease(B)";
+}
+
+pub mod term_oe_3_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "disjoint lease sets A, B";
+}
+
+pub mod term_oe_4a_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "sem(fused(k, k+1))";
+}
+
+pub mod term_oe_4a_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "sem(stage(k)); sem(stage(k+1))";
+}
+
+pub mod term_oe_4a_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "fused stages k, k+1";
+}
+
+pub mod term_oe_4b_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "outcome(a; b)";
+}
+
+pub mod term_oe_4b_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "outcome(b; a)";
+}
+
+pub mod term_oe_4b_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "commuting effects a, b";
+}
+
+pub mod term_oe_4c_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "coverage(A || B)";
+}
+
+pub mod term_oe_4c_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "coverage(A) + coverage(B)";
+}
+
+pub mod term_oe_4c_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "parallel leases A, B";
+}
+
+pub mod term_cs_1_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "cost(stage(k))";
+}
+
+pub mod term_cs_1_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "O(1)";
+}
+
+pub mod term_cs_1_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "cascade stage k";
+}
+
+pub mod term_cs_2_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "cost(pipeline)";
+}
+
+pub mod term_cs_2_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "sum(cost(stage(k)))";
+}
+
+pub mod term_cs_2_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "cascade pipeline";
+}
+
+pub mod term_cs_3_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "cost(rollback)";
+}
+
+pub mod term_cs_3_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "cost(forward)";
+}
+
+pub mod term_cs_3_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "cascade rollback operation";
+}
+
+pub mod term_cs_4_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "cost(preflight)";
+}
+
+pub mod term_cs_4_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "O(1)";
+}
+
+pub mod term_cs_4_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "preflight check";
+}
+
+pub mod term_cs_5_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "cost(cascade)";
+}
+
+pub mod term_cs_5_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "n * max(cost(stage(k)))";
+}
+
+pub mod term_cs_5_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "cascade with n stages";
+}
+
+pub mod term_cs_6_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str =
+        "thermodynamicBudget(U) < bitsWidth(unitQuantumLevel(U)) × ln 2";
+}
+
+pub mod term_cs_6_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "reject(U) at BudgetSolvencyCheck";
+}
+
+pub mod term_cs_6_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "CompileUnit U";
+}
+
+pub mod term_cs_7_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "unitAddress(U)";
+}
+
+pub mod term_cs_7_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "address(canonicalBytes(transitiveClosure(rootTerm(U))))";
+}
+
+pub mod term_cs_7_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "CompileUnit U";
+}
+
+pub mod term_fa_1_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "pending(q)";
+}
+
+pub mod term_fa_1_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "reaches_gate(q)";
+}
+
+pub mod term_fa_1_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "query q in cascade";
+}
+
+pub mod term_fa_2_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "admitted(q, epoch)";
+}
+
+pub mod term_fa_2_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "served(q, epoch + k)";
+}
+
+pub mod term_fa_2_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "query q, bounded k";
+}
+
+pub mod term_fa_3_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "lease_alloc(p1 + p2)";
+}
+
+pub mod term_fa_3_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "lease_alloc(p1) + lease_alloc(p2)";
+}
+
+pub mod term_fa_3_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "disjoint partitions p1, p2";
+}
+
+pub mod term_sw_1_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "memory(window(w))";
+}
+
+pub mod term_sw_1_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "O(w)";
+}
+
+pub mod term_sw_1_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "service window of size w";
+}
+
+pub mod term_sw_2_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "saturated(slide(w))";
+}
+
+pub mod term_sw_2_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "saturated(w)";
+}
+
+pub mod term_sw_2_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "window slide operation";
+}
+
+pub mod term_sw_3_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "resources(evict(e))";
+}
+
+pub mod term_sw_3_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "0";
+}
+
+pub mod term_sw_3_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "evicted epoch e";
+}
+
+pub mod term_sw_4_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "size(window)";
+}
+
+pub mod term_sw_4_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = ">= 1";
+}
+
+pub mod term_sw_4_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "service window";
+}
+
+pub mod term_ls_1_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "pinned(suspend(lease))";
+}
+
+pub mod term_ls_1_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "pinned(lease)";
+}
+
+pub mod term_ls_1_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "lease suspension";
+}
+
+pub mod term_ls_2_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "resources(expire(lease))";
+}
+
+pub mod term_ls_2_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "0";
+}
+
+pub mod term_ls_2_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "expired lease";
+}
+
+pub mod term_ls_3_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "restore(restore(checkpoint))";
+}
+
+pub mod term_ls_3_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "restore(checkpoint)";
+}
+
+pub mod term_ls_3_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "checkpoint restore";
+}
+
+pub mod term_ls_4_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "resume(suspend(lease))";
+}
+
+pub mod term_ls_4_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "lease";
+}
+
+pub mod term_ls_4_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "active lease";
+}
+
+pub mod term_tj_1_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "all_or_nothing(fail)";
+}
+
+pub mod term_tj_1_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "rollback";
+}
+
+pub mod term_tj_1_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "AllOrNothing transaction with failure";
+}
+
+pub mod term_tj_2_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "best_effort(partial_fail)";
+}
+
+pub mod term_tj_2_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "commit(succeeded)";
+}
+
+pub mod term_tj_2_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "BestEffort transaction";
+}
+
+pub mod term_tj_3_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "scope(transaction)";
+}
+
+pub mod term_tj_3_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "single_epoch";
+}
+
+pub mod term_tj_3_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "cascade transaction";
+}
+
+pub mod term_ap_1_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "sat(stage(k+1))";
+}
+
+pub mod term_ap_1_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = ">= sat(stage(k))";
+}
+
+pub mod term_ap_1_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "consecutive stages k, k+1";
+}
+
+pub mod term_ap_2_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "quality(epoch(n+1))";
+}
+
+pub mod term_ap_2_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = ">= quality(epoch(n))";
+}
+
+pub mod term_ap_2_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "consecutive epochs n, n+1";
+}
+
+pub mod term_ap_3_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "deferred(q)";
+}
+
+pub mod term_ap_3_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "processed(q) | dropped(q)";
+}
+
+pub mod term_ap_3_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "deferred query q";
+}
+
+pub mod term_ec_1_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "Ω⁶";
+}
+
+pub mod term_ec_1_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "−1";
+}
+
+pub mod term_ec_1_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "cascade phase angle Ω = e^{iπ/6}";
+}
+
+pub mod term_ec_2_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "conj(conj(z))";
+}
+
+pub mod term_ec_2_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "z";
+}
+
+pub mod term_ec_2_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "complex z in cascade";
+}
+
+pub mod term_ec_3_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "[q_A, q_B]^inf";
+}
+
+pub mod term_ec_3_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "1";
+}
+
+pub mod term_ec_3_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "quaternion pair q_A, q_B";
+}
+
+pub mod term_ec_4_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "[q_A, q_B, q_C]^inf";
+}
+
+pub mod term_ec_4_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "0";
+}
+
+pub mod term_ec_4_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "octonion triple q_A, q_B, q_C";
+}
+
+pub mod term_ec_4a_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "||[a,b,c]_{n+1}||";
+}
+
+pub mod term_ec_4a_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "<= ||[a,b,c]_n||";
+}
+
+pub mod term_ec_4a_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "successive associator iterates";
+}
+
+pub mod term_ec_4b_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "steps_to_zero([a,b,c])";
+}
+
+pub mod term_ec_4b_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "<= |three_way_fibers|";
+}
+
+pub mod term_ec_4b_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "octonion triple a, b, c";
+}
+
+pub mod term_ec_4c_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "[a,b,c] = 0";
+}
+
+pub mod term_ec_4c_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "associative(resolved_fiber_space)";
+}
+
+pub mod term_ec_4c_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "resolved fiber space";
+}
+
+pub mod term_ec_5_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "max_level(convergence_tower)";
+}
+
+pub mod term_ec_5_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "L3_Self";
+}
+
+pub mod term_ec_5_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "convergence tower";
+}
+
+pub mod term_da_1_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "CD(R, i)";
+}
+
+pub mod term_da_1_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "C";
+}
+
+pub mod term_da_1_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "Cayley-Dickson doubling";
+}
+
+pub mod term_da_2_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "CD(C, j)";
+}
+
+pub mod term_da_2_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "H";
+}
+
+pub mod term_da_2_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "Cayley-Dickson doubling";
+}
+
+pub mod term_da_3_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "CD(H, l)";
+}
+
+pub mod term_da_3_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "O";
+}
+
+pub mod term_da_3_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "Cayley-Dickson doubling";
+}
+
+pub mod term_da_4_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "dim(normed_div_alg)";
+}
+
+pub mod term_da_4_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "∈ {1, 2, 4, 8}";
+}
+
+pub mod term_da_4_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "normed division algebras over R";
+}
+
+pub mod term_da_5_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "algebra(L_k)";
+}
+
+pub mod term_da_5_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "division_algebra[k]";
+}
+
+pub mod term_da_5_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "convergence level L_k";
+}
+
+pub mod term_da_6_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "[a,b] = 0";
+}
+
+pub mod term_da_6_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "isCommutative(algebra(L_k))";
+}
+
+pub mod term_da_6_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "elements a, b in division algebra at level k";
+}
+
+pub mod term_da_7_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "[a,b,c] = 0";
+}
+
+pub mod term_da_7_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "isAssociative(algebra(L_k))";
+}
+
+pub mod term_da_7_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "elements a, b, c in division algebra at level k";
+}
+
+pub mod term_in_1_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "d_Δ(A,B)";
+}
+
+pub mod term_in_1_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "interaction_cost(A,B)";
+}
+
+pub mod term_in_1_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "entity pairs A, B";
+}
+
+pub mod term_in_2_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "disjoint_leases(A,B)";
+}
+
+pub mod term_in_2_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "commutator(A,B) = 0";
+}
+
+pub mod term_in_2_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "entity pairs with disjoint leases";
+}
+
+pub mod term_in_3_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "shared_fibers(A,B) ≠ ∅";
+}
+
+pub mod term_in_3_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "commutator(A,B) > 0";
+}
+
+pub mod term_in_3_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "entity pairs with shared fibers";
+}
+
+pub mod term_in_4_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "SR_8_session(A,B)";
+}
+
+pub mod term_in_4_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "commutator(A,B,t+1) ≤ commutator(A,B,t)";
+}
+
+pub mod term_in_4_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "entity pairs in session";
+}
+
+pub mod term_in_5_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "converged_negotiation(A,B)";
+}
+
+pub mod term_in_5_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "U(1) ⊂ SU(2)";
+}
+
+pub mod term_in_5_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "converged pairwise interactions";
+}
+
+pub mod term_in_6_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "outcome_space(pairwise_negotiation)";
+}
+
+pub mod term_in_6_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "S²";
+}
+
+pub mod term_in_6_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "pairwise negotiations";
+}
+
+pub mod term_in_7_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "converged_mutual_model(A,B,C)";
+}
+
+pub mod term_in_7_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "H ⊂ O";
+}
+
+pub mod term_in_7_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "converged triple interactions";
+}
+
+pub mod term_in_8_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "β_k(interaction_nerve)";
+}
+
+pub mod term_in_8_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "coupling_complexity(k)";
+}
+
+pub mod term_in_8_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "interaction nerve at dimension k";
+}
+
+pub mod term_in_9_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "β_2(nerve) × max_disagreement";
+}
+
+pub mod term_in_9_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "upper_bound(associator_norm)";
+}
+
+pub mod term_in_9_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "interaction nerves with β_2 > 0";
+}
+
+pub mod term_as_1_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "(δ ∘ ι) ∘ κ";
+}
+
+pub mod term_as_1_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "δ ∘ (ι ∘ κ)";
+}
+
+pub mod term_as_1_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "triple δ, ι, κ with shared registry";
+}
+
+pub mod term_as_2_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "(ι ∘ α) ∘ λ";
+}
+
+pub mod term_as_2_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "ι ∘ (α ∘ λ)";
+}
+
+pub mod term_as_2_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "triple ι, α, λ with shared lease";
+}
+
+pub mod term_as_3_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "(λ ∘ κ) ∘ δ";
+}
+
+pub mod term_as_3_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "λ ∘ (κ ∘ δ)";
+}
+
+pub mod term_as_3_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "triple λ, κ, δ with shared state";
+}
+
+pub mod term_as_4_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "associator(A,B,C) ≠ 0";
+}
+
+pub mod term_as_4_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "∃ mediating read-write interleaving";
+}
+
+pub mod term_as_4_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "triples with non-zero associator";
+}
+
+pub mod term_mo_1_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "I ⊗ A";
+}
+
+pub mod term_mo_1_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "A";
+}
+
+pub mod term_mo_1_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "computations A";
+}
+
+pub mod term_mo_2_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "(A⊗B)⊗C";
+}
+
+pub mod term_mo_2_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "A⊗(B⊗C)";
+}
+
+pub mod term_mo_2_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "computations A, B, C";
+}
+
+pub mod term_mo_3_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "cert(A⊗B)";
+}
+
+pub mod term_mo_3_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "cert(A) ∧ cert(B)";
+}
+
+pub mod term_mo_3_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "certified computations A, B";
+}
+
+pub mod term_mo_4_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "σ(A⊗B)";
+}
+
+pub mod term_mo_4_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "max(σ(A), σ(B))";
+}
+
+pub mod term_mo_4_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "computations A, B";
+}
+
+pub mod term_mo_5_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "r(A⊗B)";
+}
+
+pub mod term_mo_5_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "min(r(A), r(B))";
+}
+
+pub mod term_mo_5_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "computations A, B";
+}
+
+pub mod term_op_1_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "fiberCount(F(G))";
+}
+
+pub mod term_op_1_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "F.fibers + Σ_i G_i.fibers";
+}
+
+pub mod term_op_1_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "structural types F, G";
+}
+
+pub mod term_op_2_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "grounding(F(G(x)))";
+}
+
+pub mod term_op_2_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "F.ground(G.ground(x))";
+}
+
+pub mod term_op_2_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "structural types F, G, element x";
+}
+
+pub mod term_op_3_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "d_Δ(F(G))";
+}
+
+pub mod term_op_3_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "d_Δ(F) ∘ G + F ∘ d_Δ(G)";
+}
+
+pub mod term_op_3_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "structural types F, G";
+}
+
+pub mod term_op_4_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "Table(Tuple(fields))";
+}
+
+pub mod term_op_4_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "Sequence(Tuple(fields))";
+}
+
+pub mod term_op_4_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "tabular data";
+}
+
+pub mod term_op_5_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "Tree(Symbol(leaves))";
+}
+
+pub mod term_op_5_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "Graph(Symbol(leaves), acyclic)";
+}
+
+pub mod term_op_5_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "hierarchical data";
+}
+
+pub mod term_fx_1_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "freeCount(postContext(e))";
+}
+
+pub mod term_fx_1_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "freeCount(preContext(e)) − 1";
+}
+
+pub mod term_fx_1_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "PinningEffect e";
+}
+
+pub mod term_fx_2_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "freeCount(postContext(e))";
+}
+
+pub mod term_fx_2_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "freeCount(preContext(e)) + 1";
+}
+
+pub mod term_fx_2_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "UnbindingEffect e";
+}
+
+pub mod term_fx_3_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "freeCount(postContext(e))";
+}
+
+pub mod term_fx_3_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "freeCount(preContext(e))";
+}
+
+pub mod term_fx_3_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "PhaseEffect e";
+}
+
+pub mod term_fx_4_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "apply(A ; B, ctx)";
+}
+
+pub mod term_fx_4_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "apply(B ; A, ctx)";
+}
+
+pub mod term_fx_4_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "Effects A, B with DisjointnessWitness(target(A), target(B))";
+}
+
+pub mod term_fx_5_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "freeCountDelta(E₁ ; E₂)";
+}
+
+pub mod term_fx_5_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "freeCountDelta(E₁) + freeCountDelta(E₂)";
+}
+
+pub mod term_fx_5_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "CompositeEffect (E₁ ; E₂)";
+}
+
+pub mod term_fx_6_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "apply(e, apply(e⁻¹, ctx))";
+}
+
+pub mod term_fx_6_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "ctx";
+}
+
+pub mod term_fx_6_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "ReversibleEffect e";
+}
+
+pub mod term_fx_7_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "freeCountDelta(e)";
+}
+
+pub mod term_fx_7_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "declared freeCountDelta in EffectShape";
+}
+
+pub mod term_fx_7_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "ExternalEffect e satisfying conformance:EffectShape";
+}
+
+pub mod term_pr_1_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "eval(p, x)";
+}
+
+pub mod term_pr_1_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "∈ {true, false}";
+}
+
+pub mod term_pr_1_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "Predicate p, input x";
+}
+
+pub mod term_pr_2_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "state(eval(p, x, s))";
+}
+
+pub mod term_pr_2_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "s";
+}
+
+pub mod term_pr_2_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "Predicate p, input x, state s";
+}
+
+pub mod term_pr_3_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "dispatch(D, x)";
+}
+
+pub mod term_pr_3_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "exactly one DispatchRule";
+}
+
+pub mod term_pr_3_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str =
+        "DispatchTable D with isExhaustive=true, isMutuallyExclusive=true";
+}
+
+pub mod term_pr_4_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "eval(M)";
+}
+
+pub mod term_pr_4_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "armResult(first matching arm)";
+}
+
+pub mod term_pr_4_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "MatchExpression M with exhaustive arms";
+}
+
+pub mod term_pr_5_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "advance(k, guardTarget(g))";
+}
+
+pub mod term_pr_5_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "requires guardPredicate(g) = true";
+}
+
+pub mod term_pr_5_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "GuardedTransition g at cascade stage k";
+}
+
+pub mod term_cg_1_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "advance_to(s)";
+}
+
+pub mod term_cg_1_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "requires eval(g, currentState) = true";
+}
+
+pub mod term_cg_1_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "CascadeStage s with entryGuard g";
+}
+
+pub mod term_cg_2_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "advance_from(s)";
+}
+
+pub mod term_cg_2_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "requires eval(g, currentState) = true, then apply(e)";
+}
+
+pub mod term_cg_2_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "CascadeStage s with exitGuard g and stageEffect e";
+}
+
+pub mod term_dis_1_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "isExhaustive(D) ∧ isMutuallyExclusive(D)";
+}
+
+pub mod term_dis_1_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "true";
+}
+
+pub mod term_dis_1_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "Root DispatchTable D";
+}
+
+pub mod term_dis_2_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "dispatch(D, T)";
+}
+
+pub mod term_dis_2_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "exactly one Resolver";
+}
+
+pub mod term_dis_2_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "TypeDefinition T, DispatchTable D";
+}
+
+pub mod term_par_1_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "apply(A ⊗ B, ctx)";
+}
+
+pub mod term_par_1_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "apply(B ⊗ A, ctx)";
+}
+
+pub mod term_par_1_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "ParallelProduct A ∥ B with DisjointnessCertificate";
+}
+
+pub mod term_par_2_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "freeCountDelta(A ∥ B)";
+}
+
+pub mod term_par_2_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "freeCountDelta(A) + freeCountDelta(B)";
+}
+
+pub mod term_par_2_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "ParallelProduct A ∥ B";
+}
+
+pub mod term_par_3_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "Σ |component_i|";
+}
+
+pub mod term_par_3_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "n";
+}
+
+pub mod term_par_3_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "FiberPartitioning P over n fibers";
+}
+
+pub mod term_par_4_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "finalContext(σ(A, B))";
+}
+
+pub mod term_par_4_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "finalContext(A ⊗ B)";
+}
+
+pub mod term_par_4_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "ParallelProduct A ∥ B, any interleaving σ";
+}
+
+pub mod term_par_5_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "cert(A ∥ B)";
+}
+
+pub mod term_par_5_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "cert(A) ∧ cert(B) ∧ DisjointnessCertificate(A, B)";
+}
+
+pub mod term_par_5_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "cert(A ∥ B)";
+}
+
+pub mod term_ho_1_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "value(c)";
+}
+
+pub mod term_ho_1_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "contentHash(referencedCertificate(c))";
+}
+
+pub mod term_ho_1_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "ComputationDatum c";
+}
+
+pub mod term_ho_2_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "cert(output(app))";
+}
+
+pub mod term_ho_2_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "cert(applicationTarget(app))";
+}
+
+pub mod term_ho_2_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "ApplicationMorphism app";
+}
+
+pub mod term_ho_3_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "cert(f ∘ g)";
+}
+
+pub mod term_ho_3_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "cert(f) ∧ cert(g) ∧ range(g) = domain(f)";
+}
+
+pub mod term_ho_3_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "TransformComposition f ∘ g";
+}
+
+pub mod term_ho_4_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "p";
+}
+
+pub mod term_ho_4_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "ApplicationMorphism(partialBase(p), boundArguments(p))";
+}
+
+pub mod term_ho_4_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "PartialApplication p with remainingArity = 0";
+}
+
+pub mod term_str_1_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "cascade(e_k) converges to π";
+}
+
+pub mod term_str_1_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "true";
+}
+
+pub mod term_str_1_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "Epoch e_k in ProductiveStream";
+}
+
+pub mod term_str_2_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "saturation(continuationContext(b))";
+}
+
+pub mod term_str_2_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "saturation(postContext(e_k))";
+}
+
+pub mod term_str_2_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "EpochBoundary b between e_k and e_{k+1}";
+}
+
+pub mod term_str_3_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "computationTime(P)";
+}
+
+pub mod term_str_3_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "Σ_{i=0}^{k−1} computationTime(epoch_i)";
+}
+
+pub mod term_str_3_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "StreamPrefix P of length k";
+}
+
+pub mod term_str_4_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "epoch_0.context";
+}
+
+pub mod term_str_4_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "seed";
+}
+
+pub mod term_str_4_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "Unfold(seed, step)";
+}
+
+pub mod term_str_5_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "epoch_{k+1}.context";
+}
+
+pub mod term_str_5_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "continuationContext(boundary(e_k))";
+}
+
+pub mod term_str_5_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "Unfold(seed, step), epoch e_k";
+}
+
+pub mod term_str_6_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "linearBudget(epoch_{k+1})";
+}
+
+pub mod term_str_6_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "linearBudget(epoch_k) + leaseCardinality(L)";
+}
+
+pub mod term_str_6_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "EpochBoundary b with LeaseAllocation L expiring at b";
+}
+
+pub mod term_flr_1_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "result(P)";
+}
+
+pub mod term_flr_1_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "∈ {Success, Failure}";
+}
+
+pub mod term_flr_1_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "PartialComputation P";
+}
+
+pub mod term_flr_2_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "result(T)";
+}
+
+pub mod term_flr_2_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "Success";
+}
+
+pub mod term_flr_2_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "TotalComputation T";
+}
+
+pub mod term_flr_3_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "result(A ⊗ B)";
+}
+
+pub mod term_flr_3_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "Failure(A)";
+}
+
+pub mod term_flr_3_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "A ⊗ B where result(A) = Failure";
+}
+
+pub mod term_flr_4_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "result(A ∥ B)";
+}
+
+pub mod term_flr_4_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "Failure(A) (left component)";
+}
+
+pub mod term_flr_4_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "A ∥ B where result(A) = Failure, result(B) = Success";
+}
+
+pub mod term_flr_5_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "result(apply(recoveryEffect(r), failureState(f)))";
+}
+
+pub mod term_flr_5_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "ComputationResult";
+}
+
+pub mod term_flr_5_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "Recovery r on Failure f";
+}
+
+pub mod term_flr_6_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "recoveryEffect(rollback(f))";
+}
+
+pub mod term_flr_6_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "PhaseEffect(conjugate)";
+}
+
+pub mod term_flr_6_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "ComplexConjugateRollback on Failure f";
+}
+
+pub mod term_ln_1_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "Σ targetCount(fiber_i)";
+}
+
+pub mod term_ln_1_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "n";
+}
+
+pub mod term_ln_1_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "LinearTrace T over n-bit type";
+}
+
+pub mod term_ln_2_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "status(f, postContext(e))";
+}
+
+pub mod term_ln_2_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "pinned";
+}
+
+pub mod term_ln_2_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "LinearEffect e on fiber f";
+}
+
+pub mod term_ln_3_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "target(e′) = f";
+}
+
+pub mod term_ln_3_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "forbidden";
+}
+
+pub mod term_ln_3_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "LinearEffect e on fiber f, any subsequent effect e′";
+}
+
+pub mod term_ln_4_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "remainingCount(budget after L)";
+}
+
+pub mod term_ln_4_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "remainingCount(budget before L) − k";
+}
+
+pub mod term_ln_4_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "LeaseAllocation L with leaseCardinality k";
+}
+
+pub mod term_ln_5_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "remainingCount(budget after expiry)";
+}
+
+pub mod term_ln_5_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "remainingCount(budget before expiry) + leaseCardinality(L)";
+}
+
+pub mod term_ln_5_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "Lease expiry on LeaseAllocation L";
+}
+
+pub mod term_ln_6_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "G";
+}
+
+pub mod term_ln_6_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "LinearTrace";
+}
+
+pub mod term_ln_6_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "GeodesicTrace G";
+}
+
+pub mod term_sb_1_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "constraints(T₁)";
+}
+
+pub mod term_sb_1_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "⊇ constraints(T₂)";
+}
+
+pub mod term_sb_1_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "TypeInclusion T₁ ≤ T₂";
+}
+
+pub mod term_sb_2_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "resolutions(T₁)";
+}
+
+pub mod term_sb_2_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "⊆ resolutions(T₂)";
+}
+
+pub mod term_sb_2_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "TypeInclusion T₁ ≤ T₂, resolution R";
+}
+
+pub mod term_sb_3_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "N(C(T₂))";
+}
+
+pub mod term_sb_3_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "sub-complex of N(C(T₁))";
+}
+
+pub mod term_sb_3_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "TypeInclusion T₁ ≤ T₂";
+}
+
+pub mod term_sb_4_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "F(T₁)";
+}
+
+pub mod term_sb_4_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "≤ F(T₂)";
+}
+
+pub mod term_sb_4_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "Covariant position F(_), T₁ ≤ T₂";
+}
+
+pub mod term_sb_5_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "F(T₂)";
+}
+
+pub mod term_sb_5_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "≤ F(T₁)";
+}
+
+pub mod term_sb_5_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "Contravariant position F(_), T₁ ≤ T₂";
+}
+
+pub mod term_sb_6_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "latticeDepth";
+}
+
+pub mod term_sb_6_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "n";
+}
+
+pub mod term_sb_6_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "SubtypingLattice at quantum level n";
+}
+
+pub mod term_br_1_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "measureValue(stepMeasurePost(s))";
+}
+
+pub mod term_br_1_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "< measureValue(stepMeasurePre(s))";
+}
+
+pub mod term_br_1_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "RecursiveStep s";
+}
+
+pub mod term_br_2_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "depth(RecursionTrace(R))";
+}
+
+pub mod term_br_2_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "≤ m";
+}
+
+pub mod term_br_2_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "BoundedRecursion R with initialMeasure m";
+}
+
+pub mod term_br_3_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "terminates(R)";
+}
+
+pub mod term_br_3_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "true";
+}
+
+pub mod term_br_3_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "BoundedRecursion R";
+}
+
+pub mod term_br_4_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "initialMeasure(R)";
+}
+
+pub mod term_br_4_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "structuralSize(T)";
+}
+
+pub mod term_br_4_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "StructuralRecursion R on type T";
+}
+
+pub mod term_br_5_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "eval(p, state) = true";
+}
+
+pub mod term_br_5_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "measureValue = 0";
+}
+
+pub mod term_br_5_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "BoundedRecursion R with basePredicate p";
+}
+
+pub mod term_rg_1_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "workingSetRegions(W)";
+}
+
+pub mod term_rg_1_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "computable from N(C(T)) and stage k fiber targets";
+}
+
+pub mod term_rg_1_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "WorkingSet W for type T at stage k";
+}
+
+pub mod term_rg_2_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "∀ a, b ∈ R: d_R(a, b)";
+}
+
+pub mod term_rg_2_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "≤ diameter(R)";
+}
+
+pub mod term_rg_2_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "AddressRegion R with LocalityMetric d_R";
+}
+
+pub mod term_rg_3_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "Σ workingSetSize(stage_k)";
+}
+
+pub mod term_rg_3_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "≤ totalAddressableSpace(quantumLevel)";
+}
+
+pub mod term_rg_3_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "RegionAllocation A for computation C";
+}
+
+pub mod term_rg_4_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "addresses accessed by resolver at stage k";
+}
+
+pub mod term_rg_4_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "⊆ addresses(W_k)";
+}
+
+pub mod term_rg_4_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "Cascade stage k with WorkingSet W_k";
+}
+
+pub mod term_io_1_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "type(resultDatum(e))";
+}
+
+pub mod term_io_1_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "conformsTo(sourceType(s))";
+}
+
+pub mod term_io_1_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "IngestEffect e from Source s";
+}
+
+pub mod term_io_2_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "type(emittedDatum(e))";
+}
+
+pub mod term_io_2_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "conformsTo(sinkType(s))";
+}
+
+pub mod term_io_2_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "EmitEffect e to Sink s";
+}
+
+pub mod term_io_3_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "apply(g, ingest(s))";
+}
+
+pub mod term_io_3_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "Datum in R_n";
+}
+
+pub mod term_io_3_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "Source s with GroundingMap g";
+}
+
+pub mod term_io_4_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "apply(p, d)";
+}
+
+pub mod term_io_4_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "surface symbol conforming to sinkType(s)";
+}
+
+pub mod term_io_4_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "Sink s with ProjectionMap p, Datum d";
+}
+
+pub mod term_io_5_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "effect:effectTarget(e)";
+}
+
+pub mod term_io_5_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "non-empty EffectTarget";
+}
+
+pub mod term_io_5_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "BoundaryEffect e";
+}
+
+pub mod term_boundary_squared_zero_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "∂_k(∂_{k+1}(c))";
+}
+
+pub mod term_boundary_squared_zero_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "0";
+}
+
+pub mod term_boundary_squared_zero_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "c ∈ C_{k+1}";
+}
+
+pub mod term_psi_4_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "β_k(K)";
+}
+
+pub mod term_psi_4_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "rank(H_k(K))";
+}
+
+pub mod term_psi_4_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "simplicial complex K";
+}
+
+pub mod term_index_bridge_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "χ(K)";
+}
+
+pub mod term_index_bridge_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "Σ_k (-1)^k β_k";
+}
+
+pub mod term_index_bridge_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "finite simplicial complex K";
+}
+
+pub mod term_coboundary_squared_zero_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "δ^{k+1}(δ^k(f))";
+}
+
+pub mod term_coboundary_squared_zero_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "0";
+}
+
+pub mod term_coboundary_squared_zero_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "f ∈ C^k";
+}
+
+pub mod term_de_rham_duality_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "H^k(K; R)";
+}
+
+pub mod term_de_rham_duality_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "Hom(H_k(K), R)";
+}
+
+pub mod term_de_rham_duality_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "simplicial complex K, ring R";
+}
+
+pub mod term_sheaf_cohomology_bridge_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "H^k(K; F_R)";
+}
+
+pub mod term_sheaf_cohomology_bridge_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "H^k(K; R)";
+}
+
+pub mod term_sheaf_cohomology_bridge_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "constant sheaf F_R over K";
+}
+
+pub mod term_local_global_principle_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "H^1(K; F) = 0";
+}
+
+pub mod term_local_global_principle_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "all local sections glue";
+}
+
+pub mod term_local_global_principle_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "sheaf F over K";
 }

@@ -154,8 +154,10 @@ pub trait DomainSaturationRecord<P: Primitives> {
     type SaturatedContext: SaturatedContext<P>;
     /// The SaturatedContext that this DomainSaturationRecord monitors.
     fn saturated_context(&self) -> &Self::SaturatedContext;
+    /// Associated type for `TypeDefinition`.
+    type TypeDefinition: crate::user::type_::TypeDefinition<P>;
     /// The domain within the context being tracked by this DomainSaturationRecord.
-    fn saturated_domain(&self) -> &P::String;
+    fn saturated_domain(&self) -> &Self::TypeDefinition;
     /// The number of free fibers remaining in the specific domain tracked by this DomainSaturationRecord.
     fn domain_free_count(&self) -> P::NonNegativeInteger;
 }

@@ -278,7 +278,7 @@ fn properties() -> Vec<Property> {
             kind: PropertyKind::Datatype,
             functional: true,
             domain: Some("https://uor.foundation/partition/FiberCoordinate"),
-            range: XSD_STRING,
+            range: XSD_NON_NEGATIVE_INTEGER,
         },
         Property {
             id: "https://uor.foundation/partition/fiberBudget",
@@ -394,10 +394,10 @@ fn properties() -> Vec<Property> {
             comment: "The formal membership criterion for this ExteriorSet: \
                       x ∈ Ext(T) iff x ∉ carrier(T). The ExteriorSet is \
                       context-dependent on the active type T (FPM_9).",
-            kind: PropertyKind::Datatype,
+            kind: PropertyKind::Object,
             functional: true,
             domain: Some("https://uor.foundation/partition/ExteriorSet"),
-            range: XSD_STRING,
+            range: "https://uor.foundation/schema/TermExpression",
         },
         // Amendment 37: Partition exhaustiveness (Gap 3)
         Property {

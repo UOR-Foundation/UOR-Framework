@@ -20,6 +20,10 @@ pub trait Resolver<P: Primitives> {
     type Partition: crate::bridge::partition::Partition<P>;
     /// The type of output this resolver produces. For all UOR resolvers, the output is a partition:Partition.
     fn output_type(&self) -> &Self::Partition;
+    /// Associated type for `TermExpression`.
+    type TermExpression: crate::kernel::schema::TermExpression<P>;
+    /// A human-readable description of the resolution strategy this resolver implements.
+    fn strategy(&self) -> &Self::TermExpression;
     /// Associated type for `ResolutionState`.
     type ResolutionState: ResolutionState<P>;
     /// The current resolution state of this resolver.
@@ -177,7 +181,7 @@ pub trait JacobianGuidedResolver<P: Primitives>: Resolver<P> {}
 /// A resolver that handles superposed fiber states, computing amplitudes and determining when superposition collapses to a classical fiber assignment (Amendment 32).
 pub trait SuperpositionResolver<P: Primitives>: Resolver<P> {
     /// The amplitude vector of all branches maintained by this SuperpositionResolver during ψ-pipeline traversal. Encoded as a comma-separated list of decimal amplitudes. Must satisfy Σ|αᵢ|² = 1 (QM_5) after normalization.
-    fn amplitude_vector(&self) -> &P::String;
+    fn amplitude_vector(&self) -> P::Decimal;
 }
 
 /// A resolver that exploits accumulated session bindings at full saturation (σ = 1) to provide O(1) resolution via direct coordinate reads (SC_5).
@@ -203,7 +207,7 @@ pub trait MeasurementResolver<P: Primitives>: Resolver<P> {
     /// The classical value obtained from the projective collapse. Either 0 or 1 for a single-fiber measurement.
     fn measurement_outcome(&self) -> P::NonNegativeInteger;
     /// The full vector of all branch amplitudes before projective collapse. Recorded by the MeasurementResolver to enable Born rule verification (QM_5): P(outcome k) = |α_k|².
-    fn prior_amplitude_vector(&self) -> &P::String;
+    fn prior_amplitude_vector(&self) -> P::Decimal;
 }
 
 /// A Resolver that constructs a LiftChain from liftSourceLevel to an arbitrary liftTargetLevel Q_k by iterating IncrementalCompletenessResolver step by step.

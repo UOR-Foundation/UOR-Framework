@@ -127,17 +127,9 @@ fn classes() -> Vec<Class> {
             subclass_of: &[OWL_THING],
             disjoint_with: &[],
         },
-        // Amendment 31: EmpiricalVerification proof class
-        Class {
-            id: "https://uor.foundation/proof/EmpiricalVerification",
-            label: "EmpiricalVerification",
-            comment: "A proof grounded in empirical verification across a bounded \
-                      range of quantum levels, rather than axiomatic derivation \
-                      or exhaustive computation. Used for identities like AR_5 \
-                      whose forAll quantifier is 'empirical, Q0--Q4'.",
-            subclass_of: &["https://uor.foundation/proof/Proof"],
-            disjoint_with: &[],
-        },
+        // Amendment 31/86: EmpiricalVerification class removed in Amendment 86.
+        // All 4 former EmpiricalVerification proofs reclassified to
+        // InductiveProof (AR_5, QM_6) or AxiomaticDerivation (OA_4, CIC_7).
         // Amendment 34: Morphospace Achievability
         Class {
             id: "https://uor.foundation/proof/ImpossibilityWitness",
@@ -161,9 +153,9 @@ fn classes() -> Vec<Class> {
         Class {
             id: "https://uor.foundation/proof/MorphospaceBoundary",
             label: "MorphospaceBoundary",
-            comment: "An aggregate of ImpossibilityWitness and EmpiricalVerification \
-                      instances forming the queryable morphospace map. SPARQL over \
-                      this structure answers achievability queries in O(1).",
+            comment: "An aggregate of ImpossibilityWitness instances forming the \
+                      queryable morphospace map. SPARQL over this structure \
+                      answers achievability queries in O(1).",
             subclass_of: &[OWL_THING],
             disjoint_with: &[],
         },
@@ -175,6 +167,59 @@ fn classes() -> Vec<Class> {
                       Carries a base case proof, an inductive step proof, and the \
                       minimum k for which the induction holds.",
             subclass_of: &["https://uor.foundation/proof/Proof"],
+            disjoint_with: &[],
+        },
+        // Amendment 87: ProofStrategy controlled vocabulary
+        Class {
+            id: "https://uor.foundation/proof/ProofStrategy",
+            label: "ProofStrategy",
+            comment: "A controlled vocabulary of proof methods. Each proof individual \
+                      carries exactly one strategy from this vocabulary, enabling \
+                      compilation to verified theorem provers.",
+            subclass_of: &[OWL_THING],
+            disjoint_with: &[],
+        },
+        // Amendment 92: DerivationTerm class hierarchy for proof construction AST
+        Class {
+            id: "https://uor.foundation/proof/DerivationTerm",
+            label: "DerivationTerm",
+            comment: "Root AST node for proof construction terms. Distinct from \
+                      schema:TermExpression which represents mathematical terms; \
+                      DerivationTerm represents proof constructions (tactic \
+                      applications, lemma invocations, induction scaffolding).",
+            subclass_of: &[OWL_THING],
+            disjoint_with: &[],
+        },
+        Class {
+            id: "https://uor.foundation/proof/TacticApplication",
+            label: "TacticApplication",
+            comment: "A proof step applying a named tactic (from ProofStrategy) \
+                      with arguments. Maps to a Lean4 tactic invocation.",
+            subclass_of: &["https://uor.foundation/proof/DerivationTerm"],
+            disjoint_with: &[],
+        },
+        Class {
+            id: "https://uor.foundation/proof/LemmaInvocation",
+            label: "LemmaInvocation",
+            comment: "A proof step invoking a previously proved identity as a \
+                      lemma. References the identity via proof:dependsOn.",
+            subclass_of: &["https://uor.foundation/proof/DerivationTerm"],
+            disjoint_with: &[],
+        },
+        Class {
+            id: "https://uor.foundation/proof/InductionStep",
+            label: "InductionStep",
+            comment: "A proof step performing structural induction: base case \
+                      derivation, inductive hypothesis, and step derivation.",
+            subclass_of: &["https://uor.foundation/proof/DerivationTerm"],
+            disjoint_with: &[],
+        },
+        Class {
+            id: "https://uor.foundation/proof/ComputationStep",
+            label: "ComputationStep",
+            comment: "A proof step performing exhaustive computation at a specific \
+                      quantum level as verification witness.",
+            subclass_of: &["https://uor.foundation/proof/DerivationTerm"],
             disjoint_with: &[],
         },
     ]
@@ -331,36 +376,8 @@ fn properties() -> Vec<Property> {
             domain: Some("https://uor.foundation/proof/AxiomaticDerivation"),
             range: "https://uor.foundation/derivation/Derivation",
         },
-        // Amendment 31: EmpiricalVerification properties
-        Property {
-            id: "https://uor.foundation/proof/quantumLevelRange",
-            label: "quantumLevelRange",
-            comment: "The range of quantum levels over which this empirical \
-                      verification was conducted (e.g., 'Q0-Q4').",
-            kind: PropertyKind::Datatype,
-            functional: true,
-            domain: Some("https://uor.foundation/proof/EmpiricalVerification"),
-            range: XSD_STRING,
-        },
-        Property {
-            id: "https://uor.foundation/proof/verificationMethod",
-            label: "verificationMethod",
-            comment: "The empirical method used for verification (e.g., 'exhaustive \
-                      enumeration over Z/(2^n)Z for n=8,16,32,64').",
-            kind: PropertyKind::Datatype,
-            functional: true,
-            domain: Some("https://uor.foundation/proof/EmpiricalVerification"),
-            range: XSD_STRING,
-        },
-        Property {
-            id: "https://uor.foundation/proof/verifiedAt",
-            label: "verifiedAt",
-            comment: "The timestamp at which empirical verification was conducted.",
-            kind: PropertyKind::Datatype,
-            functional: true,
-            domain: Some("https://uor.foundation/proof/EmpiricalVerification"),
-            range: XSD_DATETIME,
-        },
+        // Amendment 31/86: quantumLevelRange, verificationMethod, and verifiedAt
+        // removed in Amendment 86 (EmpiricalVerification elimination).
         // Amendment 34: Morphospace Achievability
         Property {
             id: "https://uor.foundation/proof/forbidsSignature",
@@ -393,6 +410,7 @@ fn properties() -> Vec<Property> {
             domain: Some("https://uor.foundation/proof/ImpossibilityWitness"),
             range: "https://uor.foundation/op/VerificationDomain",
         },
+        // Amendment 86: domain reassigned from EmpiricalVerification to ImpossibilityWitness
         Property {
             id: "https://uor.foundation/proof/achievabilityStatus",
             label: "achievabilityStatus",
@@ -400,7 +418,7 @@ fn properties() -> Vec<Property> {
                       signature: Achievable or Forbidden.",
             kind: PropertyKind::Object,
             functional: true,
-            domain: Some("https://uor.foundation/proof/EmpiricalVerification"),
+            domain: Some("https://uor.foundation/proof/ImpossibilityWitness"),
             range: "https://uor.foundation/observable/AchievabilityStatus",
         },
         Property {
@@ -461,11 +479,125 @@ fn properties() -> Vec<Property> {
             domain: Some("https://uor.foundation/proof/InductiveProof"),
             range: XSD_NON_NEGATIVE_INTEGER,
         },
+        // Amendment 87: Proof enrichment properties
+        Property {
+            id: "https://uor.foundation/proof/strategy",
+            label: "strategy",
+            comment: "The proof method from the ProofStrategy controlled vocabulary. \
+                      Determines the compilation target (e.g., `by ring`, `by simp`, \
+                      `by induction`).",
+            kind: PropertyKind::Object,
+            functional: true,
+            domain: Some("https://uor.foundation/proof/Proof"),
+            range: "https://uor.foundation/proof/ProofStrategy",
+        },
+        Property {
+            id: "https://uor.foundation/proof/dependsOn",
+            label: "dependsOn",
+            comment: "An identity that this proof depends on as a lemma. Forms the \
+                      proof dependency DAG. Leaf proofs (provable from definitions \
+                      alone) have no dependsOn assertions.",
+            kind: PropertyKind::Object,
+            functional: false,
+            domain: Some("https://uor.foundation/proof/Proof"),
+            range: "https://uor.foundation/op/Identity",
+        },
+        // Amendment 92: formalDerivation retyped to ObjectProperty
+        Property {
+            id: "https://uor.foundation/proof/formalDerivation",
+            label: "formalDerivation",
+            comment: "The formal proof construction term: a DerivationTerm AST \
+                      node encoding the tactic script, lemma chain, or induction \
+                      scaffold that constitutes the proof.",
+            kind: PropertyKind::Object,
+            functional: true,
+            domain: Some("https://uor.foundation/proof/Proof"),
+            range: "https://uor.foundation/proof/DerivationTerm",
+        },
     ]
 }
 
 fn individuals() -> Vec<Individual> {
     vec![
+        // Amendment 87: ProofStrategy controlled vocabulary individuals
+        Individual {
+            id: "https://uor.foundation/proof/RingAxiom",
+            type_: "https://uor.foundation/proof/ProofStrategy",
+            label: "RingAxiom",
+            comment: "Follows from ZMod ring axioms. Lean4 tactic: `by ring`.",
+            properties: &[],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/DecideQ0",
+            type_: "https://uor.foundation/proof/ProofStrategy",
+            label: "DecideQ0",
+            comment: "Decidable at Q0 by exhaustive evaluation. Lean4: `by native_decide`.",
+            properties: &[],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/BitwiseInduction",
+            type_: "https://uor.foundation/proof/ProofStrategy",
+            label: "BitwiseInduction",
+            comment: "Induction on bit width n. Lean4: `by induction n`.",
+            properties: &[],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/GroupPresentation",
+            type_: "https://uor.foundation/proof/ProofStrategy",
+            label: "GroupPresentation",
+            comment: "From dihedral group presentation. Lean4: `by group`.",
+            properties: &[],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/Simplification",
+            type_: "https://uor.foundation/proof/ProofStrategy",
+            label: "Simplification",
+            comment: "By simplification with cited lemmas. Lean4: `by simp [lemmalist]`.",
+            properties: &[],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/ChineseRemainder",
+            type_: "https://uor.foundation/proof/ProofStrategy",
+            label: "ChineseRemainder",
+            comment: "By Chinese Remainder Theorem. Lean4: `by exact ZMod.chineseRemainder ...`.",
+            properties: &[],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/EulerPoincare",
+            type_: "https://uor.foundation/proof/ProofStrategy",
+            label: "EulerPoincare",
+            comment: "By Euler-Poincare formula applied to the constraint nerve.",
+            properties: &[],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/ProductFormula",
+            type_: "https://uor.foundation/proof/ProofStrategy",
+            label: "ProductFormula",
+            comment: "By Ostrowski product formula or derived valuation arguments.",
+            properties: &[],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/Composition",
+            type_: "https://uor.foundation/proof/ProofStrategy",
+            label: "Composition",
+            comment: "By composing proofs of sub-identities. Lean4: `by exact ...`.",
+            properties: &[],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/Contradiction",
+            type_: "https://uor.foundation/proof/ProofStrategy",
+            label: "Contradiction",
+            comment:
+                "By deriving contradiction for impossibility witnesses. Lean4: `by contradiction`.",
+            properties: &[],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/Computation",
+            type_: "https://uor.foundation/proof/ProofStrategy",
+            label: "Computation",
+            comment: "By computation at a specified quantum level. Lean4: `by native_decide`.",
+            properties: &[],
+        },
         // Critical identity: computation certificate (CriticalIdentityProof at Q0)
         Individual {
             id: "https://uor.foundation/proof/prf_criticalIdentity",
@@ -485,6 +617,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Computation"),
                 ),
             ],
         },
@@ -508,6 +644,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
+                ),
             ],
         },
         // phi_1 through phi_6: computation certificates at Q0
@@ -529,6 +669,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Computation"),
+                ),
             ],
         },
         Individual {
@@ -548,6 +692,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Computation"),
                 ),
             ],
         },
@@ -569,6 +717,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Computation"),
+                ),
             ],
         },
         Individual {
@@ -588,6 +740,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Computation"),
                 ),
             ],
         },
@@ -609,6 +765,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Computation"),
+                ),
             ],
         },
         Individual {
@@ -628,6 +788,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Computation"),
                 ),
             ],
         },
@@ -651,6 +815,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
+                ),
             ],
         },
         Individual {
@@ -671,6 +839,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
                 ),
             ],
         },
@@ -693,6 +865,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
+                ),
             ],
         },
         Individual {
@@ -713,6 +889,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
                 ),
             ],
         },
@@ -735,6 +915,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
+                ),
             ],
         },
         Individual {
@@ -755,6 +939,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
                 ),
             ],
         },
@@ -777,6 +965,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
+                ),
             ],
         },
         Individual {
@@ -797,6 +989,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
                 ),
             ],
         },
@@ -819,6 +1015,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
+                ),
             ],
         },
         Individual {
@@ -839,6 +1039,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
                 ),
             ],
         },
@@ -861,6 +1065,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
+                ),
             ],
         },
         Individual {
@@ -881,6 +1089,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
                 ),
             ],
         },
@@ -903,6 +1115,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
+                ),
             ],
         },
         Individual {
@@ -923,6 +1139,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/BitwiseInduction"),
                 ),
             ],
         },
@@ -945,6 +1165,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/BitwiseInduction"),
+                ),
             ],
         },
         Individual {
@@ -965,6 +1189,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/BitwiseInduction"),
                 ),
             ],
         },
@@ -987,6 +1215,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/BitwiseInduction"),
+                ),
             ],
         },
         Individual {
@@ -1007,6 +1239,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/BitwiseInduction"),
                 ),
             ],
         },
@@ -1029,6 +1265,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/BitwiseInduction"),
+                ),
             ],
         },
         Individual {
@@ -1049,6 +1289,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/BitwiseInduction"),
                 ),
             ],
         },
@@ -1071,6 +1315,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/BitwiseInduction"),
+                ),
             ],
         },
         Individual {
@@ -1091,6 +1339,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/BitwiseInduction"),
                 ),
             ],
         },
@@ -1113,6 +1365,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/BitwiseInduction"),
+                ),
             ],
         },
         Individual {
@@ -1133,6 +1389,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/BitwiseInduction"),
                 ),
             ],
         },
@@ -1155,6 +1415,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/BitwiseInduction"),
+                ),
             ],
         },
         Individual {
@@ -1175,6 +1439,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/BitwiseInduction"),
                 ),
             ],
         },
@@ -1197,6 +1465,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
+                ),
             ],
         },
         Individual {
@@ -1217,6 +1489,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
                 ),
             ],
         },
@@ -1239,6 +1515,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
+                ),
             ],
         },
         Individual {
@@ -1259,6 +1539,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
                 ),
             ],
         },
@@ -1281,6 +1565,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
+                ),
             ],
         },
         Individual {
@@ -1301,6 +1589,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
                 ),
             ],
         },
@@ -1323,6 +1615,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
+                ),
             ],
         },
         Individual {
@@ -1343,6 +1639,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
                 ),
             ],
         },
@@ -1365,6 +1665,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
+                ),
             ],
         },
         Individual {
@@ -1385,6 +1689,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
                 ),
             ],
         },
@@ -1407,6 +1715,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
+                ),
             ],
         },
         Individual {
@@ -1427,6 +1739,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/ChineseRemainder"),
                 ),
             ],
         },
@@ -1449,6 +1765,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/ChineseRemainder"),
+                ),
             ],
         },
         Individual {
@@ -1469,6 +1789,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/ChineseRemainder"),
                 ),
             ],
         },
@@ -1491,6 +1815,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/ChineseRemainder"),
+                ),
             ],
         },
         Individual {
@@ -1511,6 +1839,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/ChineseRemainder"),
                 ),
             ],
         },
@@ -1533,6 +1865,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
+                ),
             ],
         },
         Individual {
@@ -1553,6 +1889,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
                 ),
             ],
         },
@@ -1575,6 +1915,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
+                ),
             ],
         },
         Individual {
@@ -1595,6 +1939,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
                 ),
             ],
         },
@@ -1617,6 +1965,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/BitwiseInduction"),
+                ),
             ],
         },
         Individual {
@@ -1637,6 +1989,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/BitwiseInduction"),
                 ),
             ],
         },
@@ -1659,6 +2015,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/BitwiseInduction"),
+                ),
             ],
         },
         Individual {
@@ -1679,6 +2039,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/BitwiseInduction"),
                 ),
             ],
         },
@@ -1701,6 +2065,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/BitwiseInduction"),
+                ),
             ],
         },
         Individual {
@@ -1721,6 +2089,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/BitwiseInduction"),
                 ),
             ],
         },
@@ -1743,6 +2115,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
+                ),
             ],
         },
         Individual {
@@ -1763,6 +2139,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
                 ),
             ],
         },
@@ -1785,6 +2165,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
+                ),
             ],
         },
         Individual {
@@ -1805,6 +2189,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
                 ),
             ],
         },
@@ -1827,6 +2215,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
+                ),
             ],
         },
         Individual {
@@ -1847,6 +2239,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
                 ),
             ],
         },
@@ -1869,6 +2265,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
+                ),
             ],
         },
         Individual {
@@ -1889,6 +2289,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
                 ),
             ],
         },
@@ -1911,6 +2315,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
+                ),
             ],
         },
         Individual {
@@ -1931,6 +2339,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
                 ),
             ],
         },
@@ -1953,6 +2365,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
+                ),
             ],
         },
         Individual {
@@ -1973,6 +2389,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
                 ),
             ],
         },
@@ -1995,6 +2415,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
+                ),
             ],
         },
         Individual {
@@ -2015,6 +2439,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
                 ),
             ],
         },
@@ -2037,6 +2465,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
+                ),
             ],
         },
         Individual {
@@ -2057,6 +2489,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
                 ),
             ],
         },
@@ -2079,6 +2515,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
+                ),
             ],
         },
         Individual {
@@ -2099,6 +2539,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
                 ),
             ],
         },
@@ -2121,6 +2565,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
+                ),
             ],
         },
         Individual {
@@ -2141,6 +2589,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
                 ),
             ],
         },
@@ -2163,6 +2615,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/BitwiseInduction"),
+                ),
             ],
         },
         Individual {
@@ -2183,6 +2639,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/BitwiseInduction"),
                 ),
             ],
         },
@@ -2205,6 +2665,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/BitwiseInduction"),
+                ),
             ],
         },
         Individual {
@@ -2225,6 +2689,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/BitwiseInduction"),
                 ),
             ],
         },
@@ -2247,6 +2715,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
+                ),
             ],
         },
         Individual {
@@ -2267,6 +2739,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
                 ),
             ],
         },
@@ -2289,6 +2765,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
+                ),
             ],
         },
         Individual {
@@ -2309,6 +2789,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
                 ),
             ],
         },
@@ -2331,6 +2815,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
+                ),
             ],
         },
         Individual {
@@ -2351,6 +2839,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
                 ),
             ],
         },
@@ -2373,6 +2865,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
+                ),
             ],
         },
         Individual {
@@ -2393,6 +2889,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
                 ),
             ],
         },
@@ -2415,6 +2915,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
+                ),
             ],
         },
         Individual {
@@ -2435,6 +2939,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
                 ),
             ],
         },
@@ -2457,6 +2965,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
+                ),
             ],
         },
         Individual {
@@ -2477,6 +2989,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
                 ),
             ],
         },
@@ -2499,6 +3015,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
+                ),
             ],
         },
         Individual {
@@ -2519,6 +3039,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
                 ),
             ],
         },
@@ -2541,6 +3065,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
+                ),
             ],
         },
         Individual {
@@ -2561,6 +3089,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
                 ),
             ],
         },
@@ -2583,6 +3115,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
+                ),
             ],
         },
         Individual {
@@ -2603,6 +3139,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
                 ),
             ],
         },
@@ -2625,6 +3165,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
+                ),
             ],
         },
         Individual {
@@ -2645,6 +3189,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
                 ),
             ],
         },
@@ -2667,6 +3215,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
+                ),
             ],
         },
         Individual {
@@ -2687,6 +3239,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
                 ),
             ],
         },
@@ -2709,6 +3265,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
+                ),
             ],
         },
         Individual {
@@ -2729,6 +3289,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
                 ),
             ],
         },
@@ -2751,6 +3315,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
+                ),
             ],
         },
         Individual {
@@ -2771,6 +3339,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
                 ),
             ],
         },
@@ -2793,6 +3365,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
+                ),
             ],
         },
         Individual {
@@ -2813,6 +3389,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
                 ),
             ],
         },
@@ -2835,6 +3415,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
+                ),
             ],
         },
         Individual {
@@ -2855,6 +3439,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
                 ),
             ],
         },
@@ -2877,6 +3465,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
+                ),
             ],
         },
         Individual {
@@ -2897,6 +3489,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
                 ),
             ],
         },
@@ -2919,6 +3515,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
+                ),
             ],
         },
         Individual {
@@ -2939,6 +3539,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
                 ),
             ],
         },
@@ -2961,6 +3565,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
+                ),
             ],
         },
         Individual {
@@ -2981,6 +3589,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
                 ),
             ],
         },
@@ -3003,6 +3615,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/BitwiseInduction"),
+                ),
             ],
         },
         Individual {
@@ -3023,6 +3639,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/BitwiseInduction"),
                 ),
             ],
         },
@@ -3045,6 +3665,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/BitwiseInduction"),
+                ),
             ],
         },
         Individual {
@@ -3065,6 +3689,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/BitwiseInduction"),
                 ),
             ],
         },
@@ -3087,6 +3715,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/BitwiseInduction"),
+                ),
             ],
         },
         Individual {
@@ -3107,6 +3739,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/BitwiseInduction"),
                 ),
             ],
         },
@@ -3129,6 +3765,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
+                ),
             ],
         },
         Individual {
@@ -3149,6 +3789,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
                 ),
             ],
         },
@@ -3171,6 +3815,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
+                ),
             ],
         },
         Individual {
@@ -3191,6 +3839,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
                 ),
             ],
         },
@@ -3213,6 +3865,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
+                ),
             ],
         },
         Individual {
@@ -3233,6 +3889,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
                 ),
             ],
         },
@@ -3255,6 +3915,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
+                ),
             ],
         },
         Individual {
@@ -3275,6 +3939,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
                 ),
             ],
         },
@@ -3297,6 +3965,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
+                ),
             ],
         },
         Individual {
@@ -3317,6 +3989,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
                 ),
             ],
         },
@@ -3339,6 +4015,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
+                ),
             ],
         },
         Individual {
@@ -3359,6 +4039,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
                 ),
             ],
         },
@@ -3381,6 +4065,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
+                ),
             ],
         },
         Individual {
@@ -3401,6 +4089,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
                 ),
             ],
         },
@@ -3423,6 +4115,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
+                ),
             ],
         },
         Individual {
@@ -3443,6 +4139,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
                 ),
             ],
         },
@@ -3465,6 +4165,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
+                ),
             ],
         },
         Individual {
@@ -3485,6 +4189,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
                 ),
             ],
         },
@@ -3507,6 +4215,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
+                ),
             ],
         },
         Individual {
@@ -3527,6 +4239,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
                 ),
             ],
         },
@@ -3549,6 +4265,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
+                ),
             ],
         },
         Individual {
@@ -3569,6 +4289,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
                 ),
             ],
         },
@@ -3591,6 +4315,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
+                ),
             ],
         },
         Individual {
@@ -3611,6 +4339,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
                 ),
             ],
         },
@@ -3633,6 +4365,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
+                ),
             ],
         },
         Individual {
@@ -3653,6 +4389,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
                 ),
             ],
         },
@@ -3675,6 +4415,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
+                ),
             ],
         },
         Individual {
@@ -3695,6 +4439,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
                 ),
             ],
         },
@@ -3717,6 +4465,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/GroupPresentation"),
+                ),
             ],
         },
         Individual {
@@ -3737,6 +4489,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/GroupPresentation"),
                 ),
             ],
         },
@@ -3759,6 +4515,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/GroupPresentation"),
+                ),
             ],
         },
         Individual {
@@ -3779,6 +4539,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/GroupPresentation"),
                 ),
             ],
         },
@@ -3801,6 +4565,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/GroupPresentation"),
+                ),
             ],
         },
         Individual {
@@ -3821,6 +4589,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/GroupPresentation"),
                 ),
             ],
         },
@@ -3843,6 +4615,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/GroupPresentation"),
+                ),
             ],
         },
         Individual {
@@ -3863,6 +4639,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/GroupPresentation"),
                 ),
             ],
         },
@@ -3885,6 +4665,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/GroupPresentation"),
+                ),
             ],
         },
         Individual {
@@ -3905,6 +4689,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/GroupPresentation"),
                 ),
             ],
         },
@@ -3927,6 +4715,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/GroupPresentation"),
+                ),
             ],
         },
         Individual {
@@ -3947,6 +4739,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/GroupPresentation"),
                 ),
             ],
         },
@@ -3969,6 +4765,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/GroupPresentation"),
+                ),
             ],
         },
         Individual {
@@ -3989,6 +4789,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/GroupPresentation"),
                 ),
             ],
         },
@@ -4011,6 +4815,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/GroupPresentation"),
+                ),
             ],
         },
         Individual {
@@ -4031,6 +4839,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/GroupPresentation"),
                 ),
             ],
         },
@@ -4053,6 +4865,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/GroupPresentation"),
+                ),
             ],
         },
         Individual {
@@ -4073,6 +4889,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/GroupPresentation"),
                 ),
             ],
         },
@@ -4095,6 +4915,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/GroupPresentation"),
+                ),
             ],
         },
         Individual {
@@ -4115,6 +4939,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/GroupPresentation"),
                 ),
             ],
         },
@@ -4137,6 +4965,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/GroupPresentation"),
+                ),
             ],
         },
         Individual {
@@ -4157,6 +4989,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/GroupPresentation"),
                 ),
             ],
         },
@@ -4179,6 +5015,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/GroupPresentation"),
+                ),
             ],
         },
         Individual {
@@ -4199,6 +5039,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/GroupPresentation"),
                 ),
             ],
         },
@@ -4221,6 +5065,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/GroupPresentation"),
+                ),
             ],
         },
         Individual {
@@ -4241,6 +5089,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/GroupPresentation"),
                 ),
             ],
         },
@@ -4263,6 +5115,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/GroupPresentation"),
+                ),
             ],
         },
         Individual {
@@ -4283,6 +5139,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/GroupPresentation"),
                 ),
             ],
         },
@@ -4305,6 +5165,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/GroupPresentation"),
+                ),
             ],
         },
         Individual {
@@ -4325,6 +5189,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
                 ),
             ],
         },
@@ -4347,6 +5215,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
+                ),
             ],
         },
         Individual {
@@ -4367,6 +5239,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
                 ),
             ],
         },
@@ -4389,6 +5265,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
+                ),
             ],
         },
         Individual {
@@ -4409,6 +5289,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
                 ),
             ],
         },
@@ -4431,6 +5315,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
+                ),
             ],
         },
         Individual {
@@ -4451,6 +5339,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
                 ),
             ],
         },
@@ -4473,6 +5365,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
+                ),
             ],
         },
         Individual {
@@ -4493,6 +5389,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
                 ),
             ],
         },
@@ -4515,6 +5415,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
+                ),
             ],
         },
         Individual {
@@ -4535,6 +5439,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
                 ),
             ],
         },
@@ -4557,6 +5465,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
+                ),
             ],
         },
         Individual {
@@ -4577,6 +5489,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
                 ),
             ],
         },
@@ -4599,6 +5515,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
+                ),
             ],
         },
         Individual {
@@ -4619,6 +5539,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
                 ),
             ],
         },
@@ -4641,6 +5565,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
+                ),
             ],
         },
         Individual {
@@ -4661,6 +5589,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
                 ),
             ],
         },
@@ -4683,6 +5615,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
+                ),
             ],
         },
         Individual {
@@ -4703,6 +5639,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
                 ),
             ],
         },
@@ -4725,6 +5665,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
+                ),
             ],
         },
         Individual {
@@ -4745,6 +5689,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
                 ),
             ],
         },
@@ -4767,6 +5715,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
+                ),
             ],
         },
         Individual {
@@ -4787,6 +5739,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
                 ),
             ],
         },
@@ -4809,33 +5765,48 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
+                ),
             ],
         },
-        // Amendment 31: prf_AR_5 retyped from AxiomaticDerivation to EmpiricalVerification
-        // AR_5's forAll is 'empirical, Q0--Q4' — a computationally-verified bound
+        // Amendment 86: prf_AR_5 reclassified from EmpiricalVerification to InductiveProof
         Individual {
             id: "https://uor.foundation/proof/prf_AR_5",
-            type_: "https://uor.foundation/proof/EmpiricalVerification",
+            type_: "https://uor.foundation/proof/InductiveProof",
             label: "prf_AR_5",
-            comment: "Empirical verification of AR_5: greedy vs adiabatic cost \
-                      difference is at most 5% for n ≤ 16. Verified by exhaustive \
-                      enumeration at Q0 through Q4.",
+            comment: "Inductive proof of AR_5: greedy vs adiabatic cost difference \
+                      is at most 5%. Base case at Q0 by exhaustive evaluation; \
+                      inductive step by QLS_5 (identity preservation under lift).",
             properties: &[
                 (
                     "https://uor.foundation/proof/provesIdentity",
                     IndividualValue::IriRef("https://uor.foundation/op/AR_5"),
                 ),
                 (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
                 (
-                    "https://uor.foundation/proof/quantumLevelRange",
-                    IndividualValue::Str("Q0-Q4"),
+                    "https://uor.foundation/proof/baseCase",
+                    IndividualValue::IriRef("https://uor.foundation/proof/prf_AR_5_base"),
                 ),
                 (
-                    "https://uor.foundation/proof/verificationMethod",
-                    IndividualValue::Str("exhaustive enumeration over Z/(2^n)Z for n=8,16,32,64"),
+                    "https://uor.foundation/proof/inductiveStep",
+                    IndividualValue::IriRef("https://uor.foundation/proof/prf_AR_5_step"),
+                ),
+                (
+                    "https://uor.foundation/proof/validForKAtLeast",
+                    IndividualValue::Int(0),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/BitwiseInduction"),
                 ),
             ],
         },
@@ -4858,6 +5829,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
+                ),
             ],
         },
         Individual {
@@ -4878,6 +5853,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
                 ),
             ],
         },
@@ -4900,6 +5879,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
+                ),
             ],
         },
         Individual {
@@ -4920,6 +5903,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
                 ),
             ],
         },
@@ -4942,6 +5929,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
+                ),
             ],
         },
         Individual {
@@ -4962,6 +5953,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
                 ),
             ],
         },
@@ -4984,6 +5979,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
+                ),
             ],
         },
         Individual {
@@ -5004,6 +6003,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
                 ),
             ],
         },
@@ -5026,6 +6029,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
+                ),
             ],
         },
         Individual {
@@ -5046,6 +6053,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
                 ),
             ],
         },
@@ -5068,6 +6079,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
+                ),
             ],
         },
         Individual {
@@ -5088,6 +6103,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
                 ),
             ],
         },
@@ -5110,6 +6129,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
+                ),
             ],
         },
         Individual {
@@ -5130,6 +6153,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
                 ),
             ],
         },
@@ -5152,6 +6179,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
+                ),
             ],
         },
         Individual {
@@ -5172,6 +6203,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
                 ),
             ],
         },
@@ -5194,6 +6229,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
+                ),
             ],
         },
         Individual {
@@ -5214,6 +6253,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
                 ),
             ],
         },
@@ -5236,6 +6279,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
+                ),
             ],
         },
         Individual {
@@ -5256,6 +6303,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
                 ),
             ],
         },
@@ -5278,6 +6329,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
+                ),
             ],
         },
         Individual {
@@ -5298,6 +6353,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/EulerPoincare"),
                 ),
             ],
         },
@@ -5320,6 +6379,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/EulerPoincare"),
+                ),
             ],
         },
         Individual {
@@ -5340,6 +6403,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/EulerPoincare"),
                 ),
             ],
         },
@@ -5362,6 +6429,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/EulerPoincare"),
+                ),
             ],
         },
         Individual {
@@ -5382,6 +6453,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/EulerPoincare"),
                 ),
             ],
         },
@@ -5404,6 +6479,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/EulerPoincare"),
+                ),
             ],
         },
         Individual {
@@ -5424,6 +6503,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Composition"),
                 ),
             ],
         },
@@ -5446,6 +6529,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Composition"),
+                ),
             ],
         },
         Individual {
@@ -5466,6 +6553,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Composition"),
                 ),
             ],
         },
@@ -5488,6 +6579,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Composition"),
+                ),
             ],
         },
         Individual {
@@ -5508,6 +6603,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/EulerPoincare"),
                 ),
             ],
         },
@@ -5530,6 +6629,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/EulerPoincare"),
+                ),
             ],
         },
         Individual {
@@ -5550,6 +6653,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/EulerPoincare"),
                 ),
             ],
         },
@@ -5572,6 +6679,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/EulerPoincare"),
+                ),
             ],
         },
         Individual {
@@ -5592,6 +6703,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/EulerPoincare"),
                 ),
             ],
         },
@@ -5615,6 +6730,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
+                ),
             ],
         },
         Individual {
@@ -5636,6 +6755,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
+                ),
             ],
         },
         Individual {
@@ -5656,6 +6779,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
                 ),
             ],
         },
@@ -5681,6 +6808,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
+                ),
             ],
         },
         Individual {
@@ -5701,6 +6832,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
                 ),
             ],
         },
@@ -5725,6 +6860,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
+                ),
             ],
         },
         Individual {
@@ -5747,6 +6886,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
                 ),
             ],
         },
@@ -5772,6 +6915,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
+                ),
             ],
         },
         // Amendment 25: Completeness Certification proofs (CC_1–CC_5)
@@ -5795,6 +6942,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
+                ),
             ],
         },
         Individual {
@@ -5816,6 +6967,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
                 ),
             ],
         },
@@ -5839,6 +6994,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
+                ),
             ],
         },
         Individual {
@@ -5861,6 +7020,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
+                ),
             ],
         },
         Individual {
@@ -5882,6 +7045,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/EulerPoincare"),
                 ),
             ],
         },
@@ -5907,6 +7074,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
+                ),
             ],
         },
         Individual {
@@ -5927,6 +7098,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
                 ),
             ],
         },
@@ -5950,6 +7125,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
+                ),
             ],
         },
         Individual {
@@ -5972,6 +7151,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
+                ),
             ],
         },
         Individual {
@@ -5993,6 +7176,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
                 ),
             ],
         },
@@ -6017,6 +7204,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
+                ),
             ],
         },
         Individual {
@@ -6038,6 +7229,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/EulerPoincare"),
                 ),
             ],
         },
@@ -6063,6 +7258,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
+                ),
             ],
         },
         Individual {
@@ -6084,6 +7283,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
                 ),
             ],
         },
@@ -6107,6 +7310,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
+                ),
             ],
         },
         Individual {
@@ -6128,6 +7335,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
                 ),
             ],
         },
@@ -6152,6 +7363,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
+                ),
             ],
         },
         // Amendment 28: ψ-Pipeline Inversion proof coverage
@@ -6175,6 +7390,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
+                ),
             ],
         },
         Individual {
@@ -6196,6 +7415,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
                 ),
             ],
         },
@@ -6219,6 +7442,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
+                ),
             ],
         },
         Individual {
@@ -6240,6 +7467,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
                 ),
             ],
         },
@@ -6263,6 +7494,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
+                ),
             ],
         },
         Individual {
@@ -6285,6 +7520,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
+                ),
             ],
         },
         Individual {
@@ -6306,6 +7545,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
                 ),
             ],
         },
@@ -6333,7 +7576,7 @@ fn individuals() -> Vec<Individual> {
                 ),
                 (
                     "https://uor.foundation/proof/baseCase",
-                    IndividualValue::IriRef("https://uor.foundation/proof/prf_QLS_1"),
+                    IndividualValue::IriRef("https://uor.foundation/proof/prf_QLS_1_base"),
                 ),
                 (
                     "https://uor.foundation/proof/inductiveStep",
@@ -6342,6 +7585,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/validForKAtLeast",
                     IndividualValue::Int(0),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/BitwiseInduction"),
                 ),
             ],
         },
@@ -6367,15 +7614,19 @@ fn individuals() -> Vec<Individual> {
                 ),
                 (
                     "https://uor.foundation/proof/baseCase",
-                    IndividualValue::IriRef("https://uor.foundation/proof/prf_QLS_2"),
+                    IndividualValue::IriRef("https://uor.foundation/proof/prf_QLS_2_base"),
                 ),
                 (
                     "https://uor.foundation/proof/inductiveStep",
-                    IndividualValue::IriRef("https://uor.foundation/proof/prf_QLS_2"),
+                    IndividualValue::IriRef("https://uor.foundation/proof/prf_QLS_2_step"),
                 ),
                 (
                     "https://uor.foundation/proof/validForKAtLeast",
                     IndividualValue::Int(0),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/BitwiseInduction"),
                 ),
             ],
         },
@@ -6400,15 +7651,19 @@ fn individuals() -> Vec<Individual> {
                 ),
                 (
                     "https://uor.foundation/proof/baseCase",
-                    IndividualValue::IriRef("https://uor.foundation/proof/prf_QLS_3"),
+                    IndividualValue::IriRef("https://uor.foundation/proof/prf_QLS_3_base"),
                 ),
                 (
                     "https://uor.foundation/proof/inductiveStep",
-                    IndividualValue::IriRef("https://uor.foundation/proof/prf_QLS_3"),
+                    IndividualValue::IriRef("https://uor.foundation/proof/prf_QLS_3_step"),
                 ),
                 (
                     "https://uor.foundation/proof/validForKAtLeast",
                     IndividualValue::Int(0),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/BitwiseInduction"),
                 ),
             ],
         },
@@ -6434,15 +7689,19 @@ fn individuals() -> Vec<Individual> {
                 ),
                 (
                     "https://uor.foundation/proof/baseCase",
-                    IndividualValue::IriRef("https://uor.foundation/proof/prf_QLS_4"),
+                    IndividualValue::IriRef("https://uor.foundation/proof/prf_QLS_4_base"),
                 ),
                 (
                     "https://uor.foundation/proof/inductiveStep",
-                    IndividualValue::IriRef("https://uor.foundation/proof/prf_QLS_4"),
+                    IndividualValue::IriRef("https://uor.foundation/proof/prf_QLS_4_step"),
                 ),
                 (
                     "https://uor.foundation/proof/validForKAtLeast",
                     IndividualValue::Int(0),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/BitwiseInduction"),
                 ),
             ],
         },
@@ -6468,7 +7727,7 @@ fn individuals() -> Vec<Individual> {
                 ),
                 (
                     "https://uor.foundation/proof/baseCase",
-                    IndividualValue::IriRef("https://uor.foundation/proof/prf_QLS_5"),
+                    IndividualValue::IriRef("https://uor.foundation/proof/prf_QLS_5_base"),
                 ),
                 (
                     "https://uor.foundation/proof/inductiveStep",
@@ -6477,6 +7736,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/validForKAtLeast",
                     IndividualValue::Int(0),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/BitwiseInduction"),
                 ),
             ],
         },
@@ -6502,15 +7765,425 @@ fn individuals() -> Vec<Individual> {
                 ),
                 (
                     "https://uor.foundation/proof/baseCase",
-                    IndividualValue::IriRef("https://uor.foundation/proof/prf_QLS_6"),
+                    IndividualValue::IriRef("https://uor.foundation/proof/prf_QLS_6_base"),
                 ),
                 (
                     "https://uor.foundation/proof/inductiveStep",
-                    IndividualValue::IriRef("https://uor.foundation/proof/prf_QLS_6"),
+                    IndividualValue::IriRef("https://uor.foundation/proof/prf_QLS_6_step"),
                 ),
                 (
                     "https://uor.foundation/proof/validForKAtLeast",
                     IndividualValue::Int(0),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/BitwiseInduction"),
+                ),
+            ],
+        },
+        // Amendment 85: Non-self-referential base-case and step proofs for InductiveProofs
+        Individual {
+            id: "https://uor.foundation/proof/prf_QLS_1_base",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_QLS_1_base",
+            comment: "Base case for QLS_1 at Q0: lift unobstructedness holds trivially \
+                      for 8-bit rings where the constraint nerve is contractible.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/QLS_1"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(false),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Composition"),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_QLS_2_base",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_QLS_2_base",
+            comment: "Base case for QLS_2 at Q0: obstruction localisation holds at the \
+                      8-bit level where fibers are directly inspectable.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/QLS_2"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(false),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Composition"),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_QLS_2_step",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_QLS_2_step",
+            comment: "Inductive step for QLS_2: if obstruction is localised at Q_k, \
+                      the local-to-global structure of the constraint nerve preserves \
+                      localisation at Q_{k+1}.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/QLS_2"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Composition"),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_QLS_3_base",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_QLS_3_base",
+            comment: "Base case for QLS_3 at Q0: monotone lifting basis size increment \
+                      holds trivially for 8-bit to 16-bit extension.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/QLS_3"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(false),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Composition"),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_QLS_3_step",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_QLS_3_step",
+            comment: "Inductive step for QLS_3: the minimal basis construction at Q_{k+1} \
+                      adds exactly one element from the trivially obstructed fiber.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/QLS_3"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Composition"),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_QLS_4_base",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_QLS_4_base",
+            comment: "Base case for QLS_4 at Q0: spectral sequence convergence at \
+                      E_{d+2} holds for 8-bit filtrations by direct computation.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/QLS_4"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(false),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Composition"),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_QLS_4_step",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_QLS_4_step",
+            comment: "Inductive step for QLS_4: filtration length at Q_{k+1} extends \
+                      by at most one page from Q_k, preserving the E_{d+2} bound.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/QLS_4"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Composition"),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_QLS_5_base",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_QLS_5_base",
+            comment: "Base case for QLS_5 at Q0: universallyValid identities hold in \
+                      the 8-bit ring by definition of universal validity.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/QLS_5"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(false),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Composition"),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_QLS_6_base",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_QLS_6_base",
+            comment: "Base case for QLS_6 at Q0: the psi-pipeline produces a valid \
+                      ChainComplex for 8-bit QuantumLifts by direct construction.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/QLS_6"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(false),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Composition"),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_QLS_6_step",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_QLS_6_step",
+            comment: "Inductive step for QLS_6: the functorial construction of the \
+                      chain complex commutes with quantum level extension.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/QLS_6"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Composition"),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_QT_3_base",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_QT_3_base",
+            comment: "Base case for QT_3: resolved basis size formula holds for \
+                      chain length 1 by direct construction.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/QT_3"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(false),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Composition"),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_QT_5_base",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_QT_5_base",
+            comment: "Base case for QT_5: LiftChainCertificate existence for \
+                      tower height 1 follows from single-step certificate issuance.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/QT_5"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(false),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Composition"),
+                ),
+            ],
+        },
+        // Amendment 86: Base/step proofs for reclassified EmpiricalVerification proofs
+        Individual {
+            id: "https://uor.foundation/proof/prf_AR_5_base",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_AR_5_base",
+            comment: "Base case for AR_5 at Q0: greedy vs adiabatic cost difference \
+                      verified by exhaustive enumeration over Z/256Z.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/AR_5"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(false),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_AR_5_step",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_AR_5_step",
+            comment: "Inductive step for AR_5: if greedy vs adiabatic bound holds at \
+                      Q_k, it holds at Q_{k+1} by QLS_5 (universal identity \
+                      preservation under quantum lift).",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/AR_5"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_QM_6_base",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_QM_6_base",
+            comment: "Base case for QM_6 at Q0: amplitude index set equals monotone \
+                      pinning trajectories by exhaustive trajectory enumeration over \
+                      the 8-bit fiber lattice.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/QM_6"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(false),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_QM_6_step",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_QM_6_step",
+            comment: "Inductive step for QM_6: monotone pinning trajectories at \
+                      Q_{k+1} extend those at Q_k by the fiber lattice ordering \
+                      (monotone extension property).",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/QM_6"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
                 ),
             ],
         },
@@ -6534,6 +8207,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/EulerPoincare"),
+                ),
             ],
         },
         Individual {
@@ -6555,6 +8232,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/EulerPoincare"),
                 ),
             ],
         },
@@ -6578,6 +8259,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/EulerPoincare"),
+                ),
             ],
         },
         Individual {
@@ -6600,6 +8285,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/EulerPoincare"),
+                ),
             ],
         },
         Individual {
@@ -6620,6 +8309,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/EulerPoincare"),
                 ),
             ],
         },
@@ -6643,6 +8336,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/EulerPoincare"),
+                ),
             ],
         },
         Individual {
@@ -6664,6 +8361,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/EulerPoincare"),
                 ),
             ],
         },
@@ -6688,6 +8389,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
+                ),
             ],
         },
         Individual {
@@ -6711,6 +8416,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/EulerPoincare"),
+                ),
             ],
         },
         Individual {
@@ -6732,6 +8441,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Composition"),
                 ),
             ],
         },
@@ -6755,6 +8468,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
+                ),
             ],
         },
         Individual {
@@ -6776,6 +8493,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
                 ),
             ],
         },
@@ -6800,6 +8521,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
+                ),
             ],
         },
         // Amendment 33: Saturated Context Limit proof individuals
@@ -6822,6 +8547,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
+                ),
             ],
         },
         Individual {
@@ -6842,6 +8571,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
                 ),
             ],
         },
@@ -6864,6 +8597,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
+                ),
             ],
         },
         Individual {
@@ -6884,6 +8621,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
                 ),
             ],
         },
@@ -6906,6 +8647,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
+                ),
             ],
         },
         Individual {
@@ -6927,6 +8672,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
+                ),
             ],
         },
         Individual {
@@ -6947,6 +8696,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
                 ),
             ],
         },
@@ -6970,6 +8723,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
+                ),
             ],
         },
         Individual {
@@ -6990,6 +8747,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
                 ),
             ],
         },
@@ -7012,6 +8773,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/EulerPoincare"),
+                ),
             ],
         },
         Individual {
@@ -7033,6 +8798,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
+                ),
             ],
         },
         Individual {
@@ -7040,7 +8809,7 @@ fn individuals() -> Vec<Individual> {
             type_: "https://uor.foundation/proof/AxiomaticDerivation",
             label: "prf_MS_5",
             comment: "Proof of MS_5: empirical completeness convergence. \
-                      Convergence statement for EmpiricalVerification accumulation.",
+                      Convergence statement for verification accumulation.",
             properties: &[
                 (
                     "https://uor.foundation/proof/provesIdentity",
@@ -7053,6 +8822,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
                 ),
             ],
         },
@@ -7076,6 +8849,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
+                ),
             ],
         },
         Individual {
@@ -7096,6 +8873,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
                 ),
             ],
         },
@@ -7118,6 +8899,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
+                ),
             ],
         },
         Individual {
@@ -7139,6 +8924,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
+                ),
             ],
         },
         Individual {
@@ -7159,6 +8948,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
                 ),
             ],
         },
@@ -7182,6 +8975,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/ProductFormula"),
+                ),
             ],
         },
         Individual {
@@ -7202,6 +8999,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/EulerPoincare"),
                 ),
             ],
         },
@@ -7224,6 +9025,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/ProductFormula"),
+                ),
             ],
         },
         Individual {
@@ -7244,6 +9049,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
                 ),
             ],
         },
@@ -7267,6 +9076,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/ProductFormula"),
+                ),
             ],
         },
         Individual {
@@ -7287,6 +9100,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
                 ),
             ],
         },
@@ -7309,6 +9126,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/DecideQ0"),
+                ),
             ],
         },
         Individual {
@@ -7329,6 +9150,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
                 ),
             ],
         },
@@ -7351,6 +9176,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/EulerPoincare"),
+                ),
             ],
         },
         Individual {
@@ -7371,6 +9200,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
                 ),
             ],
         },
@@ -7393,6 +9226,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/GroupPresentation"),
+                ),
             ],
         },
         Individual {
@@ -7413,6 +9250,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
                 ),
             ],
         },
@@ -7435,6 +9276,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/ProductFormula"),
+                ),
             ],
         },
         Individual {
@@ -7455,6 +9300,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
                 ),
             ],
         },
@@ -7477,6 +9326,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/ProductFormula"),
+                ),
             ],
         },
         Individual {
@@ -7497,6 +9350,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
                 ),
             ],
         },
@@ -7519,6 +9376,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
+                ),
             ],
         },
         Individual {
@@ -7539,6 +9400,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
                 ),
             ],
         },
@@ -7569,6 +9434,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Contradiction"),
+                ),
             ],
         },
         Individual {
@@ -7596,6 +9465,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Contradiction"),
                 ),
             ],
         },
@@ -7664,6 +9537,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/validForKAtLeast",
                     IndividualValue::Int(0),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/BitwiseInduction"),
+                ),
             ],
         },
         Individual {
@@ -7683,6 +9560,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Composition"),
                 ),
             ],
         },
@@ -7707,7 +9588,7 @@ fn individuals() -> Vec<Individual> {
                 ),
                 (
                     "https://uor.foundation/proof/baseCase",
-                    IndividualValue::IriRef("https://uor.foundation/proof/prf_QT_3"),
+                    IndividualValue::IriRef("https://uor.foundation/proof/prf_QT_3_base"),
                 ),
                 (
                     "https://uor.foundation/proof/inductiveStep",
@@ -7716,6 +9597,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/validForKAtLeast",
                     IndividualValue::Int(0),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/BitwiseInduction"),
                 ),
             ],
         },
@@ -7737,6 +9622,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/EulerPoincare"),
                 ),
             ],
         },
@@ -7761,7 +9650,7 @@ fn individuals() -> Vec<Individual> {
                 ),
                 (
                     "https://uor.foundation/proof/baseCase",
-                    IndividualValue::IriRef("https://uor.foundation/proof/prf_QT_5"),
+                    IndividualValue::IriRef("https://uor.foundation/proof/prf_QT_5_base"),
                 ),
                 (
                     "https://uor.foundation/proof/inductiveStep",
@@ -7770,6 +9659,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/validForKAtLeast",
                     IndividualValue::Int(0),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/BitwiseInduction"),
                 ),
             ],
         },
@@ -7792,6 +9685,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Composition"),
+                ),
             ],
         },
         Individual {
@@ -7811,6 +9708,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Composition"),
                 ),
             ],
         },
@@ -7835,6 +9736,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
+                ),
             ],
         },
         Individual {
@@ -7855,6 +9760,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Computation"),
                 ),
             ],
         },
@@ -7878,6 +9787,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
+                ),
             ],
         },
         Individual {
@@ -7900,6 +9813,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
+                ),
             ],
         },
         Individual {
@@ -7920,6 +9837,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Computation"),
                 ),
             ],
         },
@@ -7943,6 +9864,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
+                ),
             ],
         },
         Individual {
@@ -7963,6 +9888,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
                 ),
             ],
         },
@@ -7986,6 +9915,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
+                ),
             ],
         },
         Individual {
@@ -8007,6 +9940,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Computation"),
+                ),
             ],
         },
         Individual {
@@ -8027,6 +9964,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
                 ),
             ],
         },
@@ -8050,6 +9991,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Composition"),
+                ),
             ],
         },
         Individual {
@@ -8071,6 +10016,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/EulerPoincare"),
+                ),
             ],
         },
         Individual {
@@ -8091,6 +10040,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Composition"),
                 ),
             ],
         },
@@ -8127,6 +10080,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/validForKAtLeast",
                     IndividualValue::Int(1),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/BitwiseInduction"),
+                ),
             ],
         },
         Individual {
@@ -8161,6 +10118,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/validForKAtLeast",
                     IndividualValue::Int(1),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/BitwiseInduction"),
+                ),
             ],
         },
         Individual {
@@ -8181,6 +10142,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
                 ),
             ],
         },
@@ -8204,6 +10169,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Composition"),
+                ),
             ],
         },
         Individual {
@@ -8224,6 +10193,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
                 ),
             ],
         },
@@ -8247,6 +10220,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
+                ),
             ],
         },
         // G9: GluingObstruction feedback
@@ -8268,6 +10245,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/EulerPoincare"),
                 ),
             ],
         },
@@ -8291,6 +10272,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
+                ),
             ],
         },
         Individual {
@@ -8312,33 +10297,48 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
+                ),
             ],
         },
-        // G10: Amplitude index set
+        // G10: Amplitude index set (Amendment 86: reclassified to InductiveProof)
         Individual {
             id: "https://uor.foundation/proof/prf_QM_6",
-            type_: "https://uor.foundation/proof/EmpiricalVerification",
+            type_: "https://uor.foundation/proof/InductiveProof",
             label: "prf_QM_6",
-            comment: "Empirical verification of QM_6: amplitude index set \
-                      equals monotone pinning trajectories consistent with \
-                      constraints. Verified by exhaustive enumeration at Q0 \
-                      through Q3.",
+            comment: "Inductive proof of QM_6: amplitude index set equals monotone \
+                      pinning trajectories. Base case at Q0 by exhaustive trajectory \
+                      enumeration; inductive step by fiber lattice ordering.",
             properties: &[
                 (
                     "https://uor.foundation/proof/provesIdentity",
                     IndividualValue::IriRef("https://uor.foundation/op/QM_6"),
                 ),
                 (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
                 (
-                    "https://uor.foundation/proof/quantumLevelRange",
-                    IndividualValue::Str("Q0-Q3"),
+                    "https://uor.foundation/proof/baseCase",
+                    IndividualValue::IriRef("https://uor.foundation/proof/prf_QM_6_base"),
                 ),
                 (
-                    "https://uor.foundation/proof/verificationMethod",
-                    IndividualValue::Str("exhaustive trajectory enumeration over fiber lattice"),
+                    "https://uor.foundation/proof/inductiveStep",
+                    IndividualValue::IriRef("https://uor.foundation/proof/prf_QM_6_step"),
+                ),
+                (
+                    "https://uor.foundation/proof/validForKAtLeast",
+                    IndividualValue::Int(0),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/BitwiseInduction"),
                 ),
             ],
         },
@@ -8361,6 +10361,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
+                ),
             ],
         },
         Individual {
@@ -8380,6 +10384,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/GroupPresentation"),
                 ),
             ],
         },
@@ -8401,6 +10409,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
+                ),
             ],
         },
         Individual {
@@ -8420,6 +10432,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
                 ),
             ],
         },
@@ -8441,6 +10457,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
+                ),
             ],
         },
         Individual {
@@ -8461,29 +10481,36 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/ProductFormula"),
+                ),
             ],
         },
+        // Amendment 86: prf_CIC_7 reclassified from EmpiricalVerification to AxiomaticDerivation
         Individual {
             id: "https://uor.foundation/proof/prf_CIC_7",
-            type_: "https://uor.foundation/proof/EmpiricalVerification",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
             label: "prf_CIC_7",
-            comment: "Empirical verification of CIC_7: BornRuleVerification issuance coverage.",
+            comment: "Axiomatic derivation of CIC_7: BornRuleVerification issuance \
+                      coverage. Follows by composition from corrected OA_4 (product \
+                      formula chain) and QM_5 (amplitude normalization).",
             properties: &[
                 (
                     "https://uor.foundation/proof/provesIdentity",
                     IndividualValue::IriRef("https://uor.foundation/op/CIC_7"),
                 ),
                 (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
                 (
-                    "https://uor.foundation/proof/quantumLevelRange",
-                    IndividualValue::Str("Q0-Q3"),
-                ),
-                (
-                    "https://uor.foundation/proof/verificationMethod",
-                    IndividualValue::Str("Born rule amplitude sum verification over fiber lattice"),
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/ProductFormula"),
                 ),
             ],
         },
@@ -8504,6 +10531,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
                 ),
             ],
         },
@@ -8526,6 +10557,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
+                ),
             ],
         },
         Individual {
@@ -8545,6 +10580,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
                 ),
             ],
         },
@@ -8566,6 +10605,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
+                ),
             ],
         },
         Individual {
@@ -8585,6 +10628,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
                 ),
             ],
         },
@@ -8606,6 +10653,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
+                ),
             ],
         },
         Individual {
@@ -8625,6 +10676,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
                 ),
             ],
         },
@@ -8646,6 +10701,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
+                ),
             ],
         },
         Individual {
@@ -8665,6 +10724,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
                 ),
             ],
         },
@@ -8686,6 +10749,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
+                ),
             ],
         },
         Individual {
@@ -8706,6 +10773,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
+                ),
             ],
         },
         Individual {
@@ -8725,6 +10796,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
                 ),
             ],
         },
@@ -8748,6 +10823,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/BitwiseInduction"),
+                ),
             ],
         },
         Individual {
@@ -8768,6 +10847,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/BitwiseInduction"),
                 ),
             ],
         },
@@ -8790,6 +10873,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/BitwiseInduction"),
+                ),
             ],
         },
         Individual {
@@ -8810,6 +10897,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/BitwiseInduction"),
                 ),
             ],
         },
@@ -8832,6 +10923,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/BitwiseInduction"),
+                ),
             ],
         },
         Individual {
@@ -8852,6 +10947,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/BitwiseInduction"),
                 ),
             ],
         },
@@ -8874,6 +10973,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/BitwiseInduction"),
+                ),
             ],
         },
         Individual {
@@ -8894,6 +10997,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/BitwiseInduction"),
                 ),
             ],
         },
@@ -8916,6 +11023,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/BitwiseInduction"),
+                ),
             ],
         },
         Individual {
@@ -8936,6 +11047,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/BitwiseInduction"),
                 ),
             ],
         },
@@ -8958,6 +11073,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/BitwiseInduction"),
+                ),
             ],
         },
         Individual {
@@ -8978,6 +11097,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/BitwiseInduction"),
                 ),
             ],
         },
@@ -9001,6 +11124,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/ProductFormula"),
+                ),
             ],
         },
         Individual {
@@ -9020,6 +11147,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/ProductFormula"),
                 ),
             ],
         },
@@ -9042,30 +11173,36 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/ProductFormula"),
+                ),
             ],
         },
+        // Amendment 86: prf_OA_4 reclassified from EmpiricalVerification to AxiomaticDerivation
         Individual {
             id: "https://uor.foundation/proof/prf_OA_4",
-            type_: "https://uor.foundation/proof/EmpiricalVerification",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
             label: "prf_OA_4",
-            comment: "Empirical verification of OA_4: Born rule bridge \
-                      conditional on amplitude rationality.",
+            comment: "Axiomatic derivation of OA_4: Born rule bridge follows from \
+                      the product formula chain OA_1 (Ostrowski) -> OA_2 (crossing \
+                      cost) -> OA_3 (Landauer grounding) -> OA_4.",
             properties: &[
                 (
                     "https://uor.foundation/proof/provesIdentity",
                     IndividualValue::IriRef("https://uor.foundation/op/OA_4"),
                 ),
                 (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
                 (
-                    "https://uor.foundation/proof/quantumLevelRange",
-                    IndividualValue::Str("Q0-Q3"),
-                ),
-                (
-                    "https://uor.foundation/proof/verificationMethod",
-                    IndividualValue::Str("empirical verification with rational fiber amplitudes"),
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/ProductFormula"),
                 ),
             ],
         },
@@ -9087,6 +11224,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/ProductFormula"),
                 ),
             ],
         },
@@ -9110,6 +11251,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/EulerPoincare"),
+                ),
             ],
         },
         Individual {
@@ -9130,6 +11275,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/EulerPoincare"),
                 ),
             ],
         },
@@ -9152,6 +11301,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/EulerPoincare"),
+                ),
             ],
         },
         Individual {
@@ -9172,6 +11325,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/EulerPoincare"),
                 ),
             ],
         },
@@ -9194,6 +11351,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/EulerPoincare"),
+                ),
             ],
         },
         Individual {
@@ -9214,6 +11375,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Composition"),
                 ),
             ],
         },
@@ -9236,6 +11401,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Composition"),
+                ),
             ],
         },
         Individual {
@@ -9256,6 +11425,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/EulerPoincare"),
                 ),
             ],
         },
@@ -9279,6 +11452,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
+                ),
             ],
         },
         Individual {
@@ -9299,6 +11476,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
                 ),
             ],
         },
@@ -9321,6 +11502,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
+                ),
             ],
         },
         Individual {
@@ -9341,6 +11526,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
                 ),
             ],
         },
@@ -9363,6 +11552,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
+                ),
             ],
         },
         Individual {
@@ -9384,6 +11577,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Composition"),
+                ),
             ],
         },
         Individual {
@@ -9404,6 +11601,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
                 ),
             ],
         },
@@ -9427,6 +11628,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
+                ),
             ],
         },
         Individual {
@@ -9447,6 +11652,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
                 ),
             ],
         },
@@ -9469,6 +11678,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
+                ),
             ],
         },
         Individual {
@@ -9489,6 +11702,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Composition"),
                 ),
             ],
         },
@@ -9511,6 +11728,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/EulerPoincare"),
+                ),
             ],
         },
         Individual {
@@ -9531,6 +11752,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/EulerPoincare"),
                 ),
             ],
         },
@@ -9553,6 +11778,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
+                ),
             ],
         },
         Individual {
@@ -9573,6 +11802,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Composition"),
                 ),
             ],
         },
@@ -9595,6 +11828,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Composition"),
+                ),
             ],
         },
         Individual {
@@ -9615,6 +11852,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Composition"),
                 ),
             ],
         },
@@ -9638,6 +11879,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
+                ),
             ],
         },
         Individual {
@@ -9658,6 +11903,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/EulerPoincare"),
                 ),
             ],
         },
@@ -9680,6 +11929,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
+                ),
             ],
         },
         Individual {
@@ -9700,6 +11953,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
                 ),
             ],
         },
@@ -9722,6 +11979,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
+                ),
             ],
         },
         Individual {
@@ -9742,6 +12003,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
+                ),
             ],
         },
         Individual {
@@ -9761,6 +12026,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
                 ),
             ],
         },
@@ -9783,6 +12052,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
+                ),
             ],
         },
         Individual {
@@ -9803,6 +12076,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
+                ),
             ],
         },
         Individual {
@@ -9822,6 +12099,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
                 ),
             ],
         },
@@ -9844,6 +12125,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
+                ),
             ],
         },
         // ── Amendment 59: Named Base Metrics proofs ─────────────────────
@@ -9865,6 +12150,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Composition"),
+                ),
             ],
         },
         Individual {
@@ -9884,6 +12173,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Composition"),
                 ),
             ],
         },
@@ -9905,6 +12198,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Composition"),
+                ),
             ],
         },
         Individual {
@@ -9924,6 +12221,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Composition"),
                 ),
             ],
         },
@@ -9945,6 +12246,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Composition"),
+                ),
             ],
         },
         Individual {
@@ -9964,6 +12269,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Composition"),
                 ),
             ],
         },
@@ -9986,6 +12295,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/EulerPoincare"),
+                ),
             ],
         },
         Individual {
@@ -10005,6 +12318,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/EulerPoincare"),
                 ),
             ],
         },
@@ -10026,6 +12343,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/EulerPoincare"),
+                ),
             ],
         },
         Individual {
@@ -10045,6 +12366,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/EulerPoincare"),
                 ),
             ],
         },
@@ -10067,6 +12392,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/EulerPoincare"),
+                ),
             ],
         },
         Individual {
@@ -10086,6 +12415,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/EulerPoincare"),
                 ),
             ],
         },
@@ -10107,6 +12440,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/EulerPoincare"),
+                ),
             ],
         },
         Individual {
@@ -10126,6 +12463,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/EulerPoincare"),
                 ),
             ],
         },
@@ -10148,6 +12489,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
+                ),
             ],
         },
         Individual {
@@ -10167,6 +12512,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
                 ),
             ],
         },
@@ -10188,6 +12537,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
+                ),
             ],
         },
         Individual {
@@ -10207,6 +12560,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
                 ),
             ],
         },
@@ -10228,6 +12585,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
+                ),
             ],
         },
         Individual {
@@ -10247,6 +12608,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
                 ),
             ],
         },
@@ -10268,6 +12633,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
+                ),
             ],
         },
         Individual {
@@ -10287,6 +12656,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
                 ),
             ],
         },
@@ -10309,6 +12682,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Composition"),
+                ),
             ],
         },
         Individual {
@@ -10328,6 +12705,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Composition"),
                 ),
             ],
         },
@@ -10349,6 +12730,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Composition"),
+                ),
             ],
         },
         Individual {
@@ -10368,6 +12753,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Composition"),
                 ),
             ],
         },
@@ -10389,6 +12778,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Composition"),
+                ),
             ],
         },
         Individual {
@@ -10408,6 +12801,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Composition"),
                 ),
             ],
         },
@@ -10429,6 +12826,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Composition"),
+                ),
             ],
         },
         Individual {
@@ -10448,6 +12849,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Composition"),
                 ),
             ],
         },
@@ -10469,6 +12874,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Composition"),
+                ),
             ],
         },
         Individual {
@@ -10488,6 +12897,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Composition"),
                 ),
             ],
         },
@@ -10509,6 +12922,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Composition"),
+                ),
             ],
         },
         Individual {
@@ -10528,6 +12945,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Composition"),
                 ),
             ],
         },
@@ -10549,6 +12970,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Composition"),
+                ),
             ],
         },
         Individual {
@@ -10568,6 +12993,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Composition"),
                 ),
             ],
         },
@@ -10589,6 +13018,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Composition"),
+                ),
             ],
         },
         Individual {
@@ -10608,6 +13041,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Composition"),
                 ),
             ],
         },
@@ -10629,6 +13066,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Composition"),
+                ),
             ],
         },
         Individual {
@@ -10648,6 +13089,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Composition"),
                 ),
             ],
         },
@@ -10670,6 +13115,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
+                ),
             ],
         },
         Individual {
@@ -10689,6 +13138,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
                 ),
             ],
         },
@@ -10710,6 +13163,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
+                ),
             ],
         },
         Individual {
@@ -10729,6 +13186,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
                 ),
             ],
         },
@@ -10750,6 +13211,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
+                ),
             ],
         },
         Individual {
@@ -10769,6 +13234,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
                 ),
             ],
         },
@@ -10790,6 +13259,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
+                ),
             ],
         },
         Individual {
@@ -10809,6 +13282,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
                 ),
             ],
         },
@@ -10830,6 +13307,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
+                ),
             ],
         },
         Individual {
@@ -10849,6 +13330,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
                 ),
             ],
         },
@@ -10870,6 +13355,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
+                ),
             ],
         },
         Individual {
@@ -10889,6 +13378,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
                 ),
             ],
         },
@@ -10910,6 +13403,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
+                ),
             ],
         },
         Individual {
@@ -10929,6 +13426,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
                 ),
             ],
         },
@@ -10950,6 +13451,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
+                ),
             ],
         },
         Individual {
@@ -10969,6 +13474,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
                 ),
             ],
         },
@@ -10991,6 +13500,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
+                ),
             ],
         },
         Individual {
@@ -11010,6 +13523,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
                 ),
             ],
         },
@@ -11031,6 +13548,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
+                ),
             ],
         },
         Individual {
@@ -11050,6 +13571,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
                 ),
             ],
         },
@@ -11071,6 +13596,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
+                ),
             ],
         },
         Individual {
@@ -11090,6 +13619,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
                 ),
             ],
         },
@@ -11111,6 +13644,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
+                ),
             ],
         },
         Individual {
@@ -11130,6 +13667,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
                 ),
             ],
         },
@@ -11151,6 +13692,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
+                ),
             ],
         },
         Individual {
@@ -11170,6 +13715,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
                 ),
             ],
         },
@@ -11191,6 +13740,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
+                ),
             ],
         },
         Individual {
@@ -11210,6 +13763,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
                 ),
             ],
         },
@@ -11231,6 +13788,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
+                ),
             ],
         },
         Individual {
@@ -11250,6 +13811,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
                 ),
             ],
         },
@@ -11271,6 +13836,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
+                ),
             ],
         },
         Individual {
@@ -11290,6 +13859,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
                 ),
             ],
         },
@@ -11312,6 +13885,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
+                ),
             ],
         },
         Individual {
@@ -11331,6 +13908,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
                 ),
             ],
         },
@@ -11352,6 +13933,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
+                ),
             ],
         },
         Individual {
@@ -11371,6 +13956,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
                 ),
             ],
         },
@@ -11392,6 +13981,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
+                ),
             ],
         },
         Individual {
@@ -11411,6 +14004,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
                 ),
             ],
         },
@@ -11432,6 +14029,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
+                ),
             ],
         },
         Individual {
@@ -11451,6 +14052,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
                 ),
             ],
         },
@@ -11472,6 +14077,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
+                ),
             ],
         },
         Individual {
@@ -11491,6 +14100,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
                 ),
             ],
         },
@@ -11512,6 +14125,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
+                ),
             ],
         },
         Individual {
@@ -11531,6 +14148,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
                 ),
             ],
         },
@@ -11552,6 +14173,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
+                ),
             ],
         },
         Individual {
@@ -11571,6 +14196,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
                 ),
             ],
         },
@@ -11592,6 +14221,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
+                ),
             ],
         },
         Individual {
@@ -11611,6 +14244,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
                 ),
             ],
         },
@@ -11632,6 +14269,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
+                ),
             ],
         },
         Individual {
@@ -11651,6 +14292,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
                 ),
             ],
         },
@@ -11673,6 +14318,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/EulerPoincare"),
+                ),
             ],
         },
         Individual {
@@ -11692,6 +14341,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/EulerPoincare"),
                 ),
             ],
         },
@@ -11713,6 +14366,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/EulerPoincare"),
+                ),
             ],
         },
         Individual {
@@ -11732,6 +14389,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/EulerPoincare"),
                 ),
             ],
         },
@@ -11753,6 +14414,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/EulerPoincare"),
+                ),
             ],
         },
         Individual {
@@ -11772,6 +14437,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/EulerPoincare"),
                 ),
             ],
         },
@@ -11793,6 +14462,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/EulerPoincare"),
+                ),
             ],
         },
         Individual {
@@ -11812,6 +14485,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/EulerPoincare"),
                 ),
             ],
         },
@@ -11834,6 +14511,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
+                ),
             ],
         },
         Individual {
@@ -11853,6 +14534,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
                 ),
             ],
         },
@@ -11874,6 +14559,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
+                ),
             ],
         },
         Individual {
@@ -11893,6 +14582,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
                 ),
             ],
         },
@@ -11915,6 +14608,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
+                ),
             ],
         },
         Individual {
@@ -11935,6 +14632,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
                 ),
             ],
         },
@@ -11957,6 +14658,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
+                ),
             ],
         },
         // ── Amendment 68: Interaction Algebra proofs (IN_, AS_) ──────────
@@ -11978,6 +14683,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Composition"),
+                ),
             ],
         },
         Individual {
@@ -11997,6 +14706,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Composition"),
                 ),
             ],
         },
@@ -12019,6 +14732,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Composition"),
+                ),
             ],
         },
         Individual {
@@ -12038,6 +14755,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Composition"),
                 ),
             ],
         },
@@ -12060,6 +14781,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Composition"),
+                ),
             ],
         },
         Individual {
@@ -12079,6 +14804,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Composition"),
                 ),
             ],
         },
@@ -12101,6 +14830,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Composition"),
+                ),
             ],
         },
         Individual {
@@ -12121,6 +14854,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Composition"),
                 ),
             ],
         },
@@ -12143,6 +14880,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Composition"),
+                ),
             ],
         },
         Individual {
@@ -12163,6 +14904,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Composition"),
                 ),
             ],
         },
@@ -12185,6 +14930,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Composition"),
+                ),
             ],
         },
         Individual {
@@ -12205,6 +14954,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Composition"),
                 ),
             ],
         },
@@ -12227,6 +14980,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Composition"),
+                ),
             ],
         },
         // ── Amendment 69: Monoidal Composition proofs (MO_) ──────────────
@@ -12248,6 +15005,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
+                ),
             ],
         },
         Individual {
@@ -12267,6 +15028,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
                 ),
             ],
         },
@@ -12288,6 +15053,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
+                ),
             ],
         },
         Individual {
@@ -12308,6 +15077,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
+                ),
             ],
         },
         Individual {
@@ -12327,6 +15100,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
                 ),
             ],
         },
@@ -12349,6 +15126,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
+                ),
             ],
         },
         Individual {
@@ -12368,6 +15149,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
                 ),
             ],
         },
@@ -12389,6 +15174,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
+                ),
             ],
         },
         Individual {
@@ -12409,6 +15198,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
+                ),
             ],
         },
         Individual {
@@ -12428,6 +15221,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
                 ),
             ],
         },
@@ -12450,6 +15247,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
+                ),
             ],
         },
         Individual {
@@ -12469,6 +15270,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
                 ),
             ],
         },
@@ -12490,6 +15295,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
+                ),
             ],
         },
         Individual {
@@ -12509,6 +15318,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
                 ),
             ],
         },
@@ -12530,6 +15343,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
+                ),
             ],
         },
         Individual {
@@ -12550,6 +15367,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
+                ),
             ],
         },
         Individual {
@@ -12569,6 +15390,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
                 ),
             ],
         },
@@ -12591,6 +15416,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
+                ),
             ],
         },
         Individual {
@@ -12610,6 +15439,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
                 ),
             ],
         },
@@ -12631,6 +15464,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
+                ),
             ],
         },
         Individual {
@@ -12651,6 +15488,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
+                ),
             ],
         },
         Individual {
@@ -12670,6 +15511,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
                 ),
             ],
         },
@@ -12692,6 +15537,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
+                ),
             ],
         },
         Individual {
@@ -12711,6 +15560,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
                 ),
             ],
         },
@@ -12732,6 +15585,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
+                ),
             ],
         },
         Individual {
@@ -12751,6 +15608,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
                 ),
             ],
         },
@@ -12773,6 +15634,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
+                ),
             ],
         },
         Individual {
@@ -12792,6 +15657,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
                 ),
             ],
         },
@@ -12813,6 +15682,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
+                ),
             ],
         },
         Individual {
@@ -12833,6 +15706,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
+                ),
             ],
         },
         Individual {
@@ -12852,6 +15729,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
                 ),
             ],
         },
@@ -12874,6 +15755,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
+                ),
             ],
         },
         Individual {
@@ -12893,6 +15778,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
                 ),
             ],
         },
@@ -12914,6 +15803,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
+                ),
             ],
         },
         Individual {
@@ -12933,6 +15826,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
                 ),
             ],
         },
@@ -12955,6 +15852,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
+                ),
             ],
         },
         Individual {
@@ -12974,6 +15875,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
                 ),
             ],
         },
@@ -12995,6 +15900,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
+                ),
             ],
         },
         Individual {
@@ -13014,6 +15923,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
                 ),
             ],
         },
@@ -13035,6 +15948,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
+                ),
             ],
         },
         Individual {
@@ -13054,6 +15971,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
                 ),
             ],
         },
@@ -13076,6 +15997,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
+                ),
             ],
         },
         Individual {
@@ -13095,6 +16020,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
                 ),
             ],
         },
@@ -13116,6 +16045,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
+                ),
             ],
         },
         Individual {
@@ -13135,6 +16068,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
                 ),
             ],
         },
@@ -13156,6 +16093,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
+                ),
             ],
         },
         Individual {
@@ -13175,6 +16116,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
                 ),
             ],
         },
@@ -13197,6 +16142,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
+                ),
             ],
         },
         Individual {
@@ -13216,6 +16165,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
                 ),
             ],
         },
@@ -13237,6 +16190,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
+                ),
             ],
         },
         Individual {
@@ -13256,6 +16213,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
                 ),
             ],
         },
@@ -13277,6 +16238,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
+                ),
             ],
         },
         Individual {
@@ -13296,6 +16261,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/EulerPoincare"),
                 ),
             ],
         },
@@ -13317,6 +16286,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
+                ),
             ],
         },
         Individual {
@@ -13336,6 +16309,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
                 ),
             ],
         },
@@ -13357,6 +16334,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/EulerPoincare"),
+                ),
             ],
         },
         Individual {
@@ -13376,6 +16357,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
                 ),
             ],
         },
@@ -13397,6 +16382,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
+                ),
             ],
         },
         Individual {
@@ -13416,6 +16405,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
                 ),
             ],
         },
@@ -13438,6 +16431,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
+                ),
             ],
         },
         Individual {
@@ -13457,6 +16454,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
                 ),
             ],
         },
@@ -13478,6 +16479,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
+                ),
             ],
         },
         Individual {
@@ -13498,6 +16503,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
+                ),
             ],
         },
         Individual {
@@ -13517,6 +16526,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
                 ),
             ],
         },
@@ -13539,6 +16552,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/EulerPoincare"),
+                ),
             ],
         },
         Individual {
@@ -13558,6 +16575,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
                 ),
             ],
         },
@@ -13579,6 +16600,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
+                ),
             ],
         },
         Individual {
@@ -13598,6 +16623,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
                 ),
             ],
         },
@@ -13620,6 +16649,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
+                ),
             ],
         },
         Individual {
@@ -13639,6 +16672,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
                 ),
             ],
         },
@@ -13660,6 +16697,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
+                ),
             ],
         },
         Individual {
@@ -13680,6 +16721,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
+                ),
             ],
         },
         Individual {
@@ -13699,6 +16744,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
                 ),
             ],
         },
@@ -13721,6 +16770,10 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
                 ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Simplification"),
+                ),
             ],
         },
         Individual {
@@ -13740,6 +16793,10 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/verified",
                     IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
                 ),
             ],
         },

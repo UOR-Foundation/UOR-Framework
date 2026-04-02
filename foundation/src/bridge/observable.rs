@@ -179,7 +179,7 @@ pub trait SynthesisSignature<P: Primitives> {
     fn is_forbidden(&self) -> P::Boolean;
     /// Associated type for `Proof`.
     type Proof: crate::bridge::proof::Proof<P>;
-    /// The proof individual (ImpossibilityWitness or EmpiricalVerification) that grounds this signature's achievability classification.
+    /// The proof individual (ImpossibilityWitness or AxiomaticDerivation) that grounds this signature's achievability classification.
     fn achievability_witness(&self) -> &Self::Proof;
 }
 
@@ -268,26 +268,32 @@ pub trait BaseMetric<P: Primitives>: Observable<P> {
     fn metric_domain(&self) -> &P::String;
     /// The mathematical range (codomain) of this base metric.
     fn metric_range(&self) -> &P::String;
+    /// Associated type for `TermExpression`.
+    type TermExpression: crate::kernel::schema::TermExpression<P>;
     /// How this metric composes with others in the measurement tower.
-    fn metric_composition(&self) -> &P::String;
+    fn metric_composition(&self) -> &Self::TermExpression;
+    /// Associated type for `Observable`.
+    type Observable: Observable<P>;
     /// The existing observable class that this base metric references.
-    fn references_class(&self) -> &P::String;
+    fn references_class(&self) -> &Self::Observable;
+    /// Associated type for `Identity`.
+    type Identity: crate::kernel::op::Identity<P>;
     /// The existing identity that defines this base metric.
-    fn references_identity(&self) -> &P::String;
+    fn references_identity(&self) -> &Self::Identity;
     /// The unit of measurement for this base metric.
-    fn metric_unit(&self) -> &P::String;
+    fn metric_unit(&self) -> MeasurementUnit;
     /// The precision or resolution of this base metric.
-    fn metric_precision(&self) -> &P::String;
+    fn metric_precision(&self) -> P::NonNegativeInteger;
     /// Monotonicity property of this metric (e.g., non-decreasing).
-    fn metric_monotonicity(&self) -> &P::String;
+    fn metric_monotonicity(&self) -> &Self::TermExpression;
     /// The decomposition rule for this metric into sub-metrics.
-    fn metric_decomposition(&self) -> &P::String;
+    fn metric_decomposition(&self) -> &Self::TermExpression;
     /// The position of this metric in the metric tower.
     fn metric_tower_position(&self) -> P::NonNegativeInteger;
     /// The computational cost of evaluating this metric.
-    fn metric_computation_cost(&self) -> &P::String;
+    fn metric_computation_cost(&self) -> &Self::TermExpression;
     /// Upper or lower bound on the metric value.
-    fn metric_bound(&self) -> &P::String;
+    fn metric_bound(&self) -> &Self::TermExpression;
 }
 
 /// The saturation metric σ = pinned fibers / total fibers. Ranges from 0 (no fibers pinned) to 1 (fully saturated).
@@ -300,8 +306,10 @@ pub trait SaturationObservable<P: Primitives>: Observable<P> {
 
 /// The Euler characteristic χ = Σ(−1)^k β_k of the constraint nerve. An integer-valued topological invariant.
 pub trait EulerCharacteristicObservable<P: Primitives>: Observable<P> {
+    /// Associated type for `TermExpression`.
+    type TermExpression: crate::kernel::schema::TermExpression<P>;
     /// The alternating sum formula for Euler characteristic.
-    fn alternating_sum(&self) -> &P::String;
+    fn alternating_sum(&self) -> &Self::TermExpression;
 }
 
 /// Information-theoretic unit: the measurement is in bits (e.g., Hamming weight, entropy).
@@ -322,7 +330,7 @@ pub mod period_boundary {}
 /// A phase boundary where g = 2^k, meaning g aligns with the binary stratification of R_n.
 pub mod power_of_two_boundary {}
 
-/// The signature has been empirically verified as achievable at some quantum level by an EmpiricalVerification record.
+/// The signature has been verified as achievable at some quantum level by an AxiomaticDerivation proof.
 pub mod achievable {}
 
 /// The signature has been formally proven impossible by an ImpossibilityWitness deriving from MS_1, MS_2, or other impossibility theorems.
@@ -334,8 +342,8 @@ pub mod d_delta_metric {
     pub const METRIC_DOMAIN: &str = "pair of ring elements";
     /// `metricRange`
     pub const METRIC_RANGE: &str = "non-negative integer";
-    /// `referencesClass`
-    pub const REFERENCES_CLASS: &str = "IncompatibilityMetric";
+    /// `referencesClass` -> `IncompatibilityMetric`
+    pub const REFERENCES_CLASS: &str = "https://uor.foundation/observable/IncompatibilityMetric";
 }
 
 /// σ: the saturation metric, pinned fibers / total fibers.
@@ -344,8 +352,8 @@ pub mod sigma_metric {
     pub const METRIC_DOMAIN: &str = "computation state";
     /// `metricRange`
     pub const METRIC_RANGE: &str = "decimal in [0, 1]";
-    /// `referencesIdentity`
-    pub const REFERENCES_IDENTITY: &str = "SC_2";
+    /// `referencesIdentity` -> `SC_2`
+    pub const REFERENCES_IDENTITY: &str = "https://uor.foundation/op/SC_2";
 }
 
 /// J_k: per-fiber curvature, ∂_R f_k.
@@ -354,10 +362,10 @@ pub mod jacobian_metric {
     pub const METRIC_DOMAIN: &str = "computation state × fiber index";
     /// `metricRange`
     pub const METRIC_RANGE: &str = "decimal";
-    /// `referencesClass`
-    pub const REFERENCES_CLASS: &str = "Jacobian";
-    /// `referencesIdentity`
-    pub const REFERENCES_IDENTITY: &str = "DC_6";
+    /// `referencesClass` -> `Jacobian`
+    pub const REFERENCES_CLASS: &str = "https://uor.foundation/observable/Jacobian";
+    /// `referencesIdentity` -> `DC_6`
+    pub const REFERENCES_IDENTITY: &str = "https://uor.foundation/op/DC_6";
 }
 
 /// β_k: per-dimension Betti number of the constraint nerve.
@@ -366,8 +374,8 @@ pub mod betti_metric {
     pub const METRIC_DOMAIN: &str = "simplicial complex × dimension";
     /// `metricRange`
     pub const METRIC_RANGE: &str = "non-negative integer";
-    /// `referencesClass`
-    pub const REFERENCES_CLASS: &str = "BettiNumber";
+    /// `referencesClass` -> `BettiNumber`
+    pub const REFERENCES_CLASS: &str = "https://uor.foundation/observable/BettiNumber";
 }
 
 /// χ: Euler characteristic, Σ(−1)^k β_k.
@@ -376,8 +384,8 @@ pub mod euler_metric {
     pub const METRIC_DOMAIN: &str = "simplicial complex";
     /// `metricRange`
     pub const METRIC_RANGE: &str = "integer";
-    /// `referencesIdentity`
-    pub const REFERENCES_IDENTITY: &str = "IT_2";
+    /// `referencesIdentity` -> `IT_2`
+    pub const REFERENCES_IDENTITY: &str = "https://uor.foundation/op/IT_2";
 }
 
 /// r: count of free (unpinned) fibers, the residual entropy.
@@ -386,6 +394,6 @@ pub mod residual_metric {
     pub const METRIC_DOMAIN: &str = "computation state";
     /// `metricRange`
     pub const METRIC_RANGE: &str = "non-negative integer";
-    /// `referencesClass`
-    pub const REFERENCES_CLASS: &str = "ResidualEntropy";
+    /// `referencesClass` -> `ResidualEntropy`
+    pub const REFERENCES_CLASS: &str = "https://uor.foundation/observable/ResidualEntropy";
 }

@@ -229,7 +229,25 @@ pub fn detect_enums(ontology: &Ontology) -> Vec<DetectedEnum> {
         &mut enums,
     );
 
-    // 19. ProofModality enum (hardcoded — codegen enum, not an OWL class)
+    // 19. QuantifierKind enum (Amendment 89 — detected from schema/QuantifierKind individuals)
+    detect_vocabulary_enum(
+        ontology,
+        "schema",
+        "QuantifierKind",
+        "The kind of quantifier: Universal (forall) or Existential (exists).",
+        &mut enums,
+    );
+
+    // 20. ProofStrategy enum (Amendment 87 — detected from proof/ProofStrategy individuals)
+    detect_vocabulary_enum(
+        ontology,
+        "proof",
+        "ProofStrategy",
+        "A controlled vocabulary of proof methods for compilation to verified provers.",
+        &mut enums,
+    );
+
+    // 20. ProofModality enum (hardcoded — codegen enum, not an OWL class)
     enums.push(DetectedEnum {
         name: "ProofModality",
         comment: "The modality of a proof: computation (exhaustive verification at a \
@@ -245,11 +263,7 @@ pub fn detect_enums(ontology: &Ontology) -> Vec<DetectedEnum> {
                 "Axiomatic".to_string(),
                 "A proof derived from ring axioms that holds at all quantum levels.".to_string(),
             ),
-            (
-                "Empirical".to_string(),
-                "A proof verified empirically across a bounded range of quantum levels."
-                    .to_string(),
-            ),
+            // Amendment 86: Empirical variant removed (EmpiricalVerification eliminated)
             (
                 "Inductive".to_string(),
                 "A proof by structural induction on the quantum level parameter k.".to_string(),

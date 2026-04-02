@@ -556,10 +556,10 @@ fn properties() -> Vec<Property> {
             label: "saturatedDomain",
             comment: "The domain within the context being tracked by this \
                       DomainSaturationRecord.",
-            kind: PropertyKind::Datatype,
+            kind: PropertyKind::Object,
             functional: true,
             domain: Some("https://uor.foundation/state/DomainSaturationRecord"),
-            range: XSD_STRING,
+            range: "https://uor.foundation/type/TypeDefinition",
         },
         Property {
             id: "https://uor.foundation/state/domainFreeCount",

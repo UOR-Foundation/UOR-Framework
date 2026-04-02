@@ -150,16 +150,14 @@ pub trait DeformationComplex<P: Primitives>: ChainComplex<P> {
 
 /// ∂² = 0: the boundary of a boundary is zero.
 pub mod boundary_squared_zero {
-    /// `forAll`
-    pub const FOR_ALL: &str = "c ∈ C_{k+1}";
-    /// `lhs`
-    pub const LHS: &str = "∂_k(∂_{k+1}(c))";
-    /// `rhs`
-    pub const RHS: &str = "0";
+    /// `forAll` -> `term_boundarySquaredZero_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_boundarySquaredZero_forAll";
+    /// `lhs` -> `term_boundarySquaredZero_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_boundarySquaredZero_lhs";
+    /// `rhs` -> `term_boundarySquaredZero_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_boundarySquaredZero_rhs";
     /// `verificationDomain` -> `Topological`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Topological";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "ChainComplex → BoundaryOperator → ∂² = 0";
 }
 
 /// The nerve functor N: constraints → simplicial complex.
@@ -170,29 +168,24 @@ pub mod chain_functor_c {}
 
 /// ψ_4: HomologyGroups → BettiNumbers (extraction functor).
 pub mod psi_4 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "simplicial complex K";
-    /// `lhs`
-    pub const LHS: &str = "β_k(K)";
-    /// `rhs`
-    pub const RHS: &str = "rank(H_k(K))";
+    /// `forAll` -> `term_psi_4_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_psi_4_forAll";
+    /// `lhs` -> `term_psi_4_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_psi_4_lhs";
+    /// `rhs` -> `term_psi_4_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_psi_4_rhs";
     /// `verificationDomain` -> `Topological`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Topological";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "HomologyGroup → rank → BettiNumber";
 }
 
 /// Index bridge: connects Euler characteristic to alternating Betti sum.
 pub mod index_bridge {
-    /// `forAll`
-    pub const FOR_ALL: &str = "finite simplicial complex K";
-    /// `lhs`
-    pub const LHS: &str = "χ(K)";
-    /// `rhs`
-    pub const RHS: &str = "Σ_k (-1)^k β_k";
+    /// `forAll` -> `term_indexBridge_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_indexBridge_forAll";
+    /// `lhs` -> `term_indexBridge_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_indexBridge_lhs";
+    /// `rhs` -> `term_indexBridge_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_indexBridge_rhs";
     /// `verificationDomain` -> `Topological`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Topological";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str =
-        "SimplicialComplex → ChainComplex → HomologyGroup → BettiNumber → alternating sum";
 }

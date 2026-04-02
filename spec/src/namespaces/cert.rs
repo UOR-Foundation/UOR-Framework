@@ -170,20 +170,20 @@ fn properties() -> Vec<Property> {
             label: "transformType",
             comment: "The type of transform this certificate attests to \
                       (e.g., 'isometry', 'embedding', 'action').",
-            kind: PropertyKind::Datatype,
+            kind: PropertyKind::Object,
             functional: true,
             domain: Some("https://uor.foundation/cert/TransformCertificate"),
-            range: XSD_STRING,
+            range: "https://uor.foundation/schema/TermExpression",
         },
         Property {
             id: "https://uor.foundation/cert/method",
             label: "method",
             comment: "The verification method used to produce this certificate \
                       (e.g., 'exhaustive_check', 'symbolic_proof', 'sampling').",
-            kind: PropertyKind::Datatype,
+            kind: PropertyKind::Object,
             functional: true,
             domain: Some("https://uor.foundation/cert/Certificate"),
-            range: XSD_STRING,
+            range: "https://uor.foundation/proof/ProofStrategy",
         },
         Property {
             id: "https://uor.foundation/cert/operation",

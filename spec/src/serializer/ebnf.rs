@@ -59,6 +59,17 @@ pub fn to_ebnf(ontology: &Ontology) -> String {
     emit_try_expr(&mut out);
     emit_recurse_expr(&mut out);
     emit_boundary_decl(&mut out);
+    // Amendment 88: identity formalization grammar extensions
+    emit_relation_expr(&mut out);
+    emit_quantified_expr(&mut out);
+    emit_set_expr(&mut out);
+    emit_aggregation_expr(&mut out);
+    emit_composition_expr(&mut out);
+    emit_subscript_expr(&mut out);
+    emit_power_expr(&mut out);
+    emit_cardinality_expr(&mut out);
+    emit_connective_expr(&mut out);
+    emit_conditional_expr(&mut out);
     emit_whitespace(&mut out);
     emit_end(&mut out);
 
@@ -133,7 +144,18 @@ term
       | match-expr
       | try-expr
       | recurse-expr
-      | stream-expr ;
+      | stream-expr
+      | relation-expr
+      | quantified-expr
+      | set-expr
+      | aggregation-expr
+      | composition-expr
+      | subscript-expr
+      | power-expr
+      | cardinality-expr
+      | connective-expr
+      | conditional-expr
+      | \"(\" , term , \")\" ;
 
 (* schema:Literal — a leaf term that directly denotes a Datum via schema:denotes *)
 literal
@@ -514,6 +536,171 @@ source-decl
 
 sink-decl
     ::= \"sink\" , identifier , \":\" , identifier , \"via\" , identifier , \";\" ;
+
+",
+    );
+}
+
+// ── Amendment 88: Identity formalization grammar extensions ──────────────────
+
+/// Emits relation expression rules (=, <=, >=, <, >, etc.).
+fn emit_relation_expr(out: &mut String) {
+    out.push_str(
+        "\
+(* ── Relations ──────────────────────────────────────────────────────────────
+   Precedence: lower than application, higher than connectives.
+   Used for identity equations, inequalities, and membership tests. *)
+
+relation-expr
+    ::= term , relation-op , term ;
+
+relation-op
+    ::= \"=\" | \"\\u2264\" | \"\\u2265\" | \"<\" | \">\"
+      | \"\\u2261\" | \"\\u2286\" | \"\\u2287\" | \"\\u2208\" | \"\\u2209\" | \"\\u2223\" ;
+      (* = ≤ ≥ < > ≡ ⊆ ⊇ ∈ ∉ ∣ *)
+
+",
+    );
+}
+
+/// Emits quantified expression rules (forall, exists).
+fn emit_quantified_expr(out: &mut String) {
+    out.push_str(
+        "\
+(* ── Quantified expressions ─────────────────────────────────────────────────
+   Universal and existential quantification over typed variables. *)
+
+quantified-expr
+    ::= quantifier , variable-decl-list , \",\" , term ;
+
+quantifier
+    ::= \"\\u2200\" | \"\\u2203\" ;   (* ∀  ∃ *)
+
+variable-decl-list
+    ::= variable-decl , { \",\" , variable-decl } ;
+
+variable-decl
+    ::= identifier , \"\\u2208\" , term ;   (* x ∈ Domain *)
+
+",
+    );
+}
+
+/// Emits set-builder notation rules.
+fn emit_set_expr(out: &mut String) {
+    out.push_str(
+        "\
+(* ── Set builder ────────────────────────────────────────────────────────────
+   Set comprehension and enumeration. *)
+
+set-expr
+    ::= \"{\" , term , \":\" , term , \"}\"
+      | \"{\" , term , \"}\" ;
+
+",
+    );
+}
+
+/// Emits aggregation expression rules (sum, product).
+fn emit_aggregation_expr(out: &mut String) {
+    out.push_str(
+        "\
+(* ── Aggregation ────────────────────────────────────────────────────────────
+   Summation and product over a variable. *)
+
+aggregation-expr
+    ::= aggregation-op , \"_\" , variable , term ;
+
+aggregation-op
+    ::= \"\\u03A3\" | \"\\u03A0\" ;   (* Σ  Π *)
+
+",
+    );
+}
+
+/// Emits function composition rules.
+fn emit_composition_expr(out: &mut String) {
+    out.push_str(
+        "\
+(* ── Composition ────────────────────────────────────────────────────────────
+   Function composition: f ∘ g. *)
+
+composition-expr
+    ::= term , \"\\u2218\" , term ;   (* f ∘ g *)
+
+",
+    );
+}
+
+/// Emits subscript access rules.
+fn emit_subscript_expr(out: &mut String) {
+    out.push_str(
+        "\
+(* ── Subscript ──────────────────────────────────────────────────────────────
+   Indexed access: x_k, fiber_k(x). Highest precedence among new productions. *)
+
+subscript-expr
+    ::= term , \"_\" , ( identifier | integer-literal ) ;
+
+",
+    );
+}
+
+/// Emits exponentiation rules.
+fn emit_power_expr(out: &mut String) {
+    out.push_str(
+        "\
+(* ── Exponentiation ─────────────────────────────────────────────────────────
+   Power expressions: 2^n, Ω^k. Right-associative. *)
+
+power-expr
+    ::= term , \"^\" , term ;
+
+",
+    );
+}
+
+/// Emits cardinality rules.
+fn emit_cardinality_expr(out: &mut String) {
+    out.push_str(
+        "\
+(* ── Cardinality ────────────────────────────────────────────────────────────
+   Set or group cardinality: |S|. *)
+
+cardinality-expr
+    ::= \"|\" , term , \"|\" ;
+
+",
+    );
+}
+
+/// Emits logical connective rules.
+fn emit_connective_expr(out: &mut String) {
+    out.push_str(
+        "\
+(* ── Logical connectives ────────────────────────────────────────────────────
+   Propositional connectives for compound identity statements. *)
+
+connective-expr
+    ::= term , connective-op , term ;
+
+connective-op
+    ::= \"\\u2227\" | \"\\u2228\" | \"\\u2192\" | \"\\u2194\" | \"\\u27FA\" ;
+      (* ∧ ∨ → ↔ ⟺ *)
+
+",
+    );
+}
+
+/// Emits conditional expression rules.
+fn emit_conditional_expr(out: &mut String) {
+    out.push_str(
+        "\
+(* ── Conditional ────────────────────────────────────────────────────────────
+   If-then-else for piecewise definitions. *)
+
+conditional-expr
+    ::= \"if\" , term , \"then\" , term , \"else\" , term ;
 
 ",
     );

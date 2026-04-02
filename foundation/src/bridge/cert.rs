@@ -4,13 +4,14 @@
 //!
 //! Space: Bridge
 
+use crate::enums::ProofStrategy;
 use crate::enums::QuantumLevel;
 use crate::Primitives;
 
 /// A kernel-produced attestation. The root class for all certificate types.
 pub trait Certificate<P: Primitives> {
     /// The verification method used to produce this certificate (e.g., 'exhaustive_check', 'symbolic_proof', 'sampling').
-    fn method(&self) -> &P::String;
+    fn method(&self) -> ProofStrategy;
     /// Whether this certificate has been verified by the kernel.
     fn verified(&self) -> P::Boolean;
     /// The quantum level at which this certificate was produced.
@@ -23,8 +24,10 @@ pub trait Certificate<P: Primitives> {
 
 /// A certificate attesting to the properties of a morphism:Transform. Certifies that the transform maps source to target correctly.
 pub trait TransformCertificate<P: Primitives>: Certificate<P> {
+    /// Associated type for `TermExpression`.
+    type TermExpression: crate::kernel::schema::TermExpression<P>;
     /// The type of transform this certificate attests to (e.g., 'isometry', 'embedding', 'action').
-    fn transform_type(&self) -> &P::String;
+    fn transform_type(&self) -> &Self::TermExpression;
 }
 
 /// A certificate attesting that a morphism:Isometry preserves metric distances. Certifies the transform is a metric isometry with respect to the specified metric.

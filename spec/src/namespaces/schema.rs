@@ -120,6 +120,79 @@ fn classes() -> Vec<Class> {
             subclass_of: &[OWL_THING],
             disjoint_with: &[],
         },
+        // Amendment 89: AST classes for machine-parsable identity formalization
+        Class {
+            id: "https://uor.foundation/schema/TermExpression",
+            label: "TermExpression",
+            comment: "Root AST node for parsed EBNF term expressions. Identity \
+                      lhs/rhs values are instances of TermExpression subtypes. \
+                      Maps to the `term` production in the EBNF grammar.",
+            subclass_of: &[OWL_THING],
+            disjoint_with: &[],
+        },
+        Class {
+            id: "https://uor.foundation/schema/LiteralExpression",
+            label: "LiteralExpression",
+            comment: "A leaf AST node: an integer literal, variable reference, \
+                      or named constant.",
+            subclass_of: &["https://uor.foundation/schema/TermExpression"],
+            disjoint_with: &[],
+        },
+        Class {
+            id: "https://uor.foundation/schema/ApplicationExpression",
+            label: "ApplicationExpression",
+            comment: "An AST node representing operator application: an operator \
+                      applied to an argument list (e.g., add(x, y)).",
+            subclass_of: &["https://uor.foundation/schema/TermExpression"],
+            disjoint_with: &[],
+        },
+        Class {
+            id: "https://uor.foundation/schema/InfixExpression",
+            label: "InfixExpression",
+            comment: "An AST node for infix relations and logical connectives \
+                      (e.g., x <= y, P -> Q, a = b).",
+            subclass_of: &["https://uor.foundation/schema/TermExpression"],
+            disjoint_with: &[],
+        },
+        Class {
+            id: "https://uor.foundation/schema/SetExpression",
+            label: "SetExpression",
+            comment: "An AST node for set-builder notation (e.g., {x : P(x)}).",
+            subclass_of: &["https://uor.foundation/schema/TermExpression"],
+            disjoint_with: &[],
+        },
+        Class {
+            id: "https://uor.foundation/schema/CompositionExpression",
+            label: "CompositionExpression",
+            comment: "An AST node for function composition (f compose g).",
+            subclass_of: &["https://uor.foundation/schema/TermExpression"],
+            disjoint_with: &[],
+        },
+        Class {
+            id: "https://uor.foundation/schema/ForAllDeclaration",
+            label: "ForAllDeclaration",
+            comment: "A structured quantifier binding: typed variable declarations \
+                      with a domain and quantifier kind (universal or existential). \
+                      Replaces the string-valued op:forAll property.",
+            subclass_of: &[OWL_THING],
+            disjoint_with: &[],
+        },
+        Class {
+            id: "https://uor.foundation/schema/VariableBinding",
+            label: "VariableBinding",
+            comment: "A single variable binding: a variable name bound to a domain \
+                      type (e.g., x in R_n).",
+            subclass_of: &[OWL_THING],
+            disjoint_with: &[],
+        },
+        Class {
+            id: "https://uor.foundation/schema/QuantifierKind",
+            label: "QuantifierKind",
+            comment: "The kind of quantifier: Universal (forall) or Existential \
+                      (exists). Controlled vocabulary with exactly 2 individuals.",
+            subclass_of: &[OWL_THING],
+            disjoint_with: &[],
+        },
     ]
 }
 
@@ -163,7 +236,7 @@ fn properties() -> Vec<Property> {
             kind: PropertyKind::Datatype,
             functional: true,
             domain: Some("https://uor.foundation/schema/Datum"),
-            range: XSD_STRING,
+            range: XSD_NON_NEGATIVE_INTEGER,
         },
         Property {
             id: "https://uor.foundation/schema/glyph",
@@ -339,11 +412,217 @@ fn properties() -> Vec<Property> {
             domain: Some("https://uor.foundation/schema/Q1Ring"),
             range: XSD_POSITIVE_INTEGER,
         },
+        // Amendment 89: AST properties for identity formalization
+        Property {
+            id: "https://uor.foundation/schema/boundVariables",
+            label: "boundVariables",
+            comment: "The variable bindings in a quantifier declaration. \
+                      Non-functional: a ForAllDeclaration may bind multiple variables.",
+            kind: PropertyKind::Object,
+            functional: false,
+            domain: Some("https://uor.foundation/schema/ForAllDeclaration"),
+            range: "https://uor.foundation/schema/VariableBinding",
+        },
+        Property {
+            id: "https://uor.foundation/schema/variableDomain",
+            label: "variableDomain",
+            comment: "The domain type of a variable binding (e.g., schema:Ring, \
+                      type:ConstrainedType).",
+            kind: PropertyKind::Object,
+            functional: true,
+            domain: Some("https://uor.foundation/schema/VariableBinding"),
+            range: OWL_CLASS,
+        },
+        Property {
+            id: "https://uor.foundation/schema/variableName",
+            label: "variableName",
+            comment: "The name of a bound variable (e.g., 'x', 'y', 'n').",
+            kind: PropertyKind::Datatype,
+            functional: true,
+            domain: Some("https://uor.foundation/schema/VariableBinding"),
+            range: XSD_STRING,
+        },
+        Property {
+            id: "https://uor.foundation/schema/quantifierKind",
+            label: "quantifierKind",
+            comment: "The kind of quantifier: Universal or Existential.",
+            kind: PropertyKind::Object,
+            functional: true,
+            domain: Some("https://uor.foundation/schema/ForAllDeclaration"),
+            range: "https://uor.foundation/schema/QuantifierKind",
+        },
+        Property {
+            id: "https://uor.foundation/schema/expressionOperator",
+            label: "expressionOperator",
+            comment: "The operator in an application expression (e.g., op:add, op:neg).",
+            kind: PropertyKind::Object,
+            functional: true,
+            domain: Some("https://uor.foundation/schema/ApplicationExpression"),
+            range: "https://uor.foundation/op/Operation",
+        },
+        Property {
+            id: "https://uor.foundation/schema/leftOperand",
+            label: "leftOperand",
+            comment: "The left operand of an infix expression.",
+            kind: PropertyKind::Object,
+            functional: true,
+            domain: Some("https://uor.foundation/schema/InfixExpression"),
+            range: "https://uor.foundation/schema/TermExpression",
+        },
+        Property {
+            id: "https://uor.foundation/schema/rightOperand",
+            label: "rightOperand",
+            comment: "The right operand of an infix expression.",
+            kind: PropertyKind::Object,
+            functional: true,
+            domain: Some("https://uor.foundation/schema/InfixExpression"),
+            range: "https://uor.foundation/schema/TermExpression",
+        },
+        Property {
+            id: "https://uor.foundation/schema/arguments",
+            label: "arguments",
+            comment: "The argument list of an application expression. Non-functional: \
+                      an application may take multiple arguments.",
+            kind: PropertyKind::Object,
+            functional: false,
+            domain: Some("https://uor.foundation/schema/ApplicationExpression"),
+            range: "https://uor.foundation/schema/TermExpression",
+        },
+        Property {
+            id: "https://uor.foundation/schema/literalValue",
+            label: "literalValue",
+            comment: "The string representation of a literal expression value \
+                      (e.g., '42', 'x', 'pi1').",
+            kind: PropertyKind::Datatype,
+            functional: true,
+            domain: Some("https://uor.foundation/schema/LiteralExpression"),
+            range: XSD_STRING,
+        },
+        Property {
+            id: "https://uor.foundation/schema/infixOperator",
+            label: "infixOperator",
+            comment: "The operator symbol in an infix expression (e.g., '=', \
+                      '\\u{2264}', '\\u{2192}').",
+            kind: PropertyKind::Datatype,
+            functional: true,
+            domain: Some("https://uor.foundation/schema/InfixExpression"),
+            range: XSD_STRING,
+        },
     ]
 }
 
+/// Extracts the local name from an IRI (the part after the last `/`).
+fn local_name(iri: &str) -> &str {
+    match iri.rfind('/') {
+        Some(pos) => &iri[pos + 1..],
+        None => iri,
+    }
+}
+
+/// Generates AST individuals (TermExpression / ForAllDeclaration) for all
+/// identity individuals across op, homology, and cohomology namespaces.
+///
+/// Each identity's `lhs` and `rhs` string values become `LiteralExpression`
+/// individuals; each `forAll` string becomes a `ForAllDeclaration` individual.
+/// The IRI pattern is `schema/term_{localName}_{lhs|rhs|forAll}`.
+///
+/// Uses `Box::leak` to produce `&'static str` references from dynamic data.
+fn generate_ast_individuals() -> Vec<Individual> {
+    let identity_type = "https://uor.foundation/op/Identity";
+    let lhs_prop = "https://uor.foundation/op/lhs";
+    let rhs_prop = "https://uor.foundation/op/rhs";
+    let forall_prop = "https://uor.foundation/op/forAll";
+
+    let op_inds = super::op::raw_individuals();
+    let hom_inds = super::homology::raw_individuals();
+    let coh_inds = super::cohomology::raw_individuals();
+
+    let mut ast = Vec::new();
+
+    for individuals in &[&op_inds, &hom_inds, &coh_inds] {
+        for ind in individuals.iter() {
+            if ind.type_ != identity_type {
+                continue;
+            }
+
+            let name = local_name(ind.id);
+
+            for &(prop, ref val) in ind.properties {
+                let is_lhs = prop == lhs_prop;
+                let is_rhs = prop == rhs_prop;
+                let is_forall = prop == forall_prop;
+
+                if !is_lhs && !is_rhs && !is_forall {
+                    continue;
+                }
+
+                // Only convert Str values — IriRef/List values (e.g.
+                // criticalIdentity lhs/rhs) are already typed references.
+                let text = match val {
+                    IndividualValue::Str(s) => *s,
+                    _ => continue,
+                };
+
+                let suffix = if is_lhs {
+                    "lhs"
+                } else if is_rhs {
+                    "rhs"
+                } else {
+                    "forAll"
+                };
+
+                let (type_iri, value_prop) = if is_forall {
+                    (
+                        "https://uor.foundation/schema/ForAllDeclaration",
+                        "https://uor.foundation/schema/variableName",
+                    )
+                } else {
+                    (
+                        "https://uor.foundation/schema/LiteralExpression",
+                        "https://uor.foundation/schema/literalValue",
+                    )
+                };
+
+                let id_string = format!("https://uor.foundation/schema/term_{name}_{suffix}");
+                let label_string = format!("term_{name}_{suffix}");
+
+                let id: &'static str = Box::leak(id_string.into_boxed_str());
+                let label: &'static str = Box::leak(label_string.into_boxed_str());
+                let val_str: &'static str = Box::leak(text.to_string().into_boxed_str());
+                let props: &'static [(&'static str, IndividualValue)] =
+                    Box::leak(vec![(value_prop, IndividualValue::Str(val_str))].into_boxed_slice());
+
+                ast.push(Individual {
+                    id,
+                    type_: type_iri,
+                    label,
+                    comment: "",
+                    properties: props,
+                });
+            }
+        }
+    }
+
+    ast
+}
+
 fn individuals() -> Vec<Individual> {
-    vec![
+    let mut base = vec![
+        // Amendment 89: QuantifierKind vocabulary
+        Individual {
+            id: "https://uor.foundation/schema/Universal",
+            type_: "https://uor.foundation/schema/QuantifierKind",
+            label: "Universal",
+            comment: "Universal quantification (forall).",
+            properties: &[],
+        },
+        Individual {
+            id: "https://uor.foundation/schema/Existential",
+            type_: "https://uor.foundation/schema/QuantifierKind",
+            label: "Existential",
+            comment: "Existential quantification (exists).",
+            properties: &[],
+        },
         // Amendment 2: pi1 — the generator (value = 1)
         Individual {
             id: "https://uor.foundation/schema/pi1",
@@ -477,5 +756,7 @@ fn individuals() -> Vec<Individual> {
                 ),
             ],
         },
-    ]
+    ];
+    base.extend(generate_ast_individuals());
+    base
 }

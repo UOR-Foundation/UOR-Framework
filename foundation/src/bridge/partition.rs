@@ -4,7 +4,6 @@
 //!
 //! Space: Bridge
 
-use crate::enums::FiberState;
 use crate::Primitives;
 
 /// A four-component partition of R_n produced by resolving a type declaration. The four components — Irreducible, Reducible, Units, Exterior — are mutually disjoint and exhaustive over the carrier.
@@ -67,8 +66,10 @@ pub trait UnitSet<P: Primitives>: Component<P> {}
 /// Elements of R_n that fall outside the active carrier — i.e., outside the type's domain. These are ring elements that do not participate in the current type resolution.
 /// Disjoint with: IrreducibleSet, ReducibleSet, UnitSet.
 pub trait ExteriorSet<P: Primitives>: Component<P> {
+    /// Associated type for `TermExpression`.
+    type TermExpression: crate::kernel::schema::TermExpression<P>;
     /// The formal membership criterion for this ExteriorSet: x ∈ Ext(T) iff x ∉ carrier(T). The ExteriorSet is context-dependent on the active type T (FPM_9).
-    fn exterior_criteria(&self) -> &P::String;
+    fn exterior_criteria(&self) -> &Self::TermExpression;
 }
 
 /// A single fiber coordinate in the iterated Z/2Z fibration. Each fiber represents one binary degree of freedom in the ring's structure. The total number of fibers equals the quantum level n.
@@ -77,7 +78,7 @@ pub trait FiberCoordinate<P: Primitives> {
     /// The zero-based position of this fiber coordinate within the iterated fibration. Position 0 is the least significant bit; position n-1 is the most significant.
     fn fiber_position(&self) -> P::NonNegativeInteger;
     /// The current state of this fiber coordinate: 'pinned' if determined by a constraint, 'free' if still available for refinement.
-    fn fiber_state(&self) -> FiberState;
+    fn fiber_state(&self) -> P::NonNegativeInteger;
     /// Associated type for `FiberCoordinate`.
     type FiberCoordinateTarget: FiberCoordinate<P>;
     /// An ancilla fiber coordinate paired with this fiber for reversible computation (RC_1–RC_4 ancilla model).

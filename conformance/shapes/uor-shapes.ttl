@@ -137,8 +137,7 @@ uor-sh:IdentityShape
     sh:property [ sh:path op:lhs ; sh:minCount 1 ; sh:maxCount 1 ] ;
     sh:property [ sh:path op:rhs ; sh:minCount 1 ; sh:maxCount 1 ] ;
     sh:property [ sh:path op:forAll ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
-    sh:property [ sh:path op:verificationDomain ; sh:minCount 1 ; sh:class op:VerificationDomain ] ;
-    sh:property [ sh:path op:verificationPathNote ; sh:maxCount 1 ; sh:datatype xsd:string ] .
+    sh:property [ sh:path op:verificationDomain ; sh:minCount 1 ; sh:class op:VerificationDomain ] .
 
 uor-sh:GroupShape
     a               sh:NodeShape ;
@@ -1569,13 +1568,91 @@ uor-sh:ClosedConstraintPathShape
     rdfs:label      "ClosedConstraintPathShape" ;
     sh:property [ sh:path observable:pathLength ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:nonNegativeInteger ] .
 
-# Amendment 31: EmpiricalVerification
-uor-sh:EmpiricalVerificationShape
+# Amendment 31/86: EmpiricalVerification shape removed (class eliminated in Amendment 86)
+
+# Amendment 87: ProofStrategy vocabulary enum
+uor-sh:ProofStrategyShape
     a               sh:NodeShape ;
-    sh:targetClass  proof:EmpiricalVerification ;
-    rdfs:label      "EmpiricalVerificationShape" ;
-    sh:property [ sh:path proof:quantumLevelRange ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
-    sh:property [ sh:path proof:verificationMethod ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string ] .
+    sh:targetClass  proof:ProofStrategy ;
+    rdfs:label      "ProofStrategyShape" .
+
+# Amendment 89: AST classes for identity formalization
+uor-sh:TermExpressionShape
+    a               sh:NodeShape ;
+    sh:targetClass  schema:TermExpression ;
+    rdfs:label      "TermExpressionShape" .
+
+uor-sh:LiteralExpressionShape
+    a               sh:NodeShape ;
+    sh:targetClass  schema:LiteralExpression ;
+    rdfs:label      "LiteralExpressionShape" .
+
+uor-sh:ApplicationExpressionShape
+    a               sh:NodeShape ;
+    sh:targetClass  schema:ApplicationExpression ;
+    rdfs:label      "ApplicationExpressionShape" .
+
+uor-sh:InfixExpressionShape
+    a               sh:NodeShape ;
+    sh:targetClass  schema:InfixExpression ;
+    rdfs:label      "InfixExpressionShape" .
+
+uor-sh:SetExpressionShape
+    a               sh:NodeShape ;
+    sh:targetClass  schema:SetExpression ;
+    rdfs:label      "SetExpressionShape" .
+
+uor-sh:CompositionExpressionShape
+    a               sh:NodeShape ;
+    sh:targetClass  schema:CompositionExpression ;
+    rdfs:label      "CompositionExpressionShape" .
+
+uor-sh:ForAllDeclarationShape
+    a               sh:NodeShape ;
+    sh:targetClass  schema:ForAllDeclaration ;
+    rdfs:label      "ForAllDeclarationShape" .
+
+uor-sh:VariableBindingShape
+    a               sh:NodeShape ;
+    sh:targetClass  schema:VariableBinding ;
+    rdfs:label      "VariableBindingShape" .
+
+uor-sh:QuantifierKindShape
+    a               sh:NodeShape ;
+    sh:targetClass  schema:QuantifierKind ;
+    rdfs:label      "QuantifierKindShape" .
+
+# Amendment 89: GroupPresentation class
+uor-sh:GroupPresentationShape
+    a               sh:NodeShape ;
+    sh:targetClass  op:GroupPresentation ;
+    rdfs:label      "GroupPresentationShape" .
+
+# Amendment 92: DerivationTerm class hierarchy
+uor-sh:DerivationTermShape
+    a               sh:NodeShape ;
+    sh:targetClass  proof:DerivationTerm ;
+    rdfs:label      "DerivationTermShape" .
+
+uor-sh:TacticApplicationShape
+    a               sh:NodeShape ;
+    sh:targetClass  proof:TacticApplication ;
+    rdfs:label      "TacticApplicationShape" .
+
+uor-sh:LemmaInvocationShape
+    a               sh:NodeShape ;
+    sh:targetClass  proof:LemmaInvocation ;
+    rdfs:label      "LemmaInvocationShape" .
+
+uor-sh:InductionStepShape
+    a               sh:NodeShape ;
+    sh:targetClass  proof:InductionStep ;
+    rdfs:label      "InductionStepShape" .
+
+uor-sh:ComputationStepShape
+    a               sh:NodeShape ;
+    sh:targetClass  proof:ComputationStep ;
+    rdfs:label      "ComputationStepShape" .
 
 # Amendment 31: PhaseBoundaryType vocabulary enum
 uor-sh:PhaseBoundaryTypeShape

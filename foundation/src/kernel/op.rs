@@ -42,8 +42,16 @@ pub trait Involution<P: Primitives>: UnaryOp<P> {}
 
 /// An algebraic identity: a statement that two expressions are equal for all inputs. The critical identity is neg(bnot(x)) = succ(x) for all x in R_n.
 pub trait Identity<P: Primitives> {
-    /// The quantifier scope: the variable(s) over which this algebraic identity holds (e.g., 'x ∈ R_n').
-    fn for_all(&self) -> &P::String;
+    /// Associated type for `TermExpression`.
+    type TermExpression: crate::kernel::schema::TermExpression<P>;
+    /// The left-hand side of an algebraic identity as a typed AST node (schema:TermExpression).
+    fn lhs(&self) -> &Self::TermExpression;
+    /// The right-hand side of an algebraic identity as a typed AST node (schema:TermExpression).
+    fn rhs(&self) -> &Self::TermExpression;
+    /// Associated type for `ForAllDeclaration`.
+    type ForAllDeclaration: crate::kernel::schema::ForAllDeclaration<P>;
+    /// The quantifier scope: a typed declaration of the variable(s) over which this identity holds.
+    fn for_all(&self) -> &Self::ForAllDeclaration;
     /// The mathematical discipline(s) through which this identity is established. Range is op:VerificationDomain. Non-functional: composite identities (e.g. IT_7a–IT_7d) reference multiple domain individuals.
     fn verification_domain(&self) -> &[VerificationDomain];
     /// Associated type for `QuantumLevelBinding`.
@@ -90,10 +98,12 @@ pub trait ComposedOperation<P: Primitives>:
     type Operation: Operation<P>;
     /// References a constituent operation of a ComposedOperation. Non-functional: a composed operation may reference multiple constituent operations.
     fn composed_of_ops(&self) -> &[Self::Operation];
+    /// Associated type for `TypeDefinition`.
+    type TypeDefinition: crate::user::type_::TypeDefinition<P>;
     /// The domain type of a composed operation.
-    fn operator_domain_type(&self) -> &P::String;
+    fn operator_domain_type(&self) -> &Self::TypeDefinition;
     /// The range type of a composed operation.
-    fn operator_range_type(&self) -> &P::String;
+    fn operator_range_type(&self) -> &Self::TypeDefinition;
     /// The computational complexity class of a composed operation.
     fn operator_complexity(&self) -> &P::String;
     /// Whether this composed operation is idempotent.
@@ -102,42 +112,44 @@ pub trait ComposedOperation<P: Primitives>:
     fn composed_operator_count(&self) -> P::NonNegativeInteger;
     /// Whether applying this operation twice yields the identity.
     fn is_involutory(&self) -> P::Boolean;
+    /// Associated type for `TermExpression`.
+    type TermExpression: crate::kernel::schema::TermExpression<P>;
     /// Description of the convergence guarantee for this operation.
-    fn convergence_guarantee(&self) -> &P::String;
+    fn convergence_guarantee(&self) -> &Self::TermExpression;
 }
 
 /// δ: Query × ResolverRegistry → Resolver. Non-commutative, non-associative, arity 2.
 pub trait DispatchOperation<P: Primitives>: ComposedOperation<P> {
     /// The source selector for a dispatch operation.
-    fn dispatch_source(&self) -> &P::String;
+    fn dispatch_source(&self) -> &Self::Operation;
     /// The target resolver for a dispatch operation.
-    fn dispatch_target(&self) -> &P::String;
+    fn dispatch_target(&self) -> &Self::Operation;
 }
 
 /// ι = P ∘ Π ∘ G (the φ-pipeline composed). Non-commutative, non-associative, arity 2.
 pub trait InferenceOperation<P: Primitives>: ComposedOperation<P> {
     /// The source data for an inference operation.
-    fn inference_source(&self) -> &P::String;
+    fn inference_source(&self) -> &Self::Operation;
     /// The target type for an inference operation.
-    fn inference_target(&self) -> &P::String;
+    fn inference_target(&self) -> &Self::Operation;
     /// The pipeline through which inference is performed.
-    fn inference_pipeline(&self) -> &P::String;
+    fn inference_pipeline(&self) -> &Self::Operation;
 }
 
 /// α: Binding × Context → Context. Non-commutative, associative at convergence (SR_10), arity 2.
 pub trait AccumulationOperation<P: Primitives>: ComposedOperation<P> {
     /// The base value for an accumulation operation.
-    fn accumulation_base(&self) -> &P::String;
+    fn accumulation_base(&self) -> &Self::TermExpression;
     /// The binding accumulator for an accumulation operation.
-    fn accumulation_binding(&self) -> &P::String;
+    fn accumulation_binding(&self) -> &Self::TermExpression;
 }
 
 /// λ: SharedContext × ℕ → ContextLease^k. Non-commutative, non-associative, arity 2.
 pub trait LeasePartitionOperation<P: Primitives>: ComposedOperation<P> {
     /// The source context for a lease partition operation.
-    fn lease_source(&self) -> &P::String;
+    fn lease_source(&self) -> &Self::Operation;
     /// The partition factor for a lease partition operation.
-    fn lease_factor(&self) -> &P::String;
+    fn lease_factor(&self) -> &Self::Operation;
     /// The number of partitions in a lease partition operation.
     fn lease_partition_count(&self) -> P::NonNegativeInteger;
 }
@@ -145,105 +157,108 @@ pub trait LeasePartitionOperation<P: Primitives>: ComposedOperation<P> {
 /// κ: Session × Session → Session. Commutative (disjoint leases), associative (SR_8), arity 2.
 pub trait SessionCompositionOperation<P: Primitives>: ComposedOperation<P> {
     /// The left session in a session composition operation.
-    fn composition_left_session(&self) -> &P::String;
+    fn composition_left_session(&self) -> &Self::Operation;
     /// The right session in a session composition operation.
-    fn composition_right_session(&self) -> &P::String;
+    fn composition_right_session(&self) -> &Self::Operation;
 }
+
+/// A structured group presentation: generators and relations as typed data rather than prose strings.
+pub trait GroupPresentation<P: Primitives> {}
 
 /// Established by exhaustive traversal of R_n. Valid for all identities where the ring is finite.
 pub mod enumerative {
-    /// `enumVariant`
-    pub const ENUM_VARIANT: &str = "Enumerative";
+    /// `enumVariant` -> `Enumerative`
+    pub const ENUM_VARIANT: &str = "https://uor.foundation/op/Enumerative";
 }
 
 /// Established by equational reasoning from ring or group axioms. Covers derivations via associativity, commutativity, inverse laws, and group presentations.
 pub mod algebraic {
-    /// `enumVariant`
-    pub const ENUM_VARIANT: &str = "Algebraic";
+    /// `enumVariant` -> `Algebraic`
+    pub const ENUM_VARIANT: &str = "https://uor.foundation/op/Algebraic";
 }
 
 /// Established by isometry, symmetry, or GeometricCharacter arguments. Covers dihedral actions, fixed-point analysis, automorphism groups, and affine embeddings.
 pub mod geometric {
-    /// `enumVariant`
-    pub const ENUM_VARIANT: &str = "Geometric";
+    /// `enumVariant` -> `Geometric`
+    pub const ENUM_VARIANT: &str = "https://uor.foundation/op/Geometric";
 }
 
 /// Established via discrete differential calculus or metric analysis. Covers ring/Hamming derivatives (DC_), metric divergence (AM_), and adiabatic scheduling (AR_).
 pub mod analytical {
-    /// `enumVariant`
-    pub const ENUM_VARIANT: &str = "Analytical";
+    /// `enumVariant` -> `Analytical`
+    pub const ENUM_VARIANT: &str = "https://uor.foundation/op/Analytical";
 }
 
 /// Established via entropy, Landauer bounds, or Boltzmann distributions. Covers fiber entropy (TH_), reversible computation (RC_), and phase transitions.
 pub mod thermodynamic {
-    /// `enumVariant`
-    pub const ENUM_VARIANT: &str = "Thermodynamic";
+    /// `enumVariant` -> `Thermodynamic`
+    pub const ENUM_VARIANT: &str = "https://uor.foundation/op/Thermodynamic";
 }
 
 /// Established via simplicial homology, cohomology, or constraint nerve analysis. Covers homological algebra (HA_) and ψ-pipeline identities.
 pub mod topological {
-    /// `enumVariant`
-    pub const ENUM_VARIANT: &str = "Topological";
+    /// `enumVariant` -> `Topological`
+    pub const ENUM_VARIANT: &str = "https://uor.foundation/op/Topological";
 }
 
 /// Established by the inter-algebra map structure of the resolution pipeline. Covers φ-maps (phi_1–phi_6) and ψ-maps (psi_1–psi_6).
 pub mod pipeline {
-    /// `enumVariant`
-    pub const ENUM_VARIANT: &str = "Pipeline";
+    /// `enumVariant` -> `Pipeline`
+    pub const ENUM_VARIANT: &str = "https://uor.foundation/op/Pipeline";
 }
 
 /// Established by the composition of Analytical and Topological reasoning. The only domain requiring multiple op:verificationDomain assertions. Covers the UOR Index Theorem (IT_7a–IT_7d).
 pub mod index_theoretic {
-    /// `enumVariant`
-    pub const ENUM_VARIANT: &str = "IndexTheoretic";
+    /// `enumVariant` -> `IndexTheoretic`
+    pub const ENUM_VARIANT: &str = "https://uor.foundation/op/IndexTheoretic";
 }
 
 /// Established by superposition analysis of fiber states. Covers identities involving superposed (non-classical) fiber assignments where fibers carry complex amplitudes.
 pub mod superposition_domain {
-    /// `enumVariant`
-    pub const ENUM_VARIANT: &str = "SuperpositionDomain";
+    /// `enumVariant` -> `SuperpositionDomain`
+    pub const ENUM_VARIANT: &str = "https://uor.foundation/op/SuperpositionDomain";
 }
 
 /// Established by the intersection of quantum superposition analysis and classical thermodynamic reasoning. Covers identities relating von Neumann entropy of superposed states to Landauer costs of projective collapse (QM_).
 pub mod quantum_thermodynamic {
-    /// `enumVariant`
-    pub const ENUM_VARIANT: &str = "QuantumThermodynamic";
+    /// `enumVariant` -> `QuantumThermodynamic`
+    pub const ENUM_VARIANT: &str = "https://uor.foundation/op/QuantumThermodynamic";
 }
 
 /// Established by number-theoretic valuation arguments including p-adic absolute values, the Ostrowski product formula, and the arithmetic of global fields. Covers identities grounded in the product formula |x|_p · |x|_∞ = 1 and the Witt–Ostrowski derivation chain.
 pub mod arithmetic_valuation {
-    /// `enumVariant`
-    pub const ENUM_VARIANT: &str = "ArithmeticValuation";
+    /// `enumVariant` -> `ArithmeticValuation`
+    pub const ENUM_VARIANT: &str = "https://uor.foundation/op/ArithmeticValuation";
 }
 
 /// Verification domain for composed operation identities — algebraic properties of operator compositions including dispatch, inference, accumulation, lease, and session composition operations.
 pub mod composed_algebraic {
-    /// `enumVariant`
-    pub const ENUM_VARIANT: &str = "ComposedAlgebraic";
+    /// `enumVariant` -> `ComposedAlgebraic`
+    pub const ENUM_VARIANT: &str = "https://uor.foundation/op/ComposedAlgebraic";
 }
 
 /// Holds for all k in N. No minimum k constraint.
 pub mod universal {
-    /// `enumVariant`
-    pub const ENUM_VARIANT: &str = "Universal";
+    /// `enumVariant` -> `Universal`
+    pub const ENUM_VARIANT: &str = "https://uor.foundation/op/Universal";
 }
 
 /// Holds for all k >= k_min, where k_min is given by validKMin.
 pub mod parametric_lower {
-    /// `enumVariant`
-    pub const ENUM_VARIANT: &str = "ParametricLower";
+    /// `enumVariant` -> `ParametricLower`
+    pub const ENUM_VARIANT: &str = "https://uor.foundation/op/ParametricLower";
 }
 
 /// Holds for k_min <= k <= k_max. Both validKMin and validKMax required.
 pub mod parametric_range {
-    /// `enumVariant`
-    pub const ENUM_VARIANT: &str = "ParametricRange";
+    /// `enumVariant` -> `ParametricRange`
+    pub const ENUM_VARIANT: &str = "https://uor.foundation/op/ParametricRange";
 }
 
 /// Holds only at exactly one level, given by a QuantumLevelBinding.
 pub mod level_specific {
-    /// `enumVariant`
-    pub const ENUM_VARIANT: &str = "LevelSpecific";
+    /// `enumVariant` -> `LevelSpecific`
+    pub const ENUM_VARIANT: &str = "https://uor.foundation/op/LevelSpecific";
 }
 
 /// Reflection through the origin of the additive ring: neg(x) = -x mod 2^n. One of the two generators of D_{2^n}.
@@ -360,8 +375,8 @@ pub mod compose_op {
 
 /// The foundational theorem of the UOR kernel: neg(bnot(x)) = succ(x) for all x in R_n. This identity links the two involutions (neg and bnot) to the successor operation, making succ derivable from neg and bnot.
 pub mod critical_identity {
-    /// `forAll`
-    pub const FOR_ALL: &str = "x ∈ R_n";
+    /// `forAll` -> `term_criticalIdentity_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_criticalIdentity_forAll";
     /// `lhs` -> `succ`
     pub const LHS: &str = "https://uor.foundation/op/succ";
     /// `rhs`
@@ -375,3420 +390,2926 @@ pub mod critical_identity {
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Witt polynomial identification at p=2 (Theorem 1)";
 }
 
 /// Addressing bijection: addresses(glyph(d)) = d. Round-trip from datum through glyph and back is identity.
 pub mod ad_1 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "d ∈ R_n";
-    /// `lhs`
-    pub const LHS: &str = "addresses(glyph(d))";
-    /// `rhs`
-    pub const RHS: &str = "d";
+    /// `forAll` -> `term_AD_1_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_AD_1_forAll";
+    /// `lhs` -> `term_AD_1_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_AD_1_lhs";
+    /// `rhs` -> `term_AD_1_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_AD_1_rhs";
     /// `verificationDomain` -> `Analytical`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Analytical";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Address → Ring → bijection";
 }
 
 /// Embedding coherence: glyph(ι(addresses(a))) = ι_addr(a). The addressing diagram commutes through embeddings.
 pub mod ad_2 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "a ∈ Addr(R_n), ι : R_n → R_{n'}";
-    /// `lhs`
-    pub const LHS: &str = "glyph(ι(addresses(a)))";
-    /// `rhs`
-    pub const RHS: &str = "ι_addr(a)";
+    /// `forAll` -> `term_AD_2_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_AD_2_forAll";
+    /// `lhs` -> `term_AD_2_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_AD_2_lhs";
+    /// `rhs` -> `term_AD_2_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_AD_2_rhs";
     /// `verificationDomain` -> `Analytical`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Analytical";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Address → Ring → bijection";
 }
 
 /// Additive associativity: add(x, add(y, z)) = add(add(x, y), z).
 pub mod r_a1 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "x, y, z ∈ R_n";
-    /// `lhs`
-    pub const LHS: &str = "add(x, add(y, z))";
-    /// `rhs`
-    pub const RHS: &str = "add(add(x, y), z)";
+    /// `forAll` -> `term_R_A1_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_R_A1_forAll";
+    /// `lhs` -> `term_R_A1_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_R_A1_lhs";
+    /// `rhs` -> `term_R_A1_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_R_A1_rhs";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Witt polynomial identification at p=2 (Theorem 1)";
 }
 
 /// Additive identity: add(x, 0) = x.
 pub mod r_a2 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "x ∈ R_n";
-    /// `lhs`
-    pub const LHS: &str = "add(x, 0)";
-    /// `rhs`
-    pub const RHS: &str = "x";
+    /// `forAll` -> `term_R_A2_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_R_A2_forAll";
+    /// `lhs` -> `term_R_A2_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_R_A2_lhs";
+    /// `rhs` -> `term_R_A2_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_R_A2_rhs";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Witt polynomial identification at p=2 (Theorem 1)";
 }
 
 /// Additive inverse: add(x, neg(x)) = 0.
 pub mod r_a3 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "x ∈ R_n";
-    /// `lhs`
-    pub const LHS: &str = "add(x, neg(x))";
-    /// `rhs`
-    pub const RHS: &str = "0";
+    /// `forAll` -> `term_R_A3_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_R_A3_forAll";
+    /// `lhs` -> `term_R_A3_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_R_A3_lhs";
+    /// `rhs` -> `term_R_A3_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_R_A3_rhs";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Witt polynomial identification at p=2 (Theorem 1)";
 }
 
 /// Additive commutativity: add(x, y) = add(y, x).
 pub mod r_a4 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "x, y ∈ R_n";
-    /// `lhs`
-    pub const LHS: &str = "add(x, y)";
-    /// `rhs`
-    pub const RHS: &str = "add(y, x)";
+    /// `forAll` -> `term_R_A4_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_R_A4_forAll";
+    /// `lhs` -> `term_R_A4_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_R_A4_lhs";
+    /// `rhs` -> `term_R_A4_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_R_A4_rhs";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Witt polynomial identification at p=2 (Theorem 1)";
 }
 
 /// Subtraction definition: sub(x, y) = add(x, neg(y)).
 pub mod r_a5 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "x, y ∈ R_n";
-    /// `lhs`
-    pub const LHS: &str = "sub(x, y)";
-    /// `rhs`
-    pub const RHS: &str = "add(x, neg(y))";
+    /// `forAll` -> `term_R_A5_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_R_A5_forAll";
+    /// `lhs` -> `term_R_A5_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_R_A5_lhs";
+    /// `rhs` -> `term_R_A5_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_R_A5_rhs";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Witt polynomial identification at p=2 (Theorem 1)";
 }
 
 /// Negation involution: neg(neg(x)) = x.
 pub mod r_a6 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "x ∈ R_n";
-    /// `lhs`
-    pub const LHS: &str = "neg(neg(x))";
-    /// `rhs`
-    pub const RHS: &str = "x";
+    /// `forAll` -> `term_R_A6_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_R_A6_forAll";
+    /// `lhs` -> `term_R_A6_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_R_A6_lhs";
+    /// `rhs` -> `term_R_A6_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_R_A6_rhs";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Witt polynomial identification at p=2 (Theorem 1)";
 }
 
 /// Multiplicative associativity: mul(x, mul(y, z)) = mul(mul(x, y), z).
 pub mod r_m1 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "x, y, z ∈ R_n";
-    /// `lhs`
-    pub const LHS: &str = "mul(x, mul(y, z))";
-    /// `rhs`
-    pub const RHS: &str = "mul(mul(x, y), z)";
+    /// `forAll` -> `term_R_M1_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_R_M1_forAll";
+    /// `lhs` -> `term_R_M1_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_R_M1_lhs";
+    /// `rhs` -> `term_R_M1_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_R_M1_rhs";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Witt polynomial identification at p=2 (Theorem 1)";
 }
 
 /// Multiplicative identity: mul(x, 1) = x.
 pub mod r_m2 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "x ∈ R_n";
-    /// `lhs`
-    pub const LHS: &str = "mul(x, 1)";
-    /// `rhs`
-    pub const RHS: &str = "x";
+    /// `forAll` -> `term_R_M2_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_R_M2_forAll";
+    /// `lhs` -> `term_R_M2_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_R_M2_lhs";
+    /// `rhs` -> `term_R_M2_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_R_M2_rhs";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Witt polynomial identification at p=2 (Theorem 1)";
 }
 
 /// Multiplicative commutativity: mul(x, y) = mul(y, x).
 pub mod r_m3 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "x, y ∈ R_n";
-    /// `lhs`
-    pub const LHS: &str = "mul(x, y)";
-    /// `rhs`
-    pub const RHS: &str = "mul(y, x)";
+    /// `forAll` -> `term_R_M3_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_R_M3_forAll";
+    /// `lhs` -> `term_R_M3_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_R_M3_lhs";
+    /// `rhs` -> `term_R_M3_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_R_M3_rhs";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Witt polynomial identification at p=2 (Theorem 1)";
 }
 
 /// Distributivity: mul(x, add(y, z)) = add(mul(x, y), mul(x, z)).
 pub mod r_m4 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "x, y, z ∈ R_n";
-    /// `lhs`
-    pub const LHS: &str = "mul(x, add(y, z))";
-    /// `rhs`
-    pub const RHS: &str = "add(mul(x, y), mul(x, z))";
+    /// `forAll` -> `term_R_M4_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_R_M4_forAll";
+    /// `lhs` -> `term_R_M4_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_R_M4_lhs";
+    /// `rhs` -> `term_R_M4_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_R_M4_rhs";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Witt polynomial identification at p=2 (Theorem 1)";
 }
 
 /// Annihilation: mul(x, 0) = 0.
 pub mod r_m5 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "x ∈ R_n";
-    /// `lhs`
-    pub const LHS: &str = "mul(x, 0)";
-    /// `rhs`
-    pub const RHS: &str = "0";
+    /// `forAll` -> `term_R_M5_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_R_M5_forAll";
+    /// `lhs` -> `term_R_M5_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_R_M5_lhs";
+    /// `rhs` -> `term_R_M5_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_R_M5_rhs";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Witt polynomial identification at p=2 (Theorem 1)";
 }
 
 /// XOR associativity: xor(x, xor(y, z)) = xor(xor(x, y), z).
 pub mod b_1 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "x, y, z ∈ R_n";
-    /// `lhs`
-    pub const LHS: &str = "xor(x, xor(y, z))";
-    /// `rhs`
-    pub const RHS: &str = "xor(xor(x, y), z)";
+    /// `forAll` -> `term_B_1_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_B_1_forAll";
+    /// `lhs` -> `term_B_1_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_B_1_lhs";
+    /// `rhs` -> `term_B_1_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_B_1_rhs";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Witt polynomial identification at p=2 (Theorem 1)";
 }
 
 /// XOR identity: xor(x, 0) = x.
 pub mod b_2 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "x ∈ R_n";
-    /// `lhs`
-    pub const LHS: &str = "xor(x, 0)";
-    /// `rhs`
-    pub const RHS: &str = "x";
+    /// `forAll` -> `term_B_2_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_B_2_forAll";
+    /// `lhs` -> `term_B_2_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_B_2_lhs";
+    /// `rhs` -> `term_B_2_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_B_2_rhs";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Witt polynomial identification at p=2 (Theorem 1)";
 }
 
 /// XOR self-inverse: xor(x, x) = 0.
 pub mod b_3 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "x ∈ R_n";
-    /// `lhs`
-    pub const LHS: &str = "xor(x, x)";
-    /// `rhs`
-    pub const RHS: &str = "0";
+    /// `forAll` -> `term_B_3_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_B_3_forAll";
+    /// `lhs` -> `term_B_3_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_B_3_lhs";
+    /// `rhs` -> `term_B_3_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_B_3_rhs";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Witt polynomial identification at p=2 (Theorem 1)";
 }
 
 /// AND associativity: and(x, and(y, z)) = and(and(x, y), z).
 pub mod b_4 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "x, y, z ∈ R_n";
-    /// `lhs`
-    pub const LHS: &str = "and(x, and(y, z))";
-    /// `rhs`
-    pub const RHS: &str = "and(and(x, y), z)";
+    /// `forAll` -> `term_B_4_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_B_4_forAll";
+    /// `lhs` -> `term_B_4_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_B_4_lhs";
+    /// `rhs` -> `term_B_4_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_B_4_rhs";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Witt polynomial identification at p=2 (Theorem 1)";
 }
 
 /// AND identity: and(x, 2^n - 1) = x.
 pub mod b_5 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "x ∈ R_n";
-    /// `lhs`
-    pub const LHS: &str = "and(x, 2^n - 1)";
-    /// `rhs`
-    pub const RHS: &str = "x";
+    /// `forAll` -> `term_B_5_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_B_5_forAll";
+    /// `lhs` -> `term_B_5_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_B_5_lhs";
+    /// `rhs` -> `term_B_5_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_B_5_rhs";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Witt polynomial identification at p=2 (Theorem 1)";
 }
 
 /// AND annihilation: and(x, 0) = 0.
 pub mod b_6 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "x ∈ R_n";
-    /// `lhs`
-    pub const LHS: &str = "and(x, 0)";
-    /// `rhs`
-    pub const RHS: &str = "0";
+    /// `forAll` -> `term_B_6_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_B_6_forAll";
+    /// `lhs` -> `term_B_6_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_B_6_lhs";
+    /// `rhs` -> `term_B_6_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_B_6_rhs";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Witt polynomial identification at p=2 (Theorem 1)";
 }
 
 /// OR associativity: or(x, or(y, z)) = or(or(x, y), z).
 pub mod b_7 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "x, y, z ∈ R_n";
-    /// `lhs`
-    pub const LHS: &str = "or(x, or(y, z))";
-    /// `rhs`
-    pub const RHS: &str = "or(or(x, y), z)";
+    /// `forAll` -> `term_B_7_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_B_7_forAll";
+    /// `lhs` -> `term_B_7_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_B_7_lhs";
+    /// `rhs` -> `term_B_7_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_B_7_rhs";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Witt polynomial identification at p=2 (Theorem 1)";
 }
 
 /// OR identity: or(x, 0) = x.
 pub mod b_8 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "x ∈ R_n";
-    /// `lhs`
-    pub const LHS: &str = "or(x, 0)";
-    /// `rhs`
-    pub const RHS: &str = "x";
+    /// `forAll` -> `term_B_8_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_B_8_forAll";
+    /// `lhs` -> `term_B_8_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_B_8_lhs";
+    /// `rhs` -> `term_B_8_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_B_8_rhs";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Witt polynomial identification at p=2 (Theorem 1)";
 }
 
 /// Absorption: and(x, or(x, y)) = x.
 pub mod b_9 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "x, y ∈ R_n";
-    /// `lhs`
-    pub const LHS: &str = "and(x, or(x, y))";
-    /// `rhs`
-    pub const RHS: &str = "x";
+    /// `forAll` -> `term_B_9_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_B_9_forAll";
+    /// `lhs` -> `term_B_9_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_B_9_lhs";
+    /// `rhs` -> `term_B_9_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_B_9_rhs";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Witt polynomial identification at p=2 (Theorem 1)";
 }
 
 /// AND distributes over OR: and(x, or(y, z)) = or(and(x, y), and(x, z)).
 pub mod b_10 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "x, y, z ∈ R_n";
-    /// `lhs`
-    pub const LHS: &str = "and(x, or(y, z))";
-    /// `rhs`
-    pub const RHS: &str = "or(and(x, y), and(x, z))";
+    /// `forAll` -> `term_B_10_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_B_10_forAll";
+    /// `lhs` -> `term_B_10_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_B_10_lhs";
+    /// `rhs` -> `term_B_10_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_B_10_rhs";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Witt polynomial identification at p=2 (Theorem 1)";
 }
 
 /// De Morgan 1: bnot(and(x, y)) = or(bnot(x), bnot(y)).
 pub mod b_11 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "x, y ∈ R_n";
-    /// `lhs`
-    pub const LHS: &str = "bnot(and(x, y))";
-    /// `rhs`
-    pub const RHS: &str = "or(bnot(x), bnot(y))";
+    /// `forAll` -> `term_B_11_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_B_11_forAll";
+    /// `lhs` -> `term_B_11_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_B_11_lhs";
+    /// `rhs` -> `term_B_11_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_B_11_rhs";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Witt polynomial identification at p=2 (Theorem 1)";
 }
 
 /// De Morgan 2: bnot(or(x, y)) = and(bnot(x), bnot(y)).
 pub mod b_12 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "x, y ∈ R_n";
-    /// `lhs`
-    pub const LHS: &str = "bnot(or(x, y))";
-    /// `rhs`
-    pub const RHS: &str = "and(bnot(x), bnot(y))";
+    /// `forAll` -> `term_B_12_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_B_12_forAll";
+    /// `lhs` -> `term_B_12_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_B_12_lhs";
+    /// `rhs` -> `term_B_12_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_B_12_rhs";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Witt polynomial identification at p=2 (Theorem 1)";
 }
 
 /// Bnot involution: bnot(bnot(x)) = x.
 pub mod b_13 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "x ∈ R_n";
-    /// `lhs`
-    pub const LHS: &str = "bnot(bnot(x))";
-    /// `rhs`
-    pub const RHS: &str = "x";
+    /// `forAll` -> `term_B_13_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_B_13_forAll";
+    /// `lhs` -> `term_B_13_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_B_13_lhs";
+    /// `rhs` -> `term_B_13_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_B_13_rhs";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Witt polynomial identification at p=2 (Theorem 1)";
 }
 
 /// Neg via subtraction: neg(x) = sub(0, x).
 pub mod x_1 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "x ∈ R_n";
-    /// `lhs`
-    pub const LHS: &str = "neg(x)";
-    /// `rhs`
-    pub const RHS: &str = "sub(0, x)";
+    /// `forAll` -> `term_X_1_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_X_1_forAll";
+    /// `lhs` -> `term_X_1_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_X_1_lhs";
+    /// `rhs` -> `term_X_1_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_X_1_rhs";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Witt polynomial identification at p=2 (Theorem 1)";
 }
 
 /// Complement via XOR: bnot(x) = xor(x, 2^n - 1).
 pub mod x_2 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "x ∈ R_n";
-    /// `lhs`
-    pub const LHS: &str = "bnot(x)";
-    /// `rhs`
-    pub const RHS: &str = "xor(x, 2^n - 1)";
+    /// `forAll` -> `term_X_2_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_X_2_forAll";
+    /// `lhs` -> `term_X_2_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_X_2_lhs";
+    /// `rhs` -> `term_X_2_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_X_2_rhs";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Witt polynomial identification at p=2 (Theorem 1)";
 }
 
 /// Succ via addition: succ(x) = add(x, 1).
 pub mod x_3 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "x ∈ R_n";
-    /// `lhs`
-    pub const LHS: &str = "succ(x)";
-    /// `rhs`
-    pub const RHS: &str = "add(x, 1)";
+    /// `forAll` -> `term_X_3_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_X_3_forAll";
+    /// `lhs` -> `term_X_3_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_X_3_lhs";
+    /// `rhs` -> `term_X_3_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_X_3_rhs";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Witt polynomial identification at p=2 (Theorem 1)";
 }
 
 /// Pred via subtraction: pred(x) = sub(x, 1).
 pub mod x_4 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "x ∈ R_n";
-    /// `lhs`
-    pub const LHS: &str = "pred(x)";
-    /// `rhs`
-    pub const RHS: &str = "sub(x, 1)";
+    /// `forAll` -> `term_X_4_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_X_4_forAll";
+    /// `lhs` -> `term_X_4_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_X_4_lhs";
+    /// `rhs` -> `term_X_4_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_X_4_rhs";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Witt polynomial identification at p=2 (Theorem 1)";
 }
 
 /// Neg-bnot bridge: neg(x) = add(bnot(x), 1).
 pub mod x_5 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "x ∈ R_n";
-    /// `lhs`
-    pub const LHS: &str = "neg(x)";
-    /// `rhs`
-    pub const RHS: &str = "add(bnot(x), 1)";
+    /// `forAll` -> `term_X_5_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_X_5_forAll";
+    /// `lhs` -> `term_X_5_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_X_5_lhs";
+    /// `rhs` -> `term_X_5_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_X_5_rhs";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Witt polynomial identification at p=2 (Theorem 1)";
 }
 
 /// Complement predecessor: bnot(x) = pred(neg(x)).
 pub mod x_6 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "x ∈ R_n";
-    /// `lhs`
-    pub const LHS: &str = "bnot(x)";
-    /// `rhs`
-    pub const RHS: &str = "pred(neg(x))";
+    /// `forAll` -> `term_X_6_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_X_6_forAll";
+    /// `lhs` -> `term_X_6_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_X_6_lhs";
+    /// `rhs` -> `term_X_6_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_X_6_rhs";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Witt polynomial identification at p=2 (Theorem 1)";
 }
 
 /// XOR-add bridge: xor(x, y) = add(x, y) - 2 * and(x, y) (in Z before mod).
 pub mod x_7 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "x, y ∈ Z (before mod)";
-    /// `lhs`
-    pub const LHS: &str = "xor(x, y)";
-    /// `rhs`
-    pub const RHS: &str = "add(x, y) - 2 * and(x, y)";
+    /// `forAll` -> `term_X_7_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_X_7_forAll";
+    /// `lhs` -> `term_X_7_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_X_7_lhs";
+    /// `rhs` -> `term_X_7_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_X_7_rhs";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Witt polynomial identification at p=2 (Theorem 1)";
 }
 
 /// Rotation order: succ^\[2^n\](x) = x.
 pub mod d_1 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "x ∈ R_n";
-    /// `lhs`
-    pub const LHS: &str = "succ^{2^n}(x)";
-    /// `rhs`
-    pub const RHS: &str = "x";
+    /// `forAll` -> `term_D_1_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_D_1_forAll";
+    /// `lhs` -> `term_D_1_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_D_1_lhs";
+    /// `rhs` -> `term_D_1_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_D_1_rhs";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Witt polynomial identification at p=2 (Theorem 1)";
 }
 
 /// Conjugation: neg(succ(neg(x))) = pred(x).
 pub mod d_3 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "x ∈ R_n";
-    /// `lhs`
-    pub const LHS: &str = "neg(succ(neg(x)))";
-    /// `rhs`
-    pub const RHS: &str = "pred(x)";
+    /// `forAll` -> `term_D_3_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_D_3_forAll";
+    /// `lhs` -> `term_D_3_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_D_3_lhs";
+    /// `rhs` -> `term_D_3_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_D_3_rhs";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Witt polynomial identification at p=2 (Theorem 1)";
 }
 
 /// Reverse composition: bnot(neg(x)) = pred(x).
 pub mod d_4 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "x ∈ R_n";
-    /// `lhs`
-    pub const LHS: &str = "bnot(neg(x))";
-    /// `rhs`
-    pub const RHS: &str = "pred(x)";
+    /// `forAll` -> `term_D_4_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_D_4_forAll";
+    /// `lhs` -> `term_D_4_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_D_4_lhs";
+    /// `rhs` -> `term_D_4_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_D_4_rhs";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Witt polynomial identification at p=2 (Theorem 1)";
 }
 
 /// Group closure: D_\[2^n\] = \[succ^k, neg ∘ succ^k : 0 ≤ k < 2^n\].
 pub mod d_5 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "n ≥ 1";
-    /// `lhs`
-    pub const LHS: &str = "D_{2^n}";
-    /// `rhs`
-    pub const RHS: &str = "{succ^k, neg ∘ succ^k : 0 ≤ k < 2^n}";
+    /// `forAll` -> `term_D_5_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_D_5_forAll";
+    /// `lhs` -> `term_D_5_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_D_5_lhs";
+    /// `rhs` -> `term_D_5_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_D_5_rhs";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Witt polynomial identification at p=2 (Theorem 1)";
 }
 
 /// Unit group decomposition: R_n× ≅ Z/2 × Z/2^\[n-2\] for n ≥ 3.
 pub mod u_1 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "n ≥ 3";
-    /// `lhs`
-    pub const LHS: &str = "R_n×";
-    /// `rhs`
-    pub const RHS: &str = "Z/2 × Z/2^{n-2}";
+    /// `forAll` -> `term_U_1_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_U_1_forAll";
+    /// `lhs` -> `term_U_1_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_U_1_lhs";
+    /// `rhs` -> `term_U_1_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_U_1_rhs";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "exhaustive_enumeration(R_n)";
 }
 
 /// Unit group special cases: R_1× ≅ \[1\]; R_2× ≅ Z/2.
 pub mod u_2 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "n ∈ {1, 2}";
-    /// `lhs`
-    pub const LHS: &str = "R_1× ≅ {1}; R_2× ≅ Z/2";
-    /// `rhs`
-    pub const RHS: &str = "special cases for small n";
+    /// `forAll` -> `term_U_2_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_U_2_forAll";
+    /// `lhs` -> `term_U_2_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_U_2_lhs";
+    /// `rhs` -> `term_U_2_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_U_2_rhs";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "exhaustive_enumeration(R_n)";
 }
 
 /// Multiplicative order: ord(u) = lcm(ord((-1)^a), ord(3^b)).
 pub mod u_3 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "u = (-1)^a · 3^b ∈ R_n×";
-    /// `lhs`
-    pub const LHS: &str = "ord(u)";
-    /// `rhs`
-    pub const RHS: &str = "lcm(ord((-1)^a), ord(3^b))";
+    /// `forAll` -> `term_U_3_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_U_3_forAll";
+    /// `lhs` -> `term_U_3_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_U_3_lhs";
+    /// `rhs` -> `term_U_3_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_U_3_rhs";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "exhaustive_enumeration(R_n)";
 }
 
 /// Resonance period: ord_g(2) divides φ(g).
 pub mod u_4 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "g odd";
-    /// `lhs`
-    pub const LHS: &str = "ord_g(2)";
-    /// `rhs`
-    pub const RHS: &str = "divides φ(g)";
+    /// `forAll` -> `term_U_4_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_U_4_forAll";
+    /// `lhs` -> `term_U_4_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_U_4_lhs";
+    /// `rhs` -> `term_U_4_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_U_4_rhs";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "exhaustive_enumeration(R_n)";
 }
 
 /// Step formula derivation: step_g = 2 * ((g - (2^n mod g)) mod g) + 1.
 pub mod u_5 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "g odd, g > 1";
-    /// `lhs`
-    pub const LHS: &str = "step_g";
-    /// `rhs`
-    pub const RHS: &str = "2 * ((g - (2^n mod g)) mod g) + 1";
+    /// `forAll` -> `term_U_5_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_U_5_forAll";
+    /// `lhs` -> `term_U_5_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_U_5_lhs";
+    /// `rhs` -> `term_U_5_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_U_5_rhs";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "exhaustive_enumeration(R_n)";
 }
 
 /// Scaling not dihedral: μ_u ∉ D_\[2^n\] for u ≠ ±1.
 pub mod ag_1 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "u ∈ R_n×, u ≠ ±1";
-    /// `lhs`
-    pub const LHS: &str = "μ_u";
-    /// `rhs`
-    pub const RHS: &str = "∉ D_{2^n}";
+    /// `forAll` -> `term_AG_1_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_AG_1_forAll";
+    /// `lhs` -> `term_AG_1_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_AG_1_lhs";
+    /// `rhs` -> `term_AG_1_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_AG_1_rhs";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "exhaustive_enumeration(R_n)";
 }
 
 /// Affine group: Aff(R_n) = R_n× ⋉ R_n.
 pub mod ag_2 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "n ≥ 1";
-    /// `lhs`
-    pub const LHS: &str = "Aff(R_n)";
-    /// `rhs`
-    pub const RHS: &str = "R_n× ⋉ R_n";
+    /// `forAll` -> `term_AG_2_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_AG_2_forAll";
+    /// `lhs` -> `term_AG_2_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_AG_2_lhs";
+    /// `rhs` -> `term_AG_2_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_AG_2_rhs";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "exhaustive_enumeration(R_n)";
 }
 
 /// Affine group order: |Aff(R_n)| = 2^\[2n-1\].
 pub mod ag_3 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "n ≥ 1";
-    /// `lhs`
-    pub const LHS: &str = "|Aff(R_n)|";
-    /// `rhs`
-    pub const RHS: &str = "2^{2n-1}";
+    /// `forAll` -> `term_AG_3_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_AG_3_forAll";
+    /// `lhs` -> `term_AG_3_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_AG_3_lhs";
+    /// `rhs` -> `term_AG_3_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_AG_3_rhs";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "exhaustive_enumeration(R_n)";
 }
 
 /// Subgroup inclusion: D_\[2^n\] ⊂ Aff(R_n) with u ∈ \[±1\].
 pub mod ag_4 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "n ≥ 1";
-    /// `lhs`
-    pub const LHS: &str = "D_{2^n}";
-    /// `rhs`
-    pub const RHS: &str = "⊂ Aff(R_n), u ∈ {±1}";
+    /// `forAll` -> `term_AG_4_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_AG_4_forAll";
+    /// `lhs` -> `term_AG_4_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_AG_4_lhs";
+    /// `rhs` -> `term_AG_4_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_AG_4_rhs";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "exhaustive_enumeration(R_n)";
 }
 
 /// Addition decomposition: add(x,y)_k = xor(x_k, xor(y_k, c_k(x,y))).
 pub mod ca_1 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "x, y ∈ R_n, 0 ≤ k < n";
-    /// `lhs`
-    pub const LHS: &str = "add(x,y)_k";
-    /// `rhs`
-    pub const RHS: &str = "xor(x_k, xor(y_k, c_k(x,y)))";
+    /// `forAll` -> `term_CA_1_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_CA_1_forAll";
+    /// `lhs` -> `term_CA_1_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_CA_1_lhs";
+    /// `rhs` -> `term_CA_1_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_CA_1_rhs";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Witt polynomial identification at p=2 (Theorem 1)";
 }
 
 /// Carry recurrence: c_\[k+1\](x,y) = or(and(x_k,y_k), and(xor(x_k,y_k), c_k)).
 pub mod ca_2 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "x, y ∈ R_n";
-    /// `lhs`
-    pub const LHS: &str = "c_{k+1}(x,y)";
-    /// `rhs`
-    pub const RHS: &str = "or(and(x_k,y_k), and(xor(x_k,y_k), c_k))";
+    /// `forAll` -> `term_CA_2_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_CA_2_forAll";
+    /// `lhs` -> `term_CA_2_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_CA_2_lhs";
+    /// `rhs` -> `term_CA_2_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_CA_2_rhs";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Witt polynomial identification at p=2 (Theorem 1)";
 }
 
 /// Carry commutativity: c(x, y) = c(y, x).
 pub mod ca_3 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "x, y ∈ R_n";
-    /// `lhs`
-    pub const LHS: &str = "c(x, y)";
-    /// `rhs`
-    pub const RHS: &str = "c(y, x)";
+    /// `forAll` -> `term_CA_3_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_CA_3_forAll";
+    /// `lhs` -> `term_CA_3_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_CA_3_lhs";
+    /// `rhs` -> `term_CA_3_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_CA_3_rhs";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Witt polynomial identification at p=2 (Theorem 1)";
 }
 
 /// Zero carry: c(x, 0) = 0 at all positions.
 pub mod ca_4 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "x ∈ R_n, all positions";
-    /// `lhs`
-    pub const LHS: &str = "c(x, 0)";
-    /// `rhs`
-    pub const RHS: &str = "0";
+    /// `forAll` -> `term_CA_4_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_CA_4_forAll";
+    /// `lhs` -> `term_CA_4_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_CA_4_lhs";
+    /// `rhs` -> `term_CA_4_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_CA_4_rhs";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Witt polynomial identification at p=2 (Theorem 1)";
 }
 
 /// Negation carry: c(x, neg(x))_k = 1 for k > v_2(x).
 pub mod ca_5 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "x ∈ R_n, k > v_2(x)";
-    /// `lhs`
-    pub const LHS: &str = "c(x, neg(x))_k";
-    /// `rhs`
-    pub const RHS: &str = "1";
+    /// `forAll` -> `term_CA_5_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_CA_5_forAll";
+    /// `lhs` -> `term_CA_5_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_CA_5_lhs";
+    /// `rhs` -> `term_CA_5_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_CA_5_rhs";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Witt polynomial identification at p=2 (Theorem 1)";
 }
 
 /// Carry-incompatibility link: d_Δ(x, y) > 0 iff ∃ k : c_k(x,y) = 1.
 pub mod ca_6 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "x, y ∈ R_n";
-    /// `lhs`
-    pub const LHS: &str = "d_Δ(x, y) > 0";
-    /// `rhs`
-    pub const RHS: &str = "∃ k : c_k(x,y) = 1";
+    /// `forAll` -> `term_CA_6_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_CA_6_forAll";
+    /// `lhs` -> `term_CA_6_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_CA_6_lhs";
+    /// `rhs` -> `term_CA_6_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_CA_6_rhs";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Witt polynomial identification at p=2 (Theorem 1)";
 }
 
 /// Constraint pin union: pins of a composite constraint equal the union of component pins.
 pub mod c_1 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "constraints A, B";
-    /// `lhs`
-    pub const LHS: &str = "pins(compose(A, B))";
-    /// `rhs`
-    pub const RHS: &str = "pins(A) ∪ pins(B)";
+    /// `forAll` -> `term_C_1_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_C_1_forAll";
+    /// `lhs` -> `term_C_1_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_C_1_lhs";
+    /// `rhs` -> `term_C_1_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_C_1_rhs";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Ring → Constraint via axiom inheritance";
 }
 
 /// Constraint composition commutativity.
 pub mod c_2 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "constraints A, B";
-    /// `lhs`
-    pub const LHS: &str = "compose(A, B)";
-    /// `rhs`
-    pub const RHS: &str = "compose(B, A)";
+    /// `forAll` -> `term_C_2_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_C_2_forAll";
+    /// `lhs` -> `term_C_2_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_C_2_lhs";
+    /// `rhs` -> `term_C_2_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_C_2_rhs";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Ring → Constraint via axiom inheritance";
 }
 
 /// Constraint composition associativity.
 pub mod c_3 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "constraints A, B, C";
-    /// `lhs`
-    pub const LHS: &str = "compose(compose(A,B), C)";
-    /// `rhs`
-    pub const RHS: &str = "compose(A, compose(B,C))";
+    /// `forAll` -> `term_C_3_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_C_3_forAll";
+    /// `lhs` -> `term_C_3_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_C_3_lhs";
+    /// `rhs` -> `term_C_3_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_C_3_rhs";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Ring → Constraint via axiom inheritance";
 }
 
 /// Constraint composition idempotence.
 pub mod c_4 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "constraint A";
-    /// `lhs`
-    pub const LHS: &str = "compose(A, A)";
-    /// `rhs`
-    pub const RHS: &str = "A";
+    /// `forAll` -> `term_C_4_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_C_4_forAll";
+    /// `lhs` -> `term_C_4_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_C_4_lhs";
+    /// `rhs` -> `term_C_4_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_C_4_rhs";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Ring → Constraint via axiom inheritance";
 }
 
 /// Constraint composition identity element.
 pub mod c_5 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "constraint A, identity ε";
-    /// `lhs`
-    pub const LHS: &str = "compose(A, ε)";
-    /// `rhs`
-    pub const RHS: &str = "A";
+    /// `forAll` -> `term_C_5_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_C_5_forAll";
+    /// `lhs` -> `term_C_5_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_C_5_lhs";
+    /// `rhs` -> `term_C_5_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_C_5_rhs";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Ring → Constraint via axiom inheritance";
 }
 
 /// Constraint composition annihilator.
 pub mod c_6 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "constraint A, annihilator Ω";
-    /// `lhs`
-    pub const LHS: &str = "compose(A, Ω)";
-    /// `rhs`
-    pub const RHS: &str = "Ω";
+    /// `forAll` -> `term_C_6_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_C_6_forAll";
+    /// `lhs` -> `term_C_6_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_C_6_lhs";
+    /// `rhs` -> `term_C_6_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_C_6_rhs";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Ring → Constraint via axiom inheritance";
 }
 
 /// Constraint-depth invariant: carry complexity of the residue representation equals the type depth.
 pub mod cdi {
-    /// `forAll`
-    pub const FOR_ALL: &str = "T ∈ T_n";
-    /// `lhs`
-    pub const LHS: &str = "carry(residue(T))";
-    /// `rhs`
-    pub const RHS: &str = "depth(T)";
+    /// `forAll` -> `term_CDI_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_CDI_forAll";
+    /// `lhs` -> `term_CDI_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_CDI_lhs";
+    /// `rhs` -> `term_CDI_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_CDI_rhs";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Constraint → Dihedral via interaction";
 }
 
 /// Constraint quotient lattice isomorphism to power set.
 pub mod cl_1 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "constraint equivalence classes";
-    /// `lhs`
-    pub const LHS: &str = "Constraint/≡";
-    /// `rhs`
-    pub const RHS: &str = "2^{[n]}";
+    /// `forAll` -> `term_CL_1_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_CL_1_forAll";
+    /// `lhs` -> `term_CL_1_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_CL_1_lhs";
+    /// `rhs` -> `term_CL_1_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_CL_1_rhs";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Constraint → Lattice via ordering";
 }
 
 /// Lattice join equals constraint composition.
 pub mod cl_2 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "constraints A, B";
-    /// `lhs`
-    pub const LHS: &str = "A ∨ B";
-    /// `rhs`
-    pub const RHS: &str = "compose(A, B)";
+    /// `forAll` -> `term_CL_2_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_CL_2_forAll";
+    /// `lhs` -> `term_CL_2_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_CL_2_lhs";
+    /// `rhs` -> `term_CL_2_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_CL_2_rhs";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Constraint → Lattice via ordering";
 }
 
 /// Lattice meet pins the intersection of component pins.
 pub mod cl_3 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "constraints A, B";
-    /// `lhs`
-    pub const LHS: &str = "pins(A ∧ B)";
-    /// `rhs`
-    pub const RHS: &str = "pins(A) ∩ pins(B)";
+    /// `forAll` -> `term_CL_3_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_CL_3_forAll";
+    /// `lhs` -> `term_CL_3_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_CL_3_lhs";
+    /// `rhs` -> `term_CL_3_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_CL_3_rhs";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Constraint → Lattice via ordering";
 }
 
 /// Constraint lattice distributivity.
 pub mod cl_4 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "constraints A, B, C";
-    /// `lhs`
-    pub const LHS: &str = "(A ∨ B) ∧ C";
-    /// `rhs`
-    pub const RHS: &str = "(A ∧ C) ∨ (B ∧ C)";
+    /// `forAll` -> `term_CL_4_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_CL_4_forAll";
+    /// `lhs` -> `term_CL_4_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_CL_4_lhs";
+    /// `rhs` -> `term_CL_4_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_CL_4_rhs";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Constraint → Lattice via ordering";
 }
 
 /// Constraint lattice complement existence.
 pub mod cl_5 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "constraint A";
-    /// `lhs`
-    pub const LHS: &str = "A ∧ A̅ = ε, A ∨ A̅ = Ω";
-    /// `rhs`
-    pub const RHS: &str = "∃ A̅ (complement)";
+    /// `forAll` -> `term_CL_5_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_CL_5_forAll";
+    /// `lhs` -> `term_CL_5_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_CL_5_lhs";
+    /// `rhs` -> `term_CL_5_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_CL_5_rhs";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Constraint → Lattice via ordering";
 }
 
 /// Constraint redundancy criterion.
 pub mod cm_1 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "constraint set {C_1,...,C_k}";
-    /// `lhs`
-    pub const LHS: &str = "C_i redundant in {C_1,...,C_k}";
-    /// `rhs`
-    pub const RHS: &str = "pins(C_i) ⊆ ∪_{j≠i} pins(C_j)";
+    /// `forAll` -> `term_CM_1_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_CM_1_forAll";
+    /// `lhs` -> `term_CM_1_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_CM_1_lhs";
+    /// `rhs` -> `term_CM_1_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_CM_1_rhs";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Constraint → Metric via measurement";
 }
 
 /// Minimal cover via greedy irredundant removal.
 pub mod cm_2 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "CompositeConstraint";
-    /// `lhs`
-    pub const LHS: &str = "minimal cover";
-    /// `rhs`
-    pub const RHS: &str = "irredundant sub-collection (greedy removal)";
+    /// `forAll` -> `term_CM_2_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_CM_2_forAll";
+    /// `lhs` -> `term_CM_2_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_CM_2_lhs";
+    /// `rhs` -> `term_CM_2_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_CM_2_rhs";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Constraint → Metric via measurement";
 }
 
 /// Minimum constraint count to cover n fibers.
 pub mod cm_3 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "n fibers, constraint set";
-    /// `lhs`
-    pub const LHS: &str = "min constraints to cover n fibers";
-    /// `rhs`
-    pub const RHS: &str = "⌈n / max_k pins_per_constraint_k⌉";
+    /// `forAll` -> `term_CM_3_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_CM_3_forAll";
+    /// `lhs` -> `term_CM_3_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_CM_3_lhs";
+    /// `rhs` -> `term_CM_3_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_CM_3_rhs";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Constraint → Metric via measurement";
 }
 
 /// Residue constraint cost is the step formula.
 pub mod cr_1 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "ResidueConstraint";
-    /// `lhs`
-    pub const LHS: &str = "cost(ResidueConstraint(m, r))";
-    /// `rhs`
-    pub const RHS: &str = "step_m = 2 × ((−2^n) mod m) + 1";
+    /// `forAll` -> `term_CR_1_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_CR_1_forAll";
+    /// `lhs` -> `term_CR_1_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_CR_1_lhs";
+    /// `rhs` -> `term_CR_1_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_CR_1_rhs";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Constraint → Resolution via convergence";
 }
 
 /// Carry constraint cost is the popcount of the pattern.
 pub mod cr_2 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "CarryConstraint";
-    /// `lhs`
-    pub const LHS: &str = "cost(CarryConstraint(p))";
-    /// `rhs`
-    pub const RHS: &str = "popcount(p)";
+    /// `forAll` -> `term_CR_2_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_CR_2_forAll";
+    /// `lhs` -> `term_CR_2_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_CR_2_lhs";
+    /// `rhs` -> `term_CR_2_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_CR_2_rhs";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Constraint → Resolution via convergence";
 }
 
 /// Depth constraint cost is sum of residue and carry costs.
 pub mod cr_3 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "DepthConstraint";
-    /// `lhs`
-    pub const LHS: &str = "cost(DepthConstraint(d_min, d_max))";
-    /// `rhs`
-    pub const RHS: &str = "cost(residue) + cost(carry)";
+    /// `forAll` -> `term_CR_3_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_CR_3_forAll";
+    /// `lhs` -> `term_CR_3_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_CR_3_lhs";
+    /// `rhs` -> `term_CR_3_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_CR_3_rhs";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Constraint → Resolution via convergence";
 }
 
 /// Composite constraint cost is subadditive.
 pub mod cr_4 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "constraints A, B";
-    /// `lhs`
-    pub const LHS: &str = "cost(compose(A, B))";
-    /// `rhs`
-    pub const RHS: &str = "≤ cost(A) + cost(B)";
+    /// `forAll` -> `term_CR_4_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_CR_4_forAll";
+    /// `lhs` -> `term_CR_4_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_CR_4_lhs";
+    /// `rhs` -> `term_CR_4_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_CR_4_rhs";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Constraint → Resolution via convergence";
 }
 
 /// Optimal resolution order is increasing cost.
 pub mod cr_5 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "constraint set";
-    /// `lhs`
-    pub const LHS: &str = "optimal resolution order";
-    /// `rhs`
-    pub const RHS: &str = "increasing cost order";
+    /// `forAll` -> `term_CR_5_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_CR_5_forAll";
+    /// `lhs` -> `term_CR_5_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_CR_5_lhs";
+    /// `rhs` -> `term_CR_5_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_CR_5_rhs";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Constraint → Resolution via convergence";
 }
 
 /// Fiber monotonicity: a pinned fiber cannot be unpinned.
 pub mod f_1 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "FiberCoordinate";
-    /// `lhs`
-    pub const LHS: &str = "pinned fiber";
-    /// `rhs`
-    pub const RHS: &str = "cannot be unpinned";
+    /// `forAll` -> `term_F_1_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_F_1_forAll";
+    /// `lhs` -> `term_F_1_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_F_1_lhs";
+    /// `rhs` -> `term_F_1_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_F_1_rhs";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Constraint → FiberBudget → pins";
 }
 
 /// Fiber budget upper bound: at most n pin operations to close.
 pub mod f_2 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "FiberBudget";
-    /// `lhs`
-    pub const LHS: &str = "pin operations to close";
-    /// `rhs`
-    pub const RHS: &str = "≤ n";
+    /// `forAll` -> `term_F_2_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_F_2_forAll";
+    /// `lhs` -> `term_F_2_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_F_2_lhs";
+    /// `rhs` -> `term_F_2_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_F_2_rhs";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Constraint → FiberBudget → pins";
 }
 
 /// Fiber budget conservation: pinned + free = total fibers.
 pub mod f_3 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "FiberBudget";
-    /// `lhs`
-    pub const LHS: &str = "pinnedCount + freeCount";
-    /// `rhs`
-    pub const RHS: &str = "totalFibers = n";
+    /// `forAll` -> `term_F_3_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_F_3_forAll";
+    /// `lhs` -> `term_F_3_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_F_3_lhs";
+    /// `rhs` -> `term_F_3_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_F_3_rhs";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Constraint → FiberBudget → pins";
 }
 
 /// Fiber budget closure: closed iff all fibers pinned.
 pub mod f_4 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "FiberBudget";
-    /// `lhs`
-    pub const LHS: &str = "isClosed";
-    /// `rhs`
-    pub const RHS: &str = "freeCount = 0 ⇔ pinnedCount = n";
+    /// `forAll` -> `term_F_4_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_F_4_forAll";
+    /// `lhs` -> `term_F_4_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_F_4_lhs";
+    /// `rhs` -> `term_F_4_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_F_4_rhs";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Constraint → FiberBudget → pins";
 }
 
 /// Fiber lattice bottom: all fibers free.
 pub mod fl_1 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "FiberBudget lattice";
-    /// `lhs`
-    pub const LHS: &str = "⊥";
-    /// `rhs`
-    pub const RHS: &str = "all fibers free (freeCount = n)";
+    /// `forAll` -> `term_FL_1_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_FL_1_forAll";
+    /// `lhs` -> `term_FL_1_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_FL_1_lhs";
+    /// `rhs` -> `term_FL_1_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_FL_1_rhs";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Fiber → Lattice via ordering";
 }
 
 /// Fiber lattice top: all fibers pinned.
 pub mod fl_2 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "FiberBudget lattice";
-    /// `lhs`
-    pub const LHS: &str = "⊤";
-    /// `rhs`
-    pub const RHS: &str = "all fibers pinned (pinnedCount = n)";
+    /// `forAll` -> `term_FL_2_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_FL_2_forAll";
+    /// `lhs` -> `term_FL_2_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_FL_2_lhs";
+    /// `rhs` -> `term_FL_2_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_FL_2_rhs";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Fiber → Lattice via ordering";
 }
 
 /// Fiber lattice join is union of pinnings.
 pub mod fl_3 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "FiberBudget states S₁, S₂";
-    /// `lhs`
-    pub const LHS: &str = "join(S₁, S₂)";
-    /// `rhs`
-    pub const RHS: &str = "union of pinnings from S₁ and S₂";
+    /// `forAll` -> `term_FL_3_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_FL_3_forAll";
+    /// `lhs` -> `term_FL_3_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_FL_3_lhs";
+    /// `rhs` -> `term_FL_3_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_FL_3_rhs";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Fiber → Lattice via ordering";
 }
 
 /// Fiber lattice height equals n.
 pub mod fl_4 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "FiberBudget lattice";
-    /// `lhs`
-    pub const LHS: &str = "lattice height";
-    /// `rhs`
-    pub const RHS: &str = "n";
+    /// `forAll` -> `term_FL_4_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_FL_4_forAll";
+    /// `lhs` -> `term_FL_4_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_FL_4_lhs";
+    /// `rhs` -> `term_FL_4_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_FL_4_rhs";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Fiber → Lattice via ordering";
 }
 
 /// Unit partition membership: x is a unit iff fiber_0(x) = 1 (x is odd).
 pub mod fpm_1 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "x ∈ R_n";
-    /// `lhs`
-    pub const LHS: &str = "x ∈ Unit";
-    /// `rhs`
-    pub const RHS: &str = "fiber_0(x) = 1 (x is odd)";
+    /// `forAll` -> `term_FPM_1_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_FPM_1_forAll";
+    /// `lhs` -> `term_FPM_1_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_FPM_1_lhs";
+    /// `rhs` -> `term_FPM_1_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_FPM_1_rhs";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Fiber → Partition → Metric";
 }
 
 /// Exterior partition membership: x is exterior iff x is not in the carrier of T.
 pub mod fpm_2 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "x ∈ R_n, type T";
-    /// `lhs`
-    pub const LHS: &str = "x ∈ Exterior";
-    /// `rhs`
-    pub const RHS: &str = "x ∉ carrier(T)";
+    /// `forAll` -> `term_FPM_2_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_FPM_2_forAll";
+    /// `lhs` -> `term_FPM_2_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_FPM_2_lhs";
+    /// `rhs` -> `term_FPM_2_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_FPM_2_rhs";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Fiber → Partition → Metric";
 }
 
 /// Irreducible partition membership: x is irreducible iff x is not a unit, exterior, or reducible.
 pub mod fpm_3 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "x ∈ R_n";
-    /// `lhs`
-    pub const LHS: &str = "x ∈ Irreducible";
-    /// `rhs`
-    pub const RHS: &str = "x ∉ Unit ∪ Exterior AND no non-trivial factorization";
+    /// `forAll` -> `term_FPM_3_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_FPM_3_forAll";
+    /// `lhs` -> `term_FPM_3_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_FPM_3_lhs";
+    /// `rhs` -> `term_FPM_3_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_FPM_3_rhs";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Fiber → Partition → Metric";
 }
 
 /// Reducible partition membership: x is reducible iff x is not a unit, exterior, or irreducible.
 pub mod fpm_4 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "x ∈ R_n";
-    /// `lhs`
-    pub const LHS: &str = "x ∈ Reducible";
-    /// `rhs`
-    pub const RHS: &str = "x ∉ Unit ∪ Exterior ∪ Irreducible";
+    /// `forAll` -> `term_FPM_4_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_FPM_4_forAll";
+    /// `lhs` -> `term_FPM_4_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_FPM_4_lhs";
+    /// `rhs` -> `term_FPM_4_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_FPM_4_rhs";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Fiber → Partition → Metric";
 }
 
 /// 2-adic decomposition: every element factors as 2^{v(x)} times an odd unit.
 pub mod fpm_5 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "x ∈ R_n";
-    /// `lhs`
-    pub const LHS: &str = "x = 2^{v(x)} ⋅ u";
-    /// `rhs`
-    pub const RHS: &str = "u odd, v(x) = min position of 1-bit";
+    /// `forAll` -> `term_FPM_5_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_FPM_5_forAll";
+    /// `lhs` -> `term_FPM_5_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_FPM_5_lhs";
+    /// `rhs` -> `term_FPM_5_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_FPM_5_rhs";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Fiber → Partition → Metric";
 }
 
 /// Stratum size formula.
 pub mod fpm_6 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "R_n";
-    /// `lhs`
-    pub const LHS: &str = "|{x: v(x) = k}|";
-    /// `rhs`
-    pub const RHS: &str = "2^{n−k−1} for 0 < k < n; 1 for k = n";
+    /// `forAll` -> `term_FPM_6_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_FPM_6_forAll";
+    /// `lhs` -> `term_FPM_6_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_FPM_6_lhs";
+    /// `rhs` -> `term_FPM_6_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_FPM_6_rhs";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Fiber → Partition → Metric";
 }
 
 /// Base type partition cardinalities.
 pub mod fpm_7 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "R_n, n ≥ 3";
-    /// `lhs`
-    pub const LHS: &str = "base type partition";
-    /// `rhs`
-    pub const RHS: &str = "|Unit| = 2^{n−1}; |Irr| = 2^{n−2}; |Red| = 2^{n−2}";
+    /// `forAll` -> `term_FPM_7_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_FPM_7_forAll";
+    /// `lhs` -> `term_FPM_7_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_FPM_7_lhs";
+    /// `rhs` -> `term_FPM_7_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_FPM_7_rhs";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Fiber → Partition → Metric";
 }
 
 /// Fiber extraction: fiber_k(x) is the k-th bit of x.
 pub mod fs_1 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "x ∈ R_n, 0 ≤ k < n";
-    /// `lhs`
-    pub const LHS: &str = "fiber_k(x)";
-    /// `rhs`
-    pub const RHS: &str = "(x >> k) AND 1";
+    /// `forAll` -> `term_FS_1_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_FS_1_forAll";
+    /// `lhs` -> `term_FS_1_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_FS_1_lhs";
+    /// `rhs` -> `term_FS_1_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_FS_1_rhs";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Fiber → Structure via decomposition";
 }
 
 /// Fiber 0 is parity.
 pub mod fs_2 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "x ∈ R_n";
-    /// `lhs`
-    pub const LHS: &str = "fiber_0(x)";
-    /// `rhs`
-    pub const RHS: &str = "x mod 2 (parity)";
+    /// `forAll` -> `term_FS_2_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_FS_2_forAll";
+    /// `lhs` -> `term_FS_2_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_FS_2_lhs";
+    /// `rhs` -> `term_FS_2_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_FS_2_rhs";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Fiber → Structure via decomposition";
 }
 
 /// Progressive fiber determination: fiber_k given lower fibers determines x mod 2^{k+1}.
 pub mod fs_3 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "x ∈ R_n";
-    /// `lhs`
-    pub const LHS: &str = "fiber_k(x) given fibers 0..k−1";
-    /// `rhs`
-    pub const RHS: &str = "determines x mod 2^{k+1}";
+    /// `forAll` -> `term_FS_3_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_FS_3_forAll";
+    /// `lhs` -> `term_FS_3_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_FS_3_lhs";
+    /// `rhs` -> `term_FS_3_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_FS_3_rhs";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Fiber → Structure via decomposition";
 }
 
 /// Cumulative fiber determination: fibers 0..k together determine x mod 2^{k+1}.
 pub mod fs_4 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "x ∈ R_n";
-    /// `lhs`
-    pub const LHS: &str = "fibers 0..k together";
-    /// `rhs`
-    pub const RHS: &str = "determine x mod 2^{k+1}";
+    /// `forAll` -> `term_FS_4_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_FS_4_forAll";
+    /// `lhs` -> `term_FS_4_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_FS_4_lhs";
+    /// `rhs` -> `term_FS_4_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_FS_4_rhs";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Fiber → Structure via decomposition";
 }
 
 /// Complete fiber determination: all n fibers determine x uniquely.
 pub mod fs_5 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "x ∈ R_n";
-    /// `lhs`
-    pub const LHS: &str = "all n fibers";
-    /// `rhs`
-    pub const RHS: &str = "determine x uniquely";
+    /// `forAll` -> `term_FS_5_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_FS_5_forAll";
+    /// `lhs` -> `term_FS_5_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_FS_5_lhs";
+    /// `rhs` -> `term_FS_5_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_FS_5_rhs";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Fiber → Structure via decomposition";
 }
 
 /// Stratum from fibers: v_2(x) is the minimum k where fiber_k(x) = 1.
 pub mod fs_6 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "x ∈ R_n";
-    /// `lhs`
-    pub const LHS: &str = "stratum(x)";
-    /// `rhs`
-    pub const RHS: &str = "v_2(x) = min{k : fiber_k(x) = 1}";
+    /// `forAll` -> `term_FS_6_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_FS_6_forAll";
+    /// `lhs` -> `term_FS_6_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_FS_6_lhs";
+    /// `rhs` -> `term_FS_6_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_FS_6_rhs";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Fiber → Structure via decomposition";
 }
 
 /// Depth bound: depth(x) ≤ v_2(x) for irreducible elements.
 pub mod fs_7 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "x ∈ R_n, base type";
-    /// `lhs`
-    pub const LHS: &str = "depth(x)";
-    /// `rhs`
-    pub const RHS: &str = "≤ v_2(x) for irreducible elements";
+    /// `forAll` -> `term_FS_7_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_FS_7_forAll";
+    /// `lhs` -> `term_FS_7_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_FS_7_lhs";
+    /// `rhs` -> `term_FS_7_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_FS_7_rhs";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Fiber → Structure via decomposition";
 }
 
 /// Resolution strategy equivalence: dihedral, canonical-form, and evaluation resolvers all compute the same partition.
 pub mod re_1 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "T ∈ T_n";
-    /// `lhs`
-    pub const LHS: &str = "Π_D(T)";
-    /// `rhs`
-    pub const RHS: &str = "Π_C(T) = Π_E(T)";
+    /// `forAll` -> `term_RE_1_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_RE_1_forAll";
+    /// `lhs` -> `term_RE_1_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_RE_1_lhs";
+    /// `rhs` -> `term_RE_1_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_RE_1_rhs";
     /// `verificationDomain` -> `Pipeline`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Constraint → Resolution → convergence";
 }
 
 /// Resolution monotonicity: pinned count never decreases.
 pub mod ir_1 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "resolution states";
-    /// `lhs`
-    pub const LHS: &str = "pinnedCount(state_{i+1})";
-    /// `rhs`
-    pub const RHS: &str = "≥ pinnedCount(state_i)";
+    /// `forAll` -> `term_IR_1_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_IR_1_forAll";
+    /// `lhs` -> `term_IR_1_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_IR_1_lhs";
+    /// `rhs` -> `term_IR_1_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_IR_1_rhs";
     /// `verificationDomain` -> `Pipeline`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Resolution → Iteration → convergence";
 }
 
 /// Resolution convergence bound: at most n iterations.
 pub mod ir_2 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "resolution loop";
-    /// `lhs`
-    pub const LHS: &str = "iterations to converge";
-    /// `rhs`
-    pub const RHS: &str = "≤ n";
+    /// `forAll` -> `term_IR_2_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_IR_2_forAll";
+    /// `lhs` -> `term_IR_2_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_IR_2_lhs";
+    /// `rhs` -> `term_IR_2_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_IR_2_rhs";
     /// `verificationDomain` -> `Pipeline`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Resolution → Iteration → convergence";
 }
 
 /// Convergence rate definition.
 pub mod ir_3 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "ResolutionState";
-    /// `lhs`
-    pub const LHS: &str = "convergenceRate";
-    /// `rhs`
-    pub const RHS: &str = "pinnedCount / iterationCount";
+    /// `forAll` -> `term_IR_3_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_IR_3_forAll";
+    /// `lhs` -> `term_IR_3_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_IR_3_lhs";
+    /// `rhs` -> `term_IR_3_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_IR_3_rhs";
     /// `verificationDomain` -> `Pipeline`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Resolution → Iteration → convergence";
 }
 
 /// Resolution termination: loop terminates if constraint set spans all fibers.
 pub mod ir_4 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "complete constraint set";
-    /// `lhs`
-    pub const LHS: &str = "constraint set spans all fibers";
-    /// `rhs`
-    pub const RHS: &str = "loop terminates";
+    /// `forAll` -> `term_IR_4_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_IR_4_forAll";
+    /// `lhs` -> `term_IR_4_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_IR_4_lhs";
+    /// `rhs` -> `term_IR_4_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_IR_4_rhs";
     /// `verificationDomain` -> `Pipeline`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Resolution → Iteration → convergence";
 }
 
 /// Optimal resolution level for a factor: n ≡ 0 (mod ord_g(2)).
 pub mod sf_1 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "factor g, quantum n";
-    /// `lhs`
-    pub const LHS: &str = "n ≡ 0 (mod ord_g(2))";
-    /// `rhs`
-    pub const RHS: &str = "factor g has optimal resolution at level n";
+    /// `forAll` -> `term_SF_1_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_SF_1_forAll";
+    /// `lhs` -> `term_SF_1_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_SF_1_lhs";
+    /// `rhs` -> `term_SF_1_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_SF_1_rhs";
     /// `verificationDomain` -> `Pipeline`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Structure → Fiber via decomposition";
 }
 
 /// Constraint ordering by step cost: smaller step_g first.
 pub mod sf_2 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "constraint ordering";
-    /// `lhs`
-    pub const LHS: &str = "constraints with smaller step_g";
-    /// `rhs`
-    pub const RHS: &str = "are more constraining, apply first";
+    /// `forAll` -> `term_SF_2_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_SF_2_forAll";
+    /// `lhs` -> `term_SF_2_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_SF_2_lhs";
+    /// `rhs` -> `term_SF_2_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_SF_2_rhs";
     /// `verificationDomain` -> `Pipeline`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Structure → Fiber via decomposition";
 }
 
 /// Resolution determinism: same type and constraint sequence yield unique partition.
 pub mod rd_1 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "T ∈ T_n, [C₁,...,Cₖ]";
-    /// `lhs`
-    pub const LHS: &str = "same type T and constraint sequence";
-    /// `rhs`
-    pub const RHS: &str = "unique resolved partition";
+    /// `forAll` -> `term_RD_1_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_RD_1_forAll";
+    /// `lhs` -> `term_RD_1_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_RD_1_lhs";
+    /// `rhs` -> `term_RD_1_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_RD_1_rhs";
     /// `verificationDomain` -> `Pipeline`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Resolution → Derivation via steps";
 }
 
 /// Order independence: complete constraint sets yield the same partition regardless of order.
 pub mod rd_2 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "closing constraint set";
-    /// `lhs`
-    pub const LHS: &str = "complete constraint set, any order";
-    /// `rhs`
-    pub const RHS: &str = "same final partition";
+    /// `forAll` -> `term_RD_2_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_RD_2_forAll";
+    /// `lhs` -> `term_RD_2_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_RD_2_lhs";
+    /// `rhs` -> `term_RD_2_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_RD_2_rhs";
     /// `verificationDomain` -> `Pipeline`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Resolution → Derivation via steps";
 }
 
 /// Evaluation resolver directly computes the set-theoretic partition.
 pub mod se_1 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "T ∈ T_n";
-    /// `lhs`
-    pub const LHS: &str = "EvaluationResolver";
-    /// `rhs`
-    pub const RHS: &str = "directly computes set-theoretic partition";
+    /// `forAll` -> `term_SE_1_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_SE_1_forAll";
+    /// `lhs` -> `term_SE_1_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_SE_1_lhs";
+    /// `rhs` -> `term_SE_1_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_SE_1_rhs";
     /// `verificationDomain` -> `Pipeline`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Structure → Evolution via dynamics";
 }
 
 /// Dihedral factorization resolver yields the same partition via orbit decomposition.
 pub mod se_2 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "T ∈ T_n";
-    /// `lhs`
-    pub const LHS: &str = "DihedralFactorizationResolver";
-    /// `rhs`
-    pub const RHS: &str = "orbit decomposition yields same partition";
+    /// `forAll` -> `term_SE_2_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_SE_2_forAll";
+    /// `lhs` -> `term_SE_2_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_SE_2_lhs";
+    /// `rhs` -> `term_SE_2_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_SE_2_rhs";
     /// `verificationDomain` -> `Pipeline`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Structure → Evolution via dynamics";
 }
 
 /// Canonical form resolver yields the same partition via confluent rewrite.
 pub mod se_3 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "T ∈ T_n";
-    /// `lhs`
-    pub const LHS: &str = "CanonicalFormResolver";
-    /// `rhs`
-    pub const RHS: &str = "confluent rewrite → same partition";
+    /// `forAll` -> `term_SE_3_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_SE_3_forAll";
+    /// `lhs` -> `term_SE_3_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_SE_3_lhs";
+    /// `rhs` -> `term_SE_3_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_SE_3_rhs";
     /// `verificationDomain` -> `Pipeline`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Structure → Evolution via dynamics";
 }
 
 /// All three strategies compute the same set-theoretic partition.
 pub mod se_4 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "T ∈ T_n";
-    /// `lhs`
-    pub const LHS: &str = "Π_D(T) = Π_C(T) = Π_E(T)";
-    /// `rhs`
-    pub const RHS: &str = "all compute same set-theoretic partition";
+    /// `forAll` -> `term_SE_4_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_SE_4_forAll";
+    /// `lhs` -> `term_SE_4_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_SE_4_lhs";
+    /// `rhs` -> `term_SE_4_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_SE_4_rhs";
     /// `verificationDomain` -> `Pipeline`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Structure → Evolution via dynamics";
 }
 
 /// Benefit of a constraint is the number of new pins it provides.
 pub mod oo_1 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "constraint C_i, pinned set S";
-    /// `lhs`
-    pub const LHS: &str = "benefit(C_i, S)";
-    /// `rhs`
-    pub const RHS: &str = "|pins(C_i) ∖ S|";
+    /// `forAll` -> `term_OO_1_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_OO_1_forAll";
+    /// `lhs` -> `term_OO_1_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_OO_1_lhs";
+    /// `rhs` -> `term_OO_1_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_OO_1_rhs";
     /// `verificationDomain` -> `Pipeline`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Operation → Observable via measurement";
 }
 
 /// Constraint cost is step or popcount depending on type.
 pub mod oo_2 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "ResidueConstraint or CarryConstraint";
-    /// `lhs`
-    pub const LHS: &str = "cost(C_i)";
-    /// `rhs`
-    pub const RHS: &str = "step_{m_i} or popcount(p_i)";
+    /// `forAll` -> `term_OO_2_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_OO_2_forAll";
+    /// `lhs` -> `term_OO_2_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_OO_2_lhs";
+    /// `rhs` -> `term_OO_2_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_OO_2_rhs";
     /// `verificationDomain` -> `Pipeline`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Operation → Observable via measurement";
 }
 
 /// Greedy selection maximizes benefit-to-cost ratio.
 pub mod oo_3 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "each resolution step";
-    /// `lhs`
-    pub const LHS: &str = "greedy selection";
-    /// `rhs`
-    pub const RHS: &str = "argmax benefit(C_i, S) / cost(C_i)";
+    /// `forAll` -> `term_OO_3_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_OO_3_forAll";
+    /// `lhs` -> `term_OO_3_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_OO_3_lhs";
+    /// `rhs` -> `term_OO_3_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_OO_3_rhs";
     /// `verificationDomain` -> `Pipeline`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Operation → Observable via measurement";
 }
 
 /// Greedy approximation achieves (1 − 1/e) ≈ 63% of optimal.
 pub mod oo_4 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "weighted set cover";
-    /// `lhs`
-    pub const LHS: &str = "greedy approximation";
-    /// `rhs`
-    pub const RHS: &str = "(1 − 1/e) ≈ 63% of optimal";
+    /// `forAll` -> `term_OO_4_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_OO_4_forAll";
+    /// `lhs` -> `term_OO_4_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_OO_4_lhs";
+    /// `rhs` -> `term_OO_4_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_OO_4_rhs";
     /// `verificationDomain` -> `Pipeline`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Operation → Observable via measurement";
 }
 
 /// Tiebreaker: prefer vertical (residue) before horizontal (carry).
 pub mod oo_5 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "cost-tied constraints";
-    /// `lhs`
-    pub const LHS: &str = "equal cost tiebreaker";
-    /// `rhs`
-    pub const RHS: &str = "prefer vertical (residue) before horizontal (carry)";
+    /// `forAll` -> `term_OO_5_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_OO_5_forAll";
+    /// `lhs` -> `term_OO_5_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_OO_5_lhs";
+    /// `rhs` -> `term_OO_5_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_OO_5_rhs";
     /// `verificationDomain` -> `Pipeline`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Operation → Observable via measurement";
 }
 
 /// Minimum convergence rate: 1 fiber per iteration (worst case).
 pub mod cb_1 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "worst case";
-    /// `lhs`
-    pub const LHS: &str = "min convergenceRate";
-    /// `rhs`
-    pub const RHS: &str = "1 fiber per iteration";
+    /// `forAll` -> `term_CB_1_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_CB_1_forAll";
+    /// `lhs` -> `term_CB_1_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_CB_1_lhs";
+    /// `rhs` -> `term_CB_1_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_CB_1_rhs";
     /// `verificationDomain` -> `Pipeline`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Cert → Bridge via validation";
 }
 
 /// Maximum convergence rate: n fibers in 1 iteration (best case).
 pub mod cb_2 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "best case";
-    /// `lhs`
-    pub const LHS: &str = "max convergenceRate";
-    /// `rhs`
-    pub const RHS: &str = "n fibers in 1 iteration";
+    /// `forAll` -> `term_CB_2_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_CB_2_forAll";
+    /// `lhs` -> `term_CB_2_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_CB_2_lhs";
+    /// `rhs` -> `term_CB_2_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_CB_2_rhs";
     /// `verificationDomain` -> `Pipeline`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Cert → Bridge via validation";
 }
 
 /// Expected residue constraint rate: ⌊log_2(m)⌋ fibers per constraint.
 pub mod cb_3 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "ResidueConstraint(m, r)";
-    /// `lhs`
-    pub const LHS: &str = "expected rate (residue)";
-    /// `rhs`
-    pub const RHS: &str = "⌊log_2(m)⌋ fibers per constraint";
+    /// `forAll` -> `term_CB_3_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_CB_3_forAll";
+    /// `lhs` -> `term_CB_3_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_CB_3_lhs";
+    /// `rhs` -> `term_CB_3_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_CB_3_rhs";
     /// `verificationDomain` -> `Pipeline`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Cert → Bridge via validation";
 }
 
 /// Stall detection: convergenceRate < 1 for 2 iterations suggests insufficiency.
 pub mod cb_4 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "stall detection";
-    /// `lhs`
-    pub const LHS: &str = "convergenceRate < 1 for 2 iterations";
-    /// `rhs`
-    pub const RHS: &str = "constraint set may be insufficient";
+    /// `forAll` -> `term_CB_4_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_CB_4_forAll";
+    /// `lhs` -> `term_CB_4_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_CB_4_lhs";
+    /// `rhs` -> `term_CB_4_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_CB_4_rhs";
     /// `verificationDomain` -> `Pipeline`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Cert → Bridge via validation";
 }
 
 /// Sufficiency criterion: pin union covers all fiber positions.
 pub mod cb_5 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "sufficiency criterion";
-    /// `lhs`
-    pub const LHS: &str = "∪_i pins(C_i) = {0,...,n−1}";
-    /// `rhs`
-    pub const RHS: &str = "constraint set closes budget";
+    /// `forAll` -> `term_CB_5_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_CB_5_forAll";
+    /// `lhs` -> `term_CB_5_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_CB_5_lhs";
+    /// `rhs` -> `term_CB_5_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_CB_5_rhs";
     /// `verificationDomain` -> `Pipeline`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Cert → Bridge via validation";
 }
 
 /// Iteration bound for k constraints: at most min(k, n) iterations.
 pub mod cb_6 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "well-formed model";
-    /// `lhs`
-    pub const LHS: &str = "iterations for k constraints";
-    /// `rhs`
-    pub const RHS: &str = "≤ min(k, n)";
+    /// `forAll` -> `term_CB_6_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_CB_6_forAll";
+    /// `lhs` -> `term_CB_6_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_CB_6_lhs";
+    /// `rhs` -> `term_CB_6_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_CB_6_rhs";
     /// `verificationDomain` -> `Pipeline`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Cert → Bridge via validation";
 }
 
 /// Ring metric triangle inequality.
 pub mod ob_m1 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "x, y, z ∈ R_n";
-    /// `lhs`
-    pub const LHS: &str = "d_R(x, z)";
-    /// `rhs`
-    pub const RHS: &str = "≤ d_R(x, y) + d_R(y, z)";
+    /// `forAll` -> `term_OB_M1_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_OB_M1_forAll";
+    /// `lhs` -> `term_OB_M1_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_OB_M1_lhs";
+    /// `rhs` -> `term_OB_M1_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_OB_M1_rhs";
     /// `verificationDomain` -> `Analytical`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Analytical";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Observable → Metric via measurement";
 }
 
 /// Hamming metric triangle inequality.
 pub mod ob_m2 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "x, y, z ∈ R_n";
-    /// `lhs`
-    pub const LHS: &str = "d_H(x, z)";
-    /// `rhs`
-    pub const RHS: &str = "≤ d_H(x, y) + d_H(y, z)";
+    /// `forAll` -> `term_OB_M2_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_OB_M2_forAll";
+    /// `lhs` -> `term_OB_M2_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_OB_M2_lhs";
+    /// `rhs` -> `term_OB_M2_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_OB_M2_rhs";
     /// `verificationDomain` -> `Analytical`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Analytical";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Observable → Metric via measurement";
 }
 
 /// Incompatibility metric is the absolute difference of ring and Hamming metrics.
 pub mod ob_m3 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "x, y ∈ R_n";
-    /// `lhs`
-    pub const LHS: &str = "d_Δ(x, y)";
-    /// `rhs`
-    pub const RHS: &str = "|d_R(x, y) − d_H(x, y)|";
+    /// `forAll` -> `term_OB_M3_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_OB_M3_forAll";
+    /// `lhs` -> `term_OB_M3_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_OB_M3_lhs";
+    /// `rhs` -> `term_OB_M3_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_OB_M3_rhs";
     /// `verificationDomain` -> `Analytical`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Analytical";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Observable → Metric via measurement";
 }
 
 /// Negation preserves ring metric.
 pub mod ob_m4 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "x, y ∈ R_n";
-    /// `lhs`
-    pub const LHS: &str = "d_R(neg(x), neg(y))";
-    /// `rhs`
-    pub const RHS: &str = "d_R(x, y)";
+    /// `forAll` -> `term_OB_M4_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_OB_M4_forAll";
+    /// `lhs` -> `term_OB_M4_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_OB_M4_lhs";
+    /// `rhs` -> `term_OB_M4_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_OB_M4_rhs";
     /// `verificationDomain` -> `Analytical`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Analytical";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Observable → Metric via measurement";
 }
 
 /// Bitwise complement preserves Hamming metric.
 pub mod ob_m5 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "x, y ∈ R_n";
-    /// `lhs`
-    pub const LHS: &str = "d_H(bnot(x), bnot(y))";
-    /// `rhs`
-    pub const RHS: &str = "d_H(x, y)";
+    /// `forAll` -> `term_OB_M5_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_OB_M5_forAll";
+    /// `lhs` -> `term_OB_M5_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_OB_M5_lhs";
+    /// `rhs` -> `term_OB_M5_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_OB_M5_rhs";
     /// `verificationDomain` -> `Analytical`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Analytical";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Observable → Metric via measurement";
 }
 
 /// Successor preserves ring metric but may change Hamming metric.
 pub mod ob_m6 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "x, y ∈ R_n";
-    /// `lhs`
-    pub const LHS: &str = "d_R(succ(x), succ(y))";
-    /// `rhs`
-    pub const RHS: &str = "d_R(x, y) but d_H may differ";
+    /// `forAll` -> `term_OB_M6_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_OB_M6_forAll";
+    /// `lhs` -> `term_OB_M6_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_OB_M6_lhs";
+    /// `rhs` -> `term_OB_M6_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_OB_M6_rhs";
     /// `verificationDomain` -> `Analytical`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Analytical";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Observable → Metric via measurement";
 }
 
 /// Negation-complement commutator is constant 2.
 pub mod ob_c1 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "x ∈ R_n";
-    /// `lhs`
-    pub const LHS: &str = "[neg, bnot](x)";
-    /// `rhs`
-    pub const RHS: &str = "2";
+    /// `forAll` -> `term_OB_C1_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_OB_C1_forAll";
+    /// `lhs` -> `term_OB_C1_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_OB_C1_lhs";
+    /// `rhs` -> `term_OB_C1_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_OB_C1_rhs";
     /// `verificationDomain` -> `Analytical`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Analytical";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Observable → Constraint via measurement";
 }
 
 /// Negation-translation commutator.
 pub mod ob_c2 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "x ∈ R_n, constant k";
-    /// `lhs`
-    pub const LHS: &str = "[neg, add(•,k)](x)";
-    /// `rhs`
-    pub const RHS: &str = "−2k mod 2^n";
+    /// `forAll` -> `term_OB_C2_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_OB_C2_forAll";
+    /// `lhs` -> `term_OB_C2_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_OB_C2_lhs";
+    /// `rhs` -> `term_OB_C2_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_OB_C2_rhs";
     /// `verificationDomain` -> `Analytical`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Analytical";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Observable → Constraint via measurement";
 }
 
 /// Complement-XOR commutator is trivial.
 pub mod ob_c3 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "x ∈ R_n, constant k";
-    /// `lhs`
-    pub const LHS: &str = "[bnot, xor(•,k)](x)";
-    /// `rhs`
-    pub const RHS: &str = "0";
+    /// `forAll` -> `term_OB_C3_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_OB_C3_forAll";
+    /// `lhs` -> `term_OB_C3_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_OB_C3_lhs";
+    /// `rhs` -> `term_OB_C3_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_OB_C3_rhs";
     /// `verificationDomain` -> `Analytical`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Analytical";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Observable → Constraint via measurement";
 }
 
 /// Additive paths have trivial monodromy (abelian ⇒ path-independent).
 pub mod ob_h1 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "additive group";
-    /// `lhs`
-    pub const LHS: &str = "closed additive path monodromy";
-    /// `rhs`
-    pub const RHS: &str = "trivial (abelian ⇒ path-independent)";
+    /// `forAll` -> `term_OB_H1_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_OB_H1_forAll";
+    /// `lhs` -> `term_OB_H1_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_OB_H1_lhs";
+    /// `rhs` -> `term_OB_H1_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_OB_H1_rhs";
     /// `verificationDomain` -> `Analytical`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Analytical";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Observable → Hamming via measurement";
 }
 
 /// Dihedral generator paths have monodromy in D_{2^n}.
 pub mod ob_h2 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "dihedral generators";
-    /// `lhs`
-    pub const LHS: &str = "closed {neg,bnot} path monodromy";
-    /// `rhs`
-    pub const RHS: &str = "∈ D_{2^n}";
+    /// `forAll` -> `term_OB_H2_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_OB_H2_forAll";
+    /// `lhs` -> `term_OB_H2_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_OB_H2_lhs";
+    /// `rhs` -> `term_OB_H2_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_OB_H2_rhs";
     /// `verificationDomain` -> `Analytical`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Analytical";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Observable → Hamming via measurement";
 }
 
 /// Successor-only closed path winding number.
 pub mod ob_h3 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "closed succ path";
-    /// `lhs`
-    pub const LHS: &str = "succ-only path WindingNumber";
-    /// `rhs`
-    pub const RHS: &str = "path length / 2^n";
+    /// `forAll` -> `term_OB_H3_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_OB_H3_forAll";
+    /// `lhs` -> `term_OB_H3_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_OB_H3_lhs";
+    /// `rhs` -> `term_OB_H3_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_OB_H3_rhs";
     /// `verificationDomain` -> `Analytical`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Analytical";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Observable → Hamming via measurement";
 }
 
 /// Path length is additive under concatenation.
 pub mod ob_p1 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "paths p₁, p₂";
-    /// `lhs`
-    pub const LHS: &str = "PathLength(p₁ ⋅ p₂)";
-    /// `rhs`
-    pub const RHS: &str = "PathLength(p₁) + PathLength(p₂)";
+    /// `forAll` -> `term_OB_P1_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_OB_P1_forAll";
+    /// `lhs` -> `term_OB_P1_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_OB_P1_lhs";
+    /// `rhs` -> `term_OB_P1_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_OB_P1_rhs";
     /// `verificationDomain` -> `Analytical`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Analytical";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Observable → Partition via measurement";
 }
 
 /// Total variation is subadditive under concatenation.
 pub mod ob_p2 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "paths p₁, p₂";
-    /// `lhs`
-    pub const LHS: &str = "TotalVariation(p₁ ⋅ p₂)";
-    /// `rhs`
-    pub const RHS: &str = "≤ TotalVariation(p₁) + TotalVariation(p₂)";
+    /// `forAll` -> `term_OB_P2_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_OB_P2_forAll";
+    /// `lhs` -> `term_OB_P2_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_OB_P2_lhs";
+    /// `rhs` -> `term_OB_P2_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_OB_P2_rhs";
     /// `verificationDomain` -> `Analytical`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Analytical";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Observable → Partition via measurement";
 }
 
 /// Cascade length is additive under sequential composition.
 pub mod ob_p3 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "cascades c₁, c₂";
-    /// `lhs`
-    pub const LHS: &str = "CascadeLength(c₁ ; c₂)";
-    /// `rhs`
-    pub const RHS: &str = "CascadeLength(c₁) + CascadeLength(c₂)";
+    /// `forAll` -> `term_OB_P3_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_OB_P3_forAll";
+    /// `lhs` -> `term_OB_P3_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_OB_P3_lhs";
+    /// `rhs` -> `term_OB_P3_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_OB_P3_rhs";
     /// `verificationDomain` -> `Analytical`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Analytical";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Observable → Partition via measurement";
 }
 
 /// Catastrophe boundaries are powers of 2.
 pub mod ct_1 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "stratum transitions";
-    /// `lhs`
-    pub const LHS: &str = "catastrophe boundaries";
-    /// `rhs`
-    pub const RHS: &str = "g = 2^k for 1 ≤ k ≤ n−1";
+    /// `forAll` -> `term_CT_1_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_CT_1_forAll";
+    /// `lhs` -> `term_CT_1_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_CT_1_lhs";
+    /// `rhs` -> `term_CT_1_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_CT_1_rhs";
     /// `verificationDomain` -> `Analytical`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Analytical";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Constraint → Type via classification";
 }
 
 /// Odd prime catastrophe transitions visibility via residue constraints.
 pub mod ct_2 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "odd prime p";
-    /// `lhs`
-    pub const LHS: &str = "odd prime catastrophe";
-    /// `rhs`
-    pub const RHS: &str = "ResidueConstraint(p, •) transitions visibility";
+    /// `forAll` -> `term_CT_2_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_CT_2_forAll";
+    /// `lhs` -> `term_CT_2_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_CT_2_lhs";
+    /// `rhs` -> `term_CT_2_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_CT_2_rhs";
     /// `verificationDomain` -> `Analytical`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Analytical";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Constraint → Type via classification";
 }
 
 /// Catastrophe threshold is normalized step cost.
 pub mod ct_3 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "factor g";
-    /// `lhs`
-    pub const LHS: &str = "CatastropheThreshold(g)";
-    /// `rhs`
-    pub const RHS: &str = "step_g / n";
+    /// `forAll` -> `term_CT_3_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_CT_3_forAll";
+    /// `lhs` -> `term_CT_3_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_CT_3_lhs";
+    /// `rhs` -> `term_CT_3_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_CT_3_rhs";
     /// `verificationDomain` -> `Analytical`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Analytical";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Constraint → Type via classification";
 }
 
 /// Composite catastrophe threshold is max of component thresholds.
 pub mod ct_4 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "composite g";
-    /// `lhs`
-    pub const LHS: &str = "composite catastrophe g = p⋅q";
-    /// `rhs`
-    pub const RHS: &str = "max(step_p, step_q) / n";
+    /// `forAll` -> `term_CT_4_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_CT_4_forAll";
+    /// `lhs` -> `term_CT_4_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_CT_4_lhs";
+    /// `rhs` -> `term_CT_4_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_CT_4_rhs";
     /// `verificationDomain` -> `Analytical`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Analytical";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Constraint → Type via classification";
 }
 
 /// Curvature flux is the sum of incompatibility along a path.
 pub mod cf_1 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "path γ";
-    /// `lhs`
-    pub const LHS: &str = "CurvatureFlux(γ)";
-    /// `rhs`
-    pub const RHS: &str = "Σ |d_R(x_i, x_{i+1}) − d_H(x_i, x_{i+1})|";
+    /// `forAll` -> `term_CF_1_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_CF_1_forAll";
+    /// `lhs` -> `term_CF_1_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_CF_1_lhs";
+    /// `rhs` -> `term_CF_1_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_CF_1_rhs";
     /// `verificationDomain` -> `Analytical`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Analytical";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Constraint → Fiber via pinning";
 }
 
 /// Resolution cost is bounded below by curvature flux of optimal path.
 pub mod cf_2 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "type T";
-    /// `lhs`
-    pub const LHS: &str = "ResolutionCost(T)";
-    /// `rhs`
-    pub const RHS: &str = "≥ CurvatureFlux(γ_opt)";
+    /// `forAll` -> `term_CF_2_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_CF_2_forAll";
+    /// `lhs` -> `term_CF_2_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_CF_2_lhs";
+    /// `rhs` -> `term_CF_2_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_CF_2_rhs";
     /// `verificationDomain` -> `Analytical`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Analytical";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Constraint → Fiber via pinning";
 }
 
 /// Successor curvature flux: trailing_ones(x) for most x, n−1 at maximum.
 pub mod cf_3 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "x ∈ R_n";
-    /// `lhs`
-    pub const LHS: &str = "CurvatureFlux(x, succ(x))";
-    /// `rhs`
-    pub const RHS: &str = "trailing_ones(x) for t < n; n−1 for x = 2^n−1";
+    /// `forAll` -> `term_CF_3_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_CF_3_forAll";
+    /// `lhs` -> `term_CF_3_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_CF_3_lhs";
+    /// `rhs` -> `term_CF_3_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_CF_3_rhs";
     /// `verificationDomain` -> `Analytical`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Analytical";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Constraint → Fiber via pinning";
 }
 
 /// Total successor curvature flux over R_n equals 2^n − 2.
 pub mod cf_4 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "n ≥ 1";
-    /// `lhs`
-    pub const LHS: &str = "Σ_{x ∈ R_n} CurvatureFlux(x, succ(x))";
-    /// `rhs`
-    pub const RHS: &str = "2^n − 2";
+    /// `forAll` -> `term_CF_4_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_CF_4_forAll";
+    /// `lhs` -> `term_CF_4_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_CF_4_lhs";
+    /// `rhs` -> `term_CF_4_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_CF_4_rhs";
     /// `verificationDomain` -> `Analytical`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Analytical";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Constraint → Fiber via pinning";
 }
 
 /// Additive holonomy is trivial (abelian group).
 pub mod hg_1 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "additive group";
-    /// `lhs`
-    pub const LHS: &str = "additive holonomy";
-    /// `rhs`
-    pub const RHS: &str = "trivial (abelian ⇒ path-independent)";
+    /// `forAll` -> `term_HG_1_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_HG_1_forAll";
+    /// `lhs` -> `term_HG_1_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_HG_1_lhs";
+    /// `rhs` -> `term_HG_1_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_HG_1_rhs";
     /// `verificationDomain` -> `Analytical`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Analytical";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Hamming → Geometry via structure";
 }
 
 /// Dihedral generator holonomy group is D_{2^n}.
 pub mod hg_2 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "dihedral generators";
-    /// `lhs`
-    pub const LHS: &str = "{neg, bnot, succ, pred} holonomy";
-    /// `rhs`
-    pub const RHS: &str = "D_{2^n}";
+    /// `forAll` -> `term_HG_2_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_HG_2_forAll";
+    /// `lhs` -> `term_HG_2_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_HG_2_lhs";
+    /// `rhs` -> `term_HG_2_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_HG_2_rhs";
     /// `verificationDomain` -> `Analytical`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Analytical";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Hamming → Geometry via structure";
 }
 
 /// Unit multiplication holonomy equals the unit group.
 pub mod hg_3 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "unit group";
-    /// `lhs`
-    pub const LHS: &str = "{mul(•, u) : u ∈ R_n×} holonomy";
-    /// `rhs`
-    pub const RHS: &str = "R_n× ≅ Z/2 × Z/2^{n−2}";
+    /// `forAll` -> `term_HG_3_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_HG_3_forAll";
+    /// `lhs` -> `term_HG_3_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_HG_3_lhs";
+    /// `rhs` -> `term_HG_3_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_HG_3_rhs";
     /// `verificationDomain` -> `Analytical`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Analytical";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Hamming → Geometry via structure";
 }
 
 /// Full holonomy group is the affine group.
 pub mod hg_4 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "n ≥ 1";
-    /// `lhs`
-    pub const LHS: &str = "Hol(R_n)";
-    /// `rhs`
-    pub const RHS: &str = "Aff(R_n) = R_n× ⋉ R_n";
+    /// `forAll` -> `term_HG_4_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_HG_4_forAll";
+    /// `lhs` -> `term_HG_4_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_HG_4_lhs";
+    /// `rhs` -> `term_HG_4_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_HG_4_rhs";
     /// `verificationDomain` -> `Analytical`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Analytical";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Hamming → Geometry via structure";
 }
 
 /// Holonomy group decomposition into dihedral and non-trivial units.
 pub mod hg_5 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "n ≥ 1";
-    /// `lhs`
-    pub const LHS: &str = "Hol(R_n) decomposition";
-    /// `rhs`
-    pub const RHS: &str = "D_{2^n} ⋅ {mul(•,u) : u ∈ R_n×, u ≠ ±1}";
+    /// `forAll` -> `term_HG_5_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_HG_5_forAll";
+    /// `lhs` -> `term_HG_5_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_HG_5_lhs";
+    /// `rhs` -> `term_HG_5_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_HG_5_rhs";
     /// `verificationDomain` -> `Analytical`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Analytical";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Hamming → Geometry via structure";
 }
 
 /// Category left identity: compose(id, f) = f.
 pub mod t_c1 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "f ∈ Transform";
-    /// `lhs`
-    pub const LHS: &str = "compose(id, f)";
-    /// `rhs`
-    pub const RHS: &str = "f";
+    /// `forAll` -> `term_T_C1_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_T_C1_forAll";
+    /// `lhs` -> `term_T_C1_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_T_C1_lhs";
+    /// `rhs` -> `term_T_C1_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_T_C1_rhs";
     /// `verificationDomain` -> `Geometric`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Geometric";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Transform → Composition via structure";
 }
 
 /// Category right identity: compose(f, id) = f.
 pub mod t_c2 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "f ∈ Transform";
-    /// `lhs`
-    pub const LHS: &str = "compose(f, id)";
-    /// `rhs`
-    pub const RHS: &str = "f";
+    /// `forAll` -> `term_T_C2_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_T_C2_forAll";
+    /// `lhs` -> `term_T_C2_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_T_C2_lhs";
+    /// `rhs` -> `term_T_C2_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_T_C2_rhs";
     /// `verificationDomain` -> `Geometric`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Geometric";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Transform → Composition via structure";
 }
 
 /// Category associativity of transform composition.
 pub mod t_c3 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "f, g, h ∈ Transform";
-    /// `lhs`
-    pub const LHS: &str = "compose(f, compose(g, h))";
-    /// `rhs`
-    pub const RHS: &str = "compose(compose(f, g), h)";
+    /// `forAll` -> `term_T_C3_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_T_C3_forAll";
+    /// `lhs` -> `term_T_C3_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_T_C3_lhs";
+    /// `rhs` -> `term_T_C3_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_T_C3_rhs";
     /// `verificationDomain` -> `Geometric`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Geometric";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Transform → Composition via structure";
 }
 
 /// Composability condition: f composesWith g iff target(f) = source(g).
 pub mod t_c4 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "f, g ∈ Transform";
-    /// `lhs`
-    pub const LHS: &str = "f composesWith g";
-    /// `rhs`
-    pub const RHS: &str = "target(f) = source(g)";
+    /// `forAll` -> `term_T_C4_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_T_C4_forAll";
+    /// `lhs` -> `term_T_C4_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_T_C4_lhs";
+    /// `rhs` -> `term_T_C4_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_T_C4_rhs";
     /// `verificationDomain` -> `Geometric`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Geometric";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Transform → Composition via structure";
 }
 
 /// Negation is a ring-metric isometry.
 pub mod t_i1 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "x, y ∈ R_n";
-    /// `lhs`
-    pub const LHS: &str = "d_R(neg(x), neg(y))";
-    /// `rhs`
-    pub const RHS: &str = "d_R(x, y)";
+    /// `forAll` -> `term_T_I1_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_T_I1_forAll";
+    /// `lhs` -> `term_T_I1_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_T_I1_lhs";
+    /// `rhs` -> `term_T_I1_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_T_I1_rhs";
     /// `verificationDomain` -> `Geometric`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Geometric";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Transform → Isometry via structure";
 }
 
 /// Bitwise complement is a Hamming-metric isometry.
 pub mod t_i2 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "x, y ∈ R_n";
-    /// `lhs`
-    pub const LHS: &str = "d_H(bnot(x), bnot(y))";
-    /// `rhs`
-    pub const RHS: &str = "d_H(x, y)";
+    /// `forAll` -> `term_T_I2_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_T_I2_forAll";
+    /// `lhs` -> `term_T_I2_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_T_I2_lhs";
+    /// `rhs` -> `term_T_I2_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_T_I2_rhs";
     /// `verificationDomain` -> `Geometric`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Geometric";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Transform → Isometry via structure";
 }
 
 /// Successor as composed isometries: succ = neg ∘ bnot preserves d_R but not d_H.
 pub mod t_i3 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "x ∈ R_n";
-    /// `lhs`
-    pub const LHS: &str = "succ = neg ∘ bnot";
-    /// `rhs`
-    pub const RHS: &str = "preserves d_R but not d_H";
+    /// `forAll` -> `term_T_I3_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_T_I3_forAll";
+    /// `lhs` -> `term_T_I3_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_T_I3_lhs";
+    /// `rhs` -> `term_T_I3_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_T_I3_rhs";
     /// `verificationDomain` -> `Geometric`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Geometric";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Transform → Isometry via structure";
 }
 
 /// Ring isometries form a group under composition.
 pub mod t_i4 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "Isometry";
-    /// `lhs`
-    pub const LHS: &str = "ring isometries";
-    /// `rhs`
-    pub const RHS: &str = "form a group under composition";
+    /// `forAll` -> `term_T_I4_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_T_I4_forAll";
+    /// `lhs` -> `term_T_I4_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_T_I4_lhs";
+    /// `rhs` -> `term_T_I4_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_T_I4_rhs";
     /// `verificationDomain` -> `Geometric`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Geometric";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Transform → Isometry via structure";
 }
 
 /// CurvatureObservable measures failure of ring isometry to be Hamming isometry.
 pub mod t_i5 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "Isometry";
-    /// `lhs`
-    pub const LHS: &str = "CurvatureObservable";
-    /// `rhs`
-    pub const RHS: &str = "measures failure of ring isometry to be Hamming isometry";
+    /// `forAll` -> `term_T_I5_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_T_I5_forAll";
+    /// `lhs` -> `term_T_I5_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_T_I5_lhs";
+    /// `rhs` -> `term_T_I5_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_T_I5_rhs";
     /// `verificationDomain` -> `Geometric`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Geometric";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Transform → Isometry via structure";
 }
 
 /// Embedding injectivity.
 pub mod t_e1 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "x, y ∈ R_n (injectivity)";
-    /// `lhs`
-    pub const LHS: &str = "ι(x) = ι(y)";
-    /// `rhs`
-    pub const RHS: &str = "x = y";
+    /// `forAll` -> `term_T_E1_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_T_E1_forAll";
+    /// `lhs` -> `term_T_E1_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_T_E1_lhs";
+    /// `rhs` -> `term_T_E1_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_T_E1_rhs";
     /// `verificationDomain` -> `Geometric`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Geometric";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Transform → Embedding via structure";
 }
 
 /// Embedding is a ring homomorphism.
 pub mod t_e2 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "x, y ∈ R_n";
-    /// `lhs`
-    pub const LHS: &str = "ι(add(x,y))";
-    /// `rhs`
-    pub const RHS: &str = "add(ι(x), ι(y)); ι(mul(x,y)) = mul(ι(x), ι(y))";
+    /// `forAll` -> `term_T_E2_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_T_E2_forAll";
+    /// `lhs` -> `term_T_E2_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_T_E2_lhs";
+    /// `rhs` -> `term_T_E2_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_T_E2_rhs";
     /// `verificationDomain` -> `Geometric`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Geometric";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Transform → Embedding via structure";
 }
 
 /// Embedding transitivity: composition of embeddings is an embedding.
 pub mod t_e3 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "ι₁: R_n → R_m, ι₂: R_m → R_k";
-    /// `lhs`
-    pub const LHS: &str = "ι₂ ∘ ι₁ : R_n → R_k";
-    /// `rhs`
-    pub const RHS: &str = "is an embedding (transitivity)";
+    /// `forAll` -> `term_T_E3_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_T_E3_forAll";
+    /// `lhs` -> `term_T_E3_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_T_E3_lhs";
+    /// `rhs` -> `term_T_E3_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_T_E3_rhs";
     /// `verificationDomain` -> `Geometric`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Geometric";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Transform → Embedding via structure";
 }
 
 /// Embedding address coherence: glyph ∘ ι ∘ addresses is well-defined.
 pub mod t_e4 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "embedding ι";
-    /// `lhs`
-    pub const LHS: &str = "glyph ∘ ι ∘ addresses";
-    /// `rhs`
-    pub const RHS: &str = "well-defined";
+    /// `forAll` -> `term_T_E4_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_T_E4_forAll";
+    /// `lhs` -> `term_T_E4_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_T_E4_lhs";
+    /// `rhs` -> `term_T_E4_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_T_E4_rhs";
     /// `verificationDomain` -> `Geometric`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Geometric";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Transform → Embedding via structure";
 }
 
 /// Dihedral group acts on constraints by transforming them.
 pub mod t_a1 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "g ∈ D_{2^n}, C ∈ Constraint";
-    /// `lhs`
-    pub const LHS: &str = "g ∈ D_{2^n} on Constraint C";
-    /// `rhs`
-    pub const RHS: &str = "g⋅C (transformed constraint)";
+    /// `forAll` -> `term_T_A1_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_T_A1_forAll";
+    /// `lhs` -> `term_T_A1_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_T_A1_lhs";
+    /// `rhs` -> `term_T_A1_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_T_A1_rhs";
     /// `verificationDomain` -> `Geometric`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Geometric";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Transform → Action via structure";
 }
 
 /// Dihedral group action on partitions permutes components.
 pub mod t_a2 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "g ∈ D_{2^n}";
-    /// `lhs`
-    pub const LHS: &str = "g ∈ D_{2^n} on Partition";
-    /// `rhs`
-    pub const RHS: &str = "permutes components";
+    /// `forAll` -> `term_T_A2_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_T_A2_forAll";
+    /// `lhs` -> `term_T_A2_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_T_A2_lhs";
+    /// `rhs` -> `term_T_A2_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_T_A2_rhs";
     /// `verificationDomain` -> `Geometric`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Geometric";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Transform → Action via structure";
 }
 
 /// Dihedral orbits determine irreducibility boundaries.
 pub mod t_a3 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "DihedralFactorizationResolver";
-    /// `lhs`
-    pub const LHS: &str = "D_{2^n} orbits on R_n";
-    /// `rhs`
-    pub const RHS: &str = "determine irreducibility boundaries";
+    /// `forAll` -> `term_T_A3_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_T_A3_forAll";
+    /// `lhs` -> `term_T_A3_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_T_A3_lhs";
+    /// `rhs` -> `term_T_A3_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_T_A3_rhs";
     /// `verificationDomain` -> `Geometric`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Geometric";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Transform → Action via structure";
 }
 
 /// Fixed points of negation are {0, 2^{n−1}}; bnot has no fixed points.
 pub mod t_a4 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "R_n";
-    /// `lhs`
-    pub const LHS: &str = "fixed points of neg";
-    /// `rhs`
-    pub const RHS: &str = "{0, 2^{n−1}}; bnot has none (n > 0)";
+    /// `forAll` -> `term_T_A4_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_T_A4_forAll";
+    /// `lhs` -> `term_T_A4_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_T_A4_lhs";
+    /// `rhs` -> `term_T_A4_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_T_A4_rhs";
     /// `verificationDomain` -> `Geometric`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Geometric";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Transform → Action via structure";
 }
 
 /// Automorphism group consists of unit multiplications.
 pub mod au_1 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "n ≥ 1";
-    /// `lhs`
-    pub const LHS: &str = "Aut(R_n)";
-    /// `rhs`
-    pub const RHS: &str = "{μ_u : x ↦ mul(u, x) | u ∈ R_n×}";
+    /// `forAll` -> `term_AU_1_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_AU_1_forAll";
+    /// `lhs` -> `term_AU_1_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_AU_1_lhs";
+    /// `rhs` -> `term_AU_1_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_AU_1_rhs";
     /// `verificationDomain` -> `Geometric`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Geometric";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Automorphism → Structure via symmetry";
 }
 
 /// Automorphism group is isomorphic to the unit group.
 pub mod au_2 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "n ≥ 3";
-    /// `lhs`
-    pub const LHS: &str = "Aut(R_n)";
-    /// `rhs`
-    pub const RHS: &str = "≅ R_n× ≅ Z/2 × Z/2^{n−2}";
+    /// `forAll` -> `term_AU_2_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_AU_2_forAll";
+    /// `lhs` -> `term_AU_2_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_AU_2_lhs";
+    /// `rhs` -> `term_AU_2_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_AU_2_rhs";
     /// `verificationDomain` -> `Geometric`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Geometric";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Automorphism → Structure via symmetry";
 }
 
 /// Automorphism group order is 2^{n−1}.
 pub mod au_3 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "n ≥ 1";
-    /// `lhs`
-    pub const LHS: &str = "|Aut(R_n)|";
-    /// `rhs`
-    pub const RHS: &str = "2^{n−1}";
+    /// `forAll` -> `term_AU_3_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_AU_3_forAll";
+    /// `lhs` -> `term_AU_3_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_AU_3_lhs";
+    /// `rhs` -> `term_AU_3_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_AU_3_rhs";
     /// `verificationDomain` -> `Geometric`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Geometric";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Automorphism → Structure via symmetry";
 }
 
 /// Intersection of automorphism group with dihedral group is {id, neg}.
 pub mod au_4 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "n ≥ 1";
-    /// `lhs`
-    pub const LHS: &str = "Aut(R_n) ∩ D_{2^n}";
-    /// `rhs`
-    pub const RHS: &str = "{id, neg}";
+    /// `forAll` -> `term_AU_4_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_AU_4_forAll";
+    /// `lhs` -> `term_AU_4_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_AU_4_lhs";
+    /// `rhs` -> `term_AU_4_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_AU_4_rhs";
     /// `verificationDomain` -> `Geometric`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Geometric";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Automorphism → Structure via symmetry";
 }
 
 /// Affine group is generated by D_{2^n} and μ_3.
 pub mod au_5 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "n ≥ 1";
-    /// `lhs`
-    pub const LHS: &str = "Aff(R_n)";
-    /// `rhs`
-    pub const RHS: &str = "⟨D_{2^n}, μ_3⟩";
+    /// `forAll` -> `term_AU_5_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_AU_5_forAll";
+    /// `lhs` -> `term_AU_5_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_AU_5_lhs";
+    /// `rhs` -> `term_AU_5_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_AU_5_rhs";
     /// `verificationDomain` -> `Geometric`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Geometric";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Automorphism → Structure via symmetry";
 }
 
 /// Embedding functor action on morphisms.
 pub mod ef_1 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "ι: R_n → R_m, f ∈ Cat(R_n)";
-    /// `lhs`
-    pub const LHS: &str = "F_ι(f)";
-    /// `rhs`
-    pub const RHS: &str = "ι ∘ f ∘ ι⁻¹ on Im(ι)";
+    /// `forAll` -> `term_EF_1_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_EF_1_forAll";
+    /// `lhs` -> `term_EF_1_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_EF_1_lhs";
+    /// `rhs` -> `term_EF_1_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_EF_1_rhs";
     /// `verificationDomain` -> `Geometric`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Geometric";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Embedding → Factorization via decomposition";
 }
 
 /// Embedding functor preserves composition.
 pub mod ef_2 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "ι: R_n → R_m";
-    /// `lhs`
-    pub const LHS: &str = "F_ι(f ∘ g)";
-    /// `rhs`
-    pub const RHS: &str = "F_ι(f) ∘ F_ι(g)";
+    /// `forAll` -> `term_EF_2_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_EF_2_forAll";
+    /// `lhs` -> `term_EF_2_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_EF_2_lhs";
+    /// `rhs` -> `term_EF_2_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_EF_2_rhs";
     /// `verificationDomain` -> `Geometric`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Geometric";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Embedding → Factorization via decomposition";
 }
 
 /// Embedding functor preserves identities.
 pub mod ef_3 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "ι: R_n → R_m";
-    /// `lhs`
-    pub const LHS: &str = "F_ι(id_{R_n})";
-    /// `rhs`
-    pub const RHS: &str = "id_{Im(ι)}";
+    /// `forAll` -> `term_EF_3_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_EF_3_forAll";
+    /// `lhs` -> `term_EF_3_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_EF_3_lhs";
+    /// `rhs` -> `term_EF_3_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_EF_3_rhs";
     /// `verificationDomain` -> `Geometric`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Geometric";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Embedding → Factorization via decomposition";
 }
 
 /// Embedding functor composition is functorial.
 pub mod ef_4 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "ι₁: R_n → R_m, ι₂: R_m → R_k";
-    /// `lhs`
-    pub const LHS: &str = "F_{ι₂ ∘ ι₁}";
-    /// `rhs`
-    pub const RHS: &str = "F_{ι₂} ∘ F_{ι₁}";
+    /// `forAll` -> `term_EF_4_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_EF_4_forAll";
+    /// `lhs` -> `term_EF_4_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_EF_4_lhs";
+    /// `rhs` -> `term_EF_4_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_EF_4_rhs";
     /// `verificationDomain` -> `Geometric`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Geometric";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Embedding → Factorization via decomposition";
 }
 
 /// Embedding functor preserves ring isometries.
 pub mod ef_5 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "ι: R_n → R_m";
-    /// `lhs`
-    pub const LHS: &str = "F_ι(ring isometry)";
-    /// `rhs`
-    pub const RHS: &str = "ring isometry at level m";
+    /// `forAll` -> `term_EF_5_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_EF_5_forAll";
+    /// `lhs` -> `term_EF_5_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_EF_5_lhs";
+    /// `rhs` -> `term_EF_5_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_EF_5_rhs";
     /// `verificationDomain` -> `Geometric`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Geometric";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Embedding → Factorization via decomposition";
 }
 
 /// Embedding functor maps dihedral subgroup into target dihedral group.
 pub mod ef_6 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "ι: R_n → R_m";
-    /// `lhs`
-    pub const LHS: &str = "F_ι(D_{2^n})";
-    /// `rhs`
-    pub const RHS: &str = "⊆ D_{2^m} as subgroup";
+    /// `forAll` -> `term_EF_6_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_EF_6_forAll";
+    /// `lhs` -> `term_EF_6_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_EF_6_lhs";
+    /// `rhs` -> `term_EF_6_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_EF_6_rhs";
     /// `verificationDomain` -> `Geometric`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Geometric";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Embedding → Factorization via decomposition";
 }
 
 /// Embedding functor maps unit group into target unit group.
 pub mod ef_7 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "ι: R_n → R_m";
-    /// `lhs`
-    pub const LHS: &str = "F_ι(R_n×)";
-    /// `rhs`
-    pub const RHS: &str = "⊆ R_m× as subgroup";
+    /// `forAll` -> `term_EF_7_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_EF_7_forAll";
+    /// `lhs` -> `term_EF_7_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_EF_7_lhs";
+    /// `rhs` -> `term_EF_7_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_EF_7_rhs";
     /// `verificationDomain` -> `Geometric`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Geometric";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Embedding → Factorization via decomposition";
 }
 
 /// Braille glyph encoding: 6-bit blocks to Braille characters.
 pub mod aa_1 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "x ∈ R_n (6-bit blocks)";
-    /// `lhs`
-    pub const LHS: &str = "glyph(x)";
-    /// `rhs`
-    pub const RHS: &str = "[braille(x[0:5]), braille(x[6:11]), ...]";
+    /// `forAll` -> `term_AA_1_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_AA_1_forAll";
+    /// `lhs` -> `term_AA_1_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_AA_1_lhs";
+    /// `rhs` -> `term_AA_1_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_AA_1_rhs";
     /// `verificationDomain` -> `Analytical`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Analytical";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Analytical → Addressing via calculus";
 }
 
 /// Braille XOR homomorphism: Braille encoding commutes with XOR.
 pub mod aa_2 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "a, b ∈ {0,1}^6";
-    /// `lhs`
-    pub const LHS: &str = "braille(a ⊕ b)";
-    /// `rhs`
-    pub const RHS: &str = "braille(a) ⊕ braille(b)";
+    /// `forAll` -> `term_AA_2_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_AA_2_forAll";
+    /// `lhs` -> `term_AA_2_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_AA_2_lhs";
+    /// `rhs` -> `term_AA_2_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_AA_2_rhs";
     /// `verificationDomain` -> `Analytical`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Analytical";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Analytical → Addressing via calculus";
 }
 
 /// Braille complement: glyph of bnot(x) is character-wise complement of glyph(x).
 pub mod aa_3 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "x ∈ R_n";
-    /// `lhs`
-    pub const LHS: &str = "glyph(bnot(x))";
-    /// `rhs`
-    pub const RHS: &str = "complement each Braille character of glyph(x)";
+    /// `forAll` -> `term_AA_3_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_AA_3_forAll";
+    /// `lhs` -> `term_AA_3_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_AA_3_lhs";
+    /// `rhs` -> `term_AA_3_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_AA_3_rhs";
     /// `verificationDomain` -> `Analytical`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Analytical";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Analytical → Addressing via calculus";
 }
 
 /// Addition does not lift to address space: no glyph homomorphism for add.
 pub mod aa_4 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "x, y ∈ R_n";
-    /// `lhs`
-    pub const LHS: &str = "glyph(add(x, y))";
-    /// `rhs`
-    pub const RHS: &str = "≠ f(glyph(x), glyph(y)) in general";
+    /// `forAll` -> `term_AA_4_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_AA_4_forAll";
+    /// `lhs` -> `term_AA_4_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_AA_4_lhs";
+    /// `rhs` -> `term_AA_4_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_AA_4_rhs";
     /// `verificationDomain` -> `Analytical`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Analytical";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Analytical → Addressing via calculus";
 }
 
 /// Liftable operations are exactly the Boolean operations.
 pub mod aa_5 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "operations on R_n";
-    /// `lhs`
-    pub const LHS: &str = "liftable operations";
-    /// `rhs`
-    pub const RHS: &str = "{xor, and, or, bnot}; NOT {add, sub, mul, neg, succ, pred}";
+    /// `forAll` -> `term_AA_5_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_AA_5_forAll";
+    /// `lhs` -> `term_AA_5_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_AA_5_lhs";
+    /// `rhs` -> `term_AA_5_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_AA_5_rhs";
     /// `verificationDomain` -> `Analytical`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Analytical";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Analytical → Addressing via calculus";
 }
 
 /// Negation decomposes into liftable bnot and non-liftable succ.
 pub mod aa_6 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "x ∈ R_n";
-    /// `lhs`
-    pub const LHS: &str = "neg(x) = succ(bnot(x))";
-    /// `rhs`
-    pub const RHS: &str = "bnot lifts, succ does not";
+    /// `forAll` -> `term_AA_6_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_AA_6_forAll";
+    /// `lhs` -> `term_AA_6_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_AA_6_lhs";
+    /// `rhs` -> `term_AA_6_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_AA_6_rhs";
     /// `verificationDomain` -> `Analytical`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Analytical";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Analytical → Addressing via calculus";
 }
 
 /// Address metric is sum of per-character Hamming distances.
 pub mod am_1 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "addresses a, b";
-    /// `lhs`
-    pub const LHS: &str = "d_addr(a, b)";
-    /// `rhs`
-    pub const RHS: &str = "Σ_i popcount(braille_i(a) ⊕ braille_i(b))";
+    /// `forAll` -> `term_AM_1_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_AM_1_forAll";
+    /// `lhs` -> `term_AM_1_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_AM_1_lhs";
+    /// `rhs` -> `term_AM_1_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_AM_1_rhs";
     /// `verificationDomain` -> `Analytical`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Analytical";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Analytical → Metric via calculus";
 }
 
 /// Address metric equals Hamming metric on ring elements.
 pub mod am_2 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "x, y ∈ R_n";
-    /// `lhs`
-    pub const LHS: &str = "d_addr(glyph(x), glyph(y))";
-    /// `rhs`
-    pub const RHS: &str = "d_H(x, y)";
+    /// `forAll` -> `term_AM_2_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_AM_2_forAll";
+    /// `lhs` -> `term_AM_2_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_AM_2_lhs";
+    /// `rhs` -> `term_AM_2_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_AM_2_rhs";
     /// `verificationDomain` -> `Analytical`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Analytical";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Analytical → Metric via calculus";
 }
 
 /// Address metric does not preserve ring metric in general.
 pub mod am_3 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "addresses";
-    /// `lhs`
-    pub const LHS: &str = "d_addr";
-    /// `rhs`
-    pub const RHS: &str = "does NOT preserve d_R in general";
+    /// `forAll` -> `term_AM_3_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_AM_3_forAll";
+    /// `lhs` -> `term_AM_3_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_AM_3_lhs";
+    /// `rhs` -> `term_AM_3_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_AM_3_rhs";
     /// `verificationDomain` -> `Analytical`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Analytical";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Analytical → Metric via calculus";
 }
 
 /// Address incompatibility metric.
 pub mod am_4 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "x, y ∈ R_n";
-    /// `lhs`
-    pub const LHS: &str = "d_Δ(x, y)";
-    /// `rhs`
-    pub const RHS: &str = "|d_R(x,y) − d_addr(glyph(x), glyph(y))|";
+    /// `forAll` -> `term_AM_4_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_AM_4_forAll";
+    /// `lhs` -> `term_AM_4_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_AM_4_lhs";
+    /// `rhs` -> `term_AM_4_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_AM_4_rhs";
     /// `verificationDomain` -> `Analytical`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Analytical";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Analytical → Metric via calculus";
 }
 
 /// Entropy of a fiber budget state.
 pub mod th_1 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "state ∈ FiberBudget";
-    /// `lhs`
-    pub const LHS: &str = "S(state)";
-    /// `rhs`
-    pub const RHS: &str = "freeCount × ln 2";
+    /// `forAll` -> `term_TH_1_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_TH_1_forAll";
+    /// `lhs` -> `term_TH_1_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_TH_1_lhs";
+    /// `rhs` -> `term_TH_1_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_TH_1_rhs";
     /// `verificationDomain` -> `Thermodynamic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Thermodynamic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Thermodynamic → Observable via entropy";
 }
 
 /// Maximum entropy: unconstrained state has S = n × ln 2.
 pub mod th_2 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "unconstrained type";
-    /// `lhs`
-    pub const LHS: &str = "S(⊥)";
-    /// `rhs`
-    pub const RHS: &str = "n × ln 2";
+    /// `forAll` -> `term_TH_2_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_TH_2_forAll";
+    /// `lhs` -> `term_TH_2_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_TH_2_lhs";
+    /// `rhs` -> `term_TH_2_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_TH_2_rhs";
     /// `verificationDomain` -> `Thermodynamic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Thermodynamic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Thermodynamic → Observable via entropy";
 }
 
 /// Zero entropy: fully resolved state has S = 0.
 pub mod th_3 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "fully resolved type";
-    /// `lhs`
-    pub const LHS: &str = "S(⊤)";
-    /// `rhs`
-    pub const RHS: &str = "0";
+    /// `forAll` -> `term_TH_3_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_TH_3_forAll";
+    /// `lhs` -> `term_TH_3_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_TH_3_lhs";
+    /// `rhs` -> `term_TH_3_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_TH_3_rhs";
     /// `verificationDomain` -> `Thermodynamic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Thermodynamic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Thermodynamic → Observable via entropy";
 }
 
 /// Landauer bound on total resolution cost.
 pub mod th_4 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "Landauer bound";
-    /// `lhs`
-    pub const LHS: &str = "total resolution cost";
-    /// `rhs`
-    pub const RHS: &str = "n × k_B T × ln 2";
+    /// `forAll` -> `term_TH_4_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_TH_4_forAll";
+    /// `lhs` -> `term_TH_4_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_TH_4_lhs";
+    /// `rhs` -> `term_TH_4_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_TH_4_rhs";
     /// `verificationDomain` -> `Thermodynamic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Thermodynamic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Thermodynamic → Observable via entropy";
 }
 
 /// Critical inverse temperature for UOR fiber system.
 pub mod th_5 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "UOR fiber system";
-    /// `lhs`
-    pub const LHS: &str = "β*";
-    /// `rhs`
-    pub const RHS: &str = "ln 2";
+    /// `forAll` -> `term_TH_5_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_TH_5_forAll";
+    /// `lhs` -> `term_TH_5_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_TH_5_lhs";
+    /// `rhs` -> `term_TH_5_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_TH_5_rhs";
     /// `verificationDomain` -> `Thermodynamic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Thermodynamic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Thermodynamic → Observable via entropy";
 }
 
 /// Constraint application removes entropy; convergence rate equals cooling rate.
 pub mod th_6 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "resolution loop";
-    /// `lhs`
-    pub const LHS: &str = "constraint application";
-    /// `rhs`
-    pub const RHS: &str = "removes entropy; convergenceRate = cooling rate";
+    /// `forAll` -> `term_TH_6_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_TH_6_forAll";
+    /// `lhs` -> `term_TH_6_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_TH_6_lhs";
+    /// `rhs` -> `term_TH_6_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_TH_6_rhs";
     /// `verificationDomain` -> `Thermodynamic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Thermodynamic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Thermodynamic → Observable via entropy";
 }
 
 /// CatastropheThreshold is the temperature of a partition phase transition.
 pub mod th_7 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "partition bifurcation";
-    /// `lhs`
-    pub const LHS: &str = "CatastropheThreshold";
-    /// `rhs`
-    pub const RHS: &str = "temperature of partition phase transition";
+    /// `forAll` -> `term_TH_7_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_TH_7_forAll";
+    /// `lhs` -> `term_TH_7_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_TH_7_lhs";
+    /// `rhs` -> `term_TH_7_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_TH_7_rhs";
     /// `verificationDomain` -> `Thermodynamic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Thermodynamic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Thermodynamic → Observable via entropy";
 }
 
 /// Step formula as free-energy cost of a constraint boundary.
 pub mod th_8 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "constraint boundary g";
-    /// `lhs`
-    pub const LHS: &str = "step_g";
-    /// `rhs`
-    pub const RHS: &str = "free-energy cost of constraint boundary";
+    /// `forAll` -> `term_TH_8_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_TH_8_forAll";
+    /// `lhs` -> `term_TH_8_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_TH_8_lhs";
+    /// `rhs` -> `term_TH_8_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_TH_8_rhs";
     /// `verificationDomain` -> `Thermodynamic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Thermodynamic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Thermodynamic → Observable via entropy";
 }
 
 /// Computational hardness maps to type incompleteness (high temperature).
 pub mod th_9 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "type specification";
-    /// `lhs`
-    pub const LHS: &str = "computational hardness";
-    /// `rhs`
-    pub const RHS: &str = "type incompleteness (high temperature)";
+    /// `forAll` -> `term_TH_9_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_TH_9_forAll";
+    /// `lhs` -> `term_TH_9_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_TH_9_lhs";
+    /// `rhs` -> `term_TH_9_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_TH_9_rhs";
     /// `verificationDomain` -> `Thermodynamic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Thermodynamic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Thermodynamic → Observable via entropy";
 }
 
 /// Type resolution is measurement; cost ≥ entropy removed.
 pub mod th_10 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "resolution process";
-    /// `lhs`
-    pub const LHS: &str = "type resolution";
-    /// `rhs`
-    pub const RHS: &str = "measurement; cost ≥ entropy removed";
+    /// `forAll` -> `term_TH_10_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_TH_10_forAll";
+    /// `lhs` -> `term_TH_10_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_TH_10_lhs";
+    /// `rhs` -> `term_TH_10_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_TH_10_rhs";
     /// `verificationDomain` -> `Thermodynamic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Thermodynamic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Thermodynamic → Observable via entropy";
 }
 
 /// Adiabatic schedule: decreasing freeCount, cost-per-fiber ordering.
 pub mod ar_1 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "constraint ordering";
-    /// `lhs`
-    pub const LHS: &str = "adiabatic schedule";
-    /// `rhs`
-    pub const RHS: &str = "decreasing freeCount × cost-per-fiber order";
+    /// `forAll` -> `term_AR_1_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_AR_1_forAll";
+    /// `lhs` -> `term_AR_1_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_AR_1_lhs";
+    /// `rhs` -> `term_AR_1_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_AR_1_rhs";
     /// `verificationDomain` -> `Analytical`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Analytical";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Analytical → Resolution via calculus";
 }
 
 /// Adiabatic cost is sum of constraint costs in optimal order.
 pub mod ar_2 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "optimal ordering";
-    /// `lhs`
-    pub const LHS: &str = "Cost_adiabatic";
-    /// `rhs`
-    pub const RHS: &str = "Σ_i cost(C_{σ(i)}) where σ is optimal";
+    /// `forAll` -> `term_AR_2_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_AR_2_forAll";
+    /// `lhs` -> `term_AR_2_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_AR_2_lhs";
+    /// `rhs` -> `term_AR_2_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_AR_2_rhs";
     /// `verificationDomain` -> `Analytical`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Analytical";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Analytical → Resolution via calculus";
 }
 
 /// Adiabatic cost satisfies Landauer bound.
 pub mod ar_3 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "Landauer bound";
-    /// `lhs`
-    pub const LHS: &str = "Cost_adiabatic";
-    /// `rhs`
-    pub const RHS: &str = "≥ n × k_B T × ln 2";
+    /// `forAll` -> `term_AR_3_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_AR_3_forAll";
+    /// `lhs` -> `term_AR_3_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_AR_3_lhs";
+    /// `rhs` -> `term_AR_3_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_AR_3_rhs";
     /// `verificationDomain` -> `Analytical`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Analytical";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Analytical → Resolution via calculus";
 }
 
 /// Adiabatic efficiency η ≤ 1.
 pub mod ar_4 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "adiabatic efficiency";
-    /// `lhs`
-    pub const LHS: &str = "η = (n × ln 2) / Cost_adiabatic";
-    /// `rhs`
-    pub const RHS: &str = "≤ 1";
+    /// `forAll` -> `term_AR_4_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_AR_4_forAll";
+    /// `lhs` -> `term_AR_4_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_AR_4_lhs";
+    /// `rhs` -> `term_AR_4_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_AR_4_rhs";
     /// `verificationDomain` -> `Analytical`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Analytical";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Analytical → Resolution via calculus";
 }
 
 /// Greedy vs adiabatic cost difference: ≤ 5% for n ≤ 16.
 pub mod ar_5 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "empirical, Q0–Q4";
-    /// `lhs`
-    pub const LHS: &str = "greedy vs adiabatic difference";
-    /// `rhs`
-    pub const RHS: &str = "≤ 5% for n ≤ 16";
+    /// `forAll` -> `term_AR_5_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_AR_5_forAll";
+    /// `lhs` -> `term_AR_5_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_AR_5_lhs";
+    /// `rhs` -> `term_AR_5_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_AR_5_rhs";
     /// `verificationDomain` -> `Analytical`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Analytical";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Analytical → Resolution via calculus";
 }
 
 /// Phase space definition.
 pub mod pd_1 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "UOR phase diagram";
-    /// `lhs`
-    pub const LHS: &str = "phase space";
-    /// `rhs`
-    pub const RHS: &str = "{(n, g) : n ∈ Z₊, g constraint boundary}";
+    /// `forAll` -> `term_PD_1_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_PD_1_forAll";
+    /// `lhs` -> `term_PD_1_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_PD_1_lhs";
+    /// `rhs` -> `term_PD_1_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_PD_1_rhs";
     /// `verificationDomain` -> `Thermodynamic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Thermodynamic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Partition → Dynamics via evolution";
 }
 
 /// Phase boundaries occur where g divides 2^n − 1 or g is a power of 2.
 pub mod pd_2 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "(n, g) plane";
-    /// `lhs`
-    pub const LHS: &str = "phase boundaries";
-    /// `rhs`
-    pub const RHS: &str = "g | (2^n − 1) or g = 2^k";
+    /// `forAll` -> `term_PD_2_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_PD_2_forAll";
+    /// `lhs` -> `term_PD_2_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_PD_2_lhs";
+    /// `rhs` -> `term_PD_2_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_PD_2_rhs";
     /// `verificationDomain` -> `Thermodynamic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Thermodynamic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Partition → Dynamics via evolution";
 }
 
 /// Parity boundary divides R_n into equal halves.
 pub mod pd_3 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "g = 2";
-    /// `lhs`
-    pub const LHS: &str = "parity boundary";
-    /// `rhs`
-    pub const RHS: &str = "|Unit| = 2^{n−1}, |non-Unit| = 2^{n−1}";
+    /// `forAll` -> `term_PD_3_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_PD_3_forAll";
+    /// `lhs` -> `term_PD_3_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_PD_3_lhs";
+    /// `rhs` -> `term_PD_3_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_PD_3_rhs";
     /// `verificationDomain` -> `Thermodynamic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Thermodynamic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Partition → Dynamics via evolution";
 }
 
 /// Resonance lines in the phase diagram.
 pub mod pd_4 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "(n, g) plane";
-    /// `lhs`
-    pub const LHS: &str = "resonance lines";
-    /// `rhs`
-    pub const RHS: &str = "n = k ⋅ ord_g(2)";
+    /// `forAll` -> `term_PD_4_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_PD_4_forAll";
+    /// `lhs` -> `term_PD_4_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_PD_4_lhs";
+    /// `rhs` -> `term_PD_4_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_PD_4_rhs";
     /// `verificationDomain` -> `Thermodynamic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Thermodynamic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Partition → Dynamics via evolution";
 }
 
 /// Phase count at level n is at most 2^n (typically O(n)).
 pub mod pd_5 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "quantum level n";
-    /// `lhs`
-    pub const LHS: &str = "phase count at level n";
-    /// `rhs`
-    pub const RHS: &str = "≤ 2^n (typical O(n))";
+    /// `forAll` -> `term_PD_5_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_PD_5_forAll";
+    /// `lhs` -> `term_PD_5_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_PD_5_lhs";
+    /// `rhs` -> `term_PD_5_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_PD_5_rhs";
     /// `verificationDomain` -> `Thermodynamic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Thermodynamic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Partition → Dynamics via evolution";
 }
 
 /// Reversible pinning stores prior state in ancilla fiber.
 pub mod rc_1 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "FiberCoordinate k";
-    /// `lhs`
-    pub const LHS: &str = "reversible pinning of fiber k";
-    /// `rhs`
-    pub const RHS: &str = "store prior state in ancilla fiber k'";
+    /// `forAll` -> `term_RC_1_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_RC_1_forAll";
+    /// `lhs` -> `term_RC_1_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_RC_1_lhs";
+    /// `rhs` -> `term_RC_1_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_RC_1_rhs";
     /// `verificationDomain` -> `Thermodynamic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Thermodynamic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Resolution → Convergence via rate";
 }
 
 /// Reversible pinning has zero total entropy change.
 pub mod rc_2 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "reversible strategy";
-    /// `lhs`
-    pub const LHS: &str = "reversible pinning entropy";
-    /// `rhs`
-    pub const RHS: &str = "ΔS_total = 0";
+    /// `forAll` -> `term_RC_2_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_RC_2_forAll";
+    /// `lhs` -> `term_RC_2_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_RC_2_lhs";
+    /// `rhs` -> `term_RC_2_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_RC_2_rhs";
     /// `verificationDomain` -> `Thermodynamic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Thermodynamic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Resolution → Convergence via rate";
 }
 
 /// Deferred Landauer cost at ancilla erasure.
 pub mod rc_3 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "ancilla cleanup";
-    /// `lhs`
-    pub const LHS: &str = "deferred Landauer cost";
-    /// `rhs`
-    pub const RHS: &str = "n × k_B T × ln 2 at ancilla erasure";
+    /// `forAll` -> `term_RC_3_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_RC_3_forAll";
+    /// `lhs` -> `term_RC_3_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_RC_3_lhs";
+    /// `rhs` -> `term_RC_3_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_RC_3_rhs";
     /// `verificationDomain` -> `Thermodynamic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Thermodynamic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Resolution → Convergence via rate";
 }
 
 /// Reversible total cost equals irreversible total cost (redistributed).
 pub mod rc_4 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "reversible strategy";
-    /// `lhs`
-    pub const LHS: &str = "reversible total cost";
-    /// `rhs`
-    pub const RHS: &str = "= irreversible total cost (redistributed)";
+    /// `forAll` -> `term_RC_4_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_RC_4_forAll";
+    /// `lhs` -> `term_RC_4_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_RC_4_lhs";
+    /// `rhs` -> `term_RC_4_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_RC_4_rhs";
     /// `verificationDomain` -> `Thermodynamic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Thermodynamic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Resolution → Convergence via rate";
 }
 
 /// Quantum UOR: superposed fibers, cost proportional to winning path.
 pub mod rc_5 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "hypothetical quantum";
-    /// `lhs`
-    pub const LHS: &str = "quantum UOR";
-    /// `rhs`
-    pub const RHS: &str = "superposed fibers, cost ∝ winning path";
+    /// `forAll` -> `term_RC_5_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_RC_5_forAll";
+    /// `lhs` -> `term_RC_5_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_RC_5_lhs";
+    /// `rhs` -> `term_RC_5_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_RC_5_rhs";
     /// `verificationDomain` -> `Thermodynamic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Thermodynamic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Resolution → Convergence via rate";
 }
 
 /// Ring derivative: ∂_R f(x) = f(succ(x)) - f(x).
 pub mod dc_1 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "f : R_n → R_n, x ∈ R_n";
-    /// `lhs`
-    pub const LHS: &str = "∂_R f(x)";
-    /// `rhs`
-    pub const RHS: &str = "f(succ(x)) - f(x)";
+    /// `forAll` -> `term_DC_1_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_DC_1_forAll";
+    /// `lhs` -> `term_DC_1_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_DC_1_lhs";
+    /// `rhs` -> `term_DC_1_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_DC_1_rhs";
     /// `verificationDomain` -> `Analytical`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Analytical";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Observable → DifferentialCalculus → Jacobian";
 }
 
 /// Hamming derivative: ∂_H f(x) = f(bnot(x)) - f(x).
 pub mod dc_2 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "f : R_n → R_n, x ∈ R_n";
-    /// `lhs`
-    pub const LHS: &str = "∂_H f(x)";
-    /// `rhs`
-    pub const RHS: &str = "f(bnot(x)) - f(x)";
+    /// `forAll` -> `term_DC_2_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_DC_2_forAll";
+    /// `lhs` -> `term_DC_2_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_DC_2_lhs";
+    /// `rhs` -> `term_DC_2_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_DC_2_rhs";
     /// `verificationDomain` -> `Analytical`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Analytical";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Observable → DifferentialCalculus → Jacobian";
 }
 
 /// Hamming derivative of identity: ∂_H id(x) = -(2x + 1) mod 2^n.
 pub mod dc_3 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "x ∈ R_n";
-    /// `lhs`
-    pub const LHS: &str = "∂_H id(x)";
-    /// `rhs`
-    pub const RHS: &str = "bnot(x) - x = -(2x + 1) mod 2^n";
+    /// `forAll` -> `term_DC_3_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_DC_3_forAll";
+    /// `lhs` -> `term_DC_3_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_DC_3_lhs";
+    /// `rhs` -> `term_DC_3_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_DC_3_rhs";
     /// `verificationDomain` -> `Analytical`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Analytical";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Observable → DifferentialCalculus → Jacobian";
 }
 
 /// Commutator from derivatives: \[neg, bnot\](x) = ∂_R neg(x) - ∂_H neg(x).
 pub mod dc_4 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "x ∈ R_n";
-    /// `lhs`
-    pub const LHS: &str = "[neg, bnot](x)";
-    /// `rhs`
-    pub const RHS: &str = "∂_R neg(x) - ∂_H neg(x)";
+    /// `forAll` -> `term_DC_4_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_DC_4_forAll";
+    /// `lhs` -> `term_DC_4_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_DC_4_lhs";
+    /// `rhs` -> `term_DC_4_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_DC_4_rhs";
     /// `verificationDomain` -> `Analytical`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Analytical";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Observable → DifferentialCalculus → Jacobian";
 }
 
 /// Carry dependence: the difference ∂_R f - ∂_H f decomposes into carry contributions.
 pub mod dc_5 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "f : R_n → R_n";
-    /// `lhs`
-    pub const LHS: &str = "∂_R f - ∂_H f";
-    /// `rhs`
-    pub const RHS: &str = "Σ carry contributions";
+    /// `forAll` -> `term_DC_5_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_DC_5_forAll";
+    /// `lhs` -> `term_DC_5_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_DC_5_lhs";
+    /// `rhs` -> `term_DC_5_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_DC_5_rhs";
     /// `verificationDomain` -> `Analytical`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Analytical";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Observable → DifferentialCalculus → Jacobian";
 }
 
 /// Jacobian definition: J_k(x) = ∂_R f_k(x) where f_k = fiber_k.
 pub mod dc_6 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "x ∈ R_n, 0 ≤ k < n";
-    /// `lhs`
-    pub const LHS: &str = "J_k(x)";
-    /// `rhs`
-    pub const RHS: &str = "∂_R f_k(x) where f_k = fiber_k";
+    /// `forAll` -> `term_DC_6_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_DC_6_forAll";
+    /// `lhs` -> `term_DC_6_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_DC_6_lhs";
+    /// `rhs` -> `term_DC_6_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_DC_6_rhs";
     /// `verificationDomain` -> `Analytical`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Analytical";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Observable → DifferentialCalculus → Jacobian";
 }
 
 /// Top-fiber anomaly: J_{n-1}(x) may differ from lower fibers.
 pub mod dc_7 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "x ∈ R_n";
-    /// `lhs`
-    pub const LHS: &str = "J_{n-1}(x)";
-    /// `rhs`
-    pub const RHS: &str = "may differ from lower fibers";
+    /// `forAll` -> `term_DC_7_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_DC_7_forAll";
+    /// `lhs` -> `term_DC_7_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_DC_7_lhs";
+    /// `rhs` -> `term_DC_7_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_DC_7_rhs";
     /// `verificationDomain` -> `Analytical`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Analytical";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Observable → DifferentialCalculus → Jacobian";
 }
 
 /// Rank-curvature identity: rank(J(x)) = d_H(x, succ(x)) - 1 for generic x.
 pub mod dc_8 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "x ∈ R_n";
-    /// `lhs`
-    pub const LHS: &str = "rank(J(x))";
-    /// `rhs`
-    pub const RHS: &str = "= d_H(x, succ(x)) - 1 for generic x";
+    /// `forAll` -> `term_DC_8_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_DC_8_forAll";
+    /// `lhs` -> `term_DC_8_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_DC_8_lhs";
+    /// `rhs` -> `term_DC_8_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_DC_8_rhs";
     /// `verificationDomain` -> `Analytical`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Analytical";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Observable → DifferentialCalculus → Jacobian";
 }
 
 /// Total curvature from Jacobian: κ(x) = Σ_k J_k(x).
 pub mod dc_9 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "x ∈ R_n";
-    /// `lhs`
-    pub const LHS: &str = "κ(x)";
-    /// `rhs`
-    pub const RHS: &str = "Σ_k J_k(x)";
+    /// `forAll` -> `term_DC_9_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_DC_9_forAll";
+    /// `lhs` -> `term_DC_9_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_DC_9_lhs";
+    /// `rhs` -> `term_DC_9_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_DC_9_rhs";
     /// `verificationDomain` -> `Analytical`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Analytical";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Observable → DifferentialCalculus → Jacobian";
 }
 
 /// Curvature-weighted ordering: optimal next constraint maximizes J_k over free fibers.
 pub mod dc_10 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "resolution step";
-    /// `lhs`
-    pub const LHS: &str = "optimal next constraint";
-    /// `rhs`
-    pub const RHS: &str = "argmax J_k over free fibers";
+    /// `forAll` -> `term_DC_10_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_DC_10_forAll";
+    /// `lhs` -> `term_DC_10_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_DC_10_lhs";
+    /// `rhs` -> `term_DC_10_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_DC_10_rhs";
     /// `verificationDomain` -> `Analytical`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Analytical";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Observable → DifferentialCalculus → Jacobian";
 }
 
 /// Curvature equipartition: Σ_{x} J_k(x) ≈ (2^n - 2)/n for each k.
 pub mod dc_11 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "0 ≤ k < n";
-    /// `lhs`
-    pub const LHS: &str = "Σ_{x} J_k(x)";
-    /// `rhs`
-    pub const RHS: &str = "≈ (2^n - 2)/n for each k";
+    /// `forAll` -> `term_DC_11_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_DC_11_forAll";
+    /// `lhs` -> `term_DC_11_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_DC_11_lhs";
+    /// `rhs` -> `term_DC_11_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_DC_11_rhs";
     /// `verificationDomain` -> `Analytical`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Analytical";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Observable → DifferentialCalculus → Jacobian";
 }
 
 /// Constraint nerve: N(C) is the simplicial complex on constraints.
 pub mod ha_1 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "constraint set C";
-    /// `lhs`
-    pub const LHS: &str = "N(C)";
-    /// `rhs`
-    pub const RHS: &str = "simplicial complex on constraints";
+    /// `forAll` -> `term_HA_1_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_HA_1_forAll";
+    /// `lhs` -> `term_HA_1_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_HA_1_lhs";
+    /// `rhs` -> `term_HA_1_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_HA_1_rhs";
     /// `verificationDomain` -> `Topological`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Topological";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Observable → HomologicalAlgebra → Betti";
 }
 
 /// Stall iff non-trivial homology: resolution stalls ⟺ H_k(N(C)) ≠ 0 for some k > 0.
 pub mod ha_2 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "constraint set C";
-    /// `lhs`
-    pub const LHS: &str = "resolution stalls";
-    /// `rhs`
-    pub const RHS: &str = "⟺ H_k(N(C)) ≠ 0 for some k > 0";
+    /// `forAll` -> `term_HA_2_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_HA_2_forAll";
+    /// `lhs` -> `term_HA_2_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_HA_2_lhs";
+    /// `rhs` -> `term_HA_2_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_HA_2_rhs";
     /// `verificationDomain` -> `Topological`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Topological";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Observable → HomologicalAlgebra → Betti";
 }
 
 /// Betti-entropy theorem: S_residual ≥ Σ_k β_k × ln 2.
 pub mod ha_3 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "constraint configuration C";
-    /// `lhs`
-    pub const LHS: &str = "S_residual";
-    /// `rhs`
-    pub const RHS: &str = "≥ Σ_k β_k × ln 2";
+    /// `forAll` -> `term_HA_3_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_HA_3_forAll";
+    /// `lhs` -> `term_HA_3_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_HA_3_lhs";
+    /// `rhs` -> `term_HA_3_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_HA_3_rhs";
     /// `verificationDomain` -> `Topological`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Topological";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Observable → HomologicalAlgebra → Betti";
 }
 
 /// Euler-Poincaré formula for constraint nerve.
 pub mod it_2 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "constraint nerve N(C)";
-    /// `lhs`
-    pub const LHS: &str = "χ(N(C))";
-    /// `rhs`
-    pub const RHS: &str = "Σ_k (-1)^k β_k";
+    /// `forAll` -> `term_IT_2_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_IT_2_forAll";
+    /// `lhs` -> `term_IT_2_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_IT_2_lhs";
+    /// `rhs` -> `term_IT_2_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_IT_2_rhs";
     /// `verificationDomain` -> `Topological`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Topological";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str =
-        "DifferentialCalculus + HomologicalAlgebra → IndexTheorem";
 }
 
 /// Spectral Euler characteristic.
 pub mod it_3 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "constraint nerve N(C)";
-    /// `lhs`
-    pub const LHS: &str = "χ(N(C))";
-    /// `rhs`
-    pub const RHS: &str = "Σ_k (-1)^k dim(H_k)";
+    /// `forAll` -> `term_IT_3_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_IT_3_forAll";
+    /// `lhs` -> `term_IT_3_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_IT_3_lhs";
+    /// `rhs` -> `term_IT_3_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_IT_3_rhs";
     /// `verificationDomain` -> `Topological`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Topological";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str =
-        "DifferentialCalculus + HomologicalAlgebra → IndexTheorem";
 }
 
 /// Spectral gap bounds convergence rate from below.
 pub mod it_6 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "constraint nerve N(C)";
-    /// `lhs`
-    pub const LHS: &str = "λ_1(N(C))";
-    /// `rhs`
-    pub const RHS: &str = "lower bounds convergence rate";
+    /// `forAll` -> `term_IT_6_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_IT_6_forAll";
+    /// `lhs` -> `term_IT_6_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_IT_6_lhs";
+    /// `rhs` -> `term_IT_6_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_IT_6_rhs";
     /// `verificationDomain` -> `Topological`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Topological";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str =
-        "DifferentialCalculus + HomologicalAlgebra → IndexTheorem";
 }
 
 /// UOR index theorem (topological form): total curvature minus Euler characteristic equals residual entropy in bits.
 pub mod it_7a {
-    /// `forAll`
-    pub const FOR_ALL: &str = "constraint configuration C";
-    /// `lhs`
-    pub const LHS: &str = "Σ κ_k - χ(N(C))";
-    /// `rhs`
-    pub const RHS: &str = "= S_residual / ln 2";
+    /// `forAll` -> `term_IT_7a_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_IT_7a_forAll";
+    /// `lhs` -> `term_IT_7a_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_IT_7a_lhs";
+    /// `rhs` -> `term_IT_7a_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_IT_7a_rhs";
     /// `verificationDomain`
     pub const VERIFICATION_DOMAIN: &[&str] = &[
         "https://uor.foundation/op/IndexTheoretic",
         "https://uor.foundation/op/Analytical",
         "https://uor.foundation/op/Topological",
     ];
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str =
-        "DifferentialCalculus + HomologicalAlgebra → IndexTheorem";
 }
 
 /// UOR index theorem (entropy-topology duality).
 pub mod it_7b {
-    /// `forAll`
-    pub const FOR_ALL: &str = "constraint configuration C";
-    /// `lhs`
-    pub const LHS: &str = "S_residual";
-    /// `rhs`
-    pub const RHS: &str = "= (Σ κ_k - χ) × ln 2";
+    /// `forAll` -> `term_IT_7b_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_IT_7b_forAll";
+    /// `lhs` -> `term_IT_7b_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_IT_7b_lhs";
+    /// `rhs` -> `term_IT_7b_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_IT_7b_rhs";
     /// `verificationDomain`
     pub const VERIFICATION_DOMAIN: &[&str] = &[
         "https://uor.foundation/op/IndexTheoretic",
         "https://uor.foundation/op/Analytical",
         "https://uor.foundation/op/Topological",
     ];
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str =
-        "DifferentialCalculus + HomologicalAlgebra → IndexTheorem";
 }
 
 /// UOR index theorem (spectral cost bound): resolution cost ≥ n - χ(N(C)).
 pub mod it_7c {
-    /// `forAll`
-    pub const FOR_ALL: &str = "constraint configuration C";
-    /// `lhs`
-    pub const LHS: &str = "resolution cost";
-    /// `rhs`
-    pub const RHS: &str = "≥ n - χ(N(C))";
+    /// `forAll` -> `term_IT_7c_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_IT_7c_forAll";
+    /// `lhs` -> `term_IT_7c_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_IT_7c_lhs";
+    /// `rhs` -> `term_IT_7c_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_IT_7c_rhs";
     /// `verificationDomain`
     pub const VERIFICATION_DOMAIN: &[&str] = &[
         "https://uor.foundation/op/IndexTheoretic",
         "https://uor.foundation/op/Analytical",
         "https://uor.foundation/op/Topological",
     ];
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str =
-        "DifferentialCalculus + HomologicalAlgebra → IndexTheorem";
 }
 
 /// UOR index theorem (completeness criterion): resolution is complete iff χ(N(C)) = n and all Betti numbers vanish.
 pub mod it_7d {
-    /// `forAll`
-    pub const FOR_ALL: &str = "constraint nerve N(C)";
-    /// `lhs`
-    pub const LHS: &str = "resolution complete";
-    /// `rhs`
-    pub const RHS: &str = "⟺ χ(N(C)) = n and all β_k = 0";
+    /// `forAll` -> `term_IT_7d_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_IT_7d_forAll";
+    /// `lhs` -> `term_IT_7d_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_IT_7d_lhs";
+    /// `rhs` -> `term_IT_7d_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_IT_7d_rhs";
     /// `verificationDomain`
     pub const VERIFICATION_DOMAIN: &[&str] = &[
         "https://uor.foundation/op/IndexTheoretic",
         "https://uor.foundation/op/Analytical",
         "https://uor.foundation/op/Topological",
     ];
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str =
-        "DifferentialCalculus + HomologicalAlgebra → IndexTheorem";
 }
 
 /// Ring → Constraints map: negation transforms a residue constraint.
 pub mod phi_1 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "ring op, constraint";
-    /// `lhs`
-    pub const LHS: &str = "φ₁(neg, ResidueConstraint(m,r))";
-    /// `rhs`
-    pub const RHS: &str = "ResidueConstraint(m, m-r)";
+    /// `forAll` -> `term_phi_1_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_phi_1_forAll";
+    /// `lhs` -> `term_phi_1_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_phi_1_lhs";
+    /// `rhs` -> `term_phi_1_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_phi_1_rhs";
     /// `verificationDomain` -> `Pipeline`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Inter-algebra map: source → target";
 }
 
 /// Constraints → Fibers map: composition maps to union of fiber pinnings.
 pub mod phi_2 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "constraints A, B";
-    /// `lhs`
-    pub const LHS: &str = "φ₂(compose(A,B))";
-    /// `rhs`
-    pub const RHS: &str = "φ₂(A) ∪ φ₂(B)";
+    /// `forAll` -> `term_phi_2_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_phi_2_forAll";
+    /// `lhs` -> `term_phi_2_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_phi_2_lhs";
+    /// `rhs` -> `term_phi_2_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_phi_2_rhs";
     /// `verificationDomain` -> `Pipeline`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Inter-algebra map: source → target";
 }
 
 /// Fibers → Partition map: a closed fiber state determines a unique 4-component partition.
 pub mod phi_3 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "closed FiberBudget";
-    /// `lhs`
-    pub const LHS: &str = "φ₃(closed fiber state)";
-    /// `rhs`
-    pub const RHS: &str = "unique 4-component partition";
+    /// `forAll` -> `term_phi_3_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_phi_3_forAll";
+    /// `lhs` -> `term_phi_3_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_phi_3_lhs";
+    /// `rhs` -> `term_phi_3_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_phi_3_rhs";
     /// `verificationDomain` -> `Pipeline`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Inter-algebra map: source → target";
 }
 
 /// Resolution pipeline: φ₄ = φ₃ ∘ φ₂ ∘ φ₁ is the composite resolution map.
 pub mod phi_4 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "T ∈ T_n, x ∈ R_n";
-    /// `lhs`
-    pub const LHS: &str = "φ₄(T, x)";
-    /// `rhs`
-    pub const RHS: &str = "φ₃(φ₂(φ₁(T, x)))";
+    /// `forAll` -> `term_phi_4_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_phi_4_forAll";
+    /// `lhs` -> `term_phi_4_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_phi_4_lhs";
+    /// `rhs` -> `term_phi_4_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_phi_4_rhs";
     /// `verificationDomain` -> `Pipeline`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Inter-algebra map: source → target";
 }
 
 /// Operations → Observables map: negation preserves d_R, may change d_H.
 pub mod phi_5 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "op ∈ Operation";
-    /// `lhs`
-    pub const LHS: &str = "φ₅(neg)";
-    /// `rhs`
-    pub const RHS: &str = "preserves d_R, may change d_H";
+    /// `forAll` -> `term_phi_5_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_phi_5_forAll";
+    /// `lhs` -> `term_phi_5_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_phi_5_lhs";
+    /// `rhs` -> `term_phi_5_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_phi_5_rhs";
     /// `verificationDomain` -> `Pipeline`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Inter-algebra map: source → target";
 }
 
 /// Observables → Refinement map: observables on a state yield a refinement suggestion.
 pub mod phi_6 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "ResolutionState";
-    /// `lhs`
-    pub const LHS: &str = "φ₆(state, observables)";
-    /// `rhs`
-    pub const RHS: &str = "RefinementSuggestion";
+    /// `forAll` -> `term_phi_6_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_phi_6_forAll";
+    /// `lhs` -> `term_phi_6_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_phi_6_lhs";
+    /// `rhs` -> `term_phi_6_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_phi_6_rhs";
     /// `verificationDomain` -> `Pipeline`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Inter-algebra map: source → target";
 }
 
 /// ψ_1: Constraints → SimplicialComplex (nerve construction). Maps a set of constraints to its nerve simplicial complex.
 pub mod psi_1 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "constraint set";
-    /// `lhs`
-    pub const LHS: &str = "N(constraints)";
-    /// `rhs`
-    pub const RHS: &str = "SimplicialComplex";
+    /// `forAll` -> `term_psi_1_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_psi_1_forAll";
+    /// `lhs` -> `term_psi_1_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_psi_1_lhs";
+    /// `rhs` -> `term_psi_1_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_psi_1_rhs";
     /// `verificationDomain` -> `Topological`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Topological";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Constraint → NerveFunctor → SimplicialComplex";
 }
 
 /// ψ_2: SimplicialComplex → ChainComplex (chain functor). Maps a simplicial complex to its chain complex.
 pub mod psi_2 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "simplicial complex K";
-    /// `lhs`
-    pub const LHS: &str = "C(K)";
-    /// `rhs`
-    pub const RHS: &str = "ChainComplex";
+    /// `forAll` -> `term_psi_2_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_psi_2_forAll";
+    /// `lhs` -> `term_psi_2_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_psi_2_lhs";
+    /// `rhs` -> `term_psi_2_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_psi_2_rhs";
     /// `verificationDomain` -> `Topological`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Topological";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "SimplicialComplex → ChainFunctor → ChainComplex";
 }
 
 /// ψ_3: ChainComplex → HomologyGroups (homology functor). Computes homology groups from a chain complex.
 pub mod psi_3 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "chain complex C";
-    /// `lhs`
-    pub const LHS: &str = "H_k(C)";
-    /// `rhs`
-    pub const RHS: &str = "ker(∂_k) / im(∂_{k+1})";
+    /// `forAll` -> `term_psi_3_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_psi_3_forAll";
+    /// `lhs` -> `term_psi_3_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_psi_3_lhs";
+    /// `rhs` -> `term_psi_3_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_psi_3_rhs";
     /// `verificationDomain` -> `Topological`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Topological";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "ChainComplex → BoundaryOperator → HomologyGroup";
 }
 
 /// ψ_5: ChainComplex → CochainComplex (dualization functor). Dualizes a chain complex to obtain a cochain complex.
 pub mod psi_5 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "chain complex C, ring R";
-    /// `lhs`
-    pub const LHS: &str = "C^k";
-    /// `rhs`
-    pub const RHS: &str = "Hom(C_k, R)";
+    /// `forAll` -> `term_psi_5_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_psi_5_forAll";
+    /// `lhs` -> `term_psi_5_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_psi_5_lhs";
+    /// `rhs` -> `term_psi_5_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_psi_5_rhs";
     /// `verificationDomain` -> `Topological`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Topological";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "ChainComplex → dual → CochainComplex";
 }
 
 /// ψ_6: CochainComplex → CohomologyGroups (cohomology functor). Computes cohomology groups from a cochain complex.
 pub mod psi_6 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "cochain complex C";
-    /// `lhs`
-    pub const LHS: &str = "H^k(C)";
-    /// `rhs`
-    pub const RHS: &str = "ker(δ^k) / im(δ^{k-1})";
+    /// `forAll` -> `term_psi_6_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_psi_6_forAll";
+    /// `lhs` -> `term_psi_6_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_psi_6_lhs";
+    /// `rhs` -> `term_psi_6_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_psi_6_rhs";
     /// `verificationDomain` -> `Topological`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Topological";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str =
-        "CochainComplex → CoboundaryOperator → CohomologyGroup";
 }
 
 /// The dihedral group of order 2^(n+1), generated by neg (ring reflection) and bnot (hypercube reflection). Every element of this group acts as an isometry on the type space 𝒯_n.
@@ -3804,1959 +3325,1676 @@ pub mod d2n {
 
 /// The Surface Symmetry Theorem: the composite P∘Π∘G is a well-typed morphism iff G and P share the same state:Frame F. When the shared-frame condition holds, the output lands in the type-equivalent neighbourhood of the source symbol.
 pub mod surface_symmetry {
-    /// `forAll`
-    pub const FOR_ALL: &str =
-        "G: GroundingMap, P: ProjectionMap, F: Frame, s: Literal, G.symbolConstraints = P.projectionOrder";
-    /// `lhs`
-    pub const LHS: &str = "P(Π(G(s)))";
-    /// `rhs`
-    pub const RHS: &str = "s' where type(s') ≡ type(s) under F.constraint";
+    /// `forAll` -> `term_surfaceSymmetry_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_surfaceSymmetry_forAll";
+    /// `lhs` -> `term_surfaceSymmetry_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_surfaceSymmetry_lhs";
+    /// `rhs` -> `term_surfaceSymmetry_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_surfaceSymmetry_rhs";
     /// `verificationDomain` -> `Pipeline`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str =
-        "GroundingMap → ResolutionPipeline → ProjectionMap: shared-frame condition guarantees type-equivalent neighbourhood";
 }
 
 /// Completeness implies O(1) resolution: a CompleteType T satisfies ∀ x ∈ R_n, resolution(x, T) terminates in O(1).
 pub mod cc_1 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "x ∈ R_n, T: CompleteType";
-    /// `lhs`
-    pub const LHS: &str = "resolution(x, T)";
-    /// `rhs`
-    pub const RHS: &str = "O(1) for CompleteType T";
+    /// `forAll` -> `term_CC_1_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_CC_1_forAll";
+    /// `lhs` -> `term_CC_1_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_CC_1_lhs";
+    /// `rhs` -> `term_CC_1_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_CC_1_rhs";
     /// `verificationDomain` -> `Pipeline`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "CompleteType → CompletenessResolver → O(1) partition";
 }
 
 /// Completeness is monotone: if T ⊆ T' (T' has more constraints), then completeness(T) implies completeness(T').
 pub mod cc_2 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "T, T': ConstrainedType, T ⊆ T'";
-    /// `lhs`
-    pub const LHS: &str = "completeness(T)";
-    /// `rhs`
-    pub const RHS: &str = "implies completeness(T')";
+    /// `forAll` -> `term_CC_2_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_CC_2_forAll";
+    /// `lhs` -> `term_CC_2_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_CC_2_lhs";
+    /// `rhs` -> `term_CC_2_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_CC_2_rhs";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "ConstraintNerve → monotone under constraint addition";
 }
 
 /// Witness composition: concat(W₁, W₂) is a valid audit trail iff W₁.fibersClosed + W₂.fibersClosed = n.
 pub mod cc_3 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "W₁, W₂: CompletenessWitness";
-    /// `lhs`
-    pub const LHS: &str = "fibersClosed(W₁) + fibersClosed(W₂)";
-    /// `rhs`
-    pub const RHS: &str = "= n for valid concat(W₁, W₂)";
+    /// `forAll` -> `term_CC_3_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_CC_3_forAll";
+    /// `lhs` -> `term_CC_3_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_CC_3_lhs";
+    /// `rhs` -> `term_CC_3_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_CC_3_rhs";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "CompletenessWitness → FiberBudget → audit trail";
 }
 
 /// The CompletenessResolver is the unique fixed point of the ψ-pipeline applied to a CompletenessCandidate.
 pub mod cc_4 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "CompletenessCandidate";
-    /// `lhs`
-    pub const LHS: &str = "CompletenessResolver";
-    /// `rhs`
-    pub const RHS: &str = "fix(ψ-pipeline, CompletenessCandidate)";
+    /// `forAll` -> `term_CC_4_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_CC_4_forAll";
+    /// `lhs` -> `term_CC_4_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_CC_4_lhs";
+    /// `rhs` -> `term_CC_4_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_CC_4_rhs";
     /// `verificationDomain` -> `Pipeline`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str =
-        "ψ-pipeline fixed point → CompletenessResolver uniqueness";
 }
 
 /// CompletenessCertificate soundness: cert.verified = true implies χ(N(C)) = n and for all k: β_k = 0.
 pub mod cc_5 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "cert: CompletenessCertificate";
-    /// `lhs`
-    pub const LHS: &str = "cert.verified = true";
-    /// `rhs`
-    pub const RHS: &str = "implies χ(N(C)) = n ∧ ∀k: β_k = 0";
+    /// `forAll` -> `term_CC_5_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_CC_5_forAll";
+    /// `lhs` -> `term_CC_5_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_CC_5_lhs";
+    /// `rhs` -> `term_CC_5_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_CC_5_rhs";
     /// `verificationDomain` -> `Topological`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Topological";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str =
-        "CompletenessCertificate → ConstraintNerve → Euler characteristic";
 }
 
 /// neg(bnot(x)) = succ(x) holds in Z/(2ⁿ)Z for all n ≥ 1. Universal form of the Critical Identity across all quantum levels.
 pub mod ql_1 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "x ∈ R_n, n ≥ 1";
-    /// `lhs`
-    pub const LHS: &str = "neg(bnot(x))";
-    /// `rhs`
-    pub const RHS: &str = "succ(x) in Z/(2ⁿ)Z";
+    /// `forAll` -> `term_QL_1_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_QL_1_forAll";
+    /// `lhs` -> `term_QL_1_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_QL_1_lhs";
+    /// `rhs` -> `term_QL_1_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_QL_1_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Ring axioms → induction on n → universality";
 }
 
 /// The dihedral group D_{2ⁿ} generated by neg and bnot has order 2ⁿ⁺¹ for all n ≥ 1.
 pub mod ql_2 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "n ≥ 1";
-    /// `lhs`
-    pub const LHS: &str = "|D_{2ⁿ}|";
-    /// `rhs`
-    pub const RHS: &str = "2ⁿ⁺¹ for all n ≥ 1";
+    /// `forAll` -> `term_QL_2_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_QL_2_forAll";
+    /// `lhs` -> `term_QL_2_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_QL_2_lhs";
+    /// `rhs` -> `term_QL_2_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_QL_2_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "DihedralGroup → group order formula → universality";
 }
 
 /// The cascade distribution P(j) = 2^{-j} is the Boltzmann distribution at β* = ln 2 for all n ≥ 1.
 pub mod ql_3 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "j ∈ R_n, n ≥ 1";
-    /// `lhs`
-    pub const LHS: &str = "P(j) = 2^{-j}";
-    /// `rhs`
-    pub const RHS: &str = "Boltzmann distribution at β* = ln 2, all n ≥ 1";
+    /// `forAll` -> `term_QL_3_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_QL_3_forAll";
+    /// `lhs` -> `term_QL_3_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_QL_3_lhs";
+    /// `rhs` -> `term_QL_3_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_QL_3_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Thermodynamic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Thermodynamic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str =
-        "CascadeEntropy → Boltzmann distribution → universality";
 }
 
 /// The fiber budget of a PrimitiveType at quantum level n is exactly n (one fiber per bit).
 pub mod ql_4 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "PrimitiveType, n ≥ 1";
-    /// `lhs`
-    pub const LHS: &str = "fiberBudget(PrimitiveType, n)";
-    /// `rhs`
-    pub const RHS: &str = "= n (one fiber per bit)";
+    /// `forAll` -> `term_QL_4_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_QL_4_forAll";
+    /// `lhs` -> `term_QL_4_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_QL_4_lhs";
+    /// `rhs` -> `term_QL_4_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_QL_4_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "FiberBudget → PrimitiveType → bit-fiber bijection";
 }
 
 /// Resolution complexity for a CompleteType is O(1) for all n ≥ 1.
 pub mod ql_5 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "CompleteType, n ≥ 1";
-    /// `lhs`
-    pub const LHS: &str = "resolution(CompleteType, n)";
-    /// `rhs`
-    pub const RHS: &str = "O(1) for all n ≥ 1";
+    /// `forAll` -> `term_QL_5_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_QL_5_forAll";
+    /// `lhs` -> `term_QL_5_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_QL_5_lhs";
+    /// `rhs` -> `term_QL_5_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_QL_5_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Pipeline`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str =
-        "CompleteType → O(1) resolution → quantum-level-agnostic";
 }
 
 /// Content addressing is a bijection for all n ≥ 1 (AD_1/AD_2 universality).
 pub mod ql_6 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "x ∈ R_n, n ≥ 1";
-    /// `lhs`
-    pub const LHS: &str = "contentAddress(x, n)";
-    /// `rhs`
-    pub const RHS: &str = "bijection for all n ≥ 1";
+    /// `forAll` -> `term_QL_6_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_QL_6_forAll";
+    /// `lhs` -> `term_QL_6_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_QL_6_lhs";
+    /// `rhs` -> `term_QL_6_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_QL_6_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "AD_1/AD_2 → bijection → all quantum levels";
 }
 
 /// The ψ-pipeline produces a valid ChainComplex for any ConstrainedType at any quantum level n ≥ 1.
 pub mod ql_7 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "ConstrainedType, n ≥ 1";
-    /// `lhs`
-    pub const LHS: &str = "ψ-pipeline(ConstrainedType, n)";
-    /// `rhs`
-    pub const RHS: &str = "valid ChainComplex for all n ≥ 1";
+    /// `forAll` -> `term_QL_7_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_QL_7_forAll";
+    /// `lhs` -> `term_QL_7_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_QL_7_lhs";
+    /// `rhs` -> `term_QL_7_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_QL_7_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Topological`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Topological";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "ψ-pipeline → ChainComplex → quantum-level-agnostic";
 }
 
 /// Binding monotonicity: freeCount(B_{i+1}) ≤ freeCount(B_i) for all i in a Session.
 pub mod sr_1 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "i in Session S";
-    /// `lhs`
-    pub const LHS: &str = "freeCount(B_{i+1})";
-    /// `rhs`
-    pub const RHS: &str = "≤ freeCount(B_i)";
+    /// `forAll` -> `term_SR_1_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_SR_1_forAll";
+    /// `lhs` -> `term_SR_1_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_SR_1_lhs";
+    /// `rhs` -> `term_SR_1_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_SR_1_rhs";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str =
-        "BindingAccumulator → monotone freeCount → Session invariant";
 }
 
 /// Binding soundness: a Binding b is sound iff b.datum resolves under b.constraint in O(1).
 pub mod sr_2 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "b: Binding";
-    /// `lhs`
-    pub const LHS: &str = "b.datum resolves under b.constraint";
-    /// `rhs`
-    pub const RHS: &str = "in O(1) iff Binding b is sound";
+    /// `forAll` -> `term_SR_2_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_SR_2_forAll";
+    /// `lhs` -> `term_SR_2_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_SR_2_lhs";
+    /// `rhs` -> `term_SR_2_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_SR_2_rhs";
     /// `verificationDomain` -> `Pipeline`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Binding → constraint resolution → O(1) soundness";
 }
 
 /// Session convergence: a Session S converges iff there exists i such that freeCount(B_i) = 0.
 pub mod sr_3 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "Session S";
-    /// `lhs`
-    pub const LHS: &str = "∃ i: freeCount(B_i) = 0";
-    /// `rhs`
-    pub const RHS: &str = "Session S converges";
+    /// `forAll` -> `term_SR_3_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_SR_3_forAll";
+    /// `lhs` -> `term_SR_3_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_SR_3_lhs";
+    /// `rhs` -> `term_SR_3_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_SR_3_rhs";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "BindingAccumulator → zero freeCount → convergence";
 }
 
 /// Context reset isolation: bindings in C_fresh are independent of bindings in C_prior after a SessionBoundary.
 pub mod sr_4 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "C_prior, C_fresh: Context, SessionBoundary event";
-    /// `lhs`
-    pub const LHS: &str = "bindings(C_fresh) ∩ bindings(C_prior)";
-    /// `rhs`
-    pub const RHS: &str = "= ∅ after SessionBoundary";
+    /// `forAll` -> `term_SR_4_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_SR_4_forAll";
+    /// `lhs` -> `term_SR_4_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_SR_4_lhs";
+    /// `rhs` -> `term_SR_4_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_SR_4_rhs";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str =
-        "SessionBoundary → priorContext/freshContext isolation";
 }
 
 /// Contradiction detection: ContradictionBoundary fires iff there exist bindings b, b' with the same address, different datum, under the same constraint.
 pub mod sr_5 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "b, b': Binding in same Context";
-    /// `lhs`
-    pub const LHS: &str = "ContradictionBoundary";
-    /// `rhs`
-    pub const RHS: &str = "iff ∃ b, b': same address, different datum, same constraint";
+    /// `forAll` -> `term_SR_5_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_SR_5_forAll";
+    /// `lhs` -> `term_SR_5_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_SR_5_lhs";
+    /// `rhs` -> `term_SR_5_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_SR_5_rhs";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str =
-        "Binding contradiction → SessionBoundary → ContradictionBoundary";
 }
 
 /// Nerve realisability: for any target (χ*, β₀* = 1, β_k* = 0 for k ≥ 1) with χ* ≤ n, there exists a ConstrainedType T over R_n whose constraint nerve realises the target.
 pub mod ts_1 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "target: χ* ≤ n, β₀* = 1, β_k* = 0 for k ≥ 1";
-    /// `lhs`
-    pub const LHS: &str = "nerve(T, target)";
-    /// `rhs`
-    pub const RHS: &str = "∃ ConstrainedType T over R_n realising target";
+    /// `forAll` -> `term_TS_1_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_TS_1_forAll";
+    /// `lhs` -> `term_TS_1_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_TS_1_lhs";
+    /// `rhs` -> `term_TS_1_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_TS_1_rhs";
     /// `verificationDomain` -> `Pipeline`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str =
-        "TypeSynthesisResolver → ConstraintNerve → target signature";
 }
 
 /// Minimal basis bound: for the IT_7d target (χ* = n, all β* = 0), the MinimalConstraintBasis has size exactly n (one constraint per fiber position). No redundant constraints exist in the minimal basis.
 pub mod ts_2 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "IT_7d target, n-fiber types";
-    /// `lhs`
-    pub const LHS: &str = "basisSize(T, IT_7d target)";
-    /// `rhs`
-    pub const RHS: &str = "n";
+    /// `forAll` -> `term_TS_2_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_TS_2_forAll";
+    /// `lhs` -> `term_TS_2_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_TS_2_lhs";
+    /// `rhs` -> `term_TS_2_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_TS_2_rhs";
     /// `verificationDomain` -> `Pipeline`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "MinimalConstraintBasis → basisSize = n for IT_7d";
 }
 
 /// Synthesis monotonicity: adding a constraint to a synthesis candidate never decreases the Euler characteristic of the resulting nerve (χ is monotone non-decreasing under constraint addition).
 pub mod ts_3 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "C: synthesis candidate constraint set";
-    /// `lhs`
-    pub const LHS: &str = "χ(N(C + constraint))";
-    /// `rhs`
-    pub const RHS: &str = "≥ χ(N(C))";
+    /// `forAll` -> `term_TS_3_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_TS_3_forAll";
+    /// `lhs` -> `term_TS_3_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_TS_3_lhs";
+    /// `rhs` -> `term_TS_3_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_TS_3_rhs";
     /// `verificationDomain` -> `Pipeline`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str =
-        "ConstraintNerve monotonicity under constraint addition";
 }
 
 /// Synthesis convergence: the TypeSynthesisResolver terminates for any realisable target in at most n constraint additions (for n-fiber types).
 pub mod ts_4 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "target: realisable n-fiber type synthesis goal";
-    /// `lhs`
-    pub const LHS: &str = "steps(TypeSynthesisResolver, target)";
-    /// `rhs`
-    pub const RHS: &str = "≤ n";
+    /// `forAll` -> `term_TS_4_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_TS_4_forAll";
+    /// `lhs` -> `term_TS_4_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_TS_4_lhs";
+    /// `rhs` -> `term_TS_4_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_TS_4_rhs";
     /// `verificationDomain` -> `Pipeline`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str =
-        "TypeSynthesisResolver terminates in ≤ n SynthesisStep additions";
 }
 
 /// Synthesis–certification duality: a SynthesizedType T achieves the IT_7d target if and only if the CompletenessResolver certifies T as a CompleteType. The forward ψ-pipeline and the inverse TypeSynthesisResolver are dual computations.
 pub mod ts_5 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "T: SynthesizedType";
-    /// `lhs`
-    pub const LHS: &str = "SynthesizedType achieves IT_7d";
-    /// `rhs`
-    pub const RHS: &str = "iff CompletenessResolver certifies CompleteType";
+    /// `forAll` -> `term_TS_5_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_TS_5_forAll";
+    /// `lhs` -> `term_TS_5_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_TS_5_lhs";
+    /// `rhs` -> `term_TS_5_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_TS_5_rhs";
     /// `verificationDomain` -> `Pipeline`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "TypeSynthesisResolver ↔ CompletenessResolver duality";
 }
 
 /// Jacobian-guided synthesis efficiency: using the Jacobian (DC_10) to select the next constraint reduces the expected number of synthesis steps from O(n²) (uninformed) to O(n log n) (Jacobian-guided).
 pub mod ts_6 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "T: n-fiber type synthesis goal";
-    /// `lhs`
-    pub const LHS: &str = "E[steps, Jacobian-guided synthesis]";
-    /// `rhs`
-    pub const RHS: &str = "O(n log n) vs O(n²) uninformed";
+    /// `forAll` -> `term_TS_6_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_TS_6_forAll";
+    /// `lhs` -> `term_TS_6_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_TS_6_lhs";
+    /// `rhs` -> `term_TS_6_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_TS_6_rhs";
     /// `verificationDomain` -> `Pipeline`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str =
-        "Jacobian DC_10 → guided ConstraintSearchState exploration";
 }
 
 /// Unreachable signatures: a Betti profile with β₀ = 0 is unreachable by any non-empty ConstrainedType — the nerve of a non-empty constraint set is always connected (β₀ ≥ 1).
 pub mod ts_7 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "C: non-empty constraint set";
-    /// `lhs`
-    pub const LHS: &str = "β₀(N(C)) for non-empty C";
-    /// `rhs`
-    pub const RHS: &str = "≥ 1";
+    /// `forAll` -> `term_TS_7_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_TS_7_forAll";
+    /// `lhs` -> `term_TS_7_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_TS_7_lhs";
+    /// `rhs` -> `term_TS_7_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_TS_7_rhs";
     /// `verificationDomain` -> `Pipeline`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "non-empty ConstraintNerve → β₀ ≥ 1 (connected)";
 }
 
 /// Lift unobstructedness criterion: QuantumLift T' is a CompleteType iff the spectral sequence E_r^{p,q} collapses at E_2 (d_2 = 0 and all higher differentials zero).
 pub mod qls_1 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "T: CompleteType at Q_n, T': QuantumLift to Q_{n+1}";
-    /// `lhs`
-    pub const LHS: &str = "QuantumLift T' is CompleteType";
-    /// `rhs`
-    pub const RHS: &str = "iff spectral sequence collapses at E_2";
+    /// `forAll` -> `term_QLS_1_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_QLS_1_forAll";
+    /// `lhs` -> `term_QLS_1_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_QLS_1_lhs";
+    /// `rhs` -> `term_QLS_1_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_QLS_1_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `IndexTheoretic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/IndexTheoretic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str =
-        "SpectralSequencePage convergedAt = 2 → trivial LiftObstruction";
 }
 
 /// Obstruction localisation: a non-trivial LiftObstruction is localised to a specific fiber at bit position n+1. The obstruction class lives in H²(N(C(T))) and is killed by adding one constraint involving the new fiber.
 pub mod qls_2 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "non-trivial LiftObstruction";
-    /// `lhs`
-    pub const LHS: &str = "non-trivial LiftObstruction location";
-    /// `rhs`
-    pub const RHS: &str = "specific fiber at bit position n+1";
+    /// `forAll` -> `term_QLS_2_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_QLS_2_forAll";
+    /// `lhs` -> `term_QLS_2_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_QLS_2_lhs";
+    /// `rhs` -> `term_QLS_2_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_QLS_2_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `IndexTheoretic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/IndexTheoretic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str =
-        "LiftObstructionClass → obstructionFiber at Q_{n+1} position";
 }
 
 /// Monotone lifting for trivially obstructed types: if T is a CompleteType at Q_n and its constraint set is closed under the Q_{n+1} extension map, then T' is a CompleteType at Q_{n+1} with basisSize(T') = basisSize(T) + 1.
 pub mod qls_3 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "T: CompleteType at Q_n with closed constraint set";
-    /// `lhs`
-    pub const LHS: &str = "basisSize(T') for trivial lift";
-    /// `rhs`
-    pub const RHS: &str = "basisSize(T) + 1";
+    /// `forAll` -> `term_QLS_3_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_QLS_3_forAll";
+    /// `lhs` -> `term_QLS_3_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_QLS_3_lhs";
+    /// `rhs` -> `term_QLS_3_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_QLS_3_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `IndexTheoretic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/IndexTheoretic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str =
-        "obstructionTrivial = true → basisSize increases by exactly 1";
 }
 
 /// Spectral sequence convergence bound: for constraint configurations of homological depth d (H_k(N(C(T))) = 0 for k > d), the spectral sequence converges by page E_{d+2}.
 pub mod qls_4 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "depth-d constraint configuration";
-    /// `lhs`
-    pub const LHS: &str = "spectral sequence convergence page";
-    /// `rhs`
-    pub const RHS: &str = "≤ E_{d+2}";
+    /// `forAll` -> `term_QLS_4_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_QLS_4_forAll";
+    /// `lhs` -> `term_QLS_4_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_QLS_4_lhs";
+    /// `rhs` -> `term_QLS_4_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_QLS_4_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `IndexTheoretic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/IndexTheoretic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str =
-        "SpectralSequencePage convergedAt ≤ homological depth + 2";
 }
 
 /// Universal identity preservation: every op:universallyValid identity holds in ℤ/(2^{n+1})ℤ with the lifted constraint set. The lift does not invalidate any certified universal identity.
 pub mod qls_5 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "every op:universallyValid identity, QuantumLift T'";
-    /// `lhs`
-    pub const LHS: &str = "universallyValid identity in R_{n+1}";
-    /// `rhs`
-    pub const RHS: &str = "holds with lifted constraint set";
+    /// `forAll` -> `term_QLS_5_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_QLS_5_forAll";
+    /// `lhs` -> `term_QLS_5_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_QLS_5_lhs";
+    /// `rhs` -> `term_QLS_5_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_QLS_5_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `IndexTheoretic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/IndexTheoretic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str =
-        "universallyValid identities preserved under QuantumLift extension";
 }
 
 /// ψ-pipeline universality for quantum lifts: the ψ-pipeline produces a valid ChainComplex for any QuantumLift T' — the chain complex of T' restricts to the chain complex of T on the base nerve, and the extension is well-formed by construction.
 pub mod qls_6 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "T': any QuantumLift of a CompleteType T";
-    /// `lhs`
-    pub const LHS: &str = "ψ-pipeline ChainComplex(T')";
-    /// `rhs`
-    pub const RHS: &str = "valid and restricts to ChainComplex(T) on base nerve";
+    /// `forAll` -> `term_QLS_6_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_QLS_6_forAll";
+    /// `lhs` -> `term_QLS_6_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_QLS_6_lhs";
+    /// `rhs` -> `term_QLS_6_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_QLS_6_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `IndexTheoretic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/IndexTheoretic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "ψ-pipeline → valid ChainComplex for any QuantumLift";
 }
 
 /// Holonomy group containment: HolonomyGroup(T) ≤ D_{2^n} for all ConstrainedTypes T over R_n. The holonomy group is always a subgroup of the full dihedral group.
 pub mod mn_1 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "T: ConstrainedType over R_n";
-    /// `lhs`
-    pub const LHS: &str = "HolonomyGroup(T)";
-    /// `rhs`
-    pub const RHS: &str = "≤ D_{2^n}";
+    /// `forAll` -> `term_MN_1_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_MN_1_forAll";
+    /// `lhs` -> `term_MN_1_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_MN_1_lhs";
+    /// `rhs` -> `term_MN_1_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_MN_1_rhs";
     /// `verificationDomain` -> `Topological`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Topological";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "HolonomyGroup subgroup containment in D_{2^n}";
 }
 
 /// Additive flatness (extends OB_H1): if all constraints in T are additive (ResidueConstraint or DepthConstraint type), then HolonomyGroup(T) = {id} — T is a FlatType.
 pub mod mn_2 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "T: all ResidueConstraint or DepthConstraint";
-    /// `lhs`
-    pub const LHS: &str = "HolonomyGroup(T) for additive constraints";
-    /// `rhs`
-    pub const RHS: &str = "{id} (trivial: T is FlatType)";
+    /// `forAll` -> `term_MN_2_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_MN_2_forAll";
+    /// `lhs` -> `term_MN_2_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_MN_2_lhs";
+    /// `rhs` -> `term_MN_2_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_MN_2_rhs";
     /// `verificationDomain` -> `Topological`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Topological";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "additive constraints → trivial monodromy → FlatType";
 }
 
 /// Dihedral generation: if T contains both a neg-related and a bnot-related constraint in a common closed path, then HolonomyGroup(T) = D_{2^n} — T has full dihedral holonomy.
 pub mod mn_3 {
-    /// `forAll`
-    pub const FOR_ALL: &str =
-        "T: ConstrainedType with neg-related and bnot-related constraints in closed path";
-    /// `lhs`
-    pub const LHS: &str = "HolonomyGroup(T) with neg + bnot in closed path";
-    /// `rhs`
-    pub const RHS: &str = "D_{2^n} (full dihedral holonomy)";
+    /// `forAll` -> `term_MN_3_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_MN_3_forAll";
+    /// `lhs` -> `term_MN_3_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_MN_3_lhs";
+    /// `rhs` -> `term_MN_3_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_MN_3_rhs";
     /// `verificationDomain` -> `Topological`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Topological";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str =
-        "neg + bnot generators in ClosedConstraintPath → full D_{2^n}";
 }
 
 /// Holonomy-Betti implication: HolonomyGroup(T) ≠ {id} ⟹ β₁(N(C(T))) ≥ 1. Non-trivial monodromy requires a topological loop. (Converse is false: β₁ ≥ 1 does not imply non-trivial holonomy.)
 pub mod mn_4 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "T: ConstrainedType";
-    /// `lhs`
-    pub const LHS: &str = "HolonomyGroup(T) ≠ {id}";
-    /// `rhs`
-    pub const RHS: &str = "⟹ β₁(N(C(T))) ≥ 1";
+    /// `forAll` -> `term_MN_4_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_MN_4_forAll";
+    /// `lhs` -> `term_MN_4_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_MN_4_lhs";
+    /// `rhs` -> `term_MN_4_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_MN_4_rhs";
     /// `verificationDomain` -> `Topological`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Topological";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str =
-        "non-trivial HolonomyGroup → β₁ ≥ 1 in ConstraintNerve";
 }
 
 /// CompleteType holonomy: a CompleteType (IT_7d: χ = n, all β = 0) has trivial holonomy. IT_7d implies FlatType because IT_7d requires β₁ = 0, which by MN_4 implies trivial monodromy.
 pub mod mn_5 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "T: CompleteType";
-    /// `lhs`
-    pub const LHS: &str = "CompleteType (IT_7d) ⟹ β₁ = 0 ⟹ holonomy";
-    /// `rhs`
-    pub const RHS: &str = "trivial ⟹ FlatType";
+    /// `forAll` -> `term_MN_5_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_MN_5_forAll";
+    /// `lhs` -> `term_MN_5_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_MN_5_lhs";
+    /// `rhs` -> `term_MN_5_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_MN_5_rhs";
     /// `verificationDomain` -> `Topological`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Topological";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "IT_7d → β₁ = 0 → trivial HolonomyGroup → FlatType";
 }
 
 /// Monodromy composition: if p₁ and p₂ are closed constraint paths, then monodromy(p₁ · p₂) = monodromy(p₁) · monodromy(p₂) in D_{2^n} (group homomorphism from loops to dihedral elements).
 pub mod mn_6 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "p₁, p₂: ClosedConstraintPath";
-    /// `lhs`
-    pub const LHS: &str = "monodromy(p₁ · p₂)";
-    /// `rhs`
-    pub const RHS: &str = "monodromy(p₁) · monodromy(p₂) in D_{2^n}";
+    /// `forAll` -> `term_MN_6_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_MN_6_forAll";
+    /// `lhs` -> `term_MN_6_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_MN_6_lhs";
+    /// `rhs` -> `term_MN_6_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_MN_6_rhs";
     /// `verificationDomain` -> `Topological`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Topological";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Monodromy composition homomorphism: π₁ → D_{2^n}";
 }
 
 /// TwistedType obstruction class: the monodromy of a TwistedType contributes a non-zero class to H²(N(C(T')); ℤ/2ℤ) where T' is any QuantumLift of T. TwistedTypes always have non-trivial lift obstructions.
 pub mod mn_7 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "T': any QuantumLift of TwistedType T";
-    /// `lhs`
-    pub const LHS: &str = "TwistedType T ⟹ H²(N(C(T')); ℤ/2ℤ)";
-    /// `rhs`
-    pub const RHS: &str = "non-zero class (non-trivial LiftObstruction)";
+    /// `forAll` -> `term_MN_7_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_MN_7_forAll";
+    /// `lhs` -> `term_MN_7_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_MN_7_lhs";
+    /// `rhs` -> `term_MN_7_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_MN_7_rhs";
     /// `verificationDomain` -> `Topological`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Topological";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str =
-        "TwistedType → non-trivial LiftObstruction at every quantum level";
 }
 
 /// Product type fiber additivity: fiberBudget(A × B) = fiberBudget(A) + fiberBudget(B).
 pub mod pt_1 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "A, B: TypeDefinition";
-    /// `lhs`
-    pub const LHS: &str = "fiberBudget(A × B)";
-    /// `rhs`
-    pub const RHS: &str = "fiberBudget(A) + fiberBudget(B)";
+    /// `forAll` -> `term_PT_1_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_PT_1_forAll";
+    /// `lhs` -> `term_PT_1_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_PT_1_lhs";
+    /// `rhs` -> `term_PT_1_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_PT_1_rhs";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "ProductType → FiberBudget additivity";
 }
 
 /// Product type partition product: partition(A × B) = partition(A) ⊗ partition(B).
 pub mod pt_2 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "A, B: TypeDefinition";
-    /// `lhs`
-    pub const LHS: &str = "partition(A × B)";
-    /// `rhs`
-    pub const RHS: &str = "partition(A) ⊗ partition(B)";
+    /// `forAll` -> `term_PT_2_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_PT_2_forAll";
+    /// `lhs` -> `term_PT_2_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_PT_2_lhs";
+    /// `rhs` -> `term_PT_2_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_PT_2_rhs";
     /// `verificationDomain` -> `Topological`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Topological";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "ProductType → Partition tensor product";
 }
 
 /// Product type Euler additivity: χ(N(C(A × B))) = χ(N(C(A))) + χ(N(C(B))).
 pub mod pt_3 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "A, B: TypeDefinition";
-    /// `lhs`
-    pub const LHS: &str = "χ(N(C(A × B)))";
-    /// `rhs`
-    pub const RHS: &str = "χ(N(C(A))) + χ(N(C(B)))";
+    /// `forAll` -> `term_PT_3_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_PT_3_forAll";
+    /// `lhs` -> `term_PT_3_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_PT_3_lhs";
+    /// `rhs` -> `term_PT_3_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_PT_3_rhs";
     /// `verificationDomain` -> `IndexTheoretic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/IndexTheoretic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str =
-        "ProductType → constraint nerve Euler characteristic additivity";
 }
 
 /// Product type entropy additivity: S(A × B) = S(A) + S(B).
 pub mod pt_4 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "A, B: TypeDefinition";
-    /// `lhs`
-    pub const LHS: &str = "S(A × B)";
-    /// `rhs`
-    pub const RHS: &str = "S(A) + S(B)";
+    /// `forAll` -> `term_PT_4_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_PT_4_forAll";
+    /// `lhs` -> `term_PT_4_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_PT_4_lhs";
+    /// `rhs` -> `term_PT_4_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_PT_4_rhs";
     /// `verificationDomain` -> `Thermodynamic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Thermodynamic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "ProductType → fiber entropy additivity";
 }
 
 /// Sum type fiber budget: fiberBudget(A + B) = max(fiberBudget(A), fiberBudget(B)).
 pub mod st_1 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "A, B: TypeDefinition";
-    /// `lhs`
-    pub const LHS: &str = "fiberBudget(A + B)";
-    /// `rhs`
-    pub const RHS: &str = "max(fiberBudget(A), fiberBudget(B))";
+    /// `forAll` -> `term_ST_1_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_ST_1_forAll";
+    /// `lhs` -> `term_ST_1_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_ST_1_lhs";
+    /// `rhs` -> `term_ST_1_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_ST_1_rhs";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "SumType → FiberBudget max";
 }
 
 /// Sum type entropy: S(A + B) = ln 2 + max(S(A), S(B)).
 pub mod st_2 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "A, B: TypeDefinition";
-    /// `lhs`
-    pub const LHS: &str = "S(A + B)";
-    /// `rhs`
-    pub const RHS: &str = "ln 2 + max(S(A), S(B))";
+    /// `forAll` -> `term_ST_2_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_ST_2_forAll";
+    /// `lhs` -> `term_ST_2_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_ST_2_lhs";
+    /// `rhs` -> `term_ST_2_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_ST_2_rhs";
     /// `verificationDomain` -> `Thermodynamic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Thermodynamic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "SumType → entropy with binary choice overhead";
 }
 
 /// Context temperature: T_ctx(C) = freeCount(C) × ln 2 / n.
 pub mod sc_1 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "C: Context, n = fiberBudget";
-    /// `lhs`
-    pub const LHS: &str = "T_ctx(C)";
-    /// `rhs`
-    pub const RHS: &str = "freeCount(C) × ln 2 / n";
+    /// `forAll` -> `term_SC_1_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_SC_1_forAll";
+    /// `lhs` -> `term_SC_1_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_SC_1_lhs";
+    /// `rhs` -> `term_SC_1_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_SC_1_rhs";
     /// `verificationDomain` -> `Thermodynamic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Thermodynamic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str =
-        "TH_1 → normalized entropy per fiber → context temperature";
 }
 
 /// Saturation degree: σ(C) = (n − freeCount(C)) / n.
 pub mod sc_2 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "C: Context, n = fiberBudget";
-    /// `lhs`
-    pub const LHS: &str = "σ(C)";
-    /// `rhs`
-    pub const RHS: &str = "(n − freeCount(C)) / n";
+    /// `forAll` -> `term_SC_2_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_SC_2_forAll";
+    /// `lhs` -> `term_SC_2_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_SC_2_lhs";
+    /// `rhs` -> `term_SC_2_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_SC_2_rhs";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Definitional: normalized coldness of context";
 }
 
 /// Saturation monotonicity: σ(B_{i+1}) ≥ σ(B_i) for all i in a Session.
 pub mod sc_3 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "i in Session S";
-    /// `lhs`
-    pub const LHS: &str = "σ(B_{i+1})";
-    /// `rhs`
-    pub const RHS: &str = "≥ σ(B_i)";
+    /// `forAll` -> `term_SC_3_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_SC_3_forAll";
+    /// `lhs` -> `term_SC_3_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_SC_3_lhs";
+    /// `rhs` -> `term_SC_3_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_SC_3_rhs";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str =
-        "SR_1 → order-reversing definition of SC_2 → monotone cooling";
 }
 
 /// Ground state equivalence: σ(C) = 1 ↔ freeCount(C) = 0 ↔ S(C) = 0 ↔ T_ctx(C) = 0.
 pub mod sc_4 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "C: Context";
-    /// `lhs`
-    pub const LHS: &str = "σ(C) = 1";
-    /// `rhs`
-    pub const RHS: &str = "freeCount(C) = 0 ↔ S(C) = 0 ↔ T_ctx(C) = 0";
+    /// `forAll` -> `term_SC_4_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_SC_4_forAll";
+    /// `lhs` -> `term_SC_4_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_SC_4_lhs";
+    /// `rhs` -> `term_SC_4_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_SC_4_rhs";
     /// `verificationDomain` -> `Thermodynamic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Thermodynamic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str =
-        "SC_2 + TH_1 + SC_1 → four equivalent ground-state conditions";
 }
 
 /// O(1) resolution guarantee: freeCount(C) = 0 ∧ q.address ∈ bindings(C) → stepCount(q, C) = 0.
 pub mod sc_5 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "q: Query, C: SaturatedContext";
-    /// `lhs`
-    pub const LHS: &str = "stepCount(q, C) at freeCount(C) = 0";
-    /// `rhs`
-    pub const RHS: &str = "0";
+    /// `forAll` -> `term_SC_5_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_SC_5_forAll";
+    /// `lhs` -> `term_SC_5_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_SC_5_lhs";
+    /// `rhs` -> `term_SC_5_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_SC_5_rhs";
     /// `verificationDomain` -> `Pipeline`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "SR_2 + FiberBudget.isClosed → direct coordinate read";
 }
 
 /// Pre-reduction of effective budget: effectiveBudget(q, C) = max(0, fiberBudget(q.type) − |pinnedFibers(C) ∩ q.fiberSet|).
 pub mod sc_6 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "q: Query, C: Context";
-    /// `lhs`
-    pub const LHS: &str = "effectiveBudget(q, C)";
-    /// `rhs`
-    pub const RHS: &str = "max(0, fiberBudget(q.type) − |pinnedFibers(C) ∩ q.fiberSet|)";
+    /// `forAll` -> `term_SC_6_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_SC_6_forAll";
+    /// `lhs` -> `term_SC_6_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_SC_6_lhs";
+    /// `rhs` -> `term_SC_6_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_SC_6_rhs";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str =
-        "Session-scoped fiber reduction → partial saturation budget";
 }
 
 /// Thermodynamic cooling cost: Cost_saturation(C) = n × k_B T × ln 2.
 pub mod sc_7 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "C: SaturatedContext, n = fiberBudget";
-    /// `lhs`
-    pub const LHS: &str = "Cost_saturation(C)";
-    /// `rhs`
-    pub const RHS: &str = "n × k_B T × ln 2";
+    /// `forAll` -> `term_SC_7_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_SC_7_forAll";
+    /// `lhs` -> `term_SC_7_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_SC_7_lhs";
+    /// `rhs` -> `term_SC_7_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_SC_7_rhs";
     /// `verificationDomain` -> `Thermodynamic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Thermodynamic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "SR_1 + TH_4 → n fiber-closures at Landauer cost each";
 }
 
 /// Connectivity lower bound: β₀(N(C)) ≥ 1 for all non-empty C.
 pub mod ms_1 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "C: non-empty ConstrainedType";
-    /// `lhs`
-    pub const LHS: &str = "β₀(N(C))";
-    /// `rhs`
-    pub const RHS: &str = "≥ 1";
+    /// `forAll` -> `term_MS_1_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_MS_1_forAll";
+    /// `lhs` -> `term_MS_1_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_MS_1_lhs";
+    /// `rhs` -> `term_MS_1_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_MS_1_rhs";
     /// `verificationDomain` -> `Pipeline`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str =
-        "TS_7 formalisation → constraint nerve always connected";
 }
 
 /// Euler capacity ceiling: χ(N(C)) ≤ n for all C at quantum level n.
 pub mod ms_2 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "C: ConstrainedType at quantum level n";
-    /// `lhs`
-    pub const LHS: &str = "χ(N(C))";
-    /// `rhs`
-    pub const RHS: &str = "≤ n";
+    /// `forAll` -> `term_MS_2_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_MS_2_forAll";
+    /// `lhs` -> `term_MS_2_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_MS_2_lhs";
+    /// `rhs` -> `term_MS_2_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_MS_2_rhs";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "TS_1 → constraint nerve dimension bound → χ ≤ n";
 }
 
 /// Betti monotonicity under addition: χ(N(C + c)) ≥ χ(N(C)) for any constraint c added to C.
 pub mod ms_3 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "C: ConstrainedType, c: Constraint";
-    /// `lhs`
-    pub const LHS: &str = "χ(N(C + c))";
-    /// `rhs`
-    pub const RHS: &str = "≥ χ(N(C))";
+    /// `forAll` -> `term_MS_3_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_MS_3_forAll";
+    /// `lhs` -> `term_MS_3_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_MS_3_lhs";
+    /// `rhs` -> `term_MS_3_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_MS_3_rhs";
     /// `verificationDomain` -> `Topological`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Topological";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str =
-        "TS_3 formalisation → monotone traversal of morphospace";
 }
 
 /// Level-relative achievability: a signature achievable at quantum level n remains achievable at level n+1.
 pub mod ms_4 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "(χ*, β_k*) achievable at level n";
-    /// `lhs`
-    pub const LHS: &str = "achievable(χ*, β_k*, n)";
-    /// `rhs`
-    pub const RHS: &str = "→ achievable(χ*, β_k*, n+1)";
+    /// `forAll` -> `term_MS_4_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_MS_4_forAll";
+    /// `lhs` -> `term_MS_4_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_MS_4_lhs";
+    /// `rhs` -> `term_MS_4_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_MS_4_rhs";
     /// `verificationDomain` -> `Pipeline`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "QuantumLift → morphospace grows with quantum level";
 }
 
 /// Empirical completeness convergence: verified SynthesisSignature individuals converge to the exact morphospace boundary.
 pub mod ms_5 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "all quantum levels";
-    /// `lhs`
-    pub const LHS: &str = "verified SynthesisSignature set";
-    /// `rhs`
-    pub const RHS: &str = "→ exact morphospace boundary in the limit";
+    /// `forAll` -> `term_MS_5_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_MS_5_forAll";
+    /// `lhs` -> `term_MS_5_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_MS_5_lhs";
+    /// `rhs` -> `term_MS_5_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_MS_5_rhs";
     /// `verificationDomain` -> `Pipeline`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str =
-        "EmpiricalVerification accumulation → convergence statement";
 }
 
 /// Geodesic condition: a ComputationTrace is a geodesic iff its steps are AR_1-ordered and each step selects the constraint maximising J_k over free fibers (DC_10).
 pub mod gd_1 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "T: ComputationTrace";
-    /// `lhs`
-    pub const LHS: &str = "isGeodesic(T)";
-    /// `rhs`
-    pub const RHS: &str = "AR_1-ordered(T) ∧ DC_10-selected(T)";
+    /// `forAll` -> `term_GD_1_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_GD_1_forAll";
+    /// `lhs` -> `term_GD_1_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_GD_1_lhs";
+    /// `rhs` -> `term_GD_1_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_GD_1_rhs";
     /// `verificationDomain` -> `Analytical`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Analytical";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "AR_1 + DC_10 → dual geodesic condition";
 }
 
 /// Geodesic entropy bound: ΔS_step(i) = ln 2 for every step i of a geodesic trace.
 pub mod gd_2 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "step i of GeodesicTrace T";
-    /// `lhs`
-    pub const LHS: &str = "ΔS_step(i) on geodesic";
-    /// `rhs`
-    pub const RHS: &str = "ln 2";
+    /// `forAll` -> `term_GD_2_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_GD_2_forAll";
+    /// `lhs` -> `term_GD_2_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_GD_2_lhs";
+    /// `rhs` -> `term_GD_2_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_GD_2_rhs";
     /// `verificationDomain` -> `Thermodynamic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Thermodynamic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str =
-        "AR_1 minimum-cost step + TH_1 → constant ln 2 per step";
 }
 
 /// Total geodesic cost: Cost_geodesic(T) = freeCount_initial × k_B T ln 2 = TH_4.
 pub mod gd_3 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "T: GeodesicTrace";
-    /// `lhs`
-    pub const LHS: &str = "Cost_geodesic(T)";
-    /// `rhs`
-    pub const RHS: &str = "freeCount_initial × k_B T × ln 2";
+    /// `forAll` -> `term_GD_3_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_GD_3_forAll";
+    /// `lhs` -> `term_GD_3_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_GD_3_lhs";
+    /// `rhs` -> `term_GD_3_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_GD_3_rhs";
     /// `verificationDomain` -> `Thermodynamic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Thermodynamic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "GD_2 × stepCount → Landauer bound TH_4 with equality";
 }
 
 /// Geodesic uniqueness up to step-order equivalence: all geodesics for the same ConstrainedType share stepCount and constraint set.
 pub mod gd_4 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "T, T': GeodesicTrace on same ConstrainedType";
-    /// `lhs`
-    pub const LHS: &str = "Cost(T) for geodesic T";
-    /// `rhs`
-    pub const RHS: &str = "= Cost(T') for any geodesic T' on same type";
+    /// `forAll` -> `term_GD_4_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_GD_4_forAll";
+    /// `lhs` -> `term_GD_4_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_GD_4_lhs";
+    /// `rhs` -> `term_GD_4_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_GD_4_rhs";
     /// `verificationDomain` -> `Analytical`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Analytical";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Equal-J_k permutation → cost invariance";
 }
 
 /// Subgeodesic detectability: a trace is sub-geodesic iff ∃ step i where J_k(step_i) < max_{free fibers} J_k(state_i).
 pub mod gd_5 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "T: ComputationTrace";
-    /// `lhs`
-    pub const LHS: &str = "isSubgeodesic(T)";
-    /// `rhs`
-    pub const RHS: &str = "∃ i: J_k(step_i) < max_{free} J_k(state_i)";
+    /// `forAll` -> `term_GD_5_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_GD_5_forAll";
+    /// `lhs` -> `term_GD_5_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_GD_5_lhs";
+    /// `rhs` -> `term_GD_5_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_GD_5_rhs";
     /// `verificationDomain` -> `Pipeline`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str =
-        "GeodesicValidator → step-by-step J_k check → violation detection";
 }
 
 /// Von Neumann–Landauer bridge: S_vonNeumann(ψ) = Cost_Landauer(collapse(ψ)).
 pub mod qm_1 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "ψ: SuperposedFiberState";
-    /// `lhs`
-    pub const LHS: &str = "S_vonNeumann(ψ)";
-    /// `rhs`
-    pub const RHS: &str = "Cost_Landauer(collapse(ψ))";
+    /// `forAll` -> `term_QM_1_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_QM_1_forAll";
+    /// `lhs` -> `term_QM_1_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_QM_1_lhs";
+    /// `rhs` -> `term_QM_1_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_QM_1_rhs";
     /// `verificationDomain` -> `QuantumThermodynamic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/QuantumThermodynamic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str =
-        "Von Neumann entropy = Landauer erasure cost at β* = ln 2";
 }
 
 /// Measurement as fiber topology change: projective collapse on a SuperposedFiberState is topologically equivalent to applying a ResidueConstraint that pins the collapsed fiber.
 pub mod qm_2 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "ψ: SuperposedFiberState";
-    /// `lhs`
-    pub const LHS: &str = "collapse(ψ)";
-    /// `rhs`
-    pub const RHS: &str = "apply(ResidueConstraint, collapsed_fiber)";
+    /// `forAll` -> `term_QM_2_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_QM_2_forAll";
+    /// `lhs` -> `term_QM_2_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_QM_2_lhs";
+    /// `rhs` -> `term_QM_2_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_QM_2_rhs";
     /// `verificationDomain` -> `Topological`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Topological";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str =
-        "Projective collapse ≅ classical fiber-pinning → ψ-pipeline applies";
 }
 
 /// Superposition entropy bound: 0 ≤ S_vN(ψ) ≤ ln 2 for any single-fiber SuperposedFiberState.
 pub mod qm_3 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "ψ: single-fiber SuperposedFiberState";
-    /// `lhs`
-    pub const LHS: &str = "S_vN(ψ)";
-    /// `rhs`
-    pub const RHS: &str = "∈ [0, ln 2]";
+    /// `forAll` -> `term_QM_3_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_QM_3_forAll";
+    /// `lhs` -> `term_QM_3_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_QM_3_lhs";
+    /// `rhs` -> `term_QM_3_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_QM_3_rhs";
     /// `verificationDomain` -> `QuantumThermodynamic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/QuantumThermodynamic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str =
-        "Von Neumann entropy bounds → maximum at equal superposition";
 }
 
 /// Collapse idempotence: collapse(collapse(ψ)) = collapse(ψ). Measurement on an already-collapsed state is a no-op.
 pub mod qm_4 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "ψ: SuperposedFiberState";
-    /// `lhs`
-    pub const LHS: &str = "collapse(collapse(ψ))";
-    /// `rhs`
-    pub const RHS: &str = "collapse(ψ)";
+    /// `forAll` -> `term_QM_4_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_QM_4_forAll";
+    /// `lhs` -> `term_QM_4_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_QM_4_lhs";
+    /// `rhs` -> `term_QM_4_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_QM_4_rhs";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str =
-        "CollapsedFiberState → re-measurement is no-op → stepCount = 0";
 }
 
 /// Amplitude normalization (Born rule): the sum of squared amplitudes equals 1 for any well-formed SuperposedFiberState.
 pub mod qm_5 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "SuperposedFiberState ψ";
-    /// `lhs`
-    pub const LHS: &str = "Σᵢ |αᵢ|²";
-    /// `rhs`
-    pub const RHS: &str = "1";
+    /// `forAll` -> `term_QM_5_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_QM_5_forAll";
+    /// `lhs` -> `term_QM_5_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_QM_5_lhs";
+    /// `rhs` -> `term_QM_5_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_QM_5_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `QuantumThermodynamic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/QuantumThermodynamic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Born rule → probability axioms → normalization";
 }
 
 /// Amplitude renormalization: a SuperposedFiberState can always be normalized to satisfy QM_5.
 pub mod rc_6 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "SuperposedFiberState ψ";
-    /// `lhs`
-    pub const LHS: &str = "normalize(ψ)";
-    /// `rhs`
-    pub const RHS: &str = "ψ / sqrt(Σ |αᵢ|²)";
+    /// `forAll` -> `term_RC_6_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_RC_6_forAll";
+    /// `lhs` -> `term_RC_6_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_RC_6_lhs";
+    /// `rhs` -> `term_RC_6_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_RC_6_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `SuperpositionDomain`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/SuperpositionDomain";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Division by norm → idempotent normalization";
 }
 
 /// Partition exhaustiveness: the four component cardinalities sum to the ring size.
 pub mod fpm_8 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "Partition P over R_n";
-    /// `lhs`
-    pub const LHS: &str = "|Irr| + |Red| + |Unit| + |Ext|";
-    /// `rhs`
-    pub const RHS: &str = "2ⁿ";
+    /// `forAll` -> `term_FPM_8_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_FPM_8_forAll";
+    /// `lhs` -> `term_FPM_8_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_FPM_8_lhs";
+    /// `rhs` -> `term_FPM_8_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_FPM_8_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Enumerative`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Enumerative";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Exhaustive partition → cardinality sum → ring size";
 }
 
 /// Exterior membership criterion: x is exterior iff x is not in the carrier of T.
 pub mod fpm_9 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "TypeDefinition T, Datum x";
-    /// `lhs`
-    pub const LHS: &str = "x ∈ Ext(T)";
-    /// `rhs`
-    pub const RHS: &str = "x ∉ carrier(T)";
+    /// `forAll` -> `term_FPM_9_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_FPM_9_forAll";
+    /// `lhs` -> `term_FPM_9_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_FPM_9_lhs";
+    /// `rhs` -> `term_FPM_9_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_FPM_9_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Carrier complement → context-dependent exterior";
 }
 
 /// Holonomy classification covering: every ConstrainedType with a computed holonomy group is either flat or twisted, not both.
 pub mod mn_8 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "ConstrainedType T with holonomyGroup";
-    /// `lhs`
-    pub const LHS: &str = "holonomyClassified(T)";
-    /// `rhs`
-    pub const RHS: &str = "isFlatType(T) xor isTwistedType(T)";
+    /// `forAll` -> `term_MN_8_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_MN_8_forAll";
+    /// `lhs` -> `term_MN_8_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_MN_8_lhs";
+    /// `rhs` -> `term_MN_8_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_MN_8_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Topological`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Topological";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str =
-        "Holonomy group → flat iff trivial → bivalent classification";
 }
 
 /// Quantum level chain inverse: levelSuccessor is the left inverse of nextLevel.
 pub mod ql_8 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "QuantumLevel Q_k with nextLevel defined";
-    /// `lhs`
-    pub const LHS: &str = "levelSuccessor(nextLevel(Q_k))";
-    /// `rhs`
-    pub const RHS: &str = "Q_k";
+    /// `forAll` -> `term_QL_8_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_QL_8_forAll";
+    /// `lhs` -> `term_QL_8_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_QL_8_lhs";
+    /// `rhs` -> `term_QL_8_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_QL_8_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Chain successor → left inverse → Q_k recovery";
 }
 
 /// Dihedral composition rule: (rᵃ sᵖ)(rᵇ sᵠ) = r^(a + (-1)ᵖ b mod 2ⁿ) s^(p xor q).
 pub mod d_7 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "DihedralElement rᵃ sᵖ, rᵇ sᵠ in D_{2ⁿ}";
-    /// `lhs`
-    pub const LHS: &str = "compose(rᵃ sᵖ, rᵇ sᵠ)";
-    /// `rhs`
-    pub const RHS: &str = "r^((a + (-1)ᵖ b) mod 2ⁿ) s^(p xor q)";
+    /// `forAll` -> `term_D_7_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_D_7_forAll";
+    /// `lhs` -> `term_D_7_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_D_7_lhs";
+    /// `rhs` -> `term_D_7_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_D_7_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Geometric`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Geometric";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str =
-        "Dihedral presentation → semidirect product → composition formula";
 }
 
 /// Classical embedding: superposition resolution of a classical (non-superposed) datum reduces to classical resolution.
 pub mod sp_1 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "Datum x";
-    /// `lhs`
-    pub const LHS: &str = "resolve_superposition(classical(x))";
-    /// `rhs`
-    pub const RHS: &str = "resolve_classical(x)";
+    /// `forAll` -> `term_SP_1_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_SP_1_forAll";
+    /// `lhs` -> `term_SP_1_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_SP_1_lhs";
+    /// `rhs` -> `term_SP_1_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_SP_1_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `SuperpositionDomain`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/SuperpositionDomain";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str =
-        "Classical datum → single fiber with amplitude 1 → classical path";
 }
 
 /// Collapse–resolve commutativity: collapsing then resolving classically equals resolving in superposition then collapsing.
 pub mod sp_2 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "SuperposedFiberState ψ";
-    /// `lhs`
-    pub const LHS: &str = "collapse(resolve_superposition(ψ))";
-    /// `rhs`
-    pub const RHS: &str = "resolve_classical(collapse(ψ))";
+    /// `forAll` -> `term_SP_2_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_SP_2_forAll";
+    /// `lhs` -> `term_SP_2_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_SP_2_lhs";
+    /// `rhs` -> `term_SP_2_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_SP_2_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `QuantumThermodynamic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/QuantumThermodynamic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str =
-        "Projective collapse → classical fiber → resolution commutativity";
 }
 
 /// Amplitude preservation: the SuperpositionResolver preserves the normalized amplitude vector during ψ-pipeline traversal.
 pub mod sp_3 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "SuperposedFiberState ψ";
-    /// `lhs`
-    pub const LHS: &str = "amplitudeVector(resolve_superposition(ψ))";
-    /// `rhs`
-    pub const RHS: &str = "normalized";
+    /// `forAll` -> `term_SP_3_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_SP_3_forAll";
+    /// `lhs` -> `term_SP_3_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_SP_3_lhs";
+    /// `rhs` -> `term_SP_3_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_SP_3_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `SuperpositionDomain`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/SuperpositionDomain";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str =
-        "ψ-pipeline → amplitude tracking → normalization invariant";
 }
 
 /// Born rule outcome probability: the probability of collapsing to fiber k equals the squared amplitude of that fiber.
 pub mod sp_4 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "SuperposedFiberState ψ, fiber index k";
-    /// `lhs`
-    pub const LHS: &str = "P(collapse to fiber k)";
-    /// `rhs`
-    pub const RHS: &str = "|α_k|²";
+    /// `forAll` -> `term_SP_4_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_SP_4_forAll";
+    /// `lhs` -> `term_SP_4_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_SP_4_lhs";
+    /// `rhs` -> `term_SP_4_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_SP_4_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `QuantumThermodynamic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/QuantumThermodynamic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Born rule → squared amplitude → outcome probability";
 }
 
 /// Product type partition tensor: the partition of a product type is the tensor product of the component partitions.
 pub mod pt_2a {
-    /// `forAll`
-    pub const FOR_ALL: &str = "ProductType A × B";
-    /// `lhs`
-    pub const LHS: &str = "Π(A × B)";
-    /// `rhs`
-    pub const RHS: &str = "PartitionProduct(Π(A), Π(B))";
+    /// `forAll` -> `term_PT_2a_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_PT_2a_forAll";
+    /// `lhs` -> `term_PT_2a_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_PT_2a_lhs";
+    /// `rhs` -> `term_PT_2a_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_PT_2a_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str =
-        "Product type → component-wise partition → tensor product";
 }
 
 /// Sum type partition coproduct: the partition of a sum type is the coproduct of the variant partitions.
 pub mod pt_2b {
-    /// `forAll`
-    pub const FOR_ALL: &str = "SumType A + B";
-    /// `lhs`
-    pub const LHS: &str = "Π(A + B)";
-    /// `rhs`
-    pub const RHS: &str = "PartitionCoproduct(Π(A), Π(B))";
+    /// `forAll` -> `term_PT_2b_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_PT_2b_forAll";
+    /// `lhs` -> `term_PT_2b_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_PT_2b_lhs";
+    /// `rhs` -> `term_PT_2b_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_PT_2b_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str =
-        "Sum type → variant partition → disjoint union coproduct";
 }
 
 /// Geodesic predicate decomposition: a trace is geodesic iff it is both AR_1-ordered and DC_10-selected.
 pub mod gd_6 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "ComputationTrace trace";
-    /// `lhs`
-    pub const LHS: &str = "isGeodesic(trace)";
-    /// `rhs`
-    pub const RHS: &str = "isAR1Ordered(trace) ∧ isDC10Selected(trace)";
+    /// `forAll` -> `term_GD_6_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_GD_6_forAll";
+    /// `lhs` -> `term_GD_6_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_GD_6_lhs";
+    /// `rhs` -> `term_GD_6_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_GD_6_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Analytical`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Analytical";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str =
-        "Geodesic condition → AR_1 ordering + DC_10 selection → conjunction";
 }
 
 /// LiftChain(Q_j, Q_k) is valid CompleteType tower iff every chainStep QuantumLift has trivial or resolved LiftObstruction.
 pub mod qt_1 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "LiftChain from Q_j to Q_k";
-    /// `lhs`
-    pub const LHS: &str = "LiftChain(Q_j, Q_k) valid";
-    /// `rhs`
-    pub const RHS: &str = "every chainStep has trivial or resolved LiftObstruction";
+    /// `forAll` -> `term_QT_1_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_QT_1_forAll";
+    /// `lhs` -> `term_QT_1_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_QT_1_lhs";
+    /// `rhs` -> `term_QT_1_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_QT_1_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `IndexTheoretic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/IndexTheoretic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "LiftChain → chainStep → LiftObstruction resolution";
 }
 
 /// Obstruction count bound: the number of non-trivial LiftObstructions in a chain is at most the chain length.
 pub mod qt_2 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "LiftChain";
-    /// `lhs`
-    pub const LHS: &str = "obstructionCount(chain)";
-    /// `rhs`
-    pub const RHS: &str = "<= chainLength(chain)";
+    /// `forAll` -> `term_QT_2_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_QT_2_forAll";
+    /// `lhs` -> `term_QT_2_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_QT_2_lhs";
+    /// `rhs` -> `term_QT_2_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_QT_2_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `IndexTheoretic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/IndexTheoretic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str =
-        "LiftChain → ObstructionChain → obstructionCount ≤ chainLength";
 }
 
 /// Resolved basis size formula: the basis size at Q_k equals basisSize(Q_j) + chainLength + obstructionResolutionCost.
 pub mod qt_3 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "LiftChain with source Q_j, target Q_k";
-    /// `lhs`
-    pub const LHS: &str = "resolvedBasisSize(Q_k)";
-    /// `rhs`
-    pub const RHS: &str = "basisSize(Q_j) + chainLength + obstructionResolutionCost";
+    /// `forAll` -> `term_QT_3_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_QT_3_forAll";
+    /// `lhs` -> `term_QT_3_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_QT_3_lhs";
+    /// `rhs` -> `term_QT_3_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_QT_3_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `IndexTheoretic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/IndexTheoretic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "LiftChain → resolvedBasisSize accumulation formula";
 }
 
 /// Flat tower characterization: isFlat(chain) iff obstructionCount = 0 iff HolonomyGroup trivial at every step.
 pub mod qt_4 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "LiftChain";
-    /// `lhs`
-    pub const LHS: &str = "isFlat(chain)";
-    /// `rhs`
-    pub const RHS: &str = "obstructionCount = 0 iff HolonomyGroup trivial at every step";
+    /// `forAll` -> `term_QT_4_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_QT_4_forAll";
+    /// `lhs` -> `term_QT_4_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_QT_4_lhs";
+    /// `rhs` -> `term_QT_4_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_QT_4_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Topological`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Topological";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str =
-        "LiftChain → ObstructionChain → isFlat ↔ trivial holonomy";
 }
 
 /// LiftChainCertificate existence: a CompleteType at Q_k satisfies IT_7d with a witness chain.
 pub mod qt_5 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "Q_k for arbitrary k";
-    /// `lhs`
-    pub const LHS: &str = "LiftChainCertificate exists";
-    /// `rhs`
-    pub const RHS: &str = "CompleteType at Q_k satisfies IT_7d with witness chain";
+    /// `forAll` -> `term_QT_5_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_QT_5_forAll";
+    /// `lhs` -> `term_QT_5_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_QT_5_lhs";
+    /// `rhs` -> `term_QT_5_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_QT_5_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `IndexTheoretic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/IndexTheoretic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str =
-        "LiftChainCertificate → certifiedChain → IT_7d compliance";
 }
 
 /// Single-step reduction: QT_3 with chainLength=1 and cost=0 reduces to QLS_3.
 pub mod qt_6 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "Single-step chains";
-    /// `lhs`
-    pub const LHS: &str = "QT_3 with chainLength=1, cost=0";
-    /// `rhs`
-    pub const RHS: &str = "reduces to QLS_3";
+    /// `forAll` -> `term_QT_6_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_QT_6_forAll";
+    /// `lhs` -> `term_QT_6_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_QT_6_lhs";
+    /// `rhs` -> `term_QT_6_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_QT_6_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `IndexTheoretic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/IndexTheoretic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "QT_3 specialization → chainLength=1 → QLS_3 identity";
 }
 
 /// Flat chain basis size: for flat chains, resolvedBasisSize(Q_k) = basisSize(Q_j) + (k - j).
 pub mod qt_7 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "LiftChain with isFlat = true";
-    /// `lhs`
-    pub const LHS: &str = "flat chain resolvedBasisSize(Q_k)";
-    /// `rhs`
-    pub const RHS: &str = "basisSize(Q_j) + (k - j)";
+    /// `forAll` -> `term_QT_7_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_QT_7_forAll";
+    /// `lhs` -> `term_QT_7_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_QT_7_lhs";
+    /// `rhs` -> `term_QT_7_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_QT_7_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `IndexTheoretic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/IndexTheoretic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str =
-        "Flat LiftChain → zero obstruction cost → linear basis growth";
 }
 
 /// Carry-constraint fiber-pinning map: pinsFibers(CarryConstraint(p)) equals the set of bit positions where p has a 1 plus the first-zero stopping position.
 pub mod cc_pins {
-    /// `forAll`
-    pub const FOR_ALL: &str = "bit-pattern p in CarryConstraint";
-    /// `lhs`
-    pub const LHS: &str = "pinsFibers(CarryConstraint(p))";
-    /// `rhs`
-    pub const RHS: &str = "{k : p(k)=1} union {first-zero(p)}";
+    /// `forAll` -> `term_CC_PINS_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_CC_PINS_forAll";
+    /// `lhs` -> `term_CC_PINS_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_CC_PINS_lhs";
+    /// `rhs` -> `term_CC_PINS_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_CC_PINS_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Ring carry propagation rule; exhaustive enum at Q0";
 }
 
 /// Carry-constraint cost-to-fiber count: the number of fibers pinned by a CarryConstraint equals popcount plus one for the stopping position.
 pub mod cc_cost_fiber {
-    /// `forAll`
-    pub const FOR_ALL: &str = "bit-pattern p in CarryConstraint";
-    /// `lhs`
-    pub const LHS: &str = "|pinsFibers(CarryConstraint(p))|";
-    /// `rhs`
-    pub const RHS: &str = "popcount(p) + 1";
+    /// `forAll` -> `term_CC_COST_FIBER_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_CC_COST_FIBER_forAll";
+    /// `lhs` -> `term_CC_COST_FIBER_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_CC_COST_FIBER_lhs";
+    /// `rhs` -> `term_CC_COST_FIBER_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_CC_COST_FIBER_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Enumerative`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Enumerative";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Exhaustive enumeration at Q0; refines cr_2";
 }
 
 /// CRT joint satisfiability: two ResidueConstraints are jointly satisfiable iff the gcd of their moduli divides the difference of their residues.
 pub mod jsat_rr {
-    /// `forAll`
-    pub const FOR_ALL: &str = "ResidueConstraint pairs over R_n";
-    /// `lhs`
-    pub const LHS: &str = "jointSat(Res(m1,r1), Res(m2,r2))";
-    /// `rhs`
-    pub const RHS: &str = "gcd(m1,m2) | (r1 - r2)";
+    /// `forAll` -> `term_jsat_RR_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_jsat_RR_forAll";
+    /// `lhs` -> `term_jsat_RR_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_jsat_RR_lhs";
+    /// `rhs` -> `term_jsat_RR_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_jsat_RR_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Chinese Remainder Theorem; exhaustive enum at Q0";
 }
 
 /// Carry-residue joint satisfiability: a CarryConstraint and ResidueConstraint are jointly satisfiable iff the carry-pinned fibers are compatible with the residue class.
 pub mod jsat_cr {
-    /// `forAll`
-    pub const FOR_ALL: &str = "CarryConstraint, ResidueConstraint pairs";
-    /// `lhs`
-    pub const LHS: &str = "jointSat(Carry(p), Res(m,r))";
-    /// `rhs`
-    pub const RHS: &str = "pin-fiber intersection residue-class compatible";
+    /// `forAll` -> `term_jsat_CR_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_jsat_CR_forAll";
+    /// `lhs` -> `term_jsat_CR_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_jsat_CR_lhs";
+    /// `rhs` -> `term_jsat_CR_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_jsat_CR_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Carry stopping rule + residue class intersection";
 }
 
 /// Carry-carry joint satisfiability: two CarryConstraints are jointly satisfiable iff their bit-patterns have no conflicting positions.
 pub mod jsat_cc {
-    /// `forAll`
-    pub const FOR_ALL: &str = "CarryConstraint pairs over R_n";
-    /// `lhs`
-    pub const LHS: &str = "jointSat(Carry(p1), Carry(p2))";
-    /// `rhs`
-    pub const RHS: &str = "p1 AND p2 conflict-free";
+    /// `forAll` -> `term_jsat_CC_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_jsat_CC_forAll";
+    /// `lhs` -> `term_jsat_CC_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_jsat_CC_lhs";
+    /// `rhs` -> `term_jsat_CC_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_jsat_CC_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Enumerative`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Enumerative";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Bit-pattern exhaustive enumeration at Q0";
 }
 
 /// Dihedral inverse formula: the inverse of r^a s^p in D_(2^n) is r^(-(−1)^p a mod 2^n) s^p.
 pub mod d_8 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "a in 0..2^n, p in {0,1}";
-    /// `lhs`
-    pub const LHS: &str = "(r^a s^p)^(-1)";
-    /// `rhs`
-    pub const RHS: &str = "r^(-(−1)^p a mod 2^n) s^p";
+    /// `forAll` -> `term_D_8_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_D_8_forAll";
+    /// `lhs` -> `term_D_8_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_D_8_lhs";
+    /// `rhs` -> `term_D_8_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_D_8_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "D_5 group presentation + D_7 composition";
 }
 
 /// Dihedral reflection order: every reflection element r^k s^1 in D_(2^n) has order 2.
 pub mod d_9 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "k in Z/(2^n)Z";
-    /// `lhs`
-    pub const LHS: &str = "ord(r^k s^1)";
-    /// `rhs`
-    pub const RHS: &str = "2";
+    /// `forAll` -> `term_D_9_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_D_9_forAll";
+    /// `lhs` -> `term_D_9_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_D_9_lhs";
+    /// `rhs` -> `term_D_9_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_D_9_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "D_7: (r^k s)(r^k s) = r^0 s^0 = identity";
 }
 
 /// Monotone carrier characterization: a ConstrainedType has an upward-closed carrier iff every ResidueConstraint has residue = modulus - 1 and no CarryConstraint or DepthConstraint appears.
 pub mod exp_1 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "ConstrainedType C over R_n";
-    /// `lhs`
-    pub const LHS: &str = "carrier(C) is monotone";
-    /// `rhs`
-    pub const RHS: &str = "all residues of C = modulus - 1, no Carry/Depth";
+    /// `forAll` -> `term_EXP_1_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_EXP_1_forAll";
+    /// `lhs` -> `term_EXP_1_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_EXP_1_lhs";
+    /// `rhs` -> `term_EXP_1_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_EXP_1_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Fiber lattice monotonicity + R_n bit structure";
 }
 
 /// Monotone constraint count: the number of expressible monotone ConstrainedTypes at quantum level Q_n is 2^n, corresponding to the principal filter count.
 pub mod exp_2 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "QuantumLevel Q_n, n >= 1";
-    /// `lhs`
-    pub const LHS: &str = "count of monotone ConstrainedTypes at Q_n";
-    /// `rhs`
-    pub const RHS: &str = "2^n";
+    /// `forAll` -> `term_EXP_2_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_EXP_2_forAll";
+    /// `lhs` -> `term_EXP_2_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_EXP_2_lhs";
+    /// `rhs` -> `term_EXP_2_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_EXP_2_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Enumerative`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Enumerative";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Principal filter count; exhaustive enum at Q0";
 }
 
 /// SumType carrier semantics: the carrier of a SumType is the coproduct (disjoint union) of component carriers, not the set-theoretic union.
 pub mod exp_3 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "SumType A + B";
-    /// `lhs`
-    pub const LHS: &str = "carrier(SumType(A,B))";
-    /// `rhs`
-    pub const RHS: &str = "coproduct(carrier(A), carrier(B))";
+    /// `forAll` -> `term_EXP_3_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_EXP_3_forAll";
+    /// `lhs` -> `term_EXP_3_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_EXP_3_lhs";
+    /// `rhs` -> `term_EXP_3_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_EXP_3_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Definitional; architectural decision identity";
 }
 
 /// SumType Euler characteristic additivity: for a SumType with topologically disjoint component nerves, the Euler characteristic is additive.
 pub mod st_3 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "disjoint SumType A + B";
-    /// `lhs`
-    pub const LHS: &str = "chi(N(C(A+B)))";
-    /// `rhs`
-    pub const RHS: &str = "chi(N(C(A))) + chi(N(C(B)))";
+    /// `forAll` -> `term_ST_3_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_ST_3_forAll";
+    /// `lhs` -> `term_ST_3_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_ST_3_lhs";
+    /// `rhs` -> `term_ST_3_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_ST_3_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `IndexTheoretic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/IndexTheoretic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Disjoint simplicial complex Euler formula";
 }
 
 /// SumType Betti number additivity: for disjoint component nerves, all Betti numbers are additive.
 pub mod st_4 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "disjoint SumType A + B, k >= 0";
-    /// `lhs`
-    pub const LHS: &str = "beta_k(N(C(A+B)))";
-    /// `rhs`
-    pub const RHS: &str = "beta_k(N(C(A))) + beta_k(N(C(B)))";
+    /// `forAll` -> `term_ST_4_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_ST_4_forAll";
+    /// `lhs` -> `term_ST_4_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_ST_4_lhs";
+    /// `rhs` -> `term_ST_4_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_ST_4_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Topological`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Topological";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Mayer-Vietoris for disjoint union";
 }
 
 /// SumType completeness transfer: a SumType A+B is CompleteType iff both A and B are CompleteType and they have equal quantum levels.
 pub mod st_5 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "SumType A + B";
-    /// `lhs`
-    pub const LHS: &str = "CompleteType(A + B)";
-    /// `rhs`
-    pub const RHS: &str = "CompleteType(A) and CompleteType(B) and Q(A)=Q(B)";
+    /// `forAll` -> `term_ST_5_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_ST_5_forAll";
+    /// `lhs` -> `term_ST_5_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_ST_5_lhs";
+    /// `rhs` -> `term_ST_5_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_ST_5_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `IndexTheoretic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/IndexTheoretic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "ST_3 + ST_4 + IT_7d";
 }
 
 /// Betti-1 minimum constraint count: the minimum number of constraints needed to achieve first Betti number beta_1 = k in the constraint nerve is 2k + 1.
 pub mod ts_8 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "first Betti number k >= 1, n-fiber type";
-    /// `lhs`
-    pub const LHS: &str = "min constraints for beta_1 = k";
-    /// `rhs`
-    pub const RHS: &str = "2k + 1";
+    /// `forAll` -> `term_TS_8_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_TS_8_forAll";
+    /// `lhs` -> `term_TS_8_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_TS_8_lhs";
+    /// `rhs` -> `term_TS_8_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_TS_8_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Pipeline`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Simplicial cycle construction; inductive on k";
 }
 
 /// TypeSynthesisResolver termination: the resolver terminates in at most 2^n steps for any target signature at quantum level Q_n, returning either a ConstrainedType or a ForbiddenSignature certificate.
 pub mod ts_9 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "QuantumLevel Q_n, any target signature";
-    /// `lhs`
-    pub const LHS: &str = "TypeSynthesisResolver terminates";
-    /// `rhs`
-    pub const RHS: &str = "within 2^n steps";
+    /// `forAll` -> `term_TS_9_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_TS_9_forAll";
+    /// `lhs` -> `term_TS_9_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_TS_9_lhs";
+    /// `rhs` -> `term_TS_9_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_TS_9_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Pipeline`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Finite constraint combination space; inductive on n";
 }
 
 /// ForbiddenSignature membership criterion: a topological signature is a ForbiddenSignature iff no ConstrainedType with at most n constraints realises it at quantum level Q_n.
 pub mod ts_10 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "topological signature sigma at Q_n";
-    /// `lhs`
-    pub const LHS: &str = "ForbiddenSignature(sigma)";
-    /// `rhs`
-    pub const RHS: &str = "no ConstrainedType with <= n constraints realises sigma";
+    /// `forAll` -> `term_TS_10_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_TS_10_forAll";
+    /// `lhs` -> `term_TS_10_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_TS_10_lhs";
+    /// `rhs` -> `term_TS_10_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_TS_10_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Exhaustive enum at Q0; combinatorial bound";
 }
 
 /// ObstructionChain length bound: the length of the ObstructionChain from Q_j to Q_k is at most (k-j) times C(basisSize(Q_j), 3).
 pub mod qt_8 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "LiftChain from Q_j to Q_k";
-    /// `lhs`
-    pub const LHS: &str = "ObstructionChain length from Q_j to Q_k";
-    /// `rhs`
-    pub const RHS: &str = "<= (k-j) * C(basisSize(Q_j), 3)";
+    /// `forAll` -> `term_QT_8_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_QT_8_forAll";
+    /// `lhs` -> `term_QT_8_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_QT_8_lhs";
+    /// `rhs` -> `term_QT_8_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_QT_8_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `IndexTheoretic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/IndexTheoretic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "QLS_2 + spectral sequence convergence bound";
 }
 
 /// TowerCompletenessResolver termination: the resolver terminates for any finite LiftChain within the QT_8 bound, producing a CompleteType certificate or a bounded ObstructionChain.
 pub mod qt_9 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "LiftChain of finite length";
-    /// `lhs`
-    pub const LHS: &str = "TowerCompletenessResolver terminates";
-    /// `rhs`
-    pub const RHS: &str = "within QT_8 bound";
+    /// `forAll` -> `term_QT_9_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_QT_9_forAll";
+    /// `lhs` -> `term_QT_9_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_QT_9_lhs";
+    /// `rhs` -> `term_QT_9_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_QT_9_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Pipeline`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Finite chain + QT_8 bound";
 }
 
 /// Standard coefficient ring: the coefficient ring for all psi-pipeline cohomology computations in uor.foundation is Z/2Z, consistent with MN_7.
 pub mod coeff_1 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "ConstraintNerve N(C) at any quantum level";
-    /// `lhs`
-    pub const LHS: &str = "standard coefficient ring for psi-pipeline";
-    /// `rhs`
-    pub const RHS: &str = "Z/2Z";
+    /// `forAll` -> `term_COEFF_1_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_COEFF_1_forAll";
+    /// `lhs` -> `term_COEFF_1_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_COEFF_1_lhs";
+    /// `rhs` -> `term_COEFF_1_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_COEFF_1_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Definitional; MN_7 consistency requirement";
 }
 
 /// GluingObstruction feedback: given a GluingObstruction class in H^1(N(C)), the killing RefinementSuggestion adds a constraint whose pinned fibers contain the intersection of the cycle-generating pair.
 pub mod go_1 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "GluingObstruction c, cycle pair (C_i, C_j)";
-    /// `lhs`
-    pub const LHS: &str = "pinsFibers(killing constraint for obstruction c)";
-    /// `rhs`
-    pub const RHS: &str = "superset of pinsFibers(C_i) cap pinsFibers(C_j)";
+    /// `forAll` -> `term_GO_1_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_GO_1_forAll";
+    /// `lhs` -> `term_GO_1_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_GO_1_lhs";
+    /// `rhs` -> `term_GO_1_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_GO_1_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Topological`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Topological";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Cohomology killing lemma; psi_6 output";
 }
 
 /// Saturation re-entry free count: for a session at full saturation, a new query q has freeCount equal to the number of q's fiber coordinates not already bound.
 pub mod sr_6 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "saturated Session, new RelationQuery q";
-    /// `lhs`
-    pub const LHS: &str = "freeCount(q) after saturation";
-    /// `rhs`
-    pub const RHS: &str = "fibers of q not in BindingAccumulator";
+    /// `forAll` -> `term_SR_6_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_SR_6_forAll";
+    /// `lhs` -> `term_SR_6_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_SR_6_lhs";
+    /// `rhs` -> `term_SR_6_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_SR_6_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "SR_1 monotone accumulation + SC_2 formula";
 }
 
 /// Saturation degree degradation: after re-entry with query q, the saturation degree becomes min(current sigma, 1 - freeCount(q)/n).
 pub mod sr_7 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "SessionResolver, new query q";
-    /// `lhs`
-    pub const LHS: &str = "sigma after re-entry with query q";
-    /// `rhs`
-    pub const RHS: &str = "min(sigma, 1 - freeCount(q)/n)";
+    /// `forAll` -> `term_SR_7_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_SR_7_forAll";
+    /// `lhs` -> `term_SR_7_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_SR_7_lhs";
+    /// `rhs` -> `term_SR_7_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_SR_7_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "SC_2 definition + SR_1 monotonicity";
 }
 
 /// Amplitude index set characterization: the amplitude index set of a SuperposedFiberState over ConstrainedType T at Q_n is the set of monotone pinning trajectories consistent with T's constraints.
 pub mod qm_6 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "SuperposedFiberState over ConstrainedType T at Q_n";
-    /// `lhs`
-    pub const LHS: &str = "amplitude index set of SuperposedFiberState over T";
-    /// `rhs`
-    pub const RHS: &str = "monotone pinning trajectories consistent with T";
+    /// `forAll` -> `term_QM_6_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_QM_6_forAll";
+    /// `lhs` -> `term_QM_6_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_QM_6_lhs";
+    /// `rhs` -> `term_QM_6_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_QM_6_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `SuperpositionDomain`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/SuperpositionDomain";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Fiber lattice + constraint filter; enum at Q0-Q3";
 }
 
 /// Certificate issuance: every valid Transform admits a TransformCertificate attesting correct source-to-target mapping.
 pub mod cic_1 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "Transform T";
-    /// `lhs`
-    pub const LHS: &str = "valid(T) ∧ T: Transform";
-    /// `rhs`
-    pub const RHS: &str = "∃ c: TransformCertificate. certifies(c, T)";
+    /// `forAll` -> `term_CIC_1_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_CIC_1_forAll";
+    /// `lhs` -> `term_CIC_1_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_CIC_1_lhs";
+    /// `rhs` -> `term_CIC_1_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_CIC_1_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Pipeline`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Transform → TransformCertificate issuance";
 }
 
 /// Certificate issuance: every metric-preserving Transform admits an IsometryCertificate attesting distance preservation.
 pub mod cic_2 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "Isometry T";
-    /// `lhs`
-    pub const LHS: &str = "isometry(T) ∧ metric-preserving(T)";
-    /// `rhs`
-    pub const RHS: &str = "∃ c: IsometryCertificate. certifies(c, T)";
+    /// `forAll` -> `term_CIC_2_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_CIC_2_forAll";
+    /// `lhs` -> `term_CIC_2_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_CIC_2_lhs";
+    /// `rhs` -> `term_CIC_2_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_CIC_2_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Geometric`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Geometric";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Isometry → IsometryCertificate issuance";
 }
 
 /// Certificate issuance: every involutive operation f where f(f(x)) = x admits an InvolutionCertificate.
 pub mod cic_3 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "Involution f";
-    /// `lhs`
-    pub const LHS: &str = "f(f(x)) = x ∀ x ∈ R_n";
-    /// `rhs`
-    pub const RHS: &str = "∃ c: InvolutionCertificate. certifies(c, f)";
+    /// `forAll` -> `term_CIC_3_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_CIC_3_forAll";
+    /// `lhs` -> `term_CIC_3_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_CIC_3_lhs";
+    /// `rhs` -> `term_CIC_3_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_CIC_3_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Involution → InvolutionCertificate issuance";
 }
 
 /// Certificate issuance: full saturation (σ = 1, freeCount = 0) admits a SaturationCertificate.
 pub mod cic_4 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "SaturatedContext C";
-    /// `lhs`
-    pub const LHS: &str = "σ(C) = 1 ∧ freeCount = 0";
-    /// `rhs`
-    pub const RHS: &str = "∃ c: SaturationCertificate. certifies(c, C)";
+    /// `forAll` -> `term_CIC_4_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_CIC_4_forAll";
+    /// `lhs` -> `term_CIC_4_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_CIC_4_lhs";
+    /// `rhs` -> `term_CIC_4_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_CIC_4_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Thermodynamic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Thermodynamic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "SC_4 → SaturationCertificate issuance";
 }
 
 /// Certificate issuance: an AR_1-ordered and DC_10-selected trace admits a GeodesicCertificate.
 pub mod cic_5 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "GeodesicTrace";
-    /// `lhs`
-    pub const LHS: &str = "AR_1-ordered ∧ DC_10-selected trace";
-    /// `rhs`
-    pub const RHS: &str = "∃ c: GeodesicCertificate. certifies(c, trace)";
+    /// `forAll` -> `term_CIC_5_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_CIC_5_forAll";
+    /// `lhs` -> `term_CIC_5_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_CIC_5_lhs";
+    /// `rhs` -> `term_CIC_5_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_CIC_5_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Pipeline`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "GD_1 → GeodesicCertificate issuance";
 }
 
 /// Certificate issuance: a MeasurementEvent verifying the von Neumann–Landauer bridge at β* = ln 2 admits a MeasurementCertificate.
 pub mod cic_6 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "MeasurementEvent";
-    /// `lhs`
-    pub const LHS: &str = "S_vN = L_cost at β* = ln 2";
-    /// `rhs`
-    pub const RHS: &str = "∃ c: MeasurementCertificate. certifies(c, event)";
+    /// `forAll` -> `term_CIC_6_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_CIC_6_forAll";
+    /// `lhs` -> `term_CIC_6_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_CIC_6_lhs";
+    /// `rhs` -> `term_CIC_6_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_CIC_6_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `QuantumThermodynamic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/QuantumThermodynamic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "QM_1 → MeasurementCertificate issuance";
 }
 
 /// Certificate issuance: a MeasurementEvent verifying P(outcome k) = |α_k|² admits a BornRuleVerification certificate.
 pub mod cic_7 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "MeasurementEvent with amplitude vector";
-    /// `lhs`
-    pub const LHS: &str = "P(k) = |α_k|² verified";
-    /// `rhs`
-    pub const RHS: &str = "∃ c: BornRuleVerification. certifies(c, event)";
+    /// `forAll` -> `term_CIC_7_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_CIC_7_forAll";
+    /// `lhs` -> `term_CIC_7_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_CIC_7_lhs";
+    /// `rhs` -> `term_CIC_7_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_CIC_7_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `QuantumThermodynamic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/QuantumThermodynamic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "QM_5 → BornRuleVerification issuance";
 }
 
 /// Certificate issuance: shared-frame grounding that lands in the type-equivalent neighbourhood admits a GroundingCertificate.
 pub mod gc_1 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "GroundingMap with valid ProjectionMap";
-    /// `lhs`
-    pub const LHS: &str = "shared-frame grounding of symbol s";
-    /// `rhs`
-    pub const RHS: &str = "∃ c: GroundingCertificate. certifies(c, map)";
+    /// `forAll` -> `term_GC_1_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_GC_1_forAll";
+    /// `lhs` -> `term_GC_1_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_GC_1_lhs";
+    /// `rhs` -> `term_GC_1_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_GC_1_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Pipeline`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "surfaceSymmetry → GroundingCertificate issuance";
 }
 
 /// Session composition validity: compose(S_A, S_B) is valid at Q_k iff all pinned-fiber intersections agree at every tower level Q_0 through Q_k.
 pub mod sr_8 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "S_A, S_B: Session at quantum level Q_k (k ≥ 0)";
-    /// `lhs`
-    pub const LHS: &str = "compose(S_A, S_B) valid at Q_k";
-    /// `rhs`
-    pub const RHS: &str =
-        "∀ j ≤ k: ∀ a ∈ pinnedFibers(S_A, Q_j) ∩ pinnedFibers(S_B, Q_j): datum(S_A, a, Q_j) = datum(S_B, a, Q_j)";
+    /// `forAll` -> `term_SR_8_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_SR_8_forAll";
+    /// `lhs` -> `term_SR_8_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_SR_8_lhs";
+    /// `rhs` -> `term_SR_8_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_SR_8_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = false;
     /// `validKMin`
@@ -5765,4677 +5003,4102 @@ pub mod sr_8 {
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/ParametricLower";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str =
-        "SR_5 contradiction criterion extended over LiftChain tower Q_0…Q_k; base case k=0 is standard SR_5";
 }
 
 /// ContextLease disjointness: two distinct leases on the same SharedContext have non-overlapping fiber sets.
 pub mod sr_9 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "L_A, L_B: ContextLease on SharedContext C, L_A ≠ L_B";
-    /// `lhs`
-    pub const LHS: &str = "leasedFibers(L_A) ∩ leasedFibers(L_B)";
-    /// `rhs`
-    pub const RHS: &str = "= ∅";
+    /// `forAll` -> `term_SR_9_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_SR_9_forAll";
+    /// `lhs` -> `term_SR_9_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_SR_9_lhs";
+    /// `rhs` -> `term_SR_9_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_SR_9_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str =
-        "ContextLease disjointness → FiberBudget partition → SR_1 per-session soundness";
 }
 
 /// ExecutionPolicy confluence: different execution policies on the same pending query set produce the same final resolved state (Church-Rosser for session resolution).
 pub mod sr_10 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "SessionResolver R with ExecutionPolicy P, pending query set Q";
-    /// `lhs`
-    pub const LHS: &str = "finalState(R, P_1, Q)";
-    /// `rhs`
-    pub const RHS: &str = "= finalState(R, P_2, Q) for any P_1, P_2: ExecutionPolicy";
+    /// `forAll` -> `term_SR_10_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_SR_10_forAll";
+    /// `lhs` -> `term_SR_10_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_SR_10_lhs";
+    /// `rhs` -> `term_SR_10_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_SR_10_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str =
-        "SR_1 monotonicity + SR_2 binding soundness → policy-invariant convergence";
 }
 
 /// Lease partition conserves total budget: the sum of freeCount over all leases equals the SharedContext freeCount.
 pub mod mc_1 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "SharedContext C; leaseSet {L_1, …, L_k} covering all fibers of C";
-    /// `lhs`
-    pub const LHS: &str = "Σᵢ freeCount(leasedFibers(L_i))";
-    /// `rhs`
-    pub const RHS: &str = "= freeCount(C)";
+    /// `forAll` -> `term_MC_1_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_MC_1_forAll";
+    /// `lhs` -> `term_MC_1_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_MC_1_lhs";
+    /// `rhs` -> `term_MC_1_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_MC_1_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str =
-        "SR_9 (pairwise disjoint leasedFibers) + F_3 (pinnedCount + freeCount = n) → partition additivity";
 }
 
 /// Per-lease binding monotonicity: within a leased sub-domain, freeCount decreases monotonically (SR_1 restricted to lease).
 pub mod mc_2 {
-    /// `forAll`
-    pub const FOR_ALL: &str =
-        "ContextLease L held by Session S; binding step i within S restricted to leasedFibers(L)";
-    /// `lhs`
-    pub const LHS: &str = "freeCount(B_{i+1} |_L)";
-    /// `rhs`
-    pub const RHS: &str = "≤ freeCount(B_i |_L)";
+    /// `forAll` -> `term_MC_2_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_MC_2_forAll";
+    /// `lhs` -> `term_MC_2_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_MC_2_lhs";
+    /// `rhs` -> `term_MC_2_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_MC_2_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str =
-        "SR_9 → lease is fiber-disjoint → SR_1 holds within leasedFibers(L)";
 }
 
 /// General composition freeCount via inclusion-exclusion.
 pub mod mc_3 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "S_A, S_B: Session; compose(S_A, S_B) valid (SR_8 satisfied)";
-    /// `lhs`
-    pub const LHS: &str = "freeCount(compose(S_A, S_B))";
-    /// `rhs`
-    pub const RHS: &str =
-        "freeCount(S_A) + freeCount(S_B) − |pinnedFibers(S_A) ∩ pinnedFibers(S_B)|";
+    /// `forAll` -> `term_MC_3_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_MC_3_forAll";
+    /// `lhs` -> `term_MC_3_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_MC_3_lhs";
+    /// `rhs` -> `term_MC_3_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_MC_3_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str =
-        "FL_3 (join = union of pinnings) + F_3 + inclusion-exclusion; SR_8 ensures datum consistency";
 }
 
 /// Disjoint-lease composition is additive: the intersection term vanishes when leases are fiber-disjoint (SR_9).
 pub mod mc_4 {
-    /// `forAll`
-    pub const FOR_ALL: &str =
-        "S_A, S_B on ContextLeases L_A, L_B within SharedContext C; SR_9 holds";
-    /// `lhs`
-    pub const LHS: &str = "freeCount(compose(S_A, S_B))";
-    /// `rhs`
-    pub const RHS: &str = "= freeCount(S_A) + freeCount(S_B)";
+    /// `forAll` -> `term_MC_4_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_MC_4_forAll";
+    /// `lhs` -> `term_MC_4_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_MC_4_lhs";
+    /// `rhs` -> `term_MC_4_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_MC_4_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str =
-        "MC_3 with |pinnedFibers(S_A) ∩ pinnedFibers(S_B)| = 0 by SR_9";
 }
 
 /// Policy-invariant final binding set: different execution policies produce identical FiberPinning records.
 pub mod mc_5 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "SessionResolver R; pending query set Q; ExecutionPolicy P_1, P_2";
-    /// `lhs`
-    pub const LHS: &str = "finalBindings(R, P_1, Q)";
-    /// `rhs`
-    pub const RHS: &str = "= finalBindings(R, P_2, Q)";
+    /// `forAll` -> `term_MC_5_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_MC_5_forAll";
+    /// `lhs` -> `term_MC_5_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_MC_5_lhs";
+    /// `rhs` -> `term_MC_5_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_MC_5_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str =
-        "SR_10 (finalState equal) + SR_1 (idempotent pinning on FL_3) → binding-set equality";
 }
 
 /// Full lease coverage implies composed saturation: k sessions on disjoint covering leases, each locally converged, produce a SaturatedContext via composition.
 pub mod mc_6 {
-    /// `forAll`
-    pub const FOR_ALL: &str =
-        "SharedContext C; leases {L_1, …, L_k} pairwise disjoint (SR_9) and fully covering C; each S_i with freeCount = 0 within L_i";
-    /// `lhs`
-    pub const LHS: &str = "σ(compose(S_1, …, S_k))";
-    /// `rhs`
-    pub const RHS: &str = "= 1 (FullSaturation)";
+    /// `forAll` -> `term_MC_6_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_MC_6_forAll";
+    /// `lhs` -> `term_MC_6_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_MC_6_lhs";
+    /// `rhs` -> `term_MC_6_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_MC_6_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str =
-        "SR_9 + MC_4 (inductive) + F_4 (isClosed) + SC_4 (σ = 1 ↔ freeCount = 0)";
 }
 
 /// Distributed O(1) resolution: a query against a composed SaturatedContext resolves in zero steps.
 pub mod mc_7 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "q: RelationQuery; C* = compose(S_1, …, S_k) with σ(C*) = 1 by MC_6";
-    /// `lhs`
-    pub const LHS: &str = "stepCount(q, C*)";
-    /// `rhs`
-    pub const RHS: &str = "= 0";
+    /// `forAll` -> `term_MC_7_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_MC_7_forAll";
+    /// `lhs` -> `term_MC_7_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_MC_7_lhs";
+    /// `rhs` -> `term_MC_7_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_MC_7_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Pipeline`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str =
-        "MC_6 (σ = 1) → SC_4 (freeCount = 0) → SC_5 (stepCount = 0); O(1) is substrate-agnostic";
 }
 
 /// Parallelism bound: per-session resolution work is bounded by lease size, not by total fiber count n.
 pub mod mc_8 {
-    /// `forAll`
-    pub const FOR_ALL: &str =
-        "SharedContext C with totalFibers = n; uniform partition into k leases";
-    /// `lhs`
-    pub const LHS: &str = "max_i stepCount(S_i to convergence within L_i)";
-    /// `rhs`
-    pub const RHS: &str = "≤ ⌈n/k⌉";
+    /// `forAll` -> `term_MC_8_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_MC_8_forAll";
+    /// `lhs` -> `term_MC_8_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_MC_8_lhs";
+    /// `rhs` -> `term_MC_8_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_MC_8_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str =
-        "F_2 (pin ops ≤ fiber count) + SR_9 (|leasedFibers(L_i)| = ⌈n/k⌉) → per-session bound";
 }
 
 /// Witt coordinate identification: the bit coordinates (x_0, …, x_\[n−1\]) of x ∈ Z/(2ⁿ)Z are exactly its Witt coordinates under the canonical isomorphism W_n(F_2) ≅ Z/(2ⁿ)Z.
 pub mod wc_1 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "x ∈ R_n, 0 ≤ k < n";
-    /// `lhs`
-    pub const LHS: &str = "a_k(x)";
-    /// `rhs`
-    pub const RHS: &str = "x_k (k-th bit of x)";
+    /// `forAll` -> `term_WC_1_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_WC_1_forAll";
+    /// `lhs` -> `term_WC_1_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_WC_1_lhs";
+    /// `rhs` -> `term_WC_1_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_WC_1_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str =
-        "Ghost map bijectivity at p=2 over F_2 → coordinate identification";
 }
 
 /// Witt sum correction equals carry: the k-th Witt addition polynomial correction term S_k − x_k − y_k (mod 2) is exactly the carry c_k(x,y).
 pub mod wc_2 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "x, y ∈ R_n, 0 ≤ k < n";
-    /// `lhs`
-    pub const LHS: &str = "S_k − x_k − y_k (mod 2)";
-    /// `rhs`
-    pub const RHS: &str = "c_k(x,y)";
+    /// `forAll` -> `term_WC_2_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_WC_2_forAll";
+    /// `lhs` -> `term_WC_2_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_WC_2_lhs";
+    /// `rhs` -> `term_WC_2_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_WC_2_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str =
-        "CA_1 decomposition + ghost map linearity → correction = carry";
 }
 
 /// Carry recurrence is the Witt polynomial recurrence: CA_2 implements the ghost equation for S_\[k+1\] at p=2.
 pub mod wc_3 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "x, y ∈ R_n";
-    /// `lhs`
-    pub const LHS: &str = "CA_2 recurrence";
-    /// `rhs`
-    pub const RHS: &str = "S_{k+1} ghost equation at p=2";
+    /// `forAll` -> `term_WC_3_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_WC_3_forAll";
+    /// `lhs` -> `term_WC_3_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_WC_3_lhs";
+    /// `rhs` -> `term_WC_3_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_WC_3_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str =
-        "Induction on ghost equation w_{k+1}(S) = w_{k+1}(a) + w_{k+1}(b)";
 }
 
 /// The δ-correction at level k equals the single-level carry c_\[k+1\](x,y). Each application of δ divides by 2, consuming one unit of 2-adic valuation.
 pub mod wc_4 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "x, y ∈ R_n";
-    /// `lhs`
-    pub const LHS: &str = "δ_k(x+y) correction";
-    /// `rhs`
-    pub const RHS: &str = "c_{k+1}(x,y)";
+    /// `forAll` -> `term_WC_4_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_WC_4_forAll";
+    /// `lhs` -> `term_WC_4_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_WC_4_lhs";
+    /// `rhs` -> `term_WC_4_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_WC_4_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "δ(x+y) = δ(x) + δ(y) − xy; lowest bit of −xy = carry";
 }
 
 /// LiftObstruction is equivalent to δ-nonvanishing: a nontrivial LiftObstruction at Q_\[k+1\] means δ_k ≠ 0 for some element pair.
 pub mod wc_5 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "Q_k, k ≥ 1";
-    /// `lhs`
-    pub const LHS: &str = "obstruction_trivial = false";
-    /// `rhs`
-    pub const RHS: &str = "δ_k ≠ 0 for some pair";
+    /// `forAll` -> `term_WC_5_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_WC_5_forAll";
+    /// `lhs` -> `term_WC_5_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_WC_5_lhs";
+    /// `rhs` -> `term_WC_5_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_WC_5_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `IndexTheoretic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/IndexTheoretic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str =
-        "LiftObstruction = Witt tower truncation defect = δ-correction";
 }
 
 /// Metric discrepancy equals Witt defect: d_Δ(x,y) > 0 iff the ghost map correction (carry) is nonzero.
 pub mod wc_6 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "x, y ∈ R_n";
-    /// `lhs`
-    pub const LHS: &str = "d_Δ(x,y) > 0";
-    /// `rhs`
-    pub const RHS: &str = "ghost defect nonzero";
+    /// `forAll` -> `term_WC_6_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_WC_6_forAll";
+    /// `lhs` -> `term_WC_6_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_WC_6_lhs";
+    /// `rhs` -> `term_WC_6_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_WC_6_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Analytical`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Analytical";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str =
-        "CA_6 restatement: carry nonzero ⇔ ring/Hamming metric diverge";
 }
 
 /// D_1 is the Witt truncation order relation: succ^\[2ⁿ\](x) = x is the group relation r^\[2ⁿ\] = 1 in the Witt-Burnside ring of D_\[2∞\].
 pub mod wc_7 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "x ∈ R_n, n ≥ 1";
-    /// `lhs`
-    pub const LHS: &str = "succ^{2ⁿ}(x) = x";
-    /// `rhs`
-    pub const RHS: &str = "r^{2ⁿ} = 1 in Witt-Burnside ring";
+    /// `forAll` -> `term_WC_7_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_WC_7_forAll";
+    /// `lhs` -> `term_WC_7_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_WC_7_lhs";
+    /// `rhs` -> `term_WC_7_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_WC_7_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str =
-        "Dress–Siebeneicher: cyclic subgroup C_{2ⁿ} ghost component";
 }
 
 /// D_3 is the Witt-Burnside conjugation relation: neg(succ(neg(x))) = pred(x) is srs = r⁻¹ in the pro-dihedral group.
 pub mod wc_8 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "x ∈ R_n, n ≥ 1";
-    /// `lhs`
-    pub const LHS: &str = "neg(succ(neg(x)))";
-    /// `rhs`
-    pub const RHS: &str = "srs = r⁻¹ relation";
+    /// `forAll` -> `term_WC_8_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_WC_8_forAll";
+    /// `lhs` -> `term_WC_8_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_WC_8_lhs";
+    /// `rhs` -> `term_WC_8_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_WC_8_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str =
-        "Witt-Burnside compatibility: reflection ghost inverts rotation ghost";
 }
 
 /// D_4 is a Witt-Burnside reflection composition: bnot(neg(x)) = pred(x) is the product of two reflections yielding inverse rotation.
 pub mod wc_9 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "x ∈ R_n, n ≥ 1";
-    /// `lhs`
-    pub const LHS: &str = "bnot(neg(x)) = pred(x)";
-    /// `rhs`
-    pub const RHS: &str = "Product of Witt-Burnside reflections";
+    /// `forAll` -> `term_WC_9_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_WC_9_forAll";
+    /// `lhs` -> `term_WC_9_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_WC_9_lhs";
+    /// `rhs` -> `term_WC_9_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_WC_9_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "bnot = pred ∘ neg → bnot ∘ neg = pred ∘ id = pred";
 }
 
 /// The δ-ring Frobenius lift on W_n(F_2) is the identity map because F_2 is a perfect field of characteristic 2 (a² = a for a ∈ F_2).
 pub mod wc_10 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "x ∈ R_n, n ≥ 1";
-    /// `lhs`
-    pub const LHS: &str = "φ(x) on W_n(F_2)";
-    /// `rhs`
-    pub const RHS: &str = "x (identity, F_2 perfect)";
+    /// `forAll` -> `term_WC_10_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_WC_10_forAll";
+    /// `lhs` -> `term_WC_10_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_WC_10_lhs";
+    /// `rhs` -> `term_WC_10_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_WC_10_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Witt Frobenius F(a_i) = a_i² = a_i in F_2 → F = id";
 }
 
 /// The Verschiebung on W_n(F_2) is multiplication by 2: V(x) = 2x = add(x,x). This is a coordinate shift with zero Witt defect.
 pub mod wc_11 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "x ∈ R_n, n ≥ 1";
-    /// `lhs`
-    pub const LHS: &str = "V(x) on W_n(F_2)";
-    /// `rhs`
-    pub const RHS: &str = "add(x, x) in Z/(2ⁿ)Z";
+    /// `forAll` -> `term_WC_11_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_WC_11_forAll";
+    /// `lhs` -> `term_WC_11_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_WC_11_lhs";
+    /// `rhs` -> `term_WC_11_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_WC_11_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Ghost map: w_n(V(a)) = 2 · w_{n-1}(a) = 2x";
 }
 
 /// The δ-operator on W_n(F_2) is the squaring defect divided by 2: δ(x) = (x − mul(x,x)) / 2. Expressible entirely in existing op/ primitives (sub, mul, arithmetic right shift).
 pub mod wc_12 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "x ∈ R_n, n ≥ 2";
-    /// `lhs`
-    pub const LHS: &str = "δ(x) on W_n(F_2)";
-    /// `rhs`
-    pub const RHS: &str = "(x − mul(x,x)) / 2";
+    /// `forAll` -> `term_WC_12_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_WC_12_forAll";
+    /// `lhs` -> `term_WC_12_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_WC_12_lhs";
+    /// `rhs` -> `term_WC_12_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_WC_12_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "φ(x) = x² + 2δ(x) with φ = id → δ(x) = (x − x²)/2";
 }
 
 /// Ostrowski product formula at p=2: |2|_2 · |2|_∞ = 1. The 2-adic and Archimedean absolute values of 2 are multiplicative inverses.
 pub mod oa_1 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "p = 2";
-    /// `lhs`
-    pub const LHS: &str = "|2|_2 · |2|_∞";
-    /// `rhs`
-    pub const RHS: &str = "1 in Q×";
+    /// `forAll` -> `term_OA_1_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_OA_1_forAll";
+    /// `lhs` -> `term_OA_1_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_OA_1_lhs";
+    /// `rhs` -> `term_OA_1_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_OA_1_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `ArithmeticValuation`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/ArithmeticValuation";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Ostrowski classification of absolute values on Q";
 }
 
 /// Crossing cost equals ln 2: the Archimedean image of one unit of 2-adic valuation, under the product formula, is ln 2 nats.
 pub mod oa_2 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "p = 2";
-    /// `lhs`
-    pub const LHS: &str = "CrossingCost(p=2)";
-    /// `rhs`
-    pub const RHS: &str = "ln 2 = −ln|2|_2";
+    /// `forAll` -> `term_OA_2_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_OA_2_forAll";
+    /// `lhs` -> `term_OA_2_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_OA_2_lhs";
+    /// `rhs` -> `term_OA_2_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_OA_2_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `ArithmeticValuation`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/ArithmeticValuation";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "OA_1 → |2|_∞ = 2 → ln|2|_∞ = ln 2";
 }
 
 /// QM_1 grounding: the Landauer cost β* = ln 2 is the crossing cost from OA_2, derived from the prime p=2 that structures the Witt tower.
 pub mod oa_3 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "p = 2";
-    /// `lhs`
-    pub const LHS: &str = "β* in Cost_Landauer";
-    /// `rhs`
-    pub const RHS: &str = "CrossingCost(p=2)";
+    /// `forAll` -> `term_OA_3_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_OA_3_forAll";
+    /// `lhs` -> `term_OA_3_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_OA_3_lhs";
+    /// `rhs` -> `term_OA_3_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_OA_3_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `ArithmeticValuation`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/ArithmeticValuation";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "WC_4 → OA_1 → OA_2 → β* = ln 2";
 }
 
 /// Born rule bridge (conditional on amplitude rationality): P(outcome k) = |α_k|_∞², where |·|_∞ is the Archimedean image of the 2-adic amplitude via the product formula.
 pub mod oa_4 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "rational amplitudes";
-    /// `lhs`
-    pub const LHS: &str = "P(outcome k) = |α_k|_∞²";
-    /// `rhs`
-    pub const RHS: &str = "Archimedean image of 2-adic amplitude";
+    /// `forAll` -> `term_OA_4_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_OA_4_forAll";
+    /// `lhs` -> `term_OA_4_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_OA_4_lhs";
+    /// `rhs` -> `term_OA_4_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_OA_4_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `ArithmeticValuation`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/ArithmeticValuation";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str =
-        "Conditional: requires rational fiber amplitudes (schema-level)";
 }
 
 /// Entropy per δ-level equals the crossing cost: each application of the δ-operator (division by 2) costs ln 2 nats in the Archimedean completion, which is the per-bit Landauer cost.
 pub mod oa_5 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "p = 2";
-    /// `lhs`
-    pub const LHS: &str = "Information cost of δ (division by 2)";
-    /// `rhs`
-    pub const RHS: &str = "ln 2 nats";
+    /// `forAll` -> `term_OA_5_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_OA_5_forAll";
+    /// `lhs` -> `term_OA_5_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_OA_5_lhs";
+    /// `rhs` -> `term_OA_5_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_OA_5_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `ArithmeticValuation`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/ArithmeticValuation";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str =
-        "QL_3 (β* = ln 2) + WC_4 (δ divides by 2) → per-δ cost = ln 2";
 }
 
 /// KanComplex(N(C)) — the constraint nerve satisfies the Kan extension condition for all horns of dimension ≤ d where d is the maximum simplex dimension of N(C).
 pub mod ht_1 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "constraint configuration C";
-    /// `lhs`
-    pub const LHS: &str = "N(C)";
-    /// `rhs`
-    pub const RHS: &str = "KanComplex";
+    /// `forAll` -> `term_HT_1_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_HT_1_forAll";
+    /// `lhs` -> `term_HT_1_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_HT_1_lhs";
+    /// `rhs` -> `term_HT_1_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_HT_1_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Topological`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Topological";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Finite simplicial complex ⇒ Kan condition";
 }
 
 /// Path components of nerve recover β₀: π₀(N(C)) ≅ Z^{β₀} counts the connected components of the constraint configuration.
 pub mod ht_2 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "constraint configuration C";
-    /// `lhs`
-    pub const LHS: &str = "π₀(N(C))";
-    /// `rhs`
-    pub const RHS: &str = "Z^{β₀}";
+    /// `forAll` -> `term_HT_2_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_HT_2_forAll";
+    /// `lhs` -> `term_HT_2_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_HT_2_lhs";
+    /// `rhs` -> `term_HT_2_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_HT_2_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Topological`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Topological";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Path component counting via nerve functor";
 }
 
 /// MN_6 monodromy is abelianisation of full π₁: the fundamental group π₁(N(C)) surjects onto the HolonomyGroup D_{2^n} via abelianisation.
 pub mod ht_3 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "constraint configuration C";
-    /// `lhs`
-    pub const LHS: &str = "π₁(N(C)) → D_{2^n}";
-    /// `rhs`
-    pub const RHS: &str = "HolonomyGroup factorization";
+    /// `forAll` -> `term_HT_3_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_HT_3_forAll";
+    /// `lhs` -> `term_HT_3_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_HT_3_lhs";
+    /// `rhs` -> `term_HT_3_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_HT_3_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Topological`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Topological";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Fundamental group projects through HolonomyGroup";
 }
 
 /// Higher homotopy groups vanish above nerve dimension: π_k(N(C)) = 0 for all k > dim(N(C)), because the nerve is a finite CW-complex.
 pub mod ht_4 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "constraint configuration C, k > dim(N(C))";
-    /// `lhs`
-    pub const LHS: &str = "π_k(N(C)) for k > dim(N(C))";
-    /// `rhs`
-    pub const RHS: &str = "0";
+    /// `forAll` -> `term_HT_4_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_HT_4_forAll";
+    /// `lhs` -> `term_HT_4_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_HT_4_lhs";
+    /// `rhs` -> `term_HT_4_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_HT_4_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Topological`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Topological";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Finite CW-complex dimension bound";
 }
 
 /// 1-truncation determines flat/twisted classification: τ_{≤1}(N(C)) captures the holonomy action that distinguishes FlatType from TwistedType.
 pub mod ht_5 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "constraint configuration C";
-    /// `lhs`
-    pub const LHS: &str = "τ_{≤1}(N(C))";
-    /// `rhs`
-    pub const RHS: &str = "FlatType/TwistedType classification";
+    /// `forAll` -> `term_HT_5_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_HT_5_forAll";
+    /// `lhs` -> `term_HT_5_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_HT_5_lhs";
+    /// `rhs` -> `term_HT_5_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_HT_5_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Topological`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Topological";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Postnikov 1-truncation captures holonomy";
 }
 
 /// Trivial k-invariants beyond depth d imply spectral collapse: if κ_k is trivial for all k > d then the spectral sequence collapses at E_{d+2}.
 pub mod ht_6 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "constraint configuration C, d = max simplex dim";
-    /// `lhs`
-    pub const LHS: &str = "κ_k trivial for all k > d";
-    /// `rhs`
-    pub const RHS: &str = "spectral sequence collapses at E_{d+2}";
+    /// `forAll` -> `term_HT_6_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_HT_6_forAll";
+    /// `lhs` -> `term_HT_6_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_HT_6_lhs";
+    /// `rhs` -> `term_HT_6_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_HT_6_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `IndexTheoretic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/IndexTheoretic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "k-invariant vanishing ⇒ QLS_4 convergence";
 }
 
 /// Non-trivial Whitehead product implies lift obstruction: \[α, β\] ≠ 0 in π_{p+q−1} implies a non-trivial LiftObstruction that Betti numbers alone cannot detect.
 pub mod ht_7 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "α ∈ π_p, β ∈ π_q";
-    /// `lhs`
-    pub const LHS: &str = "[α, β] ≠ 0 in π_{p+q−1}";
-    /// `rhs`
-    pub const RHS: &str = "LiftObstruction non-trivial";
+    /// `forAll` -> `term_HT_7_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_HT_7_forAll";
+    /// `lhs` -> `term_HT_7_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_HT_7_lhs";
+    /// `rhs` -> `term_HT_7_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_HT_7_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `IndexTheoretic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/IndexTheoretic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str =
-        "Whitehead bracket detects obstructions Betti numbers miss";
 }
 
 /// Hurewicz isomorphism for first non-vanishing group: π_k(N(C)) ⊗ Z ≅ H_k(N(C); Z) for the smallest k with π_k ≠ 0, linking homotopy invariants to homology.
 pub mod ht_8 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "constraint configuration C";
-    /// `lhs`
-    pub const LHS: &str = "π_k(N(C)) ⊗ Z";
-    /// `rhs`
-    pub const RHS: &str = "H_k(N(C); Z) for smallest k with π_k ≠ 0";
+    /// `forAll` -> `term_HT_8_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_HT_8_forAll";
+    /// `lhs` -> `term_HT_8_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_HT_8_lhs";
+    /// `rhs` -> `term_HT_8_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_HT_8_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Topological`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Topological";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Hurewicz theorem for simply-connected spaces";
 }
 
 /// ψ_7: KanComplex → PostnikovTower — compute the Postnikov truncations τ_{≤k} for k = 0, 1, …, dim(N(C)).
 pub mod psi_7 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "constraint configuration C";
-    /// `lhs`
-    pub const LHS: &str = "KanComplex(N(C))";
-    /// `rhs`
-    pub const RHS: &str = "PostnikovTower";
+    /// `forAll` -> `term_psi_7_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_psi_7_forAll";
+    /// `lhs` -> `term_psi_7_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_psi_7_lhs";
+    /// `rhs` -> `term_psi_7_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_psi_7_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Pipeline`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "KanComplex → PostnikovTruncation tower";
 }
 
 /// ψ_8: PostnikovTower → HomotopyGroups — extract the homotopy groups π_k from each truncation stage.
 pub mod psi_8 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "constraint configuration C";
-    /// `lhs`
-    pub const LHS: &str = "PostnikovTower(τ≤k)";
-    /// `rhs`
-    pub const RHS: &str = "HomotopyGroups(π_k)";
+    /// `forAll` -> `term_psi_8_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_psi_8_forAll";
+    /// `lhs` -> `term_psi_8_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_psi_8_lhs";
+    /// `rhs` -> `term_psi_8_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_psi_8_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Pipeline`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "PostnikovTower → HomotopyGroup extraction";
 }
 
 /// ψ_9: HomotopyGroups → KInvariants — compute the k-invariants κ_k classifying the Postnikov tower.
 pub mod psi_9 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "constraint configuration C";
-    /// `lhs`
-    pub const LHS: &str = "HomotopyGroups(π_k)";
-    /// `rhs`
-    pub const RHS: &str = "KInvariants(κ_k)";
+    /// `forAll` -> `term_psi_9_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_psi_9_forAll";
+    /// `lhs` -> `term_psi_9_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_psi_9_lhs";
+    /// `rhs` -> `term_psi_9_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_psi_9_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Pipeline`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "HomotopyGroup → KInvariant computation";
 }
 
 /// Pipeline composition: nerve construction + Kan promotion = ψ_7 ∘ ψ_1.
 pub mod hp_1 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "constraint configuration C";
-    /// `lhs`
-    pub const LHS: &str = "ψ_7 ∘ ψ_1";
-    /// `rhs`
-    pub const RHS: &str = "Kan promotion of nerve";
+    /// `forAll` -> `term_HP_1_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_HP_1_forAll";
+    /// `lhs` -> `term_HP_1_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_HP_1_lhs";
+    /// `rhs` -> `term_HP_1_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_HP_1_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Pipeline`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str =
-        "Pipeline composition: nerve construction + Kan promotion";
 }
 
 /// Homotopy extraction agrees with homology on k-skeleton.
 pub mod hp_2 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "constraint configuration C, truncation level k";
-    /// `lhs`
-    pub const LHS: &str = "ψ_8(τ≤k) restricted";
-    /// `rhs`
-    pub const RHS: &str = "ψ_3(C≤k)";
+    /// `forAll` -> `term_HP_2_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_HP_2_forAll";
+    /// `lhs` -> `term_HP_2_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_HP_2_lhs";
+    /// `rhs` -> `term_HP_2_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_HP_2_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Pipeline`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str =
-        "Homotopy extraction agrees with homology on k-skeleton";
 }
 
 /// k-invariant computation detects QLS_4 convergence.
 pub mod hp_3 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "constraint configuration C";
-    /// `lhs`
-    pub const LHS: &str = "ψ_9 detects convergence";
-    /// `rhs`
-    pub const RHS: &str = "spectral sequence converges at E_{d+2}";
+    /// `forAll` -> `term_HP_3_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_HP_3_forAll";
+    /// `lhs` -> `term_HP_3_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_HP_3_lhs";
+    /// `rhs` -> `term_HP_3_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_HP_3_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `IndexTheoretic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/IndexTheoretic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "k-invariant computation detects QLS_4 convergence";
 }
 
 /// Complexity bound for homotopy type computation.
 pub mod hp_4 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "d = max simplex dimension";
-    /// `lhs`
-    pub const LHS: &str = "HomotopyResolver time";
-    /// `rhs`
-    pub const RHS: &str = "O(n^{d+1})";
+    /// `forAll` -> `term_HP_4_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_HP_4_forAll";
+    /// `lhs` -> `term_HP_4_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_HP_4_lhs";
+    /// `rhs` -> `term_HP_4_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_HP_4_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Analytical`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Analytical";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Complexity bound for homotopy type computation";
 }
 
 /// Moduli space dimension equals basis size of any contained type.
 pub mod md_1 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "T in M_n";
-    /// `lhs`
-    pub const LHS: &str = "dim(M_n)";
-    /// `rhs`
-    pub const RHS: &str = "basisSize(T)";
+    /// `forAll` -> `term_MD_1_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_MD_1_forAll";
+    /// `lhs` -> `term_MD_1_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_MD_1_lhs";
+    /// `rhs` -> `term_MD_1_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_MD_1_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Moduli dimension = basis size";
 }
 
 /// Zeroth deformation cohomology = automorphism group intersected with dihedral group.
 pub mod md_2 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "CompleteType T";
-    /// `lhs`
-    pub const LHS: &str = "H^0(Def(T))";
-    /// `rhs`
-    pub const RHS: &str = "Aut(T) ∩ D_{2^n}";
+    /// `forAll` -> `term_MD_2_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_MD_2_forAll";
+    /// `lhs` -> `term_MD_2_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_MD_2_lhs";
+    /// `rhs` -> `term_MD_2_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_MD_2_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "H^0 = automorphisms";
 }
 
 /// First deformation cohomology = tangent space to the moduli space at T.
 pub mod md_3 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "CompleteType T";
-    /// `lhs`
-    pub const LHS: &str = "H^1(Def(T))";
-    /// `rhs`
-    pub const RHS: &str = "T_T(M_n)";
+    /// `forAll` -> `term_MD_3_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_MD_3_forAll";
+    /// `lhs` -> `term_MD_3_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_MD_3_lhs";
+    /// `rhs` -> `term_MD_3_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_MD_3_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "H^1 = tangent space";
 }
 
 /// Second deformation cohomology = LiftObstruction space.
 pub mod md_4 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "CompleteType T";
-    /// `lhs`
-    pub const LHS: &str = "H^2(Def(T))";
-    /// `rhs`
-    pub const RHS: &str = "LiftObstruction space";
+    /// `forAll` -> `term_MD_4_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_MD_4_forAll";
+    /// `lhs` -> `term_MD_4_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_MD_4_lhs";
+    /// `rhs` -> `term_MD_4_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_MD_4_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `IndexTheoretic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/IndexTheoretic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "H^2 = obstruction space";
 }
 
 /// FlatType stratum has codimension zero in the moduli space.
 pub mod md_5 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "M_n at any quantum level";
-    /// `lhs`
-    pub const LHS: &str = "FlatType stratum codimension";
-    /// `rhs`
-    pub const RHS: &str = "0";
+    /// `forAll` -> `term_MD_5_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_MD_5_forAll";
+    /// `lhs` -> `term_MD_5_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_MD_5_lhs";
+    /// `rhs` -> `term_MD_5_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_MD_5_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Topological`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Topological";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "FlatType stratum is open and dense";
 }
 
 /// TwistedType stratum has codimension at least 1.
 pub mod md_6 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "M_n at any quantum level";
-    /// `lhs`
-    pub const LHS: &str = "TwistedType stratum codimension";
-    /// `rhs`
-    pub const RHS: &str = "≥ 1";
+    /// `forAll` -> `term_MD_6_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_MD_6_forAll";
+    /// `lhs` -> `term_MD_6_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_MD_6_lhs";
+    /// `rhs` -> `term_MD_6_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_MD_6_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Topological`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Topological";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "TwistedType stratum has positive codimension";
 }
 
 /// VersalDeformation existence is guaranteed when the obstruction space H² vanishes.
 pub mod md_7 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "CompleteType T";
-    /// `lhs`
-    pub const LHS: &str = "VersalDeformation existence";
-    /// `rhs`
-    pub const RHS: &str = "guaranteed when H^2 = 0";
+    /// `forAll` -> `term_MD_7_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_MD_7_forAll";
+    /// `lhs` -> `term_MD_7_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_MD_7_lhs";
+    /// `rhs` -> `term_MD_7_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_MD_7_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Unobstructed deformations admit versal families";
 }
 
 /// A deformation family preserves completeness iff H²(Def(T_t)) = 0 along the entire path.
 pub mod md_8 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "DeformationFamily {C_t}";
-    /// `lhs`
-    pub const LHS: &str = "familyPreservesCompleteness";
-    /// `rhs`
-    pub const RHS: &str = "H^2(Def(T_t)) = 0 along path";
+    /// `forAll` -> `term_MD_8_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_MD_8_forAll";
+    /// `lhs` -> `term_MD_8_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_MD_8_lhs";
+    /// `rhs` -> `term_MD_8_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_MD_8_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `IndexTheoretic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/IndexTheoretic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str =
-        "Completeness preservation = vanishing obstruction along path";
 }
 
 /// The fiber of a ModuliTowerMap at T has dimension 1 when the obstruction is trivial.
 pub mod md_9 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "CompleteType T, obstruction = 0";
-    /// `lhs`
-    pub const LHS: &str = "fiber(ModuliTowerMap, T) dimension";
-    /// `rhs`
-    pub const RHS: &str = "1 when obstructionTrivial";
+    /// `forAll` -> `term_MD_9_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_MD_9_forAll";
+    /// `lhs` -> `term_MD_9_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_MD_9_lhs";
+    /// `rhs` -> `term_MD_9_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_MD_9_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `IndexTheoretic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/IndexTheoretic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Trivial obstruction → unique lift";
 }
 
 /// The fiber of a ModuliTowerMap at T is empty iff T is a TwistedType at every level.
 pub mod md_10 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "CompleteType T";
-    /// `lhs`
-    pub const LHS: &str = "fiber(ModuliTowerMap, T)";
-    /// `rhs`
-    pub const RHS: &str = "empty iff TwistedType at every level";
+    /// `forAll` -> `term_MD_10_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_MD_10_forAll";
+    /// `lhs` -> `term_MD_10_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_MD_10_lhs";
+    /// `rhs` -> `term_MD_10_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_MD_10_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `IndexTheoretic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/IndexTheoretic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Persistent twist → empty tower fiber";
 }
 
 /// ModuliResolver boundary agrees with MorphospaceBoundary.
 pub mod mr_1 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "M_n";
-    /// `lhs`
-    pub const LHS: &str = "ModuliResolver boundary";
-    /// `rhs`
-    pub const RHS: &str = "MorphospaceBoundary";
+    /// `forAll` -> `term_MR_1_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_MR_1_forAll";
+    /// `lhs` -> `term_MR_1_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_MR_1_lhs";
+    /// `rhs` -> `term_MR_1_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_MR_1_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Resolver boundary = morphospace boundary";
 }
 
 /// StratificationRecord covers every CompleteType in exactly one stratum.
 pub mod mr_2 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "M_n";
-    /// `lhs`
-    pub const LHS: &str = "StratificationRecord coverage";
-    /// `rhs`
-    pub const RHS: &str = "every CompleteType in exactly one stratum";
+    /// `forAll` -> `term_MR_2_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_MR_2_forAll";
+    /// `lhs` -> `term_MR_2_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_MR_2_lhs";
+    /// `rhs` -> `term_MR_2_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_MR_2_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Topological`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Topological";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Stratification is a partition of the moduli space";
 }
 
 /// ModuliResolver complexity bound.
 pub mod mr_3 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "CompleteType T";
-    /// `lhs`
-    pub const LHS: &str = "ModuliResolver complexity";
-    /// `rhs`
-    pub const RHS: &str = "O(n × basisSize²)";
+    /// `forAll` -> `term_MR_3_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_MR_3_forAll";
+    /// `lhs` -> `term_MR_3_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_MR_3_lhs";
+    /// `rhs` -> `term_MR_3_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_MR_3_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Analytical`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Analytical";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Complexity bound for moduli resolver";
 }
 
 /// Achievable signatures correspond to membership in some HolonomyStratum.
 pub mod mr_4 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "MorphospaceRecord";
-    /// `lhs`
-    pub const LHS: &str = "achievabilityStatus = Achievable";
-    /// `rhs`
-    pub const RHS: &str = "signature in some HolonomyStratum";
+    /// `forAll` -> `term_MR_4_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_MR_4_forAll";
+    /// `lhs` -> `term_MR_4_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_MR_4_lhs";
+    /// `rhs` -> `term_MR_4_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_MR_4_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Achievability = stratum membership";
 }
 
 /// Carry generates at fiber k iff and(x_k, y_k) = 1. Extends CA_1 (addition decomposition) and WC_2 (Witt sum correction).
 pub mod cy_1 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "x, y ∈ R_n, 0 ≤ k < n";
-    /// `lhs`
-    pub const LHS: &str = "generate(k)";
-    /// `rhs`
-    pub const RHS: &str = "and(x_k, y_k) = 1";
+    /// `forAll` -> `term_CY_1_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_CY_1_forAll";
+    /// `lhs` -> `term_CY_1_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_CY_1_lhs";
+    /// `rhs` -> `term_CY_1_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_CY_1_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Extends CA_1 and WC_2: carry generation condition";
 }
 
 /// Carry propagates at fiber k iff xor(x_k, y_k) = 1 and c_k = 1. Extends CA_2 (carry recurrence) and WC_3 (Witt polynomial recurrence).
 pub mod cy_2 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "x, y ∈ R_n, 0 ≤ k < n";
-    /// `lhs`
-    pub const LHS: &str = "propagate(k)";
-    /// `rhs`
-    pub const RHS: &str = "xor(x_k, y_k) = 1 ∧ c_k = 1";
+    /// `forAll` -> `term_CY_2_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_CY_2_forAll";
+    /// `lhs` -> `term_CY_2_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_CY_2_lhs";
+    /// `rhs` -> `term_CY_2_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_CY_2_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Extends CA_2 and WC_3: carry propagation condition";
 }
 
 /// Carry kills at fiber k iff and(x_k, y_k) = 0 and xor(x_k, y_k) = 0. Complement of CY_1 and CY_2.
 pub mod cy_3 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "x, y ∈ R_n, 0 ≤ k < n";
-    /// `lhs`
-    pub const LHS: &str = "kill(k)";
-    /// `rhs`
-    pub const RHS: &str = "and(x_k, y_k) = 0 ∧ xor(x_k, y_k) = 0";
+    /// `forAll` -> `term_CY_3_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_CY_3_forAll";
+    /// `lhs` -> `term_CY_3_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_CY_3_lhs";
+    /// `rhs` -> `term_CY_3_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_CY_3_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Complement of CY_1 and CY_2: carry kill condition";
 }
 
 /// d_Δ(x,y) = |carryCount(x+y) − hammingDistance(x,y)|. The metric incompatibility IS the discrepancy between carry count and Hamming distance. Strengthens WC_6.
 pub mod cy_4 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "x, y ∈ R_n";
-    /// `lhs`
-    pub const LHS: &str = "d_Δ(x, y)";
-    /// `rhs`
-    pub const RHS: &str = "|carryCount(x+y) − hammingDistance(x, y)|";
+    /// `forAll` -> `term_CY_4_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_CY_4_forAll";
+    /// `lhs` -> `term_CY_4_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_CY_4_lhs";
+    /// `rhs` -> `term_CY_4_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_CY_4_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Strengthens WC_6: d_Δ as carry–Hamming discrepancy";
 }
 
 /// Optimal encoding theorem: the encoding that minimizes Σ d_Δ over observed pairs is the one where the carry chain’s significance hierarchy matches the domain’s dependency structure.
 pub mod cy_5 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "finite symbol set S, observed pairs (s_i, s_j)";
-    /// `lhs`
-    pub const LHS: &str = "argmin_enc Σ d_Δ(enc(s_i), enc(s_j))";
-    /// `rhs`
-    pub const RHS: &str = "enc where carry significance ≅ domain dependency";
+    /// `forAll` -> `term_CY_5_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_CY_5_forAll";
+    /// `lhs` -> `term_CY_5_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_CY_5_lhs";
+    /// `rhs` -> `term_CY_5_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_CY_5_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str =
-        "Genuinely new: optimal encoding minimizes carry-induced d_Δ";
 }
 
 /// Fiber ordering theorem: d_Δ is minimized when high-significance fibers (upstream in the carry chain) encode the most structurally informative observables.
 pub mod cy_6 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "EncodingConfiguration over ordered domain";
-    /// `lhs`
-    pub const LHS: &str = "min d_Δ fiber ordering";
-    /// `rhs`
-    pub const RHS: &str = "high-significance fibers → most informative observables";
+    /// `forAll` -> `term_CY_6_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_CY_6_forAll";
+    /// `lhs` -> `term_CY_6_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_CY_6_lhs";
+    /// `rhs` -> `term_CY_6_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_CY_6_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Genuinely new: fiber ordering for d_Δ minimization";
 }
 
 /// Carry lookahead: the carry chain for n fibers is computable in O(log n) using prefix computation on generate/propagate pairs.
 pub mod cy_7 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "CarryChain of length n";
-    /// `lhs`
-    pub const LHS: &str = "T(carry_chain(n))";
-    /// `rhs`
-    pub const RHS: &str = "O(log n) via prefix computation on (g_k, p_k) pairs";
+    /// `forAll` -> `term_CY_7_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_CY_7_forAll";
+    /// `lhs` -> `term_CY_7_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_CY_7_lhs";
+    /// `rhs` -> `term_CY_7_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_CY_7_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str =
-        "Genuinely new: carry lookahead via prefix computation";
 }
 
 /// σ(C) = (n − freeCount(C)) / n. The saturation metric is the complement of free fiber ratio. Derives from SC_2.
 pub mod bm_1 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "Context C with n fibers";
-    /// `lhs`
-    pub const LHS: &str = "σ(C)";
-    /// `rhs`
-    pub const RHS: &str = "(n − freeCount(C)) / n";
+    /// `forAll` -> `term_BM_1_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_BM_1_forAll";
+    /// `lhs` -> `term_BM_1_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_BM_1_lhs";
+    /// `rhs` -> `term_BM_1_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_BM_1_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `IndexTheoretic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/IndexTheoretic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Derives from SC_2 (σ definition)";
 }
 
 /// χ = Σ(−1)^k β_k. The Euler characteristic of the constraint nerve. Derives from IT_2.
 pub mod bm_2 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "constraint set C";
-    /// `lhs`
-    pub const LHS: &str = "χ(nerve(C))";
-    /// `rhs`
-    pub const RHS: &str = "Σ(−1)^k β_k(nerve(C))";
+    /// `forAll` -> `term_BM_2_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_BM_2_forAll";
+    /// `lhs` -> `term_BM_2_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_BM_2_lhs";
+    /// `rhs` -> `term_BM_2_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_BM_2_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `IndexTheoretic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/IndexTheoretic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Derives from IT_2 (Euler–Poincaré formula)";
 }
 
 /// Index theorem: Σκ_k − χ = S_residual / ln 2. Links all six metrics. Derives from IT_7a.
 pub mod bm_3 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "computation state";
-    /// `lhs`
-    pub const LHS: &str = "Σκ_k − χ";
-    /// `rhs`
-    pub const RHS: &str = "S_residual / ln 2";
+    /// `forAll` -> `term_BM_3_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_BM_3_forAll";
+    /// `lhs` -> `term_BM_3_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_BM_3_lhs";
+    /// `rhs` -> `term_BM_3_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_BM_3_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `IndexTheoretic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/IndexTheoretic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Derives from IT_7a (index theorem)";
 }
 
 /// J_k = 0 for pinned fibers. The Jacobian vanishes on resolved fibers.
 pub mod bm_4 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "pinned fiber k";
-    /// `lhs`
-    pub const LHS: &str = "J_k (pinned fiber k)";
-    /// `rhs`
-    pub const RHS: &str = "0";
+    /// `forAll` -> `term_BM_4_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_BM_4_forAll";
+    /// `lhs` -> `term_BM_4_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_BM_4_lhs";
+    /// `rhs` -> `term_BM_4_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_BM_4_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `IndexTheoretic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/IndexTheoretic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Genuinely new: Jacobian vanishes on resolved fibers";
 }
 
 /// d_Δ > 0 iff carry ≠ 0. The metric discrepancy equals the Witt defect. Derives from WC_6.
 pub mod bm_5 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "x, y ∈ R_n";
-    /// `lhs`
-    pub const LHS: &str = "d_Δ(x, y) > 0";
-    /// `rhs`
-    pub const RHS: &str = "carry(x + y) ≠ 0";
+    /// `forAll` -> `term_BM_5_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_BM_5_forAll";
+    /// `lhs` -> `term_BM_5_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_BM_5_lhs";
+    /// `rhs` -> `term_BM_5_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_BM_5_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `IndexTheoretic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/IndexTheoretic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Derives from WC_6 (metric discrepancy = Witt defect)";
 }
 
 /// Metric composition tower: d_Δ → {σ, J_k} → β_k → χ → r. Each metric derives from previous ones.
 pub mod bm_6 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "computation state";
-    /// `lhs`
-    pub const LHS: &str = "metric tower";
-    /// `rhs`
-    pub const RHS: &str = "d_Δ → {σ, J_k} → β_k → χ → r";
+    /// `forAll` -> `term_BM_6_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_BM_6_forAll";
+    /// `lhs` -> `term_BM_6_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_BM_6_lhs";
+    /// `rhs` -> `term_BM_6_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_BM_6_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `IndexTheoretic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/IndexTheoretic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Genuinely new: metric composition tower structure";
 }
 
 /// σ = lower adjoint evaluated at current type. The saturation metric is the lower adjoint of the Galois connection. Derives from SC_2.
 pub mod gl_1 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "type T in type lattice";
-    /// `lhs`
-    pub const LHS: &str = "σ(T)";
-    /// `rhs`
-    pub const RHS: &str = "lower_adjoint(T)";
+    /// `forAll` -> `term_GL_1_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_GL_1_forAll";
+    /// `lhs` -> `term_GL_1_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_GL_1_lhs";
+    /// `rhs` -> `term_GL_1_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_GL_1_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Topological`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Topological";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Derives from SC_2 (σ as lower adjoint)";
 }
 
 /// r = complement of upper adjoint image. The residual freedom is what the type closure does not reach.
 pub mod gl_2 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "type T in type lattice";
-    /// `lhs`
-    pub const LHS: &str = "r(T)";
-    /// `rhs`
-    pub const RHS: &str = "1 − upper_adjoint(T)";
+    /// `forAll` -> `term_GL_2_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_GL_2_forAll";
+    /// `lhs` -> `term_GL_2_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_GL_2_lhs";
+    /// `rhs` -> `term_GL_2_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_GL_2_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Topological`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Topological";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str =
-        "Genuinely new: r as complement of upper adjoint image";
 }
 
 /// CompleteType = fixpoint of Galois connection, σ=1, r=0. Derives from IT_7d.
 pub mod gl_3 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "CompleteType T";
-    /// `lhs`
-    pub const LHS: &str = "upper(lower(T))";
-    /// `rhs`
-    pub const RHS: &str = "T (fixpoint: σ=1, r=0)";
+    /// `forAll` -> `term_GL_3_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_GL_3_forAll";
+    /// `lhs` -> `term_GL_3_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_GL_3_lhs";
+    /// `rhs` -> `term_GL_3_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_GL_3_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Topological`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Topological";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Derives from IT_7d (completeness = Galois fixpoint)";
 }
 
 /// Type refinement = ascending in type lattice = descending in fiber freedom. The Galois connection reverses order.
 pub mod gl_4 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "types T₁, T₂";
-    /// `lhs`
-    pub const LHS: &str = "T₁ ≤ T₂ in type lattice";
-    /// `rhs`
-    pub const RHS: &str = "fiber(T₂) ⊆ fiber(T₁)";
+    /// `forAll` -> `term_GL_4_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_GL_4_forAll";
+    /// `lhs` -> `term_GL_4_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_GL_4_lhs";
+    /// `rhs` -> `term_GL_4_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_GL_4_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Topological`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Topological";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Genuinely new: Galois order reversal";
 }
 
 /// nerve(C₁ ∪ C₂) = nerve(C₁) ∪ nerve(C₂) for disjoint constraint domains.
 pub mod nv_1 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "disjoint constraint domains C₁, C₂";
-    /// `lhs`
-    pub const LHS: &str = "nerve(C₁ ∪ C₂)";
-    /// `rhs`
-    pub const RHS: &str = "nerve(C₁) ∪ nerve(C₂)";
+    /// `forAll` -> `term_NV_1_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_NV_1_forAll";
+    /// `lhs` -> `term_NV_1_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_NV_1_lhs";
+    /// `rhs` -> `term_NV_1_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_NV_1_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Topological`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Topological";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Genuinely new: nerve additivity for disjoint domains";
 }
 
 /// Mayer–Vietoris: β_k(C₁ ∪ C₂) computable from parts and intersection.
 pub mod nv_2 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "constraint sets C₁, C₂";
-    /// `lhs`
-    pub const LHS: &str = "β_k(C₁ ∪ C₂)";
-    /// `rhs`
-    pub const RHS: &str = "β_k(C₁) + β_k(C₂) − β_k(C₁ ∩ C₂)";
+    /// `forAll` -> `term_NV_2_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_NV_2_forAll";
+    /// `lhs` -> `term_NV_2_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_NV_2_lhs";
+    /// `rhs` -> `term_NV_2_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_NV_2_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Topological`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Topological";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Genuinely new: Mayer–Vietoris for constraint nerves";
 }
 
 /// Single constraint addition: Δβ_k ∈ {−1, 0, +1} per dimension.
 pub mod nv_3 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "single constraint addition, dimension k";
-    /// `lhs`
-    pub const LHS: &str = "Δβ_k";
-    /// `rhs`
-    pub const RHS: &str = "∈ {−1, 0, +1}";
+    /// `forAll` -> `term_NV_3_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_NV_3_forAll";
+    /// `lhs` -> `term_NV_3_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_NV_3_lhs";
+    /// `rhs` -> `term_NV_3_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_NV_3_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Topological`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Topological";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Genuinely new: Betti number change bounded by 1";
 }
 
 /// Constraint accumulation monotonicity: β_k non-increasing under SR_1. Derives from SR_1.
 pub mod nv_4 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "constraint set C, new constraint c";
-    /// `lhs`
-    pub const LHS: &str = "β_k(C ∪ {c})";
-    /// `rhs`
-    pub const RHS: &str = "≤ β_k(C)";
+    /// `forAll` -> `term_NV_4_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_NV_4_forAll";
+    /// `lhs` -> `term_NV_4_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_NV_4_lhs";
+    /// `rhs` -> `term_NV_4_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_NV_4_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Topological`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Topological";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str =
-        "Derives from SR_1 (session accumulation monotonicity)";
 }
 
 /// ScalarType grounding: quantize(value, range, bits) produces ring element where d_R reflects value proximity.
 pub mod sd_1 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "values v in ordered domain";
-    /// `lhs`
-    pub const LHS: &str = "quantize(value, range, bits)";
-    /// `rhs`
-    pub const RHS: &str = "ring element with d_R ∝ |v₁ − v₂|";
+    /// `forAll` -> `term_SD_1_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_SD_1_forAll";
+    /// `lhs` -> `term_SD_1_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_SD_1_lhs";
+    /// `rhs` -> `term_SD_1_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_SD_1_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Scalar grounding preserves order via ring metric";
 }
 
 /// SymbolType grounding: argmin_{encoding} Σ d_Δ over observed pairs (CY_5).
 pub mod sd_2 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "symbol pairs (a,b) in alphabet";
-    /// `lhs`
-    pub const LHS: &str = "encoding(alphabet)";
-    /// `rhs`
-    pub const RHS: &str = "argmin_{e} Σ d_Δ(e(a), e(b))";
+    /// `forAll` -> `term_SD_2_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_SD_2_forAll";
+    /// `lhs` -> `term_SD_2_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_SD_2_lhs";
+    /// `rhs` -> `term_SD_2_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_SD_2_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str =
-        "Optimal symbol encoding via CY_5 (discrepancy minimization)";
 }
 
 /// SequenceType = free monoid on element type with backbone constraint.
 pub mod sd_3 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "element type T";
-    /// `lhs`
-    pub const LHS: &str = "Seq(T)";
-    /// `rhs`
-    pub const RHS: &str = "Free(T) with backbone ordering";
+    /// `forAll` -> `term_SD_3_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_SD_3_forAll";
+    /// `lhs` -> `term_SD_3_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_SD_3_lhs";
+    /// `rhs` -> `term_SD_3_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_SD_3_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Sequence as free monoid with positional backbone";
 }
 
 /// TupleType fiber count = Σ field fiber counts, fiber ordering follows CY_6.
 pub mod sd_4 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "fields f_1,...,f_k of tuple type";
-    /// `lhs`
-    pub const LHS: &str = "fibers(Tuple(f₁,...,fₖ))";
-    /// `rhs`
-    pub const RHS: &str = "Σᵢ fibers(fᵢ)";
+    /// `forAll` -> `term_SD_4_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_SD_4_forAll";
+    /// `lhs` -> `term_SD_4_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_SD_4_lhs";
+    /// `rhs` -> `term_SD_4_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_SD_4_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Tuple fiber count additive; ordering via CY_6";
 }
 
 /// GraphType constraint nerve = graph nerve, β_k equality.
 pub mod sd_5 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "graph (V,E) with typed nodes";
-    /// `lhs`
-    pub const LHS: &str = "nerve(Graph(V,E))";
-    /// `rhs`
-    pub const RHS: &str = "constraint_nerve(Graph(V,E))";
+    /// `forAll` -> `term_SD_5_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_SD_5_forAll";
+    /// `lhs` -> `term_SD_5_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_SD_5_lhs";
+    /// `rhs` -> `term_SD_5_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_SD_5_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Graph nerve equals constraint nerve: beta_k equality";
 }
 
 /// SetType d_Δ invariant under element permutation, D_{2n} symmetry.
 pub mod sd_6 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "permutation σ of set elements";
-    /// `lhs`
-    pub const LHS: &str = "d_Δ(Set(a,b,c))";
-    /// `rhs`
-    pub const RHS: &str = "d_Δ(Set(σ(a,b,c)))";
+    /// `forAll` -> `term_SD_6_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_SD_6_forAll";
+    /// `lhs` -> `term_SD_6_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_SD_6_lhs";
+    /// `rhs` -> `term_SD_6_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_SD_6_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Set permutation invariance under D_{2n} symmetry";
 }
 
 /// TreeType β_1=0, β_0=1 topological constraints.
 pub mod sd_7 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "tree (V,E) with beta_0=1";
-    /// `lhs`
-    pub const LHS: &str = "β_1(Tree(V,E))";
-    /// `rhs`
-    pub const RHS: &str = "0";
+    /// `forAll` -> `term_SD_7_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_SD_7_forAll";
+    /// `lhs` -> `term_SD_7_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_SD_7_lhs";
+    /// `rhs` -> `term_SD_7_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_SD_7_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Tree acyclicity: beta_1=0, connectedness: beta_0=1";
 }
 
 /// TableType = SequenceType(TupleType(S)), functorial decomposition.
 pub mod sd_8 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "schema S defining tuple fields";
-    /// `lhs`
-    pub const LHS: &str = "Table(S)";
-    /// `rhs`
-    pub const RHS: &str = "Seq(Tuple(S))";
+    /// `forAll` -> `term_SD_8_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_SD_8_forAll";
+    /// `lhs` -> `term_SD_8_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_SD_8_lhs";
+    /// `rhs` -> `term_SD_8_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_SD_8_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str =
-        "Table = Sequence(Tuple(S)) by functorial decomposition";
 }
 
 /// Dispatch determinism: same query and same registry always yield the same resolver.
 pub mod dd_1 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "query q, registry R";
-    /// `lhs`
-    pub const LHS: &str = "δ(q, R)";
-    /// `rhs`
-    pub const RHS: &str = "δ(q, R)";
+    /// `forAll` -> `term_DD_1_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_DD_1_forAll";
+    /// `lhs` -> `term_DD_1_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_DD_1_lhs";
+    /// `rhs` -> `term_DD_1_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_DD_1_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `ComposedAlgebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/ComposedAlgebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str =
-        "Dispatch is a function: deterministic by registry lookup";
 }
 
 /// Dispatch coverage: every query in the registry domain has a matching resolver.
 pub mod dd_2 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "registry R";
-    /// `lhs`
-    pub const LHS: &str = "dom(R)";
-    /// `rhs`
-    pub const RHS: &str = "{q | ∃r. δ(q,R)=r}";
+    /// `forAll` -> `term_DD_2_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_DD_2_forAll";
+    /// `lhs` -> `term_DD_2_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_DD_2_lhs";
+    /// `rhs` -> `term_DD_2_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_DD_2_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `ComposedAlgebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/ComposedAlgebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Registry completeness: dom(R) = dispatchable queries";
 }
 
 /// Inference idempotence: ι(ι(s,C),C) = ι(s,C) on SaturatedContext.
 pub mod pi_1 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "symbol s, SaturatedContext C";
-    /// `lhs`
-    pub const LHS: &str = "ι(ι(s,C),C)";
-    /// `rhs`
-    pub const RHS: &str = "ι(s,C)";
+    /// `forAll` -> `term_PI_1_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_PI_1_forAll";
+    /// `lhs` -> `term_PI_1_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_PI_1_lhs";
+    /// `rhs` -> `term_PI_1_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_PI_1_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `ComposedAlgebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/ComposedAlgebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str =
-        "Saturated context implies fixed-point: re-inference is no-op";
 }
 
 /// Inference soundness: ι(s,C) resolves to a type consistent with C.
 pub mod pi_2 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "symbol s, context C";
-    /// `lhs`
-    pub const LHS: &str = "type(ι(s,C))";
-    /// `rhs`
-    pub const RHS: &str = "consistent(C)";
+    /// `forAll` -> `term_PI_2_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_PI_2_forAll";
+    /// `lhs` -> `term_PI_2_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_PI_2_lhs";
+    /// `rhs` -> `term_PI_2_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_PI_2_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `ComposedAlgebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/ComposedAlgebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str =
-        "Inference output type is consistent with input context";
 }
 
 /// Inference composition: ι = P ∘ Π ∘ G (references phi_4).
 pub mod pi_3 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "symbol s, context C";
-    /// `lhs`
-    pub const LHS: &str = "ι(s,C)";
-    /// `rhs`
-    pub const RHS: &str = "P(Π(G(s,C)))";
+    /// `forAll` -> `term_PI_3_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_PI_3_forAll";
+    /// `lhs` -> `term_PI_3_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_PI_3_lhs";
+    /// `rhs` -> `term_PI_3_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_PI_3_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `ComposedAlgebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/ComposedAlgebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str =
-        "Pipeline decomposition: inference = project . product . ground";
 }
 
 /// Inference complexity: O(n) worst case, O(1) on CompleteType.
 pub mod pi_4 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "symbol s, context C";
-    /// `lhs`
-    pub const LHS: &str = "complexity(ι(s,C))";
-    /// `rhs`
-    pub const RHS: &str = "O(|C|)";
+    /// `forAll` -> `term_PI_4_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_PI_4_forAll";
+    /// `lhs` -> `term_PI_4_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_PI_4_lhs";
+    /// `rhs` -> `term_PI_4_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_PI_4_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `ComposedAlgebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/ComposedAlgebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Linear in context size; constant for CompleteType";
 }
 
 /// Inference coherence: roundTrip(P(Π(G(s)))) = s.
 pub mod pi_5 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "symbol s";
-    /// `lhs`
-    pub const LHS: &str = "roundTrip(P(Π(G(s))))";
-    /// `rhs`
-    pub const RHS: &str = "s";
+    /// `forAll` -> `term_PI_5_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_PI_5_forAll";
+    /// `lhs` -> `term_PI_5_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_PI_5_lhs";
+    /// `rhs` -> `term_PI_5_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_PI_5_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `ComposedAlgebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/ComposedAlgebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str =
-        "Pipeline round-trip coherence: ground, product, project, invert = id";
 }
 
 /// Accumulation permutation invariance: accumulating bindings in any order yields the same saturated context (derives from SR_10).
 pub mod pa_1 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "bindings b₁,b₂, context C at saturation";
-    /// `lhs`
-    pub const LHS: &str = "α(b₁,α(b₂,C))";
-    /// `rhs`
-    pub const RHS: &str = "α(b₂,α(b₁,C))";
+    /// `forAll` -> `term_PA_1_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_PA_1_forAll";
+    /// `lhs` -> `term_PA_1_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_PA_1_lhs";
+    /// `rhs` -> `term_PA_1_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_PA_1_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `ComposedAlgebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/ComposedAlgebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str =
-        "Permutation invariance at saturation, derives from SR_10";
 }
 
 /// Accumulation monotonicity: α(b,C) ⊇ C (the context only grows, never loses bindings). Derives from SR_1.
 pub mod pa_2 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "binding b, context C";
-    /// `lhs`
-    pub const LHS: &str = "fibers(α(b,C))";
-    /// `rhs`
-    pub const RHS: &str = "fibers(C) ∪ {b.fiber}";
+    /// `forAll` -> `term_PA_2_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_PA_2_forAll";
+    /// `lhs` -> `term_PA_2_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_PA_2_lhs";
+    /// `rhs` -> `term_PA_2_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_PA_2_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `ComposedAlgebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/ComposedAlgebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Monotone growth of pinned fibers, derives from SR_1";
 }
 
 /// Accumulation soundness: α(b,C) preserves all previously satisfied constraints. Derives from SR_2.
 pub mod pa_3 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "binding b, context C";
-    /// `lhs`
-    pub const LHS: &str = "constraints(α(b,C))";
-    /// `rhs`
-    pub const RHS: &str = "constraints(C) ∪ constraints(b)";
+    /// `forAll` -> `term_PA_3_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_PA_3_forAll";
+    /// `lhs` -> `term_PA_3_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_PA_3_lhs";
+    /// `rhs` -> `term_PA_3_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_PA_3_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `ComposedAlgebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/ComposedAlgebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str =
-        "Constraint monotonicity: new bindings preserve old constraints";
 }
 
 /// Accumulation base preservation: α does not modify previously pinned fibers.
 pub mod pa_4 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "binding b, context C";
-    /// `lhs`
-    pub const LHS: &str = "α(b,C)|_{pinned(C)}";
-    /// `rhs`
-    pub const RHS: &str = "C|_{pinned(C)}";
+    /// `forAll` -> `term_PA_4_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_PA_4_forAll";
+    /// `lhs` -> `term_PA_4_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_PA_4_lhs";
+    /// `rhs` -> `term_PA_4_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_PA_4_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `ComposedAlgebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/ComposedAlgebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str =
-        "Pinned fibers are immutable: accumulation only extends";
 }
 
 /// Accumulation identity: α(∅, C) = C.
 pub mod pa_5 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "context C";
-    /// `lhs`
-    pub const LHS: &str = "α(∅, C)";
-    /// `rhs`
-    pub const RHS: &str = "C";
+    /// `forAll` -> `term_PA_5_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_PA_5_forAll";
+    /// `lhs` -> `term_PA_5_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_PA_5_lhs";
+    /// `rhs` -> `term_PA_5_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_PA_5_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `ComposedAlgebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/ComposedAlgebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str =
-        "Empty binding is the identity element for accumulation";
 }
 
 /// Lease disjointness: partitioned leases have pairwise disjoint fiber sets (derives from SR_9).
 pub mod pl_1 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "leases Lᵢ, Lⱼ with i ≠ j";
-    /// `lhs`
-    pub const LHS: &str = "Lᵢ ∩ Lⱼ";
-    /// `rhs`
-    pub const RHS: &str = "∅";
+    /// `forAll` -> `term_PL_1_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_PL_1_forAll";
+    /// `lhs` -> `term_PL_1_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_PL_1_lhs";
+    /// `rhs` -> `term_PL_1_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_PL_1_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `ComposedAlgebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/ComposedAlgebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str =
-        "Lease disjointness by construction, derives from SR_9";
 }
 
 /// Lease conservation: union of all leases equals the original shared context (derives from MC_1).
 pub mod pl_2 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "shared context S, leases Lᵢ";
-    /// `lhs`
-    pub const LHS: &str = "⋃ᵢ Lᵢ";
-    /// `rhs`
-    pub const RHS: &str = "S";
+    /// `forAll` -> `term_PL_2_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_PL_2_forAll";
+    /// `lhs` -> `term_PL_2_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_PL_2_lhs";
+    /// `rhs` -> `term_PL_2_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_PL_2_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `ComposedAlgebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/ComposedAlgebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Lease conservation: no fibers lost in partitioning";
 }
 
 /// Lease coverage: every fiber in the shared context appears in exactly one lease (derives from MC_6).
 pub mod pl_3 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "fiber f in shared context S";
-    /// `lhs`
-    pub const LHS: &str = "|{i | f ∈ Lᵢ}|";
-    /// `rhs`
-    pub const RHS: &str = "1";
+    /// `forAll` -> `term_PL_3_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_PL_3_forAll";
+    /// `lhs` -> `term_PL_3_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_PL_3_lhs";
+    /// `rhs` -> `term_PL_3_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_PL_3_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `ComposedAlgebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/ComposedAlgebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Every fiber in exactly one lease, derives from MC_6";
 }
 
 /// Composition validity: κ(S₁,S₂) is a valid session if S₁,S₂ have disjoint leases (derives from SR_8).
 pub mod pk_1 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "sessions S₁,S₂";
-    /// `lhs`
-    pub const LHS: &str = "valid(κ(S₁,S₂))";
-    /// `rhs`
-    pub const RHS: &str = "disjoint(S₁,S₂)";
+    /// `forAll` -> `term_PK_1_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_PK_1_forAll";
+    /// `lhs` -> `term_PK_1_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_PK_1_lhs";
+    /// `rhs` -> `term_PK_1_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_PK_1_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `ComposedAlgebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/ComposedAlgebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str =
-        "Session composability requires disjoint leases (SR_8)";
 }
 
 /// Distributed resolution: resolving in κ(S₁,S₂) equals resolving in S₁ or S₂ independently (derives from MC_7).
 pub mod pk_2 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "symbol s, sessions S₁,S₂";
-    /// `lhs`
-    pub const LHS: &str = "resolve(s, κ(S₁,S₂))";
-    /// `rhs`
-    pub const RHS: &str = "resolve(s, S₁) ∨ resolve(s, S₂)";
+    /// `forAll` -> `term_PK_2_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_PK_2_forAll";
+    /// `lhs` -> `term_PK_2_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_PK_2_lhs";
+    /// `rhs` -> `term_PK_2_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_PK_2_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `ComposedAlgebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/ComposedAlgebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str =
-        "Distributed resolution: disjoint lease locality (MC_7)";
 }
 
 /// Pipeline unification: κ(λₖ(α*(ι(s,·))),C) = resolve(s,C). The full composed pipeline equals the top-level resolution function.
 pub mod pp_1 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "symbol s, context C";
-    /// `lhs`
-    pub const LHS: &str = "κ(λₖ(α*(ι(s,·))), C)";
-    /// `rhs`
-    pub const RHS: &str = "resolve(s, C)";
+    /// `forAll` -> `term_PP_1_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_PP_1_forAll";
+    /// `lhs` -> `term_PP_1_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_PP_1_lhs";
+    /// `rhs` -> `term_PP_1_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_PP_1_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `ComposedAlgebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/ComposedAlgebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str =
-        "End-to-end pipeline: compose(partition(accumulate*(infer(s))), C) = resolve(s,C)";
 }
 
 /// Stage 0 initializes state vector to 1.
 pub mod pe_1 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "cascade ψ";
-    /// `lhs`
-    pub const LHS: &str = "state(ψ, 0)";
-    /// `rhs`
-    pub const RHS: &str = "1";
+    /// `forAll` -> `term_PE_1_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_PE_1_forAll";
+    /// `lhs` -> `term_PE_1_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_PE_1_lhs";
+    /// `rhs` -> `term_PE_1_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_PE_1_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Pipeline`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Initialization: state vector starts at identity";
 }
 
 /// Stage 1 dispatches resolver (δ selects).
 pub mod pe_2 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "query q, registry R";
-    /// `lhs`
-    pub const LHS: &str = "ψ_1(q)";
-    /// `rhs`
-    pub const RHS: &str = "δ(q, R)";
+    /// `forAll` -> `term_PE_2_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_PE_2_forAll";
+    /// `lhs` -> `term_PE_2_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_PE_2_lhs";
+    /// `rhs` -> `term_PE_2_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_PE_2_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Pipeline`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Dispatch: stage 1 selects resolver from registry";
 }
 
 /// Stage 2 produces valid ring address (G grounds).
 pub mod pe_3 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "resolver r";
-    /// `lhs`
-    pub const LHS: &str = "ψ_2(r)";
-    /// `rhs`
-    pub const RHS: &str = "G(r)";
+    /// `forAll` -> `term_PE_3_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_PE_3_forAll";
+    /// `lhs` -> `term_PE_3_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_PE_3_lhs";
+    /// `rhs` -> `term_PE_3_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_PE_3_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Pipeline`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Grounding: stage 2 produces valid ring address";
 }
 
 /// Stage 3 resolves constraints (Π terminates).
 pub mod pe_4 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "address a";
-    /// `lhs`
-    pub const LHS: &str = "ψ_3(a)";
-    /// `rhs`
-    pub const RHS: &str = "Π(a)";
+    /// `forAll` -> `term_PE_4_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_PE_4_forAll";
+    /// `lhs` -> `term_PE_4_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_PE_4_lhs";
+    /// `rhs` -> `term_PE_4_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_PE_4_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Pipeline`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Resolution: stage 3 resolves constraints";
 }
 
 /// Stage 4 accumulates without contradiction (α consistent).
 pub mod pe_5 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "constraint set c";
-    /// `lhs`
-    pub const LHS: &str = "ψ_4(c)";
-    /// `rhs`
-    pub const RHS: &str = "α*(c)";
+    /// `forAll` -> `term_PE_5_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_PE_5_forAll";
+    /// `lhs` -> `term_PE_5_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_PE_5_lhs";
+    /// `rhs` -> `term_PE_5_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_PE_5_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Pipeline`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Accumulation: stage 4 accumulates consistently";
 }
 
 /// Stage 5 extracts coherent output (P projects).
 pub mod pe_6 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "binding b";
-    /// `lhs`
-    pub const LHS: &str = "ψ_5(b)";
-    /// `rhs`
-    pub const RHS: &str = "P(b)";
+    /// `forAll` -> `term_PE_6_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_PE_6_forAll";
+    /// `lhs` -> `term_PE_6_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_PE_6_lhs";
+    /// `rhs` -> `term_PE_6_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_PE_6_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Pipeline`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Extraction: stage 5 projects coherent output";
 }
 
 /// Full pipeline is the composition PE_6 ∘ … ∘ PE_1.
 pub mod pe_7 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "cascade ψ";
-    /// `lhs`
-    pub const LHS: &str = "ψ_5 ∘ ψ_4 ∘ ψ_3 ∘ ψ_2 ∘ ψ_1 ∘ ψ_0";
-    /// `rhs`
-    pub const RHS: &str = "ψ";
+    /// `forAll` -> `term_PE_7_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_PE_7_forAll";
+    /// `lhs` -> `term_PE_7_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_PE_7_lhs";
+    /// `rhs` -> `term_PE_7_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_PE_7_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Pipeline`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str =
-        "Composition: full cascade = sequential composition of stages";
 }
 
 /// Phase rotation Ω^k at stage k.
 pub mod pm_1 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "stage index k in 0..5";
-    /// `lhs`
-    pub const LHS: &str = "phase(stage_k)";
-    /// `rhs`
-    pub const RHS: &str = "Ω^k";
+    /// `forAll` -> `term_PM_1_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_PM_1_forAll";
+    /// `lhs` -> `term_PM_1_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_PM_1_lhs";
+    /// `rhs` -> `term_PM_1_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_PM_1_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Pipeline`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Phase rotation: each stage rotates by Ω";
 }
 
 /// Phase gate checks Ω^k at boundary.
 pub mod pm_2 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "stage boundary k";
-    /// `lhs`
-    pub const LHS: &str = "gate(k)";
-    /// `rhs`
-    pub const RHS: &str = "phase(k) == Ω^k";
+    /// `forAll` -> `term_PM_2_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_PM_2_forAll";
+    /// `lhs` -> `term_PM_2_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_PM_2_lhs";
+    /// `rhs` -> `term_PM_2_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_PM_2_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Pipeline`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str =
-        "Phase gate: boundary check verifies accumulated angle";
 }
 
 /// Gate failure triggers complex conjugate rollback.
 pub mod pm_3 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "stage k with gate failure";
-    /// `lhs`
-    pub const LHS: &str = "fail(gate(k))";
-    /// `rhs`
-    pub const RHS: &str = "rollback(z → z̄)";
+    /// `forAll` -> `term_PM_3_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_PM_3_forAll";
+    /// `lhs` -> `term_PM_3_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_PM_3_lhs";
+    /// `rhs` -> `term_PM_3_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_PM_3_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Pipeline`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Rollback: gate failure triggers conjugate recovery";
 }
 
 /// Rollback is involutory: (z̄)̄ = z.
 pub mod pm_4 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "complex value z";
-    /// `lhs`
-    pub const LHS: &str = "conj(conj(z))";
-    /// `rhs`
-    pub const RHS: &str = "z";
+    /// `forAll` -> `term_PM_4_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_PM_4_forAll";
+    /// `lhs` -> `term_PM_4_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_PM_4_lhs";
+    /// `rhs` -> `term_PM_4_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_PM_4_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Pipeline`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str =
-        "Involution: complex conjugate applied twice is identity";
 }
 
 /// Epoch boundary preserves saturation.
 pub mod pm_5 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "consecutive epochs n, n+1";
-    /// `lhs`
-    pub const LHS: &str = "sat(epoch_n)";
-    /// `rhs`
-    pub const RHS: &str = "sat(epoch_{n+1})";
+    /// `forAll` -> `term_PM_5_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_PM_5_forAll";
+    /// `lhs` -> `term_PM_5_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_PM_5_lhs";
+    /// `rhs` -> `term_PM_5_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_PM_5_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Pipeline`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str =
-        "Epoch continuity: saturation level preserved across epochs";
 }
 
 /// Service window provides base context.
 pub mod pm_6 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "service window";
-    /// `lhs`
-    pub const LHS: &str = "context(window)";
-    /// `rhs`
-    pub const RHS: &str = "base_context";
+    /// `forAll` -> `term_PM_6_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_PM_6_forAll";
+    /// `lhs` -> `term_PM_6_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_PM_6_lhs";
+    /// `rhs` -> `term_PM_6_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_PM_6_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Pipeline`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Service window: provides base context for cascade";
 }
 
 /// Machine is deterministic given initial state.
 pub mod pm_7 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "initial state s₀";
-    /// `lhs`
-    pub const LHS: &str = "ψ(s₀)";
-    /// `rhs`
-    pub const RHS: &str = "ψ(s₀)";
+    /// `forAll` -> `term_PM_7_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_PM_7_forAll";
+    /// `lhs` -> `term_PM_7_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_PM_7_lhs";
+    /// `rhs` -> `term_PM_7_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_PM_7_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Pipeline`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Determinism: same initial state yields same result";
 }
 
 /// Stage transition requires guard satisfaction.
 pub mod er_1 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "stage transition k to k+1";
-    /// `lhs`
-    pub const LHS: &str = "advance(k, k+1)";
-    /// `rhs`
-    pub const RHS: &str = "guard(k) = true";
+    /// `forAll` -> `term_ER_1_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_ER_1_forAll";
+    /// `lhs` -> `term_ER_1_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_ER_1_lhs";
+    /// `rhs` -> `term_ER_1_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_ER_1_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Pipeline`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Guard: transition requires guard satisfaction";
 }
 
 /// Effect application is atomic.
 pub mod er_2 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "transition effect at stage k";
-    /// `lhs`
-    pub const LHS: &str = "apply(effect(k))";
-    /// `rhs`
-    pub const RHS: &str = "atomic(effect(k))";
+    /// `forAll` -> `term_ER_2_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_ER_2_forAll";
+    /// `lhs` -> `term_ER_2_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_ER_2_lhs";
+    /// `rhs` -> `term_ER_2_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_ER_2_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Pipeline`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Atomicity: effect application is atomic";
 }
 
 /// Guard evaluation is side-effect-free.
 pub mod er_3 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "guard evaluation at stage k with state s";
-    /// `lhs`
-    pub const LHS: &str = "eval(guard(k), s)";
-    /// `rhs`
-    pub const RHS: &str = "s (state unchanged)";
+    /// `forAll` -> `term_ER_3_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_ER_3_forAll";
+    /// `lhs` -> `term_ER_3_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_ER_3_lhs";
+    /// `rhs` -> `term_ER_3_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_ER_3_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Pipeline`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Purity: guard evaluation has no side effects";
 }
 
 /// Effect composition is order-independent within a stage.
 pub mod er_4 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "effects e1, e2 within same stage";
-    /// `lhs`
-    pub const LHS: &str = "apply(e1; e2)";
-    /// `rhs`
-    pub const RHS: &str = "apply(e2; e1)";
+    /// `forAll` -> `term_ER_4_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_ER_4_forAll";
+    /// `lhs` -> `term_ER_4_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_ER_4_lhs";
+    /// `rhs` -> `term_ER_4_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_ER_4_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Pipeline`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Commutativity: intra-stage effects commute";
 }
 
 /// Epoch boundary resets free fibers.
 pub mod ea_1 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "epoch boundary n to n+1";
-    /// `lhs`
-    pub const LHS: &str = "free(epoch(n+1))";
-    /// `rhs`
-    pub const RHS: &str = "free(epoch(0))";
+    /// `forAll` -> `term_EA_1_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_EA_1_forAll";
+    /// `lhs` -> `term_EA_1_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_EA_1_lhs";
+    /// `rhs` -> `term_EA_1_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_EA_1_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Pipeline`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Reset: epoch boundary resets free fibers";
 }
 
 /// Saturation carries across epochs.
 pub mod ea_2 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "saturated fibers across epoch boundary";
-    /// `lhs`
-    pub const LHS: &str = "saturated(epoch(n))";
-    /// `rhs`
-    pub const RHS: &str = "saturated(epoch(n+1))";
+    /// `forAll` -> `term_EA_2_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_EA_2_forAll";
+    /// `lhs` -> `term_EA_2_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_EA_2_lhs";
+    /// `rhs` -> `term_EA_2_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_EA_2_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Pipeline`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Monotonicity: saturation is monotone across epochs";
 }
 
 /// Service window bounds context size.
 pub mod ea_3 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "service window w";
-    /// `lhs`
-    pub const LHS: &str = "|context(w)|";
-    /// `rhs`
-    pub const RHS: &str = "windowSize(w)";
+    /// `forAll` -> `term_EA_3_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_EA_3_forAll";
+    /// `lhs` -> `term_EA_3_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_EA_3_lhs";
+    /// `rhs` -> `term_EA_3_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_EA_3_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Pipeline`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Bounded: service window bounds context cardinality";
 }
 
 /// Epoch admits one datum or one refinement pass.
 pub mod ea_4 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "epoch admission at epoch n";
-    /// `lhs`
-    pub const LHS: &str = "admit(epoch(n))";
-    /// `rhs`
-    pub const RHS: &str = "datum | refinement";
+    /// `forAll` -> `term_EA_4_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_EA_4_forAll";
+    /// `lhs` -> `term_EA_4_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_EA_4_lhs";
+    /// `rhs` -> `term_EA_4_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_EA_4_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Pipeline`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Exclusivity: one datum or one refinement per epoch";
 }
 
 /// Adjacent stages with compatible guards may fuse.
 pub mod oe_1 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "adjacent stages k, k+1 with compatible guards";
-    /// `lhs`
-    pub const LHS: &str = "stage(k); stage(k+1)";
-    /// `rhs`
-    pub const RHS: &str = "fused(k, k+1)";
+    /// `forAll` -> `term_OE_1_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_OE_1_forAll";
+    /// `lhs` -> `term_OE_1_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_OE_1_lhs";
+    /// `rhs` -> `term_OE_1_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_OE_1_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Pipeline`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Fusion: compatible adjacent stages may fuse";
 }
 
 /// Independent effects commute.
 pub mod oe_2 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "independent effects a, b";
-    /// `lhs`
-    pub const LHS: &str = "effect(a); effect(b)";
-    /// `rhs`
-    pub const RHS: &str = "effect(b); effect(a)";
+    /// `forAll` -> `term_OE_2_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_OE_2_forAll";
+    /// `lhs` -> `term_OE_2_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_OE_2_lhs";
+    /// `rhs` -> `term_OE_2_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_OE_2_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Pipeline`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Commutativity: independent effects commute";
 }
 
 /// Disjoint leases parallelize.
 pub mod oe_3 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "disjoint lease sets A, B";
-    /// `lhs`
-    pub const LHS: &str = "lease(A); lease(B)";
-    /// `rhs`
-    pub const RHS: &str = "lease(A) || lease(B)";
+    /// `forAll` -> `term_OE_3_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_OE_3_forAll";
+    /// `lhs` -> `term_OE_3_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_OE_3_lhs";
+    /// `rhs` -> `term_OE_3_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_OE_3_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Pipeline`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Parallelism: disjoint leases may execute in parallel";
 }
 
 /// Stage fusion preserves semantics.
 pub mod oe_4a {
-    /// `forAll`
-    pub const FOR_ALL: &str = "fused stages k, k+1";
-    /// `lhs`
-    pub const LHS: &str = "sem(fused(k, k+1))";
-    /// `rhs`
-    pub const RHS: &str = "sem(stage(k)); sem(stage(k+1))";
+    /// `forAll` -> `term_OE_4a_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_OE_4a_forAll";
+    /// `lhs` -> `term_OE_4a_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_OE_4a_lhs";
+    /// `rhs` -> `term_OE_4a_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_OE_4a_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Pipeline`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Soundness: stage fusion preserves semantics";
 }
 
 /// Effect commutation preserves outcome.
 pub mod oe_4b {
-    /// `forAll`
-    pub const FOR_ALL: &str = "commuting effects a, b";
-    /// `lhs`
-    pub const LHS: &str = "outcome(a; b)";
-    /// `rhs`
-    pub const RHS: &str = "outcome(b; a)";
+    /// `forAll` -> `term_OE_4b_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_OE_4b_forAll";
+    /// `lhs` -> `term_OE_4b_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_OE_4b_lhs";
+    /// `rhs` -> `term_OE_4b_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_OE_4b_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Pipeline`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Soundness: effect commutation preserves outcome";
 }
 
 /// Lease parallelism preserves coverage.
 pub mod oe_4c {
-    /// `forAll`
-    pub const FOR_ALL: &str = "parallel leases A, B";
-    /// `lhs`
-    pub const LHS: &str = "coverage(A || B)";
-    /// `rhs`
-    pub const RHS: &str = "coverage(A) + coverage(B)";
+    /// `forAll` -> `term_OE_4c_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_OE_4c_forAll";
+    /// `lhs` -> `term_OE_4c_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_OE_4c_lhs";
+    /// `rhs` -> `term_OE_4c_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_OE_4c_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Pipeline`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Soundness: lease parallelism preserves coverage";
 }
 
 /// Each stage has bounded cost.
 pub mod cs_1 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "cascade stage k";
-    /// `lhs`
-    pub const LHS: &str = "cost(stage(k))";
-    /// `rhs`
-    pub const RHS: &str = "O(1)";
+    /// `forAll` -> `term_CS_1_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_CS_1_forAll";
+    /// `lhs` -> `term_CS_1_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_CS_1_lhs";
+    /// `rhs` -> `term_CS_1_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_CS_1_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Pipeline`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Bounded: each stage has O(1) cost";
 }
 
 /// Pipeline cost = sum of stage costs.
 pub mod cs_2 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "cascade pipeline";
-    /// `lhs`
-    pub const LHS: &str = "cost(pipeline)";
-    /// `rhs`
-    pub const RHS: &str = "sum(cost(stage(k)))";
+    /// `forAll` -> `term_CS_2_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_CS_2_forAll";
+    /// `lhs` -> `term_CS_2_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_CS_2_lhs";
+    /// `rhs` -> `term_CS_2_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_CS_2_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Pipeline`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Additivity: pipeline cost is sum of stage costs";
 }
 
 /// Rollback cost is at most forward cost.
 pub mod cs_3 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "cascade rollback operation";
-    /// `lhs`
-    pub const LHS: &str = "cost(rollback)";
-    /// `rhs`
-    pub const RHS: &str = "cost(forward)";
+    /// `forAll` -> `term_CS_3_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_CS_3_forAll";
+    /// `lhs` -> `term_CS_3_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_CS_3_lhs";
+    /// `rhs` -> `term_CS_3_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_CS_3_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Pipeline`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Bounded: rollback cost <= forward cost";
 }
 
 /// Preflight cost is O(1).
 pub mod cs_4 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "preflight check";
-    /// `lhs`
-    pub const LHS: &str = "cost(preflight)";
-    /// `rhs`
-    pub const RHS: &str = "O(1)";
+    /// `forAll` -> `term_CS_4_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_CS_4_forAll";
+    /// `lhs` -> `term_CS_4_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_CS_4_lhs";
+    /// `rhs` -> `term_CS_4_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_CS_4_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Pipeline`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Constant: preflight cost is O(1)";
 }
 
 /// Total cascade cost bounded by n × stage_max_cost.
 pub mod cs_5 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "cascade with n stages";
-    /// `lhs`
-    pub const LHS: &str = "cost(cascade)";
-    /// `rhs`
-    pub const RHS: &str = "n * max(cost(stage(k)))";
+    /// `forAll` -> `term_CS_5_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_CS_5_forAll";
+    /// `lhs` -> `term_CS_5_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_CS_5_lhs";
+    /// `rhs` -> `term_CS_5_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_CS_5_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Pipeline`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Bounded: total cascade cost <= n * stage_max_cost";
 }
 
 /// Budget solvency rejection: a CompileUnit whose declared thermodynamicBudget is strictly less than the Landauer minimum (bitsWidth(Q_k) × ln 2) is rejected at the BudgetSolvencyCheck preflight.
 pub mod cs_6 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "CompileUnit U";
-    /// `lhs`
-    pub const LHS: &str = "thermodynamicBudget(U) < bitsWidth(unitQuantumLevel(U)) × ln 2";
-    /// `rhs`
-    pub const RHS: &str = "reject(U) at BudgetSolvencyCheck";
+    /// `forAll` -> `term_CS_6_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_CS_6_forAll";
+    /// `lhs` -> `term_CS_6_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_CS_6_lhs";
+    /// `rhs` -> `term_CS_6_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_CS_6_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Pipeline`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str =
-        "AR_3 + TH_4 → minimum budget = fiberBudget × ln 2; BudgetSolvencyCheck enforces at preflight";
 }
 
 /// Unit address identity: the unitAddress of a CompileUnit is the u:Address computed by hashing the canonical byte serialization of the root term’s transitive closure.
 pub mod cs_7 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "CompileUnit U";
-    /// `lhs`
-    pub const LHS: &str = "unitAddress(U)";
-    /// `rhs`
-    pub const RHS: &str = "address(canonicalBytes(transitiveClosure(rootTerm(U))))";
+    /// `forAll` -> `term_CS_7_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_CS_7_forAll";
+    /// `lhs` -> `term_CS_7_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_CS_7_lhs";
+    /// `rhs` -> `term_CS_7_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_CS_7_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str =
-        "u:canonicalBytes + u:digest → content-addressed identity of computation graph";
 }
 
 /// Every pending query eventually reaches a stage gate.
 pub mod fa_1 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "query q in cascade";
-    /// `lhs`
-    pub const LHS: &str = "pending(q)";
-    /// `rhs`
-    pub const RHS: &str = "reaches_gate(q)";
+    /// `forAll` -> `term_FA_1_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_FA_1_forAll";
+    /// `lhs` -> `term_FA_1_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_FA_1_lhs";
+    /// `rhs` -> `term_FA_1_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_FA_1_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Pipeline`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Liveness: pending queries eventually reach a gate";
 }
 
 /// No starvation under bounded epoch admission.
 pub mod fa_2 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "query q, bounded k";
-    /// `lhs`
-    pub const LHS: &str = "admitted(q, epoch)";
-    /// `rhs`
-    pub const RHS: &str = "served(q, epoch + k)";
+    /// `forAll` -> `term_FA_2_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_FA_2_forAll";
+    /// `lhs` -> `term_FA_2_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_FA_2_lhs";
+    /// `rhs` -> `term_FA_2_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_FA_2_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Pipeline`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Fairness: no starvation under bounded admission";
 }
 
 /// Fair lease allocation under disjoint composition.
 pub mod fa_3 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "disjoint partitions p1, p2";
-    /// `lhs`
-    pub const LHS: &str = "lease_alloc(p1 + p2)";
-    /// `rhs`
-    pub const RHS: &str = "lease_alloc(p1) + lease_alloc(p2)";
+    /// `forAll` -> `term_FA_3_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_FA_3_forAll";
+    /// `lhs` -> `term_FA_3_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_FA_3_lhs";
+    /// `rhs` -> `term_FA_3_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_FA_3_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Pipeline`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str =
-        "Additivity: fair lease allocation under disjoint composition";
 }
 
 /// Service window bounds context memory.
 pub mod sw_1 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "service window of size w";
-    /// `lhs`
-    pub const LHS: &str = "memory(window(w))";
-    /// `rhs`
-    pub const RHS: &str = "O(w)";
+    /// `forAll` -> `term_SW_1_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_SW_1_forAll";
+    /// `lhs` -> `term_SW_1_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_SW_1_lhs";
+    /// `rhs` -> `term_SW_1_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_SW_1_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Pipeline`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Bounded: service window bounds context memory";
 }
 
 /// Window slide preserves saturation invariant.
 pub mod sw_2 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "window slide operation";
-    /// `lhs`
-    pub const LHS: &str = "saturated(slide(w))";
-    /// `rhs`
-    pub const RHS: &str = "saturated(w)";
+    /// `forAll` -> `term_SW_2_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_SW_2_forAll";
+    /// `lhs` -> `term_SW_2_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_SW_2_lhs";
+    /// `rhs` -> `term_SW_2_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_SW_2_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Pipeline`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Invariance: window slide preserves saturation";
 }
 
 /// Evicted epochs release lease resources.
 pub mod sw_3 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "evicted epoch e";
-    /// `lhs`
-    pub const LHS: &str = "resources(evict(e))";
-    /// `rhs`
-    pub const RHS: &str = "0";
+    /// `forAll` -> `term_SW_3_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_SW_3_forAll";
+    /// `lhs` -> `term_SW_3_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_SW_3_lhs";
+    /// `rhs` -> `term_SW_3_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_SW_3_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Pipeline`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Release: evicted epochs free lease resources";
 }
 
 /// Window size ≥ 1 (non-empty).
 pub mod sw_4 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "service window";
-    /// `lhs`
-    pub const LHS: &str = "size(window)";
-    /// `rhs`
-    pub const RHS: &str = ">= 1";
+    /// `forAll` -> `term_SW_4_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_SW_4_forAll";
+    /// `lhs` -> `term_SW_4_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_SW_4_lhs";
+    /// `rhs` -> `term_SW_4_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_SW_4_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Pipeline`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Non-empty: service window has at least one epoch";
 }
 
 /// Suspended lease preserves pinned state.
 pub mod ls_1 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "lease suspension";
-    /// `lhs`
-    pub const LHS: &str = "pinned(suspend(lease))";
-    /// `rhs`
-    pub const RHS: &str = "pinned(lease)";
+    /// `forAll` -> `term_LS_1_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_LS_1_forAll";
+    /// `lhs` -> `term_LS_1_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_LS_1_lhs";
+    /// `rhs` -> `term_LS_1_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_LS_1_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Pipeline`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Preservation: suspension preserves pinned state";
 }
 
 /// Lease expiry triggers resource release.
 pub mod ls_2 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "expired lease";
-    /// `lhs`
-    pub const LHS: &str = "resources(expire(lease))";
-    /// `rhs`
-    pub const RHS: &str = "0";
+    /// `forAll` -> `term_LS_2_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_LS_2_forAll";
+    /// `lhs` -> `term_LS_2_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_LS_2_lhs";
+    /// `rhs` -> `term_LS_2_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_LS_2_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Pipeline`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Release: expiry frees all lease resources";
 }
 
 /// Checkpoint restore is idempotent.
 pub mod ls_3 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "checkpoint restore";
-    /// `lhs`
-    pub const LHS: &str = "restore(restore(checkpoint))";
-    /// `rhs`
-    pub const RHS: &str = "restore(checkpoint)";
+    /// `forAll` -> `term_LS_3_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_LS_3_forAll";
+    /// `lhs` -> `term_LS_3_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_LS_3_lhs";
+    /// `rhs` -> `term_LS_3_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_LS_3_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Pipeline`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Idempotence: double restore equals single restore";
 }
 
 /// Active → Suspended → Active round-trip preserves state.
 pub mod ls_4 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "active lease";
-    /// `lhs`
-    pub const LHS: &str = "resume(suspend(lease))";
-    /// `rhs`
-    pub const RHS: &str = "lease";
+    /// `forAll` -> `term_LS_4_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_LS_4_forAll";
+    /// `lhs` -> `term_LS_4_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_LS_4_lhs";
+    /// `rhs` -> `term_LS_4_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_LS_4_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Pipeline`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str =
-        "Round-trip: suspend then resume preserves lease state";
 }
 
 /// AllOrNothing transaction rolls back on any failure.
 pub mod tj_1 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "AllOrNothing transaction with failure";
-    /// `lhs`
-    pub const LHS: &str = "all_or_nothing(fail)";
-    /// `rhs`
-    pub const RHS: &str = "rollback";
+    /// `forAll` -> `term_TJ_1_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_TJ_1_forAll";
+    /// `lhs` -> `term_TJ_1_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_TJ_1_lhs";
+    /// `rhs` -> `term_TJ_1_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_TJ_1_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Pipeline`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Atomicity: AllOrNothing rolls back on failure";
 }
 
 /// BestEffort transaction commits partial results.
 pub mod tj_2 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "BestEffort transaction";
-    /// `lhs`
-    pub const LHS: &str = "best_effort(partial_fail)";
-    /// `rhs`
-    pub const RHS: &str = "commit(succeeded)";
+    /// `forAll` -> `term_TJ_2_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_TJ_2_forAll";
+    /// `lhs` -> `term_TJ_2_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_TJ_2_lhs";
+    /// `rhs` -> `term_TJ_2_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_TJ_2_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Pipeline`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Partial: BestEffort commits succeeded parts";
 }
 
 /// Transaction atomicity within a single epoch.
 pub mod tj_3 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "cascade transaction";
-    /// `lhs`
-    pub const LHS: &str = "scope(transaction)";
-    /// `rhs`
-    pub const RHS: &str = "single_epoch";
+    /// `forAll` -> `term_TJ_3_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_TJ_3_forAll";
+    /// `lhs` -> `term_TJ_3_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_TJ_3_lhs";
+    /// `rhs` -> `term_TJ_3_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_TJ_3_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Pipeline`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Scoping: transaction is atomic within one epoch";
 }
 
 /// Partial saturation is monotonically non-decreasing across stages.
 pub mod ap_1 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "consecutive stages k, k+1";
-    /// `lhs`
-    pub const LHS: &str = "sat(stage(k+1))";
-    /// `rhs`
-    pub const RHS: &str = ">= sat(stage(k))";
+    /// `forAll` -> `term_AP_1_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_AP_1_forAll";
+    /// `lhs` -> `term_AP_1_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_AP_1_lhs";
+    /// `rhs` -> `term_AP_1_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_AP_1_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Pipeline`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Monotonicity: partial saturation is non-decreasing";
 }
 
 /// Approximation quality improves with additional epochs.
 pub mod ap_2 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "consecutive epochs n, n+1";
-    /// `lhs`
-    pub const LHS: &str = "quality(epoch(n+1))";
-    /// `rhs`
-    pub const RHS: &str = ">= quality(epoch(n))";
+    /// `forAll` -> `term_AP_2_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_AP_2_forAll";
+    /// `lhs` -> `term_AP_2_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_AP_2_lhs";
+    /// `rhs` -> `term_AP_2_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_AP_2_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Pipeline`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Improvement: quality is non-decreasing over epochs";
 }
 
 /// Deferred queries are eventually processed or explicitly dropped.
 pub mod ap_3 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "deferred query q";
-    /// `lhs`
-    pub const LHS: &str = "deferred(q)";
-    /// `rhs`
-    pub const RHS: &str = "processed(q) | dropped(q)";
+    /// `forAll` -> `term_AP_3_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_AP_3_forAll";
+    /// `lhs` -> `term_AP_3_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_AP_3_lhs";
+    /// `rhs` -> `term_AP_3_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_AP_3_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Pipeline`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str =
-        "Liveness: deferred queries eventually resolved or dropped";
 }
 
 /// Ω⁶ = −1: cascade converges in 6 stages (phase half-turn).
 pub mod ec_1 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "cascade phase angle Ω = e^{iπ/6}";
-    /// `lhs`
-    pub const LHS: &str = "Ω⁶";
-    /// `rhs`
-    pub const RHS: &str = "−1";
+    /// `forAll` -> `term_EC_1_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_EC_1_forAll";
+    /// `lhs` -> `term_EC_1_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_EC_1_lhs";
+    /// `rhs` -> `term_EC_1_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_EC_1_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Topological`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Topological";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Phase: cascade converges in 6 stages";
 }
 
 /// Complex conjugate rollback involutory: (z̄)̄ = z.
 pub mod ec_2 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "complex z in cascade";
-    /// `lhs`
-    pub const LHS: &str = "conj(conj(z))";
-    /// `rhs`
-    pub const RHS: &str = "z";
+    /// `forAll` -> `term_EC_2_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_EC_2_forAll";
+    /// `lhs` -> `term_EC_2_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_EC_2_lhs";
+    /// `rhs` -> `term_EC_2_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_EC_2_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Topological`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Topological";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Involution: complex conjugate rollback";
 }
 
 /// Pairwise convergence: commutator converges to identity.
 pub mod ec_3 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "quaternion pair q_A, q_B";
-    /// `lhs`
-    pub const LHS: &str = "[q_A, q_B]^inf";
-    /// `rhs`
-    pub const RHS: &str = "1";
+    /// `forAll` -> `term_EC_3_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_EC_3_forAll";
+    /// `lhs` -> `term_EC_3_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_EC_3_lhs";
+    /// `rhs` -> `term_EC_3_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_EC_3_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Topological`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Topological";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str =
-        "Convergence: pairwise commutator converges to identity";
 }
 
 /// Triple convergence: associator converges to zero.
 pub mod ec_4 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "octonion triple q_A, q_B, q_C";
-    /// `lhs`
-    pub const LHS: &str = "[q_A, q_B, q_C]^inf";
-    /// `rhs`
-    pub const RHS: &str = "0";
+    /// `forAll` -> `term_EC_4_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_EC_4_forAll";
+    /// `lhs` -> `term_EC_4_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_EC_4_lhs";
+    /// `rhs` -> `term_EC_4_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_EC_4_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Topological`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Topological";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Convergence: triple associator converges to zero";
 }
 
 /// Associator monotonicity: associator norm non-increasing.
 pub mod ec_4a {
-    /// `forAll`
-    pub const FOR_ALL: &str = "successive associator iterates";
-    /// `lhs`
-    pub const LHS: &str = "||[a,b,c]_{n+1}||";
-    /// `rhs`
-    pub const RHS: &str = "<= ||[a,b,c]_n||";
+    /// `forAll` -> `term_EC_4a_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_EC_4a_forAll";
+    /// `lhs` -> `term_EC_4a_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_EC_4a_lhs";
+    /// `rhs` -> `term_EC_4a_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_EC_4a_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Topological`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Topological";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Monotonicity: associator norm is non-increasing";
 }
 
 /// Associator finiteness: reaches 0 in bounded steps.
 pub mod ec_4b {
-    /// `forAll`
-    pub const FOR_ALL: &str = "octonion triple a, b, c";
-    /// `lhs`
-    pub const LHS: &str = "steps_to_zero([a,b,c])";
-    /// `rhs`
-    pub const RHS: &str = "<= |three_way_fibers|";
+    /// `forAll` -> `term_EC_4b_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_EC_4b_forAll";
+    /// `lhs` -> `term_EC_4b_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_EC_4b_lhs";
+    /// `rhs` -> `term_EC_4b_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_EC_4b_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Topological`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Topological";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Finiteness: associator reaches zero in bounded steps";
 }
 
 /// Associator vanishing implies associativity on resolved fiber space.
 pub mod ec_4c {
-    /// `forAll`
-    pub const FOR_ALL: &str = "resolved fiber space";
-    /// `lhs`
-    pub const LHS: &str = "[a,b,c] = 0";
-    /// `rhs`
-    pub const RHS: &str = "associative(resolved_fiber_space)";
+    /// `forAll` -> `term_EC_4c_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_EC_4c_forAll";
+    /// `lhs` -> `term_EC_4c_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_EC_4c_lhs";
+    /// `rhs` -> `term_EC_4c_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_EC_4c_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Topological`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Topological";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str =
-        "Implication: vanishing associator implies associativity";
 }
 
 /// Adams termination: no convergence level beyond L3_Self.
 pub mod ec_5 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "convergence tower";
-    /// `lhs`
-    pub const LHS: &str = "max_level(convergence_tower)";
-    /// `rhs`
-    pub const RHS: &str = "L3_Self";
+    /// `forAll` -> `term_EC_5_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_EC_5_forAll";
+    /// `lhs` -> `term_EC_5_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_EC_5_lhs";
+    /// `rhs` -> `term_EC_5_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_EC_5_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Topological`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Topological";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Termination: Adams theorem bounds tower at level 3";
 }
 
 /// Cayley-Dickson R→C: adjoin i with i²=−1, conjugation (a+bi)* = a−bi.
 pub mod da_1 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "Cayley-Dickson doubling";
-    /// `lhs`
-    pub const LHS: &str = "CD(R, i)";
-    /// `rhs`
-    pub const RHS: &str = "C";
+    /// `forAll` -> `term_DA_1_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_DA_1_forAll";
+    /// `lhs` -> `term_DA_1_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_DA_1_lhs";
+    /// `rhs` -> `term_DA_1_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_DA_1_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Division: Cayley-Dickson R to C";
 }
 
 /// Cayley-Dickson C→H: adjoin j with j²=−1, ij=k, ji=−k, k²=−1.
 pub mod da_2 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "Cayley-Dickson doubling";
-    /// `lhs`
-    pub const LHS: &str = "CD(C, j)";
-    /// `rhs`
-    pub const RHS: &str = "H";
+    /// `forAll` -> `term_DA_2_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_DA_2_forAll";
+    /// `lhs` -> `term_DA_2_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_DA_2_lhs";
+    /// `rhs` -> `term_DA_2_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_DA_2_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Division: Cayley-Dickson C to H";
 }
 
 /// Cayley-Dickson H→O: adjoin l, Fano plane products, associativity fails.
 pub mod da_3 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "Cayley-Dickson doubling";
-    /// `lhs`
-    pub const LHS: &str = "CD(H, l)";
-    /// `rhs`
-    pub const RHS: &str = "O";
+    /// `forAll` -> `term_DA_3_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_DA_3_forAll";
+    /// `lhs` -> `term_DA_3_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_DA_3_lhs";
+    /// `rhs` -> `term_DA_3_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_DA_3_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Division: Cayley-Dickson H to O";
 }
 
 /// Adams theorem: no normed division algebra of dimension 16 exists.
 pub mod da_4 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "normed division algebras over R";
-    /// `lhs`
-    pub const LHS: &str = "dim(normed_div_alg)";
-    /// `rhs`
-    pub const RHS: &str = "∈ {1, 2, 4, 8}";
+    /// `forAll` -> `term_DA_4_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_DA_4_forAll";
+    /// `lhs` -> `term_DA_4_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_DA_4_lhs";
+    /// `rhs` -> `term_DA_4_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_DA_4_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Division: Hurwitz-Adams dimension restriction";
 }
 
 /// Convergence level k lives in k-th division algebra: L0 in R, L1 in C, L2 in H, L3 in O.
 pub mod da_5 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "convergence level L_k";
-    /// `lhs`
-    pub const LHS: &str = "algebra(L_k)";
-    /// `rhs`
-    pub const RHS: &str = "division_algebra[k]";
+    /// `forAll` -> `term_DA_5_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_DA_5_forAll";
+    /// `lhs` -> `term_DA_5_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_DA_5_lhs";
+    /// `rhs` -> `term_DA_5_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_DA_5_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Division: convergence-level algebra correspondence";
 }
 
 /// Commutator vanishes iff algebra at that level is commutative.
 pub mod da_6 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "elements a, b in division algebra at level k";
-    /// `lhs`
-    pub const LHS: &str = "[a,b] = 0";
-    /// `rhs`
-    pub const RHS: &str = "isCommutative(algebra(L_k))";
+    /// `forAll` -> `term_DA_6_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_DA_6_forAll";
+    /// `lhs` -> `term_DA_6_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_DA_6_lhs";
+    /// `rhs` -> `term_DA_6_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_DA_6_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Division: commutator-commutativity equivalence";
 }
 
 /// Associator vanishes iff algebra at that level is associative.
 pub mod da_7 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "elements a, b, c in division algebra at level k";
-    /// `lhs`
-    pub const LHS: &str = "[a,b,c] = 0";
-    /// `rhs`
-    pub const RHS: &str = "isAssociative(algebra(L_k))";
+    /// `forAll` -> `term_DA_7_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_DA_7_forAll";
+    /// `lhs` -> `term_DA_7_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_DA_7_lhs";
+    /// `rhs` -> `term_DA_7_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_DA_7_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Division: associator-associativity equivalence";
 }
 
 /// d_Δ as interaction cost between entities.
 pub mod in_1 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "entity pairs A, B";
-    /// `lhs`
-    pub const LHS: &str = "d_Δ(A,B)";
-    /// `rhs`
-    pub const RHS: &str = "interaction_cost(A,B)";
+    /// `forAll` -> `term_IN_1_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_IN_1_forAll";
+    /// `lhs` -> `term_IN_1_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_IN_1_lhs";
+    /// `rhs` -> `term_IN_1_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_IN_1_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `ComposedAlgebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/ComposedAlgebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Interaction: d_Δ interaction cost";
 }
 
 /// Disjoint leases imply commutator = 0.
 pub mod in_2 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "entity pairs with disjoint leases";
-    /// `lhs`
-    pub const LHS: &str = "disjoint_leases(A,B)";
-    /// `rhs`
-    pub const RHS: &str = "commutator(A,B) = 0";
+    /// `forAll` -> `term_IN_2_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_IN_2_forAll";
+    /// `lhs` -> `term_IN_2_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_IN_2_lhs";
+    /// `rhs` -> `term_IN_2_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_IN_2_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `ComposedAlgebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/ComposedAlgebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Interaction: disjoint leases commute";
 }
 
 /// Shared fibers imply commutator > 0.
 pub mod in_3 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "entity pairs with shared fibers";
-    /// `lhs`
-    pub const LHS: &str = "shared_fibers(A,B) ≠ ∅";
-    /// `rhs`
-    pub const RHS: &str = "commutator(A,B) > 0";
+    /// `forAll` -> `term_IN_3_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_IN_3_forAll";
+    /// `lhs` -> `term_IN_3_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_IN_3_lhs";
+    /// `rhs` -> `term_IN_3_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_IN_3_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `ComposedAlgebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/ComposedAlgebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Interaction: shared fibers imply nonzero commutator";
 }
 
 /// SR_8 implies negotiation converges (commutator decreases monotonically).
 pub mod in_4 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "entity pairs in session";
-    /// `lhs`
-    pub const LHS: &str = "SR_8_session(A,B)";
-    /// `rhs`
-    pub const RHS: &str = "commutator(A,B,t+1) ≤ commutator(A,B,t)";
+    /// `forAll` -> `term_IN_4_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_IN_4_forAll";
+    /// `lhs` -> `term_IN_4_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_IN_4_lhs";
+    /// `rhs` -> `term_IN_4_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_IN_4_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `ComposedAlgebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/ComposedAlgebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Interaction: session negotiation convergence";
 }
 
 /// Convergent negotiation selects U(1) ⊂ SU(2).
 pub mod in_5 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "converged pairwise interactions";
-    /// `lhs`
-    pub const LHS: &str = "converged_negotiation(A,B)";
-    /// `rhs`
-    pub const RHS: &str = "U(1) ⊂ SU(2)";
+    /// `forAll` -> `term_IN_5_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_IN_5_forAll";
+    /// `lhs` -> `term_IN_5_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_IN_5_lhs";
+    /// `rhs` -> `term_IN_5_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_IN_5_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `ComposedAlgebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/ComposedAlgebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str =
-        "Interaction: convergent negotiation selects commutative subspace";
 }
 
 /// Outcome space of pairwise negotiation is S².
 pub mod in_6 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "pairwise negotiations";
-    /// `lhs`
-    pub const LHS: &str = "outcome_space(pairwise_negotiation)";
-    /// `rhs`
-    pub const RHS: &str = "S²";
+    /// `forAll` -> `term_IN_6_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_IN_6_forAll";
+    /// `lhs` -> `term_IN_6_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_IN_6_lhs";
+    /// `rhs` -> `term_IN_6_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_IN_6_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `ComposedAlgebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/ComposedAlgebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Interaction: pairwise outcome space is S²";
 }
 
 /// Mutual modeling selects H ⊂ O.
 pub mod in_7 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "converged triple interactions";
-    /// `lhs`
-    pub const LHS: &str = "converged_mutual_model(A,B,C)";
-    /// `rhs`
-    pub const RHS: &str = "H ⊂ O";
+    /// `forAll` -> `term_IN_7_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_IN_7_forAll";
+    /// `lhs` -> `term_IN_7_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_IN_7_lhs";
+    /// `rhs` -> `term_IN_7_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_IN_7_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `ComposedAlgebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/ComposedAlgebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str =
-        "Interaction: mutual modeling selects associative subalgebra";
 }
 
 /// Interaction nerve β_k bounds coupling complexity at dimension k.
 pub mod in_8 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "interaction nerve at dimension k";
-    /// `lhs`
-    pub const LHS: &str = "β_k(interaction_nerve)";
-    /// `rhs`
-    pub const RHS: &str = "coupling_complexity(k)";
+    /// `forAll` -> `term_IN_8_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_IN_8_forAll";
+    /// `lhs` -> `term_IN_8_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_IN_8_lhs";
+    /// `rhs` -> `term_IN_8_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_IN_8_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `ComposedAlgebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/ComposedAlgebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Interaction: nerve Betti bounds coupling complexity";
 }
 
 /// β_2(nerve) × max_disagreement bounds associator norm.
 pub mod in_9 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "interaction nerves with β_2 > 0";
-    /// `lhs`
-    pub const LHS: &str = "β_2(nerve) × max_disagreement";
-    /// `rhs`
-    pub const RHS: &str = "upper_bound(associator_norm)";
+    /// `forAll` -> `term_IN_9_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_IN_9_forAll";
+    /// `lhs` -> `term_IN_9_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_IN_9_lhs";
+    /// `rhs` -> `term_IN_9_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_IN_9_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `ComposedAlgebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/ComposedAlgebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Interaction: Betti-disagreement associator bound";
 }
 
 /// δ-ι-κ non-associativity: δ reads registry written by κ.
 pub mod as_1 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "triple δ, ι, κ with shared registry";
-    /// `lhs`
-    pub const LHS: &str = "(δ ∘ ι) ∘ κ";
-    /// `rhs`
-    pub const RHS: &str = "δ ∘ (ι ∘ κ)";
+    /// `forAll` -> `term_AS_1_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_AS_1_forAll";
+    /// `lhs` -> `term_AS_1_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_AS_1_lhs";
+    /// `rhs` -> `term_AS_1_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_AS_1_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `ComposedAlgebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/ComposedAlgebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Interaction: δ-ι-κ non-associativity";
 }
 
 /// ι-α-λ non-associativity: λ reads lease state written by α.
 pub mod as_2 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "triple ι, α, λ with shared lease";
-    /// `lhs`
-    pub const LHS: &str = "(ι ∘ α) ∘ λ";
-    /// `rhs`
-    pub const RHS: &str = "ι ∘ (α ∘ λ)";
+    /// `forAll` -> `term_AS_2_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_AS_2_forAll";
+    /// `lhs` -> `term_AS_2_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_AS_2_lhs";
+    /// `rhs` -> `term_AS_2_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_AS_2_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `ComposedAlgebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/ComposedAlgebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Interaction: ι-α-λ non-associativity";
 }
 
 /// λ-κ-δ non-associativity: δ reads state written by κ.
 pub mod as_3 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "triple λ, κ, δ with shared state";
-    /// `lhs`
-    pub const LHS: &str = "(λ ∘ κ) ∘ δ";
-    /// `rhs`
-    pub const RHS: &str = "λ ∘ (κ ∘ δ)";
+    /// `forAll` -> `term_AS_3_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_AS_3_forAll";
+    /// `lhs` -> `term_AS_3_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_AS_3_lhs";
+    /// `rhs` -> `term_AS_3_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_AS_3_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `ComposedAlgebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/ComposedAlgebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Interaction: λ-κ-δ non-associativity";
 }
 
 /// Root cause: non-associativity from read-write interleaving through mediating entity.
 pub mod as_4 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "triples with non-zero associator";
-    /// `lhs`
-    pub const LHS: &str = "associator(A,B,C) ≠ 0";
-    /// `rhs`
-    pub const RHS: &str = "∃ mediating read-write interleaving";
+    /// `forAll` -> `term_AS_4_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_AS_4_forAll";
+    /// `lhs` -> `term_AS_4_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_AS_4_lhs";
+    /// `rhs` -> `term_AS_4_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_AS_4_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `ComposedAlgebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/ComposedAlgebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Interaction: non-associativity root cause";
 }
 
 /// Unit law: I ⊗ A ≅ A ≅ A ⊗ I.
 pub mod mo_1 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "computations A";
-    /// `lhs`
-    pub const LHS: &str = "I ⊗ A";
-    /// `rhs`
-    pub const RHS: &str = "A";
+    /// `forAll` -> `term_MO_1_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_MO_1_forAll";
+    /// `lhs` -> `term_MO_1_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_MO_1_lhs";
+    /// `rhs` -> `term_MO_1_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_MO_1_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Monoidal: unit law";
 }
 
 /// Associativity: (A⊗B)⊗C ≅ A⊗(B⊗C).
 pub mod mo_2 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "computations A, B, C";
-    /// `lhs`
-    pub const LHS: &str = "(A⊗B)⊗C";
-    /// `rhs`
-    pub const RHS: &str = "A⊗(B⊗C)";
+    /// `forAll` -> `term_MO_2_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_MO_2_forAll";
+    /// `lhs` -> `term_MO_2_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_MO_2_lhs";
+    /// `rhs` -> `term_MO_2_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_MO_2_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Monoidal: associativity";
 }
 
 /// Certificate composition: cert(A⊗B) contains cert(A) and cert(B).
 pub mod mo_3 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "certified computations A, B";
-    /// `lhs`
-    pub const LHS: &str = "cert(A⊗B)";
-    /// `rhs`
-    pub const RHS: &str = "cert(A) ∧ cert(B)";
+    /// `forAll` -> `term_MO_3_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_MO_3_forAll";
+    /// `lhs` -> `term_MO_3_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_MO_3_lhs";
+    /// `rhs` -> `term_MO_3_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_MO_3_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Monoidal: certificate composition";
 }
 
 /// σ(A⊗B) ≥ max(σ(A), σ(B)): sequential composition does not lose saturation.
 pub mod mo_4 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "computations A, B";
-    /// `lhs`
-    pub const LHS: &str = "σ(A⊗B)";
-    /// `rhs`
-    pub const RHS: &str = "max(σ(A), σ(B))";
+    /// `forAll` -> `term_MO_4_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_MO_4_forAll";
+    /// `lhs` -> `term_MO_4_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_MO_4_lhs";
+    /// `rhs` -> `term_MO_4_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_MO_4_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Monoidal: saturation monotonicity";
 }
 
 /// r(A⊗B) ≤ min(r(A), r(B)): residual can only shrink under sequential composition.
 pub mod mo_5 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "computations A, B";
-    /// `lhs`
-    pub const LHS: &str = "r(A⊗B)";
-    /// `rhs`
-    pub const RHS: &str = "min(r(A), r(B))";
+    /// `forAll` -> `term_MO_5_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_MO_5_forAll";
+    /// `lhs` -> `term_MO_5_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_MO_5_lhs";
+    /// `rhs` -> `term_MO_5_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_MO_5_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Monoidal: residual monotonicity";
 }
 
 /// Fiber additivity: fiberCount(F(G)) = F.fibers + Σ_i G_i.fibers.
 pub mod op_1 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "structural types F, G";
-    /// `lhs`
-    pub const LHS: &str = "fiberCount(F(G))";
-    /// `rhs`
-    pub const RHS: &str = "F.fibers + Σ_i G_i.fibers";
+    /// `forAll` -> `term_OP_1_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_OP_1_forAll";
+    /// `lhs` -> `term_OP_1_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_OP_1_lhs";
+    /// `rhs` -> `term_OP_1_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_OP_1_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Operad: fiber additivity";
 }
 
 /// Grounding distributivity: grounding(F(G(x))) = F.ground(G.ground(x)).
 pub mod op_2 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "structural types F, G, element x";
-    /// `lhs`
-    pub const LHS: &str = "grounding(F(G(x)))";
-    /// `rhs`
-    pub const RHS: &str = "F.ground(G.ground(x))";
+    /// `forAll` -> `term_OP_2_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_OP_2_forAll";
+    /// `lhs` -> `term_OP_2_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_OP_2_lhs";
+    /// `rhs` -> `term_OP_2_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_OP_2_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Operad: grounding distributivity";
 }
 
 /// d_Δ decomposition: d_Δ(F(G)) decomposes into outer + inner d_Δ.
 pub mod op_3 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "structural types F, G";
-    /// `lhs`
-    pub const LHS: &str = "d_Δ(F(G))";
-    /// `rhs`
-    pub const RHS: &str = "d_Δ(F) ∘ G + F ∘ d_Δ(G)";
+    /// `forAll` -> `term_OP_3_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_OP_3_forAll";
+    /// `lhs` -> `term_OP_3_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_OP_3_lhs";
+    /// `rhs` -> `term_OP_3_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_OP_3_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Operad: Leibniz rule for d_Δ";
 }
 
 /// Table(Tuple(fields)): standard tabular data structure decomposition.
 pub mod op_4 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "tabular data";
-    /// `lhs`
-    pub const LHS: &str = "Table(Tuple(fields))";
-    /// `rhs`
-    pub const RHS: &str = "Sequence(Tuple(fields))";
+    /// `forAll` -> `term_OP_4_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_OP_4_forAll";
+    /// `lhs` -> `term_OP_4_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_OP_4_lhs";
+    /// `rhs` -> `term_OP_4_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_OP_4_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Operad: tabular data decomposition";
 }
 
 /// Tree(leaves): standard hierarchical data structure (AST, XML, JSON).
 pub mod op_5 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "hierarchical data";
-    /// `lhs`
-    pub const LHS: &str = "Tree(Symbol(leaves))";
-    /// `rhs`
-    pub const RHS: &str = "Graph(Symbol(leaves), acyclic)";
+    /// `forAll` -> `term_OP_5_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_OP_5_forAll";
+    /// `lhs` -> `term_OP_5_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_OP_5_lhs";
+    /// `rhs` -> `term_OP_5_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_OP_5_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Operad: hierarchical data structure";
 }
 
 /// Pinning decrements free count by exactly 1.
 pub mod fx_1 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "PinningEffect e";
-    /// `lhs`
-    pub const LHS: &str = "freeCount(postContext(e))";
-    /// `rhs`
-    pub const RHS: &str = "freeCount(preContext(e)) − 1";
+    /// `forAll` -> `term_FX_1_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_FX_1_forAll";
+    /// `lhs` -> `term_FX_1_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_FX_1_lhs";
+    /// `rhs` -> `term_FX_1_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_FX_1_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Effect: pinning fiber budget decrement";
 }
 
 /// Unbinding increments free count by exactly 1.
 pub mod fx_2 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "UnbindingEffect e";
-    /// `lhs`
-    pub const LHS: &str = "freeCount(postContext(e))";
-    /// `rhs`
-    pub const RHS: &str = "freeCount(preContext(e)) + 1";
+    /// `forAll` -> `term_FX_2_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_FX_2_forAll";
+    /// `lhs` -> `term_FX_2_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_FX_2_lhs";
+    /// `rhs` -> `term_FX_2_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_FX_2_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Effect: unbinding fiber budget increment";
 }
 
 /// Phase effects preserve fiber budget.
 pub mod fx_3 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "PhaseEffect e";
-    /// `lhs`
-    pub const LHS: &str = "freeCount(postContext(e))";
-    /// `rhs`
-    pub const RHS: &str = "freeCount(preContext(e))";
+    /// `forAll` -> `term_FX_3_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_FX_3_forAll";
+    /// `lhs` -> `term_FX_3_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_FX_3_lhs";
+    /// `rhs` -> `term_FX_3_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_FX_3_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Effect: phase budget invariance";
 }
 
 /// Disjoint effects commute.
 pub mod fx_4 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "Effects A, B with DisjointnessWitness(target(A), target(B))";
-    /// `lhs`
-    pub const LHS: &str = "apply(A ; B, ctx)";
-    /// `rhs`
-    pub const RHS: &str = "apply(B ; A, ctx)";
+    /// `forAll` -> `term_FX_4_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_FX_4_forAll";
+    /// `lhs` -> `term_FX_4_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_FX_4_lhs";
+    /// `rhs` -> `term_FX_4_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_FX_4_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Effect: disjoint commutativity";
 }
 
 /// Composite free-count delta is additive.
 pub mod fx_5 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "CompositeEffect (E₁ ; E₂)";
-    /// `lhs`
-    pub const LHS: &str = "freeCountDelta(E₁ ; E₂)";
-    /// `rhs`
-    pub const RHS: &str = "freeCountDelta(E₁) + freeCountDelta(E₂)";
+    /// `forAll` -> `term_FX_5_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_FX_5_forAll";
+    /// `lhs` -> `term_FX_5_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_FX_5_lhs";
+    /// `rhs` -> `term_FX_5_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_FX_5_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Effect: composite delta additivity";
 }
 
 /// Every ReversibleEffect has an inverse (PinningEffect⁻¹ = UnbindingEffect on same fiber, PhaseEffect⁻¹ = conjugate phase).
 pub mod fx_6 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "ReversibleEffect e";
-    /// `lhs`
-    pub const LHS: &str = "apply(e, apply(e⁻¹, ctx))";
-    /// `rhs`
-    pub const RHS: &str = "ctx";
+    /// `forAll` -> `term_FX_6_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_FX_6_forAll";
+    /// `lhs` -> `term_FX_6_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_FX_6_lhs";
+    /// `rhs` -> `term_FX_6_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_FX_6_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Effect: reversible inverse";
 }
 
 /// External effects must match their declared shape.
 pub mod fx_7 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "ExternalEffect e satisfying conformance:EffectShape";
-    /// `lhs`
-    pub const LHS: &str = "freeCountDelta(e)";
-    /// `rhs`
-    pub const RHS: &str = "declared freeCountDelta in EffectShape";
+    /// `forAll` -> `term_FX_7_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_FX_7_forAll";
+    /// `lhs` -> `term_FX_7_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_FX_7_lhs";
+    /// `rhs` -> `term_FX_7_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_FX_7_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Pipeline`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Effect: external shape compliance";
 }
 
 /// Every predicate is total: evaluation terminates for all inputs.
 pub mod pr_1 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "Predicate p, input x";
-    /// `lhs`
-    pub const LHS: &str = "eval(p, x)";
-    /// `rhs`
-    pub const RHS: &str = "∈ {true, false}";
+    /// `forAll` -> `term_PR_1_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_PR_1_forAll";
+    /// `lhs` -> `term_PR_1_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_PR_1_lhs";
+    /// `rhs` -> `term_PR_1_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_PR_1_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Pipeline`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Predicate: totality";
 }
 
 /// Every predicate is pure: evaluation does not modify state.
 pub mod pr_2 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "Predicate p, input x, state s";
-    /// `lhs`
-    pub const LHS: &str = "state(eval(p, x, s))";
-    /// `rhs`
-    pub const RHS: &str = "s";
+    /// `forAll` -> `term_PR_2_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_PR_2_forAll";
+    /// `lhs` -> `term_PR_2_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_PR_2_lhs";
+    /// `rhs` -> `term_PR_2_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_PR_2_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Pipeline`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Predicate: purity";
 }
 
 /// Exhaustive + mutually exclusive dispatch is deterministic.
 pub mod pr_3 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "DispatchTable D with isExhaustive=true, isMutuallyExclusive=true";
-    /// `lhs`
-    pub const LHS: &str = "dispatch(D, x)";
-    /// `rhs`
-    pub const RHS: &str = "exactly one DispatchRule";
+    /// `forAll` -> `term_PR_3_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_PR_3_forAll";
+    /// `lhs` -> `term_PR_3_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_PR_3_lhs";
+    /// `rhs` -> `term_PR_3_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_PR_3_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Pipeline`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Predicate: deterministic dispatch";
 }
 
 /// Match evaluation is deterministic given exhaustive, ordered arms.
 pub mod pr_4 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "MatchExpression M with exhaustive arms";
-    /// `lhs`
-    pub const LHS: &str = "eval(M)";
-    /// `rhs`
-    pub const RHS: &str = "armResult(first matching arm)";
+    /// `forAll` -> `term_PR_4_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_PR_4_forAll";
+    /// `lhs` -> `term_PR_4_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_PR_4_lhs";
+    /// `rhs` -> `term_PR_4_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_PR_4_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Pipeline`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Predicate: deterministic match";
 }
 
 /// Stage transition requires typed guard satisfaction.
 pub mod pr_5 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "GuardedTransition g at cascade stage k";
-    /// `lhs`
-    pub const LHS: &str = "advance(k, guardTarget(g))";
-    /// `rhs`
-    pub const RHS: &str = "requires guardPredicate(g) = true";
+    /// `forAll` -> `term_PR_5_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_PR_5_forAll";
+    /// `lhs` -> `term_PR_5_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_PR_5_lhs";
+    /// `rhs` -> `term_PR_5_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_PR_5_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Pipeline`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Predicate: typed guard transition";
 }
 
 /// Entry guard must be satisfied to enter a stage.
 pub mod cg_1 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "CascadeStage s with entryGuard g";
-    /// `lhs`
-    pub const LHS: &str = "advance_to(s)";
-    /// `rhs`
-    pub const RHS: &str = "requires eval(g, currentState) = true";
+    /// `forAll` -> `term_CG_1_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_CG_1_forAll";
+    /// `lhs` -> `term_CG_1_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_CG_1_lhs";
+    /// `rhs` -> `term_CG_1_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_CG_1_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Pipeline`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Cascade: typed entry guard";
 }
 
 /// Exit guard must be satisfied, then the stage effect is applied.
 pub mod cg_2 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "CascadeStage s with exitGuard g and stageEffect e";
-    /// `lhs`
-    pub const LHS: &str = "advance_from(s)";
-    /// `rhs`
-    pub const RHS: &str = "requires eval(g, currentState) = true, then apply(e)";
+    /// `forAll` -> `term_CG_2_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_CG_2_forAll";
+    /// `lhs` -> `term_CG_2_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_CG_2_lhs";
+    /// `rhs` -> `term_CG_2_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_CG_2_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Pipeline`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Cascade: typed exit guard with effect";
 }
 
 /// The root resolver dispatch table is exhaustive and mutually exclusive over all TypeDefinitions.
 pub mod dis_1 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "Root DispatchTable D";
-    /// `lhs`
-    pub const LHS: &str = "isExhaustive(D) ∧ isMutuallyExclusive(D)";
-    /// `rhs`
-    pub const RHS: &str = "true";
+    /// `forAll` -> `term_DIS_1_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_DIS_1_forAll";
+    /// `lhs` -> `term_DIS_1_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_DIS_1_lhs";
+    /// `rhs` -> `term_DIS_1_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_DIS_1_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Pipeline`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Dispatch: exhaustive exclusive table";
 }
 
 /// Resolver dispatch is deterministic for every type.
 pub mod dis_2 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "TypeDefinition T, DispatchTable D";
-    /// `lhs`
-    pub const LHS: &str = "dispatch(D, T)";
-    /// `rhs`
-    pub const RHS: &str = "exactly one Resolver";
+    /// `forAll` -> `term_DIS_2_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_DIS_2_forAll";
+    /// `lhs` -> `term_DIS_2_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_DIS_2_lhs";
+    /// `rhs` -> `term_DIS_2_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_DIS_2_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Pipeline`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Dispatch: deterministic resolver selection";
 }
 
 /// Disjoint parallel computations commute: A ⊗ B = B ⊗ A when fiber targets are disjoint.
 pub mod par_1 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "ParallelProduct A ∥ B with DisjointnessCertificate";
-    /// `lhs`
-    pub const LHS: &str = "apply(A ⊗ B, ctx)";
-    /// `rhs`
-    pub const RHS: &str = "apply(B ⊗ A, ctx)";
+    /// `forAll` -> `term_PAR_1_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_PAR_1_forAll";
+    /// `lhs` -> `term_PAR_1_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_PAR_1_lhs";
+    /// `rhs` -> `term_PAR_1_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_PAR_1_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Parallel: disjoint commutativity";
 }
 
 /// Parallel free-count deltas are additive.
 pub mod par_2 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "ParallelProduct A ∥ B";
-    /// `lhs`
-    pub const LHS: &str = "freeCountDelta(A ∥ B)";
-    /// `rhs`
-    pub const RHS: &str = "freeCountDelta(A) + freeCountDelta(B)";
+    /// `forAll` -> `term_PAR_2_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_PAR_2_forAll";
+    /// `lhs` -> `term_PAR_2_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_PAR_2_lhs";
+    /// `rhs` -> `term_PAR_2_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_PAR_2_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Parallel: delta additivity";
 }
 
 /// Partitioning is exhaustive: component cardinalities sum to total fiber budget.
 pub mod par_3 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "FiberPartitioning P over n fibers";
-    /// `lhs`
-    pub const LHS: &str = "Σ |component_i|";
-    /// `rhs`
-    pub const RHS: &str = "n";
+    /// `forAll` -> `term_PAR_3_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_PAR_3_forAll";
+    /// `lhs` -> `term_PAR_3_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_PAR_3_lhs";
+    /// `rhs` -> `term_PAR_3_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_PAR_3_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Parallel: exhaustive partitioning";
 }
 
 /// All interleavings of disjoint parallel computations yield the same final context.
 pub mod par_4 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "ParallelProduct A ∥ B, any interleaving σ";
-    /// `lhs`
-    pub const LHS: &str = "finalContext(σ(A, B))";
-    /// `rhs`
-    pub const RHS: &str = "finalContext(A ⊗ B)";
+    /// `forAll` -> `term_PAR_4_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_PAR_4_forAll";
+    /// `lhs` -> `term_PAR_4_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_PAR_4_lhs";
+    /// `rhs` -> `term_PAR_4_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_PAR_4_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Parallel: interleaving invariance";
 }
 
 /// Parallel certificate is the conjunction of component certificates plus disjointness.
 pub mod par_5 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "cert(A ∥ B)";
-    /// `lhs`
-    pub const LHS: &str = "cert(A ∥ B)";
-    /// `rhs`
-    pub const RHS: &str = "cert(A) ∧ cert(B) ∧ DisjointnessCertificate(A, B)";
+    /// `forAll` -> `term_PAR_5_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_PAR_5_forAll";
+    /// `lhs` -> `term_PAR_5_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_PAR_5_lhs";
+    /// `rhs` -> `term_PAR_5_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_PAR_5_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Pipeline`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Parallel: certificate conjunction";
 }
 
 /// A ComputationDatum’s ring value is the content hash of its certificate.
 pub mod ho_1 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "ComputationDatum c";
-    /// `lhs`
-    pub const LHS: &str = "value(c)";
-    /// `rhs`
-    pub const RHS: &str = "contentHash(referencedCertificate(c))";
+    /// `forAll` -> `term_HO_1_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_HO_1_forAll";
+    /// `lhs` -> `term_HO_1_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_HO_1_lhs";
+    /// `rhs` -> `term_HO_1_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_HO_1_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Higher-order: content-addressed certification";
 }
 
 /// Application preserves certification.
 pub mod ho_2 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "ApplicationMorphism app";
-    /// `lhs`
-    pub const LHS: &str = "cert(output(app))";
-    /// `rhs`
-    pub const RHS: &str = "cert(applicationTarget(app))";
+    /// `forAll` -> `term_HO_2_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_HO_2_forAll";
+    /// `lhs` -> `term_HO_2_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_HO_2_lhs";
+    /// `rhs` -> `term_HO_2_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_HO_2_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Pipeline`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Higher-order: application certification";
 }
 
 /// Composition certification requires both components certified and type-compatible.
 pub mod ho_3 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "TransformComposition f ∘ g";
-    /// `lhs`
-    pub const LHS: &str = "cert(f ∘ g)";
-    /// `rhs`
-    pub const RHS: &str = "cert(f) ∧ cert(g) ∧ range(g) = domain(f)";
+    /// `forAll` -> `term_HO_3_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_HO_3_forAll";
+    /// `lhs` -> `term_HO_3_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_HO_3_lhs";
+    /// `rhs` -> `term_HO_3_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_HO_3_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Pipeline`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Higher-order: composition certification";
 }
 
 /// Fully saturated partial application equals direct application.
 pub mod ho_4 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "PartialApplication p with remainingArity = 0";
-    /// `lhs`
-    pub const LHS: &str = "p";
-    /// `rhs`
-    pub const RHS: &str = "ApplicationMorphism(partialBase(p), boundArguments(p))";
+    /// `forAll` -> `term_HO_4_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_HO_4_forAll";
+    /// `lhs` -> `term_HO_4_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_HO_4_lhs";
+    /// `rhs` -> `term_HO_4_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_HO_4_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Higher-order: saturation equivalence";
 }
 
 /// Every epoch terminates: the cascade within each epoch reaches convergence angle π.
 pub mod str_1 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "Epoch e_k in ProductiveStream";
-    /// `lhs`
-    pub const LHS: &str = "cascade(e_k) converges to π";
-    /// `rhs`
-    pub const RHS: &str = "true";
+    /// `forAll` -> `term_STR_1_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_STR_1_forAll";
+    /// `lhs` -> `term_STR_1_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_STR_1_lhs";
+    /// `rhs` -> `term_STR_1_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_STR_1_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Pipeline`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Stream: epoch termination";
 }
 
 /// Saturation preservation across epoch boundaries.
 pub mod str_2 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "EpochBoundary b between e_k and e_{k+1}";
-    /// `lhs`
-    pub const LHS: &str = "saturation(continuationContext(b))";
-    /// `rhs`
-    pub const RHS: &str = "saturation(postContext(e_k))";
+    /// `forAll` -> `term_STR_2_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_STR_2_forAll";
+    /// `lhs` -> `term_STR_2_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_STR_2_lhs";
+    /// `rhs` -> `term_STR_2_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_STR_2_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Pipeline`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Stream: saturation preservation";
 }
 
 /// Every finite prefix computes in finite time.
 pub mod str_3 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "StreamPrefix P of length k";
-    /// `lhs`
-    pub const LHS: &str = "computationTime(P)";
-    /// `rhs`
-    pub const RHS: &str = "Σ_{i=0}^{k−1} computationTime(epoch_i)";
+    /// `forAll` -> `term_STR_3_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_STR_3_forAll";
+    /// `lhs` -> `term_STR_3_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_STR_3_lhs";
+    /// `rhs` -> `term_STR_3_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_STR_3_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Pipeline`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Stream: finite prefix computability";
 }
 
 /// The first epoch starts from the unfold seed context.
 pub mod str_4 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "Unfold(seed, step)";
-    /// `lhs`
-    pub const LHS: &str = "epoch_0.context";
-    /// `rhs`
-    pub const RHS: &str = "seed";
+    /// `forAll` -> `term_STR_4_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_STR_4_forAll";
+    /// `lhs` -> `term_STR_4_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_STR_4_lhs";
+    /// `rhs` -> `term_STR_4_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_STR_4_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Stream: unfold seed initialization";
 }
 
 /// Each subsequent epoch starts from the previous boundary’s continuation context.
 pub mod str_5 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "Unfold(seed, step), epoch e_k";
-    /// `lhs`
-    pub const LHS: &str = "epoch_{k+1}.context";
-    /// `rhs`
-    pub const RHS: &str = "continuationContext(boundary(e_k))";
+    /// `forAll` -> `term_STR_5_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_STR_5_forAll";
+    /// `lhs` -> `term_STR_5_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_STR_5_lhs";
+    /// `rhs` -> `term_STR_5_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_STR_5_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Stream: continuation chaining";
 }
 
 /// Lease expiry at an epoch boundary returns claimed fibers to the next epoch’s linear budget.
 pub mod str_6 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "EpochBoundary b with LeaseAllocation L expiring at b";
-    /// `lhs`
-    pub const LHS: &str = "linearBudget(epoch_{k+1})";
-    /// `rhs`
-    pub const RHS: &str = "linearBudget(epoch_k) + leaseCardinality(L)";
+    /// `forAll` -> `term_STR_6_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_STR_6_forAll";
+    /// `lhs` -> `term_STR_6_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_STR_6_lhs";
+    /// `rhs` -> `term_STR_6_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_STR_6_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Stream: lease expiry budget return";
 }
 
 /// Every partial computation produces exactly one of Success or Failure.
 pub mod flr_1 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "PartialComputation P";
-    /// `lhs`
-    pub const LHS: &str = "result(P)";
-    /// `rhs`
-    pub const RHS: &str = "∈ {Success, Failure}";
+    /// `forAll` -> `term_FLR_1_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_FLR_1_forAll";
+    /// `lhs` -> `term_FLR_1_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_FLR_1_lhs";
+    /// `rhs` -> `term_FLR_1_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_FLR_1_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Failure: coproduct exhaustiveness";
 }
 
 /// A total computation always succeeds.
 pub mod flr_2 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "TotalComputation T";
-    /// `lhs`
-    pub const LHS: &str = "result(T)";
-    /// `rhs`
-    pub const RHS: &str = "Success";
+    /// `forAll` -> `term_FLR_2_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_FLR_2_forAll";
+    /// `lhs` -> `term_FLR_2_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_FLR_2_lhs";
+    /// `rhs` -> `term_FLR_2_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_FLR_2_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Pipeline`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Failure: total computation guarantee";
 }
 
 /// Sequential failure propagation: if A fails, B is not evaluated.
 pub mod flr_3 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "A ⊗ B where result(A) = Failure";
-    /// `lhs`
-    pub const LHS: &str = "result(A ⊗ B)";
-    /// `rhs`
-    pub const RHS: &str = "Failure(A)";
+    /// `forAll` -> `term_FLR_3_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_FLR_3_forAll";
+    /// `lhs` -> `term_FLR_3_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_FLR_3_lhs";
+    /// `rhs` -> `term_FLR_3_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_FLR_3_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Failure: sequential propagation";
 }
 
 /// Parallel failure independence: one component’s failure does not prevent the other’s success.
 pub mod flr_4 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "A ∥ B where result(A) = Failure, result(B) = Success";
-    /// `lhs`
-    pub const LHS: &str = "result(A ∥ B)";
-    /// `rhs`
-    pub const RHS: &str = "Failure(A) (left component)";
+    /// `forAll` -> `term_FLR_4_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_FLR_4_forAll";
+    /// `lhs` -> `term_FLR_4_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_FLR_4_lhs";
+    /// `rhs` -> `term_FLR_4_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_FLR_4_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Failure: parallel independence";
 }
 
 /// Recovery produces a new ComputationResult.
 pub mod flr_5 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "Recovery r on Failure f";
-    /// `lhs`
-    pub const LHS: &str = "result(apply(recoveryEffect(r), failureState(f)))";
-    /// `rhs`
-    pub const RHS: &str = "ComputationResult";
+    /// `forAll` -> `term_FLR_5_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_FLR_5_forAll";
+    /// `lhs` -> `term_FLR_5_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_FLR_5_lhs";
+    /// `rhs` -> `term_FLR_5_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_FLR_5_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Pipeline`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Failure: recovery result";
 }
 
 /// The cascade’s existing rollback mechanism is a Recovery whose effect is the conjugate phase rotation.
 pub mod flr_6 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "ComplexConjugateRollback on Failure f";
-    /// `lhs`
-    pub const LHS: &str = "recoveryEffect(rollback(f))";
-    /// `rhs`
-    pub const RHS: &str = "PhaseEffect(conjugate)";
+    /// `forAll` -> `term_FLR_6_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_FLR_6_forAll";
+    /// `lhs` -> `term_FLR_6_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_FLR_6_lhs";
+    /// `rhs` -> `term_FLR_6_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_FLR_6_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Pipeline`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Failure: conjugate rollback";
 }
 
 /// In a linear trace, every fiber is targeted exactly once. Total effect count equals fiber budget.
 pub mod ln_1 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "LinearTrace T over n-bit type";
-    /// `lhs`
-    pub const LHS: &str = "Σ targetCount(fiber_i)";
-    /// `rhs`
-    pub const RHS: &str = "n";
+    /// `forAll` -> `term_LN_1_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_LN_1_forAll";
+    /// `lhs` -> `term_LN_1_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_LN_1_lhs";
+    /// `rhs` -> `term_LN_1_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_LN_1_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Linear: exact coverage";
 }
 
 /// After a LinearEffect, the target fiber is pinned.
 pub mod ln_2 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "LinearEffect e on fiber f";
-    /// `lhs`
-    pub const LHS: &str = "status(f, postContext(e))";
-    /// `rhs`
-    pub const RHS: &str = "pinned";
+    /// `forAll` -> `term_LN_2_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_LN_2_forAll";
+    /// `lhs` -> `term_LN_2_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_LN_2_lhs";
+    /// `rhs` -> `term_LN_2_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_LN_2_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Linear: pinning effect";
 }
 
 /// A consumed LinearFiber cannot be targeted again.
 pub mod ln_3 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "LinearEffect e on fiber f, any subsequent effect e′";
-    /// `lhs`
-    pub const LHS: &str = "target(e′) = f";
-    /// `rhs`
-    pub const RHS: &str = "forbidden";
+    /// `forAll` -> `term_LN_3_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_LN_3_forAll";
+    /// `lhs` -> `term_LN_3_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_LN_3_lhs";
+    /// `rhs` -> `term_LN_3_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_LN_3_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Linear: consumption linearity";
 }
 
 /// Lease allocation decrements the linear budget by the lease cardinality.
 pub mod ln_4 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "LeaseAllocation L with leaseCardinality k";
-    /// `lhs`
-    pub const LHS: &str = "remainingCount(budget after L)";
-    /// `rhs`
-    pub const RHS: &str = "remainingCount(budget before L) − k";
+    /// `forAll` -> `term_LN_4_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_LN_4_forAll";
+    /// `lhs` -> `term_LN_4_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_LN_4_lhs";
+    /// `rhs` -> `term_LN_4_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_LN_4_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Linear: lease budget decrement";
 }
 
 /// Lease expiry returns claimed fibers to the budget.
 pub mod ln_5 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "Lease expiry on LeaseAllocation L";
-    /// `lhs`
-    pub const LHS: &str = "remainingCount(budget after expiry)";
-    /// `rhs`
-    pub const RHS: &str = "remainingCount(budget before expiry) + leaseCardinality(L)";
+    /// `forAll` -> `term_LN_5_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_LN_5_forAll";
+    /// `lhs` -> `term_LN_5_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_LN_5_lhs";
+    /// `rhs` -> `term_LN_5_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_LN_5_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Pipeline`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Linear: lease expiry return";
 }
 
 /// Every geodesic trace is a linear trace.
 pub mod ln_6 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "GeodesicTrace G";
-    /// `lhs`
-    pub const LHS: &str = "G";
-    /// `rhs`
-    pub const RHS: &str = "LinearTrace";
+    /// `forAll` -> `term_LN_6_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_LN_6_forAll";
+    /// `lhs` -> `term_LN_6_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_LN_6_lhs";
+    /// `rhs` -> `term_LN_6_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_LN_6_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Topological`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Topological";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Linear: geodesic linearity";
 }
 
 /// Subtyping is constraint superset: more constraints = more specific.
 pub mod sb_1 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "TypeInclusion T₁ ≤ T₂";
-    /// `lhs`
-    pub const LHS: &str = "constraints(T₁)";
-    /// `rhs`
-    pub const RHS: &str = "⊇ constraints(T₂)";
+    /// `forAll` -> `term_SB_1_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_SB_1_forAll";
+    /// `lhs` -> `term_SB_1_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_SB_1_lhs";
+    /// `rhs` -> `term_SB_1_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_SB_1_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Subtyping: constraint superset";
 }
 
 /// Subtype has fewer valid resolutions.
 pub mod sb_2 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "TypeInclusion T₁ ≤ T₂, resolution R";
-    /// `lhs`
-    pub const LHS: &str = "resolutions(T₁)";
-    /// `rhs`
-    pub const RHS: &str = "⊆ resolutions(T₂)";
+    /// `forAll` -> `term_SB_2_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_SB_2_forAll";
+    /// `lhs` -> `term_SB_2_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_SB_2_lhs";
+    /// `rhs` -> `term_SB_2_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_SB_2_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Subtyping: resolution subset";
 }
 
 /// The constraint nerve of the supertype is a sub-complex of the subtype’s nerve.
 pub mod sb_3 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "TypeInclusion T₁ ≤ T₂";
-    /// `lhs`
-    pub const LHS: &str = "N(C(T₂))";
-    /// `rhs`
-    pub const RHS: &str = "sub-complex of N(C(T₁))";
+    /// `forAll` -> `term_SB_3_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_SB_3_forAll";
+    /// `lhs` -> `term_SB_3_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_SB_3_lhs";
+    /// `rhs` -> `term_SB_3_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_SB_3_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Topological`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Topological";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Subtyping: nerve sub-complex";
 }
 
 /// Covariance preserves inclusion.
 pub mod sb_4 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "Covariant position F(_), T₁ ≤ T₂";
-    /// `lhs`
-    pub const LHS: &str = "F(T₁)";
-    /// `rhs`
-    pub const RHS: &str = "≤ F(T₂)";
+    /// `forAll` -> `term_SB_4_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_SB_4_forAll";
+    /// `lhs` -> `term_SB_4_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_SB_4_lhs";
+    /// `rhs` -> `term_SB_4_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_SB_4_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Subtyping: covariance";
 }
 
 /// Contravariance reverses inclusion.
 pub mod sb_5 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "Contravariant position F(_), T₁ ≤ T₂";
-    /// `lhs`
-    pub const LHS: &str = "F(T₂)";
-    /// `rhs`
-    pub const RHS: &str = "≤ F(T₁)";
+    /// `forAll` -> `term_SB_5_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_SB_5_forAll";
+    /// `lhs` -> `term_SB_5_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_SB_5_lhs";
+    /// `rhs` -> `term_SB_5_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_SB_5_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Subtyping: contravariance";
 }
 
 /// Lattice depth equals fiber budget.
 pub mod sb_6 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "SubtypingLattice at quantum level n";
-    /// `lhs`
-    pub const LHS: &str = "latticeDepth";
-    /// `rhs`
-    pub const RHS: &str = "n";
+    /// `forAll` -> `term_SB_6_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_SB_6_forAll";
+    /// `lhs` -> `term_SB_6_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_SB_6_lhs";
+    /// `rhs` -> `term_SB_6_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_SB_6_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Subtyping: lattice depth";
 }
 
 /// Every recursive step strictly decreases the descent measure.
 pub mod br_1 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "RecursiveStep s";
-    /// `lhs`
-    pub const LHS: &str = "measureValue(stepMeasurePost(s))";
-    /// `rhs`
-    pub const RHS: &str = "< measureValue(stepMeasurePre(s))";
+    /// `forAll` -> `term_BR_1_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_BR_1_forAll";
+    /// `lhs` -> `term_BR_1_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_BR_1_lhs";
+    /// `rhs` -> `term_BR_1_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_BR_1_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Recursion: strict descent";
 }
 
 /// Recursion depth is bounded by the initial measure value.
 pub mod br_2 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "BoundedRecursion R with initialMeasure m";
-    /// `lhs`
-    pub const LHS: &str = "depth(RecursionTrace(R))";
-    /// `rhs`
-    pub const RHS: &str = "≤ m";
+    /// `forAll` -> `term_BR_2_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_BR_2_forAll";
+    /// `lhs` -> `term_BR_2_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_BR_2_lhs";
+    /// `rhs` -> `term_BR_2_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_BR_2_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Pipeline`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Recursion: depth bound";
 }
 
 /// Every bounded recursion terminates.
 pub mod br_3 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "BoundedRecursion R";
-    /// `lhs`
-    pub const LHS: &str = "terminates(R)";
-    /// `rhs`
-    pub const RHS: &str = "true";
+    /// `forAll` -> `term_BR_3_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_BR_3_forAll";
+    /// `lhs` -> `term_BR_3_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_BR_3_lhs";
+    /// `rhs` -> `term_BR_3_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_BR_3_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Pipeline`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Recursion: termination guarantee";
 }
 
 /// Structural recursion’s measure is the input type’s structural size.
 pub mod br_4 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "StructuralRecursion R on type T";
-    /// `lhs`
-    pub const LHS: &str = "initialMeasure(R)";
-    /// `rhs`
-    pub const RHS: &str = "structuralSize(T)";
+    /// `forAll` -> `term_BR_4_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_BR_4_forAll";
+    /// `lhs` -> `term_BR_4_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_BR_4_lhs";
+    /// `rhs` -> `term_BR_4_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_BR_4_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Recursion: structural measure";
 }
 
 /// The base predicate is satisfied exactly when the measure reaches zero.
 pub mod br_5 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "BoundedRecursion R with basePredicate p";
-    /// `lhs`
-    pub const LHS: &str = "eval(p, state) = true";
-    /// `rhs`
-    pub const RHS: &str = "measureValue = 0";
+    /// `forAll` -> `term_BR_5_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_BR_5_forAll";
+    /// `lhs` -> `term_BR_5_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_BR_5_lhs";
+    /// `rhs` -> `term_BR_5_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_BR_5_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Pipeline`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Recursion: base predicate zero";
 }
 
 /// The working set is determined by the constraint nerve and the stage’s fiber targets.
 pub mod rg_1 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "WorkingSet W for type T at stage k";
-    /// `lhs`
-    pub const LHS: &str = "workingSetRegions(W)";
-    /// `rhs`
-    pub const RHS: &str = "computable from N(C(T)) and stage k fiber targets";
+    /// `forAll` -> `term_RG_1_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_RG_1_forAll";
+    /// `lhs` -> `term_RG_1_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_RG_1_lhs";
+    /// `rhs` -> `term_RG_1_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_RG_1_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Topological`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Topological";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Region: nerve-determined working set";
 }
 
 /// All addresses within a region are within the region’s diameter under the chosen metric.
 pub mod rg_2 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "AddressRegion R with LocalityMetric d_R";
-    /// `lhs`
-    pub const LHS: &str = "∀ a, b ∈ R: d_R(a, b)";
-    /// `rhs`
-    pub const RHS: &str = "≤ diameter(R)";
+    /// `forAll` -> `term_RG_2_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_RG_2_forAll";
+    /// `lhs` -> `term_RG_2_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_RG_2_lhs";
+    /// `rhs` -> `term_RG_2_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_RG_2_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Analytical`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Analytical";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Region: diameter bound";
 }
 
 /// Total working set size is bounded by the addressable space at the quantum level.
 pub mod rg_3 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "RegionAllocation A for computation C";
-    /// `lhs`
-    pub const LHS: &str = "Σ workingSetSize(stage_k)";
-    /// `rhs`
-    pub const RHS: &str = "≤ totalAddressableSpace(quantumLevel)";
+    /// `forAll` -> `term_RG_3_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_RG_3_forAll";
+    /// `lhs` -> `term_RG_3_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_RG_3_lhs";
+    /// `rhs` -> `term_RG_3_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_RG_3_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Region: addressable space bound";
 }
 
 /// The resolver at stage k accesses only addresses within its working set.
 pub mod rg_4 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "Cascade stage k with WorkingSet W_k";
-    /// `lhs`
-    pub const LHS: &str = "addresses accessed by resolver at stage k";
-    /// `rhs`
-    pub const RHS: &str = "⊆ addresses(W_k)";
+    /// `forAll` -> `term_RG_4_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_RG_4_forAll";
+    /// `lhs` -> `term_RG_4_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_RG_4_lhs";
+    /// `rhs` -> `term_RG_4_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_RG_4_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Pipeline`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Region: working set containment";
 }
 
 /// Ingested data conforms to the source’s declared type.
 pub mod io_1 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "IngestEffect e from Source s";
-    /// `lhs`
-    pub const LHS: &str = "type(resultDatum(e))";
-    /// `rhs`
-    pub const RHS: &str = "conformsTo(sourceType(s))";
+    /// `forAll` -> `term_IO_1_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_IO_1_forAll";
+    /// `lhs` -> `term_IO_1_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_IO_1_lhs";
+    /// `rhs` -> `term_IO_1_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_IO_1_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Pipeline`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Boundary: ingest type conformance";
 }
 
 /// Emitted data conforms to the sink’s declared type.
 pub mod io_2 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "EmitEffect e to Sink s";
-    /// `lhs`
-    pub const LHS: &str = "type(emittedDatum(e))";
-    /// `rhs`
-    pub const RHS: &str = "conformsTo(sinkType(s))";
+    /// `forAll` -> `term_IO_2_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_IO_2_forAll";
+    /// `lhs` -> `term_IO_2_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_IO_2_lhs";
+    /// `rhs` -> `term_IO_2_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_IO_2_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Pipeline`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Boundary: emit type conformance";
 }
 
 /// Every ingestion through a source produces a valid ring datum via grounding.
 pub mod io_3 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "Source s with GroundingMap g";
-    /// `lhs`
-    pub const LHS: &str = "apply(g, ingest(s))";
-    /// `rhs`
-    pub const RHS: &str = "Datum in R_n";
+    /// `forAll` -> `term_IO_3_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_IO_3_forAll";
+    /// `lhs` -> `term_IO_3_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_IO_3_lhs";
+    /// `rhs` -> `term_IO_3_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_IO_3_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Pipeline`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Boundary: grounding validity";
 }
 
 /// Every emission through a sink produces a valid surface symbol via projection.
 pub mod io_4 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "Sink s with ProjectionMap p, Datum d";
-    /// `lhs`
-    pub const LHS: &str = "apply(p, d)";
-    /// `rhs`
-    pub const RHS: &str = "surface symbol conforming to sinkType(s)";
+    /// `forAll` -> `term_IO_4_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_IO_4_forAll";
+    /// `lhs` -> `term_IO_4_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_IO_4_lhs";
+    /// `rhs` -> `term_IO_4_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_IO_4_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Pipeline`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Pipeline";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Boundary: projection validity";
 }
 
 /// Every boundary effect touches at least one fiber.
 pub mod io_5 {
-    /// `forAll`
-    pub const FOR_ALL: &str = "BoundaryEffect e";
-    /// `lhs`
-    pub const LHS: &str = "effect:effectTarget(e)";
-    /// `rhs`
-    pub const RHS: &str = "non-empty EffectTarget";
+    /// `forAll` -> `term_IO_5_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_IO_5_forAll";
+    /// `lhs` -> `term_IO_5_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_IO_5_lhs";
+    /// `rhs` -> `term_IO_5_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_IO_5_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`
     pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
     /// `verificationDomain` -> `Algebraic`
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
-    /// `verificationPathNote`
-    pub const VERIFICATION_PATH_NOTE: &str = "Boundary: non-vacuous crossing";
 }
 
 use crate::enums::PrimitiveOp;

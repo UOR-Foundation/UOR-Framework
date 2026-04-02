@@ -38,7 +38,7 @@ pub trait UnbindingEffect<P: Primitives>: Effect<P> {}
 /// Rotates the cascade phase angle by Ω^k. Does not alter the fiber budget. The effect produced by cascade stage transitions.
 pub trait PhaseEffect<P: Primitives>: ReversibleEffect<P> {
     /// The phase rotation applied, expressed as Ω^k.
-    fn phase_angle_delta(&self) -> &P::String;
+    fn phase_angle_delta(&self) -> P::Decimal;
 }
 
 /// An ordered sequence of effects applied atomically. The composition E₁ ; E₂ applies E₁ then E₂.

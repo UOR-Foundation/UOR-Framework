@@ -481,7 +481,16 @@ fn properties() -> Vec<Property> {
     ]
 }
 
+/// Returns identity individuals with original `Str` values for lhs/rhs/forAll.
+pub(crate) fn raw_individuals() -> Vec<Individual> {
+    raw_individuals_vec()
+}
+
 fn individuals() -> Vec<Individual> {
+    crate::model::rewrite_identity_ast_refs(raw_individuals_vec())
+}
+
+fn raw_individuals_vec() -> Vec<Individual> {
     vec![
         Individual {
             id: "https://uor.foundation/homology/boundarySquaredZero",
@@ -493,22 +502,14 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/op/lhs",
                     IndividualValue::Str("\u{2202}_k(\u{2202}_{k+1}(c))"),
                 ),
-                (
-                    "https://uor.foundation/op/rhs",
-                    IndividualValue::Str("0"),
-                ),
+                ("https://uor.foundation/op/rhs", IndividualValue::Str("0")),
                 (
                     "https://uor.foundation/op/forAll",
                     IndividualValue::Str("c \u{2208} C_{k+1}"),
                 ),
-
                 (
                     "https://uor.foundation/op/verificationDomain",
                     IndividualValue::IriRef("https://uor.foundation/op/Topological"),
-                ),
-                (
-                    "https://uor.foundation/op/verificationPathNote",
-                    IndividualValue::Str("ChainComplex \u{2192} BoundaryOperator \u{2192} \u{2202}\u{00b2} = 0"),
                 ),
             ],
         },
@@ -544,14 +545,9 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/op/forAll",
                     IndividualValue::Str("simplicial complex K"),
                 ),
-
                 (
                     "https://uor.foundation/op/verificationDomain",
                     IndividualValue::IriRef("https://uor.foundation/op/Topological"),
-                ),
-                (
-                    "https://uor.foundation/op/verificationPathNote",
-                    IndividualValue::Str("HomologyGroup \u{2192} rank \u{2192} BettiNumber"),
                 ),
             ],
         },
@@ -573,14 +569,9 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/op/forAll",
                     IndividualValue::Str("finite simplicial complex K"),
                 ),
-
                 (
                     "https://uor.foundation/op/verificationDomain",
                     IndividualValue::IriRef("https://uor.foundation/op/Topological"),
-                ),
-                (
-                    "https://uor.foundation/op/verificationPathNote",
-                    IndividualValue::Str("SimplicialComplex \u{2192} ChainComplex \u{2192} HomologyGroup \u{2192} BettiNumber \u{2192} alternating sum"),
                 ),
             ],
         },

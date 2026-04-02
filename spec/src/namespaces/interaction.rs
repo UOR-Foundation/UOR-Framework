@@ -109,19 +109,19 @@ fn properties() -> Vec<Property> {
             id: "https://uor.foundation/interaction/entityA",
             label: "entityA",
             comment: "First entity in the interaction context.",
-            kind: PropertyKind::Datatype,
+            kind: PropertyKind::Object,
             functional: true,
             domain: Some("https://uor.foundation/interaction/InteractionContext"),
-            range: XSD_STRING,
+            range: "https://uor.foundation/schema/TermExpression",
         },
         Property {
             id: "https://uor.foundation/interaction/entityB",
             label: "entityB",
             comment: "Second entity in the interaction context.",
-            kind: PropertyKind::Datatype,
+            kind: PropertyKind::Object,
             functional: true,
             domain: Some("https://uor.foundation/interaction/InteractionContext"),
-            range: XSD_STRING,
+            range: "https://uor.foundation/schema/TermExpression",
         },
         Property {
             id: "https://uor.foundation/interaction/sharedFiberMask",
@@ -131,7 +131,7 @@ fn properties() -> Vec<Property> {
             kind: PropertyKind::Datatype,
             functional: true,
             domain: Some("https://uor.foundation/interaction/InteractionContext"),
-            range: XSD_STRING,
+            range: XSD_NON_NEGATIVE_INTEGER,
         },
         Property {
             id: "https://uor.foundation/interaction/commutatorNorm",
@@ -161,7 +161,7 @@ fn properties() -> Vec<Property> {
             kind: PropertyKind::Datatype,
             functional: true,
             domain: Some("https://uor.foundation/interaction/AssociatorState"),
-            range: XSD_STRING,
+            range: XSD_DECIMAL,
         },
         // Amendment 80: typed replacements for AssociatorTriple string props
         Property {
@@ -208,7 +208,7 @@ fn properties() -> Vec<Property> {
             kind: PropertyKind::Datatype,
             functional: true,
             domain: Some("https://uor.foundation/interaction/ThreeWayFiber"),
-            range: XSD_STRING,
+            range: XSD_DECIMAL,
         },
         Property {
             id: "https://uor.foundation/interaction/rightGroupingValue",
@@ -217,7 +217,7 @@ fn properties() -> Vec<Property> {
             kind: PropertyKind::Datatype,
             functional: true,
             domain: Some("https://uor.foundation/interaction/ThreeWayFiber"),
-            range: XSD_STRING,
+            range: XSD_DECIMAL,
         },
         Property {
             id: "https://uor.foundation/interaction/isPinned",
@@ -232,10 +232,10 @@ fn properties() -> Vec<Property> {
             id: "https://uor.foundation/interaction/pinningPair",
             label: "pinningPair",
             comment: "Identifier of the entity pair that pins this fiber.",
-            kind: PropertyKind::Datatype,
+            kind: PropertyKind::Object,
             functional: true,
             domain: Some("https://uor.foundation/interaction/ThreeWayFiber"),
-            range: XSD_STRING,
+            range: "https://uor.foundation/schema/TermExpression",
         },
         // NegotiationTrace properties
         Property {
@@ -285,7 +285,7 @@ fn properties() -> Vec<Property> {
             kind: PropertyKind::Datatype,
             functional: true,
             domain: Some("https://uor.foundation/interaction/InteractionNerve"),
-            range: XSD_STRING,
+            range: XSD_NON_NEGATIVE_INTEGER,
         },
         // InteractionComposition properties
         Property {
@@ -314,16 +314,16 @@ fn properties() -> Vec<Property> {
             kind: PropertyKind::Datatype,
             functional: true,
             domain: Some("https://uor.foundation/interaction/NegotiationTrace"),
-            range: XSD_STRING,
+            range: XSD_DECIMAL,
         },
         Property {
             id: "https://uor.foundation/interaction/terminalValue",
             label: "terminalValue",
             comment: "The terminal value of the negotiation trace.",
-            kind: PropertyKind::Datatype,
+            kind: PropertyKind::Object,
             functional: true,
             domain: Some("https://uor.foundation/interaction/NegotiationTrace"),
-            range: XSD_STRING,
+            range: "https://uor.foundation/schema/TermExpression",
         },
         // Amendment 80: typed replacements
         Property {

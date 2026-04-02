@@ -360,10 +360,10 @@ fn properties() -> Vec<Property> {
             label: "strategy",
             comment: "A human-readable description of the resolution strategy \
                       this resolver implements.",
-            kind: PropertyKind::Annotation,
+            kind: PropertyKind::Object,
             functional: true,
             domain: Some("https://uor.foundation/resolver/Resolver"),
-            range: XSD_STRING,
+            range: "https://uor.foundation/schema/TermExpression",
         },
         // complexity property removed by Amendment 23 (replaced by hasComplexityClass)
         // Amendment 11: Iterative Resolution properties
@@ -688,7 +688,7 @@ fn properties() -> Vec<Property> {
             kind: PropertyKind::Datatype,
             functional: true,
             domain: Some("https://uor.foundation/resolver/SuperpositionResolver"),
-            range: XSD_STRING,
+            range: XSD_DECIMAL,
         },
         // Amendment 37: Prior amplitude vector for MeasurementResolver (Gap 10)
         Property {
@@ -700,7 +700,7 @@ fn properties() -> Vec<Property> {
             kind: PropertyKind::Datatype,
             functional: true,
             domain: Some("https://uor.foundation/resolver/MeasurementResolver"),
-            range: XSD_STRING,
+            range: XSD_DECIMAL,
         },
         // Amendment 41: TowerCompletenessResolver properties
         Property {

@@ -22,7 +22,6 @@ The base class is {@class https://uor.foundation/type/TypeDefinition}.
 | {@prop https://uor.foundation/type/bitWidth} | PrimitiveType | xsd:nonNegativeInteger | Bit width |
 | {@prop https://uor.foundation/type/component} | ProductType | TypeDefinition | Component types |
 | {@prop https://uor.foundation/type/baseType} | SumType/ConstrainedType | TypeDefinition | Base type |
-| {@prop https://uor.foundation/type/constraint} | ConstrainedType | xsd:string | Constraint expression |
 | {@prop https://uor.foundation/type/contentAddress} | TypeDefinition | u:Address | Content address |
 
 ## Example: Primitive Types

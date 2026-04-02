@@ -1282,6 +1282,71 @@ pub fn validate() -> ConformanceReport {
         tests::fixtures::TEST252_COMPILE_UNIT,
         &mut report,
     );
+    run_test(
+        "test253_expression_types",
+        tests::fixtures::TEST253_EXPRESSION_TYPES,
+        &mut report,
+    );
+    run_test(
+        "test254_proof_derivation_types",
+        tests::fixtures::TEST254_PROOF_DERIVATION_TYPES,
+        &mut report,
+    );
+    run_test(
+        "test255_effect_types",
+        tests::fixtures::TEST255_EFFECT_TYPES,
+        &mut report,
+    );
+    run_test(
+        "test256_predicate_types",
+        tests::fixtures::TEST256_PREDICATE_TYPES,
+        &mut report,
+    );
+    run_test(
+        "test257_parallel_types",
+        tests::fixtures::TEST257_PARALLEL_TYPES,
+        &mut report,
+    );
+    run_test(
+        "test258_stream_types",
+        tests::fixtures::TEST258_STREAM_TYPES,
+        &mut report,
+    );
+    run_test(
+        "test259_failure_types",
+        tests::fixtures::TEST259_FAILURE_TYPES,
+        &mut report,
+    );
+    run_test(
+        "test260_linear_types",
+        tests::fixtures::TEST260_LINEAR_TYPES,
+        &mut report,
+    );
+    run_test(
+        "test261_recursion_types",
+        tests::fixtures::TEST261_RECURSION_TYPES,
+        &mut report,
+    );
+    run_test(
+        "test262_region_types",
+        tests::fixtures::TEST262_REGION_TYPES,
+        &mut report,
+    );
+    run_test(
+        "test263_boundary_types",
+        tests::fixtures::TEST263_BOUNDARY_TYPES,
+        &mut report,
+    );
+    run_test(
+        "test264_conformance_types",
+        tests::fixtures::TEST264_CONFORMANCE_TYPES,
+        &mut report,
+    );
+    run_test(
+        "test265_user_types",
+        tests::fixtures::TEST265_USER_TYPES,
+        &mut report,
+    );
 
     // Verify test fixture count matches expected
     let test_count = report.results.len() - before_tests;
@@ -1609,6 +1674,19 @@ fn run_test(name: &str, turtle_src: &str, report: &mut ConformanceReport) {
         "test250_pipeline_outcome" => validate_basic_turtle(turtle_src),
         "test251_preflight_checkpoint" => validate_basic_turtle(turtle_src),
         "test252_compile_unit" => validate_basic_turtle(turtle_src),
+        "test253_expression_types" => validate_basic_turtle(turtle_src),
+        "test254_proof_derivation_types" => validate_basic_turtle(turtle_src),
+        "test255_effect_types" => validate_basic_turtle(turtle_src),
+        "test256_predicate_types" => validate_basic_turtle(turtle_src),
+        "test257_parallel_types" => validate_basic_turtle(turtle_src),
+        "test258_stream_types" => validate_basic_turtle(turtle_src),
+        "test259_failure_types" => validate_basic_turtle(turtle_src),
+        "test260_linear_types" => validate_basic_turtle(turtle_src),
+        "test261_recursion_types" => validate_basic_turtle(turtle_src),
+        "test262_region_types" => validate_basic_turtle(turtle_src),
+        "test263_boundary_types" => validate_basic_turtle(turtle_src),
+        "test264_conformance_types" => validate_basic_turtle(turtle_src),
+        "test265_user_types" => validate_basic_turtle(turtle_src),
         _ => Ok(()),
     };
 

@@ -177,7 +177,7 @@ fn properties() -> Vec<Property> {
             kind: PropertyKind::Datatype,
             functional: true,
             domain: Some("https://uor.foundation/convergence/ConvergenceResidual"),
-            range: XSD_STRING,
+            range: XSD_NON_NEGATIVE_INTEGER,
         },
         Property {
             id: "https://uor.foundation/convergence/residualDimension",

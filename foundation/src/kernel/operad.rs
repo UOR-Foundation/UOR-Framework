@@ -16,14 +16,18 @@ pub trait StructuralOperad<P: Primitives> {
 
 /// A specific nesting: outer type F applied to inner type G.
 pub trait OperadComposition<P: Primitives> {
+    /// Associated type for `TypeDefinition`.
+    type TypeDefinition: crate::user::type_::TypeDefinition<P>;
     /// The outer type F in the nesting F(G).
-    fn outer_type(&self) -> &P::String;
+    fn outer_type(&self) -> &Self::TypeDefinition;
     /// The inner type G in the nesting F(G).
-    fn inner_type(&self) -> &P::String;
+    fn inner_type(&self) -> &Self::TypeDefinition;
     /// The resulting composed type F(G).
-    fn composed_type(&self) -> &P::String;
+    fn composed_type(&self) -> &Self::TypeDefinition;
     /// Fiber count of the composed type F(G).
-    fn composed_fiber_count(&self) -> &P::String;
+    fn composed_fiber_count(&self) -> P::NonNegativeInteger;
+    /// Associated type for `TermExpression`.
+    type TermExpression: crate::kernel::schema::TermExpression<P>;
     /// Grounding of the composed type F(G).
-    fn composed_grounding(&self) -> &P::String;
+    fn composed_grounding(&self) -> &Self::TermExpression;
 }

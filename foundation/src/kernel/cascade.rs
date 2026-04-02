@@ -4,7 +4,6 @@
 //!
 //! Space: Kernel
 
-use crate::enums::FiberState;
 use crate::enums::QuantumLevel;
 use crate::enums::VerificationDomain;
 use crate::Primitives;
@@ -12,25 +11,29 @@ use crate::Primitives;
 /// The composite endofunctor ψ = ψ_9 ∘ … ∘ ψ_1, parameterized by Ω = e^{iπ/6}.
 pub trait EulerCascade<P: Primitives> {
     /// The base phase parameter Ω for this cascade (e.g., e^{iπ/6}).
-    fn phase_parameter(&self) -> &P::String;
+    fn phase_parameter(&self) -> P::Decimal;
     /// The number of stages in this cascade.
     fn stage_count(&self) -> P::NonNegativeInteger;
     /// The cumulative phase angle at which the cascade converges.
-    fn convergence_angle(&self) -> &P::String;
+    fn convergence_angle(&self) -> P::Decimal;
+    /// Associated type for `TermExpression`.
+    type TermExpression: crate::kernel::schema::TermExpression<P>;
+    /// The ordered list of ψ-maps that compose this cascade.
+    fn composed_of_maps(&self) -> &[Self::TermExpression];
 }
 
 /// Schedule Ω⁰, Ω¹, …, Ω⁵ assigning a phase angle to each stage of the cascade.
 pub trait PhaseRotationScheduler<P: Primitives> {
     /// String representation of the rotation schedule Ω⁰, Ω¹, …, Ω⁵.
-    fn rotation_schedule(&self) -> &P::String;
+    fn rotation_schedule(&self) -> P::Decimal;
     /// The base angle π/6 from which the schedule is derived.
-    fn base_angle(&self) -> &P::String;
+    fn base_angle(&self) -> P::Decimal;
 }
 
 /// The angle at which the cascade terminates (default: π).
 pub trait TargetConvergenceAngle<P: Primitives> {
     /// The target convergence angle (default: π).
-    fn target_angle(&self) -> &P::String;
+    fn target_angle(&self) -> P::Decimal;
 }
 
 /// Validation at each stage boundary checking that the accumulated phase angle matches the expected Ω^k.
@@ -40,7 +43,7 @@ pub trait PhaseGateAttestation<P: Primitives> {
     /// The cascade stage at which this gate is applied.
     fn gate_stage(&self) -> &Self::CascadeStage;
     /// The expected phase angle Ω^k at this gate.
-    fn gate_expected_phase(&self) -> &P::String;
+    fn gate_expected_phase(&self) -> P::Decimal;
     /// Whether the phase gate check passed or failed.
     fn gate_result(&self) -> P::Boolean;
 }
@@ -60,7 +63,7 @@ pub trait CascadeStage<P: Primitives> {
     /// Human-readable name of this cascade stage.
     fn stage_name(&self) -> &P::String;
     /// The expected phase angle Ω^k at this stage.
-    fn expected_phase(&self) -> &P::String;
+    fn expected_phase(&self) -> P::Decimal;
     /// Associated type for `StatePredicate`.
     type StatePredicate: crate::kernel::predicate::StatePredicate<P>;
     /// A typed predicate evaluated on the current CascadeState. Must be satisfied to enter this stage.
@@ -80,13 +83,15 @@ pub trait CascadeState<P: Primitives> {
     /// The cascade stage at which execution is currently positioned.
     fn current_stage(&self) -> &Self::CascadeStage;
     /// The accumulated phase angle at the current point.
-    fn phase_angle(&self) -> &P::String;
+    fn phase_angle(&self) -> P::Decimal;
     /// Bit mask of fibers that are pinned (resolved) at this point.
-    fn pinned_mask(&self) -> &P::String;
+    fn pinned_mask(&self) -> P::NonNegativeInteger;
     /// The number of free (unresolved) fibers at this point.
     fn free_count(&self) -> P::NonNegativeInteger;
+    /// Associated type for `TermExpression`.
+    type TermExpression: crate::kernel::schema::TermExpression<P>;
     /// The fiber state descriptor within a cascade state.
-    fn fiber_state(&self) -> FiberState;
+    fn fiber_state(&self) -> &Self::TermExpression;
 }
 
 /// Guard-effect pair governing stage transitions in the cascade. The guard must be satisfied before the effect is applied.
@@ -95,8 +100,10 @@ pub trait CascadeTransitionRule<P: Primitives> {
     type GuardedTransition: crate::kernel::predicate::GuardedTransition<P>;
     /// A typed GuardedTransition from predicate/ governing the stage transition.
     fn transition_guard(&self) -> &Self::GuardedTransition;
+    /// Associated type for `TermExpression`.
+    type TermExpression: crate::kernel::schema::TermExpression<P>;
     /// The effect applied when this transition fires.
-    fn transition_effect(&self) -> &P::String;
+    fn transition_effect(&self) -> &Self::TermExpression;
     /// Whether this transition advances to the next stage.
     fn transition_advance(&self) -> P::Boolean;
 }
@@ -105,12 +112,18 @@ pub trait CascadeTransitionRule<P: Primitives> {
 pub trait Epoch<P: Primitives> {
     /// Zero-based index of this epoch in the cascade execution.
     fn epoch_index(&self) -> P::NonNegativeInteger;
+    /// Associated type for `TermExpression`.
+    type TermExpression: crate::kernel::schema::TermExpression<P>;
+    /// Metadata or summary datum for this epoch.
+    fn epoch_datum(&self) -> &Self::TermExpression;
 }
 
 /// Transition between epochs. Carries metadata about the epoch boundary crossing.
 pub trait EpochBoundary<P: Primitives> {
+    /// Associated type for `TermExpression`.
+    type TermExpression: crate::kernel::schema::TermExpression<P>;
     /// The type of epoch boundary crossing (e.g., normal, forced, timeout).
-    fn epoch_boundary_type(&self) -> &P::String;
+    fn epoch_boundary_type(&self) -> &Self::TermExpression;
     /// Whether saturation was preserved across the epoch boundary.
     fn preserved_saturation(&self) -> P::Boolean;
 }
@@ -165,20 +178,24 @@ pub trait ServiceWindow<P: Primitives> {
     fn window_size(&self) -> P::NonNegativeInteger;
     /// The starting epoch offset of this service window.
     fn window_offset(&self) -> P::NonNegativeInteger;
+    /// Associated type for `TermExpression`.
+    type TermExpression: crate::kernel::schema::TermExpression<P>;
     /// Reference to the base context provided by this service window.
-    fn base_context_ref(&self) -> &P::String;
+    fn base_context_ref(&self) -> &Self::TermExpression;
 }
 
 /// An atomic group of state changes within the cascade.
 pub trait CascadeTransaction<P: Primitives> {
     /// The execution policy for this transaction (e.g., AllOrNothing, BestEffort).
     fn transaction_policy(&self) -> &P::String;
+    /// Associated type for `TermExpression`.
+    type TermExpression: crate::kernel::schema::TermExpression<P>;
     /// The outcome of this transaction (e.g., committed, rolled back).
-    fn transaction_outcome(&self) -> &P::String;
+    fn transaction_outcome(&self) -> &Self::TermExpression;
     /// The scope of fibers affected by this transaction.
-    fn transaction_scope(&self) -> &P::String;
+    fn transaction_scope(&self) -> &Self::TermExpression;
     /// Current status of this transaction (e.g., pending, committed).
-    fn transaction_status(&self) -> &P::String;
+    fn transaction_status(&self) -> &Self::TermExpression;
 }
 
 /// Successful termination (FullSaturation).
@@ -186,23 +203,27 @@ pub trait PipelineSuccess<P: Primitives> {
     /// Whether full saturation was achieved.
     fn saturation_reached(&self) -> P::Boolean;
     /// The final saturation level achieved on pipeline success.
-    fn final_saturation(&self) -> &P::String;
+    fn final_saturation(&self) -> P::Decimal;
 }
 
 /// Typed failure: DispatchMiss, GroundingFailure, ConvergenceStall, etc.
 pub trait PipelineFailureReason<P: Primitives> {
     /// The kind of pipeline failure (e.g., DispatchMiss, ConvergenceStall).
     fn failure_kind(&self) -> &P::String;
+    /// Associated type for `TermExpression`.
+    type TermExpression: crate::kernel::schema::TermExpression<P>;
     /// The cascade stage at which the pipeline failure occurred.
-    fn failure_stage(&self) -> &P::String;
+    fn failure_stage(&self) -> &Self::TermExpression;
 }
 
 /// A pre-execution validation: feasibility, dispatch coverage, coherence.
 pub trait PreflightCheck<P: Primitives> {
     /// The kind of preflight check (e.g., feasibility, dispatch coverage).
     fn preflight_kind(&self) -> &P::String;
+    /// Associated type for `TermExpression`.
+    type TermExpression: crate::kernel::schema::TermExpression<P>;
     /// The result of the preflight check (e.g., pass, fail).
-    fn preflight_result(&self) -> &P::String;
+    fn preflight_result(&self) -> &Self::TermExpression;
     /// Zero-based execution order for preflight checks. Lower indices execute first. BudgetSolvencyCheck (order 0) must precede all others.
     fn preflight_order(&self) -> P::NonNegativeInteger;
 }
@@ -213,8 +234,10 @@ pub trait FeasibilityResult<P: Primitives> {
     fn feasibility_kind(&self) -> &P::String;
     /// The witness justifying the feasibility or infeasibility result.
     fn feasibility_witness(&self) -> &P::String;
+    /// Associated type for `TermExpression`.
+    type TermExpression: crate::kernel::schema::TermExpression<P>;
     /// The kind of infeasibility detected.
-    fn infeasibility_kind(&self) -> &P::String;
+    fn infeasibility_kind(&self) -> &Self::TermExpression;
 }
 
 /// Lifecycle of a partitioned context lease: Pending → Active → Released/Expired/Suspended.
@@ -225,8 +248,10 @@ pub trait LeaseState<P: Primitives> {
 
 /// A context lease with lifecycle tracking.
 pub trait ManagedLease<P: Primitives> {
+    /// Associated type for `TermExpression`.
+    type TermExpression: crate::kernel::schema::TermExpression<P>;
     /// Unique identifier for this managed lease.
-    fn managed_lease_id(&self) -> &P::String;
+    fn managed_lease_id(&self) -> &Self::TermExpression;
     /// Associated type for `LeaseState`.
     type LeaseState: LeaseState<P>;
     /// The current lifecycle state of this managed lease.
@@ -254,11 +279,13 @@ pub trait BackPressureSignal<P: Primitives> {
     /// The current back-pressure level (e.g., Low, Medium, High).
     fn pressure_level(&self) -> &P::String;
     /// The threshold at which back-pressure activates.
-    fn pressure_threshold(&self) -> &P::String;
+    fn pressure_threshold(&self) -> P::Decimal;
+    /// Associated type for `TermExpression`.
+    type TermExpression: crate::kernel::schema::TermExpression<P>;
     /// The source stage emitting back-pressure.
-    fn source_stage(&self) -> &P::String;
+    fn source_stage(&self) -> &Self::TermExpression;
     /// The target stage receiving back-pressure.
-    fn target_stage(&self) -> &P::String;
+    fn target_stage(&self) -> &Self::TermExpression;
 }
 
 /// Queries postponed to a future epoch.
@@ -267,16 +294,20 @@ pub trait DeferredQuerySet<P: Primitives> {
     fn deferred_count(&self) -> P::NonNegativeInteger;
     /// The epoch in which these queries were deferred.
     fn deferral_epoch(&self) -> P::NonNegativeInteger;
+    /// Associated type for `TermExpression`.
+    type TermExpression: crate::kernel::schema::TermExpression<P>;
     /// The reason for deferring these queries.
-    fn deferral_reason(&self) -> &P::String;
+    fn deferral_reason(&self) -> &Self::TermExpression;
 }
 
 /// Transfer of a lease from one computation to another.
 pub trait SubleaseTransfer<P: Primitives> {
+    /// Associated type for `TermExpression`.
+    type TermExpression: crate::kernel::schema::TermExpression<P>;
     /// The lease being transferred from.
-    fn source_lease_ref(&self) -> &P::String;
+    fn source_lease_ref(&self) -> &Self::TermExpression;
     /// The lease being transferred to.
-    fn target_lease_ref(&self) -> &P::String;
+    fn target_lease_ref(&self) -> &Self::TermExpression;
     /// The fiber budget transferred between leases.
     fn transferred_budget(&self) -> P::NonNegativeInteger;
     /// Whether the sublease transfer has been completed.
@@ -285,88 +316,98 @@ pub trait SubleaseTransfer<P: Primitives> {
 
 /// Predicate comparing a state field against a value.
 pub trait ComparisonPredicate<P: Primitives>: PredicateExpression<P> {
+    /// Associated type for `TermExpression`.
+    type TermExpression: crate::kernel::schema::TermExpression<P>;
     /// The state field tested by this comparison predicate.
-    fn comparison_field(&self) -> &P::String;
+    fn comparison_field(&self) -> &Self::TermExpression;
     /// The comparison operator (e.g., '=', '<', '>=').
-    fn comparison_operator(&self) -> &P::String;
+    fn comparison_operator(&self) -> &Self::TermExpression;
     /// The value against which the comparison is made.
-    fn comparison_value(&self) -> &P::String;
+    fn comparison_value(&self) -> &Self::TermExpression;
 }
 
 /// Conjunction (AND) of multiple predicates.
 pub trait ConjunctionPredicate<P: Primitives>: PredicateExpression<P> {
+    /// Associated type for `TermExpression`.
+    type TermExpression: crate::kernel::schema::TermExpression<P>;
     /// A conjunct predicate in a conjunction.
-    fn conjuncts_count(&self) -> usize;
-    /// Returns the item at `index`. Must satisfy `index < self.conjuncts_count()`.
-    fn conjuncts_at(&self, index: usize) -> &P::String;
+    fn conjuncts(&self) -> &[Self::TermExpression];
 }
 
 /// Disjunction (OR) of multiple predicates.
 pub trait DisjunctionPredicate<P: Primitives>: PredicateExpression<P> {
+    /// Associated type for `TermExpression`.
+    type TermExpression: crate::kernel::schema::TermExpression<P>;
     /// A disjunct predicate in a disjunction.
-    fn disjuncts_count(&self) -> usize;
-    /// Returns the item at `index`. Must satisfy `index < self.disjuncts_count()`.
-    fn disjuncts_at(&self, index: usize) -> &P::String;
+    fn disjuncts(&self) -> &[Self::TermExpression];
 }
 
 /// Negation (NOT) of a single predicate.
 pub trait NegationPredicate<P: Primitives>: PredicateExpression<P> {
+    /// Associated type for `TermExpression`.
+    type TermExpression: crate::kernel::schema::TermExpression<P>;
     /// The predicate being negated.
-    fn negated_predicate(&self) -> &P::String;
+    fn negated_predicate(&self) -> &Self::TermExpression;
 }
 
 /// Predicate testing membership of an element in a set.
 pub trait MembershipPredicate<P: Primitives>: PredicateExpression<P> {
+    /// Associated type for `TermExpression`.
+    type TermExpression: crate::kernel::schema::TermExpression<P>;
     /// The set against which membership is tested.
-    fn membership_set(&self) -> &P::String;
+    fn membership_set(&self) -> &Self::TermExpression;
     /// The element being tested for set membership.
-    fn membership_element(&self) -> &P::String;
+    fn membership_element(&self) -> &Self::TermExpression;
 }
 
 /// Predicate testing whether saturation exceeds a threshold.
 pub trait SaturationPredicate<P: Primitives>: PredicateExpression<P> {
     /// The saturation threshold above which the predicate holds.
-    fn saturation_threshold(&self) -> &P::String;
+    fn saturation_threshold(&self) -> P::NonNegativeInteger;
 }
 
 /// Predicate testing whether a fiber coverage target is met.
 pub trait FiberCoveragePredicate<P: Primitives>: PredicateExpression<P> {
     /// The fiber coverage target expression.
-    fn coverage_target(&self) -> &P::String;
+    fn coverage_target(&self) -> P::NonNegativeInteger;
 }
 
 /// Predicate testing equality of two expressions.
 pub trait EqualsPredicate<P: Primitives>: PredicateExpression<P> {
+    /// Associated type for `TermExpression`.
+    type TermExpression: crate::kernel::schema::TermExpression<P>;
     /// The left-hand side of an equality test.
-    fn equality_left(&self) -> &P::String;
+    fn equality_left(&self) -> &Self::TermExpression;
     /// The right-hand side of an equality test.
-    fn equality_right(&self) -> &P::String;
+    fn equality_right(&self) -> &Self::TermExpression;
 }
 
 /// Predicate testing that a field is non-null.
 pub trait NonNullPredicate<P: Primitives>: PredicateExpression<P> {
     /// The field that must be non-null.
-    fn non_null_field(&self) -> &P::String;
+    fn non_null_field(&self) -> P::NonNegativeInteger;
 }
 
 /// Predicate testing whether a query is a subtype of a given type.
 pub trait QuerySubtypePredicate<P: Primitives>: PredicateExpression<P> {
+    /// Associated type for `TermExpression`.
+    type TermExpression: crate::kernel::schema::TermExpression<P>;
     /// The query type reference for subtype testing.
-    fn query_type_ref(&self) -> &P::String;
+    fn query_type_ref(&self) -> &Self::TermExpression;
 }
 
 /// The typed input graph submitted to the cascade pipeline. Packages a root Term, target quantum level, verification domains, and thermodynamic budget. Stage 0 accepts exactly one CompileUnit and initializes the cascade state vector from it.
 pub trait CompileUnit<P: Primitives> {
-    /// Associated type for `Term`.
-    type Term: crate::kernel::schema::Term<P>;
-    /// The top-level term to be evaluated by the cascade pipeline. The transitive closure of this term defines the complete computation graph.
-    fn root_term(&self) -> &Self::Term;
-    /// The quantum level Q_k at which this compile unit operates. Determines the ring modulus 2^(8*(k+1)), bit width, and fiber budget.
+    /// Associated type for `TermExpression`.
+    type TermExpression: crate::kernel::schema::TermExpression<P>;
+    /// The root term expression of a CompileUnit — the top-level syntactic node from which all sub-expressions descend.
+    fn root_term(&self) -> &Self::TermExpression;
+    /// The quantum level at which this CompileUnit operates.
     fn unit_quantum_level(&self) -> QuantumLevel;
-    /// The verification domains the submitter requires the cascade to check. Non-functional: a compile unit may target multiple domains. Identities with universallyValid=true are enforced regardless.
-    fn target_domains(&self) -> &[VerificationDomain];
-    /// Maximum Landauer cost authorized for this computation, in units of k_B T. Minimum viable budget = bitsWidth(Q_k) × ln 2.
+    /// The Landauer-bounded energy budget for this CompileUnit's resolution, measured in k_B T ln 2 units.
     fn thermodynamic_budget(&self) -> P::Decimal;
+    /// The verification domain(s) targeted by this CompileUnit.
+    fn target_domains(&self) -> &[VerificationDomain];
     /// Associated type for `Address`.
     type Address: crate::kernel::address::Address<P>;
     /// Content-addressable identifier computed as the u:Address of the root term’s transitive closure. Computed by stage_initialization, not declared by the submitter. Excludes budget, domains, and quantum level to enable memoization.

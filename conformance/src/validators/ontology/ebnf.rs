@@ -92,6 +92,28 @@ pub fn validate(artifacts: &Path) -> Result<ConformanceReport> {
         }
     }
 
+    // Amendment 88: All 10 extended productions for identity formalization
+    let extended_productions = [
+        "relation-expr",
+        "quantified-expr",
+        "set-expr",
+        "aggregation-expr",
+        "composition-expr",
+        "subscript-expr",
+        "power-expr",
+        "cardinality-expr",
+        "connective-expr",
+        "conditional-expr",
+    ];
+    let mut extended_missing = Vec::new();
+    for prod in &extended_productions {
+        let def = format!("{}\n    ::=", prod);
+        if !content.contains(&def) {
+            extended_missing.push(format!("Missing extended production: {}", prod));
+        }
+    }
+    issues.extend(extended_missing);
+
     if issues.is_empty() {
         report.push(TestResult::pass(
             validator,

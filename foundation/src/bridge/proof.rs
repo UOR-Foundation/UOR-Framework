@@ -5,6 +5,7 @@
 //! Space: Bridge
 
 use crate::enums::AchievabilityStatus;
+use crate::enums::ProofStrategy;
 use crate::enums::QuantumLevel;
 use crate::enums::VerificationDomain;
 use crate::Primitives;
@@ -25,6 +26,14 @@ pub trait Proof<P: Primitives> {
     fn proves_identity(&self) -> &Self::Identity;
     /// The specific quantum level at which an empirical verification or impossibility witness was established.
     fn verified_at_level(&self) -> &[QuantumLevel];
+    /// The proof method from the ProofStrategy controlled vocabulary. Determines the compilation target (e.g., `by ring`, `by simp`, `by induction`).
+    fn strategy(&self) -> ProofStrategy;
+    /// An identity that this proof depends on as a lemma. Forms the proof dependency DAG. Leaf proofs (provable from definitions alone) have no dependsOn assertions.
+    fn depends_on(&self) -> &[Self::Identity];
+    /// Associated type for `DerivationTerm`.
+    type DerivationTerm: DerivationTerm<P>;
+    /// The formal proof construction term: a DerivationTerm AST node encoding the tactic script, lemma chain, or induction scaffold that constitutes the proof.
+    fn formal_derivation(&self) -> &Self::DerivationTerm;
 }
 
 /// A proof of coherence: the type system and ring structure are mutually consistent at a given quantum level.
@@ -63,24 +72,14 @@ pub trait WitnessData<P: Primitives> {
     fn holds(&self) -> &[P::Boolean];
 }
 
-/// A proof grounded in empirical verification across a bounded range of quantum levels, rather than axiomatic derivation or exhaustive computation. Used for identities like AR_5 whose forAll quantifier is 'empirical, Q0--Q4'.
-pub trait EmpiricalVerification<P: Primitives>: Proof<P> {
-    /// The range of quantum levels over which this empirical verification was conducted (e.g., 'Q0-Q4').
-    fn quantum_level_range(&self) -> &P::String;
-    /// The empirical method used for verification (e.g., 'exhaustive enumeration over Z/(2^n)Z for n=8,16,32,64').
-    fn verification_method(&self) -> &P::String;
-    /// The timestamp at which empirical verification was conducted.
-    fn verified_at(&self) -> &P::String;
-    /// The achievability classification of a proof-linked observable signature: Achievable or Forbidden.
-    fn achievability_status(&self) -> AchievabilityStatus;
-}
-
 /// A formal witness that a topological signature (χ, β_k) is impossible to achieve for any ConstrainedType. Carries the algebraic reason and the verification domain grounding the impossibility.
 pub trait ImpossibilityWitness<P: Primitives>: Proof<P> {
     /// Human-readable statement of the algebraic reason the signature is impossible (e.g., 'β₀ = 0 violates MS_1').
     fn impossibility_reason(&self) -> &P::String;
     /// The verification domain grounding the impossibility (e.g., Pipeline for β₀ = 0, Algebraic for χ > n).
     fn impossibility_domain(&self) -> VerificationDomain;
+    /// The achievability classification of a proof-linked observable signature: Achievable or Forbidden.
+    fn achievability_status(&self) -> AchievabilityStatus;
 }
 
 /// A formal record of a morphospace boundary point — either an achievable or forbidden topological signature. Aggregated by MorphospaceBoundary to form the queryable morphospace map.
@@ -89,7 +88,7 @@ pub trait MorphospaceRecord<P: Primitives> {
     fn boundary_type(&self) -> AchievabilityStatus;
 }
 
-/// An aggregate of ImpossibilityWitness and EmpiricalVerification instances forming the queryable morphospace map. SPARQL over this structure answers achievability queries in O(1).
+/// An aggregate of ImpossibilityWitness instances forming the queryable morphospace map. SPARQL over this structure answers achievability queries in O(1).
 pub trait MorphospaceBoundary<P: Primitives> {
     /// Associated type for `MorphospaceRecord`.
     type MorphospaceRecord: MorphospaceRecord<P>;
@@ -109,12 +108,62 @@ pub trait InductiveProof<P: Primitives>: Proof<P> {
     fn valid_for_kat_least(&self) -> P::NonNegativeInteger;
 }
 
+/// Root AST node for proof construction terms. Distinct from schema:TermExpression which represents mathematical terms; DerivationTerm represents proof constructions (tactic applications, lemma invocations, induction scaffolding).
+pub trait DerivationTerm<P: Primitives> {}
+
+/// A proof step applying a named tactic (from ProofStrategy) with arguments. Maps to a Lean4 tactic invocation.
+pub trait TacticApplication<P: Primitives>: DerivationTerm<P> {}
+
+/// A proof step invoking a previously proved identity as a lemma. References the identity via proof:dependsOn.
+pub trait LemmaInvocation<P: Primitives>: DerivationTerm<P> {}
+
+/// A proof step performing structural induction: base case derivation, inductive hypothesis, and step derivation.
+pub trait InductionStep<P: Primitives>: DerivationTerm<P> {}
+
+/// A proof step performing exhaustive computation at a specific quantum level as verification witness.
+pub trait ComputationStep<P: Primitives>: DerivationTerm<P> {}
+
+/// Follows from ZMod ring axioms. Lean4 tactic: `by ring`.
+pub mod ring_axiom {}
+
+/// Decidable at Q0 by exhaustive evaluation. Lean4: `by native_decide`.
+pub mod decide_q0 {}
+
+/// Induction on bit width n. Lean4: `by induction n`.
+pub mod bitwise_induction {}
+
+/// From dihedral group presentation. Lean4: `by group`.
+pub mod group_presentation {}
+
+/// By simplification with cited lemmas. Lean4: `by simp \[lemmalist\]`.
+pub mod simplification {}
+
+/// By Chinese Remainder Theorem. Lean4: `by exact ZMod.chineseRemainder ...`.
+pub mod chinese_remainder {}
+
+/// By Euler-Poincare formula applied to the constraint nerve.
+pub mod euler_poincare {}
+
+/// By Ostrowski product formula or derived valuation arguments.
+pub mod product_formula {}
+
+/// By composing proofs of sub-identities. Lean4: `by exact ...`.
+pub mod composition {}
+
+/// By deriving contradiction for impossibility witnesses. Lean4: `by contradiction`.
+pub mod contradiction {}
+
+/// By computation at a specified quantum level. Lean4: `by native_decide`.
+pub mod computation {}
+
 /// Computation certificate for the critical identity neg(bnot(x)) = succ(x) at Q0.
 pub mod prf_critical_identity {
     /// `atQuantumLevel` -> `Q0`
     pub const AT_QUANTUM_LEVEL: &str = "https://uor.foundation/schema/Q0";
     /// `provesIdentity` -> `criticalIdentity`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/criticalIdentity";
+    /// `strategy` -> `Computation`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Computation";
     /// `verified`
     pub const VERIFIED: bool = true;
 }
@@ -123,6 +172,8 @@ pub mod prf_critical_identity {
 pub mod prf_critical_identity_axiomatic {
     /// `provesIdentity` -> `criticalIdentity`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/criticalIdentity";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -135,6 +186,8 @@ pub mod prf_phi_1 {
     pub const AT_QUANTUM_LEVEL: &str = "https://uor.foundation/schema/Q0";
     /// `provesIdentity` -> `phi_1`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/phi_1";
+    /// `strategy` -> `Computation`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Computation";
     /// `verified`
     pub const VERIFIED: bool = true;
 }
@@ -145,6 +198,8 @@ pub mod prf_phi_2 {
     pub const AT_QUANTUM_LEVEL: &str = "https://uor.foundation/schema/Q0";
     /// `provesIdentity` -> `phi_2`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/phi_2";
+    /// `strategy` -> `Computation`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Computation";
     /// `verified`
     pub const VERIFIED: bool = true;
 }
@@ -155,6 +210,8 @@ pub mod prf_phi_3 {
     pub const AT_QUANTUM_LEVEL: &str = "https://uor.foundation/schema/Q0";
     /// `provesIdentity` -> `phi_3`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/phi_3";
+    /// `strategy` -> `Computation`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Computation";
     /// `verified`
     pub const VERIFIED: bool = true;
 }
@@ -165,6 +222,8 @@ pub mod prf_phi_4 {
     pub const AT_QUANTUM_LEVEL: &str = "https://uor.foundation/schema/Q0";
     /// `provesIdentity` -> `phi_4`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/phi_4";
+    /// `strategy` -> `Computation`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Computation";
     /// `verified`
     pub const VERIFIED: bool = true;
 }
@@ -175,6 +234,8 @@ pub mod prf_phi_5 {
     pub const AT_QUANTUM_LEVEL: &str = "https://uor.foundation/schema/Q0";
     /// `provesIdentity` -> `phi_5`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/phi_5";
+    /// `strategy` -> `Computation`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Computation";
     /// `verified`
     pub const VERIFIED: bool = true;
 }
@@ -185,6 +246,8 @@ pub mod prf_phi_6 {
     pub const AT_QUANTUM_LEVEL: &str = "https://uor.foundation/schema/Q0";
     /// `provesIdentity` -> `phi_6`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/phi_6";
+    /// `strategy` -> `Computation`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Computation";
     /// `verified`
     pub const VERIFIED: bool = true;
 }
@@ -193,6 +256,8 @@ pub mod prf_phi_6 {
 pub mod prf_ad_1 {
     /// `provesIdentity` -> `AD_1`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/AD_1";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -203,6 +268,8 @@ pub mod prf_ad_1 {
 pub mod prf_ad_2 {
     /// `provesIdentity` -> `AD_2`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/AD_2";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -213,6 +280,8 @@ pub mod prf_ad_2 {
 pub mod prf_r_a1 {
     /// `provesIdentity` -> `R_A1`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/R_A1";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -223,6 +292,8 @@ pub mod prf_r_a1 {
 pub mod prf_r_a2 {
     /// `provesIdentity` -> `R_A2`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/R_A2";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -233,6 +304,8 @@ pub mod prf_r_a2 {
 pub mod prf_r_a3 {
     /// `provesIdentity` -> `R_A3`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/R_A3";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -243,6 +316,8 @@ pub mod prf_r_a3 {
 pub mod prf_r_a4 {
     /// `provesIdentity` -> `R_A4`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/R_A4";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -253,6 +328,8 @@ pub mod prf_r_a4 {
 pub mod prf_r_a5 {
     /// `provesIdentity` -> `R_A5`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/R_A5";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -263,6 +340,8 @@ pub mod prf_r_a5 {
 pub mod prf_r_a6 {
     /// `provesIdentity` -> `R_A6`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/R_A6";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -273,6 +352,8 @@ pub mod prf_r_a6 {
 pub mod prf_r_m1 {
     /// `provesIdentity` -> `R_M1`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/R_M1";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -283,6 +364,8 @@ pub mod prf_r_m1 {
 pub mod prf_r_m2 {
     /// `provesIdentity` -> `R_M2`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/R_M2";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -293,6 +376,8 @@ pub mod prf_r_m2 {
 pub mod prf_r_m3 {
     /// `provesIdentity` -> `R_M3`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/R_M3";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -303,6 +388,8 @@ pub mod prf_r_m3 {
 pub mod prf_r_m4 {
     /// `provesIdentity` -> `R_M4`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/R_M4";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -313,6 +400,8 @@ pub mod prf_r_m4 {
 pub mod prf_r_m5 {
     /// `provesIdentity` -> `R_M5`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/R_M5";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -323,6 +412,8 @@ pub mod prf_r_m5 {
 pub mod prf_b_1 {
     /// `provesIdentity` -> `B_1`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/B_1";
+    /// `strategy` -> `BitwiseInduction`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/BitwiseInduction";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -333,6 +424,8 @@ pub mod prf_b_1 {
 pub mod prf_b_2 {
     /// `provesIdentity` -> `B_2`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/B_2";
+    /// `strategy` -> `BitwiseInduction`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/BitwiseInduction";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -343,6 +436,8 @@ pub mod prf_b_2 {
 pub mod prf_b_3 {
     /// `provesIdentity` -> `B_3`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/B_3";
+    /// `strategy` -> `BitwiseInduction`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/BitwiseInduction";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -353,6 +448,8 @@ pub mod prf_b_3 {
 pub mod prf_b_4 {
     /// `provesIdentity` -> `B_4`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/B_4";
+    /// `strategy` -> `BitwiseInduction`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/BitwiseInduction";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -363,6 +460,8 @@ pub mod prf_b_4 {
 pub mod prf_b_5 {
     /// `provesIdentity` -> `B_5`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/B_5";
+    /// `strategy` -> `BitwiseInduction`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/BitwiseInduction";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -373,6 +472,8 @@ pub mod prf_b_5 {
 pub mod prf_b_6 {
     /// `provesIdentity` -> `B_6`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/B_6";
+    /// `strategy` -> `BitwiseInduction`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/BitwiseInduction";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -383,6 +484,8 @@ pub mod prf_b_6 {
 pub mod prf_b_7 {
     /// `provesIdentity` -> `B_7`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/B_7";
+    /// `strategy` -> `BitwiseInduction`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/BitwiseInduction";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -393,6 +496,8 @@ pub mod prf_b_7 {
 pub mod prf_b_8 {
     /// `provesIdentity` -> `B_8`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/B_8";
+    /// `strategy` -> `BitwiseInduction`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/BitwiseInduction";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -403,6 +508,8 @@ pub mod prf_b_8 {
 pub mod prf_b_9 {
     /// `provesIdentity` -> `B_9`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/B_9";
+    /// `strategy` -> `BitwiseInduction`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/BitwiseInduction";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -413,6 +520,8 @@ pub mod prf_b_9 {
 pub mod prf_b_10 {
     /// `provesIdentity` -> `B_10`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/B_10";
+    /// `strategy` -> `BitwiseInduction`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/BitwiseInduction";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -423,6 +532,8 @@ pub mod prf_b_10 {
 pub mod prf_b_11 {
     /// `provesIdentity` -> `B_11`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/B_11";
+    /// `strategy` -> `BitwiseInduction`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/BitwiseInduction";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -433,6 +544,8 @@ pub mod prf_b_11 {
 pub mod prf_b_12 {
     /// `provesIdentity` -> `B_12`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/B_12";
+    /// `strategy` -> `BitwiseInduction`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/BitwiseInduction";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -443,6 +556,8 @@ pub mod prf_b_12 {
 pub mod prf_b_13 {
     /// `provesIdentity` -> `B_13`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/B_13";
+    /// `strategy` -> `BitwiseInduction`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/BitwiseInduction";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -453,6 +568,8 @@ pub mod prf_b_13 {
 pub mod prf_x_1 {
     /// `provesIdentity` -> `X_1`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/X_1";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -463,6 +580,8 @@ pub mod prf_x_1 {
 pub mod prf_x_2 {
     /// `provesIdentity` -> `X_2`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/X_2";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -473,6 +592,8 @@ pub mod prf_x_2 {
 pub mod prf_x_3 {
     /// `provesIdentity` -> `X_3`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/X_3";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -483,6 +604,8 @@ pub mod prf_x_3 {
 pub mod prf_x_4 {
     /// `provesIdentity` -> `X_4`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/X_4";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -493,6 +616,8 @@ pub mod prf_x_4 {
 pub mod prf_x_5 {
     /// `provesIdentity` -> `X_5`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/X_5";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -503,6 +628,8 @@ pub mod prf_x_5 {
 pub mod prf_x_6 {
     /// `provesIdentity` -> `X_6`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/X_6";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -513,6 +640,8 @@ pub mod prf_x_6 {
 pub mod prf_x_7 {
     /// `provesIdentity` -> `X_7`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/X_7";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -523,6 +652,8 @@ pub mod prf_x_7 {
 pub mod prf_d_1 {
     /// `provesIdentity` -> `D_1`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/D_1";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -533,6 +664,8 @@ pub mod prf_d_1 {
 pub mod prf_d_3 {
     /// `provesIdentity` -> `D_3`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/D_3";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -543,6 +676,8 @@ pub mod prf_d_3 {
 pub mod prf_d_4 {
     /// `provesIdentity` -> `D_4`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/D_4";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -553,6 +688,8 @@ pub mod prf_d_4 {
 pub mod prf_d_5 {
     /// `provesIdentity` -> `D_5`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/D_5";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -563,6 +700,8 @@ pub mod prf_d_5 {
 pub mod prf_u_1 {
     /// `provesIdentity` -> `U_1`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/U_1";
+    /// `strategy` -> `ChineseRemainder`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/ChineseRemainder";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -573,6 +712,8 @@ pub mod prf_u_1 {
 pub mod prf_u_2 {
     /// `provesIdentity` -> `U_2`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/U_2";
+    /// `strategy` -> `ChineseRemainder`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/ChineseRemainder";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -583,6 +724,8 @@ pub mod prf_u_2 {
 pub mod prf_u_3 {
     /// `provesIdentity` -> `U_3`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/U_3";
+    /// `strategy` -> `ChineseRemainder`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/ChineseRemainder";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -593,6 +736,8 @@ pub mod prf_u_3 {
 pub mod prf_u_4 {
     /// `provesIdentity` -> `U_4`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/U_4";
+    /// `strategy` -> `ChineseRemainder`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/ChineseRemainder";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -603,6 +748,8 @@ pub mod prf_u_4 {
 pub mod prf_u_5 {
     /// `provesIdentity` -> `U_5`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/U_5";
+    /// `strategy` -> `ChineseRemainder`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/ChineseRemainder";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -613,6 +760,8 @@ pub mod prf_u_5 {
 pub mod prf_ag_1 {
     /// `provesIdentity` -> `AG_1`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/AG_1";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -623,6 +772,8 @@ pub mod prf_ag_1 {
 pub mod prf_ag_2 {
     /// `provesIdentity` -> `AG_2`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/AG_2";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -633,6 +784,8 @@ pub mod prf_ag_2 {
 pub mod prf_ag_3 {
     /// `provesIdentity` -> `AG_3`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/AG_3";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -643,6 +796,8 @@ pub mod prf_ag_3 {
 pub mod prf_ag_4 {
     /// `provesIdentity` -> `AG_4`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/AG_4";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -653,6 +808,8 @@ pub mod prf_ag_4 {
 pub mod prf_ca_1 {
     /// `provesIdentity` -> `CA_1`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/CA_1";
+    /// `strategy` -> `BitwiseInduction`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/BitwiseInduction";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -663,6 +820,8 @@ pub mod prf_ca_1 {
 pub mod prf_ca_2 {
     /// `provesIdentity` -> `CA_2`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/CA_2";
+    /// `strategy` -> `BitwiseInduction`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/BitwiseInduction";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -673,6 +832,8 @@ pub mod prf_ca_2 {
 pub mod prf_ca_3 {
     /// `provesIdentity` -> `CA_3`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/CA_3";
+    /// `strategy` -> `BitwiseInduction`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/BitwiseInduction";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -683,6 +844,8 @@ pub mod prf_ca_3 {
 pub mod prf_ca_4 {
     /// `provesIdentity` -> `CA_4`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/CA_4";
+    /// `strategy` -> `BitwiseInduction`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/BitwiseInduction";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -693,6 +856,8 @@ pub mod prf_ca_4 {
 pub mod prf_ca_5 {
     /// `provesIdentity` -> `CA_5`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/CA_5";
+    /// `strategy` -> `BitwiseInduction`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/BitwiseInduction";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -703,6 +868,8 @@ pub mod prf_ca_5 {
 pub mod prf_ca_6 {
     /// `provesIdentity` -> `CA_6`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/CA_6";
+    /// `strategy` -> `BitwiseInduction`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/BitwiseInduction";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -713,6 +880,8 @@ pub mod prf_ca_6 {
 pub mod prf_c_1 {
     /// `provesIdentity` -> `C_1`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/C_1";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -723,6 +892,8 @@ pub mod prf_c_1 {
 pub mod prf_c_2 {
     /// `provesIdentity` -> `C_2`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/C_2";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -733,6 +904,8 @@ pub mod prf_c_2 {
 pub mod prf_c_3 {
     /// `provesIdentity` -> `C_3`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/C_3";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -743,6 +916,8 @@ pub mod prf_c_3 {
 pub mod prf_c_4 {
     /// `provesIdentity` -> `C_4`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/C_4";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -753,6 +928,8 @@ pub mod prf_c_4 {
 pub mod prf_c_5 {
     /// `provesIdentity` -> `C_5`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/C_5";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -763,6 +940,8 @@ pub mod prf_c_5 {
 pub mod prf_c_6 {
     /// `provesIdentity` -> `C_6`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/C_6";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -773,6 +952,8 @@ pub mod prf_c_6 {
 pub mod prf_cdi {
     /// `provesIdentity` -> `CDI`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/CDI";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -783,6 +964,8 @@ pub mod prf_cdi {
 pub mod prf_cl_1 {
     /// `provesIdentity` -> `CL_1`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/CL_1";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -793,6 +976,8 @@ pub mod prf_cl_1 {
 pub mod prf_cl_2 {
     /// `provesIdentity` -> `CL_2`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/CL_2";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -803,6 +988,8 @@ pub mod prf_cl_2 {
 pub mod prf_cl_3 {
     /// `provesIdentity` -> `CL_3`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/CL_3";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -813,6 +1000,8 @@ pub mod prf_cl_3 {
 pub mod prf_cl_4 {
     /// `provesIdentity` -> `CL_4`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/CL_4";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -823,6 +1012,8 @@ pub mod prf_cl_4 {
 pub mod prf_cl_5 {
     /// `provesIdentity` -> `CL_5`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/CL_5";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -833,6 +1024,8 @@ pub mod prf_cl_5 {
 pub mod prf_cm_1 {
     /// `provesIdentity` -> `CM_1`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/CM_1";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -843,6 +1036,8 @@ pub mod prf_cm_1 {
 pub mod prf_cm_2 {
     /// `provesIdentity` -> `CM_2`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/CM_2";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -853,6 +1048,8 @@ pub mod prf_cm_2 {
 pub mod prf_cm_3 {
     /// `provesIdentity` -> `CM_3`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/CM_3";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -863,6 +1060,8 @@ pub mod prf_cm_3 {
 pub mod prf_cr_1 {
     /// `provesIdentity` -> `CR_1`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/CR_1";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -873,6 +1072,8 @@ pub mod prf_cr_1 {
 pub mod prf_cr_2 {
     /// `provesIdentity` -> `CR_2`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/CR_2";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -883,6 +1084,8 @@ pub mod prf_cr_2 {
 pub mod prf_cr_3 {
     /// `provesIdentity` -> `CR_3`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/CR_3";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -893,6 +1096,8 @@ pub mod prf_cr_3 {
 pub mod prf_cr_4 {
     /// `provesIdentity` -> `CR_4`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/CR_4";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -903,6 +1108,8 @@ pub mod prf_cr_4 {
 pub mod prf_cr_5 {
     /// `provesIdentity` -> `CR_5`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/CR_5";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -913,6 +1120,8 @@ pub mod prf_cr_5 {
 pub mod prf_f_1 {
     /// `provesIdentity` -> `F_1`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/F_1";
+    /// `strategy` -> `BitwiseInduction`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/BitwiseInduction";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -923,6 +1132,8 @@ pub mod prf_f_1 {
 pub mod prf_f_2 {
     /// `provesIdentity` -> `F_2`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/F_2";
+    /// `strategy` -> `BitwiseInduction`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/BitwiseInduction";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -933,6 +1144,8 @@ pub mod prf_f_2 {
 pub mod prf_f_3 {
     /// `provesIdentity` -> `F_3`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/F_3";
+    /// `strategy` -> `BitwiseInduction`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/BitwiseInduction";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -943,6 +1156,8 @@ pub mod prf_f_3 {
 pub mod prf_f_4 {
     /// `provesIdentity` -> `F_4`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/F_4";
+    /// `strategy` -> `BitwiseInduction`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/BitwiseInduction";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -953,6 +1168,8 @@ pub mod prf_f_4 {
 pub mod prf_fl_1 {
     /// `provesIdentity` -> `FL_1`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/FL_1";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -963,6 +1180,8 @@ pub mod prf_fl_1 {
 pub mod prf_fl_2 {
     /// `provesIdentity` -> `FL_2`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/FL_2";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -973,6 +1192,8 @@ pub mod prf_fl_2 {
 pub mod prf_fl_3 {
     /// `provesIdentity` -> `FL_3`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/FL_3";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -983,6 +1204,8 @@ pub mod prf_fl_3 {
 pub mod prf_fl_4 {
     /// `provesIdentity` -> `FL_4`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/FL_4";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -993,6 +1216,8 @@ pub mod prf_fl_4 {
 pub mod prf_fpm_1 {
     /// `provesIdentity` -> `FPM_1`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/FPM_1";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -1003,6 +1228,8 @@ pub mod prf_fpm_1 {
 pub mod prf_fpm_2 {
     /// `provesIdentity` -> `FPM_2`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/FPM_2";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -1013,6 +1240,8 @@ pub mod prf_fpm_2 {
 pub mod prf_fpm_3 {
     /// `provesIdentity` -> `FPM_3`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/FPM_3";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -1023,6 +1252,8 @@ pub mod prf_fpm_3 {
 pub mod prf_fpm_4 {
     /// `provesIdentity` -> `FPM_4`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/FPM_4";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -1033,6 +1264,8 @@ pub mod prf_fpm_4 {
 pub mod prf_fpm_5 {
     /// `provesIdentity` -> `FPM_5`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/FPM_5";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -1043,6 +1276,8 @@ pub mod prf_fpm_5 {
 pub mod prf_fpm_6 {
     /// `provesIdentity` -> `FPM_6`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/FPM_6";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -1053,6 +1288,8 @@ pub mod prf_fpm_6 {
 pub mod prf_fpm_7 {
     /// `provesIdentity` -> `FPM_7`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/FPM_7";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -1063,6 +1300,8 @@ pub mod prf_fpm_7 {
 pub mod prf_fs_1 {
     /// `provesIdentity` -> `FS_1`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/FS_1";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -1073,6 +1312,8 @@ pub mod prf_fs_1 {
 pub mod prf_fs_2 {
     /// `provesIdentity` -> `FS_2`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/FS_2";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -1083,6 +1324,8 @@ pub mod prf_fs_2 {
 pub mod prf_fs_3 {
     /// `provesIdentity` -> `FS_3`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/FS_3";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -1093,6 +1336,8 @@ pub mod prf_fs_3 {
 pub mod prf_fs_4 {
     /// `provesIdentity` -> `FS_4`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/FS_4";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -1103,6 +1348,8 @@ pub mod prf_fs_4 {
 pub mod prf_fs_5 {
     /// `provesIdentity` -> `FS_5`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/FS_5";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -1113,6 +1360,8 @@ pub mod prf_fs_5 {
 pub mod prf_fs_6 {
     /// `provesIdentity` -> `FS_6`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/FS_6";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -1123,6 +1372,8 @@ pub mod prf_fs_6 {
 pub mod prf_fs_7 {
     /// `provesIdentity` -> `FS_7`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/FS_7";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -1133,6 +1384,8 @@ pub mod prf_fs_7 {
 pub mod prf_re_1 {
     /// `provesIdentity` -> `RE_1`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/RE_1";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -1143,6 +1396,8 @@ pub mod prf_re_1 {
 pub mod prf_ir_1 {
     /// `provesIdentity` -> `IR_1`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/IR_1";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -1153,6 +1408,8 @@ pub mod prf_ir_1 {
 pub mod prf_ir_2 {
     /// `provesIdentity` -> `IR_2`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/IR_2";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -1163,6 +1420,8 @@ pub mod prf_ir_2 {
 pub mod prf_ir_3 {
     /// `provesIdentity` -> `IR_3`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/IR_3";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -1173,6 +1432,8 @@ pub mod prf_ir_3 {
 pub mod prf_ir_4 {
     /// `provesIdentity` -> `IR_4`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/IR_4";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -1183,6 +1444,8 @@ pub mod prf_ir_4 {
 pub mod prf_sf_1 {
     /// `provesIdentity` -> `SF_1`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/SF_1";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -1193,6 +1456,8 @@ pub mod prf_sf_1 {
 pub mod prf_sf_2 {
     /// `provesIdentity` -> `SF_2`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/SF_2";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -1203,6 +1468,8 @@ pub mod prf_sf_2 {
 pub mod prf_rd_1 {
     /// `provesIdentity` -> `RD_1`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/RD_1";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -1213,6 +1480,8 @@ pub mod prf_rd_1 {
 pub mod prf_rd_2 {
     /// `provesIdentity` -> `RD_2`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/RD_2";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -1223,6 +1492,8 @@ pub mod prf_rd_2 {
 pub mod prf_se_1 {
     /// `provesIdentity` -> `SE_1`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/SE_1";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -1233,6 +1504,8 @@ pub mod prf_se_1 {
 pub mod prf_se_2 {
     /// `provesIdentity` -> `SE_2`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/SE_2";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -1243,6 +1516,8 @@ pub mod prf_se_2 {
 pub mod prf_se_3 {
     /// `provesIdentity` -> `SE_3`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/SE_3";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -1253,6 +1528,8 @@ pub mod prf_se_3 {
 pub mod prf_se_4 {
     /// `provesIdentity` -> `SE_4`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/SE_4";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -1263,6 +1540,8 @@ pub mod prf_se_4 {
 pub mod prf_oo_1 {
     /// `provesIdentity` -> `OO_1`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/OO_1";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -1273,6 +1552,8 @@ pub mod prf_oo_1 {
 pub mod prf_oo_2 {
     /// `provesIdentity` -> `OO_2`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/OO_2";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -1283,6 +1564,8 @@ pub mod prf_oo_2 {
 pub mod prf_oo_3 {
     /// `provesIdentity` -> `OO_3`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/OO_3";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -1293,6 +1576,8 @@ pub mod prf_oo_3 {
 pub mod prf_oo_4 {
     /// `provesIdentity` -> `OO_4`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/OO_4";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -1303,6 +1588,8 @@ pub mod prf_oo_4 {
 pub mod prf_oo_5 {
     /// `provesIdentity` -> `OO_5`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/OO_5";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -1313,6 +1600,8 @@ pub mod prf_oo_5 {
 pub mod prf_cb_1 {
     /// `provesIdentity` -> `CB_1`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/CB_1";
+    /// `strategy` -> `BitwiseInduction`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/BitwiseInduction";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -1323,6 +1612,8 @@ pub mod prf_cb_1 {
 pub mod prf_cb_2 {
     /// `provesIdentity` -> `CB_2`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/CB_2";
+    /// `strategy` -> `BitwiseInduction`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/BitwiseInduction";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -1333,6 +1624,8 @@ pub mod prf_cb_2 {
 pub mod prf_cb_3 {
     /// `provesIdentity` -> `CB_3`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/CB_3";
+    /// `strategy` -> `BitwiseInduction`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/BitwiseInduction";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -1343,6 +1636,8 @@ pub mod prf_cb_3 {
 pub mod prf_cb_4 {
     /// `provesIdentity` -> `CB_4`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/CB_4";
+    /// `strategy` -> `BitwiseInduction`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/BitwiseInduction";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -1353,6 +1648,8 @@ pub mod prf_cb_4 {
 pub mod prf_cb_5 {
     /// `provesIdentity` -> `CB_5`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/CB_5";
+    /// `strategy` -> `BitwiseInduction`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/BitwiseInduction";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -1363,6 +1660,8 @@ pub mod prf_cb_5 {
 pub mod prf_cb_6 {
     /// `provesIdentity` -> `CB_6`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/CB_6";
+    /// `strategy` -> `BitwiseInduction`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/BitwiseInduction";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -1373,6 +1672,8 @@ pub mod prf_cb_6 {
 pub mod prf_ob_m1 {
     /// `provesIdentity` -> `OB_M1`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/OB_M1";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -1383,6 +1684,8 @@ pub mod prf_ob_m1 {
 pub mod prf_ob_m2 {
     /// `provesIdentity` -> `OB_M2`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/OB_M2";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -1393,6 +1696,8 @@ pub mod prf_ob_m2 {
 pub mod prf_ob_m3 {
     /// `provesIdentity` -> `OB_M3`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/OB_M3";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -1403,6 +1708,8 @@ pub mod prf_ob_m3 {
 pub mod prf_ob_m4 {
     /// `provesIdentity` -> `OB_M4`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/OB_M4";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -1413,6 +1720,8 @@ pub mod prf_ob_m4 {
 pub mod prf_ob_m5 {
     /// `provesIdentity` -> `OB_M5`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/OB_M5";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -1423,6 +1732,8 @@ pub mod prf_ob_m5 {
 pub mod prf_ob_m6 {
     /// `provesIdentity` -> `OB_M6`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/OB_M6";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -1433,6 +1744,8 @@ pub mod prf_ob_m6 {
 pub mod prf_ob_c1 {
     /// `provesIdentity` -> `OB_C1`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/OB_C1";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -1443,6 +1756,8 @@ pub mod prf_ob_c1 {
 pub mod prf_ob_c2 {
     /// `provesIdentity` -> `OB_C2`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/OB_C2";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -1453,6 +1768,8 @@ pub mod prf_ob_c2 {
 pub mod prf_ob_c3 {
     /// `provesIdentity` -> `OB_C3`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/OB_C3";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -1463,6 +1780,8 @@ pub mod prf_ob_c3 {
 pub mod prf_ob_h1 {
     /// `provesIdentity` -> `OB_H1`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/OB_H1";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -1473,6 +1792,8 @@ pub mod prf_ob_h1 {
 pub mod prf_ob_h2 {
     /// `provesIdentity` -> `OB_H2`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/OB_H2";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -1483,6 +1804,8 @@ pub mod prf_ob_h2 {
 pub mod prf_ob_h3 {
     /// `provesIdentity` -> `OB_H3`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/OB_H3";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -1493,6 +1816,8 @@ pub mod prf_ob_h3 {
 pub mod prf_ob_p1 {
     /// `provesIdentity` -> `OB_P1`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/OB_P1";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -1503,6 +1828,8 @@ pub mod prf_ob_p1 {
 pub mod prf_ob_p2 {
     /// `provesIdentity` -> `OB_P2`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/OB_P2";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -1513,6 +1840,8 @@ pub mod prf_ob_p2 {
 pub mod prf_ob_p3 {
     /// `provesIdentity` -> `OB_P3`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/OB_P3";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -1523,6 +1852,8 @@ pub mod prf_ob_p3 {
 pub mod prf_ct_1 {
     /// `provesIdentity` -> `CT_1`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/CT_1";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -1533,6 +1864,8 @@ pub mod prf_ct_1 {
 pub mod prf_ct_2 {
     /// `provesIdentity` -> `CT_2`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/CT_2";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -1543,6 +1876,8 @@ pub mod prf_ct_2 {
 pub mod prf_ct_3 {
     /// `provesIdentity` -> `CT_3`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/CT_3";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -1553,6 +1888,8 @@ pub mod prf_ct_3 {
 pub mod prf_ct_4 {
     /// `provesIdentity` -> `CT_4`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/CT_4";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -1563,6 +1900,8 @@ pub mod prf_ct_4 {
 pub mod prf_cf_1 {
     /// `provesIdentity` -> `CF_1`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/CF_1";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -1573,6 +1912,8 @@ pub mod prf_cf_1 {
 pub mod prf_cf_2 {
     /// `provesIdentity` -> `CF_2`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/CF_2";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -1583,6 +1924,8 @@ pub mod prf_cf_2 {
 pub mod prf_cf_3 {
     /// `provesIdentity` -> `CF_3`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/CF_3";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -1593,6 +1936,8 @@ pub mod prf_cf_3 {
 pub mod prf_cf_4 {
     /// `provesIdentity` -> `CF_4`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/CF_4";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -1603,6 +1948,8 @@ pub mod prf_cf_4 {
 pub mod prf_hg_1 {
     /// `provesIdentity` -> `HG_1`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/HG_1";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -1613,6 +1960,8 @@ pub mod prf_hg_1 {
 pub mod prf_hg_2 {
     /// `provesIdentity` -> `HG_2`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/HG_2";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -1623,6 +1972,8 @@ pub mod prf_hg_2 {
 pub mod prf_hg_3 {
     /// `provesIdentity` -> `HG_3`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/HG_3";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -1633,6 +1984,8 @@ pub mod prf_hg_3 {
 pub mod prf_hg_4 {
     /// `provesIdentity` -> `HG_4`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/HG_4";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -1643,6 +1996,8 @@ pub mod prf_hg_4 {
 pub mod prf_hg_5 {
     /// `provesIdentity` -> `HG_5`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/HG_5";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -1653,6 +2008,8 @@ pub mod prf_hg_5 {
 pub mod prf_t_c1 {
     /// `provesIdentity` -> `T_C1`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/T_C1";
+    /// `strategy` -> `GroupPresentation`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/GroupPresentation";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -1663,6 +2020,8 @@ pub mod prf_t_c1 {
 pub mod prf_t_c2 {
     /// `provesIdentity` -> `T_C2`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/T_C2";
+    /// `strategy` -> `GroupPresentation`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/GroupPresentation";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -1673,6 +2032,8 @@ pub mod prf_t_c2 {
 pub mod prf_t_c3 {
     /// `provesIdentity` -> `T_C3`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/T_C3";
+    /// `strategy` -> `GroupPresentation`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/GroupPresentation";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -1683,6 +2044,8 @@ pub mod prf_t_c3 {
 pub mod prf_t_c4 {
     /// `provesIdentity` -> `T_C4`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/T_C4";
+    /// `strategy` -> `GroupPresentation`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/GroupPresentation";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -1693,6 +2056,8 @@ pub mod prf_t_c4 {
 pub mod prf_t_i1 {
     /// `provesIdentity` -> `T_I1`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/T_I1";
+    /// `strategy` -> `GroupPresentation`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/GroupPresentation";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -1703,6 +2068,8 @@ pub mod prf_t_i1 {
 pub mod prf_t_i2 {
     /// `provesIdentity` -> `T_I2`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/T_I2";
+    /// `strategy` -> `GroupPresentation`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/GroupPresentation";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -1713,6 +2080,8 @@ pub mod prf_t_i2 {
 pub mod prf_t_i3 {
     /// `provesIdentity` -> `T_I3`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/T_I3";
+    /// `strategy` -> `GroupPresentation`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/GroupPresentation";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -1723,6 +2092,8 @@ pub mod prf_t_i3 {
 pub mod prf_t_i4 {
     /// `provesIdentity` -> `T_I4`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/T_I4";
+    /// `strategy` -> `GroupPresentation`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/GroupPresentation";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -1733,6 +2104,8 @@ pub mod prf_t_i4 {
 pub mod prf_t_i5 {
     /// `provesIdentity` -> `T_I5`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/T_I5";
+    /// `strategy` -> `GroupPresentation`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/GroupPresentation";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -1743,6 +2116,8 @@ pub mod prf_t_i5 {
 pub mod prf_t_e1 {
     /// `provesIdentity` -> `T_E1`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/T_E1";
+    /// `strategy` -> `GroupPresentation`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/GroupPresentation";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -1753,6 +2128,8 @@ pub mod prf_t_e1 {
 pub mod prf_t_e2 {
     /// `provesIdentity` -> `T_E2`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/T_E2";
+    /// `strategy` -> `GroupPresentation`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/GroupPresentation";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -1763,6 +2140,8 @@ pub mod prf_t_e2 {
 pub mod prf_t_e3 {
     /// `provesIdentity` -> `T_E3`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/T_E3";
+    /// `strategy` -> `GroupPresentation`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/GroupPresentation";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -1773,6 +2152,8 @@ pub mod prf_t_e3 {
 pub mod prf_t_e4 {
     /// `provesIdentity` -> `T_E4`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/T_E4";
+    /// `strategy` -> `GroupPresentation`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/GroupPresentation";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -1783,6 +2164,8 @@ pub mod prf_t_e4 {
 pub mod prf_t_a1 {
     /// `provesIdentity` -> `T_A1`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/T_A1";
+    /// `strategy` -> `GroupPresentation`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/GroupPresentation";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -1793,6 +2176,8 @@ pub mod prf_t_a1 {
 pub mod prf_t_a2 {
     /// `provesIdentity` -> `T_A2`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/T_A2";
+    /// `strategy` -> `GroupPresentation`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/GroupPresentation";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -1803,6 +2188,8 @@ pub mod prf_t_a2 {
 pub mod prf_t_a3 {
     /// `provesIdentity` -> `T_A3`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/T_A3";
+    /// `strategy` -> `GroupPresentation`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/GroupPresentation";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -1813,6 +2200,8 @@ pub mod prf_t_a3 {
 pub mod prf_t_a4 {
     /// `provesIdentity` -> `T_A4`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/T_A4";
+    /// `strategy` -> `GroupPresentation`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/GroupPresentation";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -1823,6 +2212,8 @@ pub mod prf_t_a4 {
 pub mod prf_au_1 {
     /// `provesIdentity` -> `AU_1`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/AU_1";
+    /// `strategy` -> `GroupPresentation`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/GroupPresentation";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -1833,6 +2224,8 @@ pub mod prf_au_1 {
 pub mod prf_au_2 {
     /// `provesIdentity` -> `AU_2`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/AU_2";
+    /// `strategy` -> `GroupPresentation`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/GroupPresentation";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -1843,6 +2236,8 @@ pub mod prf_au_2 {
 pub mod prf_au_3 {
     /// `provesIdentity` -> `AU_3`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/AU_3";
+    /// `strategy` -> `GroupPresentation`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/GroupPresentation";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -1853,6 +2248,8 @@ pub mod prf_au_3 {
 pub mod prf_au_4 {
     /// `provesIdentity` -> `AU_4`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/AU_4";
+    /// `strategy` -> `GroupPresentation`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/GroupPresentation";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -1863,6 +2260,8 @@ pub mod prf_au_4 {
 pub mod prf_au_5 {
     /// `provesIdentity` -> `AU_5`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/AU_5";
+    /// `strategy` -> `GroupPresentation`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/GroupPresentation";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -1873,6 +2272,8 @@ pub mod prf_au_5 {
 pub mod prf_ef_1 {
     /// `provesIdentity` -> `EF_1`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/EF_1";
+    /// `strategy` -> `GroupPresentation`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/GroupPresentation";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -1883,6 +2284,8 @@ pub mod prf_ef_1 {
 pub mod prf_ef_2 {
     /// `provesIdentity` -> `EF_2`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/EF_2";
+    /// `strategy` -> `GroupPresentation`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/GroupPresentation";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -1893,6 +2296,8 @@ pub mod prf_ef_2 {
 pub mod prf_ef_3 {
     /// `provesIdentity` -> `EF_3`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/EF_3";
+    /// `strategy` -> `GroupPresentation`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/GroupPresentation";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -1903,6 +2308,8 @@ pub mod prf_ef_3 {
 pub mod prf_ef_4 {
     /// `provesIdentity` -> `EF_4`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/EF_4";
+    /// `strategy` -> `GroupPresentation`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/GroupPresentation";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -1913,6 +2320,8 @@ pub mod prf_ef_4 {
 pub mod prf_ef_5 {
     /// `provesIdentity` -> `EF_5`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/EF_5";
+    /// `strategy` -> `GroupPresentation`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/GroupPresentation";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -1923,6 +2332,8 @@ pub mod prf_ef_5 {
 pub mod prf_ef_6 {
     /// `provesIdentity` -> `EF_6`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/EF_6";
+    /// `strategy` -> `GroupPresentation`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/GroupPresentation";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -1933,6 +2344,8 @@ pub mod prf_ef_6 {
 pub mod prf_ef_7 {
     /// `provesIdentity` -> `EF_7`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/EF_7";
+    /// `strategy` -> `GroupPresentation`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/GroupPresentation";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -1943,6 +2356,8 @@ pub mod prf_ef_7 {
 pub mod prf_aa_1 {
     /// `provesIdentity` -> `AA_1`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/AA_1";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -1953,6 +2368,8 @@ pub mod prf_aa_1 {
 pub mod prf_aa_2 {
     /// `provesIdentity` -> `AA_2`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/AA_2";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -1963,6 +2380,8 @@ pub mod prf_aa_2 {
 pub mod prf_aa_3 {
     /// `provesIdentity` -> `AA_3`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/AA_3";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -1973,6 +2392,8 @@ pub mod prf_aa_3 {
 pub mod prf_aa_4 {
     /// `provesIdentity` -> `AA_4`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/AA_4";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -1983,6 +2404,8 @@ pub mod prf_aa_4 {
 pub mod prf_aa_5 {
     /// `provesIdentity` -> `AA_5`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/AA_5";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -1993,6 +2416,8 @@ pub mod prf_aa_5 {
 pub mod prf_aa_6 {
     /// `provesIdentity` -> `AA_6`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/AA_6";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -2003,6 +2428,8 @@ pub mod prf_aa_6 {
 pub mod prf_am_1 {
     /// `provesIdentity` -> `AM_1`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/AM_1";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -2013,6 +2440,8 @@ pub mod prf_am_1 {
 pub mod prf_am_2 {
     /// `provesIdentity` -> `AM_2`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/AM_2";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -2023,6 +2452,8 @@ pub mod prf_am_2 {
 pub mod prf_am_3 {
     /// `provesIdentity` -> `AM_3`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/AM_3";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -2033,6 +2464,8 @@ pub mod prf_am_3 {
 pub mod prf_am_4 {
     /// `provesIdentity` -> `AM_4`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/AM_4";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -2043,6 +2476,8 @@ pub mod prf_am_4 {
 pub mod prf_th_1 {
     /// `provesIdentity` -> `TH_1`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/TH_1";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -2053,6 +2488,8 @@ pub mod prf_th_1 {
 pub mod prf_th_2 {
     /// `provesIdentity` -> `TH_2`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/TH_2";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -2063,6 +2500,8 @@ pub mod prf_th_2 {
 pub mod prf_th_3 {
     /// `provesIdentity` -> `TH_3`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/TH_3";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -2073,6 +2512,8 @@ pub mod prf_th_3 {
 pub mod prf_th_4 {
     /// `provesIdentity` -> `TH_4`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/TH_4";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -2083,6 +2524,8 @@ pub mod prf_th_4 {
 pub mod prf_th_5 {
     /// `provesIdentity` -> `TH_5`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/TH_5";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -2093,6 +2536,8 @@ pub mod prf_th_5 {
 pub mod prf_th_6 {
     /// `provesIdentity` -> `TH_6`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/TH_6";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -2103,6 +2548,8 @@ pub mod prf_th_6 {
 pub mod prf_th_7 {
     /// `provesIdentity` -> `TH_7`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/TH_7";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -2113,6 +2560,8 @@ pub mod prf_th_7 {
 pub mod prf_th_8 {
     /// `provesIdentity` -> `TH_8`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/TH_8";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -2123,6 +2572,8 @@ pub mod prf_th_8 {
 pub mod prf_th_9 {
     /// `provesIdentity` -> `TH_9`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/TH_9";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -2133,6 +2584,8 @@ pub mod prf_th_9 {
 pub mod prf_th_10 {
     /// `provesIdentity` -> `TH_10`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/TH_10";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -2143,6 +2596,8 @@ pub mod prf_th_10 {
 pub mod prf_ar_1 {
     /// `provesIdentity` -> `AR_1`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/AR_1";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -2153,6 +2608,8 @@ pub mod prf_ar_1 {
 pub mod prf_ar_2 {
     /// `provesIdentity` -> `AR_2`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/AR_2";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -2163,6 +2620,8 @@ pub mod prf_ar_2 {
 pub mod prf_ar_3 {
     /// `provesIdentity` -> `AR_3`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/AR_3";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -2173,20 +2632,28 @@ pub mod prf_ar_3 {
 pub mod prf_ar_4 {
     /// `provesIdentity` -> `AR_4`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/AR_4";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
     pub const VERIFIED: bool = true;
 }
 
-/// Empirical verification of AR_5: greedy vs adiabatic cost difference is at most 5% for n ≤ 16. Verified by exhaustive enumeration at Q0 through Q4.
+/// Inductive proof of AR_5: greedy vs adiabatic cost difference is at most 5%. Base case at Q0 by exhaustive evaluation; inductive step by QLS_5 (identity preservation under lift).
 pub mod prf_ar_5 {
+    /// `baseCase` -> `prf_AR_5_base`
+    pub const BASE_CASE: &str = "https://uor.foundation/proof/prf_AR_5_base";
+    /// `inductiveStep` -> `prf_AR_5_step`
+    pub const INDUCTIVE_STEP: &str = "https://uor.foundation/proof/prf_AR_5_step";
     /// `provesIdentity` -> `AR_5`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/AR_5";
-    /// `quantumLevelRange`
-    pub const QUANTUM_LEVEL_RANGE: &str = "Q0-Q4";
-    /// `verificationMethod`
-    pub const VERIFICATION_METHOD: &str = "exhaustive enumeration over Z/(2^n)Z for n=8,16,32,64";
+    /// `strategy` -> `BitwiseInduction`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/BitwiseInduction";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `validForKAtLeast`
+    pub const VALID_FOR_KAT_LEAST: i64 = 0;
     /// `verified`
     pub const VERIFIED: bool = true;
 }
@@ -2195,6 +2662,8 @@ pub mod prf_ar_5 {
 pub mod prf_pd_1 {
     /// `provesIdentity` -> `PD_1`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/PD_1";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -2205,6 +2674,8 @@ pub mod prf_pd_1 {
 pub mod prf_pd_2 {
     /// `provesIdentity` -> `PD_2`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/PD_2";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -2215,6 +2686,8 @@ pub mod prf_pd_2 {
 pub mod prf_pd_3 {
     /// `provesIdentity` -> `PD_3`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/PD_3";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -2225,6 +2698,8 @@ pub mod prf_pd_3 {
 pub mod prf_pd_4 {
     /// `provesIdentity` -> `PD_4`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/PD_4";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -2235,6 +2710,8 @@ pub mod prf_pd_4 {
 pub mod prf_pd_5 {
     /// `provesIdentity` -> `PD_5`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/PD_5";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -2245,6 +2722,8 @@ pub mod prf_pd_5 {
 pub mod prf_rc_1 {
     /// `provesIdentity` -> `RC_1`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/RC_1";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -2255,6 +2734,8 @@ pub mod prf_rc_1 {
 pub mod prf_rc_2 {
     /// `provesIdentity` -> `RC_2`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/RC_2";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -2265,6 +2746,8 @@ pub mod prf_rc_2 {
 pub mod prf_rc_3 {
     /// `provesIdentity` -> `RC_3`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/RC_3";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -2275,6 +2758,8 @@ pub mod prf_rc_3 {
 pub mod prf_rc_4 {
     /// `provesIdentity` -> `RC_4`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/RC_4";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -2285,6 +2770,8 @@ pub mod prf_rc_4 {
 pub mod prf_rc_5 {
     /// `provesIdentity` -> `RC_5`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/RC_5";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -2295,6 +2782,8 @@ pub mod prf_rc_5 {
 pub mod prf_dc_1 {
     /// `provesIdentity` -> `DC_1`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/DC_1";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -2305,6 +2794,8 @@ pub mod prf_dc_1 {
 pub mod prf_dc_2 {
     /// `provesIdentity` -> `DC_2`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/DC_2";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -2315,6 +2806,8 @@ pub mod prf_dc_2 {
 pub mod prf_dc_3 {
     /// `provesIdentity` -> `DC_3`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/DC_3";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -2325,6 +2818,8 @@ pub mod prf_dc_3 {
 pub mod prf_dc_4 {
     /// `provesIdentity` -> `DC_4`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/DC_4";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -2335,6 +2830,8 @@ pub mod prf_dc_4 {
 pub mod prf_dc_5 {
     /// `provesIdentity` -> `DC_5`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/DC_5";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -2345,6 +2842,8 @@ pub mod prf_dc_5 {
 pub mod prf_dc_6 {
     /// `provesIdentity` -> `DC_6`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/DC_6";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -2355,6 +2854,8 @@ pub mod prf_dc_6 {
 pub mod prf_dc_7 {
     /// `provesIdentity` -> `DC_7`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/DC_7";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -2365,6 +2866,8 @@ pub mod prf_dc_7 {
 pub mod prf_dc_8 {
     /// `provesIdentity` -> `DC_8`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/DC_8";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -2375,6 +2878,8 @@ pub mod prf_dc_8 {
 pub mod prf_dc_9 {
     /// `provesIdentity` -> `DC_9`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/DC_9";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -2385,6 +2890,8 @@ pub mod prf_dc_9 {
 pub mod prf_dc_10 {
     /// `provesIdentity` -> `DC_10`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/DC_10";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -2395,6 +2902,8 @@ pub mod prf_dc_10 {
 pub mod prf_dc_11 {
     /// `provesIdentity` -> `DC_11`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/DC_11";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -2405,6 +2914,8 @@ pub mod prf_dc_11 {
 pub mod prf_ha_1 {
     /// `provesIdentity` -> `HA_1`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/HA_1";
+    /// `strategy` -> `EulerPoincare`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/EulerPoincare";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -2415,6 +2926,8 @@ pub mod prf_ha_1 {
 pub mod prf_ha_2 {
     /// `provesIdentity` -> `HA_2`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/HA_2";
+    /// `strategy` -> `EulerPoincare`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/EulerPoincare";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -2425,6 +2938,8 @@ pub mod prf_ha_2 {
 pub mod prf_ha_3 {
     /// `provesIdentity` -> `HA_3`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/HA_3";
+    /// `strategy` -> `EulerPoincare`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/EulerPoincare";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -2435,6 +2950,8 @@ pub mod prf_ha_3 {
 pub mod prf_it_2 {
     /// `provesIdentity` -> `IT_2`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/IT_2";
+    /// `strategy` -> `EulerPoincare`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/EulerPoincare";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -2445,6 +2962,8 @@ pub mod prf_it_2 {
 pub mod prf_it_3 {
     /// `provesIdentity` -> `IT_3`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/IT_3";
+    /// `strategy` -> `EulerPoincare`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/EulerPoincare";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -2455,6 +2974,8 @@ pub mod prf_it_3 {
 pub mod prf_it_6 {
     /// `provesIdentity` -> `IT_6`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/IT_6";
+    /// `strategy` -> `EulerPoincare`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/EulerPoincare";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -2465,6 +2986,8 @@ pub mod prf_it_6 {
 pub mod prf_it_7a {
     /// `provesIdentity` -> `IT_7a`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/IT_7a";
+    /// `strategy` -> `Composition`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Composition";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -2475,6 +2998,8 @@ pub mod prf_it_7a {
 pub mod prf_it_7b {
     /// `provesIdentity` -> `IT_7b`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/IT_7b";
+    /// `strategy` -> `Composition`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Composition";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -2485,6 +3010,8 @@ pub mod prf_it_7b {
 pub mod prf_it_7c {
     /// `provesIdentity` -> `IT_7c`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/IT_7c";
+    /// `strategy` -> `Composition`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Composition";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -2495,6 +3022,8 @@ pub mod prf_it_7c {
 pub mod prf_it_7d {
     /// `provesIdentity` -> `IT_7d`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/IT_7d";
+    /// `strategy` -> `Composition`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Composition";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -2505,6 +3034,8 @@ pub mod prf_it_7d {
 pub mod prf_psi_1 {
     /// `provesIdentity` -> `psi_1`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/psi_1";
+    /// `strategy` -> `EulerPoincare`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/EulerPoincare";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -2515,6 +3046,8 @@ pub mod prf_psi_1 {
 pub mod prf_psi_2 {
     /// `provesIdentity` -> `psi_2`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/psi_2";
+    /// `strategy` -> `EulerPoincare`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/EulerPoincare";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -2525,6 +3058,8 @@ pub mod prf_psi_2 {
 pub mod prf_psi_3 {
     /// `provesIdentity` -> `psi_3`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/psi_3";
+    /// `strategy` -> `EulerPoincare`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/EulerPoincare";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -2535,6 +3070,8 @@ pub mod prf_psi_3 {
 pub mod prf_psi_5 {
     /// `provesIdentity` -> `psi_5`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/psi_5";
+    /// `strategy` -> `EulerPoincare`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/EulerPoincare";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -2545,6 +3082,8 @@ pub mod prf_psi_5 {
 pub mod prf_psi_6 {
     /// `provesIdentity` -> `psi_6`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/psi_6";
+    /// `strategy` -> `EulerPoincare`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/EulerPoincare";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -2555,6 +3094,8 @@ pub mod prf_psi_6 {
 pub mod prf_boundary_squared_zero {
     /// `provesIdentity` -> `boundarySquaredZero`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/homology/boundarySquaredZero";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -2565,6 +3106,8 @@ pub mod prf_boundary_squared_zero {
 pub mod prf_psi_4 {
     /// `provesIdentity` -> `psi_4`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/homology/psi_4";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -2575,6 +3118,8 @@ pub mod prf_psi_4 {
 pub mod prf_index_bridge {
     /// `provesIdentity` -> `indexBridge`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/homology/indexBridge";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -2585,6 +3130,8 @@ pub mod prf_index_bridge {
 pub mod prf_coboundary_squared_zero {
     /// `provesIdentity` -> `coboundarySquaredZero`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/cohomology/coboundarySquaredZero";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -2595,6 +3142,8 @@ pub mod prf_coboundary_squared_zero {
 pub mod prf_de_rham_duality {
     /// `provesIdentity` -> `deRhamDuality`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/cohomology/deRhamDuality";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -2605,6 +3154,8 @@ pub mod prf_de_rham_duality {
 pub mod prf_sheaf_cohomology_bridge {
     /// `provesIdentity` -> `sheafCohomologyBridge`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/cohomology/sheafCohomologyBridge";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -2615,6 +3166,8 @@ pub mod prf_sheaf_cohomology_bridge {
 pub mod prf_local_global_principle {
     /// `provesIdentity` -> `localGlobalPrinciple`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/cohomology/localGlobalPrinciple";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -2625,6 +3178,8 @@ pub mod prf_local_global_principle {
 pub mod prf_surface_symmetry {
     /// `provesIdentity` -> `surfaceSymmetry`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/surfaceSymmetry";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -2635,6 +3190,8 @@ pub mod prf_surface_symmetry {
 pub mod prf_cc_1 {
     /// `provesIdentity` -> `CC_1`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/CC_1";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -2645,6 +3202,8 @@ pub mod prf_cc_1 {
 pub mod prf_cc_2 {
     /// `provesIdentity` -> `CC_2`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/CC_2";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -2655,6 +3214,8 @@ pub mod prf_cc_2 {
 pub mod prf_cc_3 {
     /// `provesIdentity` -> `CC_3`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/CC_3";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -2665,6 +3226,8 @@ pub mod prf_cc_3 {
 pub mod prf_cc_4 {
     /// `provesIdentity` -> `CC_4`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/CC_4";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -2675,6 +3238,8 @@ pub mod prf_cc_4 {
 pub mod prf_cc_5 {
     /// `provesIdentity` -> `CC_5`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/CC_5";
+    /// `strategy` -> `EulerPoincare`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/EulerPoincare";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -2685,6 +3250,8 @@ pub mod prf_cc_5 {
 pub mod prf_ql_1 {
     /// `provesIdentity` -> `QL_1`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/QL_1";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -2695,6 +3262,8 @@ pub mod prf_ql_1 {
 pub mod prf_ql_2 {
     /// `provesIdentity` -> `QL_2`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/QL_2";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -2705,6 +3274,8 @@ pub mod prf_ql_2 {
 pub mod prf_ql_3 {
     /// `provesIdentity` -> `QL_3`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/QL_3";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -2715,6 +3286,8 @@ pub mod prf_ql_3 {
 pub mod prf_ql_4 {
     /// `provesIdentity` -> `QL_4`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/QL_4";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -2725,6 +3298,8 @@ pub mod prf_ql_4 {
 pub mod prf_ql_5 {
     /// `provesIdentity` -> `QL_5`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/QL_5";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -2735,6 +3310,8 @@ pub mod prf_ql_5 {
 pub mod prf_ql_6 {
     /// `provesIdentity` -> `QL_6`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/QL_6";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -2745,6 +3322,8 @@ pub mod prf_ql_6 {
 pub mod prf_ql_7 {
     /// `provesIdentity` -> `QL_7`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/QL_7";
+    /// `strategy` -> `EulerPoincare`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/EulerPoincare";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -2755,6 +3334,8 @@ pub mod prf_ql_7 {
 pub mod prf_sr_1 {
     /// `provesIdentity` -> `SR_1`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/SR_1";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -2765,6 +3346,8 @@ pub mod prf_sr_1 {
 pub mod prf_sr_2 {
     /// `provesIdentity` -> `SR_2`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/SR_2";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -2775,6 +3358,8 @@ pub mod prf_sr_2 {
 pub mod prf_sr_3 {
     /// `provesIdentity` -> `SR_3`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/SR_3";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -2785,6 +3370,8 @@ pub mod prf_sr_3 {
 pub mod prf_sr_4 {
     /// `provesIdentity` -> `SR_4`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/SR_4";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -2795,6 +3382,8 @@ pub mod prf_sr_4 {
 pub mod prf_sr_5 {
     /// `provesIdentity` -> `SR_5`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/SR_5";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -2805,6 +3394,8 @@ pub mod prf_sr_5 {
 pub mod prf_ts_1 {
     /// `provesIdentity` -> `TS_1`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/TS_1";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -2815,6 +3406,8 @@ pub mod prf_ts_1 {
 pub mod prf_ts_2 {
     /// `provesIdentity` -> `TS_2`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/TS_2";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -2825,6 +3418,8 @@ pub mod prf_ts_2 {
 pub mod prf_ts_3 {
     /// `provesIdentity` -> `TS_3`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/TS_3";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -2835,6 +3430,8 @@ pub mod prf_ts_3 {
 pub mod prf_ts_4 {
     /// `provesIdentity` -> `TS_4`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/TS_4";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -2845,6 +3442,8 @@ pub mod prf_ts_4 {
 pub mod prf_ts_5 {
     /// `provesIdentity` -> `TS_5`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/TS_5";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -2855,6 +3454,8 @@ pub mod prf_ts_5 {
 pub mod prf_ts_6 {
     /// `provesIdentity` -> `TS_6`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/TS_6";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -2865,6 +3466,8 @@ pub mod prf_ts_6 {
 pub mod prf_ts_7 {
     /// `provesIdentity` -> `TS_7`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/TS_7";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -2873,12 +3476,14 @@ pub mod prf_ts_7 {
 
 /// Proof of lift unobstructedness criterion: QuantumLift T' is CompleteType iff the spectral sequence collapses at E_2. Follows from the Leray spectral sequence of the quantum level extension.
 pub mod prf_qls_1 {
-    /// `baseCase` -> `prf_QLS_1`
-    pub const BASE_CASE: &str = "https://uor.foundation/proof/prf_QLS_1";
+    /// `baseCase` -> `prf_QLS_1_base`
+    pub const BASE_CASE: &str = "https://uor.foundation/proof/prf_QLS_1_base";
     /// `inductiveStep` -> `prf_QLS_6`
     pub const INDUCTIVE_STEP: &str = "https://uor.foundation/proof/prf_QLS_6";
     /// `provesIdentity` -> `QLS_1`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/QLS_1";
+    /// `strategy` -> `BitwiseInduction`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/BitwiseInduction";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `validForKAtLeast`
@@ -2889,12 +3494,14 @@ pub mod prf_qls_1 {
 
 /// Proof of obstruction localisation: a non-trivial LiftObstruction is localised to a specific fiber at bit position n+1. Follows from the local-to-global structure of the constraint nerve.
 pub mod prf_qls_2 {
-    /// `baseCase` -> `prf_QLS_2`
-    pub const BASE_CASE: &str = "https://uor.foundation/proof/prf_QLS_2";
-    /// `inductiveStep` -> `prf_QLS_2`
-    pub const INDUCTIVE_STEP: &str = "https://uor.foundation/proof/prf_QLS_2";
+    /// `baseCase` -> `prf_QLS_2_base`
+    pub const BASE_CASE: &str = "https://uor.foundation/proof/prf_QLS_2_base";
+    /// `inductiveStep` -> `prf_QLS_2_step`
+    pub const INDUCTIVE_STEP: &str = "https://uor.foundation/proof/prf_QLS_2_step";
     /// `provesIdentity` -> `QLS_2`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/QLS_2";
+    /// `strategy` -> `BitwiseInduction`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/BitwiseInduction";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `validForKAtLeast`
@@ -2905,12 +3512,14 @@ pub mod prf_qls_2 {
 
 /// Proof of monotone lifting: basisSize(T') = basisSize(T) + 1 for trivially obstructed lifts. Follows from the minimal basis construction at Q_{n+1}.
 pub mod prf_qls_3 {
-    /// `baseCase` -> `prf_QLS_3`
-    pub const BASE_CASE: &str = "https://uor.foundation/proof/prf_QLS_3";
-    /// `inductiveStep` -> `prf_QLS_3`
-    pub const INDUCTIVE_STEP: &str = "https://uor.foundation/proof/prf_QLS_3";
+    /// `baseCase` -> `prf_QLS_3_base`
+    pub const BASE_CASE: &str = "https://uor.foundation/proof/prf_QLS_3_base";
+    /// `inductiveStep` -> `prf_QLS_3_step`
+    pub const INDUCTIVE_STEP: &str = "https://uor.foundation/proof/prf_QLS_3_step";
     /// `provesIdentity` -> `QLS_3`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/QLS_3";
+    /// `strategy` -> `BitwiseInduction`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/BitwiseInduction";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `validForKAtLeast`
@@ -2921,12 +3530,14 @@ pub mod prf_qls_3 {
 
 /// Proof of spectral sequence convergence bound: the spectral sequence converges by page E_{d+2} for depth-d configurations. Follows from the filtration length of the constraint nerve chain complex.
 pub mod prf_qls_4 {
-    /// `baseCase` -> `prf_QLS_4`
-    pub const BASE_CASE: &str = "https://uor.foundation/proof/prf_QLS_4";
-    /// `inductiveStep` -> `prf_QLS_4`
-    pub const INDUCTIVE_STEP: &str = "https://uor.foundation/proof/prf_QLS_4";
+    /// `baseCase` -> `prf_QLS_4_base`
+    pub const BASE_CASE: &str = "https://uor.foundation/proof/prf_QLS_4_base";
+    /// `inductiveStep` -> `prf_QLS_4_step`
+    pub const INDUCTIVE_STEP: &str = "https://uor.foundation/proof/prf_QLS_4_step";
     /// `provesIdentity` -> `QLS_4`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/QLS_4";
+    /// `strategy` -> `BitwiseInduction`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/BitwiseInduction";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `validForKAtLeast`
@@ -2937,12 +3548,14 @@ pub mod prf_qls_4 {
 
 /// Proof of universal identity preservation under quantum lifts: every universallyValid identity holds in the lifted ring. Follows from the universal validity definition and ring extension properties.
 pub mod prf_qls_5 {
-    /// `baseCase` -> `prf_QLS_5`
-    pub const BASE_CASE: &str = "https://uor.foundation/proof/prf_QLS_5";
+    /// `baseCase` -> `prf_QLS_5_base`
+    pub const BASE_CASE: &str = "https://uor.foundation/proof/prf_QLS_5_base";
     /// `inductiveStep` -> `prf_QLS_6`
     pub const INDUCTIVE_STEP: &str = "https://uor.foundation/proof/prf_QLS_6";
     /// `provesIdentity` -> `QLS_5`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/QLS_5";
+    /// `strategy` -> `BitwiseInduction`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/BitwiseInduction";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `validForKAtLeast`
@@ -2953,12 +3566,14 @@ pub mod prf_qls_5 {
 
 /// Proof of ψ-pipeline universality for quantum lifts: the ψ-pipeline produces a valid ChainComplex for any QuantumLift. Follows from the functorial construction of the chain complex.
 pub mod prf_qls_6 {
-    /// `baseCase` -> `prf_QLS_6`
-    pub const BASE_CASE: &str = "https://uor.foundation/proof/prf_QLS_6";
-    /// `inductiveStep` -> `prf_QLS_6`
-    pub const INDUCTIVE_STEP: &str = "https://uor.foundation/proof/prf_QLS_6";
+    /// `baseCase` -> `prf_QLS_6_base`
+    pub const BASE_CASE: &str = "https://uor.foundation/proof/prf_QLS_6_base";
+    /// `inductiveStep` -> `prf_QLS_6_step`
+    pub const INDUCTIVE_STEP: &str = "https://uor.foundation/proof/prf_QLS_6_step";
     /// `provesIdentity` -> `QLS_6`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/QLS_6";
+    /// `strategy` -> `BitwiseInduction`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/BitwiseInduction";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `validForKAtLeast`
@@ -2967,10 +3582,204 @@ pub mod prf_qls_6 {
     pub const VERIFIED: bool = true;
 }
 
+/// Base case for QLS_1 at Q0: lift unobstructedness holds trivially for 8-bit rings where the constraint nerve is contractible.
+pub mod prf_qls_1_base {
+    /// `provesIdentity` -> `QLS_1`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/QLS_1";
+    /// `strategy` -> `Composition`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Composition";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = false;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Base case for QLS_2 at Q0: obstruction localisation holds at the 8-bit level where fibers are directly inspectable.
+pub mod prf_qls_2_base {
+    /// `provesIdentity` -> `QLS_2`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/QLS_2";
+    /// `strategy` -> `Composition`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Composition";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = false;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Inductive step for QLS_2: if obstruction is localised at Q_k, the local-to-global structure of the constraint nerve preserves localisation at Q_{k+1}.
+pub mod prf_qls_2_step {
+    /// `provesIdentity` -> `QLS_2`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/QLS_2";
+    /// `strategy` -> `Composition`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Composition";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Base case for QLS_3 at Q0: monotone lifting basis size increment holds trivially for 8-bit to 16-bit extension.
+pub mod prf_qls_3_base {
+    /// `provesIdentity` -> `QLS_3`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/QLS_3";
+    /// `strategy` -> `Composition`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Composition";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = false;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Inductive step for QLS_3: the minimal basis construction at Q_{k+1} adds exactly one element from the trivially obstructed fiber.
+pub mod prf_qls_3_step {
+    /// `provesIdentity` -> `QLS_3`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/QLS_3";
+    /// `strategy` -> `Composition`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Composition";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Base case for QLS_4 at Q0: spectral sequence convergence at E_{d+2} holds for 8-bit filtrations by direct computation.
+pub mod prf_qls_4_base {
+    /// `provesIdentity` -> `QLS_4`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/QLS_4";
+    /// `strategy` -> `Composition`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Composition";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = false;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Inductive step for QLS_4: filtration length at Q_{k+1} extends by at most one page from Q_k, preserving the E_{d+2} bound.
+pub mod prf_qls_4_step {
+    /// `provesIdentity` -> `QLS_4`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/QLS_4";
+    /// `strategy` -> `Composition`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Composition";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Base case for QLS_5 at Q0: universallyValid identities hold in the 8-bit ring by definition of universal validity.
+pub mod prf_qls_5_base {
+    /// `provesIdentity` -> `QLS_5`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/QLS_5";
+    /// `strategy` -> `Composition`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Composition";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = false;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Base case for QLS_6 at Q0: the psi-pipeline produces a valid ChainComplex for 8-bit QuantumLifts by direct construction.
+pub mod prf_qls_6_base {
+    /// `provesIdentity` -> `QLS_6`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/QLS_6";
+    /// `strategy` -> `Composition`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Composition";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = false;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Inductive step for QLS_6: the functorial construction of the chain complex commutes with quantum level extension.
+pub mod prf_qls_6_step {
+    /// `provesIdentity` -> `QLS_6`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/QLS_6";
+    /// `strategy` -> `Composition`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Composition";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Base case for QT_3: resolved basis size formula holds for chain length 1 by direct construction.
+pub mod prf_qt_3_base {
+    /// `provesIdentity` -> `QT_3`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/QT_3";
+    /// `strategy` -> `Composition`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Composition";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = false;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Base case for QT_5: LiftChainCertificate existence for tower height 1 follows from single-step certificate issuance.
+pub mod prf_qt_5_base {
+    /// `provesIdentity` -> `QT_5`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/QT_5";
+    /// `strategy` -> `Composition`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Composition";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = false;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Base case for AR_5 at Q0: greedy vs adiabatic cost difference verified by exhaustive enumeration over Z/256Z.
+pub mod prf_ar_5_base {
+    /// `provesIdentity` -> `AR_5`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/AR_5";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = false;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Inductive step for AR_5: if greedy vs adiabatic bound holds at Q_k, it holds at Q_{k+1} by QLS_5 (universal identity preservation under quantum lift).
+pub mod prf_ar_5_step {
+    /// `provesIdentity` -> `AR_5`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/AR_5";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Base case for QM_6 at Q0: amplitude index set equals monotone pinning trajectories by exhaustive trajectory enumeration over the 8-bit fiber lattice.
+pub mod prf_qm_6_base {
+    /// `provesIdentity` -> `QM_6`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/QM_6";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = false;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Inductive step for QM_6: monotone pinning trajectories at Q_{k+1} extend those at Q_k by the fiber lattice ordering (monotone extension property).
+pub mod prf_qm_6_step {
+    /// `provesIdentity` -> `QM_6`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/QM_6";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
 /// Proof of holonomy group containment: HolonomyGroup(T) ≤ D_{2^n}. Follows from the fact that all constraint applications are dihedral group elements.
 pub mod prf_mn_1 {
     /// `provesIdentity` -> `MN_1`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/MN_1";
+    /// `strategy` -> `EulerPoincare`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/EulerPoincare";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -2981,6 +3790,8 @@ pub mod prf_mn_1 {
 pub mod prf_mn_2 {
     /// `provesIdentity` -> `MN_2`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/MN_2";
+    /// `strategy` -> `EulerPoincare`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/EulerPoincare";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -2991,6 +3802,8 @@ pub mod prf_mn_2 {
 pub mod prf_mn_3 {
     /// `provesIdentity` -> `MN_3`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/MN_3";
+    /// `strategy` -> `EulerPoincare`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/EulerPoincare";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -3001,6 +3814,8 @@ pub mod prf_mn_3 {
 pub mod prf_mn_4 {
     /// `provesIdentity` -> `MN_4`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/MN_4";
+    /// `strategy` -> `EulerPoincare`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/EulerPoincare";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -3011,6 +3826,8 @@ pub mod prf_mn_4 {
 pub mod prf_mn_5 {
     /// `provesIdentity` -> `MN_5`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/MN_5";
+    /// `strategy` -> `EulerPoincare`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/EulerPoincare";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -3021,6 +3838,8 @@ pub mod prf_mn_5 {
 pub mod prf_mn_6 {
     /// `provesIdentity` -> `MN_6`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/MN_6";
+    /// `strategy` -> `EulerPoincare`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/EulerPoincare";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -3031,6 +3850,8 @@ pub mod prf_mn_6 {
 pub mod prf_mn_7 {
     /// `provesIdentity` -> `MN_7`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/MN_7";
+    /// `strategy` -> `EulerPoincare`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/EulerPoincare";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -3041,6 +3862,8 @@ pub mod prf_mn_7 {
 pub mod prf_pt_1 {
     /// `provesIdentity` -> `PT_1`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/PT_1";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -3051,6 +3874,8 @@ pub mod prf_pt_1 {
 pub mod prf_pt_2 {
     /// `provesIdentity` -> `PT_2`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/PT_2";
+    /// `strategy` -> `EulerPoincare`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/EulerPoincare";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -3061,6 +3886,8 @@ pub mod prf_pt_2 {
 pub mod prf_pt_3 {
     /// `provesIdentity` -> `PT_3`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/PT_3";
+    /// `strategy` -> `Composition`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Composition";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -3071,6 +3898,8 @@ pub mod prf_pt_3 {
 pub mod prf_pt_4 {
     /// `provesIdentity` -> `PT_4`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/PT_4";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -3081,6 +3910,8 @@ pub mod prf_pt_4 {
 pub mod prf_st_1 {
     /// `provesIdentity` -> `ST_1`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/ST_1";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -3091,6 +3922,8 @@ pub mod prf_st_1 {
 pub mod prf_st_2 {
     /// `provesIdentity` -> `ST_2`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/ST_2";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -3101,6 +3934,8 @@ pub mod prf_st_2 {
 pub mod prf_sc_1 {
     /// `provesIdentity` -> `SC_1`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/SC_1";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -3111,6 +3946,8 @@ pub mod prf_sc_1 {
 pub mod prf_sc_2 {
     /// `provesIdentity` -> `SC_2`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/SC_2";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -3121,6 +3958,8 @@ pub mod prf_sc_2 {
 pub mod prf_sc_3 {
     /// `provesIdentity` -> `SC_3`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/SC_3";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -3131,6 +3970,8 @@ pub mod prf_sc_3 {
 pub mod prf_sc_4 {
     /// `provesIdentity` -> `SC_4`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/SC_4";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -3141,6 +3982,8 @@ pub mod prf_sc_4 {
 pub mod prf_sc_5 {
     /// `provesIdentity` -> `SC_5`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/SC_5";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -3151,6 +3994,8 @@ pub mod prf_sc_5 {
 pub mod prf_sc_6 {
     /// `provesIdentity` -> `SC_6`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/SC_6";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -3161,6 +4006,8 @@ pub mod prf_sc_6 {
 pub mod prf_sc_7 {
     /// `provesIdentity` -> `SC_7`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/SC_7";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -3171,6 +4018,8 @@ pub mod prf_sc_7 {
 pub mod prf_ms_1 {
     /// `provesIdentity` -> `MS_1`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/MS_1";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -3181,6 +4030,8 @@ pub mod prf_ms_1 {
 pub mod prf_ms_2 {
     /// `provesIdentity` -> `MS_2`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/MS_2";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -3191,6 +4042,8 @@ pub mod prf_ms_2 {
 pub mod prf_ms_3 {
     /// `provesIdentity` -> `MS_3`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/MS_3";
+    /// `strategy` -> `EulerPoincare`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/EulerPoincare";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -3201,16 +4054,20 @@ pub mod prf_ms_3 {
 pub mod prf_ms_4 {
     /// `provesIdentity` -> `MS_4`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/MS_4";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
     pub const VERIFIED: bool = true;
 }
 
-/// Proof of MS_5: empirical completeness convergence. Convergence statement for EmpiricalVerification accumulation.
+/// Proof of MS_5: empirical completeness convergence. Convergence statement for verification accumulation.
 pub mod prf_ms_5 {
     /// `provesIdentity` -> `MS_5`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/MS_5";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -3221,6 +4078,8 @@ pub mod prf_ms_5 {
 pub mod prf_gd_1 {
     /// `provesIdentity` -> `GD_1`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/GD_1";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -3231,6 +4090,8 @@ pub mod prf_gd_1 {
 pub mod prf_gd_2 {
     /// `provesIdentity` -> `GD_2`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/GD_2";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -3241,6 +4102,8 @@ pub mod prf_gd_2 {
 pub mod prf_gd_3 {
     /// `provesIdentity` -> `GD_3`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/GD_3";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -3251,6 +4114,8 @@ pub mod prf_gd_3 {
 pub mod prf_gd_4 {
     /// `provesIdentity` -> `GD_4`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/GD_4";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -3261,6 +4126,8 @@ pub mod prf_gd_4 {
 pub mod prf_gd_5 {
     /// `provesIdentity` -> `GD_5`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/GD_5";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -3271,6 +4138,8 @@ pub mod prf_gd_5 {
 pub mod prf_qm_1 {
     /// `provesIdentity` -> `QM_1`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/QM_1";
+    /// `strategy` -> `ProductFormula`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/ProductFormula";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -3281,6 +4150,8 @@ pub mod prf_qm_1 {
 pub mod prf_qm_2 {
     /// `provesIdentity` -> `QM_2`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/QM_2";
+    /// `strategy` -> `EulerPoincare`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/EulerPoincare";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -3291,6 +4162,8 @@ pub mod prf_qm_2 {
 pub mod prf_qm_3 {
     /// `provesIdentity` -> `QM_3`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/QM_3";
+    /// `strategy` -> `ProductFormula`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/ProductFormula";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -3301,6 +4174,8 @@ pub mod prf_qm_3 {
 pub mod prf_qm_4 {
     /// `provesIdentity` -> `QM_4`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/QM_4";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -3311,6 +4186,8 @@ pub mod prf_qm_4 {
 pub mod prf_qm_5 {
     /// `provesIdentity` -> `QM_5`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/QM_5";
+    /// `strategy` -> `ProductFormula`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/ProductFormula";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -3321,6 +4198,8 @@ pub mod prf_qm_5 {
 pub mod prf_rc_6 {
     /// `provesIdentity` -> `RC_6`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/RC_6";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -3331,6 +4210,8 @@ pub mod prf_rc_6 {
 pub mod prf_fpm_8 {
     /// `provesIdentity` -> `FPM_8`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/FPM_8";
+    /// `strategy` -> `DecideQ0`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/DecideQ0";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -3341,6 +4222,8 @@ pub mod prf_fpm_8 {
 pub mod prf_fpm_9 {
     /// `provesIdentity` -> `FPM_9`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/FPM_9";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -3351,6 +4234,8 @@ pub mod prf_fpm_9 {
 pub mod prf_mn_8 {
     /// `provesIdentity` -> `MN_8`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/MN_8";
+    /// `strategy` -> `EulerPoincare`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/EulerPoincare";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -3361,6 +4246,8 @@ pub mod prf_mn_8 {
 pub mod prf_ql_8 {
     /// `provesIdentity` -> `QL_8`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/QL_8";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -3371,6 +4258,8 @@ pub mod prf_ql_8 {
 pub mod prf_d_7 {
     /// `provesIdentity` -> `D_7`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/D_7";
+    /// `strategy` -> `GroupPresentation`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/GroupPresentation";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -3381,6 +4270,8 @@ pub mod prf_d_7 {
 pub mod prf_sp_1 {
     /// `provesIdentity` -> `SP_1`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/SP_1";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -3391,6 +4282,8 @@ pub mod prf_sp_1 {
 pub mod prf_sp_2 {
     /// `provesIdentity` -> `SP_2`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/SP_2";
+    /// `strategy` -> `ProductFormula`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/ProductFormula";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -3401,6 +4294,8 @@ pub mod prf_sp_2 {
 pub mod prf_sp_3 {
     /// `provesIdentity` -> `SP_3`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/SP_3";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -3411,6 +4306,8 @@ pub mod prf_sp_3 {
 pub mod prf_sp_4 {
     /// `provesIdentity` -> `SP_4`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/SP_4";
+    /// `strategy` -> `ProductFormula`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/ProductFormula";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -3421,6 +4318,8 @@ pub mod prf_sp_4 {
 pub mod prf_pt_2a {
     /// `provesIdentity` -> `PT_2a`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/PT_2a";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -3431,6 +4330,8 @@ pub mod prf_pt_2a {
 pub mod prf_pt_2b {
     /// `provesIdentity` -> `PT_2b`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/PT_2b";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -3441,6 +4342,8 @@ pub mod prf_pt_2b {
 pub mod prf_gd_6 {
     /// `provesIdentity` -> `GD_6`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/GD_6";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -3456,6 +4359,8 @@ pub mod iw_beta0_bound {
     /// `impossibilityReason`
     pub const IMPOSSIBILITY_REASON: &str =
         "β₀ = 0 violates MS_1: constraint nerve of non-empty set is connected";
+    /// `strategy` -> `Contradiction`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Contradiction";
     /// `verified`
     pub const VERIFIED: bool = true;
 }
@@ -3469,6 +4374,8 @@ pub mod iw_chi_ceiling {
     /// `impossibilityReason`
     pub const IMPOSSIBILITY_REASON: &str =
         "χ > n violates MS_2: Euler characteristic bounded by quantum level";
+    /// `strategy` -> `Contradiction`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Contradiction";
     /// `verified`
     pub const VERIFIED: bool = true;
 }
@@ -3497,6 +4404,8 @@ pub mod prf_qt_1 {
     pub const INDUCTIVE_STEP: &str = "https://uor.foundation/proof/prf_QLS_6";
     /// `provesIdentity` -> `QT_1`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/QT_1";
+    /// `strategy` -> `BitwiseInduction`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/BitwiseInduction";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `validForKAtLeast`
@@ -3509,6 +4418,8 @@ pub mod prf_qt_1 {
 pub mod prf_qt_2 {
     /// `provesIdentity` -> `QT_2`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/QT_2";
+    /// `strategy` -> `Composition`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Composition";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -3517,12 +4428,14 @@ pub mod prf_qt_2 {
 
 /// Proof of resolved basis size formula by induction on chain length.
 pub mod prf_qt_3 {
-    /// `baseCase` -> `prf_QT_3`
-    pub const BASE_CASE: &str = "https://uor.foundation/proof/prf_QT_3";
+    /// `baseCase` -> `prf_QT_3_base`
+    pub const BASE_CASE: &str = "https://uor.foundation/proof/prf_QT_3_base";
     /// `inductiveStep` -> `prf_QLS_3`
     pub const INDUCTIVE_STEP: &str = "https://uor.foundation/proof/prf_QLS_3";
     /// `provesIdentity` -> `QT_3`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/QT_3";
+    /// `strategy` -> `BitwiseInduction`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/BitwiseInduction";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `validForKAtLeast`
@@ -3535,6 +4448,8 @@ pub mod prf_qt_3 {
 pub mod prf_qt_4 {
     /// `provesIdentity` -> `QT_4`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/QT_4";
+    /// `strategy` -> `EulerPoincare`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/EulerPoincare";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -3543,12 +4458,14 @@ pub mod prf_qt_4 {
 
 /// Proof of LiftChainCertificate existence by induction on tower height.
 pub mod prf_qt_5 {
-    /// `baseCase` -> `prf_QT_5`
-    pub const BASE_CASE: &str = "https://uor.foundation/proof/prf_QT_5";
+    /// `baseCase` -> `prf_QT_5_base`
+    pub const BASE_CASE: &str = "https://uor.foundation/proof/prf_QT_5_base";
     /// `inductiveStep` -> `prf_QT_1`
     pub const INDUCTIVE_STEP: &str = "https://uor.foundation/proof/prf_QT_1";
     /// `provesIdentity` -> `QT_5`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/QT_5";
+    /// `strategy` -> `BitwiseInduction`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/BitwiseInduction";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `validForKAtLeast`
@@ -3561,6 +4478,8 @@ pub mod prf_qt_5 {
 pub mod prf_qt_6 {
     /// `provesIdentity` -> `QT_6`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/QT_6";
+    /// `strategy` -> `Composition`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Composition";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -3571,6 +4490,8 @@ pub mod prf_qt_6 {
 pub mod prf_qt_7 {
     /// `provesIdentity` -> `QT_7`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/QT_7";
+    /// `strategy` -> `Composition`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Composition";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -3581,6 +4502,8 @@ pub mod prf_qt_7 {
 pub mod prf_cc_pins {
     /// `provesIdentity` -> `CC_PINS`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/CC_PINS";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -3593,6 +4516,8 @@ pub mod prf_cc_cost_fiber {
     pub const AT_QUANTUM_LEVEL: &str = "https://uor.foundation/schema/Q0";
     /// `provesIdentity` -> `CC_COST_FIBER`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/CC_COST_FIBER";
+    /// `strategy` -> `Computation`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Computation";
     /// `verified`
     pub const VERIFIED: bool = true;
 }
@@ -3601,6 +4526,8 @@ pub mod prf_cc_cost_fiber {
 pub mod prf_jsat_rr {
     /// `provesIdentity` -> `jsat_RR`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/jsat_RR";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -3611,6 +4538,8 @@ pub mod prf_jsat_rr {
 pub mod prf_jsat_cr {
     /// `provesIdentity` -> `jsat_CR`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/jsat_CR";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -3623,6 +4552,8 @@ pub mod prf_jsat_cc {
     pub const AT_QUANTUM_LEVEL: &str = "https://uor.foundation/schema/Q0";
     /// `provesIdentity` -> `jsat_CC`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/jsat_CC";
+    /// `strategy` -> `Computation`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Computation";
     /// `verified`
     pub const VERIFIED: bool = true;
 }
@@ -3631,6 +4562,8 @@ pub mod prf_jsat_cc {
 pub mod prf_d_8 {
     /// `provesIdentity` -> `D_8`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/D_8";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -3641,6 +4574,8 @@ pub mod prf_d_8 {
 pub mod prf_d_9 {
     /// `provesIdentity` -> `D_9`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/D_9";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -3651,6 +4586,8 @@ pub mod prf_d_9 {
 pub mod prf_exp_1 {
     /// `provesIdentity` -> `EXP_1`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/EXP_1";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -3663,6 +4600,8 @@ pub mod prf_exp_2 {
     pub const AT_QUANTUM_LEVEL: &str = "https://uor.foundation/schema/Q0";
     /// `provesIdentity` -> `EXP_2`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/EXP_2";
+    /// `strategy` -> `Computation`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Computation";
     /// `verified`
     pub const VERIFIED: bool = true;
 }
@@ -3671,6 +4610,8 @@ pub mod prf_exp_2 {
 pub mod prf_exp_3 {
     /// `provesIdentity` -> `EXP_3`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/EXP_3";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -3681,6 +4622,8 @@ pub mod prf_exp_3 {
 pub mod prf_st_3 {
     /// `provesIdentity` -> `ST_3`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/ST_3";
+    /// `strategy` -> `Composition`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Composition";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -3691,6 +4634,8 @@ pub mod prf_st_3 {
 pub mod prf_st_4 {
     /// `provesIdentity` -> `ST_4`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/ST_4";
+    /// `strategy` -> `EulerPoincare`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/EulerPoincare";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -3701,6 +4646,8 @@ pub mod prf_st_4 {
 pub mod prf_st_5 {
     /// `provesIdentity` -> `ST_5`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/ST_5";
+    /// `strategy` -> `Composition`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Composition";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -3715,6 +4662,8 @@ pub mod prf_ts_8 {
     pub const INDUCTIVE_STEP: &str = "https://uor.foundation/proof/prf_TS_4";
     /// `provesIdentity` -> `TS_8`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/TS_8";
+    /// `strategy` -> `BitwiseInduction`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/BitwiseInduction";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `validForKAtLeast`
@@ -3731,6 +4680,8 @@ pub mod prf_ts_9 {
     pub const INDUCTIVE_STEP: &str = "https://uor.foundation/proof/prf_TS_4";
     /// `provesIdentity` -> `TS_9`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/TS_9";
+    /// `strategy` -> `BitwiseInduction`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/BitwiseInduction";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `validForKAtLeast`
@@ -3743,6 +4694,8 @@ pub mod prf_ts_9 {
 pub mod prf_ts_10 {
     /// `provesIdentity` -> `TS_10`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/TS_10";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -3753,6 +4706,8 @@ pub mod prf_ts_10 {
 pub mod prf_qt_8 {
     /// `provesIdentity` -> `QT_8`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/QT_8";
+    /// `strategy` -> `Composition`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Composition";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -3763,6 +4718,8 @@ pub mod prf_qt_8 {
 pub mod prf_qt_9 {
     /// `provesIdentity` -> `QT_9`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/QT_9";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -3773,6 +4730,8 @@ pub mod prf_qt_9 {
 pub mod prf_coeff_1 {
     /// `provesIdentity` -> `COEFF_1`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/COEFF_1";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -3783,6 +4742,8 @@ pub mod prf_coeff_1 {
 pub mod prf_go_1 {
     /// `provesIdentity` -> `GO_1`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/GO_1";
+    /// `strategy` -> `EulerPoincare`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/EulerPoincare";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -3793,6 +4754,8 @@ pub mod prf_go_1 {
 pub mod prf_sr_6 {
     /// `provesIdentity` -> `SR_6`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/SR_6";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -3803,20 +4766,28 @@ pub mod prf_sr_6 {
 pub mod prf_sr_7 {
     /// `provesIdentity` -> `SR_7`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/SR_7";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
     pub const VERIFIED: bool = true;
 }
 
-/// Empirical verification of QM_6: amplitude index set equals monotone pinning trajectories consistent with constraints. Verified by exhaustive enumeration at Q0 through Q3.
+/// Inductive proof of QM_6: amplitude index set equals monotone pinning trajectories. Base case at Q0 by exhaustive trajectory enumeration; inductive step by fiber lattice ordering.
 pub mod prf_qm_6 {
+    /// `baseCase` -> `prf_QM_6_base`
+    pub const BASE_CASE: &str = "https://uor.foundation/proof/prf_QM_6_base";
+    /// `inductiveStep` -> `prf_QM_6_step`
+    pub const INDUCTIVE_STEP: &str = "https://uor.foundation/proof/prf_QM_6_step";
     /// `provesIdentity` -> `QM_6`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/QM_6";
-    /// `quantumLevelRange`
-    pub const QUANTUM_LEVEL_RANGE: &str = "Q0-Q3";
-    /// `verificationMethod`
-    pub const VERIFICATION_METHOD: &str = "exhaustive trajectory enumeration over fiber lattice";
+    /// `strategy` -> `BitwiseInduction`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/BitwiseInduction";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `validForKAtLeast`
+    pub const VALID_FOR_KAT_LEAST: i64 = 0;
     /// `verified`
     pub const VERIFIED: bool = true;
 }
@@ -3825,6 +4796,8 @@ pub mod prf_qm_6 {
 pub mod prf_cic_1 {
     /// `provesIdentity` -> `CIC_1`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/CIC_1";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -3835,6 +4808,8 @@ pub mod prf_cic_1 {
 pub mod prf_cic_2 {
     /// `provesIdentity` -> `CIC_2`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/CIC_2";
+    /// `strategy` -> `GroupPresentation`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/GroupPresentation";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -3845,6 +4820,8 @@ pub mod prf_cic_2 {
 pub mod prf_cic_3 {
     /// `provesIdentity` -> `CIC_3`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/CIC_3";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -3855,6 +4832,8 @@ pub mod prf_cic_3 {
 pub mod prf_cic_4 {
     /// `provesIdentity` -> `CIC_4`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/CIC_4";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -3865,6 +4844,8 @@ pub mod prf_cic_4 {
 pub mod prf_cic_5 {
     /// `provesIdentity` -> `CIC_5`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/CIC_5";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -3875,20 +4856,22 @@ pub mod prf_cic_5 {
 pub mod prf_cic_6 {
     /// `provesIdentity` -> `CIC_6`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/CIC_6";
+    /// `strategy` -> `ProductFormula`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/ProductFormula";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
     pub const VERIFIED: bool = true;
 }
 
-/// Empirical verification of CIC_7: BornRuleVerification issuance coverage.
+/// Axiomatic derivation of CIC_7: BornRuleVerification issuance coverage. Follows by composition from corrected OA_4 (product formula chain) and QM_5 (amplitude normalization).
 pub mod prf_cic_7 {
     /// `provesIdentity` -> `CIC_7`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/CIC_7";
-    /// `quantumLevelRange`
-    pub const QUANTUM_LEVEL_RANGE: &str = "Q0-Q3";
-    /// `verificationMethod`
-    pub const VERIFICATION_METHOD: &str = "Born rule amplitude sum verification over fiber lattice";
+    /// `strategy` -> `ProductFormula`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/ProductFormula";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
     pub const VERIFIED: bool = true;
 }
@@ -3897,6 +4880,8 @@ pub mod prf_cic_7 {
 pub mod prf_gc_1 {
     /// `provesIdentity` -> `GC_1`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/GC_1";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -3907,6 +4892,8 @@ pub mod prf_gc_1 {
 pub mod prf_sr_8 {
     /// `provesIdentity` -> `SR_8`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/SR_8";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = false;
     /// `verified`
@@ -3917,6 +4904,8 @@ pub mod prf_sr_8 {
 pub mod prf_sr_9 {
     /// `provesIdentity` -> `SR_9`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/SR_9";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -3927,6 +4916,8 @@ pub mod prf_sr_9 {
 pub mod prf_sr_10 {
     /// `provesIdentity` -> `SR_10`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/SR_10";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -3937,6 +4928,8 @@ pub mod prf_sr_10 {
 pub mod prf_mc_1 {
     /// `provesIdentity` -> `MC_1`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/MC_1";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -3947,6 +4940,8 @@ pub mod prf_mc_1 {
 pub mod prf_mc_2 {
     /// `provesIdentity` -> `MC_2`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/MC_2";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -3957,6 +4952,8 @@ pub mod prf_mc_2 {
 pub mod prf_mc_3 {
     /// `provesIdentity` -> `MC_3`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/MC_3";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -3967,6 +4964,8 @@ pub mod prf_mc_3 {
 pub mod prf_mc_4 {
     /// `provesIdentity` -> `MC_4`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/MC_4";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -3977,6 +4976,8 @@ pub mod prf_mc_4 {
 pub mod prf_mc_5 {
     /// `provesIdentity` -> `MC_5`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/MC_5";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -3987,6 +4988,8 @@ pub mod prf_mc_5 {
 pub mod prf_mc_6 {
     /// `provesIdentity` -> `MC_6`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/MC_6";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -3997,6 +5000,8 @@ pub mod prf_mc_6 {
 pub mod prf_mc_7 {
     /// `provesIdentity` -> `MC_7`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/MC_7";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -4007,6 +5012,8 @@ pub mod prf_mc_7 {
 pub mod prf_mc_8 {
     /// `provesIdentity` -> `MC_8`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/MC_8";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -4017,6 +5024,8 @@ pub mod prf_mc_8 {
 pub mod prf_wc_1 {
     /// `provesIdentity` -> `WC_1`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/WC_1";
+    /// `strategy` -> `BitwiseInduction`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/BitwiseInduction";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -4027,6 +5036,8 @@ pub mod prf_wc_1 {
 pub mod prf_wc_2 {
     /// `provesIdentity` -> `WC_2`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/WC_2";
+    /// `strategy` -> `BitwiseInduction`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/BitwiseInduction";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -4037,6 +5048,8 @@ pub mod prf_wc_2 {
 pub mod prf_wc_3 {
     /// `provesIdentity` -> `WC_3`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/WC_3";
+    /// `strategy` -> `BitwiseInduction`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/BitwiseInduction";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -4047,6 +5060,8 @@ pub mod prf_wc_3 {
 pub mod prf_wc_4 {
     /// `provesIdentity` -> `WC_4`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/WC_4";
+    /// `strategy` -> `BitwiseInduction`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/BitwiseInduction";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -4057,6 +5072,8 @@ pub mod prf_wc_4 {
 pub mod prf_wc_5 {
     /// `provesIdentity` -> `WC_5`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/WC_5";
+    /// `strategy` -> `BitwiseInduction`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/BitwiseInduction";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -4067,6 +5084,8 @@ pub mod prf_wc_5 {
 pub mod prf_wc_6 {
     /// `provesIdentity` -> `WC_6`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/WC_6";
+    /// `strategy` -> `BitwiseInduction`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/BitwiseInduction";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -4077,6 +5096,8 @@ pub mod prf_wc_6 {
 pub mod prf_wc_7 {
     /// `provesIdentity` -> `WC_7`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/WC_7";
+    /// `strategy` -> `BitwiseInduction`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/BitwiseInduction";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -4087,6 +5108,8 @@ pub mod prf_wc_7 {
 pub mod prf_wc_8 {
     /// `provesIdentity` -> `WC_8`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/WC_8";
+    /// `strategy` -> `BitwiseInduction`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/BitwiseInduction";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -4097,6 +5120,8 @@ pub mod prf_wc_8 {
 pub mod prf_wc_9 {
     /// `provesIdentity` -> `WC_9`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/WC_9";
+    /// `strategy` -> `BitwiseInduction`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/BitwiseInduction";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -4107,6 +5132,8 @@ pub mod prf_wc_9 {
 pub mod prf_wc_10 {
     /// `provesIdentity` -> `WC_10`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/WC_10";
+    /// `strategy` -> `BitwiseInduction`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/BitwiseInduction";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -4117,6 +5144,8 @@ pub mod prf_wc_10 {
 pub mod prf_wc_11 {
     /// `provesIdentity` -> `WC_11`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/WC_11";
+    /// `strategy` -> `BitwiseInduction`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/BitwiseInduction";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -4127,6 +5156,8 @@ pub mod prf_wc_11 {
 pub mod prf_wc_12 {
     /// `provesIdentity` -> `WC_12`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/WC_12";
+    /// `strategy` -> `BitwiseInduction`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/BitwiseInduction";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -4137,6 +5168,8 @@ pub mod prf_wc_12 {
 pub mod prf_oa_1 {
     /// `provesIdentity` -> `OA_1`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/OA_1";
+    /// `strategy` -> `ProductFormula`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/ProductFormula";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -4147,6 +5180,8 @@ pub mod prf_oa_1 {
 pub mod prf_oa_2 {
     /// `provesIdentity` -> `OA_2`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/OA_2";
+    /// `strategy` -> `ProductFormula`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/ProductFormula";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -4157,20 +5192,22 @@ pub mod prf_oa_2 {
 pub mod prf_oa_3 {
     /// `provesIdentity` -> `OA_3`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/OA_3";
+    /// `strategy` -> `ProductFormula`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/ProductFormula";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
     pub const VERIFIED: bool = true;
 }
 
-/// Empirical verification of OA_4: Born rule bridge conditional on amplitude rationality.
+/// Axiomatic derivation of OA_4: Born rule bridge follows from the product formula chain OA_1 (Ostrowski) -> OA_2 (crossing cost) -> OA_3 (Landauer grounding) -> OA_4.
 pub mod prf_oa_4 {
     /// `provesIdentity` -> `OA_4`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/OA_4";
-    /// `quantumLevelRange`
-    pub const QUANTUM_LEVEL_RANGE: &str = "Q0-Q3";
-    /// `verificationMethod`
-    pub const VERIFICATION_METHOD: &str = "empirical verification with rational fiber amplitudes";
+    /// `strategy` -> `ProductFormula`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/ProductFormula";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
     pub const VERIFIED: bool = true;
 }
@@ -4179,6 +5216,8 @@ pub mod prf_oa_4 {
 pub mod prf_oa_5 {
     /// `provesIdentity` -> `OA_5`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/OA_5";
+    /// `strategy` -> `ProductFormula`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/ProductFormula";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -4189,6 +5228,8 @@ pub mod prf_oa_5 {
 pub mod prf_ht_1 {
     /// `provesIdentity` -> `HT_1`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/HT_1";
+    /// `strategy` -> `EulerPoincare`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/EulerPoincare";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -4199,6 +5240,8 @@ pub mod prf_ht_1 {
 pub mod prf_ht_2 {
     /// `provesIdentity` -> `HT_2`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/HT_2";
+    /// `strategy` -> `EulerPoincare`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/EulerPoincare";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -4209,6 +5252,8 @@ pub mod prf_ht_2 {
 pub mod prf_ht_3 {
     /// `provesIdentity` -> `HT_3`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/HT_3";
+    /// `strategy` -> `EulerPoincare`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/EulerPoincare";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -4219,6 +5264,8 @@ pub mod prf_ht_3 {
 pub mod prf_ht_4 {
     /// `provesIdentity` -> `HT_4`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/HT_4";
+    /// `strategy` -> `EulerPoincare`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/EulerPoincare";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -4229,6 +5276,8 @@ pub mod prf_ht_4 {
 pub mod prf_ht_5 {
     /// `provesIdentity` -> `HT_5`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/HT_5";
+    /// `strategy` -> `EulerPoincare`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/EulerPoincare";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -4239,6 +5288,8 @@ pub mod prf_ht_5 {
 pub mod prf_ht_6 {
     /// `provesIdentity` -> `HT_6`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/HT_6";
+    /// `strategy` -> `Composition`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Composition";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -4249,6 +5300,8 @@ pub mod prf_ht_6 {
 pub mod prf_ht_7 {
     /// `provesIdentity` -> `HT_7`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/HT_7";
+    /// `strategy` -> `Composition`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Composition";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -4259,6 +5312,8 @@ pub mod prf_ht_7 {
 pub mod prf_ht_8 {
     /// `provesIdentity` -> `HT_8`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/HT_8";
+    /// `strategy` -> `EulerPoincare`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/EulerPoincare";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -4269,6 +5324,8 @@ pub mod prf_ht_8 {
 pub mod prf_psi_7 {
     /// `provesIdentity` -> `psi_7`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/psi_7";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -4279,6 +5336,8 @@ pub mod prf_psi_7 {
 pub mod prf_psi_8 {
     /// `provesIdentity` -> `psi_8`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/psi_8";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -4289,6 +5348,8 @@ pub mod prf_psi_8 {
 pub mod prf_psi_9 {
     /// `provesIdentity` -> `psi_9`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/psi_9";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -4299,6 +5360,8 @@ pub mod prf_psi_9 {
 pub mod prf_hp_1 {
     /// `provesIdentity` -> `HP_1`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/HP_1";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -4309,6 +5372,8 @@ pub mod prf_hp_1 {
 pub mod prf_hp_2 {
     /// `provesIdentity` -> `HP_2`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/HP_2";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -4319,6 +5384,8 @@ pub mod prf_hp_2 {
 pub mod prf_hp_3 {
     /// `provesIdentity` -> `HP_3`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/HP_3";
+    /// `strategy` -> `Composition`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Composition";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -4329,6 +5396,8 @@ pub mod prf_hp_3 {
 pub mod prf_hp_4 {
     /// `provesIdentity` -> `HP_4`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/HP_4";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -4339,6 +5408,8 @@ pub mod prf_hp_4 {
 pub mod prf_md_1 {
     /// `provesIdentity` -> `MD_1`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/MD_1";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -4349,6 +5420,8 @@ pub mod prf_md_1 {
 pub mod prf_md_2 {
     /// `provesIdentity` -> `MD_2`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/MD_2";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -4359,6 +5432,8 @@ pub mod prf_md_2 {
 pub mod prf_md_3 {
     /// `provesIdentity` -> `MD_3`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/MD_3";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -4369,6 +5444,8 @@ pub mod prf_md_3 {
 pub mod prf_md_4 {
     /// `provesIdentity` -> `MD_4`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/MD_4";
+    /// `strategy` -> `Composition`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Composition";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -4379,6 +5456,8 @@ pub mod prf_md_4 {
 pub mod prf_md_5 {
     /// `provesIdentity` -> `MD_5`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/MD_5";
+    /// `strategy` -> `EulerPoincare`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/EulerPoincare";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -4389,6 +5468,8 @@ pub mod prf_md_5 {
 pub mod prf_md_6 {
     /// `provesIdentity` -> `MD_6`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/MD_6";
+    /// `strategy` -> `EulerPoincare`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/EulerPoincare";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -4399,6 +5480,8 @@ pub mod prf_md_6 {
 pub mod prf_md_7 {
     /// `provesIdentity` -> `MD_7`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/MD_7";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -4409,6 +5492,8 @@ pub mod prf_md_7 {
 pub mod prf_md_8 {
     /// `provesIdentity` -> `MD_8`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/MD_8";
+    /// `strategy` -> `Composition`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Composition";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -4419,6 +5504,8 @@ pub mod prf_md_8 {
 pub mod prf_md_9 {
     /// `provesIdentity` -> `MD_9`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/MD_9";
+    /// `strategy` -> `Composition`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Composition";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -4429,6 +5516,8 @@ pub mod prf_md_9 {
 pub mod prf_md_10 {
     /// `provesIdentity` -> `MD_10`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/MD_10";
+    /// `strategy` -> `Composition`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Composition";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -4439,6 +5528,8 @@ pub mod prf_md_10 {
 pub mod prf_mr_1 {
     /// `provesIdentity` -> `MR_1`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/MR_1";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -4449,6 +5540,8 @@ pub mod prf_mr_1 {
 pub mod prf_mr_2 {
     /// `provesIdentity` -> `MR_2`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/MR_2";
+    /// `strategy` -> `EulerPoincare`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/EulerPoincare";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -4459,6 +5552,8 @@ pub mod prf_mr_2 {
 pub mod prf_mr_3 {
     /// `provesIdentity` -> `MR_3`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/MR_3";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -4469,6 +5564,8 @@ pub mod prf_mr_3 {
 pub mod prf_mr_4 {
     /// `provesIdentity` -> `MR_4`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/MR_4";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -4479,6 +5576,8 @@ pub mod prf_mr_4 {
 pub mod prf_cy_1 {
     /// `provesIdentity` -> `CY_1`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/CY_1";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -4489,6 +5588,8 @@ pub mod prf_cy_1 {
 pub mod prf_cy_2 {
     /// `provesIdentity` -> `CY_2`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/CY_2";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -4499,6 +5600,8 @@ pub mod prf_cy_2 {
 pub mod prf_cy_3 {
     /// `provesIdentity` -> `CY_3`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/CY_3";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -4509,6 +5612,8 @@ pub mod prf_cy_3 {
 pub mod prf_cy_4 {
     /// `provesIdentity` -> `CY_4`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/CY_4";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -4519,6 +5624,8 @@ pub mod prf_cy_4 {
 pub mod prf_cy_5 {
     /// `provesIdentity` -> `CY_5`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/CY_5";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -4529,6 +5636,8 @@ pub mod prf_cy_5 {
 pub mod prf_cy_6 {
     /// `provesIdentity` -> `CY_6`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/CY_6";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -4539,6 +5648,8 @@ pub mod prf_cy_6 {
 pub mod prf_cy_7 {
     /// `provesIdentity` -> `CY_7`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/CY_7";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -4549,6 +5660,8 @@ pub mod prf_cy_7 {
 pub mod prf_bm_1 {
     /// `provesIdentity` -> `BM_1`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/BM_1";
+    /// `strategy` -> `Composition`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Composition";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -4559,6 +5672,8 @@ pub mod prf_bm_1 {
 pub mod prf_bm_2 {
     /// `provesIdentity` -> `BM_2`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/BM_2";
+    /// `strategy` -> `Composition`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Composition";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -4569,6 +5684,8 @@ pub mod prf_bm_2 {
 pub mod prf_bm_3 {
     /// `provesIdentity` -> `BM_3`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/BM_3";
+    /// `strategy` -> `Composition`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Composition";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -4579,6 +5696,8 @@ pub mod prf_bm_3 {
 pub mod prf_bm_4 {
     /// `provesIdentity` -> `BM_4`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/BM_4";
+    /// `strategy` -> `Composition`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Composition";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -4589,6 +5708,8 @@ pub mod prf_bm_4 {
 pub mod prf_bm_5 {
     /// `provesIdentity` -> `BM_5`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/BM_5";
+    /// `strategy` -> `Composition`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Composition";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -4599,6 +5720,8 @@ pub mod prf_bm_5 {
 pub mod prf_bm_6 {
     /// `provesIdentity` -> `BM_6`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/BM_6";
+    /// `strategy` -> `Composition`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Composition";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -4609,6 +5732,8 @@ pub mod prf_bm_6 {
 pub mod prf_gl_1 {
     /// `provesIdentity` -> `GL_1`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/GL_1";
+    /// `strategy` -> `EulerPoincare`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/EulerPoincare";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -4619,6 +5744,8 @@ pub mod prf_gl_1 {
 pub mod prf_gl_2 {
     /// `provesIdentity` -> `GL_2`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/GL_2";
+    /// `strategy` -> `EulerPoincare`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/EulerPoincare";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -4629,6 +5756,8 @@ pub mod prf_gl_2 {
 pub mod prf_gl_3 {
     /// `provesIdentity` -> `GL_3`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/GL_3";
+    /// `strategy` -> `EulerPoincare`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/EulerPoincare";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -4639,6 +5768,8 @@ pub mod prf_gl_3 {
 pub mod prf_gl_4 {
     /// `provesIdentity` -> `GL_4`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/GL_4";
+    /// `strategy` -> `EulerPoincare`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/EulerPoincare";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -4649,6 +5780,8 @@ pub mod prf_gl_4 {
 pub mod prf_nv_1 {
     /// `provesIdentity` -> `NV_1`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/NV_1";
+    /// `strategy` -> `EulerPoincare`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/EulerPoincare";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -4659,6 +5792,8 @@ pub mod prf_nv_1 {
 pub mod prf_nv_2 {
     /// `provesIdentity` -> `NV_2`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/NV_2";
+    /// `strategy` -> `EulerPoincare`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/EulerPoincare";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -4669,6 +5804,8 @@ pub mod prf_nv_2 {
 pub mod prf_nv_3 {
     /// `provesIdentity` -> `NV_3`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/NV_3";
+    /// `strategy` -> `EulerPoincare`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/EulerPoincare";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -4679,6 +5816,8 @@ pub mod prf_nv_3 {
 pub mod prf_nv_4 {
     /// `provesIdentity` -> `NV_4`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/NV_4";
+    /// `strategy` -> `EulerPoincare`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/EulerPoincare";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -4689,6 +5828,8 @@ pub mod prf_nv_4 {
 pub mod prf_sd_1 {
     /// `provesIdentity` -> `SD_1`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/SD_1";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -4699,6 +5840,8 @@ pub mod prf_sd_1 {
 pub mod prf_sd_2 {
     /// `provesIdentity` -> `SD_2`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/SD_2";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -4709,6 +5852,8 @@ pub mod prf_sd_2 {
 pub mod prf_sd_3 {
     /// `provesIdentity` -> `SD_3`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/SD_3";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -4719,6 +5864,8 @@ pub mod prf_sd_3 {
 pub mod prf_sd_4 {
     /// `provesIdentity` -> `SD_4`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/SD_4";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -4729,6 +5876,8 @@ pub mod prf_sd_4 {
 pub mod prf_sd_5 {
     /// `provesIdentity` -> `SD_5`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/SD_5";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -4739,6 +5888,8 @@ pub mod prf_sd_5 {
 pub mod prf_sd_6 {
     /// `provesIdentity` -> `SD_6`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/SD_6";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -4749,6 +5900,8 @@ pub mod prf_sd_6 {
 pub mod prf_sd_7 {
     /// `provesIdentity` -> `SD_7`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/SD_7";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -4759,6 +5912,8 @@ pub mod prf_sd_7 {
 pub mod prf_sd_8 {
     /// `provesIdentity` -> `SD_8`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/SD_8";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -4769,6 +5924,8 @@ pub mod prf_sd_8 {
 pub mod prf_dd_1 {
     /// `provesIdentity` -> `DD_1`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/DD_1";
+    /// `strategy` -> `Composition`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Composition";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -4779,6 +5936,8 @@ pub mod prf_dd_1 {
 pub mod prf_dd_2 {
     /// `provesIdentity` -> `DD_2`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/DD_2";
+    /// `strategy` -> `Composition`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Composition";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -4789,6 +5948,8 @@ pub mod prf_dd_2 {
 pub mod prf_pi_1 {
     /// `provesIdentity` -> `PI_1`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/PI_1";
+    /// `strategy` -> `Composition`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Composition";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -4799,6 +5960,8 @@ pub mod prf_pi_1 {
 pub mod prf_pi_2 {
     /// `provesIdentity` -> `PI_2`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/PI_2";
+    /// `strategy` -> `Composition`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Composition";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -4809,6 +5972,8 @@ pub mod prf_pi_2 {
 pub mod prf_pi_3 {
     /// `provesIdentity` -> `PI_3`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/PI_3";
+    /// `strategy` -> `Composition`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Composition";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -4819,6 +5984,8 @@ pub mod prf_pi_3 {
 pub mod prf_pi_4 {
     /// `provesIdentity` -> `PI_4`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/PI_4";
+    /// `strategy` -> `Composition`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Composition";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -4829,6 +5996,8 @@ pub mod prf_pi_4 {
 pub mod prf_pi_5 {
     /// `provesIdentity` -> `PI_5`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/PI_5";
+    /// `strategy` -> `Composition`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Composition";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -4839,6 +6008,8 @@ pub mod prf_pi_5 {
 pub mod prf_pa_1 {
     /// `provesIdentity` -> `PA_1`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/PA_1";
+    /// `strategy` -> `Composition`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Composition";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -4849,6 +6020,8 @@ pub mod prf_pa_1 {
 pub mod prf_pa_2 {
     /// `provesIdentity` -> `PA_2`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/PA_2";
+    /// `strategy` -> `Composition`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Composition";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -4859,6 +6032,8 @@ pub mod prf_pa_2 {
 pub mod prf_pa_3 {
     /// `provesIdentity` -> `PA_3`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/PA_3";
+    /// `strategy` -> `Composition`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Composition";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -4869,6 +6044,8 @@ pub mod prf_pa_3 {
 pub mod prf_pa_4 {
     /// `provesIdentity` -> `PA_4`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/PA_4";
+    /// `strategy` -> `Composition`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Composition";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -4879,6 +6056,8 @@ pub mod prf_pa_4 {
 pub mod prf_pa_5 {
     /// `provesIdentity` -> `PA_5`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/PA_5";
+    /// `strategy` -> `Composition`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Composition";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -4889,6 +6068,8 @@ pub mod prf_pa_5 {
 pub mod prf_pl_1 {
     /// `provesIdentity` -> `PL_1`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/PL_1";
+    /// `strategy` -> `Composition`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Composition";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -4899,6 +6080,8 @@ pub mod prf_pl_1 {
 pub mod prf_pl_2 {
     /// `provesIdentity` -> `PL_2`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/PL_2";
+    /// `strategy` -> `Composition`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Composition";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -4909,6 +6092,8 @@ pub mod prf_pl_2 {
 pub mod prf_pl_3 {
     /// `provesIdentity` -> `PL_3`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/PL_3";
+    /// `strategy` -> `Composition`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Composition";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -4919,6 +6104,8 @@ pub mod prf_pl_3 {
 pub mod prf_pk_1 {
     /// `provesIdentity` -> `PK_1`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/PK_1";
+    /// `strategy` -> `Composition`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Composition";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -4929,6 +6116,8 @@ pub mod prf_pk_1 {
 pub mod prf_pk_2 {
     /// `provesIdentity` -> `PK_2`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/PK_2";
+    /// `strategy` -> `Composition`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Composition";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -4939,6 +6128,8 @@ pub mod prf_pk_2 {
 pub mod prf_pp_1 {
     /// `provesIdentity` -> `PP_1`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/PP_1";
+    /// `strategy` -> `Composition`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Composition";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -4949,6 +6140,8 @@ pub mod prf_pp_1 {
 pub mod prf_pe_1 {
     /// `provesIdentity` -> `PE_1`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/PE_1";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -4959,6 +6152,8 @@ pub mod prf_pe_1 {
 pub mod prf_pe_2 {
     /// `provesIdentity` -> `PE_2`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/PE_2";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -4969,6 +6164,8 @@ pub mod prf_pe_2 {
 pub mod prf_pe_3 {
     /// `provesIdentity` -> `PE_3`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/PE_3";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -4979,6 +6176,8 @@ pub mod prf_pe_3 {
 pub mod prf_pe_4 {
     /// `provesIdentity` -> `PE_4`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/PE_4";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -4989,6 +6188,8 @@ pub mod prf_pe_4 {
 pub mod prf_pe_5 {
     /// `provesIdentity` -> `PE_5`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/PE_5";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -4999,6 +6200,8 @@ pub mod prf_pe_5 {
 pub mod prf_pe_6 {
     /// `provesIdentity` -> `PE_6`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/PE_6";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -5009,6 +6212,8 @@ pub mod prf_pe_6 {
 pub mod prf_pe_7 {
     /// `provesIdentity` -> `PE_7`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/PE_7";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -5019,6 +6224,8 @@ pub mod prf_pe_7 {
 pub mod prf_pm_1 {
     /// `provesIdentity` -> `PM_1`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/PM_1";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -5029,6 +6236,8 @@ pub mod prf_pm_1 {
 pub mod prf_pm_2 {
     /// `provesIdentity` -> `PM_2`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/PM_2";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -5039,6 +6248,8 @@ pub mod prf_pm_2 {
 pub mod prf_pm_3 {
     /// `provesIdentity` -> `PM_3`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/PM_3";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -5049,6 +6260,8 @@ pub mod prf_pm_3 {
 pub mod prf_pm_4 {
     /// `provesIdentity` -> `PM_4`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/PM_4";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -5059,6 +6272,8 @@ pub mod prf_pm_4 {
 pub mod prf_pm_5 {
     /// `provesIdentity` -> `PM_5`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/PM_5";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -5069,6 +6284,8 @@ pub mod prf_pm_5 {
 pub mod prf_pm_6 {
     /// `provesIdentity` -> `PM_6`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/PM_6";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -5079,6 +6296,8 @@ pub mod prf_pm_6 {
 pub mod prf_pm_7 {
     /// `provesIdentity` -> `PM_7`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/PM_7";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -5089,6 +6308,8 @@ pub mod prf_pm_7 {
 pub mod prf_er_1 {
     /// `provesIdentity` -> `ER_1`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/ER_1";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -5099,6 +6320,8 @@ pub mod prf_er_1 {
 pub mod prf_er_2 {
     /// `provesIdentity` -> `ER_2`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/ER_2";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -5109,6 +6332,8 @@ pub mod prf_er_2 {
 pub mod prf_er_3 {
     /// `provesIdentity` -> `ER_3`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/ER_3";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -5119,6 +6344,8 @@ pub mod prf_er_3 {
 pub mod prf_er_4 {
     /// `provesIdentity` -> `ER_4`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/ER_4";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -5129,6 +6356,8 @@ pub mod prf_er_4 {
 pub mod prf_ea_1 {
     /// `provesIdentity` -> `EA_1`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/EA_1";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -5139,6 +6368,8 @@ pub mod prf_ea_1 {
 pub mod prf_ea_2 {
     /// `provesIdentity` -> `EA_2`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/EA_2";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -5149,6 +6380,8 @@ pub mod prf_ea_2 {
 pub mod prf_ea_3 {
     /// `provesIdentity` -> `EA_3`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/EA_3";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -5159,6 +6392,8 @@ pub mod prf_ea_3 {
 pub mod prf_ea_4 {
     /// `provesIdentity` -> `EA_4`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/EA_4";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -5169,6 +6404,8 @@ pub mod prf_ea_4 {
 pub mod prf_oe_1 {
     /// `provesIdentity` -> `OE_1`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/OE_1";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -5179,6 +6416,8 @@ pub mod prf_oe_1 {
 pub mod prf_oe_2 {
     /// `provesIdentity` -> `OE_2`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/OE_2";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -5189,6 +6428,8 @@ pub mod prf_oe_2 {
 pub mod prf_oe_3 {
     /// `provesIdentity` -> `OE_3`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/OE_3";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -5199,6 +6440,8 @@ pub mod prf_oe_3 {
 pub mod prf_oe_4a {
     /// `provesIdentity` -> `OE_4a`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/OE_4a";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -5209,6 +6452,8 @@ pub mod prf_oe_4a {
 pub mod prf_oe_4b {
     /// `provesIdentity` -> `OE_4b`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/OE_4b";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -5219,6 +6464,8 @@ pub mod prf_oe_4b {
 pub mod prf_oe_4c {
     /// `provesIdentity` -> `OE_4c`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/OE_4c";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -5229,6 +6476,8 @@ pub mod prf_oe_4c {
 pub mod prf_cs_1 {
     /// `provesIdentity` -> `CS_1`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/CS_1";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -5239,6 +6488,8 @@ pub mod prf_cs_1 {
 pub mod prf_cs_2 {
     /// `provesIdentity` -> `CS_2`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/CS_2";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -5249,6 +6500,8 @@ pub mod prf_cs_2 {
 pub mod prf_cs_3 {
     /// `provesIdentity` -> `CS_3`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/CS_3";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -5259,6 +6512,8 @@ pub mod prf_cs_3 {
 pub mod prf_cs_4 {
     /// `provesIdentity` -> `CS_4`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/CS_4";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -5269,6 +6524,8 @@ pub mod prf_cs_4 {
 pub mod prf_cs_5 {
     /// `provesIdentity` -> `CS_5`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/CS_5";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -5279,6 +6536,8 @@ pub mod prf_cs_5 {
 pub mod prf_fa_1 {
     /// `provesIdentity` -> `FA_1`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/FA_1";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -5289,6 +6548,8 @@ pub mod prf_fa_1 {
 pub mod prf_fa_2 {
     /// `provesIdentity` -> `FA_2`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/FA_2";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -5299,6 +6560,8 @@ pub mod prf_fa_2 {
 pub mod prf_fa_3 {
     /// `provesIdentity` -> `FA_3`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/FA_3";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -5309,6 +6572,8 @@ pub mod prf_fa_3 {
 pub mod prf_sw_1 {
     /// `provesIdentity` -> `SW_1`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/SW_1";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -5319,6 +6584,8 @@ pub mod prf_sw_1 {
 pub mod prf_sw_2 {
     /// `provesIdentity` -> `SW_2`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/SW_2";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -5329,6 +6596,8 @@ pub mod prf_sw_2 {
 pub mod prf_sw_3 {
     /// `provesIdentity` -> `SW_3`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/SW_3";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -5339,6 +6608,8 @@ pub mod prf_sw_3 {
 pub mod prf_sw_4 {
     /// `provesIdentity` -> `SW_4`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/SW_4";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -5349,6 +6620,8 @@ pub mod prf_sw_4 {
 pub mod prf_ls_1 {
     /// `provesIdentity` -> `LS_1`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/LS_1";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -5359,6 +6632,8 @@ pub mod prf_ls_1 {
 pub mod prf_ls_2 {
     /// `provesIdentity` -> `LS_2`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/LS_2";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -5369,6 +6644,8 @@ pub mod prf_ls_2 {
 pub mod prf_ls_3 {
     /// `provesIdentity` -> `LS_3`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/LS_3";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -5379,6 +6656,8 @@ pub mod prf_ls_3 {
 pub mod prf_ls_4 {
     /// `provesIdentity` -> `LS_4`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/LS_4";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -5389,6 +6668,8 @@ pub mod prf_ls_4 {
 pub mod prf_tj_1 {
     /// `provesIdentity` -> `TJ_1`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/TJ_1";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -5399,6 +6680,8 @@ pub mod prf_tj_1 {
 pub mod prf_tj_2 {
     /// `provesIdentity` -> `TJ_2`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/TJ_2";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -5409,6 +6692,8 @@ pub mod prf_tj_2 {
 pub mod prf_tj_3 {
     /// `provesIdentity` -> `TJ_3`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/TJ_3";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -5419,6 +6704,8 @@ pub mod prf_tj_3 {
 pub mod prf_ap_1 {
     /// `provesIdentity` -> `AP_1`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/AP_1";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -5429,6 +6716,8 @@ pub mod prf_ap_1 {
 pub mod prf_ap_2 {
     /// `provesIdentity` -> `AP_2`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/AP_2";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -5439,6 +6728,8 @@ pub mod prf_ap_2 {
 pub mod prf_ap_3 {
     /// `provesIdentity` -> `AP_3`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/AP_3";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -5449,6 +6740,8 @@ pub mod prf_ap_3 {
 pub mod prf_ec_1 {
     /// `provesIdentity` -> `EC_1`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/EC_1";
+    /// `strategy` -> `EulerPoincare`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/EulerPoincare";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -5459,6 +6752,8 @@ pub mod prf_ec_1 {
 pub mod prf_ec_2 {
     /// `provesIdentity` -> `EC_2`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/EC_2";
+    /// `strategy` -> `EulerPoincare`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/EulerPoincare";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -5469,6 +6764,8 @@ pub mod prf_ec_2 {
 pub mod prf_ec_3 {
     /// `provesIdentity` -> `EC_3`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/EC_3";
+    /// `strategy` -> `EulerPoincare`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/EulerPoincare";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -5479,6 +6776,8 @@ pub mod prf_ec_3 {
 pub mod prf_ec_4 {
     /// `provesIdentity` -> `EC_4`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/EC_4";
+    /// `strategy` -> `EulerPoincare`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/EulerPoincare";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -5489,6 +6788,8 @@ pub mod prf_ec_4 {
 pub mod prf_ec_4a {
     /// `provesIdentity` -> `EC_4a`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/EC_4a";
+    /// `strategy` -> `EulerPoincare`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/EulerPoincare";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -5499,6 +6800,8 @@ pub mod prf_ec_4a {
 pub mod prf_ec_4b {
     /// `provesIdentity` -> `EC_4b`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/EC_4b";
+    /// `strategy` -> `EulerPoincare`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/EulerPoincare";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -5509,6 +6812,8 @@ pub mod prf_ec_4b {
 pub mod prf_ec_4c {
     /// `provesIdentity` -> `EC_4c`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/EC_4c";
+    /// `strategy` -> `EulerPoincare`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/EulerPoincare";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -5519,6 +6824,8 @@ pub mod prf_ec_4c {
 pub mod prf_ec_5 {
     /// `provesIdentity` -> `EC_5`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/EC_5";
+    /// `strategy` -> `EulerPoincare`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/EulerPoincare";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -5529,6 +6836,8 @@ pub mod prf_ec_5 {
 pub mod prf_da_1 {
     /// `provesIdentity` -> `DA_1`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/DA_1";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -5539,6 +6848,8 @@ pub mod prf_da_1 {
 pub mod prf_da_2 {
     /// `provesIdentity` -> `DA_2`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/DA_2";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -5549,6 +6860,8 @@ pub mod prf_da_2 {
 pub mod prf_da_3 {
     /// `provesIdentity` -> `DA_3`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/DA_3";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -5559,6 +6872,8 @@ pub mod prf_da_3 {
 pub mod prf_da_4 {
     /// `provesIdentity` -> `DA_4`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/DA_4";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -5569,6 +6884,8 @@ pub mod prf_da_4 {
 pub mod prf_da_5 {
     /// `provesIdentity` -> `DA_5`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/DA_5";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -5579,6 +6896,8 @@ pub mod prf_da_5 {
 pub mod prf_da_6 {
     /// `provesIdentity` -> `DA_6`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/DA_6";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -5589,6 +6908,8 @@ pub mod prf_da_6 {
 pub mod prf_da_7 {
     /// `provesIdentity` -> `DA_7`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/DA_7";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -5599,6 +6920,8 @@ pub mod prf_da_7 {
 pub mod prf_in_1 {
     /// `provesIdentity` -> `IN_1`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/IN_1";
+    /// `strategy` -> `Composition`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Composition";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -5609,6 +6932,8 @@ pub mod prf_in_1 {
 pub mod prf_in_2 {
     /// `provesIdentity` -> `IN_2`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/IN_2";
+    /// `strategy` -> `Composition`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Composition";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -5619,6 +6944,8 @@ pub mod prf_in_2 {
 pub mod prf_in_3 {
     /// `provesIdentity` -> `IN_3`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/IN_3";
+    /// `strategy` -> `Composition`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Composition";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -5629,6 +6956,8 @@ pub mod prf_in_3 {
 pub mod prf_in_4 {
     /// `provesIdentity` -> `IN_4`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/IN_4";
+    /// `strategy` -> `Composition`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Composition";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -5639,6 +6968,8 @@ pub mod prf_in_4 {
 pub mod prf_in_5 {
     /// `provesIdentity` -> `IN_5`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/IN_5";
+    /// `strategy` -> `Composition`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Composition";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -5649,6 +6980,8 @@ pub mod prf_in_5 {
 pub mod prf_in_6 {
     /// `provesIdentity` -> `IN_6`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/IN_6";
+    /// `strategy` -> `Composition`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Composition";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -5659,6 +6992,8 @@ pub mod prf_in_6 {
 pub mod prf_in_7 {
     /// `provesIdentity` -> `IN_7`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/IN_7";
+    /// `strategy` -> `Composition`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Composition";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -5669,6 +7004,8 @@ pub mod prf_in_7 {
 pub mod prf_in_8 {
     /// `provesIdentity` -> `IN_8`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/IN_8";
+    /// `strategy` -> `Composition`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Composition";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -5679,6 +7016,8 @@ pub mod prf_in_8 {
 pub mod prf_in_9 {
     /// `provesIdentity` -> `IN_9`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/IN_9";
+    /// `strategy` -> `Composition`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Composition";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -5689,6 +7028,8 @@ pub mod prf_in_9 {
 pub mod prf_as_1 {
     /// `provesIdentity` -> `AS_1`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/AS_1";
+    /// `strategy` -> `Composition`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Composition";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -5699,6 +7040,8 @@ pub mod prf_as_1 {
 pub mod prf_as_2 {
     /// `provesIdentity` -> `AS_2`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/AS_2";
+    /// `strategy` -> `Composition`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Composition";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -5709,6 +7052,8 @@ pub mod prf_as_2 {
 pub mod prf_as_3 {
     /// `provesIdentity` -> `AS_3`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/AS_3";
+    /// `strategy` -> `Composition`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Composition";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -5719,6 +7064,8 @@ pub mod prf_as_3 {
 pub mod prf_as_4 {
     /// `provesIdentity` -> `AS_4`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/AS_4";
+    /// `strategy` -> `Composition`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Composition";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -5729,6 +7076,8 @@ pub mod prf_as_4 {
 pub mod prf_mo_1 {
     /// `provesIdentity` -> `MO_1`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/MO_1";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -5739,6 +7088,8 @@ pub mod prf_mo_1 {
 pub mod prf_mo_2 {
     /// `provesIdentity` -> `MO_2`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/MO_2";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -5749,6 +7100,8 @@ pub mod prf_mo_2 {
 pub mod prf_mo_3 {
     /// `provesIdentity` -> `MO_3`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/MO_3";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -5759,6 +7112,8 @@ pub mod prf_mo_3 {
 pub mod prf_mo_4 {
     /// `provesIdentity` -> `MO_4`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/MO_4";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -5769,6 +7124,8 @@ pub mod prf_mo_4 {
 pub mod prf_mo_5 {
     /// `provesIdentity` -> `MO_5`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/MO_5";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -5779,6 +7136,8 @@ pub mod prf_mo_5 {
 pub mod prf_op_1 {
     /// `provesIdentity` -> `OP_1`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/OP_1";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -5789,6 +7148,8 @@ pub mod prf_op_1 {
 pub mod prf_op_2 {
     /// `provesIdentity` -> `OP_2`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/OP_2";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -5799,6 +7160,8 @@ pub mod prf_op_2 {
 pub mod prf_op_3 {
     /// `provesIdentity` -> `OP_3`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/OP_3";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -5809,6 +7172,8 @@ pub mod prf_op_3 {
 pub mod prf_op_4 {
     /// `provesIdentity` -> `OP_4`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/OP_4";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -5819,6 +7184,8 @@ pub mod prf_op_4 {
 pub mod prf_op_5 {
     /// `provesIdentity` -> `OP_5`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/OP_5";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -5829,6 +7196,8 @@ pub mod prf_op_5 {
 pub mod prf_fx_1 {
     /// `provesIdentity` -> `FX_1`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/FX_1";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -5839,6 +7208,8 @@ pub mod prf_fx_1 {
 pub mod prf_fx_2 {
     /// `provesIdentity` -> `FX_2`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/FX_2";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -5849,6 +7220,8 @@ pub mod prf_fx_2 {
 pub mod prf_fx_3 {
     /// `provesIdentity` -> `FX_3`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/FX_3";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -5859,6 +7232,8 @@ pub mod prf_fx_3 {
 pub mod prf_fx_4 {
     /// `provesIdentity` -> `FX_4`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/FX_4";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -5869,6 +7244,8 @@ pub mod prf_fx_4 {
 pub mod prf_fx_5 {
     /// `provesIdentity` -> `FX_5`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/FX_5";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -5879,6 +7256,8 @@ pub mod prf_fx_5 {
 pub mod prf_fx_6 {
     /// `provesIdentity` -> `FX_6`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/FX_6";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -5889,6 +7268,8 @@ pub mod prf_fx_6 {
 pub mod prf_fx_7 {
     /// `provesIdentity` -> `FX_7`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/FX_7";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -5899,6 +7280,8 @@ pub mod prf_fx_7 {
 pub mod prf_pr_1 {
     /// `provesIdentity` -> `PR_1`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/PR_1";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -5909,6 +7292,8 @@ pub mod prf_pr_1 {
 pub mod prf_pr_2 {
     /// `provesIdentity` -> `PR_2`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/PR_2";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -5919,6 +7304,8 @@ pub mod prf_pr_2 {
 pub mod prf_pr_3 {
     /// `provesIdentity` -> `PR_3`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/PR_3";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -5929,6 +7316,8 @@ pub mod prf_pr_3 {
 pub mod prf_pr_4 {
     /// `provesIdentity` -> `PR_4`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/PR_4";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -5939,6 +7328,8 @@ pub mod prf_pr_4 {
 pub mod prf_pr_5 {
     /// `provesIdentity` -> `PR_5`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/PR_5";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -5949,6 +7340,8 @@ pub mod prf_pr_5 {
 pub mod prf_cg_1 {
     /// `provesIdentity` -> `CG_1`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/CG_1";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -5959,6 +7352,8 @@ pub mod prf_cg_1 {
 pub mod prf_cg_2 {
     /// `provesIdentity` -> `CG_2`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/CG_2";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -5969,6 +7364,8 @@ pub mod prf_cg_2 {
 pub mod prf_dis_1 {
     /// `provesIdentity` -> `DIS_1`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/DIS_1";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -5979,6 +7376,8 @@ pub mod prf_dis_1 {
 pub mod prf_dis_2 {
     /// `provesIdentity` -> `DIS_2`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/DIS_2";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -5989,6 +7388,8 @@ pub mod prf_dis_2 {
 pub mod prf_par_1 {
     /// `provesIdentity` -> `PAR_1`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/PAR_1";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -5999,6 +7400,8 @@ pub mod prf_par_1 {
 pub mod prf_par_2 {
     /// `provesIdentity` -> `PAR_2`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/PAR_2";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -6009,6 +7412,8 @@ pub mod prf_par_2 {
 pub mod prf_par_3 {
     /// `provesIdentity` -> `PAR_3`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/PAR_3";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -6019,6 +7424,8 @@ pub mod prf_par_3 {
 pub mod prf_par_4 {
     /// `provesIdentity` -> `PAR_4`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/PAR_4";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -6029,6 +7436,8 @@ pub mod prf_par_4 {
 pub mod prf_par_5 {
     /// `provesIdentity` -> `PAR_5`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/PAR_5";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -6039,6 +7448,8 @@ pub mod prf_par_5 {
 pub mod prf_ho_1 {
     /// `provesIdentity` -> `HO_1`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/HO_1";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -6049,6 +7460,8 @@ pub mod prf_ho_1 {
 pub mod prf_ho_2 {
     /// `provesIdentity` -> `HO_2`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/HO_2";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -6059,6 +7472,8 @@ pub mod prf_ho_2 {
 pub mod prf_ho_3 {
     /// `provesIdentity` -> `HO_3`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/HO_3";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -6069,6 +7484,8 @@ pub mod prf_ho_3 {
 pub mod prf_ho_4 {
     /// `provesIdentity` -> `HO_4`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/HO_4";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -6079,6 +7496,8 @@ pub mod prf_ho_4 {
 pub mod prf_str_1 {
     /// `provesIdentity` -> `STR_1`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/STR_1";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -6089,6 +7508,8 @@ pub mod prf_str_1 {
 pub mod prf_str_2 {
     /// `provesIdentity` -> `STR_2`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/STR_2";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -6099,6 +7520,8 @@ pub mod prf_str_2 {
 pub mod prf_str_3 {
     /// `provesIdentity` -> `STR_3`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/STR_3";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -6109,6 +7532,8 @@ pub mod prf_str_3 {
 pub mod prf_str_4 {
     /// `provesIdentity` -> `STR_4`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/STR_4";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -6119,6 +7544,8 @@ pub mod prf_str_4 {
 pub mod prf_str_5 {
     /// `provesIdentity` -> `STR_5`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/STR_5";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -6129,6 +7556,8 @@ pub mod prf_str_5 {
 pub mod prf_str_6 {
     /// `provesIdentity` -> `STR_6`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/STR_6";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -6139,6 +7568,8 @@ pub mod prf_str_6 {
 pub mod prf_flr_1 {
     /// `provesIdentity` -> `FLR_1`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/FLR_1";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -6149,6 +7580,8 @@ pub mod prf_flr_1 {
 pub mod prf_flr_2 {
     /// `provesIdentity` -> `FLR_2`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/FLR_2";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -6159,6 +7592,8 @@ pub mod prf_flr_2 {
 pub mod prf_flr_3 {
     /// `provesIdentity` -> `FLR_3`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/FLR_3";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -6169,6 +7604,8 @@ pub mod prf_flr_3 {
 pub mod prf_flr_4 {
     /// `provesIdentity` -> `FLR_4`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/FLR_4";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -6179,6 +7616,8 @@ pub mod prf_flr_4 {
 pub mod prf_flr_5 {
     /// `provesIdentity` -> `FLR_5`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/FLR_5";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -6189,6 +7628,8 @@ pub mod prf_flr_5 {
 pub mod prf_flr_6 {
     /// `provesIdentity` -> `FLR_6`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/FLR_6";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -6199,6 +7640,8 @@ pub mod prf_flr_6 {
 pub mod prf_ln_1 {
     /// `provesIdentity` -> `LN_1`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/LN_1";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -6209,6 +7652,8 @@ pub mod prf_ln_1 {
 pub mod prf_ln_2 {
     /// `provesIdentity` -> `LN_2`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/LN_2";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -6219,6 +7664,8 @@ pub mod prf_ln_2 {
 pub mod prf_ln_3 {
     /// `provesIdentity` -> `LN_3`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/LN_3";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -6229,6 +7676,8 @@ pub mod prf_ln_3 {
 pub mod prf_ln_4 {
     /// `provesIdentity` -> `LN_4`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/LN_4";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -6239,6 +7688,8 @@ pub mod prf_ln_4 {
 pub mod prf_ln_5 {
     /// `provesIdentity` -> `LN_5`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/LN_5";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -6249,6 +7700,8 @@ pub mod prf_ln_5 {
 pub mod prf_ln_6 {
     /// `provesIdentity` -> `LN_6`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/LN_6";
+    /// `strategy` -> `EulerPoincare`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/EulerPoincare";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -6259,6 +7712,8 @@ pub mod prf_ln_6 {
 pub mod prf_sb_1 {
     /// `provesIdentity` -> `SB_1`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/SB_1";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -6269,6 +7724,8 @@ pub mod prf_sb_1 {
 pub mod prf_sb_2 {
     /// `provesIdentity` -> `SB_2`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/SB_2";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -6279,6 +7736,8 @@ pub mod prf_sb_2 {
 pub mod prf_sb_3 {
     /// `provesIdentity` -> `SB_3`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/SB_3";
+    /// `strategy` -> `EulerPoincare`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/EulerPoincare";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -6289,6 +7748,8 @@ pub mod prf_sb_3 {
 pub mod prf_sb_4 {
     /// `provesIdentity` -> `SB_4`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/SB_4";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -6299,6 +7760,8 @@ pub mod prf_sb_4 {
 pub mod prf_sb_5 {
     /// `provesIdentity` -> `SB_5`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/SB_5";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -6309,6 +7772,8 @@ pub mod prf_sb_5 {
 pub mod prf_sb_6 {
     /// `provesIdentity` -> `SB_6`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/SB_6";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -6319,6 +7784,8 @@ pub mod prf_sb_6 {
 pub mod prf_br_1 {
     /// `provesIdentity` -> `BR_1`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/BR_1";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -6329,6 +7796,8 @@ pub mod prf_br_1 {
 pub mod prf_br_2 {
     /// `provesIdentity` -> `BR_2`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/BR_2";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -6339,6 +7808,8 @@ pub mod prf_br_2 {
 pub mod prf_br_3 {
     /// `provesIdentity` -> `BR_3`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/BR_3";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -6349,6 +7820,8 @@ pub mod prf_br_3 {
 pub mod prf_br_4 {
     /// `provesIdentity` -> `BR_4`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/BR_4";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -6359,6 +7832,8 @@ pub mod prf_br_4 {
 pub mod prf_br_5 {
     /// `provesIdentity` -> `BR_5`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/BR_5";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -6369,6 +7844,8 @@ pub mod prf_br_5 {
 pub mod prf_rg_1 {
     /// `provesIdentity` -> `RG_1`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/RG_1";
+    /// `strategy` -> `EulerPoincare`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/EulerPoincare";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -6379,6 +7856,8 @@ pub mod prf_rg_1 {
 pub mod prf_rg_2 {
     /// `provesIdentity` -> `RG_2`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/RG_2";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -6389,6 +7868,8 @@ pub mod prf_rg_2 {
 pub mod prf_rg_3 {
     /// `provesIdentity` -> `RG_3`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/RG_3";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -6399,6 +7880,8 @@ pub mod prf_rg_3 {
 pub mod prf_rg_4 {
     /// `provesIdentity` -> `RG_4`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/RG_4";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -6409,6 +7892,8 @@ pub mod prf_rg_4 {
 pub mod prf_io_1 {
     /// `provesIdentity` -> `IO_1`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/IO_1";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -6419,6 +7904,8 @@ pub mod prf_io_1 {
 pub mod prf_io_2 {
     /// `provesIdentity` -> `IO_2`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/IO_2";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -6429,6 +7916,8 @@ pub mod prf_io_2 {
 pub mod prf_io_3 {
     /// `provesIdentity` -> `IO_3`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/IO_3";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -6439,6 +7928,8 @@ pub mod prf_io_3 {
 pub mod prf_io_4 {
     /// `provesIdentity` -> `IO_4`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/IO_4";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -6449,6 +7940,8 @@ pub mod prf_io_4 {
 pub mod prf_io_5 {
     /// `provesIdentity` -> `IO_5`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/IO_5";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -6459,6 +7952,8 @@ pub mod prf_io_5 {
 pub mod prf_cs_6 {
     /// `provesIdentity` -> `CS_6`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/CS_6";
+    /// `strategy` -> `Simplification`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`
@@ -6469,6 +7964,8 @@ pub mod prf_cs_6 {
 pub mod prf_cs_7 {
     /// `provesIdentity` -> `CS_7`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/CS_7";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
     pub const UNIVERSAL_SCOPE: bool = true;
     /// `verified`

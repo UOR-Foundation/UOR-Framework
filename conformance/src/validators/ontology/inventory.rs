@@ -142,6 +142,30 @@ pub fn validate(artifacts: &Path) -> Result<ConformanceReport> {
     validate_compile_unit_vocabulary(&mut report);
     validate_compile_unit_identities(&mut report);
 
+    // Amendment 85: InductiveProof acyclicity
+    validate_inductive_proof_acyclicity(&mut report);
+
+    // Amendment 86: EmpiricalVerification elimination
+    validate_no_empirical_verification(&mut report);
+
+    // Amendment 87: Proof enrichment
+    validate_proof_strategy_coverage(&mut report);
+    validate_proof_strategy_vocabulary(&mut report);
+    validate_proof_dependency_acyclicity(&mut report);
+
+    // Amendment 89: Identity property typing
+    validate_identity_properties_typed(&mut report);
+
+    // Amendment 90: String property cleanup
+    validate_removed_properties_absent(&mut report);
+    validate_legitimate_string_properties_only(&mut report);
+
+    // Amendment 91: Identity individual AST rewrite
+    validate_identity_values_are_irirefs(&mut report);
+
+    // Amendment 92: Proof derivation typing
+    validate_formal_derivation_typed(&mut report);
+
     // Validate the built JSON-LD artifact
     let json_path = artifacts.join("uor.foundation.jsonld");
     if !json_path.exists() {
@@ -919,18 +943,13 @@ fn validate_quantum_scope(report: &mut ConformanceReport) {
     let crit_type = "https://uor.foundation/proof/CriticalIdentityProof";
     let axiomatic_type = "https://uor.foundation/proof/AxiomaticDerivation";
     let inductive_type = "https://uor.foundation/proof/InductiveProof";
-    let empirical_type = "https://uor.foundation/proof/EmpiricalVerification";
     let at_ql_prop = "https://uor.foundation/proof/atQuantumLevel";
     let univ_prop = "https://uor.foundation/proof/universalScope";
-    let qlr_prop = "https://uor.foundation/proof/quantumLevelRange";
-    let vm_prop = "https://uor.foundation/proof/verificationMethod";
-    let verified_prop = "https://uor.foundation/proof/verified";
 
     let mut all_valid = true;
     let mut cert_count = 0usize;
     let mut axiomatic_count = 0usize;
     let mut inductive_count = 0usize;
-    let mut empirical_count = 0usize;
 
     if let Some(proof_module) = ontology.find_namespace("proof") {
         for ind in &proof_module.individuals {
@@ -1004,73 +1023,14 @@ fn validate_quantum_scope(report: &mut ConformanceReport) {
                 }
             }
 
-            // Amendment 47: EmpiricalVerification branch
-            let is_empirical = ind.type_ == empirical_type;
-
-            if is_empirical {
-                empirical_count += 1;
-                let has_verified = ind.properties.iter().any(|(k, _)| *k == verified_prop);
-                let has_qlr = ind.properties.iter().any(|(k, _)| *k == qlr_prop);
-                let has_vm = ind.properties.iter().any(|(k, _)| *k == vm_prop);
-                let has_univ = ind.properties.iter().any(|(k, _)| *k == univ_prop);
-                let has_ql = ind.properties.iter().any(|(k, _)| *k == at_ql_prop);
-                if !has_verified {
-                    report.push(TestResult::fail(
-                        validator,
-                        format!("EmpiricalVerification {} missing verified", ind.id),
-                    ));
-                    all_valid = false;
-                }
-                if !has_qlr {
-                    report.push(TestResult::fail(
-                        validator,
-                        format!("EmpiricalVerification {} missing quantumLevelRange", ind.id),
-                    ));
-                    all_valid = false;
-                }
-                if !has_vm {
-                    report.push(TestResult::fail(
-                        validator,
-                        format!(
-                            "EmpiricalVerification {} missing verificationMethod",
-                            ind.id
-                        ),
-                    ));
-                    all_valid = false;
-                }
-                if has_univ {
-                    report.push(TestResult::fail(
-                        validator,
-                        format!(
-                            "EmpiricalVerification {} should not have universalScope",
-                            ind.id
-                        ),
-                    ));
-                    all_valid = false;
-                }
-                if has_ql {
-                    report.push(TestResult::fail(
-                        validator,
-                        format!(
-                            "EmpiricalVerification {} should not have atQuantumLevel",
-                            ind.id
-                        ),
-                    ));
-                    all_valid = false;
-                }
-            }
-
-            // Amendment 47: Exhaustive type guard — flag unrecognized proof types
+            // Amendment 47/86: Exhaustive type guard — flag unrecognized proof types
+            // (EmpiricalVerification branch removed in Amendment 86)
             let known_exempt = [
                 "https://uor.foundation/proof/ImpossibilityWitness",
                 "https://uor.foundation/proof/MorphospaceRecord",
+                "https://uor.foundation/proof/ProofStrategy",
             ];
-            if !is_cert
-                && !is_axiomatic
-                && !is_inductive
-                && !is_empirical
-                && !known_exempt.contains(&ind.type_)
-            {
+            if !is_cert && !is_axiomatic && !is_inductive && !known_exempt.contains(&ind.type_) {
                 report.push(TestResult::fail(
                     validator,
                     format!(
@@ -1084,14 +1044,13 @@ fn validate_quantum_scope(report: &mut ConformanceReport) {
         }
     }
 
-    if all_valid && (cert_count + axiomatic_count + inductive_count + empirical_count) > 0 {
+    if all_valid && (cert_count + axiomatic_count + inductive_count) > 0 {
         report.push(TestResult::pass(
             validator,
             format!(
                 "Quantum scope valid: {} computation certificates, \
-                 {} axiomatic derivations, {} inductive proofs, \
-                 {} empirical verifications",
-                cert_count, axiomatic_count, inductive_count, empirical_count
+                 {} axiomatic derivations, {} inductive proofs",
+                cert_count, axiomatic_count, inductive_count
             ),
         ));
     }
@@ -2159,8 +2118,28 @@ fn validate_certificate_issuance_coverage(report: &mut ConformanceReport) {
         .filter(|i| i.type_ == identity_type)
         .collect();
 
+    // Structural certificate subclasses that serve as containers rather
+    // than identity targets — exempt from the "governing Identity" check.
+    let structural_exempt: HashSet<&str> = [
+        "https://uor.foundation/cert/TransformCertificate",
+        "https://uor.foundation/cert/IsometryCertificate",
+        "https://uor.foundation/cert/InvolutionCertificate",
+        "https://uor.foundation/cert/CompletenessCertificate",
+        "https://uor.foundation/cert/SaturationCertificate",
+        "https://uor.foundation/cert/GeodesicCertificate",
+        "https://uor.foundation/cert/MeasurementCertificate",
+        "https://uor.foundation/cert/BornRuleVerification",
+        "https://uor.foundation/cert/LiftChainCertificate",
+        "https://uor.foundation/morphism/GroundingCertificate",
+        "https://uor.foundation/parallel/DisjointnessCertificate",
+    ]
+    .into();
+
     let mut all_governed = true;
     for cert_class in &cert_subclasses {
+        if structural_exempt.contains(cert_class.id) {
+            continue;
+        }
         let governed = identities.iter().any(|id| {
             id.properties
                 .iter()
@@ -2569,6 +2548,16 @@ fn validate_iri_ref_targets(report: &mut ConformanceReport) {
         .flat_map(|m| m.classes.iter())
         .map(|c| c.id)
         .collect();
+    let known_properties: HashSet<&str> = ontology
+        .namespaces
+        .iter()
+        .flat_map(|m| m.properties.iter())
+        .map(|p| p.id)
+        .collect();
+
+    // Well-known external IRIs that are valid targets but not defined
+    // in the ontology itself.
+    let known_external: HashSet<&str> = ["http://www.w3.org/2001/XMLSchema#decimal"].into();
 
     let mut violations = Vec::new();
     for ns in &ontology.namespaces {
@@ -2580,7 +2569,11 @@ fn validate_iri_ref_targets(report: &mut ConformanceReport) {
                     _ => vec![],
                 };
                 for iri in iris {
-                    if !known_individuals.contains(iri) && !known_classes.contains(iri) {
+                    if !known_individuals.contains(iri)
+                        && !known_classes.contains(iri)
+                        && !known_properties.contains(iri)
+                        && !known_external.contains(iri)
+                    {
                         violations.push(format!(
                             "{}: property {} references unknown IRI {}",
                             ind.label, k, iri
@@ -4638,5 +4631,588 @@ fn validate_compile_unit_identities(report: &mut ConformanceReport) {
             validator,
             "CS_6 (Pipeline) and CS_7 (Algebraic) compile unit identities verified",
         ));
+    }
+}
+
+/// Amendment 85: Validates that no `InductiveProof` has self-referential
+/// `baseCase` or `inductiveStep` properties.
+fn validate_inductive_proof_acyclicity(report: &mut ConformanceReport) {
+    let ontology = uor_ontology::Ontology::full();
+    let validator = "ontology/inventory/inductive_proof_acyclicity";
+
+    let inductive_type = "https://uor.foundation/proof/InductiveProof";
+    let base_case_prop = "https://uor.foundation/proof/baseCase";
+    let step_prop = "https://uor.foundation/proof/inductiveStep";
+
+    let mut violations = Vec::new();
+
+    for ns in &ontology.namespaces {
+        for ind in &ns.individuals {
+            if ind.type_ != inductive_type {
+                continue;
+            }
+            for (prop, val) in ind.properties {
+                if *prop == base_case_prop || *prop == step_prop {
+                    if let IndividualValue::IriRef(iri) = val {
+                        if *iri == ind.id {
+                            violations.push(format!(
+                                "{} has self-referential {} (points to itself)",
+                                ind.label,
+                                if *prop == base_case_prop {
+                                    "baseCase"
+                                } else {
+                                    "inductiveStep"
+                                },
+                            ));
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    if violations.is_empty() {
+        report.push(TestResult::pass(
+            validator,
+            "All InductiveProof baseCase/inductiveStep references are non-self-referential",
+        ));
+    } else {
+        for v in &violations {
+            report.push(TestResult::fail(validator, v.clone()));
+        }
+    }
+}
+
+/// Amendment 86: Validates that no `EmpiricalVerification` class or instances
+/// exist in the ontology.
+fn validate_no_empirical_verification(report: &mut ConformanceReport) {
+    let ontology = uor_ontology::Ontology::full();
+
+    // Check 1: No EmpiricalVerification class
+    let ev_class_id = "https://uor.foundation/proof/EmpiricalVerification";
+    let class_exists = ontology
+        .namespaces
+        .iter()
+        .flat_map(|m| m.classes.iter())
+        .any(|c| c.id == ev_class_id);
+
+    if class_exists {
+        report.push(TestResult::fail(
+            "ontology/inventory/no_empirical_verification_class",
+            "proof/EmpiricalVerification class still exists in the ontology",
+        ));
+    } else {
+        report.push(TestResult::pass(
+            "ontology/inventory/no_empirical_verification_class",
+            "proof/EmpiricalVerification class has been removed",
+        ));
+    }
+
+    // Check 2: No EmpiricalVerification instances
+    let mut ev_instances = Vec::new();
+    for ns in &ontology.namespaces {
+        for ind in &ns.individuals {
+            if ind.type_ == ev_class_id {
+                ev_instances.push(ind.label.to_string());
+            }
+        }
+    }
+
+    if ev_instances.is_empty() {
+        report.push(TestResult::pass(
+            "ontology/inventory/no_empirical_verification_instances",
+            "Zero EmpiricalVerification instances exist",
+        ));
+    } else {
+        for label in &ev_instances {
+            report.push(TestResult::fail(
+                "ontology/inventory/no_empirical_verification_instances",
+                format!("{} is still typed as EmpiricalVerification", label),
+            ));
+        }
+    }
+}
+
+/// Amendment 87: Validates that every Proof individual has exactly one
+/// `proof:strategy` property pointing to a `ProofStrategy` individual.
+fn validate_proof_strategy_coverage(report: &mut ConformanceReport) {
+    let ontology = uor_ontology::Ontology::full();
+    let validator = "ontology/inventory/proof_strategy_coverage";
+
+    let proof_superclass = "https://uor.foundation/proof/Proof";
+    let strategy_prop = "https://uor.foundation/proof/strategy";
+
+    // Collect all proof subclass IRIs
+    let proof_subclasses: HashSet<&str> = ontology
+        .namespaces
+        .iter()
+        .flat_map(|m| m.classes.iter())
+        .filter(|c| c.subclass_of.contains(&proof_superclass))
+        .map(|c| c.id)
+        .chain(std::iter::once(proof_superclass))
+        .collect();
+
+    // Exempt types that are not proofs of identities
+    let exempt_types: HashSet<&str> = [
+        "https://uor.foundation/proof/MorphospaceRecord",
+        "https://uor.foundation/proof/MorphospaceBoundary",
+        "https://uor.foundation/proof/ProofStrategy",
+        "https://uor.foundation/proof/WitnessData",
+    ]
+    .into_iter()
+    .collect();
+
+    let mut missing = Vec::new();
+
+    if let Some(proof_module) = ontology.find_namespace("proof") {
+        for ind in &proof_module.individuals {
+            if exempt_types.contains(ind.type_) {
+                continue;
+            }
+            if !proof_subclasses.contains(ind.type_) {
+                continue;
+            }
+            let has_strategy = ind.properties.iter().any(|(k, _)| *k == strategy_prop);
+            if !has_strategy {
+                missing.push(ind.label.to_string());
+            }
+        }
+    }
+
+    if missing.is_empty() {
+        report.push(TestResult::pass(
+            validator,
+            "Every Proof individual has a strategy property",
+        ));
+    } else {
+        for label in &missing {
+            report.push(TestResult::fail(
+                validator,
+                format!("{} missing proof:strategy", label),
+            ));
+        }
+    }
+}
+
+/// Amendment 87: Validates that exactly 11 `ProofStrategy` individuals exist.
+fn validate_proof_strategy_vocabulary(report: &mut ConformanceReport) {
+    let ontology = uor_ontology::Ontology::full();
+    let validator = "ontology/inventory/proof_strategy_vocabulary";
+
+    let strategy_type = "https://uor.foundation/proof/ProofStrategy";
+    let expected_count = 11;
+
+    let count = ontology
+        .namespaces
+        .iter()
+        .flat_map(|m| m.individuals.iter())
+        .filter(|ind| ind.type_ == strategy_type)
+        .count();
+
+    if count == expected_count {
+        report.push(TestResult::pass(
+            validator,
+            format!("Exactly {} ProofStrategy individuals exist", expected_count),
+        ));
+    } else {
+        report.push(TestResult::fail(
+            validator,
+            format!(
+                "Expected {} ProofStrategy individuals, found {}",
+                expected_count, count
+            ),
+        ));
+    }
+}
+
+/// Amendment 87: Validates that the `proof:dependsOn` relation forms a DAG
+/// (no cycles in the dependency graph).
+fn validate_proof_dependency_acyclicity(report: &mut ConformanceReport) {
+    let ontology = uor_ontology::Ontology::full();
+    let validator = "ontology/inventory/proof_dependency_acyclicity";
+
+    let depends_on_prop = "https://uor.foundation/proof/dependsOn";
+    let proves_prop = "https://uor.foundation/proof/provesIdentity";
+
+    // Build proof ID -> identity ID mapping
+    let mut proof_to_identity: HashMap<&str, &str> = HashMap::new();
+    // Build identity ID -> set of dependency identity IDs
+    let mut identity_deps: HashMap<&str, Vec<&str>> = HashMap::new();
+
+    if let Some(proof_module) = ontology.find_namespace("proof") {
+        for ind in &proof_module.individuals {
+            let mut identity_id = None;
+            let mut deps = Vec::new();
+
+            for (prop, val) in ind.properties {
+                if *prop == proves_prop {
+                    if let IndividualValue::IriRef(iri) = val {
+                        identity_id = Some(*iri);
+                    }
+                }
+                if *prop == depends_on_prop {
+                    if let IndividualValue::IriRef(iri) = val {
+                        deps.push(*iri);
+                    }
+                }
+            }
+
+            if let Some(id) = identity_id {
+                proof_to_identity.insert(ind.id, id);
+                if !deps.is_empty() {
+                    identity_deps.insert(id, deps);
+                }
+            }
+        }
+    }
+
+    // DFS cycle detection on identity dependency graph
+    let mut visited: HashSet<&str> = HashSet::new();
+    let mut in_stack: HashSet<&str> = HashSet::new();
+    let mut has_cycle = false;
+
+    fn dfs<'a>(
+        node: &'a str,
+        deps: &HashMap<&'a str, Vec<&'a str>>,
+        visited: &mut HashSet<&'a str>,
+        in_stack: &mut HashSet<&'a str>,
+    ) -> bool {
+        if in_stack.contains(node) {
+            return true; // cycle
+        }
+        if visited.contains(node) {
+            return false;
+        }
+        visited.insert(node);
+        in_stack.insert(node);
+
+        if let Some(neighbors) = deps.get(node) {
+            for &neighbor in neighbors {
+                if dfs(neighbor, deps, visited, in_stack) {
+                    return true;
+                }
+            }
+        }
+        in_stack.remove(node);
+        false
+    }
+
+    for &identity in identity_deps.keys() {
+        if dfs(identity, &identity_deps, &mut visited, &mut in_stack) {
+            has_cycle = true;
+            break;
+        }
+    }
+
+    if has_cycle {
+        report.push(TestResult::fail(
+            validator,
+            "Cycle detected in proof:dependsOn dependency graph",
+        ));
+    } else {
+        report.push(TestResult::pass(
+            validator,
+            format!(
+                "Proof dependency DAG is acyclic ({} identities with dependencies)",
+                identity_deps.len()
+            ),
+        ));
+    }
+}
+
+/// Amendment 89: Validates that op:lhs, op:rhs, and op:forAll are ObjectProperties
+/// with the correct AST ranges.
+fn validate_identity_properties_typed(report: &mut ConformanceReport) {
+    let ontology = uor_ontology::Ontology::full();
+
+    let checks = [
+        (
+            "https://uor.foundation/op/lhs",
+            PropertyKind::Object,
+            "schema/TermExpression",
+            "ontology/inventory/identity_lhs_typed",
+        ),
+        (
+            "https://uor.foundation/op/rhs",
+            PropertyKind::Object,
+            "schema/TermExpression",
+            "ontology/inventory/identity_rhs_typed",
+        ),
+        (
+            "https://uor.foundation/op/forAll",
+            PropertyKind::Object,
+            "schema/ForAllDeclaration",
+            "ontology/inventory/identity_forall_typed",
+        ),
+    ];
+
+    for (prop_iri, expected_kind, expected_range_suffix, validator) in checks {
+        let found = ontology
+            .namespaces
+            .iter()
+            .flat_map(|m| m.properties.iter())
+            .find(|p| p.id == prop_iri);
+
+        match found {
+            Some(prop) => {
+                let kind_ok = prop.kind == expected_kind;
+                let range_ok = prop.range.contains(expected_range_suffix);
+
+                if kind_ok && range_ok {
+                    report.push(TestResult::pass(
+                        validator,
+                        format!(
+                            "{} is {:?} with range containing {}",
+                            prop_iri, expected_kind, expected_range_suffix
+                        ),
+                    ));
+                } else {
+                    if !kind_ok {
+                        report.push(TestResult::fail(
+                            validator,
+                            format!(
+                                "{} has kind {:?}, expected {:?}",
+                                prop_iri, prop.kind, expected_kind
+                            ),
+                        ));
+                    }
+                    if !range_ok {
+                        report.push(TestResult::fail(
+                            validator,
+                            format!(
+                                "{} has range {}, expected to contain {}",
+                                prop_iri, prop.range, expected_range_suffix
+                            ),
+                        ));
+                    }
+                }
+            }
+            None => {
+                report.push(TestResult::fail(
+                    validator,
+                    format!("Property {} not found in ontology", prop_iri),
+                ));
+            }
+        }
+    }
+}
+
+/// Amendment 90: Validates that removed properties no longer exist.
+fn validate_removed_properties_absent(report: &mut ConformanceReport) {
+    let ontology = uor_ontology::Ontology::full();
+    let validator = "ontology/inventory/removed_properties_absent";
+
+    let removed_iris = [
+        "https://uor.foundation/op/verificationPathNote",
+        "https://uor.foundation/op/geometricCharacterNote",
+        "https://uor.foundation/op/compositionLawRef",
+        "https://uor.foundation/type/constraint",
+        "https://uor.foundation/type/axisSignatureNote",
+        "https://uor.foundation/type/decompositionRule",
+    ];
+
+    let all_prop_ids: HashSet<&str> = ontology
+        .namespaces
+        .iter()
+        .flat_map(|m| m.properties.iter())
+        .map(|p| p.id)
+        .collect();
+
+    let mut found = Vec::new();
+    for iri in &removed_iris {
+        if all_prop_ids.contains(*iri) {
+            found.push(iri.to_string());
+        }
+    }
+
+    if found.is_empty() {
+        report.push(TestResult::pass(
+            validator,
+            format!("All {} removed properties are absent", removed_iris.len()),
+        ));
+    } else {
+        for iri in &found {
+            report.push(TestResult::fail(
+                validator,
+                format!("Property {} should have been removed but still exists", iri),
+            ));
+        }
+    }
+}
+
+/// Amendment 90: Validates that only legitimate string properties remain.
+fn validate_legitimate_string_properties_only(report: &mut ConformanceReport) {
+    let ontology = uor_ontology::Ontology::full();
+    let validator = "ontology/inventory/legitimate_string_properties_only";
+
+    let xsd_string = "http://www.w3.org/2001/XMLSchema#string";
+
+    let legitimate: HashSet<&str> = [
+        "https://uor.foundation/u/glyph",
+        "https://uor.foundation/u/digest",
+        "https://uor.foundation/u/digestAlgorithm",
+        "https://uor.foundation/state/contentAddress",
+        "https://uor.foundation/cascade/stageName",
+        "https://uor.foundation/cascade/pressureLevel",
+        "https://uor.foundation/convergence/levelName",
+        "https://uor.foundation/convergence/bettiSignature",
+        "https://uor.foundation/state/boundaryReason",
+        "https://uor.foundation/trace/violationReason",
+        "https://uor.foundation/op/operatorComplexity",
+        "https://uor.foundation/op/operatorSignature",
+        "https://uor.foundation/op/presentation",
+        "https://uor.foundation/proof/quantumNote",
+        "https://uor.foundation/proof/criticalIdentity",
+        "https://uor.foundation/schema/variableName",
+        "https://uor.foundation/schema/literalValue",
+        "https://uor.foundation/schema/infixOperator",
+        "https://uor.foundation/type/structuralFiberCount",
+        "https://uor.foundation/type/structuralGrounding",
+        "https://uor.foundation/type/structuralConstraint",
+        "https://uor.foundation/observable/metricDomain",
+        "https://uor.foundation/observable/metricRange",
+        "https://uor.foundation/division/basisElements",
+        "https://uor.foundation/division/adjoinedElement",
+        "https://uor.foundation/division/conjugationRule",
+        "https://uor.foundation/proof/forbidsSignature",
+        "https://uor.foundation/proof/impossibilityReason",
+        "https://uor.foundation/convergence/totalSpace",
+        "https://uor.foundation/convergence/baseSpace",
+        "https://uor.foundation/convergence/fiberSphere",
+        "https://uor.foundation/convergence/characteristicIdentity",
+        "https://uor.foundation/cascade/failureKind",
+        "https://uor.foundation/cascade/preflightKind",
+        "https://uor.foundation/cascade/transactionPolicy",
+        "https://uor.foundation/cascade/leasePhase",
+        "https://uor.foundation/cascade/feasibilityKind",
+        "https://uor.foundation/cascade/feasibilityWitness",
+        "https://uor.foundation/cascade/bindTarget",
+        "https://uor.foundation/cascade/bindValue",
+        "https://uor.foundation/cascade/predicateField",
+        "https://uor.foundation/cascade/predicateOperator",
+        "https://uor.foundation/cascade/predicateValue",
+    ]
+    .into_iter()
+    .collect();
+
+    let mut violations = Vec::new();
+    for ns in &ontology.namespaces {
+        for prop in &ns.properties {
+            if prop.range == xsd_string && !legitimate.contains(prop.id) {
+                violations.push(format!("{} still has range xsd:string", prop.id));
+            }
+        }
+    }
+
+    if violations.is_empty() {
+        report.push(TestResult::pass(
+            validator,
+            format!(
+                "Only {} legitimate string properties remain",
+                legitimate.len()
+            ),
+        ));
+    } else {
+        for v in &violations {
+            report.push(TestResult::fail(validator, v.clone()));
+        }
+    }
+}
+
+/// Amendment 91: Validates that every op:Identity individual's lhs, rhs, and
+/// forAll property assertions use `IndividualValue::IriRef`, not `Str`.
+fn validate_identity_values_are_irirefs(report: &mut ConformanceReport) {
+    let ontology = uor_ontology::Ontology::full();
+    let validator = "ontology/inventory/identity_values_are_irirefs";
+
+    let identity_type = "https://uor.foundation/op/Identity";
+    let lhs_prop = "https://uor.foundation/op/lhs";
+    let rhs_prop = "https://uor.foundation/op/rhs";
+    let forall_prop = "https://uor.foundation/op/forAll";
+
+    let mut violations = Vec::new();
+
+    for ns in &ontology.namespaces {
+        for ind in &ns.individuals {
+            if ind.type_ != identity_type {
+                continue;
+            }
+            for (prop, val) in ind.properties {
+                if (*prop == lhs_prop || *prop == rhs_prop || *prop == forall_prop)
+                    && matches!(val, IndividualValue::Str(_))
+                {
+                    violations.push(format!(
+                        "{}: {} still uses IndividualValue::Str",
+                        ind.label,
+                        prop.rsplit('/').next().unwrap_or(prop)
+                    ));
+                }
+            }
+        }
+    }
+
+    if violations.is_empty() {
+        report.push(TestResult::pass(
+            validator,
+            "All identity lhs/rhs/forAll values are IriRef (not Str)",
+        ));
+    } else {
+        report.push(TestResult::fail(
+            validator,
+            format!(
+                "{} identity property assertions still use Str instead of IriRef",
+                violations.len()
+            ),
+        ));
+    }
+}
+
+/// Amendment 92: Validates that `proof:formalDerivation` is an ObjectProperty
+/// with range `proof/DerivationTerm`.
+fn validate_formal_derivation_typed(report: &mut ConformanceReport) {
+    let ontology = uor_ontology::Ontology::full();
+    let validator = "ontology/inventory/formal_derivation_typed";
+
+    let prop_iri = "https://uor.foundation/proof/formalDerivation";
+    let found = ontology
+        .namespaces
+        .iter()
+        .flat_map(|m| m.properties.iter())
+        .find(|p| p.id == prop_iri);
+
+    match found {
+        Some(prop) => {
+            let kind_ok = prop.kind == PropertyKind::Object;
+            let range_ok = prop.range.contains("DerivationTerm");
+
+            if kind_ok && range_ok {
+                report.push(TestResult::pass(
+                    validator,
+                    "proof:formalDerivation is ObjectProperty with range DerivationTerm",
+                ));
+            } else {
+                if !kind_ok {
+                    report.push(TestResult::fail(
+                        validator,
+                        format!("formalDerivation has kind {:?}, expected Object", prop.kind),
+                    ));
+                }
+                if !range_ok {
+                    report.push(TestResult::fail(
+                        validator,
+                        format!(
+                            "formalDerivation has range {}, expected DerivationTerm",
+                            prop.range
+                        ),
+                    ));
+                }
+            }
+        }
+        None => {
+            report.push(TestResult::fail(
+                validator,
+                "Property proof:formalDerivation not found",
+            ));
+        }
     }
 }

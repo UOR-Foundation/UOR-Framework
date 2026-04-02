@@ -8,28 +8,30 @@
 pub const NAMESPACES: usize = 33;
 
 /// Total OWL classes across all namespaces.
-pub const CLASSES: usize = 396;
+pub const CLASSES: usize = 411;
 
 /// Total properties including the global `uor:space` annotation.
-pub const PROPERTIES: usize = 837;
+pub const PROPERTIES: usize = 841;
 
 /// Namespace-level properties only (excludes global annotation).
-pub const NAMESPACE_PROPERTIES: usize = 836;
+pub const NAMESPACE_PROPERTIES: usize = 840;
 
 /// Total named individuals across all namespaces.
-pub const INDIVIDUALS: usize = 1432;
+/// Includes 1870 AST term individuals (LiteralExpression / ForAllDeclaration)
+/// generated from identity lhs/rhs/forAll string values.
+pub const INDIVIDUALS: usize = 3331;
 
 /// Number of SHACL test instance graphs.
-pub const SHACL_TESTS: usize = 252;
+pub const SHACL_TESTS: usize = 265;
 
 /// Total conformance checks in the full suite.
-pub const CONFORMANCE_CHECKS: usize = 396;
+pub const CONFORMANCE_CHECKS: usize = 422;
 
 /// Number of amendments applied to the base ontology.
-pub const AMENDMENTS: usize = 84;
+pub const AMENDMENTS: usize = 94;
 
 /// Number of classes that become Rust enums/structs (not traits).
-pub const ENUM_CLASSES: usize = 15;
+pub const ENUM_CLASSES: usize = 17;
 
 /// Number of `op:Identity` individuals (and corresponding proofs).
 pub const IDENTITY_COUNT: usize = 624;
@@ -45,13 +47,13 @@ pub const USER_NAMESPACES: usize = 3;
 
 /// Number of trait methods generated (properties with domains,
 /// excluding enum-class-domain and cross-namespace-domain properties).
-pub const METHODS: usize = 790;
+pub const METHODS: usize = 804;
 
 /// Number of individual constant modules generated.
-pub const CONSTANT_MODULES: usize = 1452;
+pub const CONSTANT_MODULES: usize = 1481;
 
 /// Number of concept pages on the website (one per content/concepts/*.md file).
-pub const CONCEPT_PAGES: usize = 26;
+pub const CONCEPT_PAGES: usize = 27;
 
 /// Number of PRISM pipeline stages (Define / Resolve / Certify).
 pub const PIPELINE_STAGES: usize = 3;

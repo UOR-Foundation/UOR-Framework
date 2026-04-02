@@ -22,6 +22,5 @@ query:AddressCoordinate a query:CoordinateKind .
 
 <https://uor.foundation/instance/address-query>
     a query:CoordinateQuery ;
-    query:hasCoordinateKind query:AddressCoordinate ;
-    type:axisSignatureNote "V" .
+    query:hasCoordinateKind query:AddressCoordinate .
 "#;

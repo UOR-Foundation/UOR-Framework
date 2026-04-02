@@ -384,7 +384,7 @@ impl fmt::Display for SaturationPhase {
 #[repr(u8)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum AchievabilityStatus {
-    /// The signature has been empirically verified as achievable at some quantum level by an EmpiricalVerification record.
+    /// The signature has been verified as achievable at some quantum level by an AxiomaticDerivation proof.
     Achievable,
     /// The signature has been formally proven impossible by an ImpossibilityWitness deriving from MS_1, MS_2, or other impossibility theorems.
     Forbidden,
@@ -474,6 +474,71 @@ impl fmt::Display for VarianceAnnotation {
     }
 }
 
+/// The kind of quantifier: Universal (forall) or Existential (exists).
+#[repr(u8)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub enum QuantifierKind {
+    /// Universal quantification (forall).
+    Universal,
+    /// Existential quantification (exists).
+    Existential,
+}
+
+impl fmt::Display for QuantifierKind {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Universal => f.write_str("universal"),
+            Self::Existential => f.write_str("existential"),
+        }
+    }
+}
+
+/// A controlled vocabulary of proof methods for compilation to verified provers.
+#[repr(u8)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub enum ProofStrategy {
+    /// Follows from ZMod ring axioms. Lean4 tactic: `by ring`.
+    RingAxiom,
+    /// Decidable at Q0 by exhaustive evaluation. Lean4: `by native_decide`.
+    DecideQ0,
+    /// Induction on bit width n. Lean4: `by induction n`.
+    BitwiseInduction,
+    /// From dihedral group presentation. Lean4: `by group`.
+    GroupPresentation,
+    /// By simplification with cited lemmas. Lean4: `by simp \[lemmalist\]`.
+    Simplification,
+    /// By Chinese Remainder Theorem. Lean4: `by exact ZMod.chineseRemainder ...`.
+    ChineseRemainder,
+    /// By Euler-Poincare formula applied to the constraint nerve.
+    EulerPoincare,
+    /// By Ostrowski product formula or derived valuation arguments.
+    ProductFormula,
+    /// By composing proofs of sub-identities. Lean4: `by exact ...`.
+    Composition,
+    /// By deriving contradiction for impossibility witnesses. Lean4: `by contradiction`.
+    Contradiction,
+    /// By computation at a specified quantum level. Lean4: `by native_decide`.
+    Computation,
+}
+
+impl fmt::Display for ProofStrategy {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::RingAxiom => f.write_str("ring_axiom"),
+            Self::DecideQ0 => f.write_str("decide_q0"),
+            Self::BitwiseInduction => f.write_str("bitwise_induction"),
+            Self::GroupPresentation => f.write_str("group_presentation"),
+            Self::Simplification => f.write_str("simplification"),
+            Self::ChineseRemainder => f.write_str("chinese_remainder"),
+            Self::EulerPoincare => f.write_str("euler_poincare"),
+            Self::ProductFormula => f.write_str("product_formula"),
+            Self::Composition => f.write_str("composition"),
+            Self::Contradiction => f.write_str("contradiction"),
+            Self::Computation => f.write_str("computation"),
+        }
+    }
+}
+
 /// The modality of a proof: computation (exhaustive verification at a specific quantum level) or axiomatic (derivation from ring axioms).
 #[repr(u8)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -482,8 +547,6 @@ pub enum ProofModality {
     Computation,
     /// A proof derived from ring axioms that holds at all quantum levels.
     Axiomatic,
-    /// A proof verified empirically across a bounded range of quantum levels.
-    Empirical,
     /// A proof by structural induction on the quantum level parameter k.
     Inductive,
 }
@@ -493,7 +556,6 @@ impl fmt::Display for ProofModality {
         match self {
             Self::Computation => f.write_str("computation"),
             Self::Axiomatic => f.write_str("axiomatic"),
-            Self::Empirical => f.write_str("empirical"),
             Self::Inductive => f.write_str("inductive"),
         }
     }

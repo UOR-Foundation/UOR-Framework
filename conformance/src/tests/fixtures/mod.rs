@@ -172,7 +172,20 @@ mod test24_verification_domain;
 mod test250_pipeline_outcome;
 mod test251_preflight_checkpoint;
 mod test252_compile_unit;
+mod test253_expression_types;
+mod test254_proof_derivation_types;
+mod test255_effect_types;
+mod test256_predicate_types;
+mod test257_parallel_types;
+mod test258_stream_types;
+mod test259_failure_types;
 mod test25_geometric_character;
+mod test260_linear_types;
+mod test261_recursion_types;
+mod test262_region_types;
+mod test263_boundary_types;
+mod test264_conformance_types;
+mod test265_user_types;
 mod test26_complexity_class;
 mod test27_rewrite_rule;
 mod test28_measurement_unit;
@@ -425,7 +438,20 @@ pub use test24_verification_domain::TEST24_VERIFICATION_DOMAIN;
 pub use test250_pipeline_outcome::TEST250_PIPELINE_OUTCOME;
 pub use test251_preflight_checkpoint::TEST251_PREFLIGHT_CHECKPOINT;
 pub use test252_compile_unit::TEST252_COMPILE_UNIT;
+pub use test253_expression_types::TEST253_EXPRESSION_TYPES;
+pub use test254_proof_derivation_types::TEST254_PROOF_DERIVATION_TYPES;
+pub use test255_effect_types::TEST255_EFFECT_TYPES;
+pub use test256_predicate_types::TEST256_PREDICATE_TYPES;
+pub use test257_parallel_types::TEST257_PARALLEL_TYPES;
+pub use test258_stream_types::TEST258_STREAM_TYPES;
+pub use test259_failure_types::TEST259_FAILURE_TYPES;
 pub use test25_geometric_character::TEST25_GEOMETRIC_CHARACTER;
+pub use test260_linear_types::TEST260_LINEAR_TYPES;
+pub use test261_recursion_types::TEST261_RECURSION_TYPES;
+pub use test262_region_types::TEST262_REGION_TYPES;
+pub use test263_boundary_types::TEST263_BOUNDARY_TYPES;
+pub use test264_conformance_types::TEST264_CONFORMANCE_TYPES;
+pub use test265_user_types::TEST265_USER_TYPES;
 pub use test26_complexity_class::TEST26_COMPLEXITY_CLASS;
 pub use test27_rewrite_rule::TEST27_REWRITE_RULE;
 pub use test28_measurement_unit::TEST28_MEASUREMENT_UNIT;
@@ -765,5 +791,18 @@ pub fn all_fixture_sources() -> Vec<&'static str> {
         TEST250_PIPELINE_OUTCOME,
         TEST251_PREFLIGHT_CHECKPOINT,
         TEST252_COMPILE_UNIT,
+        TEST253_EXPRESSION_TYPES,
+        TEST254_PROOF_DERIVATION_TYPES,
+        TEST255_EFFECT_TYPES,
+        TEST256_PREDICATE_TYPES,
+        TEST257_PARALLEL_TYPES,
+        TEST258_STREAM_TYPES,
+        TEST259_FAILURE_TYPES,
+        TEST260_LINEAR_TYPES,
+        TEST261_RECURSION_TYPES,
+        TEST262_REGION_TYPES,
+        TEST263_BOUNDARY_TYPES,
+        TEST264_CONFORMANCE_TYPES,
+        TEST265_USER_TYPES,
     ]
 }

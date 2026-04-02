@@ -126,8 +126,8 @@ Every identity carries typed grounding properties:
   mathematical discipline (Enumerative, Algebraic, Geometric, Analytical, Thermodynamic,
   Topological, Pipeline, IndexTheoretic, SuperpositionDomain, QuantumThermodynamic,
   or ArithmeticValuation).
-- {@prop https://uor.foundation/op/verificationPathNote}: a human-readable annotation
-  describing the specific verification route.
+- {@prop https://uor.foundation/proof/dependsOn}: a formal dependency on other identities
+  used as lemmas in the proof (Amendment 87).
 
 Of the {@count:identities} identities, those with `universallyValid = true` are derivable
 from axioms; the remainder are verifiable by exhaustive enumeration at Q0.

@@ -222,7 +222,7 @@ fn properties() -> Vec<Property> {
             kind: PropertyKind::Datatype,
             functional: true,
             domain: Some("https://uor.foundation/effect/PhaseEffect"),
-            range: XSD_STRING,
+            range: XSD_DECIMAL,
         },
         Property {
             id: "https://uor.foundation/effect/compositeIndex",

@@ -302,7 +302,16 @@ fn properties() -> Vec<Property> {
     ]
 }
 
+/// Returns identity individuals with original `Str` values for lhs/rhs/forAll.
+pub(crate) fn raw_individuals() -> Vec<Individual> {
+    raw_individuals_vec()
+}
+
 fn individuals() -> Vec<Individual> {
+    crate::model::rewrite_identity_ast_refs(raw_individuals_vec())
+}
+
+fn raw_individuals_vec() -> Vec<Individual> {
     vec![
         Individual {
             id: "https://uor.foundation/cohomology/coboundarySquaredZero",
@@ -317,10 +326,6 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/op/verificationDomain",
                     IndividualValue::IriRef("https://uor.foundation/op/Topological"),
-                ),
-                (
-                    "https://uor.foundation/op/verificationPathNote",
-                    IndividualValue::Str("CochainComplex → CoboundaryOperator → δ² = 0"),
                 ),
             ],
         },
@@ -341,10 +346,6 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/op/verificationDomain",
                     IndividualValue::IriRef("https://uor.foundation/op/Topological"),
                 ),
-                (
-                    "https://uor.foundation/op/verificationPathNote",
-                    IndividualValue::Str("CohomologyGroup ≅ dual(HomologyGroup)"),
-                ),
             ],
         },
         Individual {
@@ -364,10 +365,6 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/op/verificationDomain",
                     IndividualValue::IriRef("https://uor.foundation/op/Topological"),
                 ),
-                (
-                    "https://uor.foundation/op/verificationPathNote",
-                    IndividualValue::Str("Sheaf → constant coefficient → CochainComplex"),
-                ),
             ],
         },
         Individual {
@@ -383,10 +380,6 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/op/verificationDomain",
                     IndividualValue::IriRef("https://uor.foundation/op/Topological"),
-                ),
-                (
-                    "https://uor.foundation/op/verificationPathNote",
-                    IndividualValue::Str("CohomologyGroup → GluingObstruction → vanishing"),
                 ),
             ],
         },

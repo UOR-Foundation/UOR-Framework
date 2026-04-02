@@ -391,13 +391,11 @@ fn generate_property_method(
 }
 
 /// Returns an enum type override for special datatype properties.
-fn datatype_enum_override(prop: &Property) -> Option<&'static str> {
-    let local = local_name(prop.id);
-    match local {
-        "fiberState" => Some("FiberState"),
-        // geometricCharacter removed by Amendment 23 (now an Object property)
-        _ => None,
-    }
+///
+/// All former overrides have been removed by property retypings
+/// (fiberState in Amendment 90, geometricCharacter in Amendment 23).
+fn datatype_enum_override(_prop: &Property) -> Option<&'static str> {
+    None
 }
 
 /// Builds supertrait bounds for a class.

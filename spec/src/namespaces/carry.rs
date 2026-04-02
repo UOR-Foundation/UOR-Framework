@@ -104,7 +104,7 @@ fn properties() -> Vec<Property> {
             kind: PropertyKind::Datatype,
             functional: true,
             domain: Some("https://uor.foundation/carry/CarryChain"),
-            range: XSD_STRING,
+            range: XSD_NON_NEGATIVE_INTEGER,
         },
         Property {
             id: "https://uor.foundation/carry/propagateMask",
@@ -114,7 +114,7 @@ fn properties() -> Vec<Property> {
             kind: PropertyKind::Datatype,
             functional: true,
             domain: Some("https://uor.foundation/carry/CarryChain"),
-            range: XSD_STRING,
+            range: XSD_NON_NEGATIVE_INTEGER,
         },
         Property {
             id: "https://uor.foundation/carry/killMask",
@@ -124,7 +124,7 @@ fn properties() -> Vec<Property> {
             kind: PropertyKind::Datatype,
             functional: true,
             domain: Some("https://uor.foundation/carry/CarryChain"),
-            range: XSD_STRING,
+            range: XSD_NON_NEGATIVE_INTEGER,
         },
         // CarryEvent properties
         Property {
@@ -134,7 +134,7 @@ fn properties() -> Vec<Property> {
             kind: PropertyKind::Datatype,
             functional: true,
             domain: Some("https://uor.foundation/carry/CarryEvent"),
-            range: XSD_STRING,
+            range: XSD_NON_NEGATIVE_INTEGER,
         },
         Property {
             id: "https://uor.foundation/carry/fiberPosition",
@@ -196,10 +196,10 @@ fn properties() -> Vec<Property> {
             id: "https://uor.foundation/carry/encodingMap",
             label: "encodingMap",
             comment: "String representation of the mapping from symbols to ring elements.",
-            kind: PropertyKind::Datatype,
+            kind: PropertyKind::Object,
             functional: true,
             domain: Some("https://uor.foundation/carry/EncodingConfiguration"),
-            range: XSD_STRING,
+            range: "https://uor.foundation/schema/TermExpression",
         },
         // EncodingQuality properties
         Property {

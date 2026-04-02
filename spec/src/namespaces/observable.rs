@@ -404,9 +404,8 @@ fn classes() -> Vec<Class> {
             id: "https://uor.foundation/observable/AchievabilityStatus",
             label: "AchievabilityStatus",
             comment: "The achievability classification of a topological signature \
-                      in the morphospace. Either Achievable (verified by \
-                      EmpiricalVerification) or Forbidden (witnessed by \
-                      ImpossibilityWitness).",
+                      in the morphospace. Either Achievable or Forbidden \
+                      (witnessed by ImpossibilityWitness).",
             subclass_of: &[OWL_THING],
             disjoint_with: &[],
         },
@@ -795,7 +794,7 @@ fn properties() -> Vec<Property> {
             id: "https://uor.foundation/observable/achievabilityWitness",
             label: "achievabilityWitness",
             comment: "The proof individual (ImpossibilityWitness or \
-                      EmpiricalVerification) that grounds this signature's \
+                      AxiomaticDerivation) that grounds this signature's \
                       achievability classification.",
             kind: PropertyKind::Object,
             functional: true,
@@ -924,28 +923,28 @@ fn properties() -> Vec<Property> {
             id: "https://uor.foundation/observable/metricComposition",
             label: "metricComposition",
             comment: "How this metric composes with others in the measurement tower.",
-            kind: PropertyKind::Datatype,
+            kind: PropertyKind::Object,
             functional: true,
             domain: Some("https://uor.foundation/observable/BaseMetric"),
-            range: XSD_STRING,
+            range: "https://uor.foundation/schema/TermExpression",
         },
         Property {
             id: "https://uor.foundation/observable/referencesClass",
             label: "referencesClass",
             comment: "The existing observable class that this base metric references.",
-            kind: PropertyKind::Datatype,
+            kind: PropertyKind::Object,
             functional: true,
             domain: Some("https://uor.foundation/observable/BaseMetric"),
-            range: XSD_STRING,
+            range: "https://uor.foundation/observable/Observable",
         },
         Property {
             id: "https://uor.foundation/observable/referencesIdentity",
             label: "referencesIdentity",
             comment: "The existing identity that defines this base metric.",
-            kind: PropertyKind::Datatype,
+            kind: PropertyKind::Object,
             functional: true,
             domain: Some("https://uor.foundation/observable/BaseMetric"),
-            range: XSD_STRING,
+            range: "https://uor.foundation/op/Identity",
         },
         Property {
             id: "https://uor.foundation/observable/saturationNumerator",
@@ -969,20 +968,20 @@ fn properties() -> Vec<Property> {
             id: "https://uor.foundation/observable/alternatingSum",
             label: "alternatingSum",
             comment: "The alternating sum formula for Euler characteristic.",
-            kind: PropertyKind::Datatype,
+            kind: PropertyKind::Object,
             functional: true,
             domain: Some("https://uor.foundation/observable/EulerCharacteristicObservable"),
-            range: XSD_STRING,
+            range: "https://uor.foundation/schema/TermExpression",
         },
         // Amendment 71: Missing BaseMetric properties (7)
         Property {
             id: "https://uor.foundation/observable/metricUnit",
             label: "metricUnit",
             comment: "The unit of measurement for this base metric.",
-            kind: PropertyKind::Datatype,
+            kind: PropertyKind::Object,
             functional: true,
             domain: Some("https://uor.foundation/observable/BaseMetric"),
-            range: XSD_STRING,
+            range: "https://uor.foundation/observable/MeasurementUnit",
         },
         Property {
             id: "https://uor.foundation/observable/metricPrecision",
@@ -991,25 +990,25 @@ fn properties() -> Vec<Property> {
             kind: PropertyKind::Datatype,
             functional: true,
             domain: Some("https://uor.foundation/observable/BaseMetric"),
-            range: XSD_STRING,
+            range: XSD_NON_NEGATIVE_INTEGER,
         },
         Property {
             id: "https://uor.foundation/observable/metricMonotonicity",
             label: "metricMonotonicity",
             comment: "Monotonicity property of this metric (e.g., non-decreasing).",
-            kind: PropertyKind::Datatype,
+            kind: PropertyKind::Object,
             functional: true,
             domain: Some("https://uor.foundation/observable/BaseMetric"),
-            range: XSD_STRING,
+            range: "https://uor.foundation/schema/TermExpression",
         },
         Property {
             id: "https://uor.foundation/observable/metricDecomposition",
             label: "metricDecomposition",
             comment: "The decomposition rule for this metric into sub-metrics.",
-            kind: PropertyKind::Datatype,
+            kind: PropertyKind::Object,
             functional: true,
             domain: Some("https://uor.foundation/observable/BaseMetric"),
-            range: XSD_STRING,
+            range: "https://uor.foundation/schema/TermExpression",
         },
         Property {
             id: "https://uor.foundation/observable/metricTowerPosition",
@@ -1024,19 +1023,19 @@ fn properties() -> Vec<Property> {
             id: "https://uor.foundation/observable/metricComputationCost",
             label: "metricComputationCost",
             comment: "The computational cost of evaluating this metric.",
-            kind: PropertyKind::Datatype,
+            kind: PropertyKind::Object,
             functional: true,
             domain: Some("https://uor.foundation/observable/BaseMetric"),
-            range: XSD_STRING,
+            range: "https://uor.foundation/schema/TermExpression",
         },
         Property {
             id: "https://uor.foundation/observable/metricBound",
             label: "metricBound",
             comment: "Upper or lower bound on the metric value.",
-            kind: PropertyKind::Datatype,
+            kind: PropertyKind::Object,
             functional: true,
             domain: Some("https://uor.foundation/observable/BaseMetric"),
-            range: XSD_STRING,
+            range: "https://uor.foundation/schema/TermExpression",
         },
     ]
 }
@@ -1099,8 +1098,8 @@ fn individuals() -> Vec<Individual> {
             id: "https://uor.foundation/observable/Achievable",
             type_: "https://uor.foundation/observable/AchievabilityStatus",
             label: "Achievable",
-            comment: "The signature has been empirically verified as achievable \
-                      at some quantum level by an EmpiricalVerification record.",
+            comment: "The signature has been verified as achievable \
+                      at some quantum level by an AxiomaticDerivation proof.",
             properties: &[],
         },
         Individual {
@@ -1129,7 +1128,9 @@ fn individuals() -> Vec<Individual> {
                 ),
                 (
                     "https://uor.foundation/observable/referencesClass",
-                    IndividualValue::Str("IncompatibilityMetric"),
+                    IndividualValue::IriRef(
+                        "https://uor.foundation/observable/IncompatibilityMetric",
+                    ),
                 ),
             ],
         },
@@ -1149,7 +1150,7 @@ fn individuals() -> Vec<Individual> {
                 ),
                 (
                     "https://uor.foundation/observable/referencesIdentity",
-                    IndividualValue::Str("SC_2"),
+                    IndividualValue::IriRef("https://uor.foundation/op/SC_2"),
                 ),
             ],
         },
@@ -1169,11 +1170,11 @@ fn individuals() -> Vec<Individual> {
                 ),
                 (
                     "https://uor.foundation/observable/referencesClass",
-                    IndividualValue::Str("Jacobian"),
+                    IndividualValue::IriRef("https://uor.foundation/observable/Jacobian"),
                 ),
                 (
                     "https://uor.foundation/observable/referencesIdentity",
-                    IndividualValue::Str("DC_6"),
+                    IndividualValue::IriRef("https://uor.foundation/op/DC_6"),
                 ),
             ],
         },
@@ -1193,7 +1194,7 @@ fn individuals() -> Vec<Individual> {
                 ),
                 (
                     "https://uor.foundation/observable/referencesClass",
-                    IndividualValue::Str("BettiNumber"),
+                    IndividualValue::IriRef("https://uor.foundation/observable/BettiNumber"),
                 ),
             ],
         },
@@ -1213,7 +1214,7 @@ fn individuals() -> Vec<Individual> {
                 ),
                 (
                     "https://uor.foundation/observable/referencesIdentity",
-                    IndividualValue::Str("IT_2"),
+                    IndividualValue::IriRef("https://uor.foundation/op/IT_2"),
                 ),
             ],
         },
@@ -1233,7 +1234,7 @@ fn individuals() -> Vec<Individual> {
                 ),
                 (
                     "https://uor.foundation/observable/referencesClass",
-                    IndividualValue::Str("ResidualEntropy"),
+                    IndividualValue::IriRef("https://uor.foundation/observable/ResidualEntropy"),
                 ),
             ],
         },

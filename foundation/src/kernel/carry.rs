@@ -11,17 +11,17 @@ pub trait CarryChain<P: Primitives> {
     /// The number of fibers in this carry chain.
     fn chain_length(&self) -> P::NonNegativeInteger;
     /// Bit mask of fiber positions where carry is generated: and(x_k, y_k) = 1.
-    fn generate_mask(&self) -> &P::String;
+    fn generate_mask(&self) -> P::NonNegativeInteger;
     /// Bit mask of fiber positions where carry propagates: xor(x_k, y_k) = 1.
-    fn propagate_mask(&self) -> &P::String;
+    fn propagate_mask(&self) -> P::NonNegativeInteger;
     /// Bit mask of fiber positions where carry is killed: neither generated nor propagated.
-    fn kill_mask(&self) -> &P::String;
+    fn kill_mask(&self) -> P::NonNegativeInteger;
 }
 
 /// A single carry event at fiber k. Three kinds: Generate (and(x_k, y_k) = 1), Propagate (xor(x_k, y_k) = 1 and c_k = 1), Kill (neither generate nor propagate).
 pub trait CarryEvent<P: Primitives> {
     /// The kind of carry event: Generate, Propagate, or Kill.
-    fn event_kind(&self) -> &P::String;
+    fn event_kind(&self) -> P::NonNegativeInteger;
     /// The fiber index k at which this carry event occurs.
     fn fiber_position(&self) -> P::NonNegativeInteger;
 }
@@ -44,8 +44,10 @@ pub trait EncodingConfiguration<P: Primitives> {
     fn symbol_set_size(&self) -> P::PositiveInteger;
     /// The number of bits k used for encoding (2^k ≥ |S|).
     fn quantization_bits(&self) -> P::PositiveInteger;
+    /// Associated type for `TermExpression`.
+    type TermExpression: crate::kernel::schema::TermExpression<P>;
     /// String representation of the mapping from symbols to ring elements.
-    fn encoding_map(&self) -> &P::String;
+    fn encoding_map(&self) -> &Self::TermExpression;
 }
 
 /// The d_Δ quality metric for an encoding over observed data. Measures how well an encoding minimizes carry-induced metric incompatibility.

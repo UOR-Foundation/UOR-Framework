@@ -40,10 +40,6 @@ pub trait ConstrainedType<P: Primitives>: TypeDefinition<P> {
     type TypeDefinition: TypeDefinition<P>;
     /// The base type that a constrained type restricts.
     fn base_type(&self) -> &Self::TypeDefinition;
-    /// The constraint predicate applied to the base type. Expressed as a string in the Prism constraint language. Deprecated in favor of type:hasConstraint (Amendment 10), which provides typed object references to Constraint individuals. Retained for backwards compatibility.
-    fn constraint_count(&self) -> usize;
-    /// Returns the item at `index`. Must satisfy `index < self.constraint_count()`.
-    fn constraint_at(&self, index: usize) -> &P::String;
     /// Associated type for `Constraint`.
     type Constraint: Constraint<P>;
     /// A typed constraint object applied to this constrained type. Replaces the deprecated string-based type:constraint property.
@@ -85,8 +81,10 @@ pub trait ResidueConstraint<P: Primitives>: Constraint<P> {
 /// A constraint based on carry propagation patterns in ring arithmetic. Pins fibers corresponding to carry positions.
 /// Disjoint with: ResidueConstraint, DepthConstraint, CompositeConstraint.
 pub trait CarryConstraint<P: Primitives>: Constraint<P> {
+    /// Associated type for `TermExpression`.
+    type TermExpression: crate::kernel::schema::TermExpression<P>;
     /// The carry propagation pattern of a carry constraint, expressed as a binary string (e.g., '1010').
-    fn carry_pattern(&self) -> &P::String;
+    fn carry_pattern(&self) -> &Self::TermExpression;
 }
 
 /// A constraint on factorization depth: the minimum and maximum number of irreducible factors. Pins fibers by bounding the factorization tree depth.
@@ -303,18 +301,20 @@ pub trait ModuliTowerMap<P: Primitives> {
 
 /// The adjunction between the type lattice and the fiber lattice. The upper adjoint is type closure; the lower adjoint is fiber interior. σ = lower adjoint evaluation; r = complement of upper adjoint image.
 pub trait GaloisConnection<P: Primitives> {
+    /// Associated type for `TermExpression`.
+    type TermExpression: crate::kernel::schema::TermExpression<P>;
     /// The upper adjoint (type closure) of the Galois connection, expressed as a symbolic formula string.
-    fn upper_adjoint(&self) -> &P::String;
+    fn upper_adjoint(&self) -> &Self::TermExpression;
     /// The lower adjoint (fiber interior) of the Galois connection, expressed as a symbolic formula string.
-    fn lower_adjoint(&self) -> &P::String;
+    fn lower_adjoint(&self) -> &Self::TermExpression;
     /// The fixpoint condition for the Galois connection: when upper(lower(T)) = T, the type is complete.
-    fn fixpoint_condition(&self) -> &P::String;
+    fn fixpoint_condition(&self) -> &Self::TermExpression;
     /// Description of the refinement direction: ascending in type lattice corresponds to descending in fiber freedom.
-    fn refinement_direction(&self) -> &P::String;
+    fn refinement_direction(&self) -> P::NonNegativeInteger;
     /// The closure property of a Galois connection.
-    fn galois_closure_property(&self) -> &P::String;
+    fn galois_closure_property(&self) -> &Self::TermExpression;
     /// The interior property of a Galois connection.
-    fn galois_interior_property(&self) -> &P::String;
+    fn galois_interior_property(&self) -> &Self::TermExpression;
 }
 
 /// A morphism T₁ → T₂ witnessing that T₁ is a subtype of T₂: the constraint set of T₁ is a superset of the constraint set of T₂.
@@ -414,24 +414,24 @@ pub mod table_type {
 
 /// The structural position preserves TypeInclusion: if T₁ ≤ T₂, then F(T₁) ≤ F(T₂).
 pub mod covariant {
-    /// `enumVariant`
-    pub const ENUM_VARIANT: &str = "Covariant";
+    /// `enumVariant` -> `Covariant`
+    pub const ENUM_VARIANT: &str = "https://uor.foundation/type/Covariant";
 }
 
 /// The structural position reverses TypeInclusion: if T₁ ≤ T₂, then F(T₂) ≤ F(T₁).
 pub mod contravariant {
-    /// `enumVariant`
-    pub const ENUM_VARIANT: &str = "Contravariant";
+    /// `enumVariant` -> `Contravariant`
+    pub const ENUM_VARIANT: &str = "https://uor.foundation/type/Contravariant";
 }
 
 /// The structural position requires exact type equality: F(T₁) ≤ F(T₂) only if T₁ = T₂.
 pub mod invariant {
-    /// `enumVariant`
-    pub const ENUM_VARIANT: &str = "Invariant";
+    /// `enumVariant` -> `Invariant`
+    pub const ENUM_VARIANT: &str = "https://uor.foundation/type/Invariant";
 }
 
 /// The structural position ignores the type parameter: F(T₁) ≤ F(T₂) for all T₁, T₂.
 pub mod bivariant {
-    /// `enumVariant`
-    pub const ENUM_VARIANT: &str = "Bivariant";
+    /// `enumVariant` -> `Bivariant`
+    pub const ENUM_VARIANT: &str = "https://uor.foundation/type/Bivariant";
 }

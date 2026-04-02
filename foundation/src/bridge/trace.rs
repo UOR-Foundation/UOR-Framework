@@ -103,7 +103,7 @@ pub trait MeasurementEvent<P: Primitives>: ComputationStep<P> {
     /// The step index within the enclosing ComputationTrace at which this projective collapse occurred.
     fn collapse_step(&self) -> P::NonNegativeInteger;
     /// The full pre-collapse amplitude vector of all branches at the time of measurement. Enables Born rule verification (QM_5): P(outcome k) = |α_k|² / Σ|αᵢ|².
-    fn amplitude_vector(&self) -> &P::String;
+    fn amplitude_vector(&self) -> P::Decimal;
 }
 
 /// A single outcome of a projective measurement on a SuperposedFiberState, recording the classical fiber index (outcomeValue) and its Born-rule probability |α_k|² (outcomeProbability). Multiple outcomes form the probability distribution of a measurement.

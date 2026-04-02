@@ -354,7 +354,7 @@ fn properties() -> Vec<Property> {
             kind: PropertyKind::Datatype,
             functional: true,
             domain: Some("https://uor.foundation/trace/MeasurementEvent"),
-            range: XSD_STRING,
+            range: XSD_DECIMAL,
         },
         // Amendment 37: Geodesic predicate decomposition (Gap 9)
         Property {

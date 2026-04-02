@@ -37,7 +37,7 @@ pub trait HopfFiber<P: Primitives> {
 /// The unresolved structure at a convergence level. The β_{2^k−1} = 1 Betti number that persists.
 pub trait ConvergenceResidual<P: Primitives> {
     /// The persistent Betti number at this residual.
-    fn residual_betti(&self) -> &P::String;
+    fn residual_betti(&self) -> P::NonNegativeInteger;
     /// The dimension at which the residual persists.
     fn residual_dimension(&self) -> P::NonNegativeInteger;
 }

@@ -8,12 +8,14 @@ use crate::Primitives;
 
 /// Two entities sharing fibers through composed operations. Properties: entityA, entityB, sharedFiberMask, commutatorNorm.
 pub trait InteractionContext<P: Primitives> {
+    /// Associated type for `TermExpression`.
+    type TermExpression: crate::kernel::schema::TermExpression<P>;
     /// First entity in the interaction context.
-    fn entity_a(&self) -> &P::String;
+    fn entity_a(&self) -> &Self::TermExpression;
     /// Second entity in the interaction context.
-    fn entity_b(&self) -> &P::String;
+    fn entity_b(&self) -> &Self::TermExpression;
     /// Bitmask identifying which fibers are shared between the two entities.
-    fn shared_fiber_mask(&self) -> &P::String;
+    fn shared_fiber_mask(&self) -> P::NonNegativeInteger;
     /// The norm of the commutator on shared fibers. Zero iff the operators commute.
     fn commutator_norm(&self) -> P::Decimal;
 }
@@ -27,7 +29,7 @@ pub trait CommutatorState<P: Primitives> {
 /// The norm of the three-way associator on shared fibers.
 pub trait AssociatorState<P: Primitives> {
     /// The norm of the three-way associator on shared fibers.
-    fn associator_norm(&self) -> &P::String;
+    fn associator_norm(&self) -> P::Decimal;
 }
 
 /// Three entities whose interaction exhibits non-associativity due to read-write interleaving.
@@ -53,13 +55,15 @@ pub trait ThreeWayFiber<P: Primitives> {
     /// The position index of the shared fiber.
     fn fiber_position(&self) -> P::NonNegativeInteger;
     /// Value under left-associative grouping (AB)C.
-    fn left_grouping_value(&self) -> &P::String;
+    fn left_grouping_value(&self) -> P::Decimal;
     /// Value under right-associative grouping A(BC).
-    fn right_grouping_value(&self) -> &P::String;
+    fn right_grouping_value(&self) -> P::Decimal;
     /// Whether this fiber is pinned by a lease constraint.
     fn is_pinned(&self) -> P::Boolean;
+    /// Associated type for `TermExpression`.
+    type TermExpression: crate::kernel::schema::TermExpression<P>;
     /// Identifier of the entity pair that pins this fiber.
-    fn pinning_pair(&self) -> &P::String;
+    fn pinning_pair(&self) -> &Self::TermExpression;
 }
 
 /// Sequence of CommutatorStates across interaction steps.
@@ -71,9 +75,11 @@ pub trait NegotiationTrace<P: Primitives> {
     /// The number of steps in a negotiation trace.
     fn trace_length(&self) -> P::NonNegativeInteger;
     /// The rate at which the negotiation trace converges.
-    fn convergence_rate(&self) -> &P::String;
+    fn convergence_rate(&self) -> P::Decimal;
+    /// Associated type for `TermExpression`.
+    type TermExpression: crate::kernel::schema::TermExpression<P>;
     /// The terminal value of the negotiation trace.
-    fn terminal_value(&self) -> &P::String;
+    fn terminal_value(&self) -> &Self::TermExpression;
 }
 
 /// Sequence of AssociatorStates across interaction steps.
@@ -87,7 +93,7 @@ pub trait InteractionNerve<P: Primitives> {
     /// Maximum dimension of the interaction nerve simplicial complex.
     fn nerve_dimension(&self) -> P::NonNegativeInteger;
     /// Betti number sequence of the interaction nerve.
-    fn nerve_betti_numbers(&self) -> &P::String;
+    fn nerve_betti_numbers(&self) -> P::NonNegativeInteger;
 }
 
 /// IC(A,B) = κ(session(A,B)). Combined interaction-composition operator.

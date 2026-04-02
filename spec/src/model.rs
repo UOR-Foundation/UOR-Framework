@@ -305,6 +305,8 @@ impl Ontology {
             "MeasurementUnit",
             "MetricAxis",
             "PhaseBoundaryType",
+            "ProofStrategy",
+            "QuantifierKind",
             "QuantumLevel",
             "RewriteRule",
             "SaturationPhase",
@@ -327,6 +329,71 @@ pub fn annotation_space_property() -> AnnotationProperty {
                   user-consumed). Values: 'kernel', 'user', 'bridge'.",
         range: "http://www.w3.org/2001/XMLSchema#string",
     }
+}
+
+/// Rewrites identity individuals' `lhs`, `rhs`, and `forAll` property values
+/// from `IndividualValue::Str` to `IndividualValue::IriRef` pointing to the
+/// corresponding `schema/term_{localName}_{suffix}` AST individual.
+///
+/// Uses `Box::leak` to produce `&'static` references from dynamic strings.
+/// Call this on the `Vec<Individual>` returned from each namespace's identity
+/// data before returning from `individuals()`.
+#[must_use]
+pub fn rewrite_identity_ast_refs(mut individuals: Vec<Individual>) -> Vec<Individual> {
+    let identity_type = "https://uor.foundation/op/Identity";
+    let lhs_prop = "https://uor.foundation/op/lhs";
+    let rhs_prop = "https://uor.foundation/op/rhs";
+    let forall_prop = "https://uor.foundation/op/forAll";
+
+    for ind in &mut individuals {
+        if ind.type_ != identity_type {
+            continue;
+        }
+
+        let name = match ind.id.rfind('/') {
+            Some(pos) => &ind.id[pos + 1..],
+            None => ind.id,
+        };
+
+        let mut needs_rewrite = false;
+        for &(prop, ref val) in ind.properties.iter() {
+            if (prop == lhs_prop || prop == rhs_prop || prop == forall_prop)
+                && matches!(val, IndividualValue::Str(_))
+            {
+                needs_rewrite = true;
+                break;
+            }
+        }
+
+        if !needs_rewrite {
+            continue;
+        }
+
+        let mut new_props: Vec<(&'static str, IndividualValue)> = Vec::new();
+        for &(prop, ref val) in ind.properties.iter() {
+            if matches!(val, IndividualValue::Str(_))
+                && (prop == lhs_prop || prop == rhs_prop || prop == forall_prop)
+            {
+                let suffix = if prop == lhs_prop {
+                    "lhs"
+                } else if prop == rhs_prop {
+                    "rhs"
+                } else {
+                    "forAll"
+                };
+                let iri = format!("https://uor.foundation/schema/term_{name}_{suffix}");
+                let iri: &'static str = Box::leak(iri.into_boxed_str());
+                new_props.push((prop, IndividualValue::IriRef(iri)));
+            } else {
+                new_props.push((prop, val.clone()));
+            }
+        }
+        let leaked: &'static [(&'static str, IndividualValue)] =
+            Box::leak(new_props.into_boxed_slice());
+        ind.properties = leaked;
+    }
+
+    individuals
 }
 
 /// Standard IRI constants used across all namespace modules.
