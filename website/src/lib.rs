@@ -69,7 +69,7 @@ use extractor::{
     concept_breadcrumbs, home_breadcrumbs, learn_breadcrumbs, namespace_breadcrumbs,
     namespace_summaries, namespaces_index_breadcrumbs, reference_breadcrumbs, simple_breadcrumbs,
 };
-use nav::{build_nav, render_nav};
+use nav::{build_nav, render_nav_bootstrap};
 use renderer::{
     render_about_page, render_citation_page, render_concept_page_body, render_concepts_index,
     render_download_page, render_explore, render_homepage, render_identities_page,
@@ -107,7 +107,7 @@ pub fn generate(out_dir: &Path) -> Result<()> {
 
     // Homepage
     let home_body = render_homepage(&summaries, base_path);
-    let home_nav = render_nav(&nav, &format!("{}/", base_path));
+    let home_nav = render_nav_bootstrap(&nav, &format!("{}/", base_path));
     let home_html = render_page(
         "UOR Foundation",
         &home_body,
@@ -120,7 +120,7 @@ pub fn generate(out_dir: &Path) -> Result<()> {
 
     // Search page
     let search_body = render_search_page(base_path);
-    let search_nav = render_nav(&nav, &format!("{}/search.html", base_path));
+    let search_nav = render_nav_bootstrap(&nav, &format!("{}/search.html", base_path));
     let search_crumbs = simple_breadcrumbs("Search", base_path);
     let search_html = render_page(
         "Search",
@@ -133,7 +133,7 @@ pub fn generate(out_dir: &Path) -> Result<()> {
     sitemap_paths.push("/search.html".to_string());
 
     // Namespaces index page
-    let ns_index_nav = render_nav(&nav, &format!("{}/namespaces/", base_path));
+    let ns_index_nav = render_nav_bootstrap(&nav, &format!("{}/namespaces/", base_path));
     let ns_index_body = render_namespaces_index(&summaries, base_path);
     let ns_index_html = render_page(
         "Namespaces",
@@ -152,7 +152,7 @@ pub fn generate(out_dir: &Path) -> Result<()> {
     for module in &ontology.namespaces {
         let prefix = module.namespace.prefix;
         let page_path = format!("/namespaces/{prefix}/");
-        let page_nav = render_nav(&nav, &format!("{}{}", base_path, page_path));
+        let page_nav = render_nav_bootstrap(&nav, &format!("{}{}", base_path, page_path));
         let ns_breadcrumbs = namespace_breadcrumbs(module.namespace.label, base_path);
         let body = render_namespace_page(module, Some(base_path));
         let html = render_page(
@@ -186,7 +186,7 @@ pub fn generate(out_dir: &Path) -> Result<()> {
         }
     };
     let pipeline_body = render_pipeline_page(&summaries, base_path, &prism_narrative);
-    let pipeline_nav = render_nav(&nav, &format!("{}/pipeline/", base_path));
+    let pipeline_nav = render_nav_bootstrap(&nav, &format!("{}/pipeline/", base_path));
     let pipeline_html = render_page(
         "Pipeline",
         &pipeline_body,
@@ -199,7 +199,7 @@ pub fn generate(out_dir: &Path) -> Result<()> {
 
     // Explore page
     let explore_body = render_explore(ontology, &summaries, base_path);
-    let explore_nav = render_nav(&nav, &format!("{}/explore/", base_path));
+    let explore_nav = render_nav_bootstrap(&nav, &format!("{}/explore/", base_path));
     let explore_html = render_page(
         "Explore",
         &explore_body,
@@ -212,7 +212,7 @@ pub fn generate(out_dir: &Path) -> Result<()> {
 
     // Identities page
     let identities_body = render_identities_page(ontology, base_path);
-    let identities_nav = render_nav(&nav, &format!("{}/identities/", base_path));
+    let identities_nav = render_nav_bootstrap(&nav, &format!("{}/identities/", base_path));
     let identities_html = render_page(
         "Identities",
         &identities_body,
@@ -228,7 +228,7 @@ pub fn generate(out_dir: &Path) -> Result<()> {
 
     // Download page
     let download_body = render_download_page(base_path);
-    let download_nav = render_nav(&nav, &format!("{}/download/", base_path));
+    let download_nav = render_nav_bootstrap(&nav, &format!("{}/download/", base_path));
     let download_html = render_page(
         "Download",
         &download_body,
@@ -241,7 +241,7 @@ pub fn generate(out_dir: &Path) -> Result<()> {
 
     // Citation page
     let citation_body = render_citation_page();
-    let citation_nav = render_nav(&nav, &format!("{}/citation/", base_path));
+    let citation_nav = render_nav_bootstrap(&nav, &format!("{}/citation/", base_path));
     let citation_html = render_page(
         "Citation",
         &citation_body,
@@ -254,7 +254,7 @@ pub fn generate(out_dir: &Path) -> Result<()> {
 
     // About page
     let about_body = render_about_page(&content_dir, ontology, &concept_list, base_path)?;
-    let about_nav = render_nav(&nav, &format!("{}/about/", base_path));
+    let about_nav = render_nav_bootstrap(&nav, &format!("{}/about/", base_path));
     let about_html = render_page(
         "About",
         &about_body,
@@ -267,7 +267,7 @@ pub fn generate(out_dir: &Path) -> Result<()> {
 
     // Learn landing page
     let learn_body = render_learn_landing(&concept_list, &summaries, base_path);
-    let learn_nav = render_nav(&nav, &format!("{}/learn/", base_path));
+    let learn_nav = render_nav_bootstrap(&nav, &format!("{}/learn/", base_path));
     let learn_html = render_page(
         "Learn",
         &learn_body,
@@ -280,7 +280,7 @@ pub fn generate(out_dir: &Path) -> Result<()> {
 
     // Concepts index
     let concepts_body = render_concepts_index(&concept_list, base_path);
-    let concepts_nav = render_nav(&nav, &format!("{}/concepts/", base_path));
+    let concepts_nav = render_nav_bootstrap(&nav, &format!("{}/concepts/", base_path));
     let concepts_html = render_page(
         "Concepts",
         &concepts_body,
@@ -332,7 +332,7 @@ pub fn generate(out_dir: &Path) -> Result<()> {
             &rel_concepts,
             base_path,
         );
-        let concept_nav = render_nav(&nav, &concept.url);
+        let concept_nav = render_nav_bootstrap(&nav, &concept.url);
         let concept_crumbs = concept_breadcrumbs(&concept.title, base_path);
         let concept_html = render_page(
             &concept.title,
@@ -398,7 +398,7 @@ mod tests {
     #[test]
     fn nav_renders_non_empty() {
         let nav = build_nav("");
-        let html = render_nav(&nav, "/");
+        let html = render_nav_bootstrap(&nav, "/");
         assert!(!html.is_empty());
         assert!(html.contains("UOR Foundation") || html.contains("Home"));
     }

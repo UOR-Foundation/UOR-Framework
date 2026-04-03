@@ -20,6 +20,7 @@ pub fn validate(artifacts: &Path) -> Result<ConformanceReport> {
     check_css_custom_properties(artifacts, &mut report)?;
     check_kind_badges(artifacts, &mut report)?;
     check_print_stylesheet(artifacts, &mut report)?;
+    check_navbar_dark_theme(artifacts, &mut report)?;
 
     Ok(report)
 }
@@ -121,6 +122,40 @@ fn check_print_stylesheet(artifacts: &Path, report: &mut ConformanceReport) -> R
         report.push(TestResult::fail(
             "website/design/print-stylesheet",
             "css/style.css missing @media print block",
+        ));
+    }
+
+    Ok(())
+}
+
+/// CSS must contain a `.navbar` or `.site-header` rule that applies the dark theme,
+/// ensuring the custom dark header is preserved when using Bootstrap.
+fn check_navbar_dark_theme(artifacts: &Path, report: &mut ConformanceReport) -> Result<()> {
+    let css_path = artifacts.join("css").join("style.css");
+    if !css_path.exists() {
+        report.push(TestResult::fail(
+            "website/design/navbar-dark-theme",
+            "css/style.css not found in generated website",
+        ));
+        return Ok(());
+    }
+
+    let css = std::fs::read_to_string(&css_path)?;
+
+    // The dark theme must be applied via custom CSS on top of Bootstrap.
+    // Check for the site-header rule referencing the dark background.
+    let has_dark_override = css.contains(".site-header")
+        && (css.contains("--color-bg-dark") || css.contains("#0a0a1a"));
+
+    if has_dark_override {
+        report.push(TestResult::pass(
+            "website/design/navbar-dark-theme",
+            "css/style.css applies custom dark theme override on .site-header navbar",
+        ));
+    } else {
+        report.push(TestResult::fail(
+            "website/design/navbar-dark-theme",
+            "css/style.css missing dark theme override for .site-header (expected --color-bg-dark or #0a0a1a)",
         ));
     }
 

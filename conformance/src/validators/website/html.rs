@@ -4,6 +4,7 @@
 //! - `<title>` element present on every page
 //! - Semantic elements present: `<nav>`, `<main>`, `<footer>`
 //! - `lang` attribute on `<html>` element
+//! - Bootstrap JS bundle present on every page
 
 use std::path::Path;
 
@@ -86,7 +87,64 @@ pub fn validate(artifacts: &Path) -> Result<ConformanceReport> {
         ));
     }
 
+    check_bootstrap_js(artifacts, &mut report)?;
+
     Ok(report)
+}
+
+/// Every HTML page must include the Bootstrap JS bundle script.
+fn check_bootstrap_js(artifacts: &Path, report: &mut ConformanceReport) -> Result<()> {
+    let mut missing: Vec<String> = Vec::new();
+    let mut pages_checked = 0u32;
+
+    for entry in WalkDir::new(artifacts)
+        .into_iter()
+        .filter_map(|e| e.ok())
+        .filter(|e| {
+            e.path().extension().map(|x| x == "html").unwrap_or(false)
+                && !e.path().to_string_lossy().contains("target")
+        })
+    {
+        let content = match std::fs::read_to_string(entry.path()) {
+            Ok(c) => c,
+            Err(_) => continue,
+        };
+        pages_checked += 1;
+
+        let lower = content.to_lowercase();
+        if !(lower.contains("<script") && lower.contains("bootstrap")) {
+            let rel = entry
+                .path()
+                .strip_prefix(artifacts)
+                .unwrap_or(entry.path())
+                .to_string_lossy()
+                .to_string();
+            missing.push(rel);
+        }
+    }
+
+    if pages_checked == 0 {
+        report.push(TestResult::warn(
+            "website/html/bootstrap-js",
+            "No HTML files found — skipping Bootstrap JS check",
+        ));
+        return Ok(());
+    }
+
+    if missing.is_empty() {
+        report.push(TestResult::pass(
+            "website/html/bootstrap-js",
+            format!("All {pages_checked} pages include Bootstrap JS bundle"),
+        ));
+    } else {
+        report.push(TestResult::fail_with_details(
+            "website/html/bootstrap-js",
+            format!("{} page(s) missing Bootstrap JS bundle", missing.len()),
+            missing,
+        ));
+    }
+
+    Ok(())
 }
 
 /// Checks a single HTML file for structural issues using string-based heuristics.

@@ -137,41 +137,6 @@ pub fn search_js(base_path: &str) -> String {
     search();
   }}
 }}());
-
-// Hamburger menu toggle
-(function () {{
-  'use strict';
-  var btn = document.querySelector('.hamburger-toggle');
-  var nav = document.querySelector('.site-nav');
-  if (!btn || !nav) return;
-
-  btn.addEventListener('click', function () {{
-    var open = nav.classList.toggle('mobile-open');
-    btn.setAttribute('aria-expanded', open ? 'true' : 'false');
-    btn.innerHTML = open ? '&#10005;' : '&#9776;';
-  }});
-
-  // Allow expanding dropdown groups on mobile via click
-  nav.querySelectorAll(':scope > ul > li').forEach(function (li) {{
-    if (li.querySelector('ul')) {{
-      li.addEventListener('click', function (e) {{
-        if (window.innerWidth <= 768 && e.target.closest('a') === null) {{
-          li.classList.toggle('mobile-expanded');
-        }}
-      }});
-      // Also expand when clicking the top-level link of a group heading
-      var topLink = li.querySelector(':scope > a, :scope > span');
-      if (topLink) {{
-        topLink.addEventListener('click', function (e) {{
-          if (window.innerWidth <= 768 && li.querySelector('ul')) {{
-            e.preventDefault();
-            li.classList.toggle('mobile-expanded');
-          }}
-        }});
-      }}
-    }}
-  }});
-}}());
 ",
         base_path = base_path,
     )

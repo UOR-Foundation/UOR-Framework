@@ -1,7 +1,7 @@
 //! Shared navigation tree builder.
 //!
-//! Defines `NavItem`, `PRISM_STAGES`, `build_nav`, and `render_nav` — the single
-//! source of truth for site navigation used by both `uor-docs` and `uor-website`.
+//! Defines `NavItem`, `PRISM_STAGES`, `build_nav`, and `render_nav_bootstrap` — the
+//! single source of truth for site navigation used by both `uor-docs` and `uor-website`.
 
 use serde::Serialize;
 use uor_ontology::Ontology;
@@ -140,7 +140,7 @@ pub fn build_nav(base_path: &str) -> Vec<NavItem> {
 /// Builds space-grouped namespace nav children.
 ///
 /// Each space group starts with a group-label item (url = ""), followed by namespace items
-/// in assembly order. The CSS class `nav-group-label` is applied by `render_nav_item`.
+/// in assembly order. Bootstrap `dropdown-header` is applied by `render_bs_item`.
 fn build_namespace_nav(ontology: &Ontology, base_path: &str) -> Vec<NavItem> {
     use uor_ontology::model::Space;
     let mut children = Vec::new();
@@ -173,70 +173,107 @@ fn build_namespace_nav(ontology: &Ontology, base_path: &str) -> Vec<NavItem> {
     children
 }
 
-/// Renders the navigation tree as an HTML string.
-pub fn render_nav(nav: &[NavItem], current_path: &str) -> String {
-    // Home is always the first item; its URL is the deployment root (e.g. "/" or
-    // "/UOR-Framework/"). Prefix-matching against the root would mark Home as current
-    // on every page, so it is used only as an exact-match guard in render_nav_item.
+/// Renders the navigation tree as Bootstrap 5 navbar HTML.
+///
+/// Outputs `<ul class="navbar-nav">` with Bootstrap dropdown classes for items
+/// with children, and Bootstrap `dropdown-header` elements for group labels.
+/// Used by both the website and docs crates.
+pub fn render_nav_bootstrap(nav: &[NavItem], current_path: &str) -> String {
     let root_url = nav.first().map(|i| i.url.as_str()).unwrap_or("/");
-    let mut html = String::from("<ul>\n");
+    let mut html = String::from("<ul class=\"navbar-nav\">\n");
     for item in nav {
-        render_nav_item(&mut html, item, current_path, root_url, 1);
+        render_bs_item(&mut html, item, current_path, root_url, 1);
     }
     html.push_str("</ul>\n");
     html
 }
 
-/// Recursively renders a navigation item.
-fn render_nav_item(
+/// Recursively renders a Bootstrap navigation item.
+fn render_bs_item(
     html: &mut String,
     item: &NavItem,
     current_path: &str,
     root_url: &str,
     depth: usize,
 ) {
-    // Exact match always marks an item current.
-    // Prefix match marks parent items current when on a child page (e.g. Namespaces
-    // highlighted when on /namespaces/op/, Concepts when on /concepts/ring.html),
-    // but is suppressed for the root URL to prevent Home from matching every page.
     let is_current = !item.url.is_empty()
         && (current_path == item.url
             || (item.url != root_url && current_path.starts_with(&item.url)));
-    let class = if is_current { " class=\"current\"" } else { "" };
     let indent = "  ".repeat(depth);
 
     if item.url.is_empty() && item.children.is_empty() {
-        // Group label — not a link, styled as a separator
+        // Group label inside a dropdown (e.g., Kernel / Bridge / User separators)
         html.push_str(&format!(
-            "{indent}<li><span class=\"nav-group-label\">{label}</span></li>\n",
+            "{indent}<li><h6 class=\"dropdown-header\">{label}</h6></li>\n",
             label = escape_html(&item.label)
         ));
     } else if item.children.is_empty() {
-        html.push_str(&format!(
-            "{indent}<li{class}><a href=\"{url}\">{label}</a></li>\n",
-            url = escape_html(&item.url),
-            label = escape_html(&item.label)
-        ));
-    } else {
-        // Items with children: render as a link if url is non-empty, otherwise
-        // as a non-clickable group heading (e.g. Reference, Resources).
-        let tag = if item.url.is_empty() {
-            format!(
-                "<span class=\"nav-group-label\">{}</span>",
-                escape_html(&item.label)
-            )
+        // Leaf item
+        if depth == 1 {
+            // Top-level leaf: nav-item + nav-link
+            let active = if is_current { " active" } else { "" };
+            html.push_str(&format!(
+                "{indent}<li class=\"nav-item\"><a class=\"nav-link{active}\" \
+                 href=\"{url}\">{label}</a></li>\n",
+                url = escape_html(&item.url),
+                label = escape_html(&item.label),
+            ));
         } else {
-            format!(
-                "<a href=\"{}\">{}</a>",
+            // Nested leaf: dropdown-item
+            let active = if is_current { " active" } else { "" };
+            html.push_str(&format!(
+                "{indent}<li><a class=\"dropdown-item{active}\" \
+                 href=\"{url}\">{label}</a></li>\n",
+                url = escape_html(&item.url),
+                label = escape_html(&item.label),
+            ));
+        }
+    } else {
+        // Item with children → dropdown
+        let active = if is_current { " active" } else { "" };
+        if depth == 1 {
+            // Top-level dropdown
+            let toggle = if item.url.is_empty() {
+                // Group heading (Reference, Resources): pure toggle, no navigation
+                format!(
+                    "<a class=\"nav-link{active} dropdown-toggle\" href=\"#\" role=\"button\" \
+                     data-bs-toggle=\"dropdown\" aria-expanded=\"false\">{}</a>",
+                    escape_html(&item.label)
+                )
+            } else {
+                // Navigable dropdown (Learn): link + toggle
+                format!(
+                    "<a class=\"nav-link{active} dropdown-toggle\" href=\"{}\" role=\"button\" \
+                     data-bs-toggle=\"dropdown\" aria-expanded=\"false\">{}</a>",
+                    escape_html(&item.url),
+                    escape_html(&item.label)
+                )
+            };
+            html.push_str(&format!(
+                "{indent}<li class=\"nav-item dropdown\">{toggle}\n\
+                 {indent}<ul class=\"dropdown-menu\">\n"
+            ));
+            for child in &item.children {
+                render_bs_item(html, child, current_path, root_url, depth + 1);
+            }
+            html.push_str(&format!("{indent}</ul>\n{indent}</li>\n"));
+        } else {
+            // Nested dropdown (e.g. Namespaces → 33+ namespace items): dropend
+            let toggle = format!(
+                "<a class=\"dropdown-item dropdown-toggle\" href=\"{}\" \
+                 data-bs-toggle=\"dropdown\" aria-expanded=\"false\">{}</a>",
                 escape_html(&item.url),
                 escape_html(&item.label)
-            )
-        };
-        html.push_str(&format!("{indent}<li{class}>{tag}\n{indent}<ul>\n",));
-        for child in &item.children {
-            render_nav_item(html, child, current_path, root_url, depth + 1);
+            );
+            html.push_str(&format!(
+                "{indent}<li class=\"dropend\">{toggle}\n\
+                 {indent}<ul class=\"dropdown-menu\">\n"
+            ));
+            for child in &item.children {
+                render_bs_item(html, child, current_path, root_url, depth + 1);
+            }
+            html.push_str(&format!("{indent}</ul>\n{indent}</li>\n"));
         }
-        html.push_str(&format!("{indent}</ul>\n{indent}</li>\n"));
     }
 }
 

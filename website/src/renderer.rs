@@ -25,20 +25,27 @@ pub fn render_page(
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>{title} — UOR Foundation</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YcnS/1uj6kMGKdFARPBITNGI0Agm3xDReig0" crossorigin="anonymous">
 <link rel="stylesheet" href="{css_url}">
 </head>
 <body>
 <a href="#main-content" class="skip-link">Skip to main content</a>
-<header class="site-header">
-<a href="{home_url}" class="site-logo">UOR Foundation</a>
-<button class="hamburger-toggle" aria-label="Toggle navigation" aria-expanded="false">&#9776;</button>
-<nav aria-label="Site navigation" class="site-nav">
+<header class="navbar navbar-expand-lg navbar-dark site-header">
+<div class="container-fluid">
+<a class="navbar-brand site-logo" href="{home_url}">UOR Foundation</a>
+<button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#siteNav" aria-controls="siteNav" aria-expanded="false" aria-label="Toggle navigation">
+<span class="navbar-toggler-icon"></span>
+</button>
+<div class="collapse navbar-collapse" id="siteNav">
+<nav aria-label="Site navigation" class="site-nav me-auto">
 {nav_html}
 </nav>
 <a href="https://github.com/UOR-Foundation/UOR-Framework" class="github-link" target="_blank" rel="noopener">&#9733; Star on GitHub</a>
+</div>
+</div>
 </header>
 <main id="main-content">
-<nav aria-label="Breadcrumb" class="breadcrumb">
+<nav aria-label="Breadcrumb" class="site-breadcrumb">
 {crumb_html}
 </nav>
 <article class="page-content">
@@ -48,6 +55,7 @@ pub fn render_page(
 <footer class="site-footer">
 <p>UOR Foundation — <a href="https://uor.foundation/">uor.foundation</a> — <a href="https://github.com/UOR-Foundation/UOR-Framework">GitHub</a> — Apache-2.0</p>
 </footer>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
 <script src="{js_url}" defer></script>
 </body>
 </html>"##,
@@ -135,9 +143,9 @@ pub fn render_homepage(summaries: &[NamespaceSummary], base_path: &str) -> Strin
 <h1>UOR Foundation</h1>
 <p class="tagline">Universal Object Reference — a formal ontology for content-addressed, algebraically-structured object spaces.</p>
 <p>
-<a href="{learn_url}" class="btn-primary">Start Learning</a>
-<a href="{ns_url}" class="btn-secondary">Browse Namespaces</a>
-<a href="{search_url}" class="btn-secondary">Search</a>
+<a href="{learn_url}" class="cta-primary">Start Learning</a>
+<a href="{ns_url}" class="cta-secondary">Browse Namespaces</a>
+<a href="{search_url}" class="cta-secondary">Search</a>
 </p>
 </section>
 
@@ -557,7 +565,7 @@ pub fn render_download_page(base_path: &str) -> String {
          <h2>Rust Crate</h2>\n\
          <p>The <code>uor-foundation</code> crate provides the ontology as typed Rust \
          traits and constants, suitable for <code>#![no_std]</code> environments.</p>\n\
-         <p><a href=\"https://crates.io/crates/uor-foundation\" class=\"btn-primary\">View on crates.io</a></p>"
+         <p><a href=\"https://crates.io/crates/uor-foundation\" class=\"cta-primary\">View on crates.io</a></p>"
     )
 }
 

@@ -60,6 +60,9 @@
   --r-md:   0.375rem;
   --r-lg:   0.5rem;
   --r-full: 9999px;
+
+  /* Layout */
+  --header-height: 3.5rem;
 }
 
 /* ── Reset & Base ──────────────────────────────────────────────────────────── */
@@ -104,26 +107,18 @@ body {
   top: 0;
 }
 
-/* ── Header ────────────────────────────────────────────────────────────────── */
+/* ── Header (Bootstrap navbar overrides) ───────────────────────────────────── */
 
 .site-header {
   background: var(--color-bg-dark);
-  color: #e8e8f0;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0.75rem 2rem;
-  position: sticky;
-  top: 0;
-  z-index: 100;
   border-bottom: 2px solid var(--color-link);
+  padding: 0.5rem 1rem;
 }
 
 .site-logo {
   color: #7eb8ff;
   font-size: var(--text-xl);
   font-weight: 700;
-  text-decoration: none;
   letter-spacing: -0.02em;
 }
 
@@ -148,134 +143,72 @@ body {
   color: #fff;
 }
 
-/* ── Navigation ────────────────────────────────────────────────────────────── */
+/* ── Navigation (Bootstrap navbar-nav overrides) ──────────────────────────── */
 
-.site-nav ul {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  gap: 1.5rem;
-  align-items: center;
-}
-
-.site-nav li {
-  position: relative;
-}
-
-.site-nav a {
+.site-nav .nav-link {
   color: #c8d0e8;
-  text-decoration: none;
   font-size: 0.9rem;
-  padding: 0.25rem 0;
-  border-bottom: 2px solid transparent;
-  transition: color 0.15s, border-color 0.15s;
+  transition: color 0.15s;
 }
 
-.site-nav a:hover,
-.site-nav a:focus {
+.site-nav .nav-link:hover,
+.site-nav .nav-link:focus {
   color: #7eb8ff;
-  border-bottom-color: #7eb8ff;
-  outline: none;
 }
 
-.site-nav li.current > a {
+.site-nav .nav-link.active {
   color: #7eb8ff;
-  border-bottom-color: #7eb8ff;
 }
 
-/* Dropdown nav */
-.site-nav li ul {
-  display: none;
-  position: absolute;
-  top: 100%;
-  left: 0;
+/* Dropdown menus — dark theme */
+.site-nav .dropdown-menu {
   background: #0d0d1f;
   border: 1px solid #2a2a4a;
-  border-radius: var(--r-md);
-  padding: 0.5rem 0;
   min-width: 14rem;
-  flex-direction: column;
-  gap: 0;
-  z-index: 200;
 }
 
-.site-nav li:hover ul,
-.site-nav li:focus-within ul {
-  display: flex;
-}
-
-.site-nav li ul li {
-  width: 100%;
-}
-
-.site-nav li ul a {
-  display: block;
-  padding: 0.4rem 1rem;
-  border-bottom: none;
+.site-nav .dropdown-item {
+  color: #c8d0e8;
   font-size: var(--text-sm);
 }
 
-/* Nested dropdown (depth 3: e.g. Reference > Namespaces > Kernel/...) */
-.site-nav li ul li ul {
-  display: none;
-  position: absolute;
-  top: 0;
-  left: 100%;
-  background: #0d0d1f;
-  border: 1px solid #2a2a4a;
-  border-radius: var(--r-md);
-  padding: 0.5rem 0;
-  min-width: 12rem;
-  flex-direction: column;
-  gap: 0;
-  z-index: 210;
+.site-nav .dropdown-item:hover,
+.site-nav .dropdown-item:focus {
+  color: #7eb8ff;
+  background: rgba(255, 255, 255, 0.05);
 }
 
-.site-nav li ul li:hover > ul,
-.site-nav li ul li:focus-within > ul {
-  display: flex;
+.site-nav .dropdown-item.active {
+  color: #7eb8ff;
+  background: rgba(255, 255, 255, 0.08);
 }
 
-/* Nav group label (space grouping separators) */
-.nav-group-label {
+/* Nested dropdown (namespace flyout) — scrollable for 33+ items */
+.site-nav .dropend .dropdown-menu {
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+/* Dropdown headers (space group labels: Kernel / Bridge / User) */
+.site-nav .dropdown-header {
   font-size: var(--text-xs);
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: var(--color-text-muted);
-  padding: var(--sp-1) var(--sp-3);
-  pointer-events: none;
-  cursor: default;
-  display: block;
-}
-
-/* Hamburger menu toggle (hidden on desktop) */
-.hamburger-toggle {
-  display: none;
-  background: none;
-  border: none;
-  color: #c8d0e8;
-  cursor: pointer;
-  padding: 0.25rem;
-  font-size: 1.5rem;
-  line-height: 1;
-}
-
-.hamburger-toggle:hover {
-  color: #7eb8ff;
+  color: #8090a8;
+  padding: 0.5rem 1rem 0.25rem;
 }
 
 /* ── Breadcrumb ────────────────────────────────────────────────────────────── */
 
-.breadcrumb {
+.site-breadcrumb {
   padding: 0.5rem 2rem;
   background: #eef2f8;
   border-bottom: 1px solid var(--color-border);
   font-size: var(--text-sm);
 }
 
-.breadcrumb ol {
+.site-breadcrumb ol {
   list-style: none;
   margin: 0;
   padding: 0;
@@ -285,22 +218,22 @@ body {
   flex-wrap: wrap;
 }
 
-.breadcrumb li::before {
+.site-breadcrumb li::before {
   content: "›";
   margin-right: 0.5rem;
   color: #6b7280;
 }
 
-.breadcrumb li:first-child::before {
+.site-breadcrumb li:first-child::before {
   display: none;
 }
 
-.breadcrumb a {
+.site-breadcrumb a {
   color: var(--color-link);
   text-decoration: none;
 }
 
-.breadcrumb a:hover {
+.site-breadcrumb a:hover {
   text-decoration: underline;
 }
 
@@ -490,8 +423,8 @@ dd {
 
 /* ── Buttons ───────────────────────────────────────────────────────────────── */
 
-.btn-primary,
-.btn-secondary {
+.cta-primary,
+.cta-secondary {
   display: inline-block;
   padding: 0.75rem 1.5rem;
   border-radius: var(--r-md);
@@ -501,23 +434,23 @@ dd {
   transition: background 0.15s, color 0.15s;
 }
 
-.btn-primary {
+.cta-primary {
   background: var(--color-link);
   color: #fff;
 }
 
-.btn-primary:hover {
+.cta-primary:hover {
   background: #0052a3;
   text-decoration: none;
 }
 
-.btn-secondary {
+.cta-secondary {
   background: transparent;
   color: #7eb8ff;
   border: 2px solid #7eb8ff;
 }
 
-.btn-secondary:hover {
+.cta-secondary:hover {
   background: #7eb8ff;
   color: var(--color-bg-dark);
   text-decoration: none;
@@ -1255,7 +1188,7 @@ details.ns-detail[open] summary::before {
 
 /* ── Responsive ────────────────────────────────────────────────────────────── */
 
-@media (max-width: 1024px) {
+@media (max-width: 991.98px) {
   .page-content {
     padding: 1.5rem 1.5rem 3rem;
   }
@@ -1301,67 +1234,6 @@ details.ns-detail[open] summary::before {
     width: 100%;
   }
 
-  .site-header {
-    flex-wrap: wrap;
-    align-items: center;
-    padding: 0.75rem 1rem;
-    gap: 0.5rem;
-  }
-
-  .hamburger-toggle {
-    display: block;
-    order: 2;
-    margin-left: auto;
-  }
-
-  .site-logo {
-    order: 1;
-  }
-
-  .github-link {
-    order: 3;
-  }
-
-  .site-nav {
-    order: 4;
-    width: 100%;
-    display: none;
-  }
-
-  .site-nav.mobile-open {
-    display: block;
-  }
-
-  .site-nav ul {
-    flex-direction: column;
-    gap: 0;
-  }
-
-  .site-nav > ul > li > a,
-  .site-nav > ul > li > span {
-    padding: 0.5rem 0;
-    display: block;
-  }
-
-  .site-nav li ul {
-    position: static;
-    display: none;
-    border: none;
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 0;
-    padding-left: 1rem;
-  }
-
-  .site-nav li.mobile-expanded > ul {
-    display: flex;
-  }
-
-  .site-nav li ul li ul {
-    position: static;
-    left: 0;
-    padding-left: 1rem;
-  }
-
   .page-content {
     padding: 1rem 1rem 2rem;
   }
@@ -1379,7 +1251,7 @@ details.ns-detail[open] summary::before {
     font-size: var(--text-base);
   }
 
-  .breadcrumb {
+  .site-breadcrumb {
     padding: 0.5rem 1rem;
   }
 
@@ -1417,7 +1289,7 @@ details.ns-detail[open] summary::before {
 .docs-layout {
   display: flex;
   align-items: flex-start;
-  min-height: calc(100vh - 3.5rem);
+  min-height: calc(100vh - var(--header-height));
 }
 
 .docs-sidebar {
@@ -1426,8 +1298,8 @@ details.ns-detail[open] summary::before {
   background: #0d0d1f;
   border-right: 1px solid #1e1e3a;
   position: sticky;
-  top: 3.5rem;
-  max-height: calc(100vh - 3.5rem);
+  top: var(--header-height);
+  max-height: calc(100vh - var(--header-height));
   overflow: hidden;
   z-index: 1;
 }
@@ -1437,7 +1309,7 @@ details.ns-detail[open] summary::before {
    stacking-context bugs in Safari/Firefox where the sidebar paints above
    the site-header dropdown (z-index:100) despite having no explicit z-index. */
 .docs-sidebar nav {
-  max-height: calc(100vh - 3.5rem);
+  max-height: calc(100vh - var(--header-height));
   overflow-y: auto;
   padding: 1.5rem 0;
 }
@@ -1632,7 +1504,7 @@ details.ns-detail[open] summary::before {
 @media print {
   .site-header,
   .site-nav,
-  .breadcrumb,
+  .site-breadcrumb,
   .skip-link,
   .site-footer { display: none !important; }
 

@@ -5,6 +5,7 @@
 //! - Parses without fatal errors (cssparser)
 //! - Contains responsive breakpoints (`@media`)
 //! - No excessive `!important` usage (≤5 occurrences)
+//! - No orphan nav classes from pre-Bootstrap migration
 
 use std::path::Path;
 
@@ -88,7 +89,26 @@ pub fn validate(artifacts: &Path) -> Result<ConformanceReport> {
         ));
     }
 
+    // Check for orphan nav classes from pre-Bootstrap migration
+    check_no_orphan_nav_classes(&content, &mut report);
+
     Ok(report)
+}
+
+/// CSS must not contain the old `.hamburger-toggle` class (superseded by Bootstrap
+/// navbar-toggler). Its presence indicates incomplete migration cleanup.
+fn check_no_orphan_nav_classes(css: &str, report: &mut ConformanceReport) {
+    if css.contains(".hamburger-toggle") {
+        report.push(TestResult::fail(
+            "website/css/no-orphan-nav-classes",
+            "style.css still contains .hamburger-toggle class — should be removed after Bootstrap migration",
+        ));
+    } else {
+        report.push(TestResult::pass(
+            "website/css/no-orphan-nav-classes",
+            "style.css contains no orphan pre-Bootstrap nav classes",
+        ));
+    }
 }
 
 /// Returns true if the CSS content can be tokenized by cssparser without fatal errors.

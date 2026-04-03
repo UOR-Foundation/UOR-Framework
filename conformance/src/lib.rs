@@ -143,6 +143,8 @@ pub fn run_all(paths: &WorkspacePaths) -> anyhow::Result<ConformanceReport> {
     report.extend(validators::website::pages::validate(&paths.artifacts)?);
     // 8e. Visual elements (SVG)
     report.extend(validators::website::visual::validate(&paths.artifacts)?);
+    // 8f. Bootstrap framework integration
+    report.extend(validators::website::bootstrap::validate(&paths.artifacts)?);
 
     Ok(report)
 }

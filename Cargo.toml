@@ -25,9 +25,6 @@ sophia_inmem = "0.8"
 # CLI
 clap = { version = "4", features = ["derive"] }
 
-# Templating
-tera = "1"
-
 # Error handling
 anyhow = "1"
 thiserror = "1"

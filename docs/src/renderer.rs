@@ -154,15 +154,23 @@ pub fn render_docs_page(
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>{title} — UOR Foundation</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YcnS/1uj6kMGKdFARPBITNGI0Agm3xDReig0" crossorigin="anonymous">
 <link rel="stylesheet" href="{css_url}">
 </head>
 <body>
 <a href="#main-content" class="skip-link">Skip to main content</a>
-<header class="site-header">
-<a href="{home_url}" class="site-logo">UOR Foundation</a>
-<nav aria-label="Site navigation" class="site-nav">
+<header class="navbar navbar-expand-lg navbar-dark site-header">
+<div class="container-fluid">
+<a class="navbar-brand site-logo" href="{home_url}">UOR Foundation</a>
+<button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#siteNav" aria-controls="siteNav" aria-expanded="false" aria-label="Toggle navigation">
+<span class="navbar-toggler-icon"></span>
+</button>
+<div class="collapse navbar-collapse" id="siteNav">
+<nav aria-label="Site navigation" class="site-nav me-auto">
 {site_nav_html}
 </nav>
+</div>
+</div>
 </header>
 <div class="docs-layout">
 <aside class="docs-sidebar">
@@ -171,7 +179,7 @@ pub fn render_docs_page(
 </nav>
 </aside>
 <main id="main-content">
-<nav aria-label="Breadcrumb" class="breadcrumb">{breadcrumb}</nav>
+<nav aria-label="Breadcrumb" class="site-breadcrumb">{breadcrumb}</nav>
 <article class="page-content">
 {content_html}
 </article>
@@ -180,6 +188,7 @@ pub fn render_docs_page(
 <footer class="site-footer">
 <p>UOR Foundation — <a href="https://uor.foundation/">uor.foundation</a> — Apache-2.0</p>
 </footer>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
 <script src="{js_url}" defer></script>
 </body>
 </html>"##,

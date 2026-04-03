@@ -75,7 +75,7 @@ pub fn generate(out_dir: &Path, readme_path: &Path) -> Result<()> {
     verifier::verify_content(&content_dir)?;
 
     let docs_current = format!("{base_path}/docs/");
-    let site_nav_html = nav::render_nav(&nav::build_nav(base_path), &docs_current);
+    let site_nav_html = nav::render_nav_bootstrap(&nav::build_nav(base_path), &docs_current);
     let docs_nav_html = build_docs_sidebar_html(base_path);
 
     // Generate index page
