@@ -196,17 +196,17 @@ mod tests {
     fn functional_property_has_max_count() {
         let ontology = Ontology::full();
         let shacl = to_shacl(ontology);
-        // schema:ringQuantum is functional — should have maxCount 1
+        // schema:ringWittLength is functional — should have maxCount 1
         assert!(
-            shacl.contains("sh:path schema:ringQuantum"),
-            "Missing schema:ringQuantum path"
+            shacl.contains("sh:path schema:ringWittLength"),
+            "Missing schema:ringWittLength path"
         );
-        // Check maxCount is near the ringQuantum path
-        let idx = shacl.find("sh:path schema:ringQuantum").unwrap_or(0);
+        // Check maxCount is near the ringWittLength path
+        let idx = shacl.find("sh:path schema:ringWittLength").unwrap_or(0);
         let snippet = &shacl[idx..idx + 120];
         assert!(
             snippet.contains("sh:maxCount 1"),
-            "ringQuantum should have sh:maxCount 1"
+            "ringWittLength should have sh:maxCount 1"
         );
     }
 

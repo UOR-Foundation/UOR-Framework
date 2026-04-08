@@ -11,7 +11,7 @@ op:COEFF_1 a owl:NamedIndividual, op:Identity ;
     rdfs:label "COEFF_1" ;
     op:lhs "standard coefficient ring for psi-pipeline" ;
     op:rhs "Z/2Z" ;
-    op:forAll "ConstraintNerve N(C) at any quantum level" ;
+    op:forAll "CechNerve N(C) at any quantum level" ;
     op:verificationDomain op:Algebraic ;
     op:universallyValid "true"^^xsd:boolean .
 "#;

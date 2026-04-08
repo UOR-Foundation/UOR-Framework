@@ -8,12 +8,12 @@ pub const TEST197_GRAPH_TREE_TYPE: &str = r#"
 @prefix type: <https://uor.foundation/type/> .
 
 type:GraphType a owl:NamedIndividual, type:ConstrainedType ;
-    type:structuralFiberCount "sum of node fiber counts + edge overhead" ;
+    type:structuralSiteCount "sum of node site counts + edge overhead" ;
     type:structuralGrounding "constraint nerve = graph nerve, beta_k equality" ;
     type:structuralConstraint "edge constraints: adjacency preserved under grounding" .
 
 type:TreeType a owl:NamedIndividual, type:ConstrainedType ;
-    type:structuralFiberCount "sum of node fiber counts" ;
+    type:structuralSiteCount "sum of node site counts" ;
     type:structuralGrounding "parent-child encoding with acyclicity constraint" ;
     type:structuralConstraint "beta_1=0 (acyclic), beta_0=1 (connected)" .
 "#;

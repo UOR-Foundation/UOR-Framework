@@ -35,8 +35,8 @@ fn classes() -> Vec<Class> {
         Class {
             id: "https://uor.foundation/interaction/InteractionContext",
             label: "InteractionContext",
-            comment: "Two entities sharing fibers through composed operations. \
-                      Properties: entityA, entityB, sharedFiberMask, commutatorNorm.",
+            comment: "Two entities sharing sites through composed operations. \
+                      Properties: entityA, entityB, sharedSiteMask, commutatorNorm.",
             subclass_of: &[OWL_THING],
             disjoint_with: &[],
         },
@@ -44,14 +44,14 @@ fn classes() -> Vec<Class> {
             id: "https://uor.foundation/interaction/CommutatorState",
             label: "CommutatorState",
             comment: "The norm \u{2016}[\u{03b4}_A, \u{03b9}_B]\u{2016} on \
-                      shared fibers. Zero iff operators commute on the shared domain.",
+                      shared sites. Zero iff operators commute on the shared domain.",
             subclass_of: &[OWL_THING],
             disjoint_with: &[],
         },
         Class {
             id: "https://uor.foundation/interaction/AssociatorState",
             label: "AssociatorState",
-            comment: "The norm of the three-way associator on shared fibers.",
+            comment: "The norm of the three-way associator on shared sites.",
             subclass_of: &[OWL_THING],
             disjoint_with: &[],
         },
@@ -64,9 +64,9 @@ fn classes() -> Vec<Class> {
             disjoint_with: &[],
         },
         Class {
-            id: "https://uor.foundation/interaction/ThreeWayFiber",
-            label: "ThreeWayFiber",
-            comment: "A fiber shared by all three entities in an AssociatorTriple.",
+            id: "https://uor.foundation/interaction/ThreeWaySite",
+            label: "ThreeWaySite",
+            comment: "A site shared by all three entities in an AssociatorTriple.",
             subclass_of: &[OWL_THING],
             disjoint_with: &[],
         },
@@ -124,9 +124,9 @@ fn properties() -> Vec<Property> {
             range: "https://uor.foundation/schema/TermExpression",
         },
         Property {
-            id: "https://uor.foundation/interaction/sharedFiberMask",
-            label: "sharedFiberMask",
-            comment: "Bitmask identifying which fibers are shared between \
+            id: "https://uor.foundation/interaction/sharedSiteMask",
+            label: "sharedSiteMask",
+            comment: "Bitmask identifying which sites are shared between \
                       the two entities.",
             kind: PropertyKind::Datatype,
             functional: true,
@@ -136,7 +136,7 @@ fn properties() -> Vec<Property> {
         Property {
             id: "https://uor.foundation/interaction/commutatorNorm",
             label: "commutatorNorm",
-            comment: "The norm of the commutator on shared fibers. \
+            comment: "The norm of the commutator on shared sites. \
                       Zero iff the operators commute.",
             kind: PropertyKind::Datatype,
             functional: true,
@@ -157,7 +157,7 @@ fn properties() -> Vec<Property> {
         Property {
             id: "https://uor.foundation/interaction/associatorNorm",
             label: "associatorNorm",
-            comment: "The norm of the three-way associator on shared fibers.",
+            comment: "The norm of the three-way associator on shared sites.",
             kind: PropertyKind::Datatype,
             functional: true,
             domain: Some("https://uor.foundation/interaction/AssociatorState"),
@@ -191,14 +191,14 @@ fn properties() -> Vec<Property> {
             domain: Some("https://uor.foundation/interaction/AssociatorTriple"),
             range: "https://uor.foundation/schema/Datum",
         },
-        // ThreeWayFiber properties
+        // ThreeWaySite properties
         Property {
-            id: "https://uor.foundation/interaction/fiberPosition",
-            label: "fiberPosition",
-            comment: "The position index of the shared fiber.",
+            id: "https://uor.foundation/interaction/sitePosition",
+            label: "sitePosition",
+            comment: "The position index of the shared site.",
             kind: PropertyKind::Datatype,
             functional: true,
-            domain: Some("https://uor.foundation/interaction/ThreeWayFiber"),
+            domain: Some("https://uor.foundation/interaction/ThreeWaySite"),
             range: XSD_NON_NEGATIVE_INTEGER,
         },
         Property {
@@ -207,7 +207,7 @@ fn properties() -> Vec<Property> {
             comment: "Value under left-associative grouping (AB)C.",
             kind: PropertyKind::Datatype,
             functional: true,
-            domain: Some("https://uor.foundation/interaction/ThreeWayFiber"),
+            domain: Some("https://uor.foundation/interaction/ThreeWaySite"),
             range: XSD_DECIMAL,
         },
         Property {
@@ -216,25 +216,25 @@ fn properties() -> Vec<Property> {
             comment: "Value under right-associative grouping A(BC).",
             kind: PropertyKind::Datatype,
             functional: true,
-            domain: Some("https://uor.foundation/interaction/ThreeWayFiber"),
+            domain: Some("https://uor.foundation/interaction/ThreeWaySite"),
             range: XSD_DECIMAL,
         },
         Property {
             id: "https://uor.foundation/interaction/isPinned",
             label: "isPinned",
-            comment: "Whether this fiber is pinned by a lease constraint.",
+            comment: "Whether this site is pinned by a lease constraint.",
             kind: PropertyKind::Datatype,
             functional: true,
-            domain: Some("https://uor.foundation/interaction/ThreeWayFiber"),
+            domain: Some("https://uor.foundation/interaction/ThreeWaySite"),
             range: XSD_BOOLEAN,
         },
         Property {
             id: "https://uor.foundation/interaction/pinningPair",
             label: "pinningPair",
-            comment: "Identifier of the entity pair that pins this fiber.",
+            comment: "Identifier of the entity pair that pins this site.",
             kind: PropertyKind::Object,
             functional: true,
-            domain: Some("https://uor.foundation/interaction/ThreeWayFiber"),
+            domain: Some("https://uor.foundation/interaction/ThreeWaySite"),
             range: "https://uor.foundation/schema/TermExpression",
         },
         // NegotiationTrace properties

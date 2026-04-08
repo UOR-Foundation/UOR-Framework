@@ -21,8 +21,8 @@ Certificates are not generic. Each subclass targets a distinct invariant:
   preservation under a transform.
 - {@class https://uor.foundation/cert/CompletenessCertificate} — attests that a
   type satisfies the completeness criterion (identity IT\_7d).
-- {@class https://uor.foundation/cert/SaturationCertificate} — attests that a
-  context has reached full saturation (all fibers pinned).
+- {@class https://uor.foundation/cert/GroundingCertificate} — attests that a
+  context has reached full grounding (all sites pinned).
 - {@class https://uor.foundation/cert/GeodesicCertificate} — attests that a
   geodesic trace satisfies both GD\_1 conditions.
 - {@class https://uor.foundation/cert/MeasurementCertificate} — attests that a
@@ -34,13 +34,13 @@ For complex verifications the framework records step-by-step provenance.
 The {@class https://uor.foundation/cert/CompletenessAuditTrail} collects an
 ordered sequence of completeness witnesses, and the
 {@class https://uor.foundation/cert/ChainAuditTrail} records per-step evidence
-for lift-chain certificates that span multiple quantum levels.
+for lift-chain certificates that span multiple Witt levels.
 
 ## Connecting to Proofs
 
 Certificates are the *output* of the {@concept proof-system}. A
 {@class https://uor.foundation/proof/ComputationCertificate} verifies an
-identity at a specific quantum level, while an
+identity at a specific Witt level, while an
 {@class https://uor.foundation/proof/AxiomaticDerivation} establishes universal
 scope. The cert namespace consumes these proofs and packages them as
 self-contained attestations that downstream systems can verify independently.

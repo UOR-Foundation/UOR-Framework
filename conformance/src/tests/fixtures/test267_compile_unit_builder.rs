@@ -14,6 +14,6 @@ conformance:ex_lease_decl_267 a owl:NamedIndividual, conformance:LeaseDeclaratio
 conformance:ex_stream_decl_267 a owl:NamedIndividual, conformance:StreamDeclaration .
 conformance:ex_predicate_decl_267 a owl:NamedIndividual, conformance:PredicateDeclaration .
 conformance:ex_parallel_decl_267 a owl:NamedIndividual, conformance:ParallelDeclaration .
-conformance:ex_ql_decl_267 a owl:NamedIndividual, conformance:QuantumLevelDeclaration .
+conformance:ex_ql_decl_267 a owl:NamedIndividual, conformance:WittLevelDeclaration .
 conformance:ex_violation_267 a owl:NamedIndividual, conformance:ShapeViolationReport .
 "#;

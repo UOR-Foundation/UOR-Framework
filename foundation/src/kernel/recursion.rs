@@ -61,5 +61,5 @@ pub trait RecursiveStep<P: Primitives> {
 /// A computation trace recording the sequence of recursive steps, measure values, and the base case result. The trace length is bounded by the initial measure value.
 pub trait RecursionTrace<P: Primitives>: crate::bridge::trace::ComputationTrace<P> {}
 
-/// A bounded recursion where the descent measure is the structural size of the input type (fiber count, constraint count, or operad nesting depth).
+/// A bounded recursion where the descent measure is the structural size of the input type (site count, constraint count, or operad nesting depth).
 pub trait StructuralRecursion<P: Primitives>: BoundedRecursion<P> {}

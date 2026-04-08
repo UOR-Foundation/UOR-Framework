@@ -7,7 +7,7 @@
 use crate::enums::AchievabilityStatus;
 use crate::enums::MeasurementUnit;
 use crate::enums::PhaseBoundaryType;
-use crate::enums::QuantumLevel;
+use crate::enums::WittLevel;
 use crate::Primitives;
 
 /// A measurable quantity in the UOR Framework. All observables are kernel-computed and user-consumed.
@@ -31,8 +31,8 @@ pub trait MetricObservable<P: Primitives>: Observable<P> {}
 /// An observable measuring properties of paths through the ring: path length, total variation, winding number.
 pub trait PathObservable<P: Primitives>: Observable<P> {}
 
-/// An observable measuring cascade properties: the length and count of operation sequences.
-pub trait CascadeObservable<P: Primitives>: Observable<P> {}
+/// An observable measuring reduction properties: the length and count of operation sequences.
+pub trait ReductionObservable<P: Primitives>: Observable<P> {}
 
 /// An observable measuring catastrophe-theoretic properties: thresholds at which qualitative changes occur in the partition.
 pub trait CatastropheObservable<P: Primitives>: Observable<P> {
@@ -79,11 +79,11 @@ pub trait TotalVariation<P: Primitives>: PathObservable<P> {}
 /// The winding number of a closed path: the number of times the path wraps around the ring.
 pub trait WindingNumber<P: Primitives>: PathObservable<P> {}
 
-/// The number of operation applications in an operation cascade.
-pub trait CascadeLength<P: Primitives>: CascadeObservable<P> {}
+/// The number of operation applications in a reduction sequence.
+pub trait ReductionLength<P: Primitives>: ReductionObservable<P> {}
 
-/// The number of distinct cascades in a computation.
-pub trait CascadeCount<P: Primitives>: CascadeObservable<P> {}
+/// The number of distinct reduction sequences in a computation.
+pub trait ReductionCount<P: Primitives>: ReductionObservable<P> {}
 
 /// A critical value at which a qualitative change occurs in the partition structure.
 pub trait CatastropheThreshold<P: Primitives>: CatastropheObservable<P> {}
@@ -130,11 +130,11 @@ pub trait DihedralElement<P: Primitives>: HolonomyObservable<P> {
     fn reflection_bit(&self) -> P::Boolean;
 }
 
-/// Fiber-by-fiber curvature decomposition. J_k measures the discrete derivative of the incompatibility metric at fiber position k: J_k = |d_R(x, succ(x)) - d_H(x, succ(x))| restricted to position k.
+/// Site-by-site curvature decomposition. J_k measures the discrete derivative of the incompatibility metric at site position k: J_k = |d_R(x, succ(x)) - d_H(x, succ(x))| restricted to position k.
 pub trait Jacobian<P: Primitives>: CurvatureObservable<P> {
-    /// The fiber position k at which this Jacobian entry is measured.
-    fn fiber_position(&self) -> P::NonNegativeInteger;
-    /// The discrete derivative value at this fiber position.
+    /// The site position k at which this Jacobian entry is measured.
+    fn site_position(&self) -> P::NonNegativeInteger;
+    /// The discrete derivative value at this site position.
     fn derivative_value(&self) -> P::Decimal;
 }
 
@@ -150,20 +150,20 @@ pub trait BettiNumber<P: Primitives>: TopologicalObservable<P> {}
 /// The smallest positive eigenvalue of the constraint nerve Laplacian. Controls the convergence rate of iterative resolution: larger gap = faster convergence.
 pub trait SpectralGap<P: Primitives>: TopologicalObservable<P> {}
 
-/// An observable measuring thermodynamic properties of the resolution process: residual entropy, Landauer cost, and cascade distribution statistics.
+/// An observable measuring thermodynamic properties of the resolution process: residual entropy, Landauer cost, and reduction distribution statistics.
 pub trait ThermoObservable<P: Primitives>: Observable<P> {
     /// An estimated computational hardness for a ThermoObservable, connecting thermodynamic cost to complexity (TH_9 realisation).
     fn hardness_estimate(&self) -> P::Decimal;
 }
 
-/// S_residual: the residual Shannon entropy of the fiber distribution after partial resolution. Computed as S = (Σ κ_k − χ(N(C))) × ln 2 (IT_7b). Unit: Nats.
+/// S_residual: the residual Shannon entropy of the site distribution after partial resolution. Computed as S = (Σ κ_k − χ(N(C))) × ln 2 (IT_7b). Unit: Nats.
 pub trait ResidualEntropy<P: Primitives>: ThermoObservable<P> {}
 
-/// The minimum thermodynamic cost (in units of k_B T ln 2) of erasing one bit of fiber uncertainty. The UOR ring operates at β* = ln 2 — the Landauer temperature.
+/// The minimum thermodynamic cost (in units of k_B T ln 2) of erasing one bit of site uncertainty. The UOR ring operates at β* = ln 2 — the Landauer temperature.
 pub trait LandauerCost<P: Primitives>: ThermoObservable<P> {}
 
-/// The Shannon entropy of the cascade distribution P(j) = 2^{−j}. At the Landauer temperature, this equals ln 2 per cascade step — each step erases exactly one bit of fiber uncertainty.
-pub trait CascadeEntropy<P: Primitives>: ThermoObservable<P> {}
+/// The Shannon entropy of the reduction distribution P(j) = 2^{−j}. At the Landauer temperature, this equals ln 2 per reduction step — each step erases exactly one bit of site uncertainty.
+pub trait ReductionEntropy<P: Primitives>: ThermoObservable<P> {}
 
 /// A named topological signature: a pair (realised Euler characteristic, realised Betti profile). Linked from TypeSynthesisResult. Allows comparison between the goal signature and the actually achieved signature.
 pub trait SynthesisSignature<P: Primitives> {
@@ -197,7 +197,7 @@ pub trait SpectralSequencePage<P: Primitives> {
     fn postnikov_truncation(&self) -> &Self::PostnikovTruncation;
 }
 
-/// The cohomology class in H^2(N(C(T))) representing the LiftObstruction for a specific QuantumLift. The class is zero iff the obstruction is trivial. When non-zero, it indexes the specific fiber pair at Q_{n+1} that cannot be closed by the lifted constraint set alone.
+/// The cohomology class in H^2(N(C(T))) representing the LiftObstruction for a specific WittLift. The class is zero iff the obstruction is trivial. When non-zero, it indexes the specific site pair at Q_{n+1} that cannot be closed by the lifted constraint set alone.
 pub trait LiftObstructionClass<P: Primitives> {
     /// Associated type for `CohomologyGroup`.
     type CohomologyGroup: crate::bridge::cohomology::CohomologyGroup<P>;
@@ -205,7 +205,7 @@ pub trait LiftObstructionClass<P: Primitives> {
     fn obstruction_class(&self) -> &Self::CohomologyGroup;
 }
 
-/// A classification of a type's holonomy: the subgroup of D_{2^n} generated by all Monodromy observables computed over closed paths in the type's constraint nerve. Trivial iff every closed constraint path returns to its starting fiber assignment without net dihedral transformation.
+/// A classification of a type's holonomy: the subgroup of D_{2^n} generated by all Monodromy observables computed over closed paths in the type's constraint nerve. Trivial iff every closed constraint path returns to its starting site assignment without net dihedral transformation.
 pub trait MonodromyClass<P: Primitives> {}
 
 /// The holonomy group of a ConstrainedType: the group of all Monodromy elements achievable by closed paths in the constraint nerve. Always a subgroup of D_{2^n}. Trivial iff the type has trivial monodromy everywhere; equals D_{2^n} iff paths involving both neg and bnot involutions are present.
@@ -218,7 +218,7 @@ pub trait HolonomyGroup<P: Primitives> {
     fn holonomy_group_order(&self) -> P::PositiveInteger;
 }
 
-/// A sequence of constraint applications forming a closed loop in the constraint nerve — beginning and ending at the same fiber assignment. The Monodromy of the loop is the net DihedralElement accumulated when traversing it.
+/// A sequence of constraint applications forming a closed loop in the constraint nerve — beginning and ending at the same site assignment. The Monodromy of the loop is the net DihedralElement accumulated when traversing it.
 pub trait ClosedConstraintPath<P: Primitives> {
     /// The number of constraint application steps in this closed path.
     fn path_length(&self) -> P::NonNegativeInteger;
@@ -240,7 +240,7 @@ pub trait HomotopyGroup<P: Primitives> {
     fn homotopy_basepoint(&self) -> &Self::Constraint;
 }
 
-/// The image of πk(N(C)) → Aut(fiberk) for k > 1. Generalises the MN_6 monodromy homomorphism.
+/// The image of πk(N(C)) → Aut(sitek) for k > 1. Generalises the MN_6 monodromy homomorphism.
 pub trait HigherMonodromy<P: Primitives> {
     /// The dimension k > 1 at which this higher monodromy acts.
     fn higher_monodromy_dimension(&self) -> P::NonNegativeInteger;
@@ -255,7 +255,7 @@ pub trait WhiteheadProduct<P: Primitives> {
 /// A record of the holonomy stratification of the moduli space at a given quantum level: the list of HolonomyStrata, their codimensions, and their relationship to the MorphospaceBoundary.
 pub trait StratificationRecord<P: Primitives> {
     /// The quantum level at which this stratification is computed.
-    fn stratification_level(&self) -> QuantumLevel;
+    fn stratification_level(&self) -> WittLevel;
     /// Associated type for `HolonomyStratum`.
     type HolonomyStratum: crate::user::type_::HolonomyStratum<P>;
     /// A HolonomyStratum in this stratification record.
@@ -296,11 +296,11 @@ pub trait BaseMetric<P: Primitives>: Observable<P> {
     fn metric_bound(&self) -> &Self::TermExpression;
 }
 
-/// The saturation metric σ = pinned fibers / total fibers. Ranges from 0 (no fibers pinned) to 1 (fully saturated).
-pub trait SaturationObservable<P: Primitives>: Observable<P> {
-    /// The count of pinned fibers (numerator of σ).
+/// The grounding metric σ = pinned sites / total sites. Ranges from 0 (no sites pinned) to 1 (fully grounded).
+pub trait GroundingObservable<P: Primitives>: Observable<P> {
+    /// The count of pinned sites (numerator of σ).
     fn saturation_numerator(&self) -> P::NonNegativeInteger;
-    /// The total fiber count (denominator of σ).
+    /// The total site count (denominator of σ).
     fn saturation_denominator(&self) -> P::PositiveInteger;
 }
 
@@ -336,7 +336,7 @@ pub mod achievable {}
 /// The signature has been formally proven impossible by an ImpossibilityWitness deriving from MS_1, MS_2, or other impossibility theorems.
 pub mod forbidden {}
 
-/// d_Δ: the incompatibility metric |d_R − d_H| per fiber pair.
+/// d_Δ: the incompatibility metric |d_R − d_H| per site pair.
 pub mod d_delta_metric {
     /// `metricDomain`
     pub const METRIC_DOMAIN: &str = "pair of ring elements";
@@ -346,20 +346,20 @@ pub mod d_delta_metric {
     pub const REFERENCES_CLASS: &str = "https://uor.foundation/observable/IncompatibilityMetric";
 }
 
-/// σ: the saturation metric, pinned fibers / total fibers.
+/// σ: the grounding metric, pinned sites / total sites.
 pub mod sigma_metric {
     /// `metricDomain`
     pub const METRIC_DOMAIN: &str = "computation state";
     /// `metricRange`
     pub const METRIC_RANGE: &str = "decimal in [0, 1]";
-    /// `referencesIdentity` -> `SC_2`
-    pub const REFERENCES_IDENTITY: &str = "https://uor.foundation/op/SC_2";
+    /// `referencesIdentity` -> `GS_2`
+    pub const REFERENCES_IDENTITY: &str = "https://uor.foundation/op/GS_2";
 }
 
-/// J_k: per-fiber curvature, ∂_R f_k.
+/// J_k: per-site curvature, ∂_R f_k.
 pub mod jacobian_metric {
     /// `metricDomain`
-    pub const METRIC_DOMAIN: &str = "computation state × fiber index";
+    pub const METRIC_DOMAIN: &str = "computation state × site index";
     /// `metricRange`
     pub const METRIC_RANGE: &str = "decimal";
     /// `referencesClass` -> `Jacobian`
@@ -388,7 +388,7 @@ pub mod euler_metric {
     pub const REFERENCES_IDENTITY: &str = "https://uor.foundation/op/IT_2";
 }
 
-/// r: count of free (unpinned) fibers, the residual entropy.
+/// r: count of free (unpinned) sites, the residual entropy.
 pub mod residual_metric {
     /// `metricDomain`
     pub const METRIC_DOMAIN: &str = "computation state";

@@ -16,21 +16,21 @@ DC_1 and DC_2 in the `op/` namespace.
 ## The Jacobian
 
 The {@class https://uor.foundation/observable/Jacobian} decomposes the
-incompatibility metric fiber by fiber. At position k:
+incompatibility metric site by site. At position k:
 
-> J_k(x) = |d_R(x, succ(x)) - d_H(x, succ(x))| restricted to fiber k
+> J_k(x) = |d_R(x, succ(x)) - d_H(x, succ(x))| restricted to site k
 
 Key identities:
-- **DC_6**: J_k(x) = ∂_R fiber_k(x)
+- **DC_6**: J_k(x) = ∂_R site_k(x)
 - **DC_8**: rank(J(x)) = d_H(x, succ(x)) - 1 for generic x
 - **DC_9**: Total curvature κ(x) = Σ_k J_k(x)
-- **DC_11**: Curvature equipartition — each fiber contributes approximately
+- **DC_11**: Curvature equipartition — each site contributes approximately
   equally to total curvature.
 
 ## Curvature-Weighted Resolution
 
 Identity DC_10 shows that the optimal next constraint in iterative resolution
-maximizes the Jacobian over free fibers. This connects the differential
+maximizes the Jacobian over free sites. This connects the differential
 calculus to the resolution pipeline: curvature guides constraint selection.
 
 ## Worked Example: Ring Derivative on R_4
@@ -60,7 +60,7 @@ This provides a differential-geometric interpretation of the critical identity.
 
 Identity DC_10 shows that the optimal next constraint in iterative resolution
 maximizes the {@class https://uor.foundation/observable/Jacobian} over free
-fibers. This connects differential calculus directly to the resolution loop:
+sites. This connects differential calculus directly to the resolution loop:
 each step selects the constraint whose curvature contribution is largest,
 ensuring maximal progress per iteration. See
 [Iterative Resolution](iterative-resolution.html) for the convergence analysis

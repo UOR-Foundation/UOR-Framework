@@ -20,7 +20,7 @@ obs:BettiNumber a owl:Class ;
 obs:SpectralGap a owl:Class ;
     rdfs:subClassOf obs:TopologicalObservable .
 
-resolver:ConstraintNerve a owl:Class .
+resolver:CechNerve a owl:Class .
 
 op:DC_1 a op:Identity ;
     op:lhs "∂_R f(x)" ;

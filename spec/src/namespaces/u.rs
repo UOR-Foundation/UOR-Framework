@@ -1,8 +1,8 @@
-//! `u/` namespace — Content addressing via Braille bijection.
+//! `u/` namespace — Ring elements and content addressing.
 //!
 //! The `u/` namespace defines the content-addressing scheme used throughout
-//! the UOR Framework. Addresses are represented as Braille strings, where
-//! each Braille cell (glyph) encodes a 6-bit chunk of the address.
+//! the UOR Framework. Elements are content-addressable identifiers derived
+//! from ring-element hashes.
 //!
 //! **Space classification:** `kernel` — compiled into ROM.
 
@@ -17,9 +17,8 @@ pub fn module() -> NamespaceModule {
             prefix: "u",
             iri: NS_U,
             label: "UOR Content Addressing",
-            comment: "Content-addressable identifiers represented as Braille strings. \
-                      Each address is a sequence of Braille glyphs encoding a unique \
-                      content-derived identifier.",
+            comment: "Content-addressable identifiers for ring elements. \
+                      Each element carries a unique content-derived identifier.",
             space: Space::Kernel,
             imports: &[],
         },
@@ -30,68 +29,25 @@ pub fn module() -> NamespaceModule {
 }
 
 fn classes() -> Vec<Class> {
-    vec![
-        Class {
-            id: "https://uor.foundation/u/Address",
-            label: "Address",
-            comment: "A content-addressable identifier represented as a Braille string. \
-                      Each Address uniquely identifies a piece of content via its \
-                      Braille-encoded hash.",
-            subclass_of: &[OWL_THING],
-            disjoint_with: &[],
-        },
-        Class {
-            id: "https://uor.foundation/u/Glyph",
-            label: "Glyph",
-            comment: "A single Braille cell encoding 6 bits of an address. \
-                      The bijection between Braille cells and 6-bit values is \
-                      the foundational encoding of the UOR content-addressing scheme.",
-            subclass_of: &[OWL_THING],
-            disjoint_with: &[],
-        },
-    ]
+    vec![Class {
+        id: "https://uor.foundation/u/Element",
+        label: "Element",
+        comment: "A content-addressable ring element. Each Element uniquely \
+                      identifies a piece of content via its hash-derived identifier.",
+        subclass_of: &[OWL_THING],
+        disjoint_with: &[],
+    }]
 }
 
 fn properties() -> Vec<Property> {
     vec![
-        Property {
-            id: "https://uor.foundation/u/glyph",
-            label: "glyph",
-            comment: "The Braille string representation of an address. \
-                      Each character in the string is a Braille glyph (cell).",
-            kind: PropertyKind::Datatype,
-            functional: true,
-            domain: Some("https://uor.foundation/u/Address"),
-            range: XSD_STRING,
-        },
-        Property {
-            id: "https://uor.foundation/u/codepoint",
-            label: "codepoint",
-            comment: "The Unicode codepoint of a Braille glyph. \
-                      Braille glyphs occupy the range U+2800–U+28FF.",
-            kind: PropertyKind::Datatype,
-            functional: true,
-            domain: Some("https://uor.foundation/u/Glyph"),
-            range: XSD_NON_NEGATIVE_INTEGER,
-        },
-        Property {
-            id: "https://uor.foundation/u/byteValue",
-            label: "byteValue",
-            comment: "The 6-bit integer value (0–63) encoded by this Braille glyph. \
-                      The bijection maps each of the 64 Braille patterns to a unique \
-                      6-bit value.",
-            kind: PropertyKind::Datatype,
-            functional: true,
-            domain: Some("https://uor.foundation/u/Glyph"),
-            range: XSD_NON_NEGATIVE_INTEGER,
-        },
         Property {
             id: "https://uor.foundation/u/length",
             label: "length",
             comment: "The number of Braille glyphs in an address string.",
             kind: PropertyKind::Datatype,
             functional: true,
-            domain: Some("https://uor.foundation/u/Address"),
+            domain: Some("https://uor.foundation/u/Element"),
             range: XSD_NON_NEGATIVE_INTEGER,
         },
         // Amendment 13: Address Resolution
@@ -101,7 +57,7 @@ fn properties() -> Vec<Property> {
             comment: "The datum that this address references. Inverse of schema:glyph.",
             kind: PropertyKind::Object,
             functional: true,
-            domain: Some("https://uor.foundation/u/Address"),
+            domain: Some("https://uor.foundation/u/Element"),
             range: OWL_THING,
         },
         Property {
@@ -112,7 +68,7 @@ fn properties() -> Vec<Property> {
                       The algorithm prefix must match u:digestAlgorithm.",
             kind: PropertyKind::Datatype,
             functional: true,
-            domain: Some("https://uor.foundation/u/Address"),
+            domain: Some("https://uor.foundation/u/Element"),
             range: XSD_STRING,
         },
         // Amendment 43: Cryptographic Primitive Pinning
@@ -123,7 +79,7 @@ fn properties() -> Vec<Property> {
                       Allowed values: 'blake3' (primary), 'sha256' (secondary).",
             kind: PropertyKind::Datatype,
             functional: true,
-            domain: Some("https://uor.foundation/u/Address"),
+            domain: Some("https://uor.foundation/u/Element"),
             range: XSD_STRING,
         },
         Property {
@@ -134,17 +90,17 @@ fn properties() -> Vec<Property> {
                       This is the exact byte string hashed to produce u:digest.",
             kind: PropertyKind::Datatype,
             functional: true,
-            domain: Some("https://uor.foundation/u/Address"),
+            domain: Some("https://uor.foundation/u/Element"),
             range: XSD_HEX_BINARY,
         },
         Property {
-            id: "https://uor.foundation/u/quantum",
-            label: "quantum",
-            comment: "The quantum level n of this address. The address encodes a \
+            id: "https://uor.foundation/u/wittLength",
+            label: "wittLength",
+            comment: "The Witt level n of this element. The element encodes a \
                       datum in R_n = Z/(2^n)Z.",
             kind: PropertyKind::Datatype,
             functional: true,
-            domain: Some("https://uor.foundation/u/Address"),
+            domain: Some("https://uor.foundation/u/Element"),
             range: XSD_POSITIVE_INTEGER,
         },
     ]

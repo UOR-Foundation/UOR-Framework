@@ -16,9 +16,9 @@ op:phi_2 a op:Identity ;
     op:forAll "constraints A, B" .
 
 op:phi_3 a op:Identity ;
-    op:lhs "φ₃(closed fiber state)" ;
+    op:lhs "φ₃(closed site state)" ;
     op:rhs "unique 4-component partition" ;
-    op:forAll "closed FiberBudget" .
+    op:forAll "closed FreeRank" .
 
 op:phi_4 a op:Identity ;
     op:lhs "φ₄(T, x)" ;

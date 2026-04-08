@@ -49,8 +49,8 @@ pub fn validate() -> ConformanceReport {
         &mut report,
     );
     run_test(
-        "test8_fiber_budget",
-        tests::fixtures::TEST8_FIBER_BUDGET,
+        "test8_free_rank",
+        tests::fixtures::TEST8_FREE_RANK,
         &mut report,
     );
     run_test(
@@ -154,8 +154,8 @@ pub fn validate() -> ConformanceReport {
         &mut report,
     );
     run_test(
-        "test29_coordinate_kind",
-        tests::fixtures::TEST29_COORDINATE_KIND,
+        "test29_triad_projection",
+        tests::fixtures::TEST29_TRIAD_PROJECTION,
         &mut report,
     );
     run_test(
@@ -164,8 +164,8 @@ pub fn validate() -> ConformanceReport {
         &mut report,
     );
     run_test(
-        "test31_quantum_level",
-        tests::fixtures::TEST31_QUANTUM_LEVEL,
+        "test31_witt_level",
+        tests::fixtures::TEST31_WITT_LEVEL,
         &mut report,
     );
     run_test(
@@ -189,13 +189,13 @@ pub fn validate() -> ConformanceReport {
         &mut report,
     );
     run_test(
-        "test36_q1_ring",
-        tests::fixtures::TEST36_Q1_RING,
+        "test36_w16_ring",
+        tests::fixtures::TEST36_W16_RING,
         &mut report,
     );
     run_test(
-        "test37_quantum_level_binding",
-        tests::fixtures::TEST37_QUANTUM_LEVEL_BINDING,
+        "test37_witt_level_binding",
+        tests::fixtures::TEST37_WITT_LEVEL_BINDING,
         &mut report,
     );
     run_test(
@@ -219,8 +219,8 @@ pub fn validate() -> ConformanceReport {
         &mut report,
     );
     run_test(
-        "test42_quantum_lift",
-        tests::fixtures::TEST42_QUANTUM_LIFT,
+        "test42_witt_lift",
+        tests::fixtures::TEST42_WITT_LIFT,
         &mut report,
     );
     run_test(
@@ -274,38 +274,38 @@ pub fn validate() -> ConformanceReport {
         &mut report,
     );
     run_test(
-        "test53_superposed_fiber",
-        tests::fixtures::TEST53_SUPERPOSED_FIBER,
+        "test53_superposed_site",
+        tests::fixtures::TEST53_SUPERPOSED_SITE,
         &mut report,
     );
     run_test(
-        "test54_saturated_context",
-        tests::fixtures::TEST54_SATURATED_CONTEXT,
+        "test54_grounded_context",
+        tests::fixtures::TEST54_GROUNDED_CONTEXT,
         &mut report,
     );
     run_test(
-        "test55_saturation_witness",
-        tests::fixtures::TEST55_SATURATION_WITNESS,
+        "test55_grounding_witness",
+        tests::fixtures::TEST55_GROUNDING_WITNESS,
         &mut report,
     );
     run_test(
-        "test56_domain_saturation_record",
-        tests::fixtures::TEST56_DOMAIN_SATURATION_RECORD,
+        "test56_domain_grounding_record",
+        tests::fixtures::TEST56_DOMAIN_GROUNDING_RECORD,
         &mut report,
     );
     run_test(
-        "test57_saturation_phase",
-        tests::fixtures::TEST57_SATURATION_PHASE,
+        "test57_grounding_phase",
+        tests::fixtures::TEST57_GROUNDING_PHASE,
         &mut report,
     );
     run_test(
-        "test58_saturation_certificate",
-        tests::fixtures::TEST58_SATURATION_CERTIFICATE,
+        "test58_grounding_certificate",
+        tests::fixtures::TEST58_GROUNDING_CERTIFICATE,
         &mut report,
     );
     run_test(
-        "test59_saturation_aware_resolver",
-        tests::fixtures::TEST59_SATURATION_AWARE_RESOLVER,
+        "test59_grounding_aware_resolver",
+        tests::fixtures::TEST59_GROUNDING_AWARE_RESOLVER,
         &mut report,
     );
     run_test(
@@ -374,8 +374,8 @@ pub fn validate() -> ConformanceReport {
         &mut report,
     );
     run_test(
-        "test73_collapsed_fiber_state",
-        tests::fixtures::TEST73_COLLAPSED_FIBER_STATE,
+        "test73_collapsed_site_state",
+        tests::fixtures::TEST73_COLLAPSED_SITE_STATE,
         &mut report,
     );
     run_test(
@@ -436,13 +436,13 @@ pub fn validate() -> ConformanceReport {
     );
     // Amendment 39: Q1 Lift fixtures
     run_test(
-        "test85_q1_ring_grounding",
-        tests::fixtures::TEST85_Q1_RING_GROUNDING,
+        "test85_w16_ring_grounding",
+        tests::fixtures::TEST85_W16_RING_GROUNDING,
         &mut report,
     );
     run_test(
-        "test86_quantum_lift_trivial",
-        tests::fixtures::TEST86_QUANTUM_LIFT_TRIVIAL,
+        "test86_witt_lift_trivial",
+        tests::fixtures::TEST86_WITT_LIFT_TRIVIAL,
         &mut report,
     );
     run_test(
@@ -467,8 +467,8 @@ pub fn validate() -> ConformanceReport {
     );
     // Amendment 39: Q1 Inverse Pipeline fixtures
     run_test(
-        "test91_synthesis_goal_q1",
-        tests::fixtures::TEST91_SYNTHESIS_GOAL_Q1,
+        "test91_synthesis_goal_w16",
+        tests::fixtures::TEST91_SYNTHESIS_GOAL_W16,
         &mut report,
     );
     run_test(
@@ -493,8 +493,8 @@ pub fn validate() -> ConformanceReport {
     );
     // Amendment 40: Q1 Normative Certification fixtures
     run_test(
-        "test96_geodesic_trace_q1",
-        tests::fixtures::TEST96_GEODESIC_TRACE_Q1,
+        "test96_geodesic_trace_w16",
+        tests::fixtures::TEST96_GEODESIC_TRACE_W16,
         &mut report,
     );
     run_test(
@@ -508,8 +508,8 @@ pub fn validate() -> ConformanceReport {
         &mut report,
     );
     run_test(
-        "test99_measurement_born_q1",
-        tests::fixtures::TEST99_MEASUREMENT_BORN_Q1,
+        "test99_measurement_born_w16",
+        tests::fixtures::TEST99_MEASUREMENT_BORN_W16,
         &mut report,
     );
     run_test(
@@ -626,8 +626,8 @@ pub fn validate() -> ConformanceReport {
         &mut report,
     );
     run_test(
-        "test122_session_saturation",
-        tests::fixtures::TEST122_SESSION_SATURATION,
+        "test122_session_grounding",
+        tests::fixtures::TEST122_SESSION_GROUNDING,
         &mut report,
     );
     run_test(
@@ -648,8 +648,8 @@ pub fn validate() -> ConformanceReport {
         &mut report,
     );
     run_test(
-        "test127_quantum_level_resolver",
-        tests::fixtures::TEST127_QUANTUM_LEVEL_RESOLVER,
+        "test127_witt_level_resolver",
+        tests::fixtures::TEST127_WITT_LEVEL_RESOLVER,
         &mut report,
     );
     run_test(
@@ -668,8 +668,8 @@ pub fn validate() -> ConformanceReport {
         &mut report,
     );
     run_test(
-        "test131_cascade_observable",
-        tests::fixtures::TEST131_CASCADE_OBSERVABLE,
+        "test131_reduction_observable",
+        tests::fixtures::TEST131_REDUCTION_OBSERVABLE,
         &mut report,
     );
     run_test(
@@ -713,13 +713,13 @@ pub fn validate() -> ConformanceReport {
         &mut report,
     );
     run_test(
-        "test140_cascade_length",
-        tests::fixtures::TEST140_CASCADE_LENGTH,
+        "test140_reduction_length",
+        tests::fixtures::TEST140_REDUCTION_LENGTH,
         &mut report,
     );
     run_test(
-        "test141_cascade_count",
-        tests::fixtures::TEST141_CASCADE_COUNT,
+        "test141_reduction_count",
+        tests::fixtures::TEST141_REDUCTION_COUNT,
         &mut report,
     );
     run_test(
@@ -748,8 +748,8 @@ pub fn validate() -> ConformanceReport {
         &mut report,
     );
     run_test(
-        "test147_cascade_entropy",
-        tests::fixtures::TEST147_CASCADE_ENTROPY,
+        "test147_reduction_entropy",
+        tests::fixtures::TEST147_REDUCTION_ENTROPY,
         &mut report,
     );
     run_test(
@@ -828,8 +828,8 @@ pub fn validate() -> ConformanceReport {
         &mut report,
     );
     run_test(
-        "test163_distributed_saturation",
-        tests::fixtures::TEST163_DISTRIBUTED_SATURATION,
+        "test163_distributed_grounding",
+        tests::fixtures::TEST163_DISTRIBUTED_GROUNDING,
         &mut report,
     );
     // Amendment 49: User-space class coverage fixtures
@@ -974,8 +974,8 @@ pub fn validate() -> ConformanceReport {
         &mut report,
     );
     run_test(
-        "test191_saturation_observable",
-        tests::fixtures::TEST191_SATURATION_OBSERVABLE,
+        "test191_grounding_observable",
+        tests::fixtures::TEST191_GROUNDING_OBSERVABLE,
         &mut report,
     );
     run_test(
@@ -1040,20 +1040,20 @@ pub fn validate() -> ConformanceReport {
         tests::fixtures::TEST203_SESSION_COMPOSITION_OPERATION,
         &mut report,
     );
-    // Amendment 63: Cascade Core
+    // Amendment 63: Reduction Core
     run_test(
-        "test204_euler_cascade",
-        tests::fixtures::TEST204_EULER_CASCADE,
+        "test204_euler_reduction",
+        tests::fixtures::TEST204_EULER_REDUCTION,
         &mut report,
     );
     run_test(
-        "test205_cascade_stage",
-        tests::fixtures::TEST205_CASCADE_STAGE,
+        "test205_reduction_step",
+        tests::fixtures::TEST205_REDUCTION_STEP,
         &mut report,
     );
     run_test(
-        "test206_cascade_state",
-        tests::fixtures::TEST206_CASCADE_STATE,
+        "test206_reduction_state",
+        tests::fixtures::TEST206_REDUCTION_STATE,
         &mut report,
     );
     run_test(
@@ -1083,8 +1083,8 @@ pub fn validate() -> ConformanceReport {
         &mut report,
     );
     run_test(
-        "test213_cascade_transaction",
-        tests::fixtures::TEST213_CASCADE_TRANSACTION,
+        "test213_reduction_transaction",
+        tests::fixtures::TEST213_REDUCTION_TRANSACTION,
         &mut report,
     );
     run_test(
@@ -1178,8 +1178,8 @@ pub fn validate() -> ConformanceReport {
         &mut report,
     );
     run_test(
-        "test232_three_way_fiber",
-        tests::fixtures::TEST232_THREE_WAY_FIBER,
+        "test232_three_way_site",
+        tests::fixtures::TEST232_THREE_WAY_SITE,
         &mut report,
     );
     run_test(
@@ -1393,6 +1393,16 @@ pub fn validate() -> ConformanceReport {
         tests::fixtures::TEST274_WITNESS_TYPES,
         &mut report,
     );
+    run_test(
+        "test275_reduction_advance",
+        tests::fixtures::TEST275_REDUCTION_ADVANCE,
+        &mut report,
+    );
+    run_test(
+        "test276_witness_site_budget",
+        tests::fixtures::TEST276_WITNESS_SITE_BUDGET,
+        &mut report,
+    );
 
     // Verify test fixture count matches expected
     let test_count = report.results.len() - before_tests;
@@ -1445,7 +1455,7 @@ fn run_test(name: &str, turtle_src: &str, report: &mut ConformanceReport) {
         "test5_partition" => validate_partition(turtle_src),
         "test6_critical_identity" => validate_critical_identity(turtle_src),
         "test7_end_to_end" => validate_end_to_end(turtle_src),
-        "test8_fiber_budget" => validate_fiber_budget(turtle_src),
+        "test8_free_rank" => validate_free_rank(turtle_src),
         "test9_constraint_algebra" => validate_constraint_algebra(turtle_src),
         "test10_iterative_resolution" => validate_iterative_resolution(turtle_src),
         "test11_composition" => validate_composition(turtle_src),
@@ -1466,20 +1476,20 @@ fn run_test(name: &str, turtle_src: &str, report: &mut ConformanceReport) {
         "test26_complexity_class" => validate_complexity_class_shacl(turtle_src),
         "test27_rewrite_rule" => validate_rewrite_rule_shacl(turtle_src),
         "test28_measurement_unit" => validate_measurement_unit_shacl(turtle_src),
-        "test29_coordinate_kind" => validate_coordinate_kind_shacl(turtle_src),
+        "test29_triad_projection" => validate_coordinate_kind_shacl(turtle_src),
         "test30_proof_coverage" => validate_proof_coverage_shacl(turtle_src),
-        "test31_quantum_level" => validate_quantum_level_shacl(turtle_src),
+        "test31_witt_level" => validate_quantum_level_shacl(turtle_src),
         "test32_arc_grounding" => validate_arc_grounding_shacl(turtle_src),
         "test33_graph_gaps" => validate_graph_gaps_shacl(turtle_src),
         "test34_completeness_candidate" => validate_completeness_candidate_shacl(turtle_src),
         "test35_completeness_certificate" => validate_completeness_certificate_shacl(turtle_src),
-        "test36_q1_ring" => validate_q1_ring_shacl(turtle_src),
-        "test37_quantum_level_binding" => validate_quantum_level_binding_shacl(turtle_src),
+        "test36_w16_ring" => validate_q1_ring_shacl(turtle_src),
+        "test37_witt_level_binding" => validate_quantum_level_binding_shacl(turtle_src),
         "test38_session_lifecycle" => validate_session_lifecycle_shacl(turtle_src),
         "test39_session_boundary" => validate_session_boundary_shacl(turtle_src),
         "test40_type_synthesis_goal" => validate_type_synthesis_goal_shacl(turtle_src),
         "test41_synthesis_result" => validate_synthesis_result_shacl(turtle_src),
-        "test42_quantum_lift" => validate_quantum_lift_shacl(turtle_src),
+        "test42_witt_lift" => validate_quantum_lift_shacl(turtle_src),
         "test43_spectral_sequence" => validate_spectral_sequence_shacl(turtle_src),
         "test44_monodromy_flat" => validate_monodromy_flat_shacl(turtle_src),
         "test45_monodromy_twisted" => validate_monodromy_twisted_shacl(turtle_src),
@@ -1490,13 +1500,13 @@ fn run_test(name: &str, turtle_src: &str, report: &mut ConformanceReport) {
         "test50_jacobian_resolver" => validate_jacobian_resolver_shacl(turtle_src),
         "test51_product_type_pipeline" => validate_product_type_pipeline_shacl(turtle_src),
         "test52_sum_type_variant" => validate_sum_type_variant_shacl(turtle_src),
-        "test53_superposed_fiber" => validate_superposed_fiber_shacl(turtle_src),
-        "test54_saturated_context" => validate_saturated_context_shacl(turtle_src),
-        "test55_saturation_witness" => validate_saturation_witness_shacl(turtle_src),
-        "test56_domain_saturation_record" => validate_domain_saturation_record_shacl(turtle_src),
-        "test57_saturation_phase" => validate_saturation_phase_shacl(turtle_src),
-        "test58_saturation_certificate" => validate_saturation_certificate_shacl(turtle_src),
-        "test59_saturation_aware_resolver" => validate_saturation_aware_resolver_shacl(turtle_src),
+        "test53_superposed_site" => validate_superposed_site_shacl(turtle_src),
+        "test54_grounded_context" => validate_saturated_context_shacl(turtle_src),
+        "test55_grounding_witness" => validate_saturation_witness_shacl(turtle_src),
+        "test56_domain_grounding_record" => validate_domain_saturation_record_shacl(turtle_src),
+        "test57_grounding_phase" => validate_saturation_phase_shacl(turtle_src),
+        "test58_grounding_certificate" => validate_saturation_certificate_shacl(turtle_src),
+        "test59_grounding_aware_resolver" => validate_saturation_aware_resolver_shacl(turtle_src),
         "test60_impossibility_witness" => validate_impossibility_witness_shacl(turtle_src),
         "test61_morphospace_record" => validate_morphospace_record_shacl(turtle_src),
         "test62_morphospace_boundary" => validate_morphospace_boundary_shacl(turtle_src),
@@ -1510,7 +1520,7 @@ fn run_test(name: &str, turtle_src: &str, report: &mut ConformanceReport) {
         "test70_measurement_resolver" => validate_measurement_resolver_shacl(turtle_src),
         "test71_measurement_event" => validate_measurement_event_shacl(turtle_src),
         "test72_measurement_certificate" => validate_measurement_certificate_shacl(turtle_src),
-        "test73_collapsed_fiber_state" => validate_collapsed_fiber_state_shacl(turtle_src),
+        "test73_collapsed_site_state" => validate_collapsed_site_state_shacl(turtle_src),
         "test74_quantum_thermodynamic" => validate_quantum_thermodynamic_shacl(turtle_src),
         "test75_partition_product" => validate_basic_turtle(turtle_src),
         "test76_partition_coproduct" => validate_basic_turtle(turtle_src),
@@ -1522,21 +1532,21 @@ fn run_test(name: &str, turtle_src: &str, report: &mut ConformanceReport) {
         "test82_level_successor" => validate_basic_turtle(turtle_src),
         "test83_amplitude_normalization" => validate_basic_turtle(turtle_src),
         "test84_enum_variant" => validate_basic_turtle(turtle_src),
-        "test85_q1_ring_grounding" => validate_basic_turtle(turtle_src),
-        "test86_quantum_lift_trivial" => validate_basic_turtle(turtle_src),
+        "test85_w16_ring_grounding" => validate_basic_turtle(turtle_src),
+        "test86_witt_lift_trivial" => validate_basic_turtle(turtle_src),
         "test87_spectral_convergence" => validate_basic_turtle(turtle_src),
         "test88_lift_obstruction_nontrivial" => validate_basic_turtle(turtle_src),
         "test89_lift_refinement_suggestion" => validate_basic_turtle(turtle_src),
         "test90_resolved_lift" => validate_basic_turtle(turtle_src),
-        "test91_synthesis_goal_q1" => validate_basic_turtle(turtle_src),
+        "test91_synthesis_goal_w16" => validate_basic_turtle(turtle_src),
         "test92_synthesis_checkpoint" => validate_basic_turtle(turtle_src),
         "test93_synthesis_signature" => validate_basic_turtle(turtle_src),
         "test94_synthesized_type" => validate_basic_turtle(turtle_src),
         "test95_unreachable_signature" => validate_basic_turtle(turtle_src),
-        "test96_geodesic_trace_q1" => validate_basic_turtle(turtle_src),
+        "test96_geodesic_trace_w16" => validate_basic_turtle(turtle_src),
         "test97_evidence_bundle_ar1" => validate_basic_turtle(turtle_src),
         "test98_evidence_bundle_dc10" => validate_basic_turtle(turtle_src),
-        "test99_measurement_born_q1" => validate_basic_turtle(turtle_src),
+        "test99_measurement_born_w16" => validate_basic_turtle(turtle_src),
         "test100_normative_chain" => validate_basic_turtle(turtle_src),
         "test101_lift_chain_flat" => validate_basic_turtle(turtle_src),
         "test102_lift_chain_twisted" => validate_basic_turtle(turtle_src),
@@ -1559,17 +1569,17 @@ fn run_test(name: &str, turtle_src: &str, report: &mut ConformanceReport) {
         "test119_obstruction_termination" => validate_basic_turtle(turtle_src),
         "test120_coefficient_ring" => validate_basic_turtle(turtle_src),
         "test121_gluing_feedback" => validate_basic_turtle(turtle_src),
-        "test122_session_saturation" => validate_basic_turtle(turtle_src),
+        "test122_session_grounding" => validate_basic_turtle(turtle_src),
         "test123_amplitude_index" => validate_basic_turtle(turtle_src),
         // Amendment 46: SHACL fixture coverage gap closure
         "test124_glyph" => validate_basic_turtle(turtle_src),
         "test125_dihedral_group" => validate_basic_turtle(turtle_src),
         "test126_validity_scope_kind" => validate_basic_turtle(turtle_src),
-        "test127_quantum_level_resolver" => validate_basic_turtle(turtle_src),
+        "test127_witt_level_resolver" => validate_basic_turtle(turtle_src),
         "test128_stratum_observable" => validate_basic_turtle(turtle_src),
         "test129_metric_observable" => validate_basic_turtle(turtle_src),
         "test130_path_observable" => validate_basic_turtle(turtle_src),
-        "test131_cascade_observable" => validate_basic_turtle(turtle_src),
+        "test131_reduction_observable" => validate_basic_turtle(turtle_src),
         "test132_holonomy_observable" => validate_basic_turtle(turtle_src),
         "test133_incompatibility_metric" => validate_basic_turtle(turtle_src),
         "test134_stratum_value" => validate_basic_turtle(turtle_src),
@@ -1578,14 +1588,14 @@ fn run_test(name: &str, turtle_src: &str, report: &mut ConformanceReport) {
         "test137_path_length" => validate_basic_turtle(turtle_src),
         "test138_total_variation" => validate_basic_turtle(turtle_src),
         "test139_winding_number" => validate_basic_turtle(turtle_src),
-        "test140_cascade_length" => validate_basic_turtle(turtle_src),
-        "test141_cascade_count" => validate_basic_turtle(turtle_src),
+        "test140_reduction_length" => validate_basic_turtle(turtle_src),
+        "test141_reduction_count" => validate_basic_turtle(turtle_src),
         "test142_catastrophe_threshold" => validate_basic_turtle(turtle_src),
         "test143_catastrophe_count" => validate_basic_turtle(turtle_src),
         "test144_commutator" => validate_basic_turtle(turtle_src),
         "test145_curvature_flux" => validate_basic_turtle(turtle_src),
         "test146_parallel_transport" => validate_basic_turtle(turtle_src),
-        "test147_cascade_entropy" => validate_basic_turtle(turtle_src),
+        "test147_reduction_entropy" => validate_basic_turtle(turtle_src),
         "test148_phase_boundary_type" => validate_basic_turtle(turtle_src),
         "test149_face_map" => validate_basic_turtle(turtle_src),
         "test150_nerve_functor" => validate_basic_turtle(turtle_src),
@@ -1601,7 +1611,7 @@ fn run_test(name: &str, turtle_src: &str, report: &mut ConformanceReport) {
         "test160_shared_context" => validate_basic_turtle(turtle_src),
         "test161_execution_policy" => validate_basic_turtle(turtle_src),
         "test162_session_composition" => validate_basic_turtle(turtle_src),
-        "test163_distributed_saturation" => validate_basic_turtle(turtle_src),
+        "test163_distributed_grounding" => validate_basic_turtle(turtle_src),
         "test164_embedding" => validate_basic_turtle(turtle_src),
         "test165_action" => validate_basic_turtle(turtle_src),
         "test166_session_boundary_type" => validate_basic_turtle(turtle_src),
@@ -1661,7 +1671,7 @@ fn run_test(name: &str, turtle_src: &str, report: &mut ConformanceReport) {
         "test188_encoding_configuration" => validate_basic_turtle(turtle_src),
         "test189_encoding_quality" => validate_basic_turtle(turtle_src),
         "test190_base_metric" => validate_basic_turtle(turtle_src),
-        "test191_saturation_observable" => validate_basic_turtle(turtle_src),
+        "test191_grounding_observable" => validate_basic_turtle(turtle_src),
         "test192_euler_characteristic" => validate_basic_turtle(turtle_src),
         "test193_galois_connection" => validate_basic_turtle(turtle_src),
         "test194_nerve_operations" => validate_basic_turtle(turtle_src),
@@ -1671,16 +1681,16 @@ fn run_test(name: &str, turtle_src: &str, report: &mut ConformanceReport) {
         "test201_accumulation_operation" => validate_basic_turtle(turtle_src),
         "test202_lease_partition_operation" => validate_basic_turtle(turtle_src),
         "test203_session_composition_operation" => validate_basic_turtle(turtle_src),
-        "test204_euler_cascade" => validate_basic_turtle(turtle_src),
-        "test205_cascade_stage" => validate_basic_turtle(turtle_src),
-        "test206_cascade_state" => validate_basic_turtle(turtle_src),
+        "test204_euler_reduction" => validate_basic_turtle(turtle_src),
+        "test205_reduction_step" => validate_basic_turtle(turtle_src),
+        "test206_reduction_state" => validate_basic_turtle(turtle_src),
         "test207_phase_gate" => validate_basic_turtle(turtle_src),
         "test208_epoch" => validate_basic_turtle(turtle_src),
         "test209_predicate_expression" => validate_basic_turtle(turtle_src),
         "test210_guard_expression" => validate_basic_turtle(turtle_src),
         "test211_transition_effect" => validate_basic_turtle(turtle_src),
         "test212_service_window" => validate_basic_turtle(turtle_src),
-        "test213_cascade_transaction" => validate_basic_turtle(turtle_src),
+        "test213_reduction_transaction" => validate_basic_turtle(turtle_src),
         "test214_feasibility_result" => validate_basic_turtle(turtle_src),
         "test215_lease_state" => validate_basic_turtle(turtle_src),
         "test216_managed_lease" => validate_basic_turtle(turtle_src),
@@ -1699,7 +1709,7 @@ fn run_test(name: &str, turtle_src: &str, report: &mut ConformanceReport) {
         "test229_interaction_context" => validate_basic_turtle(turtle_src),
         "test230_commutator_state" => validate_basic_turtle(turtle_src),
         "test231_associator_state" => validate_basic_turtle(turtle_src),
-        "test232_three_way_fiber" => validate_basic_turtle(turtle_src),
+        "test232_three_way_site" => validate_basic_turtle(turtle_src),
         "test233_negotiation_trace" => validate_basic_turtle(turtle_src),
         "test234_interaction_nerve" => validate_basic_turtle(turtle_src),
         "test235_monoidal_product" => validate_basic_turtle(turtle_src),
@@ -1742,6 +1752,8 @@ fn run_test(name: &str, turtle_src: &str, report: &mut ConformanceReport) {
         "test272_boundary_map_individuals" => validate_basic_turtle(turtle_src),
         "test273_type_definition_sum" => validate_basic_turtle(turtle_src),
         "test274_witness_types" => validate_basic_turtle(turtle_src),
+        "test275_reduction_advance" => validate_basic_turtle(turtle_src),
+        "test276_witness_site_budget" => validate_basic_turtle(turtle_src),
         _ => Ok(()),
     };
 
@@ -1758,8 +1770,8 @@ fn validate_ring(src: &str) -> Result<(), String> {
     check_contains(src, "schema:Ring", "Missing schema:Ring type assertion")?;
     check_contains(
         src,
-        "schema:ringQuantum",
-        "Missing schema:ringQuantum property",
+        "schema:ringWittLength",
+        "Missing schema:ringWittLength property",
     )?;
     check_contains(src, "schema:modulus", "Missing schema:modulus property")?;
     Ok(())
@@ -1819,29 +1831,21 @@ fn validate_end_to_end(src: &str) -> Result<(), String> {
     Ok(())
 }
 
-fn validate_fiber_budget(src: &str) -> Result<(), String> {
-    check_contains(
-        src,
-        "partition:FiberBudget",
-        "Missing partition:FiberBudget",
-    )?;
-    check_contains(
-        src,
-        "partition:FiberCoordinate",
-        "Missing partition:FiberCoordinate",
-    )?;
+fn validate_free_rank(src: &str) -> Result<(), String> {
+    check_contains(src, "partition:FreeRank", "Missing partition:FreeRank")?;
+    check_contains(src, "partition:SiteIndex", "Missing partition:SiteIndex")?;
     check_contains(src, "partition:isClosed", "Missing partition:isClosed")?;
     check_contains(
         src,
         "partition:pinnedCount",
         "Missing partition:pinnedCount",
     )?;
-    check_contains(src, "partition:freeCount", "Missing partition:freeCount")?;
-    check_contains(src, "partition:hasFiber", "Missing partition:hasFiber")?;
+    check_contains(src, "partition:freeRank", "Missing partition:freeRank")?;
+    check_contains(src, "partition:hasSite", "Missing partition:hasSite")?;
     check_contains(
         src,
-        "partition:FiberPinning",
-        "Missing partition:FiberPinning",
+        "partition:SiteBinding",
+        "Missing partition:SiteBinding",
     )?;
     Ok(())
 }
@@ -1916,11 +1920,7 @@ fn validate_factorization(src: &str) -> Result<(), String> {
         "resolver:DihedralFactorizationResolver",
         "Missing DihedralFactorizationResolver",
     )?;
-    check_contains(
-        src,
-        "partition:FiberBudget",
-        "Missing partition:FiberBudget",
-    )?;
+    check_contains(src, "partition:FreeRank", "Missing partition:FreeRank")?;
     check_contains(src, "cert:certifies", "Missing cert:certifies")?;
     check_contains(src, "trace:certifiedBy", "Missing trace:certifiedBy")?;
     Ok(())
@@ -1956,7 +1956,7 @@ fn validate_canonical_form(src: &str) -> Result<(), String> {
 }
 
 fn validate_content_addressing(src: &str) -> Result<(), String> {
-    check_contains(src, "u:Address", "Missing u:Address")?;
+    check_contains(src, "u:Element", "Missing u:Element")?;
     check_contains(
         src,
         "observable:RingMetric",
@@ -1997,7 +1997,7 @@ fn validate_algebraic_identities(src: &str) -> Result<(), String> {
     check_contains(src, "op:R_A1", "Missing ring identity R_A1")?;
     check_contains(src, "op:B_1", "Missing Boolean identity B_1")?;
     check_contains(src, "op:C_1", "Missing constraint identity C_1")?;
-    check_contains(src, "op:F_1", "Missing fiber identity F_1")?;
+    check_contains(src, "op:F_1", "Missing site identity F_1")?;
     check_contains(src, "op:RE_1", "Missing resolution identity RE_1")?;
     check_contains(src, "op:OB_M1", "Missing observable identity OB_M1")?;
     check_contains(src, "op:T_C1", "Missing transform identity T_C1")?;
@@ -2010,8 +2010,8 @@ fn validate_algebraic_identities(src: &str) -> Result<(), String> {
 fn validate_inter_algebra_maps(src: &str) -> Result<(), String> {
     check_contains(src, "op:Identity", "Missing op:Identity type assertion")?;
     check_contains(src, "op:phi_1", "Missing phi_1 (Ring → Constraints)")?;
-    check_contains(src, "op:phi_2", "Missing phi_2 (Constraints → Fibers)")?;
-    check_contains(src, "op:phi_3", "Missing phi_3 (Fibers → Partition)")?;
+    check_contains(src, "op:phi_2", "Missing phi_2 (Constraints → Sites)")?;
+    check_contains(src, "op:phi_3", "Missing phi_3 (Sites → Partition)")?;
     check_contains(src, "op:phi_4", "Missing phi_4 (Resolution Pipeline)")?;
     check_contains(src, "op:phi_5", "Missing phi_5 (Operations → Observables)")?;
     check_contains(src, "op:phi_6", "Missing phi_6 (Observables → Refinement)")?;
@@ -2027,11 +2027,7 @@ fn validate_analytical_completeness(src: &str) -> Result<(), String> {
     )?;
     check_contains(src, "obs:BettiNumber", "Missing obs:BettiNumber class")?;
     check_contains(src, "obs:SpectralGap", "Missing obs:SpectralGap class")?;
-    check_contains(
-        src,
-        "resolver:ConstraintNerve",
-        "Missing resolver:ConstraintNerve",
-    )?;
+    check_contains(src, "resolver:CechNerve", "Missing resolver:CechNerve")?;
     check_contains(
         src,
         "op:DC_1",
@@ -2223,17 +2219,21 @@ fn validate_measurement_unit_shacl(src: &str) -> Result<(), String> {
 }
 
 fn validate_coordinate_kind_shacl(src: &str) -> Result<(), String> {
-    check_contains(src, "query:CoordinateKind", "Missing CoordinateKind type")?;
-    check_contains(src, "query:hasCoordinateKind", "Missing hasCoordinateKind")?;
+    check_contains(src, "query:TriadProjection", "Missing TriadProjection type")?;
     check_contains(
         src,
-        "query:StratumCoordinate",
-        "Missing StratumCoordinate individual",
+        "query:hasTriadProjection",
+        "Missing hasTriadProjection",
     )?;
     check_contains(
         src,
-        "query:SpectrumCoordinate",
-        "Missing SpectrumCoordinate individual",
+        "query:TwoAdicValuation",
+        "Missing TwoAdicValuation individual",
+    )?;
+    check_contains(
+        src,
+        "query:WalshHadamardImage",
+        "Missing WalshHadamardImage individual",
     )?;
     Ok(())
 }
@@ -2259,11 +2259,7 @@ fn validate_proof_coverage_shacl(src: &str) -> Result<(), String> {
         "proof:provesIdentity",
         "Missing provesIdentity property",
     )?;
-    check_contains(
-        src,
-        "proof:atQuantumLevel",
-        "Missing atQuantumLevel property",
-    )?;
+    check_contains(src, "proof:atWittLevel", "Missing atWittLevel property")?;
     check_contains(
         src,
         "proof:universalScope",
@@ -2284,22 +2280,25 @@ fn validate_proof_coverage_shacl(src: &str) -> Result<(), String> {
 }
 
 fn validate_quantum_level_shacl(src: &str) -> Result<(), String> {
-    check_contains(src, "schema:QuantumLevel", "Missing QuantumLevel type")?;
-    check_contains(src, "schema:quantumIndex", "Missing quantumIndex property")?;
+    check_contains(src, "schema:WittLevel", "Missing WittLevel type")?;
     check_contains(src, "schema:bitsWidth", "Missing bitsWidth property")?;
     check_contains(src, "schema:cycleSize", "Missing cycleSize property")?;
-    check_contains(src, "schema:nextLevel", "Missing nextLevel property")?;
-    check_contains(src, "schema:Q0", "Missing Q0 individual")?;
-    check_contains(src, "schema:Q1", "Missing Q1 individual")?;
-    check_contains(src, "schema:Q2", "Missing Q2 individual")?;
-    check_contains(src, "schema:Q3", "Missing Q3 individual")?;
-    // Q3 terminal condition: must NOT have nextLevel
-    if let Some(q3_start) = src.find("schema:Q3") {
-        let q3_block = &src[q3_start..];
-        let q3_end = q3_block.find("\n\n").unwrap_or(q3_block.len());
-        let q3_section = &q3_block[..q3_end];
-        if q3_section.contains("nextLevel") {
-            return Err("Q3 must not have nextLevel (terminal condition)".to_string());
+    check_contains(
+        src,
+        "schema:nextWittLevel",
+        "Missing nextWittLevel property",
+    )?;
+    check_contains(src, "schema:W8", "Missing W8 individual")?;
+    check_contains(src, "schema:W16", "Missing W16 individual")?;
+    check_contains(src, "schema:W24", "Missing W24 individual")?;
+    check_contains(src, "schema:W32", "Missing W32 individual")?;
+    // W32 terminal condition: must NOT have nextWittLevel
+    if let Some(w32_start) = src.find("schema:W32") {
+        let w32_block = &src[w32_start..];
+        let w32_end = w32_block.find("\n\n").unwrap_or(w32_block.len());
+        let w32_section = &w32_block[..w32_end];
+        if w32_section.contains("nextWittLevel") {
+            return Err("W32 must not have nextWittLevel (terminal condition)".to_string());
         }
     }
     Ok(())
@@ -2348,7 +2347,7 @@ fn validate_arc_grounding_shacl(src: &str) -> Result<(), String> {
     )?;
     check_contains(src, "query:sourceAddress", "Missing sourceAddress property")?;
     check_contains(src, "query:relationType", "Missing relationType property")?;
-    check_contains(src, "query:targetFiber", "Missing targetFiber property")?;
+    check_contains(src, "query:targetSite", "Missing targetSite property")?;
     check_contains(src, "query:groundingMap", "Missing groundingMap property")?;
     check_contains(src, "query:projectionMap", "Missing projectionMap property")?;
     Ok(())
@@ -2440,7 +2439,7 @@ fn validate_completeness_candidate_shacl(src: &str) -> Result<(), String> {
         "type:witnessConstraint",
         "Missing witnessConstraint property",
     )?;
-    check_contains(src, "type:fibersClosed", "Missing fibersClosed property")?;
+    check_contains(src, "type:sitesClosed", "Missing sitesClosed property")?;
     Ok(())
 }
 
@@ -2467,18 +2466,22 @@ fn validate_completeness_certificate_shacl(src: &str) -> Result<(), String> {
 }
 
 fn validate_q1_ring_shacl(src: &str) -> Result<(), String> {
-    check_contains(src, "schema:Q1Ring", "Missing Q1Ring type assertion")?;
-    check_contains(src, "schema:Q1bitWidth", "Missing Q1bitWidth property")?;
-    check_contains(src, "schema:Q1capacity", "Missing Q1capacity property")?;
-    check_contains(src, "schema:nextLevel", "Missing nextLevel property")?;
+    check_contains(src, "schema:W16Ring", "Missing W16Ring type assertion")?;
+    check_contains(src, "schema:W16bitWidth", "Missing W16bitWidth property")?;
+    check_contains(src, "schema:W16capacity", "Missing W16capacity property")?;
+    check_contains(
+        src,
+        "schema:nextWittLevel",
+        "Missing nextWittLevel property",
+    )?;
     Ok(())
 }
 
 fn validate_quantum_level_binding_shacl(src: &str) -> Result<(), String> {
     check_contains(
         src,
-        "op:QuantumLevelBinding",
-        "Missing QuantumLevelBinding type assertion",
+        "op:WittLevelBinding",
+        "Missing WittLevelBinding type assertion",
     )?;
     check_contains(
         src,
@@ -2622,11 +2625,7 @@ fn validate_synthesis_result_shacl(src: &str) -> Result<(), String> {
 }
 
 fn validate_quantum_lift_shacl(src: &str) -> Result<(), String> {
-    check_contains(
-        src,
-        "type:QuantumLift",
-        "Missing QuantumLift type assertion",
-    )?;
+    check_contains(src, "type:WittLift", "Missing WittLift type assertion")?;
     check_contains(src, "type:liftBase", "Missing liftBase property")?;
     check_contains(
         src,
@@ -2952,9 +2951,9 @@ fn validate_phase_diagram_shacl(src: &str) -> Result<(), String> {
 }
 
 fn validate_reversible_resolution_shacl(src: &str) -> Result<(), String> {
-    check_contains(src, "partition:FiberBudget", "Missing FiberBudget")?;
-    check_contains(src, "partition:FiberCoordinate", "Missing FiberCoordinate")?;
-    check_contains(src, "partition:ancillaFiber", "Missing ancillaFiber")?;
+    check_contains(src, "partition:FreeRank", "Missing FreeRank")?;
+    check_contains(src, "partition:SiteIndex", "Missing SiteIndex")?;
+    check_contains(src, "partition:ancillaSite", "Missing ancillaSite")?;
     check_contains(
         src,
         "partition:reversibleStrategy",
@@ -2987,11 +2986,11 @@ fn validate_sum_type_variant_shacl(src: &str) -> Result<(), String> {
     Ok(())
 }
 
-fn validate_superposed_fiber_shacl(src: &str) -> Result<(), String> {
+fn validate_superposed_site_shacl(src: &str) -> Result<(), String> {
     check_contains(
         src,
-        "type:SuperposedFiberState",
-        "Missing SuperposedFiberState",
+        "type:SuperposedSiteState",
+        "Missing SuperposedSiteState",
     )?;
     check_contains(src, "type:amplitude", "Missing amplitude property")?;
     check_contains(
@@ -3005,24 +3004,24 @@ fn validate_superposed_fiber_shacl(src: &str) -> Result<(), String> {
 fn validate_saturated_context_shacl(src: &str) -> Result<(), String> {
     check_contains(
         src,
-        "state:SaturatedContext",
-        "Missing SaturatedContext type assertion",
+        "state:GroundedContext",
+        "Missing GroundedContext type assertion",
     )?;
     check_contains(
         src,
-        "state:saturationDegree",
-        "Missing saturationDegree property",
+        "state:groundingDegree",
+        "Missing groundingDegree property",
     )?;
     check_contains(
         src,
         "state:contextTemperature",
         "Missing contextTemperature property",
     )?;
-    check_contains(src, "state:isSaturated", "Missing isSaturated property")?;
+    check_contains(src, "state:isGrounded", "Missing isGrounded property")?;
     check_contains(
         src,
-        "state:saturationPhase",
-        "Missing saturationPhase property",
+        "state:groundingPhase",
+        "Missing groundingPhase property",
     )?;
     Ok(())
 }
@@ -3030,8 +3029,8 @@ fn validate_saturated_context_shacl(src: &str) -> Result<(), String> {
 fn validate_saturation_witness_shacl(src: &str) -> Result<(), String> {
     check_contains(
         src,
-        "state:SaturationWitness",
-        "Missing SaturationWitness type assertion",
+        "state:GroundingWitness",
+        "Missing GroundingWitness type assertion",
     )?;
     check_contains(
         src,
@@ -3041,8 +3040,8 @@ fn validate_saturation_witness_shacl(src: &str) -> Result<(), String> {
     check_contains(src, "state:witnessStep", "Missing witnessStep property")?;
     check_contains(
         src,
-        "state:residualFreeCount",
-        "Missing residualFreeCount property",
+        "state:residualFreeRank",
+        "Missing residualFreeRank property",
     )?;
     Ok(())
 }
@@ -3050,23 +3049,23 @@ fn validate_saturation_witness_shacl(src: &str) -> Result<(), String> {
 fn validate_domain_saturation_record_shacl(src: &str) -> Result<(), String> {
     check_contains(
         src,
-        "observable:DomainSaturationRecord",
-        "Missing DomainSaturationRecord type assertion",
+        "observable:DomainGroundingRecord",
+        "Missing DomainGroundingRecord type assertion",
     )?;
     check_contains(
         src,
-        "observable:saturatedContext",
-        "Missing saturatedContext property",
+        "observable:groundedContext",
+        "Missing groundedContext property",
     )?;
     check_contains(
         src,
-        "observable:saturatedDomain",
-        "Missing saturatedDomain property",
+        "observable:groundedDomain",
+        "Missing groundedDomain property",
     )?;
     check_contains(
         src,
-        "observable:domainFreeCount",
-        "Missing domainFreeCount property",
+        "observable:domainFreeRank",
+        "Missing domainFreeRank property",
     )?;
     Ok(())
 }
@@ -3074,23 +3073,19 @@ fn validate_domain_saturation_record_shacl(src: &str) -> Result<(), String> {
 fn validate_saturation_phase_shacl(src: &str) -> Result<(), String> {
     check_contains(
         src,
-        "observable:SaturationPhase",
-        "Missing SaturationPhase type assertion",
+        "state:GroundingPhase",
+        "Missing GroundingPhase type assertion",
+    )?;
+    check_contains(src, "state:Open", "Missing Open individual")?;
+    check_contains(
+        src,
+        "state:PartialGrounding",
+        "Missing PartialGrounding individual",
     )?;
     check_contains(
         src,
-        "observable:Unsaturated",
-        "Missing Unsaturated individual",
-    )?;
-    check_contains(
-        src,
-        "observable:PartialSaturation",
-        "Missing PartialSaturation individual",
-    )?;
-    check_contains(
-        src,
-        "observable:FullSaturation",
-        "Missing FullSaturation individual",
+        "state:FullGrounding",
+        "Missing FullGrounding individual",
     )?;
     Ok(())
 }
@@ -3098,18 +3093,18 @@ fn validate_saturation_phase_shacl(src: &str) -> Result<(), String> {
 fn validate_saturation_certificate_shacl(src: &str) -> Result<(), String> {
     check_contains(
         src,
-        "cert:SaturationCertificate",
-        "Missing SaturationCertificate type assertion",
+        "cert:GroundingCertificate",
+        "Missing GroundingCertificate type assertion",
     )?;
     check_contains(
         src,
-        "cert:certifiedSaturation",
-        "Missing certifiedSaturation property",
+        "cert:certifiedGrounding",
+        "Missing certifiedGrounding property",
     )?;
     check_contains(
         src,
-        "cert:saturationWitness",
-        "Missing saturationWitness property",
+        "cert:groundingWitness",
+        "Missing groundingWitness property",
     )?;
     Ok(())
 }
@@ -3117,13 +3112,13 @@ fn validate_saturation_certificate_shacl(src: &str) -> Result<(), String> {
 fn validate_saturation_aware_resolver_shacl(src: &str) -> Result<(), String> {
     check_contains(
         src,
-        "resolver:SaturationAwareResolver",
-        "Missing SaturationAwareResolver type assertion",
+        "resolver:GroundingAwareResolver",
+        "Missing GroundingAwareResolver type assertion",
     )?;
     check_contains(
         src,
-        "resolver:usedSaturation",
-        "Missing usedSaturation property",
+        "resolver:usedGrounding",
+        "Missing usedGrounding property",
     )?;
     Ok(())
 }
@@ -3319,8 +3314,8 @@ fn validate_measurement_resolver_shacl(src: &str) -> Result<(), String> {
     )?;
     check_contains(
         src,
-        "resolver:collapsedFiber",
-        "Missing collapsedFiber property",
+        "resolver:collapsedSite",
+        "Missing collapsedSite property",
     )?;
     check_contains(
         src,
@@ -3379,11 +3374,11 @@ fn validate_measurement_certificate_shacl(src: &str) -> Result<(), String> {
     Ok(())
 }
 
-fn validate_collapsed_fiber_state_shacl(src: &str) -> Result<(), String> {
+fn validate_collapsed_site_state_shacl(src: &str) -> Result<(), String> {
     check_contains(
         src,
-        "type:CollapsedFiberState",
-        "Missing CollapsedFiberState type assertion",
+        "type:CollapsedSiteState",
+        "Missing CollapsedSiteState type assertion",
     )?;
     check_contains(src, "type:collapsedFrom", "Missing collapsedFrom property")?;
     check_contains(

@@ -6,7 +6,6 @@
 
 pub mod boundary;
 pub mod carry;
-pub mod cascade;
 pub mod cert;
 pub mod cohomology;
 pub mod conformance_;
@@ -29,6 +28,7 @@ pub mod predicate;
 pub mod proof;
 pub mod query;
 pub mod recursion;
+pub mod reduction;
 pub mod region;
 pub mod resolver;
 pub mod schema;

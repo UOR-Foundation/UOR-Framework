@@ -8,10 +8,10 @@ pub const TEST195_SCALAR_SYMBOL_TYPE: &str = r#"
 @prefix type: <https://uor.foundation/type/> .
 
 type:ScalarType a owl:NamedIndividual, type:PrimitiveType ;
-    type:structuralFiberCount "n (quantization bits)" ;
+    type:structuralSiteCount "n (quantization bits)" ;
     type:structuralGrounding "quantize(value, range, bits) produces ring element where d_R reflects value proximity" .
 
 type:SymbolType a owl:NamedIndividual, type:PrimitiveType ;
-    type:structuralFiberCount "ceil(log2(|alphabet|))" ;
+    type:structuralSiteCount "ceil(log2(|alphabet|))" ;
     type:structuralGrounding "argmin_{encoding} sum d_delta over observed pairs (CY_5)" .
 "#;

@@ -8,25 +8,25 @@ use crate::Primitives;
 
 /// The Boolean function chain c_{k+1} = or(and(x_k, y_k), and(xor(x_k, y_k), c_k)). The carry chain is the algebraic mechanism behind the incompatibility metric d_Δ.
 pub trait CarryChain<P: Primitives> {
-    /// The number of fibers in this carry chain.
+    /// The number of sites in this carry chain.
     fn chain_length(&self) -> P::NonNegativeInteger;
-    /// Bit mask of fiber positions where carry is generated: and(x_k, y_k) = 1.
+    /// Bit mask of site positions where carry is generated: and(x_k, y_k) = 1.
     fn generate_mask(&self) -> P::NonNegativeInteger;
-    /// Bit mask of fiber positions where carry propagates: xor(x_k, y_k) = 1.
+    /// Bit mask of site positions where carry propagates: xor(x_k, y_k) = 1.
     fn propagate_mask(&self) -> P::NonNegativeInteger;
-    /// Bit mask of fiber positions where carry is killed: neither generated nor propagated.
+    /// Bit mask of site positions where carry is killed: neither generated nor propagated.
     fn kill_mask(&self) -> P::NonNegativeInteger;
 }
 
-/// A single carry event at fiber k. Three kinds: Generate (and(x_k, y_k) = 1), Propagate (xor(x_k, y_k) = 1 and c_k = 1), Kill (neither generate nor propagate).
+/// A single carry event at site k. Three kinds: Generate (and(x_k, y_k) = 1), Propagate (xor(x_k, y_k) = 1 and c_k = 1), Kill (neither generate nor propagate).
 pub trait CarryEvent<P: Primitives> {
     /// The kind of carry event: Generate, Propagate, or Kill.
     fn event_kind(&self) -> P::NonNegativeInteger;
-    /// The fiber index k at which this carry event occurs.
-    fn fiber_position(&self) -> P::NonNegativeInteger;
+    /// The site index k at which this carry event occurs.
+    fn site_position(&self) -> P::NonNegativeInteger;
 }
 
-/// The complete carry pattern for an addition x + y. Aggregates carry events across all fibers into counts and position masks.
+/// The complete carry pattern for an addition x + y. Aggregates carry events across all sites into counts and position masks.
 pub trait CarryProfile<P: Primitives> {
     /// The total number of carry events in this profile.
     fn carry_count(&self) -> P::NonNegativeInteger;

@@ -3,9 +3,9 @@
 ## Definition
 
 The **constraint algebra** provides composable predicates that refine types by
-pinning fiber coordinates. A {@class https://uor.foundation/type/Constraint}
+pinning site indices. A {@class https://uor.foundation/type/Constraint}
 is a predicate that, when applied to a type, determines the value of one or
-more fibers in the iterated Z/2Z fibration.
+more sites in the iterated Z/2Z fibration.
 
 ## Constraint Hierarchy
 
@@ -50,12 +50,12 @@ The property {@prop https://uor.foundation/type/metricAxis} assigns each constra
 to its axis. The property {@prop https://uor.foundation/type/crossingCost} records
 how many axis boundaries a constraint must traverse.
 
-## Fiber Pinning
+## Site Pinning
 
-The property {@prop https://uor.foundation/type/pinsFibers} declares which
-{@class https://uor.foundation/partition/FiberCoordinate} instances a constraint
+The property {@prop https://uor.foundation/type/pinsSites} declares which
+{@class https://uor.foundation/partition/SiteIndex} instances a constraint
 pins when applied. A {@class https://uor.foundation/type/CompositeConstraint}
-pins the union of fibers pinned by its components.
+pins the union of sites pinned by its components.
 
 ## Example: Residue + Depth
 
@@ -73,7 +73,7 @@ pins the union of fibers pinned by its components.
     type:metricAxis  type:verticalAxis .
 ```
 
-Each constraint pins specific fibers tracked by the
-{@class https://uor.foundation/partition/FiberBudget} — see
-[Fiber Budget](fiber-budget.html) for how pinned fibers accumulate toward
+Each constraint pins specific sites tracked by the
+{@class https://uor.foundation/partition/FreeRank} — see
+[Free Rank](free-rank.html) for how pinned sites accumulate toward
 resolution closure.

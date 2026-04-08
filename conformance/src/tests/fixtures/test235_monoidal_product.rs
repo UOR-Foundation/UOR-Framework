@@ -11,5 +11,5 @@ monoidal:test_product a owl:NamedIndividual, monoidal:MonoidalProduct ;
     monoidal:leftComponent "computation_A" ;
     monoidal:rightComponent "computation_B" ;
     monoidal:composedEndpoint "A_then_B" ;
-    monoidal:monoidalSaturation "max(sigma_A, sigma_B)" .
+    monoidal:monoidalGrounding "max(sigma_A, sigma_B)" .
 "#;

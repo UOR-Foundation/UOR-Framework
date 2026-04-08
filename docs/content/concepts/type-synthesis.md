@@ -47,9 +47,9 @@ Intermediate topological signatures are captured in
 | Identity | Statement |
 |----------|-----------|
 | TS\_1 | ∃ SynthesizedType T realising target iff χ\* ≤ n and β₀\*=1, βₖ\*=0 k≥1 |
-| TS\_2 | basisSize(T) = n for an n-fiber target |
+| TS\_2 | basisSize(T) = n for an n-site target |
 | TS\_3 | χ(T + constraint) ≥ χ(T) for any synthesis candidate |
-| TS\_4 | TypeSynthesisResolver takes ≤ n steps for a realisable n-fiber target |
+| TS\_4 | TypeSynthesisResolver takes ≤ n steps for a realisable n-site target |
 | TS\_5 | SynthesizedType achieves IT\_7d iff CompletenessResolver certifies CompleteType |
 | TS\_6 | Expected steps with Jacobian-guided search is O(n log n) |
 | TS\_7 | β₀(non-empty ConstrainedType) ≥ 1 |

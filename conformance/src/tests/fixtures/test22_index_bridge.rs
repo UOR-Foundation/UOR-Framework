@@ -18,9 +18,9 @@ op:phi_2 a op:Identity ;
     op:verificationDomain op:Pipeline .
 
 op:phi_3 a op:Identity ;
-    op:lhs "φ₃(closed fiber state)" ;
+    op:lhs "φ₃(closed site state)" ;
     op:rhs "unique 4-component partition" ;
-    op:forAll "closed FiberBudget" ;
+    op:forAll "closed FreeRank" ;
     op:verificationDomain op:Pipeline .
 
 op:phi_4 a op:Identity ;
@@ -43,7 +43,7 @@ op:phi_6 a op:Identity ;
 
 op:psi_1 a op:Identity ;
     op:lhs "ψ₁(κ_k, constraint_k)" ;
-    op:rhs "fiber pinning state" ;
+    op:rhs "site binding state" ;
     op:forAll "curvature κ_k, constraint_k" ;
     op:verificationDomain op:Topological .
 

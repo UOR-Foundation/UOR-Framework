@@ -1,6 +1,6 @@
 //! SHACL test 175: Extended psi-pipeline round-trip.
 
-/// Instance graph for Test 175: psi-pipeline ConstraintNerve -> KanComplex -> HomotopyGroup.
+/// Instance graph for Test 175: psi-pipeline CechNerve -> KanComplex -> HomotopyGroup.
 pub const TEST175_HOMOTOPY_PIPELINE: &str = r#"
 @prefix rdf:        <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix owl:        <http://www.w3.org/2002/07/owl#> .

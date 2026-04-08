@@ -15,7 +15,7 @@ type:ex_result_90 a owl:NamedIndividual, type:TypeSynthesisResult .
 type:ex_basis_90 a owl:NamedIndividual, type:MinimalConstraintBasis ;
     type:basisSize "9"^^xsd:nonNegativeInteger .
 
-type:ex_lift_90 a owl:NamedIndividual, type:QuantumLift ;
+type:ex_lift_90 a owl:NamedIndividual, type:WittLift ;
     type:liftBase        type:ex_synthesized_90 ;
     type:liftTargetLevel schema:Q1 .
 "#;

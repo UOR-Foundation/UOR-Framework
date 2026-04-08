@@ -14,4 +14,4 @@ pub type SvgHookFn = fn(&Ontology) -> String;
 /// slug, the generator is called and its SVG is injected after the page `<h1>`.
 /// This eliminates `match` expressions on hard-coded slug strings in `generate()`.
 pub const CONCEPT_SVG_HOOKS: &[(&str, SvgHookFn)] =
-    &[("quantum-levels", crate::svg::render_quantum_levels_svg)];
+    &[("witt-levels", crate::svg::render_witt_levels_svg)];

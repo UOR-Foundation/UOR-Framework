@@ -122,12 +122,12 @@ pub fn validate(artifacts: &Path) -> Result<ConformanceReport> {
     validate_structural_types_vocabulary(&mut report);
     // Amendment 62: Composed Operations
     validate_composed_ops_vocabulary(&mut report);
-    // Amendment 63: Cascade Core
-    validate_cascade_core_vocabulary(&mut report);
-    // Amendment 64: Cascade Expansion
-    validate_cascade_expansion_vocabulary(&mut report);
-    // Amendment 65: Cascade Completion
-    validate_cascade_completion_vocabulary(&mut report);
+    // Amendment 63: Reduction Core
+    validate_reduction_core_vocabulary(&mut report);
+    // Amendment 64: Reduction Expansion
+    validate_reduction_expansion_vocabulary(&mut report);
+    // Amendment 65: Reduction Completion
+    validate_reduction_completion_vocabulary(&mut report);
     // Amendment 66: Convergence Tower
     validate_convergence_tower_vocabulary(&mut report);
     // Amendment 67: Division Algebras
@@ -496,18 +496,18 @@ fn validate_identity_completeness(report: &mut ConformanceReport) {
         // Amendment 25: Completeness Certification
         "CC_",  // Amendment 26: Quantum Level Scaling
         "QL_",  // Amendment 27: Session-Scoped Resolution
-        "SR_",  // Amendment 28: Type Synthesis
-        "TS_",  // Amendment 29: Quantum Level Spectral Sequence
-        "QLS_", // Amendment 30: Monodromy Observables
+        "GR_",  // Amendment 28: Type Synthesis
+        "TS_",  // Amendment 29: Witt Level Spectral Sequence
+        "WLS_", // Amendment 30: Monodromy Observables
         "MN_",  // Amendment 31: Product/Sum Type identities
         "PT_",  // Amendment 31: Sum Type identities
-        "ST_",  // Amendment 33: Saturated Context Limit
-        "SC_",  // Amendment 34: Morphospace Achievability
+        "ST_",  // Amendment 33: Grounded State Limit
+        "GS_",  // Amendment 34: Morphospace Achievability
         "MS_",  // Amendment 35: Computational Geodesic
         "GD_",  // Amendment 36: Measurement Boundary
         "QM_",  // Amendment 37: SuperpositionResolver identities
         "SP_",  // Amendment 41: Tower identities
-        "QT_",  // Amendment 44: Structural Gap Closures
+        "WT_",  // Amendment 44: Structural Gap Closures
         "jsat_", "EXP_", "GO_", "COEFF_",
         // Amendment 46: Certificate Issuance Coverage
         "CIC_", "GC_", // Amendment 48: Multi-Session Coordination
@@ -521,9 +521,9 @@ fn validate_identity_completeness(report: &mut ConformanceReport) {
         "BM_", // Amendment 60: Galois Connection + Nerve Operations
         "GL_", "NV_", // Amendment 61: Structural Types
         "SD_", // Amendment 62: Composed Operations
-        "DD_", "PI_", "PA_", "PL_", "PK_", "PP_", // Amendment 63: Cascade Core
-        "PE_", "PM_", "ER_", // Amendment 64: Cascade Expansion
-        "EA_", "OE_", "CS_", // Amendment 65: Cascade Completion
+        "DD_", "PI_", "PA_", "PL_", "PK_", "PP_", // Amendment 63: Reduction Core
+        "PE_", "PM_", "ER_", // Amendment 64: Reduction Expansion
+        "EA_", "OE_", "CS_", // Amendment 65: Reduction Completion
         "FA_", "SW_", "LS_", "TJ_", "AP_", // Amendment 66: Convergence Tower
         "EC_", // Amendment 67: Division Algebras
         "DA_", // Amendment 68: Interaction Algebra
@@ -531,7 +531,7 @@ fn validate_identity_completeness(report: &mut ConformanceReport) {
         "MO_", // Amendment 70: Operad Composition
         "OP_", // Amendment 71: Effect Algebra
         "FX_", // Amendment 72: Predicate & Dispatch
-        "PR_", // Amendment 73: Cascade Guard + Resolver Dispatch
+        "PR_", // Amendment 73: Reduction Guard + Resolver Dispatch
         "CG_", "DIS_", // Amendment 74: Parallel Composition
         "PAR_", // Amendment 75: Higher-Order + Streams
         "HO_", "STR_", // Amendment 76: Failure Algebra
@@ -852,15 +852,15 @@ fn validate_measurement_unit_individuals(report: &mut ConformanceReport) {
     }
 }
 
-/// Validates the 3 CoordinateKind vocabulary individuals.
+/// Validates the 3 TriadProjection vocabulary individuals.
 fn validate_coordinate_kind_individuals(report: &mut ConformanceReport) {
     let ontology = uor_ontology::Ontology::full();
     let validator = "ontology/inventory/coordinate_kind";
 
     let ck_iris = [
-        "https://uor.foundation/query/StratumCoordinate",
-        "https://uor.foundation/query/SpectrumCoordinate",
-        "https://uor.foundation/query/AddressCoordinate",
+        "https://uor.foundation/query/TwoAdicValuation",
+        "https://uor.foundation/query/WalshHadamardImage",
+        "https://uor.foundation/query/RingElement",
     ];
 
     let mut all_found = true;
@@ -868,7 +868,7 @@ fn validate_coordinate_kind_individuals(report: &mut ConformanceReport) {
         if ontology.find_individual(iri).is_none() {
             report.push(TestResult::fail(
                 validator,
-                format!("CoordinateKind individual {} not found", iri),
+                format!("TriadProjection individual {} not found", iri),
             ));
             all_found = false;
         }
@@ -877,7 +877,7 @@ fn validate_coordinate_kind_individuals(report: &mut ConformanceReport) {
     if all_found {
         report.push(TestResult::pass(
             validator,
-            "All 3 CoordinateKind individuals present",
+            "All 3 TriadProjection individuals present",
         ));
     }
 }
@@ -941,9 +941,9 @@ fn validate_proof_coverage(report: &mut ConformanceReport) {
 }
 
 /// Validates quantum scope consistency: `ComputationCertificate` individuals
-/// must have `atQuantumLevel` and must NOT have `universalScope`;
+/// must have `atWittLevel` and must NOT have `universalScope`;
 /// `AxiomaticDerivation` individuals must have `universalScope` and must NOT
-/// have `atQuantumLevel`.
+/// have `atWittLevel`.
 fn validate_quantum_scope(report: &mut ConformanceReport) {
     let ontology = uor_ontology::Ontology::full();
     let validator = "ontology/inventory/quantum_scope";
@@ -952,7 +952,7 @@ fn validate_quantum_scope(report: &mut ConformanceReport) {
     let crit_type = "https://uor.foundation/proof/CriticalIdentityProof";
     let axiomatic_type = "https://uor.foundation/proof/AxiomaticDerivation";
     let inductive_type = "https://uor.foundation/proof/InductiveProof";
-    let at_ql_prop = "https://uor.foundation/proof/atQuantumLevel";
+    let at_ql_prop = "https://uor.foundation/proof/atWittLevel";
     let univ_prop = "https://uor.foundation/proof/universalScope";
 
     let mut all_valid = true;
@@ -973,7 +973,7 @@ fn validate_quantum_scope(report: &mut ConformanceReport) {
                 if !has_ql {
                     report.push(TestResult::fail(
                         validator,
-                        format!("ComputationCertificate {} missing atQuantumLevel", ind.id),
+                        format!("ComputationCertificate {} missing atWittLevel", ind.id),
                     ));
                     all_valid = false;
                 }
@@ -1003,10 +1003,7 @@ fn validate_quantum_scope(report: &mut ConformanceReport) {
                 if has_ql {
                     report.push(TestResult::fail(
                         validator,
-                        format!(
-                            "AxiomaticDerivation {} should not have atQuantumLevel",
-                            ind.id
-                        ),
+                        format!("AxiomaticDerivation {} should not have atWittLevel", ind.id),
                     ));
                     all_valid = false;
                 }
@@ -1026,7 +1023,7 @@ fn validate_quantum_scope(report: &mut ConformanceReport) {
                 if has_ql {
                     report.push(TestResult::fail(
                         validator,
-                        format!("InductiveProof {} should not have atQuantumLevel", ind.id),
+                        format!("InductiveProof {} should not have atWittLevel", ind.id),
                     ));
                     all_valid = false;
                 }
@@ -1168,15 +1165,15 @@ fn validate_surface_symmetry_identity(report: &mut ConformanceReport) {
     }
 }
 
-/// Validates the 3 SaturationPhase vocabulary individuals.
+/// Validates the 3 GroundingPhase vocabulary individuals.
 fn validate_saturation_phase_individuals(report: &mut ConformanceReport) {
     let ontology = uor_ontology::Ontology::full();
     let validator = "ontology/inventory/saturation_phase";
 
     let sp_iris = [
-        "https://uor.foundation/state/Unsaturated",
-        "https://uor.foundation/state/PartialSaturation",
-        "https://uor.foundation/state/FullSaturation",
+        "https://uor.foundation/state/Open",
+        "https://uor.foundation/state/PartialGrounding",
+        "https://uor.foundation/state/FullGrounding",
     ];
 
     let mut all_found = true;
@@ -1184,7 +1181,7 @@ fn validate_saturation_phase_individuals(report: &mut ConformanceReport) {
         if ontology.find_individual(iri).is_none() {
             report.push(TestResult::fail(
                 validator,
-                format!("SaturationPhase individual {} not found", iri),
+                format!("GroundingPhase individual {} not found", iri),
             ));
             all_found = false;
         }
@@ -1193,7 +1190,7 @@ fn validate_saturation_phase_individuals(report: &mut ConformanceReport) {
     if all_found {
         report.push(TestResult::pass(
             validator,
-            "All 3 SaturationPhase individuals present",
+            "All 3 GroundingPhase individuals present",
         ));
     }
 }
@@ -1359,24 +1356,24 @@ fn validate_enum_variant_alignment(report: &mut ConformanceReport) {
     }
 }
 
-/// Validates Q1Ring class exists (Amendment 39).
+/// Validates W16Ring class exists (Amendment 39).
 fn validate_q1_ring_grounding(report: &mut ConformanceReport) {
     let ontology = uor_ontology::Ontology::full();
     let validator = "ontology/inventory/q1_ring_grounding";
-    let q1ring = "https://uor.foundation/schema/Q1Ring";
-    if ontology.find_class(q1ring).is_some() {
-        report.push(TestResult::pass(validator, "Q1Ring class present"));
+    let w16ring = "https://uor.foundation/schema/W16Ring";
+    if ontology.find_class(w16ring).is_some() {
+        report.push(TestResult::pass(validator, "W16Ring class present"));
     } else {
-        report.push(TestResult::fail(validator, "Q1Ring class not found"));
+        report.push(TestResult::fail(validator, "W16Ring class not found"));
     }
 }
 
-/// Validates QuantumLift and LiftObstruction classes exist (Amendment 39).
+/// Validates WittLift and LiftObstruction classes exist (Amendment 39).
 fn validate_lift_obstruction_paths(report: &mut ConformanceReport) {
     let ontology = uor_ontology::Ontology::full();
     let validator = "ontology/inventory/lift_obstruction_paths";
     let class_iris = [
-        "https://uor.foundation/type/QuantumLift",
+        "https://uor.foundation/type/WittLift",
         "https://uor.foundation/type/LiftObstruction",
     ];
     let mut all_found = true;
@@ -1392,7 +1389,7 @@ fn validate_lift_obstruction_paths(report: &mut ConformanceReport) {
     if all_found {
         report.push(TestResult::pass(
             validator,
-            "QuantumLift and LiftObstruction classes present",
+            "WittLift and LiftObstruction classes present",
         ));
     }
 }
@@ -1554,10 +1551,10 @@ fn validate_tower_chain_vocabulary(report: &mut ConformanceReport) {
         }
     }
 
-    // Check QT_1 through QT_7 identities exist
+    // Check WT_1 through WT_7 identities exist
     if let Some(op_module) = ontology.find_namespace("op") {
         for i in 1..=7 {
-            let label = format!("QT_{}", i);
+            let label = format!("WT_{}", i);
             let has = op_module
                 .individuals
                 .iter()
@@ -1575,22 +1572,22 @@ fn validate_tower_chain_vocabulary(report: &mut ConformanceReport) {
     if all_found {
         report.push(TestResult::pass(
             validator,
-            "All Amendment 41 tower chain vocabulary present (7 classes, 7 QT_ identities)",
+            "All Amendment 41 tower chain vocabulary present (7 classes, 7 WT_ identities)",
         ));
     }
 }
 
 /// Validates that the EBNF grammar operations align with the ontology's
-/// PrimitiveOp individuals and QuantumLevel individuals.
+/// PrimitiveOp individuals and WittLevel individuals.
 fn validate_ebnf_grammar_alignment(report: &mut ConformanceReport) {
     let ontology = uor_ontology::Ontology::full();
     let validator = "ontology/inventory/ebnf_grammar_alignment";
 
-    // The EBNF grammar references 10 PrimitiveOp operations and 4 quantum levels.
+    // The EBNF grammar references 10 PrimitiveOp operations and 4 Witt levels.
     let expected_ops = [
         "neg", "bnot", "succ", "pred", "add", "sub", "mul", "xor", "and", "or",
     ];
-    let expected_levels = ["Q0", "Q1", "Q2", "Q3"];
+    let expected_levels = ["W8", "W16", "W24", "W32"];
 
     let op_ns = ontology
         .namespaces
@@ -1677,7 +1674,7 @@ fn validate_crypto_pinning_vocabulary(report: &mut ConformanceReport) {
         .iter()
         .find(|p| p.id == "https://uor.foundation/u/digestAlgorithm");
     if let Some(prop) = digest_alg {
-        if prop.domain != Some("https://uor.foundation/u/Address") {
+        if prop.domain != Some("https://uor.foundation/u/Element") {
             report.push(TestResult::fail(
                 validator,
                 "u:digestAlgorithm has incorrect domain",
@@ -1705,7 +1702,7 @@ fn validate_crypto_pinning_vocabulary(report: &mut ConformanceReport) {
         .iter()
         .find(|p| p.id == "https://uor.foundation/u/canonicalBytes");
     if let Some(prop) = canonical {
-        if prop.domain != Some("https://uor.foundation/u/Address") {
+        if prop.domain != Some("https://uor.foundation/u/Element") {
             report.push(TestResult::fail(
                 validator,
                 "u:canonicalBytes has incorrect domain",
@@ -1742,7 +1739,7 @@ fn validate_crypto_pinning_vocabulary(report: &mut ConformanceReport) {
     }
 }
 
-/// Validates carry constraint fiber-pinning identities (Amendment 44, G7).
+/// Validates carry constraint site-binding identities (Amendment 44, G7).
 fn validate_carry_constraint_pinning(report: &mut ConformanceReport) {
     let ontology = uor_ontology::Ontology::full();
     let validator = "ontology/inventory/carry_constraint_pinning";
@@ -1754,7 +1751,7 @@ fn validate_carry_constraint_pinning(report: &mut ConformanceReport) {
         report.push(TestResult::fail(validator, "op/ namespace not found"));
         return;
     };
-    let expected = ["CC_PINS", "CC_COST_FIBER"];
+    let expected = ["CC_PINS", "CC_COST_SITE"];
     let mut all_found = true;
     for label in &expected {
         let has = op_mod.individuals.iter().any(|ind| ind.label == *label);
@@ -1769,7 +1766,7 @@ fn validate_carry_constraint_pinning(report: &mut ConformanceReport) {
     if all_found {
         report.push(TestResult::pass(
             validator,
-            "Amendment 44 carry constraint pinning identities present (CC_PINS, CC_COST_FIBER)",
+            "Amendment 44 carry constraint pinning identities present (CC_PINS, CC_COST_SITE)",
         ));
     }
 }
@@ -1946,7 +1943,7 @@ fn validate_obstruction_termination(report: &mut ConformanceReport) {
         report.push(TestResult::fail(validator, "op/ namespace not found"));
         return;
     };
-    let expected = ["QT_8", "QT_9"];
+    let expected = ["WT_8", "WT_9"];
     let mut all_found = true;
     for label in &expected {
         let has = op_mod.individuals.iter().any(|ind| ind.label == *label);
@@ -1961,7 +1958,7 @@ fn validate_obstruction_termination(report: &mut ConformanceReport) {
     if all_found {
         report.push(TestResult::pass(
             validator,
-            "Amendment 44 obstruction termination identities present (QT_8, QT_9)",
+            "Amendment 44 obstruction termination identities present (WT_8, WT_9)",
         ));
     }
 }
@@ -2030,7 +2027,7 @@ fn validate_session_saturation_bridge(report: &mut ConformanceReport) {
         report.push(TestResult::fail(validator, "op/ namespace not found"));
         return;
     };
-    let expected = ["SR_6", "SR_7"];
+    let expected = ["GR_6", "GR_7"];
     let mut all_found = true;
     for label in &expected {
         let has = op_mod.individuals.iter().any(|ind| ind.label == *label);
@@ -2050,7 +2047,7 @@ fn validate_session_saturation_bridge(report: &mut ConformanceReport) {
     }
 }
 
-/// Validates SuperposedFiberState amplitude index characterization (Amendment 44, G10).
+/// Validates SuperposedSiteState amplitude index characterization (Amendment 44, G10).
 fn validate_amplitude_index_characterization(report: &mut ConformanceReport) {
     let ontology = uor_ontology::Ontology::full();
     let validator = "ontology/inventory/amplitude_index_characterization";
@@ -2134,7 +2131,7 @@ fn validate_certificate_issuance_coverage(report: &mut ConformanceReport) {
         "https://uor.foundation/cert/IsometryCertificate",
         "https://uor.foundation/cert/InvolutionCertificate",
         "https://uor.foundation/cert/CompletenessCertificate",
-        "https://uor.foundation/cert/SaturationCertificate",
+        "https://uor.foundation/cert/GroundingCertificate",
         "https://uor.foundation/cert/GeodesicCertificate",
         "https://uor.foundation/cert/MeasurementCertificate",
         "https://uor.foundation/cert/BornRuleVerification",
@@ -3028,7 +3025,7 @@ fn validate_homotopy_nerve_vocabulary(report: &mut ConformanceReport) {
     }
 }
 
-/// Amendment 54: Validates Postnikov bridge \u{2014} ConstraintNerve has
+/// Amendment 54: Validates Postnikov bridge \u{2014} CechNerve has
 /// KanComplex subclass and observable/ has a postnikovTruncation property.
 fn validate_postnikov_bridge(report: &mut ConformanceReport) {
     let ontology = uor_ontology::Ontology::full();
@@ -3039,7 +3036,7 @@ fn validate_postnikov_bridge(report: &mut ConformanceReport) {
         .namespaces
         .iter()
         .flat_map(|m| m.classes.iter())
-        .any(|c| c.label == "ConstraintNerve" && c.subclass_of.contains(&kan_iri));
+        .any(|c| c.label == "CechNerve" && c.subclass_of.contains(&kan_iri));
 
     let postnikov_prop = ontology
         .namespaces
@@ -3050,12 +3047,12 @@ fn validate_postnikov_bridge(report: &mut ConformanceReport) {
     if nerve_found && postnikov_prop {
         report.push(TestResult::pass(
             validator,
-            "Postnikov bridge: ConstraintNerve subclasses KanComplex and postnikovTruncation property exists",
+            "Postnikov bridge: CechNerve subclasses KanComplex and postnikovTruncation property exists",
         ));
     } else {
         let mut msg = String::new();
         if !nerve_found {
-            msg.push_str("ConstraintNerve does not subclass KanComplex; ");
+            msg.push_str("CechNerve does not subclass KanComplex; ");
         }
         if !postnikov_prop {
             msg.push_str("postnikovTruncation property not found");
@@ -3743,10 +3740,10 @@ fn validate_composed_ops_vocabulary(report: &mut ConformanceReport) {
     }
 }
 
-/// Validates the cascade core vocabulary (Amendment 63).
-fn validate_cascade_core_vocabulary(report: &mut ConformanceReport) {
+/// Validates the reduction core vocabulary (Amendment 63).
+fn validate_reduction_core_vocabulary(report: &mut ConformanceReport) {
     let ontology = uor_ontology::Ontology::full();
-    let validator = "ontology/inventory/cascade_core_vocabulary";
+    let validator = "ontology/inventory/reduction_core_vocabulary";
 
     let ids: &[(&str, &str)] = &[
         (
@@ -3849,15 +3846,15 @@ fn validate_cascade_core_vocabulary(report: &mut ConformanceReport) {
     if all_valid {
         report.push(TestResult::pass(
             validator,
-            "All 16 PE_/PM_/ER_ cascade core identities present with correct verificationDomains",
+            "All 16 PE_/PM_/ER_ reduction core identities present with correct verificationDomains",
         ));
     }
 }
 
-/// Validates the cascade expansion vocabulary (Amendment 64).
-fn validate_cascade_expansion_vocabulary(report: &mut ConformanceReport) {
+/// Validates the reduction expansion vocabulary (Amendment 64).
+fn validate_reduction_expansion_vocabulary(report: &mut ConformanceReport) {
     let ontology = uor_ontology::Ontology::full();
-    let validator = "ontology/inventory/cascade_expansion_vocabulary";
+    let validator = "ontology/inventory/reduction_expansion_vocabulary";
 
     let ids: &[(&str, &str)] = &[
         (
@@ -3960,15 +3957,15 @@ fn validate_cascade_expansion_vocabulary(report: &mut ConformanceReport) {
     if all_valid {
         report.push(TestResult::pass(
             validator,
-            "All 16 ER_/EA_/OE_/CS_ cascade expansion identities present with correct verificationDomains",
+            "All 16 ER_/EA_/OE_/CS_ reduction expansion identities present with correct verificationDomains",
         ));
     }
 }
 
-/// Validates the cascade completion vocabulary (Amendment 65).
-fn validate_cascade_completion_vocabulary(report: &mut ConformanceReport) {
+/// Validates the reduction completion vocabulary (Amendment 65).
+fn validate_reduction_completion_vocabulary(report: &mut ConformanceReport) {
     let ontology = uor_ontology::Ontology::full();
-    let validator = "ontology/inventory/cascade_completion_vocabulary";
+    let validator = "ontology/inventory/reduction_completion_vocabulary";
 
     let ids: &[(&str, &str)] = &[
         (
@@ -4079,7 +4076,7 @@ fn validate_cascade_completion_vocabulary(report: &mut ConformanceReport) {
     if all_valid {
         report.push(TestResult::pass(
             validator,
-            "All 18 CS_5/FA_/SW_/LS_/TJ_/AP_ cascade completion identities present with correct verificationDomains",
+            "All 18 CS_5/FA_/SW_/LS_/TJ_/AP_ reduction completion identities present with correct verificationDomains",
         ));
     }
 }
@@ -4510,24 +4507,24 @@ fn validate_compile_unit_vocabulary(report: &mut ConformanceReport) {
 
     // Check CompileUnit class
     if ontology
-        .find_class("https://uor.foundation/cascade/CompileUnit")
+        .find_class("https://uor.foundation/reduction/CompileUnit")
         .is_none()
     {
         report.push(TestResult::fail(
             validator,
-            "cascade:CompileUnit class not found",
+            "reduction:CompileUnit class not found",
         ));
         all_valid = false;
     }
 
     // Check 6 new properties
     let prop_iris = [
-        "https://uor.foundation/cascade/rootTerm",
-        "https://uor.foundation/cascade/unitQuantumLevel",
-        "https://uor.foundation/cascade/targetDomains",
-        "https://uor.foundation/cascade/thermodynamicBudget",
-        "https://uor.foundation/cascade/unitAddress",
-        "https://uor.foundation/cascade/preflightOrder",
+        "https://uor.foundation/reduction/rootTerm",
+        "https://uor.foundation/reduction/unitWittLevel",
+        "https://uor.foundation/reduction/targetDomains",
+        "https://uor.foundation/reduction/thermodynamicBudget",
+        "https://uor.foundation/reduction/unitAddress",
+        "https://uor.foundation/reduction/preflightOrder",
     ];
     for iri in &prop_iris {
         if ontology.find_property(iri).is_none() {
@@ -4541,26 +4538,26 @@ fn validate_compile_unit_vocabulary(report: &mut ConformanceReport) {
 
     // Check BudgetSolvencyCheck individual
     if ontology
-        .find_individual("https://uor.foundation/cascade/BudgetSolvencyCheck")
+        .find_individual("https://uor.foundation/reduction/BudgetSolvencyCheck")
         .is_none()
     {
         report.push(TestResult::fail(
             validator,
-            "cascade:BudgetSolvencyCheck individual not found",
+            "reduction:BudgetSolvencyCheck individual not found",
         ));
         all_valid = false;
     }
 
     // Check all 6 PreflightCheck individuals have preflightOrder
     let preflight_iris = [
-        "https://uor.foundation/cascade/BudgetSolvencyCheck",
-        "https://uor.foundation/cascade/FeasibilityCheck",
-        "https://uor.foundation/cascade/DispatchCoverageCheck",
-        "https://uor.foundation/cascade/PackageCoherenceCheck",
-        "https://uor.foundation/cascade/PreflightTiming",
-        "https://uor.foundation/cascade/RuntimeTiming",
+        "https://uor.foundation/reduction/BudgetSolvencyCheck",
+        "https://uor.foundation/reduction/FeasibilityCheck",
+        "https://uor.foundation/reduction/DispatchCoverageCheck",
+        "https://uor.foundation/reduction/PackageCoherenceCheck",
+        "https://uor.foundation/reduction/PreflightTiming",
+        "https://uor.foundation/reduction/RuntimeTiming",
     ];
-    let order_prop = "https://uor.foundation/cascade/preflightOrder";
+    let order_prop = "https://uor.foundation/reduction/preflightOrder";
     for iri in &preflight_iris {
         match ontology.find_individual(iri) {
             Some(ind) => {
@@ -5061,8 +5058,8 @@ fn validate_legitimate_string_properties_only(report: &mut ConformanceReport) {
         "https://uor.foundation/u/digest",
         "https://uor.foundation/u/digestAlgorithm",
         "https://uor.foundation/state/contentAddress",
-        "https://uor.foundation/cascade/stageName",
-        "https://uor.foundation/cascade/pressureLevel",
+        "https://uor.foundation/reduction/stageName",
+        "https://uor.foundation/reduction/pressureLevel",
         "https://uor.foundation/convergence/levelName",
         "https://uor.foundation/convergence/bettiSignature",
         "https://uor.foundation/state/boundaryReason",
@@ -5070,12 +5067,12 @@ fn validate_legitimate_string_properties_only(report: &mut ConformanceReport) {
         "https://uor.foundation/op/operatorComplexity",
         "https://uor.foundation/op/operatorSignature",
         "https://uor.foundation/op/presentation",
-        "https://uor.foundation/proof/quantumNote",
+        "https://uor.foundation/proof/wittNote",
         "https://uor.foundation/proof/criticalIdentity",
         "https://uor.foundation/schema/variableName",
         "https://uor.foundation/schema/literalValue",
         "https://uor.foundation/schema/infixOperator",
-        "https://uor.foundation/type/structuralFiberCount",
+        "https://uor.foundation/type/structuralSiteCount",
         "https://uor.foundation/type/structuralGrounding",
         "https://uor.foundation/type/structuralConstraint",
         "https://uor.foundation/observable/metricDomain",
@@ -5089,17 +5086,17 @@ fn validate_legitimate_string_properties_only(report: &mut ConformanceReport) {
         "https://uor.foundation/convergence/baseSpace",
         "https://uor.foundation/convergence/fiberSphere",
         "https://uor.foundation/convergence/characteristicIdentity",
-        "https://uor.foundation/cascade/failureKind",
-        "https://uor.foundation/cascade/preflightKind",
-        "https://uor.foundation/cascade/transactionPolicy",
-        "https://uor.foundation/cascade/leasePhase",
-        "https://uor.foundation/cascade/feasibilityKind",
-        "https://uor.foundation/cascade/feasibilityWitness",
-        "https://uor.foundation/cascade/bindTarget",
-        "https://uor.foundation/cascade/bindValue",
-        "https://uor.foundation/cascade/predicateField",
-        "https://uor.foundation/cascade/predicateOperator",
-        "https://uor.foundation/cascade/predicateValue",
+        "https://uor.foundation/reduction/failureKind",
+        "https://uor.foundation/reduction/preflightKind",
+        "https://uor.foundation/reduction/transactionPolicy",
+        "https://uor.foundation/reduction/leasePhase",
+        "https://uor.foundation/reduction/feasibilityKind",
+        "https://uor.foundation/reduction/feasibilityWitness",
+        "https://uor.foundation/reduction/bindTarget",
+        "https://uor.foundation/reduction/bindValue",
+        "https://uor.foundation/reduction/predicateField",
+        "https://uor.foundation/reduction/predicateOperator",
+        "https://uor.foundation/reduction/predicateValue",
         // Amendment 95: Declarative enforcement
         "https://uor.foundation/conformance/shapeIri",
         "https://uor.foundation/conformance/constraintIri",
@@ -5256,11 +5253,11 @@ fn validate_predicate_registry(report: &mut ConformanceReport) {
                 "isOdd",
                 "isEven",
                 "isInvolution",
-                "fiberPinned",
-                "fiberFree",
+                "sitePinned",
+                "siteFree",
                 "contradictionReached",
                 "budgetExhausted",
-                "cascadeConverged",
+                "reductionConverged",
             ];
             let mut all_found = true;
             for label in &expected {
@@ -5299,7 +5296,7 @@ fn validate_constraint_completion(report: &mut ConformanceReport) {
         Some(m) => {
             let new_classes = [
                 "https://uor.foundation/type/HammingConstraint",
-                "https://uor.foundation/type/FiberConstraint",
+                "https://uor.foundation/type/SiteConstraint",
                 "https://uor.foundation/type/AffineConstraint",
             ];
             let classes_ok = new_classes
@@ -5307,8 +5304,8 @@ fn validate_constraint_completion(report: &mut ConformanceReport) {
                 .all(|iri| m.classes.iter().any(|c| c.id == *iri));
             let new_props = [
                 "https://uor.foundation/type/hammingBound",
-                "https://uor.foundation/type/fiberIndex",
-                "https://uor.foundation/type/fiberValue",
+                "https://uor.foundation/type/siteIndex",
+                "https://uor.foundation/type/siteValue",
                 "https://uor.foundation/type/affineOffset",
                 "https://uor.foundation/type/affineGenerator",
             ];

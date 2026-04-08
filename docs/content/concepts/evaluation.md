@@ -28,8 +28,8 @@ canonical form computation:
 3. Classify each element into the four partition components:
    {@class https://uor.foundation/partition/IrreducibleSet},
    {@class https://uor.foundation/partition/ReducibleSet},
-   {@class https://uor.foundation/partition/UnitSet}, or
-   {@class https://uor.foundation/partition/ExteriorSet}
+   {@class https://uor.foundation/partition/UnitGroup}, or
+   {@class https://uor.foundation/partition/Complement}
 4. Produce the final {@class https://uor.foundation/partition/Partition}
 
 ## Boolean SAT Case Study
@@ -38,7 +38,7 @@ Evaluation provides a direct path to Boolean satisfiability. Given a
 {@class https://uor.foundation/type/ConstrainedType} with Boolean constraints,
 the evaluation resolver enumerates satisfying assignments:
 
-- Each {@class https://uor.foundation/partition/FiberCoordinate} corresponds to
+- Each {@class https://uor.foundation/partition/SiteIndex} corresponds to
   a Boolean variable
 - A {@class https://uor.foundation/type/ResidueConstraint} with modulus 2
   fixes a variable's value
@@ -47,7 +47,7 @@ the evaluation resolver enumerates satisfying assignments:
 - The {@class https://uor.foundation/partition/IrreducibleSet} of the resulting
   partition contains the satisfying assignments
 
-The {@class https://uor.foundation/partition/FiberBudget} tracks how many
+The {@class https://uor.foundation/partition/FreeRank} tracks how many
 variables have been determined. When
 {@prop https://uor.foundation/partition/isClosed} is true, all variables are
 fixed and the formula is either satisfied or unsatisfiable.

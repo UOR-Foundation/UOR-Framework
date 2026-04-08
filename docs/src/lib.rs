@@ -109,13 +109,13 @@ pub fn generate(out_dir: &Path, readme_path: &Path) -> Result<()> {
 <p>Explanatory documentation for the key ideas in the UOR Foundation ontology.</p>
 <ul>
 <li><a href="ring.html">Ring — The algebraic substrate Z/(2^n)Z</a></li>
-<li><a href="content-addressing.html">Content Addressing — Braille-encoded content identifiers</a></li>
+<li><a href="content-addressing.html">Content Addressing — Content identifiers and the address space</a></li>
 <li><a href="critical-identity.html">Critical Identity — The fundamental equation neg(bnot(x)) = succ(x)</a></li>
 <li><a href="partition.html">Partition — Decomposition of address spaces</a></li>
 <li><a href="resolution.html">Resolution — The PRISM resolution pipeline</a></li>
 <li><a href="type-system.html">Type System — Typed expressions and abstraction layers</a></li>
 <li><a href="state-model.html">State Model — Execution contexts and binding frames</a></li>
-<li><a href="fiber-budget.html">Fiber Budget — Completeness criterion for type declarations</a></li>
+<li><a href="free-rank.html">Free Rank — Completeness criterion for type declarations</a></li>
 <li><a href="constraint-algebra.html">Constraint Algebra — Composable predicates and metric axes</a></li>
 <li><a href="iterative-resolution.html">Iterative Resolution — The resolution-as-learning loop</a></li>
 <li><a href="composition.html">Composition — Categorical composition primitive</a></li>
@@ -131,10 +131,10 @@ pub fn generate(out_dir: &Path, readme_path: &Path) -> Result<()> {
 <li><a href="cohomology.html">Cohomology — Sheaf cohomology and local-to-global</a></li>
 <li><a href="sheaf-semantics.html">Sheaf Semantics — Sheaf-theoretic view of resolution</a></li>
 <li><a href="type-completeness.html">Type Completeness — IT_7d: Euler characteristic and the completeness criterion</a></li>
-<li><a href="quantum-universality.html">Quantum Universality — Identities that hold for all n ≥ 1</a></li>
+<li><a href="quantum-universality.html">Witt Universality — Identities that hold for all n ≥ 1</a></li>
 <li><a href="session-resolution.html">Session Resolution — Multi-turn PRISM sessions with binding accumulation</a></li>
 <li><a href="type-synthesis.html">Type Synthesis — Inverse ψ-pipeline: synthesising types from topological targets</a></li>
-<li><a href="quantum-spectral-sequence.html">Quantum Spectral Sequence — Lifting CompleteTypes across quantum levels</a></li>
+<li><a href="quantum-spectral-sequence.html">Witt Spectral Sequence — Lifting CompleteTypes across Witt levels</a></li>
 <li><a href="monodromy.html">Monodromy — Holonomy groups and flat/twisted type classification</a></li>
 <li><a href="homotopy-nerve.html">Homotopy Nerve — KanComplex, Postnikov tower, and higher homotopy groups</a></li>
 <li><a href="moduli-space.html">Moduli Space — Deformation complexes and holonomy stratification</a></li>
@@ -172,7 +172,7 @@ pub fn generate(out_dir: &Path, readme_path: &Path) -> Result<()> {
 <li><a href="contributing.html">Contributing — How to contribute to UOR</a></li>
 <li><a href="psi-pipeline.html">ψ Pipeline — Structural reasoning via homology and cohomology</a></li>
 <li><a href="type-synthesis.html">Type Synthesis — Construct CompleteTypes from topological goals</a></li>
-<li><a href="incremental-completeness.html">Incremental Completeness — Lift CompleteTypes across quantum levels</a></li>
+<li><a href="incremental-completeness.html">Incremental Completeness — Lift CompleteTypes across Witt levels</a></li>
 <li><a href="homotopy-pipeline.html">Homotopy Pipeline — Extended psi pipeline: psi_7 through psi_9</a></li>
 <li><a href="deformation-analysis.html">Deformation Analysis — ModuliResolver and stratification records</a></li>
 </ul>"#,
@@ -248,7 +248,7 @@ fn build_docs_sidebar_html(base_path: &str) -> String {
 <li><a href="{base_path}/docs/concepts/resolution.html">Resolution</a></li>
 <li><a href="{base_path}/docs/concepts/type-system.html">Type System</a></li>
 <li><a href="{base_path}/docs/concepts/state-model.html">State Model</a></li>
-<li><a href="{base_path}/docs/concepts/fiber-budget.html">Fiber Budget</a></li>
+<li><a href="{base_path}/docs/concepts/free-rank.html">Free Rank</a></li>
 <li><a href="{base_path}/docs/concepts/constraint-algebra.html">Constraint Algebra</a></li>
 <li><a href="{base_path}/docs/concepts/iterative-resolution.html">Iterative Resolution</a></li>
 <li><a href="{base_path}/docs/concepts/composition.html">Composition</a></li>
@@ -264,10 +264,10 @@ fn build_docs_sidebar_html(base_path: &str) -> String {
 <li><a href="{base_path}/docs/concepts/cohomology.html">Cohomology</a></li>
 <li><a href="{base_path}/docs/concepts/sheaf-semantics.html">Sheaf Semantics</a></li>
 <li><a href="{base_path}/docs/concepts/type-completeness.html">Type Completeness</a></li>
-<li><a href="{base_path}/docs/concepts/quantum-universality.html">Quantum Universality</a></li>
+<li><a href="{base_path}/docs/concepts/quantum-universality.html">Witt Universality</a></li>
 <li><a href="{base_path}/docs/concepts/session-resolution.html">Session Resolution</a></li>
 <li><a href="{base_path}/docs/concepts/type-synthesis.html">Type Synthesis</a></li>
-<li><a href="{base_path}/docs/concepts/quantum-spectral-sequence.html">Quantum Spectral Sequence</a></li>
+<li><a href="{base_path}/docs/concepts/quantum-spectral-sequence.html">Witt Spectral Sequence</a></li>
 <li><a href="{base_path}/docs/concepts/monodromy.html">Monodromy</a></li>
 <li><a href="{base_path}/docs/concepts/homotopy-nerve.html">Homotopy Nerve</a></li>
 <li><a href="{base_path}/docs/concepts/moduli-space.html">Moduli Space</a></li>

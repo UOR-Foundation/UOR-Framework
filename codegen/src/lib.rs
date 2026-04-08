@@ -219,8 +219,8 @@ fn generate_lib_rs(ontology: &Ontology) -> String {
          //!\n\
          //! **Layer 1 — Opaque Witnesses.** [`enforcement::Datum`],\n\
          //! [`enforcement::Validated`], [`enforcement::Derivation`],\n\
-         //! [`enforcement::FiberBudget`]: sealed types with private fields that\n\
-         //! prove a value passed through the cascade evaluator or the two-phase\n\
+         //! [`enforcement::FreeRank`]: sealed types with private fields that\n\
+         //! prove a value passed through the reduction evaluator or the two-phase\n\
          //! minting boundary. Prism code consumes these but cannot fabricate them.\n\
          //!\n\
          //! **Layer 2 — Declarative Builders.** [`enforcement::CompileUnitBuilder`]\n\
@@ -259,7 +259,7 @@ fn generate_lib_rs(ontology: &Ontology) -> String {
          //! 2. Use the [`enforcement`] builders to declare your types, effects,\n\
          //!    and boundaries.\n\
          //! 3. Use the [`uor!`] macro for term-language expressions.\n\
-         //! 4. The cascade evaluator validates and evaluates your declarations,\n\
+         //! 4. The reduction evaluator validates and evaluates your declarations,\n\
          //!    producing [`enforcement::Datum`] and [`enforcement::Derivation`]\n\
          //!    witnesses.",
         ontology.version,
@@ -371,9 +371,9 @@ impl Primitives for MyImpl {{
 Then implement any foundation trait with your chosen primitives:
 
 ```rust,ignore
-use uor_foundation::bridge::partition::FiberBudget;
+use uor_foundation::bridge::partition::FreeRank;
 
-impl FiberBudget<MyImpl> for MyFiberBudget {{
+impl FreeRank<MyImpl> for MyFreeRank {{
     // ...
 }}
 ```
@@ -382,7 +382,7 @@ impl FiberBudget<MyImpl> for MyFiberBudget {{
 
 | Module | Space | Description |
 |--------|-------|-------------|
-{module_rows}| `enums` | — | Controlled vocabulary enums (QuantumLevel, PrimitiveOp, etc.) |
+{module_rows}| `enums` | — | Controlled vocabulary enums (WittLevel, PrimitiveOp, etc.) |
 | `enforcement` | — | Opaque witnesses, declarative builders, Term AST |
 
 ## Features

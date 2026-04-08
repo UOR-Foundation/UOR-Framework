@@ -85,17 +85,17 @@ fn classes() -> Vec<Class> {
             label: "CompletenessAuditTrail",
             comment: "An ordered collection of CompletenessWitness records belonging to \
                       a CompletenessCertificate. Provides full provenance of the \
-                      certification process: every constraint applied, every fiber \
+                      certification process: every constraint applied, every site \
                       closed, in sequence.",
             subclass_of: &[OWL_THING],
             disjoint_with: &[],
         },
-        // Amendment 33: Saturation Certificate
+        // Amendment 33: Grounding Certificate
         Class {
-            id: "https://uor.foundation/cert/SaturationCertificate",
-            label: "SaturationCertificate",
-            comment: "A certificate attesting that a state:SaturatedContext has \
-                      reached full saturation (σ = 1, freeCount = 0, S = 0, \
+            id: "https://uor.foundation/cert/GroundingCertificate",
+            label: "GroundingCertificate",
+            comment: "A certificate attesting that a state:GroundedContext has \
+                      reached full saturation (σ = 1, freeRank = 0, S = 0, \
                       T_ctx = 0) per SC_4. The session-layer dual of \
                       CompletenessCertificate.",
             subclass_of: &["https://uor.foundation/cert/Certificate"],
@@ -204,9 +204,9 @@ fn properties() -> Vec<Property> {
             range: XSD_BOOLEAN,
         },
         Property {
-            id: "https://uor.foundation/cert/quantum",
-            label: "quantum",
-            comment: "The quantum level at which this certificate was produced.",
+            id: "https://uor.foundation/cert/wittLength",
+            label: "wittLength",
+            comment: "The Witt level at which this certificate was produced.",
             kind: PropertyKind::Datatype,
             functional: true,
             domain: Some("https://uor.foundation/cert/Certificate"),
@@ -264,26 +264,26 @@ fn properties() -> Vec<Property> {
             domain: Some("https://uor.foundation/cert/CompletenessAuditTrail"),
             range: XSD_NON_NEGATIVE_INTEGER,
         },
-        // Amendment 33: Saturation Certificate properties
+        // Amendment 33: Grounding Certificate properties
         Property {
-            id: "https://uor.foundation/cert/certifiedSaturation",
-            label: "certifiedSaturation",
-            comment: "The SaturatedContext whose full saturation this certificate \
+            id: "https://uor.foundation/cert/certifiedGrounding",
+            label: "certifiedGrounding",
+            comment: "The GroundedContext whose full saturation this certificate \
                       attests. Uses IRI string (cert cannot import state).",
             kind: PropertyKind::Object,
             functional: true,
-            domain: Some("https://uor.foundation/cert/SaturationCertificate"),
-            range: "https://uor.foundation/state/SaturatedContext",
+            domain: Some("https://uor.foundation/cert/GroundingCertificate"),
+            range: "https://uor.foundation/state/GroundedContext",
         },
         Property {
-            id: "https://uor.foundation/cert/saturationWitness",
-            label: "saturationWitness",
-            comment: "The SaturationWitness providing step-by-step evidence \
+            id: "https://uor.foundation/cert/groundingWitness",
+            label: "groundingWitness",
+            comment: "The GroundingWitness providing step-by-step evidence \
                       of the saturation process.",
             kind: PropertyKind::Object,
             functional: true,
-            domain: Some("https://uor.foundation/cert/SaturationCertificate"),
-            range: "https://uor.foundation/state/SaturationWitness",
+            domain: Some("https://uor.foundation/cert/GroundingCertificate"),
+            range: "https://uor.foundation/state/GroundingWitness",
         },
         // Amendment 35: Geodesic Certificate properties
         Property {
@@ -322,7 +322,7 @@ fn properties() -> Vec<Property> {
             id: "https://uor.foundation/cert/vonNeumannEntropy",
             label: "vonNeumannEntropy",
             comment: "The von Neumann entropy S_vN of the pre-measurement \
-                      SuperposedFiberState, recorded by this certificate.",
+                      SuperposedSiteState, recorded by this certificate.",
             kind: PropertyKind::Datatype,
             functional: true,
             domain: Some("https://uor.foundation/cert/MeasurementCertificate"),
@@ -357,7 +357,7 @@ fn properties() -> Vec<Property> {
             label: "bornRuleVerified",
             comment: "Whether this BornRuleVerification certificate confirms \
                       that all outcome probabilities match the Born rule \
-                      (QM_5): P(k) = |α_k|² for every fiber k.",
+                      (QM_5): P(k) = |α_k|² for every site k.",
             kind: PropertyKind::Datatype,
             functional: true,
             domain: Some("https://uor.foundation/cert/BornRuleVerification"),
@@ -389,7 +389,7 @@ fn properties() -> Vec<Property> {
             kind: PropertyKind::Object,
             functional: true,
             domain: Some("https://uor.foundation/cert/LiftChainCertificate"),
-            range: "https://uor.foundation/schema/QuantumLevel",
+            range: "https://uor.foundation/schema/WittLevel",
         },
         Property {
             id: "https://uor.foundation/cert/sourceLevel",
@@ -398,7 +398,7 @@ fn properties() -> Vec<Property> {
             kind: PropertyKind::Object,
             functional: true,
             domain: Some("https://uor.foundation/cert/LiftChainCertificate"),
-            range: "https://uor.foundation/schema/QuantumLevel",
+            range: "https://uor.foundation/schema/WittLevel",
         },
         // Amendment 41: ChainAuditTrail property
         Property {

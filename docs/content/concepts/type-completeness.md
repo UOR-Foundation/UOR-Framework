@@ -6,7 +6,7 @@
 {@class https://uor.foundation/type/ConstrainedType} that guarantees resolution
 always terminates in O(1) time. A type is complete when its constraint nerve
 satisfies the completeness criterion IT\_7d: the Euler characteristic of the
-constraint nerve equals the quantum level _n_ and all Betti numbers β\_k are
+Cech nerve equals the Witt level _n_ and all Betti numbers β\_k are
 zero.
 
 Completeness is certified by the kernel via the
@@ -21,15 +21,15 @@ The completeness certification lifecycle proceeds in four stages:
 1. **Candidate registration** — A `ConstrainedType` is promoted to a
    {@class https://uor.foundation/type/CompletenessCandidate} by associating
    it with a resolver:ResolutionState and an
-   observable:ConstraintNerve via the
+   observable:CechNerve via the
    {@prop https://uor.foundation/type/candidateNerve} property.
 
 2. **Witness accumulation** — Each constraint application that closes at
-   least one fiber produces a
+   least one site produces a
    {@class https://uor.foundation/type/CompletenessWitness}. The witness
    records the applied constraint via
    {@prop https://uor.foundation/type/witnessConstraint} and the
-   {@prop https://uor.foundation/type/fibersClosed} count.
+   {@prop https://uor.foundation/type/sitesClosed} count.
 
 3. **Resolver evaluation** — A
    {@class https://uor.foundation/resolver/CompletenessResolver} reads the
@@ -48,12 +48,12 @@ The completeness certification lifecycle proceeds in four stages:
 
 IT\_7d requires:
 
-- χ(N(C)) = n (Euler characteristic of the constraint nerve equals the
-  quantum level)
+- χ(N(C)) = n (Euler characteristic of the Cech nerve equals the
+  Witt level)
 - β\_k = 0 for all k ≥ 0 (no topological obstructions)
 
-When IT\_7d holds, the residual entropy S = freeCount × ln 2 drops to zero,
-meaning no unconstrained fibers remain.
+When IT\_7d holds, the residual entropy S = freeRank × ln 2 drops to zero,
+meaning no unconstrained sites remain.
 
 ## Related
 

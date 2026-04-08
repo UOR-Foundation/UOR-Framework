@@ -80,7 +80,7 @@ fn classes() -> Vec<Class> {
             id: "https://uor.foundation/trace/MeasurementEvent",
             label: "MeasurementEvent",
             comment: "A specialized computation step recording a single projective \
-                      collapse of a SuperposedFiberState. Carries pre-collapse \
+                      collapse of a SuperposedSiteState. Carries pre-collapse \
                       entropy and post-collapse Landauer cost (QM_1).",
             subclass_of: &["https://uor.foundation/trace/ComputationStep"],
             disjoint_with: &[],
@@ -90,7 +90,7 @@ fn classes() -> Vec<Class> {
             id: "https://uor.foundation/trace/MeasurementOutcome",
             label: "MeasurementOutcome",
             comment: "A single outcome of a projective measurement on a \
-                      SuperposedFiberState, recording the classical fiber \
+                      SuperposedSiteState, recording the classical site \
                       index (outcomeValue) and its Born-rule probability \
                       |α_k|² (outcomeProbability). Multiple outcomes form \
                       the probability distribution of a measurement.",
@@ -268,7 +268,7 @@ fn properties() -> Vec<Property> {
             id: "https://uor.foundation/trace/cumulativeEntropyCost",
             label: "cumulativeEntropyCost",
             comment: "The total entropy cost accumulated across all steps of a trace. \
-                      On a geodesic, equals freeCount_initial × ln 2 (GD_3).",
+                      On a geodesic, equals freeRank_initial × ln 2 (GD_3).",
             kind: PropertyKind::Datatype,
             functional: true,
             domain: Some("https://uor.foundation/trace/ComputationTrace"),
@@ -288,7 +288,7 @@ fn properties() -> Vec<Property> {
             id: "https://uor.foundation/trace/adiabaticallyOrdered",
             label: "adiabaticallyOrdered",
             comment: "Whether the step sequence of this trace follows the AR_1 \
-                      adiabatic ordering (decreasing freeCount × cost-per-fiber).",
+                      adiabatic ordering (decreasing freeRank × cost-per-site).",
             kind: PropertyKind::Datatype,
             functional: true,
             domain: Some("https://uor.foundation/trace/ComputationTrace"),
@@ -317,7 +317,7 @@ fn properties() -> Vec<Property> {
         Property {
             id: "https://uor.foundation/trace/preCollapseEntropy",
             label: "preCollapseEntropy",
-            comment: "The von Neumann entropy S_vN of the SuperposedFiberState \
+            comment: "The von Neumann entropy S_vN of the SuperposedSiteState \
                       before projective collapse.",
             kind: PropertyKind::Datatype,
             functional: true,
@@ -361,7 +361,7 @@ fn properties() -> Vec<Property> {
             id: "https://uor.foundation/trace/isAR1Ordered",
             label: "isAR1Ordered",
             comment: "Whether this computation trace has steps ordered by the \
-                      AR_1 adiabatic metric (decreasing freeCount × cost-per-fiber). \
+                      AR_1 adiabatic metric (decreasing freeRank × cost-per-site). \
                       One of the two sub-predicates of isGeodesic (GD_6).",
             kind: PropertyKind::Datatype,
             functional: true,
@@ -372,7 +372,7 @@ fn properties() -> Vec<Property> {
             id: "https://uor.foundation/trace/isDC10Selected",
             label: "isDC10Selected",
             comment: "Whether each step of this computation trace was selected by \
-                      the DC_10 Jacobian criterion (maximal J_k among free fibers). \
+                      the DC_10 Jacobian criterion (maximal J_k among free sites). \
                       One of the two sub-predicates of isGeodesic (GD_6).",
             kind: PropertyKind::Datatype,
             functional: true,
@@ -383,7 +383,7 @@ fn properties() -> Vec<Property> {
         Property {
             id: "https://uor.foundation/trace/outcomeValue",
             label: "outcomeValue",
-            comment: "The classical fiber index selected by projective collapse \
+            comment: "The classical site index selected by projective collapse \
                       in this measurement outcome.",
             kind: PropertyKind::Datatype,
             functional: true,
@@ -394,7 +394,7 @@ fn properties() -> Vec<Property> {
             id: "https://uor.foundation/trace/outcomeProbability",
             label: "outcomeProbability",
             comment: "The Born-rule probability of this measurement outcome: \
-                      |α_k|² where α_k is the amplitude of the collapsed fiber.",
+                      |α_k|² where α_k is the amplitude of the collapsed site.",
             kind: PropertyKind::Datatype,
             functional: true,
             domain: Some("https://uor.foundation/trace/MeasurementOutcome"),

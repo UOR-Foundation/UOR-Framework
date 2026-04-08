@@ -14,7 +14,7 @@ use crate::mapping::{
 };
 
 /// Set of class local names that skip trait generation.
-/// Most are enum classes; QuantumLevel is a struct but also skips trait generation.
+/// Most are enum classes; WittLevel is a struct but also skips trait generation.
 /// The authoritative list is [`uor_ontology::Ontology::enum_class_names()`].
 fn enum_class_names() -> HashSet<&'static str> {
     uor_ontology::Ontology::enum_class_names()
@@ -393,7 +393,7 @@ fn generate_property_method(
 /// Returns an enum type override for special datatype properties.
 ///
 /// All former overrides have been removed by property retypings
-/// (fiberState in Amendment 90, geometricCharacter in Amendment 23).
+/// (siteState in Amendment 90, geometricCharacter in Amendment 23).
 fn datatype_enum_override(_prop: &Property) -> Option<&'static str> {
     None
 }
@@ -447,7 +447,7 @@ fn generate_individuals(f: &mut RustFile, module: &NamespaceModule) {
         // Skip individuals whose types are codegen-internal enums (PrimitiveOp
         // variants) or OWL enum classes whose individuals carry no property
         // assertions worth exposing as constant modules.  Other enum classes
-        // (e.g. QuantumLevel, VerificationDomain) retain constant modules
+        // (e.g. WittLevel, VerificationDomain) retain constant modules
         // because their individuals have data properties.
         if type_local == "UnaryOp"
             || type_local == "BinaryOp"

@@ -2,13 +2,13 @@
 
 Content addressing is the foundational principle of UOR: an object is identified by
 *what it is*, not *where it is*. The {@ns u} namespace formalizes this with the
-{@class https://uor.foundation/u/Address} class and the
+{@class https://uor.foundation/u/Element} class and the
 {@class https://uor.foundation/u/ContentAddressed} interface.
 
 ## The Universal Address Space
 
 Every object in UOR has a canonical address derived from its content. The address
-space is grounded in the byte ring Z/(2^8)Z at quantum level Q3. An address is a
+space is grounded in the byte ring Z/(2^8)Z at Witt level W32. An address is a
 point in this ring (or a tuple of ring elements for higher-dimensional data), making
 every UOR identity a statement about ring arithmetic.
 
@@ -33,7 +33,7 @@ the content (or a hash of it). This provides three guarantees:
 ## Addresses and the Ring
 
 The address space is grounded in the {@concept ring} -- specifically the byte ring
-Z/(2^8)Z at {@concept quantum-levels} Q3. The
+Z/(2^8)Z at {@concept witt-levels} W32. The
 {@prop https://uor.foundation/u/address} property maps every identifiable object to
 its position in the universal address space.
 
@@ -46,6 +46,6 @@ structures the space of all content-addressed objects.
 
 Content addressing lives in the **Define** stage of the [PRISM](../pipeline/) pipeline.
 The {@ns u} namespace is a kernel-space namespace that establishes *what exists*
-before the Resolve stage determines *what type it has*. The {@concept fiber} bundle
+before the Resolve stage determines *what type it has*. The {@concept site} bundle
 structure overlays typed meaning onto the address space defined here, and the
 {@concept partition} decomposes addresses into disjoint classification sets.

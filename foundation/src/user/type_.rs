@@ -5,16 +5,16 @@
 //! Space: User
 
 use crate::enums::MetricAxis;
-use crate::enums::QuantumLevel;
+use crate::enums::WittLevel;
 use crate::Primitives;
 
 /// A runtime type declaration. The root class for all UOR types. Each TypeDefinition, when resolved, produces a partition of the ring at the specified quantum level.
 /// Disjoint with: Constraint, MetricAxis.
 pub trait TypeDefinition<P: Primitives> {
-    /// Associated type for `Address`.
-    type Address: crate::kernel::address::Address<P>;
+    /// Associated type for `Element`.
+    type Element: crate::kernel::address::Element<P>;
     /// The content-derived address of this type definition, uniquely identifying the type in the UOR address space.
-    fn content_address(&self) -> &Self::Address;
+    fn content_address(&self) -> &Self::Element;
 }
 
 /// A primitive type defined by a fixed bit width. The carrier is the entire ring Z/(2^n)Z at the specified quantum level.
@@ -56,21 +56,21 @@ pub trait ConstrainedType<P: Primitives>: TypeDefinition<P> {
     fn holonomy_classified(&self) -> P::Boolean;
 }
 
-/// A composable predicate that refines a type by pinning one or more fiber coordinates. Constraints are the parameterization mechanism for ConstrainedType.
+/// A composable predicate that refines a type by pinning one or more site coordinates. Constraints are the parameterization mechanism for ConstrainedType.
 /// Disjoint with: TypeDefinition, MetricAxis.
 pub trait Constraint<P: Primitives> {
     /// The metric axis along which this constraint operates: vertical (ring), horizontal (Hamming), or diagonal (incompatibility).
     fn metric_axis(&self) -> MetricAxis;
-    /// Associated type for `FiberCoordinate`.
-    type FiberCoordinate: crate::bridge::partition::FiberCoordinate<P>;
-    /// A fiber coordinate that this constraint pins when applied.
-    fn pins_fibers(&self) -> &[Self::FiberCoordinate];
+    /// Associated type for `SiteIndex`.
+    type SiteIndex: crate::bridge::partition::SiteIndex<P>;
+    /// A site coordinate that this constraint pins when applied.
+    fn pins_sites(&self) -> &[Self::SiteIndex];
     /// The cost of applying this constraint in terms of axis crossings: the number of metric boundaries that must be traversed.
     fn crossing_cost(&self) -> P::NonNegativeInteger;
 }
 
-/// A constraint based on residue class membership: x ≡ r (mod m). Pins fibers corresponding to the residue pattern.
-/// Disjoint with: CarryConstraint, DepthConstraint, CompositeConstraint, HammingConstraint, FiberConstraint, AffineConstraint.
+/// A constraint based on residue class membership: x ≡ r (mod m). Pins sites corresponding to the residue pattern.
+/// Disjoint with: CarryConstraint, DepthConstraint, CompositeConstraint, HammingConstraint, SiteConstraint, AffineConstraint.
 pub trait ResidueConstraint<P: Primitives>: Constraint<P> {
     /// The modulus m of a residue constraint: x ≡ r (mod m).
     fn modulus(&self) -> P::PositiveInteger;
@@ -78,8 +78,8 @@ pub trait ResidueConstraint<P: Primitives>: Constraint<P> {
     fn residue(&self) -> P::NonNegativeInteger;
 }
 
-/// A constraint based on carry propagation patterns in ring arithmetic. Pins fibers corresponding to carry positions.
-/// Disjoint with: ResidueConstraint, DepthConstraint, CompositeConstraint, HammingConstraint, FiberConstraint, AffineConstraint.
+/// A constraint based on carry propagation patterns in ring arithmetic. Pins sites corresponding to carry positions.
+/// Disjoint with: ResidueConstraint, DepthConstraint, CompositeConstraint, HammingConstraint, SiteConstraint, AffineConstraint.
 pub trait CarryConstraint<P: Primitives>: Constraint<P> {
     /// Associated type for `Datum`.
     type Datum: crate::kernel::schema::Datum<P>;
@@ -87,8 +87,8 @@ pub trait CarryConstraint<P: Primitives>: Constraint<P> {
     fn carry_pattern(&self) -> &Self::Datum;
 }
 
-/// A constraint on factorization depth: the minimum and maximum number of irreducible factors. Pins fibers by bounding the factorization tree depth.
-/// Disjoint with: ResidueConstraint, CarryConstraint, CompositeConstraint, HammingConstraint, FiberConstraint, AffineConstraint.
+/// A constraint on factorization depth: the minimum and maximum number of irreducible factors. Pins sites by bounding the factorization tree depth.
+/// Disjoint with: ResidueConstraint, CarryConstraint, CompositeConstraint, HammingConstraint, SiteConstraint, AffineConstraint.
 pub trait DepthConstraint<P: Primitives>: Constraint<P> {
     /// The minimum factorization depth required by a depth constraint.
     fn min_depth(&self) -> P::NonNegativeInteger;
@@ -96,8 +96,8 @@ pub trait DepthConstraint<P: Primitives>: Constraint<P> {
     fn max_depth(&self) -> P::NonNegativeInteger;
 }
 
-/// A constraint formed by composing two or more simpler constraints. The composite pins the union of fibers pinned by its components.
-/// Disjoint with: ResidueConstraint, CarryConstraint, DepthConstraint, HammingConstraint, FiberConstraint, AffineConstraint.
+/// A constraint formed by composing two or more simpler constraints. The composite pins the union of sites pinned by its components.
+/// Disjoint with: ResidueConstraint, CarryConstraint, DepthConstraint, HammingConstraint, SiteConstraint, AffineConstraint.
 pub trait CompositeConstraint<P: Primitives>: Constraint<P> {
     /// Associated type for `Constraint`.
     type Constraint: Constraint<P>;
@@ -106,25 +106,25 @@ pub trait CompositeConstraint<P: Primitives>: Constraint<P> {
 }
 
 /// Pins the Hamming weight of the Datum to at most the bound. The horizontal axis of the tri-metric.
-/// Disjoint with: ResidueConstraint, CarryConstraint, DepthConstraint, CompositeConstraint, FiberConstraint, AffineConstraint.
+/// Disjoint with: ResidueConstraint, CarryConstraint, DepthConstraint, CompositeConstraint, SiteConstraint, AffineConstraint.
 pub trait HammingConstraint<P: Primitives>: Constraint<P> {
     /// Upper bound on the Hamming weight of the Datum.
     fn hamming_bound(&self) -> P::NonNegativeInteger;
 }
 
-/// Pins a single fiber coordinate to 0 or 1. The atomic unit of the fiber budget.
+/// Pins a single site coordinate to 0 or 1. The atomic unit of the site budget.
 /// Disjoint with: ResidueConstraint, CarryConstraint, DepthConstraint, CompositeConstraint, HammingConstraint, AffineConstraint.
-pub trait FiberConstraint<P: Primitives>: Constraint<P> {
-    /// Zero-based index of the pinned fiber coordinate.
-    fn fiber_index(&self) -> P::NonNegativeInteger;
+pub trait SiteConstraint<P: Primitives>: Constraint<P> {
+    /// Zero-based index of the pinned site coordinate.
+    fn site_index(&self) -> P::NonNegativeInteger;
     /// Associated type for `Datum`.
     type Datum: crate::kernel::schema::Datum<P>;
-    /// The value the pinned fiber coordinate must equal (a Datum in the set {0, 1}).
-    fn fiber_value(&self) -> &Self::Datum;
+    /// The value the pinned site coordinate must equal (a Datum in the set {0, 1}).
+    fn site_value(&self) -> &Self::Datum;
 }
 
 /// Pins the Datum to an affine subspace specified by an offset and a set of generators.
-/// Disjoint with: ResidueConstraint, CarryConstraint, DepthConstraint, CompositeConstraint, HammingConstraint, FiberConstraint.
+/// Disjoint with: ResidueConstraint, CarryConstraint, DepthConstraint, CompositeConstraint, HammingConstraint, SiteConstraint.
 pub trait AffineConstraint<P: Primitives>: Constraint<P> {
     /// Associated type for `Datum`.
     type Datum: crate::kernel::schema::Datum<P>;
@@ -134,30 +134,30 @@ pub trait AffineConstraint<P: Primitives>: Constraint<P> {
     fn affine_generator(&self) -> &[Self::Datum];
 }
 
-/// A TypeDefinition certified to satisfy the UOR completeness criterion (IT_7d): its constraint nerve N(C) has Euler characteristic χ = n and all Betti numbers β_k = 0. A CompleteType guarantees that resolution closes the fiber budget in O(1) — no iterative refinement is required. Completeness is attested by a cert:CompletenessCertificate linked via cert:certifiedType. This class is not addressable from a type-expr position in the term language; references from term-language positions are rejected by the resolver.
+/// A TypeDefinition certified to satisfy the UOR completeness criterion (IT_7d): its constraint nerve N(C) has Euler characteristic χ = n and all Betti numbers β_k = 0. A CompleteType guarantees that resolution closes the site budget in O(1) — no iterative refinement is required. Completeness is attested by a cert:CompletenessCertificate linked via cert:certifiedType. This class is not addressable from a type-expr position in the term language; references from term-language positions are rejected by the resolver.
 pub trait CompleteType<P: Primitives>: TypeDefinition<P> {}
 
-/// A ConstrainedType actively undergoing the completeness certification pipeline. Links to the resolver:ResolutionState tracking the current iteration and to the resolver:ConstraintNerve being computed. Disjoint from CompleteType (which is already certified). This class is not addressable from a type-expr position in the term language; references from term-language positions are rejected by the resolver.
+/// A ConstrainedType actively undergoing the completeness certification pipeline. Links to the resolver:ResolutionState tracking the current iteration and to the resolver:CechNerve being computed. Disjoint from CompleteType (which is already certified). This class is not addressable from a type-expr position in the term language; references from term-language positions are rejected by the resolver.
 /// Disjoint with: CompleteType.
 pub trait CompletenessCandidate<P: Primitives>: ConstrainedType<P> {
     /// Associated type for `ConstrainedType`.
     type ConstrainedType: ConstrainedType<P>;
     /// The ConstrainedType being evaluated for completeness by this CompletenessCandidate.
     fn completeness_candidate(&self) -> &[Self::ConstrainedType];
-    /// Associated type for `ConstraintNerve`.
-    type ConstraintNerve: crate::bridge::resolver::ConstraintNerve<P>;
+    /// Associated type for `CechNerve`.
+    type CechNerve: crate::bridge::resolver::CechNerve<P>;
     /// The constraint nerve being computed for this candidate. The CompletenessResolver reads χ(N(C)) from this nerve at each iteration via resolver:nerveEulerCharacteristic.
-    fn candidate_nerve(&self) -> &Self::ConstraintNerve;
+    fn candidate_nerve(&self) -> &Self::CechNerve;
 }
 
-/// A record of a single fiber-closing event: one constraint application that reduced the FiberBudget deficit. Carries the applied constraint and the fibersClosed count. Forms the ordered audit trail between ConstrainedType and CompleteType.
+/// A record of a single site-closing event: one constraint application that reduced the FreeRank deficit. Carries the applied constraint and the sitesClosed count. Forms the ordered audit trail between ConstrainedType and CompleteType.
 pub trait CompletenessWitness<P: Primitives> {
     /// Associated type for `Constraint`.
     type Constraint: Constraint<P>;
     /// The constraint applied in this witness step.
     fn witness_constraint(&self) -> &Self::Constraint;
-    /// Number of fibers closed by this witness step.
-    fn fibers_closed(&self) -> P::NonNegativeInteger;
+    /// Number of sites closed by this witness step.
+    fn sites_closed(&self) -> P::NonNegativeInteger;
 }
 
 /// A specification of the desired topological properties of a type to be synthesised. Carries a target Euler characteristic (targetEulerCharacteristic) and a target Betti profile (zero or more targetBettiNumber assertions). The minimal goal for O(1) resolution is: targetEulerCharacteristic = n and all targetBettiNumber = 0 — the IT_7d profile.
@@ -187,32 +187,32 @@ pub trait MinimalConstraintBasis<P: Primitives> {
     type Constraint: Constraint<P>;
     /// Non-functional. One assertion per constraint in the minimal basis.
     fn basis_constraint(&self) -> &[Self::Constraint];
-    /// The cardinality of the minimal basis. The theoretical lower bound is n (one constraint per fiber).
+    /// The cardinality of the minimal basis. The theoretical lower bound is n (one constraint per site).
     fn basis_size(&self) -> P::NonNegativeInteger;
 }
 
-/// A ConstrainedType T' over R_{n+1} obtained by extending a ConstrainedType T over R_n. Carries a link to the base type (liftBase), the quantum level it lifts to (liftTargetLevel), and the LiftObstruction (if the lift fails to transfer completeness). A QuantumLift is a CompleteType iff its LiftObstruction is trivial.
-pub trait QuantumLift<P: Primitives> {
+/// A ConstrainedType T' over R_{n+1} obtained by extending a ConstrainedType T over R_n. Carries a link to the base type (liftBase), the quantum level it lifts to (liftTargetLevel), and the LiftObstruction (if the lift fails to transfer completeness). A WittLift is a CompleteType iff its LiftObstruction is trivial.
+pub trait WittLift<P: Primitives> {
     /// Associated type for `ConstrainedType`.
     type ConstrainedType: ConstrainedType<P>;
     /// The base type being lifted to the next quantum level.
     fn lift_base(&self) -> &Self::ConstrainedType;
     /// The quantum level this lift targets.
-    fn lift_target_level(&self) -> QuantumLevel;
+    fn lift_target_level(&self) -> WittLevel;
     /// Associated type for `LiftObstruction`.
     type LiftObstruction: LiftObstruction<P>;
     /// The LiftObstruction for this lift. Trivial (zero class) iff the lift inherits completeness.
     fn lift_obstruction(&self) -> &Self::LiftObstruction;
 }
 
-/// The algebraic obstruction to a QuantumLift inheriting the completeness of its base type. Computed as the image of the spectral sequence differential d_2. If trivial (zero), the base type's completeness lifts. If non-trivial, at least one additional constraint is needed at the new quantum level.
+/// The algebraic obstruction to a WittLift inheriting the completeness of its base type. Computed as the image of the spectral sequence differential d_2. If trivial (zero), the base type's completeness lifts. If non-trivial, at least one additional constraint is needed at the new quantum level.
 pub trait LiftObstruction<P: Primitives> {
     /// True iff the obstruction class is zero — the base type's completeness transfers to the lifted quantum level without additional constraints.
     fn obstruction_trivial(&self) -> P::Boolean;
-    /// Associated type for `FiberCoordinate`.
-    type FiberCoordinate: crate::bridge::partition::FiberCoordinate<P>;
-    /// The fiber at the new quantum level where the obstruction is located. Ranges over the new bit position introduced at Q_{n+1}.
-    fn obstruction_fiber(&self) -> &Self::FiberCoordinate;
+    /// Associated type for `SiteIndex`.
+    type SiteIndex: crate::bridge::partition::SiteIndex<P>;
+    /// The site at the new quantum level where the obstruction is located. Ranges over the new bit position introduced at Q_{n+1}.
+    fn obstruction_site(&self) -> &Self::SiteIndex;
 }
 
 /// A ConstrainedType whose HolonomyGroup is non-trivial — at least one closed constraint path produces a non-identity dihedral element. A TwistedType may still be a CompleteType (IT_7d is a homological, not holonomic, criterion), but its resolution paths require tracking dihedral accumulation. This class is not addressable from a type-expr position in the term language; references from term-language positions are rejected by the resolver.
@@ -223,37 +223,37 @@ pub trait TwistedType<P: Primitives>: ConstrainedType<P> {}
 /// Disjoint with: TwistedType.
 pub trait FlatType<P: Primitives>: ConstrainedType<P> {}
 
-/// A type representing a superposition of fiber states where fibers carry complex amplitudes rather than binary pinned/free assignments. Ontological realisation of RC_5 (Amendment 32). This class is not addressable from a type-expr position in the term language; references from term-language positions are rejected by the resolver.
-pub trait SuperposedFiberState<P: Primitives>: TypeDefinition<P> {
-    /// The amplitude coefficient for this superposed fiber state.
+/// A type representing a superposition of site states where sites carry complex amplitudes rather than binary pinned/free assignments. Ontological realisation of RC_5 (Amendment 32). This class is not addressable from a type-expr position in the term language; references from term-language positions are rejected by the resolver.
+pub trait SuperposedSiteState<P: Primitives>: TypeDefinition<P> {
+    /// The amplitude coefficient for this superposed site state.
     fn amplitude(&self) -> P::Decimal;
-    /// Whether the amplitude vector of this SuperposedFiberState satisfies the normalization condition Σ|αᵢ|² = 1 (QM_5). Set by the SuperpositionResolver after verification.
+    /// Whether the amplitude vector of this SuperposedSiteState satisfies the normalization condition Σ|αᵢ|² = 1 (QM_5). Set by the SuperpositionResolver after verification.
     fn normalization_verified(&self) -> P::Boolean;
 }
 
 /// A topological signature (χ, β_k) that is formally impossible to achieve for any ConstrainedType. Witnessed by an ImpossibilityWitness in proof/.
 pub trait ForbiddenSignature<P: Primitives> {}
 
-/// A fiber state that has undergone projective collapse from a SuperposedFiberState to a definitive classical value. Topologically equivalent to a classically pinned fiber (QM_2).
-pub trait CollapsedFiberState<P: Primitives> {
-    /// Associated type for `SuperposedFiberState`.
-    type SuperposedFiberState: SuperposedFiberState<P>;
-    /// The SuperposedFiberState from which this CollapsedFiberState was produced by projective measurement.
-    fn collapsed_from(&self) -> &Self::SuperposedFiberState;
+/// A site state that has undergone projective collapse from a SuperposedSiteState to a definitive classical value. Topologically equivalent to a classically pinned site (QM_2).
+pub trait CollapsedSiteState<P: Primitives> {
+    /// Associated type for `SuperposedSiteState`.
+    type SuperposedSiteState: SuperposedSiteState<P>;
+    /// The SuperposedSiteState from which this CollapsedSiteState was produced by projective measurement.
+    fn collapsed_from(&self) -> &Self::SuperposedSiteState;
     /// The amplitude of the surviving branch after projective collapse. |α|² is the probability of this outcome under the Born rule.
     fn surviving_amplitude(&self) -> P::Decimal;
 }
 
-/// An ordered composition of QuantumLift steps from liftSourceLevel (Q_j) to liftTargetLevel (Q_k) for any j < k. The canonical object certifying type completeness at arbitrary Q_k.
+/// An ordered composition of WittLift steps from liftSourceLevel (Q_j) to liftTargetLevel (Q_k) for any j < k. The canonical object certifying type completeness at arbitrary Q_k.
 pub trait LiftChain<P: Primitives> {
     /// The quantum level at the base of the chain.
-    fn lift_source_level(&self) -> QuantumLevel;
-    /// The number of QuantumLift steps in the chain (k - j).
+    fn lift_source_level(&self) -> WittLevel;
+    /// The number of WittLift steps in the chain (k - j).
     fn chain_length(&self) -> P::NonNegativeInteger;
-    /// Associated type for `QuantumLift`.
-    type QuantumLift: QuantumLift<P>;
-    /// A QuantumLift step in this chain. Non-functional: one per step.
-    fn chain_step(&self) -> &[Self::QuantumLift];
+    /// Associated type for `WittLift`.
+    type WittLift: WittLift<P>;
+    /// A WittLift step in this chain. Non-functional: one per step.
+    fn chain_step(&self) -> &[Self::WittLift];
     /// Associated type for `ObstructionChain`.
     type ObstructionChain: ObstructionChain<P>;
     /// The full obstruction history of this chain.
@@ -277,7 +277,7 @@ pub trait ObstructionChain<P: Primitives> {
 /// The space of all CompleteTypes over R_n at a given quantum level.
 pub trait ModuliSpace<P: Primitives> {
     /// The quantum level at which this moduli space is defined.
-    fn moduli_quantum_level(&self) -> QuantumLevel;
+    fn moduli_witt_level(&self) -> WittLevel;
     /// Associated type for `CompleteType`.
     type CompleteType: CompleteType<P>;
     /// A CompleteType that is a point of this moduli space.
@@ -320,7 +320,7 @@ pub trait VersalDeformation<P: Primitives> {
     fn versal_dimension(&self) -> P::NonNegativeInteger;
 }
 
-/// The map induced by QuantumLift from one moduli space to the next.
+/// The map induced by WittLift from one moduli space to the next.
 pub trait ModuliTowerMap<P: Primitives> {
     /// Associated type for `ModuliSpace`.
     type ModuliSpace: ModuliSpace<P>;
@@ -328,17 +328,17 @@ pub trait ModuliTowerMap<P: Primitives> {
     fn tower_map_source(&self) -> &Self::ModuliSpace;
 }
 
-/// The adjunction between the type lattice and the fiber lattice. The upper adjoint is type closure; the lower adjoint is fiber interior. σ = lower adjoint evaluation; r = complement of upper adjoint image.
+/// The adjunction between the type lattice and the site lattice. The upper adjoint is type closure; the lower adjoint is site interior. σ = lower adjoint evaluation; r = complement of upper adjoint image.
 pub trait GaloisConnection<P: Primitives> {
     /// Associated type for `TermExpression`.
     type TermExpression: crate::kernel::schema::TermExpression<P>;
     /// The upper adjoint (type closure) of the Galois connection, expressed as a symbolic formula string.
     fn upper_adjoint(&self) -> &Self::TermExpression;
-    /// The lower adjoint (fiber interior) of the Galois connection, expressed as a symbolic formula string.
+    /// The lower adjoint (site interior) of the Galois connection, expressed as a symbolic formula string.
     fn lower_adjoint(&self) -> &Self::TermExpression;
     /// The fixpoint condition for the Galois connection: when upper(lower(T)) = T, the type is complete.
     fn fixpoint_condition(&self) -> &Self::TermExpression;
-    /// Description of the refinement direction: ascending in type lattice corresponds to descending in fiber freedom.
+    /// Description of the refinement direction: ascending in type lattice corresponds to descending in site freedom.
     fn refinement_direction(&self) -> P::NonNegativeInteger;
     /// The closure property of a Galois connection.
     fn galois_closure_property(&self) -> &Self::TermExpression;
@@ -358,87 +358,87 @@ pub trait TypeInclusion<P: Primitives>: crate::user::morphism::Transform<P> {
     fn inclusion_witness(&self) -> P::Boolean;
 }
 
-/// The partial order on types induced by TypeInclusion. The top element is PrimitiveType (no constraints); the bottom elements are CompleteTypes (all fibers pinned).
+/// The partial order on types induced by TypeInclusion. The top element is PrimitiveType (no constraints); the bottom elements are CompleteTypes (all sites pinned).
 pub trait SubtypingLattice<P: Primitives> {
-    /// Maximum chain length from PrimitiveType (top) to any CompleteType (bottom). Equals the fiber budget n at quantum level Q_k.
+    /// Maximum chain length from PrimitiveType (top) to any CompleteType (bottom). Equals the site budget n at quantum level Q_k.
     fn lattice_depth(&self) -> P::NonNegativeInteger;
 }
 
-/// A single value from an ordered domain. fiberCount = n (quantization bits).
+/// A single value from an ordered domain. siteCount = n (quantization bits).
 pub mod scalar_type {
-    /// `structuralFiberCount`
-    pub const STRUCTURAL_FIBER_COUNT: &str = "n (quantization bits)";
     /// `structuralGrounding`
     pub const STRUCTURAL_GROUNDING: &str =
         "quantize(value, range, bits) produces ring element where d_R reflects value proximity";
+    /// `structuralSiteCount`
+    pub const STRUCTURAL_SITE_COUNT: &str = "n (quantization bits)";
 }
 
-/// A value from a finite unordered set. fiberCount = ceil(log2(|alphabet|)).
+/// A value from a finite unordered set. siteCount = ceil(log2(|alphabet|)).
 pub mod symbol_type {
-    /// `structuralFiberCount`
-    pub const STRUCTURAL_FIBER_COUNT: &str = "ceil(log2(|alphabet|))";
     /// `structuralGrounding`
     pub const STRUCTURAL_GROUNDING: &str =
         "argmin_{encoding} sum d_delta over observed pairs (CY_5)";
+    /// `structuralSiteCount`
+    pub const STRUCTURAL_SITE_COUNT: &str = "ceil(log2(|alphabet|))";
 }
 
 /// An ordered list of elements with backbone constraint. The free monoid on the element type.
 pub mod sequence_type {
     /// `structuralConstraint`
     pub const STRUCTURAL_CONSTRAINT: &str = "backbone ordering: elements indexed by position";
-    /// `structuralFiberCount`
-    pub const STRUCTURAL_FIBER_COUNT: &str = "sum of element fiber counts";
     /// `structuralGrounding`
     pub const STRUCTURAL_GROUNDING: &str = "free monoid on element type, backbone constraint";
+    /// `structuralSiteCount`
+    pub const STRUCTURAL_SITE_COUNT: &str = "sum of element site counts";
 }
 
 /// A fixed collection of named fields.
 pub mod tuple_type {
-    /// `structuralFiberCount`
-    pub const STRUCTURAL_FIBER_COUNT: &str = "sum of field fiber counts";
     /// `structuralGrounding`
-    pub const STRUCTURAL_GROUNDING: &str = "fiber ordering follows CY_6 (optimal fiber ordering)";
+    pub const STRUCTURAL_GROUNDING: &str = "site ordering follows CY_6 (optimal site ordering)";
+    /// `structuralSiteCount`
+    pub const STRUCTURAL_SITE_COUNT: &str = "sum of field site counts";
 }
 
 /// Nodes with edge constraints. Constraint nerve = graph topology.
 pub mod graph_type {
     /// `structuralConstraint`
     pub const STRUCTURAL_CONSTRAINT: &str = "edge constraints: adjacency preserved under grounding";
-    /// `structuralFiberCount`
-    pub const STRUCTURAL_FIBER_COUNT: &str = "sum of node fiber counts + edge overhead";
     /// `structuralGrounding`
     pub const STRUCTURAL_GROUNDING: &str = "constraint nerve = graph nerve, beta_k equality";
+    /// `structuralSiteCount`
+    pub const STRUCTURAL_SITE_COUNT: &str = "sum of node site counts + edge overhead";
 }
 
 /// Unordered collection. d_delta is permutation-invariant.
 pub mod set_type {
     /// `structuralConstraint`
     pub const STRUCTURAL_CONSTRAINT: &str = "permutation invariance: encoding is order-independent";
-    /// `structuralFiberCount`
-    pub const STRUCTURAL_FIBER_COUNT: &str = "sum of element fiber counts";
     /// `structuralGrounding`
     pub const STRUCTURAL_GROUNDING: &str =
         "d_delta invariant under element permutation, D_{2n} symmetry";
+    /// `structuralSiteCount`
+    pub const STRUCTURAL_SITE_COUNT: &str = "sum of element site counts";
 }
 
 /// Hierarchical structure. beta_1=0 (acyclic), beta_0=1 (connected).
 pub mod tree_type {
     /// `structuralConstraint`
     pub const STRUCTURAL_CONSTRAINT: &str = "beta_1=0 (acyclic), beta_0=1 (connected)";
-    /// `structuralFiberCount`
-    pub const STRUCTURAL_FIBER_COUNT: &str = "sum of node fiber counts";
     /// `structuralGrounding`
     pub const STRUCTURAL_GROUNDING: &str = "parent-child encoding with acyclicity constraint";
+    /// `structuralSiteCount`
+    pub const STRUCTURAL_SITE_COUNT: &str = "sum of node site counts";
 }
 
 /// Collection of tuples sharing a schema = Sequence(Tuple(S)). Functorial decomposition.
 pub mod table_type {
     /// `structuralConstraint`
     pub const STRUCTURAL_CONSTRAINT: &str = "shared schema: all rows conform to tuple type S";
-    /// `structuralFiberCount`
-    pub const STRUCTURAL_FIBER_COUNT: &str = "row_count * tuple_fiber_count";
     /// `structuralGrounding`
     pub const STRUCTURAL_GROUNDING: &str = "Sequence(Tuple(S)), functorial decomposition";
+    /// `structuralSiteCount`
+    pub const STRUCTURAL_SITE_COUNT: &str = "row_count * tuple_site_count";
 }
 
 /// The structural position preserves TypeInclusion: if T₁ ≤ T₂, then F(T₁) ≤ F(T₂).

@@ -91,17 +91,17 @@ impl fmt::Display for MetricAxis {
     }
 }
 
-/// The state of a fiber coordinate: pinned or free.
+/// The state of a site: pinned or free.
 #[repr(u8)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub enum FiberState {
-    /// Fiber is determined by a constraint.
+pub enum SiteState {
+    /// Site is determined by a constraint.
     Pinned,
-    /// Fiber is still available for refinement.
+    /// Site is still available for refinement.
     Free,
 }
 
-impl fmt::Display for FiberState {
+impl fmt::Display for SiteState {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::Pinned => f.write_str("pinned"),
@@ -136,10 +136,10 @@ pub enum GeometricCharacter {
     ConstraintSelection,
     /// Geometric character of inference: traversal through the φ-pipeline resolution graph P ∘ Π ∘ G.
     ResolutionTraversal,
-    /// Geometric character of accumulation: progressive pinning of fiber states in the context lattice.
-    FiberPinning,
-    /// Geometric character of lease partition: splitting a shared context into disjoint fiber-set leases.
-    FiberPartition,
+    /// Geometric character of accumulation: progressive pinning of site states in the context lattice.
+    SiteBinding,
+    /// Geometric character of lease partition: splitting a shared context into disjoint site-set leases.
+    SitePartition,
     /// Geometric character of session composition: merging disjoint lease sessions into a unified resolution context.
     SessionMerge,
 }
@@ -158,8 +158,8 @@ impl fmt::Display for GeometricCharacter {
             Self::HypercubeJoin => f.write_str("hypercube_join"),
             Self::ConstraintSelection => f.write_str("constraint_selection"),
             Self::ResolutionTraversal => f.write_str("resolution_traversal"),
-            Self::FiberPinning => f.write_str("fiber_pinning"),
-            Self::FiberPartition => f.write_str("fiber_partition"),
+            Self::SiteBinding => f.write_str("site_binding"),
+            Self::SitePartition => f.write_str("site_partition"),
             Self::SessionMerge => f.write_str("session_merge"),
         }
     }
@@ -177,7 +177,7 @@ pub enum VerificationDomain {
     Geometric,
     /// Established via discrete differential calculus or metric analysis. Covers ring/Hamming derivatives (DC_), metric divergence (AM_), and adiabatic scheduling (AR_).
     Analytical,
-    /// Established via entropy, Landauer bounds, or Boltzmann distributions. Covers fiber entropy (TH_), reversible computation (RC_), and phase transitions.
+    /// Established via entropy, Landauer bounds, or Boltzmann distributions. Covers site entropy (TH_), reversible computation (RC_), and phase transitions.
     Thermodynamic,
     /// Established via simplicial homology, cohomology, or constraint nerve analysis. Covers homological algebra (HA_) and ψ-pipeline identities.
     Topological,
@@ -185,7 +185,7 @@ pub enum VerificationDomain {
     Pipeline,
     /// Established by the composition of Analytical and Topological reasoning. The only domain requiring multiple op:verificationDomain assertions. Covers the UOR Index Theorem (IT_7a–IT_7d).
     IndexTheoretic,
-    /// Established by superposition analysis of fiber states. Covers identities involving superposed (non-classical) fiber assignments where fibers carry complex amplitudes.
+    /// Established by superposition analysis of site states. Covers identities involving superposed (non-classical) site assignments where sites carry complex amplitudes.
     SuperpositionDomain,
     /// Established by the intersection of quantum superposition analysis and classical thermodynamic reasoning. Covers identities relating von Neumann entropy of superposed states to Landauer costs of projective collapse (QM_).
     QuantumThermodynamic,
@@ -295,24 +295,24 @@ impl fmt::Display for MeasurementUnit {
     }
 }
 
-/// A classification of coordinate types for coordinate queries.
+/// A classification of triad projection types for coordinate queries.
 #[repr(u8)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub enum CoordinateKind {
+pub enum TriadProjection {
     /// The stratum coordinate: the layer position of a datum within the ring's stratification.
-    Stratum,
+    TwoAdicValuation,
     /// The spectrum coordinate: the spectral decomposition of a datum under the ring's Fourier analysis.
-    Spectrum,
+    WalshHadamardImage,
     /// The address coordinate: the content-addressable position of a datum in the Braille glyph encoding.
-    Address,
+    RingElement,
 }
 
-impl fmt::Display for CoordinateKind {
+impl fmt::Display for TriadProjection {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::Stratum => f.write_str("stratum"),
-            Self::Spectrum => f.write_str("spectrum"),
-            Self::Address => f.write_str("address"),
+            Self::TwoAdicValuation => f.write_str("two_adic_valuation"),
+            Self::WalshHadamardImage => f.write_str("walsh_hadamard_image"),
+            Self::RingElement => f.write_str("ring_element"),
         }
     }
 }
@@ -323,7 +323,7 @@ impl fmt::Display for CoordinateKind {
 pub enum SessionBoundaryType {
     /// The caller explicitly requested a context reset. All accumulated bindings are discarded.
     ExplicitReset,
-    /// The session resolver determined that no further queries can reduce the aggregate fiber deficit.
+    /// The session resolver determined that no further queries can reduce the aggregate site deficit.
     ConvergenceBoundary,
     /// A new query produced a type contradiction with an accumulated binding. Context must reset before resolution can continue.
     ContradictionBoundary,
@@ -358,24 +358,24 @@ impl fmt::Display for PhaseBoundaryType {
     }
 }
 
-/// The phase of context saturation towards the ground state.
+/// The phase of grounding towards the ground state.
 #[repr(u8)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub enum SaturationPhase {
-    /// The context has σ = 0: no bindings accumulated, all fibers are free. The initial phase of every session.
-    Unsaturated,
-    /// The context has 0 < σ < 1: some fibers are pinned by accumulated bindings, but free fibers remain. The accumulation phase.
-    PartialSaturation,
-    /// The context has σ = 1: all fibers are pinned, freeCount = 0. The ground state. All subsequent queries resolve in O(1) via SC_5.
-    FullSaturation,
+pub enum GroundingPhase {
+    /// The context has σ = 0: no bindings accumulated, all sites are free. The initial phase of every session.
+    Open,
+    /// The context has 0 < σ < 1: some sites are pinned by accumulated bindings, but free sites remain. The accumulation phase.
+    PartialGrounding,
+    /// The context has σ = 1: all sites are pinned, freeRank = 0. The ground state. All subsequent queries resolve in O(1) via SC_5.
+    FullGrounding,
 }
 
-impl fmt::Display for SaturationPhase {
+impl fmt::Display for GroundingPhase {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::Unsaturated => f.write_str("unsaturated"),
-            Self::PartialSaturation => f.write_str("partial_saturation"),
-            Self::FullSaturation => f.write_str("full_saturation"),
+            Self::Open => f.write_str("open"),
+            Self::PartialGrounding => f.write_str("partial_grounding"),
+            Self::FullGrounding => f.write_str("full_grounding"),
         }
     }
 }
@@ -409,7 +409,7 @@ pub enum ValidityScopeKind {
     ParametricLower,
     /// Holds for k_min <= k <= k_max. Both validKMin and validKMax required.
     ParametricRange,
-    /// Holds only at exactly one level, given by a QuantumLevelBinding.
+    /// Holds only at exactly one level, given by a WittLevelBinding.
     LevelSpecific,
 }
 
@@ -430,11 +430,11 @@ impl fmt::Display for ValidityScopeKind {
 pub enum ExecutionPolicyKind {
     /// Process queries in arrival order. The implicit pre-Amendment 48 behavior.
     FifoPolicy,
-    /// Process the query with the smallest targetFiber.freeCount first. Favors cheapest resolutions, accelerating early saturation gain.
+    /// Process the query with the smallest targetSite.freeRank first. Favors cheapest resolutions, accelerating early grounding gain.
     MinFreeCountFirst,
-    /// Process the query with the largest targetFiber.freeCount first. Favors hardest resolutions, maximizing information gain per step.
+    /// Process the query with the largest targetSite.freeRank first. Favors hardest resolutions, maximizing information gain per step.
     MaxFreeCountFirst,
-    /// Process queries whose targetFiber is disjoint from all other pending queries' fiber sets first. Minimizes contention when operating against a SharedContext.
+    /// Process queries whose targetSite is disjoint from all other pending queries' site sets first. Minimizes contention when operating against a SharedContext.
     DisjointFirst,
 }
 
@@ -589,87 +589,87 @@ impl fmt::Display for ProofModality {
     }
 }
 
-/// A quantum level Q_k at which the UOR ring R_k = Z/2^(8*(k+1))Z operates.
-/// Corresponds to `schema:QuantumLevel` in the uor.foundation ontology.
-/// The class is open: any non-negative integer k identifies a valid level.
-/// Named levels Q0 through Q3 are provided as associated constants.
-/// Arbitrary levels can be constructed with `QuantumLevel::new(k)`.
+/// A Witt level W_n at which the UOR ring R_n = Z/2^n Z operates.
+/// Corresponds to `schema:WittLevel` in the uor.foundation ontology.
+/// The class is open: any positive multiple of 8 identifies a valid level.
+/// Named levels W8 through W32 are provided as associated constants.
+/// Arbitrary levels can be constructed with `WittLevel::new(n)`.
 /// # Examples
 /// ```rust
-/// use uor_foundation::QuantumLevel;
+/// use uor_foundation::WittLevel;
 ///
-/// // Named reference levels (Q0-Q3 are spec-defined):
-/// let q0 = QuantumLevel::Q0;
-/// assert_eq!(q0.index(), 0);
-/// assert_eq!(q0.bits_width(), 8);    // 8*(0+1) = 8 bits
-/// assert_eq!(q0.cycle_size(), Some(256)); // 2^8 = 256 ring elements
+/// // Named reference levels (W8-W32 are spec-defined):
+/// let w8 = WittLevel::W8;
+/// assert_eq!(w8.witt_length(), 8);
+/// assert_eq!(w8.bits_width(), 8);    // Witt length IS bit width
+/// assert_eq!(w8.cycle_size(), Some(256)); // 2^8 = 256 ring elements
 ///
-/// let q3 = QuantumLevel::Q3;
-/// assert_eq!(q3.bits_width(), 32);   // 8*(3+1) = 32 bits
+/// let w32 = WittLevel::W32;
+/// assert_eq!(w32.bits_width(), 32);  // 32 bits
 ///
-/// // Arbitrary levels beyond Q3 (Prism-declared):
-/// let q7 = QuantumLevel::new(7);
-/// assert_eq!(q7.bits_width(), 64);   // 8*(7+1) = 64 bits — native u64
+/// // Arbitrary levels beyond W32 (Prism-declared):
+/// let w64 = WittLevel::new(64);
+/// assert_eq!(w64.bits_width(), 64);  // 64 bits — native u64
 ///
 /// // The chain is unbounded:
-/// let q10 = QuantumLevel::new(10);
-/// assert_eq!(q10.bits_width(), 88);
-/// assert_eq!(q10.next_level().index(), 11);
+/// let w88 = WittLevel::new(88);
+/// assert_eq!(w88.bits_width(), 88);
+/// assert_eq!(w88.next_witt_level().witt_length(), 96);
 ///
-/// // Ordering follows the index:
-/// assert!(QuantumLevel::Q0 < QuantumLevel::Q3);
+/// // Ordering follows the Witt length:
+/// assert!(WittLevel::W8 < WittLevel::W32);
 /// ```
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub struct QuantumLevel {
-    /// The quantum index k in Q_k. Maps to `schema:quantumIndex`.
-    index: u32,
+pub struct WittLevel {
+    /// The Witt length n in W_n. Maps to `schema:wittLength`.
+    witt_length: u32,
 }
 
-impl QuantumLevel {
-    /// Quantum level 0: 8-bit ring Z/256Z, 256 states. The reference level for all ComputationCertificate proofs in the spec.
-    pub const Q0: Self = Self { index: 0 };
-    /// Quantum level 1: 16-bit ring Z/65536Z, 65,536 states.
-    pub const Q1: Self = Self { index: 1 };
-    /// Quantum level 2: 24-bit ring Z/16777216Z, 16,777,216 states.
-    pub const Q2: Self = Self { index: 2 };
-    /// Quantum level 3: 32-bit ring Z/4294967296Z, 4,294,967,296 states. The highest named level in the spec.
-    pub const Q3: Self = Self { index: 3 };
+impl WittLevel {
+    /// Witt level 8: 8-bit ring Z/256Z, 256 states. The reference level for all ComputationCertificate proofs in the spec.
+    pub const W8: Self = Self { witt_length: 8 };
+    /// Witt level 16: 16-bit ring Z/65536Z, 65,536 states.
+    pub const W16: Self = Self { witt_length: 16 };
+    /// Witt level 24: 24-bit ring Z/16777216Z, 16,777,216 states.
+    pub const W24: Self = Self { witt_length: 24 };
+    /// Witt level 32: 32-bit ring Z/4294967296Z, 4,294,967,296 states. The highest named level in the spec.
+    pub const W32: Self = Self { witt_length: 32 };
 
-    /// Construct an arbitrary quantum level Q_k. `k` need not be one of the spec-named individuals; Prism implementations may use any level.
+    /// Construct an arbitrary Witt level W_n. `n` need not be one of the spec-named individuals; Prism implementations may use any level.
     #[inline]
-    pub const fn new(index: u32) -> Self {
-        Self { index }
+    pub const fn new(witt_length: u32) -> Self {
+        Self { witt_length }
     }
 
-    /// The quantum index k. Maps to `schema:quantumIndex`.
+    /// The Witt length n. Maps to `schema:wittLength`.
     #[inline]
-    pub const fn index(self) -> u32 {
-        self.index
+    pub const fn witt_length(self) -> u32 {
+        self.witt_length
     }
 
-    /// Bit width of the ring at this level: 8*(k+1). Maps to `schema:bitsWidth`. This is a derived property, not a stored field — the formula is definitional.
+    /// Bit width of the ring at this level: equal to the Witt length. Maps to `schema:bitsWidth`. This is an identity — the Witt length IS the bit width.
     #[inline]
     pub const fn bits_width(self) -> u32 {
-        8 * (self.index + 1)
+        self.witt_length
     }
 
-    /// Number of distinct ring states at this level: 2^(8*(k+1)). Maps to `schema:cycleSize`. Returns `None` if the result exceeds `u128` (i.e. for k >= 15).
+    /// Number of distinct ring states at this level: 2^n. Maps to `schema:cycleSize`. Returns `None` if the result exceeds `u128` (i.e. for n > 128).
     #[inline]
     pub const fn cycle_size(self) -> Option<u128> {
         1u128.checked_shl(self.bits_width())
     }
 
-    /// The next quantum level in the chain: Q_k -> Q_{k+1}. Maps to `schema:nextLevel`. Always well-defined; the chain is unbounded.
+    /// The next Witt level in the chain: W_n -> W_{n+8}. Maps to `schema:nextWittLevel`. Always well-defined; the chain is unbounded.
     #[inline]
-    pub const fn next_level(self) -> Self {
+    pub const fn next_witt_level(self) -> Self {
         Self {
-            index: self.index + 1,
+            witt_length: self.witt_length + 8,
         }
     }
 }
 
-impl fmt::Display for QuantumLevel {
+impl fmt::Display for WittLevel {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "q{}", self.index)
+        write!(f, "w{}", self.witt_length)
     }
 }

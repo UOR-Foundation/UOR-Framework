@@ -19,7 +19,7 @@ op:jsat_RR a owl:NamedIndividual, op:Identity ;
 op:jsat_CR a owl:NamedIndividual, op:Identity ;
     rdfs:label "jsat_CR" ;
     op:lhs "jointSat(Carry(p), Res(m,r))" ;
-    op:rhs "pin-fiber intersection residue-class compatible" ;
+    op:rhs "pin-site intersection residue-class compatible" ;
     op:verificationDomain op:Algebraic ;
     op:universallyValid "true"^^xsd:boolean .
 

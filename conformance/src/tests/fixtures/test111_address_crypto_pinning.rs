@@ -1,6 +1,6 @@
 /// SHACL test 111: Address with cryptographic primitive pinning —
 /// demonstrates u:digestAlgorithm, u:canonicalBytes, and algorithm-prefixed
-/// u:digest on a Q0 address (Amendment 43).
+/// u:digest on a Q0 element (Amendment 43).
 pub const TEST111_ADDRESS_CRYPTO_PINNING: &str = r#"
 @prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
@@ -8,8 +8,8 @@ pub const TEST111_ADDRESS_CRYPTO_PINNING: &str = r#"
 @prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
 @prefix u:    <https://uor.foundation/u/> .
 
-# Address for datum value 42 at Q0 (8-bit ring)
-u:ex_addr_111 a owl:NamedIndividual, u:Address ;
+# Element for datum value 42 at Q0 (8-bit ring)
+u:ex_addr_111 a owl:NamedIndividual, u:Element ;
     rdfs:label "Address for 42 at Q0" ;
     u:glyph "\u2819\u2840" ;
     u:length "2"^^xsd:nonNegativeInteger ;

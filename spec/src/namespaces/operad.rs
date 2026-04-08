@@ -90,9 +90,9 @@ fn properties() -> Vec<Property> {
             range: "https://uor.foundation/type/TypeDefinition",
         },
         Property {
-            id: "https://uor.foundation/operad/composedFiberCount",
-            label: "composedFiberCount",
-            comment: "Fiber count of the composed type F(G).",
+            id: "https://uor.foundation/operad/composedSiteCount",
+            label: "composedSiteCount",
+            comment: "Site count of the composed type F(G).",
             kind: PropertyKind::Datatype,
             functional: true,
             domain: Some("https://uor.foundation/operad/OperadComposition"),

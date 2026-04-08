@@ -193,11 +193,11 @@ fn properties() -> Vec<Property> {
         Property {
             id: "https://uor.foundation/homology/pinIntersection",
             label: "pinIntersection",
-            comment: "A fiber coordinate in the partition whose intersection pins this simplex.",
+            comment: "A site coordinate in the partition whose intersection pins this simplex.",
             kind: PropertyKind::Object,
             functional: false,
             domain: Some("https://uor.foundation/homology/Simplex"),
-            range: "https://uor.foundation/partition/FiberCoordinate",
+            range: "https://uor.foundation/partition/SiteIndex",
         },
         Property {
             id: "https://uor.foundation/homology/hasSimplex",

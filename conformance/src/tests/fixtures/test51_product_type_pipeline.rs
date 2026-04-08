@@ -16,7 +16,7 @@ type:ex_prod_51 a owl:NamedIndividual, type:ProductType ;
 type:ex_comp_a_51 a owl:NamedIndividual, type:TypeDefinition .
 type:ex_comp_b_51 a owl:NamedIndividual, type:TypeDefinition .
 
-# 3. FiberBudget for the product
-partition:ex_fb_51 a owl:NamedIndividual, partition:FiberBudget ;
-    partition:fiberCount "6"^^xsd:nonNegativeInteger .
+# 3. FreeRank for the product
+partition:ex_fb_51 a owl:NamedIndividual, partition:FreeRank ;
+    partition:siteCount "6"^^xsd:nonNegativeInteger .
 "#;

@@ -4,12 +4,12 @@
 
 **Analytical completeness** means that the UOR ontology provides a complete
 topological and spectral characterization of the resolution process. Three
-structures make this possible: the constraint nerve, Betti numbers, and the
+structures make this possible: the Cech nerve, Betti numbers, and the
 index theorem.
 
-## Constraint Nerve
+## Cech Nerve
 
-The {@class https://uor.foundation/resolver/ConstraintNerve} is the
+The {@class https://uor.foundation/resolver/CechNerve} is the
 {@class https://uor.foundation/homology/SimplicialComplex} whose vertices are
 constraints and where a k-simplex exists iff the corresponding k+1 constraints
 have nonempty pin intersection. Identity HA_1 formalizes this construction.
@@ -24,14 +24,14 @@ Consider three constraints on R_4 = Z/16Z:
 
 | Constraint | Type | Pins |
 |-----------|------|------|
-| C_1 | {@class https://uor.foundation/type/ResidueConstraint} (mod 2, residue 1) | Fibers {0} |
-| C_2 | {@class https://uor.foundation/type/DepthConstraint} (depth 1–2) | Fibers {0, 1} |
-| C_3 | {@class https://uor.foundation/type/CarryConstraint} (pattern "10") | Fibers {1} |
+| C_1 | {@class https://uor.foundation/type/ResidueConstraint} (mod 2, residue 1) | Sites {0} |
+| C_2 | {@class https://uor.foundation/type/DepthConstraint} (depth 1–2) | Sites {0, 1} |
+| C_3 | {@class https://uor.foundation/type/CarryConstraint} (pattern "10") | Sites {1} |
 
 Compatible subsets (nonempty pin intersection) form simplices:
 - **0-simplices** (vertices): {C_1}, {C_2}, {C_3}
-- **1-simplices** (edges): {C_1, C_2} (share fiber 0), {C_2, C_3} (share fiber 1)
-- **2-simplices**: none — C_1 and C_3 pin disjoint fibers
+- **1-simplices** (edges): {C_1, C_2} (share site 0), {C_2, C_3} (share site 1)
+- **2-simplices**: none — C_1 and C_3 pin disjoint sites
 
 The nerve is a path graph: C_1 — C_2 — C_3. This
 {@class https://uor.foundation/homology/SimplicialComplex} has 3 vertices,
@@ -61,9 +61,9 @@ full chain complex machinery.
 
 {@class https://uor.foundation/observable/BettiNumber} β_k = rank(H_k(N(C)))
 counts the k-dimensional holes in the constraint configuration:
-- β_0 counts connected components — constraint clusters that interact independently.
-- β_1 counts loops — cyclic constraint dependencies that may stall resolution.
-- Higher β_k detect higher-dimensional voids.
+- beta_0 counts connected components — constraint clusters that interact independently.
+- beta_1 counts loops — cyclic constraint dependencies that may stall resolution.
+- Higher beta_k detect higher-dimensional voids.
 
 The Betti-entropy theorem (HA_3) gives a lower bound on residual entropy:
 
@@ -72,7 +72,7 @@ The Betti-entropy theorem (HA_3) gives a lower bound on residual entropy:
 ## Spectral Gap
 
 The {@class https://uor.foundation/observable/SpectralGap} λ_1 is the smallest
-positive eigenvalue of the constraint nerve Laplacian. Identity IT_6 shows
+positive eigenvalue of the Cech nerve Laplacian. Identity IT_6 shows
 that λ_1 lower-bounds the convergence rate of iterative resolution: larger
 spectral gaps mean faster convergence.
 
@@ -82,11 +82,11 @@ The capstone identity IT_7a connects curvature, topology, and entropy:
 
 > Σ κ_k - χ(N(C)) = S_residual / ln 2
 
-where κ_k is the total curvature at fiber k, χ is the Euler characteristic
+where κ_k is the total curvature at site k, χ is the Euler characteristic
 (χ = Σ(-1)^k β_k), and S_residual is the residual Shannon entropy. This is
 the UOR analog of the Atiyah-Singer index theorem.
 
-In the example above, χ = β_0 - β_1 = 1 - 0 = 1. With n = 4 fibers and
+In the example above, χ = beta_0 - beta_1 = 1 - 0 = 1. With n = 4 sites and
 χ = 1, IT_7c gives a resolution cost lower bound of n - χ = 3 constraint
 applications.
 

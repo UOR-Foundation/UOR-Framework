@@ -26,8 +26,8 @@ Cartesian product of two partitions -- the full joint space. The
 {@class https://uor.foundation/partition/PartitionCoproduct} class represents their
 disjoint union -- an exclusive choice between classification domains.
 
-The {@class https://uor.foundation/partition/AncillaFiber} class provides auxiliary
-fibers used in reversible computation strategies, where ancilla bits enable
+The {@class https://uor.foundation/partition/AncillaSite} class provides auxiliary
+sites used in reversible computation strategies, where ancilla bits enable
 information-preserving transformations.
 
 ## Exhaustive Coverage
@@ -37,12 +37,12 @@ partition covers the entire space -- every element is classified, none are left 
 This is a formal completeness claim implemented in OWL, ensuring that the partition
 is not merely partial but truly decomposes the whole ring.
 
-## Fiber Budget Connection
+## Free Rank Connection
 
-The partition structure relates directly to the {@concept fiber} bundle semantics.
-Each partition component corresponds to a family of fibers over the address space.
-The fiber budget -- the count of unconstrained fibers remaining -- decreases as
-resolution proceeds. When every fiber is pinned (assigned to a partition component),
+The partition structure relates directly to the {@concept site} bundle semantics.
+Each partition component corresponds to a family of sites over the address space.
+The free rank -- the count of unconstrained sites remaining -- decreases as
+resolution proceeds. When every site is pinned (assigned to a partition component),
 resolution is complete.
 
 ## Connection to the PRISM Pipeline

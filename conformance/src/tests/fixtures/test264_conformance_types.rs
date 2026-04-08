@@ -8,7 +8,7 @@ pub const TEST264_CONFORMANCE_TYPES: &str = r#"
 
 conformance:ex_shape_264 a owl:NamedIndividual, conformance:Shape .
 conformance:ex_prop_constraint_264 a owl:NamedIndividual, conformance:PropertyConstraint .
-conformance:ex_ql_shape_264 a owl:NamedIndividual, conformance:QuantumLevelShape .
+conformance:ex_ql_shape_264 a owl:NamedIndividual, conformance:WittLevelShape .
 conformance:ex_effect_shape_264 a owl:NamedIndividual, conformance:EffectShape .
 conformance:ex_parallel_shape_264 a owl:NamedIndividual, conformance:ParallelShape .
 conformance:ex_stream_shape_264 a owl:NamedIndividual, conformance:StreamShape .

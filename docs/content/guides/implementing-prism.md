@@ -16,9 +16,9 @@ A PRISM implementation must:
 ## Step 1: Define the Context
 
 ```rust
-// Establish the evaluation context at quantum level 8
+// Establish the evaluation context at Witt level 8
 let context = Context {
-    quantum: 8,
+    witt_length: 8,
     capacity: 256,
 };
 ```
@@ -27,7 +27,7 @@ The corresponding ontology individual:
 ```turtle
 <my:ctx>
     a               state:Context ;
-    state:quantum   "8"^^xsd:nonNegativeInteger ;
+    state:wittLength "8"^^xsd:nonNegativeInteger ;
     state:capacity  "256"^^xsd:nonNegativeInteger .
 ```
 
@@ -96,15 +96,15 @@ The single-pass pipeline above works when the type is fully determined. For
 partially-constrained types, PRISM supports an iterative resolution loop:
 
 1. **Declare** — create a {@class https://uor.foundation/type/ConstrainedType} with initial constraints
-2. **Resolve** — run the resolver to produce a partition with a {@class https://uor.foundation/partition/FiberBudget}
+2. **Resolve** — run the resolver to produce a partition with a {@class https://uor.foundation/partition/FreeRank}
 3. **Observe** — check {@prop https://uor.foundation/partition/isClosed} on the budget
-4. **Refine** — if not closed, apply a {@class https://uor.foundation/resolver/RefinementSuggestion} to pin more fibers
+4. **Refine** — if not closed, apply a {@class https://uor.foundation/resolver/RefinementSuggestion} to pin more sites
 5. **Iterate** — repeat until the budget closes or convergence stalls
 
 The {@class https://uor.foundation/resolver/ResolutionState} tracks iteration count,
-fiber deficit, and {@prop https://uor.foundation/resolver/convergenceRate}. Each
+site deficit, and {@prop https://uor.foundation/resolver/convergenceRate}. Each
 iteration produces a {@class https://uor.foundation/derivation/RefinementStep} recording
-the applied constraint and fibers closed.
+the applied constraint and sites closed.
 
 ## Completeness Certification (Amendment 25)
 
@@ -112,11 +112,11 @@ To certify that a type resolves in O(1), promote it to a
 {@class https://uor.foundation/type/CompletenessCandidate} and run the ψ
 pipeline via a {@class https://uor.foundation/resolver/CompletenessResolver}:
 
-1. **Promote** — associate the type with a ResolutionState and ConstraintNerve
+1. **Promote** — associate the type with a ResolutionState and CechNerve
    via {@prop https://uor.foundation/type/candidateNerve}.
-2. **Accumulate witnesses** — each fiber-closing step produces a
+2. **Accumulate witnesses** — each site-closing step produces a
    {@class https://uor.foundation/type/CompletenessWitness} recording the
-   applied constraint and {@prop https://uor.foundation/type/fibersClosed}.
+   applied constraint and {@prop https://uor.foundation/type/sitesClosed}.
 3. **Check IT\_7d** — the resolver reads the cached
    {@prop https://uor.foundation/resolver/nerveEulerCharacteristic}. If
    χ(N(C)) = n and all β\_k = 0, the kernel issues a
@@ -126,17 +126,17 @@ pipeline via a {@class https://uor.foundation/resolver/CompletenessResolver}:
    {@class https://uor.foundation/cert/CompletenessAuditTrail} with the
    full witness sequence and {@prop https://uor.foundation/cert/witnessCount}.
 
-## Q1 Resolver (Amendment 26)
+## W16 Resolver (Amendment 26)
 
-To run any resolver at quantum level Q1 instead of Q0, use a
-{@class https://uor.foundation/resolver/QuantumLevelResolver} with
+To run any resolver at Witt level W16 instead of W8, use a
+{@class https://uor.foundation/resolver/WittLevelResolver} with
 {@prop https://uor.foundation/resolver/quantumLevel} set to
-`schema:Q1`. The Q1 ring is {@class https://uor.foundation/schema/Q1Ring}:
-Z/(2^16)Z with {@prop https://uor.foundation/schema/Q1bitWidth} = 16 and
+`schema:W16`. The W16 ring is {@class https://uor.foundation/schema/W16Ring}:
+Z/(2^16)Z with {@prop https://uor.foundation/schema/W16bitWidth} = 16 and
 65,536 elements.
 
 Identities marked `op:universallyValid true` (such as the critical identity
-and all QL\_ individuals) hold at Q1 and every higher level without
+and all QL\_ individuals) hold at W16 and every higher level without
 re-verification.
 
 ## Session Lifecycle (Amendment 27)
@@ -151,7 +151,7 @@ Multi-turn Prism deployments use a
    declares {@prop https://uor.foundation/query/sessionMembership}; resolved
    bindings are appended to the accumulator.
 3. **Monitor deficit** — the
-   {@prop https://uor.foundation/state/aggregateFiberDeficit} on the
+   {@prop https://uor.foundation/state/aggregateSiteDeficit} on the
    accumulator decreases monotonically (SR\_1 invariant).
 4. **Handle boundaries** — when convergence stalls or a contradiction arises,
    a {@class https://uor.foundation/state/SessionBoundary} resets the context.
@@ -172,5 +172,5 @@ Use {@class https://uor.foundation/morphism/Identity} for identity transforms an
 
 See SHACL test `test7_end_to_end` in `conformance/src/tests/fixtures/test7_end_to_end.rs`
 for a complete single-pass pipeline, and `test12_factorization` for a full PRISM pipeline
-with fiber budget and certification using {@prop https://uor.foundation/cert/certifies}
+with free rank and certification using {@prop https://uor.foundation/cert/certifies}
 and {@prop https://uor.foundation/trace/certifiedBy}.

@@ -22,7 +22,7 @@ The base class is {@class https://uor.foundation/type/TypeDefinition}.
 | {@prop https://uor.foundation/type/bitWidth} | PrimitiveType | xsd:nonNegativeInteger | Bit width |
 | {@prop https://uor.foundation/type/component} | ProductType | TypeDefinition | Component types |
 | {@prop https://uor.foundation/type/baseType} | SumType/ConstrainedType | TypeDefinition | Base type |
-| {@prop https://uor.foundation/type/contentAddress} | TypeDefinition | u:Address | Content address |
+| {@prop https://uor.foundation/type/contentAddress} | TypeDefinition | u:Element | Content address |
 
 ## Example: Primitive Types
 
@@ -67,17 +67,17 @@ are combined using {@class https://uor.foundation/type/CompositeConstraint}:
 
 This constrained type accepts only values in Z/256Z that are odd (residue 1
 mod 2) and have valuation depth between 1 and 2. Each constraint pins
-specific fibers of the Z/2Z fibration:
+specific sites of the Z/2Z fibration:
 
 - {@class https://uor.foundation/type/ResidueConstraint} (mod 2, residue 1)
-  pins fiber 0.
+  pins site 0.
 - {@class https://uor.foundation/type/DepthConstraint} (depth 1–2) pins
-  fibers 0 and 1.
+  sites 0 and 1.
 
-## Types and Fiber Budgets
+## Types and Free Rank
 
-Each constraint pins fibers, and the type's total fiber budget tracks how
-many fibers remain free. A fully resolved type has zero free fibers — every
-fiber is pinned by at least one constraint. See
-[Fiber Budget](fiber-budget.html) for the accounting and
+Each constraint pins sites, and the type's total free rank tracks how
+many sites remain free. A fully resolved type has zero free sites — every
+site is pinned by at least one constraint. See
+[Free Rank](free-rank.html) for the accounting and
 [Constraint Algebra](constraint-algebra.html) for how constraints compose.

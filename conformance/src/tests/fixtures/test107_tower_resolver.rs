@@ -17,8 +17,8 @@ resolver:ex_tower_107 a owl:NamedIndividual, resolver:IncrementalCompletenessRes
 resolver:ex_suggestion_107 a owl:NamedIndividual, resolver:LiftRefinementSuggestion ;
     rdfs:label "Refinement at Q2 boundary" .
 
-# QuantumLift resolved by the tower
-type:ex_lift_107 a owl:NamedIndividual, type:QuantumLift ;
+# WittLift resolved by the tower
+type:ex_lift_107 a owl:NamedIndividual, type:WittLift ;
     type:sourceLevel   schema:Q0 ;
     type:targetLevel   schema:Q3 ;
     type:isFlat        "true"^^xsd:boolean .

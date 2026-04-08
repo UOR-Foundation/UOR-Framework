@@ -14,7 +14,7 @@ pub const TEST4_STATE_LIFECYCLE: &str = r#"
 # Context: an evaluation environment
 <https://uor.foundation/instance/ctx-1>
     a               owl:NamedIndividual, state:Context ;
-    state:quantum   "8"^^xsd:nonNegativeInteger ;
+    state:wittLength   "8"^^xsd:nonNegativeInteger ;
     state:capacity  "256"^^xsd:nonNegativeInteger .
 
 # Binding: a name bound to a typed value in the context

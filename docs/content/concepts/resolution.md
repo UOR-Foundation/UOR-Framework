@@ -72,7 +72,7 @@ The resolution pipeline flows through several stages, each tracked by the
 ## Iterative vs Single-Pass
 
 The factorization pipeline (steps 1–6 above) is a **single pass** through
-the resolver hierarchy. When constraints conflict or the type's fiber budget
+the resolver hierarchy. When constraints conflict or the type's site budget
 is not fully resolved, the system enters an **iterative resolution loop**
 that refines the solution. Each iteration applies constraints, re-evaluates
 observables, and checks convergence. See
@@ -83,7 +83,7 @@ decomposition.
 ## Topological Diagnostics
 
 When iterative resolution stalls, the
-{@class https://uor.foundation/resolver/ConstraintNerve} provides structural
+{@class https://uor.foundation/resolver/CechNerve} provides structural
 diagnostics. Its Betti numbers reveal whether stalls arise from topological
 obstructions (constraint loops) or from insufficient constraint coverage.
 See [Analytical Completeness](analytical-completeness.html) for the nerve

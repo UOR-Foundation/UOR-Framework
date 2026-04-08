@@ -4,13 +4,13 @@
 
 The **moduli space** M_n is the space of all
 {@class https://uor.foundation/type/CompleteType} instances over R_n at a given
-quantum level. Its geometry is governed by the
+Witt level. Its geometry is governed by the
 {@class https://uor.foundation/homology/DeformationComplex} at each point, and its
 stratification is indexed by holonomy classes from
 [Monodromy](monodromy.html).
 
 A {@class https://uor.foundation/type/ModuliSpace} carries:
-- {@prop https://uor.foundation/type/moduliQuantumLevel} — the quantum level of the space
+- {@prop https://uor.foundation/type/moduliWittLevel} — the Witt level of the space
 - {@prop https://uor.foundation/type/moduliPoint} — CompleteType members
 - {@prop https://uor.foundation/type/moduliDimension} — the dimension of the space
 
@@ -55,10 +55,10 @@ deformation of a CompleteType T: every other deformation factors through it
 ## Moduli Tower
 
 The {@class https://uor.foundation/type/ModuliTowerMap} M_n -> M_{n+1} is induced by
-QuantumLift. Its fiber over T is the space of completions of the partial lift.
+WittLift. Its site over T is the space of completions of the partial lift.
 Property: {@prop https://uor.foundation/type/towerMapSource}.
 
-This connects to the [Quantum Spectral Sequence](quantum-spectral-sequence.html)
+This connects to the [Witt Spectral Sequence](quantum-spectral-sequence.html)
 and incremental completeness pipeline.
 
 ## Key Identities
@@ -73,5 +73,5 @@ and incremental completeness pipeline.
 | {@ind https://uor.foundation/op/MD_6} | TwistedType strata have codimension >= 1 |
 | {@ind https://uor.foundation/op/MD_7} | VersalDeformation exists for every CompleteType |
 | {@ind https://uor.foundation/op/MD_8} | Completeness-preserving iff H^2 = 0 along path |
-| {@ind https://uor.foundation/op/MD_9} | Fiber dim = 1 when obstructionTrivial |
-| {@ind https://uor.foundation/op/MD_10} | Fiber empty iff TwistedType at every level |
+| {@ind https://uor.foundation/op/MD_9} | Site dim = 1 when obstructionTrivial |
+| {@ind https://uor.foundation/op/MD_10} | Site empty iff TwistedType at every level |

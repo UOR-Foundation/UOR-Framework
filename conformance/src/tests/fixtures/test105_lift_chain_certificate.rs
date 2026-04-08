@@ -10,7 +10,7 @@ pub const TEST105_LIFT_CHAIN_CERTIFICATE: &str = r#"
 @prefix cert:   <https://uor.foundation/cert/> .
 
 # Certified lift chain
-type:ex_lift_105 a owl:NamedIndividual, type:QuantumLift ;
+type:ex_lift_105 a owl:NamedIndividual, type:WittLift ;
     type:sourceLevel   schema:Q0 ;
     type:targetLevel   schema:Q3 ;
     type:liftedType    type:ex_flat_105 ;

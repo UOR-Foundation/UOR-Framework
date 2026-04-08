@@ -282,7 +282,7 @@ fn properties() -> Vec<Property> {
             label: "addressesSuggestion",
             comment: "The refinement suggestion that, if applied, would resolve this gluing \
                       obstruction. Computed by the kernel when ψ₆ detects H^1 ≠ 0: the \
-                      obstruction class indexes the fiber pair that is incompatible, and \
+                      obstruction class indexes the site pair that is incompatible, and \
                       the suggestion targets that pair with a new bridging constraint.",
             kind: PropertyKind::Object,
             functional: false,

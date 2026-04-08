@@ -9,8 +9,8 @@ pub const TEST103_OBSTRUCTION_CHAIN_EMPTY: &str = r#"
 @prefix type:   <https://uor.foundation/type/> .
 @prefix observable: <https://uor.foundation/observable/> .
 
-# QuantumLift with empty obstruction chain
-type:ex_lift_empty_103 a owl:NamedIndividual, type:QuantumLift ;
+# WittLift with empty obstruction chain
+type:ex_lift_empty_103 a owl:NamedIndividual, type:WittLift ;
     type:sourceLevel   schema:Q0 ;
     type:targetLevel   schema:Q1 ;
     type:liftedType    type:ex_flat_103 ;

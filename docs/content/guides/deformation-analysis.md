@@ -21,14 +21,14 @@ The resolver:
 ## Stratification Record
 
 The {@class https://uor.foundation/observable/StratificationRecord} captures the
-holonomy stratification of M_n at a given quantum level:
-- {@prop https://uor.foundation/observable/stratificationLevel} — the quantum level
+holonomy stratification of M_n at a given Witt level:
+- {@prop https://uor.foundation/observable/stratificationLevel} — the Witt level
 - {@prop https://uor.foundation/observable/stratificationStratum} — links to each
   {@class https://uor.foundation/type/HolonomyStratum} in the decomposition
 
 ## Worked Example
 
-Consider a CompleteType T in M_2 (quantum level Q2, R_4 = Z/16Z) with basis
+Consider a CompleteType T in M_2 (Witt level Q2, R_4 = Z/16Z) with basis
 size 4 and trivial holonomy (FlatType):
 
 **Step 1 — Deformation complex.** Construct Def(T):
@@ -47,7 +47,7 @@ with codimension 0 ({@ind https://uor.foundation/op/MD_5}). The
 a versal deformation of dimension 3 (matching H^1). Since H^2 = 0, any deformation
 family through T preserves completeness ({@ind https://uor.foundation/op/MD_8}).
 
-**Step 4 — Tower map fiber.** The fiber of M_2 -> M_3 over T has dimension 1
+**Step 4 — Tower map site.** The site of M_2 -> M_3 over T has dimension 1
 ({@ind https://uor.foundation/op/MD_9}) since the obstruction to lifting vanishes.
 
 ## Complexity

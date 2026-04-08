@@ -44,7 +44,7 @@ The homotopy nerve yields three families of observables in the `observable/` nam
   {@prop https://uor.foundation/observable/homotopyBasepoint}.
 
 - {@class https://uor.foundation/observable/HigherMonodromy} — the image of pi_k into
-  the automorphism group of the fiber. Generalises the
+  the automorphism group of the site. Generalises the
   [Monodromy](monodromy.html) pi_1 -> D_{2^n} homomorphism to higher groups.
   Property: {@prop https://uor.foundation/observable/higherMonodromyDimension}.
 

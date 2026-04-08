@@ -11,7 +11,7 @@ pub const TEST101_LIFT_CHAIN_FLAT: &str = r#"
 @prefix resolver: <https://uor.foundation/resolver/> .
 
 # Flat LiftChain from Q0 to Q3 with no obstructions
-type:ex_lc_flat_101 a owl:NamedIndividual, type:QuantumLift ;
+type:ex_lc_flat_101 a owl:NamedIndividual, type:WittLift ;
     type:sourceLevel   schema:Q0 ;
     type:targetLevel   schema:Q3 ;
     type:liftedType    type:ex_flat_type_101 ;

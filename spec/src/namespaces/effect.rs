@@ -1,8 +1,8 @@
 //! `effect/` namespace — Effect algebra.
 //!
 //! The `effect/` namespace formalizes typed endomorphisms on `state:Context`
-//! classified by fiber target. Effects are the atomic unit of state mutation
-//! in the kernel: each effect maps one fiber-budget configuration to another.
+//! classified by site target. Effects are the atomic unit of state mutation
+//! in the kernel: each effect maps one site-budget configuration to another.
 //!
 //! - **Amendment 71**: 9 classes, 14 properties, 0 individuals (identities in op/)
 //!
@@ -19,9 +19,9 @@ pub fn module() -> NamespaceModule {
             prefix: "effect",
             iri: NS_EFFECT,
             label: "UOR Effect Algebra",
-            comment: "Typed endomorphisms on state:Context classified by fiber \
-                      target. Formalizes what cascade guard-effect pairs do to \
-                      the fiber budget.",
+            comment: "Typed endomorphisms on state:Context classified by site \
+                      target. Formalizes what reduction guard-effect pairs do to \
+                      the site budget.",
             space: Space::Kernel,
             imports: &[NS_OP, NS_STATE, NS_PARTITION, NS_TYPE, NS_CERT],
         },
@@ -37,7 +37,7 @@ fn classes() -> Vec<Class> {
             id: "https://uor.foundation/effect/Effect",
             label: "Effect",
             comment: "A typed endomorphism on state:Context. Maps one \
-                      fiber-budget configuration to another. The atomic unit \
+                      site-budget configuration to another. The atomic unit \
                       of state mutation in the kernel.",
             subclass_of: &[OWL_THING],
             disjoint_with: &[],
@@ -54,8 +54,8 @@ fn classes() -> Vec<Class> {
         Class {
             id: "https://uor.foundation/effect/PinningEffect",
             label: "PinningEffect",
-            comment: "Pins a single free fiber to a definite value. \
-                      Decrements freeCount by exactly 1. The effect produced \
+            comment: "Pins a single free site to a definite value. \
+                      Decrements freeRank by exactly 1. The effect produced \
                       by constraint resolution.",
             subclass_of: &["https://uor.foundation/effect/ReversibleEffect"],
             disjoint_with: &[],
@@ -63,8 +63,8 @@ fn classes() -> Vec<Class> {
         Class {
             id: "https://uor.foundation/effect/UnbindingEffect",
             label: "UnbindingEffect",
-            comment: "Releases a pinned fiber back to free state. Increments \
-                      freeCount by exactly 1. The effect produced by session \
+            comment: "Releases a pinned site back to free state. Increments \
+                      freeRank by exactly 1. The effect produced by session \
                       boundary reset.",
             subclass_of: &["https://uor.foundation/effect/Effect"],
             disjoint_with: &[],
@@ -72,9 +72,9 @@ fn classes() -> Vec<Class> {
         Class {
             id: "https://uor.foundation/effect/PhaseEffect",
             label: "PhaseEffect",
-            comment: "Rotates the cascade phase angle by \u{03a9}^k. Does \
-                      not alter the fiber budget. The effect produced by \
-                      cascade stage transitions.",
+            comment: "Rotates the reduction phase angle by \u{03a9}^k. Does \
+                      not alter the site budget. The effect produced by \
+                      reduction step transitions.",
             subclass_of: &["https://uor.foundation/effect/ReversibleEffect"],
             disjoint_with: &[],
         },
@@ -91,7 +91,7 @@ fn classes() -> Vec<Class> {
             id: "https://uor.foundation/effect/ExternalEffect",
             label: "ExternalEffect",
             comment: "An opaque effect declared by a Prism implementation. \
-                      The kernel treats it as a fiber-budget transformation \
+                      The kernel treats it as a site-budget transformation \
                       satisfying the declared commutation contract. Must \
                       carry an effect:externalEffectShape linking to a \
                       conformance:EffectShape.",
@@ -101,7 +101,7 @@ fn classes() -> Vec<Class> {
         Class {
             id: "https://uor.foundation/effect/EffectTarget",
             label: "EffectTarget",
-            comment: "The set of fiber coordinates that an effect reads or \
+            comment: "The set of site coordinates that an effect reads or \
                       writes. Determines commutation.",
             subclass_of: &[OWL_THING],
             disjoint_with: &[],
@@ -123,20 +123,20 @@ fn properties() -> Vec<Property> {
         Property {
             id: "https://uor.foundation/effect/effectTarget",
             label: "effectTarget",
-            comment: "The fiber coordinates this effect touches.",
+            comment: "The site coordinates this effect touches.",
             kind: PropertyKind::Object,
             functional: true,
             domain: Some("https://uor.foundation/effect/Effect"),
             range: "https://uor.foundation/effect/EffectTarget",
         },
         Property {
-            id: "https://uor.foundation/effect/targetFibers",
-            label: "targetFibers",
-            comment: "The individual fiber coordinates in this target set.",
+            id: "https://uor.foundation/effect/targetSites",
+            label: "targetSites",
+            comment: "The individual site coordinates in this target set.",
             kind: PropertyKind::Object,
             functional: false,
             domain: Some("https://uor.foundation/effect/EffectTarget"),
-            range: "https://uor.foundation/partition/FiberCoordinate",
+            range: "https://uor.foundation/partition/SiteIndex",
         },
         Property {
             id: "https://uor.foundation/effect/compositeHead",
@@ -206,9 +206,9 @@ fn properties() -> Vec<Property> {
         },
         // Datatype properties
         Property {
-            id: "https://uor.foundation/effect/freeCountDelta",
-            label: "freeCountDelta",
-            comment: "Change in freeCount: \u{2212}1 for PinningEffect, +1 \
+            id: "https://uor.foundation/effect/freeRankDelta",
+            label: "freeRankDelta",
+            comment: "Change in freeRank: \u{2212}1 for PinningEffect, +1 \
                       for UnbindingEffect, 0 for PhaseEffect.",
             kind: PropertyKind::Datatype,
             functional: true,
@@ -247,7 +247,7 @@ fn properties() -> Vec<Property> {
         Property {
             id: "https://uor.foundation/effect/targetCardinality",
             label: "targetCardinality",
-            comment: "Number of fiber coordinates in this target set.",
+            comment: "Number of site coordinates in this target set.",
             kind: PropertyKind::Datatype,
             functional: true,
             domain: Some("https://uor.foundation/effect/EffectTarget"),

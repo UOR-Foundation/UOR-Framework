@@ -21,41 +21,41 @@ pub trait Success<P: Primitives>: ComputationResult<P> {
     fn result_certificate(&self) -> &Self::ComputationCertificate;
 }
 
-/// A computation that could not reach convergence. Carries a typed FailureReason and the cascade state at the point of failure.
+/// A computation that could not reach convergence. Carries a typed FailureReason and the reduction state at the point of failure.
 pub trait Failure<P: Primitives>: ComputationResult<P> {
     /// Associated type for `FailureReason`.
     type FailureReason: FailureReason<P>;
     /// The typed reason for failure.
     fn failure_reason(&self) -> &Self::FailureReason;
-    /// Associated type for `CascadeState`.
-    type CascadeState: crate::kernel::cascade::CascadeState<P>;
-    /// The cascade state at the point of failure.
-    fn failure_state(&self) -> &Self::CascadeState;
-    /// Associated type for `CascadeStage`.
-    type CascadeStage: crate::kernel::cascade::CascadeStage<P>;
-    /// The cascade stage where failure occurred.
-    fn failure_stage(&self) -> &Self::CascadeStage;
+    /// Associated type for `ReductionState`.
+    type ReductionState: crate::kernel::reduction::ReductionState<P>;
+    /// The reduction state at the point of failure.
+    fn failure_state(&self) -> &Self::ReductionState;
+    /// Associated type for `ReductionStep`.
+    type ReductionStep: crate::kernel::reduction::ReductionStep<P>;
+    /// The reduction step where failure occurred.
+    fn failure_stage(&self) -> &Self::ReductionStep;
     /// Associated type for `Recovery`.
     type Recovery: Recovery<P>;
     /// Available recovery strategies for this failure.
     fn recovery_strategy(&self) -> &[Self::Recovery];
-    /// The cascade stage index at which failure occurred.
+    /// The reduction step index at which failure occurred.
     fn failure_depth(&self) -> P::NonNegativeInteger;
 }
 
 /// A typed classification of why a computation failed.
 pub trait FailureReason<P: Primitives> {}
 
-/// A cascade stage guard evaluated to false and no alternative transition exists.
+/// A reduction step guard evaluated to false and no alternative transition exists.
 pub trait GuardFailure<P: Primitives>: FailureReason<P> {}
 
 /// Two constraints in the type’s constraint set are jointly unsatisfiable.
 pub trait ConstraintContradiction<P: Primitives>: FailureReason<P> {}
 
 /// The linear budget was exhausted before resolution completed.
-pub trait FiberExhaustion<P: Primitives>: FailureReason<P> {}
+pub trait SiteExhaustion<P: Primitives>: FailureReason<P> {}
 
-/// A QuantumLift encountered a non-trivial obstruction that could not be resolved.
+/// A WittLift encountered a non-trivial obstruction that could not be resolved.
 pub trait LiftObstructionFailure<P: Primitives>: FailureReason<P> {}
 
 /// A computation that produces a ComputationResult rather than a guaranteed datum. The general case of all computations.
@@ -73,10 +73,10 @@ pub trait Recovery<P: Primitives> {
     type Effect: crate::kernel::effect::Effect<P>;
     /// The effect applied to recover from failure.
     fn recovery_effect(&self) -> &Self::Effect;
-    /// Associated type for `CascadeStage`.
-    type CascadeStage: crate::kernel::cascade::CascadeStage<P>;
-    /// The cascade stage to retry after recovery.
-    fn recovery_target(&self) -> &Self::CascadeStage;
+    /// Associated type for `ReductionStep`.
+    type ReductionStep: crate::kernel::reduction::ReductionStep<P>;
+    /// The reduction step to retry after recovery.
+    fn recovery_target(&self) -> &Self::ReductionStep;
 }
 
 /// The rule for how failures compose under monoidal and parallel products.

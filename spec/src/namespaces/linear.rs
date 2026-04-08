@@ -1,7 +1,7 @@
 //! `linear/` namespace — Linear resources.
 //!
-//! The `linear/` namespace formalizes linear discipline on fiber consumption.
-//! Each fiber in a complete resolution path is targeted by exactly one effect.
+//! The `linear/` namespace formalizes linear discipline on site consumption.
+//! Each site in a complete resolution path is targeted by exactly one effect.
 //!
 //! - **Amendment 77**: 6 classes, 8 properties, 0 individuals (identities in op/)
 //!
@@ -18,8 +18,8 @@ pub fn module() -> NamespaceModule {
             prefix: "linear",
             iri: NS_LINEAR,
             label: "UOR Linear Resources",
-            comment: "Linear discipline on fiber consumption. Formalizes \
-                      that each fiber in a complete resolution path is \
+            comment: "Linear discipline on site consumption. Formalizes \
+                      that each site in a complete resolution path is \
                       targeted by exactly one effect.",
             space: Space::Kernel,
             imports: &[NS_OP, NS_EFFECT, NS_PARTITION, NS_TYPE, NS_STATE, NS_TRACE],
@@ -33,19 +33,19 @@ pub fn module() -> NamespaceModule {
 fn classes() -> Vec<Class> {
     vec![
         Class {
-            id: "https://uor.foundation/linear/LinearFiber",
-            label: "LinearFiber",
-            comment: "A fiber coordinate annotated with a linearity \
+            id: "https://uor.foundation/linear/LinearSite",
+            label: "LinearSite",
+            comment: "A site index annotated with a linearity \
                       constraint: must be pinned exactly once in any \
                       complete resolution path.",
-            subclass_of: &["https://uor.foundation/partition/FiberCoordinate"],
+            subclass_of: &["https://uor.foundation/partition/SiteIndex"],
             disjoint_with: &[],
         },
         Class {
             id: "https://uor.foundation/linear/LinearEffect",
             label: "LinearEffect",
-            comment: "A PinningEffect that consumes its target LinearFiber. \
-                      After application, the fiber is no longer available \
+            comment: "A PinningEffect that consumes its target LinearSite. \
+                      After application, the site is no longer available \
                       for pinning by any subsequent effect.",
             subclass_of: &["https://uor.foundation/effect/PinningEffect"],
             disjoint_with: &[],
@@ -53,7 +53,7 @@ fn classes() -> Vec<Class> {
         Class {
             id: "https://uor.foundation/linear/LinearTrace",
             label: "LinearTrace",
-            comment: "A computation trace where every fiber in the budget is \
+            comment: "A computation trace where every site in the budget is \
                       targeted by exactly one LinearEffect.",
             subclass_of: &["https://uor.foundation/trace/ComputationTrace"],
             disjoint_with: &[],
@@ -61,8 +61,8 @@ fn classes() -> Vec<Class> {
         Class {
             id: "https://uor.foundation/linear/LinearBudget",
             label: "LinearBudget",
-            comment: "The multiset of LinearFibers available at a given \
-                      point in resolution. Starts as the full fiber budget; \
+            comment: "The multiset of LinearSites available at a given \
+                      point in resolution. Starts as the full site budget; \
                       each LinearEffect removes exactly one element.",
             subclass_of: &[OWL_THING],
             disjoint_with: &[],
@@ -71,18 +71,18 @@ fn classes() -> Vec<Class> {
             id: "https://uor.foundation/linear/LeaseAllocation",
             label: "LeaseAllocation",
             comment: "A binding between a state:ContextLease and a subset \
-                      of LinearFibers. Formalizes what resources a lease \
+                      of LinearSites. Formalizes what resources a lease \
                       claims.",
             subclass_of: &[OWL_THING],
             disjoint_with: &[],
         },
         Class {
-            id: "https://uor.foundation/linear/AffineFiber",
-            label: "AffineFiber",
-            comment: "A fiber that may be pinned at most once (but need not \
-                      be pinned). Relaxation of LinearFiber for incomplete \
+            id: "https://uor.foundation/linear/AffineSite",
+            label: "AffineSite",
+            comment: "A site that may be pinned at most once (but need not \
+                      be pinned). Relaxation of LinearSite for incomplete \
                       resolution paths.",
-            subclass_of: &["https://uor.foundation/partition/FiberCoordinate"],
+            subclass_of: &["https://uor.foundation/partition/SiteIndex"],
             disjoint_with: &[],
         },
     ]
@@ -94,20 +94,20 @@ fn properties() -> Vec<Property> {
         Property {
             id: "https://uor.foundation/linear/linearTarget",
             label: "linearTarget",
-            comment: "The single fiber consumed by this effect.",
+            comment: "The single site consumed by this effect.",
             kind: PropertyKind::Object,
             functional: true,
             domain: Some("https://uor.foundation/linear/LinearEffect"),
-            range: "https://uor.foundation/linear/LinearFiber",
+            range: "https://uor.foundation/linear/LinearSite",
         },
         Property {
-            id: "https://uor.foundation/linear/budgetFibers",
-            label: "budgetFibers",
-            comment: "The fibers remaining in the budget.",
+            id: "https://uor.foundation/linear/budgetSites",
+            label: "budgetSites",
+            comment: "The sites remaining in the budget.",
             kind: PropertyKind::Object,
             functional: false,
             domain: Some("https://uor.foundation/linear/LinearBudget"),
-            range: "https://uor.foundation/linear/LinearFiber",
+            range: "https://uor.foundation/linear/LinearSite",
         },
         Property {
             id: "https://uor.foundation/linear/budgetContext",
@@ -121,11 +121,11 @@ fn properties() -> Vec<Property> {
         Property {
             id: "https://uor.foundation/linear/leaseTarget",
             label: "leaseTarget",
-            comment: "The fibers claimed by this lease.",
+            comment: "The sites claimed by this lease.",
             kind: PropertyKind::Object,
             functional: false,
             domain: Some("https://uor.foundation/linear/LeaseAllocation"),
-            range: "https://uor.foundation/linear/LinearFiber",
+            range: "https://uor.foundation/linear/LinearSite",
         },
         Property {
             id: "https://uor.foundation/linear/leaseSource",
@@ -139,7 +139,7 @@ fn properties() -> Vec<Property> {
         Property {
             id: "https://uor.foundation/linear/leaseAllocation",
             label: "leaseAllocation",
-            comment: "Links a state:ContextLease to its LinearFiber \
+            comment: "Links a state:ContextLease to its LinearSite \
                       allocation.",
             kind: PropertyKind::Object,
             functional: true,
@@ -152,7 +152,7 @@ fn properties() -> Vec<Property> {
         Property {
             id: "https://uor.foundation/linear/remainingCount",
             label: "remainingCount",
-            comment: "Number of unconsumed fibers. Equals freeCount on the \
+            comment: "Number of unconsumed sites. Equals freeRank on the \
                       associated context.",
             kind: PropertyKind::Datatype,
             functional: true,
@@ -162,7 +162,7 @@ fn properties() -> Vec<Property> {
         Property {
             id: "https://uor.foundation/linear/leaseCardinality",
             label: "leaseCardinality",
-            comment: "Number of fibers claimed by this lease.",
+            comment: "Number of sites claimed by this lease.",
             kind: PropertyKind::Datatype,
             functional: true,
             domain: Some("https://uor.foundation/linear/LeaseAllocation"),

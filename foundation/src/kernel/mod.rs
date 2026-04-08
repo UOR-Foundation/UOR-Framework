@@ -4,7 +4,6 @@
 
 pub mod address;
 pub mod carry;
-pub mod cascade;
 pub mod convergence;
 pub mod division;
 pub mod effect;
@@ -16,6 +15,7 @@ pub mod operad;
 pub mod parallel;
 pub mod predicate;
 pub mod recursion;
+pub mod reduction;
 pub mod region;
 pub mod schema;
 pub mod stream;

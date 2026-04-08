@@ -44,7 +44,7 @@ pub trait RewriteStep<P: Primitives>: DerivationStep<P> {
     fn has_rewrite_rule(&self) -> RewriteRule;
 }
 
-/// A type-level refinement step: the application of a constraint to narrow a type, pinning additional fiber coordinates. Complements RewriteStep (term-level) in the derivation hierarchy.
+/// A type-level refinement step: the application of a constraint to narrow a type, pinning additional site coordinates. Complements RewriteStep (term-level) in the derivation hierarchy.
 pub trait RefinementStep<P: Primitives>: DerivationStep<P> {
     /// Associated type for `TypeDefinition`.
     type TypeDefinition: crate::user::type_::TypeDefinition<P>;
@@ -56,8 +56,8 @@ pub trait RefinementStep<P: Primitives>: DerivationStep<P> {
     fn applied_constraint(&self) -> &Self::Constraint;
     /// The type after this refinement step was applied.
     fn refined_type(&self) -> &Self::TypeDefinition;
-    /// The number of fiber coordinates pinned by this refinement step.
-    fn fibers_closed(&self) -> P::NonNegativeInteger;
+    /// The number of site coordinates pinned by this refinement step.
+    fn sites_closed(&self) -> P::NonNegativeInteger;
 }
 
 /// Metrics describing the size and complexity of a term.

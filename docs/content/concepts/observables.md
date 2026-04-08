@@ -15,7 +15,7 @@ The observable hierarchy is organized into six categories:
 | {@class https://uor.foundation/observable/StratumObservable} | Layer position within the ring |
 | {@class https://uor.foundation/observable/MetricObservable} | Geometric distance under a specific metric |
 | {@class https://uor.foundation/observable/PathObservable} | Properties of paths through the ring |
-| {@class https://uor.foundation/observable/CascadeObservable} | Operation sequence measurements |
+| {@class https://uor.foundation/observable/ReductionObservable} | Operation sequence measurements |
 | {@class https://uor.foundation/observable/CatastropheObservable} | Qualitative partition changes |
 | {@class https://uor.foundation/observable/CurvatureObservable} | Gap between ring and Hamming isometry |
 
@@ -64,6 +64,6 @@ axis information ({@prop https://uor.foundation/resolver/suggestedAxis}) to
 guide which constraints to apply next, informed by observable measurements.
 
 The {@class https://uor.foundation/observable/Jacobian} is a curvature
-observable that decomposes the incompatibility metric fiber by fiber — see
+observable that decomposes the incompatibility metric site by site — see
 [Differential Calculus](differential-calculus.html) for the Jacobian's
 definition and its role in curvature-weighted constraint selection (DC_10).

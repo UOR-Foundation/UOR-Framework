@@ -117,16 +117,16 @@ fn emit_terms(out: &mut String) {
          \x20                  | set-expr ;\n\
          \n\
          literal          ::= integer-literal\n\
-         \x20                  | braille-literal\n\
-         \x20                  | quantum-literal ;\n\
+         \x20                  | element-literal\n\
+         \x20                  | witt-literal ;\n\
          \n\
          integer-literal  ::= digit , { digit } ;\n\
          \n\
-         braille-literal  ::= braille-glyph , { braille-glyph } ;\n\
-         braille-glyph    ::= \"\\u2800\" .. \"\\u28FF\" ;\n\
+         element-literal  ::= byte-element , { byte-element } ;\n\
+         byte-element     ::= \"\\u2800\" .. \"\\u28FF\" ;\n\
          \n\
-         quantum-literal  ::= integer-literal , \"@\" , name ;\n\
-         \x20                  (* name \u{2192} individual of schema:QuantumLevel. *)\n\n",
+         witt-literal     ::= integer-literal , \"@\" , name ;\n\
+         \x20                  (* name \u{2192} individual of schema:WittLevel. *)\n\n",
     );
 }
 
@@ -178,7 +178,7 @@ fn emit_type_expr(out: &mut String) {
         "\n\
          \x20  type-app is an operadic composition over the structural operad and\n\
          \x20  materialises an operad:OperadComposition individual whose outerType,\n\
-         \x20  innerType, composedType, composedFiberCount and composedGrounding are\n\
+         \x20  innerType, composedType, composedSiteCount and composedGrounding are\n\
          \x20  populated from the AST and the carry layer. *)\n\
          \n\
          type-expr        ::= name\n\
@@ -186,7 +186,7 @@ fn emit_type_expr(out: &mut String) {
          \x20                  (* name \u{2192} owl:NamedIndividual of type:TypeDefinition\n\
          \x20                     (transitively, via any subclass). Category classes\n\
          \x20                     (PrimitiveType, ProductType, SumType, ConstrainedType)\n\
-         \x20                     and state classes (CompleteType, SuperposedFiberState,\n\
+         \x20                     and state classes (CompleteType, SuperposedSiteState,\n\
          \x20                     CompletenessCandidate, SynthesizedType, TwistedType,\n\
          \x20                     FlatType) are not valid targets at this position. *)\n\
          \n\
@@ -194,7 +194,7 @@ fn emit_type_expr(out: &mut String) {
          \x20                  (* name \u{2192} owl:NamedIndividual of type:TypeDefinition\n\
          \x20                     (a parameterised one). The application materialises\n\
          \x20                     a fresh operad:OperadComposition individual whose\n\
-         \x20                     outerType, innerType, composedType, composedFiberCount,\n\
+         \x20                     outerType, innerType, composedType, composedSiteCount,\n\
          \x20                     and composedGrounding are populated from the AST and\n\
          \x20                     the carry layer, and a fresh type:TypeDefinition\n\
          \x20                     individual representing the composed type. *)\n\n",
@@ -224,7 +224,7 @@ fn emit_type_decl(out: &mut String) {
          \x20                  (* outer name \u{2192} subclass of type:Constraint. The currently\n\
          \x20                     declared subclasses are ResidueConstraint,\n\
          \x20                     CarryConstraint, DepthConstraint, HammingConstraint,\n\
-         \x20                     FiberConstraint, AffineConstraint. CompositeConstraint\n\
+         \x20                     SiteConstraint, AffineConstraint. CompositeConstraint\n\
          \x20                     is the implicit shape of any type-decl body containing\n\
          \x20                     more than one constraint-decl and has no syntactic\n\
          \x20                     constructor. inner name (in constraint-arg) \u{2192} property\n\
@@ -268,7 +268,7 @@ fn emit_match_expr(out: &mut String) {
          match-expr       ::= \"match\" , term , \"{\" , { match-arm } , \"}\" ;\n\
          match-arm        ::= name , \"=>\" , term , \";\" ;\n\
          \x20                  (* name \u{2192} individual of predicate:Predicate (a TypePredicate,\n\
-         \x20                     StatePredicate, or FiberPredicate member). *)\n\n",
+         \x20                     StatePredicate, or SitePredicate member). *)\n\n",
     );
 }
 
@@ -350,7 +350,7 @@ fn emit_try_expr(out: &mut String) {
          recover-arm      ::= \"recover\" , name , \"=>\" , term , \";\" ;\n\
          \x20                  (* name \u{2192} subclass of failure:FailureReason. The currently\n\
          \x20                     declared subclasses are GuardFailure,\n\
-         \x20                     ConstraintContradiction, FiberExhaustion,\n\
+         \x20                     ConstraintContradiction, SiteExhaustion,\n\
          \x20                     LiftObstructionFailure. *)\n\n",
     );
 }

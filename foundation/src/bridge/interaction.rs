@@ -6,7 +6,7 @@
 
 use crate::Primitives;
 
-/// Two entities sharing fibers through composed operations. Properties: entityA, entityB, sharedFiberMask, commutatorNorm.
+/// Two entities sharing sites through composed operations. Properties: entityA, entityB, sharedSiteMask, commutatorNorm.
 pub trait InteractionContext<P: Primitives> {
     /// Associated type for `TermExpression`.
     type TermExpression: crate::kernel::schema::TermExpression<P>;
@@ -14,21 +14,21 @@ pub trait InteractionContext<P: Primitives> {
     fn entity_a(&self) -> &Self::TermExpression;
     /// Second entity in the interaction context.
     fn entity_b(&self) -> &Self::TermExpression;
-    /// Bitmask identifying which fibers are shared between the two entities.
-    fn shared_fiber_mask(&self) -> P::NonNegativeInteger;
-    /// The norm of the commutator on shared fibers. Zero iff the operators commute.
+    /// Bitmask identifying which sites are shared between the two entities.
+    fn shared_site_mask(&self) -> P::NonNegativeInteger;
+    /// The norm of the commutator on shared sites. Zero iff the operators commute.
     fn commutator_norm(&self) -> P::Decimal;
 }
 
-/// The norm ‖\[δ_A, ι_B\]‖ on shared fibers. Zero iff operators commute on the shared domain.
+/// The norm ‖\[δ_A, ι_B\]‖ on shared sites. Zero iff operators commute on the shared domain.
 pub trait CommutatorState<P: Primitives> {
     /// The computed commutator norm value.
     fn commutator_value(&self) -> P::Decimal;
 }
 
-/// The norm of the three-way associator on shared fibers.
+/// The norm of the three-way associator on shared sites.
 pub trait AssociatorState<P: Primitives> {
-    /// The norm of the three-way associator on shared fibers.
+    /// The norm of the three-way associator on shared sites.
     fn associator_norm(&self) -> P::Decimal;
 }
 
@@ -50,19 +50,19 @@ pub trait AssociatorTriple<P: Primitives> {
     fn associator_norm_value(&self) -> P::Decimal;
 }
 
-/// A fiber shared by all three entities in an AssociatorTriple.
-pub trait ThreeWayFiber<P: Primitives> {
-    /// The position index of the shared fiber.
-    fn fiber_position(&self) -> P::NonNegativeInteger;
+/// A site shared by all three entities in an AssociatorTriple.
+pub trait ThreeWaySite<P: Primitives> {
+    /// The position index of the shared site.
+    fn site_position(&self) -> P::NonNegativeInteger;
     /// Value under left-associative grouping (AB)C.
     fn left_grouping_value(&self) -> P::Decimal;
     /// Value under right-associative grouping A(BC).
     fn right_grouping_value(&self) -> P::Decimal;
-    /// Whether this fiber is pinned by a lease constraint.
+    /// Whether this site is pinned by a lease constraint.
     fn is_pinned(&self) -> P::Boolean;
     /// Associated type for `TermExpression`.
     type TermExpression: crate::kernel::schema::TermExpression<P>;
-    /// Identifier of the entity pair that pins this fiber.
+    /// Identifier of the entity pair that pins this site.
     fn pinning_pair(&self) -> &Self::TermExpression;
 }
 

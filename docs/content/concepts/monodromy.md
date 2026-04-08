@@ -8,7 +8,7 @@ under parallel transport around closed loops in the constraint nerve. For a
 monodromy group is a subgroup of the dihedral group D\_{2^n}.
 
 A {@class https://uor.foundation/observable/ClosedConstraintPath} represents a
-closed loop in the constraint nerve returning to the same fiber assignment.
+closed loop in the constraint nerve returning to the same site assignment.
 The {@prop https://uor.foundation/observable/pathLength} counts the number of
 constraint steps and {@prop https://uor.foundation/observable/pathConstraints}
 lists the traversed constraints.

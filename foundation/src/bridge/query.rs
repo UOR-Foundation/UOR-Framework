@@ -4,7 +4,7 @@
 //!
 //! Space: Bridge
 
-use crate::enums::CoordinateKind;
+use crate::enums::TriadProjection;
 use crate::Primitives;
 
 /// A request for information from the UOR kernel. The root abstraction for all query types.
@@ -17,8 +17,8 @@ pub trait Query<P: Primitives> {
 
 /// A query for the ring-coordinate position of a datum: its stratum, spectrum, and address within the ring geometry.
 pub trait CoordinateQuery<P: Primitives>: Query<P> {
-    /// The typed coordinate kind this query extracts. Replaces the string-valued query:coordinate property with a typed reference to a CoordinateKind individual.
-    fn has_coordinate_kind(&self) -> CoordinateKind;
+    /// The typed coordinate kind this query extracts. Replaces the string-valued query:coordinate property with a typed reference to a TriadProjection individual.
+    fn has_triad_projection(&self) -> TriadProjection;
 }
 
 /// A query for a metric value between two datums: ring distance, Hamming distance, or their divergence (curvature).
@@ -27,20 +27,20 @@ pub trait MetricQuery<P: Primitives>: Query<P> {}
 /// A query for the canonical representation of a datum or term: its normal form under the active resolver strategy.
 pub trait RepresentationQuery<P: Primitives>: Query<P> {}
 
-/// A Query with a known source address, a typed relation constraint, and an open target partition:FiberBudget. Represents any question of the form: given this source symbol and relation type, what is the target? The relation type is read from the observable coordinate triple (d_R, d_H, d_I) — not externally supplied. Applies across NLP, ARC-AGI grids, music, images, sensor streams, and logical formulae.
+/// A Query with a known source address, a typed relation constraint, and an open target partition:FreeRank. Represents any question of the form: given this source symbol and relation type, what is the target? The relation type is read from the observable coordinate triple (d_R, d_H, d_I) — not externally supplied. Applies across NLP, ARC-AGI grids, music, images, sensor streams, and logical formulae.
 pub trait RelationQuery<P: Primitives>: Query<P> {
-    /// Associated type for `Address`.
-    type Address: crate::kernel::address::Address<P>;
+    /// Associated type for `Element`.
+    type Element: crate::kernel::address::Element<P>;
     /// The ring address of the grounded source symbol.
-    fn source_address(&self) -> &Self::Address;
+    fn source_address(&self) -> &Self::Element;
     /// Associated type for `Constraint`.
     type Constraint: crate::user::type_::Constraint<P>;
     /// The transformation type, expressed as a type:CompositeConstraint composed from the primitive basis. At inference time this is the output of an observable coordinate read on example pairs — computed from (d_R, d_H, d_I). Not an externally supplied input; read from the representation space.
     fn relation_type(&self) -> &Self::Constraint;
-    /// Associated type for `FiberBudget`.
-    type FiberBudget: crate::bridge::partition::FiberBudget<P>;
-    /// The open fiber budget for the unknown target. Begins fully free; closes to isClosed = true upon resolution.
-    fn target_fiber(&self) -> &Self::FiberBudget;
+    /// Associated type for `FreeRank`.
+    type FreeRank: crate::bridge::partition::FreeRank<P>;
+    /// The open site budget for the unknown target. Begins fully free; closes to isClosed = true upon resolution.
+    fn target_site(&self) -> &Self::FreeRank;
     /// Associated type for `GroundingMap`.
     type GroundingMap: crate::user::morphism::GroundingMap<P>;
     /// The GroundingMap that resolved the source symbol to its ring address.
@@ -51,11 +51,11 @@ pub trait RelationQuery<P: Primitives>: Query<P> {
     fn projection_map(&self) -> &Self::ProjectionMap;
     /// Associated type for `Context`.
     type Context: crate::user::state::Context<P>;
-    /// Accumulated session state carrying all state:Binding instances produced by prior queries. Each binding records a resolved address, its datum, and the type under which it was resolved. Prior bindings monotonically reduce the free fiber space for subsequent queries.
+    /// Accumulated session state carrying all state:Binding instances produced by prior queries. Each binding records a resolved address, its datum, and the type under which it was resolved. Prior bindings monotonically reduce the free site space for subsequent queries.
     fn session_context(&self) -> &Self::Context;
 }
 
-/// A RelationQuery that explicitly declares its session membership, allowing the conformance suite to validate session-scoped fiber reduction across multi-turn Prism deployments.
+/// A RelationQuery that explicitly declares its session membership, allowing the conformance suite to validate session-scoped site reduction across multi-turn Prism deployments.
 pub trait SessionQuery<P: Primitives>: RelationQuery<P> {
     /// Associated type for `Session`.
     type Session: crate::user::state::Session<P>;
@@ -64,10 +64,10 @@ pub trait SessionQuery<P: Primitives>: RelationQuery<P> {
 }
 
 /// The stratum coordinate: the layer position of a datum within the ring's stratification.
-pub mod stratum_coordinate {}
+pub mod two_adic_valuation {}
 
 /// The spectrum coordinate: the spectral decomposition of a datum under the ring's Fourier analysis.
-pub mod spectrum_coordinate {}
+pub mod walsh_hadamard_image {}
 
 /// The address coordinate: the content-addressable position of a datum in the Braille glyph encoding.
-pub mod address_coordinate {}
+pub mod ring_element {}

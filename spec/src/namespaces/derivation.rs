@@ -67,7 +67,7 @@ fn classes() -> Vec<Class> {
             id: "https://uor.foundation/derivation/RefinementStep",
             label: "RefinementStep",
             comment: "A type-level refinement step: the application of a constraint \
-                      to narrow a type, pinning additional fiber coordinates. \
+                      to narrow a type, pinning additional site coordinates. \
                       Complements RewriteStep (term-level) in the derivation \
                       hierarchy.",
             subclass_of: &["https://uor.foundation/derivation/DerivationStep"],
@@ -252,9 +252,9 @@ fn properties() -> Vec<Property> {
             range: "https://uor.foundation/type/TypeDefinition",
         },
         Property {
-            id: "https://uor.foundation/derivation/fibersClosed",
-            label: "fibersClosed",
-            comment: "The number of fiber coordinates pinned by this refinement step.",
+            id: "https://uor.foundation/derivation/sitesClosed",
+            label: "sitesClosed",
+            comment: "The number of site coordinates pinned by this refinement step.",
             kind: PropertyKind::Datatype,
             functional: true,
             domain: Some("https://uor.foundation/derivation/RefinementStep"),

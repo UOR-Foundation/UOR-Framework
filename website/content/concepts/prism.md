@@ -27,9 +27,9 @@ and {@ns op}.
   content-addressable location. See {@concept content-addressing}.
 
 - **{@ns schema}**: The {@class https://uor.foundation/schema/Ring} and
-  {@class https://uor.foundation/schema/QuantumLevel} classes define the algebraic substrate.
-  This is where Q0–Q3 are declared and the ring structure is encoded formally in OWL.
-  See {@concept ring} and {@concept quantum-levels}.
+  {@class https://uor.foundation/schema/WittLevel} classes define the algebraic substrate.
+  This is where W8--W32 are declared and the ring structure is encoded formally in OWL.
+  See {@concept ring} and {@concept witt-levels}.
 
 - **{@ns op}**: The {@class https://uor.foundation/op/Operation} hierarchy defines what
   operations are possible over ring elements. The {@count:identities} named algebraic
@@ -49,8 +49,8 @@ These namespaces implement the computational resolution of algebraic claims:
 - **{@ns query} / {@ns resolver}**: The query-resolver pair implements type-directed search
   and incremental completeness resolution. See {@concept resolution}.
 
-- **`type` / {@ns partition}**: The type namespace implements the {@concept fiber} bundle
-  structure — types are fibers over addresses. The {@concept partition} decomposes the
+- **`type` / {@ns partition}**: The type namespace implements the {@concept site} bundle
+  structure — types are sites over addresses. The {@concept partition} decomposes the
   address space.
 
 - **{@ns observable} / {@ns homology} / {@ns cohomology}**: These namespaces observe
@@ -74,8 +74,8 @@ Key certificate classes:
   completeness resolution is exhaustive
 - {@class https://uor.foundation/cert/GeodesicCertificate} — certifies that a computation
   follows the geodesic (shortest) path in the space of derivations
-- {@class https://uor.foundation/cert/SaturationCertificate} — certifies that the context
-  is fully saturated
+- {@class https://uor.foundation/cert/GroundingCertificate} — certifies that the context
+  is fully grounded
 
 The Certify stage answers: *has this been verified to the required standard?*
 

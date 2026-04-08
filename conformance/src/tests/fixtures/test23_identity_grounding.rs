@@ -20,11 +20,11 @@ op:C_1 a op:Identity ;
     op:verificationPathNote "Constraint composition — set union lemma" .
 
 op:F_1 a op:Identity ;
-    op:lhs "pinned fiber" ;
+    op:lhs "pinned site" ;
     op:rhs "cannot be unpinned" ;
-    op:forAll "FiberCoordinate" ;
+    op:forAll "SiteIndex" ;
     op:verificationDomain op:Algebraic ;
-    op:verificationPathNote "Fiber monotonicity — lattice argument" .
+    op:verificationPathNote "Site monotonicity — lattice argument" .
 
 op:DC_1 a op:Identity ;
     op:lhs "∂_R f(x)" ;
@@ -35,8 +35,8 @@ op:DC_1 a op:Identity ;
 
 op:psi_1 a op:Identity ;
     op:lhs "ψ₁(κ_k, constraint_k)" ;
-    op:rhs "fiber pinning state" ;
+    op:rhs "site binding state" ;
     op:forAll "curvature κ_k, constraint_k" ;
     op:verificationDomain op:Topological ;
-    op:verificationPathNote "Curvature → Fiber — index bridge" .
+    op:verificationPathNote "Curvature → Site — index bridge" .
 "#;

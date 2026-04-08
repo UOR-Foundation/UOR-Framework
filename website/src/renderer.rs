@@ -160,7 +160,7 @@ pub fn render_homepage(summaries: &[NamespaceSummary], base_path: &str) -> Strin
 <div class="pipeline-step">
 <span class="step-number">1</span>
 <h3>Define</h3>
-<p>Declare types with constraints that pin fibers of the Z/2Z fibration.</p>
+<p>Declare types with constraints that pin sites of the Z/2Z fibration.</p>
 </div>
 <div class="pipeline-arrow" aria-hidden="true"></div>
 <div class="pipeline-step">
@@ -186,9 +186,9 @@ pub fn render_homepage(summaries: &[NamespaceSummary], base_path: &str) -> Strin
 <p>Start with the algebraic substrate and build up to the full type system.</p>
 <ol class="pathway-steps">
 <li><a href="{concepts_url}/ring.html">The Ring Substrate</a></li>
-<li><a href="{concepts_url}/quantum-levels.html">Quantum Levels</a></li>
+<li><a href="{concepts_url}/witt-levels.html">Witt Levels</a></li>
 <li><a href="{concepts_url}/content-addressing.html">Content Addressing</a></li>
-<li><a href="{concepts_url}/fiber.html">Fiber Bundles</a></li>
+<li><a href="{concepts_url}/site.html">Site Bundles</a></li>
 </ol>
 </article>
 <article class="pathway pathway-bridge">
@@ -713,7 +713,7 @@ pub fn render_pipeline_page(
             "stage-certify" => body.push_str(
                 "<p>The Certify stage attests resolution results with verification hashes \
                  and replayable computation traces. The <code>cert</code> namespace issues \
-                 certificates that bind identity proofs to specific quantum-level \
+                 certificates that bind identity proofs to specific Witt-level \
                  computations.</p>\n",
             ),
             _ => {}
@@ -763,7 +763,7 @@ pub fn render_identities_page(ontology: &Ontology, base_path: &str) -> String {
          Algebraic (ring-theoretic derivation), Geometric (metric-space arguments), and others. \
          The chart below shows the distribution across all {identity_count} identities.</p>\n\
          <p>Each identity also has a <strong>validity scope</strong>: Universal (valid at all \
-         quantum levels), ParametricLower (valid at level \u{2265} k), ParametricRange (valid in \
+         Witt levels), ParametricLower (valid at level \u{2265} k), ParametricRange (valid in \
          [k_min, k_max]), or LevelSpecific (valid at exactly one level). \
          See <a href=\"{ring_url}\">The Ring Substrate</a> for the \
          ring foundation and <a href=\"{proof_url}\">Proofs, \
@@ -1006,7 +1006,7 @@ verification. Start with the path closest to your background:</p>
 <p>Begin with the algebraic substrate and build up to the full proof system.</p>
 <ol>
 <li><a href="{concepts_url}/ring.html">The Ring Substrate</a></li>
-<li><a href="{concepts_url}/quantum-levels.html">Quantum Levels</a></li>
+<li><a href="{concepts_url}/witt-levels.html">Witt Levels</a></li>
 <li><a href="{identities_url}">Algebraic Identities</a></li>
 <li><a href="{concepts_url}/homology.html">Homological Analysis</a></li>
 <li><a href="{pipeline_url}">The PRISM Pipeline</a></li>
@@ -1029,7 +1029,7 @@ verification. Start with the path closest to your background:</p>
 <li><a href="{overview_url}">Overview</a></li>
 <li><a href="{arch_url}">Architecture</a></li>
 <li><a href="{ns_url}">All Namespaces</a></li>
-<li><a href="{concepts_url}/fiber.html">Fiber Bundles</a></li>
+<li><a href="{concepts_url}/site.html">Site Bundles</a></li>
 <li><a href="{concepts_url}/partition.html">Partitions</a></li>
 </ol>
 </article>
@@ -1086,10 +1086,10 @@ intuitions behind the framework:</p>
 
 const READING_ORDER: &[(&str, &str, &str)] = &[
     ("ring", "The Ring Substrate", "kernel"),
-    ("quantum-levels", "Quantum Levels", "kernel"),
+    ("witt-levels", "Witt Levels", "kernel"),
     ("content-addressing", "Content Addressing", "kernel"),
     ("partition", "The Partition Decomposition", "bridge"),
-    ("fiber", "Fiber Bundle Semantics", "bridge"),
+    ("site", "Site Bundle Semantics", "bridge"),
     ("resolution", "Resolution &amp; Queries", "bridge"),
     ("observables", "Observables &amp; Measurement", "bridge"),
     ("proof-system", "Proofs, Derivations &amp; Traces", "bridge"),
@@ -1259,7 +1259,7 @@ fn space_context_html(space: &uor_ontology::model::Space, prefix: &str, base_pat
     let concept_link = match prefix {
         "u" => Some(("content-addressing", "Content Addressing")),
         "schema" => Some(("ring", "The Ring Substrate")),
-        "op" => Some(("quantum-levels", "Quantum Levels")),
+        "op" => Some(("witt-levels", "Witt Levels")),
         "query" | "resolver" => Some(("resolution", "Resolution &amp; Queries")),
         "partition" => Some(("partition", "The Partition Decomposition")),
         "observable" => Some(("observables", "Observables &amp; Measurement")),
@@ -1268,7 +1268,7 @@ fn space_context_html(space: &uor_ontology::model::Space, prefix: &str, base_pat
             Some(("proof-system", "Proofs, Derivations &amp; Traces"))
         }
         "cert" => Some(("proof-system", "Proofs, Derivations &amp; Traces")),
-        "type" | "morphism" | "state" => Some(("fiber", "Fiber Bundle Semantics")),
+        "type" | "morphism" | "state" => Some(("site", "Site Bundle Semantics")),
         _ => None,
     };
 
@@ -1293,7 +1293,7 @@ fn stage_concept_links(section_id: &str, base_path: &str) -> String {
     let links: &[(&str, &str)] = match section_id {
         "stage-define" => &[
             ("ring", "The Ring Substrate"),
-            ("quantum-levels", "Quantum Levels"),
+            ("witt-levels", "Witt Levels"),
             ("content-addressing", "Content Addressing"),
         ],
         "stage-resolve" => &[
@@ -1301,7 +1301,7 @@ fn stage_concept_links(section_id: &str, base_path: &str) -> String {
             ("partition", "The Partition Decomposition"),
             ("observables", "Observables &amp; Measurement"),
             ("homology", "Homological Analysis"),
-            ("fiber", "Fiber Bundle Semantics"),
+            ("site", "Site Bundle Semantics"),
         ],
         "stage-certify" => &[("proof-system", "Proofs, Derivations &amp; Traces")],
         _ => &[],

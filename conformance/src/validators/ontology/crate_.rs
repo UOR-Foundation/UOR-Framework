@@ -60,7 +60,7 @@ fn validate_module_structure(src_dir: &Path, report: &mut ConformanceReport) -> 
         "kernel/schema.rs",
         "kernel/op.rs",
         "kernel/carry.rs",
-        "kernel/cascade.rs",
+        "kernel/reduction.rs",
         "kernel/convergence.rs",
         "kernel/division.rs",
         "kernel/monoidal.rs",
@@ -279,12 +279,11 @@ fn validate_individual_completeness(
                 // The codegen strips common PascalCase-word suffixes to avoid
                 // clippy::enum_variant_names (e.g., MetricAxis strips "Axis",
                 // ComplexityClass strips "Time", RewriteRule strips "Rule",
-                // CoordinateKind strips "Coordinate")
+                // TriadProjection strips "Projection")
                 let suffix = match type_local {
                     "MetricAxis" => Some("Axis"),
                     "ComplexityClass" => Some("Time"),
                     "RewriteRule" => Some("Rule"),
-                    "CoordinateKind" => Some("Coordinate"),
                     "PhaseBoundaryType" => Some("Boundary"),
                     _ => None,
                 };

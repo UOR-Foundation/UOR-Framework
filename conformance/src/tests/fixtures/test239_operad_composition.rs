@@ -11,6 +11,6 @@ operad:test_composition a owl:NamedIndividual, operad:OperadComposition ;
     operad:outerType "Table" ;
     operad:innerType "Tuple" ;
     operad:composedType "Table(Tuple)" ;
-    operad:composedFiberCount "n_rows * n_fields" ;
+    operad:composedSiteCount "n_rows * n_fields" ;
     operad:composedGrounding "row-major flattening" .
 "#;

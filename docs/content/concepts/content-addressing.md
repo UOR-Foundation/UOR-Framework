@@ -4,7 +4,7 @@
 
 **Content addressing** is the principle that an object's identity is determined by
 its content, not by an external location or name. In the UOR framework, this is
-formalized through the {@class https://uor.foundation/u/Address} class.
+formalized through the {@class https://uor.foundation/u/Element} class.
 
 ## Mathematical Basis
 
@@ -22,16 +22,13 @@ The addressing namespace `u/` provides two foundational classes:
 
 | Class | Description |
 |-------|-------------|
-| {@class https://uor.foundation/u/Address} | Universal content address |
-| {@class https://uor.foundation/u/Glyph} | Canonical glyph (minimal representative) |
+| {@class https://uor.foundation/u/Element} | Universal content address |
 
 Properties in the `u/` namespace:
 
 | Property | Description |
 |----------|-------------|
-| {@prop https://uor.foundation/u/glyph} | The glyph of an address |
-| {@prop https://uor.foundation/u/codepoint} | Unicode code point |
-| {@prop https://uor.foundation/u/byteValue} | Byte value in R_n |
+| {@prop https://uor.foundation/u/wittLength} | The Witt level n of this element |
 | {@prop https://uor.foundation/u/length} | Length in bytes |
 | {@prop https://uor.foundation/u/digest} | Content hash (algorithm-prefixed) |
 | {@prop https://uor.foundation/u/digestAlgorithm} | Hash algorithm ('blake3' or 'sha256') |
@@ -45,8 +42,8 @@ identifier and a colon, e.g. `blake3:af13...` or `sha256:e3b0...`.
 
 The hash input is a deterministic byte string stored in
 {@prop https://uor.foundation/u/canonicalBytes}. This canonical form consists of a 4-byte
-header (magic `UR` + quantum level + reserved byte) followed by the datum value in
-little-endian byte order. At quantum level k, the total length is `4 + (k + 1)` bytes.
+header (magic `UR` + Witt level + reserved byte) followed by the datum value in
+little-endian byte order. At Witt level k, the total length is `4 + (k + 1)` bytes.
 
 The {@prop https://uor.foundation/u/digestAlgorithm} property records which algorithm was
 used, ensuring that the algorithm prefix in the digest can be cross-checked.

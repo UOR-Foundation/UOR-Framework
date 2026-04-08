@@ -10,7 +10,7 @@ pub const TEST201_ACCUMULATION_OPERATION: &str = r#"
 # Covers: op:AccumulationOperation
 op:accumulate a owl:NamedIndividual, op:AccumulationOperation ;
     op:arity "2"^^xsd:integer ;
-    op:hasGeometricCharacter op:FiberPinning ;
+    op:hasGeometricCharacter op:SitePinning ;
     op:commutative "false"^^xsd:boolean ;
     op:associative "true"^^xsd:boolean ;
     op:operatorSignature "Binding × Context → Context" .

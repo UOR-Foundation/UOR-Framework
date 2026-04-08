@@ -21,9 +21,9 @@ op:C_1 a op:Identity ;
     op:forAll "constraints A, B" .
 
 op:F_1 a op:Identity ;
-    op:lhs "pinned fiber" ;
+    op:lhs "pinned site" ;
     op:rhs "cannot be unpinned" ;
-    op:forAll "FiberCoordinate" .
+    op:forAll "SiteIndex" .
 
 op:RE_1 a op:Identity ;
     op:lhs "Π_D(T)" ;
@@ -47,8 +47,8 @@ op:AD_1 a op:Identity ;
 
 op:TH_1 a op:Identity ;
     op:lhs "S(state)" ;
-    op:rhs "freeCount × ln 2" ;
-    op:forAll "state ∈ FiberBudget" .
+    op:rhs "freeRank × ln 2" ;
+    op:forAll "state ∈ FreeRank" .
 
 op:CA_1 a op:Identity ;
     op:lhs "add(x,y)_k" ;

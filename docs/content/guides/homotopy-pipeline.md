@@ -8,7 +8,7 @@ constraint nerve.
 
 The {@class https://uor.foundation/resolver/HomotopyResolver} runs stages psi_7
 through psi_9 on a
-{@class https://uor.foundation/resolver/ConstraintNerve}:
+{@class https://uor.foundation/resolver/CechNerve}:
 
 | Stage | Input | Output | Description |
 |-------|-------|--------|-------------|
@@ -17,12 +17,12 @@ through psi_9 on a
 | psi_9 | HomotopyGroups | KInvariants | Compute the {@class https://uor.foundation/homology/KInvariant} classifying each extension |
 
 The resolver connects via {@prop https://uor.foundation/resolver/homotopyTarget}
-(the input ConstraintNerve) and {@prop https://uor.foundation/resolver/homotopyResult}
+(the input CechNerve) and {@prop https://uor.foundation/resolver/homotopyResult}
 (the output HomotopyGroup observables).
 
 ## Prerequisite: Kan Promotion
 
-Before entering psi_7, the ConstraintNerve (already a SimplicialComplex from psi_1)
+Before entering psi_7, the CechNerve (already a SimplicialComplex from psi_1)
 must be promoted to a {@class https://uor.foundation/homology/KanComplex}. Identity
 {@ind https://uor.foundation/op/HT_1} certifies that the finite constraint nerve
 always satisfies the Kan extension condition. The

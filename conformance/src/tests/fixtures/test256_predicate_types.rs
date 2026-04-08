@@ -8,7 +8,7 @@ pub const TEST256_PREDICATE_TYPES: &str = r#"
 
 predicate:ex_type_pred_256 a owl:NamedIndividual, predicate:TypePredicate .
 predicate:ex_state_pred_256 a owl:NamedIndividual, predicate:StatePredicate .
-predicate:ex_fiber_pred_256 a owl:NamedIndividual, predicate:FiberPredicate .
+predicate:ex_site_pred_256 a owl:NamedIndividual, predicate:SitePredicate .
 predicate:ex_dispatch_rule_256 a owl:NamedIndividual, predicate:DispatchRule .
 predicate:ex_dispatch_table_256 a owl:NamedIndividual, predicate:DispatchTable .
 predicate:ex_guarded_trans_256 a owl:NamedIndividual, predicate:GuardedTransition .

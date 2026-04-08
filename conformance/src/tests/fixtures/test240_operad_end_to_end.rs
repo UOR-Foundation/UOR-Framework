@@ -14,6 +14,6 @@ operad:test_e2e_tree a owl:NamedIndividual, operad:OperadComposition ;
     operad:outerType "Tree" ;
     operad:innerType "Symbol" ;
     operad:composedType "Tree(Symbol)" ;
-    operad:composedFiberCount "branching_factor * leaf_count" ;
+    operad:composedSiteCount "branching_factor * leaf_count" ;
     operad:composedGrounding "depth-first traversal" .
 "#;

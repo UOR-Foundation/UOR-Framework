@@ -22,7 +22,7 @@ pub fn module() -> NamespaceModule {
             comment: "Sequential composition of computations via monoidal \
                       product A \u{2297} B.",
             space: Space::Kernel,
-            imports: &[NS_OP, NS_CASCADE, NS_CERT, NS_MORPHISM, NS_SCHEMA],
+            imports: &[NS_OP, NS_REDUCTION, NS_CERT, NS_MORPHISM, NS_SCHEMA],
         },
         classes: classes(),
         properties: properties(),

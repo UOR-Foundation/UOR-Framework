@@ -10,5 +10,5 @@ parallel:ex_product_257 a owl:NamedIndividual, parallel:ParallelProduct .
 parallel:ex_disjointness_cert_257 a owl:NamedIndividual, parallel:DisjointnessCertificate .
 parallel:ex_sync_point_257 a owl:NamedIndividual, parallel:SynchronizationPoint .
 parallel:ex_trace_257 a owl:NamedIndividual, parallel:ParallelTrace .
-parallel:ex_partitioning_257 a owl:NamedIndividual, parallel:FiberPartitioning .
+parallel:ex_partitioning_257 a owl:NamedIndividual, parallel:SitePartitioning .
 "#;

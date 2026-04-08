@@ -27,7 +27,7 @@ pub fn module() -> NamespaceModule {
                       of dimensions 1, 2, 4, 8. Each level carries a Hopf \
                       fibration fiber and Betti signature.",
             space: Space::Kernel,
-            imports: &[NS_OP, NS_CASCADE, NS_OBSERVABLE, NS_HOMOLOGY],
+            imports: &[NS_OP, NS_REDUCTION, NS_OBSERVABLE, NS_HOMOLOGY],
         },
         classes: classes(),
         properties: properties(),

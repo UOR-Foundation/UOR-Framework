@@ -2,7 +2,7 @@
 
 The {@class https://uor.foundation/resolver/IncrementalCompletenessResolver}
 determines whether a {@class https://uor.foundation/type/CompleteType} at
-quantum level Q_n lifts to Q_{n+1} without re-running the full ψ-pipeline from
+Witt level W_n lifts to W_{n+1} without re-running the full psi-pipeline from
 scratch.
 
 ## When to Use This Resolver
@@ -10,23 +10,23 @@ scratch.
 Use `IncrementalCompletenessResolver` instead of the full
 {@class https://uor.foundation/resolver/CompletenessResolver} when:
 
-- You already have a certified CompleteType at Q_n.
-- You want to promote it to Q_{n+1} (the next quantum level).
-- Re-running the full ψ-pipeline would be prohibitively expensive.
+- You already have a certified CompleteType at W_n.
+- You want to promote it to W_{n+1} (the next Witt level).
+- Re-running the full psi-pipeline would be prohibitively expensive.
 
-Identity QLS\_4 guarantees the spectral sequence converges by page E\_{d+2}
+Identity WLS\_4 guarantees the spectral sequence converges by page E\_{d+2}
 where d is the constraint depth, making the incremental approach tractable.
 
-## Step 1 — Declare a QuantumLift
+## Step 1 — Declare a WittLift
 
 ```turtle
 @prefix type:     <https://uor.foundation/type/> .
 @prefix schema:   <https://uor.foundation/schema/> .
 @prefix owl:      <http://www.w3.org/2002/07/owl#> .
 
-type:my_lift a owl:NamedIndividual, type:QuantumLift ;
-    type:liftBase         type:my_q0_complete_type ;
-    type:liftTargetLevel  schema:Q1 .
+type:my_lift a owl:NamedIndividual, type:WittLift ;
+    type:liftBase         type:my_w8_complete_type ;
+    type:liftTargetLevel  schema:W16 .
 ```
 
 ## Step 2 — Run the IncrementalCompletenessResolver
@@ -48,11 +48,11 @@ becomes true at page r, the sequence has converged (QLS\_4) and
 The lift carries a {@class https://uor.foundation/type/LiftObstruction}:
 
 - If {@prop https://uor.foundation/type/obstructionTrivial} is `true`: the lift
-  is complete — identity QLS\_1 applies.
-- If `false`: the obstruction is a non-zero cohomology class localised to fiber
-  position n+1 (QLS\_2). The resolver returns a
+  is complete — identity WLS\_1 applies.
+- If `false`: the obstruction is a non-zero cohomology class localised to site
+  position n+1 (WLS\_2). The resolver returns a
   {@class https://uor.foundation/resolver/LiftRefinementSuggestion} with:
-  - {@prop https://uor.foundation/resolver/liftFiberPosition} — the fiber to
+  - {@prop https://uor.foundation/resolver/liftSitePosition} — the site to
     target.
   - {@prop https://uor.foundation/resolver/obstructionClass} — the
     {@class https://uor.foundation/observable/LiftObstructionClass} to kill.
@@ -61,13 +61,13 @@ The lift carries a {@class https://uor.foundation/type/LiftObstruction}:
 
 A non-trivial obstruction means the type is a
 {@class https://uor.foundation/type/TwistedType}. Per identity MN\_7,
-TwistedType implies a non-zero class in H²(N(C(T')); ℤ/2ℤ). Add the suggested
-constraint from `liftFiberPosition`, re-run the synthesis step, and retry the
-lift. Identity QLS\_3 guarantees basisSize(T') = basisSize(T) + 1 after a
+TwistedType implies a non-zero class in H²(N(C(T')); Z/2Z). Add the suggested
+constraint from `liftSitePosition`, re-run the synthesis step, and retry the
+lift. Identity WLS\_3 guarantees basisSize(T') = basisSize(T) + 1 after a
 successful resolution.
 
 ## Related
 
-- [Quantum Spectral Sequence](../concepts/quantum-spectral-sequence.html)
+- [Witt Spectral Sequence](../concepts/quantum-spectral-sequence.html)
 - [Monodromy](../concepts/monodromy.html)
 - [Type Synthesis Guide](type-synthesis.html)

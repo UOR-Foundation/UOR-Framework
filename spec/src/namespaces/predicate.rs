@@ -1,7 +1,7 @@
 //! `predicate/` namespace — Predicates and dispatch.
 //!
 //! The `predicate/` namespace formalizes boolean-valued functions on kernel
-//! objects: resolver dispatch, cascade guard evaluation, and conditional
+//! objects: resolver dispatch, reduction guard evaluation, and conditional
 //! resolution paths. Every predicate is total (evaluation terminates for
 //! all inputs) and pure (no side effects).
 //!
@@ -23,7 +23,7 @@ pub fn module() -> NamespaceModule {
             iri: NS_PREDICATE,
             label: "UOR Predicates and Dispatch",
             comment: "Boolean-valued functions on kernel objects. Formalizes \
-                      resolver dispatch, cascade guard evaluation, and \
+                      resolver dispatch, reduction guard evaluation, and \
                       conditional resolution paths.",
             space: Space::Kernel,
             imports: &[NS_OP, NS_SCHEMA, NS_TYPE, NS_STATE, NS_EFFECT, NS_PARTITION],
@@ -57,15 +57,15 @@ fn classes() -> Vec<Class> {
             id: "https://uor.foundation/predicate/StatePredicate",
             label: "StatePredicate",
             comment: "A predicate over state:Context or \
-                      cascade:CascadeState. Used for cascade stage guards.",
+                      reduction:ReductionState. Used for reduction step guards.",
             subclass_of: &["https://uor.foundation/predicate/Predicate"],
             disjoint_with: &[],
         },
         Class {
-            id: "https://uor.foundation/predicate/FiberPredicate",
-            label: "FiberPredicate",
-            comment: "A predicate over partition:FiberCoordinate. Used for \
-                      fiber-level selection in geodesic resolution.",
+            id: "https://uor.foundation/predicate/SitePredicate",
+            label: "SitePredicate",
+            comment: "A predicate over partition:SiteIndex. Used for \
+                      site-level selection in geodesic resolution.",
             subclass_of: &["https://uor.foundation/predicate/Predicate"],
             disjoint_with: &[],
         },
@@ -90,9 +90,9 @@ fn classes() -> Vec<Class> {
             id: "https://uor.foundation/predicate/GuardedTransition",
             label: "GuardedTransition",
             comment: "A triple (StatePredicate, effect:Effect, \
-                      cascade:CascadeStage). The guard is a StatePredicate; \
-                      if true, the effect is applied and the cascade advances \
-                      to the target stage.",
+                      reduction:ReductionStep). The guard is a StatePredicate; \
+                      if true, the effect is applied and the reduction advances \
+                      to the target step.",
             subclass_of: &[OWL_THING],
             disjoint_with: &[],
         },
@@ -177,13 +177,13 @@ fn properties() -> Vec<Property> {
         Property {
             id: "https://uor.foundation/predicate/guardTarget",
             label: "guardTarget",
-            comment: "The cascade stage to advance to.",
+            comment: "The reduction step to advance to.",
             kind: PropertyKind::Object,
             functional: true,
             domain: Some("https://uor.foundation/predicate/GuardedTransition"),
-            // Full IRI string: predicate/ cannot import cascade/
-            // because cascade/ will import predicate/ in Phase 3
-            range: "https://uor.foundation/cascade/CascadeStage",
+            // Full IRI string: predicate/ cannot import reduction/
+            // because reduction/ will import predicate/ in Phase 3
+            range: "https://uor.foundation/reduction/ReductionStep",
         },
         Property {
             id: "https://uor.foundation/predicate/matchArms",
@@ -342,23 +342,23 @@ fn individuals() -> Vec<Individual> {
             )],
         },
         Individual {
-            id: "https://uor.foundation/predicate/fiberPinned",
-            type_: "https://uor.foundation/predicate/FiberPredicate",
-            label: "fiberPinned",
-            comment: "True iff the named fiber coordinate is currently pinned.",
+            id: "https://uor.foundation/predicate/sitePinned",
+            type_: "https://uor.foundation/predicate/SitePredicate",
+            label: "sitePinned",
+            comment: "True iff the named site coordinate is currently pinned.",
             properties: &[(
                 EVALUATES_OVER,
-                IndividualValue::IriRef("https://uor.foundation/partition/FiberCoordinate"),
+                IndividualValue::IriRef("https://uor.foundation/partition/SiteIndex"),
             )],
         },
         Individual {
-            id: "https://uor.foundation/predicate/fiberFree",
-            type_: "https://uor.foundation/predicate/FiberPredicate",
-            label: "fiberFree",
-            comment: "True iff the named fiber coordinate is currently free.",
+            id: "https://uor.foundation/predicate/siteFree",
+            type_: "https://uor.foundation/predicate/SitePredicate",
+            label: "siteFree",
+            comment: "True iff the named site coordinate is currently free.",
             properties: &[(
                 EVALUATES_OVER,
-                IndividualValue::IriRef("https://uor.foundation/partition/FiberCoordinate"),
+                IndividualValue::IriRef("https://uor.foundation/partition/SiteIndex"),
             )],
         },
         Individual {
@@ -375,20 +375,20 @@ fn individuals() -> Vec<Individual> {
             id: "https://uor.foundation/predicate/budgetExhausted",
             type_: "https://uor.foundation/predicate/StatePredicate",
             label: "budgetExhausted",
-            comment: "True iff the FiberBudget deficit is zero.",
+            comment: "True iff the FreeRank deficit is zero.",
             properties: &[(
                 EVALUATES_OVER,
-                IndividualValue::IriRef("https://uor.foundation/partition/FiberBudget"),
+                IndividualValue::IriRef("https://uor.foundation/partition/FreeRank"),
             )],
         },
         Individual {
-            id: "https://uor.foundation/predicate/cascadeConverged",
+            id: "https://uor.foundation/predicate/reductionConverged",
             type_: "https://uor.foundation/predicate/StatePredicate",
-            label: "cascadeConverged",
-            comment: "True iff the cascade fixpoint has been reached.",
+            label: "reductionConverged",
+            comment: "True iff the reduction fixpoint has been reached.",
             properties: &[(
                 EVALUATES_OVER,
-                IndividualValue::IriRef("https://uor.foundation/cascade/CascadeState"),
+                IndividualValue::IriRef("https://uor.foundation/reduction/ReductionState"),
             )],
         },
     ]

@@ -61,7 +61,7 @@ impl Ontology {
     /// Assembly order follows the dependency graph specified in the UOR Foundation
     /// completion plan:
     /// `u → schema → op → query → resolver → type → partition →
-    ///  observable → carry → homology → cohomology → proof → derivation → trace → cert → morphism → state → cascade → convergence → division → interaction → monoidal → operad → effect → predicate → parallel → stream → failure → linear → recursion → region → boundary → conformance`
+    ///  observable → carry → homology → cohomology → proof → derivation → trace → cert → morphism → state → reduction → convergence → division → interaction → monoidal → operad → effect → predicate → parallel → stream → failure → linear → recursion → region → boundary → conformance`
     #[must_use]
     pub fn full() -> &'static Ontology {
         static ONTOLOGY: std::sync::OnceLock<Ontology> = std::sync::OnceLock::new();
@@ -86,7 +86,7 @@ impl Ontology {
                 namespaces::cert::module(),
                 namespaces::morphism::module(),
                 namespaces::state::module(),
-                namespaces::cascade::module(),
+                namespaces::reduction::module(),
                 namespaces::convergence::module(),
                 namespaces::division::module(),
                 namespaces::interaction::module(),

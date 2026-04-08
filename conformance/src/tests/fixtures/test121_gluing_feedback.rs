@@ -9,8 +9,8 @@ pub const TEST121_GLUING_FEEDBACK: &str = r#"
 
 op:GO_1 a owl:NamedIndividual, op:Identity ;
     rdfs:label "GO_1" ;
-    op:lhs "pinsFibers(killing constraint for obstruction c)" ;
-    op:rhs "superset of pinsFibers(C_i) cap pinsFibers(C_j)" ;
+    op:lhs "pinsSites(killing constraint for obstruction c)" ;
+    op:rhs "superset of pinsSites(C_i) cap pinsSites(C_j)" ;
     op:forAll "GluingObstruction c, cycle pair (C_i, C_j)" ;
     op:verificationDomain op:Topological ;
     op:universallyValid "true"^^xsd:boolean .

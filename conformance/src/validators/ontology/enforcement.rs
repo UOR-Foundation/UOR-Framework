@@ -126,7 +126,7 @@ fn validate_builder_completeness(content: &str, report: &mut ConformanceReport) 
         "StreamDeclarationBuilder",
         "PredicateDeclarationBuilder",
         "ParallelDeclarationBuilder",
-        "QuantumLevelDeclarationBuilder",
+        "WittLevelDeclarationBuilder",
     ];
     let mut all_present = true;
     for builder in &builders {
@@ -179,24 +179,24 @@ fn validate_shape_violation_struct(content: &str, report: &mut ConformanceReport
     }
 }
 
-/// Check that `Derivation` and `FiberBudget` have private fields.
+/// Check that `Derivation` and `FreeRank` have private fields.
 fn validate_witness_opacity(content: &str, report: &mut ConformanceReport) {
     let derivation_private = content.contains("pub struct Derivation {")
         && content.contains("step_count: u32,")
         && !content.contains("pub step_count: u32,");
-    let fiber_private = content.contains("pub struct FiberBudget {")
+    let free_rank_private = content.contains("pub struct FreeRank {")
         && content.contains("total: u32,")
         && !content.contains("pub total: u32,");
 
-    if derivation_private && fiber_private {
+    if derivation_private && free_rank_private {
         report.push(TestResult::pass(
             VALIDATOR,
-            "Derivation and FiberBudget have private fields",
+            "Derivation and FreeRank have private fields",
         ));
     } else {
         report.push(TestResult::fail(
             VALIDATOR,
-            "Derivation and FiberBudget must have private fields",
+            "Derivation and FreeRank must have private fields",
         ));
     }
 }

@@ -47,8 +47,8 @@ cargo run --bin uor-conformance
 |------|-------------------|
 | test34 | CompletenessCandidate, CompletenessWitness, CompletenessResolver (Amendment 25) |
 | test35 | CompletenessCertificate, CompletenessAuditTrail, witnessCount (Amendment 25) |
-| test36 | Q1Ring, Q1bitWidth, Q1capacity, nextLevel chain (Amendment 26) |
-| test37 | QuantumLevelBinding, universallyValid, verifiedAtLevel (Amendment 26) |
+| test36 | W16Ring, W16bitWidth, W16capacity, nextWittLevel chain (Amendment 26) |
+| test37 | WittLevelBinding, universallyValid, verifiedAtLevel (Amendment 26) |
 | test38 | Session, BindingAccumulator, SessionResolver, SessionQuery (Amendment 27) |
 | test39 | SessionBoundary, SessionBoundaryType vocabulary individuals (Amendment 27) |
 | test40 | TypeSynthesisGoal, TypeSynthesisResolver, synthesisGoal (Amendment 28) |
@@ -60,22 +60,22 @@ cargo run --bin uor-conformance
 | test46 | MonodromyResolver end-to-end pipeline: ConstrainedType → HolonomyGroup → MonodromyClass → TwistedType (Amendment 30) |
 | test47 | ThermoObservable + hardnessEstimate + ComputationTrace + residualEntropy (Amendment 31) |
 | test48 | CatastropheObservable + phaseN/phaseG + PhaseBoundaryType + onResonanceLine (Amendment 31) |
-| test49 | FiberBudget + FiberCoordinate + ancillaFiber + reversibleStrategy (Amendment 31) |
+| test49 | FreeRank + SiteIndex + ancillaSite + reversibleStrategy (Amendment 31) |
 | test50 | JacobianGuidedResolver + ResolutionState + guidingJacobian (Amendment 31) |
-| test51 | ProductType + component assertions + FiberBudget (Amendment 31) |
+| test51 | ProductType + component assertions + FreeRank (Amendment 31) |
 | test52 | SumType + variant assertions (Amendment 31) |
-| test53 | SuperposedFiberState + amplitude + SuperpositionResolver (Amendment 32) |
+| test53 | SuperposedSiteState + amplitude + SuperpositionResolver (Amendment 32) |
 
 ### SHACL Tests 54–100 (v4.1.0–v5.0.0)
 
 | Test | What It Validates |
 |------|-------------------|
-| test54 | SaturatedContext + saturationDegree + contextTemperature + isSaturated (Amendment 33) |
-| test55 | SaturationWitness + witnessBinding + witnessStep + residualFreeCount (Amendment 33) |
-| test56 | DomainSaturationRecord + saturatedDomain + domainFreeCount (Amendment 33) |
-| test57 | SaturationPhase vocabulary: Unsaturated, PartialSaturation, FullSaturation (Amendment 33) |
-| test58 | SaturationCertificate + certifiedSaturation + saturationWitness (Amendment 33) |
-| test59 | SaturationAwareResolver + usedSaturation (Amendment 33) |
+| test54 | GroundedContext + groundingDegree + contextTemperature + isGrounded (Amendment 33) |
+| test55 | GroundingWitness + witnessBinding + witnessStep + residualFreeRank (Amendment 33) |
+| test56 | DomainGroundingRecord + groundedDomain + domainFreeRank (Amendment 33) |
+| test57 | GroundingPhase vocabulary: Open, PartialGrounding, FullGrounding (Amendment 33) |
+| test58 | GroundingCertificate + certifiedGrounding + groundingWitness (Amendment 33) |
+| test59 | GroundingAwareResolver + usedGrounding (Amendment 33) |
 | test60 | ImpossibilityWitness + forbidsSignature + impossibilityReason (Amendment 34) |
 | test61 | MorphospaceRecord + achievabilityStatus + verifiedAtLevel (Amendment 34) |
 | test62 | MorphospaceBoundary + boundaryType (Amendment 34) |
@@ -86,10 +86,10 @@ cargo run --bin uor-conformance
 | test67 | GeodesicViolation + violationReason (Amendment 35) |
 | test68 | GeodesicValidator + validateGeodesic (Amendment 35) |
 | test69 | GeodesicTrace + adiabaticallyOrdered + jacobianAtStep (Amendment 35) |
-| test70 | MeasurementResolver + collapseAmplitude + collapsedFiber (Amendment 36) |
+| test70 | MeasurementResolver + collapseAmplitude + collapsedSite (Amendment 36) |
 | test71 | MeasurementEvent + preCollapseEntropy + postCollapseLandauerCost (Amendment 36) |
 | test72 | MeasurementCertificate + certifiedMeasurement + vonNeumannEntropy + landauerCost (Amendment 36) |
-| test73 | CollapsedFiberState + collapsedFrom + survivingAmplitude (Amendment 36) |
+| test73 | CollapsedSiteState + collapsedFrom + survivingAmplitude (Amendment 36) |
 | test74 | QuantumThermodynamicDomain + QuantumThermodynamic verification domain (Amendment 36) |
 
 ### SHACL Tests 75–84 (v4.2.0)
@@ -102,7 +102,7 @@ cargo run --bin uor-conformance
 | test78 | GeodesicEvidenceBundle + evidenceBundle + isAR1Ordered + isDC10Selected (Amendment 37) |
 | test79 | BornRuleVerification + bornRuleVerified (Amendment 37) |
 | test80 | NormativeComputationType + normalizationVerified + holonomyClassified (Amendment 37) |
-| test81 | SpectralSequencePage + levelSuccessor linkage (Amendment 37) |
+| test81 | SpectralSequencePage + wittLevelPredecessor linkage (Amendment 37) |
 | test82 | amplitudeVector on resolver + priorAmplitudeVector (Amendment 37) |
 | test83 | amplitudeVector on trace + rotationExponent + reflectionBit (Amendment 37) |
 | test84 | VerificationDomain individual with enumVariant annotation (Amendment 37) |
@@ -111,7 +111,7 @@ cargo run --bin uor-conformance
 
 | Test | What It Validates |
 |------|-------------------|
-| test85 | Q1Ring individual grounding at quantum level Q1 (Amendment 39) |
+| test85 | W16Ring individual grounding at Witt level W16 (Amendment 39) |
 | test86 | QuantumLift with trivial LiftObstruction — Q1 lift (Amendment 39) |
 | test87 | SpectralSequencePage convergence at E2 — Q1 scale (Amendment 39) |
 | test88 | Non-trivial LiftObstruction with TwistedType — Q1 scale (Amendment 39) |
@@ -154,7 +154,7 @@ cargo run --bin uor-conformance
 
 | Test | What It Validates |
 |------|-------------------|
-| test113 | CC\_PINS and CC\_COST\_FIBER identity grounding (Amendment 44) |
+| test113 | CC\_PINS and CC\_COST\_SITE identity grounding (Amendment 44) |
 | test114 | jsat\_RR, jsat\_CR, jsat\_CC identity grounding (Amendment 44) |
 | test115 | D\_8 and D\_9 identity grounding (Amendment 44) |
 | test116 | EXP\_1, EXP\_2, EXP\_3 identity grounding (Amendment 44) |
@@ -170,14 +170,14 @@ cargo run --bin uor-conformance
 
 | Test | What It Validates |
 |------|-------------------|
-| test124 | u:Glyph class (Amendment 45) |
+| test124 | (removed — Glyph deleted from foundation) |
 | test125 | op:DihedralGroup class (Amendment 45) |
 | test126 | op:ValidityScopeKind enum class (Amendment 45) |
-| test127 | resolver:QuantumLevelResolver class (Amendment 45) |
+| test127 | resolver:WittLevelResolver class (Amendment 45) |
 | test128 | observable:StratumObservable class (Amendment 45) |
 | test129 | observable:MetricObservable class (Amendment 45) |
 | test130 | observable:PathObservable class (Amendment 45) |
-| test131 | observable:CascadeObservable class (Amendment 45) |
+| test131 | observable:ReductionObservable class (Amendment 45) |
 | test132 | observable:HolonomyObservable class (Amendment 45) |
 | test133 | observable:IncompatibilityMetric class (Amendment 45) |
 | test134 | observable:StratumValue class (Amendment 45) |
@@ -186,14 +186,14 @@ cargo run --bin uor-conformance
 | test137 | observable:PathLength class (Amendment 45) |
 | test138 | observable:TotalVariation class (Amendment 45) |
 | test139 | observable:WindingNumber class (Amendment 45) |
-| test140 | observable:CascadeLength class (Amendment 45) |
-| test141 | observable:CascadeCount class (Amendment 45) |
+| test140 | observable:ReductionLength class (Amendment 45) |
+| test141 | observable:ReductionCount class (Amendment 45) |
 | test142 | observable:CatastropheThreshold class (Amendment 45) |
 | test143 | observable:CatastropheCount class (Amendment 45) |
 | test144 | observable:Commutator class (Amendment 45) |
 | test145 | observable:CurvatureFlux class (Amendment 45) |
 | test146 | observable:ParallelTransport class (Amendment 45) |
-| test147 | observable:CascadeEntropy class (Amendment 45) |
+| test147 | observable:ReductionEntropy class (Amendment 45) |
 | test148 | observable:PhaseBoundaryType enum class (Amendment 45) |
 | test149 | homology:FaceMap class (Amendment 45) |
 | test150 | homology:NerveFunctor class (Amendment 45) |
@@ -216,10 +216,10 @@ cargo run --bin uor-conformance
 
 | Test | What It Validates |
 |------|-------------------|
-| test160 | state:SharedContext + state:ContextLease multi-session leasing with two fiber-disjoint leases (Amendment 48) |
+| test160 | state:SharedContext + state:ContextLease multi-session leasing with two site-disjoint leases (Amendment 48) |
 | test161 | resolver:ExecutionPolicy + resolver:ExecutionPolicyKind scheduling vocabulary (MinFreeCountFirst individual) (Amendment 48) |
 | test162 | state:SessionComposition with composedFrom, compositionCompatible, compositionResult, towerConsistencyVerified (Amendment 48) |
-| test163 | Distributed saturation: SharedContext → two ContextLeases → SessionComposition → SaturatedContext (Amendment 48) |
+| test163 | Distributed grounding: SharedContext → two ContextLeases → SessionComposition → GroundedContext (Amendment 48) |
 
 ### SHACL Tests 164–167 (v6.0.0)
 

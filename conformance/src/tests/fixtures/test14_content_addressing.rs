@@ -1,6 +1,6 @@
 //! Test 14: Content addressing case study.
 //!
-//! Validates: Address → Observable taxonomy → InvolutionCertificate.
+//! Validates: Element → Observable taxonomy → InvolutionCertificate.
 
 /// Instance graph for Test 14: Content addressing.
 pub const TEST14_CONTENT_ADDRESSING: &str = r#"
@@ -18,9 +18,9 @@ pub const TEST14_CONTENT_ADDRESSING: &str = r#"
     a               owl:NamedIndividual, schema:Datum ;
     schema:value    "48656C6C6F" .
 
-# Its content address
+# Its content element
 <https://uor.foundation/instance/ca/address>
-    a               owl:NamedIndividual, u:Address ;
+    a               owl:NamedIndividual, u:Element ;
     u:digest        "sha256:2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824" ;
     u:addresses     <https://uor.foundation/instance/ca/datum> .
 

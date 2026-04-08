@@ -36,17 +36,17 @@ pub trait ComputationTrace<P: Primitives> {
     type GeodesicViolation: GeodesicViolation<P>;
     /// A GeodesicViolation record indicating where the trace deviated from the geodesic condition.
     fn geodesic_violation(&self) -> &[Self::GeodesicViolation];
-    /// The total entropy cost accumulated across all steps of a trace. On a geodesic, equals freeCount_initial × ln 2 (GD_3).
+    /// The total entropy cost accumulated across all steps of a trace. On a geodesic, equals freeRank_initial × ln 2 (GD_3).
     fn cumulative_entropy_cost(&self) -> P::Decimal;
-    /// Whether the step sequence of this trace follows the AR_1 adiabatic ordering (decreasing freeCount × cost-per-fiber).
+    /// Whether the step sequence of this trace follows the AR_1 adiabatic ordering (decreasing freeRank × cost-per-site).
     fn adiabatically_ordered(&self) -> P::Boolean;
     /// Associated type for `MeasurementEvent`.
     type MeasurementEvent: MeasurementEvent<P>;
     /// A MeasurementEvent step within this computation trace.
     fn measurement_event(&self) -> &[Self::MeasurementEvent];
-    /// Whether this computation trace has steps ordered by the AR_1 adiabatic metric (decreasing freeCount × cost-per-fiber). One of the two sub-predicates of isGeodesic (GD_6).
+    /// Whether this computation trace has steps ordered by the AR_1 adiabatic metric (decreasing freeRank × cost-per-site). One of the two sub-predicates of isGeodesic (GD_6).
     fn is_ar1_ordered(&self) -> P::Boolean;
-    /// Whether each step of this computation trace was selected by the DC_10 Jacobian criterion (maximal J_k among free fibers). One of the two sub-predicates of isGeodesic (GD_6).
+    /// Whether each step of this computation trace was selected by the DC_10 Jacobian criterion (maximal J_k among free sites). One of the two sub-predicates of isGeodesic (GD_6).
     fn is_dc10_selected(&self) -> P::Boolean;
 }
 
@@ -94,9 +94,9 @@ pub trait GeodesicViolation<P: Primitives> {
     fn violation_reason(&self) -> &P::String;
 }
 
-/// A specialized computation step recording a single projective collapse of a SuperposedFiberState. Carries pre-collapse entropy and post-collapse Landauer cost (QM_1).
+/// A specialized computation step recording a single projective collapse of a SuperposedSiteState. Carries pre-collapse entropy and post-collapse Landauer cost (QM_1).
 pub trait MeasurementEvent<P: Primitives>: ComputationStep<P> {
-    /// The von Neumann entropy S_vN of the SuperposedFiberState before projective collapse.
+    /// The von Neumann entropy S_vN of the SuperposedSiteState before projective collapse.
     fn pre_collapse_entropy(&self) -> P::Decimal;
     /// The Landauer cost incurred by the projective collapse. Equals preCollapseEntropy at β* = ln 2 (QM_1).
     fn post_collapse_landauer_cost(&self) -> P::Decimal;
@@ -106,11 +106,11 @@ pub trait MeasurementEvent<P: Primitives>: ComputationStep<P> {
     fn amplitude_vector(&self) -> P::Decimal;
 }
 
-/// A single outcome of a projective measurement on a SuperposedFiberState, recording the classical fiber index (outcomeValue) and its Born-rule probability |α_k|² (outcomeProbability). Multiple outcomes form the probability distribution of a measurement.
+/// A single outcome of a projective measurement on a SuperposedSiteState, recording the classical site index (outcomeValue) and its Born-rule probability |α_k|² (outcomeProbability). Multiple outcomes form the probability distribution of a measurement.
 pub trait MeasurementOutcome<P: Primitives> {
-    /// The classical fiber index selected by projective collapse in this measurement outcome.
+    /// The classical site index selected by projective collapse in this measurement outcome.
     fn outcome_value(&self) -> P::NonNegativeInteger;
-    /// The Born-rule probability of this measurement outcome: |α_k|² where α_k is the amplitude of the collapsed fiber.
+    /// The Born-rule probability of this measurement outcome: |α_k|² where α_k is the amplitude of the collapsed site.
     fn outcome_probability(&self) -> P::Decimal;
 }
 

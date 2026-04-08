@@ -6,7 +6,7 @@
 
 use crate::Primitives;
 
-/// A contiguous range of u:Address values accessible during a single cascade stage. Defines the resolver’s working set.
+/// A contiguous range of u:Element values accessible during a single reduction step. Defines the resolver’s working set.
 pub trait AddressRegion<P: Primitives> {
     /// Associated type for `RegionBound`.
     type RegionBound: RegionBound<P>;
@@ -22,27 +22,27 @@ pub trait AddressRegion<P: Primitives> {
 
 /// The boundary of an AddressRegion: a pair (lowerAddress, upperAddress) in the content-address ordering.
 pub trait RegionBound<P: Primitives> {
-    /// Associated type for `Address`.
-    type Address: crate::kernel::address::Address<P>;
+    /// Associated type for `Element`.
+    type Element: crate::kernel::address::Element<P>;
     /// The lower bound of the address range.
-    fn region_lower(&self) -> &Self::Address;
+    fn region_lower(&self) -> &Self::Element;
     /// The upper bound of the address range.
-    fn region_upper(&self) -> &Self::Address;
+    fn region_upper(&self) -> &Self::Element;
 }
 
-/// A metric on u:Address values determining which addresses are near each other for resolution purposes.
+/// A metric on u:Element values determining which addresses are near each other for resolution purposes.
 pub trait LocalityMetric<P: Primitives>: crate::bridge::observable::MetricObservable<P> {}
 
-/// The set of AddressRegions needed by a resolver at a specific cascade stage for a specific type. Computable from the type’s constraint nerve.
+/// The set of AddressRegions needed by a resolver at a specific reduction step for a specific type. Computable from the type’s constraint nerve.
 pub trait WorkingSet<P: Primitives> {
     /// Associated type for `AddressRegion`.
     type AddressRegion: AddressRegion<P>;
     /// The address regions composing this working set.
     fn working_set_regions(&self) -> &[Self::AddressRegion];
-    /// Associated type for `CascadeStage`.
-    type CascadeStage: crate::kernel::cascade::CascadeStage<P>;
-    /// The cascade stage this working set applies to.
-    fn working_set_stage(&self) -> &Self::CascadeStage;
+    /// Associated type for `ReductionStep`.
+    type ReductionStep: crate::kernel::reduction::ReductionStep<P>;
+    /// The reduction step this working set applies to.
+    fn working_set_stage(&self) -> &Self::ReductionStep;
     /// Associated type for `TypeDefinition`.
     type TypeDefinition: crate::user::type_::TypeDefinition<P>;
     /// The type being resolved.
@@ -51,12 +51,12 @@ pub trait WorkingSet<P: Primitives> {
     fn working_set_size(&self) -> P::NonNegativeInteger;
 }
 
-/// An assignment of AddressRegions to cascade stages for a given computation. Enables Prism to pre-compute memory layout.
+/// An assignment of AddressRegions to reduction steps for a given computation. Enables Prism to pre-compute memory layout.
 pub trait RegionAllocation<P: Primitives> {
-    /// Associated type for `CascadeStage`.
-    type CascadeStage: crate::kernel::cascade::CascadeStage<P>;
-    /// Cascade stages in this allocation.
-    fn allocation_stage(&self) -> &[Self::CascadeStage];
+    /// Associated type for `ReductionStep`.
+    type ReductionStep: crate::kernel::reduction::ReductionStep<P>;
+    /// Reduction steps in this allocation.
+    fn allocation_stage(&self) -> &[Self::ReductionStep];
     /// Associated type for `WorkingSet`.
     type WorkingSet: WorkingSet<P>;
     /// The working sets assigned to each stage.

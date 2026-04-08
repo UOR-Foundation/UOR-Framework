@@ -23,13 +23,13 @@ pub fn generate_enforcement_module() -> String {
          //! # Layers\n\
          //!\n\
          //! - **Layer 1** \\[Opaque Witnesses\\]: `Datum`, `Validated<T>`, `Derivation`,\n\
-         //!   `FiberBudget` \\[private fields, no public constructors\\]\n\
+         //!   `FreeRank` \\[private fields, no public constructors\\]\n\
          //! - **Layer 2** \\[Declarative Builders\\]: `CompileUnitBuilder`,\n\
          //!   `EffectDeclarationBuilder`, etc. \\[produce `Validated<T>` on success\\]\n\
          //! - **Term AST**: `Term`, `TermArena`, `Binding`, `Assertion`, etc.",
     );
 
-    f.line("use crate::{PrimitiveOp, QuantumLevel, VerificationDomain, ViolationKind};");
+    f.line("use crate::{PrimitiveOp, WittLevel, VerificationDomain, ViolationKind};");
     f.blank();
 
     generate_sealed_module(&mut f);
@@ -83,11 +83,11 @@ fn generate_datum_types(f: &mut RustFile) {
     f.doc_comment("A ring element at its minting quantum level.");
     f.doc_comment("");
     f.doc_comment("Cannot be constructed outside the `uor_foundation` crate.");
-    f.doc_comment("The only way to obtain a `Datum` is through cascade evaluation");
+    f.doc_comment("The only way to obtain a `Datum` is through reduction evaluation");
     f.doc_comment("or the two-phase minting boundary (`validate_and_mint_coord` /");
     f.doc_comment("`validate_and_mint_tuple`).");
     f.doc_example(
-        "// A Datum is produced by cascade evaluation or the minting boundary —\n\
+        "// A Datum is produced by reduction evaluation or the minting boundary —\n\
          // you never construct one directly.\n\
          fn inspect_datum(d: &uor_foundation::enforcement::Datum) {\n\
          \x20   // Query its quantum level (Q0 = 8-bit, Q7 = 64-bit, etc.)\n\
@@ -107,16 +107,16 @@ fn generate_datum_types(f: &mut RustFile) {
     f.line("}");
     f.blank();
     f.line("impl Datum {");
-    f.indented_doc_comment("Returns the quantum level at which this datum was minted.");
+    f.indented_doc_comment("Returns the Witt level at which this datum was minted.");
     f.line("    #[inline]");
     f.line("    #[must_use]");
-    f.line("    pub const fn level(&self) -> QuantumLevel {");
+    f.line("    pub const fn level(&self) -> WittLevel {");
     f.line("        match self.inner {");
-    f.line("            DatumInner::Q0(_) => QuantumLevel::Q0,");
-    f.line("            DatumInner::Q1(_) => QuantumLevel::Q1,");
-    f.line("            DatumInner::Q3(_) => QuantumLevel::new(3),");
-    f.line("            DatumInner::Q7(_) => QuantumLevel::new(7),");
-    f.line("            DatumInner::Q511(_) => QuantumLevel::new(511),");
+    f.line("            DatumInner::Q0(_) => WittLevel::W8,");
+    f.line("            DatumInner::Q1(_) => WittLevel::W16,");
+    f.line("            DatumInner::Q3(_) => WittLevel::new(32),");
+    f.line("            DatumInner::Q7(_) => WittLevel::new(64),");
+    f.line("            DatumInner::Q511(_) => WittLevel::new(4096),");
     f.line("        }");
     f.line("    }");
     f.blank();
@@ -326,17 +326,17 @@ fn generate_witness_types(f: &mut RustFile) {
     f.doc_comment("can only be constructed within this crate.");
     f.doc_example(
         "use uor_foundation::enforcement::{CompileUnitBuilder, Term};\n\
-         use uor_foundation::{QuantumLevel, VerificationDomain};\n\
+         use uor_foundation::{WittLevel, VerificationDomain};\n\
          \n\
          // Validated<T> proves that a value passed conformance checking.\n\
          // You cannot construct one directly — only builder validate() methods\n\
          // and the minting boundary produce them.\n\
-         let terms = [Term::Literal { value: 1, level: QuantumLevel::Q0 }];\n\
+         let terms = [Term::Literal { value: 1, level: WittLevel::W8 }];\n\
          let domains = [VerificationDomain::Enumerative];\n\
          \n\
          let validated = CompileUnitBuilder::new()\n\
          \x20   .root_term(&terms)\n\
-         \x20   .quantum_level_ceiling(QuantumLevel::Q0)\n\
+         \x20   .witt_level_ceiling(WittLevel::W8)\n\
          \x20   .thermodynamic_budget(1024)\n\
          \x20   .target_domains(&domains)\n\
          \x20   .validate()\n\
@@ -408,40 +408,40 @@ fn generate_witness_types(f: &mut RustFile) {
     f.line("}");
     f.blank();
 
-    // FiberBudget
-    f.doc_comment("An opaque fiber budget that can only be decremented by `PinningEffect`");
+    // FreeRank
+    f.doc_comment("An opaque free rank that can only be decremented by `PinningEffect`");
     f.doc_comment("and incremented by `UnbindingEffect` \\[never by direct mutation\\].");
     f.line("#[derive(Debug, Clone, PartialEq, Eq)]");
-    f.line("pub struct FiberBudget {");
-    f.indented_doc_comment("Total fiber capacity at the quantum level.");
+    f.line("pub struct FreeRank {");
+    f.indented_doc_comment("Total site capacity at the Witt level.");
     f.line("    total: u32,");
-    f.indented_doc_comment("Currently pinned fibers.");
+    f.indented_doc_comment("Currently pinned sites.");
     f.line("    pinned: u32,");
     f.line("}");
     f.blank();
-    f.line("impl FiberBudget {");
-    f.indented_doc_comment("Returns the total fiber capacity.");
+    f.line("impl FreeRank {");
+    f.indented_doc_comment("Returns the total site capacity.");
     f.line("    #[inline]");
     f.line("    #[must_use]");
     f.line("    pub const fn total(&self) -> u32 {");
     f.line("        self.total");
     f.line("    }");
     f.blank();
-    f.indented_doc_comment("Returns the number of currently pinned fibers.");
+    f.indented_doc_comment("Returns the number of currently pinned sites.");
     f.line("    #[inline]");
     f.line("    #[must_use]");
     f.line("    pub const fn pinned(&self) -> u32 {");
     f.line("        self.pinned");
     f.line("    }");
     f.blank();
-    f.indented_doc_comment("Returns the number of remaining (unpinned) fibers.");
+    f.indented_doc_comment("Returns the number of remaining (unpinned) sites.");
     f.line("    #[inline]");
     f.line("    #[must_use]");
     f.line("    pub const fn remaining(&self) -> u32 {");
     f.line("        self.total - self.pinned");
     f.line("    }");
     f.blank();
-    f.indented_doc_comment("Creates a new fiber budget. Only callable within the crate.");
+    f.indented_doc_comment("Creates a new free rank. Only callable within the crate.");
     f.line("    #[inline]");
     f.line("    #[allow(dead_code)]");
     f.line("    pub(crate) const fn new(total: u32, pinned: u32) -> Self {");
@@ -471,14 +471,14 @@ fn generate_term_ast(f: &mut RustFile) {
     f.doc_comment("`#![no_std]`-safe: no heap allocation.");
     f.doc_example(
         "use uor_foundation::enforcement::{TermArena, Term, TermList};\n\
-         use uor_foundation::{QuantumLevel, PrimitiveOp};\n\
+         use uor_foundation::{WittLevel, PrimitiveOp};\n\
          \n\
          // Build the expression `add(3, 5)` bottom-up in an arena.\n\
          let mut arena = TermArena::<4>::new();\n\
          \n\
          // Push leaves first:\n\
-         let idx_3 = arena.push(Term::Literal { value: 3, level: QuantumLevel::Q0 });\n\
-         let idx_5 = arena.push(Term::Literal { value: 5, level: QuantumLevel::Q0 });\n\
+         let idx_3 = arena.push(Term::Literal { value: 3, level: WittLevel::W8 });\n\
+         let idx_5 = arena.push(Term::Literal { value: 5, level: WittLevel::W8 });\n\
          \n\
          // Push the application node, referencing the leaves by index:\n\
          let idx_add = arena.push(Term::Application {\n\
@@ -566,10 +566,10 @@ fn generate_term_ast(f: &mut RustFile) {
     f.doc_comment("`#![no_std]`-safe.");
     f.doc_example(
         "use uor_foundation::enforcement::{Term, TermList};\n\
-         use uor_foundation::{QuantumLevel, PrimitiveOp};\n\
+         use uor_foundation::{WittLevel, PrimitiveOp};\n\
          \n\
-         // Literal: an integer value tagged with a quantum level.\n\
-         let lit = Term::Literal { value: 42, level: QuantumLevel::Q0 };\n\
+         // Literal: an integer value tagged with a Witt level.\n\
+         let lit = Term::Literal { value: 42, level: WittLevel::W8 };\n\
          \n\
          // Application: an operation applied to arguments.\n\
          // `args` is a TermList { start, len } pointing into a TermArena.\n\
@@ -578,21 +578,21 @@ fn generate_term_ast(f: &mut RustFile) {
          \x20   args: TermList { start: 0, len: 2 },\n\
          };\n\
          \n\
-         // Lift: canonical injection from a lower to a higher quantum level.\n\
-         let lift = Term::Lift { operand_index: 0, target: QuantumLevel::new(3) };\n\
+         // Lift: canonical injection from a lower to a higher Witt level.\n\
+         let lift = Term::Lift { operand_index: 0, target: WittLevel::new(32) };\n\
          \n\
          // Project: canonical surjection from a higher to a lower level.\n\
-         let proj = Term::Project { operand_index: 0, target: QuantumLevel::Q0 };",
+         let proj = Term::Project { operand_index: 0, target: WittLevel::W8 };",
         "rust",
     );
     f.line("#[derive(Debug, Clone, PartialEq, Eq)]");
     f.line("pub enum Term {");
-    f.indented_doc_comment("Integer literal with quantum level annotation.");
+    f.indented_doc_comment("Integer literal with Witt level annotation.");
     f.line("    Literal {");
     f.line("        /// The literal integer value.");
     f.line("        value: u64,");
-    f.line("        /// The quantum level of this literal.");
-    f.line("        level: QuantumLevel,");
+    f.line("        /// The Witt level of this literal.");
+    f.line("        level: WittLevel,");
     f.line("    },");
     f.indented_doc_comment("Variable reference by name index.");
     f.line("    Variable {");
@@ -606,19 +606,19 @@ fn generate_term_ast(f: &mut RustFile) {
     f.line("        /// Argument list (indices into arena).");
     f.line("        args: TermList,");
     f.line("    },");
-    f.indented_doc_comment("Lift: canonical injection Q_n to Q_m (n < m, lossless).");
+    f.indented_doc_comment("Lift: canonical injection W_n to W_m (n < m, lossless).");
     f.line("    Lift {");
     f.line("        /// Index of the operand term in the arena.");
     f.line("        operand_index: u32,");
-    f.line("        /// Target quantum level.");
-    f.line("        target: QuantumLevel,");
+    f.line("        /// Target Witt level.");
+    f.line("        target: WittLevel,");
     f.line("    },");
-    f.indented_doc_comment("Project: canonical surjection Q_m to Q_n (m > n, lossy).");
+    f.indented_doc_comment("Project: canonical surjection W_m to W_n (m > n, lossy).");
     f.line("    Project {");
     f.line("        /// Index of the operand term in the arena.");
     f.line("        operand_index: u32,");
-    f.line("        /// Target quantum level.");
-    f.line("        target: QuantumLevel,");
+    f.line("        /// Target Witt level.");
+    f.line("        target: WittLevel,");
     f.line("    },");
     f.indented_doc_comment("Match expression with pattern-result pairs.");
     f.line("    Match {");
@@ -733,7 +733,7 @@ fn generate_shape_violation(f: &mut RustFile) {
          let violation = ShapeViolation {\n\
          \x20   shape_iri: \"https://uor.foundation/conformance/CompileUnitShape\",\n\
          \x20   constraint_iri: \"https://uor.foundation/conformance/compileUnit_rootTerm_constraint\",\n\
-         \x20   property_iri: \"https://uor.foundation/cascade/rootTerm\",\n\
+         \x20   property_iri: \"https://uor.foundation/reduction/rootTerm\",\n\
          \x20   expected_range: \"https://uor.foundation/schema/Term\",\n\
          \x20   min_count: 1,\n\
          \x20   max_count: 1,\n\
@@ -768,23 +768,23 @@ fn generate_shape_violation(f: &mut RustFile) {
 
 fn generate_builders(f: &mut RustFile) {
     // CompileUnitBuilder
-    f.doc_comment("Builder for `CompileUnit` admission into the cascade pipeline.");
+    f.doc_comment("Builder for `CompileUnit` admission into the reduction pipeline.");
     f.doc_comment("");
-    f.doc_comment("Collects `rootTerm`, `quantumLevelCeiling`, `thermodynamicBudget`,");
+    f.doc_comment("Collects `rootTerm`, `wittLevelCeiling`, `thermodynamicBudget`,");
     f.doc_comment("and `targetDomains`. The `validate()` method checks structural");
     f.doc_comment("constraints (Tier 1) and value-dependent constraints (Tier 2).");
     f.doc_example(
         "use uor_foundation::enforcement::{CompileUnitBuilder, Term};\n\
-         use uor_foundation::{QuantumLevel, VerificationDomain, ViolationKind};\n\
+         use uor_foundation::{WittLevel, VerificationDomain, ViolationKind};\n\
          \n\
-         // A CompileUnit packages a term graph for cascade admission.\n\
+         // A CompileUnit packages a term graph for reduction admission.\n\
          // The builder enforces that all required fields are present.\n\
-         let terms = [Term::Literal { value: 1, level: QuantumLevel::Q0 }];\n\
+         let terms = [Term::Literal { value: 1, level: WittLevel::W8 }];\n\
          let domains = [VerificationDomain::Enumerative];\n\
          \n\
          let unit = CompileUnitBuilder::new()\n\
          \x20   .root_term(&terms)\n\
-         \x20   .quantum_level_ceiling(QuantumLevel::Q0)\n\
+         \x20   .witt_level_ceiling(WittLevel::W8)\n\
          \x20   .thermodynamic_budget(1024)\n\
          \x20   .target_domains(&domains)\n\
          \x20   .validate();\n\
@@ -793,7 +793,7 @@ fn generate_builders(f: &mut RustFile) {
          // Omitting a required field produces a ShapeViolation\n\
          // with the exact conformance IRI that failed:\n\
          let err = CompileUnitBuilder::new()\n\
-         \x20   .quantum_level_ceiling(QuantumLevel::Q0)\n\
+         \x20   .witt_level_ceiling(WittLevel::W8)\n\
          \x20   .thermodynamic_budget(1024)\n\
          \x20   .target_domains(&domains)\n\
          \x20   .validate();\n\
@@ -808,8 +808,8 @@ fn generate_builders(f: &mut RustFile) {
     f.line("pub struct CompileUnitBuilder<'a> {");
     f.indented_doc_comment("The root term expression.");
     f.line("    root_term: Option<&'a [Term]>,");
-    f.indented_doc_comment("The widest quantum level the computation may reference.");
-    f.line("    quantum_level_ceiling: Option<QuantumLevel>,");
+    f.indented_doc_comment("The widest Witt level the computation may reference.");
+    f.line("    witt_level_ceiling: Option<WittLevel>,");
     f.indented_doc_comment("Landauer-bounded energy budget.");
     f.line("    thermodynamic_budget: Option<u64>,");
     f.indented_doc_comment("Verification domains targeted.");
@@ -818,11 +818,11 @@ fn generate_builders(f: &mut RustFile) {
     f.blank();
 
     // CompileUnit (validated result type)
-    f.doc_comment("A validated compile unit ready for cascade admission.");
+    f.doc_comment("A validated compile unit ready for reduction admission.");
     f.line("#[derive(Debug, Clone, PartialEq, Eq)]");
     f.line("pub struct CompileUnit {");
-    f.indented_doc_comment("The quantum level ceiling.");
-    f.line("    level: QuantumLevel,");
+    f.indented_doc_comment("The Witt level ceiling.");
+    f.line("    level: WittLevel,");
     f.indented_doc_comment("The thermodynamic budget.");
     f.line("    budget: u64,");
     f.line("}");
@@ -834,7 +834,7 @@ fn generate_builders(f: &mut RustFile) {
     f.line("    pub const fn new() -> Self {");
     f.line("        Self {");
     f.line("            root_term: None,");
-    f.line("            quantum_level_ceiling: None,");
+    f.line("            witt_level_ceiling: None,");
     f.line("            thermodynamic_budget: None,");
     f.line("            target_domains: None,");
     f.line("        }");
@@ -847,10 +847,10 @@ fn generate_builders(f: &mut RustFile) {
     f.line("        self");
     f.line("    }");
     f.blank();
-    f.indented_doc_comment("Set the quantum level ceiling.");
+    f.indented_doc_comment("Set the Witt level ceiling.");
     f.line("    #[must_use]");
-    f.line("    pub const fn quantum_level_ceiling(mut self, level: QuantumLevel) -> Self {");
-    f.line("        self.quantum_level_ceiling = Some(level);");
+    f.line("    pub const fn witt_level_ceiling(mut self, level: WittLevel) -> Self {");
+    f.line("        self.witt_level_ceiling = Some(level);");
     f.line("        self");
     f.line("    }");
     f.blank();
@@ -883,20 +883,20 @@ fn generate_builders(f: &mut RustFile) {
     f.line("            return Err(ShapeViolation {");
     f.line("                shape_iri: \"https://uor.foundation/conformance/CompileUnitShape\",");
     f.line("                constraint_iri: \"https://uor.foundation/conformance/compileUnit_rootTerm_constraint\",");
-    f.line("                property_iri: \"https://uor.foundation/cascade/rootTerm\",");
+    f.line("                property_iri: \"https://uor.foundation/reduction/rootTerm\",");
     f.line("                expected_range: \"https://uor.foundation/schema/Term\",");
     f.line("                min_count: 1,");
     f.line("                max_count: 1,");
     f.line("                kind: ViolationKind::Missing,");
     f.line("            });");
     f.line("        }");
-    f.line("        let level = match self.quantum_level_ceiling {");
+    f.line("        let level = match self.witt_level_ceiling {");
     f.line("            Some(l) => l,");
     f.line("            None => return Err(ShapeViolation {");
     f.line("                shape_iri: \"https://uor.foundation/conformance/CompileUnitShape\",");
-    f.line("                constraint_iri: \"https://uor.foundation/conformance/compileUnit_unitQuantumLevel_constraint\",");
-    f.line("                property_iri: \"https://uor.foundation/cascade/unitQuantumLevel\",");
-    f.line("                expected_range: \"https://uor.foundation/schema/QuantumLevel\",");
+    f.line("                constraint_iri: \"https://uor.foundation/conformance/compileUnit_unitWittLevel_constraint\",");
+    f.line("                property_iri: \"https://uor.foundation/reduction/unitWittLevel\",");
+    f.line("                expected_range: \"https://uor.foundation/schema/WittLevel\",");
     f.line("                min_count: 1,");
     f.line("                max_count: 1,");
     f.line("                kind: ViolationKind::Missing,");
@@ -907,7 +907,9 @@ fn generate_builders(f: &mut RustFile) {
     f.line("            None => return Err(ShapeViolation {");
     f.line("                shape_iri: \"https://uor.foundation/conformance/CompileUnitShape\",");
     f.line("                constraint_iri: \"https://uor.foundation/conformance/compileUnit_thermodynamicBudget_constraint\",");
-    f.line("                property_iri: \"https://uor.foundation/cascade/thermodynamicBudget\",");
+    f.line(
+        "                property_iri: \"https://uor.foundation/reduction/thermodynamicBudget\",",
+    );
     f.line("                expected_range: \"http://www.w3.org/2001/XMLSchema#decimal\",");
     f.line("                min_count: 1,");
     f.line("                max_count: 1,");
@@ -919,7 +921,7 @@ fn generate_builders(f: &mut RustFile) {
     f.line("            _ => return Err(ShapeViolation {");
     f.line("                shape_iri: \"https://uor.foundation/conformance/CompileUnitShape\",");
     f.line("                constraint_iri: \"https://uor.foundation/conformance/compileUnit_targetDomains_constraint\",");
-    f.line("                property_iri: \"https://uor.foundation/cascade/targetDomains\",");
+    f.line("                property_iri: \"https://uor.foundation/reduction/targetDomains\",");
     f.line("                expected_range: \"https://uor.foundation/op/VerificationDomain\",");
     f.line("                min_count: 1,");
     f.line("                max_count: 0,");
@@ -946,7 +948,7 @@ fn generate_builders(f: &mut RustFile) {
         "Declared effect validated against `EffectShape`.",
         &[
             ("name", "&'a str"),
-            ("target_fibers", "&'a [u32]"),
+            ("target_sites", "&'a [u32]"),
             ("budget_delta", "i64"),
             ("commutes", "bool"),
         ],
@@ -981,7 +983,7 @@ fn generate_builders(f: &mut RustFile) {
         f,
         "LeaseDeclarationBuilder",
         "Declared lease validated against `LeaseShape`.",
-        &[("linear_fiber", "u32"), ("scope", "&'a str")],
+        &[("linear_site", "u32"), ("scope", "&'a str")],
         "LeaseDeclaration",
         "https://uor.foundation/conformance/LeaseShape",
     );
@@ -1014,39 +1016,39 @@ fn generate_builders(f: &mut RustFile) {
         "ParallelDeclarationBuilder",
         "Declared parallel composition validated against `ParallelShape`.",
         &[
-            ("fiber_partition", "&'a [u32]"),
+            ("site_partition", "&'a [u32]"),
             ("disjointness_witness", "&'a str"),
         ],
         "ParallelDeclaration",
         "https://uor.foundation/conformance/ParallelShape",
     );
 
-    // QuantumLevelDeclarationBuilder (no lifetime needed)
-    f.doc_comment("Builder for declaring a new quantum level beyond Q3.");
+    // WittLevelDeclarationBuilder (no lifetime needed)
+    f.doc_comment("Builder for declaring a new Witt level beyond W32.");
     f.doc_comment("");
-    f.doc_comment("Validates against `QuantumLevelShape`.");
+    f.doc_comment("Validates against `WittLevelShape`.");
     f.line("#[derive(Debug, Clone)]");
-    f.line("pub struct QuantumLevelDeclarationBuilder {");
+    f.line("pub struct WittLevelDeclarationBuilder {");
     f.indented_doc_comment("The declared bit width.");
     f.line("    bit_width: Option<u32>,");
     f.indented_doc_comment("The declared cycle size.");
     f.line("    cycle_size: Option<u128>,");
     f.indented_doc_comment("The predecessor level.");
-    f.line("    predecessor: Option<QuantumLevel>,");
+    f.line("    predecessor: Option<WittLevel>,");
     f.line("}");
     f.blank();
 
-    f.doc_comment("Validated quantum level declaration.");
+    f.doc_comment("Validated Witt level declaration.");
     f.line("#[derive(Debug, Clone, PartialEq, Eq)]");
-    f.line("pub struct QuantumLevelDeclaration {");
+    f.line("pub struct WittLevelDeclaration {");
     f.indented_doc_comment("The declared bit width.");
     f.line("    pub bit_width: u32,");
     f.indented_doc_comment("The predecessor level.");
-    f.line("    pub predecessor: QuantumLevel,");
+    f.line("    pub predecessor: WittLevel,");
     f.line("}");
     f.blank();
 
-    f.line("impl QuantumLevelDeclarationBuilder {");
+    f.line("impl WittLevelDeclarationBuilder {");
     f.indented_doc_comment("Creates a new empty builder.");
     f.line("    #[must_use]");
     f.line("    pub const fn new() -> Self {");
@@ -1067,27 +1069,27 @@ fn generate_builders(f: &mut RustFile) {
     f.line("        self");
     f.line("    }");
     f.blank();
-    f.indented_doc_comment("Set the predecessor quantum level.");
+    f.indented_doc_comment("Set the predecessor Witt level.");
     f.line("    #[must_use]");
-    f.line("    pub const fn predecessor(mut self, level: QuantumLevel) -> Self {");
+    f.line("    pub const fn predecessor(mut self, level: WittLevel) -> Self {");
     f.line("        self.predecessor = Some(level);");
     f.line("        self");
     f.line("    }");
     f.blank();
-    f.indented_doc_comment("Validate against `QuantumLevelShape`.");
+    f.indented_doc_comment("Validate against `WittLevelShape`.");
     f.indented_doc_comment("");
     f.indented_doc_comment("# Errors");
     f.indented_doc_comment("");
     f.indented_doc_comment("Returns `ShapeViolation` if any required field is missing.");
     f.line(
-        "    pub fn validate(self) -> Result<Validated<QuantumLevelDeclaration>, ShapeViolation> {",
+        "    pub fn validate(self) -> Result<Validated<WittLevelDeclaration>, ShapeViolation> {",
     );
     f.line("        let bw = match self.bit_width {");
     f.line("            Some(w) => w,");
     f.line("            None => return Err(ShapeViolation {");
-    f.line("                shape_iri: \"https://uor.foundation/conformance/QuantumLevelShape\",");
+    f.line("                shape_iri: \"https://uor.foundation/conformance/WittLevelShape\",");
     f.line(
-        "                constraint_iri: \"https://uor.foundation/conformance/QuantumLevelShape\",",
+        "                constraint_iri: \"https://uor.foundation/conformance/WittLevelShape\",",
     );
     f.line(
         "                property_iri: \"https://uor.foundation/conformance/declaredBitWidth\",",
@@ -1101,27 +1103,25 @@ fn generate_builders(f: &mut RustFile) {
     f.line("        let pred = match self.predecessor {");
     f.line("            Some(p) => p,");
     f.line("            None => return Err(ShapeViolation {");
-    f.line("                shape_iri: \"https://uor.foundation/conformance/QuantumLevelShape\",");
+    f.line("                shape_iri: \"https://uor.foundation/conformance/WittLevelShape\",");
     f.line(
-        "                constraint_iri: \"https://uor.foundation/conformance/QuantumLevelShape\",",
+        "                constraint_iri: \"https://uor.foundation/conformance/WittLevelShape\",",
     );
     f.line(
         "                property_iri: \"https://uor.foundation/conformance/predecessorLevel\",",
     );
-    f.line("                expected_range: \"https://uor.foundation/schema/QuantumLevel\",");
+    f.line("                expected_range: \"https://uor.foundation/schema/WittLevel\",");
     f.line("                min_count: 1,");
     f.line("                max_count: 1,");
     f.line("                kind: ViolationKind::Missing,");
     f.line("            }),");
     f.line("        };");
-    f.line(
-        "        Ok(Validated::new(QuantumLevelDeclaration { bit_width: bw, predecessor: pred }))",
-    );
+    f.line("        Ok(Validated::new(WittLevelDeclaration { bit_width: bw, predecessor: pred }))");
     f.line("    }");
     f.line("}");
     f.blank();
 
-    f.line("impl Default for QuantumLevelDeclarationBuilder {");
+    f.line("impl Default for WittLevelDeclarationBuilder {");
     f.line("    fn default() -> Self {");
     f.line("        Self::new()");
     f.line("    }");
@@ -1323,7 +1323,7 @@ fn generate_minting_session(f: &mut RustFile) {
     f.doc_comment("");
     f.doc_comment("Mints the first coordinate of the tuple as the representative `Datum`.");
     f.doc_comment("Composite multi-coordinate `Datum` construction depends on the target");
-    f.doc_comment("type's fiber decomposition, which is resolved during cascade evaluation.");
+    f.doc_comment("type's site decomposition, which is resolved during reduction evaluation.");
     f.doc_comment("");
     f.doc_comment("# Errors");
     f.doc_comment("");
@@ -1346,8 +1346,8 @@ fn generate_minting_session(f: &mut RustFile) {
     f.line("        });");
     f.line("    }");
     f.line("    // Mint the first coordinate as the representative Datum.");
-    f.line("    // The full tuple is decomposed during cascade evaluation,");
-    f.line("    // where each coordinate maps to a fiber in the constrained type.");
+    f.line("    // The full tuple is decomposed during reduction evaluation,");
+    f.line("    // where each coordinate maps to a site in the constrained type.");
     f.line("    validate_and_mint_coord(grounded.coords[0].clone(), shape, session)");
     f.line("}");
     f.blank();

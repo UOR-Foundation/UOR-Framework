@@ -10,7 +10,7 @@ pub const TEST30_PROOF_COVERAGE: &str = r#"
 # CriticalIdentityProof (subclass of ComputationCertificate)
 proof:prf_criticalIdentity a owl:NamedIndividual, proof:CriticalIdentityProof ;
     proof:provesIdentity op:criticalIdentity ;
-    proof:atQuantumLevel schema:Q0 ;
+    proof:atWittLevel schema:Q0 ;
     proof:verified       "true"^^xsd:boolean .
 
 # Axiomatic dual for criticalIdentity
@@ -22,7 +22,7 @@ proof:prf_criticalIdentity_axiomatic a owl:NamedIndividual, proof:AxiomaticDeriv
 # ComputationCertificate example
 proof:prf_phi_1 a owl:NamedIndividual, proof:ComputationCertificate ;
     proof:provesIdentity op:phi_1 ;
-    proof:atQuantumLevel schema:Q0 ;
+    proof:atWittLevel schema:Q0 ;
     proof:verified       "true"^^xsd:boolean .
 
 # AxiomaticDerivation example

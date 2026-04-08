@@ -20,7 +20,7 @@ observable:ex_oclass_104 a owl:NamedIndividual, observable:LiftObstructionClass 
     rdfs:label "Non-trivial cohomological class" .
 
 # The blocked lift
-type:ex_lift_blocked_104 a owl:NamedIndividual, type:QuantumLift ;
+type:ex_lift_blocked_104 a owl:NamedIndividual, type:WittLift ;
     type:sourceLevel      schema:Q0 ;
     type:targetLevel      schema:Q3 ;
     type:isFlat           "false"^^xsd:boolean ;

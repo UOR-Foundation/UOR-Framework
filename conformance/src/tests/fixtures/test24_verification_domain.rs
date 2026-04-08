@@ -25,9 +25,9 @@ op:R_A1 a op:Identity ;
 
 # Spot-check: TH_1 (derivable, Thermodynamic)
 op:TH_1 a op:Identity ;
-    op:lhs "S(fiber_state)" ;
+    op:lhs "S(site_state)" ;
     op:rhs "free_count × ln(2)" ;
-    op:forAll "fiber state" ;
+    op:forAll "site state" ;
     op:verificationDomain op:Thermodynamic .
 
 # Spot-check: IT_7a (derivable, 3 domains)

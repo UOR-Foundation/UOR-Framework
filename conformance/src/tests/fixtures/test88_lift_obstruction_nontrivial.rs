@@ -18,11 +18,11 @@ observable:ex_holonomy_88 a owl:NamedIndividual, observable:HolonomyGroup ;
 
 type:ex_obstruction_88 a owl:NamedIndividual, type:LiftObstruction ;
     type:obstructionTrivial "false"^^xsd:boolean ;
-    type:obstructionFiber   partition:ex_fiber_88 .
+    type:obstructionSite   partition:ex_site_88 .
 
-partition:ex_fiber_88 a owl:NamedIndividual, partition:FiberCoordinate .
+partition:ex_site_88 a owl:NamedIndividual, partition:SiteIndex .
 
-type:ex_lift_88 a owl:NamedIndividual, type:QuantumLift ;
+type:ex_lift_88 a owl:NamedIndividual, type:WittLift ;
     type:liftBase        type:ex_twisted_88 ;
     type:liftTargetLevel schema:Q1 ;
     type:liftObstruction type:ex_obstruction_88 .

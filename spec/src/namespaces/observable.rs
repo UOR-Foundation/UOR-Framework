@@ -68,9 +68,9 @@ fn classes() -> Vec<Class> {
             disjoint_with: &[],
         },
         Class {
-            id: "https://uor.foundation/observable/CascadeObservable",
-            label: "CascadeObservable",
-            comment: "An observable measuring cascade properties: the length and \
+            id: "https://uor.foundation/observable/ReductionObservable",
+            label: "ReductionObservable",
+            comment: "An observable measuring reduction properties: the length and \
                       count of operation sequences.",
             subclass_of: &["https://uor.foundation/observable/Observable"],
             disjoint_with: &[],
@@ -172,17 +172,17 @@ fn classes() -> Vec<Class> {
             disjoint_with: &[],
         },
         Class {
-            id: "https://uor.foundation/observable/CascadeLength",
-            label: "CascadeLength",
-            comment: "The number of operation applications in an operation cascade.",
-            subclass_of: &["https://uor.foundation/observable/CascadeObservable"],
+            id: "https://uor.foundation/observable/ReductionLength",
+            label: "ReductionLength",
+            comment: "The number of operation applications in a reduction sequence.",
+            subclass_of: &["https://uor.foundation/observable/ReductionObservable"],
             disjoint_with: &[],
         },
         Class {
-            id: "https://uor.foundation/observable/CascadeCount",
-            label: "CascadeCount",
-            comment: "The number of distinct cascades in a computation.",
-            subclass_of: &["https://uor.foundation/observable/CascadeObservable"],
+            id: "https://uor.foundation/observable/ReductionCount",
+            label: "ReductionCount",
+            comment: "The number of distinct reduction sequences in a computation.",
+            subclass_of: &["https://uor.foundation/observable/ReductionObservable"],
             disjoint_with: &[],
         },
         Class {
@@ -256,8 +256,8 @@ fn classes() -> Vec<Class> {
         Class {
             id: "https://uor.foundation/observable/Jacobian",
             label: "Jacobian",
-            comment: "Fiber-by-fiber curvature decomposition. J_k measures the \
-                      discrete derivative of the incompatibility metric at fiber \
+            comment: "Site-by-site curvature decomposition. J_k measures the \
+                      discrete derivative of the incompatibility metric at site \
                       position k: J_k = |d_R(x, succ(x)) - d_H(x, succ(x))| \
                       restricted to position k.",
             subclass_of: &["https://uor.foundation/observable/CurvatureObservable"],
@@ -295,14 +295,14 @@ fn classes() -> Vec<Class> {
             id: "https://uor.foundation/observable/ThermoObservable",
             label: "ThermoObservable",
             comment: "An observable measuring thermodynamic properties of the resolution process: \
-                      residual entropy, Landauer cost, and cascade distribution statistics.",
+                      residual entropy, Landauer cost, and reduction distribution statistics.",
             subclass_of: &["https://uor.foundation/observable/Observable"],
             disjoint_with: &[],
         },
         Class {
             id: "https://uor.foundation/observable/ResidualEntropy",
             label: "ResidualEntropy",
-            comment: "S_residual: the residual Shannon entropy of the fiber distribution after \
+            comment: "S_residual: the residual Shannon entropy of the site distribution after \
                       partial resolution. Computed as S = (Σ κ_k − χ(N(C))) × ln 2 (IT_7b). \
                       Unit: Nats.",
             subclass_of: &["https://uor.foundation/observable/ThermoObservable"],
@@ -312,17 +312,17 @@ fn classes() -> Vec<Class> {
             id: "https://uor.foundation/observable/LandauerCost",
             label: "LandauerCost",
             comment: "The minimum thermodynamic cost (in units of k_B T ln 2) of erasing one \
-                      bit of fiber uncertainty. The UOR ring operates at β* = ln 2 — the \
+                      bit of site uncertainty. The UOR ring operates at β* = ln 2 — the \
                       Landauer temperature.",
             subclass_of: &["https://uor.foundation/observable/ThermoObservable"],
             disjoint_with: &[],
         },
         Class {
-            id: "https://uor.foundation/observable/CascadeEntropy",
-            label: "CascadeEntropy",
-            comment: "The Shannon entropy of the cascade distribution P(j) = 2^{−j}. At the \
-                      Landauer temperature, this equals ln 2 per cascade step — each step erases \
-                      exactly one bit of fiber uncertainty.",
+            id: "https://uor.foundation/observable/ReductionEntropy",
+            label: "ReductionEntropy",
+            comment: "The Shannon entropy of the reduction distribution P(j) = 2^{−j}. At the \
+                      Landauer temperature, this equals ln 2 per reduction step — each step erases \
+                      exactly one bit of site uncertainty.",
             subclass_of: &["https://uor.foundation/observable/ThermoObservable"],
             disjoint_with: &[],
         },
@@ -351,8 +351,8 @@ fn classes() -> Vec<Class> {
             id: "https://uor.foundation/observable/LiftObstructionClass",
             label: "LiftObstructionClass",
             comment: "The cohomology class in H^2(N(C(T))) representing the LiftObstruction \
-                      for a specific QuantumLift. The class is zero iff the obstruction is \
-                      trivial. When non-zero, it indexes the specific fiber pair at Q_{n+1} \
+                      for a specific WittLift. The class is zero iff the obstruction is \
+                      trivial. When non-zero, it indexes the specific site pair at Q_{n+1} \
                       that cannot be closed by the lifted constraint set alone.",
             subclass_of: &[OWL_THING],
             disjoint_with: &[],
@@ -364,7 +364,7 @@ fn classes() -> Vec<Class> {
             comment: "A classification of a type's holonomy: the subgroup of D_{2^n} generated \
                       by all Monodromy observables computed over closed paths in the type's \
                       constraint nerve. Trivial iff every closed constraint path returns to its \
-                      starting fiber assignment without net dihedral transformation.",
+                      starting site assignment without net dihedral transformation.",
             subclass_of: &[OWL_THING],
             disjoint_with: &[],
         },
@@ -383,7 +383,7 @@ fn classes() -> Vec<Class> {
             id: "https://uor.foundation/observable/ClosedConstraintPath",
             label: "ClosedConstraintPath",
             comment: "A sequence of constraint applications forming a closed loop in the \
-                      constraint nerve — beginning and ending at the same fiber assignment. \
+                      constraint nerve — beginning and ending at the same site assignment. \
                       The Monodromy of the loop is the net DihedralElement accumulated \
                       when traversing it.",
             subclass_of: &[OWL_THING],
@@ -421,7 +421,7 @@ fn classes() -> Vec<Class> {
         Class {
             id: "https://uor.foundation/observable/HigherMonodromy",
             label: "HigherMonodromy",
-            comment: "The image of \u{03c0}k(N(C)) \u{2192} Aut(fiberk) for k > 1. \
+            comment: "The image of \u{03c0}k(N(C)) \u{2192} Aut(sitek) for k > 1. \
                       Generalises the MN_6 monodromy homomorphism.",
             subclass_of: &[OWL_THING],
             disjoint_with: &[],
@@ -455,10 +455,10 @@ fn classes() -> Vec<Class> {
             disjoint_with: &[],
         },
         Class {
-            id: "https://uor.foundation/observable/SaturationObservable",
-            label: "SaturationObservable",
-            comment: "The saturation metric \u{03c3} = pinned fibers / total fibers. \
-                      Ranges from 0 (no fibers pinned) to 1 (fully saturated).",
+            id: "https://uor.foundation/observable/GroundingObservable",
+            label: "GroundingObservable",
+            comment: "The grounding metric \u{03c3} = pinned sites / total sites. \
+                      Ranges from 0 (no sites pinned) to 1 (fully grounded).",
             subclass_of: &["https://uor.foundation/observable/Observable"],
             disjoint_with: &[],
         },
@@ -519,9 +519,9 @@ fn properties() -> Vec<Property> {
         },
         // Amendment 18: Analytical Observable properties
         Property {
-            id: "https://uor.foundation/observable/fiberPosition",
-            label: "fiberPosition",
-            comment: "The fiber position k at which this Jacobian entry is measured.",
+            id: "https://uor.foundation/observable/sitePosition",
+            label: "sitePosition",
+            comment: "The site position k at which this Jacobian entry is measured.",
             kind: PropertyKind::Datatype,
             functional: true,
             domain: Some("https://uor.foundation/observable/Jacobian"),
@@ -530,7 +530,7 @@ fn properties() -> Vec<Property> {
         Property {
             id: "https://uor.foundation/observable/derivativeValue",
             label: "derivativeValue",
-            comment: "The discrete derivative value at this fiber position.",
+            comment: "The discrete derivative value at this site position.",
             kind: PropertyKind::Datatype,
             functional: true,
             domain: Some("https://uor.foundation/observable/Jacobian"),
@@ -889,7 +889,7 @@ fn properties() -> Vec<Property> {
             kind: PropertyKind::Object,
             functional: true,
             domain: Some("https://uor.foundation/observable/StratificationRecord"),
-            range: "https://uor.foundation/schema/QuantumLevel",
+            range: "https://uor.foundation/schema/WittLevel",
         },
         Property {
             id: "https://uor.foundation/observable/stratificationStratum",
@@ -949,19 +949,19 @@ fn properties() -> Vec<Property> {
         Property {
             id: "https://uor.foundation/observable/saturationNumerator",
             label: "saturationNumerator",
-            comment: "The count of pinned fibers (numerator of \u{03c3}).",
+            comment: "The count of pinned sites (numerator of \u{03c3}).",
             kind: PropertyKind::Datatype,
             functional: true,
-            domain: Some("https://uor.foundation/observable/SaturationObservable"),
+            domain: Some("https://uor.foundation/observable/GroundingObservable"),
             range: XSD_NON_NEGATIVE_INTEGER,
         },
         Property {
             id: "https://uor.foundation/observable/saturationDenominator",
             label: "saturationDenominator",
-            comment: "The total fiber count (denominator of \u{03c3}).",
+            comment: "The total site count (denominator of \u{03c3}).",
             kind: PropertyKind::Datatype,
             functional: true,
-            domain: Some("https://uor.foundation/observable/SaturationObservable"),
+            domain: Some("https://uor.foundation/observable/GroundingObservable"),
             range: XSD_POSITIVE_INTEGER,
         },
         Property {
@@ -1116,7 +1116,7 @@ fn individuals() -> Vec<Individual> {
             id: "https://uor.foundation/observable/d_delta_metric",
             type_: "https://uor.foundation/observable/BaseMetric",
             label: "d_delta_metric",
-            comment: "d_\u{0394}: the incompatibility metric |d_R \u{2212} d_H| per fiber pair.",
+            comment: "d_\u{0394}: the incompatibility metric |d_R \u{2212} d_H| per site pair.",
             properties: &[
                 (
                     "https://uor.foundation/observable/metricDomain",
@@ -1138,7 +1138,7 @@ fn individuals() -> Vec<Individual> {
             id: "https://uor.foundation/observable/sigma_metric",
             type_: "https://uor.foundation/observable/BaseMetric",
             label: "sigma_metric",
-            comment: "\u{03c3}: the saturation metric, pinned fibers / total fibers.",
+            comment: "\u{03c3}: the grounding metric, pinned sites / total sites.",
             properties: &[
                 (
                     "https://uor.foundation/observable/metricDomain",
@@ -1150,7 +1150,7 @@ fn individuals() -> Vec<Individual> {
                 ),
                 (
                     "https://uor.foundation/observable/referencesIdentity",
-                    IndividualValue::IriRef("https://uor.foundation/op/SC_2"),
+                    IndividualValue::IriRef("https://uor.foundation/op/GS_2"),
                 ),
             ],
         },
@@ -1158,11 +1158,11 @@ fn individuals() -> Vec<Individual> {
             id: "https://uor.foundation/observable/jacobian_metric",
             type_: "https://uor.foundation/observable/BaseMetric",
             label: "jacobian_metric",
-            comment: "J_k: per-fiber curvature, \u{2202}_R f_k.",
+            comment: "J_k: per-site curvature, \u{2202}_R f_k.",
             properties: &[
                 (
                     "https://uor.foundation/observable/metricDomain",
-                    IndividualValue::Str("computation state \u{00d7} fiber index"),
+                    IndividualValue::Str("computation state \u{00d7} site index"),
                 ),
                 (
                     "https://uor.foundation/observable/metricRange",
@@ -1222,7 +1222,7 @@ fn individuals() -> Vec<Individual> {
             id: "https://uor.foundation/observable/residual_metric",
             type_: "https://uor.foundation/observable/BaseMetric",
             label: "residual_metric",
-            comment: "r: count of free (unpinned) fibers, the residual entropy.",
+            comment: "r: count of free (unpinned) sites, the residual entropy.",
             properties: &[
                 (
                     "https://uor.foundation/observable/metricDomain",

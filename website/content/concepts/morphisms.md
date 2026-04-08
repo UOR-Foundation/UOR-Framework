@@ -14,7 +14,7 @@ Specialisations include:
 - {@class https://uor.foundation/morphism/Isometry} — preserves metric
   distances with respect to a named metric.
 - {@class https://uor.foundation/morphism/Embedding} — an injective,
-  structure-preserving map across quantum levels.
+  structure-preserving map across Witt levels.
 - {@class https://uor.foundation/morphism/Action} — the mechanism by which a
   group applies transforms systematically to a set.
 
@@ -49,9 +49,9 @@ datum to an input, and
 {@class https://uor.foundation/morphism/PartialApplication} fixes some inputs
 while leaving others free.
 
-## Connection to Fibers
+## Connection to Sites
 
-Morphisms interact tightly with the {@concept fiber} decomposition. An
-embedding across quantum levels maps fibers in the source type to fibers in the
+Morphisms interact tightly with the {@concept site} decomposition. An
+embedding across Witt levels maps sites in the source type to sites in the
 target, and the {@concept partition} decomposition must respect the structure
 that morphisms preserve.

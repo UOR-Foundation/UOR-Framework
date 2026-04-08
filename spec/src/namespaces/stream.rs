@@ -1,6 +1,6 @@
 //! `stream/` namespace — Productive streams.
 //!
-//! The `stream/` namespace formalizes coinductive sequences of cascade epochs.
+//! The `stream/` namespace formalizes coinductive sequences of reduction epochs.
 //! Each epoch terminates independently; the stream is the unbounded composition
 //! of terminating epochs.
 //!
@@ -19,13 +19,13 @@ pub fn module() -> NamespaceModule {
             prefix: "stream",
             iri: NS_STREAM,
             label: "UOR Productive Streams",
-            comment: "Coinductive sequences of cascade epochs. Each epoch \
+            comment: "Coinductive sequences of reduction epochs. Each epoch \
                       terminates independently; the stream is the unbounded \
                       composition of terminating epochs.",
             space: Space::Kernel,
             imports: &[
                 NS_OP,
-                NS_CASCADE,
+                NS_REDUCTION,
                 NS_STATE,
                 NS_MONOIDAL,
                 NS_CERT,
@@ -44,7 +44,7 @@ fn classes() -> Vec<Class> {
         Class {
             id: "https://uor.foundation/stream/ProductiveStream",
             label: "ProductiveStream",
-            comment: "An unbounded sequence of cascade epochs where each \
+            comment: "An unbounded sequence of reduction epochs where each \
                       epoch terminates and produces a well-typed output. \
                       The coinductive dual of a finite computation.",
             subclass_of: &[OWL_THING],
@@ -54,7 +54,7 @@ fn classes() -> Vec<Class> {
             id: "https://uor.foundation/stream/Epoch",
             label: "Epoch",
             comment: "A single bounded iteration within a productive stream. \
-                      Each epoch is a complete cascade execution from \
+                      Each epoch is a complete reduction execution from \
                       Initialization through Convergence.",
             subclass_of: &[OWL_THING],
             disjoint_with: &[],
@@ -91,7 +91,7 @@ fn classes() -> Vec<Class> {
             comment: "The coinductive constructor: given an initial context \
                       and a step function (a morphism:ComputationDatum), \
                       produces a ProductiveStream. The step function must \
-                      be certified to always reach cascade convergence.",
+                      be certified to always reach reduction convergence.",
             subclass_of: &[OWL_THING],
             disjoint_with: &[],
         },
@@ -102,13 +102,13 @@ fn properties() -> Vec<Property> {
     vec![
         // Object properties
         Property {
-            id: "https://uor.foundation/stream/epochCascade",
-            label: "epochCascade",
-            comment: "The cascade execution for this epoch.",
+            id: "https://uor.foundation/stream/epochReduction",
+            label: "epochReduction",
+            comment: "The reduction execution for this epoch.",
             kind: PropertyKind::Object,
             functional: true,
             domain: Some("https://uor.foundation/stream/Epoch"),
-            range: "https://uor.foundation/cascade/EulerCascade",
+            range: "https://uor.foundation/reduction/EulerReduction",
         },
         Property {
             id: "https://uor.foundation/stream/epochOutput",

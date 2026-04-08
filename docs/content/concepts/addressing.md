@@ -3,9 +3,9 @@
 ## Definition
 
 **Content addressing** in UOR maps ring elements to Braille-encoded strings
-via a bijective encoding. Each {@class https://uor.foundation/u/Address}
-represents a content-addressable identifier where each
-{@class https://uor.foundation/u/Glyph} encodes a 6-bit chunk.
+via a bijective encoding. Each {@class https://uor.foundation/u/Element}
+represents a content-addressable identifier where each byte
+encodes a chunk of the element value.
 
 ## The Addressing Bijection
 
@@ -49,13 +49,13 @@ glyph ∘ ι ∘ addresses is well-defined and injective.
 Consider the value 42 in R_8 (= Z/256Z). Its binary representation is
 `00101010`. The 6-bit chunking scheme splits this into two chunks:
 
-| Chunk | Bits | Decimal | {@class https://uor.foundation/u/Glyph} |
+| Chunk | Bits | Decimal | Encoding |
 |-------|------|---------|-------|
 | 1 | `001010` | 10 | U+2819 (⠙) |
 | 2 | `10xxxx` | 32 (padded) | U+2840 (⡀) |
 
-Each glyph's {@prop https://uor.foundation/u/codepoint} stores the Braille
-code point, producing the {@class https://uor.foundation/u/Address} `⠙⡀`.
+Each byte encodes a chunk of the element value, producing
+the {@class https://uor.foundation/u/Element} `⠙⡀`.
 The addressing bijection (AD_1) guarantees that decoding this address recovers
 the original value 42.
 
@@ -64,6 +64,6 @@ the original value 42.
 The {@class https://uor.foundation/resolver/CanonicalFormResolver} produces
 the unique canonical representation of a ring element. Once the canonical form
 is computed, the addressing bijection maps it to a content-addressable
-{@class https://uor.foundation/u/Address}. This two-step process — resolve
+{@class https://uor.foundation/u/Element}. This two-step process — resolve
 then address — ensures that semantically equivalent values receive identical
 addresses. See [Canonical Form](canonical-form.html) for the resolution step.

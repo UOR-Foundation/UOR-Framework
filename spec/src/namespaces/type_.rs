@@ -5,17 +5,17 @@
 //! the ring into irreducible, reducible, unit, and exterior elements.
 //!
 //! Amendment 10 adds constraint algebra: composable predicates that refine types
-//! by pinning fibers, plus metric axes that classify constraints by their
+//! by pinning sites, plus metric axes that classify constraints by their
 //! geometric effect.
 //!
 //! Amendment 25 adds the completeness certification pathway: `CompletenessCandidate`
 //! (a ConstrainedType undergoing certification) and `CompletenessWitness` (a single
-//! fiber-closing event), with four new properties supporting the certification loop.
+//! site-closing event), with four new properties supporting the certification loop.
 //!
 //! Amendment 61 adds 8 structural type individuals (ScalarType, SymbolType,
 //! SequenceType, TupleType, GraphType, SetType, TreeType, TableType) as
 //! instances of existing type classes with annotation properties describing
-//! fiber count formulas, grounding rules, and structural constraints.
+//! site count formulas, grounding rules, and structural constraints.
 //!
 //! **Space classification:** `user` — parameterizable at runtime.
 
@@ -99,7 +99,7 @@ fn classes() -> Vec<Class> {
             id: "https://uor.foundation/type/Constraint",
             label: "Constraint",
             comment: "A composable predicate that refines a type by pinning one or \
-                      more fiber coordinates. Constraints are the parameterization \
+                      more site coordinates. Constraints are the parameterization \
                       mechanism for ConstrainedType.",
             subclass_of: &[OWL_THING],
             disjoint_with: &[
@@ -111,14 +111,14 @@ fn classes() -> Vec<Class> {
             id: "https://uor.foundation/type/ResidueConstraint",
             label: "ResidueConstraint",
             comment: "A constraint based on residue class membership: x ≡ r (mod m). \
-                      Pins fibers corresponding to the residue pattern.",
+                      Pins sites corresponding to the residue pattern.",
             subclass_of: &["https://uor.foundation/type/Constraint"],
             disjoint_with: &[
                 "https://uor.foundation/type/CarryConstraint",
                 "https://uor.foundation/type/DepthConstraint",
                 "https://uor.foundation/type/CompositeConstraint",
                 "https://uor.foundation/type/HammingConstraint",
-                "https://uor.foundation/type/FiberConstraint",
+                "https://uor.foundation/type/SiteConstraint",
                 "https://uor.foundation/type/AffineConstraint",
             ],
         },
@@ -126,14 +126,14 @@ fn classes() -> Vec<Class> {
             id: "https://uor.foundation/type/CarryConstraint",
             label: "CarryConstraint",
             comment: "A constraint based on carry propagation patterns in ring \
-                      arithmetic. Pins fibers corresponding to carry positions.",
+                      arithmetic. Pins sites corresponding to carry positions.",
             subclass_of: &["https://uor.foundation/type/Constraint"],
             disjoint_with: &[
                 "https://uor.foundation/type/ResidueConstraint",
                 "https://uor.foundation/type/DepthConstraint",
                 "https://uor.foundation/type/CompositeConstraint",
                 "https://uor.foundation/type/HammingConstraint",
-                "https://uor.foundation/type/FiberConstraint",
+                "https://uor.foundation/type/SiteConstraint",
                 "https://uor.foundation/type/AffineConstraint",
             ],
         },
@@ -141,7 +141,7 @@ fn classes() -> Vec<Class> {
             id: "https://uor.foundation/type/DepthConstraint",
             label: "DepthConstraint",
             comment: "A constraint on factorization depth: the minimum and maximum \
-                      number of irreducible factors. Pins fibers by bounding the \
+                      number of irreducible factors. Pins sites by bounding the \
                       factorization tree depth.",
             subclass_of: &["https://uor.foundation/type/Constraint"],
             disjoint_with: &[
@@ -149,7 +149,7 @@ fn classes() -> Vec<Class> {
                 "https://uor.foundation/type/CarryConstraint",
                 "https://uor.foundation/type/CompositeConstraint",
                 "https://uor.foundation/type/HammingConstraint",
-                "https://uor.foundation/type/FiberConstraint",
+                "https://uor.foundation/type/SiteConstraint",
                 "https://uor.foundation/type/AffineConstraint",
             ],
         },
@@ -157,7 +157,7 @@ fn classes() -> Vec<Class> {
             id: "https://uor.foundation/type/CompositeConstraint",
             label: "CompositeConstraint",
             comment: "A constraint formed by composing two or more simpler \
-                      constraints. The composite pins the union of fibers \
+                      constraints. The composite pins the union of sites \
                       pinned by its components.",
             subclass_of: &["https://uor.foundation/type/Constraint"],
             disjoint_with: &[
@@ -165,7 +165,7 @@ fn classes() -> Vec<Class> {
                 "https://uor.foundation/type/CarryConstraint",
                 "https://uor.foundation/type/DepthConstraint",
                 "https://uor.foundation/type/HammingConstraint",
-                "https://uor.foundation/type/FiberConstraint",
+                "https://uor.foundation/type/SiteConstraint",
                 "https://uor.foundation/type/AffineConstraint",
             ],
         },
@@ -181,15 +181,15 @@ fn classes() -> Vec<Class> {
                 "https://uor.foundation/type/CarryConstraint",
                 "https://uor.foundation/type/DepthConstraint",
                 "https://uor.foundation/type/CompositeConstraint",
-                "https://uor.foundation/type/FiberConstraint",
+                "https://uor.foundation/type/SiteConstraint",
                 "https://uor.foundation/type/AffineConstraint",
             ],
         },
         Class {
-            id: "https://uor.foundation/type/FiberConstraint",
-            label: "FiberConstraint",
-            comment: "Pins a single fiber coordinate to 0 or 1. The atomic unit \
-                      of the fiber budget.",
+            id: "https://uor.foundation/type/SiteConstraint",
+            label: "SiteConstraint",
+            comment: "Pins a single site coordinate to 0 or 1. The atomic unit \
+                      of the site budget.",
             subclass_of: &["https://uor.foundation/type/Constraint"],
             disjoint_with: &[
                 "https://uor.foundation/type/ResidueConstraint",
@@ -212,7 +212,7 @@ fn classes() -> Vec<Class> {
                 "https://uor.foundation/type/DepthConstraint",
                 "https://uor.foundation/type/CompositeConstraint",
                 "https://uor.foundation/type/HammingConstraint",
-                "https://uor.foundation/type/FiberConstraint",
+                "https://uor.foundation/type/SiteConstraint",
             ],
         },
         Class {
@@ -235,7 +235,7 @@ fn classes() -> Vec<Class> {
             comment: "A TypeDefinition certified to satisfy the UOR completeness criterion \
                       (IT_7d): its constraint nerve N(C) has Euler characteristic χ = n and \
                       all Betti numbers β_k = 0. A CompleteType guarantees that resolution \
-                      closes the fiber budget in O(1) — no iterative refinement is required. \
+                      closes the site budget in O(1) — no iterative refinement is required. \
                       Completeness is attested by a cert:CompletenessCertificate linked via \
                       cert:certifiedType. This class is not addressable from a type-expr \
                       position in the term language; references from term-language positions \
@@ -249,7 +249,7 @@ fn classes() -> Vec<Class> {
             label: "CompletenessCandidate",
             comment: "A ConstrainedType actively undergoing the completeness certification \
                       pipeline. Links to the resolver:ResolutionState tracking the current \
-                      iteration and to the resolver:ConstraintNerve being computed. \
+                      iteration and to the resolver:CechNerve being computed. \
                       Disjoint from CompleteType (which is already certified). \
                       This class is not addressable from a type-expr position in \
                       the term language; references from term-language positions \
@@ -260,9 +260,9 @@ fn classes() -> Vec<Class> {
         Class {
             id: "https://uor.foundation/type/CompletenessWitness",
             label: "CompletenessWitness",
-            comment: "A record of a single fiber-closing event: one constraint application \
-                      that reduced the FiberBudget deficit. Carries the applied constraint \
-                      and the fibersClosed count. Forms the ordered audit trail between \
+            comment: "A record of a single site-closing event: one constraint application \
+                      that reduced the FreeRank deficit. Carries the applied constraint \
+                      and the sitesClosed count. Forms the ordered audit trail between \
                       ConstrainedType and CompleteType.",
             subclass_of: &[OWL_THING],
             disjoint_with: &[],
@@ -313,12 +313,12 @@ fn classes() -> Vec<Class> {
         },
         // Amendment 29: Quantum Level Spectral Sequence
         Class {
-            id: "https://uor.foundation/type/QuantumLift",
-            label: "QuantumLift",
+            id: "https://uor.foundation/type/WittLift",
+            label: "WittLift",
             comment: "A ConstrainedType T' over R_{n+1} obtained by extending a \
                       ConstrainedType T over R_n. Carries a link to the base type (liftBase), \
                       the quantum level it lifts to (liftTargetLevel), and the LiftObstruction \
-                      (if the lift fails to transfer completeness). A QuantumLift is a \
+                      (if the lift fails to transfer completeness). A WittLift is a \
                       CompleteType iff its LiftObstruction is trivial.",
             subclass_of: &[OWL_THING],
             disjoint_with: &[],
@@ -326,7 +326,7 @@ fn classes() -> Vec<Class> {
         Class {
             id: "https://uor.foundation/type/LiftObstruction",
             label: "LiftObstruction",
-            comment: "The algebraic obstruction to a QuantumLift inheriting the completeness \
+            comment: "The algebraic obstruction to a WittLift inheriting the completeness \
                       of its base type. Computed as the image of the spectral sequence \
                       differential d_2. If trivial (zero), the base type's completeness lifts. \
                       If non-trivial, at least one additional constraint is needed at the new \
@@ -359,11 +359,11 @@ fn classes() -> Vec<Class> {
             subclass_of: &["https://uor.foundation/type/ConstrainedType"],
             disjoint_with: &["https://uor.foundation/type/TwistedType"],
         },
-        // Amendment 32: Superposed fiber state (RC_5)
+        // Amendment 32: Superposed site state (RC_5)
         Class {
-            id: "https://uor.foundation/type/SuperposedFiberState",
-            label: "SuperposedFiberState",
-            comment: "A type representing a superposition of fiber states where fibers \
+            id: "https://uor.foundation/type/SuperposedSiteState",
+            label: "SuperposedSiteState",
+            comment: "A type representing a superposition of site states where sites \
                       carry complex amplitudes rather than binary pinned/free \
                       assignments. Ontological realisation of RC_5 (Amendment 32). \
                       This class is not addressable from a type-expr position in \
@@ -384,11 +384,11 @@ fn classes() -> Vec<Class> {
         },
         // Amendment 36: Measurement Boundary
         Class {
-            id: "https://uor.foundation/type/CollapsedFiberState",
-            label: "CollapsedFiberState",
-            comment: "A fiber state that has undergone projective collapse from a \
-                      SuperposedFiberState to a definitive classical value. \
-                      Topologically equivalent to a classically pinned fiber (QM_2).",
+            id: "https://uor.foundation/type/CollapsedSiteState",
+            label: "CollapsedSiteState",
+            comment: "A site state that has undergone projective collapse from a \
+                      SuperposedSiteState to a definitive classical value. \
+                      Topologically equivalent to a classically pinned site (QM_2).",
             subclass_of: &[OWL_THING],
             disjoint_with: &[],
         },
@@ -396,7 +396,7 @@ fn classes() -> Vec<Class> {
         Class {
             id: "https://uor.foundation/type/LiftChain",
             label: "LiftChain",
-            comment: "An ordered composition of QuantumLift steps from liftSourceLevel \
+            comment: "An ordered composition of WittLift steps from liftSourceLevel \
                       (Q_j) to liftTargetLevel (Q_k) for any j < k. The canonical \
                       object certifying type completeness at arbitrary Q_k.",
             subclass_of: &[OWL_THING],
@@ -444,7 +444,7 @@ fn classes() -> Vec<Class> {
         Class {
             id: "https://uor.foundation/type/ModuliTowerMap",
             label: "ModuliTowerMap",
-            comment: "The map induced by QuantumLift from one moduli space to the next.",
+            comment: "The map induced by WittLift from one moduli space to the next.",
             subclass_of: &[OWL_THING],
             disjoint_with: &[],
         },
@@ -452,8 +452,8 @@ fn classes() -> Vec<Class> {
         Class {
             id: "https://uor.foundation/type/GaloisConnection",
             label: "GaloisConnection",
-            comment: "The adjunction between the type lattice and the fiber lattice. \
-                      The upper adjoint is type closure; the lower adjoint is fiber \
+            comment: "The adjunction between the type lattice and the site lattice. \
+                      The upper adjoint is type closure; the lower adjoint is site \
                       interior. \u{03c3} = lower adjoint evaluation; r = complement \
                       of upper adjoint image.",
             subclass_of: &[OWL_THING],
@@ -485,7 +485,7 @@ fn classes() -> Vec<Class> {
             label: "SubtypingLattice",
             comment: "The partial order on types induced by TypeInclusion. \
                       The top element is PrimitiveType (no constraints); \
-                      the bottom elements are CompleteTypes (all fibers \
+                      the bottom elements are CompleteTypes (all sites \
                       pinned).",
             subclass_of: &[OWL_THING],
             disjoint_with: &[],
@@ -531,7 +531,7 @@ fn properties() -> Vec<Property> {
             kind: PropertyKind::Object,
             functional: true,
             domain: Some("https://uor.foundation/type/TypeDefinition"),
-            range: "https://uor.foundation/u/Address",
+            range: "https://uor.foundation/u/Element",
         },
         // Amendment 10: Constraint Algebra properties
         Property {
@@ -612,22 +612,22 @@ fn properties() -> Vec<Property> {
             range: XSD_NON_NEGATIVE_INTEGER,
         },
         Property {
-            id: "https://uor.foundation/type/fiberIndex",
-            label: "fiberIndex",
-            comment: "Zero-based index of the pinned fiber coordinate.",
+            id: "https://uor.foundation/type/siteIndex",
+            label: "siteIndex",
+            comment: "Zero-based index of the pinned site coordinate.",
             kind: PropertyKind::Datatype,
             functional: true,
-            domain: Some("https://uor.foundation/type/FiberConstraint"),
+            domain: Some("https://uor.foundation/type/SiteConstraint"),
             range: XSD_NON_NEGATIVE_INTEGER,
         },
         Property {
-            id: "https://uor.foundation/type/fiberValue",
-            label: "fiberValue",
-            comment: "The value the pinned fiber coordinate must equal \
+            id: "https://uor.foundation/type/siteValue",
+            label: "siteValue",
+            comment: "The value the pinned site coordinate must equal \
                       (a Datum in the set {0, 1}).",
             kind: PropertyKind::Object,
             functional: true,
-            domain: Some("https://uor.foundation/type/FiberConstraint"),
+            domain: Some("https://uor.foundation/type/SiteConstraint"),
             range: "https://uor.foundation/schema/Datum",
         },
         Property {
@@ -661,13 +661,13 @@ fn properties() -> Vec<Property> {
             range: "https://uor.foundation/type/MetricAxis",
         },
         Property {
-            id: "https://uor.foundation/type/pinsFibers",
-            label: "pinsFibers",
-            comment: "A fiber coordinate that this constraint pins when applied.",
+            id: "https://uor.foundation/type/pinsSites",
+            label: "pinsSites",
+            comment: "A site coordinate that this constraint pins when applied.",
             kind: PropertyKind::Object,
             functional: false,
             domain: Some("https://uor.foundation/type/Constraint"),
-            range: "https://uor.foundation/partition/FiberCoordinate",
+            range: "https://uor.foundation/partition/SiteIndex",
         },
         // type:axisSignature property removed by Amendment 23 (replaced by affectsAxis + axisSignatureNote)
         // Amendment 23: Typed controlled vocabulary properties
@@ -714,7 +714,7 @@ fn properties() -> Vec<Property> {
             kind: PropertyKind::Object,
             functional: true,
             domain: Some("https://uor.foundation/type/CompletenessCandidate"),
-            range: "https://uor.foundation/resolver/ConstraintNerve",
+            range: "https://uor.foundation/resolver/CechNerve",
         },
         Property {
             id: "https://uor.foundation/type/witnessConstraint",
@@ -726,9 +726,9 @@ fn properties() -> Vec<Property> {
             range: "https://uor.foundation/type/Constraint",
         },
         Property {
-            id: "https://uor.foundation/type/fibersClosed",
-            label: "fibersClosed",
-            comment: "Number of fibers closed by this witness step.",
+            id: "https://uor.foundation/type/sitesClosed",
+            label: "sitesClosed",
+            comment: "Number of sites closed by this witness step.",
             kind: PropertyKind::Datatype,
             functional: true,
             domain: Some("https://uor.foundation/type/CompletenessWitness"),
@@ -780,20 +780,20 @@ fn properties() -> Vec<Property> {
             id: "https://uor.foundation/type/basisSize",
             label: "basisSize",
             comment: "The cardinality of the minimal basis. The theoretical lower bound is \
-                      n (one constraint per fiber).",
+                      n (one constraint per site).",
             kind: PropertyKind::Datatype,
             functional: true,
             domain: Some("https://uor.foundation/type/MinimalConstraintBasis"),
             range: XSD_NON_NEGATIVE_INTEGER,
         },
-        // Amendment 29: QuantumLift properties
+        // Amendment 29: WittLift properties
         Property {
             id: "https://uor.foundation/type/liftBase",
             label: "liftBase",
             comment: "The base type being lifted to the next quantum level.",
             kind: PropertyKind::Object,
             functional: true,
-            domain: Some("https://uor.foundation/type/QuantumLift"),
+            domain: Some("https://uor.foundation/type/WittLift"),
             range: "https://uor.foundation/type/ConstrainedType",
         },
         Property {
@@ -802,8 +802,8 @@ fn properties() -> Vec<Property> {
             comment: "The quantum level this lift targets.",
             kind: PropertyKind::Object,
             functional: true,
-            domain: Some("https://uor.foundation/type/QuantumLift"),
-            range: "https://uor.foundation/schema/QuantumLevel",
+            domain: Some("https://uor.foundation/type/WittLift"),
+            range: "https://uor.foundation/schema/WittLevel",
         },
         Property {
             id: "https://uor.foundation/type/liftObstruction",
@@ -812,7 +812,7 @@ fn properties() -> Vec<Property> {
                       inherits completeness.",
             kind: PropertyKind::Object,
             functional: true,
-            domain: Some("https://uor.foundation/type/QuantumLift"),
+            domain: Some("https://uor.foundation/type/WittLift"),
             range: "https://uor.foundation/type/LiftObstruction",
         },
         // Amendment 29: LiftObstruction properties
@@ -827,14 +827,14 @@ fn properties() -> Vec<Property> {
             range: XSD_BOOLEAN,
         },
         Property {
-            id: "https://uor.foundation/type/obstructionFiber",
-            label: "obstructionFiber",
-            comment: "The fiber at the new quantum level where the obstruction is located. \
+            id: "https://uor.foundation/type/obstructionSite",
+            label: "obstructionSite",
+            comment: "The site at the new quantum level where the obstruction is located. \
                       Ranges over the new bit position introduced at Q_{n+1}.",
             kind: PropertyKind::Object,
             functional: true,
             domain: Some("https://uor.foundation/type/LiftObstruction"),
-            range: "https://uor.foundation/partition/FiberCoordinate",
+            range: "https://uor.foundation/partition/SiteIndex",
         },
         // Amendment 30: ConstrainedType extensions
         Property {
@@ -855,14 +855,14 @@ fn properties() -> Vec<Property> {
             domain: Some("https://uor.foundation/type/ConstrainedType"),
             range: "https://uor.foundation/observable/MonodromyClass",
         },
-        // Amendment 32: Superposed fiber state amplitude (RC_5)
+        // Amendment 32: Superposed site state amplitude (RC_5)
         Property {
             id: "https://uor.foundation/type/amplitude",
             label: "amplitude",
-            comment: "The amplitude coefficient for this superposed fiber state.",
+            comment: "The amplitude coefficient for this superposed site state.",
             kind: PropertyKind::Datatype,
             functional: true,
-            domain: Some("https://uor.foundation/type/SuperposedFiberState"),
+            domain: Some("https://uor.foundation/type/SuperposedSiteState"),
             range: XSD_DECIMAL,
         },
         // Amendment 34: Morphospace Achievability
@@ -880,12 +880,12 @@ fn properties() -> Vec<Property> {
         Property {
             id: "https://uor.foundation/type/collapsedFrom",
             label: "collapsedFrom",
-            comment: "The SuperposedFiberState from which this CollapsedFiberState \
+            comment: "The SuperposedSiteState from which this CollapsedSiteState \
                       was produced by projective measurement.",
             kind: PropertyKind::Object,
             functional: true,
-            domain: Some("https://uor.foundation/type/CollapsedFiberState"),
-            range: "https://uor.foundation/type/SuperposedFiberState",
+            domain: Some("https://uor.foundation/type/CollapsedSiteState"),
+            range: "https://uor.foundation/type/SuperposedSiteState",
         },
         Property {
             id: "https://uor.foundation/type/survivingAmplitude",
@@ -895,19 +895,19 @@ fn properties() -> Vec<Property> {
                       the Born rule.",
             kind: PropertyKind::Datatype,
             functional: true,
-            domain: Some("https://uor.foundation/type/CollapsedFiberState"),
+            domain: Some("https://uor.foundation/type/CollapsedSiteState"),
             range: XSD_DECIMAL,
         },
         // Amendment 37: Amplitude normalization verification (Gap 1)
         Property {
             id: "https://uor.foundation/type/normalizationVerified",
             label: "normalizationVerified",
-            comment: "Whether the amplitude vector of this SuperposedFiberState \
+            comment: "Whether the amplitude vector of this SuperposedSiteState \
                       satisfies the normalization condition Σ|αᵢ|² = 1 (QM_5). \
                       Set by the SuperpositionResolver after verification.",
             kind: PropertyKind::Datatype,
             functional: true,
-            domain: Some("https://uor.foundation/type/SuperposedFiberState"),
+            domain: Some("https://uor.foundation/type/SuperposedSiteState"),
             range: XSD_BOOLEAN,
         },
         // Amendment 37: Holonomy classification flag (Gap 4)
@@ -931,12 +931,12 @@ fn properties() -> Vec<Property> {
             kind: PropertyKind::Object,
             functional: true,
             domain: Some("https://uor.foundation/type/LiftChain"),
-            range: "https://uor.foundation/schema/QuantumLevel",
+            range: "https://uor.foundation/schema/WittLevel",
         },
         Property {
             id: "https://uor.foundation/type/chainLength",
             label: "chainLength",
-            comment: "The number of QuantumLift steps in the chain (k - j).",
+            comment: "The number of WittLift steps in the chain (k - j).",
             kind: PropertyKind::Datatype,
             functional: true,
             domain: Some("https://uor.foundation/type/LiftChain"),
@@ -945,11 +945,11 @@ fn properties() -> Vec<Property> {
         Property {
             id: "https://uor.foundation/type/chainStep",
             label: "chainStep",
-            comment: "A QuantumLift step in this chain. Non-functional: one per step.",
+            comment: "A WittLift step in this chain. Non-functional: one per step.",
             kind: PropertyKind::Object,
             functional: false,
             domain: Some("https://uor.foundation/type/LiftChain"),
-            range: "https://uor.foundation/type/QuantumLift",
+            range: "https://uor.foundation/type/WittLift",
         },
         Property {
             id: "https://uor.foundation/type/chainObstructionProfile",
@@ -999,13 +999,13 @@ fn properties() -> Vec<Property> {
         },
         // Amendment 56: ModuliSpace properties
         Property {
-            id: "https://uor.foundation/type/moduliQuantumLevel",
-            label: "moduliQuantumLevel",
+            id: "https://uor.foundation/type/moduliWittLevel",
+            label: "moduliWittLevel",
             comment: "The quantum level at which this moduli space is defined.",
             kind: PropertyKind::Object,
             functional: true,
             domain: Some("https://uor.foundation/type/ModuliSpace"),
-            range: "https://uor.foundation/schema/QuantumLevel",
+            range: "https://uor.foundation/schema/WittLevel",
         },
         Property {
             id: "https://uor.foundation/type/moduliPoint",
@@ -1116,7 +1116,7 @@ fn properties() -> Vec<Property> {
         Property {
             id: "https://uor.foundation/type/lowerAdjoint",
             label: "lowerAdjoint",
-            comment: "The lower adjoint (fiber interior) of the Galois connection, \
+            comment: "The lower adjoint (site interior) of the Galois connection, \
                       expressed as a symbolic formula string.",
             kind: PropertyKind::Object,
             functional: true,
@@ -1137,7 +1137,7 @@ fn properties() -> Vec<Property> {
             id: "https://uor.foundation/type/refinementDirection",
             label: "refinementDirection",
             comment: "Description of the refinement direction: ascending in type \
-                      lattice corresponds to descending in fiber freedom.",
+                      lattice corresponds to descending in site freedom.",
             kind: PropertyKind::Datatype,
             functional: true,
             domain: Some("https://uor.foundation/type/GaloisConnection"),
@@ -1145,9 +1145,9 @@ fn properties() -> Vec<Property> {
         },
         // Amendment 61: Structural Type annotation properties
         Property {
-            id: "https://uor.foundation/type/structuralFiberCount",
-            label: "structuralFiberCount",
-            comment: "Formula or description of the fiber count for a structural \
+            id: "https://uor.foundation/type/structuralSiteCount",
+            label: "structuralSiteCount",
+            comment: "Formula or description of the site count for a structural \
                       type individual.",
             kind: PropertyKind::Annotation,
             functional: true,
@@ -1212,9 +1212,9 @@ fn properties() -> Vec<Property> {
             range: "https://uor.foundation/schema/TermExpression",
         },
         Property {
-            id: "https://uor.foundation/type/fiberOrderingConstraint",
-            label: "fiberOrderingConstraint",
-            comment: "Constraint on the ordering of fibers for this type.",
+            id: "https://uor.foundation/type/siteOrderingConstraint",
+            label: "siteOrderingConstraint",
+            comment: "Constraint on the ordering of sites for this type.",
             kind: PropertyKind::Object,
             functional: true,
             domain: None,
@@ -1232,7 +1232,7 @@ fn properties() -> Vec<Property> {
         Property {
             id: "https://uor.foundation/type/permutationGroup",
             label: "permutationGroup",
-            comment: "The permutation group acting on fibers of this type.",
+            comment: "The permutation group acting on sites of this type.",
             kind: PropertyKind::Object,
             functional: true,
             domain: None,
@@ -1335,7 +1335,7 @@ fn properties() -> Vec<Property> {
             id: "https://uor.foundation/type/latticeDepth",
             label: "latticeDepth",
             comment: "Maximum chain length from PrimitiveType (top) to any \
-                      CompleteType (bottom). Equals the fiber budget n at \
+                      CompleteType (bottom). Equals the site budget n at \
                       quantum level Q_k.",
             kind: PropertyKind::Datatype,
             functional: true,
@@ -1379,11 +1379,11 @@ fn individuals() -> Vec<Individual> {
             id: "https://uor.foundation/type/ScalarType",
             type_: "https://uor.foundation/type/PrimitiveType",
             label: "ScalarType",
-            comment: "A single value from an ordered domain. fiberCount = n \
+            comment: "A single value from an ordered domain. siteCount = n \
                       (quantization bits).",
             properties: &[
                 (
-                    "https://uor.foundation/type/structuralFiberCount",
+                    "https://uor.foundation/type/structuralSiteCount",
                     IndividualValue::Str("n (quantization bits)"),
                 ),
                 (
@@ -1396,11 +1396,11 @@ fn individuals() -> Vec<Individual> {
             id: "https://uor.foundation/type/SymbolType",
             type_: "https://uor.foundation/type/PrimitiveType",
             label: "SymbolType",
-            comment: "A value from a finite unordered set. fiberCount = \
+            comment: "A value from a finite unordered set. siteCount = \
                       ceil(log2(|alphabet|)).",
             properties: &[
                 (
-                    "https://uor.foundation/type/structuralFiberCount",
+                    "https://uor.foundation/type/structuralSiteCount",
                     IndividualValue::Str("ceil(log2(|alphabet|))"),
                 ),
                 (
@@ -1417,8 +1417,8 @@ fn individuals() -> Vec<Individual> {
                       free monoid on the element type.",
             properties: &[
                 (
-                    "https://uor.foundation/type/structuralFiberCount",
-                    IndividualValue::Str("sum of element fiber counts"),
+                    "https://uor.foundation/type/structuralSiteCount",
+                    IndividualValue::Str("sum of element site counts"),
                 ),
                 (
                     "https://uor.foundation/type/structuralGrounding",
@@ -1437,12 +1437,12 @@ fn individuals() -> Vec<Individual> {
             comment: "A fixed collection of named fields.",
             properties: &[
                 (
-                    "https://uor.foundation/type/structuralFiberCount",
-                    IndividualValue::Str("sum of field fiber counts"),
+                    "https://uor.foundation/type/structuralSiteCount",
+                    IndividualValue::Str("sum of field site counts"),
                 ),
                 (
                     "https://uor.foundation/type/structuralGrounding",
-                    IndividualValue::Str("fiber ordering follows CY_6 (optimal fiber ordering)"),
+                    IndividualValue::Str("site ordering follows CY_6 (optimal site ordering)"),
                 ),
             ],
         },
@@ -1453,8 +1453,8 @@ fn individuals() -> Vec<Individual> {
             comment: "Nodes with edge constraints. Constraint nerve = graph topology.",
             properties: &[
                 (
-                    "https://uor.foundation/type/structuralFiberCount",
-                    IndividualValue::Str("sum of node fiber counts + edge overhead"),
+                    "https://uor.foundation/type/structuralSiteCount",
+                    IndividualValue::Str("sum of node site counts + edge overhead"),
                 ),
                 (
                     "https://uor.foundation/type/structuralGrounding",
@@ -1473,8 +1473,8 @@ fn individuals() -> Vec<Individual> {
             comment: "Unordered collection. d_delta is permutation-invariant.",
             properties: &[
                 (
-                    "https://uor.foundation/type/structuralFiberCount",
-                    IndividualValue::Str("sum of element fiber counts"),
+                    "https://uor.foundation/type/structuralSiteCount",
+                    IndividualValue::Str("sum of element site counts"),
                 ),
                 (
                     "https://uor.foundation/type/structuralGrounding",
@@ -1493,8 +1493,8 @@ fn individuals() -> Vec<Individual> {
             comment: "Hierarchical structure. beta_1=0 (acyclic), beta_0=1 (connected).",
             properties: &[
                 (
-                    "https://uor.foundation/type/structuralFiberCount",
-                    IndividualValue::Str("sum of node fiber counts"),
+                    "https://uor.foundation/type/structuralSiteCount",
+                    IndividualValue::Str("sum of node site counts"),
                 ),
                 (
                     "https://uor.foundation/type/structuralGrounding",
@@ -1514,8 +1514,8 @@ fn individuals() -> Vec<Individual> {
                       Functorial decomposition.",
             properties: &[
                 (
-                    "https://uor.foundation/type/structuralFiberCount",
-                    IndividualValue::Str("row_count * tuple_fiber_count"),
+                    "https://uor.foundation/type/structuralSiteCount",
+                    IndividualValue::Str("row_count * tuple_site_count"),
                 ),
                 (
                     "https://uor.foundation/type/structuralGrounding",

@@ -134,11 +134,11 @@ pub fn namespace_mappings() -> HashMap<&'static str, NamespaceMapping> {
         },
     );
     m.insert(
-        NS_CASCADE,
+        NS_REDUCTION,
         NamespaceMapping {
             space: Space::Kernel,
             space_module: "kernel",
-            file_module: "cascade",
+            file_module: "reduction",
         },
     );
     m.insert(
@@ -340,7 +340,7 @@ pub fn to_snake_case(s: &str) -> String {
 
 /// Converts a class label into a PascalCase Rust trait name.
 pub fn to_trait_name(label: &str) -> String {
-    // Already PascalCase in the ontology (e.g., "FiberBudget", "IrreducibleSet")
+    // Already PascalCase in the ontology (e.g., "FreeRank", "IrreducibleSet")
     label.to_string()
 }
 
@@ -387,7 +387,7 @@ mod tests {
 
     #[test]
     fn snake_case_conversion() {
-        assert_eq!(to_snake_case("fiberBudget"), "fiber_budget");
+        assert_eq!(to_snake_case("freeRank"), "free_rank");
         assert_eq!(to_snake_case("isClosed"), "is_closed");
         assert_eq!(to_snake_case("sourceType"), "source_type");
         assert_eq!(to_snake_case("type"), "type_");

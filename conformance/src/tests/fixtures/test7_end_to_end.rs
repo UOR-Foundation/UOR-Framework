@@ -21,7 +21,7 @@ pub const TEST7_END_TO_END: &str = r#"
 # 1. Context — the evaluation environment
 <https://uor.foundation/instance/e2e/ctx>
     a               owl:NamedIndividual, state:Context ;
-    state:quantum   "8"^^xsd:nonNegativeInteger .
+    state:wittLength   "8"^^xsd:nonNegativeInteger .
 
 # 2. Type — the type of the value being resolved
 <https://uor.foundation/instance/e2e/type-u8>
@@ -37,7 +37,7 @@ pub const TEST7_END_TO_END: &str = r#"
 # 4. Partition — the partition of R_8 produced by the resolver
 <https://uor.foundation/instance/e2e/partition>
     a                   owl:NamedIndividual, partition:Partition ;
-    partition:quantum   "8"^^xsd:nonNegativeInteger .
+    partition:wittLength   "8"^^xsd:nonNegativeInteger .
 
 # 5. Observable — a metric measurement on the resolved value
 <https://uor.foundation/instance/e2e/observable>

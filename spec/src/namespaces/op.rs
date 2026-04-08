@@ -5,7 +5,7 @@
 //! - **Amendment 3**: `op:Identity` class and `op:criticalIdentity` individual
 //! - **Amendment 4**: `op:Group`, `op:DihedralGroup` classes and `op:D2n` individual
 //! - **Amendment 25**: 5 `CC_` identity individuals (completeness certification algebra)
-//! - **Amendment 26**: `QuantumLevelBinding` class, 3 universality properties, 7 `QL_` identity individuals
+//! - **Amendment 26**: `WittLevelBinding` class, 3 universality properties, 7 `QL_` identity individuals
 //! - **Amendment 27**: 5 `SR_` identity individuals (session-scoped resolution algebra)
 //! - **Amendments 28–30**: 20 identity families (TS_, QLS_, MN_) for type synthesis,
 //!   quantum spectral sequence, and monodromy observables
@@ -31,7 +31,7 @@
 //! - **Amendment 57**: 4 `MR_` moduli resolver identities
 //! - **Amendment 58**: 7 `CY_` carry algebra identities (carry
 //!   generate/propagate/kill, d_\u{0394} discrepancy, optimal encoding,
-//!   fiber ordering, carry lookahead)
+//!   site ordering, carry lookahead)
 //! - **Amendment 59**: 6 `BM_` named base metrics identities (saturation,
 //!   Euler characteristic, index theorem, Jacobian vanishing, Witt defect,
 //!   metric composition tower)
@@ -40,7 +40,7 @@
 //!   operations identities (nerve additivity, Mayer\u{2013}Vietoris,
 //!   Betti bounded change, accumulation monotonicity)
 //! - **Amendment 61**: 8 `SD_` structural type identities (scalar/symbol
-//!   grounding, sequence/tuple fiber count, graph/set/tree constraints,
+//!   grounding, sequence/tuple site count, graph/set/tree constraints,
 //!   table functorial decomposition)
 //! - **Amendment 62**: 6 composed operation classes (`ComposedOperation`,
 //!   `DispatchOperation`, `InferenceOperation`, `AccumulationOperation`,
@@ -48,13 +48,13 @@
 //!   `ComposedAlgebraic` verification domain, 5 geometric characters,
 //!   5 operator individuals, 18 identity individuals (DD_, PI_, PA_,
 //!   PL_, PK_, PP_)
-//! - **Amendment 63**: 16 cascade core identities: 7 `PE_` pipeline
+//! - **Amendment 63**: 16 reduction core identities: 7 `PE_` pipeline
 //!   evaluation semantics, 7 `PM_` machine execution model, 2 `ER_`
 //!   execution rules
-//! - **Amendment 64**: 16 cascade expansion identities: 2 `ER_` additional
+//! - **Amendment 64**: 16 reduction expansion identities: 2 `ER_` additional
 //!   execution rules, 4 `EA_` epoch admission, 3 `OE_` optimization
 //!   equivalences, 3 `OE_4` sub-lemmas, 4 `CS_` cost semantics
-//! - **Amendment 65**: 16 cascade completion identities: 1 `CS_5` (total cost
+//! - **Amendment 65**: 16 reduction completion identities: 1 `CS_5` (total cost
 //!   bound), 3 `FA_` (scheduler fairness), 4 `SW_` (service window),
 //!   4 `LS_` (lease suspension), 3 `TJ_` (transaction), 1 `AP_1`\u{2013}3
 //!   (approximation)
@@ -187,11 +187,11 @@ fn classes() -> Vec<Class> {
         },
         // Amendment 26: Quantum Level Scaling
         Class {
-            id: "https://uor.foundation/op/QuantumLevelBinding",
-            label: "QuantumLevelBinding",
+            id: "https://uor.foundation/op/WittLevelBinding",
+            label: "WittLevelBinding",
             comment: "A record linking an op:Identity individual to a specific quantum \
                       level at which it has been verified. Non-functional: one \
-                      QuantumLevelBinding per (Identity, QuantumLevel) pair verified.",
+                      WittLevelBinding per (Identity, WittLevel) pair verified.",
             subclass_of: &[OWL_THING],
             disjoint_with: &[],
         },
@@ -436,22 +436,22 @@ fn properties() -> Vec<Property> {
         Property {
             id: "https://uor.foundation/op/verifiedAtLevel",
             label: "verifiedAtLevel",
-            comment: "Links an Identity individual to a QuantumLevelBinding attesting \
+            comment: "Links an Identity individual to a WittLevelBinding attesting \
                       verification at a specific quantum level. Non-functional: one \
-                      binding per (Identity, QuantumLevel) pair.",
+                      binding per (Identity, WittLevel) pair.",
             kind: PropertyKind::Object,
             functional: false,
             domain: Some("https://uor.foundation/op/Identity"),
-            range: "https://uor.foundation/op/QuantumLevelBinding",
+            range: "https://uor.foundation/op/WittLevelBinding",
         },
         Property {
             id: "https://uor.foundation/op/bindingLevel",
             label: "bindingLevel",
-            comment: "The quantum level at which this QuantumLevelBinding was verified.",
+            comment: "The quantum level at which this WittLevelBinding was verified.",
             kind: PropertyKind::Object,
             functional: true,
-            domain: Some("https://uor.foundation/op/QuantumLevelBinding"),
-            range: "https://uor.foundation/schema/QuantumLevel",
+            domain: Some("https://uor.foundation/op/WittLevelBinding"),
+            range: "https://uor.foundation/schema/WittLevel",
         },
         Property {
             id: "https://uor.foundation/op/universallyValid",
@@ -768,7 +768,7 @@ fn raw_individuals_vec() -> Vec<Individual> {
             type_: "https://uor.foundation/op/VerificationDomain",
             label: "Thermodynamic",
             comment: "Established via entropy, Landauer bounds, or Boltzmann \
-                      distributions. Covers fiber entropy (TH_), reversible \
+                      distributions. Covers site entropy (TH_), reversible \
                       computation (RC_), and phase transitions.",
             properties: &[
                 ("https://uor.foundation/op/enumVariant", IndividualValue::IriRef("https://uor.foundation/op/Thermodynamic")),
@@ -812,9 +812,9 @@ fn raw_individuals_vec() -> Vec<Individual> {
             id: "https://uor.foundation/op/SuperpositionDomain",
             type_: "https://uor.foundation/op/VerificationDomain",
             label: "SuperpositionDomain",
-            comment: "Established by superposition analysis of fiber states. \
+            comment: "Established by superposition analysis of site states. \
                       Covers identities involving superposed (non-classical) \
-                      fiber assignments where fibers carry complex amplitudes.",
+                      site assignments where sites carry complex amplitudes.",
             properties: &[
                 ("https://uor.foundation/op/enumVariant", IndividualValue::IriRef("https://uor.foundation/op/SuperpositionDomain")),
             ],
@@ -892,7 +892,7 @@ fn raw_individuals_vec() -> Vec<Individual> {
             id: "https://uor.foundation/op/LevelSpecific",
             type_: "https://uor.foundation/op/ValidityScopeKind",
             label: "LevelSpecific",
-            comment: "Holds only at exactly one level, given by a QuantumLevelBinding.",
+            comment: "Holds only at exactly one level, given by a WittLevelBinding.",
             properties: &[
                 ("https://uor.foundation/op/enumVariant", IndividualValue::IriRef("https://uor.foundation/op/LevelSpecific")),
             ],
@@ -988,19 +988,19 @@ fn raw_individuals_vec() -> Vec<Individual> {
             properties: &[],
         },
         Individual {
-            id: "https://uor.foundation/op/FiberPinning",
+            id: "https://uor.foundation/op/SiteBinding",
             type_: "https://uor.foundation/op/GeometricCharacter",
-            label: "FiberPinning",
+            label: "SiteBinding",
             comment: "Geometric character of accumulation: progressive pinning of \
-                      fiber states in the context lattice.",
+                      site states in the context lattice.",
             properties: &[],
         },
         Individual {
-            id: "https://uor.foundation/op/FiberPartition",
+            id: "https://uor.foundation/op/SitePartition",
             type_: "https://uor.foundation/op/GeometricCharacter",
-            label: "FiberPartition",
+            label: "SitePartition",
             comment: "Geometric character of lease partition: splitting a shared \
-                      context into disjoint fiber-set leases.",
+                      context into disjoint site-set leases.",
             properties: &[],
         },
         Individual {
@@ -1298,13 +1298,13 @@ fn raw_individuals_vec() -> Vec<Individual> {
             type_: "https://uor.foundation/op/AccumulationOperation",
             label: "accumulate",
             comment: "\u{03b1}(b, C) = C': accumulates a binding into a resolution \
-                      context, pinning a fiber. Non-commutative, associative at \
+                      context, pinning a site. Non-commutative, associative at \
                       convergence (SR_10).",
             properties: &[
                 ("https://uor.foundation/op/arity", IndividualValue::Int(2)),
                 (
                     "https://uor.foundation/op/hasGeometricCharacter",
-                    IndividualValue::IriRef("https://uor.foundation/op/FiberPinning"),
+                    IndividualValue::IriRef("https://uor.foundation/op/SiteBinding"),
                 ),
                 (
                     "https://uor.foundation/op/commutative",
@@ -1331,7 +1331,7 @@ fn raw_individuals_vec() -> Vec<Individual> {
                 ("https://uor.foundation/op/arity", IndividualValue::Int(2)),
                 (
                     "https://uor.foundation/op/hasGeometricCharacter",
-                    IndividualValue::IriRef("https://uor.foundation/op/FiberPartition"),
+                    IndividualValue::IriRef("https://uor.foundation/op/SitePartition"),
                 ),
                 (
                     "https://uor.foundation/op/commutative",
@@ -2058,7 +2058,7 @@ fn raw_individuals_vec() -> Vec<Individual> {
                 ("https://uor.foundation/op/verificationDomain", IndividualValue::IriRef("https://uor.foundation/op/Algebraic")),
             ],
         },
-        // Amendment 15: Constraint, Fiber & Partition Laws — Constraint composition (6)
+        // Amendment 15: Constraint, Site & Partition Laws — Constraint composition (6)
         Individual {
             id: "https://uor.foundation/op/C_1",
             type_: "https://uor.foundation/op/Identity",
@@ -2236,11 +2236,11 @@ fn raw_individuals_vec() -> Vec<Individual> {
             id: "https://uor.foundation/op/CM_3",
             type_: "https://uor.foundation/op/Identity",
             label: "CM_3",
-            comment: "Minimum constraint count to cover n fibers.",
+            comment: "Minimum constraint count to cover n sites.",
             properties: &[
-                ("https://uor.foundation/op/lhs", IndividualValue::Str("min constraints to cover n fibers")),
+                ("https://uor.foundation/op/lhs", IndividualValue::Str("min constraints to cover n sites")),
                 ("https://uor.foundation/op/rhs", IndividualValue::Str("⌈n / max_k pins_per_constraint_k⌉")),
-                ("https://uor.foundation/op/forAll", IndividualValue::Str("n fibers, constraint set")),
+                ("https://uor.foundation/op/forAll", IndividualValue::Str("n sites, constraint set")),
                 ("https://uor.foundation/op/verificationDomain", IndividualValue::IriRef("https://uor.foundation/op/Algebraic")),
             ],
         },
@@ -2305,16 +2305,16 @@ fn raw_individuals_vec() -> Vec<Individual> {
                 ("https://uor.foundation/op/verificationDomain", IndividualValue::IriRef("https://uor.foundation/op/Algebraic")),
             ],
         },
-        // Amendment 15: Fiber monotone (4)
+        // Amendment 15: Site monotone (4)
         Individual {
             id: "https://uor.foundation/op/F_1",
             type_: "https://uor.foundation/op/Identity",
             label: "F_1",
-            comment: "Fiber monotonicity: a pinned fiber cannot be unpinned.",
+            comment: "Site monotonicity: a pinned site cannot be unpinned.",
             properties: &[
-                ("https://uor.foundation/op/lhs", IndividualValue::Str("pinned fiber")),
+                ("https://uor.foundation/op/lhs", IndividualValue::Str("pinned site")),
                 ("https://uor.foundation/op/rhs", IndividualValue::Str("cannot be unpinned")),
-                ("https://uor.foundation/op/forAll", IndividualValue::Str("FiberCoordinate")),
+                ("https://uor.foundation/op/forAll", IndividualValue::Str("SiteIndex")),
                 ("https://uor.foundation/op/verificationDomain", IndividualValue::IriRef("https://uor.foundation/op/Algebraic")),
             ],
         },
@@ -2322,11 +2322,11 @@ fn raw_individuals_vec() -> Vec<Individual> {
             id: "https://uor.foundation/op/F_2",
             type_: "https://uor.foundation/op/Identity",
             label: "F_2",
-            comment: "Fiber budget upper bound: at most n pin operations to close.",
+            comment: "Site budget upper bound: at most n pin operations to close.",
             properties: &[
                 ("https://uor.foundation/op/lhs", IndividualValue::Str("pin operations to close")),
                 ("https://uor.foundation/op/rhs", IndividualValue::Str("≤ n")),
-                ("https://uor.foundation/op/forAll", IndividualValue::Str("FiberBudget")),
+                ("https://uor.foundation/op/forAll", IndividualValue::Str("FreeRank")),
                 ("https://uor.foundation/op/verificationDomain", IndividualValue::IriRef("https://uor.foundation/op/Algebraic")),
             ],
         },
@@ -2334,11 +2334,11 @@ fn raw_individuals_vec() -> Vec<Individual> {
             id: "https://uor.foundation/op/F_3",
             type_: "https://uor.foundation/op/Identity",
             label: "F_3",
-            comment: "Fiber budget conservation: pinned + free = total fibers.",
+            comment: "Site budget conservation: pinned + free = total sites.",
             properties: &[
-                ("https://uor.foundation/op/lhs", IndividualValue::Str("pinnedCount + freeCount")),
-                ("https://uor.foundation/op/rhs", IndividualValue::Str("totalFibers = n")),
-                ("https://uor.foundation/op/forAll", IndividualValue::Str("FiberBudget")),
+                ("https://uor.foundation/op/lhs", IndividualValue::Str("pinnedCount + freeRank")),
+                ("https://uor.foundation/op/rhs", IndividualValue::Str("totalSites = n")),
+                ("https://uor.foundation/op/forAll", IndividualValue::Str("FreeRank")),
                 ("https://uor.foundation/op/verificationDomain", IndividualValue::IriRef("https://uor.foundation/op/Algebraic")),
             ],
         },
@@ -2346,24 +2346,24 @@ fn raw_individuals_vec() -> Vec<Individual> {
             id: "https://uor.foundation/op/F_4",
             type_: "https://uor.foundation/op/Identity",
             label: "F_4",
-            comment: "Fiber budget closure: closed iff all fibers pinned.",
+            comment: "Site budget closure: closed iff all sites pinned.",
             properties: &[
                 ("https://uor.foundation/op/lhs", IndividualValue::Str("isClosed")),
-                ("https://uor.foundation/op/rhs", IndividualValue::Str("freeCount = 0 ⇔ pinnedCount = n")),
-                ("https://uor.foundation/op/forAll", IndividualValue::Str("FiberBudget")),
+                ("https://uor.foundation/op/rhs", IndividualValue::Str("freeRank = 0 ⇔ pinnedCount = n")),
+                ("https://uor.foundation/op/forAll", IndividualValue::Str("FreeRank")),
                 ("https://uor.foundation/op/verificationDomain", IndividualValue::IriRef("https://uor.foundation/op/Algebraic")),
             ],
         },
-        // Amendment 15: Fiber lattice (4)
+        // Amendment 15: Site lattice (4)
         Individual {
             id: "https://uor.foundation/op/FL_1",
             type_: "https://uor.foundation/op/Identity",
             label: "FL_1",
-            comment: "Fiber lattice bottom: all fibers free.",
+            comment: "Site lattice bottom: all sites free.",
             properties: &[
                 ("https://uor.foundation/op/lhs", IndividualValue::Str("⊥")),
-                ("https://uor.foundation/op/rhs", IndividualValue::Str("all fibers free (freeCount = n)")),
-                ("https://uor.foundation/op/forAll", IndividualValue::Str("FiberBudget lattice")),
+                ("https://uor.foundation/op/rhs", IndividualValue::Str("all sites free (freeRank = n)")),
+                ("https://uor.foundation/op/forAll", IndividualValue::Str("FreeRank lattice")),
                 ("https://uor.foundation/op/verificationDomain", IndividualValue::IriRef("https://uor.foundation/op/Algebraic")),
             ],
         },
@@ -2371,11 +2371,11 @@ fn raw_individuals_vec() -> Vec<Individual> {
             id: "https://uor.foundation/op/FL_2",
             type_: "https://uor.foundation/op/Identity",
             label: "FL_2",
-            comment: "Fiber lattice top: all fibers pinned.",
+            comment: "Site lattice top: all sites pinned.",
             properties: &[
                 ("https://uor.foundation/op/lhs", IndividualValue::Str("⊤")),
-                ("https://uor.foundation/op/rhs", IndividualValue::Str("all fibers pinned (pinnedCount = n)")),
-                ("https://uor.foundation/op/forAll", IndividualValue::Str("FiberBudget lattice")),
+                ("https://uor.foundation/op/rhs", IndividualValue::Str("all sites pinned (pinnedCount = n)")),
+                ("https://uor.foundation/op/forAll", IndividualValue::Str("FreeRank lattice")),
                 ("https://uor.foundation/op/verificationDomain", IndividualValue::IriRef("https://uor.foundation/op/Algebraic")),
             ],
         },
@@ -2383,11 +2383,11 @@ fn raw_individuals_vec() -> Vec<Individual> {
             id: "https://uor.foundation/op/FL_3",
             type_: "https://uor.foundation/op/Identity",
             label: "FL_3",
-            comment: "Fiber lattice join is union of pinnings.",
+            comment: "Site lattice join is union of pinnings.",
             properties: &[
                 ("https://uor.foundation/op/lhs", IndividualValue::Str("join(S₁, S₂)")),
                 ("https://uor.foundation/op/rhs", IndividualValue::Str("union of pinnings from S₁ and S₂")),
-                ("https://uor.foundation/op/forAll", IndividualValue::Str("FiberBudget states S₁, S₂")),
+                ("https://uor.foundation/op/forAll", IndividualValue::Str("FreeRank states S₁, S₂")),
                 ("https://uor.foundation/op/verificationDomain", IndividualValue::IriRef("https://uor.foundation/op/Algebraic")),
             ],
         },
@@ -2395,23 +2395,23 @@ fn raw_individuals_vec() -> Vec<Individual> {
             id: "https://uor.foundation/op/FL_4",
             type_: "https://uor.foundation/op/Identity",
             label: "FL_4",
-            comment: "Fiber lattice height equals n.",
+            comment: "Site lattice height equals n.",
             properties: &[
                 ("https://uor.foundation/op/lhs", IndividualValue::Str("lattice height")),
                 ("https://uor.foundation/op/rhs", IndividualValue::Str("n")),
-                ("https://uor.foundation/op/forAll", IndividualValue::Str("FiberBudget lattice")),
+                ("https://uor.foundation/op/forAll", IndividualValue::Str("FreeRank lattice")),
                 ("https://uor.foundation/op/verificationDomain", IndividualValue::IriRef("https://uor.foundation/op/Algebraic")),
             ],
         },
-        // Amendment 15: Fiber-partition map (7)
+        // Amendment 15: Site-partition map (7)
         Individual {
             id: "https://uor.foundation/op/FPM_1",
             type_: "https://uor.foundation/op/Identity",
             label: "FPM_1",
-            comment: "Unit partition membership: x is a unit iff fiber_0(x) = 1 (x is odd).",
+            comment: "Unit partition membership: x is a unit iff site_0(x) = 1 (x is odd).",
             properties: &[
                 ("https://uor.foundation/op/lhs", IndividualValue::Str("x ∈ Unit")),
-                ("https://uor.foundation/op/rhs", IndividualValue::Str("fiber_0(x) = 1 (x is odd)")),
+                ("https://uor.foundation/op/rhs", IndividualValue::Str("site_0(x) = 1 (x is odd)")),
                 ("https://uor.foundation/op/forAll", IndividualValue::Str("x ∈ R_n")),
                 ("https://uor.foundation/op/verificationDomain", IndividualValue::IriRef("https://uor.foundation/op/Algebraic")),
             ],
@@ -2490,14 +2490,14 @@ fn raw_individuals_vec() -> Vec<Individual> {
                 ("https://uor.foundation/op/verificationDomain", IndividualValue::IriRef("https://uor.foundation/op/Algebraic")),
             ],
         },
-        // Amendment 15: Fiber position semantics (7)
+        // Amendment 15: Site position semantics (7)
         Individual {
             id: "https://uor.foundation/op/FS_1",
             type_: "https://uor.foundation/op/Identity",
             label: "FS_1",
-            comment: "Fiber extraction: fiber_k(x) is the k-th bit of x.",
+            comment: "Site extraction: site_k(x) is the k-th bit of x.",
             properties: &[
-                ("https://uor.foundation/op/lhs", IndividualValue::Str("fiber_k(x)")),
+                ("https://uor.foundation/op/lhs", IndividualValue::Str("site_k(x)")),
                 ("https://uor.foundation/op/rhs", IndividualValue::Str("(x >> k) AND 1")),
                 ("https://uor.foundation/op/forAll", IndividualValue::Str("x ∈ R_n, 0 ≤ k < n")),
                 ("https://uor.foundation/op/verificationDomain", IndividualValue::IriRef("https://uor.foundation/op/Algebraic")),
@@ -2507,9 +2507,9 @@ fn raw_individuals_vec() -> Vec<Individual> {
             id: "https://uor.foundation/op/FS_2",
             type_: "https://uor.foundation/op/Identity",
             label: "FS_2",
-            comment: "Fiber 0 is parity.",
+            comment: "Site 0 is parity.",
             properties: &[
-                ("https://uor.foundation/op/lhs", IndividualValue::Str("fiber_0(x)")),
+                ("https://uor.foundation/op/lhs", IndividualValue::Str("site_0(x)")),
                 ("https://uor.foundation/op/rhs", IndividualValue::Str("x mod 2 (parity)")),
                 ("https://uor.foundation/op/forAll", IndividualValue::Str("x ∈ R_n")),
                 ("https://uor.foundation/op/verificationDomain", IndividualValue::IriRef("https://uor.foundation/op/Algebraic")),
@@ -2519,10 +2519,10 @@ fn raw_individuals_vec() -> Vec<Individual> {
             id: "https://uor.foundation/op/FS_3",
             type_: "https://uor.foundation/op/Identity",
             label: "FS_3",
-            comment: "Progressive fiber determination: fiber_k given lower fibers \
+            comment: "Progressive site determination: site_k given lower sites \
                       determines x mod 2^{k+1}.",
             properties: &[
-                ("https://uor.foundation/op/lhs", IndividualValue::Str("fiber_k(x) given fibers 0..k−1")),
+                ("https://uor.foundation/op/lhs", IndividualValue::Str("site_k(x) given sites 0..k−1")),
                 ("https://uor.foundation/op/rhs", IndividualValue::Str("determines x mod 2^{k+1}")),
                 ("https://uor.foundation/op/forAll", IndividualValue::Str("x ∈ R_n")),
                 ("https://uor.foundation/op/verificationDomain", IndividualValue::IriRef("https://uor.foundation/op/Algebraic")),
@@ -2532,9 +2532,9 @@ fn raw_individuals_vec() -> Vec<Individual> {
             id: "https://uor.foundation/op/FS_4",
             type_: "https://uor.foundation/op/Identity",
             label: "FS_4",
-            comment: "Cumulative fiber determination: fibers 0..k together determine x mod 2^{k+1}.",
+            comment: "Cumulative site determination: sites 0..k together determine x mod 2^{k+1}.",
             properties: &[
-                ("https://uor.foundation/op/lhs", IndividualValue::Str("fibers 0..k together")),
+                ("https://uor.foundation/op/lhs", IndividualValue::Str("sites 0..k together")),
                 ("https://uor.foundation/op/rhs", IndividualValue::Str("determine x mod 2^{k+1}")),
                 ("https://uor.foundation/op/forAll", IndividualValue::Str("x ∈ R_n")),
                 ("https://uor.foundation/op/verificationDomain", IndividualValue::IriRef("https://uor.foundation/op/Algebraic")),
@@ -2544,9 +2544,9 @@ fn raw_individuals_vec() -> Vec<Individual> {
             id: "https://uor.foundation/op/FS_5",
             type_: "https://uor.foundation/op/Identity",
             label: "FS_5",
-            comment: "Complete fiber determination: all n fibers determine x uniquely.",
+            comment: "Complete site determination: all n sites determine x uniquely.",
             properties: &[
-                ("https://uor.foundation/op/lhs", IndividualValue::Str("all n fibers")),
+                ("https://uor.foundation/op/lhs", IndividualValue::Str("all n sites")),
                 ("https://uor.foundation/op/rhs", IndividualValue::Str("determine x uniquely")),
                 ("https://uor.foundation/op/forAll", IndividualValue::Str("x ∈ R_n")),
                 ("https://uor.foundation/op/verificationDomain", IndividualValue::IriRef("https://uor.foundation/op/Algebraic")),
@@ -2556,10 +2556,10 @@ fn raw_individuals_vec() -> Vec<Individual> {
             id: "https://uor.foundation/op/FS_6",
             type_: "https://uor.foundation/op/Identity",
             label: "FS_6",
-            comment: "Stratum from fibers: v_2(x) is the minimum k where fiber_k(x) = 1.",
+            comment: "Stratum from sites: v_2(x) is the minimum k where site_k(x) = 1.",
             properties: &[
                 ("https://uor.foundation/op/lhs", IndividualValue::Str("stratum(x)")),
-                ("https://uor.foundation/op/rhs", IndividualValue::Str("v_2(x) = min{k : fiber_k(x) = 1}")),
+                ("https://uor.foundation/op/rhs", IndividualValue::Str("v_2(x) = min{k : site_k(x) = 1}")),
                 ("https://uor.foundation/op/forAll", IndividualValue::Str("x ∈ R_n")),
                 ("https://uor.foundation/op/verificationDomain", IndividualValue::IriRef("https://uor.foundation/op/Algebraic")),
             ],
@@ -2631,9 +2631,9 @@ fn raw_individuals_vec() -> Vec<Individual> {
             id: "https://uor.foundation/op/IR_4",
             type_: "https://uor.foundation/op/Identity",
             label: "IR_4",
-            comment: "Resolution termination: loop terminates if constraint set spans all fibers.",
+            comment: "Resolution termination: loop terminates if constraint set spans all sites.",
             properties: &[
-                ("https://uor.foundation/op/lhs", IndividualValue::Str("constraint set spans all fibers")),
+                ("https://uor.foundation/op/lhs", IndividualValue::Str("constraint set spans all sites")),
                 ("https://uor.foundation/op/rhs", IndividualValue::Str("loop terminates")),
                 ("https://uor.foundation/op/forAll", IndividualValue::Str("complete constraint set")),
                 ("https://uor.foundation/op/verificationDomain", IndividualValue::IriRef("https://uor.foundation/op/Pipeline")),
@@ -2804,10 +2804,10 @@ fn raw_individuals_vec() -> Vec<Individual> {
             id: "https://uor.foundation/op/CB_1",
             type_: "https://uor.foundation/op/Identity",
             label: "CB_1",
-            comment: "Minimum convergence rate: 1 fiber per iteration (worst case).",
+            comment: "Minimum convergence rate: 1 site per iteration (worst case).",
             properties: &[
                 ("https://uor.foundation/op/lhs", IndividualValue::Str("min convergenceRate")),
-                ("https://uor.foundation/op/rhs", IndividualValue::Str("1 fiber per iteration")),
+                ("https://uor.foundation/op/rhs", IndividualValue::Str("1 site per iteration")),
                 ("https://uor.foundation/op/forAll", IndividualValue::Str("worst case")),
                 ("https://uor.foundation/op/verificationDomain", IndividualValue::IriRef("https://uor.foundation/op/Pipeline")),
             ],
@@ -2816,10 +2816,10 @@ fn raw_individuals_vec() -> Vec<Individual> {
             id: "https://uor.foundation/op/CB_2",
             type_: "https://uor.foundation/op/Identity",
             label: "CB_2",
-            comment: "Maximum convergence rate: n fibers in 1 iteration (best case).",
+            comment: "Maximum convergence rate: n sites in 1 iteration (best case).",
             properties: &[
                 ("https://uor.foundation/op/lhs", IndividualValue::Str("max convergenceRate")),
-                ("https://uor.foundation/op/rhs", IndividualValue::Str("n fibers in 1 iteration")),
+                ("https://uor.foundation/op/rhs", IndividualValue::Str("n sites in 1 iteration")),
                 ("https://uor.foundation/op/forAll", IndividualValue::Str("best case")),
                 ("https://uor.foundation/op/verificationDomain", IndividualValue::IriRef("https://uor.foundation/op/Pipeline")),
             ],
@@ -2828,10 +2828,10 @@ fn raw_individuals_vec() -> Vec<Individual> {
             id: "https://uor.foundation/op/CB_3",
             type_: "https://uor.foundation/op/Identity",
             label: "CB_3",
-            comment: "Expected residue constraint rate: ⌊log_2(m)⌋ fibers per constraint.",
+            comment: "Expected residue constraint rate: ⌊log_2(m)⌋ sites per constraint.",
             properties: &[
                 ("https://uor.foundation/op/lhs", IndividualValue::Str("expected rate (residue)")),
-                ("https://uor.foundation/op/rhs", IndividualValue::Str("⌊log_2(m)⌋ fibers per constraint")),
+                ("https://uor.foundation/op/rhs", IndividualValue::Str("⌊log_2(m)⌋ sites per constraint")),
                 ("https://uor.foundation/op/forAll", IndividualValue::Str("ResidueConstraint(m, r)")),
                 ("https://uor.foundation/op/verificationDomain", IndividualValue::IriRef("https://uor.foundation/op/Pipeline")),
             ],
@@ -2852,7 +2852,7 @@ fn raw_individuals_vec() -> Vec<Individual> {
             id: "https://uor.foundation/op/CB_5",
             type_: "https://uor.foundation/op/Identity",
             label: "CB_5",
-            comment: "Sufficiency criterion: pin union covers all fiber positions.",
+            comment: "Sufficiency criterion: pin union covers all site positions.",
             properties: &[
                 ("https://uor.foundation/op/lhs", IndividualValue::Str("∪_i pins(C_i) = {0,...,n−1}")),
                 ("https://uor.foundation/op/rhs", IndividualValue::Str("constraint set closes budget")),
@@ -3048,11 +3048,11 @@ fn raw_individuals_vec() -> Vec<Individual> {
             id: "https://uor.foundation/op/OB_P3",
             type_: "https://uor.foundation/op/Identity",
             label: "OB_P3",
-            comment: "Cascade length is additive under sequential composition.",
+            comment: "Reduction length is additive under sequential composition.",
             properties: &[
-                ("https://uor.foundation/op/lhs", IndividualValue::Str("CascadeLength(c₁ ; c₂)")),
-                ("https://uor.foundation/op/rhs", IndividualValue::Str("CascadeLength(c₁) + CascadeLength(c₂)")),
-                ("https://uor.foundation/op/forAll", IndividualValue::Str("cascades c₁, c₂")),
+                ("https://uor.foundation/op/lhs", IndividualValue::Str("ReductionLength(c₁ ; c₂)")),
+                ("https://uor.foundation/op/rhs", IndividualValue::Str("ReductionLength(c₁) + ReductionLength(c₂)")),
+                ("https://uor.foundation/op/forAll", IndividualValue::Str("reductions c₁, c₂")),
                 ("https://uor.foundation/op/verificationDomain", IndividualValue::IriRef("https://uor.foundation/op/Analytical")),
             ],
         },
@@ -3696,11 +3696,11 @@ fn raw_individuals_vec() -> Vec<Individual> {
             id: "https://uor.foundation/op/TH_1",
             type_: "https://uor.foundation/op/Identity",
             label: "TH_1",
-            comment: "Entropy of a fiber budget state.",
+            comment: "Entropy of a site budget state.",
             properties: &[
                 ("https://uor.foundation/op/lhs", IndividualValue::Str("S(state)")),
-                ("https://uor.foundation/op/rhs", IndividualValue::Str("freeCount × ln 2")),
-                ("https://uor.foundation/op/forAll", IndividualValue::Str("state ∈ FiberBudget")),
+                ("https://uor.foundation/op/rhs", IndividualValue::Str("freeRank × ln 2")),
+                ("https://uor.foundation/op/forAll", IndividualValue::Str("state ∈ FreeRank")),
                 ("https://uor.foundation/op/verificationDomain", IndividualValue::IriRef("https://uor.foundation/op/Thermodynamic")),
             ],
         },
@@ -3744,11 +3744,11 @@ fn raw_individuals_vec() -> Vec<Individual> {
             id: "https://uor.foundation/op/TH_5",
             type_: "https://uor.foundation/op/Identity",
             label: "TH_5",
-            comment: "Critical inverse temperature for UOR fiber system.",
+            comment: "Critical inverse temperature for UOR site system.",
             properties: &[
                 ("https://uor.foundation/op/lhs", IndividualValue::Str("β*")),
                 ("https://uor.foundation/op/rhs", IndividualValue::Str("ln 2")),
-                ("https://uor.foundation/op/forAll", IndividualValue::Str("UOR fiber system")),
+                ("https://uor.foundation/op/forAll", IndividualValue::Str("UOR site system")),
                 ("https://uor.foundation/op/verificationDomain", IndividualValue::IriRef("https://uor.foundation/op/Thermodynamic")),
             ],
         },
@@ -3817,10 +3817,10 @@ fn raw_individuals_vec() -> Vec<Individual> {
             id: "https://uor.foundation/op/AR_1",
             type_: "https://uor.foundation/op/Identity",
             label: "AR_1",
-            comment: "Adiabatic schedule: decreasing freeCount, cost-per-fiber ordering.",
+            comment: "Adiabatic schedule: decreasing freeRank, cost-per-site ordering.",
             properties: &[
                 ("https://uor.foundation/op/lhs", IndividualValue::Str("adiabatic schedule")),
-                ("https://uor.foundation/op/rhs", IndividualValue::Str("decreasing freeCount × cost-per-fiber order")),
+                ("https://uor.foundation/op/rhs", IndividualValue::Str("decreasing freeRank × cost-per-site order")),
                 ("https://uor.foundation/op/forAll", IndividualValue::Str("constraint ordering")),
                 ("https://uor.foundation/op/verificationDomain", IndividualValue::IriRef("https://uor.foundation/op/Analytical")),
             ],
@@ -3939,11 +3939,11 @@ fn raw_individuals_vec() -> Vec<Individual> {
             id: "https://uor.foundation/op/RC_1",
             type_: "https://uor.foundation/op/Identity",
             label: "RC_1",
-            comment: "Reversible pinning stores prior state in ancilla fiber.",
+            comment: "Reversible pinning stores prior state in ancilla site.",
             properties: &[
-                ("https://uor.foundation/op/lhs", IndividualValue::Str("reversible pinning of fiber k")),
-                ("https://uor.foundation/op/rhs", IndividualValue::Str("store prior state in ancilla fiber k'")),
-                ("https://uor.foundation/op/forAll", IndividualValue::Str("FiberCoordinate k")),
+                ("https://uor.foundation/op/lhs", IndividualValue::Str("reversible pinning of site k")),
+                ("https://uor.foundation/op/rhs", IndividualValue::Str("store prior state in ancilla site k'")),
+                ("https://uor.foundation/op/forAll", IndividualValue::Str("SiteIndex k")),
                 ("https://uor.foundation/op/verificationDomain", IndividualValue::IriRef("https://uor.foundation/op/Thermodynamic")),
             ],
         },
@@ -3987,10 +3987,10 @@ fn raw_individuals_vec() -> Vec<Individual> {
             id: "https://uor.foundation/op/RC_5",
             type_: "https://uor.foundation/op/Identity",
             label: "RC_5",
-            comment: "Quantum UOR: superposed fibers, cost proportional to winning path.",
+            comment: "Quantum UOR: superposed sites, cost proportional to winning path.",
             properties: &[
                 ("https://uor.foundation/op/lhs", IndividualValue::Str("quantum UOR")),
-                ("https://uor.foundation/op/rhs", IndividualValue::Str("superposed fibers, cost ∝ winning path")),
+                ("https://uor.foundation/op/rhs", IndividualValue::Str("superposed sites, cost ∝ winning path")),
                 ("https://uor.foundation/op/forAll", IndividualValue::Str("hypothetical quantum")),
                 ("https://uor.foundation/op/verificationDomain", IndividualValue::IriRef("https://uor.foundation/op/Thermodynamic")),
             ],
@@ -4060,10 +4060,10 @@ fn raw_individuals_vec() -> Vec<Individual> {
             id: "https://uor.foundation/op/DC_6",
             type_: "https://uor.foundation/op/Identity",
             label: "DC_6",
-            comment: "Jacobian definition: J_k(x) = ∂_R f_k(x) where f_k = fiber_k.",
+            comment: "Jacobian definition: J_k(x) = ∂_R f_k(x) where f_k = site_k.",
             properties: &[
                 ("https://uor.foundation/op/lhs", IndividualValue::Str("J_k(x)")),
-                ("https://uor.foundation/op/rhs", IndividualValue::Str("∂_R f_k(x) where f_k = fiber_k")),
+                ("https://uor.foundation/op/rhs", IndividualValue::Str("∂_R f_k(x) where f_k = site_k")),
                 ("https://uor.foundation/op/forAll", IndividualValue::Str("x ∈ R_n, 0 ≤ k < n")),
                 ("https://uor.foundation/op/verificationDomain", IndividualValue::IriRef("https://uor.foundation/op/Analytical")),
             ],
@@ -4072,10 +4072,10 @@ fn raw_individuals_vec() -> Vec<Individual> {
             id: "https://uor.foundation/op/DC_7",
             type_: "https://uor.foundation/op/Identity",
             label: "DC_7",
-            comment: "Top-fiber anomaly: J_{n-1}(x) may differ from lower fibers.",
+            comment: "Top-site anomaly: J_{n-1}(x) may differ from lower sites.",
             properties: &[
                 ("https://uor.foundation/op/lhs", IndividualValue::Str("J_{n-1}(x)")),
-                ("https://uor.foundation/op/rhs", IndividualValue::Str("may differ from lower fibers")),
+                ("https://uor.foundation/op/rhs", IndividualValue::Str("may differ from lower sites")),
                 ("https://uor.foundation/op/forAll", IndividualValue::Str("x ∈ R_n")),
                 ("https://uor.foundation/op/verificationDomain", IndividualValue::IriRef("https://uor.foundation/op/Analytical")),
             ],
@@ -4108,10 +4108,10 @@ fn raw_individuals_vec() -> Vec<Individual> {
             id: "https://uor.foundation/op/DC_10",
             type_: "https://uor.foundation/op/Identity",
             label: "DC_10",
-            comment: "Curvature-weighted ordering: optimal next constraint maximizes J_k over free fibers.",
+            comment: "Curvature-weighted ordering: optimal next constraint maximizes J_k over free sites.",
             properties: &[
                 ("https://uor.foundation/op/lhs", IndividualValue::Str("optimal next constraint")),
-                ("https://uor.foundation/op/rhs", IndividualValue::Str("argmax J_k over free fibers")),
+                ("https://uor.foundation/op/rhs", IndividualValue::Str("argmax J_k over free sites")),
                 ("https://uor.foundation/op/forAll", IndividualValue::Str("resolution step")),
                 ("https://uor.foundation/op/verificationDomain", IndividualValue::IriRef("https://uor.foundation/op/Analytical")),
             ],
@@ -4277,7 +4277,7 @@ fn raw_individuals_vec() -> Vec<Individual> {
             id: "https://uor.foundation/op/phi_2",
             type_: "https://uor.foundation/op/Identity",
             label: "phi_2",
-            comment: "Constraints → Fibers map: composition maps to union of fiber pinnings.",
+            comment: "Constraints → Sites map: composition maps to union of site pinnings.",
             properties: &[
                 ("https://uor.foundation/op/lhs", IndividualValue::Str("φ₂(compose(A,B))")),
                 ("https://uor.foundation/op/rhs", IndividualValue::Str("φ₂(A) ∪ φ₂(B)")),
@@ -4289,11 +4289,11 @@ fn raw_individuals_vec() -> Vec<Individual> {
             id: "https://uor.foundation/op/phi_3",
             type_: "https://uor.foundation/op/Identity",
             label: "phi_3",
-            comment: "Fibers → Partition map: a closed fiber state determines a unique 4-component partition.",
+            comment: "Sites → Partition map: a closed site state determines a unique 4-component partition.",
             properties: &[
-                ("https://uor.foundation/op/lhs", IndividualValue::Str("φ₃(closed fiber state)")),
+                ("https://uor.foundation/op/lhs", IndividualValue::Str("φ₃(closed site state)")),
                 ("https://uor.foundation/op/rhs", IndividualValue::Str("unique 4-component partition")),
-                ("https://uor.foundation/op/forAll", IndividualValue::Str("closed FiberBudget")),
+                ("https://uor.foundation/op/forAll", IndividualValue::Str("closed FreeRank")),
                 ("https://uor.foundation/op/verificationDomain", IndividualValue::IriRef("https://uor.foundation/op/Pipeline")),
             ],
         },
@@ -4491,9 +4491,9 @@ fn raw_individuals_vec() -> Vec<Individual> {
             type_: "https://uor.foundation/op/Identity",
             label: "CC_3",
             comment: "Witness composition: concat(W₁, W₂) is a valid audit trail iff \
-                      W₁.fibersClosed + W₂.fibersClosed = n.",
+                      W₁.sitesClosed + W₂.sitesClosed = n.",
             properties: &[
-                ("https://uor.foundation/op/lhs", IndividualValue::Str("fibersClosed(W₁) + fibersClosed(W₂)")),
+                ("https://uor.foundation/op/lhs", IndividualValue::Str("sitesClosed(W₁) + sitesClosed(W₂)")),
                 ("https://uor.foundation/op/rhs", IndividualValue::Str("= n for valid concat(W₁, W₂)")),
                 ("https://uor.foundation/op/forAll", IndividualValue::Str("W₁, W₂: CompletenessWitness")),
                 (
@@ -4575,7 +4575,7 @@ fn raw_individuals_vec() -> Vec<Individual> {
             id: "https://uor.foundation/op/QL_3",
             type_: "https://uor.foundation/op/Identity",
             label: "QL_3",
-            comment: "The cascade distribution P(j) = 2^{-j} is the Boltzmann \
+            comment: "The reduction distribution P(j) = 2^{-j} is the Boltzmann \
                       distribution at β* = ln 2 for all n ≥ 1.",
             properties: &[
                 ("https://uor.foundation/op/lhs", IndividualValue::Str("P(j) = 2^{-j}")),
@@ -4593,11 +4593,11 @@ fn raw_individuals_vec() -> Vec<Individual> {
             id: "https://uor.foundation/op/QL_4",
             type_: "https://uor.foundation/op/Identity",
             label: "QL_4",
-            comment: "The fiber budget of a PrimitiveType at quantum level n is \
-                      exactly n (one fiber per bit).",
+            comment: "The site budget of a PrimitiveType at quantum level n is \
+                      exactly n (one site per bit).",
             properties: &[
-                ("https://uor.foundation/op/lhs", IndividualValue::Str("fiberBudget(PrimitiveType, n)")),
-                ("https://uor.foundation/op/rhs", IndividualValue::Str("= n (one fiber per bit)")),
+                ("https://uor.foundation/op/lhs", IndividualValue::Str("siteBudget(PrimitiveType, n)")),
+                ("https://uor.foundation/op/rhs", IndividualValue::Str("= n (one site per bit)")),
                 ("https://uor.foundation/op/forAll", IndividualValue::Str("PrimitiveType, n ≥ 1")),
                 (
                     "https://uor.foundation/op/verificationDomain",
@@ -4662,14 +4662,14 @@ fn raw_individuals_vec() -> Vec<Individual> {
         },
         // Amendment 27: Session-Scoped Resolution algebra (SR_1–SR_5)
         Individual {
-            id: "https://uor.foundation/op/SR_1",
+            id: "https://uor.foundation/op/GR_1",
             type_: "https://uor.foundation/op/Identity",
-            label: "SR_1",
-            comment: "Binding monotonicity: freeCount(B_{i+1}) ≤ freeCount(B_i) \
+            label: "GR_1",
+            comment: "Binding monotonicity: freeRank(B_{i+1}) ≤ freeRank(B_i) \
                       for all i in a Session.",
             properties: &[
-                ("https://uor.foundation/op/lhs", IndividualValue::Str("freeCount(B_{i+1})")),
-                ("https://uor.foundation/op/rhs", IndividualValue::Str("≤ freeCount(B_i)")),
+                ("https://uor.foundation/op/lhs", IndividualValue::Str("freeRank(B_{i+1})")),
+                ("https://uor.foundation/op/rhs", IndividualValue::Str("≤ freeRank(B_i)")),
                 ("https://uor.foundation/op/forAll", IndividualValue::Str("i in Session S")),
                 (
                     "https://uor.foundation/op/verificationDomain",
@@ -4678,9 +4678,9 @@ fn raw_individuals_vec() -> Vec<Individual> {
             ],
         },
         Individual {
-            id: "https://uor.foundation/op/SR_2",
+            id: "https://uor.foundation/op/GR_2",
             type_: "https://uor.foundation/op/Identity",
-            label: "SR_2",
+            label: "GR_2",
             comment: "Binding soundness: a Binding b is sound iff b.datum resolves \
                       under b.constraint in O(1).",
             properties: &[
@@ -4694,13 +4694,13 @@ fn raw_individuals_vec() -> Vec<Individual> {
             ],
         },
         Individual {
-            id: "https://uor.foundation/op/SR_3",
+            id: "https://uor.foundation/op/GR_3",
             type_: "https://uor.foundation/op/Identity",
-            label: "SR_3",
+            label: "GR_3",
             comment: "Session convergence: a Session S converges iff there exists i \
-                      such that freeCount(B_i) = 0.",
+                      such that freeRank(B_i) = 0.",
             properties: &[
-                ("https://uor.foundation/op/lhs", IndividualValue::Str("∃ i: freeCount(B_i) = 0")),
+                ("https://uor.foundation/op/lhs", IndividualValue::Str("∃ i: freeRank(B_i) = 0")),
                 ("https://uor.foundation/op/rhs", IndividualValue::Str("Session S converges")),
                 ("https://uor.foundation/op/forAll", IndividualValue::Str("Session S")),
                 (
@@ -4710,9 +4710,9 @@ fn raw_individuals_vec() -> Vec<Individual> {
             ],
         },
         Individual {
-            id: "https://uor.foundation/op/SR_4",
+            id: "https://uor.foundation/op/GR_4",
             type_: "https://uor.foundation/op/Identity",
-            label: "SR_4",
+            label: "GR_4",
             comment: "Context reset isolation: bindings in C_fresh are independent of \
                       bindings in C_prior after a SessionBoundary.",
             properties: &[
@@ -4726,9 +4726,9 @@ fn raw_individuals_vec() -> Vec<Individual> {
             ],
         },
         Individual {
-            id: "https://uor.foundation/op/SR_5",
+            id: "https://uor.foundation/op/GR_5",
             type_: "https://uor.foundation/op/Identity",
-            label: "SR_5",
+            label: "GR_5",
             comment: "Contradiction detection: ContradictionBoundary fires iff there \
                       exist bindings b, b' with the same address, different datum, \
                       under the same constraint.",
@@ -4768,12 +4768,12 @@ fn raw_individuals_vec() -> Vec<Individual> {
             type_: "https://uor.foundation/op/Identity",
             label: "TS_2",
             comment: "Minimal basis bound: for the IT_7d target (χ* = n, all β* = 0), the \
-                      MinimalConstraintBasis has size exactly n (one constraint per fiber \
+                      MinimalConstraintBasis has size exactly n (one constraint per site \
                       position). No redundant constraints exist in the minimal basis.",
             properties: &[
                 ("https://uor.foundation/op/lhs", IndividualValue::Str("basisSize(T, IT_7d target)")),
                 ("https://uor.foundation/op/rhs", IndividualValue::Str("n")),
-                ("https://uor.foundation/op/forAll", IndividualValue::Str("IT_7d target, n-fiber types")),
+                ("https://uor.foundation/op/forAll", IndividualValue::Str("IT_7d target, n-site types")),
                 (
                     "https://uor.foundation/op/verificationDomain",
                     IndividualValue::IriRef("https://uor.foundation/op/Pipeline"),
@@ -4802,11 +4802,11 @@ fn raw_individuals_vec() -> Vec<Individual> {
             type_: "https://uor.foundation/op/Identity",
             label: "TS_4",
             comment: "Synthesis convergence: the TypeSynthesisResolver terminates for any \
-                      realisable target in at most n constraint additions (for n-fiber types).",
+                      realisable target in at most n constraint additions (for n-site types).",
             properties: &[
                 ("https://uor.foundation/op/lhs", IndividualValue::Str("steps(TypeSynthesisResolver, target)")),
                 ("https://uor.foundation/op/rhs", IndividualValue::Str("≤ n")),
-                ("https://uor.foundation/op/forAll", IndividualValue::Str("target: realisable n-fiber type synthesis goal")),
+                ("https://uor.foundation/op/forAll", IndividualValue::Str("target: realisable n-site type synthesis goal")),
                 (
                     "https://uor.foundation/op/verificationDomain",
                     IndividualValue::IriRef("https://uor.foundation/op/Pipeline"),
@@ -4841,7 +4841,7 @@ fn raw_individuals_vec() -> Vec<Individual> {
             properties: &[
                 ("https://uor.foundation/op/lhs", IndividualValue::Str("E[steps, Jacobian-guided synthesis]")),
                 ("https://uor.foundation/op/rhs", IndividualValue::Str("O(n log n) vs O(n²) uninformed")),
-                ("https://uor.foundation/op/forAll", IndividualValue::Str("T: n-fiber type synthesis goal")),
+                ("https://uor.foundation/op/forAll", IndividualValue::Str("T: n-site type synthesis goal")),
                 (
                     "https://uor.foundation/op/verificationDomain",
                     IndividualValue::IriRef("https://uor.foundation/op/Pipeline"),
@@ -4867,16 +4867,16 @@ fn raw_individuals_vec() -> Vec<Individual> {
         },
         // Amendment 29: Quantum Level Spectral Sequence identities
         Individual {
-            id: "https://uor.foundation/op/QLS_1",
+            id: "https://uor.foundation/op/WLS_1",
             type_: "https://uor.foundation/op/Identity",
-            label: "QLS_1",
-            comment: "Lift unobstructedness criterion: QuantumLift T' is a CompleteType iff the \
+            label: "WLS_1",
+            comment: "Lift unobstructedness criterion: WittLift T' is a CompleteType iff the \
                       spectral sequence E_r^{p,q} collapses at E_2 (d_2 = 0 and all higher \
                       differentials zero).",
             properties: &[
-                ("https://uor.foundation/op/lhs", IndividualValue::Str("QuantumLift T' is CompleteType")),
+                ("https://uor.foundation/op/lhs", IndividualValue::Str("WittLift T' is CompleteType")),
                 ("https://uor.foundation/op/rhs", IndividualValue::Str("iff spectral sequence collapses at E_2")),
-                ("https://uor.foundation/op/forAll", IndividualValue::Str("T: CompleteType at Q_n, T': QuantumLift to Q_{n+1}")),
+                ("https://uor.foundation/op/forAll", IndividualValue::Str("T: CompleteType at Q_n, T': WittLift to Q_{n+1}")),
                 (
                     "https://uor.foundation/op/verificationDomain",
                     IndividualValue::IriRef("https://uor.foundation/op/IndexTheoretic"),
@@ -4886,15 +4886,15 @@ fn raw_individuals_vec() -> Vec<Individual> {
             ],
         },
         Individual {
-            id: "https://uor.foundation/op/QLS_2",
+            id: "https://uor.foundation/op/WLS_2",
             type_: "https://uor.foundation/op/Identity",
-            label: "QLS_2",
+            label: "WLS_2",
             comment: "Obstruction localisation: a non-trivial LiftObstruction is localised to \
-                      a specific fiber at bit position n+1. The obstruction class lives in \
-                      H²(N(C(T))) and is killed by adding one constraint involving the new fiber.",
+                      a specific site at bit position n+1. The obstruction class lives in \
+                      H²(N(C(T))) and is killed by adding one constraint involving the new site.",
             properties: &[
                 ("https://uor.foundation/op/lhs", IndividualValue::Str("non-trivial LiftObstruction location")),
-                ("https://uor.foundation/op/rhs", IndividualValue::Str("specific fiber at bit position n+1")),
+                ("https://uor.foundation/op/rhs", IndividualValue::Str("specific site at bit position n+1")),
                 ("https://uor.foundation/op/forAll", IndividualValue::Str("non-trivial LiftObstruction")),
                 (
                     "https://uor.foundation/op/verificationDomain",
@@ -4905,9 +4905,9 @@ fn raw_individuals_vec() -> Vec<Individual> {
             ],
         },
         Individual {
-            id: "https://uor.foundation/op/QLS_3",
+            id: "https://uor.foundation/op/WLS_3",
             type_: "https://uor.foundation/op/Identity",
-            label: "QLS_3",
+            label: "WLS_3",
             comment: "Monotone lifting for trivially obstructed types: if T is a CompleteType \
                       at Q_n and its constraint set is closed under the Q_{n+1} extension map, \
                       then T' is a CompleteType at Q_{n+1} with basisSize(T') = basisSize(T) + 1.",
@@ -4924,9 +4924,9 @@ fn raw_individuals_vec() -> Vec<Individual> {
             ],
         },
         Individual {
-            id: "https://uor.foundation/op/QLS_4",
+            id: "https://uor.foundation/op/WLS_4",
             type_: "https://uor.foundation/op/Identity",
-            label: "QLS_4",
+            label: "WLS_4",
             comment: "Spectral sequence convergence bound: for constraint configurations of \
                       homological depth d (H_k(N(C(T))) = 0 for k > d), the spectral sequence \
                       converges by page E_{d+2}.",
@@ -4943,16 +4943,16 @@ fn raw_individuals_vec() -> Vec<Individual> {
             ],
         },
         Individual {
-            id: "https://uor.foundation/op/QLS_5",
+            id: "https://uor.foundation/op/WLS_5",
             type_: "https://uor.foundation/op/Identity",
-            label: "QLS_5",
+            label: "WLS_5",
             comment: "Universal identity preservation: every op:universallyValid identity holds \
                       in ℤ/(2^{n+1})ℤ with the lifted constraint set. The lift does not \
                       invalidate any certified universal identity.",
             properties: &[
                 ("https://uor.foundation/op/lhs", IndividualValue::Str("universallyValid identity in R_{n+1}")),
                 ("https://uor.foundation/op/rhs", IndividualValue::Str("holds with lifted constraint set")),
-                ("https://uor.foundation/op/forAll", IndividualValue::Str("every op:universallyValid identity, QuantumLift T'")),
+                ("https://uor.foundation/op/forAll", IndividualValue::Str("every op:universallyValid identity, WittLift T'")),
                 (
                     "https://uor.foundation/op/verificationDomain",
                     IndividualValue::IriRef("https://uor.foundation/op/IndexTheoretic"),
@@ -4962,17 +4962,17 @@ fn raw_individuals_vec() -> Vec<Individual> {
             ],
         },
         Individual {
-            id: "https://uor.foundation/op/QLS_6",
+            id: "https://uor.foundation/op/WLS_6",
             type_: "https://uor.foundation/op/Identity",
-            label: "QLS_6",
+            label: "WLS_6",
             comment: "ψ-pipeline universality for quantum lifts: the ψ-pipeline produces a \
-                      valid ChainComplex for any QuantumLift T' — the chain complex of T' \
+                      valid ChainComplex for any WittLift T' — the chain complex of T' \
                       restricts to the chain complex of T on the base nerve, and the extension \
                       is well-formed by construction.",
             properties: &[
                 ("https://uor.foundation/op/lhs", IndividualValue::Str("ψ-pipeline ChainComplex(T')")),
                 ("https://uor.foundation/op/rhs", IndividualValue::Str("valid and restricts to ChainComplex(T) on base nerve")),
-                ("https://uor.foundation/op/forAll", IndividualValue::Str("T': any QuantumLift of a CompleteType T")),
+                ("https://uor.foundation/op/forAll", IndividualValue::Str("T': any WittLift of a CompleteType T")),
                 (
                     "https://uor.foundation/op/verificationDomain",
                     IndividualValue::IriRef("https://uor.foundation/op/IndexTheoretic"),
@@ -5089,12 +5089,12 @@ fn raw_individuals_vec() -> Vec<Individual> {
             type_: "https://uor.foundation/op/Identity",
             label: "MN_7",
             comment: "TwistedType obstruction class: the monodromy of a TwistedType contributes \
-                      a non-zero class to H²(N(C(T')); ℤ/2ℤ) where T' is any QuantumLift of T. \
+                      a non-zero class to H²(N(C(T')); ℤ/2ℤ) where T' is any WittLift of T. \
                       TwistedTypes always have non-trivial lift obstructions.",
             properties: &[
                 ("https://uor.foundation/op/lhs", IndividualValue::Str("TwistedType T ⟹ H²(N(C(T')); ℤ/2ℤ)")),
                 ("https://uor.foundation/op/rhs", IndividualValue::Str("non-zero class (non-trivial LiftObstruction)")),
-                ("https://uor.foundation/op/forAll", IndividualValue::Str("T': any QuantumLift of TwistedType T")),
+                ("https://uor.foundation/op/forAll", IndividualValue::Str("T': any WittLift of TwistedType T")),
                 (
                     "https://uor.foundation/op/verificationDomain",
                     IndividualValue::IriRef("https://uor.foundation/op/Topological"),
@@ -5106,11 +5106,11 @@ fn raw_individuals_vec() -> Vec<Individual> {
             id: "https://uor.foundation/op/PT_1",
             type_: "https://uor.foundation/op/Identity",
             label: "PT_1",
-            comment: "Product type fiber additivity: fiberBudget(A × B) = \
-                      fiberBudget(A) + fiberBudget(B).",
+            comment: "Product type site additivity: siteBudget(A × B) = \
+                      siteBudget(A) + siteBudget(B).",
             properties: &[
-                ("https://uor.foundation/op/lhs", IndividualValue::Str("fiberBudget(A × B)")),
-                ("https://uor.foundation/op/rhs", IndividualValue::Str("fiberBudget(A) + fiberBudget(B)")),
+                ("https://uor.foundation/op/lhs", IndividualValue::Str("siteBudget(A × B)")),
+                ("https://uor.foundation/op/rhs", IndividualValue::Str("siteBudget(A) + siteBudget(B)")),
                 ("https://uor.foundation/op/forAll", IndividualValue::Str("A, B: TypeDefinition")),
                 (
                     "https://uor.foundation/op/verificationDomain",
@@ -5170,11 +5170,11 @@ fn raw_individuals_vec() -> Vec<Individual> {
             id: "https://uor.foundation/op/ST_1",
             type_: "https://uor.foundation/op/Identity",
             label: "ST_1",
-            comment: "Sum type fiber budget: fiberBudget(A + B) = \
-                      max(fiberBudget(A), fiberBudget(B)).",
+            comment: "Sum type site budget: siteBudget(A + B) = \
+                      max(siteBudget(A), siteBudget(B)).",
             properties: &[
-                ("https://uor.foundation/op/lhs", IndividualValue::Str("fiberBudget(A + B)")),
-                ("https://uor.foundation/op/rhs", IndividualValue::Str("max(fiberBudget(A), fiberBudget(B))")),
+                ("https://uor.foundation/op/lhs", IndividualValue::Str("siteBudget(A + B)")),
+                ("https://uor.foundation/op/rhs", IndividualValue::Str("max(siteBudget(A), siteBudget(B))")),
                 ("https://uor.foundation/op/forAll", IndividualValue::Str("A, B: TypeDefinition")),
                 (
                     "https://uor.foundation/op/verificationDomain",
@@ -5197,16 +5197,16 @@ fn raw_individuals_vec() -> Vec<Individual> {
                 ),
             ],
         },
-        // Amendment 33: Saturated Context Limit algebra (SC_1–SC_7)
+        // Amendment 33: Grounded Context Limit algebra (SC_1–SC_7)
         Individual {
-            id: "https://uor.foundation/op/SC_1",
+            id: "https://uor.foundation/op/GS_1",
             type_: "https://uor.foundation/op/Identity",
-            label: "SC_1",
-            comment: "Context temperature: T_ctx(C) = freeCount(C) × ln 2 / n.",
+            label: "GS_1",
+            comment: "Context temperature: T_ctx(C) = freeRank(C) × ln 2 / n.",
             properties: &[
                 ("https://uor.foundation/op/lhs", IndividualValue::Str("T_ctx(C)")),
-                ("https://uor.foundation/op/rhs", IndividualValue::Str("freeCount(C) × ln 2 / n")),
-                ("https://uor.foundation/op/forAll", IndividualValue::Str("C: Context, n = fiberBudget")),
+                ("https://uor.foundation/op/rhs", IndividualValue::Str("freeRank(C) × ln 2 / n")),
+                ("https://uor.foundation/op/forAll", IndividualValue::Str("C: Context, n = siteBudget")),
                 (
                     "https://uor.foundation/op/verificationDomain",
                     IndividualValue::IriRef("https://uor.foundation/op/Thermodynamic"),
@@ -5214,14 +5214,14 @@ fn raw_individuals_vec() -> Vec<Individual> {
             ],
         },
         Individual {
-            id: "https://uor.foundation/op/SC_2",
+            id: "https://uor.foundation/op/GS_2",
             type_: "https://uor.foundation/op/Identity",
-            label: "SC_2",
-            comment: "Saturation degree: σ(C) = (n − freeCount(C)) / n.",
+            label: "GS_2",
+            comment: "Grounding degree: σ(C) = (n − freeRank(C)) / n.",
             properties: &[
                 ("https://uor.foundation/op/lhs", IndividualValue::Str("σ(C)")),
-                ("https://uor.foundation/op/rhs", IndividualValue::Str("(n − freeCount(C)) / n")),
-                ("https://uor.foundation/op/forAll", IndividualValue::Str("C: Context, n = fiberBudget")),
+                ("https://uor.foundation/op/rhs", IndividualValue::Str("(n − freeRank(C)) / n")),
+                ("https://uor.foundation/op/forAll", IndividualValue::Str("C: Context, n = siteBudget")),
                 (
                     "https://uor.foundation/op/verificationDomain",
                     IndividualValue::IriRef("https://uor.foundation/op/Algebraic"),
@@ -5229,10 +5229,10 @@ fn raw_individuals_vec() -> Vec<Individual> {
             ],
         },
         Individual {
-            id: "https://uor.foundation/op/SC_3",
+            id: "https://uor.foundation/op/GS_3",
             type_: "https://uor.foundation/op/Identity",
-            label: "SC_3",
-            comment: "Saturation monotonicity: σ(B_{i+1}) ≥ σ(B_i) for all i in a Session.",
+            label: "GS_3",
+            comment: "Grounding monotonicity: σ(B_{i+1}) ≥ σ(B_i) for all i in a Session.",
             properties: &[
                 ("https://uor.foundation/op/lhs", IndividualValue::Str("σ(B_{i+1})")),
                 ("https://uor.foundation/op/rhs", IndividualValue::Str("≥ σ(B_i)")),
@@ -5244,14 +5244,14 @@ fn raw_individuals_vec() -> Vec<Individual> {
             ],
         },
         Individual {
-            id: "https://uor.foundation/op/SC_4",
+            id: "https://uor.foundation/op/GS_4",
             type_: "https://uor.foundation/op/Identity",
-            label: "SC_4",
-            comment: "Ground state equivalence: σ(C) = 1 ↔ freeCount(C) = 0 \
+            label: "GS_4",
+            comment: "Ground state equivalence: σ(C) = 1 ↔ freeRank(C) = 0 \
                       ↔ S(C) = 0 ↔ T_ctx(C) = 0.",
             properties: &[
                 ("https://uor.foundation/op/lhs", IndividualValue::Str("σ(C) = 1")),
-                ("https://uor.foundation/op/rhs", IndividualValue::Str("freeCount(C) = 0 ↔ S(C) = 0 ↔ T_ctx(C) = 0")),
+                ("https://uor.foundation/op/rhs", IndividualValue::Str("freeRank(C) = 0 ↔ S(C) = 0 ↔ T_ctx(C) = 0")),
                 ("https://uor.foundation/op/forAll", IndividualValue::Str("C: Context")),
                 (
                     "https://uor.foundation/op/verificationDomain",
@@ -5260,15 +5260,15 @@ fn raw_individuals_vec() -> Vec<Individual> {
             ],
         },
         Individual {
-            id: "https://uor.foundation/op/SC_5",
+            id: "https://uor.foundation/op/GS_5",
             type_: "https://uor.foundation/op/Identity",
-            label: "SC_5",
-            comment: "O(1) resolution guarantee: freeCount(C) = 0 ∧ q.address ∈ \
+            label: "GS_5",
+            comment: "O(1) resolution guarantee: freeRank(C) = 0 ∧ q.address ∈ \
                       bindings(C) → stepCount(q, C) = 0.",
             properties: &[
-                ("https://uor.foundation/op/lhs", IndividualValue::Str("stepCount(q, C) at freeCount(C) = 0")),
+                ("https://uor.foundation/op/lhs", IndividualValue::Str("stepCount(q, C) at freeRank(C) = 0")),
                 ("https://uor.foundation/op/rhs", IndividualValue::Str("0")),
-                ("https://uor.foundation/op/forAll", IndividualValue::Str("q: Query, C: SaturatedContext")),
+                ("https://uor.foundation/op/forAll", IndividualValue::Str("q: Query, C: GroundedContext")),
                 (
                     "https://uor.foundation/op/verificationDomain",
                     IndividualValue::IriRef("https://uor.foundation/op/Pipeline"),
@@ -5276,14 +5276,14 @@ fn raw_individuals_vec() -> Vec<Individual> {
             ],
         },
         Individual {
-            id: "https://uor.foundation/op/SC_6",
+            id: "https://uor.foundation/op/GS_6",
             type_: "https://uor.foundation/op/Identity",
-            label: "SC_6",
+            label: "GS_6",
             comment: "Pre-reduction of effective budget: effectiveBudget(q, C) = \
-                      max(0, fiberBudget(q.type) − |pinnedFibers(C) ∩ q.fiberSet|).",
+                      max(0, siteBudget(q.type) − |pinnedSites(C) ∩ q.siteSet|).",
             properties: &[
                 ("https://uor.foundation/op/lhs", IndividualValue::Str("effectiveBudget(q, C)")),
-                ("https://uor.foundation/op/rhs", IndividualValue::Str("max(0, fiberBudget(q.type) − |pinnedFibers(C) ∩ q.fiberSet|)")),
+                ("https://uor.foundation/op/rhs", IndividualValue::Str("max(0, siteBudget(q.type) − |pinnedSites(C) ∩ q.siteSet|)")),
                 ("https://uor.foundation/op/forAll", IndividualValue::Str("q: Query, C: Context")),
                 (
                     "https://uor.foundation/op/verificationDomain",
@@ -5292,14 +5292,14 @@ fn raw_individuals_vec() -> Vec<Individual> {
             ],
         },
         Individual {
-            id: "https://uor.foundation/op/SC_7",
+            id: "https://uor.foundation/op/GS_7",
             type_: "https://uor.foundation/op/Identity",
-            label: "SC_7",
+            label: "GS_7",
             comment: "Thermodynamic cooling cost: Cost_saturation(C) = n × k_B T × ln 2.",
             properties: &[
                 ("https://uor.foundation/op/lhs", IndividualValue::Str("Cost_saturation(C)")),
                 ("https://uor.foundation/op/rhs", IndividualValue::Str("n × k_B T × ln 2")),
-                ("https://uor.foundation/op/forAll", IndividualValue::Str("C: SaturatedContext, n = fiberBudget")),
+                ("https://uor.foundation/op/forAll", IndividualValue::Str("C: GroundedContext, n = siteBudget")),
                 (
                     "https://uor.foundation/op/verificationDomain",
                     IndividualValue::IriRef("https://uor.foundation/op/Thermodynamic"),
@@ -5392,7 +5392,7 @@ fn raw_individuals_vec() -> Vec<Individual> {
             label: "GD_1",
             comment: "Geodesic condition: a ComputationTrace is a geodesic iff its \
                       steps are AR_1-ordered and each step selects the constraint \
-                      maximising J_k over free fibers (DC_10).",
+                      maximising J_k over free sites (DC_10).",
             properties: &[
                 ("https://uor.foundation/op/lhs", IndividualValue::Str("isGeodesic(T)")),
                 ("https://uor.foundation/op/rhs", IndividualValue::Str("AR_1-ordered(T) ∧ DC_10-selected(T)")),
@@ -5423,11 +5423,11 @@ fn raw_individuals_vec() -> Vec<Individual> {
             id: "https://uor.foundation/op/GD_3",
             type_: "https://uor.foundation/op/Identity",
             label: "GD_3",
-            comment: "Total geodesic cost: Cost_geodesic(T) = freeCount_initial × \
+            comment: "Total geodesic cost: Cost_geodesic(T) = freeRank_initial × \
                       k_B T ln 2 = TH_4.",
             properties: &[
                 ("https://uor.foundation/op/lhs", IndividualValue::Str("Cost_geodesic(T)")),
-                ("https://uor.foundation/op/rhs", IndividualValue::Str("freeCount_initial × k_B T × ln 2")),
+                ("https://uor.foundation/op/rhs", IndividualValue::Str("freeRank_initial × k_B T × ln 2")),
                 ("https://uor.foundation/op/forAll", IndividualValue::Str("T: GeodesicTrace")),
                 (
                     "https://uor.foundation/op/verificationDomain",
@@ -5456,7 +5456,7 @@ fn raw_individuals_vec() -> Vec<Individual> {
             type_: "https://uor.foundation/op/Identity",
             label: "GD_5",
             comment: "Subgeodesic detectability: a trace is sub-geodesic iff ∃ step i \
-                      where J_k(step_i) < max_{free fibers} J_k(state_i).",
+                      where J_k(step_i) < max_{free sites} J_k(state_i).",
             properties: &[
                 ("https://uor.foundation/op/lhs", IndividualValue::Str("isSubgeodesic(T)")),
                 ("https://uor.foundation/op/rhs", IndividualValue::Str("∃ i: J_k(step_i) < max_{free} J_k(state_i)")),
@@ -5477,7 +5477,7 @@ fn raw_individuals_vec() -> Vec<Individual> {
             properties: &[
                 ("https://uor.foundation/op/lhs", IndividualValue::Str("S_vonNeumann(ψ)")),
                 ("https://uor.foundation/op/rhs", IndividualValue::Str("Cost_Landauer(collapse(ψ))")),
-                ("https://uor.foundation/op/forAll", IndividualValue::Str("ψ: SuperposedFiberState")),
+                ("https://uor.foundation/op/forAll", IndividualValue::Str("ψ: SuperposedSiteState")),
                 (
                     "https://uor.foundation/op/verificationDomain",
                     IndividualValue::IriRef("https://uor.foundation/op/QuantumThermodynamic"),
@@ -5488,13 +5488,13 @@ fn raw_individuals_vec() -> Vec<Individual> {
             id: "https://uor.foundation/op/QM_2",
             type_: "https://uor.foundation/op/Identity",
             label: "QM_2",
-            comment: "Measurement as fiber topology change: projective collapse on a \
-                      SuperposedFiberState is topologically equivalent to applying a \
-                      ResidueConstraint that pins the collapsed fiber.",
+            comment: "Measurement as site topology change: projective collapse on a \
+                      SuperposedSiteState is topologically equivalent to applying a \
+                      ResidueConstraint that pins the collapsed site.",
             properties: &[
                 ("https://uor.foundation/op/lhs", IndividualValue::Str("collapse(ψ)")),
-                ("https://uor.foundation/op/rhs", IndividualValue::Str("apply(ResidueConstraint, collapsed_fiber)")),
-                ("https://uor.foundation/op/forAll", IndividualValue::Str("ψ: SuperposedFiberState")),
+                ("https://uor.foundation/op/rhs", IndividualValue::Str("apply(ResidueConstraint, collapsed_site)")),
+                ("https://uor.foundation/op/forAll", IndividualValue::Str("ψ: SuperposedSiteState")),
                 (
                     "https://uor.foundation/op/verificationDomain",
                     IndividualValue::IriRef("https://uor.foundation/op/Topological"),
@@ -5506,11 +5506,11 @@ fn raw_individuals_vec() -> Vec<Individual> {
             type_: "https://uor.foundation/op/Identity",
             label: "QM_3",
             comment: "Superposition entropy bound: 0 ≤ S_vN(ψ) ≤ ln 2 for any \
-                      single-fiber SuperposedFiberState.",
+                      single-site SuperposedSiteState.",
             properties: &[
                 ("https://uor.foundation/op/lhs", IndividualValue::Str("S_vN(ψ)")),
                 ("https://uor.foundation/op/rhs", IndividualValue::Str("∈ [0, ln 2]")),
-                ("https://uor.foundation/op/forAll", IndividualValue::Str("ψ: single-fiber SuperposedFiberState")),
+                ("https://uor.foundation/op/forAll", IndividualValue::Str("ψ: single-site SuperposedSiteState")),
                 (
                     "https://uor.foundation/op/verificationDomain",
                     IndividualValue::IriRef("https://uor.foundation/op/QuantumThermodynamic"),
@@ -5526,7 +5526,7 @@ fn raw_individuals_vec() -> Vec<Individual> {
             properties: &[
                 ("https://uor.foundation/op/lhs", IndividualValue::Str("collapse(collapse(ψ))")),
                 ("https://uor.foundation/op/rhs", IndividualValue::Str("collapse(ψ)")),
-                ("https://uor.foundation/op/forAll", IndividualValue::Str("ψ: SuperposedFiberState")),
+                ("https://uor.foundation/op/forAll", IndividualValue::Str("ψ: SuperposedSiteState")),
                 (
                     "https://uor.foundation/op/verificationDomain",
                     IndividualValue::IriRef("https://uor.foundation/op/Algebraic"),
@@ -5539,11 +5539,11 @@ fn raw_individuals_vec() -> Vec<Individual> {
             type_: "https://uor.foundation/op/Identity",
             label: "QM_5",
             comment: "Amplitude normalization (Born rule): the sum of squared \
-                      amplitudes equals 1 for any well-formed SuperposedFiberState.",
+                      amplitudes equals 1 for any well-formed SuperposedSiteState.",
             properties: &[
                 ("https://uor.foundation/op/lhs", IndividualValue::Str("Σᵢ |αᵢ|²")),
                 ("https://uor.foundation/op/rhs", IndividualValue::Str("1")),
-                ("https://uor.foundation/op/forAll", IndividualValue::Str("SuperposedFiberState ψ")),
+                ("https://uor.foundation/op/forAll", IndividualValue::Str("SuperposedSiteState ψ")),
                 (
                     "https://uor.foundation/op/verificationDomain",
                     IndividualValue::IriRef("https://uor.foundation/op/QuantumThermodynamic"),
@@ -5556,12 +5556,12 @@ fn raw_individuals_vec() -> Vec<Individual> {
             id: "https://uor.foundation/op/RC_6",
             type_: "https://uor.foundation/op/Identity",
             label: "RC_6",
-            comment: "Amplitude renormalization: a SuperposedFiberState can always \
+            comment: "Amplitude renormalization: a SuperposedSiteState can always \
                       be normalized to satisfy QM_5.",
             properties: &[
                 ("https://uor.foundation/op/lhs", IndividualValue::Str("normalize(ψ)")),
                 ("https://uor.foundation/op/rhs", IndividualValue::Str("ψ / sqrt(Σ |αᵢ|²)")),
-                ("https://uor.foundation/op/forAll", IndividualValue::Str("SuperposedFiberState ψ")),
+                ("https://uor.foundation/op/forAll", IndividualValue::Str("SuperposedSiteState ψ")),
                 (
                     "https://uor.foundation/op/verificationDomain",
                     IndividualValue::IriRef("https://uor.foundation/op/SuperpositionDomain"),
@@ -5628,12 +5628,12 @@ fn raw_individuals_vec() -> Vec<Individual> {
             id: "https://uor.foundation/op/QL_8",
             type_: "https://uor.foundation/op/Identity",
             label: "QL_8",
-            comment: "Quantum level chain inverse: levelSuccessor is the left \
-                      inverse of nextLevel.",
+            comment: "Witt level chain inverse: wittLevelPredecessor is the left \
+                      inverse of nextWittLevel.",
             properties: &[
-                ("https://uor.foundation/op/lhs", IndividualValue::Str("levelSuccessor(nextLevel(Q_k))")),
+                ("https://uor.foundation/op/lhs", IndividualValue::Str("wittLevelPredecessor(nextWittLevel(Q_k))")),
                 ("https://uor.foundation/op/rhs", IndividualValue::Str("Q_k")),
-                ("https://uor.foundation/op/forAll", IndividualValue::Str("QuantumLevel Q_k with nextLevel defined")),
+                ("https://uor.foundation/op/forAll", IndividualValue::Str("WittLevel W_n with nextWittLevel defined")),
                 (
                     "https://uor.foundation/op/verificationDomain",
                     IndividualValue::IriRef("https://uor.foundation/op/Algebraic"),
@@ -5687,7 +5687,7 @@ fn raw_individuals_vec() -> Vec<Individual> {
             properties: &[
                 ("https://uor.foundation/op/lhs", IndividualValue::Str("collapse(resolve_superposition(ψ))")),
                 ("https://uor.foundation/op/rhs", IndividualValue::Str("resolve_classical(collapse(ψ))")),
-                ("https://uor.foundation/op/forAll", IndividualValue::Str("SuperposedFiberState ψ")),
+                ("https://uor.foundation/op/forAll", IndividualValue::Str("SuperposedSiteState ψ")),
                 (
                     "https://uor.foundation/op/verificationDomain",
                     IndividualValue::IriRef("https://uor.foundation/op/QuantumThermodynamic"),
@@ -5705,7 +5705,7 @@ fn raw_individuals_vec() -> Vec<Individual> {
             properties: &[
                 ("https://uor.foundation/op/lhs", IndividualValue::Str("amplitudeVector(resolve_superposition(ψ))")),
                 ("https://uor.foundation/op/rhs", IndividualValue::Str("normalized")),
-                ("https://uor.foundation/op/forAll", IndividualValue::Str("SuperposedFiberState ψ")),
+                ("https://uor.foundation/op/forAll", IndividualValue::Str("SuperposedSiteState ψ")),
                 (
                     "https://uor.foundation/op/verificationDomain",
                     IndividualValue::IriRef("https://uor.foundation/op/SuperpositionDomain"),
@@ -5719,11 +5719,11 @@ fn raw_individuals_vec() -> Vec<Individual> {
             type_: "https://uor.foundation/op/Identity",
             label: "SP_4",
             comment: "Born rule outcome probability: the probability of collapsing \
-                      to fiber k equals the squared amplitude of that fiber.",
+                      to site k equals the squared amplitude of that site.",
             properties: &[
-                ("https://uor.foundation/op/lhs", IndividualValue::Str("P(collapse to fiber k)")),
+                ("https://uor.foundation/op/lhs", IndividualValue::Str("P(collapse to site k)")),
                 ("https://uor.foundation/op/rhs", IndividualValue::Str("|α_k|²")),
-                ("https://uor.foundation/op/forAll", IndividualValue::Str("SuperposedFiberState ψ, fiber index k")),
+                ("https://uor.foundation/op/forAll", IndividualValue::Str("SuperposedSiteState ψ, site index k")),
                 (
                     "https://uor.foundation/op/verificationDomain",
                     IndividualValue::IriRef("https://uor.foundation/op/QuantumThermodynamic"),
@@ -5788,11 +5788,11 @@ fn raw_individuals_vec() -> Vec<Individual> {
         },
         // Amendment 41: Tower identities (QT_ series)
         Individual {
-            id: "https://uor.foundation/op/QT_1",
+            id: "https://uor.foundation/op/WT_1",
             type_: "https://uor.foundation/op/Identity",
-            label: "QT_1",
+            label: "WT_1",
             comment: "LiftChain(Q_j, Q_k) is valid CompleteType tower iff every \
-                      chainStep QuantumLift has trivial or resolved LiftObstruction.",
+                      chainStep WittLift has trivial or resolved LiftObstruction.",
             properties: &[
                 ("https://uor.foundation/op/lhs", IndividualValue::Str("LiftChain(Q_j, Q_k) valid")),
                 ("https://uor.foundation/op/rhs", IndividualValue::Str("every chainStep has trivial or resolved LiftObstruction")),
@@ -5806,9 +5806,9 @@ fn raw_individuals_vec() -> Vec<Individual> {
             ],
         },
         Individual {
-            id: "https://uor.foundation/op/QT_2",
+            id: "https://uor.foundation/op/WT_2",
             type_: "https://uor.foundation/op/Identity",
-            label: "QT_2",
+            label: "WT_2",
             comment: "Obstruction count bound: the number of non-trivial \
                       LiftObstructions in a chain is at most the chain length.",
             properties: &[
@@ -5824,9 +5824,9 @@ fn raw_individuals_vec() -> Vec<Individual> {
             ],
         },
         Individual {
-            id: "https://uor.foundation/op/QT_3",
+            id: "https://uor.foundation/op/WT_3",
             type_: "https://uor.foundation/op/Identity",
-            label: "QT_3",
+            label: "WT_3",
             comment: "Resolved basis size formula: the basis size at Q_k equals \
                       basisSize(Q_j) + chainLength + obstructionResolutionCost.",
             properties: &[
@@ -5842,9 +5842,9 @@ fn raw_individuals_vec() -> Vec<Individual> {
             ],
         },
         Individual {
-            id: "https://uor.foundation/op/QT_4",
+            id: "https://uor.foundation/op/WT_4",
             type_: "https://uor.foundation/op/Identity",
-            label: "QT_4",
+            label: "WT_4",
             comment: "Flat tower characterization: isFlat(chain) iff \
                       obstructionCount = 0 iff HolonomyGroup trivial at every step.",
             properties: &[
@@ -5860,9 +5860,9 @@ fn raw_individuals_vec() -> Vec<Individual> {
             ],
         },
         Individual {
-            id: "https://uor.foundation/op/QT_5",
+            id: "https://uor.foundation/op/WT_5",
             type_: "https://uor.foundation/op/Identity",
-            label: "QT_5",
+            label: "WT_5",
             comment: "LiftChainCertificate existence: a CompleteType at Q_k \
                       satisfies IT_7d with a witness chain.",
             properties: &[
@@ -5878,9 +5878,9 @@ fn raw_individuals_vec() -> Vec<Individual> {
             ],
         },
         Individual {
-            id: "https://uor.foundation/op/QT_6",
+            id: "https://uor.foundation/op/WT_6",
             type_: "https://uor.foundation/op/Identity",
-            label: "QT_6",
+            label: "WT_6",
             comment: "Single-step reduction: QT_3 with chainLength=1 and cost=0 \
                       reduces to QLS_3.",
             properties: &[
@@ -5896,9 +5896,9 @@ fn raw_individuals_vec() -> Vec<Individual> {
             ],
         },
         Individual {
-            id: "https://uor.foundation/op/QT_7",
+            id: "https://uor.foundation/op/WT_7",
             type_: "https://uor.foundation/op/Identity",
-            label: "QT_7",
+            label: "WT_7",
             comment: "Flat chain basis size: for flat chains, resolvedBasisSize(Q_k) = \
                       basisSize(Q_j) + (k - j).",
             properties: &[
@@ -5914,18 +5914,18 @@ fn raw_individuals_vec() -> Vec<Individual> {
             ],
         },
         // Amendment 44: Structural Gap Closures (G1--G11)
-        // G7: CarryConstraint fiber-pinning map
+        // G7: CarryConstraint site-pinning map
         Individual {
             id: "https://uor.foundation/op/CC_PINS",
             type_: "https://uor.foundation/op/Identity",
             label: "CC_PINS",
-            comment: "Carry-constraint fiber-pinning map: \
-                      pinsFibers(CarryConstraint(p)) equals the set of bit \
+            comment: "Carry-constraint site-pinning map: \
+                      pinsSites(CarryConstraint(p)) equals the set of bit \
                       positions where p has a 1 plus the first-zero stopping \
                       position.",
             properties: &[
                 ("https://uor.foundation/op/lhs",
-                 IndividualValue::Str("pinsFibers(CarryConstraint(p))")),
+                 IndividualValue::Str("pinsSites(CarryConstraint(p))")),
                 ("https://uor.foundation/op/rhs",
                  IndividualValue::Str("{k : p(k)=1} union {first-zero(p)}")),
                 ("https://uor.foundation/op/forAll",
@@ -5940,15 +5940,15 @@ fn raw_individuals_vec() -> Vec<Individual> {
             ],
         },
         Individual {
-            id: "https://uor.foundation/op/CC_COST_FIBER",
+            id: "https://uor.foundation/op/CC_COST_SITE",
             type_: "https://uor.foundation/op/Identity",
-            label: "CC_COST_FIBER",
-            comment: "Carry-constraint cost-to-fiber count: the number of \
-                      fibers pinned by a CarryConstraint equals popcount plus \
+            label: "CC_COST_SITE",
+            comment: "Carry-constraint cost-to-site count: the number of \
+                      sites pinned by a CarryConstraint equals popcount plus \
                       one for the stopping position.",
             properties: &[
                 ("https://uor.foundation/op/lhs",
-                 IndividualValue::Str("|pinsFibers(CarryConstraint(p))|")),
+                 IndividualValue::Str("|pinsSites(CarryConstraint(p))|")),
                 ("https://uor.foundation/op/rhs",
                  IndividualValue::Str("popcount(p) + 1")),
                 ("https://uor.foundation/op/forAll",
@@ -5992,13 +5992,13 @@ fn raw_individuals_vec() -> Vec<Individual> {
             label: "jsat_CR",
             comment: "Carry-residue joint satisfiability: a CarryConstraint \
                       and ResidueConstraint are jointly satisfiable iff the \
-                      carry-pinned fibers are compatible with the residue \
+                      carry-pinned sites are compatible with the residue \
                       class.",
             properties: &[
                 ("https://uor.foundation/op/lhs",
                  IndividualValue::Str("jointSat(Carry(p), Res(m,r))")),
                 ("https://uor.foundation/op/rhs",
-                 IndividualValue::Str("pin-fiber intersection residue-class compatible")),
+                 IndividualValue::Str("pin-site intersection residue-class compatible")),
                 ("https://uor.foundation/op/forAll",
                  IndividualValue::Str("CarryConstraint, ResidueConstraint pairs")),
                 (
@@ -6116,7 +6116,7 @@ fn raw_individuals_vec() -> Vec<Individual> {
                 ("https://uor.foundation/op/rhs",
                  IndividualValue::Str("2^n")),
                 ("https://uor.foundation/op/forAll",
-                 IndividualValue::Str("QuantumLevel Q_n, n >= 1")),
+                 IndividualValue::Str("WittLevel W_n, n >= 1")),
                 (
                     "https://uor.foundation/op/verificationDomain",
                     IndividualValue::IriRef("https://uor.foundation/op/Enumerative"),
@@ -6232,7 +6232,7 @@ fn raw_individuals_vec() -> Vec<Individual> {
                 ("https://uor.foundation/op/rhs",
                  IndividualValue::Str("2k + 1")),
                 ("https://uor.foundation/op/forAll",
-                 IndividualValue::Str("first Betti number k >= 1, n-fiber type")),
+                 IndividualValue::Str("first Betti number k >= 1, n-site type")),
                 (
                     "https://uor.foundation/op/verificationDomain",
                     IndividualValue::IriRef("https://uor.foundation/op/Pipeline"),
@@ -6256,7 +6256,7 @@ fn raw_individuals_vec() -> Vec<Individual> {
                 ("https://uor.foundation/op/rhs",
                  IndividualValue::Str("within 2^n steps")),
                 ("https://uor.foundation/op/forAll",
-                 IndividualValue::Str("QuantumLevel Q_n, any target signature")),
+                 IndividualValue::Str("WittLevel W_n, any target signature")),
                 (
                     "https://uor.foundation/op/verificationDomain",
                     IndividualValue::IriRef("https://uor.foundation/op/Pipeline"),
@@ -6292,9 +6292,9 @@ fn raw_individuals_vec() -> Vec<Individual> {
         },
         // G6: ObstructionChain termination guarantee
         Individual {
-            id: "https://uor.foundation/op/QT_8",
+            id: "https://uor.foundation/op/WT_8",
             type_: "https://uor.foundation/op/Identity",
-            label: "QT_8",
+            label: "WT_8",
             comment: "ObstructionChain length bound: the length of the \
                       ObstructionChain from Q_j to Q_k is at most \
                       (k-j) times C(basisSize(Q_j), 3).",
@@ -6315,9 +6315,9 @@ fn raw_individuals_vec() -> Vec<Individual> {
             ],
         },
         Individual {
-            id: "https://uor.foundation/op/QT_9",
+            id: "https://uor.foundation/op/WT_9",
             type_: "https://uor.foundation/op/Identity",
-            label: "QT_9",
+            label: "WT_9",
             comment: "TowerCompletenessResolver termination: the resolver \
                       terminates for any finite LiftChain within the QT_8 \
                       bound, producing a CompleteType certificate or a \
@@ -6352,7 +6352,7 @@ fn raw_individuals_vec() -> Vec<Individual> {
                 ("https://uor.foundation/op/rhs",
                  IndividualValue::Str("Z/2Z")),
                 ("https://uor.foundation/op/forAll",
-                 IndividualValue::Str("ConstraintNerve N(C) at any quantum level")),
+                 IndividualValue::Str("CechNerve N(C) at any quantum level")),
                 (
                     "https://uor.foundation/op/verificationDomain",
                     IndividualValue::IriRef("https://uor.foundation/op/Algebraic"),
@@ -6370,13 +6370,13 @@ fn raw_individuals_vec() -> Vec<Individual> {
             comment: "GluingObstruction feedback: given a \
                       GluingObstruction class in H^1(N(C)), the killing \
                       RefinementSuggestion adds a constraint whose pinned \
-                      fibers contain the intersection of the \
+                      sites contain the intersection of the \
                       cycle-generating pair.",
             properties: &[
                 ("https://uor.foundation/op/lhs",
-                 IndividualValue::Str("pinsFibers(killing constraint for obstruction c)")),
+                 IndividualValue::Str("pinsSites(killing constraint for obstruction c)")),
                 ("https://uor.foundation/op/rhs",
-                 IndividualValue::Str("superset of pinsFibers(C_i) cap pinsFibers(C_j)")),
+                 IndividualValue::Str("superset of pinsSites(C_i) cap pinsSites(C_j)")),
                 ("https://uor.foundation/op/forAll",
                  IndividualValue::Str("GluingObstruction c, cycle pair (C_i, C_j)")),
                 (
@@ -6390,19 +6390,19 @@ fn raw_individuals_vec() -> Vec<Individual> {
         },
         // G8: Session saturation lifecycle bridge
         Individual {
-            id: "https://uor.foundation/op/SR_6",
+            id: "https://uor.foundation/op/GR_6",
             type_: "https://uor.foundation/op/Identity",
-            label: "SR_6",
-            comment: "Saturation re-entry free count: for a session at full \
-                      saturation, a new query q has freeCount equal to the \
-                      number of q's fiber coordinates not already bound.",
+            label: "GR_6",
+            comment: "Grounding re-entry free rank: for a session at full \
+                      grounding, a new query q has freeRank equal to the \
+                      number of q's site coordinates not already bound.",
             properties: &[
                 ("https://uor.foundation/op/lhs",
-                 IndividualValue::Str("freeCount(q) after saturation")),
+                 IndividualValue::Str("freeRank(q) after grounding")),
                 ("https://uor.foundation/op/rhs",
-                 IndividualValue::Str("fibers of q not in BindingAccumulator")),
+                 IndividualValue::Str("sites of q not in BindingAccumulator")),
                 ("https://uor.foundation/op/forAll",
-                 IndividualValue::Str("saturated Session, new RelationQuery q")),
+                 IndividualValue::Str("grounded Session, new RelationQuery q")),
                 (
                     "https://uor.foundation/op/verificationDomain",
                     IndividualValue::IriRef("https://uor.foundation/op/Algebraic"),
@@ -6413,17 +6413,17 @@ fn raw_individuals_vec() -> Vec<Individual> {
             ],
         },
         Individual {
-            id: "https://uor.foundation/op/SR_7",
+            id: "https://uor.foundation/op/GR_7",
             type_: "https://uor.foundation/op/Identity",
-            label: "SR_7",
-            comment: "Saturation degree degradation: after re-entry with \
-                      query q, the saturation degree becomes \
-                      min(current sigma, 1 - freeCount(q)/n).",
+            label: "GR_7",
+            comment: "Grounding degree degradation: after re-entry with \
+                      query q, the grounding degree becomes \
+                      min(current sigma, 1 - freeRank(q)/n).",
             properties: &[
                 ("https://uor.foundation/op/lhs",
                  IndividualValue::Str("sigma after re-entry with query q")),
                 ("https://uor.foundation/op/rhs",
-                 IndividualValue::Str("min(sigma, 1 - freeCount(q)/n)")),
+                 IndividualValue::Str("min(sigma, 1 - freeRank(q)/n)")),
                 ("https://uor.foundation/op/forAll",
                  IndividualValue::Str("SessionResolver, new query q")),
                 (
@@ -6435,22 +6435,22 @@ fn raw_individuals_vec() -> Vec<Individual> {
                  IndividualValue::IriRef("https://uor.foundation/op/Universal")),
             ],
         },
-        // G10: SuperposedFiberState amplitude index set
+        // G10: SuperposedSiteState amplitude index set
         Individual {
             id: "https://uor.foundation/op/QM_6",
             type_: "https://uor.foundation/op/Identity",
             label: "QM_6",
             comment: "Amplitude index set characterization: the amplitude \
-                      index set of a SuperposedFiberState over \
+                      index set of a SuperposedSiteState over \
                       ConstrainedType T at Q_n is the set of monotone \
                       pinning trajectories consistent with T's constraints.",
             properties: &[
                 ("https://uor.foundation/op/lhs",
-                 IndividualValue::Str("amplitude index set of SuperposedFiberState over T")),
+                 IndividualValue::Str("amplitude index set of SuperposedSiteState over T")),
                 ("https://uor.foundation/op/rhs",
                  IndividualValue::Str("monotone pinning trajectories consistent with T")),
                 ("https://uor.foundation/op/forAll",
-                 IndividualValue::Str("SuperposedFiberState over ConstrainedType T at Q_n")),
+                 IndividualValue::Str("SuperposedSiteState over ConstrainedType T at Q_n")),
                 (
                     "https://uor.foundation/op/verificationDomain",
                     IndividualValue::IriRef("https://uor.foundation/op/SuperpositionDomain"),
@@ -6534,14 +6534,14 @@ fn raw_individuals_vec() -> Vec<Individual> {
             type_: "https://uor.foundation/op/Identity",
             label: "CIC_4",
             comment: "Certificate issuance: full saturation (\u{03c3} = 1, \
-                      freeCount = 0) admits a SaturationCertificate.",
+                      freeRank = 0) admits a GroundingCertificate.",
             properties: &[
                 ("https://uor.foundation/op/lhs",
-                 IndividualValue::Str("\u{03c3}(C) = 1 \u{2227} freeCount = 0")),
+                 IndividualValue::Str("\u{03c3}(C) = 1 \u{2227} freeRank = 0")),
                 ("https://uor.foundation/op/rhs",
-                 IndividualValue::Str("\u{2203} c: SaturationCertificate. certifies(c, C)")),
+                 IndividualValue::Str("\u{2203} c: GroundingCertificate. certifies(c, C)")),
                 ("https://uor.foundation/op/forAll",
-                 IndividualValue::Str("SaturatedContext C")),
+                 IndividualValue::Str("GroundedContext C")),
                 (
                     "https://uor.foundation/op/verificationDomain",
                     IndividualValue::IriRef("https://uor.foundation/op/Thermodynamic"),
@@ -6644,17 +6644,17 @@ fn raw_individuals_vec() -> Vec<Individual> {
         },
         // Amendment 48: Multi-Session Coordination — axiomatic identities
         Individual {
-            id: "https://uor.foundation/op/SR_8",
+            id: "https://uor.foundation/op/GR_8",
             type_: "https://uor.foundation/op/Identity",
-            label: "SR_8",
+            label: "GR_8",
             comment: "Session composition validity: compose(S_A, S_B) is valid at \
-                      Q_k iff all pinned-fiber intersections agree at every tower \
+                      Q_k iff all pinned-site intersections agree at every tower \
                       level Q_0 through Q_k.",
             properties: &[
                 ("https://uor.foundation/op/lhs",
                  IndividualValue::Str("compose(S_A, S_B) valid at Q_k")),
                 ("https://uor.foundation/op/rhs",
-                 IndividualValue::Str("\u{2200} j \u{2264} k: \u{2200} a \u{2208} pinnedFibers(S_A, Q_j) \u{2229} pinnedFibers(S_B, Q_j): datum(S_A, a, Q_j) = datum(S_B, a, Q_j)")),
+                 IndividualValue::Str("\u{2200} j \u{2264} k: \u{2200} a \u{2208} pinnedSites(S_A, Q_j) \u{2229} pinnedSites(S_B, Q_j): datum(S_A, a, Q_j) = datum(S_B, a, Q_j)")),
                 ("https://uor.foundation/op/forAll",
                  IndividualValue::Str("S_A, S_B: Session at quantum level Q_k (k \u{2265} 0)")),
                 (
@@ -6668,14 +6668,14 @@ fn raw_individuals_vec() -> Vec<Individual> {
             ],
         },
         Individual {
-            id: "https://uor.foundation/op/SR_9",
+            id: "https://uor.foundation/op/GR_9",
             type_: "https://uor.foundation/op/Identity",
-            label: "SR_9",
+            label: "GR_9",
             comment: "ContextLease disjointness: two distinct leases on the same \
-                      SharedContext have non-overlapping fiber sets.",
+                      SharedContext have non-overlapping site sets.",
             properties: &[
                 ("https://uor.foundation/op/lhs",
-                 IndividualValue::Str("leasedFibers(L_A) \u{2229} leasedFibers(L_B)")),
+                 IndividualValue::Str("leasedSites(L_A) \u{2229} leasedSites(L_B)")),
                 ("https://uor.foundation/op/rhs",
                  IndividualValue::Str("= \u{2205}")),
                 ("https://uor.foundation/op/forAll",
@@ -6690,9 +6690,9 @@ fn raw_individuals_vec() -> Vec<Individual> {
             ],
         },
         Individual {
-            id: "https://uor.foundation/op/SR_10",
+            id: "https://uor.foundation/op/GR_10",
             type_: "https://uor.foundation/op/Identity",
-            label: "SR_10",
+            label: "GR_10",
             comment: "ExecutionPolicy confluence: different execution policies on \
                       the same pending query set produce the same final resolved \
                       state (Church-Rosser for session resolution).",
@@ -6718,14 +6718,14 @@ fn raw_individuals_vec() -> Vec<Individual> {
             type_: "https://uor.foundation/op/Identity",
             label: "MC_1",
             comment: "Lease partition conserves total budget: the sum of \
-                      freeCount over all leases equals the SharedContext freeCount.",
+                      freeRank over all leases equals the SharedContext freeRank.",
             properties: &[
                 ("https://uor.foundation/op/lhs",
-                 IndividualValue::Str("\u{03a3}\u{1d62} freeCount(leasedFibers(L_i))")),
+                 IndividualValue::Str("\u{03a3}\u{1d62} freeRank(leasedSites(L_i))")),
                 ("https://uor.foundation/op/rhs",
-                 IndividualValue::Str("= freeCount(C)")),
+                 IndividualValue::Str("= freeRank(C)")),
                 ("https://uor.foundation/op/forAll",
-                 IndividualValue::Str("SharedContext C; leaseSet {L_1, \u{2026}, L_k} covering all fibers of C")),
+                 IndividualValue::Str("SharedContext C; leaseSet {L_1, \u{2026}, L_k} covering all sites of C")),
                 (
                     "https://uor.foundation/op/verificationDomain",
                     IndividualValue::IriRef("https://uor.foundation/op/Algebraic"),
@@ -6740,14 +6740,14 @@ fn raw_individuals_vec() -> Vec<Individual> {
             type_: "https://uor.foundation/op/Identity",
             label: "MC_2",
             comment: "Per-lease binding monotonicity: within a leased sub-domain, \
-                      freeCount decreases monotonically (SR_1 restricted to lease).",
+                      freeRank decreases monotonically (SR_1 restricted to lease).",
             properties: &[
                 ("https://uor.foundation/op/lhs",
-                 IndividualValue::Str("freeCount(B_{i+1} |_L)")),
+                 IndividualValue::Str("freeRank(B_{i+1} |_L)")),
                 ("https://uor.foundation/op/rhs",
-                 IndividualValue::Str("\u{2264} freeCount(B_i |_L)")),
+                 IndividualValue::Str("\u{2264} freeRank(B_i |_L)")),
                 ("https://uor.foundation/op/forAll",
-                 IndividualValue::Str("ContextLease L held by Session S; binding step i within S restricted to leasedFibers(L)")),
+                 IndividualValue::Str("ContextLease L held by Session S; binding step i within S restricted to leasedSites(L)")),
                 (
                     "https://uor.foundation/op/verificationDomain",
                     IndividualValue::IriRef("https://uor.foundation/op/Algebraic"),
@@ -6761,12 +6761,12 @@ fn raw_individuals_vec() -> Vec<Individual> {
             id: "https://uor.foundation/op/MC_3",
             type_: "https://uor.foundation/op/Identity",
             label: "MC_3",
-            comment: "General composition freeCount via inclusion-exclusion.",
+            comment: "General composition freeRank via inclusion-exclusion.",
             properties: &[
                 ("https://uor.foundation/op/lhs",
-                 IndividualValue::Str("freeCount(compose(S_A, S_B))")),
+                 IndividualValue::Str("freeRank(compose(S_A, S_B))")),
                 ("https://uor.foundation/op/rhs",
-                 IndividualValue::Str("freeCount(S_A) + freeCount(S_B) \u{2212} |pinnedFibers(S_A) \u{2229} pinnedFibers(S_B)|")),
+                 IndividualValue::Str("freeRank(S_A) + freeRank(S_B) \u{2212} |pinnedSites(S_A) \u{2229} pinnedSites(S_B)|")),
                 ("https://uor.foundation/op/forAll",
                  IndividualValue::Str("S_A, S_B: Session; compose(S_A, S_B) valid (SR_8 satisfied)")),
                 (
@@ -6783,12 +6783,12 @@ fn raw_individuals_vec() -> Vec<Individual> {
             type_: "https://uor.foundation/op/Identity",
             label: "MC_4",
             comment: "Disjoint-lease composition is additive: the intersection \
-                      term vanishes when leases are fiber-disjoint (SR_9).",
+                      term vanishes when leases are site-disjoint (SR_9).",
             properties: &[
                 ("https://uor.foundation/op/lhs",
-                 IndividualValue::Str("freeCount(compose(S_A, S_B))")),
+                 IndividualValue::Str("freeRank(compose(S_A, S_B))")),
                 ("https://uor.foundation/op/rhs",
-                 IndividualValue::Str("= freeCount(S_A) + freeCount(S_B)")),
+                 IndividualValue::Str("= freeRank(S_A) + freeRank(S_B)")),
                 ("https://uor.foundation/op/forAll",
                  IndividualValue::Str("S_A, S_B on ContextLeases L_A, L_B within SharedContext C; SR_9 holds")),
                 (
@@ -6805,7 +6805,7 @@ fn raw_individuals_vec() -> Vec<Individual> {
             type_: "https://uor.foundation/op/Identity",
             label: "MC_5",
             comment: "Policy-invariant final binding set: different execution \
-                      policies produce identical FiberPinning records.",
+                      policies produce identical SiteBinding records.",
             properties: &[
                 ("https://uor.foundation/op/lhs",
                  IndividualValue::Str("finalBindings(R, P_1, Q)")),
@@ -6828,14 +6828,14 @@ fn raw_individuals_vec() -> Vec<Individual> {
             label: "MC_6",
             comment: "Full lease coverage implies composed saturation: k sessions \
                       on disjoint covering leases, each locally converged, produce \
-                      a SaturatedContext via composition.",
+                      a GroundedContext via composition.",
             properties: &[
                 ("https://uor.foundation/op/lhs",
                  IndividualValue::Str("\u{03c3}(compose(S_1, \u{2026}, S_k))")),
                 ("https://uor.foundation/op/rhs",
-                 IndividualValue::Str("= 1 (FullSaturation)")),
+                 IndividualValue::Str("= 1 (FullGrounding)")),
                 ("https://uor.foundation/op/forAll",
-                 IndividualValue::Str("SharedContext C; leases {L_1, \u{2026}, L_k} pairwise disjoint (SR_9) and fully covering C; each S_i with freeCount = 0 within L_i")),
+                 IndividualValue::Str("SharedContext C; leases {L_1, \u{2026}, L_k} pairwise disjoint (SR_9) and fully covering C; each S_i with freeRank = 0 within L_i")),
                 (
                     "https://uor.foundation/op/verificationDomain",
                     IndividualValue::IriRef("https://uor.foundation/op/Algebraic"),
@@ -6850,7 +6850,7 @@ fn raw_individuals_vec() -> Vec<Individual> {
             type_: "https://uor.foundation/op/Identity",
             label: "MC_7",
             comment: "Distributed O(1) resolution: a query against a composed \
-                      SaturatedContext resolves in zero steps.",
+                      GroundedContext resolves in zero steps.",
             properties: &[
                 ("https://uor.foundation/op/lhs",
                  IndividualValue::Str("stepCount(q, C*)")),
@@ -6872,14 +6872,14 @@ fn raw_individuals_vec() -> Vec<Individual> {
             type_: "https://uor.foundation/op/Identity",
             label: "MC_8",
             comment: "Parallelism bound: per-session resolution work is bounded \
-                      by lease size, not by total fiber count n.",
+                      by lease size, not by total site count n.",
             properties: &[
                 ("https://uor.foundation/op/lhs",
                  IndividualValue::Str("max_i stepCount(S_i to convergence within L_i)")),
                 ("https://uor.foundation/op/rhs",
                  IndividualValue::Str("\u{2264} \u{2308}n/k\u{2309}")),
                 ("https://uor.foundation/op/forAll",
-                 IndividualValue::Str("SharedContext C with totalFibers = n; uniform partition into k leases")),
+                 IndividualValue::Str("SharedContext C with totalSites = n; uniform partition into k leases")),
                 (
                     "https://uor.foundation/op/verificationDomain",
                     IndividualValue::IriRef("https://uor.foundation/op/Algebraic"),
@@ -7899,12 +7899,12 @@ fn raw_individuals_vec() -> Vec<Individual> {
             id: "https://uor.foundation/op/MD_9",
             type_: "https://uor.foundation/op/Identity",
             label: "MD_9",
-            comment: "The fiber of a ModuliTowerMap at T has dimension 1 \
+            comment: "The site of a ModuliTowerMap at T has dimension 1 \
                       when the obstruction is trivial.",
             properties: &[
                 (
                     "https://uor.foundation/op/lhs",
-                    IndividualValue::Str("fiber(ModuliTowerMap, T) dimension"),
+                    IndividualValue::Str("site(ModuliTowerMap, T) dimension"),
                 ),
                 (
                     "https://uor.foundation/op/rhs",
@@ -7929,12 +7929,12 @@ fn raw_individuals_vec() -> Vec<Individual> {
             id: "https://uor.foundation/op/MD_10",
             type_: "https://uor.foundation/op/Identity",
             label: "MD_10",
-            comment: "The fiber of a ModuliTowerMap at T is empty iff T is \
+            comment: "The site of a ModuliTowerMap at T is empty iff T is \
                       a TwistedType at every level.",
             properties: &[
                 (
                     "https://uor.foundation/op/lhs",
-                    IndividualValue::Str("fiber(ModuliTowerMap, T)"),
+                    IndividualValue::Str("site(ModuliTowerMap, T)"),
                 ),
                 (
                     "https://uor.foundation/op/rhs",
@@ -8064,7 +8064,7 @@ fn raw_individuals_vec() -> Vec<Individual> {
             id: "https://uor.foundation/op/CY_1",
             type_: "https://uor.foundation/op/Identity",
             label: "CY_1",
-            comment: "Carry generates at fiber k iff and(x_k, y_k) = 1. \
+            comment: "Carry generates at site k iff and(x_k, y_k) = 1. \
                       Extends CA_1 (addition decomposition) and WC_2 \
                       (Witt sum correction).",
             properties: &[
@@ -8086,7 +8086,7 @@ fn raw_individuals_vec() -> Vec<Individual> {
             id: "https://uor.foundation/op/CY_2",
             type_: "https://uor.foundation/op/Identity",
             label: "CY_2",
-            comment: "Carry propagates at fiber k iff xor(x_k, y_k) = 1 and \
+            comment: "Carry propagates at site k iff xor(x_k, y_k) = 1 and \
                       c_k = 1. Extends CA_2 (carry recurrence) and WC_3 \
                       (Witt polynomial recurrence).",
             properties: &[
@@ -8108,7 +8108,7 @@ fn raw_individuals_vec() -> Vec<Individual> {
             id: "https://uor.foundation/op/CY_3",
             type_: "https://uor.foundation/op/Identity",
             label: "CY_3",
-            comment: "Carry kills at fiber k iff and(x_k, y_k) = 0 and \
+            comment: "Carry kills at site k iff and(x_k, y_k) = 0 and \
                       xor(x_k, y_k) = 0. Complement of CY_1 and CY_2.",
             properties: &[
                 ("https://uor.foundation/op/lhs",
@@ -8175,14 +8175,14 @@ fn raw_individuals_vec() -> Vec<Individual> {
             id: "https://uor.foundation/op/CY_6",
             type_: "https://uor.foundation/op/Identity",
             label: "CY_6",
-            comment: "Fiber ordering theorem: d_\u{0394} is minimized when \
-                      high-significance fibers (upstream in the carry chain) \
+            comment: "Site ordering theorem: d_\u{0394} is minimized when \
+                      high-significance sites (upstream in the carry chain) \
                       encode the most structurally informative observables.",
             properties: &[
                 ("https://uor.foundation/op/lhs",
-                 IndividualValue::Str("min d_\u{0394} fiber ordering")),
+                 IndividualValue::Str("min d_\u{0394} site ordering")),
                 ("https://uor.foundation/op/rhs",
-                 IndividualValue::Str("high-significance fibers \u{2192} most informative observables")),
+                 IndividualValue::Str("high-significance sites \u{2192} most informative observables")),
                 ("https://uor.foundation/op/forAll",
                  IndividualValue::Str("EncodingConfiguration over ordered domain")),
                 ("https://uor.foundation/op/verificationDomain",
@@ -8197,7 +8197,7 @@ fn raw_individuals_vec() -> Vec<Individual> {
             id: "https://uor.foundation/op/CY_7",
             type_: "https://uor.foundation/op/Identity",
             label: "CY_7",
-            comment: "Carry lookahead: the carry chain for n fibers is \
+            comment: "Carry lookahead: the carry chain for n sites is \
                       computable in O(log n) using prefix computation on \
                       generate/propagate pairs.",
             properties: &[
@@ -8220,12 +8220,12 @@ fn raw_individuals_vec() -> Vec<Individual> {
             id: "https://uor.foundation/op/BM_1",
             type_: "https://uor.foundation/op/Identity",
             label: "BM_1",
-            comment: "\u{03c3}(C) = (n \u{2212} freeCount(C)) / n. The saturation \
-                      metric is the complement of free fiber ratio. Derives from SC_2.",
+            comment: "\u{03c3}(C) = (n \u{2212} freeRank(C)) / n. The saturation \
+                      metric is the complement of free site ratio. Derives from SC_2.",
             properties: &[
                 ("https://uor.foundation/op/lhs", IndividualValue::Str("\u{03c3}(C)")),
-                ("https://uor.foundation/op/rhs", IndividualValue::Str("(n \u{2212} freeCount(C)) / n")),
-                ("https://uor.foundation/op/forAll", IndividualValue::Str("Context C with n fibers")),
+                ("https://uor.foundation/op/rhs", IndividualValue::Str("(n \u{2212} freeRank(C)) / n")),
+                ("https://uor.foundation/op/forAll", IndividualValue::Str("Context C with n sites")),
                 ("https://uor.foundation/op/verificationDomain",
                  IndividualValue::IriRef("https://uor.foundation/op/IndexTheoretic")),
                 ("https://uor.foundation/op/universallyValid", IndividualValue::Bool(true)),
@@ -8271,11 +8271,11 @@ fn raw_individuals_vec() -> Vec<Individual> {
             id: "https://uor.foundation/op/BM_4",
             type_: "https://uor.foundation/op/Identity",
             label: "BM_4",
-            comment: "J_k = 0 for pinned fibers. The Jacobian vanishes on resolved fibers.",
+            comment: "J_k = 0 for pinned sites. The Jacobian vanishes on resolved sites.",
             properties: &[
-                ("https://uor.foundation/op/lhs", IndividualValue::Str("J_k (pinned fiber k)")),
+                ("https://uor.foundation/op/lhs", IndividualValue::Str("J_k (pinned site k)")),
                 ("https://uor.foundation/op/rhs", IndividualValue::Str("0")),
-                ("https://uor.foundation/op/forAll", IndividualValue::Str("pinned fiber k")),
+                ("https://uor.foundation/op/forAll", IndividualValue::Str("pinned site k")),
                 ("https://uor.foundation/op/verificationDomain",
                  IndividualValue::IriRef("https://uor.foundation/op/IndexTheoretic")),
                 ("https://uor.foundation/op/universallyValid", IndividualValue::Bool(true)),
@@ -8376,10 +8376,10 @@ fn raw_individuals_vec() -> Vec<Individual> {
             type_: "https://uor.foundation/op/Identity",
             label: "GL_4",
             comment: "Type refinement = ascending in type lattice = descending in \
-                      fiber freedom. The Galois connection reverses order.",
+                      site freedom. The Galois connection reverses order.",
             properties: &[
                 ("https://uor.foundation/op/lhs", IndividualValue::Str("T\u{2081} \u{2264} T\u{2082} in type lattice")),
-                ("https://uor.foundation/op/rhs", IndividualValue::Str("fiber(T\u{2082}) \u{2286} fiber(T\u{2081})")),
+                ("https://uor.foundation/op/rhs", IndividualValue::Str("site(T\u{2082}) \u{2286} site(T\u{2081})")),
                 ("https://uor.foundation/op/forAll", IndividualValue::Str("types T\u{2081}, T\u{2082}")),
                 ("https://uor.foundation/op/verificationDomain",
                  IndividualValue::IriRef("https://uor.foundation/op/Topological")),
@@ -8513,11 +8513,11 @@ fn raw_individuals_vec() -> Vec<Individual> {
             id: "https://uor.foundation/op/SD_4",
             type_: "https://uor.foundation/op/Identity",
             label: "SD_4",
-            comment: "TupleType fiber count = \u{03a3} field fiber counts, fiber \
+            comment: "TupleType site count = \u{03a3} field site counts, site \
                       ordering follows CY_6.",
             properties: &[
-                ("https://uor.foundation/op/lhs", IndividualValue::Str("fibers(Tuple(f\u{2081},...,f\u{2096}))")),
-                ("https://uor.foundation/op/rhs", IndividualValue::Str("\u{03a3}\u{1d62} fibers(f\u{1d62})")),
+                ("https://uor.foundation/op/lhs", IndividualValue::Str("sites(Tuple(f\u{2081},...,f\u{2096}))")),
+                ("https://uor.foundation/op/rhs", IndividualValue::Str("\u{03a3}\u{1d62} sites(f\u{1d62})")),
                 ("https://uor.foundation/op/forAll", IndividualValue::Str("fields f_1,...,f_k of tuple type")),
                 ("https://uor.foundation/op/verificationDomain",
                  IndividualValue::IriRef("https://uor.foundation/op/Algebraic")),
@@ -8633,11 +8633,11 @@ fn raw_individuals_vec() -> Vec<Individual> {
             type_: "https://uor.foundation/op/Identity",
             label: "PI_1",
             comment: "Inference idempotence: \u{03b9}(\u{03b9}(s,C),C) = \u{03b9}(s,C) \
-                      on SaturatedContext.",
+                      on GroundedContext.",
             properties: &[
                 ("https://uor.foundation/op/lhs", IndividualValue::Str("\u{03b9}(\u{03b9}(s,C),C)")),
                 ("https://uor.foundation/op/rhs", IndividualValue::Str("\u{03b9}(s,C)")),
-                ("https://uor.foundation/op/forAll", IndividualValue::Str("symbol s, SaturatedContext C")),
+                ("https://uor.foundation/op/forAll", IndividualValue::Str("symbol s, GroundedContext C")),
                 ("https://uor.foundation/op/verificationDomain",
                  IndividualValue::IriRef("https://uor.foundation/op/ComposedAlgebraic")),
                 ("https://uor.foundation/op/universallyValid", IndividualValue::Bool(true)),
@@ -8736,8 +8736,8 @@ fn raw_individuals_vec() -> Vec<Individual> {
             comment: "Accumulation monotonicity: \u{03b1}(b,C) \u{2287} C (the context \
                       only grows, never loses bindings). Derives from SR_1.",
             properties: &[
-                ("https://uor.foundation/op/lhs", IndividualValue::Str("fibers(\u{03b1}(b,C))")),
-                ("https://uor.foundation/op/rhs", IndividualValue::Str("fibers(C) \u{222a} {b.fiber}")),
+                ("https://uor.foundation/op/lhs", IndividualValue::Str("sites(\u{03b1}(b,C))")),
+                ("https://uor.foundation/op/rhs", IndividualValue::Str("sites(C) \u{222a} {b.site}")),
                 ("https://uor.foundation/op/forAll", IndividualValue::Str("binding b, context C")),
                 ("https://uor.foundation/op/verificationDomain",
                  IndividualValue::IriRef("https://uor.foundation/op/ComposedAlgebraic")),
@@ -8768,7 +8768,7 @@ fn raw_individuals_vec() -> Vec<Individual> {
             type_: "https://uor.foundation/op/Identity",
             label: "PA_4",
             comment: "Accumulation base preservation: \u{03b1} does not modify previously \
-                      pinned fibers.",
+                      pinned sites.",
             properties: &[
                 ("https://uor.foundation/op/lhs", IndividualValue::Str("\u{03b1}(b,C)|_{pinned(C)}")),
                 ("https://uor.foundation/op/rhs", IndividualValue::Str("C|_{pinned(C)}")),
@@ -8802,7 +8802,7 @@ fn raw_individuals_vec() -> Vec<Individual> {
             type_: "https://uor.foundation/op/Identity",
             label: "PL_1",
             comment: "Lease disjointness: partitioned leases have pairwise disjoint \
-                      fiber sets (derives from SR_9).",
+                      site sets (derives from SR_9).",
             properties: &[
                 ("https://uor.foundation/op/lhs", IndividualValue::Str("L\u{1d62} \u{2229} L\u{2c7c}")),
                 ("https://uor.foundation/op/rhs", IndividualValue::Str("\u{2205}")),
@@ -8835,12 +8835,12 @@ fn raw_individuals_vec() -> Vec<Individual> {
             id: "https://uor.foundation/op/PL_3",
             type_: "https://uor.foundation/op/Identity",
             label: "PL_3",
-            comment: "Lease coverage: every fiber in the shared context appears in \
+            comment: "Lease coverage: every site in the shared context appears in \
                       exactly one lease (derives from MC_6).",
             properties: &[
                 ("https://uor.foundation/op/lhs", IndividualValue::Str("|{i | f \u{2208} L\u{1d62}}|")),
                 ("https://uor.foundation/op/rhs", IndividualValue::Str("1")),
-                ("https://uor.foundation/op/forAll", IndividualValue::Str("fiber f in shared context S")),
+                ("https://uor.foundation/op/forAll", IndividualValue::Str("site f in shared context S")),
                 ("https://uor.foundation/op/verificationDomain",
                  IndividualValue::IriRef("https://uor.foundation/op/ComposedAlgebraic")),
                 ("https://uor.foundation/op/universallyValid", IndividualValue::Bool(true)),
@@ -8904,7 +8904,7 @@ fn raw_individuals_vec() -> Vec<Individual> {
                  IndividualValue::IriRef("https://uor.foundation/op/Universal")),
             ],
         },
-        // Amendment 63: Cascade Core identities (16)
+        // Amendment 63: Reduction Core identities (16)
         // PE_ — Pipeline evaluation semantics (7)
         Individual {
             id: "https://uor.foundation/op/PE_1",
@@ -8914,7 +8914,7 @@ fn raw_individuals_vec() -> Vec<Individual> {
             properties: &[
                 ("https://uor.foundation/op/lhs", IndividualValue::Str("state(\u{03c8}, 0)")),
                 ("https://uor.foundation/op/rhs", IndividualValue::Str("1")),
-                ("https://uor.foundation/op/forAll", IndividualValue::Str("cascade \u{03c8}")),
+                ("https://uor.foundation/op/forAll", IndividualValue::Str("reduction \u{03c8}")),
                 ("https://uor.foundation/op/verificationDomain",
                  IndividualValue::IriRef("https://uor.foundation/op/Pipeline")),
                 ("https://uor.foundation/op/universallyValid", IndividualValue::Bool(true)),
@@ -9010,7 +9010,7 @@ fn raw_individuals_vec() -> Vec<Individual> {
             properties: &[
                 ("https://uor.foundation/op/lhs", IndividualValue::Str("\u{03c8}_5 \u{2218} \u{03c8}_4 \u{2218} \u{03c8}_3 \u{2218} \u{03c8}_2 \u{2218} \u{03c8}_1 \u{2218} \u{03c8}_0")),
                 ("https://uor.foundation/op/rhs", IndividualValue::Str("\u{03c8}")),
-                ("https://uor.foundation/op/forAll", IndividualValue::Str("cascade \u{03c8}")),
+                ("https://uor.foundation/op/forAll", IndividualValue::Str("reduction \u{03c8}")),
                 ("https://uor.foundation/op/verificationDomain",
                  IndividualValue::IriRef("https://uor.foundation/op/Pipeline")),
                 ("https://uor.foundation/op/universallyValid", IndividualValue::Bool(true)),
@@ -9202,7 +9202,7 @@ fn raw_individuals_vec() -> Vec<Individual> {
             id: "https://uor.foundation/op/EA_1",
             type_: "https://uor.foundation/op/Identity",
             label: "EA_1",
-            comment: "Epoch boundary resets free fibers.",
+            comment: "Epoch boundary resets free sites.",
             properties: &[
                 ("https://uor.foundation/op/lhs", IndividualValue::Str("free(epoch(n+1))")),
                 ("https://uor.foundation/op/rhs", IndividualValue::Str("free(epoch(0))")),
@@ -9218,11 +9218,11 @@ fn raw_individuals_vec() -> Vec<Individual> {
             id: "https://uor.foundation/op/EA_2",
             type_: "https://uor.foundation/op/Identity",
             label: "EA_2",
-            comment: "Saturation carries across epochs.",
+            comment: "Grounding carries across epochs.",
             properties: &[
-                ("https://uor.foundation/op/lhs", IndividualValue::Str("saturated(epoch(n))")),
-                ("https://uor.foundation/op/rhs", IndividualValue::Str("saturated(epoch(n+1))")),
-                ("https://uor.foundation/op/forAll", IndividualValue::Str("saturated fibers across epoch boundary")),
+                ("https://uor.foundation/op/lhs", IndividualValue::Str("grounded(epoch(n))")),
+                ("https://uor.foundation/op/rhs", IndividualValue::Str("grounded(epoch(n+1))")),
+                ("https://uor.foundation/op/forAll", IndividualValue::Str("grounded sites across epoch boundary")),
                 ("https://uor.foundation/op/verificationDomain",
                  IndividualValue::IriRef("https://uor.foundation/op/Pipeline")),
                 ("https://uor.foundation/op/universallyValid", IndividualValue::Bool(true)),
@@ -9369,7 +9369,7 @@ fn raw_individuals_vec() -> Vec<Individual> {
             properties: &[
                 ("https://uor.foundation/op/lhs", IndividualValue::Str("cost(stage(k))")),
                 ("https://uor.foundation/op/rhs", IndividualValue::Str("O(1)")),
-                ("https://uor.foundation/op/forAll", IndividualValue::Str("cascade stage k")),
+                ("https://uor.foundation/op/forAll", IndividualValue::Str("reduction step k")),
                 ("https://uor.foundation/op/verificationDomain",
                  IndividualValue::IriRef("https://uor.foundation/op/Pipeline")),
                 ("https://uor.foundation/op/universallyValid", IndividualValue::Bool(true)),
@@ -9385,7 +9385,7 @@ fn raw_individuals_vec() -> Vec<Individual> {
             properties: &[
                 ("https://uor.foundation/op/lhs", IndividualValue::Str("cost(pipeline)")),
                 ("https://uor.foundation/op/rhs", IndividualValue::Str("sum(cost(stage(k)))")),
-                ("https://uor.foundation/op/forAll", IndividualValue::Str("cascade pipeline")),
+                ("https://uor.foundation/op/forAll", IndividualValue::Str("reduction pipeline")),
                 ("https://uor.foundation/op/verificationDomain",
                  IndividualValue::IriRef("https://uor.foundation/op/Pipeline")),
                 ("https://uor.foundation/op/universallyValid", IndividualValue::Bool(true)),
@@ -9401,7 +9401,7 @@ fn raw_individuals_vec() -> Vec<Individual> {
             properties: &[
                 ("https://uor.foundation/op/lhs", IndividualValue::Str("cost(rollback)")),
                 ("https://uor.foundation/op/rhs", IndividualValue::Str("cost(forward)")),
-                ("https://uor.foundation/op/forAll", IndividualValue::Str("cascade rollback operation")),
+                ("https://uor.foundation/op/forAll", IndividualValue::Str("reduction rollback operation")),
                 ("https://uor.foundation/op/verificationDomain",
                  IndividualValue::IriRef("https://uor.foundation/op/Pipeline")),
                 ("https://uor.foundation/op/universallyValid", IndividualValue::Bool(true)),
@@ -9430,11 +9430,11 @@ fn raw_individuals_vec() -> Vec<Individual> {
             id: "https://uor.foundation/op/CS_5",
             type_: "https://uor.foundation/op/Identity",
             label: "CS_5",
-            comment: "Total cascade cost bounded by n \u{00d7} stage_max_cost.",
+            comment: "Total reduction cost bounded by n \u{00d7} stage_max_cost.",
             properties: &[
-                ("https://uor.foundation/op/lhs", IndividualValue::Str("cost(cascade)")),
+                ("https://uor.foundation/op/lhs", IndividualValue::Str("cost(reduction)")),
                 ("https://uor.foundation/op/rhs", IndividualValue::Str("n * max(cost(stage(k)))")),
-                ("https://uor.foundation/op/forAll", IndividualValue::Str("cascade with n stages")),
+                ("https://uor.foundation/op/forAll", IndividualValue::Str("reduction with n stages")),
                 ("https://uor.foundation/op/verificationDomain",
                  IndividualValue::IriRef("https://uor.foundation/op/Pipeline")),
                 ("https://uor.foundation/op/universallyValid", IndividualValue::Bool(true)),
@@ -9455,7 +9455,7 @@ fn raw_individuals_vec() -> Vec<Individual> {
                 (
                     "https://uor.foundation/op/lhs",
                     IndividualValue::Str(
-                        "thermodynamicBudget(U) < bitsWidth(unitQuantumLevel(U)) \u{00d7} ln 2",
+                        "thermodynamicBudget(U) < bitsWidth(unitWittLevel(U)) \u{00d7} ln 2",
                     ),
                 ),
                 (
@@ -9486,7 +9486,7 @@ fn raw_individuals_vec() -> Vec<Individual> {
             type_: "https://uor.foundation/op/Identity",
             label: "CS_7",
             comment: "Unit address identity: the unitAddress of a CompileUnit \
-                      is the u:Address computed by hashing the canonical byte \
+                      is the u:Element computed by hashing the canonical byte \
                       serialization of the root term\u{2019}s transitive closure.",
             properties: &[
                 (
@@ -9526,7 +9526,7 @@ fn raw_individuals_vec() -> Vec<Individual> {
             properties: &[
                 ("https://uor.foundation/op/lhs", IndividualValue::Str("pending(q)")),
                 ("https://uor.foundation/op/rhs", IndividualValue::Str("reaches_gate(q)")),
-                ("https://uor.foundation/op/forAll", IndividualValue::Str("query q in cascade")),
+                ("https://uor.foundation/op/forAll", IndividualValue::Str("query q in reduction")),
                 ("https://uor.foundation/op/verificationDomain",
                  IndividualValue::IriRef("https://uor.foundation/op/Pipeline")),
                 ("https://uor.foundation/op/universallyValid", IndividualValue::Bool(true)),
@@ -9737,7 +9737,7 @@ fn raw_individuals_vec() -> Vec<Individual> {
             properties: &[
                 ("https://uor.foundation/op/lhs", IndividualValue::Str("scope(transaction)")),
                 ("https://uor.foundation/op/rhs", IndividualValue::Str("single_epoch")),
-                ("https://uor.foundation/op/forAll", IndividualValue::Str("cascade transaction")),
+                ("https://uor.foundation/op/forAll", IndividualValue::Str("reduction transaction")),
                 ("https://uor.foundation/op/verificationDomain",
                  IndividualValue::IriRef("https://uor.foundation/op/Pipeline")),
                 ("https://uor.foundation/op/universallyValid", IndividualValue::Bool(true)),
@@ -9799,11 +9799,11 @@ fn raw_individuals_vec() -> Vec<Individual> {
             id: "https://uor.foundation/op/EC_1",
             type_: "https://uor.foundation/op/Identity",
             label: "EC_1",
-            comment: "\u{03a9}\u{2076} = \u{2212}1: cascade converges in 6 stages (phase half-turn).",
+            comment: "\u{03a9}\u{2076} = \u{2212}1: reduction converges in 6 stages (phase half-turn).",
             properties: &[
                 ("https://uor.foundation/op/lhs", IndividualValue::Str("\u{03a9}\u{2076}")),
                 ("https://uor.foundation/op/rhs", IndividualValue::Str("\u{2212}1")),
-                ("https://uor.foundation/op/forAll", IndividualValue::Str("cascade phase angle \u{03a9} = e^{i\u{03c0}/6}")),
+                ("https://uor.foundation/op/forAll", IndividualValue::Str("reduction phase angle \u{03a9} = e^{i\u{03c0}/6}")),
                 ("https://uor.foundation/op/verificationDomain",
                  IndividualValue::IriRef("https://uor.foundation/op/Topological")),
                 ("https://uor.foundation/op/universallyValid", IndividualValue::Bool(true)),
@@ -9819,7 +9819,7 @@ fn raw_individuals_vec() -> Vec<Individual> {
             properties: &[
                 ("https://uor.foundation/op/lhs", IndividualValue::Str("conj(conj(z))")),
                 ("https://uor.foundation/op/rhs", IndividualValue::Str("z")),
-                ("https://uor.foundation/op/forAll", IndividualValue::Str("complex z in cascade")),
+                ("https://uor.foundation/op/forAll", IndividualValue::Str("complex z in reduction")),
                 ("https://uor.foundation/op/verificationDomain",
                  IndividualValue::IriRef("https://uor.foundation/op/Topological")),
                 ("https://uor.foundation/op/universallyValid", IndividualValue::Bool(true)),
@@ -9882,7 +9882,7 @@ fn raw_individuals_vec() -> Vec<Individual> {
             comment: "Associator finiteness: reaches 0 in bounded steps.",
             properties: &[
                 ("https://uor.foundation/op/lhs", IndividualValue::Str("steps_to_zero([a,b,c])")),
-                ("https://uor.foundation/op/rhs", IndividualValue::Str("<= |three_way_fibers|")),
+                ("https://uor.foundation/op/rhs", IndividualValue::Str("<= |three_way_sites|")),
                 ("https://uor.foundation/op/forAll", IndividualValue::Str("octonion triple a, b, c")),
                 ("https://uor.foundation/op/verificationDomain",
                  IndividualValue::IriRef("https://uor.foundation/op/Topological")),
@@ -9895,11 +9895,11 @@ fn raw_individuals_vec() -> Vec<Individual> {
             id: "https://uor.foundation/op/EC_4c",
             type_: "https://uor.foundation/op/Identity",
             label: "EC_4c",
-            comment: "Associator vanishing implies associativity on resolved fiber space.",
+            comment: "Associator vanishing implies associativity on resolved site space.",
             properties: &[
                 ("https://uor.foundation/op/lhs", IndividualValue::Str("[a,b,c] = 0")),
-                ("https://uor.foundation/op/rhs", IndividualValue::Str("associative(resolved_fiber_space)")),
-                ("https://uor.foundation/op/forAll", IndividualValue::Str("resolved fiber space")),
+                ("https://uor.foundation/op/rhs", IndividualValue::Str("associative(resolved_site_space)")),
+                ("https://uor.foundation/op/forAll", IndividualValue::Str("resolved site space")),
                 ("https://uor.foundation/op/verificationDomain",
                  IndividualValue::IriRef("https://uor.foundation/op/Topological")),
                 ("https://uor.foundation/op/universallyValid", IndividualValue::Bool(true)),
@@ -10077,11 +10077,11 @@ fn raw_individuals_vec() -> Vec<Individual> {
             id: "https://uor.foundation/op/IN_3",
             type_: "https://uor.foundation/op/Identity",
             label: "IN_3",
-            comment: "Shared fibers imply commutator > 0.",
+            comment: "Shared sites imply commutator > 0.",
             properties: &[
-                ("https://uor.foundation/op/lhs", IndividualValue::Str("shared_fibers(A,B) \u{2260} \u{2205}")),
+                ("https://uor.foundation/op/lhs", IndividualValue::Str("shared_sites(A,B) \u{2260} \u{2205}")),
                 ("https://uor.foundation/op/rhs", IndividualValue::Str("commutator(A,B) > 0")),
-                ("https://uor.foundation/op/forAll", IndividualValue::Str("entity pairs with shared fibers")),
+                ("https://uor.foundation/op/forAll", IndividualValue::Str("entity pairs with shared sites")),
                 ("https://uor.foundation/op/verificationDomain",
                  IndividualValue::IriRef("https://uor.foundation/op/ComposedAlgebraic")),
                 ("https://uor.foundation/op/universallyValid", IndividualValue::Bool(true)),
@@ -10339,11 +10339,11 @@ fn raw_individuals_vec() -> Vec<Individual> {
             id: "https://uor.foundation/op/OP_1",
             type_: "https://uor.foundation/op/Identity",
             label: "OP_1",
-            comment: "Fiber additivity: fiberCount(F(G)) = F.fibers + \
-                      \u{03a3}_i G_i.fibers.",
+            comment: "Site additivity: siteCount(F(G)) = F.sites + \
+                      \u{03a3}_i G_i.sites.",
             properties: &[
-                ("https://uor.foundation/op/lhs", IndividualValue::Str("fiberCount(F(G))")),
-                ("https://uor.foundation/op/rhs", IndividualValue::Str("F.fibers + \u{03a3}_i G_i.fibers")),
+                ("https://uor.foundation/op/lhs", IndividualValue::Str("siteCount(F(G))")),
+                ("https://uor.foundation/op/rhs", IndividualValue::Str("F.sites + \u{03a3}_i G_i.sites")),
                 ("https://uor.foundation/op/forAll", IndividualValue::Str("structural types F, G")),
                 ("https://uor.foundation/op/verificationDomain",
                  IndividualValue::IriRef("https://uor.foundation/op/Algebraic")),
@@ -10428,9 +10428,9 @@ fn raw_individuals_vec() -> Vec<Individual> {
             comment: "Pinning decrements free count by exactly 1.",
             properties: &[
                 ("https://uor.foundation/op/lhs",
-                 IndividualValue::Str("freeCount(postContext(e))")),
+                 IndividualValue::Str("freeRank(postContext(e))")),
                 ("https://uor.foundation/op/rhs",
-                 IndividualValue::Str("freeCount(preContext(e)) \u{2212} 1")),
+                 IndividualValue::Str("freeRank(preContext(e)) \u{2212} 1")),
                 ("https://uor.foundation/op/forAll",
                  IndividualValue::Str("PinningEffect e")),
                 ("https://uor.foundation/op/verificationDomain",
@@ -10447,9 +10447,9 @@ fn raw_individuals_vec() -> Vec<Individual> {
             comment: "Unbinding increments free count by exactly 1.",
             properties: &[
                 ("https://uor.foundation/op/lhs",
-                 IndividualValue::Str("freeCount(postContext(e))")),
+                 IndividualValue::Str("freeRank(postContext(e))")),
                 ("https://uor.foundation/op/rhs",
-                 IndividualValue::Str("freeCount(preContext(e)) + 1")),
+                 IndividualValue::Str("freeRank(preContext(e)) + 1")),
                 ("https://uor.foundation/op/forAll",
                  IndividualValue::Str("UnbindingEffect e")),
                 ("https://uor.foundation/op/verificationDomain",
@@ -10463,12 +10463,12 @@ fn raw_individuals_vec() -> Vec<Individual> {
             id: "https://uor.foundation/op/FX_3",
             type_: "https://uor.foundation/op/Identity",
             label: "FX_3",
-            comment: "Phase effects preserve fiber budget.",
+            comment: "Phase effects preserve site budget.",
             properties: &[
                 ("https://uor.foundation/op/lhs",
-                 IndividualValue::Str("freeCount(postContext(e))")),
+                 IndividualValue::Str("freeRank(postContext(e))")),
                 ("https://uor.foundation/op/rhs",
-                 IndividualValue::Str("freeCount(preContext(e))")),
+                 IndividualValue::Str("freeRank(preContext(e))")),
                 ("https://uor.foundation/op/forAll",
                  IndividualValue::Str("PhaseEffect e")),
                 ("https://uor.foundation/op/verificationDomain",
@@ -10504,9 +10504,9 @@ fn raw_individuals_vec() -> Vec<Individual> {
             comment: "Composite free-count delta is additive.",
             properties: &[
                 ("https://uor.foundation/op/lhs",
-                 IndividualValue::Str("freeCountDelta(E\u{2081} ; E\u{2082})")),
+                 IndividualValue::Str("freeRankDelta(E\u{2081} ; E\u{2082})")),
                 ("https://uor.foundation/op/rhs",
-                 IndividualValue::Str("freeCountDelta(E\u{2081}) + freeCountDelta(E\u{2082})")),
+                 IndividualValue::Str("freeRankDelta(E\u{2081}) + freeRankDelta(E\u{2082})")),
                 ("https://uor.foundation/op/forAll",
                  IndividualValue::Str("CompositeEffect (E\u{2081} ; E\u{2082})")),
                 ("https://uor.foundation/op/verificationDomain",
@@ -10522,7 +10522,7 @@ fn raw_individuals_vec() -> Vec<Individual> {
             label: "FX_6",
             comment: "Every ReversibleEffect has an inverse \
                       (PinningEffect\u{207b}\u{00b9} = UnbindingEffect \
-                      on same fiber, PhaseEffect\u{207b}\u{00b9} = \
+                      on same site, PhaseEffect\u{207b}\u{00b9} = \
                       conjugate phase).",
             properties: &[
                 ("https://uor.foundation/op/lhs",
@@ -10545,9 +10545,9 @@ fn raw_individuals_vec() -> Vec<Individual> {
             comment: "External effects must match their declared shape.",
             properties: &[
                 ("https://uor.foundation/op/lhs",
-                 IndividualValue::Str("freeCountDelta(e)")),
+                 IndividualValue::Str("freeRankDelta(e)")),
                 ("https://uor.foundation/op/rhs",
-                 IndividualValue::Str("declared freeCountDelta in EffectShape")),
+                 IndividualValue::Str("declared freeRankDelta in EffectShape")),
                 ("https://uor.foundation/op/forAll",
                  IndividualValue::Str("ExternalEffect e satisfying conformance:EffectShape")),
                 ("https://uor.foundation/op/verificationDomain",
@@ -10649,7 +10649,7 @@ fn raw_individuals_vec() -> Vec<Individual> {
                 ("https://uor.foundation/op/rhs",
                  IndividualValue::Str("requires guardPredicate(g) = true")),
                 ("https://uor.foundation/op/forAll",
-                 IndividualValue::Str("GuardedTransition g at cascade stage k")),
+                 IndividualValue::Str("GuardedTransition g at reduction step k")),
                 ("https://uor.foundation/op/verificationDomain",
                  IndividualValue::IriRef("https://uor.foundation/op/Pipeline")),
                 ("https://uor.foundation/op/universallyValid", IndividualValue::Bool(true)),
@@ -10657,7 +10657,7 @@ fn raw_individuals_vec() -> Vec<Individual> {
                  IndividualValue::IriRef("https://uor.foundation/op/Universal")),
             ],
         },
-        // ── Amendment 73: Cascade guard + Resolver dispatch identities ──
+        // ── Amendment 73: Reduction guard + Resolver dispatch identities ─
         Individual {
             id: "https://uor.foundation/op/CG_1",
             type_: "https://uor.foundation/op/Identity",
@@ -10669,7 +10669,7 @@ fn raw_individuals_vec() -> Vec<Individual> {
                 ("https://uor.foundation/op/rhs",
                  IndividualValue::Str("requires eval(g, currentState) = true")),
                 ("https://uor.foundation/op/forAll",
-                 IndividualValue::Str("CascadeStage s with entryGuard g")),
+                 IndividualValue::Str("ReductionStep s with entryGuard g")),
                 ("https://uor.foundation/op/verificationDomain",
                  IndividualValue::IriRef("https://uor.foundation/op/Pipeline")),
                 ("https://uor.foundation/op/universallyValid", IndividualValue::Bool(true)),
@@ -10689,7 +10689,7 @@ fn raw_individuals_vec() -> Vec<Individual> {
                 ("https://uor.foundation/op/rhs",
                  IndividualValue::Str("requires eval(g, currentState) = true, then apply(e)")),
                 ("https://uor.foundation/op/forAll",
-                 IndividualValue::Str("CascadeStage s with exitGuard g and stageEffect e")),
+                 IndividualValue::Str("ReductionStep s with exitGuard g and stageEffect e")),
                 ("https://uor.foundation/op/verificationDomain",
                  IndividualValue::IriRef("https://uor.foundation/op/Pipeline")),
                 ("https://uor.foundation/op/universallyValid", IndividualValue::Bool(true)),
@@ -10742,7 +10742,7 @@ fn raw_individuals_vec() -> Vec<Individual> {
             type_: "https://uor.foundation/op/Identity",
             label: "PAR_1",
             comment: "Disjoint parallel computations commute: A \u{2297} B = \
-                      B \u{2297} A when fiber targets are disjoint.",
+                      B \u{2297} A when site targets are disjoint.",
             properties: &[
                 ("https://uor.foundation/op/lhs",
                  IndividualValue::Str("apply(A \u{2297} B, ctx)")),
@@ -10764,9 +10764,9 @@ fn raw_individuals_vec() -> Vec<Individual> {
             comment: "Parallel free-count deltas are additive.",
             properties: &[
                 ("https://uor.foundation/op/lhs",
-                 IndividualValue::Str("freeCountDelta(A \u{2225} B)")),
+                 IndividualValue::Str("freeRankDelta(A \u{2225} B)")),
                 ("https://uor.foundation/op/rhs",
-                 IndividualValue::Str("freeCountDelta(A) + freeCountDelta(B)")),
+                 IndividualValue::Str("freeRankDelta(A) + freeRankDelta(B)")),
                 ("https://uor.foundation/op/forAll",
                  IndividualValue::Str("ParallelProduct A \u{2225} B")),
                 ("https://uor.foundation/op/verificationDomain",
@@ -10781,14 +10781,14 @@ fn raw_individuals_vec() -> Vec<Individual> {
             type_: "https://uor.foundation/op/Identity",
             label: "PAR_3",
             comment: "Partitioning is exhaustive: component cardinalities \
-                      sum to total fiber budget.",
+                      sum to total site budget.",
             properties: &[
                 ("https://uor.foundation/op/lhs",
                  IndividualValue::Str("\u{03a3} |component_i|")),
                 ("https://uor.foundation/op/rhs",
                  IndividualValue::Str("n")),
                 ("https://uor.foundation/op/forAll",
-                 IndividualValue::Str("FiberPartitioning P over n fibers")),
+                 IndividualValue::Str("SitePartitioning P over n sites")),
                 ("https://uor.foundation/op/verificationDomain",
                  IndividualValue::IriRef("https://uor.foundation/op/Algebraic")),
                 ("https://uor.foundation/op/universallyValid", IndividualValue::Bool(true)),
@@ -10913,11 +10913,11 @@ fn raw_individuals_vec() -> Vec<Individual> {
             id: "https://uor.foundation/op/STR_1",
             type_: "https://uor.foundation/op/Identity",
             label: "STR_1",
-            comment: "Every epoch terminates: the cascade within each epoch \
+            comment: "Every epoch terminates: the reduction within each epoch \
                       reaches convergence angle \u{03c0}.",
             properties: &[
                 ("https://uor.foundation/op/lhs",
-                 IndividualValue::Str("cascade(e_k) converges to \u{03c0}")),
+                 IndividualValue::Str("reduction(e_k) converges to \u{03c0}")),
                 ("https://uor.foundation/op/rhs", IndividualValue::Str("true")),
                 ("https://uor.foundation/op/forAll",
                  IndividualValue::Str("Epoch e_k in ProductiveStream")),
@@ -10932,7 +10932,7 @@ fn raw_individuals_vec() -> Vec<Individual> {
             id: "https://uor.foundation/op/STR_2",
             type_: "https://uor.foundation/op/Identity",
             label: "STR_2",
-            comment: "Saturation preservation across epoch boundaries.",
+            comment: "Grounding preservation across epoch boundaries.",
             properties: &[
                 ("https://uor.foundation/op/lhs",
                  IndividualValue::Str("saturation(continuationContext(b))")),
@@ -11009,7 +11009,7 @@ fn raw_individuals_vec() -> Vec<Individual> {
             type_: "https://uor.foundation/op/Identity",
             label: "STR_6",
             comment: "Lease expiry at an epoch boundary returns claimed \
-                      fibers to the next epoch\u{2019}s linear budget.",
+                      sites to the next epoch\u{2019}s linear budget.",
             properties: &[
                 ("https://uor.foundation/op/lhs",
                  IndividualValue::Str("linearBudget(epoch_{k+1})")),
@@ -11123,7 +11123,7 @@ fn raw_individuals_vec() -> Vec<Individual> {
             id: "https://uor.foundation/op/FLR_6",
             type_: "https://uor.foundation/op/Identity",
             label: "FLR_6",
-            comment: "The cascade\u{2019}s existing rollback mechanism is a \
+            comment: "The reduction\u{2019}s existing rollback mechanism is a \
                       Recovery whose effect is the conjugate phase rotation.",
             properties: &[
                 ("https://uor.foundation/op/lhs",
@@ -11144,11 +11144,11 @@ fn raw_individuals_vec() -> Vec<Individual> {
             id: "https://uor.foundation/op/LN_1",
             type_: "https://uor.foundation/op/Identity",
             label: "LN_1",
-            comment: "In a linear trace, every fiber is targeted exactly \
-                      once. Total effect count equals fiber budget.",
+            comment: "In a linear trace, every site is targeted exactly \
+                      once. Total effect count equals site budget.",
             properties: &[
                 ("https://uor.foundation/op/lhs",
-                 IndividualValue::Str("\u{03a3} targetCount(fiber_i)")),
+                 IndividualValue::Str("\u{03a3} targetCount(site_i)")),
                 ("https://uor.foundation/op/rhs", IndividualValue::Str("n")),
                 ("https://uor.foundation/op/forAll",
                  IndividualValue::Str("LinearTrace T over n-bit type")),
@@ -11163,13 +11163,13 @@ fn raw_individuals_vec() -> Vec<Individual> {
             id: "https://uor.foundation/op/LN_2",
             type_: "https://uor.foundation/op/Identity",
             label: "LN_2",
-            comment: "After a LinearEffect, the target fiber is pinned.",
+            comment: "After a LinearEffect, the target site is pinned.",
             properties: &[
                 ("https://uor.foundation/op/lhs",
                  IndividualValue::Str("status(f, postContext(e))")),
                 ("https://uor.foundation/op/rhs", IndividualValue::Str("pinned")),
                 ("https://uor.foundation/op/forAll",
-                 IndividualValue::Str("LinearEffect e on fiber f")),
+                 IndividualValue::Str("LinearEffect e on site f")),
                 ("https://uor.foundation/op/verificationDomain",
                  IndividualValue::IriRef("https://uor.foundation/op/Algebraic")),
                 ("https://uor.foundation/op/universallyValid", IndividualValue::Bool(true)),
@@ -11181,13 +11181,13 @@ fn raw_individuals_vec() -> Vec<Individual> {
             id: "https://uor.foundation/op/LN_3",
             type_: "https://uor.foundation/op/Identity",
             label: "LN_3",
-            comment: "A consumed LinearFiber cannot be targeted again.",
+            comment: "A consumed LinearSite cannot be targeted again.",
             properties: &[
                 ("https://uor.foundation/op/lhs",
                  IndividualValue::Str("target(e\u{2032}) = f")),
                 ("https://uor.foundation/op/rhs", IndividualValue::Str("forbidden")),
                 ("https://uor.foundation/op/forAll",
-                 IndividualValue::Str("LinearEffect e on fiber f, any subsequent effect e\u{2032}")),
+                 IndividualValue::Str("LinearEffect e on site f, any subsequent effect e\u{2032}")),
                 ("https://uor.foundation/op/verificationDomain",
                  IndividualValue::IriRef("https://uor.foundation/op/Algebraic")),
                 ("https://uor.foundation/op/universallyValid", IndividualValue::Bool(true)),
@@ -11219,7 +11219,7 @@ fn raw_individuals_vec() -> Vec<Individual> {
             id: "https://uor.foundation/op/LN_5",
             type_: "https://uor.foundation/op/Identity",
             label: "LN_5",
-            comment: "Lease expiry returns claimed fibers to the budget.",
+            comment: "Lease expiry returns claimed sites to the budget.",
             properties: &[
                 ("https://uor.foundation/op/lhs",
                  IndividualValue::Str("remainingCount(budget after expiry)")),
@@ -11353,7 +11353,7 @@ fn raw_individuals_vec() -> Vec<Individual> {
             id: "https://uor.foundation/op/SB_6",
             type_: "https://uor.foundation/op/Identity",
             label: "SB_6",
-            comment: "Lattice depth equals fiber budget.",
+            comment: "Lattice depth equals site budget.",
             properties: &[
                 ("https://uor.foundation/op/lhs",
                  IndividualValue::Str("latticeDepth")),
@@ -11471,12 +11471,12 @@ fn raw_individuals_vec() -> Vec<Individual> {
             type_: "https://uor.foundation/op/Identity",
             label: "RG_1",
             comment: "The working set is determined by the constraint nerve \
-                      and the stage\u{2019}s fiber targets.",
+                      and the stage\u{2019}s site targets.",
             properties: &[
                 ("https://uor.foundation/op/lhs",
                  IndividualValue::Str("workingSetRegions(W)")),
                 ("https://uor.foundation/op/rhs",
-                 IndividualValue::Str("computable from N(C(T)) and stage k fiber targets")),
+                 IndividualValue::Str("computable from N(C(T)) and stage k site targets")),
                 ("https://uor.foundation/op/forAll",
                  IndividualValue::Str("WorkingSet W for type T at stage k")),
                 ("https://uor.foundation/op/verificationDomain",
@@ -11538,7 +11538,7 @@ fn raw_individuals_vec() -> Vec<Individual> {
                 ("https://uor.foundation/op/rhs",
                  IndividualValue::Str("\u{2286} addresses(W_k)")),
                 ("https://uor.foundation/op/forAll",
-                 IndividualValue::Str("Cascade stage k with WorkingSet W_k")),
+                 IndividualValue::Str("Reduction step k with WorkingSet W_k")),
                 ("https://uor.foundation/op/verificationDomain",
                  IndividualValue::IriRef("https://uor.foundation/op/Pipeline")),
                 ("https://uor.foundation/op/universallyValid", IndividualValue::Bool(true)),
@@ -11629,7 +11629,7 @@ fn raw_individuals_vec() -> Vec<Individual> {
             id: "https://uor.foundation/op/IO_5",
             type_: "https://uor.foundation/op/Identity",
             label: "IO_5",
-            comment: "Every boundary effect touches at least one fiber.",
+            comment: "Every boundary effect touches at least one site.",
             properties: &[
                 ("https://uor.foundation/op/lhs",
                  IndividualValue::Str("effect:effectTarget(e)")),

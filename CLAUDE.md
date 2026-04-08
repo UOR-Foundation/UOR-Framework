@@ -47,17 +47,17 @@ Docs/website/conformance binaries accept `PUBLIC_BASE_PATH` env var for URL pref
 
 ## Ontology architecture
 
-- **33 namespaces**, assembly order: `u → schema → op → query → resolver → type → partition → observable → carry → homology → cohomology → proof → derivation → trace → cert → morphism → state → cascade → convergence → division → interaction → monoidal → operad → effect → predicate → parallel → stream → failure → linear → recursion → region → boundary → conformance`
-- **Space classification:** Kernel (17: `u`, `schema`, `op`, `carry`, `cascade`, `convergence`, `division`, `monoidal`, `operad`, `effect`, `predicate`, `parallel`, `stream`, `failure`, `linear`, `recursion`, `region`), Bridge (13: `query`, `resolver`, `partition`, `observable`, `homology`, `cohomology`, `proof`, `derivation`, `trace`, `cert`, `interaction`, `boundary`, `conformance`), User (`type`, `morphism`, `state`)
-- **396 classes** → 381 traits + 15 enum classes (includes QuantumLevel newtype struct)
-- **837 properties** → trait methods (generic over `P: Primitives`)
-- **1432 named individuals** → constant modules
-- **15 enum classes:** `AchievabilityStatus`, `CoordinateKind`, `ComplexityClass`, `ExecutionPolicyKind`, `GeometricCharacter`, `MeasurementUnit`, `MetricAxis`, `PhaseBoundaryType`, `QuantumLevel`, `RewriteRule`, `SaturationPhase`, `SessionBoundaryType`, `ValidityScopeKind`, `VarianceAnnotation`, `VerificationDomain`
+- **33 namespaces**, assembly order: `u → schema → op → query → resolver → type → partition → observable → carry → homology → cohomology → proof → derivation → trace → cert → morphism → state → reduction → convergence → division → interaction → monoidal → operad → effect → predicate → parallel → stream → failure → linear → recursion → region → boundary → conformance`
+- **Space classification:** Kernel (17: `u`, `schema`, `op`, `carry`, `reduction`, `convergence`, `division`, `monoidal`, `operad`, `effect`, `predicate`, `parallel`, `stream`, `failure`, `linear`, `recursion`, `region`), Bridge (13: `query`, `resolver`, `partition`, `observable`, `homology`, `cohomology`, `proof`, `derivation`, `trace`, `cert`, `interaction`, `boundary`, `conformance`), User (`type`, `morphism`, `state`)
+- **441 classes** → 423 traits + 18 enum classes (includes WittLevel newtype struct)
+- **892 properties** → 856 trait methods (generic over `P: Primitives`)
+- **3356 named individuals** → 1501 constant modules
+- **18 enum classes:** `AchievabilityStatus`, `ComplexityClass`, `ExecutionPolicyKind`, `GeometricCharacter`, `GroundingPhase`, `MeasurementUnit`, `MetricAxis`, `PhaseBoundaryType`, `ProofStrategy`, `QuantifierKind`, `RewriteRule`, `SessionBoundaryType`, `TriadProjection`, `ValidityScopeKind`, `VarianceAnnotation`, `VerificationDomain`, `ViolationKind`, `WittLevel`
 
 ## Code generation patterns
 
 - All traits are generic over `P: Primitives` (no hardcoded XSD types)
-- Enum classes are detected by `detect_vocabulary_enum()` and skip trait generation; QuantumLevel is a struct (not enum) but also skips trait generation
+- Enum classes are detected by `detect_vocabulary_enum()` and skip trait generation; WittLevel is a struct (not enum) but also skips trait generation
 - `object_property_enum_override()` maps ObjectProperties to enum/struct return types (delegates to `enum_class_names()`)
 - Multi-value IriRef properties on individuals → `&[&str]` slices via `BTreeMap` grouping
 - `RustFile::finish()` trims trailing whitespace to match `cargo fmt`

@@ -33,7 +33,7 @@ elements can have different distances depending on which metric axis is used.
 
 ## Holonomy and Monodromy
 
-When a {@concept fiber} is transported around a loop in the base space, it may
+When a {@concept site} is transported around a loop in the base space, it may
 return to a different state. This transformation is the **holonomy**.
 
 The {@class https://uor.foundation/observable/HolonomyGroup} captures the group
@@ -48,8 +48,8 @@ a distinction formalized by `type:FlatType` and `type:TwistedType` in the
 ## Measurement and State Collapse
 
 The {@class https://uor.foundation/trace/MeasurementEvent} class records when an
-observable is measured during resolution. For superposed fiber states (where a
-fiber is a quantum superposition of types), measurement collapses the
+observable is measured during resolution. For superposed site states (where a
+site is a quantum superposition of types), measurement collapses the
 superposition into a definite type.
 
 The {@class https://uor.foundation/observable/AchievabilityStatus} enum classifies
@@ -64,5 +64,5 @@ machinery. They produce the quantitative evidence that feeds into the
 (holonomy, monodromy, spectral sequences) connect directly to the
 {@concept homology} layer that diagnoses convergence obstructions.
 
-See also {@concept quantum-levels} for how observables are scoped to specific
+See also {@concept witt-levels} for how observables are scoped to specific
 ring scales.

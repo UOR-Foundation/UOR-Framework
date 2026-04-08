@@ -11,7 +11,7 @@
 //! Amendment 25 adds `CompletenessResolver` — a specialised resolver that drives
 //! the completeness certification loop for `CompletenessCandidate` instances.
 //!
-//! Amendment 26 adds `QuantumLevelResolver` — a resolver parameterised by quantum
+//! Amendment 26 adds `WittLevelResolver` — a resolver parameterised by quantum
 //! level, allowing the same strategy to run at Q0, Q1, or any future level.
 //!
 //! Amendment 27 adds `SessionResolver` — a resolver that maintains a
@@ -95,7 +95,7 @@ fn classes() -> Vec<Class> {
             label: "ResolutionState",
             comment: "The current state of an iterative resolution: tracks how many \
                       iterations have been performed, whether the resolution is \
-                      complete, and the current fiber deficit.",
+                      complete, and the current site deficit.",
             subclass_of: &[OWL_THING],
             disjoint_with: &[
                 "https://uor.foundation/resolver/Resolver",
@@ -107,7 +107,7 @@ fn classes() -> Vec<Class> {
             label: "RefinementSuggestion",
             comment: "A suggestion from the resolver for how to refine an incomplete \
                       resolution: which metric axis to explore, which class to narrow \
-                      to, and which fibers to target.",
+                      to, and which sites to target.",
             subclass_of: &[OWL_THING],
             disjoint_with: &[
                 "https://uor.foundation/resolver/Resolver",
@@ -126,8 +126,8 @@ fn classes() -> Vec<Class> {
         },
         // Amendment 18: Constraint Nerve
         Class {
-            id: "https://uor.foundation/resolver/ConstraintNerve",
-            label: "ConstraintNerve",
+            id: "https://uor.foundation/resolver/CechNerve",
+            label: "CechNerve",
             comment: "The simplicial complex whose vertices are constraints and \
                       where a k-simplex exists iff the corresponding k+1 constraints \
                       have nonempty intersection. The nerve's topology governs \
@@ -153,8 +153,8 @@ fn classes() -> Vec<Class> {
         },
         // Amendment 26: Quantum Level Scaling
         Class {
-            id: "https://uor.foundation/resolver/QuantumLevelResolver",
-            label: "QuantumLevelResolver",
+            id: "https://uor.foundation/resolver/WittLevelResolver",
+            label: "WittLevelResolver",
             comment: "A Resolver parameterised by quantum level. The same resolver \
                       strategy runs at any quantum level n ≥ 1 by substituting the \
                       appropriate R_n ring.",
@@ -206,8 +206,8 @@ fn classes() -> Vec<Class> {
         Class {
             id: "https://uor.foundation/resolver/LiftRefinementSuggestion",
             label: "LiftRefinementSuggestion",
-            comment: "A RefinementSuggestion produced when a QuantumLift has a non-trivial \
-                      LiftObstruction. Specialises RefinementSuggestion with liftFiberPosition \
+            comment: "A RefinementSuggestion produced when a WittLift has a non-trivial \
+                      LiftObstruction. Specialises RefinementSuggestion with liftSitePosition \
                       (the new bit position n+1) and obstructionClass.",
             subclass_of: &["https://uor.foundation/resolver/RefinementSuggestion"],
             disjoint_with: &[],
@@ -237,16 +237,16 @@ fn classes() -> Vec<Class> {
         Class {
             id: "https://uor.foundation/resolver/SuperpositionResolver",
             label: "SuperpositionResolver",
-            comment: "A resolver that handles superposed fiber states, computing \
+            comment: "A resolver that handles superposed site states, computing \
                       amplitudes and determining when superposition collapses to \
-                      a classical fiber assignment (Amendment 32).",
+                      a classical site assignment (Amendment 32).",
             subclass_of: &["https://uor.foundation/resolver/Resolver"],
             disjoint_with: &[],
         },
-        // Amendment 33: Saturation-Aware Resolution
+        // Amendment 33: Grounding-Aware Resolution
         Class {
-            id: "https://uor.foundation/resolver/SaturationAwareResolver",
-            label: "SaturationAwareResolver",
+            id: "https://uor.foundation/resolver/GroundingAwareResolver",
+            label: "GroundingAwareResolver",
             comment: "A resolver that exploits accumulated session bindings at full \
                       saturation (σ = 1) to provide O(1) resolution via direct \
                       coordinate reads (SC_5).",
@@ -268,7 +268,7 @@ fn classes() -> Vec<Class> {
             id: "https://uor.foundation/resolver/MeasurementResolver",
             label: "MeasurementResolver",
             comment: "A resolver that handles projective collapse of \
-                      SuperposedFiberState components. Issues \
+                      SuperposedSiteState components. Issues \
                       MeasurementCertificate upon successful collapse with \
                       QM_1 verification.",
             subclass_of: &["https://uor.foundation/resolver/Resolver"],
@@ -290,7 +290,7 @@ fn classes() -> Vec<Class> {
             label: "ExecutionPolicy",
             comment: "A strategy class that defines how a SessionResolver orders \
                       pending RelationQuery instances for dispatch. The policy \
-                      reads the targetFiber.freeCount of each pending query and \
+                      reads the targetSite.freeRank of each pending query and \
                       applies an ordering function.",
             subclass_of: &[OWL_THING],
             disjoint_with: &[
@@ -315,7 +315,7 @@ fn classes() -> Vec<Class> {
             label: "HomotopyResolver",
             comment: "A resolver that runs the extended \u{03c8}-pipeline \
                       (\u{03c8}_7\u{2013}\u{03c8}_9) to compute the full homotopy \
-                      type of a ConstraintNerve. Returns HomotopyGroup observables \
+                      type of a CechNerve. Returns HomotopyGroup observables \
                       and PostnikovTruncation records.",
             subclass_of: &["https://uor.foundation/resolver/Resolver"],
             disjoint_with: &[],
@@ -379,7 +379,7 @@ fn properties() -> Vec<Property> {
         Property {
             id: "https://uor.foundation/resolver/isComplete",
             label: "isComplete",
-            comment: "Whether this resolution is complete: all fibers are pinned \
+            comment: "Whether this resolution is complete: all sites are pinned \
                       and the partition is fully determined.",
             kind: PropertyKind::Datatype,
             functional: true,
@@ -396,15 +396,15 @@ fn properties() -> Vec<Property> {
             range: XSD_NON_NEGATIVE_INTEGER,
         },
         Property {
-            id: "https://uor.foundation/resolver/fiberDeficit",
-            label: "fiberDeficit",
-            comment: "The fiber budget showing the remaining unpinned fibers. \
-                      When all fibers are pinned, the deficit is zero and \
+            id: "https://uor.foundation/resolver/siteDeficit",
+            label: "siteDeficit",
+            comment: "The site budget showing the remaining unpinned sites. \
+                      When all sites are pinned, the deficit is zero and \
                       resolution is complete.",
             kind: PropertyKind::Object,
             functional: true,
             domain: Some("https://uor.foundation/resolver/ResolutionState"),
-            range: "https://uor.foundation/partition/FiberBudget",
+            range: "https://uor.foundation/partition/FreeRank",
         },
         Property {
             id: "https://uor.foundation/resolver/suggestion",
@@ -434,18 +434,18 @@ fn properties() -> Vec<Property> {
             range: OWL_CLASS,
         },
         Property {
-            id: "https://uor.foundation/resolver/targetFibers",
-            label: "targetFibers",
-            comment: "The fiber coordinates this suggestion targets for pinning.",
+            id: "https://uor.foundation/resolver/targetSites",
+            label: "targetSites",
+            comment: "The site coordinates this suggestion targets for pinning.",
             kind: PropertyKind::Object,
             functional: false,
             domain: Some("https://uor.foundation/resolver/RefinementSuggestion"),
-            range: "https://uor.foundation/partition/FiberCoordinate",
+            range: "https://uor.foundation/partition/SiteIndex",
         },
         Property {
             id: "https://uor.foundation/resolver/convergenceRate",
             label: "convergenceRate",
-            comment: "The rate at which fibers are being pinned per iteration. \
+            comment: "The rate at which sites are being pinned per iteration. \
                       A higher rate indicates faster convergence toward a \
                       complete resolution.",
             kind: PropertyKind::Datatype,
@@ -466,19 +466,19 @@ fn properties() -> Vec<Property> {
         },
         // Amendment 18: Analytical resolver properties
         Property {
-            id: "https://uor.foundation/resolver/constraintNerve",
-            label: "constraintNerve",
+            id: "https://uor.foundation/resolver/cechNerve",
+            label: "cechNerve",
             comment: "The constraint nerve associated with this resolution state.",
             kind: PropertyKind::Object,
             functional: true,
             domain: Some("https://uor.foundation/resolver/ResolutionState"),
-            range: "https://uor.foundation/resolver/ConstraintNerve",
+            range: "https://uor.foundation/resolver/CechNerve",
         },
         Property {
             id: "https://uor.foundation/resolver/residualEntropy",
             label: "residualEntropy",
             comment: "The residual Shannon entropy of the resolution state: \
-                      S = freeCount × ln 2. Measures remaining uncertainty.",
+                      S = freeRank × ln 2. Measures remaining uncertainty.",
             kind: PropertyKind::Datatype,
             functional: true,
             domain: Some("https://uor.foundation/resolver/ResolutionState"),
@@ -524,8 +524,8 @@ fn properties() -> Vec<Property> {
             comment: "The quantum level this resolver instance is configured for.",
             kind: PropertyKind::Object,
             functional: true,
-            domain: Some("https://uor.foundation/resolver/QuantumLevelResolver"),
-            range: "https://uor.foundation/schema/QuantumLevel",
+            domain: Some("https://uor.foundation/resolver/WittLevelResolver"),
+            range: "https://uor.foundation/schema/WittLevel",
         },
         // Amendment 27: Session-Scoped Resolution property
         Property {
@@ -570,21 +570,21 @@ fn properties() -> Vec<Property> {
         Property {
             id: "https://uor.foundation/resolver/liftTarget",
             label: "liftTarget",
-            comment: "The QuantumLift this incremental completeness resolver is evaluating.",
+            comment: "The WittLift this incremental completeness resolver is evaluating.",
             kind: PropertyKind::Object,
             functional: true,
             domain: Some("https://uor.foundation/resolver/IncrementalCompletenessResolver"),
-            range: "https://uor.foundation/type/QuantumLift",
+            range: "https://uor.foundation/type/WittLift",
         },
         Property {
-            id: "https://uor.foundation/resolver/liftFiberPosition",
-            label: "liftFiberPosition",
-            comment: "The new fiber position at Q_{n+1} that the lift refinement suggestion \
+            id: "https://uor.foundation/resolver/liftSitePosition",
+            label: "liftSitePosition",
+            comment: "The new site position at Q_{n+1} that the lift refinement suggestion \
                       targets.",
             kind: PropertyKind::Object,
             functional: true,
             domain: Some("https://uor.foundation/resolver/LiftRefinementSuggestion"),
-            range: "https://uor.foundation/partition/FiberCoordinate",
+            range: "https://uor.foundation/partition/SiteIndex",
         },
         Property {
             id: "https://uor.foundation/resolver/obstructionClass",
@@ -625,15 +625,15 @@ fn properties() -> Vec<Property> {
             domain: Some("https://uor.foundation/resolver/ResolutionState"),
             range: "https://uor.foundation/observable/Jacobian",
         },
-        // Amendment 33: Saturation-Aware Resolution
+        // Amendment 33: Grounding-Aware Resolution
         Property {
-            id: "https://uor.foundation/resolver/usedSaturation",
-            label: "usedSaturation",
+            id: "https://uor.foundation/resolver/usedGrounding",
+            label: "usedGrounding",
             comment: "Whether this resolver used the saturation shortcut (SC_5) \
                       to bypass the ψ-pipeline and return a direct coordinate read.",
             kind: PropertyKind::Datatype,
             functional: true,
-            domain: Some("https://uor.foundation/resolver/SaturationAwareResolver"),
+            domain: Some("https://uor.foundation/resolver/GroundingAwareResolver"),
             range: XSD_BOOLEAN,
         },
         // Amendment 35: Geodesic Validation
@@ -650,7 +650,7 @@ fn properties() -> Vec<Property> {
         Property {
             id: "https://uor.foundation/resolver/collapseAmplitude",
             label: "collapseAmplitude",
-            comment: "The amplitude of the SuperposedFiberState prior to projective \
+            comment: "The amplitude of the SuperposedSiteState prior to projective \
                       collapse by this MeasurementResolver.",
             kind: PropertyKind::Datatype,
             functional: true,
@@ -658,9 +658,9 @@ fn properties() -> Vec<Property> {
             range: XSD_DECIMAL,
         },
         Property {
-            id: "https://uor.foundation/resolver/collapsedFiber",
-            label: "collapsedFiber",
-            comment: "The fiber index that was collapsed (pinned to a classical \
+            id: "https://uor.foundation/resolver/collapsedSite",
+            label: "collapsedSite",
+            comment: "The site index that was collapsed (pinned to a classical \
                       value) by the projective measurement.",
             kind: PropertyKind::Datatype,
             functional: true,
@@ -671,7 +671,7 @@ fn properties() -> Vec<Property> {
             id: "https://uor.foundation/resolver/measurementOutcome",
             label: "measurementOutcome",
             comment: "The classical value obtained from the projective collapse. \
-                      Either 0 or 1 for a single-fiber measurement.",
+                      Either 0 or 1 for a single-site measurement.",
             kind: PropertyKind::Datatype,
             functional: true,
             domain: Some("https://uor.foundation/resolver/MeasurementResolver"),
@@ -710,7 +710,7 @@ fn properties() -> Vec<Property> {
             kind: PropertyKind::Object,
             functional: true,
             domain: Some("https://uor.foundation/resolver/TowerCompletenessResolver"),
-            range: "https://uor.foundation/schema/QuantumLevel",
+            range: "https://uor.foundation/schema/WittLevel",
         },
         Property {
             id: "https://uor.foundation/resolver/towerTargetLevel",
@@ -719,7 +719,7 @@ fn properties() -> Vec<Property> {
             kind: PropertyKind::Object,
             functional: true,
             domain: Some("https://uor.foundation/resolver/TowerCompletenessResolver"),
-            range: "https://uor.foundation/schema/QuantumLevel",
+            range: "https://uor.foundation/schema/WittLevel",
         },
         Property {
             id: "https://uor.foundation/resolver/currentChain",
@@ -755,11 +755,11 @@ fn properties() -> Vec<Property> {
         Property {
             id: "https://uor.foundation/resolver/homotopyTarget",
             label: "homotopyTarget",
-            comment: "The ConstraintNerve whose homotopy type this resolver computes.",
+            comment: "The CechNerve whose homotopy type this resolver computes.",
             kind: PropertyKind::Object,
             functional: true,
             domain: Some("https://uor.foundation/resolver/HomotopyResolver"),
-            range: "https://uor.foundation/resolver/ConstraintNerve",
+            range: "https://uor.foundation/resolver/CechNerve",
         },
         Property {
             id: "https://uor.foundation/resolver/homotopyResult",
@@ -862,16 +862,16 @@ fn individuals() -> Vec<Individual> {
             id: "https://uor.foundation/resolver/MinFreeCountFirst",
             type_: "https://uor.foundation/resolver/ExecutionPolicyKind",
             label: "MinFreeCountFirst",
-            comment: "Process the query with the smallest targetFiber.freeCount \
+            comment: "Process the query with the smallest targetSite.freeRank \
                       first. Favors cheapest resolutions, accelerating early \
-                      saturation gain.",
+                      grounding gain.",
             properties: &[],
         },
         Individual {
             id: "https://uor.foundation/resolver/MaxFreeCountFirst",
             type_: "https://uor.foundation/resolver/ExecutionPolicyKind",
             label: "MaxFreeCountFirst",
-            comment: "Process the query with the largest targetFiber.freeCount \
+            comment: "Process the query with the largest targetSite.freeRank \
                       first. Favors hardest resolutions, maximizing information \
                       gain per step.",
             properties: &[],
@@ -880,8 +880,8 @@ fn individuals() -> Vec<Individual> {
             id: "https://uor.foundation/resolver/DisjointFirst",
             type_: "https://uor.foundation/resolver/ExecutionPolicyKind",
             label: "DisjointFirst",
-            comment: "Process queries whose targetFiber is disjoint from all \
-                      other pending queries' fiber sets first. Minimizes \
+            comment: "Process queries whose targetSite is disjoint from all \
+                      other pending queries' site sets first. Minimizes \
                       contention when operating against a SharedContext.",
             properties: &[],
         },

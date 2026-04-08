@@ -27,12 +27,12 @@ pub const TEST15_BOOLEAN_SAT: &str = r#"
 # 3. Partition
 <https://uor.foundation/instance/sat/partition>
     a                       owl:NamedIndividual, partition:Partition ;
-    partition:quantum       "3"^^xsd:positiveInteger .
+    partition:wittLength       "3"^^xsd:positiveInteger .
 
 # 4. State — evaluation context with bindings and transitions
 <https://uor.foundation/instance/sat/ctx>
     a               owl:NamedIndividual, state:Context ;
-    state:quantum   "3"^^xsd:nonNegativeInteger .
+    state:wittLength   "3"^^xsd:nonNegativeInteger .
 
 <https://uor.foundation/instance/sat/binding-x>
     a               owl:NamedIndividual, state:Binding ;

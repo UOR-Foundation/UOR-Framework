@@ -150,10 +150,10 @@ pub trait GroundingCertificate<P: Primitives>: crate::bridge::cert::Certificate<
     type Literal: crate::kernel::schema::Literal<P>;
     /// The surface symbol that entered the grounding boundary.
     fn grounding_cert_source_symbol(&self) -> &Self::Literal;
-    /// Associated type for `Address`.
-    type Address: crate::kernel::address::Address<P>;
+    /// Associated type for `Element`.
+    type Element: crate::kernel::address::Element<P>;
     /// The ring address the symbol was grounded to.
-    fn grounding_cert_address(&self) -> &Self::Address;
+    fn grounding_cert_address(&self) -> &Self::Element;
 }
 
 /// A topological delta: records changes in topological invariants (Betti numbers, Euler characteristic, nerve structure) before and after a morphism.
@@ -183,7 +183,7 @@ pub trait ComputationDatum<P: Primitives>: crate::kernel::schema::Datum<P> {
     /// The certificate this computation datum encodes.
     fn referenced_certificate(&self) -> &Self::TransformCertificate;
     /// The content address of the referenced certificate.
-    fn computation_address(&self) -> &Self::Address;
+    fn computation_address(&self) -> &Self::Element;
 }
 
 /// A transform that applies a ComputationDatum to an input datum, producing an output datum. The output inherits the certificate of the ComputationDatum.
@@ -232,10 +232,10 @@ pub trait GroundingWitness<P: Primitives>: Witness<P> {
     type SurfaceSymbol: crate::kernel::schema::SurfaceSymbol<P>;
     /// The surface symbol that is the source of this grounding witness.
     fn surface_symbol(&self) -> &Self::SurfaceSymbol;
-    /// Associated type for `Address`.
-    type Address: crate::kernel::address::Address<P>;
+    /// Associated type for `Element`.
+    type Element: crate::kernel::address::Element<P>;
     /// The resolved ring address that is the target of this grounding witness.
-    fn grounded_address(&self) -> &Self::Address;
+    fn grounded_address(&self) -> &Self::Element;
 }
 
 /// One specific input partition mapped to one specific surface symbol sequence by some ProjectionMap.
@@ -288,24 +288,24 @@ pub mod critical_composition {
 pub mod integer_grounding_map {
     /// `inputClass` -> `Literal`
     pub const INPUT_CLASS: &str = "https://uor.foundation/schema/Literal";
-    /// `outputClass` -> `Address`
-    pub const OUTPUT_CLASS: &str = "https://uor.foundation/u/Address";
+    /// `outputClass` -> `Element`
+    pub const OUTPUT_CLASS: &str = "https://uor.foundation/u/Element";
 }
 
 /// Grounds UTF-8 host strings to ring addresses.
 pub mod utf8_grounding_map {
     /// `inputClass` -> `HostStringLiteral`
     pub const INPUT_CLASS: &str = "https://uor.foundation/schema/HostStringLiteral";
-    /// `outputClass` -> `Address`
-    pub const OUTPUT_CLASS: &str = "https://uor.foundation/u/Address";
+    /// `outputClass` -> `Element`
+    pub const OUTPUT_CLASS: &str = "https://uor.foundation/u/Element";
 }
 
 /// Grounds JSON host strings to ring addresses.
 pub mod json_grounding_map {
     /// `inputClass` -> `HostStringLiteral`
     pub const INPUT_CLASS: &str = "https://uor.foundation/schema/HostStringLiteral";
-    /// `outputClass` -> `Address`
-    pub const OUTPUT_CLASS: &str = "https://uor.foundation/u/Address";
+    /// `outputClass` -> `Element`
+    pub const OUTPUT_CLASS: &str = "https://uor.foundation/u/Element";
 }
 
 /// Projects partitions to integer symbol sequences.

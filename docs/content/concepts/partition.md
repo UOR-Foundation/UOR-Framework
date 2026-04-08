@@ -14,8 +14,8 @@ Every partition of R_n has exactly four component sets:
 |-------|-------------|
 | {@class https://uor.foundation/partition/IrreducibleSet} | Elements with no non-trivial factorization |
 | {@class https://uor.foundation/partition/ReducibleSet} | Elements that factor into smaller pieces |
-| {@class https://uor.foundation/partition/UnitSet} | Invertible elements (units of the ring) |
-| {@class https://uor.foundation/partition/ExteriorSet} | Elements outside the kernel |
+| {@class https://uor.foundation/partition/UnitGroup} | Invertible elements (units of the ring) |
+| {@class https://uor.foundation/partition/Complement} | Elements outside the kernel |
 
 These four sets are mutually `owl:disjointWith` and their cardinalities sum to 2^n.
 
@@ -25,13 +25,13 @@ These four sets are mutually `owl:disjointWith` and their cardinalities sum to 2
 |----------|--------|-------|-------------|
 | {@prop https://uor.foundation/partition/irreducibles} | Partition | IrreducibleSet | Link to irreducible set |
 | {@prop https://uor.foundation/partition/reducibles} | Partition | ReducibleSet | Link to reducible set |
-| {@prop https://uor.foundation/partition/units} | Partition | UnitSet | Link to unit set |
-| {@prop https://uor.foundation/partition/exterior} | Partition | ExteriorSet | Link to exterior set |
+| {@prop https://uor.foundation/partition/units} | Partition | UnitGroup | Link to unit set |
+| {@prop https://uor.foundation/partition/exterior} | Partition | Complement | Link to complement set |
 | {@prop https://uor.foundation/partition/cardinality} | Component | xsd:nonNegativeInteger | Element count |
 | {@prop https://uor.foundation/partition/density} | Component | xsd:string | Density as fraction |
 | {@prop https://uor.foundation/partition/member} | Component | partition:Component | Member element |
 | {@prop https://uor.foundation/partition/sourceType} | Partition | type:TypeDefinition | Source type |
-| {@prop https://uor.foundation/partition/quantum} | Partition | xsd:nonNegativeInteger | Ring quantum level |
+| {@prop https://uor.foundation/partition/wittLength} | Partition | xsd:nonNegativeInteger | Ring Witt level |
 
 ## Example: R_4
 
@@ -40,7 +40,7 @@ For R_4 = Z/16Z (n=4, 16 elements):
 ```turtle
 <https://uor.foundation/instance/partition-R4>
     a                   partition:Partition ;
-    schema:ringQuantum  "4"^^xsd:nonNegativeInteger ;
+    schema:ringWittLength "4"^^xsd:nonNegativeInteger ;
     partition:irreducibles  <...irred-set-R4> ;
     partition:reducibles    <...red-set-R4> ;
     partition:units         <...unit-set-R4> ;
@@ -66,10 +66,10 @@ For R_4 = Z/16Z with 16 elements (0–15):
 
 | Component | Elements | {@prop https://uor.foundation/partition/cardinality} | {@prop https://uor.foundation/partition/density} |
 |-----------|----------|-------------|---------|
-| {@class https://uor.foundation/partition/UnitSet} | {1, 3, 5, 7, 9, 11, 13, 15} | 8 | 1/2 |
+| {@class https://uor.foundation/partition/UnitGroup} | {1, 3, 5, 7, 9, 11, 13, 15} | 8 | 1/2 |
 | {@class https://uor.foundation/partition/IrreducibleSet} | {2} | 1 | 1/16 |
 | {@class https://uor.foundation/partition/ReducibleSet} | {4, 6, 8, 10, 12, 14} | 6 | 3/8 |
-| {@class https://uor.foundation/partition/ExteriorSet} | {0} | 1 | 1/16 |
+| {@class https://uor.foundation/partition/Complement} | {0} | 1 | 1/16 |
 
 The 8 units are exactly the odd numbers (invertible mod 16). The sole
 irreducible is 2, the generator of the maximal ideal. All even non-zero

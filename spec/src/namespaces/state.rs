@@ -11,7 +11,7 @@
 //!
 //! Amendment 48 adds the multi-session coordination layer: `SharedContext`,
 //! `ContextLease`, and `SessionComposition` — enabling concurrent sessions on
-//! disjoint fiber leases and composition of completed sessions.
+//! disjoint site leases and composition of completed sessions.
 //!
 //! **Space classification:** `user` — state is managed by user-space (Prism).
 
@@ -125,7 +125,7 @@ fn classes() -> Vec<Class> {
             label: "BindingAccumulator",
             comment: "The mutable accumulator that appends state:Binding instances \
                       to a state:Context as each RelationQuery resolves. Tracks \
-                      monotonic reduction of aggregate free fiber space.",
+                      monotonic reduction of aggregate free site space.",
             subclass_of: &[OWL_THING],
             disjoint_with: &[],
         },
@@ -138,20 +138,20 @@ fn classes() -> Vec<Class> {
             subclass_of: &[OWL_THING],
             disjoint_with: &[],
         },
-        // Amendment 33: Saturated Context Limit
+        // Amendment 33: Grounded Context Limit
         Class {
-            id: "https://uor.foundation/state/SaturatedContext",
-            label: "SaturatedContext",
+            id: "https://uor.foundation/state/GroundedContext",
+            label: "GroundedContext",
             comment: "A context that has reached full saturation: σ = 1, \
-                      freeCount = 0, S = 0, T_ctx = 0 (SC_4). The ground \
+                      freeRank = 0, S = 0, T_ctx = 0 (SC_4). The ground \
                       state of the type system. All subsequent queries \
                       resolve in O(1) via SC_5.",
             subclass_of: &["https://uor.foundation/state/Context"],
             disjoint_with: &[],
         },
         Class {
-            id: "https://uor.foundation/state/SaturationWitness",
-            label: "SaturationWitness",
+            id: "https://uor.foundation/state/GroundingWitness",
+            label: "GroundingWitness",
             comment: "Step-by-step evidence of the saturation process: records \
                       which bindings were applied, in what order, to reach \
                       full saturation.",
@@ -159,8 +159,8 @@ fn classes() -> Vec<Class> {
             disjoint_with: &[],
         },
         Class {
-            id: "https://uor.foundation/state/DomainSaturationRecord",
-            label: "DomainSaturationRecord",
+            id: "https://uor.foundation/state/DomainGroundingRecord",
+            label: "DomainGroundingRecord",
             comment: "An informational/monitoring record tracking the saturation \
                       progress of a specific domain within a context. Carries no \
                       formal authority — purely observational.",
@@ -168,11 +168,11 @@ fn classes() -> Vec<Class> {
             disjoint_with: &[],
         },
         Class {
-            id: "https://uor.foundation/state/SaturationPhase",
-            label: "SaturationPhase",
+            id: "https://uor.foundation/state/GroundingPhase",
+            label: "GroundingPhase",
             comment: "A typed controlled vocabulary for the three phases of \
-                      context saturation: Unsaturated (σ = 0), \
-                      PartialSaturation (0 < σ < 1), and FullSaturation (σ = 1).",
+                      context saturation: Open (σ = 0), \
+                      PartialGrounding (0 < σ < 1), and FullGrounding (σ = 1).",
             subclass_of: &[OWL_THING],
             disjoint_with: &[],
         },
@@ -182,7 +182,7 @@ fn classes() -> Vec<Class> {
             label: "SharedContext",
             comment: "A Context visible to more than one Session simultaneously. \
                       Holds a set of ContextLease instances that partition its \
-                      fiber coordinates among active sessions. Lease disjointness \
+                      site coordinates among active sessions. Lease disjointness \
                       (SR_9) prevents concurrent write conflicts.",
             subclass_of: &["https://uor.foundation/state/Context"],
             disjoint_with: &[],
@@ -190,10 +190,10 @@ fn classes() -> Vec<Class> {
         Class {
             id: "https://uor.foundation/state/ContextLease",
             label: "ContextLease",
-            comment: "A bounded, exclusive claim on a set of fiber coordinates \
+            comment: "A bounded, exclusive claim on a set of site coordinates \
                       within a SharedContext, held by exactly one Session. When \
                       the session closes or hits a SessionBoundary, the lease is \
-                      released and its fibers become available for re-leasing.",
+                      released and its sites become available for re-leasing.",
             subclass_of: &[OWL_THING],
             disjoint_with: &[
                 "https://uor.foundation/state/Context",
@@ -226,7 +226,7 @@ fn properties() -> Vec<Property> {
             kind: PropertyKind::Object,
             functional: true,
             domain: Some("https://uor.foundation/state/Binding"),
-            range: "https://uor.foundation/u/Address",
+            range: "https://uor.foundation/u/Element",
         },
         Property {
             id: "https://uor.foundation/state/content",
@@ -285,9 +285,9 @@ fn properties() -> Vec<Property> {
             range: XSD_STRING,
         },
         Property {
-            id: "https://uor.foundation/state/quantum",
-            label: "quantum",
-            comment: "The quantum level of this context's address space.",
+            id: "https://uor.foundation/state/wittLength",
+            label: "wittLength",
+            comment: "The Witt level of this context's address space.",
             kind: PropertyKind::Datatype,
             functional: true,
             domain: Some("https://uor.foundation/state/Context"),
@@ -402,15 +402,15 @@ fn properties() -> Vec<Property> {
             range: XSD_NON_NEGATIVE_INTEGER,
         },
         Property {
-            id: "https://uor.foundation/state/aggregateFiberDeficit",
-            label: "aggregateFiberDeficit",
-            comment: "The aggregate FiberBudget deficit across all accumulated bindings: \
-                      the total remaining free fibers that have not yet been closed by \
+            id: "https://uor.foundation/state/aggregateSiteDeficit",
+            label: "aggregateSiteDeficit",
+            comment: "The aggregate FreeRank deficit across all accumulated bindings: \
+                      the total remaining free sites that have not yet been closed by \
                       resolution. Decreases monotonically as the session progresses.",
             kind: PropertyKind::Object,
             functional: true,
             domain: Some("https://uor.foundation/state/BindingAccumulator"),
-            range: "https://uor.foundation/partition/FiberBudget",
+            range: "https://uor.foundation/partition/FreeRank",
         },
         Property {
             id: "https://uor.foundation/state/accumulatedBindings",
@@ -460,12 +460,12 @@ fn properties() -> Vec<Property> {
             domain: Some("https://uor.foundation/state/SessionBoundary"),
             range: "https://uor.foundation/state/Context",
         },
-        // Amendment 33: Saturated Context Limit properties
+        // Amendment 33: Grounded Context Limit properties
         Property {
-            id: "https://uor.foundation/state/saturationDegree",
-            label: "saturationDegree",
+            id: "https://uor.foundation/state/groundingDegree",
+            label: "groundingDegree",
             comment: "The saturation degree σ ∈ \\[0, 1\\] of this context. \
-                      Defined by SC_2: σ = (n − freeCount) / n.",
+                      Defined by SC_2: σ = (n − freeRank) / n.",
             kind: PropertyKind::Datatype,
             functional: true,
             domain: Some("https://uor.foundation/state/Context"),
@@ -475,50 +475,50 @@ fn properties() -> Vec<Property> {
             id: "https://uor.foundation/state/contextTemperature",
             label: "contextTemperature",
             comment: "The context temperature T_ctx ∈ \\[0, ln 2\\]. Defined by \
-                      SC_1: T_ctx = freeCount × ln 2 / n. At σ = 1, T_ctx = 0.",
+                      SC_1: T_ctx = freeRank × ln 2 / n. At σ = 1, T_ctx = 0.",
             kind: PropertyKind::Datatype,
             functional: true,
             domain: Some("https://uor.foundation/state/Context"),
             range: XSD_DECIMAL,
         },
         Property {
-            id: "https://uor.foundation/state/isSaturated",
-            label: "isSaturated",
+            id: "https://uor.foundation/state/isGrounded",
+            label: "isGrounded",
             comment: "Whether this context has reached full saturation (σ = 1). \
-                      Equivalent to freeCount = 0, S = 0, T_ctx = 0 per SC_4.",
+                      Equivalent to freeRank = 0, S = 0, T_ctx = 0 per SC_4.",
             kind: PropertyKind::Datatype,
             functional: true,
             domain: Some("https://uor.foundation/state/Context"),
             range: XSD_BOOLEAN,
         },
         Property {
-            id: "https://uor.foundation/state/saturationPhase",
-            label: "saturationPhase",
-            comment: "The current saturation phase of this context: Unsaturated, \
-                      PartialSaturation, or FullSaturation.",
+            id: "https://uor.foundation/state/groundingPhase",
+            label: "groundingPhase",
+            comment: "The current saturation phase of this context: Open, \
+                      PartialGrounding, or FullGrounding.",
             kind: PropertyKind::Object,
             functional: true,
             domain: Some("https://uor.foundation/state/Context"),
-            range: "https://uor.foundation/state/SaturationPhase",
+            range: "https://uor.foundation/state/GroundingPhase",
         },
         Property {
-            id: "https://uor.foundation/state/saturationCertificate",
-            label: "saturationCertificate",
-            comment: "The SaturationCertificate attesting that this context has \
+            id: "https://uor.foundation/state/groundingCertificate",
+            label: "groundingCertificate",
+            comment: "The GroundingCertificate attesting that this context has \
                       reached full saturation.",
             kind: PropertyKind::Object,
             functional: true,
-            domain: Some("https://uor.foundation/state/SaturatedContext"),
-            range: "https://uor.foundation/cert/SaturationCertificate",
+            domain: Some("https://uor.foundation/state/GroundedContext"),
+            range: "https://uor.foundation/cert/GroundingCertificate",
         },
         Property {
             id: "https://uor.foundation/state/witnessBinding",
             label: "witnessBinding",
             comment: "A binding that contributed to the saturation process, \
-                      recorded in this SaturationWitness.",
+                      recorded in this GroundingWitness.",
             kind: PropertyKind::Object,
             functional: false,
-            domain: Some("https://uor.foundation/state/SaturationWitness"),
+            domain: Some("https://uor.foundation/state/GroundingWitness"),
             range: "https://uor.foundation/state/Binding",
         },
         Property {
@@ -528,13 +528,13 @@ fn properties() -> Vec<Property> {
                       during the saturation process.",
             kind: PropertyKind::Datatype,
             functional: true,
-            domain: Some("https://uor.foundation/state/SaturationWitness"),
+            domain: Some("https://uor.foundation/state/GroundingWitness"),
             range: XSD_NON_NEGATIVE_INTEGER,
         },
         Property {
             id: "https://uor.foundation/state/residualFreeCount",
             label: "residualFreeCount",
-            comment: "The number of free (unbound) fibers remaining in this \
+            comment: "The number of free (unbound) sites remaining in this \
                       context. At saturation, residualFreeCount = 0.",
             kind: PropertyKind::Datatype,
             functional: true,
@@ -542,45 +542,45 @@ fn properties() -> Vec<Property> {
             range: XSD_NON_NEGATIVE_INTEGER,
         },
         Property {
-            id: "https://uor.foundation/state/saturatedContext",
-            label: "saturatedContext",
-            comment: "The SaturatedContext that this DomainSaturationRecord \
+            id: "https://uor.foundation/state/groundedContext",
+            label: "groundedContext",
+            comment: "The GroundedContext that this DomainGroundingRecord \
                       monitors.",
             kind: PropertyKind::Object,
             functional: true,
-            domain: Some("https://uor.foundation/state/DomainSaturationRecord"),
-            range: "https://uor.foundation/state/SaturatedContext",
+            domain: Some("https://uor.foundation/state/DomainGroundingRecord"),
+            range: "https://uor.foundation/state/GroundedContext",
         },
         Property {
-            id: "https://uor.foundation/state/saturatedDomain",
-            label: "saturatedDomain",
+            id: "https://uor.foundation/state/groundedDomain",
+            label: "groundedDomain",
             comment: "The domain within the context being tracked by this \
-                      DomainSaturationRecord.",
+                      DomainGroundingRecord.",
             kind: PropertyKind::Object,
             functional: true,
-            domain: Some("https://uor.foundation/state/DomainSaturationRecord"),
+            domain: Some("https://uor.foundation/state/DomainGroundingRecord"),
             range: "https://uor.foundation/type/TypeDefinition",
         },
         Property {
             id: "https://uor.foundation/state/domainFreeCount",
             label: "domainFreeCount",
-            comment: "The number of free fibers remaining in the specific domain \
-                      tracked by this DomainSaturationRecord.",
+            comment: "The number of free sites remaining in the specific domain \
+                      tracked by this DomainGroundingRecord.",
             kind: PropertyKind::Datatype,
             functional: true,
-            domain: Some("https://uor.foundation/state/DomainSaturationRecord"),
+            domain: Some("https://uor.foundation/state/DomainGroundingRecord"),
             range: XSD_NON_NEGATIVE_INTEGER,
         },
         // Amendment 48: Multi-Session Coordination properties
         Property {
-            id: "https://uor.foundation/state/leasedFibers",
-            label: "leasedFibers",
-            comment: "The subset of fibers claimed by this lease. Must be disjoint \
+            id: "https://uor.foundation/state/leasedSites",
+            label: "leasedSites",
+            comment: "The subset of sites claimed by this lease. Must be disjoint \
                       from all other active leases on the same SharedContext (SR_9).",
             kind: PropertyKind::Object,
             functional: true,
             domain: Some("https://uor.foundation/state/ContextLease"),
-            range: "https://uor.foundation/partition/FiberBudget",
+            range: "https://uor.foundation/partition/FreeRank",
         },
         Property {
             id: "https://uor.foundation/state/leaseHolder",
@@ -663,7 +663,7 @@ fn individuals() -> Vec<Individual> {
             type_: "https://uor.foundation/state/SessionBoundaryType",
             label: "ConvergenceBoundary",
             comment: "The session resolver determined that no further queries \
-                      can reduce the aggregate fiber deficit.",
+                      can reduce the aggregate site deficit.",
             properties: &[],
         },
         Individual {
@@ -675,29 +675,29 @@ fn individuals() -> Vec<Individual> {
                       resolution can continue.",
             properties: &[],
         },
-        // Amendment 33: SaturationPhase vocabulary individuals
+        // Amendment 33: GroundingPhase vocabulary individuals
         Individual {
-            id: "https://uor.foundation/state/Unsaturated",
-            type_: "https://uor.foundation/state/SaturationPhase",
-            label: "Unsaturated",
-            comment: "The context has σ = 0: no bindings accumulated, all fibers \
+            id: "https://uor.foundation/state/Open",
+            type_: "https://uor.foundation/state/GroundingPhase",
+            label: "Open",
+            comment: "The context has σ = 0: no bindings accumulated, all sites \
                       are free. The initial phase of every session.",
             properties: &[],
         },
         Individual {
-            id: "https://uor.foundation/state/PartialSaturation",
-            type_: "https://uor.foundation/state/SaturationPhase",
-            label: "PartialSaturation",
-            comment: "The context has 0 < σ < 1: some fibers are pinned by \
-                      accumulated bindings, but free fibers remain. The \
+            id: "https://uor.foundation/state/PartialGrounding",
+            type_: "https://uor.foundation/state/GroundingPhase",
+            label: "PartialGrounding",
+            comment: "The context has 0 < σ < 1: some sites are pinned by \
+                      accumulated bindings, but free sites remain. The \
                       accumulation phase.",
             properties: &[],
         },
         Individual {
-            id: "https://uor.foundation/state/FullSaturation",
-            type_: "https://uor.foundation/state/SaturationPhase",
-            label: "FullSaturation",
-            comment: "The context has σ = 1: all fibers are pinned, freeCount = 0. \
+            id: "https://uor.foundation/state/FullGrounding",
+            type_: "https://uor.foundation/state/GroundingPhase",
+            label: "FullGrounding",
+            comment: "The context has σ = 1: all sites are pinned, freeRank = 0. \
                       The ground state. All subsequent queries resolve in O(1) \
                       via SC_5.",
             properties: &[],
@@ -705,15 +705,15 @@ fn individuals() -> Vec<Individual> {
         // Amendment 33: Canonical ground-state witness
         Individual {
             id: "https://uor.foundation/state/ground_state",
-            type_: "https://uor.foundation/state/SaturatedContext",
+            type_: "https://uor.foundation/state/GroundedContext",
             label: "ground_state",
-            comment: "The canonical ground-state witness: a SaturatedContext at \
-                      σ = 1, freeCount = 0, T_ctx = 0, S = 0 (SC_4). Demonstrates \
+            comment: "The canonical ground-state witness: a GroundedContext at \
+                      σ = 1, freeRank = 0, T_ctx = 0, S = 0 (SC_4). Demonstrates \
                       that full saturation is achievable and O(1) resolution (SC_5) \
                       is realized.",
             properties: &[
                 (
-                    "https://uor.foundation/state/saturationDegree",
+                    "https://uor.foundation/state/groundingDegree",
                     IndividualValue::Str("1.0"),
                 ),
                 (
@@ -721,7 +721,7 @@ fn individuals() -> Vec<Individual> {
                     IndividualValue::Str("0.0"),
                 ),
                 (
-                    "https://uor.foundation/state/isSaturated",
+                    "https://uor.foundation/state/isGrounded",
                     IndividualValue::Bool(true),
                 ),
                 (
@@ -729,8 +729,8 @@ fn individuals() -> Vec<Individual> {
                     IndividualValue::Int(0),
                 ),
                 (
-                    "https://uor.foundation/state/saturationPhase",
-                    IndividualValue::IriRef("https://uor.foundation/state/FullSaturation"),
+                    "https://uor.foundation/state/groundingPhase",
+                    IndividualValue::IriRef("https://uor.foundation/state/FullGrounding"),
                 ),
             ],
         },

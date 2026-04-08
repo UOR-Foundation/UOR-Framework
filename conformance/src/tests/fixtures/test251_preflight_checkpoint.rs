@@ -1,17 +1,17 @@
-//! SHACL test 251: `cascade:PreflightCheck` and `cascade:LeaseCheckpoint`.
+//! SHACL test 251: `reduction:PreflightCheck` and `reduction:LeaseCheckpoint`.
 
 /// Instance graph for Test 251: PreflightCheck and LeaseCheckpoint.
 pub const TEST251_PREFLIGHT_CHECKPOINT: &str = r#"
 @prefix rdf:     <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix owl:     <http://www.w3.org/2002/07/owl#> .
 @prefix xsd:     <http://www.w3.org/2001/XMLSchema#> .
-@prefix cascade: <https://uor.foundation/cascade/> .
+@prefix reduction: <https://uor.foundation/reduction/> .
 
-cascade:ex_preflight_251 a owl:NamedIndividual, cascade:PreflightCheck ;
-    cascade:preflightKind "FeasibilityCheck" ;
-    cascade:preflightResult "pass" .
+reduction:ex_preflight_251 a owl:NamedIndividual, reduction:PreflightCheck ;
+    reduction:preflightKind "FeasibilityCheck" ;
+    reduction:preflightResult "pass" .
 
-cascade:ex_checkpoint_251 a owl:NamedIndividual, cascade:LeaseCheckpoint ;
-    cascade:checkpointEpoch "5"^^xsd:nonNegativeInteger ;
-    cascade:leaseRemainingBudget "3"^^xsd:nonNegativeInteger .
+reduction:ex_checkpoint_251 a owl:NamedIndividual, reduction:LeaseCheckpoint ;
+    reduction:checkpointEpoch "5"^^xsd:nonNegativeInteger ;
+    reduction:leaseRemainingBudget "3"^^xsd:nonNegativeInteger .
 "#;

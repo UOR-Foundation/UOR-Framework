@@ -103,18 +103,18 @@ pub fn detect_enums(ontology: &Ontology) -> Vec<DetectedEnum> {
         }
     }
 
-    // 4. FiberState enum (from ontology comments)
+    // 4. SiteState enum (from ontology comments)
     enums.push(DetectedEnum {
-        name: "FiberState",
-        comment: "The state of a fiber coordinate: pinned or free.",
+        name: "SiteState",
+        comment: "The state of a site: pinned or free.",
         variants: vec![
             (
                 "Pinned".to_string(),
-                "Fiber is determined by a constraint.".to_string(),
+                "Site is determined by a constraint.".to_string(),
             ),
             (
                 "Free".to_string(),
-                "Fiber is still available for refinement.".to_string(),
+                "Site is still available for refinement.".to_string(),
             ),
         ],
         non_exhaustive: false,
@@ -161,8 +161,8 @@ pub fn detect_enums(ontology: &Ontology) -> Vec<DetectedEnum> {
     detect_vocabulary_enum(
         ontology,
         "query",
-        "CoordinateKind",
-        "A classification of coordinate types for coordinate queries.",
+        "TriadProjection",
+        "A classification of triad projection types for coordinate queries.",
         &mut enums,
     );
 
@@ -184,12 +184,12 @@ pub fn detect_enums(ontology: &Ontology) -> Vec<DetectedEnum> {
         &mut enums,
     );
 
-    // 14. SaturationPhase enum — Amendment 33: Saturated Context Limit
+    // 14. GroundingPhase enum — Amendment 33: Grounded Context Limit
     detect_vocabulary_enum(
         ontology,
         "state",
-        "SaturationPhase",
-        "The phase of context saturation towards the ground state.",
+        "GroundingPhase",
+        "The phase of grounding towards the ground state.",
         &mut enums,
     );
 
@@ -397,91 +397,91 @@ pub fn generate_enums_file(ontology: &Ontology) -> String {
         f.blank();
     }
 
-    // QuantumLevel newtype struct — open-world representation of schema:QuantumLevel.
-    // Not an enum: any non-negative integer k identifies a valid level Q_k.
-    f.doc_comment("A quantum level Q_k at which the UOR ring R_k = Z/2^(8*(k+1))Z operates.");
+    // WittLevel newtype struct — open-world representation of schema:WittLevel.
+    // Not an enum: any positive multiple of 8 identifies a valid Witt length.
+    f.doc_comment("A Witt level W_n at which the UOR ring R_n = Z/2^n Z operates.");
     f.doc_comment("");
-    f.doc_comment("Corresponds to `schema:QuantumLevel` in the uor.foundation ontology.");
-    f.doc_comment("The class is open: any non-negative integer k identifies a valid level.");
-    f.doc_comment("Named levels Q0 through Q3 are provided as associated constants.");
-    f.doc_comment("Arbitrary levels can be constructed with `QuantumLevel::new(k)`.");
+    f.doc_comment("Corresponds to `schema:WittLevel` in the uor.foundation ontology.");
+    f.doc_comment("The class is open: any positive multiple of 8 identifies a valid level.");
+    f.doc_comment("Named levels W8 through W32 are provided as associated constants.");
+    f.doc_comment("Arbitrary levels can be constructed with `WittLevel::new(n)`.");
     f.doc_example(
-        "use uor_foundation::QuantumLevel;\n\
+        "use uor_foundation::WittLevel;\n\
          \n\
-         // Named reference levels (Q0-Q3 are spec-defined):\n\
-         let q0 = QuantumLevel::Q0;\n\
-         assert_eq!(q0.index(), 0);\n\
-         assert_eq!(q0.bits_width(), 8);    // 8*(0+1) = 8 bits\n\
-         assert_eq!(q0.cycle_size(), Some(256)); // 2^8 = 256 ring elements\n\
+         // Named reference levels (W8-W32 are spec-defined):\n\
+         let w8 = WittLevel::W8;\n\
+         assert_eq!(w8.witt_length(), 8);\n\
+         assert_eq!(w8.bits_width(), 8);    // Witt length IS bit width\n\
+         assert_eq!(w8.cycle_size(), Some(256)); // 2^8 = 256 ring elements\n\
          \n\
-         let q3 = QuantumLevel::Q3;\n\
-         assert_eq!(q3.bits_width(), 32);   // 8*(3+1) = 32 bits\n\
+         let w32 = WittLevel::W32;\n\
+         assert_eq!(w32.bits_width(), 32);  // 32 bits\n\
          \n\
-         // Arbitrary levels beyond Q3 (Prism-declared):\n\
-         let q7 = QuantumLevel::new(7);\n\
-         assert_eq!(q7.bits_width(), 64);   // 8*(7+1) = 64 bits — native u64\n\
+         // Arbitrary levels beyond W32 (Prism-declared):\n\
+         let w64 = WittLevel::new(64);\n\
+         assert_eq!(w64.bits_width(), 64);  // 64 bits — native u64\n\
          \n\
          // The chain is unbounded:\n\
-         let q10 = QuantumLevel::new(10);\n\
-         assert_eq!(q10.bits_width(), 88);\n\
-         assert_eq!(q10.next_level().index(), 11);\n\
+         let w88 = WittLevel::new(88);\n\
+         assert_eq!(w88.bits_width(), 88);\n\
+         assert_eq!(w88.next_witt_level().witt_length(), 96);\n\
          \n\
-         // Ordering follows the index:\n\
-         assert!(QuantumLevel::Q0 < QuantumLevel::Q3);",
+         // Ordering follows the Witt length:\n\
+         assert!(WittLevel::W8 < WittLevel::W32);",
         "rust",
     );
     f.line("#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]");
-    f.line("pub struct QuantumLevel {");
-    f.indented_doc_comment("The quantum index k in Q_k. Maps to `schema:quantumIndex`.");
-    f.line("    index: u32,");
+    f.line("pub struct WittLevel {");
+    f.indented_doc_comment("The Witt length n in W_n. Maps to `schema:wittLength`.");
+    f.line("    witt_length: u32,");
     f.line("}");
     f.blank();
-    f.line("impl QuantumLevel {");
+    f.line("impl WittLevel {");
     f.indented_doc_comment(
-        "Quantum level 0: 8-bit ring Z/256Z, 256 states. \
+        "Witt level 8: 8-bit ring Z/256Z, 256 states. \
          The reference level for all ComputationCertificate proofs in the spec.",
     );
-    f.line("    pub const Q0: Self = Self { index: 0 };");
-    f.indented_doc_comment("Quantum level 1: 16-bit ring Z/65536Z, 65,536 states.");
-    f.line("    pub const Q1: Self = Self { index: 1 };");
-    f.indented_doc_comment("Quantum level 2: 24-bit ring Z/16777216Z, 16,777,216 states.");
-    f.line("    pub const Q2: Self = Self { index: 2 };");
+    f.line("    pub const W8: Self = Self { witt_length: 8 };");
+    f.indented_doc_comment("Witt level 16: 16-bit ring Z/65536Z, 65,536 states.");
+    f.line("    pub const W16: Self = Self { witt_length: 16 };");
+    f.indented_doc_comment("Witt level 24: 24-bit ring Z/16777216Z, 16,777,216 states.");
+    f.line("    pub const W24: Self = Self { witt_length: 24 };");
     f.indented_doc_comment(
-        "Quantum level 3: 32-bit ring Z/4294967296Z, 4,294,967,296 states. \
+        "Witt level 32: 32-bit ring Z/4294967296Z, 4,294,967,296 states. \
          The highest named level in the spec.",
     );
-    f.line("    pub const Q3: Self = Self { index: 3 };");
+    f.line("    pub const W32: Self = Self { witt_length: 32 };");
     f.blank();
     f.indented_doc_comment(
-        "Construct an arbitrary quantum level Q_k. \
-         `k` need not be one of the spec-named individuals; \
+        "Construct an arbitrary Witt level W_n. \
+         `n` need not be one of the spec-named individuals; \
          Prism implementations may use any level.",
     );
     f.line("    #[inline]");
-    f.line("    pub const fn new(index: u32) -> Self {");
-    f.line("        Self { index }");
+    f.line("    pub const fn new(witt_length: u32) -> Self {");
+    f.line("        Self { witt_length }");
     f.line("    }");
     f.blank();
-    f.indented_doc_comment("The quantum index k. Maps to `schema:quantumIndex`.");
+    f.indented_doc_comment("The Witt length n. Maps to `schema:wittLength`.");
     f.line("    #[inline]");
-    f.line("    pub const fn index(self) -> u32 {");
-    f.line("        self.index");
+    f.line("    pub const fn witt_length(self) -> u32 {");
+    f.line("        self.witt_length");
     f.line("    }");
     f.blank();
     f.indented_doc_comment(
-        "Bit width of the ring at this level: 8*(k+1). \
-         Maps to `schema:bitsWidth`. This is a derived property, \
-         not a stored field — the formula is definitional.",
+        "Bit width of the ring at this level: equal to the Witt length. \
+         Maps to `schema:bitsWidth`. This is an identity — \
+         the Witt length IS the bit width.",
     );
     f.line("    #[inline]");
     f.line("    pub const fn bits_width(self) -> u32 {");
-    f.line("        8 * (self.index + 1)");
+    f.line("        self.witt_length");
     f.line("    }");
     f.blank();
     f.indented_doc_comment(
-        "Number of distinct ring states at this level: 2^(8*(k+1)). \
+        "Number of distinct ring states at this level: 2^n. \
          Maps to `schema:cycleSize`. Returns `None` if the result \
-         exceeds `u128` (i.e. for k >= 15).",
+         exceeds `u128` (i.e. for n > 128).",
     );
     f.line("    #[inline]");
     f.line("    pub const fn cycle_size(self) -> Option<u128> {");
@@ -489,20 +489,20 @@ pub fn generate_enums_file(ontology: &Ontology) -> String {
     f.line("    }");
     f.blank();
     f.indented_doc_comment(
-        "The next quantum level in the chain: Q_k -> Q_{k+1}. \
-         Maps to `schema:nextLevel`. Always well-defined; the chain is unbounded.",
+        "The next Witt level in the chain: W_n -> W_{n+8}. \
+         Maps to `schema:nextWittLevel`. Always well-defined; the chain is unbounded.",
     );
     f.line("    #[inline]");
-    f.line("    pub const fn next_level(self) -> Self {");
+    f.line("    pub const fn next_witt_level(self) -> Self {");
     f.line("        Self {");
-    f.line("            index: self.index + 1,");
+    f.line("            witt_length: self.witt_length + 8,");
     f.line("        }");
     f.line("    }");
     f.line("}");
     f.blank();
-    f.line("impl fmt::Display for QuantumLevel {");
+    f.line("impl fmt::Display for WittLevel {");
     f.line("    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {");
-    f.line("        write!(f, \"q{}\", self.index)");
+    f.line("        write!(f, \"w{}\", self.witt_length)");
     f.line("    }");
     f.line("}");
     f.blank();
@@ -547,13 +547,13 @@ mod tests {
         assert!(names.contains(&"Space"));
         assert!(names.contains(&"PrimitiveOp"));
         assert!(names.contains(&"MetricAxis"));
-        assert!(names.contains(&"FiberState"));
+        assert!(names.contains(&"SiteState"));
         assert!(names.contains(&"GeometricCharacter"));
         assert!(names.contains(&"VerificationDomain"));
         assert!(names.contains(&"ComplexityClass"));
         assert!(names.contains(&"RewriteRule"));
         assert!(names.contains(&"MeasurementUnit"));
-        assert!(names.contains(&"CoordinateKind"));
+        assert!(names.contains(&"TriadProjection"));
         assert!(names.contains(&"SessionBoundaryType"));
         assert!(names.contains(&"ProofModality"));
     }

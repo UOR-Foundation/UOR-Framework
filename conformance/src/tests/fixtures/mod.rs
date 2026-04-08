@@ -27,17 +27,17 @@ mod test119_obstruction_termination;
 mod test11_composition;
 mod test120_coefficient_ring;
 mod test121_gluing_feedback;
-mod test122_session_saturation;
+mod test122_session_grounding;
 mod test123_amplitude_index;
 mod test124_glyph;
 mod test125_dihedral_group;
 mod test126_validity_scope_kind;
-mod test127_quantum_level_resolver;
+mod test127_witt_level_resolver;
 mod test128_stratum_observable;
 mod test129_metric_observable;
 mod test12_factorization;
 mod test130_path_observable;
-mod test131_cascade_observable;
+mod test131_reduction_observable;
 mod test132_holonomy_observable;
 mod test133_incompatibility_metric;
 mod test134_stratum_value;
@@ -47,14 +47,14 @@ mod test137_path_length;
 mod test138_total_variation;
 mod test139_winding_number;
 mod test13_canonical_form;
-mod test140_cascade_length;
-mod test141_cascade_count;
+mod test140_reduction_length;
+mod test141_reduction_count;
 mod test142_catastrophe_threshold;
 mod test143_catastrophe_count;
 mod test144_commutator;
 mod test145_curvature_flux;
 mod test146_parallel_transport;
-mod test147_cascade_entropy;
+mod test147_reduction_entropy;
 mod test148_phase_boundary_type;
 mod test149_face_map;
 mod test14_content_addressing;
@@ -72,7 +72,7 @@ mod test15_boolean_sat;
 mod test160_shared_context;
 mod test161_execution_policy;
 mod test162_session_composition;
-mod test163_distributed_saturation;
+mod test163_distributed_grounding;
 mod test164_embedding;
 mod test165_action;
 mod test166_session_boundary_type;
@@ -103,7 +103,7 @@ mod test188_encoding_configuration;
 mod test189_encoding_quality;
 mod test18_analytical_completeness;
 mod test190_base_metric;
-mod test191_saturation_observable;
+mod test191_grounding_observable;
 mod test192_euler_characteristic;
 mod test193_galois_connection;
 mod test194_nerve_operations;
@@ -118,9 +118,9 @@ mod test200_inference_operation;
 mod test201_accumulation_operation;
 mod test202_lease_partition_operation;
 mod test203_session_composition_operation;
-mod test204_euler_cascade;
-mod test205_cascade_stage;
-mod test206_cascade_state;
+mod test204_euler_reduction;
+mod test205_reduction_step;
+mod test206_reduction_state;
 mod test207_phase_gate;
 mod test208_epoch;
 mod test209_predicate_expression;
@@ -128,7 +128,7 @@ mod test20_sheaf_consistency;
 mod test210_guard_expression;
 mod test211_transition_effect;
 mod test212_service_window;
-mod test213_cascade_transaction;
+mod test213_reduction_transaction;
 mod test214_feasibility_result;
 mod test215_lease_state;
 mod test216_managed_lease;
@@ -149,7 +149,7 @@ mod test229_interaction_context;
 mod test22_index_bridge;
 mod test230_commutator_state;
 mod test231_associator_state;
-mod test232_three_way_fiber;
+mod test232_three_way_site;
 mod test233_negotiation_trace;
 mod test234_interaction_nerve;
 mod test235_monoidal_product;
@@ -196,24 +196,26 @@ mod test271_host_value_types;
 mod test272_boundary_map_individuals;
 mod test273_type_definition_sum;
 mod test274_witness_types;
+mod test275_reduction_advance;
+mod test276_witness_site_budget;
 mod test27_rewrite_rule;
 mod test28_measurement_unit;
-mod test29_coordinate_kind;
+mod test29_triad_projection;
 mod test2_primitives;
 mod test30_proof_coverage;
-mod test31_quantum_level;
+mod test31_witt_level;
 mod test32_arc_grounding;
 mod test33_graph_gaps;
 mod test34_completeness_candidate;
 mod test35_completeness_certificate;
-mod test36_q1_ring;
-mod test37_quantum_level_binding;
+mod test36_w16_ring;
+mod test37_witt_level_binding;
 mod test38_session_lifecycle;
 mod test39_session_boundary;
 mod test3_term_graph;
 mod test40_type_synthesis_goal;
 mod test41_synthesis_result;
-mod test42_quantum_lift;
+mod test42_witt_lift;
 mod test43_spectral_sequence;
 mod test44_monodromy_flat;
 mod test45_monodromy_twisted;
@@ -225,13 +227,13 @@ mod test4_state_lifecycle;
 mod test50_jacobian_resolver;
 mod test51_product_type_pipeline;
 mod test52_sum_type_variant;
-mod test53_superposed_fiber;
-mod test54_saturated_context;
-mod test55_saturation_witness;
-mod test56_domain_saturation_record;
-mod test57_saturation_phase;
-mod test58_saturation_certificate;
-mod test59_saturation_aware_resolver;
+mod test53_superposed_site;
+mod test54_grounded_context;
+mod test55_grounding_witness;
+mod test56_domain_grounding_record;
+mod test57_grounding_phase;
+mod test58_grounding_certificate;
+mod test59_grounding_aware_resolver;
 mod test5_partition;
 mod test60_impossibility_witness;
 mod test61_morphospace_record;
@@ -247,7 +249,7 @@ mod test6_critical_identity;
 mod test70_measurement_resolver;
 mod test71_measurement_event;
 mod test72_measurement_certificate;
-mod test73_collapsed_fiber_state;
+mod test73_collapsed_site_state;
 mod test74_quantum_thermodynamic;
 mod test75_partition_product;
 mod test76_partition_coproduct;
@@ -260,22 +262,22 @@ mod test81_dihedral_algebra;
 mod test82_level_successor;
 mod test83_amplitude_normalization;
 mod test84_enum_variant;
-mod test85_q1_ring_grounding;
-mod test86_quantum_lift_trivial;
+mod test85_w16_ring_grounding;
+mod test86_witt_lift_trivial;
 mod test87_spectral_convergence;
 mod test88_lift_obstruction_nontrivial;
 mod test89_lift_refinement_suggestion;
-mod test8_fiber_budget;
+mod test8_free_rank;
 mod test90_resolved_lift;
-mod test91_synthesis_goal_q1;
+mod test91_synthesis_goal_w16;
 mod test92_synthesis_checkpoint;
 mod test93_synthesis_signature;
 mod test94_synthesized_type;
 mod test95_unreachable_signature;
-mod test96_geodesic_trace_q1;
+mod test96_geodesic_trace_w16;
 mod test97_evidence_bundle_ar1;
 mod test98_evidence_bundle_dc10;
-mod test99_measurement_born_q1;
+mod test99_measurement_born_w16;
 mod test9_constraint_algebra;
 
 pub use test100_normative_chain::TEST100_NORMATIVE_CHAIN;
@@ -302,17 +304,17 @@ pub use test119_obstruction_termination::TEST119_OBSTRUCTION_TERMINATION;
 pub use test11_composition::TEST11_COMPOSITION;
 pub use test120_coefficient_ring::TEST120_COEFFICIENT_RING;
 pub use test121_gluing_feedback::TEST121_GLUING_FEEDBACK;
-pub use test122_session_saturation::TEST122_SESSION_SATURATION;
+pub use test122_session_grounding::TEST122_SESSION_GROUNDING;
 pub use test123_amplitude_index::TEST123_AMPLITUDE_INDEX;
 pub use test124_glyph::TEST124_GLYPH;
 pub use test125_dihedral_group::TEST125_DIHEDRAL_GROUP;
 pub use test126_validity_scope_kind::TEST126_VALIDITY_SCOPE_KIND;
-pub use test127_quantum_level_resolver::TEST127_QUANTUM_LEVEL_RESOLVER;
+pub use test127_witt_level_resolver::TEST127_WITT_LEVEL_RESOLVER;
 pub use test128_stratum_observable::TEST128_STRATUM_OBSERVABLE;
 pub use test129_metric_observable::TEST129_METRIC_OBSERVABLE;
 pub use test12_factorization::TEST12_FACTORIZATION;
 pub use test130_path_observable::TEST130_PATH_OBSERVABLE;
-pub use test131_cascade_observable::TEST131_CASCADE_OBSERVABLE;
+pub use test131_reduction_observable::TEST131_REDUCTION_OBSERVABLE;
 pub use test132_holonomy_observable::TEST132_HOLONOMY_OBSERVABLE;
 pub use test133_incompatibility_metric::TEST133_INCOMPATIBILITY_METRIC;
 pub use test134_stratum_value::TEST134_STRATUM_VALUE;
@@ -322,14 +324,14 @@ pub use test137_path_length::TEST137_PATH_LENGTH;
 pub use test138_total_variation::TEST138_TOTAL_VARIATION;
 pub use test139_winding_number::TEST139_WINDING_NUMBER;
 pub use test13_canonical_form::TEST13_CANONICAL_FORM;
-pub use test140_cascade_length::TEST140_CASCADE_LENGTH;
-pub use test141_cascade_count::TEST141_CASCADE_COUNT;
+pub use test140_reduction_length::TEST140_REDUCTION_LENGTH;
+pub use test141_reduction_count::TEST141_REDUCTION_COUNT;
 pub use test142_catastrophe_threshold::TEST142_CATASTROPHE_THRESHOLD;
 pub use test143_catastrophe_count::TEST143_CATASTROPHE_COUNT;
 pub use test144_commutator::TEST144_COMMUTATOR;
 pub use test145_curvature_flux::TEST145_CURVATURE_FLUX;
 pub use test146_parallel_transport::TEST146_PARALLEL_TRANSPORT;
-pub use test147_cascade_entropy::TEST147_CASCADE_ENTROPY;
+pub use test147_reduction_entropy::TEST147_REDUCTION_ENTROPY;
 pub use test148_phase_boundary_type::TEST148_PHASE_BOUNDARY_TYPE;
 pub use test149_face_map::TEST149_FACE_MAP;
 pub use test14_content_addressing::TEST14_CONTENT_ADDRESSING;
@@ -347,7 +349,7 @@ pub use test15_boolean_sat::TEST15_BOOLEAN_SAT;
 pub use test160_shared_context::TEST160_SHARED_CONTEXT;
 pub use test161_execution_policy::TEST161_EXECUTION_POLICY;
 pub use test162_session_composition::TEST162_SESSION_COMPOSITION;
-pub use test163_distributed_saturation::TEST163_DISTRIBUTED_SATURATION;
+pub use test163_distributed_grounding::TEST163_DISTRIBUTED_GROUNDING;
 pub use test164_embedding::TEST164_EMBEDDING;
 pub use test165_action::TEST165_ACTION;
 pub use test166_session_boundary_type::TEST166_SESSION_BOUNDARY_TYPE;
@@ -378,7 +380,7 @@ pub use test188_encoding_configuration::TEST188_ENCODING_CONFIGURATION;
 pub use test189_encoding_quality::TEST189_ENCODING_QUALITY;
 pub use test18_analytical_completeness::TEST18_ANALYTICAL_COMPLETENESS;
 pub use test190_base_metric::TEST190_BASE_METRIC;
-pub use test191_saturation_observable::TEST191_SATURATION_OBSERVABLE;
+pub use test191_grounding_observable::TEST191_GROUNDING_OBSERVABLE;
 pub use test192_euler_characteristic::TEST192_EULER_CHARACTERISTIC;
 pub use test193_galois_connection::TEST193_GALOIS_CONNECTION;
 pub use test194_nerve_operations::TEST194_NERVE_OPERATIONS;
@@ -393,9 +395,9 @@ pub use test200_inference_operation::TEST200_INFERENCE_OPERATION;
 pub use test201_accumulation_operation::TEST201_ACCUMULATION_OPERATION;
 pub use test202_lease_partition_operation::TEST202_LEASE_PARTITION_OPERATION;
 pub use test203_session_composition_operation::TEST203_SESSION_COMPOSITION_OPERATION;
-pub use test204_euler_cascade::TEST204_EULER_CASCADE;
-pub use test205_cascade_stage::TEST205_CASCADE_STAGE;
-pub use test206_cascade_state::TEST206_CASCADE_STATE;
+pub use test204_euler_reduction::TEST204_EULER_REDUCTION;
+pub use test205_reduction_step::TEST205_REDUCTION_STEP;
+pub use test206_reduction_state::TEST206_REDUCTION_STATE;
 pub use test207_phase_gate::TEST207_PHASE_GATE;
 pub use test208_epoch::TEST208_EPOCH;
 pub use test209_predicate_expression::TEST209_PREDICATE_EXPRESSION;
@@ -403,7 +405,7 @@ pub use test20_sheaf_consistency::TEST20_SHEAF_CONSISTENCY;
 pub use test210_guard_expression::TEST210_GUARD_EXPRESSION;
 pub use test211_transition_effect::TEST211_TRANSITION_EFFECT;
 pub use test212_service_window::TEST212_SERVICE_WINDOW;
-pub use test213_cascade_transaction::TEST213_CASCADE_TRANSACTION;
+pub use test213_reduction_transaction::TEST213_REDUCTION_TRANSACTION;
 pub use test214_feasibility_result::TEST214_FEASIBILITY_RESULT;
 pub use test215_lease_state::TEST215_LEASE_STATE;
 pub use test216_managed_lease::TEST216_MANAGED_LEASE;
@@ -424,7 +426,7 @@ pub use test229_interaction_context::TEST229_INTERACTION_CONTEXT;
 pub use test22_index_bridge::TEST22_INDEX_BRIDGE;
 pub use test230_commutator_state::TEST230_COMMUTATOR_STATE;
 pub use test231_associator_state::TEST231_ASSOCIATOR_STATE;
-pub use test232_three_way_fiber::TEST232_THREE_WAY_FIBER;
+pub use test232_three_way_site::TEST232_THREE_WAY_SITE;
 pub use test233_negotiation_trace::TEST233_NEGOTIATION_TRACE;
 pub use test234_interaction_nerve::TEST234_INTERACTION_NERVE;
 pub use test235_monoidal_product::TEST235_MONOIDAL_PRODUCT;
@@ -471,24 +473,26 @@ pub use test271_host_value_types::TEST271_HOST_VALUE_TYPES;
 pub use test272_boundary_map_individuals::TEST272_BOUNDARY_MAP_INDIVIDUALS;
 pub use test273_type_definition_sum::TEST273_TYPE_DEFINITION_SUM;
 pub use test274_witness_types::TEST274_WITNESS_TYPES;
+pub use test275_reduction_advance::TEST275_REDUCTION_ADVANCE;
+pub use test276_witness_site_budget::TEST276_WITNESS_SITE_BUDGET;
 pub use test27_rewrite_rule::TEST27_REWRITE_RULE;
 pub use test28_measurement_unit::TEST28_MEASUREMENT_UNIT;
-pub use test29_coordinate_kind::TEST29_COORDINATE_KIND;
+pub use test29_triad_projection::TEST29_TRIAD_PROJECTION;
 pub use test2_primitives::TEST2_PRIMITIVES;
 pub use test30_proof_coverage::TEST30_PROOF_COVERAGE;
-pub use test31_quantum_level::TEST31_QUANTUM_LEVEL;
+pub use test31_witt_level::TEST31_WITT_LEVEL;
 pub use test32_arc_grounding::TEST32_ARC_GROUNDING;
 pub use test33_graph_gaps::TEST33_GRAPH_GAPS;
 pub use test34_completeness_candidate::TEST34_COMPLETENESS_CANDIDATE;
 pub use test35_completeness_certificate::TEST35_COMPLETENESS_CERTIFICATE;
-pub use test36_q1_ring::TEST36_Q1_RING;
-pub use test37_quantum_level_binding::TEST37_QUANTUM_LEVEL_BINDING;
+pub use test36_w16_ring::TEST36_W16_RING;
+pub use test37_witt_level_binding::TEST37_WITT_LEVEL_BINDING;
 pub use test38_session_lifecycle::TEST38_SESSION_LIFECYCLE;
 pub use test39_session_boundary::TEST39_SESSION_BOUNDARY;
 pub use test3_term_graph::TEST3_TERM_GRAPH;
 pub use test40_type_synthesis_goal::TEST40_TYPE_SYNTHESIS_GOAL;
 pub use test41_synthesis_result::TEST41_SYNTHESIS_RESULT;
-pub use test42_quantum_lift::TEST42_QUANTUM_LIFT;
+pub use test42_witt_lift::TEST42_WITT_LIFT;
 pub use test43_spectral_sequence::TEST43_SPECTRAL_SEQUENCE;
 pub use test44_monodromy_flat::TEST44_MONODROMY_FLAT;
 pub use test45_monodromy_twisted::TEST45_MONODROMY_TWISTED;
@@ -500,13 +504,13 @@ pub use test4_state_lifecycle::TEST4_STATE_LIFECYCLE;
 pub use test50_jacobian_resolver::TEST50_JACOBIAN_RESOLVER;
 pub use test51_product_type_pipeline::TEST51_PRODUCT_TYPE_PIPELINE;
 pub use test52_sum_type_variant::TEST52_SUM_TYPE_VARIANT;
-pub use test53_superposed_fiber::TEST53_SUPERPOSED_FIBER;
-pub use test54_saturated_context::TEST54_SATURATED_CONTEXT;
-pub use test55_saturation_witness::TEST55_SATURATION_WITNESS;
-pub use test56_domain_saturation_record::TEST56_DOMAIN_SATURATION_RECORD;
-pub use test57_saturation_phase::TEST57_SATURATION_PHASE;
-pub use test58_saturation_certificate::TEST58_SATURATION_CERTIFICATE;
-pub use test59_saturation_aware_resolver::TEST59_SATURATION_AWARE_RESOLVER;
+pub use test53_superposed_site::TEST53_SUPERPOSED_SITE;
+pub use test54_grounded_context::TEST54_GROUNDED_CONTEXT;
+pub use test55_grounding_witness::TEST55_GROUNDING_WITNESS;
+pub use test56_domain_grounding_record::TEST56_DOMAIN_GROUNDING_RECORD;
+pub use test57_grounding_phase::TEST57_GROUNDING_PHASE;
+pub use test58_grounding_certificate::TEST58_GROUNDING_CERTIFICATE;
+pub use test59_grounding_aware_resolver::TEST59_GROUNDING_AWARE_RESOLVER;
 pub use test5_partition::TEST5_PARTITION;
 pub use test60_impossibility_witness::TEST60_IMPOSSIBILITY_WITNESS;
 pub use test61_morphospace_record::TEST61_MORPHOSPACE_RECORD;
@@ -522,7 +526,7 @@ pub use test6_critical_identity::TEST6_CRITICAL_IDENTITY;
 pub use test70_measurement_resolver::TEST70_MEASUREMENT_RESOLVER;
 pub use test71_measurement_event::TEST71_MEASUREMENT_EVENT;
 pub use test72_measurement_certificate::TEST72_MEASUREMENT_CERTIFICATE;
-pub use test73_collapsed_fiber_state::TEST73_COLLAPSED_FIBER_STATE;
+pub use test73_collapsed_site_state::TEST73_COLLAPSED_SITE_STATE;
 pub use test74_quantum_thermodynamic::TEST74_QUANTUM_THERMODYNAMIC;
 pub use test75_partition_product::TEST75_PARTITION_PRODUCT;
 pub use test76_partition_coproduct::TEST76_PARTITION_COPRODUCT;
@@ -535,22 +539,22 @@ pub use test81_dihedral_algebra::TEST81_DIHEDRAL_ALGEBRA;
 pub use test82_level_successor::TEST82_LEVEL_SUCCESSOR;
 pub use test83_amplitude_normalization::TEST83_AMPLITUDE_NORMALIZATION;
 pub use test84_enum_variant::TEST84_ENUM_VARIANT;
-pub use test85_q1_ring_grounding::TEST85_Q1_RING_GROUNDING;
-pub use test86_quantum_lift_trivial::TEST86_QUANTUM_LIFT_TRIVIAL;
+pub use test85_w16_ring_grounding::TEST85_W16_RING_GROUNDING;
+pub use test86_witt_lift_trivial::TEST86_WITT_LIFT_TRIVIAL;
 pub use test87_spectral_convergence::TEST87_SPECTRAL_CONVERGENCE;
 pub use test88_lift_obstruction_nontrivial::TEST88_LIFT_OBSTRUCTION_NONTRIVIAL;
 pub use test89_lift_refinement_suggestion::TEST89_LIFT_REFINEMENT_SUGGESTION;
-pub use test8_fiber_budget::TEST8_FIBER_BUDGET;
+pub use test8_free_rank::TEST8_FREE_RANK;
 pub use test90_resolved_lift::TEST90_RESOLVED_LIFT;
-pub use test91_synthesis_goal_q1::TEST91_SYNTHESIS_GOAL_Q1;
+pub use test91_synthesis_goal_w16::TEST91_SYNTHESIS_GOAL_W16;
 pub use test92_synthesis_checkpoint::TEST92_SYNTHESIS_CHECKPOINT;
 pub use test93_synthesis_signature::TEST93_SYNTHESIS_SIGNATURE;
 pub use test94_synthesized_type::TEST94_SYNTHESIZED_TYPE;
 pub use test95_unreachable_signature::TEST95_UNREACHABLE_SIGNATURE;
-pub use test96_geodesic_trace_q1::TEST96_GEODESIC_TRACE_Q1;
+pub use test96_geodesic_trace_w16::TEST96_GEODESIC_TRACE_W16;
 pub use test97_evidence_bundle_ar1::TEST97_EVIDENCE_BUNDLE_AR1;
 pub use test98_evidence_bundle_dc10::TEST98_EVIDENCE_BUNDLE_DC10;
-pub use test99_measurement_born_q1::TEST99_MEASUREMENT_BORN_Q1;
+pub use test99_measurement_born_w16::TEST99_MEASUREMENT_BORN_W16;
 pub use test9_constraint_algebra::TEST9_CONSTRAINT_ALGEBRA;
 
 /// Returns all compiled SHACL fixture source strings for meta-validator
@@ -564,7 +568,7 @@ pub fn all_fixture_sources() -> Vec<&'static str> {
         TEST5_PARTITION,
         TEST6_CRITICAL_IDENTITY,
         TEST7_END_TO_END,
-        TEST8_FIBER_BUDGET,
+        TEST8_FREE_RANK,
         TEST9_CONSTRAINT_ALGEBRA,
         TEST10_ITERATIVE_RESOLUTION,
         TEST11_COMPOSITION,
@@ -585,20 +589,20 @@ pub fn all_fixture_sources() -> Vec<&'static str> {
         TEST26_COMPLEXITY_CLASS,
         TEST27_REWRITE_RULE,
         TEST28_MEASUREMENT_UNIT,
-        TEST29_COORDINATE_KIND,
+        TEST29_TRIAD_PROJECTION,
         TEST30_PROOF_COVERAGE,
-        TEST31_QUANTUM_LEVEL,
+        TEST31_WITT_LEVEL,
         TEST32_ARC_GROUNDING,
         TEST33_GRAPH_GAPS,
         TEST34_COMPLETENESS_CANDIDATE,
         TEST35_COMPLETENESS_CERTIFICATE,
-        TEST36_Q1_RING,
-        TEST37_QUANTUM_LEVEL_BINDING,
+        TEST36_W16_RING,
+        TEST37_WITT_LEVEL_BINDING,
         TEST38_SESSION_LIFECYCLE,
         TEST39_SESSION_BOUNDARY,
         TEST40_TYPE_SYNTHESIS_GOAL,
         TEST41_SYNTHESIS_RESULT,
-        TEST42_QUANTUM_LIFT,
+        TEST42_WITT_LIFT,
         TEST43_SPECTRAL_SEQUENCE,
         TEST44_MONODROMY_FLAT,
         TEST45_MONODROMY_TWISTED,
@@ -609,13 +613,13 @@ pub fn all_fixture_sources() -> Vec<&'static str> {
         TEST50_JACOBIAN_RESOLVER,
         TEST51_PRODUCT_TYPE_PIPELINE,
         TEST52_SUM_TYPE_VARIANT,
-        TEST53_SUPERPOSED_FIBER,
-        TEST54_SATURATED_CONTEXT,
-        TEST55_SATURATION_WITNESS,
-        TEST56_DOMAIN_SATURATION_RECORD,
-        TEST57_SATURATION_PHASE,
-        TEST58_SATURATION_CERTIFICATE,
-        TEST59_SATURATION_AWARE_RESOLVER,
+        TEST53_SUPERPOSED_SITE,
+        TEST54_GROUNDED_CONTEXT,
+        TEST55_GROUNDING_WITNESS,
+        TEST56_DOMAIN_GROUNDING_RECORD,
+        TEST57_GROUNDING_PHASE,
+        TEST58_GROUNDING_CERTIFICATE,
+        TEST59_GROUNDING_AWARE_RESOLVER,
         TEST60_IMPOSSIBILITY_WITNESS,
         TEST61_MORPHOSPACE_RECORD,
         TEST62_MORPHOSPACE_BOUNDARY,
@@ -629,7 +633,7 @@ pub fn all_fixture_sources() -> Vec<&'static str> {
         TEST70_MEASUREMENT_RESOLVER,
         TEST71_MEASUREMENT_EVENT,
         TEST72_MEASUREMENT_CERTIFICATE,
-        TEST73_COLLAPSED_FIBER_STATE,
+        TEST73_COLLAPSED_SITE_STATE,
         TEST74_QUANTUM_THERMODYNAMIC,
         TEST75_PARTITION_PRODUCT,
         TEST76_PARTITION_COPRODUCT,
@@ -641,21 +645,21 @@ pub fn all_fixture_sources() -> Vec<&'static str> {
         TEST82_LEVEL_SUCCESSOR,
         TEST83_AMPLITUDE_NORMALIZATION,
         TEST84_ENUM_VARIANT,
-        TEST85_Q1_RING_GROUNDING,
-        TEST86_QUANTUM_LIFT_TRIVIAL,
+        TEST85_W16_RING_GROUNDING,
+        TEST86_WITT_LIFT_TRIVIAL,
         TEST87_SPECTRAL_CONVERGENCE,
         TEST88_LIFT_OBSTRUCTION_NONTRIVIAL,
         TEST89_LIFT_REFINEMENT_SUGGESTION,
         TEST90_RESOLVED_LIFT,
-        TEST91_SYNTHESIS_GOAL_Q1,
+        TEST91_SYNTHESIS_GOAL_W16,
         TEST92_SYNTHESIS_CHECKPOINT,
         TEST93_SYNTHESIS_SIGNATURE,
         TEST94_SYNTHESIZED_TYPE,
         TEST95_UNREACHABLE_SIGNATURE,
-        TEST96_GEODESIC_TRACE_Q1,
+        TEST96_GEODESIC_TRACE_W16,
         TEST97_EVIDENCE_BUNDLE_AR1,
         TEST98_EVIDENCE_BUNDLE_DC10,
-        TEST99_MEASUREMENT_BORN_Q1,
+        TEST99_MEASUREMENT_BORN_W16,
         TEST100_NORMATIVE_CHAIN,
         TEST101_LIFT_CHAIN_FLAT,
         TEST102_LIFT_CHAIN_TWISTED,
@@ -678,16 +682,16 @@ pub fn all_fixture_sources() -> Vec<&'static str> {
         TEST119_OBSTRUCTION_TERMINATION,
         TEST120_COEFFICIENT_RING,
         TEST121_GLUING_FEEDBACK,
-        TEST122_SESSION_SATURATION,
+        TEST122_SESSION_GROUNDING,
         TEST123_AMPLITUDE_INDEX,
         TEST124_GLYPH,
         TEST125_DIHEDRAL_GROUP,
         TEST126_VALIDITY_SCOPE_KIND,
-        TEST127_QUANTUM_LEVEL_RESOLVER,
+        TEST127_WITT_LEVEL_RESOLVER,
         TEST128_STRATUM_OBSERVABLE,
         TEST129_METRIC_OBSERVABLE,
         TEST130_PATH_OBSERVABLE,
-        TEST131_CASCADE_OBSERVABLE,
+        TEST131_REDUCTION_OBSERVABLE,
         TEST132_HOLONOMY_OBSERVABLE,
         TEST133_INCOMPATIBILITY_METRIC,
         TEST134_STRATUM_VALUE,
@@ -696,14 +700,14 @@ pub fn all_fixture_sources() -> Vec<&'static str> {
         TEST137_PATH_LENGTH,
         TEST138_TOTAL_VARIATION,
         TEST139_WINDING_NUMBER,
-        TEST140_CASCADE_LENGTH,
-        TEST141_CASCADE_COUNT,
+        TEST140_REDUCTION_LENGTH,
+        TEST141_REDUCTION_COUNT,
         TEST142_CATASTROPHE_THRESHOLD,
         TEST143_CATASTROPHE_COUNT,
         TEST144_COMMUTATOR,
         TEST145_CURVATURE_FLUX,
         TEST146_PARALLEL_TRANSPORT,
-        TEST147_CASCADE_ENTROPY,
+        TEST147_REDUCTION_ENTROPY,
         TEST148_PHASE_BOUNDARY_TYPE,
         TEST149_FACE_MAP,
         TEST150_NERVE_FUNCTOR,
@@ -719,7 +723,7 @@ pub fn all_fixture_sources() -> Vec<&'static str> {
         TEST160_SHARED_CONTEXT,
         TEST161_EXECUTION_POLICY,
         TEST162_SESSION_COMPOSITION,
-        TEST163_DISTRIBUTED_SATURATION,
+        TEST163_DISTRIBUTED_GROUNDING,
         TEST164_EMBEDDING,
         TEST165_ACTION,
         TEST166_SESSION_BOUNDARY_TYPE,
@@ -747,7 +751,7 @@ pub fn all_fixture_sources() -> Vec<&'static str> {
         TEST188_ENCODING_CONFIGURATION,
         TEST189_ENCODING_QUALITY,
         TEST190_BASE_METRIC,
-        TEST191_SATURATION_OBSERVABLE,
+        TEST191_GROUNDING_OBSERVABLE,
         TEST192_EULER_CHARACTERISTIC,
         TEST193_GALOIS_CONNECTION,
         TEST194_NERVE_OPERATIONS,
@@ -760,16 +764,16 @@ pub fn all_fixture_sources() -> Vec<&'static str> {
         TEST201_ACCUMULATION_OPERATION,
         TEST202_LEASE_PARTITION_OPERATION,
         TEST203_SESSION_COMPOSITION_OPERATION,
-        TEST204_EULER_CASCADE,
-        TEST205_CASCADE_STAGE,
-        TEST206_CASCADE_STATE,
+        TEST204_EULER_REDUCTION,
+        TEST205_REDUCTION_STEP,
+        TEST206_REDUCTION_STATE,
         TEST207_PHASE_GATE,
         TEST208_EPOCH,
         TEST209_PREDICATE_EXPRESSION,
         TEST210_GUARD_EXPRESSION,
         TEST211_TRANSITION_EFFECT,
         TEST212_SERVICE_WINDOW,
-        TEST213_CASCADE_TRANSACTION,
+        TEST213_REDUCTION_TRANSACTION,
         TEST214_FEASIBILITY_RESULT,
         TEST215_LEASE_STATE,
         TEST216_MANAGED_LEASE,
@@ -788,7 +792,7 @@ pub fn all_fixture_sources() -> Vec<&'static str> {
         TEST229_INTERACTION_CONTEXT,
         TEST230_COMMUTATOR_STATE,
         TEST231_ASSOCIATOR_STATE,
-        TEST232_THREE_WAY_FIBER,
+        TEST232_THREE_WAY_SITE,
         TEST233_NEGOTIATION_TRACE,
         TEST234_INTERACTION_NERVE,
         TEST235_MONOIDAL_PRODUCT,
@@ -831,5 +835,7 @@ pub fn all_fixture_sources() -> Vec<&'static str> {
         TEST272_BOUNDARY_MAP_INDIVIDUALS,
         TEST273_TYPE_DEFINITION_SUM,
         TEST274_WITNESS_TYPES,
+        TEST275_REDUCTION_ADVANCE,
+        TEST276_WITNESS_SITE_BUDGET,
     ]
 }

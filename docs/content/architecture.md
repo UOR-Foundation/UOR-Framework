@@ -46,7 +46,7 @@ This crate is the single source of truth. It is internal (`publish = false`).
 
 - **`mapping.rs`**: Namespace → module, XSD → Rust type, class IRI → path tables
 - **`traits.rs`**: Class → trait, property → method generation
-- **`enums.rs`**: Enum detection (PrimitiveOp, MetricAxis, Space, FiberState, ExecutionPolicyKind, GeometricCharacter, VerificationDomain, ComplexityClass, RewriteRule, MeasurementUnit, CoordinateKind, SessionBoundaryType, PhaseBoundaryType, SaturationPhase, AchievabilityStatus, ValidityScopeKind, ProofModality) and QuantumLevel newtype struct generation
+- **`enums.rs`**: Enum detection (PrimitiveOp, MetricAxis, Space, SiteState, ExecutionPolicyKind, GeometricCharacter, VerificationDomain, ComplexityClass, RewriteRule, MeasurementUnit, TriadProjection, SessionBoundaryType, PhaseBoundaryType, GroundingPhase, AchievabilityStatus, ValidityScopeKind, ProofModality) and WittLevel newtype struct generation
 - **`individuals.rs`**: Named individual → const module / PrimitiveOp impl generation
 - **`emit.rs`**: Rust source code writer
 
@@ -57,7 +57,7 @@ is produced by `uor-crate` — never hand-edited.
 
 - **{@count:traits} traits** (one per OWL class, generic over `Primitives`)
 - **{@count:methods} methods** (one per property with a domain)
-- **{@count:enums} enums** (Space, PrimitiveOp, MetricAxis, FiberState, ExecutionPolicyKind, GeometricCharacter, VerificationDomain, ComplexityClass, RewriteRule, MeasurementUnit, CoordinateKind, SessionBoundaryType, PhaseBoundaryType, SaturationPhase, AchievabilityStatus, ValidityScopeKind, ProofModality) **+ 1 struct** (QuantumLevel)
+- **{@count:enums} enums** (Space, PrimitiveOp, MetricAxis, SiteState, ExecutionPolicyKind, GeometricCharacter, VerificationDomain, ComplexityClass, RewriteRule, MeasurementUnit, TriadProjection, SessionBoundaryType, PhaseBoundaryType, GroundingPhase, AchievabilityStatus, ValidityScopeKind, ProofModality) **+ 1 struct** (WittLevel)
 - **{@count:constant_modules} constant modules** (for named individuals)
 - **Zero mandatory dependencies** — pure traits
 
@@ -117,39 +117,39 @@ The spec crate implements all {@count:amendments} amendments from the UOR Founda
 | 6 | morphism/ (NEW) | 4 classes, 10 properties |
 | 7 | state/ (NEW) | 4 classes, 16 properties |
 | 8 | all | uor:space annotation property on all namespaces |
-| 9 | partition/ | FiberCoordinate, FiberBudget, FiberPinning; 11 properties |
+| 9 | partition/ | SiteIndex, FreeRank, SiteBinding; 11 properties |
 | 10 | type/ | Constraint hierarchy (6 classes), MetricAxis, 3 axis individuals |
 | 11 | resolver/, derivation/ | ResolutionState, RefinementSuggestion, DerivationStep/RefinementStep |
 | 12 | morphism/ | Composition, Identity, CompositionLaw; criticalComposition individual |
 | 13 | u/, op/ | Content addressing (AD_1/AD_2), AddressHierarchy, 4 properties |
 | 14 | op/ | 50 Ring/Boolean/XOR/Dihedral/Universal/Group/Carry identities |
-| 15 | op/ | 42 Constraint/Fiber/Resolution identities |
+| 15 | op/ | 42 Constraint/Site/Resolution identities |
 | 16 | op/ | 52 Observable/Cert/Structure identities |
 | 17 | op/ | 64 Transform/Automorphism/Embedding/Analytical identities |
-| 18 | observable/, resolver/ | Jacobian, TopologicalObservable, BettiNumber, SpectralGap, ConstraintNerve |
+| 18 | observable/, resolver/ | Jacobian, TopologicalObservable, BettiNumber, SpectralGap, CechNerve |
 | 19 | op/ | 21 Thermodynamic/Analytical/Partition/Resolution identities |
 | 20 | op/ | 6 Differential calculus, Homological algebra, Index theorem identities |
 | 21 | op/, homology/, cohomology/ | Structural Reasoning namespaces, ψ-pipeline, identity grounding |
 | 22 | morphism/, state/ | TopologicalDelta class, topologicalSnapshot property |
-| 23 | op/, resolver/, derivation/, observable/, type/, query/ | Typed controlled vocabularies: 7 new classes, 35 individuals, 12 new properties |
+| 23 | op/, resolver/, derivation/, observable/, type/, query/ | Typed controlled vocabularies: 7 new classes, 35 individuals, 12 new properties (includes TriadProjection) |
 | 24 | morphism/, query/, type/, cert/ | Surface Grounding Layer, GroundingMap, CompleteType, graph gap closures |
 | 25 | type/, resolver/, cert/ | Completeness Certification: CompletenessCandidate, CompletenessWitness, CompletenessResolver |
-| 26 | schema/, op/, resolver/ | Quantum Level Scaling: Q1Ring, QuantumLevelBinding, QuantumLevelResolver |
+| 26 | schema/, op/, resolver/ | Witt Level Scaling: W16Ring, WittLevelBinding, WittLevelResolver |
 | 27 | state/, resolver/, query/ | Session-Scoped Resolution: Session, SessionBoundary, SessionBoundaryType enum |
 | 28 | type/, resolver/, derivation/, observable/ | ψ-Pipeline Inversion (Type Synthesis): TypeSynthesisGoal, TypeSynthesisResult |
-| 29 | type/, observable/, resolver/ | Quantum Level Spectral Sequence: QuantumLift, LiftObstruction, SpectralSequencePage |
+| 29 | type/, observable/, resolver/ | Witt Level Spectral Sequence: WittLift, LiftObstruction, SpectralSequencePage |
 | 30 | observable/, type/, resolver/ | Monodromy Observables: HolonomyGroup, Monodromy, FlatType, TwistedType |
 | 31 | proof/, observable/, resolver/, partition/, trace/ | Ontology Gap Closures: PhaseBoundaryType enum, JacobianGuidedResolver, PT\_/ST\_ identities (EmpiricalVerification eliminated in Amendment 86; proofs reclassified) |
-| 32 | type/, resolver/, op/ | RC\_5 Superposition Vocabulary: SuperposedFiberState, SuperpositionResolver, SuperpositionDomain |
-| 33 | state/, cert/, resolver/ | Saturated Context Limit: SaturatedContext, SaturationWitness, SaturationPhase enum, SC\_1–SC\_7 |
+| 32 | type/, resolver/, op/ | RC\_5 Superposition Vocabulary: SuperposedSiteState, SuperpositionResolver, SuperpositionDomain |
+| 33 | state/, cert/, resolver/ | Grounded Context Limit: GroundedContext, GroundingWitness, GroundingPhase enum, GS\_1–GS\_7 |
 | 34 | proof/, type/, observable/ | Morphospace Achievability: ImpossibilityWitness, MorphospaceRecord, AchievabilityStatus enum, MS\_1–MS\_5 |
 | 35 | trace/, cert/, resolver/ | Computational Geodesic: GeodesicTrace, GeodesicViolation, GeodesicCertificate, GD\_1–GD\_5 |
-| 36 | resolver/, trace/, cert/, type/, op/ | Measurement Boundary: MeasurementResolver, MeasurementEvent, CollapsedFiberState, QuantumThermodynamicDomain, QM\_1–QM\_4 |
+| 36 | resolver/, trace/, cert/, type/, op/ | Measurement Boundary: MeasurementResolver, MeasurementEvent, CollapsedSiteState, QuantumThermodynamicDomain, QM\_1–QM\_4 |
 | 37 | partition/, trace/, cert/, type/, schema/, observable/, resolver/, op/ | Ontology Gap Closures: PartitionProduct, PartitionCoproduct, MeasurementOutcome, GeodesicEvidenceBundle, BornRuleVerification |
 | 38 | cert/, derivation/ | Q1 Vocabulary: SynthesisCheckpoint, isAR1Ordered, isDC10Selected, checkpointStep, checkpointState |
 | 39 | (SHACL only) | Q1 Lift + Inverse Pipeline Coverage: test85–test95 |
 | 40 | (SHACL only) | Q1 Normative Certification Coverage: test96–test100 |
-| 41 | op/, type/, proof/, resolver/, derivation/, cert/ | Arbitrary Qₙ Scaling: ValidityScopeKind enum, LiftChain, ObstructionChain, InductiveProof, TowerCompletenessResolver, LiftChainCertificate, QT\_1–QT\_7 |
+| 41 | op/, type/, proof/, resolver/, derivation/, cert/ | Arbitrary Wₙ Scaling: ValidityScopeKind enum, LiftChain, ObstructionChain, InductiveProof, TowerCompletenessResolver, LiftChainCertificate, WT\_1–WT\_7 |
 | 42 | (grammar) | UOR Term Grammar Formalization: machine-generated EBNF grammar from ontology |
 | 43 | u/ | Cryptographic Primitive Pinning: digestAlgorithm, canonicalBytes, BLAKE3/SHA-256 |
 | 44 | op/, type/, observable/, resolver/, proof/, derivation/, trace/, cert/, state/ | Structural Gap Closures (G1–G11): CarryConstraint pinning, joint satisfiability, dihedral algebra, constraint expressiveness, SumType topology, synthesis reachability, obstruction termination, coefficient ring, gluing feedback, session saturation bridge, amplitude index characterization |

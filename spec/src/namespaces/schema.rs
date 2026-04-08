@@ -8,8 +8,8 @@
 //! semantics are strictly separated. A `Literal` *denotes* a `Datum` via
 //! `schema:denotes` without *being* one.
 //!
-//! Amendment 26 adds `Q1Ring` — the concrete ring Z/(2^16)Z at quantum level 16 —
-//! with properties `Q1bitWidth` (= 16) and `Q1capacity` (= 65,536).
+//! Amendment 26 adds `W16Ring` — the concrete ring Z/(2^16)Z at Witt level 16 —
+//! with properties `W16bitWidth` (= 16) and `W16capacity` (= 65,536).
 //!
 //! **Space classification:** `kernel` — compiled into ROM.
 
@@ -43,7 +43,7 @@ fn classes() -> Vec<Class> {
         Class {
             id: "https://uor.foundation/schema/Datum",
             label: "Datum",
-            comment: "An element of the ring Z/(2^n)Z at a specific quantum level n. \
+            comment: "An element of the ring Z/(2^n)Z at a specific Witt level n. \
                       The primary semantic value type. Disjoint from Term: datums are \
                       values, terms are syntactic expressions that evaluate to datums.",
             subclass_of: &[OWL_THING],
@@ -91,34 +91,34 @@ fn classes() -> Vec<Class> {
         Class {
             id: "https://uor.foundation/schema/Ring",
             label: "Ring",
-            comment: "The ambient ring Z/(2^n)Z at a specific quantum level n. \
+            comment: "The ambient ring Z/(2^n)Z at a specific Witt level n. \
                       The Ring is the primary data structure of the UOR kernel. \
                       Its two generators (negation and complement) produce the \
                       dihedral group D_{2^n} that governs the invariance frame.",
             subclass_of: &[OWL_THING],
             disjoint_with: &[],
         },
-        // Amendment 26: Q1Ring — the concrete ring at quantum level 16
+        // Amendment 26: W16Ring — the concrete ring at Witt level 16
         Class {
-            id: "https://uor.foundation/schema/Q1Ring",
-            label: "Q1Ring",
-            comment: "The concrete ring Z/(2^16)Z at quantum level 16. Subclass of \
-                      schema:Ring. Carries 65,536 elements. Q1Ring is the first \
+            id: "https://uor.foundation/schema/W16Ring",
+            label: "W16Ring",
+            comment: "The concrete ring Z/(2^16)Z at Witt level 16. Subclass of \
+                      schema:Ring. Carries 65,536 elements. W16Ring is the first \
                       extension of the default Q0 ring and is the target of Amendment \
                       26's universality proofs.",
             subclass_of: &["https://uor.foundation/schema/Ring"],
             disjoint_with: &[],
         },
-        // v3.2: QuantumLevel class for Q-n generalization
+        // v3.2: WittLevel class for Q-n generalization
         Class {
-            id: "https://uor.foundation/schema/QuantumLevel",
-            label: "QuantumLevel",
-            comment: "A named quantum level Q_k at which the UOR ring operates. \
+            id: "https://uor.foundation/schema/WittLevel",
+            label: "WittLevel",
+            comment: "A named Witt level Q_k at which the UOR ring operates. \
                       Level Q_k uses 8*(k+1) bits, 2^(8*(k+1)) states, and modulus \
                       2^(8*(k+1)). The named individuals Q0-Q3 are the spec-defined \
                       reference levels. The class is open: Prism implementations \
-                      operating at higher levels declare their own QuantumLevel \
-                      individuals. The nextLevel property forms an unbounded chain \
+                      operating at higher levels declare their own WittLevel \
+                      individuals. The nextWittLevel property forms an unbounded chain \
                       Q0 -> Q1 -> Q2 -> ...",
             subclass_of: &[OWL_THING],
             disjoint_with: &[],
@@ -249,9 +249,9 @@ fn properties() -> Vec<Property> {
             range: XSD_NON_NEGATIVE_INTEGER,
         },
         Property {
-            id: "https://uor.foundation/schema/quantum",
-            label: "quantum",
-            comment: "The quantum level n of a datum, where the datum's ring is \
+            id: "https://uor.foundation/schema/wittLength",
+            label: "wittLength",
+            comment: "The Witt level n of a datum, where the datum's ring is \
                       Z/(2^n)Z. Determines the bit width and modulus of the datum.",
             kind: PropertyKind::Datatype,
             functional: true,
@@ -279,14 +279,14 @@ fn properties() -> Vec<Property> {
             range: XSD_NON_NEGATIVE_INTEGER,
         },
         Property {
-            id: "https://uor.foundation/schema/glyph",
-            label: "glyph",
-            comment: "The Braille address associated with this datum, linking the \
-                      algebraic value to its content-addressable identifier.",
+            id: "https://uor.foundation/schema/element",
+            label: "element",
+            comment: "The content-addressable element associated with this datum, \
+                      linking the algebraic value to its identifier.",
             kind: PropertyKind::Object,
             functional: true,
             domain: Some("https://uor.foundation/schema/Datum"),
-            range: "https://uor.foundation/u/Address",
+            range: "https://uor.foundation/u/Element",
         },
         Property {
             id: "https://uor.foundation/schema/operator",
@@ -309,11 +309,11 @@ fn properties() -> Vec<Property> {
         },
         // Amendment 2: Ring properties
         Property {
-            id: "https://uor.foundation/schema/ringQuantum",
-            label: "ringQuantum",
+            id: "https://uor.foundation/schema/ringWittLength",
+            label: "ringWittLength",
             comment: "The bit width n of the ring Z/(2^n)Z. Distinct from \
-                      schema:quantum on Datum — ringQuantum is the container's \
-                      bit width; datum quantum is a membership property.",
+                      schema:wittLength on Datum — ringWittLength is the container's \
+                      bit width; datum wittLength is a membership property.",
             kind: PropertyKind::Datatype,
             functional: true,
             domain: Some("https://uor.foundation/schema/Ring"),
@@ -323,7 +323,7 @@ fn properties() -> Vec<Property> {
             id: "https://uor.foundation/schema/modulus",
             label: "modulus",
             comment: "The modulus 2^n of the ring. Equals 2 raised to the power \
-                      of ringQuantum.",
+                      of ringWittLength.",
             kind: PropertyKind::Datatype,
             functional: true,
             domain: Some("https://uor.foundation/schema/Ring"),
@@ -370,86 +370,76 @@ fn properties() -> Vec<Property> {
             domain: Some("https://uor.foundation/schema/Literal"),
             range: "https://uor.foundation/schema/Datum",
         },
-        // v3.2: QuantumLevel properties
-        Property {
-            id: "https://uor.foundation/schema/quantumIndex",
-            label: "quantumIndex",
-            comment: "The index k of this quantum level. Q0 has index 0, Q1 has \
-                      index 1, etc.",
-            kind: PropertyKind::Datatype,
-            functional: true,
-            domain: Some("https://uor.foundation/schema/QuantumLevel"),
-            range: XSD_NON_NEGATIVE_INTEGER,
-        },
+        // v3.2: WittLevel properties
         Property {
             id: "https://uor.foundation/schema/bitsWidth",
             label: "bitsWidth",
-            comment: "The bit width 8*(k+1) of this quantum level.",
+            comment: "The bit width 8*(k+1) of this Witt level.",
             kind: PropertyKind::Datatype,
             functional: true,
-            domain: Some("https://uor.foundation/schema/QuantumLevel"),
+            domain: Some("https://uor.foundation/schema/WittLevel"),
             range: XSD_POSITIVE_INTEGER,
         },
         Property {
             id: "https://uor.foundation/schema/cycleSize",
             label: "cycleSize",
-            comment: "The number of distinct states 2^(8*(k+1)) at this quantum level.",
+            comment: "The number of distinct states 2^(8*(k+1)) at this Witt level.",
             kind: PropertyKind::Datatype,
             functional: true,
-            domain: Some("https://uor.foundation/schema/QuantumLevel"),
+            domain: Some("https://uor.foundation/schema/WittLevel"),
             range: XSD_POSITIVE_INTEGER,
         },
         Property {
-            id: "https://uor.foundation/schema/nextLevel",
-            label: "nextLevel",
-            comment: "The next quantum level in the chain: Q_k -> Q_(k+1). The chain \
+            id: "https://uor.foundation/schema/nextWittLevel",
+            label: "nextWittLevel",
+            comment: "The next Witt level in the chain: Q_k -> Q_(k+1). The chain \
                       is unbounded; Q3 points to Q4, which is not a named individual \
                       in the spec but may be declared by Prism implementations.",
             kind: PropertyKind::Object,
             functional: true,
-            domain: Some("https://uor.foundation/schema/QuantumLevel"),
-            range: "https://uor.foundation/schema/QuantumLevel",
+            domain: Some("https://uor.foundation/schema/WittLevel"),
+            range: "https://uor.foundation/schema/WittLevel",
         },
         // Amendment 37: Quantum level chain successor (Gap 5)
         Property {
-            id: "https://uor.foundation/schema/levelSuccessor",
-            label: "levelSuccessor",
-            comment: "The predecessor quantum level in the chain: Q_(k+1) -> Q_k. \
-                      Inverse of nextLevel. If nextLevel(Q_k) = Q_(k+1), then \
-                      levelSuccessor(Q_(k+1)) = Q_k. Formalizes the chain extension \
+            id: "https://uor.foundation/schema/wittLevelPredecessor",
+            label: "wittLevelPredecessor",
+            comment: "The predecessor Witt level in the chain: Q_(k+1) -> Q_k. \
+                      Inverse of nextWittLevel. If nextWittLevel(Q_k) = Q_(k+1), then \
+                      wittLevelPredecessor(Q_(k+1)) = Q_k. Formalizes the chain extension \
                       protocol (QL_8).",
             kind: PropertyKind::Object,
             functional: true,
-            domain: Some("https://uor.foundation/schema/QuantumLevel"),
-            range: "https://uor.foundation/schema/QuantumLevel",
+            domain: Some("https://uor.foundation/schema/WittLevel"),
+            range: "https://uor.foundation/schema/WittLevel",
         },
         Property {
-            id: "https://uor.foundation/schema/atQuantumLevel",
-            label: "atQuantumLevel",
-            comment: "The quantum level at which this Ring instance operates. Links a \
-                      concrete Ring individual to its QuantumLevel.",
+            id: "https://uor.foundation/schema/atWittLevel",
+            label: "atWittLevel",
+            comment: "The Witt level at which this Ring instance operates. Links a \
+                      concrete Ring individual to its WittLevel.",
             kind: PropertyKind::Object,
             functional: true,
             domain: Some("https://uor.foundation/schema/Ring"),
-            range: "https://uor.foundation/schema/QuantumLevel",
+            range: "https://uor.foundation/schema/WittLevel",
         },
-        // Amendment 26: Q1Ring properties
+        // Amendment 26: W16Ring properties
         Property {
-            id: "https://uor.foundation/schema/Q1bitWidth",
-            label: "Q1bitWidth",
+            id: "https://uor.foundation/schema/W16bitWidth",
+            label: "W16bitWidth",
             comment: "Bit width of the Q1 ring: 16.",
             kind: PropertyKind::Datatype,
             functional: true,
-            domain: Some("https://uor.foundation/schema/Q1Ring"),
+            domain: Some("https://uor.foundation/schema/W16Ring"),
             range: XSD_POSITIVE_INTEGER,
         },
         Property {
-            id: "https://uor.foundation/schema/Q1capacity",
-            label: "Q1capacity",
+            id: "https://uor.foundation/schema/W16capacity",
+            label: "W16capacity",
             comment: "Carrier set size of the Q1 ring: 65,536 elements.",
             kind: PropertyKind::Datatype,
             functional: true,
-            domain: Some("https://uor.foundation/schema/Q1Ring"),
+            domain: Some("https://uor.foundation/schema/W16Ring"),
             range: XSD_POSITIVE_INTEGER,
         },
         // Amendment 89: AST properties for identity formalization
@@ -688,7 +678,7 @@ fn individuals() -> Vec<Individual> {
             type_: "https://uor.foundation/schema/Datum",
             label: "π₁",
             comment: "The unique generator of R_n under successor. Value = 1 at every \
-                      quantum level. Under iterated application of succ, π₁ generates \
+                      Witt level. Under iterated application of succ, π₁ generates \
                       every element of the ring.",
             properties: &[(
                 "https://uor.foundation/schema/value",
@@ -700,25 +690,21 @@ fn individuals() -> Vec<Individual> {
             id: "https://uor.foundation/schema/zero",
             type_: "https://uor.foundation/schema/Datum",
             label: "zero",
-            comment: "The additive identity of the ring. Value = 0 at every quantum \
+            comment: "The additive identity of the ring. Value = 0 at every Witt \
                       level. op:add(x, zero) = x for all x in R_n.",
             properties: &[(
                 "https://uor.foundation/schema/value",
                 IndividualValue::Int(0),
             )],
         },
-        // v3.2: QuantumLevel individuals Q0-Q3
+        // v3.2: WittLevel individuals W8-W32
         Individual {
-            id: "https://uor.foundation/schema/Q0",
-            type_: "https://uor.foundation/schema/QuantumLevel",
-            label: "Q0",
-            comment: "Quantum level 0: 8-bit ring Z/256Z, 256 states. The reference \
+            id: "https://uor.foundation/schema/W8",
+            type_: "https://uor.foundation/schema/WittLevel",
+            label: "W8",
+            comment: "Witt level 0: 8-bit ring Z/256Z, 256 states. The reference \
                       level for all ComputationCertificate proofs in the spec.",
             properties: &[
-                (
-                    "https://uor.foundation/schema/quantumIndex",
-                    IndividualValue::Int(0),
-                ),
                 (
                     "https://uor.foundation/schema/bitsWidth",
                     IndividualValue::Int(8),
@@ -728,21 +714,17 @@ fn individuals() -> Vec<Individual> {
                     IndividualValue::Int(256),
                 ),
                 (
-                    "https://uor.foundation/schema/nextLevel",
-                    IndividualValue::IriRef("https://uor.foundation/schema/Q1"),
+                    "https://uor.foundation/schema/nextWittLevel",
+                    IndividualValue::IriRef("https://uor.foundation/schema/W16"),
                 ),
             ],
         },
         Individual {
-            id: "https://uor.foundation/schema/Q1",
-            type_: "https://uor.foundation/schema/QuantumLevel",
-            label: "Q1",
-            comment: "Quantum level 1: 16-bit ring Z/65536Z, 65,536 states.",
+            id: "https://uor.foundation/schema/W16",
+            type_: "https://uor.foundation/schema/WittLevel",
+            label: "W16",
+            comment: "Witt level 1: 16-bit ring Z/65536Z, 65,536 states.",
             properties: &[
-                (
-                    "https://uor.foundation/schema/quantumIndex",
-                    IndividualValue::Int(1),
-                ),
                 (
                     "https://uor.foundation/schema/bitsWidth",
                     IndividualValue::Int(16),
@@ -752,25 +734,21 @@ fn individuals() -> Vec<Individual> {
                     IndividualValue::Int(65536),
                 ),
                 (
-                    "https://uor.foundation/schema/nextLevel",
-                    IndividualValue::IriRef("https://uor.foundation/schema/Q2"),
+                    "https://uor.foundation/schema/nextWittLevel",
+                    IndividualValue::IriRef("https://uor.foundation/schema/W24"),
                 ),
                 (
-                    "https://uor.foundation/schema/levelSuccessor",
-                    IndividualValue::IriRef("https://uor.foundation/schema/Q0"),
+                    "https://uor.foundation/schema/wittLevelPredecessor",
+                    IndividualValue::IriRef("https://uor.foundation/schema/W8"),
                 ),
             ],
         },
         Individual {
-            id: "https://uor.foundation/schema/Q2",
-            type_: "https://uor.foundation/schema/QuantumLevel",
-            label: "Q2",
-            comment: "Quantum level 2: 24-bit ring Z/16777216Z, 16,777,216 states.",
+            id: "https://uor.foundation/schema/W24",
+            type_: "https://uor.foundation/schema/WittLevel",
+            label: "W24",
+            comment: "Witt level 2: 24-bit ring Z/16777216Z, 16,777,216 states.",
             properties: &[
-                (
-                    "https://uor.foundation/schema/quantumIndex",
-                    IndividualValue::Int(2),
-                ),
                 (
                     "https://uor.foundation/schema/bitsWidth",
                     IndividualValue::Int(24),
@@ -780,27 +758,23 @@ fn individuals() -> Vec<Individual> {
                     IndividualValue::Int(16_777_216),
                 ),
                 (
-                    "https://uor.foundation/schema/nextLevel",
-                    IndividualValue::IriRef("https://uor.foundation/schema/Q3"),
+                    "https://uor.foundation/schema/nextWittLevel",
+                    IndividualValue::IriRef("https://uor.foundation/schema/W32"),
                 ),
                 (
-                    "https://uor.foundation/schema/levelSuccessor",
-                    IndividualValue::IriRef("https://uor.foundation/schema/Q1"),
+                    "https://uor.foundation/schema/wittLevelPredecessor",
+                    IndividualValue::IriRef("https://uor.foundation/schema/W16"),
                 ),
             ],
         },
         Individual {
-            id: "https://uor.foundation/schema/Q3",
-            type_: "https://uor.foundation/schema/QuantumLevel",
-            label: "Q3",
-            comment: "Quantum level 3: 32-bit ring Z/4294967296Z, 4,294,967,296 states. \
-                      The highest named level in the spec. nextLevel is absent — Prism \
+            id: "https://uor.foundation/schema/W32",
+            type_: "https://uor.foundation/schema/WittLevel",
+            label: "W32",
+            comment: "Witt level 3: 32-bit ring Z/4294967296Z, 4,294,967,296 states. \
+                      The highest named level in the spec. nextWittLevel is absent — Prism \
                       implementations may extend the chain.",
             properties: &[
-                (
-                    "https://uor.foundation/schema/quantumIndex",
-                    IndividualValue::Int(3),
-                ),
                 (
                     "https://uor.foundation/schema/bitsWidth",
                     IndividualValue::Int(32),
@@ -810,8 +784,8 @@ fn individuals() -> Vec<Individual> {
                     IndividualValue::Int(4_294_967_296),
                 ),
                 (
-                    "https://uor.foundation/schema/levelSuccessor",
-                    IndividualValue::IriRef("https://uor.foundation/schema/Q2"),
+                    "https://uor.foundation/schema/wittLevelPredecessor",
+                    IndividualValue::IriRef("https://uor.foundation/schema/W24"),
                 ),
             ],
         },

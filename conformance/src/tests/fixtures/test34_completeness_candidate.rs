@@ -14,11 +14,11 @@ type:ex_candidate_34 a owl:NamedIndividual, type:CompletenessCandidate ;
     type:candidateNerve resolver:ex_nerve_34 .
 
 type:ex_constrained_34 a owl:NamedIndividual, type:ConstrainedType .
-resolver:ex_nerve_34 a owl:NamedIndividual, resolver:ConstraintNerve .
+resolver:ex_nerve_34 a owl:NamedIndividual, resolver:CechNerve .
 
 type:ex_witness_34 a owl:NamedIndividual, type:CompletenessWitness ;
     type:witnessConstraint type:ex_constr_34 ;
-    type:fibersClosed "3"^^xsd:nonNegativeInteger .
+    type:sitesClosed "3"^^xsd:nonNegativeInteger .
 
 type:ex_constr_34 a owl:NamedIndividual, type:Constraint .
 "#;

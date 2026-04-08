@@ -25,15 +25,15 @@ pub const TEST10_ITERATIVE_RESOLUTION: &str = r#"
     resolver:isComplete     false ;
     resolver:iterationCount "2"^^xsd:nonNegativeInteger ;
     resolver:convergenceRate "0.5"^^xsd:decimal ;
-    resolver:fiberDeficit   <https://uor.foundation/instance/deficit-budget> ;
+    resolver:siteDeficit   <https://uor.foundation/instance/deficit-budget> ;
     resolver:suggestion     <https://uor.foundation/instance/suggestion-1> .
 
-# The deficit budget: 2 fibers still free
+# The deficit budget: 2 sites still free
 <https://uor.foundation/instance/deficit-budget>
-    a                       owl:NamedIndividual, partition:FiberBudget ;
-    partition:totalFibers   "8"^^xsd:nonNegativeInteger ;
+    a                       owl:NamedIndividual, partition:FreeRank ;
+    partition:totalSites   "8"^^xsd:nonNegativeInteger ;
     partition:pinnedCount   "6"^^xsd:nonNegativeInteger ;
-    partition:freeCount     "2"^^xsd:nonNegativeInteger ;
+    partition:freeRank      "2"^^xsd:nonNegativeInteger ;
     partition:isClosed      false .
 
 # A refinement suggestion
@@ -48,7 +48,7 @@ pub const TEST10_ITERATIVE_RESOLUTION: &str = r#"
     derivation:previousType <https://uor.foundation/instance/type-partial> ;
     derivation:appliedConstraint <https://uor.foundation/instance/constraint-carry> ;
     derivation:refinedType  <https://uor.foundation/instance/type-narrowed> ;
-    derivation:fibersClosed "2"^^xsd:nonNegativeInteger .
+    derivation:sitesClosed "2"^^xsd:nonNegativeInteger .
 
 <https://uor.foundation/instance/type-partial>
     a                       owl:NamedIndividual, type:ConstrainedType .

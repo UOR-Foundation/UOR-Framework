@@ -12,14 +12,14 @@ pub const TEST160_SHARED_CONTEXT: &str = r#"
 
 <urn:test:lease_a_160> a owl:NamedIndividual , state:ContextLease ;
     state:leaseHolder <urn:test:session_a_160> ;
-    state:leasedFibers <urn:test:budget_a_160> .
+    state:leasedSites <urn:test:budget_a_160> .
 
 <urn:test:lease_b_160> a owl:NamedIndividual , state:ContextLease ;
     state:leaseHolder <urn:test:session_b_160> ;
-    state:leasedFibers <urn:test:budget_b_160> .
+    state:leasedSites <urn:test:budget_b_160> .
 
 <urn:test:session_a_160> a owl:NamedIndividual , state:Session .
 <urn:test:session_b_160> a owl:NamedIndividual , state:Session .
-<urn:test:budget_a_160>  a owl:NamedIndividual , partition:FiberBudget .
-<urn:test:budget_b_160>  a owl:NamedIndividual , partition:FiberBudget .
+<urn:test:budget_a_160>  a owl:NamedIndividual , partition:FreeRank .
+<urn:test:budget_b_160>  a owl:NamedIndividual , partition:FreeRank .
 "#;

@@ -11,7 +11,7 @@ resolver:ex_hr_174 a owl:NamedIndividual, resolver:HomotopyResolver ;
     resolver:homotopyTarget resolver:ex_nerve_174 ;
     resolver:homotopyResult observable:ex_pi_174 .
 
-resolver:ex_nerve_174 a owl:NamedIndividual, resolver:ConstraintNerve .
+resolver:ex_nerve_174 a owl:NamedIndividual, resolver:CechNerve .
 
 observable:ex_pi_174 a owl:NamedIndividual, observable:HomotopyGroup .
 "#;

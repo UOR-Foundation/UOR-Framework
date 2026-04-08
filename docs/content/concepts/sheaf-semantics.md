@@ -14,7 +14,7 @@ The distinction between local and global consistency is captured by the
 sheaf structure:
 
 - **Stalks**: A {@class https://uor.foundation/cohomology/Stalk} at a single
-  constraint holds the local resolution data — the fibers pinned by that
+  constraint holds the local resolution data — the sites pinned by that
   constraint alone. Local consistency means each stalk is individually
   satisfiable.
 - **Global sections**: A {@class https://uor.foundation/cohomology/Section}
@@ -64,13 +64,13 @@ exists.
 
 Consider three constraints C_1, C_2, C_3 on R_4 where:
 
-- C_1 and C_2 overlap on fiber 0 and agree locally (both pin fiber 0 to the
+- C_1 and C_2 overlap on site 0 and agree locally (both pin site 0 to the
   same value).
-- C_2 and C_3 overlap on fiber 1 and agree locally.
+- C_2 and C_3 overlap on site 1 and agree locally.
 - C_1 and C_3 do not overlap directly, but the transitive path
   C_1 → C_2 → C_3 induces a consistency requirement.
 
-If the value forced at fiber 0 by C_1 propagates through C_2 to fiber 1 in a
+If the value forced at site 0 by C_1 propagates through C_2 to site 1 in a
 way that contradicts C_3's requirement, a
 {@class https://uor.foundation/cohomology/GluingObstruction} arises. The
 obstruction class lives in H^1 of the constraint

@@ -92,7 +92,7 @@ fn classes() -> Vec<Class> {
             label: "ComputationCertificate",
             comment: "A proof confirmed by exhaustive execution over R_n at a specific \
                       quantum level. The kernel ran the identity against all 2^n inputs \
-                      and observed that it holds. The proof:atQuantumLevel property \
+                      and observed that it holds. The proof:atWittLevel property \
                       records the level; proof:witness links to the WitnessData. \
                       CriticalIdentityProof is a subclass of ComputationCertificate.",
             subclass_of: &["https://uor.foundation/proof/Proof"],
@@ -327,8 +327,8 @@ fn properties() -> Vec<Property> {
         },
         // v3.2: ComputationCertificate properties
         Property {
-            id: "https://uor.foundation/proof/atQuantumLevel",
-            label: "atQuantumLevel",
+            id: "https://uor.foundation/proof/atWittLevel",
+            label: "atWittLevel",
             comment: "The quantum level at which this computation certificate was \
                       produced. A ComputationCertificate at schema:Q0 confirms the \
                       identity holds for all 256 inputs of R_8. A certificate at \
@@ -336,13 +336,13 @@ fn properties() -> Vec<Property> {
             kind: PropertyKind::Object,
             functional: true,
             domain: Some("https://uor.foundation/proof/ComputationCertificate"),
-            range: "https://uor.foundation/schema/QuantumLevel",
+            range: "https://uor.foundation/schema/WittLevel",
         },
         Property {
-            id: "https://uor.foundation/proof/quantumNote",
-            label: "quantumNote",
+            id: "https://uor.foundation/proof/wittNote",
+            label: "wittNote",
             comment: "Human-readable quantum level note, e.g. 'n=8, 256 inputs'. \
-                      Annotation only — proof:atQuantumLevel is the typed assertion.",
+                      Annotation only — proof:atWittLevel is the typed assertion.",
             kind: PropertyKind::Annotation,
             functional: true,
             domain: Some("https://uor.foundation/proof/ComputationCertificate"),
@@ -429,7 +429,7 @@ fn properties() -> Vec<Property> {
             kind: PropertyKind::Object,
             functional: false,
             domain: Some("https://uor.foundation/proof/Proof"),
-            range: "https://uor.foundation/schema/QuantumLevel",
+            range: "https://uor.foundation/schema/WittLevel",
         },
         Property {
             id: "https://uor.foundation/proof/morphospaceRecord",
@@ -611,8 +611,8 @@ fn individuals() -> Vec<Individual> {
                     IndividualValue::IriRef("https://uor.foundation/op/criticalIdentity"),
                 ),
                 (
-                    "https://uor.foundation/proof/atQuantumLevel",
-                    IndividualValue::IriRef("https://uor.foundation/schema/Q0"),
+                    "https://uor.foundation/proof/atWittLevel",
+                    IndividualValue::IriRef("https://uor.foundation/schema/W8"),
                 ),
                 (
                     "https://uor.foundation/proof/verified",
@@ -662,8 +662,8 @@ fn individuals() -> Vec<Individual> {
                     IndividualValue::IriRef("https://uor.foundation/op/phi_1"),
                 ),
                 (
-                    "https://uor.foundation/proof/atQuantumLevel",
-                    IndividualValue::IriRef("https://uor.foundation/schema/Q0"),
+                    "https://uor.foundation/proof/atWittLevel",
+                    IndividualValue::IriRef("https://uor.foundation/schema/W8"),
                 ),
                 (
                     "https://uor.foundation/proof/verified",
@@ -686,8 +686,8 @@ fn individuals() -> Vec<Individual> {
                     IndividualValue::IriRef("https://uor.foundation/op/phi_2"),
                 ),
                 (
-                    "https://uor.foundation/proof/atQuantumLevel",
-                    IndividualValue::IriRef("https://uor.foundation/schema/Q0"),
+                    "https://uor.foundation/proof/atWittLevel",
+                    IndividualValue::IriRef("https://uor.foundation/schema/W8"),
                 ),
                 (
                     "https://uor.foundation/proof/verified",
@@ -710,8 +710,8 @@ fn individuals() -> Vec<Individual> {
                     IndividualValue::IriRef("https://uor.foundation/op/phi_3"),
                 ),
                 (
-                    "https://uor.foundation/proof/atQuantumLevel",
-                    IndividualValue::IriRef("https://uor.foundation/schema/Q0"),
+                    "https://uor.foundation/proof/atWittLevel",
+                    IndividualValue::IriRef("https://uor.foundation/schema/W8"),
                 ),
                 (
                     "https://uor.foundation/proof/verified",
@@ -734,8 +734,8 @@ fn individuals() -> Vec<Individual> {
                     IndividualValue::IriRef("https://uor.foundation/op/phi_4"),
                 ),
                 (
-                    "https://uor.foundation/proof/atQuantumLevel",
-                    IndividualValue::IriRef("https://uor.foundation/schema/Q0"),
+                    "https://uor.foundation/proof/atWittLevel",
+                    IndividualValue::IriRef("https://uor.foundation/schema/W8"),
                 ),
                 (
                     "https://uor.foundation/proof/verified",
@@ -758,8 +758,8 @@ fn individuals() -> Vec<Individual> {
                     IndividualValue::IriRef("https://uor.foundation/op/phi_5"),
                 ),
                 (
-                    "https://uor.foundation/proof/atQuantumLevel",
-                    IndividualValue::IriRef("https://uor.foundation/schema/Q0"),
+                    "https://uor.foundation/proof/atWittLevel",
+                    IndividualValue::IriRef("https://uor.foundation/schema/W8"),
                 ),
                 (
                     "https://uor.foundation/proof/verified",
@@ -782,8 +782,8 @@ fn individuals() -> Vec<Individual> {
                     IndividualValue::IriRef("https://uor.foundation/op/phi_6"),
                 ),
                 (
-                    "https://uor.foundation/proof/atQuantumLevel",
-                    IndividualValue::IriRef("https://uor.foundation/schema/Q0"),
+                    "https://uor.foundation/proof/atWittLevel",
+                    IndividualValue::IriRef("https://uor.foundation/schema/W8"),
                 ),
                 (
                     "https://uor.foundation/proof/verified",
@@ -6953,7 +6953,7 @@ fn individuals() -> Vec<Individual> {
             type_: "https://uor.foundation/proof/AxiomaticDerivation",
             label: "prf_CC_2",
             comment: "Proof that the ψ pipeline is monotone: each constraint application \
-                      cannot increase the fiber deficit. Derived from the definition \
+                      cannot increase the site deficit. Derived from the definition \
                       of the partition refinement order.",
             properties: &[
                 (
@@ -7030,7 +7030,7 @@ fn individuals() -> Vec<Individual> {
             id: "https://uor.foundation/proof/prf_CC_5",
             type_: "https://uor.foundation/proof/AxiomaticDerivation",
             label: "prf_CC_5",
-            comment: "Proof that the ConstraintNerve nerve computation is deterministic: \
+            comment: "Proof that the CechNerve nerve computation is deterministic: \
                       the same constraint set always produces the same nerve topology. \
                       Follows from the nerve functor being a functor (functoriality).",
             properties: &[
@@ -7238,17 +7238,17 @@ fn individuals() -> Vec<Individual> {
         },
         // Amendment 27: Session-Scoped Resolution proofs (SR_1–SR_5)
         Individual {
-            id: "https://uor.foundation/proof/prf_SR_1",
+            id: "https://uor.foundation/proof/prf_GR_1",
             type_: "https://uor.foundation/proof/AxiomaticDerivation",
-            label: "prf_SR_1",
-            comment: "Proof of binding monotonicity: freeCount(B_{i+1}) ≤ freeCount(B_i) \
+            label: "prf_GR_1",
+            comment: "Proof of binding monotonicity: freeRank(B_{i+1}) ≤ freeRank(B_i) \
                       for all i in a Session. Follows from the definition of the \
-                      BindingAccumulator: each appended binding either pins fibers or \
+                      BindingAccumulator: each appended binding either pins sites or \
                       is a no-op; it never frees them.",
             properties: &[
                 (
                     "https://uor.foundation/proof/provesIdentity",
-                    IndividualValue::IriRef("https://uor.foundation/op/SR_1"),
+                    IndividualValue::IriRef("https://uor.foundation/op/GR_1"),
                 ),
                 (
                     "https://uor.foundation/proof/universalScope",
@@ -7265,16 +7265,16 @@ fn individuals() -> Vec<Individual> {
             ],
         },
         Individual {
-            id: "https://uor.foundation/proof/prf_SR_2",
+            id: "https://uor.foundation/proof/prf_GR_2",
             type_: "https://uor.foundation/proof/AxiomaticDerivation",
-            label: "prf_SR_2",
+            label: "prf_GR_2",
             comment: "Proof that the empty session is the identity element of the session \
-                      algebra: freeCount(B_0) = total fiber space. The empty accumulator \
-                      has no pinned fibers by definition.",
+                      algebra: freeRank(B_0) = total site space. The empty accumulator \
+                      has no pinned sites by definition.",
             properties: &[
                 (
                     "https://uor.foundation/proof/provesIdentity",
-                    IndividualValue::IriRef("https://uor.foundation/op/SR_2"),
+                    IndividualValue::IriRef("https://uor.foundation/op/GR_2"),
                 ),
                 (
                     "https://uor.foundation/proof/universalScope",
@@ -7291,16 +7291,16 @@ fn individuals() -> Vec<Individual> {
             ],
         },
         Individual {
-            id: "https://uor.foundation/proof/prf_SR_3",
+            id: "https://uor.foundation/proof/prf_GR_3",
             type_: "https://uor.foundation/proof/AxiomaticDerivation",
-            label: "prf_SR_3",
-            comment: "Proof of session convergence: a session terminates iff freeCount \
+            label: "prf_GR_3",
+            comment: "Proof of session convergence: a session terminates iff freeRank \
                       reaches its minimum (the maximum pinned by the given constraint set). \
-                      Follows from the compactness of the fiber space and monotonicity.",
+                      Follows from the compactness of the site space and monotonicity.",
             properties: &[
                 (
                     "https://uor.foundation/proof/provesIdentity",
-                    IndividualValue::IriRef("https://uor.foundation/op/SR_3"),
+                    IndividualValue::IriRef("https://uor.foundation/op/GR_3"),
                 ),
                 (
                     "https://uor.foundation/proof/universalScope",
@@ -7317,16 +7317,16 @@ fn individuals() -> Vec<Individual> {
             ],
         },
         Individual {
-            id: "https://uor.foundation/proof/prf_SR_4",
+            id: "https://uor.foundation/proof/prf_GR_4",
             type_: "https://uor.foundation/proof/AxiomaticDerivation",
-            label: "prf_SR_4",
-            comment: "Proof that disjoint bindings compose without fiber conflict: if two \
-                      bindings address disjoint fiber sets, their composition is \
+            label: "prf_GR_4",
+            comment: "Proof that disjoint bindings compose without site conflict: if two \
+                      bindings address disjoint site sets, their composition is \
                       well-defined and their union is also a valid binding.",
             properties: &[
                 (
                     "https://uor.foundation/proof/provesIdentity",
-                    IndividualValue::IriRef("https://uor.foundation/op/SR_4"),
+                    IndividualValue::IriRef("https://uor.foundation/op/GR_4"),
                 ),
                 (
                     "https://uor.foundation/proof/universalScope",
@@ -7343,9 +7343,9 @@ fn individuals() -> Vec<Individual> {
             ],
         },
         Individual {
-            id: "https://uor.foundation/proof/prf_SR_5",
+            id: "https://uor.foundation/proof/prf_GR_5",
             type_: "https://uor.foundation/proof/AxiomaticDerivation",
-            label: "prf_SR_5",
+            label: "prf_GR_5",
             comment: "Proof of contradiction detection correctness: ContradictionBoundary \
                       fires iff there exist bindings b, b' in the same Context with the \
                       same address, different datum, and same constraint. This is the \
@@ -7353,7 +7353,7 @@ fn individuals() -> Vec<Individual> {
             properties: &[
                 (
                     "https://uor.foundation/proof/provesIdentity",
-                    IndividualValue::IriRef("https://uor.foundation/op/SR_5"),
+                    IndividualValue::IriRef("https://uor.foundation/op/GR_5"),
                 ),
                 (
                     "https://uor.foundation/proof/universalScope",
@@ -7401,7 +7401,7 @@ fn individuals() -> Vec<Individual> {
             type_: "https://uor.foundation/proof/AxiomaticDerivation",
             label: "prf_TS_2",
             comment: "Proof of minimal basis bound: the MinimalConstraintBasis for the IT_7d \
-                      target has size exactly n. Follows from the fiber-by-fiber construction \
+                      target has size exactly n. Follows from the site-by-site construction \
                       and the minimality criterion.",
             properties: &[
                 (
@@ -7453,7 +7453,7 @@ fn individuals() -> Vec<Individual> {
             type_: "https://uor.foundation/proof/AxiomaticDerivation",
             label: "prf_TS_4",
             comment: "Proof of synthesis convergence: the TypeSynthesisResolver terminates in \
-                      at most n steps. Follows from monotonicity (TS_3) and the finite fiber \
+                      at most n steps. Follows from monotonicity (TS_3) and the finite site \
                       budget bound.",
             properties: &[
                 (
@@ -7555,16 +7555,16 @@ fn individuals() -> Vec<Individual> {
         // Amendment 29/41: Quantum Level Spectral Sequence proof coverage
         // (reclassified from AxiomaticDerivation to InductiveProof in Amendment 41)
         Individual {
-            id: "https://uor.foundation/proof/prf_QLS_1",
+            id: "https://uor.foundation/proof/prf_WLS_1",
             type_: "https://uor.foundation/proof/InductiveProof",
-            label: "prf_QLS_1",
-            comment: "Proof of lift unobstructedness criterion: QuantumLift T' is CompleteType \
+            label: "prf_WLS_1",
+            comment: "Proof of lift unobstructedness criterion: WittLift T' is CompleteType \
                       iff the spectral sequence collapses at E_2. Follows from the Leray \
                       spectral sequence of the quantum level extension.",
             properties: &[
                 (
                     "https://uor.foundation/proof/provesIdentity",
-                    IndividualValue::IriRef("https://uor.foundation/op/QLS_1"),
+                    IndividualValue::IriRef("https://uor.foundation/op/WLS_1"),
                 ),
                 (
                     "https://uor.foundation/proof/universalScope",
@@ -7576,11 +7576,11 @@ fn individuals() -> Vec<Individual> {
                 ),
                 (
                     "https://uor.foundation/proof/baseCase",
-                    IndividualValue::IriRef("https://uor.foundation/proof/prf_QLS_1_base"),
+                    IndividualValue::IriRef("https://uor.foundation/proof/prf_WLS_1_base"),
                 ),
                 (
                     "https://uor.foundation/proof/inductiveStep",
-                    IndividualValue::IriRef("https://uor.foundation/proof/prf_QLS_6"),
+                    IndividualValue::IriRef("https://uor.foundation/proof/prf_WLS_6"),
                 ),
                 (
                     "https://uor.foundation/proof/validForKAtLeast",
@@ -7593,16 +7593,16 @@ fn individuals() -> Vec<Individual> {
             ],
         },
         Individual {
-            id: "https://uor.foundation/proof/prf_QLS_2",
+            id: "https://uor.foundation/proof/prf_WLS_2",
             type_: "https://uor.foundation/proof/InductiveProof",
-            label: "prf_QLS_2",
+            label: "prf_WLS_2",
             comment: "Proof of obstruction localisation: a non-trivial LiftObstruction is \
-                      localised to a specific fiber at bit position n+1. Follows from the \
+                      localised to a specific site at bit position n+1. Follows from the \
                       local-to-global structure of the constraint nerve.",
             properties: &[
                 (
                     "https://uor.foundation/proof/provesIdentity",
-                    IndividualValue::IriRef("https://uor.foundation/op/QLS_2"),
+                    IndividualValue::IriRef("https://uor.foundation/op/WLS_2"),
                 ),
                 (
                     "https://uor.foundation/proof/universalScope",
@@ -7614,11 +7614,11 @@ fn individuals() -> Vec<Individual> {
                 ),
                 (
                     "https://uor.foundation/proof/baseCase",
-                    IndividualValue::IriRef("https://uor.foundation/proof/prf_QLS_2_base"),
+                    IndividualValue::IriRef("https://uor.foundation/proof/prf_WLS_2_base"),
                 ),
                 (
                     "https://uor.foundation/proof/inductiveStep",
-                    IndividualValue::IriRef("https://uor.foundation/proof/prf_QLS_2_step"),
+                    IndividualValue::IriRef("https://uor.foundation/proof/prf_WLS_2_step"),
                 ),
                 (
                     "https://uor.foundation/proof/validForKAtLeast",
@@ -7631,15 +7631,15 @@ fn individuals() -> Vec<Individual> {
             ],
         },
         Individual {
-            id: "https://uor.foundation/proof/prf_QLS_3",
+            id: "https://uor.foundation/proof/prf_WLS_3",
             type_: "https://uor.foundation/proof/InductiveProof",
-            label: "prf_QLS_3",
+            label: "prf_WLS_3",
             comment: "Proof of monotone lifting: basisSize(T') = basisSize(T) + 1 for trivially \
                       obstructed lifts. Follows from the minimal basis construction at Q_{n+1}.",
             properties: &[
                 (
                     "https://uor.foundation/proof/provesIdentity",
-                    IndividualValue::IriRef("https://uor.foundation/op/QLS_3"),
+                    IndividualValue::IriRef("https://uor.foundation/op/WLS_3"),
                 ),
                 (
                     "https://uor.foundation/proof/universalScope",
@@ -7651,11 +7651,11 @@ fn individuals() -> Vec<Individual> {
                 ),
                 (
                     "https://uor.foundation/proof/baseCase",
-                    IndividualValue::IriRef("https://uor.foundation/proof/prf_QLS_3_base"),
+                    IndividualValue::IriRef("https://uor.foundation/proof/prf_WLS_3_base"),
                 ),
                 (
                     "https://uor.foundation/proof/inductiveStep",
-                    IndividualValue::IriRef("https://uor.foundation/proof/prf_QLS_3_step"),
+                    IndividualValue::IriRef("https://uor.foundation/proof/prf_WLS_3_step"),
                 ),
                 (
                     "https://uor.foundation/proof/validForKAtLeast",
@@ -7668,16 +7668,16 @@ fn individuals() -> Vec<Individual> {
             ],
         },
         Individual {
-            id: "https://uor.foundation/proof/prf_QLS_4",
+            id: "https://uor.foundation/proof/prf_WLS_4",
             type_: "https://uor.foundation/proof/InductiveProof",
-            label: "prf_QLS_4",
+            label: "prf_WLS_4",
             comment: "Proof of spectral sequence convergence bound: the spectral sequence \
                       converges by page E_{d+2} for depth-d configurations. Follows from \
                       the filtration length of the constraint nerve chain complex.",
             properties: &[
                 (
                     "https://uor.foundation/proof/provesIdentity",
-                    IndividualValue::IriRef("https://uor.foundation/op/QLS_4"),
+                    IndividualValue::IriRef("https://uor.foundation/op/WLS_4"),
                 ),
                 (
                     "https://uor.foundation/proof/universalScope",
@@ -7689,11 +7689,11 @@ fn individuals() -> Vec<Individual> {
                 ),
                 (
                     "https://uor.foundation/proof/baseCase",
-                    IndividualValue::IriRef("https://uor.foundation/proof/prf_QLS_4_base"),
+                    IndividualValue::IriRef("https://uor.foundation/proof/prf_WLS_4_base"),
                 ),
                 (
                     "https://uor.foundation/proof/inductiveStep",
-                    IndividualValue::IriRef("https://uor.foundation/proof/prf_QLS_4_step"),
+                    IndividualValue::IriRef("https://uor.foundation/proof/prf_WLS_4_step"),
                 ),
                 (
                     "https://uor.foundation/proof/validForKAtLeast",
@@ -7706,16 +7706,16 @@ fn individuals() -> Vec<Individual> {
             ],
         },
         Individual {
-            id: "https://uor.foundation/proof/prf_QLS_5",
+            id: "https://uor.foundation/proof/prf_WLS_5",
             type_: "https://uor.foundation/proof/InductiveProof",
-            label: "prf_QLS_5",
+            label: "prf_WLS_5",
             comment: "Proof of universal identity preservation under quantum lifts: every \
                       universallyValid identity holds in the lifted ring. Follows from the \
                       universal validity definition and ring extension properties.",
             properties: &[
                 (
                     "https://uor.foundation/proof/provesIdentity",
-                    IndividualValue::IriRef("https://uor.foundation/op/QLS_5"),
+                    IndividualValue::IriRef("https://uor.foundation/op/WLS_5"),
                 ),
                 (
                     "https://uor.foundation/proof/universalScope",
@@ -7727,11 +7727,11 @@ fn individuals() -> Vec<Individual> {
                 ),
                 (
                     "https://uor.foundation/proof/baseCase",
-                    IndividualValue::IriRef("https://uor.foundation/proof/prf_QLS_5_base"),
+                    IndividualValue::IriRef("https://uor.foundation/proof/prf_WLS_5_base"),
                 ),
                 (
                     "https://uor.foundation/proof/inductiveStep",
-                    IndividualValue::IriRef("https://uor.foundation/proof/prf_QLS_6"),
+                    IndividualValue::IriRef("https://uor.foundation/proof/prf_WLS_6"),
                 ),
                 (
                     "https://uor.foundation/proof/validForKAtLeast",
@@ -7744,16 +7744,16 @@ fn individuals() -> Vec<Individual> {
             ],
         },
         Individual {
-            id: "https://uor.foundation/proof/prf_QLS_6",
+            id: "https://uor.foundation/proof/prf_WLS_6",
             type_: "https://uor.foundation/proof/InductiveProof",
-            label: "prf_QLS_6",
+            label: "prf_WLS_6",
             comment: "Proof of ψ-pipeline universality for quantum lifts: the ψ-pipeline \
-                      produces a valid ChainComplex for any QuantumLift. Follows from the \
+                      produces a valid ChainComplex for any WittLift. Follows from the \
                       functorial construction of the chain complex.",
             properties: &[
                 (
                     "https://uor.foundation/proof/provesIdentity",
-                    IndividualValue::IriRef("https://uor.foundation/op/QLS_6"),
+                    IndividualValue::IriRef("https://uor.foundation/op/WLS_6"),
                 ),
                 (
                     "https://uor.foundation/proof/universalScope",
@@ -7765,11 +7765,11 @@ fn individuals() -> Vec<Individual> {
                 ),
                 (
                     "https://uor.foundation/proof/baseCase",
-                    IndividualValue::IriRef("https://uor.foundation/proof/prf_QLS_6_base"),
+                    IndividualValue::IriRef("https://uor.foundation/proof/prf_WLS_6_base"),
                 ),
                 (
                     "https://uor.foundation/proof/inductiveStep",
-                    IndividualValue::IriRef("https://uor.foundation/proof/prf_QLS_6_step"),
+                    IndividualValue::IriRef("https://uor.foundation/proof/prf_WLS_6_step"),
                 ),
                 (
                     "https://uor.foundation/proof/validForKAtLeast",
@@ -7783,15 +7783,15 @@ fn individuals() -> Vec<Individual> {
         },
         // Amendment 85: Non-self-referential base-case and step proofs for InductiveProofs
         Individual {
-            id: "https://uor.foundation/proof/prf_QLS_1_base",
+            id: "https://uor.foundation/proof/prf_WLS_1_base",
             type_: "https://uor.foundation/proof/AxiomaticDerivation",
-            label: "prf_QLS_1_base",
+            label: "prf_WLS_1_base",
             comment: "Base case for QLS_1 at Q0: lift unobstructedness holds trivially \
                       for 8-bit rings where the constraint nerve is contractible.",
             properties: &[
                 (
                     "https://uor.foundation/proof/provesIdentity",
-                    IndividualValue::IriRef("https://uor.foundation/op/QLS_1"),
+                    IndividualValue::IriRef("https://uor.foundation/op/WLS_1"),
                 ),
                 (
                     "https://uor.foundation/proof/universalScope",
@@ -7808,15 +7808,15 @@ fn individuals() -> Vec<Individual> {
             ],
         },
         Individual {
-            id: "https://uor.foundation/proof/prf_QLS_2_base",
+            id: "https://uor.foundation/proof/prf_WLS_2_base",
             type_: "https://uor.foundation/proof/AxiomaticDerivation",
-            label: "prf_QLS_2_base",
+            label: "prf_WLS_2_base",
             comment: "Base case for QLS_2 at Q0: obstruction localisation holds at the \
-                      8-bit level where fibers are directly inspectable.",
+                      8-bit level where sites are directly inspectable.",
             properties: &[
                 (
                     "https://uor.foundation/proof/provesIdentity",
-                    IndividualValue::IriRef("https://uor.foundation/op/QLS_2"),
+                    IndividualValue::IriRef("https://uor.foundation/op/WLS_2"),
                 ),
                 (
                     "https://uor.foundation/proof/universalScope",
@@ -7833,16 +7833,16 @@ fn individuals() -> Vec<Individual> {
             ],
         },
         Individual {
-            id: "https://uor.foundation/proof/prf_QLS_2_step",
+            id: "https://uor.foundation/proof/prf_WLS_2_step",
             type_: "https://uor.foundation/proof/AxiomaticDerivation",
-            label: "prf_QLS_2_step",
+            label: "prf_WLS_2_step",
             comment: "Inductive step for QLS_2: if obstruction is localised at Q_k, \
                       the local-to-global structure of the constraint nerve preserves \
                       localisation at Q_{k+1}.",
             properties: &[
                 (
                     "https://uor.foundation/proof/provesIdentity",
-                    IndividualValue::IriRef("https://uor.foundation/op/QLS_2"),
+                    IndividualValue::IriRef("https://uor.foundation/op/WLS_2"),
                 ),
                 (
                     "https://uor.foundation/proof/universalScope",
@@ -7859,15 +7859,15 @@ fn individuals() -> Vec<Individual> {
             ],
         },
         Individual {
-            id: "https://uor.foundation/proof/prf_QLS_3_base",
+            id: "https://uor.foundation/proof/prf_WLS_3_base",
             type_: "https://uor.foundation/proof/AxiomaticDerivation",
-            label: "prf_QLS_3_base",
+            label: "prf_WLS_3_base",
             comment: "Base case for QLS_3 at Q0: monotone lifting basis size increment \
                       holds trivially for 8-bit to 16-bit extension.",
             properties: &[
                 (
                     "https://uor.foundation/proof/provesIdentity",
-                    IndividualValue::IriRef("https://uor.foundation/op/QLS_3"),
+                    IndividualValue::IriRef("https://uor.foundation/op/WLS_3"),
                 ),
                 (
                     "https://uor.foundation/proof/universalScope",
@@ -7884,15 +7884,15 @@ fn individuals() -> Vec<Individual> {
             ],
         },
         Individual {
-            id: "https://uor.foundation/proof/prf_QLS_3_step",
+            id: "https://uor.foundation/proof/prf_WLS_3_step",
             type_: "https://uor.foundation/proof/AxiomaticDerivation",
-            label: "prf_QLS_3_step",
+            label: "prf_WLS_3_step",
             comment: "Inductive step for QLS_3: the minimal basis construction at Q_{k+1} \
-                      adds exactly one element from the trivially obstructed fiber.",
+                      adds exactly one element from the trivially obstructed site.",
             properties: &[
                 (
                     "https://uor.foundation/proof/provesIdentity",
-                    IndividualValue::IriRef("https://uor.foundation/op/QLS_3"),
+                    IndividualValue::IriRef("https://uor.foundation/op/WLS_3"),
                 ),
                 (
                     "https://uor.foundation/proof/universalScope",
@@ -7909,15 +7909,15 @@ fn individuals() -> Vec<Individual> {
             ],
         },
         Individual {
-            id: "https://uor.foundation/proof/prf_QLS_4_base",
+            id: "https://uor.foundation/proof/prf_WLS_4_base",
             type_: "https://uor.foundation/proof/AxiomaticDerivation",
-            label: "prf_QLS_4_base",
+            label: "prf_WLS_4_base",
             comment: "Base case for QLS_4 at Q0: spectral sequence convergence at \
                       E_{d+2} holds for 8-bit filtrations by direct computation.",
             properties: &[
                 (
                     "https://uor.foundation/proof/provesIdentity",
-                    IndividualValue::IriRef("https://uor.foundation/op/QLS_4"),
+                    IndividualValue::IriRef("https://uor.foundation/op/WLS_4"),
                 ),
                 (
                     "https://uor.foundation/proof/universalScope",
@@ -7934,15 +7934,15 @@ fn individuals() -> Vec<Individual> {
             ],
         },
         Individual {
-            id: "https://uor.foundation/proof/prf_QLS_4_step",
+            id: "https://uor.foundation/proof/prf_WLS_4_step",
             type_: "https://uor.foundation/proof/AxiomaticDerivation",
-            label: "prf_QLS_4_step",
+            label: "prf_WLS_4_step",
             comment: "Inductive step for QLS_4: filtration length at Q_{k+1} extends \
                       by at most one page from Q_k, preserving the E_{d+2} bound.",
             properties: &[
                 (
                     "https://uor.foundation/proof/provesIdentity",
-                    IndividualValue::IriRef("https://uor.foundation/op/QLS_4"),
+                    IndividualValue::IriRef("https://uor.foundation/op/WLS_4"),
                 ),
                 (
                     "https://uor.foundation/proof/universalScope",
@@ -7959,15 +7959,15 @@ fn individuals() -> Vec<Individual> {
             ],
         },
         Individual {
-            id: "https://uor.foundation/proof/prf_QLS_5_base",
+            id: "https://uor.foundation/proof/prf_WLS_5_base",
             type_: "https://uor.foundation/proof/AxiomaticDerivation",
-            label: "prf_QLS_5_base",
+            label: "prf_WLS_5_base",
             comment: "Base case for QLS_5 at Q0: universallyValid identities hold in \
                       the 8-bit ring by definition of universal validity.",
             properties: &[
                 (
                     "https://uor.foundation/proof/provesIdentity",
-                    IndividualValue::IriRef("https://uor.foundation/op/QLS_5"),
+                    IndividualValue::IriRef("https://uor.foundation/op/WLS_5"),
                 ),
                 (
                     "https://uor.foundation/proof/universalScope",
@@ -7984,15 +7984,15 @@ fn individuals() -> Vec<Individual> {
             ],
         },
         Individual {
-            id: "https://uor.foundation/proof/prf_QLS_6_base",
+            id: "https://uor.foundation/proof/prf_WLS_6_base",
             type_: "https://uor.foundation/proof/AxiomaticDerivation",
-            label: "prf_QLS_6_base",
+            label: "prf_WLS_6_base",
             comment: "Base case for QLS_6 at Q0: the psi-pipeline produces a valid \
-                      ChainComplex for 8-bit QuantumLifts by direct construction.",
+                      ChainComplex for 8-bit WittLifts by direct construction.",
             properties: &[
                 (
                     "https://uor.foundation/proof/provesIdentity",
-                    IndividualValue::IriRef("https://uor.foundation/op/QLS_6"),
+                    IndividualValue::IriRef("https://uor.foundation/op/WLS_6"),
                 ),
                 (
                     "https://uor.foundation/proof/universalScope",
@@ -8009,15 +8009,15 @@ fn individuals() -> Vec<Individual> {
             ],
         },
         Individual {
-            id: "https://uor.foundation/proof/prf_QLS_6_step",
+            id: "https://uor.foundation/proof/prf_WLS_6_step",
             type_: "https://uor.foundation/proof/AxiomaticDerivation",
-            label: "prf_QLS_6_step",
+            label: "prf_WLS_6_step",
             comment: "Inductive step for QLS_6: the functorial construction of the \
                       chain complex commutes with quantum level extension.",
             properties: &[
                 (
                     "https://uor.foundation/proof/provesIdentity",
-                    IndividualValue::IriRef("https://uor.foundation/op/QLS_6"),
+                    IndividualValue::IriRef("https://uor.foundation/op/WLS_6"),
                 ),
                 (
                     "https://uor.foundation/proof/universalScope",
@@ -8034,15 +8034,15 @@ fn individuals() -> Vec<Individual> {
             ],
         },
         Individual {
-            id: "https://uor.foundation/proof/prf_QT_3_base",
+            id: "https://uor.foundation/proof/prf_WT_3_base",
             type_: "https://uor.foundation/proof/AxiomaticDerivation",
-            label: "prf_QT_3_base",
+            label: "prf_WT_3_base",
             comment: "Base case for QT_3: resolved basis size formula holds for \
                       chain length 1 by direct construction.",
             properties: &[
                 (
                     "https://uor.foundation/proof/provesIdentity",
-                    IndividualValue::IriRef("https://uor.foundation/op/QT_3"),
+                    IndividualValue::IriRef("https://uor.foundation/op/WT_3"),
                 ),
                 (
                     "https://uor.foundation/proof/universalScope",
@@ -8059,15 +8059,15 @@ fn individuals() -> Vec<Individual> {
             ],
         },
         Individual {
-            id: "https://uor.foundation/proof/prf_QT_5_base",
+            id: "https://uor.foundation/proof/prf_WT_5_base",
             type_: "https://uor.foundation/proof/AxiomaticDerivation",
-            label: "prf_QT_5_base",
+            label: "prf_WT_5_base",
             comment: "Base case for QT_5: LiftChainCertificate existence for \
                       tower height 1 follows from single-step certificate issuance.",
             properties: &[
                 (
                     "https://uor.foundation/proof/provesIdentity",
-                    IndividualValue::IriRef("https://uor.foundation/op/QT_5"),
+                    IndividualValue::IriRef("https://uor.foundation/op/WT_5"),
                 ),
                 (
                     "https://uor.foundation/proof/universalScope",
@@ -8141,7 +8141,7 @@ fn individuals() -> Vec<Individual> {
             label: "prf_QM_6_base",
             comment: "Base case for QM_6 at Q0: amplitude index set equals monotone \
                       pinning trajectories by exhaustive trajectory enumeration over \
-                      the 8-bit fiber lattice.",
+                      the 8-bit site lattice.",
             properties: &[
                 (
                     "https://uor.foundation/proof/provesIdentity",
@@ -8166,7 +8166,7 @@ fn individuals() -> Vec<Individual> {
             type_: "https://uor.foundation/proof/AxiomaticDerivation",
             label: "prf_QM_6_step",
             comment: "Inductive step for QM_6: monotone pinning trajectories at \
-                      Q_{k+1} extend those at Q_k by the fiber lattice ordering \
+                      Q_{k+1} extend those at Q_k by the site lattice ordering \
                       (monotone extension property).",
             properties: &[
                 (
@@ -8347,7 +8347,7 @@ fn individuals() -> Vec<Individual> {
             type_: "https://uor.foundation/proof/AxiomaticDerivation",
             label: "prf_MN_7",
             comment: "Proof of TwistedType obstruction class: a TwistedType always contributes \
-                      a non-zero class to H²(N(C(T')); ℤ/2ℤ) for any QuantumLift T'. Follows \
+                      a non-zero class to H²(N(C(T')); ℤ/2ℤ) for any WittLift T'. Follows \
                       from MN_4 and the obstruction theory of dihedral torsors.",
             properties: &[
                 (
@@ -8373,9 +8373,9 @@ fn individuals() -> Vec<Individual> {
             id: "https://uor.foundation/proof/prf_PT_1",
             type_: "https://uor.foundation/proof/AxiomaticDerivation",
             label: "prf_PT_1",
-            comment: "Proof of PT_1: product type fiber additivity. fiberBudget(A × B) = \
-                      fiberBudget(A) + fiberBudget(B). Follows from the definition of \
-                      ProductType as an independent concatenation of fiber spaces.",
+            comment: "Proof of PT_1: product type site additivity. siteBudget(A × B) = \
+                      siteBudget(A) + siteBudget(B). Follows from the definition of \
+                      ProductType as an independent concatenation of site spaces.",
             properties: &[
                 (
                     "https://uor.foundation/proof/provesIdentity",
@@ -8402,7 +8402,7 @@ fn individuals() -> Vec<Individual> {
             comment: "Proof of PT_2: product type partition factorisation. \
                       partition(A × B) = partition(A) ⊗ partition(B). Follows from the \
                       tensor product structure of constraint nerves over independent \
-                      fiber spaces.",
+                      site spaces.",
             properties: &[
                 (
                     "https://uor.foundation/proof/provesIdentity",
@@ -8453,8 +8453,8 @@ fn individuals() -> Vec<Individual> {
             type_: "https://uor.foundation/proof/AxiomaticDerivation",
             label: "prf_PT_4",
             comment: "Proof of PT_4: product type entropy additivity. \
-                      S(A × B) = S(A) + S(B). Follows from PT_1 (fiber additivity) \
-                      and TH_1 (S = freeCount × ln 2).",
+                      S(A × B) = S(A) + S(B). Follows from PT_1 (site additivity) \
+                      and TH_1 (S = freeRank × ln 2).",
             properties: &[
                 (
                     "https://uor.foundation/proof/provesIdentity",
@@ -8478,8 +8478,8 @@ fn individuals() -> Vec<Individual> {
             id: "https://uor.foundation/proof/prf_ST_1",
             type_: "https://uor.foundation/proof/AxiomaticDerivation",
             label: "prf_ST_1",
-            comment: "Proof of ST_1: sum type fiber budget maximum. \
-                      fiberBudget(A + B) = max(fiberBudget(A), fiberBudget(B)). \
+            comment: "Proof of ST_1: sum type site budget maximum. \
+                      siteBudget(A + B) = max(siteBudget(A), siteBudget(B)). \
                       Follows from SumType requiring capacity for the larger variant.",
             properties: &[
                 (
@@ -8527,17 +8527,17 @@ fn individuals() -> Vec<Individual> {
                 ),
             ],
         },
-        // Amendment 33: Saturated Context Limit proof individuals
+        // Amendment 33: Grounded Context Limit proof individuals
         Individual {
-            id: "https://uor.foundation/proof/prf_SC_1",
+            id: "https://uor.foundation/proof/prf_GS_1",
             type_: "https://uor.foundation/proof/AxiomaticDerivation",
-            label: "prf_SC_1",
+            label: "prf_GS_1",
             comment: "Proof of SC_1: context temperature. T_ctx(C) = \
-                      freeCount(C) × ln 2 / n. Derived from TH_1 normalized per fiber.",
+                      freeRank(C) × ln 2 / n. Derived from TH_1 normalized per site.",
             properties: &[
                 (
                     "https://uor.foundation/proof/provesIdentity",
-                    IndividualValue::IriRef("https://uor.foundation/op/SC_1"),
+                    IndividualValue::IriRef("https://uor.foundation/op/GS_1"),
                 ),
                 (
                     "https://uor.foundation/proof/universalScope",
@@ -8554,15 +8554,15 @@ fn individuals() -> Vec<Individual> {
             ],
         },
         Individual {
-            id: "https://uor.foundation/proof/prf_SC_2",
+            id: "https://uor.foundation/proof/prf_GS_2",
             type_: "https://uor.foundation/proof/AxiomaticDerivation",
-            label: "prf_SC_2",
-            comment: "Proof of SC_2: saturation degree. σ(C) = (n − freeCount(C)) / n. \
+            label: "prf_GS_2",
+            comment: "Proof of SC_2: saturation degree. σ(C) = (n − freeRank(C)) / n. \
                       Definitional identity.",
             properties: &[
                 (
                     "https://uor.foundation/proof/provesIdentity",
-                    IndividualValue::IriRef("https://uor.foundation/op/SC_2"),
+                    IndividualValue::IriRef("https://uor.foundation/op/GS_2"),
                 ),
                 (
                     "https://uor.foundation/proof/universalScope",
@@ -8579,15 +8579,15 @@ fn individuals() -> Vec<Individual> {
             ],
         },
         Individual {
-            id: "https://uor.foundation/proof/prf_SC_3",
+            id: "https://uor.foundation/proof/prf_GS_3",
             type_: "https://uor.foundation/proof/AxiomaticDerivation",
-            label: "prf_SC_3",
+            label: "prf_GS_3",
             comment: "Proof of SC_3: saturation monotonicity. Corollary of SR_1 \
                       through order-reversing SC_2.",
             properties: &[
                 (
                     "https://uor.foundation/proof/provesIdentity",
-                    IndividualValue::IriRef("https://uor.foundation/op/SC_3"),
+                    IndividualValue::IriRef("https://uor.foundation/op/GS_3"),
                 ),
                 (
                     "https://uor.foundation/proof/universalScope",
@@ -8604,15 +8604,15 @@ fn individuals() -> Vec<Individual> {
             ],
         },
         Individual {
-            id: "https://uor.foundation/proof/prf_SC_4",
+            id: "https://uor.foundation/proof/prf_GS_4",
             type_: "https://uor.foundation/proof/AxiomaticDerivation",
-            label: "prf_SC_4",
+            label: "prf_GS_4",
             comment: "Proof of SC_4: ground state equivalence. Four equivalent \
                       conditions for full saturation derived from SC_2, TH_1, SC_1.",
             properties: &[
                 (
                     "https://uor.foundation/proof/provesIdentity",
-                    IndividualValue::IriRef("https://uor.foundation/op/SC_4"),
+                    IndividualValue::IriRef("https://uor.foundation/op/GS_4"),
                 ),
                 (
                     "https://uor.foundation/proof/universalScope",
@@ -8629,15 +8629,15 @@ fn individuals() -> Vec<Individual> {
             ],
         },
         Individual {
-            id: "https://uor.foundation/proof/prf_SC_5",
+            id: "https://uor.foundation/proof/prf_GS_5",
             type_: "https://uor.foundation/proof/AxiomaticDerivation",
-            label: "prf_SC_5",
+            label: "prf_GS_5",
             comment: "Proof of SC_5: O(1) resolution guarantee at saturation. \
-                      Derived from SR_2 and FiberBudget.isClosed at freeCount = 0.",
+                      Derived from SR_2 and FreeRank.isClosed at freeRank = 0.",
             properties: &[
                 (
                     "https://uor.foundation/proof/provesIdentity",
-                    IndividualValue::IriRef("https://uor.foundation/op/SC_5"),
+                    IndividualValue::IriRef("https://uor.foundation/op/GS_5"),
                 ),
                 (
                     "https://uor.foundation/proof/universalScope",
@@ -8654,15 +8654,15 @@ fn individuals() -> Vec<Individual> {
             ],
         },
         Individual {
-            id: "https://uor.foundation/proof/prf_SC_6",
+            id: "https://uor.foundation/proof/prf_GS_6",
             type_: "https://uor.foundation/proof/AxiomaticDerivation",
-            label: "prf_SC_6",
+            label: "prf_GS_6",
             comment: "Proof of SC_6: pre-reduction of effective budget. Derived from \
-                      session-scoped fiber reduction at partial saturation.",
+                      session-scoped site reduction at partial saturation.",
             properties: &[
                 (
                     "https://uor.foundation/proof/provesIdentity",
-                    IndividualValue::IriRef("https://uor.foundation/op/SC_6"),
+                    IndividualValue::IriRef("https://uor.foundation/op/GS_6"),
                 ),
                 (
                     "https://uor.foundation/proof/universalScope",
@@ -8679,15 +8679,15 @@ fn individuals() -> Vec<Individual> {
             ],
         },
         Individual {
-            id: "https://uor.foundation/proof/prf_SC_7",
+            id: "https://uor.foundation/proof/prf_GS_7",
             type_: "https://uor.foundation/proof/AxiomaticDerivation",
-            label: "prf_SC_7",
-            comment: "Proof of SC_7: thermodynamic cooling cost. n fiber-closures \
+            label: "prf_GS_7",
+            comment: "Proof of SC_7: thermodynamic cooling cost. n site-closures \
                       at Landauer cost each via SR_1 + TH_4.",
             properties: &[
                 (
                     "https://uor.foundation/proof/provesIdentity",
-                    IndividualValue::IriRef("https://uor.foundation/op/SC_7"),
+                    IndividualValue::IriRef("https://uor.foundation/op/GS_7"),
                 ),
                 (
                     "https://uor.foundation/proof/universalScope",
@@ -8784,7 +8784,7 @@ fn individuals() -> Vec<Individual> {
             type_: "https://uor.foundation/proof/AxiomaticDerivation",
             label: "prf_MS_4",
             comment: "Proof of MS_4: level-relative achievability. Derived from \
-                      QuantumLift construction (Amendment 29).",
+                      WittLift construction (Amendment 29).",
             properties: &[
                 (
                     "https://uor.foundation/proof/provesIdentity",
@@ -8985,7 +8985,7 @@ fn individuals() -> Vec<Individual> {
             id: "https://uor.foundation/proof/prf_QM_2",
             type_: "https://uor.foundation/proof/AxiomaticDerivation",
             label: "prf_QM_2",
-            comment: "Proof of QM_2: measurement as fiber topology change. \
+            comment: "Proof of QM_2: measurement as site topology change. \
                       Projective collapse ≅ classical ResidueConstraint pinning.",
             properties: &[
                 (
@@ -9011,7 +9011,7 @@ fn individuals() -> Vec<Individual> {
             type_: "https://uor.foundation/proof/AxiomaticDerivation",
             label: "prf_QM_3",
             comment: "Proof of QM_3: superposition entropy bound. 0 ≤ S_vN ≤ ln 2 \
-                      for single-fiber superpositions.",
+                      for single-site superpositions.",
             properties: &[
                 (
                     "https://uor.foundation/proof/provesIdentity",
@@ -9062,7 +9062,7 @@ fn individuals() -> Vec<Individual> {
             type_: "https://uor.foundation/proof/AxiomaticDerivation",
             label: "prf_QM_5",
             comment: "Proof of QM_5: amplitude normalization (Born rule). \
-                      Σ|αᵢ|² = 1 for well-formed SuperposedFiberState.",
+                      Σ|αᵢ|² = 1 for well-formed SuperposedSiteState.",
             properties: &[
                 (
                     "https://uor.foundation/proof/provesIdentity",
@@ -9087,7 +9087,7 @@ fn individuals() -> Vec<Individual> {
             type_: "https://uor.foundation/proof/AxiomaticDerivation",
             label: "prf_RC_6",
             comment: "Proof of RC_6: amplitude renormalization. Division by norm \
-                      yields a normalized SuperposedFiberState.",
+                      yields a normalized SuperposedSiteState.",
             properties: &[
                 (
                     "https://uor.foundation/proof/provesIdentity",
@@ -9186,7 +9186,7 @@ fn individuals() -> Vec<Individual> {
             id: "https://uor.foundation/proof/prf_QL_8",
             type_: "https://uor.foundation/proof/AxiomaticDerivation",
             label: "prf_QL_8",
-            comment: "Proof of QL_8: quantum level chain inverse. levelSuccessor \
+            comment: "Proof of QL_8: quantum level chain inverse. wittLevelPredecessor \
                       is the left inverse of nextLevel.",
             properties: &[
                 (
@@ -9312,7 +9312,7 @@ fn individuals() -> Vec<Individual> {
             type_: "https://uor.foundation/proof/AxiomaticDerivation",
             label: "prf_SP_4",
             comment: "Proof of SP_4: Born rule outcome probability. P(collapse to \
-                      fiber k) = |α_k|².",
+                      site k) = |α_k|².",
             properties: &[
                 (
                     "https://uor.foundation/proof/provesIdentity",
@@ -9508,14 +9508,14 @@ fn individuals() -> Vec<Individual> {
         },
         // Amendment 41: QT_ tower identity proofs
         Individual {
-            id: "https://uor.foundation/proof/prf_QT_1",
+            id: "https://uor.foundation/proof/prf_WT_1",
             type_: "https://uor.foundation/proof/InductiveProof",
-            label: "prf_QT_1",
+            label: "prf_WT_1",
             comment: "Proof of tower chain validity by induction on chain length.",
             properties: &[
                 (
                     "https://uor.foundation/proof/provesIdentity",
-                    IndividualValue::IriRef("https://uor.foundation/op/QT_1"),
+                    IndividualValue::IriRef("https://uor.foundation/op/WT_1"),
                 ),
                 (
                     "https://uor.foundation/proof/universalScope",
@@ -9527,11 +9527,11 @@ fn individuals() -> Vec<Individual> {
                 ),
                 (
                     "https://uor.foundation/proof/baseCase",
-                    IndividualValue::IriRef("https://uor.foundation/proof/prf_QLS_1"),
+                    IndividualValue::IriRef("https://uor.foundation/proof/prf_WLS_1"),
                 ),
                 (
                     "https://uor.foundation/proof/inductiveStep",
-                    IndividualValue::IriRef("https://uor.foundation/proof/prf_QLS_6"),
+                    IndividualValue::IriRef("https://uor.foundation/proof/prf_WLS_6"),
                 ),
                 (
                     "https://uor.foundation/proof/validForKAtLeast",
@@ -9544,14 +9544,14 @@ fn individuals() -> Vec<Individual> {
             ],
         },
         Individual {
-            id: "https://uor.foundation/proof/prf_QT_2",
+            id: "https://uor.foundation/proof/prf_WT_2",
             type_: "https://uor.foundation/proof/AxiomaticDerivation",
-            label: "prf_QT_2",
+            label: "prf_WT_2",
             comment: "Proof of obstruction count bound: direct from QLS_2 localization.",
             properties: &[
                 (
                     "https://uor.foundation/proof/provesIdentity",
-                    IndividualValue::IriRef("https://uor.foundation/op/QT_2"),
+                    IndividualValue::IriRef("https://uor.foundation/op/WT_2"),
                 ),
                 (
                     "https://uor.foundation/proof/universalScope",
@@ -9568,15 +9568,15 @@ fn individuals() -> Vec<Individual> {
             ],
         },
         Individual {
-            id: "https://uor.foundation/proof/prf_QT_3",
+            id: "https://uor.foundation/proof/prf_WT_3",
             type_: "https://uor.foundation/proof/InductiveProof",
-            label: "prf_QT_3",
+            label: "prf_WT_3",
             comment: "Proof of resolved basis size formula by induction on chain \
                       length.",
             properties: &[
                 (
                     "https://uor.foundation/proof/provesIdentity",
-                    IndividualValue::IriRef("https://uor.foundation/op/QT_3"),
+                    IndividualValue::IriRef("https://uor.foundation/op/WT_3"),
                 ),
                 (
                     "https://uor.foundation/proof/universalScope",
@@ -9588,11 +9588,11 @@ fn individuals() -> Vec<Individual> {
                 ),
                 (
                     "https://uor.foundation/proof/baseCase",
-                    IndividualValue::IriRef("https://uor.foundation/proof/prf_QT_3_base"),
+                    IndividualValue::IriRef("https://uor.foundation/proof/prf_WT_3_base"),
                 ),
                 (
                     "https://uor.foundation/proof/inductiveStep",
-                    IndividualValue::IriRef("https://uor.foundation/proof/prf_QLS_3"),
+                    IndividualValue::IriRef("https://uor.foundation/proof/prf_WLS_3"),
                 ),
                 (
                     "https://uor.foundation/proof/validForKAtLeast",
@@ -9605,15 +9605,15 @@ fn individuals() -> Vec<Individual> {
             ],
         },
         Individual {
-            id: "https://uor.foundation/proof/prf_QT_4",
+            id: "https://uor.foundation/proof/prf_WT_4",
             type_: "https://uor.foundation/proof/AxiomaticDerivation",
-            label: "prf_QT_4",
+            label: "prf_WT_4",
             comment: "Proof of flat tower characterization: isFlat iff trivial \
                       holonomy at every step.",
             properties: &[
                 (
                     "https://uor.foundation/proof/provesIdentity",
-                    IndividualValue::IriRef("https://uor.foundation/op/QT_4"),
+                    IndividualValue::IriRef("https://uor.foundation/op/WT_4"),
                 ),
                 (
                     "https://uor.foundation/proof/universalScope",
@@ -9630,15 +9630,15 @@ fn individuals() -> Vec<Individual> {
             ],
         },
         Individual {
-            id: "https://uor.foundation/proof/prf_QT_5",
+            id: "https://uor.foundation/proof/prf_WT_5",
             type_: "https://uor.foundation/proof/InductiveProof",
-            label: "prf_QT_5",
+            label: "prf_WT_5",
             comment: "Proof of LiftChainCertificate existence by induction on \
                       tower height.",
             properties: &[
                 (
                     "https://uor.foundation/proof/provesIdentity",
-                    IndividualValue::IriRef("https://uor.foundation/op/QT_5"),
+                    IndividualValue::IriRef("https://uor.foundation/op/WT_5"),
                 ),
                 (
                     "https://uor.foundation/proof/universalScope",
@@ -9650,11 +9650,11 @@ fn individuals() -> Vec<Individual> {
                 ),
                 (
                     "https://uor.foundation/proof/baseCase",
-                    IndividualValue::IriRef("https://uor.foundation/proof/prf_QT_5_base"),
+                    IndividualValue::IriRef("https://uor.foundation/proof/prf_WT_5_base"),
                 ),
                 (
                     "https://uor.foundation/proof/inductiveStep",
-                    IndividualValue::IriRef("https://uor.foundation/proof/prf_QT_1"),
+                    IndividualValue::IriRef("https://uor.foundation/proof/prf_WT_1"),
                 ),
                 (
                     "https://uor.foundation/proof/validForKAtLeast",
@@ -9667,15 +9667,15 @@ fn individuals() -> Vec<Individual> {
             ],
         },
         Individual {
-            id: "https://uor.foundation/proof/prf_QT_6",
+            id: "https://uor.foundation/proof/prf_WT_6",
             type_: "https://uor.foundation/proof/AxiomaticDerivation",
-            label: "prf_QT_6",
+            label: "prf_WT_6",
             comment: "Proof of single-step reduction: QT_3 with chainLength=1 \
                       reduces to QLS_3.",
             properties: &[
                 (
                     "https://uor.foundation/proof/provesIdentity",
-                    IndividualValue::IriRef("https://uor.foundation/op/QT_6"),
+                    IndividualValue::IriRef("https://uor.foundation/op/WT_6"),
                 ),
                 (
                     "https://uor.foundation/proof/universalScope",
@@ -9692,14 +9692,14 @@ fn individuals() -> Vec<Individual> {
             ],
         },
         Individual {
-            id: "https://uor.foundation/proof/prf_QT_7",
+            id: "https://uor.foundation/proof/prf_WT_7",
             type_: "https://uor.foundation/proof/AxiomaticDerivation",
-            label: "prf_QT_7",
+            label: "prf_WT_7",
             comment: "Proof of flat chain basis size formula.",
             properties: &[
                 (
                     "https://uor.foundation/proof/provesIdentity",
-                    IndividualValue::IriRef("https://uor.foundation/op/QT_7"),
+                    IndividualValue::IriRef("https://uor.foundation/op/WT_7"),
                 ),
                 (
                     "https://uor.foundation/proof/universalScope",
@@ -9716,12 +9716,12 @@ fn individuals() -> Vec<Individual> {
             ],
         },
         // Amendment 44: Structural Gap Closure proofs
-        // G7: CarryConstraint fiber-pinning map
+        // G7: CarryConstraint site-pinning map
         Individual {
             id: "https://uor.foundation/proof/prf_CC_PINS",
             type_: "https://uor.foundation/proof/AxiomaticDerivation",
             label: "prf_CC_PINS",
-            comment: "Proof of CC_PINS: carry-constraint fiber-pinning map \
+            comment: "Proof of CC_PINS: carry-constraint site-pinning map \
                       follows from ring carry propagation rule.",
             properties: &[
                 (
@@ -9743,19 +9743,19 @@ fn individuals() -> Vec<Individual> {
             ],
         },
         Individual {
-            id: "https://uor.foundation/proof/prf_CC_COST_FIBER",
+            id: "https://uor.foundation/proof/prf_CC_COST_SITE",
             type_: "https://uor.foundation/proof/ComputationCertificate",
-            label: "prf_CC_COST_FIBER",
-            comment: "Computation certificate for CC_COST_FIBER: exhaustive \
-                      enumeration at Q0 confirms |pinsFibers| = popcount + 1.",
+            label: "prf_CC_COST_SITE",
+            comment: "Computation certificate for CC_COST_SITE: exhaustive \
+                      enumeration at Q0 confirms |pinsSites| = popcount + 1.",
             properties: &[
                 (
                     "https://uor.foundation/proof/provesIdentity",
-                    IndividualValue::IriRef("https://uor.foundation/op/CC_COST_FIBER"),
+                    IndividualValue::IriRef("https://uor.foundation/op/CC_COST_SITE"),
                 ),
                 (
-                    "https://uor.foundation/proof/atQuantumLevel",
-                    IndividualValue::IriRef("https://uor.foundation/schema/Q0"),
+                    "https://uor.foundation/proof/atWittLevel",
+                    IndividualValue::IriRef("https://uor.foundation/schema/W8"),
                 ),
                 (
                     "https://uor.foundation/proof/verified",
@@ -9831,8 +9831,8 @@ fn individuals() -> Vec<Individual> {
                     IndividualValue::IriRef("https://uor.foundation/op/jsat_CC"),
                 ),
                 (
-                    "https://uor.foundation/proof/atQuantumLevel",
-                    IndividualValue::IriRef("https://uor.foundation/schema/Q0"),
+                    "https://uor.foundation/proof/atWittLevel",
+                    IndividualValue::IriRef("https://uor.foundation/schema/W8"),
                 ),
                 (
                     "https://uor.foundation/proof/verified",
@@ -9901,7 +9901,7 @@ fn individuals() -> Vec<Individual> {
             type_: "https://uor.foundation/proof/AxiomaticDerivation",
             label: "prf_EXP_1",
             comment: "Proof of EXP_1: monotone carrier characterization \
-                      follows from fiber lattice monotonicity.",
+                      follows from site lattice monotonicity.",
             properties: &[
                 (
                     "https://uor.foundation/proof/provesIdentity",
@@ -9933,8 +9933,8 @@ fn individuals() -> Vec<Individual> {
                     IndividualValue::IriRef("https://uor.foundation/op/EXP_2"),
                 ),
                 (
-                    "https://uor.foundation/proof/atQuantumLevel",
-                    IndividualValue::IriRef("https://uor.foundation/schema/Q0"),
+                    "https://uor.foundation/proof/atWittLevel",
+                    IndividualValue::IriRef("https://uor.foundation/schema/W8"),
                 ),
                 (
                     "https://uor.foundation/proof/verified",
@@ -10151,15 +10151,15 @@ fn individuals() -> Vec<Individual> {
         },
         // G6: ObstructionChain termination
         Individual {
-            id: "https://uor.foundation/proof/prf_QT_8",
+            id: "https://uor.foundation/proof/prf_WT_8",
             type_: "https://uor.foundation/proof/AxiomaticDerivation",
-            label: "prf_QT_8",
+            label: "prf_WT_8",
             comment: "Proof of QT_8: ObstructionChain length bound follows \
                       from QLS_2 and spectral sequence convergence.",
             properties: &[
                 (
                     "https://uor.foundation/proof/provesIdentity",
-                    IndividualValue::IriRef("https://uor.foundation/op/QT_8"),
+                    IndividualValue::IriRef("https://uor.foundation/op/WT_8"),
                 ),
                 (
                     "https://uor.foundation/proof/universalScope",
@@ -10176,15 +10176,15 @@ fn individuals() -> Vec<Individual> {
             ],
         },
         Individual {
-            id: "https://uor.foundation/proof/prf_QT_9",
+            id: "https://uor.foundation/proof/prf_WT_9",
             type_: "https://uor.foundation/proof/AxiomaticDerivation",
-            label: "prf_QT_9",
+            label: "prf_WT_9",
             comment: "Proof of QT_9: TowerCompletenessResolver termination \
                       follows from finite chain length and QT_8 bound.",
             properties: &[
                 (
                     "https://uor.foundation/proof/provesIdentity",
-                    IndividualValue::IriRef("https://uor.foundation/op/QT_9"),
+                    IndividualValue::IriRef("https://uor.foundation/op/WT_9"),
                 ),
                 (
                     "https://uor.foundation/proof/universalScope",
@@ -10254,15 +10254,15 @@ fn individuals() -> Vec<Individual> {
         },
         // G8: Session saturation lifecycle bridge
         Individual {
-            id: "https://uor.foundation/proof/prf_SR_6",
+            id: "https://uor.foundation/proof/prf_GR_6",
             type_: "https://uor.foundation/proof/AxiomaticDerivation",
-            label: "prf_SR_6",
+            label: "prf_GR_6",
             comment: "Proof of SR_6: saturation re-entry free count follows \
                       from SR_1 monotone accumulation and SC_2.",
             properties: &[
                 (
                     "https://uor.foundation/proof/provesIdentity",
-                    IndividualValue::IriRef("https://uor.foundation/op/SR_6"),
+                    IndividualValue::IriRef("https://uor.foundation/op/GR_6"),
                 ),
                 (
                     "https://uor.foundation/proof/universalScope",
@@ -10279,15 +10279,15 @@ fn individuals() -> Vec<Individual> {
             ],
         },
         Individual {
-            id: "https://uor.foundation/proof/prf_SR_7",
+            id: "https://uor.foundation/proof/prf_GR_7",
             type_: "https://uor.foundation/proof/AxiomaticDerivation",
-            label: "prf_SR_7",
+            label: "prf_GR_7",
             comment: "Proof of SR_7: saturation degree degradation follows \
                       from SC_2 definition and SR_1 monotonicity.",
             properties: &[
                 (
                     "https://uor.foundation/proof/provesIdentity",
-                    IndividualValue::IriRef("https://uor.foundation/op/SR_7"),
+                    IndividualValue::IriRef("https://uor.foundation/op/GR_7"),
                 ),
                 (
                     "https://uor.foundation/proof/universalScope",
@@ -10310,7 +10310,7 @@ fn individuals() -> Vec<Individual> {
             label: "prf_QM_6",
             comment: "Inductive proof of QM_6: amplitude index set equals monotone \
                       pinning trajectories. Base case at Q0 by exhaustive trajectory \
-                      enumeration; inductive step by fiber lattice ordering.",
+                      enumeration; inductive step by site lattice ordering.",
             properties: &[
                 (
                     "https://uor.foundation/proof/provesIdentity",
@@ -10419,7 +10419,7 @@ fn individuals() -> Vec<Individual> {
             id: "https://uor.foundation/proof/prf_CIC_4",
             type_: "https://uor.foundation/proof/AxiomaticDerivation",
             label: "prf_CIC_4",
-            comment: "Proof of CIC_4: SaturationCertificate issuance coverage.",
+            comment: "Proof of CIC_4: GroundingCertificate issuance coverage.",
             properties: &[
                 (
                     "https://uor.foundation/proof/provesIdentity",
@@ -10540,14 +10540,14 @@ fn individuals() -> Vec<Individual> {
         },
         // Amendment 48: Multi-Session Coordination proofs
         Individual {
-            id: "https://uor.foundation/proof/prf_SR_8",
+            id: "https://uor.foundation/proof/prf_GR_8",
             type_: "https://uor.foundation/proof/AxiomaticDerivation",
-            label: "prf_SR_8",
+            label: "prf_GR_8",
             comment: "Proof of SR_8: session composition tower consistency.",
             properties: &[
                 (
                     "https://uor.foundation/proof/provesIdentity",
-                    IndividualValue::IriRef("https://uor.foundation/op/SR_8"),
+                    IndividualValue::IriRef("https://uor.foundation/op/GR_8"),
                 ),
                 (
                     "https://uor.foundation/proof/universalScope",
@@ -10564,14 +10564,14 @@ fn individuals() -> Vec<Individual> {
             ],
         },
         Individual {
-            id: "https://uor.foundation/proof/prf_SR_9",
+            id: "https://uor.foundation/proof/prf_GR_9",
             type_: "https://uor.foundation/proof/AxiomaticDerivation",
-            label: "prf_SR_9",
-            comment: "Proof of SR_9: ContextLease fiber disjointness.",
+            label: "prf_GR_9",
+            comment: "Proof of SR_9: ContextLease site disjointness.",
             properties: &[
                 (
                     "https://uor.foundation/proof/provesIdentity",
-                    IndividualValue::IriRef("https://uor.foundation/op/SR_9"),
+                    IndividualValue::IriRef("https://uor.foundation/op/GR_9"),
                 ),
                 (
                     "https://uor.foundation/proof/universalScope",
@@ -10588,14 +10588,14 @@ fn individuals() -> Vec<Individual> {
             ],
         },
         Individual {
-            id: "https://uor.foundation/proof/prf_SR_10",
+            id: "https://uor.foundation/proof/prf_GR_10",
             type_: "https://uor.foundation/proof/AxiomaticDerivation",
-            label: "prf_SR_10",
+            label: "prf_GR_10",
             comment: "Proof of SR_10: ExecutionPolicy confluence.",
             properties: &[
                 (
                     "https://uor.foundation/proof/provesIdentity",
-                    IndividualValue::IriRef("https://uor.foundation/op/SR_10"),
+                    IndividualValue::IriRef("https://uor.foundation/op/GR_10"),
                 ),
                 (
                     "https://uor.foundation/proof/universalScope",
@@ -10663,7 +10663,7 @@ fn individuals() -> Vec<Individual> {
             id: "https://uor.foundation/proof/prf_MC_3",
             type_: "https://uor.foundation/proof/AxiomaticDerivation",
             label: "prf_MC_3",
-            comment: "Proof of MC_3: composition freeCount inclusion-exclusion.",
+            comment: "Proof of MC_3: composition freeRank inclusion-exclusion.",
             properties: &[
                 (
                     "https://uor.foundation/proof/provesIdentity",
@@ -11813,7 +11813,7 @@ fn individuals() -> Vec<Individual> {
             id: "https://uor.foundation/proof/prf_MD_9",
             type_: "https://uor.foundation/proof/AxiomaticDerivation",
             label: "prf_MD_9",
-            comment: "Axiomatic derivation of MD_9: tower map fiber dimension \
+            comment: "Axiomatic derivation of MD_9: tower map site dimension \
                       is 1 when unobstructed.",
             properties: &[
                 (
@@ -11838,7 +11838,7 @@ fn individuals() -> Vec<Individual> {
             id: "https://uor.foundation/proof/prf_MD_10",
             type_: "https://uor.foundation/proof/AxiomaticDerivation",
             label: "prf_MD_10",
-            comment: "Axiomatic derivation of MD_10: tower map fiber empty iff \
+            comment: "Axiomatic derivation of MD_10: tower map site empty iff \
                       twisted at every level.",
             properties: &[
                 (
@@ -12086,7 +12086,7 @@ fn individuals() -> Vec<Individual> {
             id: "https://uor.foundation/proof/prf_CY_6",
             type_: "https://uor.foundation/proof/AxiomaticDerivation",
             label: "prf_CY_6",
-            comment: "Axiomatic derivation of CY_6: fiber ordering theorem.",
+            comment: "Axiomatic derivation of CY_6: site ordering theorem.",
             properties: &[
                 (
                     "https://uor.foundation/proof/provesIdentity",
@@ -12208,7 +12208,7 @@ fn individuals() -> Vec<Individual> {
             id: "https://uor.foundation/proof/prf_BM_4",
             type_: "https://uor.foundation/proof/AxiomaticDerivation",
             label: "prf_BM_4",
-            comment: "Axiomatic derivation of BM_4: Jacobian vanishes on pinned fibers.",
+            comment: "Axiomatic derivation of BM_4: Jacobian vanishes on pinned sites.",
             properties: &[
                 (
                     "https://uor.foundation/proof/provesIdentity",
@@ -12547,7 +12547,7 @@ fn individuals() -> Vec<Individual> {
             id: "https://uor.foundation/proof/prf_SD_4",
             type_: "https://uor.foundation/proof/AxiomaticDerivation",
             label: "prf_SD_4",
-            comment: "Axiomatic derivation of SD_4: tuple fiber additivity.",
+            comment: "Axiomatic derivation of SD_4: tuple site additivity.",
             properties: &[
                 (
                     "https://uor.foundation/proof/provesIdentity",
@@ -13096,7 +13096,7 @@ fn individuals() -> Vec<Individual> {
                 ),
             ],
         },
-        // Amendment 63: Cascade Core proofs (16)
+        // Amendment 63: Reduction Core proofs (16)
         Individual {
             id: "https://uor.foundation/proof/prf_PE_1",
             type_: "https://uor.foundation/proof/AxiomaticDerivation",
@@ -13481,7 +13481,7 @@ fn individuals() -> Vec<Individual> {
                 ),
             ],
         },
-        // Amendment 64: Cascade Expansion proofs (16)
+        // Amendment 64: Reduction Expansion proofs (16)
         Individual {
             id: "https://uor.foundation/proof/prf_ER_3",
             type_: "https://uor.foundation/proof/AxiomaticDerivation",
@@ -13866,12 +13866,12 @@ fn individuals() -> Vec<Individual> {
                 ),
             ],
         },
-        // Amendment 65: Cascade Completion proofs (16)
+        // Amendment 65: Reduction Completion proofs (16)
         Individual {
             id: "https://uor.foundation/proof/prf_CS_5",
             type_: "https://uor.foundation/proof/AxiomaticDerivation",
             label: "prf_CS_5",
-            comment: "Axiomatic derivation of CS_5: total cascade cost bound.",
+            comment: "Axiomatic derivation of CS_5: total reduction cost bound.",
             properties: &[
                 (
                     "https://uor.foundation/proof/provesIdentity",
@@ -14717,7 +14717,7 @@ fn individuals() -> Vec<Individual> {
             id: "https://uor.foundation/proof/prf_IN_3",
             type_: "https://uor.foundation/proof/AxiomaticDerivation",
             label: "prf_IN_3",
-            comment: "Axiomatic derivation of IN_3: shared fibers nonzero \
+            comment: "Axiomatic derivation of IN_3: shared sites nonzero \
                       commutator.",
             properties: &[
                 (
@@ -15112,7 +15112,7 @@ fn individuals() -> Vec<Individual> {
             id: "https://uor.foundation/proof/prf_OP_1",
             type_: "https://uor.foundation/proof/AxiomaticDerivation",
             label: "prf_OP_1",
-            comment: "Axiomatic derivation of OP_1: fiber additivity.",
+            comment: "Axiomatic derivation of OP_1: site additivity.",
             properties: &[
                 (
                     "https://uor.foundation/proof/provesIdentity",
@@ -15233,7 +15233,7 @@ fn individuals() -> Vec<Individual> {
             id: "https://uor.foundation/proof/prf_FX_1",
             type_: "https://uor.foundation/proof/AxiomaticDerivation",
             label: "prf_FX_1",
-            comment: "Axiomatic derivation of FX_1: pinning fiber budget decrement.",
+            comment: "Axiomatic derivation of FX_1: pinning site budget decrement.",
             properties: &[
                 (
                     "https://uor.foundation/proof/provesIdentity",
@@ -15257,7 +15257,7 @@ fn individuals() -> Vec<Individual> {
             id: "https://uor.foundation/proof/prf_FX_2",
             type_: "https://uor.foundation/proof/AxiomaticDerivation",
             label: "prf_FX_2",
-            comment: "Axiomatic derivation of FX_2: unbinding fiber budget increment.",
+            comment: "Axiomatic derivation of FX_2: unbinding site budget increment.",
             properties: &[
                 (
                     "https://uor.foundation/proof/provesIdentity",
@@ -15518,7 +15518,7 @@ fn individuals() -> Vec<Individual> {
                 ),
             ],
         },
-        // ── Amendment 73: Cascade guard + Dispatch proofs ───────────────
+        // ── Amendment 73: Reduction guard + Dispatch proofs ──────────────
         Individual {
             id: "https://uor.foundation/proof/prf_CG_1",
             type_: "https://uor.foundation/proof/AxiomaticDerivation",

@@ -4,9 +4,9 @@
 //!
 //! Space: Bridge
 
-use crate::enums::QuantumLevel;
 use crate::enums::VerificationDomain;
 use crate::enums::ViolationKind;
+use crate::enums::WittLevel;
 use crate::Primitives;
 
 /// A constraint shape that a Prism-declared extension must satisfy. Analogous to sh:NodeShape in SHACL.
@@ -31,8 +31,8 @@ pub trait PropertyConstraint<P: Primitives> {
     fn max_count(&self) -> P::NonNegativeInteger;
 }
 
-/// Shape for declaring a new QuantumLevel beyond Q3.
-pub trait QuantumLevelShape<P: Primitives>: Shape<P> {}
+/// Shape for declaring a new WittLevel beyond Q3.
+pub trait WittLevelShape<P: Primitives>: Shape<P> {}
 
 /// Shape for declaring an ExternalEffect.
 pub trait EffectShape<P: Primitives>: Shape<P> {}
@@ -46,7 +46,7 @@ pub trait StreamShape<P: Primitives>: Shape<P> {}
 /// Shape for declaring a new DispatchRule in a DispatchTable.
 pub trait DispatchShape<P: Primitives>: Shape<P> {}
 
-/// Shape for declaring a Lease with LinearFiber allocation.
+/// Shape for declaring a Lease with LinearSite allocation.
 pub trait LeaseShape<P: Primitives>: Shape<P> {}
 
 /// Shape for declaring a GroundingMap from surface data to the ring.
@@ -67,7 +67,7 @@ pub trait ValidationResult<P: Primitives> {
 /// Shape for user-declared predicates. Requires a bounded evaluator (termination witness) and input type declaration.
 pub trait PredicateShape<P: Primitives>: Shape<P> {}
 
-/// Opaque ring element witness. Cannot be constructed outside the foundation crate — only produced by cascade evaluation or the two-phase minting boundary.
+/// Opaque ring element witness. Cannot be constructed outside the foundation crate — only produced by reduction evaluation or the two-phase minting boundary.
 pub trait WitnessDatum<P: Primitives> {
     /// The quantum level at which this witness datum was minted.
     fn witness_level(&self) -> P::NonNegativeInteger;
@@ -78,7 +78,7 @@ pub trait WitnessDatum<P: Primitives> {
 /// Boundary crossing intermediate for a single grounded coordinate value. Not a WitnessDatum — must be validated and minted by the foundation.
 pub trait GroundedCoordinate<P: Primitives> {
     /// The quantum level tag of this grounded coordinate.
-    fn coordinate_level(&self) -> QuantumLevel;
+    fn coordinate_level(&self) -> WittLevel;
 }
 
 /// Boundary crossing intermediate for a fixed-size array of GroundedCoordinate values. Stack-resident, no heap allocation.
@@ -96,8 +96,8 @@ pub trait ValidatedWrapper<P: Primitives> {
 /// Opaque derivation trace that can only be extended by the rewrite engine. Records rewrite step count and root term content address.
 pub trait WitnessDerivation<P: Primitives> {}
 
-/// Opaque fiber budget that can only be decremented by PinningEffect and incremented by UnbindingEffect — never by direct mutation.
-pub trait WitnessFiberBudget<P: Primitives> {}
+/// Opaque site budget that can only be decremented by PinningEffect and incremented by UnbindingEffect — never by direct mutation.
+pub trait WitnessSiteBudget<P: Primitives> {}
 
 /// Structured violation diagnostic carrying the shape IRI, constraint IRI, property IRI, expected range, cardinality bounds, and violation kind.
 pub trait ShapeViolationReport<P: Primitives> {
@@ -124,22 +124,22 @@ pub trait CompileUnitBuilder<P: Primitives> {
     /// The root term expression for the CompileUnit.
     fn builder_root_term(&self) -> &Self::Term;
     /// The widest quantum level the computation may reference.
-    fn builder_quantum_level_ceiling(&self) -> QuantumLevel;
+    fn builder_witt_level_ceiling(&self) -> WittLevel;
     /// Landauer-bounded energy budget in kBT ln 2 units.
     fn builder_thermodynamic_budget(&self) -> P::Decimal;
     /// Verification domains targeted by the CompileUnit.
     fn builder_target_domains(&self) -> &[VerificationDomain];
 }
 
-/// Builder for EffectShape. Collects effect name, target fibers, budget delta, and commutation flag.
+/// Builder for EffectShape. Collects effect name, target sites, budget delta, and commutation flag.
 pub trait EffectDeclaration<P: Primitives> {
     /// The name of the declared effect.
     fn effect_name(&self) -> &P::String;
-    /// Fiber coordinates this effect reads or writes.
-    fn target_fibers(&self) -> &[P::NonNegativeInteger];
-    /// The fiber budget delta (positive = increment, negative = decrement).
+    /// Site coordinates this effect reads or writes.
+    fn target_sites(&self) -> &[P::NonNegativeInteger];
+    /// The site budget delta (positive = increment, negative = decrement).
     fn budget_delta(&self) -> P::Integer;
-    /// Whether this effect commutes with effects on disjoint fibers.
+    /// Whether this effect commutes with effects on disjoint sites.
     fn commutation_flag(&self) -> P::Boolean;
 }
 
@@ -158,7 +158,7 @@ pub trait GroundingDeclaration<P: Primitives> {
 /// Builder for DispatchShape. Collects predicate, target resolver, and dispatch priority.
 pub trait DispatchDeclaration<P: Primitives> {
     /// Associated type for `PredicateExpression`.
-    type PredicateExpression: crate::kernel::cascade::PredicateExpression<P>;
+    type PredicateExpression: crate::kernel::reduction::PredicateExpression<P>;
     /// The predicate expression guarding this dispatch rule.
     fn dispatch_predicate(&self) -> &Self::PredicateExpression;
     /// Associated type for `Resolver`.
@@ -169,10 +169,10 @@ pub trait DispatchDeclaration<P: Primitives> {
     fn dispatch_priority(&self) -> P::NonNegativeInteger;
 }
 
-/// Builder for LeaseShape. Collects linear fiber and lease scope.
+/// Builder for LeaseShape. Collects linear site and lease scope.
 pub trait LeaseDeclaration<P: Primitives> {
-    /// The fiber coordinate allocated linearly by this lease.
-    fn linear_fiber(&self) -> P::NonNegativeInteger;
+    /// The site coordinate allocated linearly by this lease.
+    fn linear_site(&self) -> P::NonNegativeInteger;
     /// The scope within which this lease is valid.
     fn lease_scope(&self) -> &P::String;
 }
@@ -203,24 +203,24 @@ pub trait PredicateDeclaration<P: Primitives> {
     fn termination_witness(&self) -> &P::String;
 }
 
-/// Builder for ParallelShape. Collects fiber partition and disjointness witness.
+/// Builder for ParallelShape. Collects site partition and disjointness witness.
 pub trait ParallelDeclaration<P: Primitives> {
     /// Associated type for `Partition`.
     type Partition: crate::bridge::partition::Partition<P>;
-    /// The fiber partition for the parallel composition.
-    fn fiber_partition(&self) -> &Self::Partition;
-    /// Evidence that the fiber partition components are pairwise disjoint.
+    /// The site partition for the parallel composition.
+    fn site_partition(&self) -> &Self::Partition;
+    /// Evidence that the site partition components are pairwise disjoint.
     fn disjointness_witness(&self) -> &P::String;
 }
 
-/// Builder for QuantumLevelShape. Collects declared bit width, cycle size, and predecessor level.
-pub trait QuantumLevelDeclaration<P: Primitives> {
+/// Builder for WittLevelShape. Collects declared bit width, cycle size, and predecessor level.
+pub trait WittLevelDeclaration<P: Primitives> {
     /// The declared bit width for this quantum level.
     fn declared_bit_width(&self) -> P::PositiveInteger;
     /// The declared number of ring states at this level.
     fn declared_cycle_size(&self) -> P::NonNegativeInteger;
     /// The predecessor quantum level in the chain.
-    fn predecessor_level(&self) -> QuantumLevel;
+    fn predecessor_level(&self) -> WittLevel;
 }
 
 /// Boundary session state tracker. Records crossing count and idempotency flag for the two-phase minting boundary.
@@ -231,23 +231,23 @@ pub trait MintingSession<P: Primitives> {
     fn session_is_idempotent(&self) -> P::Boolean;
 }
 
-/// Shape validating that a CompileUnit carries all required properties before cascade admission. The unitAddress property is NOT required — it is computed by stage_initialization after shape validation passes.
+/// Shape validating that a CompileUnit carries all required properties before reduction admission. The unitAddress property is NOT required — it is computed by stage_initialization after shape validation passes.
 pub mod compile_unit_shape {
     /// `requiredProperty`
     pub const REQUIRED_PROPERTY: &[&str] = &[
         "https://uor.foundation/conformance/compileUnit_rootTerm_constraint",
-        "https://uor.foundation/conformance/compileUnit_unitQuantumLevel_constraint",
+        "https://uor.foundation/conformance/compileUnit_unitWittLevel_constraint",
         "https://uor.foundation/conformance/compileUnit_thermodynamicBudget_constraint",
         "https://uor.foundation/conformance/compileUnit_targetDomains_constraint",
     ];
     /// `targetClass` -> `CompileUnit`
-    pub const TARGET_CLASS: &str = "https://uor.foundation/cascade/CompileUnit";
+    pub const TARGET_CLASS: &str = "https://uor.foundation/reduction/CompileUnit";
 }
 
 /// Exactly one root term is required. Range is schema:Term.
 pub mod compile_unit_root_term_constraint {
     /// `constraintProperty` -> `rootTerm`
-    pub const CONSTRAINT_PROPERTY: &str = "https://uor.foundation/cascade/rootTerm";
+    pub const CONSTRAINT_PROPERTY: &str = "https://uor.foundation/reduction/rootTerm";
     /// `constraintRange` -> `Term`
     pub const CONSTRAINT_RANGE: &str = "https://uor.foundation/schema/Term";
     /// `maxCount`
@@ -256,12 +256,12 @@ pub mod compile_unit_root_term_constraint {
     pub const MIN_COUNT: i64 = 1;
 }
 
-/// Exactly one quantum level is required. Range is schema:QuantumLevel.
-pub mod compile_unit_unit_quantum_level_constraint {
-    /// `constraintProperty` -> `unitQuantumLevel`
-    pub const CONSTRAINT_PROPERTY: &str = "https://uor.foundation/cascade/unitQuantumLevel";
-    /// `constraintRange` -> `QuantumLevel`
-    pub const CONSTRAINT_RANGE: &str = "https://uor.foundation/schema/QuantumLevel";
+/// Exactly one quantum level is required. Range is schema:WittLevel.
+pub mod compile_unit_unit_witt_level_constraint {
+    /// `constraintProperty` -> `unitWittLevel`
+    pub const CONSTRAINT_PROPERTY: &str = "https://uor.foundation/reduction/unitWittLevel";
+    /// `constraintRange` -> `WittLevel`
+    pub const CONSTRAINT_RANGE: &str = "https://uor.foundation/schema/WittLevel";
     /// `maxCount`
     pub const MAX_COUNT: i64 = 1;
     /// `minCount`
@@ -271,7 +271,7 @@ pub mod compile_unit_unit_quantum_level_constraint {
 /// Exactly one thermodynamic budget is required. Shape validates presence and type; the BudgetSolvencyCheck preflight validates the value against the Landauer bound.
 pub mod compile_unit_thermodynamic_budget_constraint {
     /// `constraintProperty` -> `thermodynamicBudget`
-    pub const CONSTRAINT_PROPERTY: &str = "https://uor.foundation/cascade/thermodynamicBudget";
+    pub const CONSTRAINT_PROPERTY: &str = "https://uor.foundation/reduction/thermodynamicBudget";
     /// `constraintRange` -> `decimal`
     pub const CONSTRAINT_RANGE: &str = "http://www.w3.org/2001/XMLSchema#decimal";
     /// `maxCount`
@@ -283,7 +283,7 @@ pub mod compile_unit_thermodynamic_budget_constraint {
 /// At least one target verification domain is required. maxCount 0 means unbounded.
 pub mod compile_unit_target_domains_constraint {
     /// `constraintProperty` -> `targetDomains`
-    pub const CONSTRAINT_PROPERTY: &str = "https://uor.foundation/cascade/targetDomains";
+    pub const CONSTRAINT_PROPERTY: &str = "https://uor.foundation/reduction/targetDomains";
     /// `constraintRange` -> `VerificationDomain`
     pub const CONSTRAINT_RANGE: &str = "https://uor.foundation/op/VerificationDomain";
     /// `maxCount`

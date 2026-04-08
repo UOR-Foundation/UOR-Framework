@@ -101,7 +101,7 @@ fn classes() -> Vec<Class> {
             id: "https://uor.foundation/recursion/StructuralRecursion",
             label: "StructuralRecursion",
             comment: "A bounded recursion where the descent measure is the \
-                      structural size of the input type (fiber count, \
+                      structural size of the input type (site count, \
                       constraint count, or operad nesting depth).",
             subclass_of: &["https://uor.foundation/recursion/BoundedRecursion"],
             disjoint_with: &[],

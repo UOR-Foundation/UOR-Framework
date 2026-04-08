@@ -97,9 +97,9 @@ fn emit_push(
             let level_expr = match level.as_deref() {
                 Some(name) => {
                     let i = parse_quantum_level_name(name);
-                    quote! { uor_foundation::QuantumLevel::new(#i) }
+                    quote! { uor_foundation::WittLevel::new(#i) }
                 }
-                None => quote! { uor_foundation::QuantumLevel::Q0 },
+                None => quote! { uor_foundation::WittLevel::W8 },
             };
             stmts.push(quote! {
                 let #idx_name = arena.push(uor_foundation::enforcement::Term::Literal {
@@ -167,7 +167,7 @@ fn emit_push(
             stmts.push(quote! {
                 let #idx_name = arena.push(uor_foundation::enforcement::Term::Lift {
                     operand_index: #op_idx.unwrap_or(0),
-                    target: uor_foundation::QuantumLevel::new(#target_index),
+                    target: uor_foundation::WittLevel::new(#target_index),
                 });
             });
             quote! { #idx_name }
@@ -181,7 +181,7 @@ fn emit_push(
             stmts.push(quote! {
                 let #idx_name = arena.push(uor_foundation::enforcement::Term::Project {
                     operand_index: #op_idx.unwrap_or(0),
-                    target: uor_foundation::QuantumLevel::new(#target_index),
+                    target: uor_foundation::WittLevel::new(#target_index),
                 });
             });
             quote! { #idx_name }
@@ -446,11 +446,17 @@ fn op_to_primitive(op: &str) -> proc_macro2::Ident {
     proc_macro2::Ident::new(variant, proc_macro2::Span::call_site())
 }
 
-/// Parse a quantum level name like "Q0", "Q7", "Q511" into its index.
+/// Parse a Witt level name into a witt_length value.
+///
+/// Accepts `W<n>` (e.g. `W8`, `W32`) returning `n` directly,
+/// or legacy `Q<k>` (e.g. `Q0`, `Q3`) returning `(k + 1) * 8`.
 fn parse_quantum_level_name(name: &str) -> u32 {
-    if let Some(num_str) = name.strip_prefix('Q') {
-        num_str.parse::<u32>().unwrap_or(0)
+    if let Some(num_str) = name.strip_prefix('W') {
+        num_str.parse::<u32>().unwrap_or(8)
+    } else if let Some(num_str) = name.strip_prefix('Q') {
+        let k = num_str.parse::<u32>().unwrap_or(0);
+        (k + 1) * 8
     } else {
-        0
+        8
     }
 }

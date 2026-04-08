@@ -5,7 +5,7 @@
 //! Space: Bridge
 
 use crate::enums::ProofStrategy;
-use crate::enums::QuantumLevel;
+use crate::enums::WittLevel;
 use crate::Primitives;
 
 /// A kernel-produced attestation. The root class for all certificate types.
@@ -14,8 +14,8 @@ pub trait Certificate<P: Primitives> {
     fn method(&self) -> ProofStrategy;
     /// Whether this certificate has been verified by the kernel.
     fn verified(&self) -> P::Boolean;
-    /// The quantum level at which this certificate was produced.
-    fn quantum(&self) -> P::PositiveInteger;
+    /// The Witt level at which this certificate was produced.
+    fn witt_length(&self) -> P::PositiveInteger;
     /// The time at which this certificate was issued.
     fn timestamp(&self) -> &P::String;
     /// The resource this certificate attests to. Links a certificate to the observable, transform, or other entity it covers.
@@ -53,22 +53,22 @@ pub trait CompletenessCertificate<P: Primitives>: Certificate<P> {
     fn audit_trail(&self) -> &Self::CompletenessAuditTrail;
 }
 
-/// An ordered collection of CompletenessWitness records belonging to a CompletenessCertificate. Provides full provenance of the certification process: every constraint applied, every fiber closed, in sequence.
+/// An ordered collection of CompletenessWitness records belonging to a CompletenessCertificate. Provides full provenance of the certification process: every constraint applied, every site closed, in sequence.
 pub trait CompletenessAuditTrail<P: Primitives> {
     /// Total number of witness steps in this audit trail.
     fn witness_count(&self) -> P::NonNegativeInteger;
 }
 
-/// A certificate attesting that a state:SaturatedContext has reached full saturation (σ = 1, freeCount = 0, S = 0, T_ctx = 0) per SC_4. The session-layer dual of CompletenessCertificate.
-pub trait SaturationCertificate<P: Primitives>: Certificate<P> {
-    /// Associated type for `SaturatedContext`.
-    type SaturatedContext: crate::user::state::SaturatedContext<P>;
-    /// The SaturatedContext whose full saturation this certificate attests. Uses IRI string (cert cannot import state).
-    fn certified_saturation(&self) -> &Self::SaturatedContext;
-    /// Associated type for `SaturationWitness`.
-    type SaturationWitness: crate::user::state::SaturationWitness<P>;
-    /// The SaturationWitness providing step-by-step evidence of the saturation process.
-    fn saturation_witness(&self) -> &Self::SaturationWitness;
+/// A certificate attesting that a state:GroundedContext has reached full saturation (σ = 1, freeRank = 0, S = 0, T_ctx = 0) per SC_4. The session-layer dual of CompletenessCertificate.
+pub trait GroundingCertificate<P: Primitives>: Certificate<P> {
+    /// Associated type for `GroundedContext`.
+    type GroundedContext: crate::user::state::GroundedContext<P>;
+    /// The GroundedContext whose full saturation this certificate attests. Uses IRI string (cert cannot import state).
+    fn certified_grounding(&self) -> &Self::GroundedContext;
+    /// Associated type for `GroundingWitness`.
+    type GroundingWitness: crate::user::state::GroundingWitness<P>;
+    /// The GroundingWitness providing step-by-step evidence of the saturation process.
+    fn grounding_witness(&self) -> &Self::GroundingWitness;
 }
 
 /// A certificate attesting that a trace:GeodesicTrace satisfies both GD_1 conditions: AR_1-ordered and DC_10-selected. Transforms ComputationTrace from descriptive to normative.
@@ -91,7 +91,7 @@ pub trait MeasurementCertificate<P: Primitives>: Certificate<P> {
     type MeasurementEvent: crate::bridge::trace::MeasurementEvent<P>;
     /// The MeasurementEvent whose QM_1 compliance this certificate attests. Uses IRI string (cert cannot import trace).
     fn certified_measurement(&self) -> &Self::MeasurementEvent;
-    /// The von Neumann entropy S_vN of the pre-measurement SuperposedFiberState, recorded by this certificate.
+    /// The von Neumann entropy S_vN of the pre-measurement SuperposedSiteState, recorded by this certificate.
     fn von_neumann_entropy(&self) -> P::Decimal;
     /// The Landauer cost incurred by the projective collapse, recorded by this certificate. Equals vonNeumannEntropy at β* = ln 2 per QM_1.
     fn landauer_cost(&self) -> P::Decimal;
@@ -107,7 +107,7 @@ pub trait GeodesicEvidenceBundle<P: Primitives> {
 
 /// A certificate attesting that a MeasurementEvent outcome probability matches the Born rule: P(outcome k) = |α_k|² (QM_5). Linked from MeasurementCertificate to provide probability distribution verification.
 pub trait BornRuleVerification<P: Primitives>: Certificate<P> {
-    /// Whether this BornRuleVerification certificate confirms that all outcome probabilities match the Born rule (QM_5): P(k) = |α_k|² for every fiber k.
+    /// Whether this BornRuleVerification certificate confirms that all outcome probabilities match the Born rule (QM_5): P(k) = |α_k|² for every site k.
     fn born_rule_verified(&self) -> P::Boolean;
 }
 
@@ -122,9 +122,9 @@ pub trait LiftChainCertificate<P: Primitives>: Certificate<P> {
     /// The ordered per-step evidence for this certificate.
     fn chain_audit_trail(&self) -> &Self::ChainAuditTrail;
     /// The quantum level Q_k at which the certificate was issued.
-    fn target_level(&self) -> QuantumLevel;
+    fn target_level(&self) -> WittLevel;
     /// The quantum level Q_j from which the tower was started.
-    fn source_level(&self) -> QuantumLevel;
+    fn source_level(&self) -> WittLevel;
 }
 
 /// An ordered collection of per-step evidence records for a LiftChainCertificate.

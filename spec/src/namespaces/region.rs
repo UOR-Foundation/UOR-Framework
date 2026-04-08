@@ -36,8 +36,8 @@ fn classes() -> Vec<Class> {
         Class {
             id: "https://uor.foundation/region/AddressRegion",
             label: "AddressRegion",
-            comment: "A contiguous range of u:Address values accessible \
-                      during a single cascade stage. Defines the resolver\u{2019}s \
+            comment: "A contiguous range of u:Element values accessible \
+                      during a single reduction step. Defines the resolver\u{2019}s \
                       working set.",
             subclass_of: &[OWL_THING],
             disjoint_with: &[],
@@ -54,7 +54,7 @@ fn classes() -> Vec<Class> {
         Class {
             id: "https://uor.foundation/region/LocalityMetric",
             label: "LocalityMetric",
-            comment: "A metric on u:Address values determining which \
+            comment: "A metric on u:Element values determining which \
                       addresses are near each other for resolution purposes.",
             subclass_of: &["https://uor.foundation/observable/MetricObservable"],
             disjoint_with: &[],
@@ -63,7 +63,7 @@ fn classes() -> Vec<Class> {
             id: "https://uor.foundation/region/WorkingSet",
             label: "WorkingSet",
             comment: "The set of AddressRegions needed by a resolver at a \
-                      specific cascade stage for a specific type. Computable \
+                      specific reduction step for a specific type. Computable \
                       from the type\u{2019}s constraint nerve.",
             subclass_of: &[OWL_THING],
             disjoint_with: &[],
@@ -71,7 +71,7 @@ fn classes() -> Vec<Class> {
         Class {
             id: "https://uor.foundation/region/RegionAllocation",
             label: "RegionAllocation",
-            comment: "An assignment of AddressRegions to cascade stages for \
+            comment: "An assignment of AddressRegions to reduction steps for \
                       a given computation. Enables Prism to pre-compute \
                       memory layout.",
             subclass_of: &[OWL_THING],
@@ -90,7 +90,7 @@ fn properties() -> Vec<Property> {
             kind: PropertyKind::Object,
             functional: true,
             domain: Some("https://uor.foundation/region/RegionBound"),
-            range: "https://uor.foundation/u/Address",
+            range: "https://uor.foundation/u/Element",
         },
         Property {
             id: "https://uor.foundation/region/regionUpper",
@@ -99,7 +99,7 @@ fn properties() -> Vec<Property> {
             kind: PropertyKind::Object,
             functional: true,
             domain: Some("https://uor.foundation/region/RegionBound"),
-            range: "https://uor.foundation/u/Address",
+            range: "https://uor.foundation/u/Element",
         },
         Property {
             id: "https://uor.foundation/region/regionBound",
@@ -131,12 +131,12 @@ fn properties() -> Vec<Property> {
         Property {
             id: "https://uor.foundation/region/workingSetStage",
             label: "workingSetStage",
-            comment: "The cascade stage this working set applies to.",
+            comment: "The reduction step this working set applies to.",
             kind: PropertyKind::Object,
             functional: true,
             domain: Some("https://uor.foundation/region/WorkingSet"),
-            // Full IRI: region/ doesn't import cascade/
-            range: "https://uor.foundation/cascade/CascadeStage",
+            // Full IRI: region/ doesn't import reduction/
+            range: "https://uor.foundation/reduction/ReductionStep",
         },
         Property {
             id: "https://uor.foundation/region/workingSetType",
@@ -150,12 +150,12 @@ fn properties() -> Vec<Property> {
         Property {
             id: "https://uor.foundation/region/allocationStage",
             label: "allocationStage",
-            comment: "Cascade stages in this allocation.",
+            comment: "Reduction steps in this allocation.",
             kind: PropertyKind::Object,
             functional: false,
             domain: Some("https://uor.foundation/region/RegionAllocation"),
-            // Full IRI: region/ doesn't import cascade/
-            range: "https://uor.foundation/cascade/CascadeStage",
+            // Full IRI: region/ doesn't import reduction/
+            range: "https://uor.foundation/reduction/ReductionStep",
         },
         Property {
             id: "https://uor.foundation/region/allocationWorkingSet",

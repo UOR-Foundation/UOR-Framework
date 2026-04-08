@@ -5,8 +5,8 @@
 //! ring, classifying every ring element as irreducible, reducible, a unit,
 //! or exterior to the carrier.
 //!
-//! Amendment 9 adds fiber budget formalization: fiber coordinates, budget
-//! accounting, and fiber pinning — the completeness criterion for type
+//! Amendment 9 adds site budget formalization: site coordinates, budget
+//! accounting, and site pinning — the completeness criterion for type
 //! declarations.
 //!
 //! **Space classification:** `bridge` — produced by the kernel, consumed by user-space.
@@ -53,8 +53,8 @@ fn classes() -> Vec<Class> {
                       belonging to one of the four categories.",
             subclass_of: &[OWL_THING],
             disjoint_with: &[
-                "https://uor.foundation/partition/FiberCoordinate",
-                "https://uor.foundation/partition/FiberBudget",
+                "https://uor.foundation/partition/SiteIndex",
+                "https://uor.foundation/partition/FreeRank",
             ],
         },
         Class {
@@ -66,8 +66,8 @@ fn classes() -> Vec<Class> {
             subclass_of: &["https://uor.foundation/partition/Component"],
             disjoint_with: &[
                 "https://uor.foundation/partition/ReducibleSet",
-                "https://uor.foundation/partition/UnitSet",
-                "https://uor.foundation/partition/ExteriorSet",
+                "https://uor.foundation/partition/UnitGroup",
+                "https://uor.foundation/partition/Complement",
             ],
         },
         Class {
@@ -78,13 +78,13 @@ fn classes() -> Vec<Class> {
             subclass_of: &["https://uor.foundation/partition/Component"],
             disjoint_with: &[
                 "https://uor.foundation/partition/IrreducibleSet",
-                "https://uor.foundation/partition/UnitSet",
-                "https://uor.foundation/partition/ExteriorSet",
+                "https://uor.foundation/partition/UnitGroup",
+                "https://uor.foundation/partition/Complement",
             ],
         },
         Class {
-            id: "https://uor.foundation/partition/UnitSet",
-            label: "UnitSet",
+            id: "https://uor.foundation/partition/UnitGroup",
+            label: "UnitGroup",
             comment: "The set of invertible elements (units) in the carrier: elements \
                       with a multiplicative inverse. In Z/(2^n)Z, the units are the \
                       odd integers.",
@@ -92,12 +92,12 @@ fn classes() -> Vec<Class> {
             disjoint_with: &[
                 "https://uor.foundation/partition/IrreducibleSet",
                 "https://uor.foundation/partition/ReducibleSet",
-                "https://uor.foundation/partition/ExteriorSet",
+                "https://uor.foundation/partition/Complement",
             ],
         },
         Class {
-            id: "https://uor.foundation/partition/ExteriorSet",
-            label: "ExteriorSet",
+            id: "https://uor.foundation/partition/Complement",
+            label: "Complement",
             comment: "Elements of R_n that fall outside the active carrier — i.e., \
                       outside the type's domain. These are ring elements that do \
                       not participate in the current type resolution.",
@@ -105,41 +105,41 @@ fn classes() -> Vec<Class> {
             disjoint_with: &[
                 "https://uor.foundation/partition/IrreducibleSet",
                 "https://uor.foundation/partition/ReducibleSet",
-                "https://uor.foundation/partition/UnitSet",
+                "https://uor.foundation/partition/UnitGroup",
             ],
         },
-        // Amendment 9: Fiber Budget classes
+        // Amendment 9: Free Rank classes
         Class {
-            id: "https://uor.foundation/partition/FiberCoordinate",
-            label: "FiberCoordinate",
-            comment: "A single fiber coordinate in the iterated Z/2Z fibration. \
-                      Each fiber represents one binary degree of freedom in the \
-                      ring's structure. The total number of fibers equals the \
+            id: "https://uor.foundation/partition/SiteIndex",
+            label: "SiteIndex",
+            comment: "A single site coordinate in the iterated Z/2Z fibration. \
+                      Each site represents one binary degree of freedom in the \
+                      ring's structure. The total number of sites equals the \
                       quantum level n.",
             subclass_of: &[OWL_THING],
             disjoint_with: &[
-                "https://uor.foundation/partition/FiberBudget",
+                "https://uor.foundation/partition/FreeRank",
                 "https://uor.foundation/partition/Component",
             ],
         },
         Class {
-            id: "https://uor.foundation/partition/FiberBudget",
-            label: "FiberBudget",
-            comment: "The fiber budget for a partition: an accounting of how many \
-                      fibers are pinned (determined by constraints) versus free \
+            id: "https://uor.foundation/partition/FreeRank",
+            label: "FreeRank",
+            comment: "The site budget for a partition: an accounting of how many \
+                      sites are pinned (determined by constraints) versus free \
                       (still available for further refinement). A closed budget \
-                      means all fibers are pinned and the type is fully resolved.",
+                      means all sites are pinned and the type is fully resolved.",
             subclass_of: &[OWL_THING],
             disjoint_with: &[
-                "https://uor.foundation/partition/FiberCoordinate",
+                "https://uor.foundation/partition/SiteIndex",
                 "https://uor.foundation/partition/Component",
             ],
         },
         Class {
-            id: "https://uor.foundation/partition/FiberPinning",
-            label: "FiberPinning",
-            comment: "A record of a single fiber being pinned by a constraint. \
-                      Links a specific fiber coordinate to the constraint that \
+            id: "https://uor.foundation/partition/SiteBinding",
+            label: "SiteBinding",
+            comment: "A record of a single site being pinned by a constraint. \
+                      Links a specific site coordinate to the constraint that \
                       determined its value.",
             subclass_of: &[OWL_THING],
             disjoint_with: &[],
@@ -197,7 +197,7 @@ fn properties() -> Vec<Property> {
             kind: PropertyKind::Object,
             functional: true,
             domain: Some("https://uor.foundation/partition/Partition"),
-            range: "https://uor.foundation/partition/UnitSet",
+            range: "https://uor.foundation/partition/UnitGroup",
         },
         Property {
             id: "https://uor.foundation/partition/exterior",
@@ -206,7 +206,7 @@ fn properties() -> Vec<Property> {
             kind: PropertyKind::Object,
             functional: true,
             domain: Some("https://uor.foundation/partition/Partition"),
-            range: "https://uor.foundation/partition/ExteriorSet",
+            range: "https://uor.foundation/partition/Complement",
         },
         Property {
             id: "https://uor.foundation/partition/member",
@@ -248,155 +248,155 @@ fn properties() -> Vec<Property> {
             range: "https://uor.foundation/type/TypeDefinition",
         },
         Property {
-            id: "https://uor.foundation/partition/quantum",
-            label: "quantum",
-            comment: "The quantum level n at which this partition was computed. \
+            id: "https://uor.foundation/partition/wittLength",
+            label: "wittLength",
+            comment: "The Witt level n at which this partition was computed. \
                       The ring has 2^n elements at this level.",
             kind: PropertyKind::Datatype,
             functional: true,
             domain: Some("https://uor.foundation/partition/Partition"),
             range: XSD_POSITIVE_INTEGER,
         },
-        // Amendment 9: Fiber Budget properties
+        // Amendment 9: Free Rank properties
         Property {
-            id: "https://uor.foundation/partition/fiberPosition",
-            label: "fiberPosition",
-            comment: "The zero-based position of this fiber coordinate within \
+            id: "https://uor.foundation/partition/sitePosition",
+            label: "sitePosition",
+            comment: "The zero-based position of this site coordinate within \
                       the iterated fibration. Position 0 is the least significant \
                       bit; position n-1 is the most significant.",
             kind: PropertyKind::Datatype,
             functional: true,
-            domain: Some("https://uor.foundation/partition/FiberCoordinate"),
+            domain: Some("https://uor.foundation/partition/SiteIndex"),
             range: XSD_NON_NEGATIVE_INTEGER,
         },
         Property {
-            id: "https://uor.foundation/partition/fiberState",
-            label: "fiberState",
-            comment: "The current state of this fiber coordinate: 'pinned' if \
+            id: "https://uor.foundation/partition/siteState",
+            label: "siteState",
+            comment: "The current state of this site coordinate: 'pinned' if \
                       determined by a constraint, 'free' if still available for \
                       refinement.",
             kind: PropertyKind::Datatype,
             functional: true,
-            domain: Some("https://uor.foundation/partition/FiberCoordinate"),
+            domain: Some("https://uor.foundation/partition/SiteIndex"),
             range: XSD_NON_NEGATIVE_INTEGER,
         },
         Property {
-            id: "https://uor.foundation/partition/fiberBudget",
-            label: "fiberBudget",
-            comment: "The fiber budget associated with this partition.",
+            id: "https://uor.foundation/partition/siteBudget",
+            label: "siteBudget",
+            comment: "The site budget associated with this partition.",
             kind: PropertyKind::Object,
             functional: true,
             domain: Some("https://uor.foundation/partition/Partition"),
-            range: "https://uor.foundation/partition/FiberBudget",
+            range: "https://uor.foundation/partition/FreeRank",
         },
         Property {
-            id: "https://uor.foundation/partition/totalFibers",
-            label: "totalFibers",
-            comment: "The total number of fiber coordinates in this budget, \
+            id: "https://uor.foundation/partition/totalSites",
+            label: "totalSites",
+            comment: "The total number of site coordinates in this budget, \
                       equal to the quantum level n.",
             kind: PropertyKind::Datatype,
             functional: true,
-            domain: Some("https://uor.foundation/partition/FiberBudget"),
+            domain: Some("https://uor.foundation/partition/FreeRank"),
             range: XSD_NON_NEGATIVE_INTEGER,
         },
         Property {
             id: "https://uor.foundation/partition/pinnedCount",
             label: "pinnedCount",
-            comment: "The number of fiber coordinates currently pinned by \
+            comment: "The number of site coordinates currently pinned by \
                       constraints.",
             kind: PropertyKind::Datatype,
             functional: true,
-            domain: Some("https://uor.foundation/partition/FiberBudget"),
+            domain: Some("https://uor.foundation/partition/FreeRank"),
             range: XSD_NON_NEGATIVE_INTEGER,
         },
         Property {
-            id: "https://uor.foundation/partition/freeCount",
-            label: "freeCount",
-            comment: "The number of fiber coordinates still free (not yet \
-                      pinned). Equals totalFibers - pinnedCount.",
+            id: "https://uor.foundation/partition/freeRank",
+            label: "freeRank",
+            comment: "The number of site coordinates still free (not yet \
+                      pinned). Equals totalSites - pinnedCount.",
             kind: PropertyKind::Datatype,
             functional: true,
-            domain: Some("https://uor.foundation/partition/FiberBudget"),
+            domain: Some("https://uor.foundation/partition/FreeRank"),
             range: XSD_NON_NEGATIVE_INTEGER,
         },
         Property {
             id: "https://uor.foundation/partition/isClosed",
             label: "isClosed",
-            comment: "Whether all fibers in this budget are pinned. A closed \
+            comment: "Whether all sites in this budget are pinned. A closed \
                       budget means the type is fully resolved and the partition \
                       is complete.",
             kind: PropertyKind::Datatype,
             functional: true,
-            domain: Some("https://uor.foundation/partition/FiberBudget"),
+            domain: Some("https://uor.foundation/partition/FreeRank"),
             range: XSD_BOOLEAN,
         },
         Property {
-            id: "https://uor.foundation/partition/hasFiber",
-            label: "hasFiber",
-            comment: "A fiber coordinate belonging to this budget.",
+            id: "https://uor.foundation/partition/hasSite",
+            label: "hasSite",
+            comment: "A site coordinate belonging to this budget.",
             kind: PropertyKind::Object,
             functional: false,
-            domain: Some("https://uor.foundation/partition/FiberBudget"),
-            range: "https://uor.foundation/partition/FiberCoordinate",
+            domain: Some("https://uor.foundation/partition/FreeRank"),
+            range: "https://uor.foundation/partition/SiteIndex",
         },
         Property {
             id: "https://uor.foundation/partition/pinnedBy",
             label: "pinnedBy",
-            comment: "The constraint that pins this fiber coordinate.",
+            comment: "The constraint that pins this site coordinate.",
             kind: PropertyKind::Object,
             functional: true,
-            domain: Some("https://uor.foundation/partition/FiberPinning"),
+            domain: Some("https://uor.foundation/partition/SiteBinding"),
             range: "https://uor.foundation/type/Constraint",
         },
         Property {
             id: "https://uor.foundation/partition/pinsCoordinate",
             label: "pinsCoordinate",
-            comment: "The fiber coordinate that this pinning determines.",
+            comment: "The site coordinate that this pinning determines.",
             kind: PropertyKind::Object,
             functional: true,
-            domain: Some("https://uor.foundation/partition/FiberPinning"),
-            range: "https://uor.foundation/partition/FiberCoordinate",
+            domain: Some("https://uor.foundation/partition/SiteBinding"),
+            range: "https://uor.foundation/partition/SiteIndex",
         },
         Property {
-            id: "https://uor.foundation/partition/hasPinning",
-            label: "hasPinning",
-            comment: "A fiber pinning record in this budget.",
+            id: "https://uor.foundation/partition/hasBinding",
+            label: "hasBinding",
+            comment: "A site pinning record in this budget.",
             kind: PropertyKind::Object,
             functional: false,
-            domain: Some("https://uor.foundation/partition/FiberBudget"),
-            range: "https://uor.foundation/partition/FiberPinning",
+            domain: Some("https://uor.foundation/partition/FreeRank"),
+            range: "https://uor.foundation/partition/SiteBinding",
         },
         // Amendment 31: Reversible computation properties (RC_1–RC_4)
         Property {
-            id: "https://uor.foundation/partition/ancillaFiber",
-            label: "ancillaFiber",
-            comment: "An ancilla fiber coordinate paired with this fiber for \
+            id: "https://uor.foundation/partition/ancillaSite",
+            label: "ancillaSite",
+            comment: "An ancilla site coordinate paired with this site for \
                       reversible computation (RC_1–RC_4 ancilla model).",
             kind: PropertyKind::Object,
             functional: true,
-            domain: Some("https://uor.foundation/partition/FiberCoordinate"),
-            range: "https://uor.foundation/partition/FiberCoordinate",
+            domain: Some("https://uor.foundation/partition/SiteIndex"),
+            range: "https://uor.foundation/partition/SiteIndex",
         },
         Property {
             id: "https://uor.foundation/partition/reversibleStrategy",
             label: "reversibleStrategy",
-            comment: "True when this fiber budget uses a reversible computation \
-                      strategy preserving information through ancilla fibers.",
+            comment: "True when this site budget uses a reversible computation \
+                      strategy preserving information through ancilla sites.",
             kind: PropertyKind::Datatype,
             functional: true,
-            domain: Some("https://uor.foundation/partition/FiberBudget"),
+            domain: Some("https://uor.foundation/partition/FreeRank"),
             range: XSD_BOOLEAN,
         },
-        // Amendment 37: ExteriorSet formal criteria (Gap 2)
+        // Amendment 37: Complement formal criteria (Gap 2)
         Property {
             id: "https://uor.foundation/partition/exteriorCriteria",
             label: "exteriorCriteria",
-            comment: "The formal membership criterion for this ExteriorSet: \
-                      x ∈ Ext(T) iff x ∉ carrier(T). The ExteriorSet is \
+            comment: "The formal membership criterion for this Complement: \
+                      x ∈ Ext(T) iff x ∉ carrier(T). The Complement is \
                       context-dependent on the active type T (FPM_9).",
             kind: PropertyKind::Object,
             functional: true,
-            domain: Some("https://uor.foundation/partition/ExteriorSet"),
+            domain: Some("https://uor.foundation/partition/Complement"),
             range: "https://uor.foundation/schema/TermExpression",
         },
         // Amendment 37: Partition exhaustiveness (Gap 3)

@@ -17,7 +17,7 @@ The generated grammar must contain:
 
 1. **Header** with specification version from `Cargo.toml`
 2. **All 10 PrimitiveOp operations** as terminal strings in unary-op/binary-op rules
-3. **All 4 QuantumLevel labels** (Q0-Q3) in the quantum-level rule
+3. **All 4 WittLevel labels** (W8-W32) in the witt-level rule
 4. **All 6 RewriteRule names** in the rewrite rules comment section
 5. **Balanced EBNF comments** — every `(*` has a matching `*)`
 
@@ -26,9 +26,9 @@ The generated grammar must contain:
 | Section | Data Source | Content |
 |---------|------------|---------|
 | Operations | `op/` namespace individuals | 4 unary + 6 binary ops with algebraic property comments |
-| Quantum levels | `schema/` namespace individuals | Q0-Q3 sorted by quantumIndex |
+| Witt levels | `schema/` namespace individuals | W8-W32 sorted by wittLength |
 | Rewrite rules | `derivation/` namespace individuals | 6 canonical rewrite patterns |
-| Quantum generalisation | `schema/` namespace individuals | bits-width and cycle-size per level |
+| Witt generalisation | `schema/` namespace individuals | bits-width and cycle-size per level |
 
 ## Static Sections
 

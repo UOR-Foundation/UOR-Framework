@@ -66,20 +66,20 @@ To implement the psi pipeline:
 
 ## Worked Example: 3 Constraints on R_4
 
-Consider three constraints on R_4 = Z/16Z with 4 fibers (fiber 0 through
-fiber 3):
+Consider three constraints on R_4 = Z/16Z with 4 sites (site 0 through
+site 3):
 
 - **C_1**: {@class https://uor.foundation/type/ResidueConstraint} (mod 2,
-  residue 1) — pins fiber 0
+  residue 1) — pins site 0
 - **C_2**: {@class https://uor.foundation/type/DepthConstraint} (depth 1–2)
-  — pins fibers 0 and 1
+  — pins sites 0 and 1
 - **C_3**: {@class https://uor.foundation/type/CarryConstraint} (pattern
-  "10") — pins fiber 1
+  "10") — pins site 1
 
 **psi_1 — Nerve construction.** Test all constraint subsets for
-compatibility (nonempty shared pinned fibers):
+compatibility (nonempty shared pinned sites):
 
-| Subset | Shared fibers | {@class https://uor.foundation/homology/Simplex} |
+| Subset | Shared sites | {@class https://uor.foundation/homology/Simplex} |
 |--------|---------------|---------|
 | {C_1} | {0} | 0-simplex |
 | {C_2} | {0,1} | 0-simplex |
@@ -108,7 +108,7 @@ The {@class https://uor.foundation/homology/BoundaryOperator} ∂_1 maps:
 - H_1 = ker(∂_1) = 0 → β_1 = 0 (no loops)
 
 **psi_4 — Index bridge.** Euler characteristic:
-χ = β_0 - β_1 = 1 - 0 = 1. With n = 4 fibers, the resolution cost lower
+χ = β_0 - β_1 = 1 - 0 = 1. With n = 4 sites, the resolution cost lower
 bound (IT_7c) is n - χ = 3 constraint applications.
 
 **psi_5 — Dualization.** The {@class https://uor.foundation/cohomology/CochainGroup}

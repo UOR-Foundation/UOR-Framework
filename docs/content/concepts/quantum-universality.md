@@ -1,9 +1,9 @@
-# Quantum Universality
+# Witt Universality
 
 ## Definition
 
-**Quantum universality** is the property of an algebraic identity that holds
-for all quantum levels n ≥ 1, not just at a specific Q0 ring. An identity is
+**Witt universality** is the property of an algebraic identity that holds
+for all Witt levels n ≥ 1, not just at a specific W8 ring. An identity is
 universally valid when it is provable symbolically from ring axioms rather than
 verified exhaustively at one ring size.
 
@@ -13,29 +13,29 @@ status. The critical identity `neg(bnot(x)) = succ(x)` is the canonical
 example: it holds in Z/(2^n)Z for every n ≥ 1 and carries
 `op:universallyValid true`.
 
-## Quantum Levels
+## Witt Levels
 
-The {@class https://uor.foundation/schema/QuantumLevel} newtype struct defines
-an open class of quantum levels. Named levels include:
+The {@class https://uor.foundation/schema/WittLevel} newtype struct defines
+an open class of Witt levels. Named levels include:
 
-- **Q0** — the base quantum level used for exhaustive verification (ring size
-  = 2^16 in the UOR Foundation reference implementation).
-- **Q1** — the concrete ring Z/(2^16)Z, now formally typed as
-  {@class https://uor.foundation/schema/Q1Ring} with
-  {@prop https://uor.foundation/schema/Q1bitWidth} = 16 and
-  {@prop https://uor.foundation/schema/Q1capacity} = 65,536.
-- Q2, Q3, … — higher levels declared via the `schema:nextLevel` chain.
+- **W8** — the base Witt level used for exhaustive verification (ring size
+  = 2^8 in the UOR Foundation reference implementation).
+- **W16** — the concrete ring Z/(2^16)Z, now formally typed as
+  {@class https://uor.foundation/schema/W16Ring} with
+  {@prop https://uor.foundation/schema/W16bitWidth} = 16 and
+  {@prop https://uor.foundation/schema/W16capacity} = 65,536.
+- W24, W32, ... — higher levels declared via the `schema:nextWittLevel` chain.
 
-## QuantumLevelBinding
+## WittLevelBinding
 
-A {@class https://uor.foundation/op/QuantumLevelBinding} record links an
-`op:Identity` individual to a specific quantum level at which the identity
+A {@class https://uor.foundation/op/WittLevelBinding} record links an
+`op:Identity` individual to a specific Witt level at which the identity
 has been verified. Because identities may be verified at multiple levels, the
 {@prop https://uor.foundation/op/verifiedAtLevel} property is
-non-functional: one binding per (Identity, QuantumLevel) pair.
+non-functional: one binding per (Identity, WittLevel) pair.
 
 Each binding carries a {@prop https://uor.foundation/op/bindingLevel}
-pointing to the relevant QuantumLevel individual.
+pointing to the relevant WittLevel individual.
 
 ## Universal Identity Groups (QL_ series)
 
@@ -56,7 +56,7 @@ to all n ≥ 1. Each carries `op:universallyValid true` and a
 
 ## Related
 
-- {@class https://uor.foundation/schema/QuantumLevel}
-- {@class https://uor.foundation/schema/Q1Ring}
-- {@class https://uor.foundation/op/QuantumLevelBinding}
+- {@class https://uor.foundation/schema/WittLevel}
+- {@class https://uor.foundation/schema/W16Ring}
+- {@class https://uor.foundation/op/WittLevelBinding}
 - [Type Completeness](type-completeness.html)

@@ -42,7 +42,7 @@ pub fn module() -> NamespaceModule {
                 NS_FAILURE,
                 NS_RECURSION,
                 NS_BOUNDARY,
-                NS_CASCADE,
+                NS_REDUCTION,
                 NS_CERT,
                 NS_TRACE,
                 NS_STATE,
@@ -75,9 +75,9 @@ fn classes() -> Vec<Class> {
             disjoint_with: &[],
         },
         Class {
-            id: "https://uor.foundation/conformance/QuantumLevelShape",
-            label: "QuantumLevelShape",
-            comment: "Shape for declaring a new QuantumLevel beyond Q3.",
+            id: "https://uor.foundation/conformance/WittLevelShape",
+            label: "WittLevelShape",
+            comment: "Shape for declaring a new WittLevel beyond Q3.",
             subclass_of: &["https://uor.foundation/conformance/Shape"],
             disjoint_with: &[],
         },
@@ -114,7 +114,7 @@ fn classes() -> Vec<Class> {
         Class {
             id: "https://uor.foundation/conformance/LeaseShape",
             label: "LeaseShape",
-            comment: "Shape for declaring a Lease with LinearFiber \
+            comment: "Shape for declaring a Lease with LinearSite \
                       allocation.",
             subclass_of: &["https://uor.foundation/conformance/Shape"],
             disjoint_with: &[],
@@ -151,7 +151,7 @@ fn classes() -> Vec<Class> {
             label: "WitnessDatum",
             comment: "Opaque ring element witness. Cannot be constructed \
                       outside the foundation crate \u{2014} only produced by \
-                      cascade evaluation or the two-phase minting boundary.",
+                      reduction evaluation or the two-phase minting boundary.",
             subclass_of: &[OWL_THING],
             disjoint_with: &[],
         },
@@ -201,9 +201,9 @@ fn classes() -> Vec<Class> {
             disjoint_with: &[],
         },
         Class {
-            id: "https://uor.foundation/conformance/WitnessFiberBudget",
-            label: "WitnessFiberBudget",
-            comment: "Opaque fiber budget that can only be decremented by \
+            id: "https://uor.foundation/conformance/WitnessSiteBudget",
+            label: "WitnessSiteBudget",
+            comment: "Opaque site budget that can only be decremented by \
                       PinningEffect and incremented by UnbindingEffect \
                       \u{2014} never by direct mutation.",
             subclass_of: &[OWL_THING],
@@ -239,7 +239,7 @@ fn classes() -> Vec<Class> {
             id: "https://uor.foundation/conformance/EffectDeclaration",
             label: "EffectDeclaration",
             comment: "Builder for EffectShape. Collects effect name, target \
-                      fibers, budget delta, and commutation flag.",
+                      sites, budget delta, and commutation flag.",
             subclass_of: &[OWL_THING],
             disjoint_with: &[],
         },
@@ -262,7 +262,7 @@ fn classes() -> Vec<Class> {
         Class {
             id: "https://uor.foundation/conformance/LeaseDeclaration",
             label: "LeaseDeclaration",
-            comment: "Builder for LeaseShape. Collects linear fiber and \
+            comment: "Builder for LeaseShape. Collects linear site and \
                       lease scope.",
             subclass_of: &[OWL_THING],
             disjoint_with: &[],
@@ -286,15 +286,15 @@ fn classes() -> Vec<Class> {
         Class {
             id: "https://uor.foundation/conformance/ParallelDeclaration",
             label: "ParallelDeclaration",
-            comment: "Builder for ParallelShape. Collects fiber partition \
+            comment: "Builder for ParallelShape. Collects site partition \
                       and disjointness witness.",
             subclass_of: &[OWL_THING],
             disjoint_with: &[],
         },
         Class {
-            id: "https://uor.foundation/conformance/QuantumLevelDeclaration",
-            label: "QuantumLevelDeclaration",
-            comment: "Builder for QuantumLevelShape. Collects declared bit \
+            id: "https://uor.foundation/conformance/WittLevelDeclaration",
+            label: "WittLevelDeclaration",
+            comment: "Builder for WittLevelShape. Collects declared bit \
                       width, cycle size, and predecessor level.",
             subclass_of: &[OWL_THING],
             disjoint_with: &[],
@@ -424,7 +424,7 @@ fn properties() -> Vec<Property> {
             kind: PropertyKind::Object,
             functional: true,
             domain: Some("https://uor.foundation/conformance/GroundedCoordinate"),
-            range: "https://uor.foundation/schema/QuantumLevel",
+            range: "https://uor.foundation/schema/WittLevel",
         },
         Property {
             id: "https://uor.foundation/conformance/validatedInner",
@@ -511,13 +511,13 @@ fn properties() -> Vec<Property> {
             range: "https://uor.foundation/schema/Term",
         },
         Property {
-            id: "https://uor.foundation/conformance/builderQuantumLevelCeiling",
-            label: "builderQuantumLevelCeiling",
+            id: "https://uor.foundation/conformance/builderWittLevelCeiling",
+            label: "builderWittLevelCeiling",
             comment: "The widest quantum level the computation may reference.",
             kind: PropertyKind::Object,
             functional: true,
             domain: Some("https://uor.foundation/conformance/CompileUnitBuilder"),
-            range: "https://uor.foundation/schema/QuantumLevel",
+            range: "https://uor.foundation/schema/WittLevel",
         },
         Property {
             id: "https://uor.foundation/conformance/builderThermodynamicBudget",
@@ -548,9 +548,9 @@ fn properties() -> Vec<Property> {
             range: XSD_STRING,
         },
         Property {
-            id: "https://uor.foundation/conformance/targetFibers",
-            label: "targetFibers",
-            comment: "Fiber coordinates this effect reads or writes.",
+            id: "https://uor.foundation/conformance/targetSites",
+            label: "targetSites",
+            comment: "Site coordinates this effect reads or writes.",
             kind: PropertyKind::Datatype,
             functional: false,
             domain: Some("https://uor.foundation/conformance/EffectDeclaration"),
@@ -559,7 +559,7 @@ fn properties() -> Vec<Property> {
         Property {
             id: "https://uor.foundation/conformance/budgetDelta",
             label: "budgetDelta",
-            comment: "The fiber budget delta (positive = increment, \
+            comment: "The site budget delta (positive = increment, \
                       negative = decrement).",
             kind: PropertyKind::Datatype,
             functional: true,
@@ -570,7 +570,7 @@ fn properties() -> Vec<Property> {
             id: "https://uor.foundation/conformance/commutationFlag",
             label: "commutationFlag",
             comment: "Whether this effect commutes with effects on \
-                      disjoint fibers.",
+                      disjoint sites.",
             kind: PropertyKind::Datatype,
             functional: true,
             domain: Some("https://uor.foundation/conformance/EffectDeclaration"),
@@ -612,7 +612,7 @@ fn properties() -> Vec<Property> {
             kind: PropertyKind::Object,
             functional: true,
             domain: Some("https://uor.foundation/conformance/DispatchDeclaration"),
-            range: "https://uor.foundation/cascade/PredicateExpression",
+            range: "https://uor.foundation/reduction/PredicateExpression",
         },
         Property {
             id: "https://uor.foundation/conformance/targetResolver",
@@ -634,9 +634,9 @@ fn properties() -> Vec<Property> {
         },
         // LeaseDeclaration (2)
         Property {
-            id: "https://uor.foundation/conformance/linearFiber",
-            label: "linearFiber",
-            comment: "The fiber coordinate allocated linearly by this lease.",
+            id: "https://uor.foundation/conformance/linearSite",
+            label: "linearSite",
+            comment: "The site coordinate allocated linearly by this lease.",
             kind: PropertyKind::Datatype,
             functional: true,
             domain: Some("https://uor.foundation/conformance/LeaseDeclaration"),
@@ -711,9 +711,9 @@ fn properties() -> Vec<Property> {
         },
         // ParallelDeclaration (2)
         Property {
-            id: "https://uor.foundation/conformance/fiberPartition",
-            label: "fiberPartition",
-            comment: "The fiber partition for the parallel composition.",
+            id: "https://uor.foundation/conformance/sitePartition",
+            label: "sitePartition",
+            comment: "The site partition for the parallel composition.",
             kind: PropertyKind::Object,
             functional: true,
             domain: Some("https://uor.foundation/conformance/ParallelDeclaration"),
@@ -722,21 +722,21 @@ fn properties() -> Vec<Property> {
         Property {
             id: "https://uor.foundation/conformance/disjointnessWitness",
             label: "disjointnessWitness",
-            comment: "Evidence that the fiber partition components are \
+            comment: "Evidence that the site partition components are \
                       pairwise disjoint.",
             kind: PropertyKind::Datatype,
             functional: true,
             domain: Some("https://uor.foundation/conformance/ParallelDeclaration"),
             range: XSD_STRING,
         },
-        // QuantumLevelDeclaration (3)
+        // WittLevelDeclaration (3)
         Property {
             id: "https://uor.foundation/conformance/declaredBitWidth",
             label: "declaredBitWidth",
             comment: "The declared bit width for this quantum level.",
             kind: PropertyKind::Datatype,
             functional: true,
-            domain: Some("https://uor.foundation/conformance/QuantumLevelDeclaration"),
+            domain: Some("https://uor.foundation/conformance/WittLevelDeclaration"),
             range: XSD_POSITIVE_INTEGER,
         },
         Property {
@@ -745,7 +745,7 @@ fn properties() -> Vec<Property> {
             comment: "The declared number of ring states at this level.",
             kind: PropertyKind::Datatype,
             functional: true,
-            domain: Some("https://uor.foundation/conformance/QuantumLevelDeclaration"),
+            domain: Some("https://uor.foundation/conformance/WittLevelDeclaration"),
             range: XSD_NON_NEGATIVE_INTEGER,
         },
         Property {
@@ -754,8 +754,8 @@ fn properties() -> Vec<Property> {
             comment: "The predecessor quantum level in the chain.",
             kind: PropertyKind::Object,
             functional: true,
-            domain: Some("https://uor.foundation/conformance/QuantumLevelDeclaration"),
-            range: "https://uor.foundation/schema/QuantumLevel",
+            domain: Some("https://uor.foundation/conformance/WittLevelDeclaration"),
+            range: "https://uor.foundation/schema/WittLevel",
         },
         // MintingSession (2)
         Property {
@@ -788,14 +788,14 @@ fn individuals() -> Vec<Individual> {
             type_: "https://uor.foundation/conformance/Shape",
             label: "CompileUnitShape",
             comment: "Shape validating that a CompileUnit carries all required \
-                      properties before cascade admission. The unitAddress \
+                      properties before reduction admission. The unitAddress \
                       property is NOT required \u{2014} it is computed by \
                       stage_initialization after shape validation passes.",
             properties: &[
                 (
                     "https://uor.foundation/conformance/targetClass",
                     IndividualValue::IriRef(
-                        "https://uor.foundation/cascade/CompileUnit",
+                        "https://uor.foundation/reduction/CompileUnit",
                     ),
                 ),
                 (
@@ -807,7 +807,7 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/conformance/requiredProperty",
                     IndividualValue::IriRef(
-                        "https://uor.foundation/conformance/compileUnit_unitQuantumLevel_constraint",
+                        "https://uor.foundation/conformance/compileUnit_unitWittLevel_constraint",
                     ),
                 ),
                 (
@@ -833,7 +833,7 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/conformance/constraintProperty",
                     IndividualValue::IriRef(
-                        "https://uor.foundation/cascade/rootTerm",
+                        "https://uor.foundation/reduction/rootTerm",
                     ),
                 ),
                 (
@@ -853,22 +853,22 @@ fn individuals() -> Vec<Individual> {
             ],
         },
         Individual {
-            id: "https://uor.foundation/conformance/compileUnit_unitQuantumLevel_constraint",
+            id: "https://uor.foundation/conformance/compileUnit_unitWittLevel_constraint",
             type_: "https://uor.foundation/conformance/PropertyConstraint",
-            label: "compileUnit_unitQuantumLevel_constraint",
+            label: "compileUnit_unitWittLevel_constraint",
             comment: "Exactly one quantum level is required. Range is \
-                      schema:QuantumLevel.",
+                      schema:WittLevel.",
             properties: &[
                 (
                     "https://uor.foundation/conformance/constraintProperty",
                     IndividualValue::IriRef(
-                        "https://uor.foundation/cascade/unitQuantumLevel",
+                        "https://uor.foundation/reduction/unitWittLevel",
                     ),
                 ),
                 (
                     "https://uor.foundation/conformance/constraintRange",
                     IndividualValue::IriRef(
-                        "https://uor.foundation/schema/QuantumLevel",
+                        "https://uor.foundation/schema/WittLevel",
                     ),
                 ),
                 (
@@ -892,7 +892,7 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/conformance/constraintProperty",
                     IndividualValue::IriRef(
-                        "https://uor.foundation/cascade/thermodynamicBudget",
+                        "https://uor.foundation/reduction/thermodynamicBudget",
                     ),
                 ),
                 (
@@ -921,7 +921,7 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/conformance/constraintProperty",
                     IndividualValue::IriRef(
-                        "https://uor.foundation/cascade/targetDomains",
+                        "https://uor.foundation/reduction/targetDomains",
                     ),
                 ),
                 (

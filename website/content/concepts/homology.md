@@ -10,7 +10,7 @@ The {@class https://uor.foundation/homology/Simplex} class represents a single
 simplex -- a generalized triangle. A collection of simplices that is closed under
 taking faces forms a {@class https://uor.foundation/homology/SimplicialComplex}.
 
-In UOR, the constraint nerve is the key simplicial complex. Each constraint in the
+In UOR, the Cech nerve is the key simplicial complex. Each constraint in the
 resolution process is a vertex. A set of constraints that can be simultaneously
 satisfied forms a simplex. The resulting complex encodes the combinatorial structure
 of constraint compatibility.
@@ -44,24 +44,24 @@ fails globally."
 
 The {@class https://uor.foundation/observable/SpectralSequencePage} class models
 the pages of a spectral sequence -- a tool that refines the homological analysis
-level by level. At each {@concept quantum-levels} scale, the spectral sequence
+level by level. At each {@concept witt-levels} scale, the spectral sequence
 provides increasingly precise information about obstructions.
 
-The spectral sequence connects the homological analysis to the quantum level
-tower: obstructions visible at Q0 may dissolve at Q1, or new obstructions may
+The spectral sequence connects the homological analysis to the Witt level
+tower: obstructions visible at W8 may dissolve at W16, or new obstructions may
 appear at higher levels.
 
 ## Euler Characteristics
 
 The {@prop https://uor.foundation/resolver/nerveEulerCharacteristic} property
-records the Euler characteristic of the constraint nerve -- a single integer that
+records the Euler characteristic of the Cech nerve -- a single integer that
 summarizes the topological complexity. A positive Euler characteristic suggests
 contractibility (good for convergence); a negative one signals complexity.
 
 ## Connection to the PRISM Pipeline
 
 Homological analysis operates within the Resolve stage. When {@concept resolution}
-stalls, the constraint nerve's topology explains why. The {@concept fiber} bundle
+stalls, the Cech nerve's topology explains why. The {@concept site} bundle
 structure provides the geometric substrate that homology and cohomology analyze.
 The {@concept observables} namespace measures the topological invariants
 (holonomy groups, monodromy classes) that feed into this analysis.

@@ -35,9 +35,9 @@ const SVG_STAGE_H: f64 = 100.0;
 const SVG_STAGE_GAP: f64 = 60.0;
 /// Quantum level box width.
 const SVG_LEVEL_W: f64 = 90.0;
-/// Quantum level box height.
+/// Witt level box height.
 const SVG_LEVEL_H: f64 = 60.0;
-/// Gap between quantum level boxes.
+/// Gap between Witt level boxes.
 const SVG_LEVEL_GAP: f64 = 20.0;
 
 // ── Color helpers ────────────────────────────────────────────────────────────
@@ -559,22 +559,22 @@ pub fn render_identity_distribution_svg(ontology: &Ontology) -> String {
     out
 }
 
-// ── 5. Quantum Levels SVG ────────────────────────────────────────────────────
+// ── 5. Witt Levels SVG ─────────────────────────────────────────────────────
 
-/// Renders the quantum level hierarchy diagram, derived from QuantumLevel individuals.
+/// Renders the Witt level hierarchy diagram, derived from WittLevel individuals.
 ///
-/// Extracts `quantumIndex` and `bitsWidth` from `Ontology::full()` — no hard-coded Q0–Q3.
-pub fn render_quantum_levels_svg(ontology: &Ontology) -> String {
+/// Extracts `wittLength` and `bitsWidth` from `Ontology::full()` — no hard-coded W8–W32.
+pub fn render_witt_levels_svg(ontology: &Ontology) -> String {
     let mut levels: Vec<(i64, i64, &str)> = ontology
         .namespaces
         .iter()
         .flat_map(|m| m.individuals.iter())
-        .filter(|i| i.type_.ends_with("QuantumLevel"))
+        .filter(|i| i.type_.ends_with("WittLevel"))
         .filter_map(|i| {
             let idx = i
                 .properties
                 .iter()
-                .find(|(k, _)| k.ends_with("quantumIndex"))
+                .find(|(k, _)| k.ends_with("wittLength"))
                 .and_then(|(_, v)| {
                     if let IndividualValue::Int(n) = v {
                         Some(*n)
@@ -619,13 +619,13 @@ pub fn render_quantum_levels_svg(ontology: &Ontology) -> String {
     };
 
     let title_text = if n_int > 1 {
-        format!("Quantum level hierarchy: {n_int} levels from Q0 to Q{max_idx}")
+        format!("Witt level hierarchy: {n_int} levels from W8 to W{max_idx}")
     } else {
-        format!("Quantum level hierarchy: {n_int} level(s)")
+        format!("Witt level hierarchy: {n_int} level(s)")
     };
 
     let mut out = format!(
-        "<svg class=\"quantum-levels\" viewBox=\"0 0 {sw:.0} {sh:.0}\" \
+        "<svg class=\"witt-levels\" viewBox=\"0 0 {sw:.0} {sh:.0}\" \
          xmlns=\"http://www.w3.org/2000/svg\" role=\"img\" aria-labelledby=\"ql-title\">\n\
          <title id=\"ql-title\">{title_text}</title>\n\
          {defs}",

@@ -9,7 +9,7 @@ pub const TEST259_FAILURE_TYPES: &str = r#"
 failure:ex_result_259 a owl:NamedIndividual, failure:ComputationResult .
 failure:ex_guard_259 a owl:NamedIndividual, failure:GuardFailure .
 failure:ex_contradiction_259 a owl:NamedIndividual, failure:ConstraintContradiction .
-failure:ex_exhaustion_259 a owl:NamedIndividual, failure:FiberExhaustion .
+failure:ex_exhaustion_259 a owl:NamedIndividual, failure:SiteExhaustion .
 failure:ex_lift_obstruction_259 a owl:NamedIndividual, failure:LiftObstructionFailure .
 failure:ex_partial_259 a owl:NamedIndividual, failure:PartialComputation .
 failure:ex_total_259 a owl:NamedIndividual, failure:TotalComputation .

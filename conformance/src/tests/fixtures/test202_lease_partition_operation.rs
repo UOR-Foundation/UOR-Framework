@@ -10,7 +10,7 @@ pub const TEST202_LEASE_PARTITION_OPERATION: &str = r#"
 # Covers: op:LeasePartitionOperation
 op:partition_op a owl:NamedIndividual, op:LeasePartitionOperation ;
     op:arity "2"^^xsd:integer ;
-    op:hasGeometricCharacter op:FiberPartition ;
+    op:hasGeometricCharacter op:SitePartition ;
     op:commutative "false"^^xsd:boolean ;
     op:associative "false"^^xsd:boolean ;
     op:operatorSignature "SharedContext × N → ContextLease^k" .

@@ -65,7 +65,7 @@ it.
 ## Complexity
 
 Identity TS\_4 bounds the number of synthesis steps at ≤ n for a realisable
-n-fiber target. With Jacobian-guided exploration (TS\_6), the expected step
+n-site target. With Jacobian-guided exploration (TS\_6), the expected step
 count is O(n log n).
 
 ## Related

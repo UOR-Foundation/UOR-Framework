@@ -48,7 +48,7 @@ fn classes() -> Vec<Class> {
         Class {
             id: "https://uor.foundation/carry/CarryEvent",
             label: "CarryEvent",
-            comment: "A single carry event at fiber k. Three kinds: Generate \
+            comment: "A single carry event at site k. Three kinds: Generate \
                       (and(x_k, y_k) = 1), Propagate (xor(x_k, y_k) = 1 and \
                       c_k = 1), Kill (neither generate nor propagate).",
             subclass_of: &[OWL_THING],
@@ -58,7 +58,7 @@ fn classes() -> Vec<Class> {
             id: "https://uor.foundation/carry/CarryProfile",
             label: "CarryProfile",
             comment: "The complete carry pattern for an addition x + y. \
-                      Aggregates carry events across all fibers into counts \
+                      Aggregates carry events across all sites into counts \
                       and position masks.",
             subclass_of: &[OWL_THING],
             disjoint_with: &[],
@@ -90,7 +90,7 @@ fn properties() -> Vec<Property> {
         Property {
             id: "https://uor.foundation/carry/chainLength",
             label: "chainLength",
-            comment: "The number of fibers in this carry chain.",
+            comment: "The number of sites in this carry chain.",
             kind: PropertyKind::Datatype,
             functional: true,
             domain: Some("https://uor.foundation/carry/CarryChain"),
@@ -99,7 +99,7 @@ fn properties() -> Vec<Property> {
         Property {
             id: "https://uor.foundation/carry/generateMask",
             label: "generateMask",
-            comment: "Bit mask of fiber positions where carry is generated: \
+            comment: "Bit mask of site positions where carry is generated: \
                       and(x_k, y_k) = 1.",
             kind: PropertyKind::Datatype,
             functional: true,
@@ -109,7 +109,7 @@ fn properties() -> Vec<Property> {
         Property {
             id: "https://uor.foundation/carry/propagateMask",
             label: "propagateMask",
-            comment: "Bit mask of fiber positions where carry propagates: \
+            comment: "Bit mask of site positions where carry propagates: \
                       xor(x_k, y_k) = 1.",
             kind: PropertyKind::Datatype,
             functional: true,
@@ -119,7 +119,7 @@ fn properties() -> Vec<Property> {
         Property {
             id: "https://uor.foundation/carry/killMask",
             label: "killMask",
-            comment: "Bit mask of fiber positions where carry is killed: \
+            comment: "Bit mask of site positions where carry is killed: \
                       neither generated nor propagated.",
             kind: PropertyKind::Datatype,
             functional: true,
@@ -137,9 +137,9 @@ fn properties() -> Vec<Property> {
             range: XSD_NON_NEGATIVE_INTEGER,
         },
         Property {
-            id: "https://uor.foundation/carry/fiberPosition",
-            label: "fiberPosition",
-            comment: "The fiber index k at which this carry event occurs.",
+            id: "https://uor.foundation/carry/sitePosition",
+            label: "sitePosition",
+            comment: "The site index k at which this carry event occurs.",
             kind: PropertyKind::Datatype,
             functional: true,
             domain: Some("https://uor.foundation/carry/CarryEvent"),

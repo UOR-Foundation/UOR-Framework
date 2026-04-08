@@ -1,7 +1,7 @@
 //! `parallel/` namespace — Parallel composition.
 //!
 //! The `parallel/` namespace formalizes independent computations over provably
-//! disjoint fiber budgets. When execution order is irrelevant — because fiber
+//! disjoint site budgets. When execution order is irrelevant — because site
 //! targets have empty intersection — computations may be composed in parallel.
 //!
 //! - **Amendment 74**: 5 classes, 10 properties, 0 individuals (identities in op/)
@@ -19,7 +19,7 @@ pub fn module() -> NamespaceModule {
             prefix: "parallel",
             iri: NS_PARALLEL,
             label: "UOR Parallel Composition",
-            comment: "Independent computations over provably disjoint fiber \
+            comment: "Independent computations over provably disjoint site \
                       budgets. Formalizes when execution order is irrelevant.",
             space: Space::Kernel,
             imports: &[
@@ -43,7 +43,7 @@ fn classes() -> Vec<Class> {
             id: "https://uor.foundation/parallel/ParallelProduct",
             label: "ParallelProduct",
             comment: "A \u{2225} B: two computations with provably disjoint \
-                      fiber targets. Execution order does not affect the \
+                      site targets. Execution order does not affect the \
                       result.",
             subclass_of: &[OWL_THING],
             disjoint_with: &[],
@@ -51,7 +51,7 @@ fn classes() -> Vec<Class> {
         Class {
             id: "https://uor.foundation/parallel/DisjointnessCertificate",
             label: "DisjointnessCertificate",
-            comment: "A kernel-produced certificate attesting that the fiber \
+            comment: "A kernel-produced certificate attesting that the site \
                       targets of two computations are disjoint.",
             subclass_of: &["https://uor.foundation/cert/Certificate"],
             disjoint_with: &[],
@@ -75,11 +75,11 @@ fn classes() -> Vec<Class> {
             disjoint_with: &[],
         },
         Class {
-            id: "https://uor.foundation/parallel/FiberPartitioning",
-            label: "FiberPartitioning",
-            comment: "A partition of the total fiber budget into disjoint \
+            id: "https://uor.foundation/parallel/SitePartitioning",
+            label: "SitePartitioning",
+            comment: "A partition of the total site budget into disjoint \
                       subsets, one per parallel component. The sum of subset \
-                      cardinalities equals the total fiber budget.",
+                      cardinalities equals the total site budget.",
             subclass_of: &[OWL_THING],
             disjoint_with: &[],
         },
@@ -111,7 +111,7 @@ fn properties() -> Vec<Property> {
         Property {
             id: "https://uor.foundation/parallel/disjointnessCert",
             label: "disjointnessCert",
-            comment: "The certificate proving fiber disjointness.",
+            comment: "The certificate proving site disjointness.",
             kind: PropertyKind::Object,
             functional: true,
             domain: Some("https://uor.foundation/parallel/ParallelProduct"),
@@ -120,7 +120,7 @@ fn properties() -> Vec<Property> {
         Property {
             id: "https://uor.foundation/parallel/certLeftTarget",
             label: "certLeftTarget",
-            comment: "The fiber target of the left computation.",
+            comment: "The site target of the left computation.",
             kind: PropertyKind::Object,
             functional: true,
             domain: Some("https://uor.foundation/parallel/DisjointnessCertificate"),
@@ -129,28 +129,28 @@ fn properties() -> Vec<Property> {
         Property {
             id: "https://uor.foundation/parallel/certRightTarget",
             label: "certRightTarget",
-            comment: "The fiber target of the right computation.",
+            comment: "The site target of the right computation.",
             kind: PropertyKind::Object,
             functional: true,
             domain: Some("https://uor.foundation/parallel/DisjointnessCertificate"),
             range: "https://uor.foundation/effect/EffectTarget",
         },
         Property {
-            id: "https://uor.foundation/parallel/syncFibers",
-            label: "syncFibers",
-            comment: "The shared fibers requiring synchronization.",
+            id: "https://uor.foundation/parallel/syncSites",
+            label: "syncSites",
+            comment: "The shared sites requiring synchronization.",
             kind: PropertyKind::Object,
             functional: false,
             domain: Some("https://uor.foundation/parallel/SynchronizationPoint"),
-            range: "https://uor.foundation/partition/FiberCoordinate",
+            range: "https://uor.foundation/partition/SiteIndex",
         },
         Property {
             id: "https://uor.foundation/parallel/partitionComponents",
             label: "partitionComponents",
-            comment: "The disjoint subsets composing the full fiber budget.",
+            comment: "The disjoint subsets composing the full site budget.",
             kind: PropertyKind::Object,
             functional: false,
-            domain: Some("https://uor.foundation/parallel/FiberPartitioning"),
+            domain: Some("https://uor.foundation/parallel/SitePartitioning"),
             range: "https://uor.foundation/effect/EffectTarget",
         },
         // Datatype properties
@@ -160,13 +160,13 @@ fn properties() -> Vec<Property> {
             comment: "Number of parallel components.",
             kind: PropertyKind::Datatype,
             functional: true,
-            domain: Some("https://uor.foundation/parallel/FiberPartitioning"),
+            domain: Some("https://uor.foundation/parallel/SitePartitioning"),
             range: XSD_POSITIVE_INTEGER,
         },
         Property {
             id: "https://uor.foundation/parallel/isFullyDisjoint",
             label: "isFullyDisjoint",
-            comment: "True iff fiber targets have zero overlap (no \
+            comment: "True iff site targets have zero overlap (no \
                       SynchronizationPoints required).",
             kind: PropertyKind::Datatype,
             functional: true,

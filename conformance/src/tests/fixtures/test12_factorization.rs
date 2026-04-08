@@ -1,7 +1,7 @@
 //! Test 12: Factorization oracle case study.
 //!
 //! Validates a full PRISM pipeline: CoordinateQuery → DihedralFactorizationResolver →
-//! Partition + FiberBudget → Observable → TransformCertificate → Trace.
+//! Partition + FreeRank → Observable → TransformCertificate → Trace.
 
 /// Instance graph for Test 12: Factorization oracle.
 pub const TEST12_FACTORIZATION: &str = r#"
@@ -19,24 +19,24 @@ pub const TEST12_FACTORIZATION: &str = r#"
 # 1. Query — coordinate query for factorization
 <https://uor.foundation/instance/fact/query>
     a               owl:NamedIndividual, query:CoordinateQuery ;
-    query:hasCoordinateKind query:StratumCoordinate .
+    query:hasTriadProjection query:TwoAdicValuation .
 
 # 2. Resolver — dihedral factorization
 <https://uor.foundation/instance/fact/resolver>
     a                   owl:NamedIndividual, resolver:DihedralFactorizationResolver ;
     resolver:strategy   "dihedral-factorization" .
 
-# 3. Partition with fiber budget
+# 3. Partition with site budget
 <https://uor.foundation/instance/fact/partition>
     a                       owl:NamedIndividual, partition:Partition ;
-    partition:quantum       "8"^^xsd:positiveInteger ;
-    partition:fiberBudget   <https://uor.foundation/instance/fact/budget> .
+    partition:wittLength       "8"^^xsd:positiveInteger ;
+    partition:siteBudget   <https://uor.foundation/instance/fact/budget> .
 
 <https://uor.foundation/instance/fact/budget>
-    a                       owl:NamedIndividual, partition:FiberBudget ;
-    partition:totalFibers   "8"^^xsd:nonNegativeInteger ;
+    a                       owl:NamedIndividual, partition:FreeRank ;
+    partition:totalSites   "8"^^xsd:nonNegativeInteger ;
     partition:pinnedCount   "8"^^xsd:nonNegativeInteger ;
-    partition:freeCount     "0"^^xsd:nonNegativeInteger ;
+    partition:freeRank      "0"^^xsd:nonNegativeInteger ;
     partition:isClosed      true .
 
 # 4. Observable — dihedral metric observation

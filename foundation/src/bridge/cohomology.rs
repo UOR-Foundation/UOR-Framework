@@ -102,7 +102,7 @@ pub trait GluingObstruction<P: Primitives> {
     fn obstruction_class(&self) -> &Self::CohomologyGroup;
     /// Associated type for `RefinementSuggestion`.
     type RefinementSuggestion: crate::bridge::resolver::RefinementSuggestion<P>;
-    /// The refinement suggestion that, if applied, would resolve this gluing obstruction. Computed by the kernel when ψ₆ detects H^1 ≠ 0: the obstruction class indexes the fiber pair that is incompatible, and the suggestion targets that pair with a new bridging constraint.
+    /// The refinement suggestion that, if applied, would resolve this gluing obstruction. Computed by the kernel when ψ₆ detects H^1 ≠ 0: the obstruction class indexes the site pair that is incompatible, and the suggestion targets that pair with a new bridging constraint.
     fn addresses_suggestion(&self) -> &[Self::RefinementSuggestion];
 }
 

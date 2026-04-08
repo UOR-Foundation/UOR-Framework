@@ -25,7 +25,7 @@ morphism:ex_projectionMap_arc a owl:NamedIndividual, morphism:ProjectionMap ;
 query:ex_relationQuery_arc a owl:NamedIndividual, query:RelationQuery ;
     query:sourceAddress u:addr_101 ;
     query:relationType  type:ex_constraint_arc ;
-    query:targetFiber   partition:ex_fiberBudget_open ;
+    query:targetSite   partition:ex_siteBudget_open ;
     query:groundingMap  morphism:ex_groundingMap_arc ;
     query:projectionMap morphism:ex_projectionMap_arc .
 "#;

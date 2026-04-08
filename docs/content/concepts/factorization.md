@@ -29,17 +29,17 @@ The output is a four-component partition of R_n:
 |-----------|-------|
 | Irreducible | {@class https://uor.foundation/partition/IrreducibleSet} |
 | Reducible | {@class https://uor.foundation/partition/ReducibleSet} |
-| Units | {@class https://uor.foundation/partition/UnitSet} |
-| Exterior | {@class https://uor.foundation/partition/ExteriorSet} |
+| Units | {@class https://uor.foundation/partition/UnitGroup} |
+| Exterior | {@class https://uor.foundation/partition/Complement} |
 
 The property {@prop https://uor.foundation/partition/density} records the
 irreducible density: |Irr| / |Carrier|.
 
-## Fiber Budget Integration
+## Free Rank Integration
 
 With iterative resolution, factorization now tracks its progress through the
-{@class https://uor.foundation/partition/FiberBudget}. Each dihedral orbit
-analysis pins fibers, and the resolver's
+{@class https://uor.foundation/partition/FreeRank}. Each dihedral orbit
+analysis pins sites, and the resolver's
 {@prop https://uor.foundation/resolver/resolutionState} records convergence.
 
 ## Example: Factorizing R_8

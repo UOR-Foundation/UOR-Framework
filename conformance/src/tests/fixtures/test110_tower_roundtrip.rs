@@ -13,8 +13,8 @@ pub const TEST110_TOWER_ROUNDTRIP: &str = r#"
 @prefix resolver: <https://uor.foundation/resolver/> .
 @prefix observable: <https://uor.foundation/observable/> .
 
-# 1. QuantumLift Q0→Q3
-type:ex_lift_110 a owl:NamedIndividual, type:QuantumLift ;
+# 1. WittLift Q0→Q3
+type:ex_lift_110 a owl:NamedIndividual, type:WittLift ;
     type:sourceLevel   schema:Q0 ;
     type:targetLevel   schema:Q3 ;
     type:liftedType    type:ex_flat_110 ;
@@ -39,7 +39,7 @@ cert:ex_cert_110 a owl:NamedIndividual, cert:CompletenessAuditTrail ;
 
 # 5. Proof of tower integrity
 proof:ex_proof_110 a owl:NamedIndividual, proof:AxiomaticDerivation ;
-    proof:atQuantumLevel schema:Q3 ;
+    proof:atWittLevel schema:Q3 ;
     proof:universalScope "true"^^xsd:boolean ;
     rdfs:label "Tower round-trip proof" .
 "#;

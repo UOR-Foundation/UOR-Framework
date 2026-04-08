@@ -24,8 +24,8 @@ pub trait OperadComposition<P: Primitives> {
     fn inner_type(&self) -> &Self::TypeDefinition;
     /// The resulting composed type F(G).
     fn composed_type(&self) -> &Self::TypeDefinition;
-    /// Fiber count of the composed type F(G).
-    fn composed_fiber_count(&self) -> P::NonNegativeInteger;
+    /// Site count of the composed type F(G).
+    fn composed_site_count(&self) -> P::NonNegativeInteger;
     /// Associated type for `GroundingMap`.
     type GroundingMap: crate::user::morphism::GroundingMap<P>;
     /// Grounding of the composed type F(G).

@@ -26,7 +26,14 @@ pub fn module() -> NamespaceModule {
                       from within the ring substrate.",
             space: Space::Kernel,
             imports: &[
-                NS_OP, NS_SCHEMA, NS_EFFECT, NS_STATE, NS_CASCADE, NS_CERT, NS_TRACE, NS_PROOF,
+                NS_OP,
+                NS_SCHEMA,
+                NS_EFFECT,
+                NS_STATE,
+                NS_REDUCTION,
+                NS_CERT,
+                NS_TRACE,
+                NS_PROOF,
             ],
         },
         classes: classes(),
@@ -59,7 +66,7 @@ fn classes() -> Vec<Class> {
             id: "https://uor.foundation/failure/Failure",
             label: "Failure",
             comment: "A computation that could not reach convergence. \
-                      Carries a typed FailureReason and the cascade state at \
+                      Carries a typed FailureReason and the reduction state at \
                       the point of failure.",
             subclass_of: &["https://uor.foundation/failure/ComputationResult"],
             disjoint_with: &[],
@@ -74,7 +81,7 @@ fn classes() -> Vec<Class> {
         Class {
             id: "https://uor.foundation/failure/GuardFailure",
             label: "GuardFailure",
-            comment: "A cascade stage guard evaluated to false and no \
+            comment: "A reduction step guard evaluated to false and no \
                       alternative transition exists.",
             subclass_of: &["https://uor.foundation/failure/FailureReason"],
             disjoint_with: &[],
@@ -88,8 +95,8 @@ fn classes() -> Vec<Class> {
             disjoint_with: &[],
         },
         Class {
-            id: "https://uor.foundation/failure/FiberExhaustion",
-            label: "FiberExhaustion",
+            id: "https://uor.foundation/failure/SiteExhaustion",
+            label: "SiteExhaustion",
             comment: "The linear budget was exhausted before resolution \
                       completed.",
             subclass_of: &["https://uor.foundation/failure/FailureReason"],
@@ -98,7 +105,7 @@ fn classes() -> Vec<Class> {
         Class {
             id: "https://uor.foundation/failure/LiftObstructionFailure",
             label: "LiftObstructionFailure",
-            comment: "A QuantumLift encountered a non-trivial obstruction \
+            comment: "A WittLift encountered a non-trivial obstruction \
                       that could not be resolved.",
             subclass_of: &["https://uor.foundation/failure/FailureReason"],
             disjoint_with: &[],
@@ -173,20 +180,20 @@ fn properties() -> Vec<Property> {
         Property {
             id: "https://uor.foundation/failure/failureState",
             label: "failureState",
-            comment: "The cascade state at the point of failure.",
+            comment: "The reduction state at the point of failure.",
             kind: PropertyKind::Object,
             functional: true,
             domain: Some("https://uor.foundation/failure/Failure"),
-            range: "https://uor.foundation/cascade/CascadeState",
+            range: "https://uor.foundation/reduction/ReductionState",
         },
         Property {
             id: "https://uor.foundation/failure/failureStage",
             label: "failureStage",
-            comment: "The cascade stage where failure occurred.",
+            comment: "The reduction step where failure occurred.",
             kind: PropertyKind::Object,
             functional: true,
             domain: Some("https://uor.foundation/failure/Failure"),
-            range: "https://uor.foundation/cascade/CascadeStage",
+            range: "https://uor.foundation/reduction/ReductionStep",
         },
         Property {
             id: "https://uor.foundation/failure/recoveryStrategy",
@@ -209,11 +216,11 @@ fn properties() -> Vec<Property> {
         Property {
             id: "https://uor.foundation/failure/recoveryTarget",
             label: "recoveryTarget",
-            comment: "The cascade stage to retry after recovery.",
+            comment: "The reduction step to retry after recovery.",
             kind: PropertyKind::Object,
             functional: true,
             domain: Some("https://uor.foundation/failure/Recovery"),
-            range: "https://uor.foundation/cascade/CascadeStage",
+            range: "https://uor.foundation/reduction/ReductionStep",
         },
         Property {
             id: "https://uor.foundation/failure/propagationRule",
@@ -239,7 +246,7 @@ fn properties() -> Vec<Property> {
         Property {
             id: "https://uor.foundation/failure/failureDepth",
             label: "failureDepth",
-            comment: "The cascade stage index at which failure occurred.",
+            comment: "The reduction step index at which failure occurred.",
             kind: PropertyKind::Datatype,
             functional: true,
             domain: Some("https://uor.foundation/failure/Failure"),

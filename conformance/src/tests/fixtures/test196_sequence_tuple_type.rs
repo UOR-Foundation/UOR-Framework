@@ -8,11 +8,11 @@ pub const TEST196_SEQUENCE_TUPLE_TYPE: &str = r#"
 @prefix type: <https://uor.foundation/type/> .
 
 type:SequenceType a owl:NamedIndividual, type:ProductType ;
-    type:structuralFiberCount "sum of element fiber counts" ;
+    type:structuralSiteCount "sum of element site counts" ;
     type:structuralGrounding "free monoid on element type, backbone constraint" ;
     type:structuralConstraint "backbone ordering: elements indexed by position" .
 
 type:TupleType a owl:NamedIndividual, type:ProductType ;
-    type:structuralFiberCount "sum of field fiber counts" ;
-    type:structuralGrounding "fiber ordering follows CY_6 (optimal fiber ordering)" .
+    type:structuralSiteCount "sum of field site counts" ;
+    type:structuralGrounding "site ordering follows CY_6 (optimal site ordering)" .
 "#;

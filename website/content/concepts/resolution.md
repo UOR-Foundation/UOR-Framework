@@ -22,14 +22,14 @@ class in the {@ns resolver} namespace defines the resolver interface.
 
 ## Iterative Resolution
 
-Not all inputs are fully constrained. When the {@concept fiber} budget is not yet
-closed (some fibers remain unpinned), the resolver cannot produce a complete answer
+Not all inputs are fully constrained. When the {@concept site} budget is not yet
+closed (some sites remain unpinned), the resolver cannot produce a complete answer
 in one step. Instead, it enters an iterative loop:
 
 1. Attempt resolution with current constraints.
 2. If incomplete, produce a {@class https://uor.foundation/resolver/RefinementSuggestion}
    identifying which additional constraints would help.
-3. Apply the refinement (pin more fibers) and retry.
+3. Apply the refinement (pin more sites) and retry.
 
 The {@class https://uor.foundation/resolver/CompletenessResolver} manages this loop,
 tracking which constraints have been satisfied and which remain open.
@@ -37,7 +37,7 @@ tracking which constraints have been satisfied and which remain open.
 ## The Constraint Nerve
 
 When constraints interact in complex ways, the
-{@class https://uor.foundation/resolver/ConstraintNerve} provides a topological
+{@class https://uor.foundation/resolver/CechNerve} provides a topological
 view of the constraint space. It is a simplicial complex whose simplices represent
 compatible subsets of constraints. The topology of this nerve reveals whether
 resolution will converge -- see {@concept homology} for the algebraic topology
@@ -47,7 +47,7 @@ analysis.
 
 The {@ns resolver} namespace includes several specialized resolvers:
 
-- **QuantumLevelResolver** -- resolves which {@concept quantum-levels} an identity
+- **WittLevelResolver** -- resolves which {@concept witt-levels} an identity
   holds at.
 - **TypeSynthesisResolver** -- inverts the resolution pipeline, computing what type
   is needed given a constraint.
@@ -56,7 +56,7 @@ The {@ns resolver} namespace includes several specialized resolvers:
 - **GeodesicValidator** -- verifies that a computation follows the shortest path
   in the derivation space.
 - **MeasurementResolver** -- handles quantum measurement events that collapse
-  superposed fiber states.
+  superposed site states.
 
 ## Connection to the PRISM Pipeline
 

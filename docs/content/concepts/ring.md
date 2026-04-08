@@ -8,7 +8,7 @@ represents this structure.
 
 ## Mathematical Basis
 
-For quantum level n, the ring R_n = Z/(2^n)Z has 2^n elements: {0, 1, ..., 2^n - 1}.
+For Witt level n, the ring R_n = Z/(2^n)Z has 2^n elements: {0, 1, ..., 2^n - 1}.
 
 The ring is equipped with:
 - Standard addition and multiplication (mod 2^n)
@@ -25,7 +25,7 @@ These two involutions generate the dihedral group D_{2^n}, captured by
 
 | Property | Type | Description |
 |----------|------|-------------|
-| {@prop https://uor.foundation/schema/ringQuantum} | xsd:nonNegativeInteger | The quantum level n |
+| {@prop https://uor.foundation/schema/ringWittLength} | xsd:nonNegativeInteger | The Witt level n |
 | {@prop https://uor.foundation/schema/modulus} | xsd:nonNegativeInteger | 2^n |
 | {@prop https://uor.foundation/schema/generator} | op:Operation | The primary generator (op:neg) |
 | {@prop https://uor.foundation/schema/negation} | op:Operation | Ring negation (op:neg) |
@@ -39,7 +39,7 @@ every byte of digital information:
 ```turtle
 <https://uor.foundation/instance/ring-R8>
     a                   schema:Ring ;
-    schema:ringQuantum  "8"^^xsd:nonNegativeInteger ;
+    schema:ringWittLength "8"^^xsd:nonNegativeInteger ;
     schema:modulus      "256"^^xsd:nonNegativeInteger ;
     schema:generator    op:neg ;
     schema:negation     op:neg ;

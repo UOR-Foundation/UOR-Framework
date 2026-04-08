@@ -9,7 +9,7 @@ pub const TEST176_MODULI_SPACE: &str = r#"
 @prefix type:   <https://uor.foundation/type/> .
 
 type:ex_moduli_176 a owl:NamedIndividual, type:ModuliSpace ;
-    type:moduliQuantumLevel schema:Q0 ;
+    type:moduliWittLevel schema:Q0 ;
     type:moduliDimension    "5"^^xsd:nonNegativeInteger ;
     type:moduliPoint        type:ex_ct_176 .
 

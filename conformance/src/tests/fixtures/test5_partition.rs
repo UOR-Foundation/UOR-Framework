@@ -1,7 +1,7 @@
 //! Test 5: Partition with components summing to 2^n.
 //!
 //! Validates: `partition:Partition` with 4 components whose cardinality values
-//! are powers of 2 consistent with the quantum level n.
+//! are powers of 2 consistent with the Witt level n.
 
 /// Instance graph for Test 5: Partition structure.
 pub const TEST5_PARTITION: &str = r#"
@@ -13,7 +13,7 @@ pub const TEST5_PARTITION: &str = r#"
 # The partition of R_4 (Z/16Z) into irreducible components
 <https://uor.foundation/instance/partition-R4>
     a                   owl:NamedIndividual, partition:Partition ;
-    partition:quantum   "4"^^xsd:nonNegativeInteger ;
+    partition:wittLength   "4"^^xsd:nonNegativeInteger ;
     partition:irreducibles  <https://uor.foundation/instance/irred-set-R4> ;
     partition:reducibles    <https://uor.foundation/instance/red-set-R4> ;
     partition:units         <https://uor.foundation/instance/unit-set-R4> ;
@@ -30,14 +30,14 @@ pub const TEST5_PARTITION: &str = r#"
     a                       owl:NamedIndividual, partition:ReducibleSet ;
     partition:cardinality   "8"^^xsd:nonNegativeInteger .
 
-# Unit set: invertible elements (units of the ring)
+# Unit group: invertible elements (units of the ring)
 <https://uor.foundation/instance/unit-set-R4>
-    a                       owl:NamedIndividual, partition:UnitSet ;
+    a                       owl:NamedIndividual, partition:UnitGroup ;
     partition:cardinality   "2"^^xsd:nonNegativeInteger .
 
-# Exterior set: elements outside the kernel
+# Complement: elements outside the kernel
 <https://uor.foundation/instance/ext-set-R4>
-    a                       owl:NamedIndividual, partition:ExteriorSet ;
+    a                       owl:NamedIndividual, partition:Complement ;
     partition:cardinality   "2"^^xsd:nonNegativeInteger .
 
 # Component members

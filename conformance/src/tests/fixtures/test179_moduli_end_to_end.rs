@@ -10,7 +10,7 @@ pub const TEST179_MODULI_END_TO_END: &str = r#"
 @prefix schema:   <https://uor.foundation/schema/> .
 
 type:ex_moduli_179 a owl:NamedIndividual, type:ModuliSpace ;
-    type:moduliQuantumLevel schema:Q0 ;
+    type:moduliWittLevel schema:Q0 ;
     type:moduliDimension    "4"^^xsd:nonNegativeInteger .
 
 homology:ex_def_179 a owl:NamedIndividual, homology:DeformationComplex ;

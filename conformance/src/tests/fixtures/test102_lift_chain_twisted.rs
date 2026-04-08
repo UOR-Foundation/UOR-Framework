@@ -10,7 +10,7 @@ pub const TEST102_LIFT_CHAIN_TWISTED: &str = r#"
 @prefix observable: <https://uor.foundation/observable/> .
 
 # Twisted LiftChain Q0→Q2 with obstruction at Q1
-type:ex_lc_twisted_102 a owl:NamedIndividual, type:QuantumLift ;
+type:ex_lc_twisted_102 a owl:NamedIndividual, type:WittLift ;
     type:sourceLevel    schema:Q0 ;
     type:targetLevel    schema:Q2 ;
     type:liftedType     type:ex_twisted_type_102 ;

@@ -60,12 +60,12 @@ size and complexity of canonical forms:
 With Amendment 11, canonical form computation can also proceed iteratively via
 {@class https://uor.foundation/derivation/RefinementStep}. Each refinement
 step applies a {@class https://uor.foundation/type/Constraint} and records how
-many fibers it closes ({@prop https://uor.foundation/derivation/fibersClosed}).
+many sites it closes ({@prop https://uor.foundation/derivation/sitesClosed}).
 
 ## Relation to Content Addressing
 
 The canonical form is the foundation of content addressing: the
-{@class https://uor.foundation/u/Address} of an object is derived from its
+{@class https://uor.foundation/u/Element} of an object is derived from its
 canonical form. Two objects with the same canonical form receive the same
 address. See [Addressing](addressing.html) for the Braille-encoded glyph
 scheme that maps canonical forms to content-addressable identifiers.

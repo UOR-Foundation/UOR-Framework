@@ -13,9 +13,9 @@ predicate:isUnit             a owl:NamedIndividual, predicate:TypePredicate .
 predicate:isOdd              a owl:NamedIndividual, predicate:TypePredicate .
 predicate:isEven             a owl:NamedIndividual, predicate:TypePredicate .
 predicate:isInvolution       a owl:NamedIndividual, predicate:TypePredicate .
-predicate:fiberPinned        a owl:NamedIndividual, predicate:FiberPredicate .
-predicate:fiberFree          a owl:NamedIndividual, predicate:FiberPredicate .
+predicate:sitePinned        a owl:NamedIndividual, predicate:SitePredicate .
+predicate:siteFree          a owl:NamedIndividual, predicate:SitePredicate .
 predicate:contradictionReached a owl:NamedIndividual, predicate:StatePredicate .
 predicate:budgetExhausted    a owl:NamedIndividual, predicate:StatePredicate .
-predicate:cascadeConverged   a owl:NamedIndividual, predicate:StatePredicate .
+predicate:reductionConverged   a owl:NamedIndividual, predicate:StatePredicate .
 "#;

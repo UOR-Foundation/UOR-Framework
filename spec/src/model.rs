@@ -68,7 +68,7 @@ impl fmt::Display for Namespace {
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct Class {
-    /// Full IRI (e.g., `"https://uor.foundation/u/Address"`).
+    /// Full IRI (e.g., `"https://uor.foundation/u/Element"`).
     pub id: &'static str,
     /// Human-readable label.
     pub label: &'static str,
@@ -293,28 +293,28 @@ impl Ontology {
     /// (not traits) in the generated `uor-foundation` crate.
     ///
     /// Most are OWL vocabulary classes detected by `detect_vocabulary_enum()`.
-    /// `QuantumLevel` is a struct (not enum) but also skips trait generation.
+    /// `WittLevel` is a struct (not enum) but also skips trait generation.
     #[must_use]
     pub fn enum_class_names() -> &'static [&'static str] {
         &[
             "AchievabilityStatus",
-            "CoordinateKind",
             "ComplexityClass",
             "ExecutionPolicyKind",
             "GeometricCharacter",
+            "GroundingPhase",
             "MeasurementUnit",
             "MetricAxis",
             "PhaseBoundaryType",
             "ProofStrategy",
             "QuantifierKind",
-            "QuantumLevel",
             "RewriteRule",
-            "SaturationPhase",
             "SessionBoundaryType",
+            "TriadProjection",
             "ValidityScopeKind",
             "VarianceAnnotation",
             "VerificationDomain",
             "ViolationKind",
+            "WittLevel",
         ]
     }
 }
@@ -448,8 +448,8 @@ pub mod iris {
     pub const NS_COHOMOLOGY: &str = "https://uor.foundation/cohomology/";
     /// Carry algebra namespace.
     pub const NS_CARRY: &str = "https://uor.foundation/carry/";
-    /// Cascade namespace.
-    pub const NS_CASCADE: &str = "https://uor.foundation/cascade/";
+    /// Reduction namespace.
+    pub const NS_REDUCTION: &str = "https://uor.foundation/reduction/";
     /// Convergence namespace.
     pub const NS_CONVERGENCE: &str = "https://uor.foundation/convergence/";
     /// Division algebras namespace.

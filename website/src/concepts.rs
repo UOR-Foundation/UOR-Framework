@@ -24,28 +24,20 @@ pub const CONCEPT_RELATIONS: &[(&str, &[&str], &[&str])] = &[
     (
         "ring",
         &["schema", "op"],
-        &["quantum-levels", "content-addressing", "partition"],
+        &["witt-levels", "content-addressing", "partition"],
     ),
     (
-        "quantum-levels",
+        "witt-levels",
         &["schema", "op"],
         &["ring", "proof-system", "observables"],
     ),
     (
-        "fiber",
+        "site",
         &["type", "partition", "morphism"],
         &["partition", "resolution", "observables"],
     ),
-    (
-        "content-addressing",
-        &["u"],
-        &["ring", "fiber", "partition"],
-    ),
-    (
-        "partition",
-        &["partition"],
-        &["ring", "fiber", "resolution"],
-    ),
+    ("content-addressing", &["u"], &["ring", "site", "partition"]),
+    ("partition", &["partition"], &["ring", "site", "resolution"]),
     (
         "resolution",
         &["resolver", "query", "state"],
@@ -54,24 +46,24 @@ pub const CONCEPT_RELATIONS: &[(&str, &[&str], &[&str])] = &[
     (
         "observables",
         &["observable"],
-        &["quantum-levels", "resolution", "homology"],
+        &["witt-levels", "resolution", "homology"],
     ),
     (
         "homology",
         &["homology", "cohomology"],
-        &["fiber", "resolution", "observables"],
+        &["site", "resolution", "observables"],
     ),
     (
         "proof-system",
         &["proof", "derivation", "trace"],
-        &["ring", "quantum-levels", "resolution"],
+        &["ring", "witt-levels", "resolution"],
     ),
     (
         "certification",
         &["cert", "proof", "derivation"],
         &["proof-system", "resolution"],
     ),
-    ("morphisms", &["morphism", "type"], &["fiber", "partition"]),
+    ("morphisms", &["morphism", "type"], &["site", "partition"]),
     (
         "state-management",
         &["state", "resolver"],
@@ -449,8 +441,8 @@ fn first_paragraph(md: &str) -> Option<String> {
 /// This is editorial metadata for color-coding cards — not a strict ontology rule.
 fn infer_space(slug: &str) -> String {
     match slug {
-        "ring" | "quantum-levels" | "content-addressing" => "kernel".to_string(),
-        "fiber" | "partition" | "resolution" | "observables" | "homology" | "proof-system"
+        "ring" | "witt-levels" | "content-addressing" => "kernel".to_string(),
+        "site" | "partition" | "resolution" | "observables" | "homology" | "proof-system"
         | "certification" => "bridge".to_string(),
         "morphisms" | "state-management" => "user".to_string(),
         _ => "kernel".to_string(),

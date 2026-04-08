@@ -20,10 +20,10 @@ pub trait Simplex<P: Primitives> {
     type SimplexTarget: Simplex<P>;
     /// Indicates that this simplex is a face of another simplex.
     fn is_face_of(&self) -> &[Self::SimplexTarget];
-    /// Associated type for `FiberCoordinate`.
-    type FiberCoordinate: crate::bridge::partition::FiberCoordinate<P>;
-    /// A fiber coordinate in the partition whose intersection pins this simplex.
-    fn pin_intersection(&self) -> &[Self::FiberCoordinate];
+    /// Associated type for `SiteIndex`.
+    type SiteIndex: crate::bridge::partition::SiteIndex<P>;
+    /// A site coordinate in the partition whose intersection pins this simplex.
+    fn pin_intersection(&self) -> &[Self::SiteIndex];
 }
 
 /// A simplicial complex: a set of simplices closed under taking faces.

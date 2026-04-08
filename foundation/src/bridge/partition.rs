@@ -16,32 +16,32 @@ pub trait Partition<P: Primitives> {
     type ReducibleSet: ReducibleSet<P>;
     /// The reducible component of this partition.
     fn reducibles(&self) -> &Self::ReducibleSet;
-    /// Associated type for `UnitSet`.
-    type UnitSet: UnitSet<P>;
+    /// Associated type for `UnitGroup`.
+    type UnitGroup: UnitGroup<P>;
     /// The units component of this partition.
-    fn units(&self) -> &Self::UnitSet;
-    /// Associated type for `ExteriorSet`.
-    type ExteriorSet: ExteriorSet<P>;
+    fn units(&self) -> &Self::UnitGroup;
+    /// Associated type for `Complement`.
+    type Complement: Complement<P>;
     /// The exterior component of this partition.
-    fn exterior(&self) -> &Self::ExteriorSet;
+    fn exterior(&self) -> &Self::Complement;
     /// The irreducible density of this partition: |Irr| / |A|, where A is the active carrier.
     fn density(&self) -> P::Decimal;
     /// Associated type for `TypeDefinition`.
     type TypeDefinition: crate::user::type_::TypeDefinition<P>;
     /// The type declaration that was resolved to produce this partition.
     fn source_type(&self) -> &Self::TypeDefinition;
-    /// The quantum level n at which this partition was computed. The ring has 2^n elements at this level.
-    fn quantum(&self) -> P::PositiveInteger;
-    /// Associated type for `FiberBudget`.
-    type FiberBudget: FiberBudget<P>;
-    /// The fiber budget associated with this partition.
-    fn fiber_budget(&self) -> &Self::FiberBudget;
+    /// The Witt level n at which this partition was computed. The ring has 2^n elements at this level.
+    fn witt_length(&self) -> P::PositiveInteger;
+    /// Associated type for `FreeRank`.
+    type FreeRank: FreeRank<P>;
+    /// The site budget associated with this partition.
+    fn site_budget(&self) -> &Self::FreeRank;
     /// Whether the four components of this partition are exhaustive over R_n: |Irr| + |Red| + |Unit| + |Ext| = 2^n (FPM_8). Set by the kernel after verification.
     fn is_exhaustive(&self) -> P::Boolean;
 }
 
 /// A single component of a partition: a set of datum values belonging to one of the four categories.
-/// Disjoint with: FiberCoordinate, FiberBudget.
+/// Disjoint with: SiteIndex, FreeRank.
 pub trait Component<P: Primitives> {
     /// Associated type for `Datum`.
     type Datum: crate::kernel::schema::Datum<P>;
@@ -52,72 +52,72 @@ pub trait Component<P: Primitives> {
 }
 
 /// The set of irreducible elements under the active type: elements whose only factorizations involve units or themselves. Analogous to prime elements in a ring.
-/// Disjoint with: ReducibleSet, UnitSet, ExteriorSet.
+/// Disjoint with: ReducibleSet, UnitGroup, Complement.
 pub trait IrreducibleSet<P: Primitives>: Component<P> {}
 
 /// The set of reducible non-unit elements: elements that can be expressed as a product of two or more non-unit elements.
-/// Disjoint with: IrreducibleSet, UnitSet, ExteriorSet.
+/// Disjoint with: IrreducibleSet, UnitGroup, Complement.
 pub trait ReducibleSet<P: Primitives>: Component<P> {}
 
 /// The set of invertible elements (units) in the carrier: elements with a multiplicative inverse. In Z/(2^n)Z, the units are the odd integers.
-/// Disjoint with: IrreducibleSet, ReducibleSet, ExteriorSet.
-pub trait UnitSet<P: Primitives>: Component<P> {}
+/// Disjoint with: IrreducibleSet, ReducibleSet, Complement.
+pub trait UnitGroup<P: Primitives>: Component<P> {}
 
 /// Elements of R_n that fall outside the active carrier — i.e., outside the type's domain. These are ring elements that do not participate in the current type resolution.
-/// Disjoint with: IrreducibleSet, ReducibleSet, UnitSet.
-pub trait ExteriorSet<P: Primitives>: Component<P> {
+/// Disjoint with: IrreducibleSet, ReducibleSet, UnitGroup.
+pub trait Complement<P: Primitives>: Component<P> {
     /// Associated type for `TermExpression`.
     type TermExpression: crate::kernel::schema::TermExpression<P>;
-    /// The formal membership criterion for this ExteriorSet: x ∈ Ext(T) iff x ∉ carrier(T). The ExteriorSet is context-dependent on the active type T (FPM_9).
+    /// The formal membership criterion for this Complement: x ∈ Ext(T) iff x ∉ carrier(T). The Complement is context-dependent on the active type T (FPM_9).
     fn exterior_criteria(&self) -> &Self::TermExpression;
 }
 
-/// A single fiber coordinate in the iterated Z/2Z fibration. Each fiber represents one binary degree of freedom in the ring's structure. The total number of fibers equals the quantum level n.
-/// Disjoint with: FiberBudget, Component.
-pub trait FiberCoordinate<P: Primitives> {
-    /// The zero-based position of this fiber coordinate within the iterated fibration. Position 0 is the least significant bit; position n-1 is the most significant.
-    fn fiber_position(&self) -> P::NonNegativeInteger;
-    /// The current state of this fiber coordinate: 'pinned' if determined by a constraint, 'free' if still available for refinement.
-    fn fiber_state(&self) -> P::NonNegativeInteger;
-    /// Associated type for `FiberCoordinate`.
-    type FiberCoordinateTarget: FiberCoordinate<P>;
-    /// An ancilla fiber coordinate paired with this fiber for reversible computation (RC_1–RC_4 ancilla model).
-    fn ancilla_fiber(&self) -> &Self::FiberCoordinateTarget;
+/// A single site coordinate in the iterated Z/2Z fibration. Each site represents one binary degree of freedom in the ring's structure. The total number of sites equals the quantum level n.
+/// Disjoint with: FreeRank, Component.
+pub trait SiteIndex<P: Primitives> {
+    /// The zero-based position of this site coordinate within the iterated fibration. Position 0 is the least significant bit; position n-1 is the most significant.
+    fn site_position(&self) -> P::NonNegativeInteger;
+    /// The current state of this site coordinate: 'pinned' if determined by a constraint, 'free' if still available for refinement.
+    fn site_state(&self) -> P::NonNegativeInteger;
+    /// Associated type for `SiteIndex`.
+    type SiteIndexTarget: SiteIndex<P>;
+    /// An ancilla site coordinate paired with this site for reversible computation (RC_1–RC_4 ancilla model).
+    fn ancilla_site(&self) -> &Self::SiteIndexTarget;
 }
 
-/// The fiber budget for a partition: an accounting of how many fibers are pinned (determined by constraints) versus free (still available for further refinement). A closed budget means all fibers are pinned and the type is fully resolved.
-/// Disjoint with: FiberCoordinate, Component.
-pub trait FiberBudget<P: Primitives> {
-    /// The total number of fiber coordinates in this budget, equal to the quantum level n.
-    fn total_fibers(&self) -> P::NonNegativeInteger;
-    /// The number of fiber coordinates currently pinned by constraints.
+/// The site budget for a partition: an accounting of how many sites are pinned (determined by constraints) versus free (still available for further refinement). A closed budget means all sites are pinned and the type is fully resolved.
+/// Disjoint with: SiteIndex, Component.
+pub trait FreeRank<P: Primitives> {
+    /// The total number of site coordinates in this budget, equal to the quantum level n.
+    fn total_sites(&self) -> P::NonNegativeInteger;
+    /// The number of site coordinates currently pinned by constraints.
     fn pinned_count(&self) -> P::NonNegativeInteger;
-    /// The number of fiber coordinates still free (not yet pinned). Equals totalFibers - pinnedCount.
-    fn free_count(&self) -> P::NonNegativeInteger;
-    /// Whether all fibers in this budget are pinned. A closed budget means the type is fully resolved and the partition is complete.
+    /// The number of site coordinates still free (not yet pinned). Equals totalSites - pinnedCount.
+    fn free_rank(&self) -> P::NonNegativeInteger;
+    /// Whether all sites in this budget are pinned. A closed budget means the type is fully resolved and the partition is complete.
     fn is_closed(&self) -> P::Boolean;
-    /// Associated type for `FiberCoordinate`.
-    type FiberCoordinate: FiberCoordinate<P>;
-    /// A fiber coordinate belonging to this budget.
-    fn has_fiber(&self) -> &[Self::FiberCoordinate];
-    /// Associated type for `FiberPinning`.
-    type FiberPinning: FiberPinning<P>;
-    /// A fiber pinning record in this budget.
-    fn has_pinning(&self) -> &[Self::FiberPinning];
-    /// True when this fiber budget uses a reversible computation strategy preserving information through ancilla fibers.
+    /// Associated type for `SiteIndex`.
+    type SiteIndex: SiteIndex<P>;
+    /// A site coordinate belonging to this budget.
+    fn has_site(&self) -> &[Self::SiteIndex];
+    /// Associated type for `SiteBinding`.
+    type SiteBinding: SiteBinding<P>;
+    /// A site pinning record in this budget.
+    fn has_binding(&self) -> &[Self::SiteBinding];
+    /// True when this site budget uses a reversible computation strategy preserving information through ancilla sites.
     fn reversible_strategy(&self) -> P::Boolean;
 }
 
-/// A record of a single fiber being pinned by a constraint. Links a specific fiber coordinate to the constraint that determined its value.
-pub trait FiberPinning<P: Primitives> {
+/// A record of a single site being pinned by a constraint. Links a specific site coordinate to the constraint that determined its value.
+pub trait SiteBinding<P: Primitives> {
     /// Associated type for `Constraint`.
     type Constraint: crate::user::type_::Constraint<P>;
-    /// The constraint that pins this fiber coordinate.
+    /// The constraint that pins this site coordinate.
     fn pinned_by(&self) -> &Self::Constraint;
-    /// Associated type for `FiberCoordinate`.
-    type FiberCoordinate: FiberCoordinate<P>;
-    /// The fiber coordinate that this pinning determines.
-    fn pins_coordinate(&self) -> &Self::FiberCoordinate;
+    /// Associated type for `SiteIndex`.
+    type SiteIndex: SiteIndex<P>;
+    /// The site coordinate that this pinning determines.
+    fn pins_coordinate(&self) -> &Self::SiteIndex;
 }
 
 /// The tensor product of two partitions: partition(A × B) = partition(A) ⊗ partition(B). The four-component structure combines component-wise under the product type construction (PT_2a). Carries leftFactor and rightFactor links to the operand partitions.

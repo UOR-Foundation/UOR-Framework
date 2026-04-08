@@ -16,7 +16,7 @@ op:ex_identity_109 a owl:NamedIndividual, op:Identity ;
 
 # Proof covering the identity
 proof:ex_proof_109 a owl:NamedIndividual, proof:AxiomaticDerivation ;
-    proof:atQuantumLevel schema:Q0 ;
+    proof:atWittLevel schema:Q0 ;
     proof:universalScope "true"^^xsd:boolean ;
     proof:criticalIdentity op:ex_identity_109 ;
     rdfs:label "Proof of universal validity" .

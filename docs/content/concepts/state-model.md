@@ -10,7 +10,7 @@ mutually disjoint classes.
 
 | Class | Description |
 |-------|-------------|
-| {@class https://uor.foundation/state/Context} | Evaluation environment (quantum level, capacity) |
+| {@class https://uor.foundation/state/Context} | Evaluation environment (Witt level, capacity) |
 | {@class https://uor.foundation/state/Binding} | A name bound to a typed value |
 | {@class https://uor.foundation/state/Frame} | Snapshot of context with active bindings |
 | {@class https://uor.foundation/state/Transition} | Change from one frame to another |
@@ -24,7 +24,7 @@ A {@class https://uor.foundation/state/Context} is the runtime environment:
 
 | Property | Description |
 |----------|-------------|
-| {@prop https://uor.foundation/state/quantum} | Quantum level n of the ring |
+| {@prop https://uor.foundation/state/wittLength} | Witt level n of the ring |
 | {@prop https://uor.foundation/state/capacity} | Maximum number of bindings |
 | {@prop https://uor.foundation/state/contentAddress} | Content address of the context |
 

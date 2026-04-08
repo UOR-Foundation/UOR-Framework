@@ -8,11 +8,11 @@ substrate based on ring theory and group symmetry.
 ## Core Ideas
 
 **Content addressing** means an object is identified by *what it is*, not *where it is*.
-The UOR framework formalizes this via {@class https://uor.foundation/u/Address}: every
+The UOR framework formalizes this via {@class https://uor.foundation/u/Element}: every
 object has a canonical address derived from its content, not from an external naming system.
 
 **The ring substrate** {@class https://uor.foundation/schema/Ring} is the algebraic
-foundation: Z/(2^n)Z — integers modulo 2^n. At quantum level n=8 this is the byte ring
+foundation: Z/(2^n)Z — integers modulo 2^n. At Witt level n=8 this is the byte ring
 (Z/256Z), familiar from computer arithmetic.
 
 **Two involutions** generate the structure:
@@ -30,7 +30,7 @@ This is the foundational theorem proved by {@class https://uor.foundation/proof/
 The {@count:namespaces} namespaces are organized into three **space** classifications:
 
 **Kernel** (mathematical core):
-- {@class https://uor.foundation/u/Address} — universal addressing
+- {@class https://uor.foundation/u/Element} — universal addressing
 - {@class https://uor.foundation/schema/Ring} — ring substrate
 - {@class https://uor.foundation/op/Operation} — operations
 
@@ -57,7 +57,7 @@ The resolution pipeline transforms a typed value into a certified, traceable res
 
 1. A value has a **type** ({@class https://uor.foundation/type/TypeDefinition}) that declares
    what constraints apply — residue classes, carry patterns, depth bounds — each pinning
-   fibers of the Z/2Z fibration. See [Type System](concepts/type-system.html).
+   sites of the Z/2Z fibration. See [Type System](concepts/type-system.html).
 
 2. A **query** ({@class https://uor.foundation/query/Query}) specifies what to resolve:
    coordinates, metrics, or canonical representation. See [Resolution](concepts/resolution.html).
@@ -65,7 +65,7 @@ The resolution pipeline transforms a typed value into a certified, traceable res
 3. A **resolver** ({@class https://uor.foundation/resolver/Resolver}) factorizes the value
    in the ring using the dihedral group structure. For partially-constrained types, the
    resolver iterates, applying {@class https://uor.foundation/resolver/RefinementSuggestion}
-   until the {@class https://uor.foundation/partition/FiberBudget} closes.
+   until the {@class https://uor.foundation/partition/FreeRank} closes.
    See [Factorization](concepts/factorization.html) and [Iterative Resolution](concepts/iterative-resolution.html).
 
 4. The **partition** ({@class https://uor.foundation/partition/Partition}) decomposes the
@@ -83,7 +83,7 @@ The resolution pipeline transforms a typed value into a certified, traceable res
    linking the certificate to the derivation that produced it.
 
 8. **State** ({@class https://uor.foundation/state/Context}) maintains the evaluation
-   context across resolution steps: quantum level, active bindings, and frame transitions.
+   context across resolution steps: Witt level, active bindings, and frame transitions.
    See [State Model](concepts/state-model.html).
 
 ## Structural Reasoning
@@ -92,7 +92,7 @@ When constraints interact in complex ways, the resolution pipeline may stall or 
 incomplete results. Amendments 21–22 add an algebraic topology layer that diagnoses these
 situations:
 
-The **constraint nerve** ({@class https://uor.foundation/resolver/ConstraintNerve}) is a
+The **Cech nerve** ({@class https://uor.foundation/resolver/CechNerve}) is a
 {@class https://uor.foundation/homology/SimplicialComplex} whose simplices represent
 compatible subsets of constraints. Its topological structure reveals whether resolution
 will converge smoothly:

@@ -5,13 +5,13 @@
 //!
 //! Amendment 24 adds `RelationQuery`: a query with a grounded source address, a
 //! typed relation constraint (read from the observable coordinate triple
-//! `(d_R, d_H, d_I)`), and an open target `partition:FiberBudget`. This is the
+//! `(d_R, d_H, d_I)`), and an open target `partition:FreeRank`. This is the
 //! canonical form for all relational inference across NLP, ARC-AGI grids, music,
 //! images, sensor streams, and logical formulae.
 //!
 //! Amendment 27 adds `SessionQuery`: a RelationQuery that explicitly declares its
 //! session membership, enabling the conformance suite to validate session-scoped
-//! fiber reduction across multi-turn Prism deployments.
+//! site reduction across multi-turn Prism deployments.
 //!
 //! **Space classification:** `bridge` — user-initiated, kernel-executed.
 
@@ -83,7 +83,7 @@ fn classes() -> Vec<Class> {
             id: "https://uor.foundation/query/RelationQuery",
             label: "RelationQuery",
             comment: "A Query with a known source address, a typed relation constraint, and an open \
-                      target partition:FiberBudget. Represents any question of the form: given this \
+                      target partition:FreeRank. Represents any question of the form: given this \
                       source symbol and relation type, what is the target? The relation type is read \
                       from the observable coordinate triple (d_R, d_H, d_I) — not externally supplied. \
                       Applies across NLP, ARC-AGI grids, music, images, sensor streams, and \
@@ -93,10 +93,10 @@ fn classes() -> Vec<Class> {
         },
         // Amendment 23: Typed controlled vocabulary class
         Class {
-            id: "https://uor.foundation/query/CoordinateKind",
-            label: "CoordinateKind",
+            id: "https://uor.foundation/query/TriadProjection",
+            label: "TriadProjection",
             comment: "A classification of coordinate types that a CoordinateQuery \
-                      can extract. Each CoordinateKind individual names a specific \
+                      can extract. Each TriadProjection individual names a specific \
                       coordinate system (stratum, spectrum, address) replacing the \
                       string-valued query:coordinate property.",
             subclass_of: &[OWL_THING],
@@ -108,7 +108,7 @@ fn classes() -> Vec<Class> {
             label: "SessionQuery",
             comment: "A RelationQuery that explicitly declares its session \
                       membership, allowing the conformance suite to validate \
-                      session-scoped fiber reduction across multi-turn Prism \
+                      session-scoped site reduction across multi-turn Prism \
                       deployments.",
             subclass_of: &["https://uor.foundation/query/RelationQuery"],
             disjoint_with: &[],
@@ -136,18 +136,18 @@ fn properties() -> Vec<Property> {
             domain: Some("https://uor.foundation/query/Query"),
             range: OWL_CLASS,
         },
-        // query:coordinate property removed by Amendment 23 (replaced by hasCoordinateKind)
+        // query:coordinate property removed by Amendment 23 (replaced by hasTriadProjection)
         // Amendment 23: Typed controlled vocabulary property
         Property {
-            id: "https://uor.foundation/query/hasCoordinateKind",
-            label: "hasCoordinateKind",
+            id: "https://uor.foundation/query/hasTriadProjection",
+            label: "hasTriadProjection",
             comment: "The typed coordinate kind this query extracts. Replaces \
                       the string-valued query:coordinate property with a typed \
-                      reference to a CoordinateKind individual.",
+                      reference to a TriadProjection individual.",
             kind: PropertyKind::Object,
             functional: true,
             domain: Some("https://uor.foundation/query/CoordinateQuery"),
-            range: "https://uor.foundation/query/CoordinateKind",
+            range: "https://uor.foundation/query/TriadProjection",
         },
         // Amendment 24: RelationQuery properties
         Property {
@@ -157,7 +157,7 @@ fn properties() -> Vec<Property> {
             kind: PropertyKind::Object,
             functional: true,
             domain: Some("https://uor.foundation/query/RelationQuery"),
-            range: "https://uor.foundation/u/Address",
+            range: "https://uor.foundation/u/Element",
         },
         Property {
             id: "https://uor.foundation/query/relationType",
@@ -172,14 +172,14 @@ fn properties() -> Vec<Property> {
             range: "https://uor.foundation/type/Constraint",
         },
         Property {
-            id: "https://uor.foundation/query/targetFiber",
-            label: "targetFiber",
-            comment: "The open fiber budget for the unknown target. Begins fully free; \
+            id: "https://uor.foundation/query/targetSite",
+            label: "targetSite",
+            comment: "The open site budget for the unknown target. Begins fully free; \
                       closes to isClosed = true upon resolution.",
             kind: PropertyKind::Object,
             functional: true,
             domain: Some("https://uor.foundation/query/RelationQuery"),
-            range: "https://uor.foundation/partition/FiberBudget",
+            range: "https://uor.foundation/partition/FreeRank",
         },
         Property {
             id: "https://uor.foundation/query/groundingMap",
@@ -206,7 +206,7 @@ fn properties() -> Vec<Property> {
             comment: "Accumulated session state carrying all state:Binding instances produced \
                       by prior queries. Each binding records a resolved address, its datum, and \
                       the type under which it was resolved. Prior bindings monotonically reduce \
-                      the free fiber space for subsequent queries.",
+                      the free site space for subsequent queries.",
             kind: PropertyKind::Object,
             functional: true,
             domain: Some("https://uor.foundation/query/RelationQuery"),
@@ -229,25 +229,25 @@ fn properties() -> Vec<Property> {
 fn individuals() -> Vec<Individual> {
     vec![
         Individual {
-            id: "https://uor.foundation/query/StratumCoordinate",
-            type_: "https://uor.foundation/query/CoordinateKind",
-            label: "StratumCoordinate",
+            id: "https://uor.foundation/query/TwoAdicValuation",
+            type_: "https://uor.foundation/query/TriadProjection",
+            label: "TwoAdicValuation",
             comment: "The stratum coordinate: the layer position of a datum \
                       within the ring's stratification.",
             properties: &[],
         },
         Individual {
-            id: "https://uor.foundation/query/SpectrumCoordinate",
-            type_: "https://uor.foundation/query/CoordinateKind",
-            label: "SpectrumCoordinate",
+            id: "https://uor.foundation/query/WalshHadamardImage",
+            type_: "https://uor.foundation/query/TriadProjection",
+            label: "WalshHadamardImage",
             comment: "The spectrum coordinate: the spectral decomposition of a \
                       datum under the ring's Fourier analysis.",
             properties: &[],
         },
         Individual {
-            id: "https://uor.foundation/query/AddressCoordinate",
-            type_: "https://uor.foundation/query/CoordinateKind",
-            label: "AddressCoordinate",
+            id: "https://uor.foundation/query/RingElement",
+            type_: "https://uor.foundation/query/TriadProjection",
+            label: "RingElement",
             comment: "The address coordinate: the content-addressable position \
                       of a datum in the Braille glyph encoding.",
             properties: &[],

@@ -530,7 +530,7 @@ fn properties() -> Vec<Property> {
             kind: PropertyKind::Object,
             functional: true,
             domain: Some("https://uor.foundation/morphism/GroundingWitness"),
-            range: "https://uor.foundation/u/Address",
+            range: "https://uor.foundation/u/Element",
         },
         Property {
             id: "https://uor.foundation/morphism/groundingDerivation",
@@ -631,7 +631,7 @@ fn properties() -> Vec<Property> {
             kind: PropertyKind::Object,
             functional: true,
             domain: Some("https://uor.foundation/morphism/GroundingCertificate"),
-            range: "https://uor.foundation/u/Address",
+            range: "https://uor.foundation/u/Element",
         },
         // Amendment 75: Higher-Order Computation properties
         Property {
@@ -650,7 +650,7 @@ fn properties() -> Vec<Property> {
             kind: PropertyKind::Object,
             functional: true,
             domain: Some("https://uor.foundation/morphism/ComputationDatum"),
-            range: "https://uor.foundation/u/Address",
+            range: "https://uor.foundation/u/Element",
         },
         Property {
             id: "https://uor.foundation/morphism/applicationTarget",
@@ -844,7 +844,7 @@ fn individuals() -> Vec<Individual> {
                 ),
                 (
                     "https://uor.foundation/morphism/outputClass",
-                    IndividualValue::IriRef("https://uor.foundation/u/Address"),
+                    IndividualValue::IriRef("https://uor.foundation/u/Element"),
                 ),
             ],
         },
@@ -860,7 +860,7 @@ fn individuals() -> Vec<Individual> {
                 ),
                 (
                     "https://uor.foundation/morphism/outputClass",
-                    IndividualValue::IriRef("https://uor.foundation/u/Address"),
+                    IndividualValue::IriRef("https://uor.foundation/u/Element"),
                 ),
             ],
         },
@@ -876,7 +876,7 @@ fn individuals() -> Vec<Individual> {
                 ),
                 (
                     "https://uor.foundation/morphism/outputClass",
-                    IndividualValue::IriRef("https://uor.foundation/u/Address"),
+                    IndividualValue::IriRef("https://uor.foundation/u/Element"),
                 ),
             ],
         },

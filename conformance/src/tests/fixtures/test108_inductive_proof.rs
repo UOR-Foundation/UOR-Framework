@@ -11,9 +11,9 @@ pub const TEST108_INDUCTIVE_PROOF: &str = r#"
 
 # Inductive proof across quantum levels
 proof:ex_inductive_108 a owl:NamedIndividual, proof:AxiomaticDerivation ;
-    proof:atQuantumLevel  schema:Q0 ;
+    proof:atWittLevel  schema:Q0 ;
     proof:universalScope  "true"^^xsd:boolean ;
-    proof:quantumNote     "Inductive step verified at each level" ;
+    proof:wittNote     "Inductive step verified at each level" ;
     rdfs:label "Inductive proof Q0→Q3" .
 
 # Derivation witness for the inductive step

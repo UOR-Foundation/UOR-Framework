@@ -54,5 +54,5 @@ algebras. See the **Resolution** concept page for the full pipeline
 ## Thermodynamic Interpretation
 
 The identities TH_1–TH_10 reinterpret the resolution process as a
-thermodynamic system: fiber entropy, Landauer bounds, and phase transitions
+thermodynamic system: site entropy, Landauer bounds, and phase transitions
 provide physical intuition for computational cost.

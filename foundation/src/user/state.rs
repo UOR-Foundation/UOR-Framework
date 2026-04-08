@@ -4,7 +4,7 @@
 //!
 //! Space: User
 
-use crate::enums::SaturationPhase;
+use crate::enums::GroundingPhase;
 use crate::enums::SessionBoundaryType;
 use crate::Primitives;
 
@@ -19,27 +19,27 @@ pub trait Context<P: Primitives> {
     fn capacity(&self) -> P::PositiveInteger;
     /// The content-derived address of this context, uniquely identifying its current state in the UOR address space.
     fn content_address(&self) -> &P::String;
-    /// The quantum level of this context's address space.
-    fn quantum(&self) -> P::PositiveInteger;
-    /// The saturation degree σ ∈ \\[0, 1\\] of this context. Defined by SC_2: σ = (n − freeCount) / n.
-    fn saturation_degree(&self) -> P::Decimal;
-    /// The context temperature T_ctx ∈ \\[0, ln 2\\]. Defined by SC_1: T_ctx = freeCount × ln 2 / n. At σ = 1, T_ctx = 0.
+    /// The Witt level of this context's address space.
+    fn witt_length(&self) -> P::PositiveInteger;
+    /// The saturation degree σ ∈ \\[0, 1\\] of this context. Defined by SC_2: σ = (n − freeRank) / n.
+    fn grounding_degree(&self) -> P::Decimal;
+    /// The context temperature T_ctx ∈ \\[0, ln 2\\]. Defined by SC_1: T_ctx = freeRank × ln 2 / n. At σ = 1, T_ctx = 0.
     fn context_temperature(&self) -> P::Decimal;
-    /// Whether this context has reached full saturation (σ = 1). Equivalent to freeCount = 0, S = 0, T_ctx = 0 per SC_4.
-    fn is_saturated(&self) -> P::Boolean;
-    /// The current saturation phase of this context: Unsaturated, PartialSaturation, or FullSaturation.
-    fn saturation_phase(&self) -> SaturationPhase;
-    /// The number of free (unbound) fibers remaining in this context. At saturation, residualFreeCount = 0.
+    /// Whether this context has reached full saturation (σ = 1). Equivalent to freeRank = 0, S = 0, T_ctx = 0 per SC_4.
+    fn is_grounded(&self) -> P::Boolean;
+    /// The current saturation phase of this context: Open, PartialGrounding, or FullGrounding.
+    fn grounding_phase(&self) -> GroundingPhase;
+    /// The number of free (unbound) sites remaining in this context. At saturation, residualFreeCount = 0.
     fn residual_free_count(&self) -> P::NonNegativeInteger;
 }
 
 /// The association of a datum value with an address in a context. The write primitive: creating a binding populates an address.
 /// Disjoint with: Context, Frame, Transition.
 pub trait Binding<P: Primitives> {
-    /// Associated type for `Address`.
-    type Address: crate::kernel::address::Address<P>;
+    /// Associated type for `Element`.
+    type Element: crate::kernel::address::Element<P>;
     /// The UOR address being bound in this binding.
-    fn address(&self) -> &Self::Address;
+    fn address(&self) -> &Self::Element;
     /// Associated type for `Datum`.
     type Datum: crate::kernel::schema::Datum<P>;
     /// The datum value bound to the address in this binding.
@@ -104,12 +104,12 @@ pub trait Session<P: Primitives> {
     fn session_queries(&self) -> P::NonNegativeInteger;
 }
 
-/// The mutable accumulator that appends state:Binding instances to a state:Context as each RelationQuery resolves. Tracks monotonic reduction of aggregate free fiber space.
+/// The mutable accumulator that appends state:Binding instances to a state:Context as each RelationQuery resolves. Tracks monotonic reduction of aggregate free site space.
 pub trait BindingAccumulator<P: Primitives> {
-    /// Associated type for `FiberBudget`.
-    type FiberBudget: crate::bridge::partition::FiberBudget<P>;
-    /// The aggregate FiberBudget deficit across all accumulated bindings: the total remaining free fibers that have not yet been closed by resolution. Decreases monotonically as the session progresses.
-    fn aggregate_fiber_deficit(&self) -> &Self::FiberBudget;
+    /// Associated type for `FreeRank`.
+    type FreeRank: crate::bridge::partition::FreeRank<P>;
+    /// The aggregate FreeRank deficit across all accumulated bindings: the total remaining free sites that have not yet been closed by resolution. Decreases monotonically as the session progresses.
+    fn aggregate_site_deficit(&self) -> &Self::FreeRank;
     /// Associated type for `Binding`.
     type Binding: Binding<P>;
     /// A binding accumulated by this accumulator from a resolved RelationQuery.
@@ -130,39 +130,39 @@ pub trait SessionBoundary<P: Primitives> {
     fn fresh_context(&self) -> &Self::Context;
 }
 
-/// A context that has reached full saturation: σ = 1, freeCount = 0, S = 0, T_ctx = 0 (SC_4). The ground state of the type system. All subsequent queries resolve in O(1) via SC_5.
-pub trait SaturatedContext<P: Primitives>: Context<P> {
-    /// Associated type for `SaturationCertificate`.
-    type SaturationCertificate: crate::bridge::cert::SaturationCertificate<P>;
-    /// The SaturationCertificate attesting that this context has reached full saturation.
-    fn saturation_certificate(&self) -> &Self::SaturationCertificate;
+/// A context that has reached full saturation: σ = 1, freeRank = 0, S = 0, T_ctx = 0 (SC_4). The ground state of the type system. All subsequent queries resolve in O(1) via SC_5.
+pub trait GroundedContext<P: Primitives>: Context<P> {
+    /// Associated type for `GroundingCertificate`.
+    type GroundingCertificate: crate::bridge::cert::GroundingCertificate<P>;
+    /// The GroundingCertificate attesting that this context has reached full saturation.
+    fn grounding_certificate(&self) -> &Self::GroundingCertificate;
 }
 
 /// Step-by-step evidence of the saturation process: records which bindings were applied, in what order, to reach full saturation.
-pub trait SaturationWitness<P: Primitives> {
+pub trait GroundingWitness<P: Primitives> {
     /// Associated type for `Binding`.
     type Binding: Binding<P>;
-    /// A binding that contributed to the saturation process, recorded in this SaturationWitness.
+    /// A binding that contributed to the saturation process, recorded in this GroundingWitness.
     fn witness_binding(&self) -> &[Self::Binding];
     /// The step index at which a particular binding was applied during the saturation process.
     fn witness_step(&self) -> P::NonNegativeInteger;
 }
 
 /// An informational/monitoring record tracking the saturation progress of a specific domain within a context. Carries no formal authority — purely observational.
-pub trait DomainSaturationRecord<P: Primitives> {
-    /// Associated type for `SaturatedContext`.
-    type SaturatedContext: SaturatedContext<P>;
-    /// The SaturatedContext that this DomainSaturationRecord monitors.
-    fn saturated_context(&self) -> &Self::SaturatedContext;
+pub trait DomainGroundingRecord<P: Primitives> {
+    /// Associated type for `GroundedContext`.
+    type GroundedContext: GroundedContext<P>;
+    /// The GroundedContext that this DomainGroundingRecord monitors.
+    fn grounded_context(&self) -> &Self::GroundedContext;
     /// Associated type for `TypeDefinition`.
     type TypeDefinition: crate::user::type_::TypeDefinition<P>;
-    /// The domain within the context being tracked by this DomainSaturationRecord.
-    fn saturated_domain(&self) -> &Self::TypeDefinition;
-    /// The number of free fibers remaining in the specific domain tracked by this DomainSaturationRecord.
+    /// The domain within the context being tracked by this DomainGroundingRecord.
+    fn grounded_domain(&self) -> &Self::TypeDefinition;
+    /// The number of free sites remaining in the specific domain tracked by this DomainGroundingRecord.
     fn domain_free_count(&self) -> P::NonNegativeInteger;
 }
 
-/// A Context visible to more than one Session simultaneously. Holds a set of ContextLease instances that partition its fiber coordinates among active sessions. Lease disjointness (SR_9) prevents concurrent write conflicts.
+/// A Context visible to more than one Session simultaneously. Holds a set of ContextLease instances that partition its site coordinates among active sessions. Lease disjointness (SR_9) prevents concurrent write conflicts.
 pub trait SharedContext<P: Primitives>: Context<P> {
     /// Associated type for `ContextLease`.
     type ContextLease: ContextLease<P>;
@@ -170,13 +170,13 @@ pub trait SharedContext<P: Primitives>: Context<P> {
     fn lease_set(&self) -> &[Self::ContextLease];
 }
 
-/// A bounded, exclusive claim on a set of fiber coordinates within a SharedContext, held by exactly one Session. When the session closes or hits a SessionBoundary, the lease is released and its fibers become available for re-leasing.
+/// A bounded, exclusive claim on a set of site coordinates within a SharedContext, held by exactly one Session. When the session closes or hits a SessionBoundary, the lease is released and its sites become available for re-leasing.
 /// Disjoint with: Context, Binding, Frame, Transition.
 pub trait ContextLease<P: Primitives> {
-    /// Associated type for `FiberBudget`.
-    type FiberBudget: crate::bridge::partition::FiberBudget<P>;
-    /// The subset of fibers claimed by this lease. Must be disjoint from all other active leases on the same SharedContext (SR_9).
-    fn leased_fibers(&self) -> &Self::FiberBudget;
+    /// Associated type for `FreeRank`.
+    type FreeRank: crate::bridge::partition::FreeRank<P>;
+    /// The subset of sites claimed by this lease. Must be disjoint from all other active leases on the same SharedContext (SR_9).
+    fn leased_sites(&self) -> &Self::FreeRank;
     /// Associated type for `Session`.
     type Session: Session<P>;
     /// The Session that holds this lease.
@@ -202,31 +202,31 @@ pub trait SessionComposition<P: Primitives> {
 /// The caller explicitly requested a context reset. All accumulated bindings are discarded.
 pub mod explicit_reset {}
 
-/// The session resolver determined that no further queries can reduce the aggregate fiber deficit.
+/// The session resolver determined that no further queries can reduce the aggregate site deficit.
 pub mod convergence_boundary {}
 
 /// A new query produced a type contradiction with an accumulated binding. Context must reset before resolution can continue.
 pub mod contradiction_boundary {}
 
-/// The context has σ = 0: no bindings accumulated, all fibers are free. The initial phase of every session.
-pub mod unsaturated {}
+/// The context has σ = 0: no bindings accumulated, all sites are free. The initial phase of every session.
+pub mod open {}
 
-/// The context has 0 < σ < 1: some fibers are pinned by accumulated bindings, but free fibers remain. The accumulation phase.
-pub mod partial_saturation {}
+/// The context has 0 < σ < 1: some sites are pinned by accumulated bindings, but free sites remain. The accumulation phase.
+pub mod partial_grounding {}
 
-/// The context has σ = 1: all fibers are pinned, freeCount = 0. The ground state. All subsequent queries resolve in O(1) via SC_5.
-pub mod full_saturation {}
+/// The context has σ = 1: all sites are pinned, freeRank = 0. The ground state. All subsequent queries resolve in O(1) via SC_5.
+pub mod full_grounding {}
 
-/// The canonical ground-state witness: a SaturatedContext at σ = 1, freeCount = 0, T_ctx = 0, S = 0 (SC_4). Demonstrates that full saturation is achievable and O(1) resolution (SC_5) is realized.
+/// The canonical ground-state witness: a GroundedContext at σ = 1, freeRank = 0, T_ctx = 0, S = 0 (SC_4). Demonstrates that full saturation is achievable and O(1) resolution (SC_5) is realized.
 pub mod ground_state {
     /// `contextTemperature`
     pub const CONTEXT_TEMPERATURE: &str = "0.0";
-    /// `isSaturated`
-    pub const IS_SATURATED: bool = true;
+    /// `groundingDegree`
+    pub const GROUNDING_DEGREE: &str = "1.0";
+    /// `groundingPhase` -> `FullGrounding`
+    pub const GROUNDING_PHASE: &str = "https://uor.foundation/state/FullGrounding";
+    /// `isGrounded`
+    pub const IS_GROUNDED: bool = true;
     /// `residualFreeCount`
     pub const RESIDUAL_FREE_COUNT: i64 = 0;
-    /// `saturationDegree`
-    pub const SATURATION_DEGREE: &str = "1.0";
-    /// `saturationPhase` -> `FullSaturation`
-    pub const SATURATION_PHASE: &str = "https://uor.foundation/state/FullSaturation";
 }

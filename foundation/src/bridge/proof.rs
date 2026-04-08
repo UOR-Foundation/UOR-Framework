@@ -6,8 +6,8 @@
 
 use crate::enums::AchievabilityStatus;
 use crate::enums::ProofStrategy;
-use crate::enums::QuantumLevel;
 use crate::enums::VerificationDomain;
+use crate::enums::WittLevel;
 use crate::Primitives;
 
 /// A kernel-produced attestation that a given algebraic property holds. The root class for all proof types.
@@ -25,7 +25,7 @@ pub trait Proof<P: Primitives> {
     /// The algebraic identity this proof establishes. Provides a canonical object reference alongside the existing proof:criticalIdentity string property, which remains for human readability.
     fn proves_identity(&self) -> &Self::Identity;
     /// The specific quantum level at which an empirical verification or impossibility witness was established.
-    fn verified_at_level(&self) -> &[QuantumLevel];
+    fn verified_at_level(&self) -> &[WittLevel];
     /// The proof method from the ProofStrategy controlled vocabulary. Determines the compilation target (e.g., `by ring`, `by simp`, `by induction`).
     fn strategy(&self) -> ProofStrategy;
     /// An identity that this proof depends on as a lemma. Forms the proof dependency DAG. Leaf proofs (provable from definitions alone) have no dependsOn assertions.
@@ -39,10 +39,10 @@ pub trait Proof<P: Primitives> {
 /// A proof of coherence: the type system and ring structure are mutually consistent at a given quantum level.
 pub trait CoherenceProof<P: Primitives>: Proof<P> {}
 
-/// A proof confirmed by exhaustive execution over R_n at a specific quantum level. The kernel ran the identity against all 2^n inputs and observed that it holds. The proof:atQuantumLevel property records the level; proof:witness links to the WitnessData. CriticalIdentityProof is a subclass of ComputationCertificate.
+/// A proof confirmed by exhaustive execution over R_n at a specific quantum level. The kernel ran the identity against all 2^n inputs and observed that it holds. The proof:atWittLevel property records the level; proof:witness links to the WitnessData. CriticalIdentityProof is a subclass of ComputationCertificate.
 pub trait ComputationCertificate<P: Primitives>: Proof<P> {
     /// The quantum level at which this computation certificate was produced. A ComputationCertificate at schema:Q0 confirms the identity holds for all 256 inputs of R_8. A certificate at schema:Q1 confirms it for all 65,536 inputs of R_16.
-    fn at_quantum_level(&self) -> QuantumLevel;
+    fn at_witt_level(&self) -> WittLevel;
 }
 
 /// A proof that follows from previously established axioms or definitions by equational, structural, or topological reasoning. The proof:derivationWitness property links to a derivation:Derivation individual recording the rewrite chain. All pipeline, constraint, observable, and topological identities are AxiomaticDerivations.
@@ -158,8 +158,8 @@ pub mod computation {}
 
 /// Computation certificate for the critical identity neg(bnot(x)) = succ(x) at Q0.
 pub mod prf_critical_identity {
-    /// `atQuantumLevel` -> `Q0`
-    pub const AT_QUANTUM_LEVEL: &str = "https://uor.foundation/schema/Q0";
+    /// `atWittLevel` -> `W8`
+    pub const AT_WITT_LEVEL: &str = "https://uor.foundation/schema/W8";
     /// `provesIdentity` -> `criticalIdentity`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/criticalIdentity";
     /// `strategy` -> `Computation`
@@ -182,8 +182,8 @@ pub mod prf_critical_identity_axiomatic {
 
 /// Computation certificate for phi_1 at Q0.
 pub mod prf_phi_1 {
-    /// `atQuantumLevel` -> `Q0`
-    pub const AT_QUANTUM_LEVEL: &str = "https://uor.foundation/schema/Q0";
+    /// `atWittLevel` -> `W8`
+    pub const AT_WITT_LEVEL: &str = "https://uor.foundation/schema/W8";
     /// `provesIdentity` -> `phi_1`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/phi_1";
     /// `strategy` -> `Computation`
@@ -194,8 +194,8 @@ pub mod prf_phi_1 {
 
 /// Computation certificate for phi_2 at Q0.
 pub mod prf_phi_2 {
-    /// `atQuantumLevel` -> `Q0`
-    pub const AT_QUANTUM_LEVEL: &str = "https://uor.foundation/schema/Q0";
+    /// `atWittLevel` -> `W8`
+    pub const AT_WITT_LEVEL: &str = "https://uor.foundation/schema/W8";
     /// `provesIdentity` -> `phi_2`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/phi_2";
     /// `strategy` -> `Computation`
@@ -206,8 +206,8 @@ pub mod prf_phi_2 {
 
 /// Computation certificate for phi_3 at Q0.
 pub mod prf_phi_3 {
-    /// `atQuantumLevel` -> `Q0`
-    pub const AT_QUANTUM_LEVEL: &str = "https://uor.foundation/schema/Q0";
+    /// `atWittLevel` -> `W8`
+    pub const AT_WITT_LEVEL: &str = "https://uor.foundation/schema/W8";
     /// `provesIdentity` -> `phi_3`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/phi_3";
     /// `strategy` -> `Computation`
@@ -218,8 +218,8 @@ pub mod prf_phi_3 {
 
 /// Computation certificate for phi_4 at Q0.
 pub mod prf_phi_4 {
-    /// `atQuantumLevel` -> `Q0`
-    pub const AT_QUANTUM_LEVEL: &str = "https://uor.foundation/schema/Q0";
+    /// `atWittLevel` -> `W8`
+    pub const AT_WITT_LEVEL: &str = "https://uor.foundation/schema/W8";
     /// `provesIdentity` -> `phi_4`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/phi_4";
     /// `strategy` -> `Computation`
@@ -230,8 +230,8 @@ pub mod prf_phi_4 {
 
 /// Computation certificate for phi_5 at Q0.
 pub mod prf_phi_5 {
-    /// `atQuantumLevel` -> `Q0`
-    pub const AT_QUANTUM_LEVEL: &str = "https://uor.foundation/schema/Q0";
+    /// `atWittLevel` -> `W8`
+    pub const AT_WITT_LEVEL: &str = "https://uor.foundation/schema/W8";
     /// `provesIdentity` -> `phi_5`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/phi_5";
     /// `strategy` -> `Computation`
@@ -242,8 +242,8 @@ pub mod prf_phi_5 {
 
 /// Computation certificate for phi_6 at Q0.
 pub mod prf_phi_6 {
-    /// `atQuantumLevel` -> `Q0`
-    pub const AT_QUANTUM_LEVEL: &str = "https://uor.foundation/schema/Q0";
+    /// `atWittLevel` -> `W8`
+    pub const AT_WITT_LEVEL: &str = "https://uor.foundation/schema/W8";
     /// `provesIdentity` -> `phi_6`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/phi_6";
     /// `strategy` -> `Computation`
@@ -3198,7 +3198,7 @@ pub mod prf_cc_1 {
     pub const VERIFIED: bool = true;
 }
 
-/// Proof that the ψ pipeline is monotone: each constraint application cannot increase the fiber deficit. Derived from the definition of the partition refinement order.
+/// Proof that the ψ pipeline is monotone: each constraint application cannot increase the site deficit. Derived from the definition of the partition refinement order.
 pub mod prf_cc_2 {
     /// `provesIdentity` -> `CC_2`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/CC_2";
@@ -3234,7 +3234,7 @@ pub mod prf_cc_4 {
     pub const VERIFIED: bool = true;
 }
 
-/// Proof that the ConstraintNerve nerve computation is deterministic: the same constraint set always produces the same nerve topology. Follows from the nerve functor being a functor (functoriality).
+/// Proof that the CechNerve nerve computation is deterministic: the same constraint set always produces the same nerve topology. Follows from the nerve functor being a functor (functoriality).
 pub mod prf_cc_5 {
     /// `provesIdentity` -> `CC_5`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/CC_5";
@@ -3330,10 +3330,10 @@ pub mod prf_ql_7 {
     pub const VERIFIED: bool = true;
 }
 
-/// Proof of binding monotonicity: freeCount(B_{i+1}) ≤ freeCount(B_i) for all i in a Session. Follows from the definition of the BindingAccumulator: each appended binding either pins fibers or is a no-op; it never frees them.
-pub mod prf_sr_1 {
-    /// `provesIdentity` -> `SR_1`
-    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/SR_1";
+/// Proof of binding monotonicity: freeRank(B_{i+1}) ≤ freeRank(B_i) for all i in a Session. Follows from the definition of the BindingAccumulator: each appended binding either pins sites or is a no-op; it never frees them.
+pub mod prf_gr_1 {
+    /// `provesIdentity` -> `GR_1`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/GR_1";
     /// `strategy` -> `RingAxiom`
     pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
@@ -3342,10 +3342,10 @@ pub mod prf_sr_1 {
     pub const VERIFIED: bool = true;
 }
 
-/// Proof that the empty session is the identity element of the session algebra: freeCount(B_0) = total fiber space. The empty accumulator has no pinned fibers by definition.
-pub mod prf_sr_2 {
-    /// `provesIdentity` -> `SR_2`
-    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/SR_2";
+/// Proof that the empty session is the identity element of the session algebra: freeRank(B_0) = total site space. The empty accumulator has no pinned sites by definition.
+pub mod prf_gr_2 {
+    /// `provesIdentity` -> `GR_2`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/GR_2";
     /// `strategy` -> `Simplification`
     pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
@@ -3354,10 +3354,10 @@ pub mod prf_sr_2 {
     pub const VERIFIED: bool = true;
 }
 
-/// Proof of session convergence: a session terminates iff freeCount reaches its minimum (the maximum pinned by the given constraint set). Follows from the compactness of the fiber space and monotonicity.
-pub mod prf_sr_3 {
-    /// `provesIdentity` -> `SR_3`
-    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/SR_3";
+/// Proof of session convergence: a session terminates iff freeRank reaches its minimum (the maximum pinned by the given constraint set). Follows from the compactness of the site space and monotonicity.
+pub mod prf_gr_3 {
+    /// `provesIdentity` -> `GR_3`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/GR_3";
     /// `strategy` -> `RingAxiom`
     pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
@@ -3366,10 +3366,10 @@ pub mod prf_sr_3 {
     pub const VERIFIED: bool = true;
 }
 
-/// Proof that disjoint bindings compose without fiber conflict: if two bindings address disjoint fiber sets, their composition is well-defined and their union is also a valid binding.
-pub mod prf_sr_4 {
-    /// `provesIdentity` -> `SR_4`
-    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/SR_4";
+/// Proof that disjoint bindings compose without site conflict: if two bindings address disjoint site sets, their composition is well-defined and their union is also a valid binding.
+pub mod prf_gr_4 {
+    /// `provesIdentity` -> `GR_4`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/GR_4";
     /// `strategy` -> `RingAxiom`
     pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
@@ -3379,9 +3379,9 @@ pub mod prf_sr_4 {
 }
 
 /// Proof of contradiction detection correctness: ContradictionBoundary fires iff there exist bindings b, b' in the same Context with the same address, different datum, and same constraint. This is the minimal condition for type contradiction.
-pub mod prf_sr_5 {
-    /// `provesIdentity` -> `SR_5`
-    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/SR_5";
+pub mod prf_gr_5 {
+    /// `provesIdentity` -> `GR_5`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/GR_5";
     /// `strategy` -> `RingAxiom`
     pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
@@ -3402,7 +3402,7 @@ pub mod prf_ts_1 {
     pub const VERIFIED: bool = true;
 }
 
-/// Proof of minimal basis bound: the MinimalConstraintBasis for the IT_7d target has size exactly n. Follows from the fiber-by-fiber construction and the minimality criterion.
+/// Proof of minimal basis bound: the MinimalConstraintBasis for the IT_7d target has size exactly n. Follows from the site-by-site construction and the minimality criterion.
 pub mod prf_ts_2 {
     /// `provesIdentity` -> `TS_2`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/TS_2";
@@ -3426,7 +3426,7 @@ pub mod prf_ts_3 {
     pub const VERIFIED: bool = true;
 }
 
-/// Proof of synthesis convergence: the TypeSynthesisResolver terminates in at most n steps. Follows from monotonicity (TS_3) and the finite fiber budget bound.
+/// Proof of synthesis convergence: the TypeSynthesisResolver terminates in at most n steps. Follows from monotonicity (TS_3) and the finite site budget bound.
 pub mod prf_ts_4 {
     /// `provesIdentity` -> `TS_4`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/TS_4";
@@ -3474,14 +3474,14 @@ pub mod prf_ts_7 {
     pub const VERIFIED: bool = true;
 }
 
-/// Proof of lift unobstructedness criterion: QuantumLift T' is CompleteType iff the spectral sequence collapses at E_2. Follows from the Leray spectral sequence of the quantum level extension.
-pub mod prf_qls_1 {
-    /// `baseCase` -> `prf_QLS_1_base`
-    pub const BASE_CASE: &str = "https://uor.foundation/proof/prf_QLS_1_base";
-    /// `inductiveStep` -> `prf_QLS_6`
-    pub const INDUCTIVE_STEP: &str = "https://uor.foundation/proof/prf_QLS_6";
-    /// `provesIdentity` -> `QLS_1`
-    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/QLS_1";
+/// Proof of lift unobstructedness criterion: WittLift T' is CompleteType iff the spectral sequence collapses at E_2. Follows from the Leray spectral sequence of the quantum level extension.
+pub mod prf_wls_1 {
+    /// `baseCase` -> `prf_WLS_1_base`
+    pub const BASE_CASE: &str = "https://uor.foundation/proof/prf_WLS_1_base";
+    /// `inductiveStep` -> `prf_WLS_6`
+    pub const INDUCTIVE_STEP: &str = "https://uor.foundation/proof/prf_WLS_6";
+    /// `provesIdentity` -> `WLS_1`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/WLS_1";
     /// `strategy` -> `BitwiseInduction`
     pub const STRATEGY: &str = "https://uor.foundation/proof/BitwiseInduction";
     /// `universalScope`
@@ -3492,14 +3492,14 @@ pub mod prf_qls_1 {
     pub const VERIFIED: bool = true;
 }
 
-/// Proof of obstruction localisation: a non-trivial LiftObstruction is localised to a specific fiber at bit position n+1. Follows from the local-to-global structure of the constraint nerve.
-pub mod prf_qls_2 {
-    /// `baseCase` -> `prf_QLS_2_base`
-    pub const BASE_CASE: &str = "https://uor.foundation/proof/prf_QLS_2_base";
-    /// `inductiveStep` -> `prf_QLS_2_step`
-    pub const INDUCTIVE_STEP: &str = "https://uor.foundation/proof/prf_QLS_2_step";
-    /// `provesIdentity` -> `QLS_2`
-    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/QLS_2";
+/// Proof of obstruction localisation: a non-trivial LiftObstruction is localised to a specific site at bit position n+1. Follows from the local-to-global structure of the constraint nerve.
+pub mod prf_wls_2 {
+    /// `baseCase` -> `prf_WLS_2_base`
+    pub const BASE_CASE: &str = "https://uor.foundation/proof/prf_WLS_2_base";
+    /// `inductiveStep` -> `prf_WLS_2_step`
+    pub const INDUCTIVE_STEP: &str = "https://uor.foundation/proof/prf_WLS_2_step";
+    /// `provesIdentity` -> `WLS_2`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/WLS_2";
     /// `strategy` -> `BitwiseInduction`
     pub const STRATEGY: &str = "https://uor.foundation/proof/BitwiseInduction";
     /// `universalScope`
@@ -3511,13 +3511,13 @@ pub mod prf_qls_2 {
 }
 
 /// Proof of monotone lifting: basisSize(T') = basisSize(T) + 1 for trivially obstructed lifts. Follows from the minimal basis construction at Q_{n+1}.
-pub mod prf_qls_3 {
-    /// `baseCase` -> `prf_QLS_3_base`
-    pub const BASE_CASE: &str = "https://uor.foundation/proof/prf_QLS_3_base";
-    /// `inductiveStep` -> `prf_QLS_3_step`
-    pub const INDUCTIVE_STEP: &str = "https://uor.foundation/proof/prf_QLS_3_step";
-    /// `provesIdentity` -> `QLS_3`
-    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/QLS_3";
+pub mod prf_wls_3 {
+    /// `baseCase` -> `prf_WLS_3_base`
+    pub const BASE_CASE: &str = "https://uor.foundation/proof/prf_WLS_3_base";
+    /// `inductiveStep` -> `prf_WLS_3_step`
+    pub const INDUCTIVE_STEP: &str = "https://uor.foundation/proof/prf_WLS_3_step";
+    /// `provesIdentity` -> `WLS_3`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/WLS_3";
     /// `strategy` -> `BitwiseInduction`
     pub const STRATEGY: &str = "https://uor.foundation/proof/BitwiseInduction";
     /// `universalScope`
@@ -3529,13 +3529,13 @@ pub mod prf_qls_3 {
 }
 
 /// Proof of spectral sequence convergence bound: the spectral sequence converges by page E_{d+2} for depth-d configurations. Follows from the filtration length of the constraint nerve chain complex.
-pub mod prf_qls_4 {
-    /// `baseCase` -> `prf_QLS_4_base`
-    pub const BASE_CASE: &str = "https://uor.foundation/proof/prf_QLS_4_base";
-    /// `inductiveStep` -> `prf_QLS_4_step`
-    pub const INDUCTIVE_STEP: &str = "https://uor.foundation/proof/prf_QLS_4_step";
-    /// `provesIdentity` -> `QLS_4`
-    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/QLS_4";
+pub mod prf_wls_4 {
+    /// `baseCase` -> `prf_WLS_4_base`
+    pub const BASE_CASE: &str = "https://uor.foundation/proof/prf_WLS_4_base";
+    /// `inductiveStep` -> `prf_WLS_4_step`
+    pub const INDUCTIVE_STEP: &str = "https://uor.foundation/proof/prf_WLS_4_step";
+    /// `provesIdentity` -> `WLS_4`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/WLS_4";
     /// `strategy` -> `BitwiseInduction`
     pub const STRATEGY: &str = "https://uor.foundation/proof/BitwiseInduction";
     /// `universalScope`
@@ -3547,13 +3547,13 @@ pub mod prf_qls_4 {
 }
 
 /// Proof of universal identity preservation under quantum lifts: every universallyValid identity holds in the lifted ring. Follows from the universal validity definition and ring extension properties.
-pub mod prf_qls_5 {
-    /// `baseCase` -> `prf_QLS_5_base`
-    pub const BASE_CASE: &str = "https://uor.foundation/proof/prf_QLS_5_base";
-    /// `inductiveStep` -> `prf_QLS_6`
-    pub const INDUCTIVE_STEP: &str = "https://uor.foundation/proof/prf_QLS_6";
-    /// `provesIdentity` -> `QLS_5`
-    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/QLS_5";
+pub mod prf_wls_5 {
+    /// `baseCase` -> `prf_WLS_5_base`
+    pub const BASE_CASE: &str = "https://uor.foundation/proof/prf_WLS_5_base";
+    /// `inductiveStep` -> `prf_WLS_6`
+    pub const INDUCTIVE_STEP: &str = "https://uor.foundation/proof/prf_WLS_6";
+    /// `provesIdentity` -> `WLS_5`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/WLS_5";
     /// `strategy` -> `BitwiseInduction`
     pub const STRATEGY: &str = "https://uor.foundation/proof/BitwiseInduction";
     /// `universalScope`
@@ -3564,14 +3564,14 @@ pub mod prf_qls_5 {
     pub const VERIFIED: bool = true;
 }
 
-/// Proof of ψ-pipeline universality for quantum lifts: the ψ-pipeline produces a valid ChainComplex for any QuantumLift. Follows from the functorial construction of the chain complex.
-pub mod prf_qls_6 {
-    /// `baseCase` -> `prf_QLS_6_base`
-    pub const BASE_CASE: &str = "https://uor.foundation/proof/prf_QLS_6_base";
-    /// `inductiveStep` -> `prf_QLS_6_step`
-    pub const INDUCTIVE_STEP: &str = "https://uor.foundation/proof/prf_QLS_6_step";
-    /// `provesIdentity` -> `QLS_6`
-    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/QLS_6";
+/// Proof of ψ-pipeline universality for quantum lifts: the ψ-pipeline produces a valid ChainComplex for any WittLift. Follows from the functorial construction of the chain complex.
+pub mod prf_wls_6 {
+    /// `baseCase` -> `prf_WLS_6_base`
+    pub const BASE_CASE: &str = "https://uor.foundation/proof/prf_WLS_6_base";
+    /// `inductiveStep` -> `prf_WLS_6_step`
+    pub const INDUCTIVE_STEP: &str = "https://uor.foundation/proof/prf_WLS_6_step";
+    /// `provesIdentity` -> `WLS_6`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/WLS_6";
     /// `strategy` -> `BitwiseInduction`
     pub const STRATEGY: &str = "https://uor.foundation/proof/BitwiseInduction";
     /// `universalScope`
@@ -3583,9 +3583,9 @@ pub mod prf_qls_6 {
 }
 
 /// Base case for QLS_1 at Q0: lift unobstructedness holds trivially for 8-bit rings where the constraint nerve is contractible.
-pub mod prf_qls_1_base {
-    /// `provesIdentity` -> `QLS_1`
-    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/QLS_1";
+pub mod prf_wls_1_base {
+    /// `provesIdentity` -> `WLS_1`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/WLS_1";
     /// `strategy` -> `Composition`
     pub const STRATEGY: &str = "https://uor.foundation/proof/Composition";
     /// `universalScope`
@@ -3594,10 +3594,10 @@ pub mod prf_qls_1_base {
     pub const VERIFIED: bool = true;
 }
 
-/// Base case for QLS_2 at Q0: obstruction localisation holds at the 8-bit level where fibers are directly inspectable.
-pub mod prf_qls_2_base {
-    /// `provesIdentity` -> `QLS_2`
-    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/QLS_2";
+/// Base case for QLS_2 at Q0: obstruction localisation holds at the 8-bit level where sites are directly inspectable.
+pub mod prf_wls_2_base {
+    /// `provesIdentity` -> `WLS_2`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/WLS_2";
     /// `strategy` -> `Composition`
     pub const STRATEGY: &str = "https://uor.foundation/proof/Composition";
     /// `universalScope`
@@ -3607,9 +3607,9 @@ pub mod prf_qls_2_base {
 }
 
 /// Inductive step for QLS_2: if obstruction is localised at Q_k, the local-to-global structure of the constraint nerve preserves localisation at Q_{k+1}.
-pub mod prf_qls_2_step {
-    /// `provesIdentity` -> `QLS_2`
-    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/QLS_2";
+pub mod prf_wls_2_step {
+    /// `provesIdentity` -> `WLS_2`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/WLS_2";
     /// `strategy` -> `Composition`
     pub const STRATEGY: &str = "https://uor.foundation/proof/Composition";
     /// `universalScope`
@@ -3619,9 +3619,9 @@ pub mod prf_qls_2_step {
 }
 
 /// Base case for QLS_3 at Q0: monotone lifting basis size increment holds trivially for 8-bit to 16-bit extension.
-pub mod prf_qls_3_base {
-    /// `provesIdentity` -> `QLS_3`
-    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/QLS_3";
+pub mod prf_wls_3_base {
+    /// `provesIdentity` -> `WLS_3`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/WLS_3";
     /// `strategy` -> `Composition`
     pub const STRATEGY: &str = "https://uor.foundation/proof/Composition";
     /// `universalScope`
@@ -3630,10 +3630,10 @@ pub mod prf_qls_3_base {
     pub const VERIFIED: bool = true;
 }
 
-/// Inductive step for QLS_3: the minimal basis construction at Q_{k+1} adds exactly one element from the trivially obstructed fiber.
-pub mod prf_qls_3_step {
-    /// `provesIdentity` -> `QLS_3`
-    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/QLS_3";
+/// Inductive step for QLS_3: the minimal basis construction at Q_{k+1} adds exactly one element from the trivially obstructed site.
+pub mod prf_wls_3_step {
+    /// `provesIdentity` -> `WLS_3`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/WLS_3";
     /// `strategy` -> `Composition`
     pub const STRATEGY: &str = "https://uor.foundation/proof/Composition";
     /// `universalScope`
@@ -3643,9 +3643,9 @@ pub mod prf_qls_3_step {
 }
 
 /// Base case for QLS_4 at Q0: spectral sequence convergence at E_{d+2} holds for 8-bit filtrations by direct computation.
-pub mod prf_qls_4_base {
-    /// `provesIdentity` -> `QLS_4`
-    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/QLS_4";
+pub mod prf_wls_4_base {
+    /// `provesIdentity` -> `WLS_4`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/WLS_4";
     /// `strategy` -> `Composition`
     pub const STRATEGY: &str = "https://uor.foundation/proof/Composition";
     /// `universalScope`
@@ -3655,9 +3655,9 @@ pub mod prf_qls_4_base {
 }
 
 /// Inductive step for QLS_4: filtration length at Q_{k+1} extends by at most one page from Q_k, preserving the E_{d+2} bound.
-pub mod prf_qls_4_step {
-    /// `provesIdentity` -> `QLS_4`
-    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/QLS_4";
+pub mod prf_wls_4_step {
+    /// `provesIdentity` -> `WLS_4`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/WLS_4";
     /// `strategy` -> `Composition`
     pub const STRATEGY: &str = "https://uor.foundation/proof/Composition";
     /// `universalScope`
@@ -3667,9 +3667,9 @@ pub mod prf_qls_4_step {
 }
 
 /// Base case for QLS_5 at Q0: universallyValid identities hold in the 8-bit ring by definition of universal validity.
-pub mod prf_qls_5_base {
-    /// `provesIdentity` -> `QLS_5`
-    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/QLS_5";
+pub mod prf_wls_5_base {
+    /// `provesIdentity` -> `WLS_5`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/WLS_5";
     /// `strategy` -> `Composition`
     pub const STRATEGY: &str = "https://uor.foundation/proof/Composition";
     /// `universalScope`
@@ -3678,10 +3678,10 @@ pub mod prf_qls_5_base {
     pub const VERIFIED: bool = true;
 }
 
-/// Base case for QLS_6 at Q0: the psi-pipeline produces a valid ChainComplex for 8-bit QuantumLifts by direct construction.
-pub mod prf_qls_6_base {
-    /// `provesIdentity` -> `QLS_6`
-    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/QLS_6";
+/// Base case for QLS_6 at Q0: the psi-pipeline produces a valid ChainComplex for 8-bit WittLifts by direct construction.
+pub mod prf_wls_6_base {
+    /// `provesIdentity` -> `WLS_6`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/WLS_6";
     /// `strategy` -> `Composition`
     pub const STRATEGY: &str = "https://uor.foundation/proof/Composition";
     /// `universalScope`
@@ -3691,9 +3691,9 @@ pub mod prf_qls_6_base {
 }
 
 /// Inductive step for QLS_6: the functorial construction of the chain complex commutes with quantum level extension.
-pub mod prf_qls_6_step {
-    /// `provesIdentity` -> `QLS_6`
-    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/QLS_6";
+pub mod prf_wls_6_step {
+    /// `provesIdentity` -> `WLS_6`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/WLS_6";
     /// `strategy` -> `Composition`
     pub const STRATEGY: &str = "https://uor.foundation/proof/Composition";
     /// `universalScope`
@@ -3703,9 +3703,9 @@ pub mod prf_qls_6_step {
 }
 
 /// Base case for QT_3: resolved basis size formula holds for chain length 1 by direct construction.
-pub mod prf_qt_3_base {
-    /// `provesIdentity` -> `QT_3`
-    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/QT_3";
+pub mod prf_wt_3_base {
+    /// `provesIdentity` -> `WT_3`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/WT_3";
     /// `strategy` -> `Composition`
     pub const STRATEGY: &str = "https://uor.foundation/proof/Composition";
     /// `universalScope`
@@ -3715,9 +3715,9 @@ pub mod prf_qt_3_base {
 }
 
 /// Base case for QT_5: LiftChainCertificate existence for tower height 1 follows from single-step certificate issuance.
-pub mod prf_qt_5_base {
-    /// `provesIdentity` -> `QT_5`
-    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/QT_5";
+pub mod prf_wt_5_base {
+    /// `provesIdentity` -> `WT_5`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/WT_5";
     /// `strategy` -> `Composition`
     pub const STRATEGY: &str = "https://uor.foundation/proof/Composition";
     /// `universalScope`
@@ -3750,7 +3750,7 @@ pub mod prf_ar_5_step {
     pub const VERIFIED: bool = true;
 }
 
-/// Base case for QM_6 at Q0: amplitude index set equals monotone pinning trajectories by exhaustive trajectory enumeration over the 8-bit fiber lattice.
+/// Base case for QM_6 at Q0: amplitude index set equals monotone pinning trajectories by exhaustive trajectory enumeration over the 8-bit site lattice.
 pub mod prf_qm_6_base {
     /// `provesIdentity` -> `QM_6`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/QM_6";
@@ -3762,7 +3762,7 @@ pub mod prf_qm_6_base {
     pub const VERIFIED: bool = true;
 }
 
-/// Inductive step for QM_6: monotone pinning trajectories at Q_{k+1} extend those at Q_k by the fiber lattice ordering (monotone extension property).
+/// Inductive step for QM_6: monotone pinning trajectories at Q_{k+1} extend those at Q_k by the site lattice ordering (monotone extension property).
 pub mod prf_qm_6_step {
     /// `provesIdentity` -> `QM_6`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/QM_6";
@@ -3846,7 +3846,7 @@ pub mod prf_mn_6 {
     pub const VERIFIED: bool = true;
 }
 
-/// Proof of TwistedType obstruction class: a TwistedType always contributes a non-zero class to H²(N(C(T')); ℤ/2ℤ) for any QuantumLift T'. Follows from MN_4 and the obstruction theory of dihedral torsors.
+/// Proof of TwistedType obstruction class: a TwistedType always contributes a non-zero class to H²(N(C(T')); ℤ/2ℤ) for any WittLift T'. Follows from MN_4 and the obstruction theory of dihedral torsors.
 pub mod prf_mn_7 {
     /// `provesIdentity` -> `MN_7`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/MN_7";
@@ -3858,7 +3858,7 @@ pub mod prf_mn_7 {
     pub const VERIFIED: bool = true;
 }
 
-/// Proof of PT_1: product type fiber additivity. fiberBudget(A × B) = fiberBudget(A) + fiberBudget(B). Follows from the definition of ProductType as an independent concatenation of fiber spaces.
+/// Proof of PT_1: product type site additivity. siteBudget(A × B) = siteBudget(A) + siteBudget(B). Follows from the definition of ProductType as an independent concatenation of site spaces.
 pub mod prf_pt_1 {
     /// `provesIdentity` -> `PT_1`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/PT_1";
@@ -3870,7 +3870,7 @@ pub mod prf_pt_1 {
     pub const VERIFIED: bool = true;
 }
 
-/// Proof of PT_2: product type partition factorisation. partition(A × B) = partition(A) ⊗ partition(B). Follows from the tensor product structure of constraint nerves over independent fiber spaces.
+/// Proof of PT_2: product type partition factorisation. partition(A × B) = partition(A) ⊗ partition(B). Follows from the tensor product structure of constraint nerves over independent site spaces.
 pub mod prf_pt_2 {
     /// `provesIdentity` -> `PT_2`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/PT_2";
@@ -3894,7 +3894,7 @@ pub mod prf_pt_3 {
     pub const VERIFIED: bool = true;
 }
 
-/// Proof of PT_4: product type entropy additivity. S(A × B) = S(A) + S(B). Follows from PT_1 (fiber additivity) and TH_1 (S = freeCount × ln 2).
+/// Proof of PT_4: product type entropy additivity. S(A × B) = S(A) + S(B). Follows from PT_1 (site additivity) and TH_1 (S = freeRank × ln 2).
 pub mod prf_pt_4 {
     /// `provesIdentity` -> `PT_4`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/PT_4";
@@ -3906,7 +3906,7 @@ pub mod prf_pt_4 {
     pub const VERIFIED: bool = true;
 }
 
-/// Proof of ST_1: sum type fiber budget maximum. fiberBudget(A + B) = max(fiberBudget(A), fiberBudget(B)). Follows from SumType requiring capacity for the larger variant.
+/// Proof of ST_1: sum type site budget maximum. siteBudget(A + B) = max(siteBudget(A), siteBudget(B)). Follows from SumType requiring capacity for the larger variant.
 pub mod prf_st_1 {
     /// `provesIdentity` -> `ST_1`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/ST_1";
@@ -3930,10 +3930,10 @@ pub mod prf_st_2 {
     pub const VERIFIED: bool = true;
 }
 
-/// Proof of SC_1: context temperature. T_ctx(C) = freeCount(C) × ln 2 / n. Derived from TH_1 normalized per fiber.
-pub mod prf_sc_1 {
-    /// `provesIdentity` -> `SC_1`
-    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/SC_1";
+/// Proof of SC_1: context temperature. T_ctx(C) = freeRank(C) × ln 2 / n. Derived from TH_1 normalized per site.
+pub mod prf_gs_1 {
+    /// `provesIdentity` -> `GS_1`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/GS_1";
     /// `strategy` -> `Simplification`
     pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
@@ -3942,10 +3942,10 @@ pub mod prf_sc_1 {
     pub const VERIFIED: bool = true;
 }
 
-/// Proof of SC_2: saturation degree. σ(C) = (n − freeCount(C)) / n. Definitional identity.
-pub mod prf_sc_2 {
-    /// `provesIdentity` -> `SC_2`
-    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/SC_2";
+/// Proof of SC_2: saturation degree. σ(C) = (n − freeRank(C)) / n. Definitional identity.
+pub mod prf_gs_2 {
+    /// `provesIdentity` -> `GS_2`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/GS_2";
     /// `strategy` -> `RingAxiom`
     pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
@@ -3955,9 +3955,9 @@ pub mod prf_sc_2 {
 }
 
 /// Proof of SC_3: saturation monotonicity. Corollary of SR_1 through order-reversing SC_2.
-pub mod prf_sc_3 {
-    /// `provesIdentity` -> `SC_3`
-    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/SC_3";
+pub mod prf_gs_3 {
+    /// `provesIdentity` -> `GS_3`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/GS_3";
     /// `strategy` -> `RingAxiom`
     pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
@@ -3967,9 +3967,9 @@ pub mod prf_sc_3 {
 }
 
 /// Proof of SC_4: ground state equivalence. Four equivalent conditions for full saturation derived from SC_2, TH_1, SC_1.
-pub mod prf_sc_4 {
-    /// `provesIdentity` -> `SC_4`
-    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/SC_4";
+pub mod prf_gs_4 {
+    /// `provesIdentity` -> `GS_4`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/GS_4";
     /// `strategy` -> `Simplification`
     pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
@@ -3978,10 +3978,10 @@ pub mod prf_sc_4 {
     pub const VERIFIED: bool = true;
 }
 
-/// Proof of SC_5: O(1) resolution guarantee at saturation. Derived from SR_2 and FiberBudget.isClosed at freeCount = 0.
-pub mod prf_sc_5 {
-    /// `provesIdentity` -> `SC_5`
-    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/SC_5";
+/// Proof of SC_5: O(1) resolution guarantee at saturation. Derived from SR_2 and FreeRank.isClosed at freeRank = 0.
+pub mod prf_gs_5 {
+    /// `provesIdentity` -> `GS_5`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/GS_5";
     /// `strategy` -> `Simplification`
     pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
@@ -3990,10 +3990,10 @@ pub mod prf_sc_5 {
     pub const VERIFIED: bool = true;
 }
 
-/// Proof of SC_6: pre-reduction of effective budget. Derived from session-scoped fiber reduction at partial saturation.
-pub mod prf_sc_6 {
-    /// `provesIdentity` -> `SC_6`
-    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/SC_6";
+/// Proof of SC_6: pre-reduction of effective budget. Derived from session-scoped site reduction at partial saturation.
+pub mod prf_gs_6 {
+    /// `provesIdentity` -> `GS_6`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/GS_6";
     /// `strategy` -> `RingAxiom`
     pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
@@ -4002,10 +4002,10 @@ pub mod prf_sc_6 {
     pub const VERIFIED: bool = true;
 }
 
-/// Proof of SC_7: thermodynamic cooling cost. n fiber-closures at Landauer cost each via SR_1 + TH_4.
-pub mod prf_sc_7 {
-    /// `provesIdentity` -> `SC_7`
-    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/SC_7";
+/// Proof of SC_7: thermodynamic cooling cost. n site-closures at Landauer cost each via SR_1 + TH_4.
+pub mod prf_gs_7 {
+    /// `provesIdentity` -> `GS_7`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/GS_7";
     /// `strategy` -> `Simplification`
     pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
@@ -4050,7 +4050,7 @@ pub mod prf_ms_3 {
     pub const VERIFIED: bool = true;
 }
 
-/// Proof of MS_4: level-relative achievability. Derived from QuantumLift construction (Amendment 29).
+/// Proof of MS_4: level-relative achievability. Derived from WittLift construction (Amendment 29).
 pub mod prf_ms_4 {
     /// `provesIdentity` -> `MS_4`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/MS_4";
@@ -4146,7 +4146,7 @@ pub mod prf_qm_1 {
     pub const VERIFIED: bool = true;
 }
 
-/// Proof of QM_2: measurement as fiber topology change. Projective collapse ≅ classical ResidueConstraint pinning.
+/// Proof of QM_2: measurement as site topology change. Projective collapse ≅ classical ResidueConstraint pinning.
 pub mod prf_qm_2 {
     /// `provesIdentity` -> `QM_2`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/QM_2";
@@ -4158,7 +4158,7 @@ pub mod prf_qm_2 {
     pub const VERIFIED: bool = true;
 }
 
-/// Proof of QM_3: superposition entropy bound. 0 ≤ S_vN ≤ ln 2 for single-fiber superpositions.
+/// Proof of QM_3: superposition entropy bound. 0 ≤ S_vN ≤ ln 2 for single-site superpositions.
 pub mod prf_qm_3 {
     /// `provesIdentity` -> `QM_3`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/QM_3";
@@ -4182,7 +4182,7 @@ pub mod prf_qm_4 {
     pub const VERIFIED: bool = true;
 }
 
-/// Proof of QM_5: amplitude normalization (Born rule). Σ|αᵢ|² = 1 for well-formed SuperposedFiberState.
+/// Proof of QM_5: amplitude normalization (Born rule). Σ|αᵢ|² = 1 for well-formed SuperposedSiteState.
 pub mod prf_qm_5 {
     /// `provesIdentity` -> `QM_5`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/QM_5";
@@ -4194,7 +4194,7 @@ pub mod prf_qm_5 {
     pub const VERIFIED: bool = true;
 }
 
-/// Proof of RC_6: amplitude renormalization. Division by norm yields a normalized SuperposedFiberState.
+/// Proof of RC_6: amplitude renormalization. Division by norm yields a normalized SuperposedSiteState.
 pub mod prf_rc_6 {
     /// `provesIdentity` -> `RC_6`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/RC_6";
@@ -4242,7 +4242,7 @@ pub mod prf_mn_8 {
     pub const VERIFIED: bool = true;
 }
 
-/// Proof of QL_8: quantum level chain inverse. levelSuccessor is the left inverse of nextLevel.
+/// Proof of QL_8: quantum level chain inverse. wittLevelPredecessor is the left inverse of nextLevel.
 pub mod prf_ql_8 {
     /// `provesIdentity` -> `QL_8`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/QL_8";
@@ -4302,7 +4302,7 @@ pub mod prf_sp_3 {
     pub const VERIFIED: bool = true;
 }
 
-/// Proof of SP_4: Born rule outcome probability. P(collapse to fiber k) = |α_k|².
+/// Proof of SP_4: Born rule outcome probability. P(collapse to site k) = |α_k|².
 pub mod prf_sp_4 {
     /// `provesIdentity` -> `SP_4`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/SP_4";
@@ -4397,13 +4397,13 @@ pub mod mr_connectivity_lower {
 }
 
 /// Proof of tower chain validity by induction on chain length.
-pub mod prf_qt_1 {
-    /// `baseCase` -> `prf_QLS_1`
-    pub const BASE_CASE: &str = "https://uor.foundation/proof/prf_QLS_1";
-    /// `inductiveStep` -> `prf_QLS_6`
-    pub const INDUCTIVE_STEP: &str = "https://uor.foundation/proof/prf_QLS_6";
-    /// `provesIdentity` -> `QT_1`
-    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/QT_1";
+pub mod prf_wt_1 {
+    /// `baseCase` -> `prf_WLS_1`
+    pub const BASE_CASE: &str = "https://uor.foundation/proof/prf_WLS_1";
+    /// `inductiveStep` -> `prf_WLS_6`
+    pub const INDUCTIVE_STEP: &str = "https://uor.foundation/proof/prf_WLS_6";
+    /// `provesIdentity` -> `WT_1`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/WT_1";
     /// `strategy` -> `BitwiseInduction`
     pub const STRATEGY: &str = "https://uor.foundation/proof/BitwiseInduction";
     /// `universalScope`
@@ -4415,9 +4415,9 @@ pub mod prf_qt_1 {
 }
 
 /// Proof of obstruction count bound: direct from QLS_2 localization.
-pub mod prf_qt_2 {
-    /// `provesIdentity` -> `QT_2`
-    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/QT_2";
+pub mod prf_wt_2 {
+    /// `provesIdentity` -> `WT_2`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/WT_2";
     /// `strategy` -> `Composition`
     pub const STRATEGY: &str = "https://uor.foundation/proof/Composition";
     /// `universalScope`
@@ -4427,13 +4427,13 @@ pub mod prf_qt_2 {
 }
 
 /// Proof of resolved basis size formula by induction on chain length.
-pub mod prf_qt_3 {
-    /// `baseCase` -> `prf_QT_3_base`
-    pub const BASE_CASE: &str = "https://uor.foundation/proof/prf_QT_3_base";
-    /// `inductiveStep` -> `prf_QLS_3`
-    pub const INDUCTIVE_STEP: &str = "https://uor.foundation/proof/prf_QLS_3";
-    /// `provesIdentity` -> `QT_3`
-    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/QT_3";
+pub mod prf_wt_3 {
+    /// `baseCase` -> `prf_WT_3_base`
+    pub const BASE_CASE: &str = "https://uor.foundation/proof/prf_WT_3_base";
+    /// `inductiveStep` -> `prf_WLS_3`
+    pub const INDUCTIVE_STEP: &str = "https://uor.foundation/proof/prf_WLS_3";
+    /// `provesIdentity` -> `WT_3`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/WT_3";
     /// `strategy` -> `BitwiseInduction`
     pub const STRATEGY: &str = "https://uor.foundation/proof/BitwiseInduction";
     /// `universalScope`
@@ -4445,9 +4445,9 @@ pub mod prf_qt_3 {
 }
 
 /// Proof of flat tower characterization: isFlat iff trivial holonomy at every step.
-pub mod prf_qt_4 {
-    /// `provesIdentity` -> `QT_4`
-    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/QT_4";
+pub mod prf_wt_4 {
+    /// `provesIdentity` -> `WT_4`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/WT_4";
     /// `strategy` -> `EulerPoincare`
     pub const STRATEGY: &str = "https://uor.foundation/proof/EulerPoincare";
     /// `universalScope`
@@ -4457,13 +4457,13 @@ pub mod prf_qt_4 {
 }
 
 /// Proof of LiftChainCertificate existence by induction on tower height.
-pub mod prf_qt_5 {
-    /// `baseCase` -> `prf_QT_5_base`
-    pub const BASE_CASE: &str = "https://uor.foundation/proof/prf_QT_5_base";
-    /// `inductiveStep` -> `prf_QT_1`
-    pub const INDUCTIVE_STEP: &str = "https://uor.foundation/proof/prf_QT_1";
-    /// `provesIdentity` -> `QT_5`
-    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/QT_5";
+pub mod prf_wt_5 {
+    /// `baseCase` -> `prf_WT_5_base`
+    pub const BASE_CASE: &str = "https://uor.foundation/proof/prf_WT_5_base";
+    /// `inductiveStep` -> `prf_WT_1`
+    pub const INDUCTIVE_STEP: &str = "https://uor.foundation/proof/prf_WT_1";
+    /// `provesIdentity` -> `WT_5`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/WT_5";
     /// `strategy` -> `BitwiseInduction`
     pub const STRATEGY: &str = "https://uor.foundation/proof/BitwiseInduction";
     /// `universalScope`
@@ -4475,9 +4475,9 @@ pub mod prf_qt_5 {
 }
 
 /// Proof of single-step reduction: QT_3 with chainLength=1 reduces to QLS_3.
-pub mod prf_qt_6 {
-    /// `provesIdentity` -> `QT_6`
-    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/QT_6";
+pub mod prf_wt_6 {
+    /// `provesIdentity` -> `WT_6`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/WT_6";
     /// `strategy` -> `Composition`
     pub const STRATEGY: &str = "https://uor.foundation/proof/Composition";
     /// `universalScope`
@@ -4487,9 +4487,9 @@ pub mod prf_qt_6 {
 }
 
 /// Proof of flat chain basis size formula.
-pub mod prf_qt_7 {
-    /// `provesIdentity` -> `QT_7`
-    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/QT_7";
+pub mod prf_wt_7 {
+    /// `provesIdentity` -> `WT_7`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/WT_7";
     /// `strategy` -> `Composition`
     pub const STRATEGY: &str = "https://uor.foundation/proof/Composition";
     /// `universalScope`
@@ -4498,7 +4498,7 @@ pub mod prf_qt_7 {
     pub const VERIFIED: bool = true;
 }
 
-/// Proof of CC_PINS: carry-constraint fiber-pinning map follows from ring carry propagation rule.
+/// Proof of CC_PINS: carry-constraint site-pinning map follows from ring carry propagation rule.
 pub mod prf_cc_pins {
     /// `provesIdentity` -> `CC_PINS`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/CC_PINS";
@@ -4510,12 +4510,12 @@ pub mod prf_cc_pins {
     pub const VERIFIED: bool = true;
 }
 
-/// Computation certificate for CC_COST_FIBER: exhaustive enumeration at Q0 confirms |pinsFibers| = popcount + 1.
-pub mod prf_cc_cost_fiber {
-    /// `atQuantumLevel` -> `Q0`
-    pub const AT_QUANTUM_LEVEL: &str = "https://uor.foundation/schema/Q0";
-    /// `provesIdentity` -> `CC_COST_FIBER`
-    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/CC_COST_FIBER";
+/// Computation certificate for CC_COST_SITE: exhaustive enumeration at Q0 confirms |pinsSites| = popcount + 1.
+pub mod prf_cc_cost_site {
+    /// `atWittLevel` -> `W8`
+    pub const AT_WITT_LEVEL: &str = "https://uor.foundation/schema/W8";
+    /// `provesIdentity` -> `CC_COST_SITE`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/CC_COST_SITE";
     /// `strategy` -> `Computation`
     pub const STRATEGY: &str = "https://uor.foundation/proof/Computation";
     /// `verified`
@@ -4548,8 +4548,8 @@ pub mod prf_jsat_cr {
 
 /// Computation certificate for jsat_CC: bit-pattern exhaustive enumeration at Q0.
 pub mod prf_jsat_cc {
-    /// `atQuantumLevel` -> `Q0`
-    pub const AT_QUANTUM_LEVEL: &str = "https://uor.foundation/schema/Q0";
+    /// `atWittLevel` -> `W8`
+    pub const AT_WITT_LEVEL: &str = "https://uor.foundation/schema/W8";
     /// `provesIdentity` -> `jsat_CC`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/jsat_CC";
     /// `strategy` -> `Computation`
@@ -4582,7 +4582,7 @@ pub mod prf_d_9 {
     pub const VERIFIED: bool = true;
 }
 
-/// Proof of EXP_1: monotone carrier characterization follows from fiber lattice monotonicity.
+/// Proof of EXP_1: monotone carrier characterization follows from site lattice monotonicity.
 pub mod prf_exp_1 {
     /// `provesIdentity` -> `EXP_1`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/EXP_1";
@@ -4596,8 +4596,8 @@ pub mod prf_exp_1 {
 
 /// Computation certificate for EXP_2: principal filter count verified by exhaustive enumeration at Q0.
 pub mod prf_exp_2 {
-    /// `atQuantumLevel` -> `Q0`
-    pub const AT_QUANTUM_LEVEL: &str = "https://uor.foundation/schema/Q0";
+    /// `atWittLevel` -> `W8`
+    pub const AT_WITT_LEVEL: &str = "https://uor.foundation/schema/W8";
     /// `provesIdentity` -> `EXP_2`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/EXP_2";
     /// `strategy` -> `Computation`
@@ -4703,9 +4703,9 @@ pub mod prf_ts_10 {
 }
 
 /// Proof of QT_8: ObstructionChain length bound follows from QLS_2 and spectral sequence convergence.
-pub mod prf_qt_8 {
-    /// `provesIdentity` -> `QT_8`
-    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/QT_8";
+pub mod prf_wt_8 {
+    /// `provesIdentity` -> `WT_8`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/WT_8";
     /// `strategy` -> `Composition`
     pub const STRATEGY: &str = "https://uor.foundation/proof/Composition";
     /// `universalScope`
@@ -4715,9 +4715,9 @@ pub mod prf_qt_8 {
 }
 
 /// Proof of QT_9: TowerCompletenessResolver termination follows from finite chain length and QT_8 bound.
-pub mod prf_qt_9 {
-    /// `provesIdentity` -> `QT_9`
-    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/QT_9";
+pub mod prf_wt_9 {
+    /// `provesIdentity` -> `WT_9`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/WT_9";
     /// `strategy` -> `Simplification`
     pub const STRATEGY: &str = "https://uor.foundation/proof/Simplification";
     /// `universalScope`
@@ -4751,9 +4751,9 @@ pub mod prf_go_1 {
 }
 
 /// Proof of SR_6: saturation re-entry free count follows from SR_1 monotone accumulation and SC_2.
-pub mod prf_sr_6 {
-    /// `provesIdentity` -> `SR_6`
-    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/SR_6";
+pub mod prf_gr_6 {
+    /// `provesIdentity` -> `GR_6`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/GR_6";
     /// `strategy` -> `RingAxiom`
     pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
@@ -4763,9 +4763,9 @@ pub mod prf_sr_6 {
 }
 
 /// Proof of SR_7: saturation degree degradation follows from SC_2 definition and SR_1 monotonicity.
-pub mod prf_sr_7 {
-    /// `provesIdentity` -> `SR_7`
-    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/SR_7";
+pub mod prf_gr_7 {
+    /// `provesIdentity` -> `GR_7`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/GR_7";
     /// `strategy` -> `RingAxiom`
     pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
@@ -4774,7 +4774,7 @@ pub mod prf_sr_7 {
     pub const VERIFIED: bool = true;
 }
 
-/// Inductive proof of QM_6: amplitude index set equals monotone pinning trajectories. Base case at Q0 by exhaustive trajectory enumeration; inductive step by fiber lattice ordering.
+/// Inductive proof of QM_6: amplitude index set equals monotone pinning trajectories. Base case at Q0 by exhaustive trajectory enumeration; inductive step by site lattice ordering.
 pub mod prf_qm_6 {
     /// `baseCase` -> `prf_QM_6_base`
     pub const BASE_CASE: &str = "https://uor.foundation/proof/prf_QM_6_base";
@@ -4828,7 +4828,7 @@ pub mod prf_cic_3 {
     pub const VERIFIED: bool = true;
 }
 
-/// Proof of CIC_4: SaturationCertificate issuance coverage.
+/// Proof of CIC_4: GroundingCertificate issuance coverage.
 pub mod prf_cic_4 {
     /// `provesIdentity` -> `CIC_4`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/CIC_4";
@@ -4889,9 +4889,9 @@ pub mod prf_gc_1 {
 }
 
 /// Proof of SR_8: session composition tower consistency.
-pub mod prf_sr_8 {
-    /// `provesIdentity` -> `SR_8`
-    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/SR_8";
+pub mod prf_gr_8 {
+    /// `provesIdentity` -> `GR_8`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/GR_8";
     /// `strategy` -> `RingAxiom`
     pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
@@ -4900,10 +4900,10 @@ pub mod prf_sr_8 {
     pub const VERIFIED: bool = true;
 }
 
-/// Proof of SR_9: ContextLease fiber disjointness.
-pub mod prf_sr_9 {
-    /// `provesIdentity` -> `SR_9`
-    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/SR_9";
+/// Proof of SR_9: ContextLease site disjointness.
+pub mod prf_gr_9 {
+    /// `provesIdentity` -> `GR_9`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/GR_9";
     /// `strategy` -> `RingAxiom`
     pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
@@ -4913,9 +4913,9 @@ pub mod prf_sr_9 {
 }
 
 /// Proof of SR_10: ExecutionPolicy confluence.
-pub mod prf_sr_10 {
-    /// `provesIdentity` -> `SR_10`
-    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/SR_10";
+pub mod prf_gr_10 {
+    /// `provesIdentity` -> `GR_10`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/GR_10";
     /// `strategy` -> `RingAxiom`
     pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
@@ -4948,7 +4948,7 @@ pub mod prf_mc_2 {
     pub const VERIFIED: bool = true;
 }
 
-/// Proof of MC_3: composition freeCount inclusion-exclusion.
+/// Proof of MC_3: composition freeRank inclusion-exclusion.
 pub mod prf_mc_3 {
     /// `provesIdentity` -> `MC_3`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/MC_3";
@@ -5500,7 +5500,7 @@ pub mod prf_md_8 {
     pub const VERIFIED: bool = true;
 }
 
-/// Axiomatic derivation of MD_9: tower map fiber dimension is 1 when unobstructed.
+/// Axiomatic derivation of MD_9: tower map site dimension is 1 when unobstructed.
 pub mod prf_md_9 {
     /// `provesIdentity` -> `MD_9`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/MD_9";
@@ -5512,7 +5512,7 @@ pub mod prf_md_9 {
     pub const VERIFIED: bool = true;
 }
 
-/// Axiomatic derivation of MD_10: tower map fiber empty iff twisted at every level.
+/// Axiomatic derivation of MD_10: tower map site empty iff twisted at every level.
 pub mod prf_md_10 {
     /// `provesIdentity` -> `MD_10`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/MD_10";
@@ -5632,7 +5632,7 @@ pub mod prf_cy_5 {
     pub const VERIFIED: bool = true;
 }
 
-/// Axiomatic derivation of CY_6: fiber ordering theorem.
+/// Axiomatic derivation of CY_6: site ordering theorem.
 pub mod prf_cy_6 {
     /// `provesIdentity` -> `CY_6`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/CY_6";
@@ -5692,7 +5692,7 @@ pub mod prf_bm_3 {
     pub const VERIFIED: bool = true;
 }
 
-/// Axiomatic derivation of BM_4: Jacobian vanishes on pinned fibers.
+/// Axiomatic derivation of BM_4: Jacobian vanishes on pinned sites.
 pub mod prf_bm_4 {
     /// `provesIdentity` -> `BM_4`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/BM_4";
@@ -5860,7 +5860,7 @@ pub mod prf_sd_3 {
     pub const VERIFIED: bool = true;
 }
 
-/// Axiomatic derivation of SD_4: tuple fiber additivity.
+/// Axiomatic derivation of SD_4: tuple site additivity.
 pub mod prf_sd_4 {
     /// `provesIdentity` -> `SD_4`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/SD_4";
@@ -6520,7 +6520,7 @@ pub mod prf_cs_4 {
     pub const VERIFIED: bool = true;
 }
 
-/// Axiomatic derivation of CS_5: total cascade cost bound.
+/// Axiomatic derivation of CS_5: total reduction cost bound.
 pub mod prf_cs_5 {
     /// `provesIdentity` -> `CS_5`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/CS_5";
@@ -6940,7 +6940,7 @@ pub mod prf_in_2 {
     pub const VERIFIED: bool = true;
 }
 
-/// Axiomatic derivation of IN_3: shared fibers nonzero commutator.
+/// Axiomatic derivation of IN_3: shared sites nonzero commutator.
 pub mod prf_in_3 {
     /// `provesIdentity` -> `IN_3`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/IN_3";
@@ -7132,7 +7132,7 @@ pub mod prf_mo_5 {
     pub const VERIFIED: bool = true;
 }
 
-/// Axiomatic derivation of OP_1: fiber additivity.
+/// Axiomatic derivation of OP_1: site additivity.
 pub mod prf_op_1 {
     /// `provesIdentity` -> `OP_1`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/OP_1";
@@ -7192,7 +7192,7 @@ pub mod prf_op_5 {
     pub const VERIFIED: bool = true;
 }
 
-/// Axiomatic derivation of FX_1: pinning fiber budget decrement.
+/// Axiomatic derivation of FX_1: pinning site budget decrement.
 pub mod prf_fx_1 {
     /// `provesIdentity` -> `FX_1`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/FX_1";
@@ -7204,7 +7204,7 @@ pub mod prf_fx_1 {
     pub const VERIFIED: bool = true;
 }
 
-/// Axiomatic derivation of FX_2: unbinding fiber budget increment.
+/// Axiomatic derivation of FX_2: unbinding site budget increment.
 pub mod prf_fx_2 {
     /// `provesIdentity` -> `FX_2`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/FX_2";

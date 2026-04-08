@@ -6,7 +6,7 @@
 
 use crate::enums::ComplexityClass;
 use crate::enums::MetricAxis;
-use crate::enums::QuantumLevel;
+use crate::enums::WittLevel;
 use crate::Primitives;
 
 /// A strategy for resolving a type declaration into a partition of the ring. The kernel dispatches to a specific resolver based on the type's structure.
@@ -49,28 +49,28 @@ pub trait CanonicalFormResolver<P: Primitives>: Resolver<P> {}
 /// Resolves types by direct evaluation: applies operations to enumerate ring elements and classify them as irreducible, reducible, unit, or exterior.
 pub trait EvaluationResolver<P: Primitives>: Resolver<P> {}
 
-/// The current state of an iterative resolution: tracks how many iterations have been performed, whether the resolution is complete, and the current fiber deficit.
+/// The current state of an iterative resolution: tracks how many iterations have been performed, whether the resolution is complete, and the current site deficit.
 /// Disjoint with: Resolver, RefinementSuggestion.
 pub trait ResolutionState<P: Primitives> {
-    /// Whether this resolution is complete: all fibers are pinned and the partition is fully determined.
+    /// Whether this resolution is complete: all sites are pinned and the partition is fully determined.
     fn is_complete(&self) -> P::Boolean;
     /// The number of refinement iterations performed so far.
     fn iteration_count(&self) -> P::NonNegativeInteger;
-    /// Associated type for `FiberBudget`.
-    type FiberBudget: crate::bridge::partition::FiberBudget<P>;
-    /// The fiber budget showing the remaining unpinned fibers. When all fibers are pinned, the deficit is zero and resolution is complete.
-    fn fiber_deficit(&self) -> &Self::FiberBudget;
+    /// Associated type for `FreeRank`.
+    type FreeRank: crate::bridge::partition::FreeRank<P>;
+    /// The site budget showing the remaining unpinned sites. When all sites are pinned, the deficit is zero and resolution is complete.
+    fn site_deficit(&self) -> &Self::FreeRank;
     /// Associated type for `RefinementSuggestion`.
     type RefinementSuggestion: RefinementSuggestion<P>;
     /// A refinement suggestion for advancing this resolution.
     fn suggestion(&self) -> &[Self::RefinementSuggestion];
-    /// The rate at which fibers are being pinned per iteration. A higher rate indicates faster convergence toward a complete resolution.
+    /// The rate at which sites are being pinned per iteration. A higher rate indicates faster convergence toward a complete resolution.
     fn convergence_rate(&self) -> P::Decimal;
-    /// Associated type for `ConstraintNerve`.
-    type ConstraintNerve: ConstraintNerve<P>;
+    /// Associated type for `CechNerve`.
+    type CechNerve: CechNerve<P>;
     /// The constraint nerve associated with this resolution state.
-    fn constraint_nerve(&self) -> &Self::ConstraintNerve;
-    /// The residual Shannon entropy of the resolution state: S = freeCount × ln 2. Measures remaining uncertainty.
+    fn cech_nerve(&self) -> &Self::CechNerve;
+    /// The residual Shannon entropy of the resolution state: S = freeRank × ln 2. Measures remaining uncertainty.
     fn residual_entropy(&self) -> P::Decimal;
     /// Whether all Betti numbers of the constraint nerve are zero, indicating no topological obstructions to resolution.
     fn topologically_complete(&self) -> P::Boolean;
@@ -82,21 +82,21 @@ pub trait ResolutionState<P: Primitives> {
     fn guiding_jacobian(&self) -> &Self::Jacobian;
 }
 
-/// A suggestion from the resolver for how to refine an incomplete resolution: which metric axis to explore, which class to narrow to, and which fibers to target.
+/// A suggestion from the resolver for how to refine an incomplete resolution: which metric axis to explore, which class to narrow to, and which sites to target.
 /// Disjoint with: Resolver, ResolutionState.
 pub trait RefinementSuggestion<P: Primitives> {
     /// The metric axis this suggestion recommends exploring.
     fn suggested_axis(&self) -> MetricAxis;
     /// The constraint class this suggestion recommends applying.
     fn suggested_class(&self) -> &P::String;
-    /// Associated type for `FiberCoordinate`.
-    type FiberCoordinate: crate::bridge::partition::FiberCoordinate<P>;
-    /// The fiber coordinates this suggestion targets for pinning.
-    fn target_fibers(&self) -> &[Self::FiberCoordinate];
+    /// Associated type for `SiteIndex`.
+    type SiteIndex: crate::bridge::partition::SiteIndex<P>;
+    /// The site coordinates this suggestion targets for pinning.
+    fn target_sites(&self) -> &[Self::SiteIndex];
 }
 
 /// The simplicial complex whose vertices are constraints and where a k-simplex exists iff the corresponding k+1 constraints have nonempty intersection. The nerve's topology governs resolution convergence: trivial homology ↔ smooth convergence, non-trivial homology ↔ potential stalls.
-pub trait ConstraintNerve<P: Primitives>:
+pub trait CechNerve<P: Primitives>:
     crate::bridge::homology::SimplicialComplex<P> + crate::bridge::homology::KanComplex<P>
 {
 }
@@ -110,9 +110,9 @@ pub trait CompletenessResolver<P: Primitives>: Resolver<P> {
 }
 
 /// A Resolver parameterised by quantum level. The same resolver strategy runs at any quantum level n ≥ 1 by substituting the appropriate R_n ring.
-pub trait QuantumLevelResolver<P: Primitives>: Resolver<P> {
+pub trait WittLevelResolver<P: Primitives>: Resolver<P> {
     /// The quantum level this resolver instance is configured for.
-    fn quantum_level(&self) -> QuantumLevel;
+    fn quantum_level(&self) -> WittLevel;
 }
 
 /// A Resolver that maintains a BindingAccumulator across multiple RelationQuery evaluations. The top-level resolver for multi-turn Prism deployments.
@@ -147,16 +147,16 @@ pub trait ConstraintSearchState<P: Primitives> {
 
 /// A Resolver that determines whether a CompleteType T at Q_n lifts to a CompleteType at Q_{n+1} without re-running the full ψ-pipeline from scratch. It computes the SpectralSequencePage sequence, reads the LiftObstruction, and either confirms the lift or returns a LiftRefinementSuggestion.
 pub trait IncrementalCompletenessResolver<P: Primitives>: Resolver<P> {
-    /// Associated type for `QuantumLift`.
-    type QuantumLift: crate::user::type_::QuantumLift<P>;
-    /// The QuantumLift this incremental completeness resolver is evaluating.
-    fn lift_target(&self) -> &Self::QuantumLift;
+    /// Associated type for `WittLift`.
+    type WittLift: crate::user::type_::WittLift<P>;
+    /// The WittLift this incremental completeness resolver is evaluating.
+    fn lift_target(&self) -> &Self::WittLift;
 }
 
-/// A RefinementSuggestion produced when a QuantumLift has a non-trivial LiftObstruction. Specialises RefinementSuggestion with liftFiberPosition (the new bit position n+1) and obstructionClass.
+/// A RefinementSuggestion produced when a WittLift has a non-trivial LiftObstruction. Specialises RefinementSuggestion with liftSitePosition (the new bit position n+1) and obstructionClass.
 pub trait LiftRefinementSuggestion<P: Primitives>: RefinementSuggestion<P> {
-    /// The new fiber position at Q_{n+1} that the lift refinement suggestion targets.
-    fn lift_fiber_position(&self) -> &Self::FiberCoordinate;
+    /// The new site position at Q_{n+1} that the lift refinement suggestion targets.
+    fn lift_site_position(&self) -> &Self::SiteIndex;
     /// Associated type for `LiftObstructionClass`.
     type LiftObstructionClass: crate::bridge::observable::LiftObstructionClass<P>;
     /// The obstruction class this lift refinement suggestion is designed to kill.
@@ -178,16 +178,16 @@ pub trait MonodromyResolver<P: Primitives>: Resolver<P> {
 /// A resolver that uses the Jacobian matrix to guide constraint selection, implementing DC_10: select the constraint that maximises total curvature reduction.
 pub trait JacobianGuidedResolver<P: Primitives>: Resolver<P> {}
 
-/// A resolver that handles superposed fiber states, computing amplitudes and determining when superposition collapses to a classical fiber assignment (Amendment 32).
+/// A resolver that handles superposed site states, computing amplitudes and determining when superposition collapses to a classical site assignment (Amendment 32).
 pub trait SuperpositionResolver<P: Primitives>: Resolver<P> {
     /// The amplitude vector of all branches maintained by this SuperpositionResolver during ψ-pipeline traversal. Encoded as a comma-separated list of decimal amplitudes. Must satisfy Σ|αᵢ|² = 1 (QM_5) after normalization.
     fn amplitude_vector(&self) -> P::Decimal;
 }
 
 /// A resolver that exploits accumulated session bindings at full saturation (σ = 1) to provide O(1) resolution via direct coordinate reads (SC_5).
-pub trait SaturationAwareResolver<P: Primitives>: Resolver<P> {
+pub trait GroundingAwareResolver<P: Primitives>: Resolver<P> {
     /// Whether this resolver used the saturation shortcut (SC_5) to bypass the ψ-pipeline and return a direct coordinate read.
-    fn used_saturation(&self) -> P::Boolean;
+    fn used_grounding(&self) -> P::Boolean;
 }
 
 /// A resolver that validates whether a ComputationTrace satisfies the dual geodesic condition (AR_1-ordered and DC_10-selected). Produces GeodesicViolation individuals on failure.
@@ -198,13 +198,13 @@ pub trait GeodesicValidator<P: Primitives>: Resolver<P> {
     fn validate_geodesic(&self) -> &Self::GeodesicTrace;
 }
 
-/// A resolver that handles projective collapse of SuperposedFiberState components. Issues MeasurementCertificate upon successful collapse with QM_1 verification.
+/// A resolver that handles projective collapse of SuperposedSiteState components. Issues MeasurementCertificate upon successful collapse with QM_1 verification.
 pub trait MeasurementResolver<P: Primitives>: Resolver<P> {
-    /// The amplitude of the SuperposedFiberState prior to projective collapse by this MeasurementResolver.
+    /// The amplitude of the SuperposedSiteState prior to projective collapse by this MeasurementResolver.
     fn collapse_amplitude(&self) -> P::Decimal;
-    /// The fiber index that was collapsed (pinned to a classical value) by the projective measurement.
-    fn collapsed_fiber(&self) -> P::NonNegativeInteger;
-    /// The classical value obtained from the projective collapse. Either 0 or 1 for a single-fiber measurement.
+    /// The site index that was collapsed (pinned to a classical value) by the projective measurement.
+    fn collapsed_site(&self) -> P::NonNegativeInteger;
+    /// The classical value obtained from the projective collapse. Either 0 or 1 for a single-site measurement.
     fn measurement_outcome(&self) -> P::NonNegativeInteger;
     /// The full vector of all branch amplitudes before projective collapse. Recorded by the MeasurementResolver to enable Born rule verification (QM_5): P(outcome k) = |α_k|².
     fn prior_amplitude_vector(&self) -> P::Decimal;
@@ -213,9 +213,9 @@ pub trait MeasurementResolver<P: Primitives>: Resolver<P> {
 /// A Resolver that constructs a LiftChain from liftSourceLevel to an arbitrary liftTargetLevel Q_k by iterating IncrementalCompletenessResolver step by step.
 pub trait TowerCompletenessResolver<P: Primitives>: Resolver<P> {
     /// The level at which the tower starts.
-    fn tower_source_level(&self) -> QuantumLevel;
+    fn tower_source_level(&self) -> WittLevel;
     /// The level to which the tower is being built.
-    fn tower_target_level(&self) -> QuantumLevel;
+    fn tower_target_level(&self) -> WittLevel;
     /// Associated type for `LiftChain`.
     type LiftChain: crate::user::type_::LiftChain<P>;
     /// The LiftChain under construction.
@@ -226,16 +226,16 @@ pub trait TowerCompletenessResolver<P: Primitives>: Resolver<P> {
     fn tower_step_resolver(&self) -> &Self::IncrementalCompletenessResolver;
 }
 
-/// A strategy class that defines how a SessionResolver orders pending RelationQuery instances for dispatch. The policy reads the targetFiber.freeCount of each pending query and applies an ordering function.
+/// A strategy class that defines how a SessionResolver orders pending RelationQuery instances for dispatch. The policy reads the targetSite.freeRank of each pending query and applies an ordering function.
 /// Disjoint with: Resolver, ResolutionState, RefinementSuggestion.
 pub trait ExecutionPolicy<P: Primitives> {}
 
-/// A resolver that runs the extended ψ-pipeline (ψ_7–ψ_9) to compute the full homotopy type of a ConstraintNerve. Returns HomotopyGroup observables and PostnikovTruncation records.
+/// A resolver that runs the extended ψ-pipeline (ψ_7–ψ_9) to compute the full homotopy type of a CechNerve. Returns HomotopyGroup observables and PostnikovTruncation records.
 pub trait HomotopyResolver<P: Primitives>: Resolver<P> {
-    /// Associated type for `ConstraintNerve`.
-    type ConstraintNerve: ConstraintNerve<P>;
-    /// The ConstraintNerve whose homotopy type this resolver computes.
-    fn homotopy_target(&self) -> &Self::ConstraintNerve;
+    /// Associated type for `CechNerve`.
+    type CechNerve: CechNerve<P>;
+    /// The CechNerve whose homotopy type this resolver computes.
+    fn homotopy_target(&self) -> &Self::CechNerve;
     /// Associated type for `HomotopyGroup`.
     type HomotopyGroup: crate::bridge::observable::HomotopyGroup<P>;
     /// A HomotopyGroup observable produced by this resolver.
@@ -269,11 +269,11 @@ pub mod exponential_time {}
 /// Process queries in arrival order. The implicit pre-Amendment 48 behavior.
 pub mod fifo_policy {}
 
-/// Process the query with the smallest targetFiber.freeCount first. Favors cheapest resolutions, accelerating early saturation gain.
+/// Process the query with the smallest targetSite.freeRank first. Favors cheapest resolutions, accelerating early grounding gain.
 pub mod min_free_count_first {}
 
-/// Process the query with the largest targetFiber.freeCount first. Favors hardest resolutions, maximizing information gain per step.
+/// Process the query with the largest targetSite.freeRank first. Favors hardest resolutions, maximizing information gain per step.
 pub mod max_free_count_first {}
 
-/// Process queries whose targetFiber is disjoint from all other pending queries' fiber sets first. Minimizes contention when operating against a SharedContext.
+/// Process queries whose targetSite is disjoint from all other pending queries' site sets first. Minimizes contention when operating against a SharedContext.
 pub mod disjoint_first {}

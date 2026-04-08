@@ -9,10 +9,10 @@ pub const TEST89_LIFT_REFINEMENT_SUGGESTION: &str = r#"
 @prefix partition:  <https://uor.foundation/partition/> .
 
 resolver:ex_lrs_89 a owl:NamedIndividual, resolver:LiftRefinementSuggestion ;
-    resolver:liftFiberPosition partition:ex_fiber_89 ;
+    resolver:liftSitePosition partition:ex_site_89 ;
     resolver:obstructionClass  observable:ex_oc_89 .
 
-partition:ex_fiber_89 a owl:NamedIndividual, partition:FiberCoordinate .
+partition:ex_site_89 a owl:NamedIndividual, partition:SiteIndex .
 
 observable:ex_oc_89 a owl:NamedIndividual, observable:LiftObstructionClass .
 "#;

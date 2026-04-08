@@ -32,7 +32,7 @@ const REQUIRED_PREFIXES: &[&str] = &[
     "cert",
     "morphism",
     "state",
-    "cascade",
+    "reduction",
     "convergence",
     "division",
     "interaction",

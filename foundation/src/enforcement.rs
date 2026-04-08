@@ -10,12 +10,12 @@
 //! # Layers
 //!
 //! - **Layer 1** \[Opaque Witnesses\]: `Datum`, `Validated<T>`, `Derivation`,
-//!   `FiberBudget` \[private fields, no public constructors\]
+//!   `FreeRank` \[private fields, no public constructors\]
 //! - **Layer 2** \[Declarative Builders\]: `CompileUnitBuilder`,
 //!   `EffectDeclarationBuilder`, etc. \[produce `Validated<T>` on success\]
 //! - **Term AST**: `Term`, `TermArena`, `Binding`, `Assertion`, etc.
 
-use crate::{PrimitiveOp, QuantumLevel, VerificationDomain, ViolationKind};
+use crate::{PrimitiveOp, VerificationDomain, ViolationKind, WittLevel};
 
 /// Private sealed module preventing downstream implementations.
 /// Only `GroundedCoord` and `GroundedTuple<N>` implement `Sealed`.
@@ -45,12 +45,12 @@ pub(crate) enum DatumInner {
 
 /// A ring element at its minting quantum level.
 /// Cannot be constructed outside the `uor_foundation` crate.
-/// The only way to obtain a `Datum` is through cascade evaluation
+/// The only way to obtain a `Datum` is through reduction evaluation
 /// or the two-phase minting boundary (`validate_and_mint_coord` /
 /// `validate_and_mint_tuple`).
 /// # Examples
 /// ```rust,ignore
-/// // A Datum is produced by cascade evaluation or the minting boundary —
+/// // A Datum is produced by reduction evaluation or the minting boundary —
 /// // you never construct one directly.
 /// fn inspect_datum(d: &uor_foundation::enforcement::Datum) {
 ///     // Query its quantum level (Q0 = 8-bit, Q7 = 64-bit, etc.)
@@ -69,16 +69,16 @@ pub struct Datum {
 }
 
 impl Datum {
-    /// Returns the quantum level at which this datum was minted.
+    /// Returns the Witt level at which this datum was minted.
     #[inline]
     #[must_use]
-    pub const fn level(&self) -> QuantumLevel {
+    pub const fn level(&self) -> WittLevel {
         match self.inner {
-            DatumInner::Q0(_) => QuantumLevel::Q0,
-            DatumInner::Q1(_) => QuantumLevel::Q1,
-            DatumInner::Q3(_) => QuantumLevel::new(3),
-            DatumInner::Q7(_) => QuantumLevel::new(7),
-            DatumInner::Q511(_) => QuantumLevel::new(511),
+            DatumInner::Q0(_) => WittLevel::W8,
+            DatumInner::Q1(_) => WittLevel::W16,
+            DatumInner::Q3(_) => WittLevel::new(32),
+            DatumInner::Q7(_) => WittLevel::new(64),
+            DatumInner::Q511(_) => WittLevel::new(4096),
         }
     }
 
@@ -274,17 +274,17 @@ pub trait Grounding {
 /// # Examples
 /// ```rust,ignore
 /// use uor_foundation::enforcement::{CompileUnitBuilder, Term};
-/// use uor_foundation::{QuantumLevel, VerificationDomain};
+/// use uor_foundation::{WittLevel, VerificationDomain};
 ///
 /// // Validated<T> proves that a value passed conformance checking.
 /// // You cannot construct one directly — only builder validate() methods
 /// // and the minting boundary produce them.
-/// let terms = [Term::Literal { value: 1, level: QuantumLevel::Q0 }];
+/// let terms = [Term::Literal { value: 1, level: WittLevel::W8 }];
 /// let domains = [VerificationDomain::Enumerative];
 ///
 /// let validated = CompileUnitBuilder::new()
 ///     .root_term(&terms)
-///     .quantum_level_ceiling(QuantumLevel::Q0)
+///     .witt_level_ceiling(WittLevel::W8)
 ///     .thermodynamic_budget(1024)
 ///     .target_domains(&domains)
 ///     .validate()
@@ -354,39 +354,39 @@ impl Derivation {
     }
 }
 
-/// An opaque fiber budget that can only be decremented by `PinningEffect`
+/// An opaque free rank that can only be decremented by `PinningEffect`
 /// and incremented by `UnbindingEffect` \[never by direct mutation\].
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct FiberBudget {
-    /// Total fiber capacity at the quantum level.
+pub struct FreeRank {
+    /// Total site capacity at the Witt level.
     total: u32,
-    /// Currently pinned fibers.
+    /// Currently pinned sites.
     pinned: u32,
 }
 
-impl FiberBudget {
-    /// Returns the total fiber capacity.
+impl FreeRank {
+    /// Returns the total site capacity.
     #[inline]
     #[must_use]
     pub const fn total(&self) -> u32 {
         self.total
     }
 
-    /// Returns the number of currently pinned fibers.
+    /// Returns the number of currently pinned sites.
     #[inline]
     #[must_use]
     pub const fn pinned(&self) -> u32 {
         self.pinned
     }
 
-    /// Returns the number of remaining (unpinned) fibers.
+    /// Returns the number of remaining (unpinned) sites.
     #[inline]
     #[must_use]
     pub const fn remaining(&self) -> u32 {
         self.total - self.pinned
     }
 
-    /// Creates a new fiber budget. Only callable within the crate.
+    /// Creates a new free rank. Only callable within the crate.
     #[inline]
     #[allow(dead_code)]
     pub(crate) const fn new(total: u32, pinned: u32) -> Self {
@@ -410,14 +410,14 @@ pub struct TermList {
 /// # Examples
 /// ```rust
 /// use uor_foundation::enforcement::{TermArena, Term, TermList};
-/// use uor_foundation::{QuantumLevel, PrimitiveOp};
+/// use uor_foundation::{WittLevel, PrimitiveOp};
 ///
 /// // Build the expression `add(3, 5)` bottom-up in an arena.
 /// let mut arena = TermArena::<4>::new();
 ///
 /// // Push leaves first:
-/// let idx_3 = arena.push(Term::Literal { value: 3, level: QuantumLevel::Q0 });
-/// let idx_5 = arena.push(Term::Literal { value: 5, level: QuantumLevel::Q0 });
+/// let idx_3 = arena.push(Term::Literal { value: 3, level: WittLevel::W8 });
+/// let idx_5 = arena.push(Term::Literal { value: 5, level: WittLevel::W8 });
 ///
 /// // Push the application node, referencing the leaves by index:
 /// let idx_add = arena.push(Term::Application {
@@ -500,10 +500,10 @@ impl<const CAP: usize> Default for TermArena<CAP> {
 /// # Examples
 /// ```rust
 /// use uor_foundation::enforcement::{Term, TermList};
-/// use uor_foundation::{QuantumLevel, PrimitiveOp};
+/// use uor_foundation::{WittLevel, PrimitiveOp};
 ///
-/// // Literal: an integer value tagged with a quantum level.
-/// let lit = Term::Literal { value: 42, level: QuantumLevel::Q0 };
+/// // Literal: an integer value tagged with a Witt level.
+/// let lit = Term::Literal { value: 42, level: WittLevel::W8 };
 ///
 /// // Application: an operation applied to arguments.
 /// // `args` is a TermList { start, len } pointing into a TermArena.
@@ -512,20 +512,20 @@ impl<const CAP: usize> Default for TermArena<CAP> {
 ///     args: TermList { start: 0, len: 2 },
 /// };
 ///
-/// // Lift: canonical injection from a lower to a higher quantum level.
-/// let lift = Term::Lift { operand_index: 0, target: QuantumLevel::new(3) };
+/// // Lift: canonical injection from a lower to a higher Witt level.
+/// let lift = Term::Lift { operand_index: 0, target: WittLevel::new(32) };
 ///
 /// // Project: canonical surjection from a higher to a lower level.
-/// let proj = Term::Project { operand_index: 0, target: QuantumLevel::Q0 };
+/// let proj = Term::Project { operand_index: 0, target: WittLevel::W8 };
 /// ```
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Term {
-    /// Integer literal with quantum level annotation.
+    /// Integer literal with Witt level annotation.
     Literal {
         /// The literal integer value.
         value: u64,
-        /// The quantum level of this literal.
-        level: QuantumLevel,
+        /// The Witt level of this literal.
+        level: WittLevel,
     },
     /// Variable reference by name index.
     Variable {
@@ -539,19 +539,19 @@ pub enum Term {
         /// Argument list (indices into arena).
         args: TermList,
     },
-    /// Lift: canonical injection Q_n to Q_m (n < m, lossless).
+    /// Lift: canonical injection W_n to W_m (n < m, lossless).
     Lift {
         /// Index of the operand term in the arena.
         operand_index: u32,
-        /// Target quantum level.
-        target: QuantumLevel,
+        /// Target Witt level.
+        target: WittLevel,
     },
-    /// Project: canonical surjection Q_m to Q_n (m > n, lossy).
+    /// Project: canonical surjection W_m to W_n (m > n, lossy).
     Project {
         /// Index of the operand term in the arena.
         operand_index: u32,
-        /// Target quantum level.
-        target: QuantumLevel,
+        /// Target Witt level.
+        target: WittLevel,
     },
     /// Match expression with pattern-result pairs.
     Match {
@@ -654,7 +654,7 @@ pub struct SinkDeclaration {
 /// let violation = ShapeViolation {
 ///     shape_iri: "https://uor.foundation/conformance/CompileUnitShape",
 ///     constraint_iri: "https://uor.foundation/conformance/compileUnit_rootTerm_constraint",
-///     property_iri: "https://uor.foundation/cascade/rootTerm",
+///     property_iri: "https://uor.foundation/reduction/rootTerm",
 ///     expected_range: "https://uor.foundation/schema/Term",
 ///     min_count: 1,
 ///     max_count: 1,
@@ -684,23 +684,23 @@ pub struct ShapeViolation {
     pub kind: ViolationKind,
 }
 
-/// Builder for `CompileUnit` admission into the cascade pipeline.
-/// Collects `rootTerm`, `quantumLevelCeiling`, `thermodynamicBudget`,
+/// Builder for `CompileUnit` admission into the reduction pipeline.
+/// Collects `rootTerm`, `wittLevelCeiling`, `thermodynamicBudget`,
 /// and `targetDomains`. The `validate()` method checks structural
 /// constraints (Tier 1) and value-dependent constraints (Tier 2).
 /// # Examples
 /// ```rust
 /// use uor_foundation::enforcement::{CompileUnitBuilder, Term};
-/// use uor_foundation::{QuantumLevel, VerificationDomain, ViolationKind};
+/// use uor_foundation::{WittLevel, VerificationDomain, ViolationKind};
 ///
-/// // A CompileUnit packages a term graph for cascade admission.
+/// // A CompileUnit packages a term graph for reduction admission.
 /// // The builder enforces that all required fields are present.
-/// let terms = [Term::Literal { value: 1, level: QuantumLevel::Q0 }];
+/// let terms = [Term::Literal { value: 1, level: WittLevel::W8 }];
 /// let domains = [VerificationDomain::Enumerative];
 ///
 /// let unit = CompileUnitBuilder::new()
 ///     .root_term(&terms)
-///     .quantum_level_ceiling(QuantumLevel::Q0)
+///     .witt_level_ceiling(WittLevel::W8)
 ///     .thermodynamic_budget(1024)
 ///     .target_domains(&domains)
 ///     .validate();
@@ -709,7 +709,7 @@ pub struct ShapeViolation {
 /// // Omitting a required field produces a ShapeViolation
 /// // with the exact conformance IRI that failed:
 /// let err = CompileUnitBuilder::new()
-///     .quantum_level_ceiling(QuantumLevel::Q0)
+///     .witt_level_ceiling(WittLevel::W8)
 ///     .thermodynamic_budget(1024)
 ///     .target_domains(&domains)
 ///     .validate();
@@ -723,19 +723,19 @@ pub struct ShapeViolation {
 pub struct CompileUnitBuilder<'a> {
     /// The root term expression.
     root_term: Option<&'a [Term]>,
-    /// The widest quantum level the computation may reference.
-    quantum_level_ceiling: Option<QuantumLevel>,
+    /// The widest Witt level the computation may reference.
+    witt_level_ceiling: Option<WittLevel>,
     /// Landauer-bounded energy budget.
     thermodynamic_budget: Option<u64>,
     /// Verification domains targeted.
     target_domains: Option<&'a [VerificationDomain]>,
 }
 
-/// A validated compile unit ready for cascade admission.
+/// A validated compile unit ready for reduction admission.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct CompileUnit {
-    /// The quantum level ceiling.
-    level: QuantumLevel,
+    /// The Witt level ceiling.
+    level: WittLevel,
     /// The thermodynamic budget.
     budget: u64,
 }
@@ -746,7 +746,7 @@ impl<'a> CompileUnitBuilder<'a> {
     pub const fn new() -> Self {
         Self {
             root_term: None,
-            quantum_level_ceiling: None,
+            witt_level_ceiling: None,
             thermodynamic_budget: None,
             target_domains: None,
         }
@@ -759,10 +759,10 @@ impl<'a> CompileUnitBuilder<'a> {
         self
     }
 
-    /// Set the quantum level ceiling.
+    /// Set the Witt level ceiling.
     #[must_use]
-    pub const fn quantum_level_ceiling(mut self, level: QuantumLevel) -> Self {
-        self.quantum_level_ceiling = Some(level);
+    pub const fn witt_level_ceiling(mut self, level: WittLevel) -> Self {
+        self.witt_level_ceiling = Some(level);
         self
     }
 
@@ -791,35 +791,34 @@ impl<'a> CompileUnitBuilder<'a> {
                 shape_iri: "https://uor.foundation/conformance/CompileUnitShape",
                 constraint_iri:
                     "https://uor.foundation/conformance/compileUnit_rootTerm_constraint",
-                property_iri: "https://uor.foundation/cascade/rootTerm",
+                property_iri: "https://uor.foundation/reduction/rootTerm",
                 expected_range: "https://uor.foundation/schema/Term",
                 min_count: 1,
                 max_count: 1,
                 kind: ViolationKind::Missing,
             });
         }
-        let level = match self.quantum_level_ceiling {
-            Some(l) => l,
-            None => {
-                return Err(ShapeViolation {
+        let level =
+            match self.witt_level_ceiling {
+                Some(l) => l,
+                None => return Err(ShapeViolation {
                     shape_iri: "https://uor.foundation/conformance/CompileUnitShape",
                     constraint_iri:
-                        "https://uor.foundation/conformance/compileUnit_unitQuantumLevel_constraint",
-                    property_iri: "https://uor.foundation/cascade/unitQuantumLevel",
-                    expected_range: "https://uor.foundation/schema/QuantumLevel",
+                        "https://uor.foundation/conformance/compileUnit_unitWittLevel_constraint",
+                    property_iri: "https://uor.foundation/reduction/unitWittLevel",
+                    expected_range: "https://uor.foundation/schema/WittLevel",
                     min_count: 1,
                     max_count: 1,
                     kind: ViolationKind::Missing,
-                })
-            }
-        };
+                }),
+            };
         let budget = match self.thermodynamic_budget {
             Some(b) => b,
             None => return Err(ShapeViolation {
                 shape_iri: "https://uor.foundation/conformance/CompileUnitShape",
                 constraint_iri:
                     "https://uor.foundation/conformance/compileUnit_thermodynamicBudget_constraint",
-                property_iri: "https://uor.foundation/cascade/thermodynamicBudget",
+                property_iri: "https://uor.foundation/reduction/thermodynamicBudget",
                 expected_range: "http://www.w3.org/2001/XMLSchema#decimal",
                 min_count: 1,
                 max_count: 1,
@@ -833,7 +832,7 @@ impl<'a> CompileUnitBuilder<'a> {
                     shape_iri: "https://uor.foundation/conformance/CompileUnitShape",
                     constraint_iri:
                         "https://uor.foundation/conformance/compileUnit_targetDomains_constraint",
-                    property_iri: "https://uor.foundation/cascade/targetDomains",
+                    property_iri: "https://uor.foundation/reduction/targetDomains",
                     expected_range: "https://uor.foundation/op/VerificationDomain",
                     min_count: 1,
                     max_count: 0,
@@ -856,8 +855,8 @@ impl<'a> Default for CompileUnitBuilder<'a> {
 pub struct EffectDeclarationBuilder<'a> {
     /// The `name` field.
     name: Option<&'a str>,
-    /// The `target_fibers` field.
-    target_fibers: Option<&'a [u32]>,
+    /// The `target_sites` field.
+    target_sites: Option<&'a [u32]>,
     /// The `budget_delta` field.
     budget_delta: Option<i64>,
     /// The `commutes` field.
@@ -877,7 +876,7 @@ impl<'a> EffectDeclarationBuilder<'a> {
     pub const fn new() -> Self {
         Self {
             name: None,
-            target_fibers: None,
+            target_sites: None,
             budget_delta: None,
             commutes: None,
         }
@@ -890,10 +889,10 @@ impl<'a> EffectDeclarationBuilder<'a> {
         self
     }
 
-    /// Set the `target_fibers` field.
+    /// Set the `target_sites` field.
     #[must_use]
-    pub const fn target_fibers(mut self, value: &'a [u32]) -> Self {
-        self.target_fibers = Some(value);
+    pub const fn target_sites(mut self, value: &'a [u32]) -> Self {
+        self.target_sites = Some(value);
         self
     }
 
@@ -926,11 +925,11 @@ impl<'a> EffectDeclarationBuilder<'a> {
                 kind: ViolationKind::Missing,
             });
         }
-        if self.target_fibers.is_none() {
+        if self.target_sites.is_none() {
             return Err(ShapeViolation {
                 shape_iri: "https://uor.foundation/conformance/EffectShape",
                 constraint_iri: "https://uor.foundation/conformance/EffectShape",
-                property_iri: "https://uor.foundation/conformance/target_fibers",
+                property_iri: "https://uor.foundation/conformance/target_sites",
                 expected_range: "http://www.w3.org/2002/07/owl#Thing",
                 min_count: 1,
                 max_count: 1,
@@ -1172,8 +1171,8 @@ impl<'a> Default for DispatchDeclarationBuilder<'a> {
 /// Builder for `LeaseDeclaration`. Validates against `LeaseShape`.
 #[derive(Debug, Clone)]
 pub struct LeaseDeclarationBuilder<'a> {
-    /// The `linear_fiber` field.
-    linear_fiber: Option<u32>,
+    /// The `linear_site` field.
+    linear_site: Option<u32>,
     /// The `scope` field.
     scope: Option<&'a str>,
 }
@@ -1190,15 +1189,15 @@ impl<'a> LeaseDeclarationBuilder<'a> {
     #[must_use]
     pub const fn new() -> Self {
         Self {
-            linear_fiber: None,
+            linear_site: None,
             scope: None,
         }
     }
 
-    /// Set the `linear_fiber` field.
+    /// Set the `linear_site` field.
     #[must_use]
-    pub const fn linear_fiber(mut self, value: u32) -> Self {
-        self.linear_fiber = Some(value);
+    pub const fn linear_site(mut self, value: u32) -> Self {
+        self.linear_site = Some(value);
         self
     }
 
@@ -1213,11 +1212,11 @@ impl<'a> LeaseDeclarationBuilder<'a> {
     /// # Errors
     /// Returns `ShapeViolation` if any required field is missing.
     pub fn validate(self) -> Result<Validated<LeaseDeclaration>, ShapeViolation> {
-        if self.linear_fiber.is_none() {
+        if self.linear_site.is_none() {
             return Err(ShapeViolation {
                 shape_iri: "https://uor.foundation/conformance/LeaseShape",
                 constraint_iri: "https://uor.foundation/conformance/LeaseShape",
-                property_iri: "https://uor.foundation/conformance/linear_fiber",
+                property_iri: "https://uor.foundation/conformance/linear_site",
                 expected_range: "http://www.w3.org/2002/07/owl#Thing",
                 min_count: 1,
                 max_count: 1,
@@ -1448,8 +1447,8 @@ impl<'a> Default for PredicateDeclarationBuilder<'a> {
 /// Builder for `ParallelDeclaration`. Validates against `ParallelShape`.
 #[derive(Debug, Clone)]
 pub struct ParallelDeclarationBuilder<'a> {
-    /// The `fiber_partition` field.
-    fiber_partition: Option<&'a [u32]>,
+    /// The `site_partition` field.
+    site_partition: Option<&'a [u32]>,
     /// The `disjointness_witness` field.
     disjointness_witness: Option<&'a str>,
 }
@@ -1466,15 +1465,15 @@ impl<'a> ParallelDeclarationBuilder<'a> {
     #[must_use]
     pub const fn new() -> Self {
         Self {
-            fiber_partition: None,
+            site_partition: None,
             disjointness_witness: None,
         }
     }
 
-    /// Set the `fiber_partition` field.
+    /// Set the `site_partition` field.
     #[must_use]
-    pub const fn fiber_partition(mut self, value: &'a [u32]) -> Self {
-        self.fiber_partition = Some(value);
+    pub const fn site_partition(mut self, value: &'a [u32]) -> Self {
+        self.site_partition = Some(value);
         self
     }
 
@@ -1489,11 +1488,11 @@ impl<'a> ParallelDeclarationBuilder<'a> {
     /// # Errors
     /// Returns `ShapeViolation` if any required field is missing.
     pub fn validate(self) -> Result<Validated<ParallelDeclaration>, ShapeViolation> {
-        if self.fiber_partition.is_none() {
+        if self.site_partition.is_none() {
             return Err(ShapeViolation {
                 shape_iri: "https://uor.foundation/conformance/ParallelShape",
                 constraint_iri: "https://uor.foundation/conformance/ParallelShape",
-                property_iri: "https://uor.foundation/conformance/fiber_partition",
+                property_iri: "https://uor.foundation/conformance/site_partition",
                 expected_range: "http://www.w3.org/2002/07/owl#Thing",
                 min_count: 1,
                 max_count: 1,
@@ -1523,28 +1522,28 @@ impl<'a> Default for ParallelDeclarationBuilder<'a> {
     }
 }
 
-/// Builder for declaring a new quantum level beyond Q3.
-/// Validates against `QuantumLevelShape`.
+/// Builder for declaring a new Witt level beyond W32.
+/// Validates against `WittLevelShape`.
 #[derive(Debug, Clone)]
-pub struct QuantumLevelDeclarationBuilder {
+pub struct WittLevelDeclarationBuilder {
     /// The declared bit width.
     bit_width: Option<u32>,
     /// The declared cycle size.
     cycle_size: Option<u128>,
     /// The predecessor level.
-    predecessor: Option<QuantumLevel>,
+    predecessor: Option<WittLevel>,
 }
 
-/// Validated quantum level declaration.
+/// Validated Witt level declaration.
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct QuantumLevelDeclaration {
+pub struct WittLevelDeclaration {
     /// The declared bit width.
     pub bit_width: u32,
     /// The predecessor level.
-    pub predecessor: QuantumLevel,
+    pub predecessor: WittLevel,
 }
 
-impl QuantumLevelDeclarationBuilder {
+impl WittLevelDeclarationBuilder {
     /// Creates a new empty builder.
     #[must_use]
     pub const fn new() -> Self {
@@ -1569,23 +1568,23 @@ impl QuantumLevelDeclarationBuilder {
         self
     }
 
-    /// Set the predecessor quantum level.
+    /// Set the predecessor Witt level.
     #[must_use]
-    pub const fn predecessor(mut self, level: QuantumLevel) -> Self {
+    pub const fn predecessor(mut self, level: WittLevel) -> Self {
         self.predecessor = Some(level);
         self
     }
 
-    /// Validate against `QuantumLevelShape`.
+    /// Validate against `WittLevelShape`.
     /// # Errors
     /// Returns `ShapeViolation` if any required field is missing.
-    pub fn validate(self) -> Result<Validated<QuantumLevelDeclaration>, ShapeViolation> {
+    pub fn validate(self) -> Result<Validated<WittLevelDeclaration>, ShapeViolation> {
         let bw = match self.bit_width {
             Some(w) => w,
             None => {
                 return Err(ShapeViolation {
-                    shape_iri: "https://uor.foundation/conformance/QuantumLevelShape",
-                    constraint_iri: "https://uor.foundation/conformance/QuantumLevelShape",
+                    shape_iri: "https://uor.foundation/conformance/WittLevelShape",
+                    constraint_iri: "https://uor.foundation/conformance/WittLevelShape",
                     property_iri: "https://uor.foundation/conformance/declaredBitWidth",
                     expected_range: "http://www.w3.org/2001/XMLSchema#positiveInteger",
                     min_count: 1,
@@ -1598,24 +1597,24 @@ impl QuantumLevelDeclarationBuilder {
             Some(p) => p,
             None => {
                 return Err(ShapeViolation {
-                    shape_iri: "https://uor.foundation/conformance/QuantumLevelShape",
-                    constraint_iri: "https://uor.foundation/conformance/QuantumLevelShape",
+                    shape_iri: "https://uor.foundation/conformance/WittLevelShape",
+                    constraint_iri: "https://uor.foundation/conformance/WittLevelShape",
                     property_iri: "https://uor.foundation/conformance/predecessorLevel",
-                    expected_range: "https://uor.foundation/schema/QuantumLevel",
+                    expected_range: "https://uor.foundation/schema/WittLevel",
                     min_count: 1,
                     max_count: 1,
                     kind: ViolationKind::Missing,
                 })
             }
         };
-        Ok(Validated::new(QuantumLevelDeclaration {
+        Ok(Validated::new(WittLevelDeclaration {
             bit_width: bw,
             predecessor: pred,
         }))
     }
 }
 
-impl Default for QuantumLevelDeclarationBuilder {
+impl Default for WittLevelDeclarationBuilder {
     fn default() -> Self {
         Self::new()
     }
@@ -1688,7 +1687,7 @@ pub(crate) fn validate_and_mint_coord(
 /// Only callable within `uor-foundation`.
 /// Mints the first coordinate of the tuple as the representative `Datum`.
 /// Composite multi-coordinate `Datum` construction depends on the target
-/// type's fiber decomposition, which is resolved during cascade evaluation.
+/// type's site decomposition, which is resolved during reduction evaluation.
 /// # Errors
 /// Returns `ShapeViolation` if the tuple is empty or fails validation.
 #[allow(dead_code)]
@@ -1709,8 +1708,8 @@ pub(crate) fn validate_and_mint_tuple<const N: usize>(
         });
     }
     // Mint the first coordinate as the representative Datum.
-    // The full tuple is decomposed during cascade evaluation,
-    // where each coordinate maps to a fiber in the constrained type.
+    // The full tuple is decomposed during reduction evaluation,
+    // where each coordinate maps to a site in the constrained type.
     validate_and_mint_coord(grounded.coords[0].clone(), shape, session)
 }
 

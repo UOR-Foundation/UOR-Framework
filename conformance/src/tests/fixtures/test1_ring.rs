@@ -1,6 +1,6 @@
-//! Test 1: Ring substrate at quantum level n.
+//! Test 1: Ring substrate at Witt level n.
 //!
-//! Validates: `schema:Ring` with all required properties (ringQuantum, modulus,
+//! Validates: `schema:Ring` with all required properties (ringWittLength, modulus,
 //! generator, negation, complement) and valid generator/involution links.
 
 /// Instance graph for Test 1: Ring substrate.
@@ -14,7 +14,7 @@ pub const TEST1_RING: &str = r#"
 # The ring R_8 = Z/256Z (n=8)
 <https://uor.foundation/instance/ring-R8>
     a                   owl:NamedIndividual, schema:Ring ;
-    schema:ringQuantum  "8"^^xsd:nonNegativeInteger ;
+    schema:ringWittLength  "8"^^xsd:nonNegativeInteger ;
     schema:modulus      "256"^^xsd:nonNegativeInteger ;
     schema:generator    op:neg ;
     schema:negation     op:neg ;
