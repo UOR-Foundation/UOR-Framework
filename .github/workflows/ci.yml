@@ -52,6 +52,15 @@ jobs:
       - name: Verify crate packaging (dry-run)
         run: cargo publish --dry-run --allow-dirty -p uor-foundation-macros
 
+      - name: Generate Lean 4 formalization
+        run: cargo run --bin uor-lean
+
+      - name: Verify no drift in generated Lean 4 code
+        run: git diff --exit-code lean4/
+
+      - name: Build Lean 4 formalization
+        uses: leanprover/lean-action@v1
+
       - name: Build ontology artifacts
         run: cargo run --bin uor-build
 

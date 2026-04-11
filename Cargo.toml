@@ -1,5 +1,5 @@
 [workspace]
-members = ["spec", "codegen", "foundation", "conformance", "docs", "website", "clients", "uor-foundation-macros"]
+members = ["spec", "codegen", "lean-codegen", "foundation", "conformance", "docs", "website", "clients", "uor-foundation-macros"]
 resolver = "2"
 
 [workspace.package]

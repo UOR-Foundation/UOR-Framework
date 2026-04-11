@@ -565,7 +565,11 @@ pub fn render_download_page(base_path: &str) -> String {
          <h2>Rust Crate</h2>\n\
          <p>The <code>uor-foundation</code> crate provides the ontology as typed Rust \
          traits and constants, suitable for <code>#![no_std]</code> environments.</p>\n\
-         <p><a href=\"https://crates.io/crates/uor-foundation\" class=\"cta-primary\">View on crates.io</a></p>"
+         <p><a href=\"https://crates.io/crates/uor-foundation\" class=\"cta-primary\">View on crates.io</a></p>\n\
+         <h2>Lean 4 Package</h2>\n\
+         <p>The <code>uor</code> Lean 4 package provides the ontology as typed \
+         structures and constants for formal verification and theorem proving.</p>\n\
+         <p><a href=\"https://github.com/UOR-Foundation/UOR-Framework/tree/main/lean4\" class=\"cta-primary\">View on GitHub</a></p>"
     )
 }
 

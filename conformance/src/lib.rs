@@ -151,6 +151,10 @@ pub fn run_all(paths: &WorkspacePaths) -> anyhow::Result<ConformanceReport> {
     // 8f. Bootstrap framework integration
     report.extend(validators::website::bootstrap::validate(&paths.artifacts)?);
 
+    // 9. Lean 4 formalization
+    report.extend(validators::lean4::structure::validate(&paths.workspace)?);
+    report.extend(validators::lean4::build::validate(&paths.workspace)?);
+
     Ok(report)
 }
 

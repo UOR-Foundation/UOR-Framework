@@ -624,6 +624,7 @@ dependencies = [
  "uor-codegen",
  "uor-conformance",
  "uor-docs",
+ "uor-lean-codegen",
  "uor-ontology",
  "uor-website",
 ]
@@ -648,6 +649,7 @@ dependencies = [
  "sophia_turtle",
  "thiserror",
  "uor-codegen",
+ "uor-lean-codegen",
  "uor-ontology",
  "walkdir",
 ]
@@ -681,6 +683,14 @@ dependencies = [
  "quote",
  "syn",
  "uor-foundation",
+]
+
+[[package]]
+name = "uor-lean-codegen"
+version = "0.2.0"
+dependencies = [
+ "anyhow",
+ "uor-ontology",
 ]
 
 [[package]]

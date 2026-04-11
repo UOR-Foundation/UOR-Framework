@@ -25,7 +25,7 @@ pub const INDIVIDUALS: usize = 3356;
 pub const SHACL_TESTS: usize = 276;
 
 /// Total conformance checks in the full suite.
-pub const CONFORMANCE_CHECKS: usize = 461;
+pub const CONFORMANCE_CHECKS: usize = 469;
 
 /// Number of amendments applied to the base ontology.
 pub const AMENDMENTS: usize = 95;
@@ -51,6 +51,15 @@ pub const METHODS: usize = 856;
 
 /// Number of individual constant modules generated.
 pub const CONSTANT_MODULES: usize = 1501;
+
+/// Number of Lean 4 structures generated (classes minus enum classes).
+pub const LEAN_STRUCTURES: usize = 423;
+
+/// Number of Lean 4 inductive + structure types generated (enum classes + hardcoded).
+pub const LEAN_INDUCTIVES: usize = 21;
+
+/// Number of Lean 4 individual constant namespaces generated.
+pub const LEAN_CONSTANT_NAMESPACES: usize = 1501;
 
 /// Number of concept pages on the website (one per content/concepts/*.md file).
 pub const CONCEPT_PAGES: usize = 27;

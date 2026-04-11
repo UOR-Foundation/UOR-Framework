@@ -14,11 +14,13 @@ Rust workspace encoding the UOR Foundation ontology as typed data structures, a 
 | `uor-conformance` | `conformance/` | no | Conformance suite (OWL, SHACL, RDF, Rust API, docs, website) — check count in `spec/src/counts.rs` |
 | `uor-docs` | `docs/` | no | Documentation generator |
 | `uor-website` | `website/` | no | Static site generator |
-| `uor-clients` | `clients/` | no | CLI binaries: `uor-build`, `uor-crate`, `uor-docs`, `uor-website`, `uor-conformance` |
+| `uor-lean-codegen` | `lean-codegen/` | no | Ontology-to-Lean 4 structure generator |
+| `uor-clients` | `clients/` | no | CLI binaries: `uor-build`, `uor-crate`, `uor-lean`, `uor-docs`, `uor-website`, `uor-conformance` |
 
 ## Critical rules
 
-- **Never hand-edit `foundation/src/`** — it is regenerated from `spec/` by `uor-crate`. CI enforces `git diff --exit-code foundation/src/`.
+- **Never hand-edit `foundation/src/` or `lean4/`** — they are regenerated from `spec/` by `uor-crate` and `uor-lean`. CI enforces `git diff --exit-code` on both.
+- **On release**, Lean 4 cloud release builds are uploaded via `lake upload`. Lean Reservoir indexes this repo directly (root `lakefile.lean` + `lake-manifest.json`).
 - **All clippy warnings are errors.** CI runs `cargo clippy --all-targets -- -D warnings`.
 - **Every crate denies:** `clippy::unwrap_used`, `clippy::expect_used`, `clippy::panic`, `missing_docs`, `clippy::missing_errors_doc`.
 - **Formatting is enforced.** CI runs `cargo fmt --check`.
@@ -33,6 +35,7 @@ cargo fmt --check                    # Format check
 cargo clippy --all-targets -- -D warnings  # Lint
 cargo test                           # Unit + integration tests
 cargo run --bin uor-crate            # Regenerate foundation/src/ from spec/
+cargo run --bin uor-lean             # Regenerate lean4/ from spec/
 cargo run --bin uor-build            # Emit JSON-LD, Turtle, N-Triples to public/
 cargo run --bin uor-docs             # Generate documentation site
 cargo run --bin uor-website          # Generate website
@@ -43,7 +46,7 @@ Docs/website/conformance binaries accept `PUBLIC_BASE_PATH` env var for URL pref
 
 ## CI pipeline (in order)
 
-`cargo fmt --check` → `cargo clippy` → `cargo test` → `cargo run --bin uor-crate` → `git diff --exit-code foundation/src/` → `cargo check -p uor-foundation --no-default-features` → `cargo publish --dry-run` → `uor-build` → `uor-docs` → `uor-website` → `uor-conformance` → deploy pages
+`cargo fmt --check` → `cargo clippy` → `cargo test` → `cargo run --bin uor-crate` → `git diff --exit-code foundation/src/` → `cargo check -p uor-foundation --no-default-features` → `cargo publish --dry-run` → `uor-lean` → `git diff --exit-code lean4/` → `uor-build` → `uor-docs` → `uor-website` → `uor-conformance` → deploy pages
 
 ## Ontology architecture
 
@@ -64,6 +67,21 @@ Docs/website/conformance binaries accept `PUBLIC_BASE_PATH` env var for URL pref
 - Module declarations in `mod.rs` are sorted alphabetically
 - Cross-namespace domain properties and enum-class domain properties are not generated
 
+## Lean 4 code generation patterns
+
+- All structures are parametric over `(P : Primitives)` — mirrors the Rust `<P: Primitives>` generic
+- OWL classes → `structure` (not `class`); only `Primitives` uses `class` (genuine typeclass)
+- Enum classes → `inductive` with `deriving DecidableEq, Repr, BEq, Hashable, Inhabited`
+- WittLevel → `structure` (open-world, not `inductive`)
+- Self-referential properties → `Option` wrapping for functional, `Array` for non-functional
+- Inheritance → `extends ParentA P, ParentB P`; cross-namespace uses qualified `UOR.Space.Module.ClassName P`
+- Non-functional properties → `Array` type (idiomatic Lean 4)
+- Lean keyword escaping → guillemets `«keyword»` (e.g., `«type»`)
+- Individual constants → `namespace name ... end name` blocks with `def` constants
+- Cross-namespace domain properties are NOT generated (same rule as Rust codegen)
+- Import DAG follows the ontology assembly order (acyclic)
+- `autoImplicit = false` in lakefile prevents implicit variable surprises
+
 ## Conformance categories
 
 1. **Rust source** — formatting, line width, public API surface
@@ -74,6 +92,7 @@ Docs/website/conformance binaries accept `PUBLIC_BASE_PATH` env var for URL pref
 6. **SHACL** — shapes (1:1 with classes), instance test graphs (counts in `spec/src/counts.rs`)
 7. **Generated crate** — trait/method/enum/constant counts, `#![no_std]` build
 8. **Documentation + Website** — completeness, accessibility, broken links
+9. **Lean 4 formalization** — structure/field/enum/individual completeness, sorry audit
 
 ## Centralized counts
 

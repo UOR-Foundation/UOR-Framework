@@ -62,6 +62,15 @@ jobs:
       - name: Check generated crate (no deps)
         run: cargo check -p uor-foundation --no-default-features
 
+      - name: Generate Lean 4 formalization
+        run: cargo run --bin uor-lean
+
+      - name: Verify no drift in generated Lean 4 code
+        run: git diff --exit-code lean4/
+
+      - name: Build Lean 4 formalization
+        uses: leanprover/lean-action@v1
+
       - name: Build ontology artifacts
         run: cargo run --bin uor-build
 
@@ -107,7 +116,11 @@ jobs:
             - `uor.term.ebnf` — ISO/IEC 14977 EBNF grammar
 
             **Rust crates:** [`uor-foundation`](https://crates.io/crates/uor-foundation) + [`uor-foundation-macros`](https://crates.io/crates/uor-foundation-macros)
+            **Lean 4 package:** [`uor`](https://github.com/UOR-Foundation/UOR-Framework/tree/main/lean4) (Lean Reservoir)
             Documentation: https://uor-foundation.github.io/UOR-Framework/
+
+      - name: Upload Lean 4 cloud release build
+        run: lake upload "${{ github.ref_name }}"
 
       - name: Publish macros to crates.io
         run: cargo publish -p uor-foundation-macros

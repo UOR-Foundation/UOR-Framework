@@ -20,11 +20,13 @@
    uor-foundation-macros = { version = "X.Y.Z", path = "../uor-foundation-macros" }
    ```
 
-3. Regenerate the foundation crate and commit:
+3. Regenerate the foundation crate and Lean 4 formalization, then commit:
    ```sh
    cargo run --bin uor-crate
    cargo fmt -- foundation/src/**/*.rs foundation/src/*.rs
-   git add Cargo.toml Cargo.lock foundation/Cargo.toml foundation/src/ uor-foundation-macros/
+   cargo run --bin uor-lean
+   git add Cargo.toml Cargo.lock foundation/Cargo.toml foundation/src/ \
+          uor-foundation-macros/ lean4/
    git commit -m "Bump version to X.Y.Z"
    ```
 
@@ -38,8 +40,11 @@
    - Validate the tag matches the `uor-foundation` Cargo.toml version
    - Run all checks (fmt, clippy, test, conformance)
    - Regenerate the foundation crate and verify no drift
+   - Regenerate the Lean 4 formalization and verify no drift
+   - Build the Lean 4 package with `lake build`
    - Verify `uor-foundation-macros` packaging with `cargo publish --dry-run`
    - Create a GitHub Release with ontology artifacts
+   - Upload Lean 4 cloud release build via `lake upload`
    - Publish `uor-foundation-macros` to crates.io (must succeed first)
    - Publish `uor-foundation` to crates.io
 
@@ -50,8 +55,17 @@ Two crates are published to crates.io (in this order):
 1. `uor-foundation-macros` — proc macro providing the `uor!` DSL
 2. `uor-foundation` — typed Rust traits for the ontology (depends on macros)
 
-The internal crates (`uor-ontology`, `uor-codegen`, `uor-conformance`,
-`uor-docs`, `uor-website`, `uor-clients`) are not published.
+The internal crates (`uor-ontology`, `uor-codegen`, `uor-lean-codegen`,
+`uor-conformance`, `uor-docs`, `uor-website`, `uor-clients`) are not published.
+
+## Lean 4 Package
+
+The `uor` Lean 4 package is published via the Lean Reservoir
+(reservoir.lean-lang.org). Reservoir automatically indexes this repo
+because it has a root `lakefile.lean` and `lake-manifest.json`.
+
+On release, `lake upload` attaches pre-built artifacts to the GitHub
+Release so downstream users can skip building from source.
 
 ## Troubleshooting
 
@@ -68,3 +82,6 @@ The internal crates (`uor-ontology`, `uor-codegen`, `uor-conformance`,
 - **Macros version mismatch**: If `foundation/Cargo.toml` specifies a
   different version for `uor-foundation-macros` than what was published,
   the foundation publish will fail. Ensure both versions match.
+- **Lean 4 drift**: If `git diff --exit-code lean4/` fails in CI,
+  the committed Lean code doesn't match the generator output. Run
+  `cargo run --bin uor-lean` locally and commit.
