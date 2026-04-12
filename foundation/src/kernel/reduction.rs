@@ -753,5 +753,6 @@ pub mod back_pressure_default {
     /// `pressureLevel`
     pub const PRESSURE_LEVEL: &str = "Medium";
     /// `pressureThreshold`
+    #[allow(clippy::approx_constant)]
     pub const PRESSURE_THRESHOLD: f64 = 0.75;
 }

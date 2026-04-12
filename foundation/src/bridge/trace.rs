@@ -144,23 +144,29 @@ pub mod geodesic_q3 {
 /// Canonical measurement event: collapse of an equal superposition (|α|² = 0.5). Maximum von Neumann entropy S_vN = ln 2. Maximum Landauer cost per QM_1.
 pub mod collapse_equal_superposition {
     /// `postCollapseLandauerCost`
+    #[allow(clippy::approx_constant)]
     pub const POST_COLLAPSE_LANDAUER_COST: f64 = 0.6931471805599453;
     /// `preCollapseEntropy`
+    #[allow(clippy::approx_constant)]
     pub const PRE_COLLAPSE_ENTROPY: f64 = 0.6931471805599453;
 }
 
 /// Canonical measurement event: collapse of a biased superposition (|α|² = 0.9). Lower entropy than equal superposition. Demonstrates QM_3 bound.
 pub mod collapse_biased {
     /// `postCollapseLandauerCost`
+    #[allow(clippy::approx_constant)]
     pub const POST_COLLAPSE_LANDAUER_COST: f64 = 0.325083;
     /// `preCollapseEntropy`
+    #[allow(clippy::approx_constant)]
     pub const PRE_COLLAPSE_ENTROPY: f64 = 0.325083;
 }
 
 /// Canonical measurement event: collapse of a classical state (|α|² = 1). Zero entropy, zero Landauer cost. Demonstrates QM_4 idempotence.
 pub mod collapse_classical {
     /// `postCollapseLandauerCost`
-    pub const POST_COLLAPSE_LANDAUER_COST: f64 = 0;
+    #[allow(clippy::approx_constant)]
+    pub const POST_COLLAPSE_LANDAUER_COST: f64 = 0.0;
     /// `preCollapseEntropy`
-    pub const PRE_COLLAPSE_ENTROPY: f64 = 0;
+    #[allow(clippy::approx_constant)]
+    pub const PRE_COLLAPSE_ENTROPY: f64 = 0.0;
 }

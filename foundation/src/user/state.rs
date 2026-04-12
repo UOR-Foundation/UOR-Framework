@@ -215,9 +215,11 @@ pub mod full_grounding {}
 /// The canonical ground-state witness: a GroundedContext at σ = 1, freeRank = 0, T_ctx = 0, S = 0 (SC_4). Demonstrates that full saturation is achievable and O(1) resolution (SC_5) is realized.
 pub mod ground_state {
     /// `contextTemperature`
-    pub const CONTEXT_TEMPERATURE: f64 = 0;
+    #[allow(clippy::approx_constant)]
+    pub const CONTEXT_TEMPERATURE: f64 = 0.0;
     /// `groundingDegree`
-    pub const GROUNDING_DEGREE: f64 = 1;
+    #[allow(clippy::approx_constant)]
+    pub const GROUNDING_DEGREE: f64 = 1.0;
     /// `groundingPhase` -> `FullGrounding`
     pub const GROUNDING_PHASE: &str = "https://uor.foundation/state/FullGrounding";
     /// `isGrounded`

@@ -544,7 +544,13 @@ fn generate_individuals(f: &mut RustFile, module: &NamespaceModule) {
                 }
                 IndividualValue::Float(x) => {
                     let _ = writeln!(f.buf, "    /// `{prop_local}`");
-                    let _ = writeln!(f.buf, "    pub const {base_const}: f64 = {x};");
+                    // Debug formatting guarantees a decimal point so the
+                    // emitted literal type-checks as `f64` (e.g. `0.0`
+                    // instead of `0`, which Rust would infer as `i32`).
+                    // `approx_constant` is silenced because the ontology
+                    // stores numeric values, not symbolic constants.
+                    let _ = writeln!(f.buf, "    #[allow(clippy::approx_constant)]");
+                    let _ = writeln!(f.buf, "    pub const {base_const}: f64 = {x:?};");
                 }
                 IndividualValue::IriRef(iri) => {
                     let ref_local = local_name(iri);
