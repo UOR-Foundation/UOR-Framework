@@ -2,6 +2,8 @@
 --
 -- Primitives typeclass — XSD primitive type family.
 
+namespace UOR.Primitives
+
 /-- XSD primitive type family. Implementations choose concrete representations for each XSD type. All generated structures are parametric over this class. -/
 class Primitives where
   /-- String type (xsd:string). -/
@@ -16,3 +18,18 @@ class Primitives where
   Decimal : Type
   /-- Boolean type (xsd:boolean). -/
   Boolean : Type
+
+end UOR.Primitives
+
+namespace UOR.Prims
+
+/-- Canonical `Primitives` instance using Lean core types. Used by all generated named-individual constants so that `import UOR` yields directly constructible values. -/
+def Standard : UOR.Primitives.Primitives where
+  String := String
+  Integer := Int
+  NonNegativeInteger := Nat
+  PositiveInteger := Nat
+  Decimal := Float
+  Boolean := Bool
+
+end UOR.Prims

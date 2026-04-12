@@ -131,12 +131,7 @@ pub trait SessionBoundary<P: Primitives> {
 }
 
 /// A context that has reached full saturation: σ = 1, freeRank = 0, S = 0, T_ctx = 0 (SC_4). The ground state of the type system. All subsequent queries resolve in O(1) via SC_5.
-pub trait GroundedContext<P: Primitives>: Context<P> {
-    /// Associated type for `GroundingCertificate`.
-    type GroundingCertificate: crate::bridge::cert::GroundingCertificate<P>;
-    /// The GroundingCertificate attesting that this context has reached full saturation.
-    fn grounding_certificate(&self) -> &Self::GroundingCertificate;
-}
+pub trait GroundedContext<P: Primitives>: Context<P> {}
 
 /// Step-by-step evidence of the saturation process: records which bindings were applied, in what order, to reach full saturation.
 pub trait GroundingWitness<P: Primitives> {
@@ -220,9 +215,9 @@ pub mod full_grounding {}
 /// The canonical ground-state witness: a GroundedContext at σ = 1, freeRank = 0, T_ctx = 0, S = 0 (SC_4). Demonstrates that full saturation is achievable and O(1) resolution (SC_5) is realized.
 pub mod ground_state {
     /// `contextTemperature`
-    pub const CONTEXT_TEMPERATURE: &str = "0.0";
+    pub const CONTEXT_TEMPERATURE: f64 = 0;
     /// `groundingDegree`
-    pub const GROUNDING_DEGREE: &str = "1.0";
+    pub const GROUNDING_DEGREE: f64 = 1;
     /// `groundingPhase` -> `FullGrounding`
     pub const GROUNDING_PHASE: &str = "https://uor.foundation/state/FullGrounding";
     /// `isGrounded`

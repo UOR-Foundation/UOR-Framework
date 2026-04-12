@@ -49,8 +49,12 @@ fn main() -> Result<()> {
     let report = uor_lean_codegen::generate(ontology, &args.out)?;
 
     println!(
-        "Generated {} structures, {} fields, {} enums, {} individual namespaces",
-        report.structure_count, report.field_count, report.enum_count, report.def_count
+        "Generated {} structures, {} fields, {} enums, {} individuals ({} unproven)",
+        report.structure_count,
+        report.field_count,
+        report.enum_count,
+        report.def_count,
+        report.unproven_count
     );
     println!("Files written ({}):", report.files.len());
     for file in &report.files {

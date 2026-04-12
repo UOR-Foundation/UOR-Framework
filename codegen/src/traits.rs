@@ -542,6 +542,10 @@ fn generate_individuals(f: &mut RustFile, module: &NamespaceModule) {
                     let _ = writeln!(f.buf, "    /// `{prop_local}`");
                     let _ = writeln!(f.buf, "    pub const {base_const}: bool = {b};");
                 }
+                IndividualValue::Float(x) => {
+                    let _ = writeln!(f.buf, "    /// `{prop_local}`");
+                    let _ = writeln!(f.buf, "    pub const {base_const}: f64 = {x};");
+                }
                 IndividualValue::IriRef(iri) => {
                     let ref_local = local_name(iri);
                     let _ = writeln!(f.buf, "    /// `{prop_local}` -> `{ref_local}`");

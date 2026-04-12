@@ -27,6 +27,7 @@ const RDF_NIL: &str = "http://www.w3.org/1999/02/22-rdf-syntax-ns#nil";
 const XSD_STRING: &str = "http://www.w3.org/2001/XMLSchema#string";
 const XSD_INTEGER: &str = "http://www.w3.org/2001/XMLSchema#integer";
 const XSD_BOOLEAN: &str = "http://www.w3.org/2001/XMLSchema#boolean";
+const XSD_DECIMAL: &str = "http://www.w3.org/2001/XMLSchema#decimal";
 const UOR_SPACE: &str = "https://uor.foundation/space";
 
 /// Serializes the complete UOR Foundation ontology to an N-Triples string.
@@ -180,6 +181,7 @@ fn individual_value_to_object(value: &IndividualValue) -> String {
         IndividualValue::Str(s) => lit(s, XSD_STRING),
         IndividualValue::Int(i) => format!("\"{}\"^^<{}>", i, XSD_INTEGER),
         IndividualValue::Bool(b) => format!("\"{}\"^^<{}>", b, XSD_BOOLEAN),
+        IndividualValue::Float(x) => format!("\"{}\"^^<{}>", x, XSD_DECIMAL),
         IndividualValue::IriRef(iri_ref) => iri(iri_ref),
         // Lists are handled by emit_rdf_list at the call site.
         IndividualValue::List(_) => iri(RDF_NIL),
@@ -273,13 +275,21 @@ mod tests {
     fn lists_produce_rdf_first_rest() {
         let ontology = Ontology::full();
         let nt = to_ntriples(ontology);
-        // 3 lists in the ontology (succ, pred, CA_1), each with 2 elements.
-        // Each 2-element list produces 2 rdf:first and 2 rdf:rest triples.
+        // 2 `op:composedOf` `IndividualValue::List` assertions remain
+        // in the ontology (op:succ and op:pred), each listing two
+        // operations. Each 2-element list produces 2 rdf:first and
+        // 2 rdf:rest triples → 4 of each minimum.
+        //
+        // `op:criticalIdentity`'s previous `rhs = List` assertion was
+        // removed in Amendment 96 (the assertion was
+        // type-incompatible with the `schema:TermExpression` field
+        // declared on `op:Identity.rhs`; see
+        // `model::rewrite_identity_ast_refs`).
         let rdf_first_count = nt.matches(RDF_FIRST).count();
         let rdf_rest_count = nt.matches(RDF_REST).count();
         assert!(
-            rdf_first_count >= 6,
-            "Expected at least 6 rdf:first triples, got {}",
+            rdf_first_count >= 4,
+            "Expected at least 4 rdf:first triples, got {}",
             rdf_first_count
         );
         assert_eq!(

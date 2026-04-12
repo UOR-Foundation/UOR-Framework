@@ -11,21 +11,21 @@ pub const NAMESPACES: usize = 33;
 pub const CLASSES: usize = 441;
 
 /// Total properties including the global `uor:space` annotation.
-pub const PROPERTIES: usize = 892;
+pub const PROPERTIES: usize = 890;
 
 /// Namespace-level properties only (excludes global annotation).
-pub const NAMESPACE_PROPERTIES: usize = 891;
+pub const NAMESPACE_PROPERTIES: usize = 889;
 
 /// Total named individuals across all namespaces.
 /// Includes 1870 AST term individuals (LiteralExpression / ForAllDeclaration)
 /// generated from identity lhs/rhs/forAll string values.
-pub const INDIVIDUALS: usize = 3356;
+pub const INDIVIDUALS: usize = 3358;
 
 /// Number of SHACL test instance graphs.
 pub const SHACL_TESTS: usize = 276;
 
 /// Total conformance checks in the full suite.
-pub const CONFORMANCE_CHECKS: usize = 469;
+pub const CONFORMANCE_CHECKS: usize = 471;
 
 /// Number of amendments applied to the base ontology.
 pub const AMENDMENTS: usize = 95;
@@ -47,7 +47,7 @@ pub const USER_NAMESPACES: usize = 3;
 
 /// Number of trait methods generated (properties with domains,
 /// excluding enum-class-domain and cross-namespace-domain properties).
-pub const METHODS: usize = 856;
+pub const METHODS: usize = 853;
 
 /// Number of individual constant modules generated.
 pub const CONSTANT_MODULES: usize = 1501;
@@ -55,11 +55,22 @@ pub const CONSTANT_MODULES: usize = 1501;
 /// Number of Lean 4 structures generated (classes minus enum classes).
 pub const LEAN_STRUCTURES: usize = 423;
 
-/// Number of Lean 4 inductive + structure types generated (enum classes + hardcoded).
-pub const LEAN_INDUCTIVES: usize = 21;
+/// Number of Lean 4 inductive + structure types generated for the enum layer.
+///
+/// Composition: 18 ontology enum classes (see `Ontology::enum_class_names()`),
+/// plus 3 hardcoded types not in the ontology's class list (`Space`,
+/// `SiteState`, `PrimitiveOp`), plus 1 `structure` for `WittLevel` (open-world,
+/// not an `inductive`). Total: 22.
+pub const LEAN_INDUCTIVES: usize = 22;
 
 /// Number of Lean 4 individual constant namespaces generated.
-pub const LEAN_CONSTANT_NAMESPACES: usize = 1501;
+///
+/// One `namespace <name> ... end <name>` block is emitted per non-enum
+/// named individual in the ontology. This is distinct from
+/// `CONSTANT_MODULES`, which counts the per-namespace-module constant
+/// files produced by the Rust codegen — those are container modules,
+/// not per-individual namespace blocks.
+pub const LEAN_CONSTANT_NAMESPACES: usize = 3258;
 
 /// Number of concept pages on the website (one per content/concepts/*.md file).
 pub const CONCEPT_PAGES: usize = 27;

@@ -218,6 +218,16 @@ pub mod w32 {
     pub const WITT_LEVEL_PREDECESSOR: &str = "https://uor.foundation/schema/W24";
 }
 
+pub mod term_critical_identity_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "neg(bnot(x))";
+}
+
+pub mod term_critical_identity_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "succ(x)";
+}
+
 pub mod term_critical_identity_for_all {
     /// `variableName`
     pub const VARIABLE_NAME: &str = "x ∈ R_n";

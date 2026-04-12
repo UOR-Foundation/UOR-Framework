@@ -156,6 +156,85 @@ mod tests {
         assert_eq!(total, counts::INDIVIDUALS);
     }
 
+    /// Drift guard: every property marked `required: true` must be
+    /// asserted on every individual whose `rdf:type` is the
+    /// property's domain or a transitive subclass of it. Catches
+    /// amendment-driven drift (e.g., "Amendment N adds new required
+    /// property P to class C but forgets to backfill existing C
+    /// individuals") within ~50ms of `cargo test` — faster than any
+    /// downstream codegen + Lean-build roundtrip.
+    #[test]
+    fn all_required_properties_asserted() {
+        let ontology = Ontology::full();
+
+        // Index classes by IRI so we can walk the extends chain for
+        // subclass closure.
+        let class_by_iri: std::collections::HashMap<&str, &model::Class> = ontology
+            .namespaces
+            .iter()
+            .flat_map(|m| m.classes.iter())
+            .map(|c| (c.id, c))
+            .collect();
+
+        fn subclass_closure<'a>(
+            root: &'a str,
+            class_by_iri: &std::collections::HashMap<&'a str, &'a model::Class>,
+        ) -> std::collections::HashSet<&'a str> {
+            let mut result: std::collections::HashSet<&'a str> = std::collections::HashSet::new();
+            result.insert(root);
+            let mut changed = true;
+            while changed {
+                changed = false;
+                for (child_iri, child) in class_by_iri {
+                    if result.contains(child_iri) {
+                        continue;
+                    }
+                    if child.subclass_of.iter().any(|p| result.contains(p)) {
+                        result.insert(child_iri);
+                        changed = true;
+                    }
+                }
+            }
+            result
+        }
+
+        let mut missing: Vec<String> = Vec::new();
+
+        for module in &ontology.namespaces {
+            for prop in &module.properties {
+                if !prop.required {
+                    continue;
+                }
+                let Some(domain_iri) = prop.domain else {
+                    missing.push(format!("{} (required: true but no domain)", prop.id));
+                    continue;
+                };
+                let domain_closure = subclass_closure(domain_iri, &class_by_iri);
+                for m2 in &ontology.namespaces {
+                    for ind in &m2.individuals {
+                        if !domain_closure.contains(ind.type_) {
+                            continue;
+                        }
+                        let has_assertion = ind.properties.iter().any(|(p, _)| *p == prop.id);
+                        if !has_assertion {
+                            missing.push(format!(
+                                "{} :: {} (required by domain <{}>)",
+                                ind.id, prop.label, domain_iri
+                            ));
+                        }
+                    }
+                }
+            }
+        }
+
+        assert!(
+            missing.is_empty(),
+            "required-property drift detected ({} missing assertions):\n  {}",
+            missing.len(),
+            missing.join("\n  ")
+        );
+    }
+
     #[test]
     fn all_class_iris_unique() {
         let mut iris = std::collections::HashSet::new();

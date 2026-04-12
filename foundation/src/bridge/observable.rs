@@ -272,10 +272,6 @@ pub trait BaseMetric<P: Primitives>: Observable<P> {
     type TermExpression: crate::kernel::schema::TermExpression<P>;
     /// How this metric composes with others in the measurement tower.
     fn metric_composition(&self) -> &Self::TermExpression;
-    /// Associated type for `Observable`.
-    type Observable: Observable<P>;
-    /// The existing observable class that this base metric references.
-    fn references_class(&self) -> &Self::Observable;
     /// Associated type for `Identity`.
     type Identity: crate::kernel::op::Identity<P>;
     /// The existing identity that defines this base metric.

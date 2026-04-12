@@ -161,6 +161,16 @@ const LEAN_KEYWORDS: &[&str] = &[
     "inductive",
     "example",
     "at",
+    "from",
+    "to",
+    "then",
+    "as",
+    "is",
+    "of",
+    "nomatch",
+    "rec",
+    "lemma",
+    "attribute",
 ];
 
 /// Converts a camelCase label to a Lean field name, escaping keywords with guillemets.

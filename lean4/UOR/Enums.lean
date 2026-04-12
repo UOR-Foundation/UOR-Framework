@@ -304,7 +304,7 @@ inductive ProofModality where
 structure WittLevel where
   /-- The Witt vector length in bits. -/
   wittLength : Nat
-  deriving DecidableEq, Repr, BEq, Hashable
+  deriving DecidableEq, Repr, BEq, Hashable, Inhabited
 
 namespace WittLevel
 

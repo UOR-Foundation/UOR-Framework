@@ -453,6 +453,7 @@ fn format_individual_properties(ind: &Individual) -> String {
             IndividualValue::Str(s) => escape_html(s),
             IndividualValue::Int(i) => i.to_string(),
             IndividualValue::Bool(b) => b.to_string(),
+            IndividualValue::Float(x) => x.to_string(),
             IndividualValue::IriRef(iri) => format!("<code>{}</code>", escape_html(iri)),
             IndividualValue::List(items) => {
                 let joined = items

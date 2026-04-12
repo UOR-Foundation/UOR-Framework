@@ -61,42 +61,23 @@ fn validate_module_structure(lean_dir: &Path, report: &mut ConformanceReport) ->
         "UOR.lean",
         "UOR/Primitives.lean",
         "UOR/Enums.lean",
-        "UOR/Kernel.lean",
-        "UOR/Bridge.lean",
-        "UOR/User.lean",
-        "UOR/Kernel/Address.lean",
-        "UOR/Kernel/Schema.lean",
-        "UOR/Kernel/Op.lean",
-        "UOR/Kernel/Carry.lean",
-        "UOR/Kernel/Reduction.lean",
-        "UOR/Kernel/Convergence.lean",
-        "UOR/Kernel/Division.lean",
-        "UOR/Kernel/Monoidal.lean",
-        "UOR/Kernel/Operad.lean",
-        "UOR/Kernel/Effect.lean",
-        "UOR/Kernel/Predicate.lean",
-        "UOR/Kernel/Parallel.lean",
-        "UOR/Kernel/Stream_.lean",
-        "UOR/Kernel/Failure.lean",
-        "UOR/Kernel/Linear.lean",
-        "UOR/Kernel/Recursion.lean",
-        "UOR/Kernel/Region.lean",
-        "UOR/Bridge/Query.lean",
-        "UOR/Bridge/Resolver.lean",
-        "UOR/Bridge/Partition.lean",
-        "UOR/Bridge/Observable.lean",
-        "UOR/Bridge/Homology.lean",
-        "UOR/Bridge/Cohomology.lean",
-        "UOR/Bridge/Proof.lean",
-        "UOR/Bridge/Derivation.lean",
-        "UOR/Bridge/Trace.lean",
-        "UOR/Bridge/Cert.lean",
-        "UOR/Bridge/Interaction.lean",
-        "UOR/Bridge/Boundary.lean",
-        "UOR/Bridge/Conformance_.lean",
-        "UOR/User/Type_.lean",
-        "UOR/User/Morphism.lean",
-        "UOR/User/State.lean",
+        "UOR/Structures.lean",
+        "UOR/Individuals.lean",
+        "UOR/Individuals/Schema.lean",
+        "UOR/Individuals/Op.lean",
+        "UOR/Individuals/Type_.lean",
+        "UOR/Individuals/Observable.lean",
+        "UOR/Individuals/Homology.lean",
+        "UOR/Individuals/Cohomology.lean",
+        "UOR/Individuals/Proof.lean",
+        "UOR/Individuals/Trace.lean",
+        "UOR/Individuals/Morphism.lean",
+        "UOR/Individuals/State.lean",
+        "UOR/Individuals/Reduction.lean",
+        "UOR/Individuals/Convergence.lean",
+        "UOR/Individuals/Division.lean",
+        "UOR/Individuals/Predicate.lean",
+        "UOR/Individuals/Conformance_.lean",
     ];
 
     let mut all_present = true;
@@ -270,6 +251,26 @@ fn validate_enum_completeness(lean_dir: &Path, report: &mut ConformanceReport) -
                 enum_classes.len()
             ),
         ));
+
+        // Drift guard: total `inductive` + `structure` declarations in
+        // Enums.lean should equal `LEAN_INDUCTIVES`. Mirrors the
+        // `METHODS` drift-check pattern in `validate_field_completeness`.
+        let inductive_count = content.matches("\ninductive ").count()
+            + usize::from(content.starts_with("inductive "));
+        let structure_count = content.matches("\nstructure ").count()
+            + usize::from(content.starts_with("structure "));
+        let total = inductive_count + structure_count;
+        if total != uor_ontology::counts::LEAN_INDUCTIVES {
+            report.push_meta(TestResult::fail(
+                VALIDATOR,
+                format!(
+                    "Enum-layer type count drift: found {} inductive/structure declarations \
+                     in Enums.lean but counts::LEAN_INDUCTIVES = {}",
+                    total,
+                    uor_ontology::counts::LEAN_INDUCTIVES
+                ),
+            ));
+        }
     } else {
         report.push(TestResult::fail_with_details(
             VALIDATOR,
@@ -299,6 +300,10 @@ fn validate_individual_completeness(
 
     let mut missing = Vec::new();
     let mut found = 0usize;
+    // Count of non-enum individuals found as typed `def <name> :`
+    // declarations (or Unit orphan placeholders). Mirrored against
+    // `counts::LEAN_CONSTANT_NAMESPACES` below.
+    let mut def_count = 0usize;
 
     for module in &ontology.namespaces {
         for ind in &module.individuals {
@@ -311,12 +316,16 @@ fn validate_individual_completeness(
                 continue;
             }
 
-            // Check for namespace declaration
-            let ns_pattern = format!("namespace {local}");
-            if all_source.contains(&ns_pattern) {
+            // Strict typed form: every non-enum individual is emitted
+            // as `def <local> : <QualifiedClass> UOR.Prims.Standard := { ... }`
+            // or `def <local> : Unit := ()` (orphan placeholder). The
+            // bag-of-defs namespace form is no longer produced.
+            let def_pattern = format!("def {local} :");
+            if all_source.contains(&def_pattern) {
                 found += 1;
+                def_count += 1;
             } else {
-                missing.push(format!("{} (namespace {local})", ind.id));
+                missing.push(format!("{} (def {local})", ind.id));
             }
         }
     }
@@ -326,6 +335,21 @@ fn validate_individual_completeness(
             VALIDATOR,
             format!("All {found} individuals present in generated Lean 4 source"),
         ));
+
+        // Drift guard: non-enum individual typed-def count should
+        // equal `LEAN_CONSTANT_NAMESPACES`. Mirrors the `METHODS`
+        // drift-check pattern in `validate_field_completeness`.
+        if def_count != uor_ontology::counts::LEAN_CONSTANT_NAMESPACES {
+            report.push_meta(TestResult::fail(
+                VALIDATOR,
+                format!(
+                    "Individual def count drift: found {} typed `def` declarations \
+                     but counts::LEAN_CONSTANT_NAMESPACES = {}",
+                    def_count,
+                    uor_ontology::counts::LEAN_CONSTANT_NAMESPACES
+                ),
+            ));
+        }
     } else {
         report.push(TestResult::fail_with_details(
             VALIDATOR,
@@ -343,15 +367,18 @@ fn validate_primitives_class(lean_dir: &Path, report: &mut ConformanceReport) ->
     let content =
         std::fs::read_to_string(&path).with_context(|| "Failed to read UOR/Primitives.lean")?;
 
-    if content.contains("class Primitives") {
+    if content.contains("class Primitives")
+        && content.contains("namespace UOR.Primitives")
+        && content.contains("def Standard : UOR.Primitives.Primitives")
+    {
         report.push(TestResult::pass(
             VALIDATOR,
-            "Primitives typeclass present in Primitives.lean",
+            "Primitives typeclass + UOR.Prims.Standard instance present in Primitives.lean",
         ));
     } else {
         report.push(TestResult::fail(
             VALIDATOR,
-            "Primitives typeclass not found in Primitives.lean",
+            "Primitives typeclass, namespace wrapper, or UOR.Prims.Standard missing in Primitives.lean",
         ));
     }
 

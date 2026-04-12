@@ -5110,6 +5110,25 @@ fn validate_legitimate_string_properties_only(report: &mut ConformanceReport) {
         "https://uor.foundation/conformance/disjointnessWitness",
         // Amendment 95: Host-value sort (Workstream 5)
         "https://uor.foundation/schema/hostString",
+        // Amendment 96 (2026-04-12): symbolic phase-angle descriptors
+        // on reduction/ individuals carry Greek symbol strings
+        // ("Ω⁰", "Ω¹", "π/6", "e^{iπ/6}") rather than numeric decimals.
+        // Range was xsd:decimal; changed to xsd:string to match the
+        // value shape. See reduction.rs.
+        "https://uor.foundation/reduction/phaseParameter",
+        "https://uor.foundation/reduction/convergenceAngle",
+        "https://uor.foundation/reduction/rotationSchedule",
+        "https://uor.foundation/reduction/baseAngle",
+        "https://uor.foundation/reduction/targetAngle",
+        "https://uor.foundation/reduction/gateExpectedPhase",
+        "https://uor.foundation/reduction/expectedPhase",
+        "https://uor.foundation/reduction/phaseAngle",
+        "https://uor.foundation/reduction/finalGrounding",
+        "https://uor.foundation/reduction/thermodynamicBudget",
+        // Amendment 96: observable/referencesClass is an
+        // annotation-valued IRI reference (the metric describes a
+        // class of phenomena, not a specific instance).
+        "https://uor.foundation/observable/referencesClass",
     ]
     .into_iter()
     .collect();

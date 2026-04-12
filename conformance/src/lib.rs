@@ -86,6 +86,14 @@ pub fn run_all(paths: &WorkspacePaths) -> anyhow::Result<ConformanceReport> {
         &paths.workspace,
     )?);
 
+    // 2c. Required-property coverage: fail if any `required: true`
+    //     property is missing an assertion on any matching individual.
+    //     Fast in-memory drift guard — runs before any codegen.
+    let ontology = uor_ontology::Ontology::full();
+    report.extend(validators::ontology::required_property_coverage::validate(
+        ontology,
+    )?);
+
     // 3. JSON-LD 1.1
     report.extend(validators::ontology::jsonld::validate(&paths.artifacts)?);
 
@@ -154,6 +162,9 @@ pub fn run_all(paths: &WorkspacePaths) -> anyhow::Result<ConformanceReport> {
     // 9. Lean 4 formalization
     report.extend(validators::lean4::structure::validate(&paths.workspace)?);
     report.extend(validators::lean4::build::validate(&paths.workspace)?);
+    report.extend(validators::lean4::individual_proof::validate(
+        &paths.workspace,
+    )?);
 
     Ok(report)
 }

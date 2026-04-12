@@ -11,11 +11,11 @@ use crate::Primitives;
 /// The composite endofunctor ψ = ψ_9 ∘ … ∘ ψ_1, parameterized by Ω = e^{iπ/6}.
 pub trait EulerReduction<P: Primitives> {
     /// The base phase parameter Ω for this reduction (e.g., e^{iπ/6}).
-    fn phase_parameter(&self) -> P::Decimal;
+    fn phase_parameter(&self) -> &P::String;
     /// The number of stages in this reduction.
     fn stage_count(&self) -> P::NonNegativeInteger;
     /// The cumulative phase angle at which the reduction converges.
-    fn convergence_angle(&self) -> P::Decimal;
+    fn convergence_angle(&self) -> &P::String;
     /// Associated type for `TermExpression`.
     type TermExpression: crate::kernel::schema::TermExpression<P>;
     /// The ordered list of ψ-maps that compose this reduction.
@@ -25,15 +25,15 @@ pub trait EulerReduction<P: Primitives> {
 /// Schedule Ω⁰, Ω¹, …, Ω⁵ assigning a phase angle to each stage of the reduction.
 pub trait PhaseRotationScheduler<P: Primitives> {
     /// String representation of the rotation schedule Ω⁰, Ω¹, …, Ω⁵.
-    fn rotation_schedule(&self) -> P::Decimal;
+    fn rotation_schedule(&self) -> &P::String;
     /// The base angle π/6 from which the schedule is derived.
-    fn base_angle(&self) -> P::Decimal;
+    fn base_angle(&self) -> &P::String;
 }
 
 /// The angle at which the reduction terminates (default: π).
 pub trait TargetConvergenceAngle<P: Primitives> {
     /// The target convergence angle (default: π).
-    fn target_angle(&self) -> P::Decimal;
+    fn target_angle(&self) -> &P::String;
 }
 
 /// Validation at each stage boundary checking that the accumulated phase angle matches the expected Ω^k.
@@ -43,7 +43,7 @@ pub trait PhaseGateAttestation<P: Primitives> {
     /// The reduction stage at which this gate is applied.
     fn gate_stage(&self) -> &Self::ReductionStep;
     /// The expected phase angle Ω^k at this gate.
-    fn gate_expected_phase(&self) -> P::Decimal;
+    fn gate_expected_phase(&self) -> &P::String;
     /// Whether the phase gate check passed or failed.
     fn gate_result(&self) -> P::Boolean;
 }
@@ -63,7 +63,7 @@ pub trait ReductionStep<P: Primitives> {
     /// Human-readable name of this reduction stage.
     fn stage_name(&self) -> &P::String;
     /// The expected phase angle Ω^k at this stage.
-    fn expected_phase(&self) -> P::Decimal;
+    fn expected_phase(&self) -> &P::String;
     /// Associated type for `StatePredicate`.
     type StatePredicate: crate::kernel::predicate::StatePredicate<P>;
     /// A typed predicate evaluated on the current ReductionState. Must be satisfied to enter this stage.
@@ -83,7 +83,7 @@ pub trait ReductionState<P: Primitives> {
     /// The reduction stage at which execution is currently positioned.
     fn current_stage(&self) -> &Self::ReductionStep;
     /// The accumulated phase angle at the current point.
-    fn phase_angle(&self) -> P::Decimal;
+    fn phase_angle(&self) -> &P::String;
     /// Bit mask of sites that are pinned (resolved) at this point.
     fn pinned_mask(&self) -> P::NonNegativeInteger;
     /// The number of free (unresolved) sites at this point.
@@ -203,7 +203,7 @@ pub trait PipelineSuccess<P: Primitives> {
     /// Whether full grounding was achieved.
     fn grounding_reached(&self) -> P::Boolean;
     /// The final grounding level achieved on pipeline success.
-    fn final_grounding(&self) -> P::Decimal;
+    fn final_grounding(&self) -> &P::String;
 }
 
 /// Typed failure: DispatchMiss, GroundingFailure, ConvergenceStall, etc.
@@ -405,7 +405,7 @@ pub trait CompileUnit<P: Primitives> {
     /// The quantum level at which this CompileUnit operates.
     fn unit_witt_level(&self) -> WittLevel;
     /// The Landauer-bounded energy budget for this CompileUnit's resolution, measured in k_B T ln 2 units.
-    fn thermodynamic_budget(&self) -> P::Decimal;
+    fn thermodynamic_budget(&self) -> &P::String;
     /// The verification domain(s) targeted by this CompileUnit.
     fn target_domains(&self) -> &[VerificationDomain];
     /// Associated type for `Element`.
@@ -753,5 +753,5 @@ pub mod back_pressure_default {
     /// `pressureLevel`
     pub const PRESSURE_LEVEL: &str = "Medium";
     /// `pressureThreshold`
-    pub const PRESSURE_THRESHOLD: &str = "0.75";
+    pub const PRESSURE_THRESHOLD: f64 = 0.75;
 }

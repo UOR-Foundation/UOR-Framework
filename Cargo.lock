@@ -690,6 +690,8 @@ name = "uor-lean-codegen"
 version = "0.2.0"
 dependencies = [
  "anyhow",
+ "serde",
+ "serde_json",
  "uor-ontology",
 ]
 

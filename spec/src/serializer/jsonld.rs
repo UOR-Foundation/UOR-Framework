@@ -187,6 +187,10 @@ fn individual_to_json(ind: &crate::model::Individual) -> Value {
             IndividualValue::Str(s) => json!(s),
             IndividualValue::Int(i) => json!(i),
             IndividualValue::Bool(b) => json!(b),
+            IndividualValue::Float(x) => json!({
+                "@value": x.to_string(),
+                "@type": "xsd:decimal"
+            }),
             IndividualValue::IriRef(iri) => json!({ "@id": iri }),
             IndividualValue::List(items) => {
                 // Encode as rdf:List structure

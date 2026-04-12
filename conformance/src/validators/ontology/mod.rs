@@ -9,6 +9,7 @@ pub mod jsonld;
 pub mod owl;
 pub mod owl_xml;
 pub mod rdf;
+pub mod required_property_coverage;
 pub mod shacl;
 pub mod shacl_shapes;
 pub mod standards;

@@ -4,6 +4,5 @@
 
 import UOR.Primitives
 import UOR.Enums
-import UOR.Kernel
-import UOR.Bridge
-import UOR.User
+import UOR.Structures
+import UOR.Individuals

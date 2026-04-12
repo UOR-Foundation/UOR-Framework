@@ -231,6 +231,13 @@ fn individual_value_to_xml(elem_name: &str, value: &IndividualValue) -> String {
                 elem_name, b, elem_name
             )
         }
+        IndividualValue::Float(x) => {
+            format!(
+                "    <{} rdf:datatype=\"http://www.w3.org/2001/XMLSchema#decimal\"\
+                 >{}</{}>\n",
+                elem_name, x, elem_name
+            )
+        }
         IndividualValue::IriRef(iri) => {
             format!(
                 "    <{} rdf:resource=\"{}\"/>\n",

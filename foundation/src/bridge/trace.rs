@@ -81,12 +81,7 @@ pub trait TraceMetrics<P: Primitives> {
 }
 
 /// A computation trace that satisfies the dual geodesic condition (GD_1): AR_1-ordered and DC_10-selected. The path of least dissipation through the resolution landscape.
-pub trait GeodesicTrace<P: Primitives>: ComputationTrace<P> {
-    /// Associated type for `GeodesicCertificate`.
-    type GeodesicCertificate: crate::bridge::cert::GeodesicCertificate<P>;
-    /// The GeodesicCertificate attesting that this trace satisfied both GD_1 conditions.
-    fn geodesic_certificate(&self) -> &Self::GeodesicCertificate;
-}
+pub trait GeodesicTrace<P: Primitives>: ComputationTrace<P> {}
 
 /// A record of a geodesic condition violation at a specific step of a computation trace. Produced by GeodesicValidator when J_k(step_i) < max_\{free\} J_k(state_i).
 pub trait GeodesicViolation<P: Primitives> {
@@ -149,23 +144,23 @@ pub mod geodesic_q3 {
 /// Canonical measurement event: collapse of an equal superposition (|α|² = 0.5). Maximum von Neumann entropy S_vN = ln 2. Maximum Landauer cost per QM_1.
 pub mod collapse_equal_superposition {
     /// `postCollapseLandauerCost`
-    pub const POST_COLLAPSE_LANDAUER_COST: &str = "0.693147";
+    pub const POST_COLLAPSE_LANDAUER_COST: f64 = 0.6931471805599453;
     /// `preCollapseEntropy`
-    pub const PRE_COLLAPSE_ENTROPY: &str = "0.693147";
+    pub const PRE_COLLAPSE_ENTROPY: f64 = 0.6931471805599453;
 }
 
 /// Canonical measurement event: collapse of a biased superposition (|α|² = 0.9). Lower entropy than equal superposition. Demonstrates QM_3 bound.
 pub mod collapse_biased {
     /// `postCollapseLandauerCost`
-    pub const POST_COLLAPSE_LANDAUER_COST: &str = "0.325083";
+    pub const POST_COLLAPSE_LANDAUER_COST: f64 = 0.325083;
     /// `preCollapseEntropy`
-    pub const PRE_COLLAPSE_ENTROPY: &str = "0.325083";
+    pub const PRE_COLLAPSE_ENTROPY: f64 = 0.325083;
 }
 
 /// Canonical measurement event: collapse of a classical state (|α|² = 1). Zero entropy, zero Landauer cost. Demonstrates QM_4 idempotence.
 pub mod collapse_classical {
     /// `postCollapseLandauerCost`
-    pub const POST_COLLAPSE_LANDAUER_COST: &str = "0.0";
+    pub const POST_COLLAPSE_LANDAUER_COST: f64 = 0;
     /// `preCollapseEntropy`
-    pub const PRE_COLLAPSE_ENTROPY: &str = "0.0";
+    pub const PRE_COLLAPSE_ENTROPY: f64 = 0;
 }

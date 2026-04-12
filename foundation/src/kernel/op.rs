@@ -377,13 +377,10 @@ pub mod compose_op {
 pub mod critical_identity {
     /// `forAll` -> `term_criticalIdentity_forAll`
     pub const FOR_ALL: &str = "https://uor.foundation/schema/term_criticalIdentity_forAll";
-    /// `lhs` -> `succ`
-    pub const LHS: &str = "https://uor.foundation/op/succ";
-    /// `rhs`
-    pub const RHS: &[&str] = &[
-        "https://uor.foundation/op/neg",
-        "https://uor.foundation/op/bnot",
-    ];
+    /// `lhs` -> `term_criticalIdentity_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_criticalIdentity_lhs";
+    /// `rhs` -> `term_criticalIdentity_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_criticalIdentity_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`

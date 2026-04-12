@@ -23,7 +23,7 @@ use std::collections::{HashMap, HashSet};
 use std::fmt::Write as FmtWrite;
 use std::path::Path;
 
-use anyhow::Result;
+use anyhow::{Context, Result};
 use uor_ontology::model::{Class, Ontology, Property, PropertyKind};
 
 use crate::emit::write_file;
@@ -37,8 +37,14 @@ pub struct LeanGenerationReport {
     pub field_count: usize,
     /// Number of `inductive` + struct enum types generated.
     pub enum_count: usize,
-    /// Number of individual constant namespaces generated.
+    /// Number of individual typed `def`s generated.
     pub def_count: usize,
+    /// Number of individuals that could not be fully proven from their
+    /// ontology assertions (non-Option/non-Array fields missing an
+    /// assertion, IRI resolution failures, type mismatches, cyclic
+    /// self-references, or blocked-type fields without assertion).
+    /// Mirrored into `lean4/.uor-unproven.json` for conformance.
+    pub unproven_count: usize,
     /// Absolute paths of files written.
     pub files: Vec<String>,
 }
@@ -51,15 +57,21 @@ pub struct LeanGenerationReport {
 ///
 /// Returns an error if any file cannot be written.
 pub fn generate(ontology: &Ontology, out_dir: &Path) -> Result<LeanGenerationReport> {
+    clean_out_dir(out_dir)?;
+
     let ns_map = lean_namespace_mappings();
     let mut files = Vec::new();
-    let mut total_structures = 0usize;
-    let mut total_fields = 0usize;
-    let mut total_defs = 0usize;
 
     // Build cross-namespace maps
     let all_props_by_domain = build_all_props_by_domain(ontology);
     let all_classes_by_iri = build_all_classes_by_iri(ontology);
+    let all_individuals_by_iri = build_all_individuals_by_iri(ontology);
+    let inhabited_blocked = structures::compute_inhabited_blocked_for_ontology(
+        ontology,
+        &ns_map,
+        &all_props_by_domain,
+        &all_classes_by_iri,
+    );
 
     // 1. Generate Primitives
     let primitives_content = primitives::generate_primitives();
@@ -80,69 +92,49 @@ pub fn generate(ontology: &Ontology, out_dir: &Path) -> Result<LeanGenerationRep
     files.push(enums_path.display().to_string());
     let enum_count = enums::count_enums(ontology);
 
-    // 3. Generate per-namespace modules
+    // 3. Generate the combined structures file (single compilation unit).
+    let (structures_content, total_structures, total_fields) = structures::generate_all_structures(
+        ontology,
+        &ns_map,
+        &all_props_by_domain,
+        &all_classes_by_iri,
+    );
+    let structures_path = out_dir.join("UOR").join("Structures.lean");
+    write_file(&structures_path, &structures_content)?;
+    files.push(structures_path.display().to_string());
+
+    // 4. Generate the individuals files. Per-module split is required
+    //    because Lean's kernel hits a stack overflow if all ~3000 nested
+    //    individual namespaces are placed in a single file. An
+    //    aggregator `UOR/Individuals.lean` re-imports every per-module
+    //    file so downstream consumers only need `import UOR`.
     let skip_types: HashSet<&str> = enums::enum_individual_types().into_iter().collect();
-
-    // Track which modules belong to which space
-    let mut kernel_modules = Vec::new();
-    let mut bridge_modules = Vec::new();
-    let mut user_modules = Vec::new();
-
-    for module in &ontology.namespaces {
-        let ns_iri = module.namespace.iri;
-        let mapping = match ns_map.get(ns_iri) {
-            Some(m) => m,
-            None => continue,
-        };
-
-        let (content, sc, fc) = structures::generate_namespace_module(
-            module,
+    let (individuals_agg_content, per_module_files, total_defs, unproven_manifest) =
+        individuals::generate_all_individuals(
+            ontology,
             &ns_map,
-            &all_props_by_domain,
+            &all_individuals_by_iri,
             &all_classes_by_iri,
+            &all_props_by_domain,
+            &inhabited_blocked,
+            &skip_types,
         );
-
-        total_structures += sc;
-        total_fields += fc;
-
-        // Count individuals
-        total_defs += individuals::count_individuals(module, &skip_types);
-
-        let file_path = out_dir
-            .join("UOR")
-            .join(mapping.space_module)
-            .join(format!("{}.lean", mapping.file_module));
-        write_file(&file_path, &content)?;
+    for entry in &per_module_files {
+        let file_path = out_dir.join(&entry.rel_path);
+        write_file(&file_path, &entry.content)?;
         files.push(file_path.display().to_string());
-
-        let module_import = format!("UOR.{}.{}", mapping.space_module, mapping.file_module);
-        match mapping.space_module {
-            "Kernel" => kernel_modules.push(module_import),
-            "Bridge" => bridge_modules.push(module_import),
-            "User" => user_modules.push(module_import),
-            _ => {}
-        }
     }
+    let individuals_path = out_dir.join("UOR").join("Individuals.lean");
+    write_file(&individuals_path, &individuals_agg_content)?;
+    files.push(individuals_path.display().to_string());
 
-    // 4. Generate space-level import files
-    kernel_modules.sort();
-    bridge_modules.sort();
-    user_modules.sort();
-
-    let kernel_content = generate_space_import("Kernel-space modules.", &kernel_modules);
-    let kernel_path = out_dir.join("UOR").join("Kernel.lean");
-    write_file(&kernel_path, &kernel_content)?;
-    files.push(kernel_path.display().to_string());
-
-    let bridge_content = generate_space_import("Bridge-space modules.", &bridge_modules);
-    let bridge_path = out_dir.join("UOR").join("Bridge.lean");
-    write_file(&bridge_path, &bridge_content)?;
-    files.push(bridge_path.display().to_string());
-
-    let user_content = generate_space_import("User-space modules.", &user_modules);
-    let user_path = out_dir.join("UOR").join("User.lean");
-    write_file(&user_path, &user_content)?;
-    files.push(user_path.display().to_string());
+    // 4a. Write the unproven-individuals manifest. Always emitted
+    //     (even if empty) so the `lean4/individual_proof` conformance
+    //     check has a predictable file to read.
+    let manifest_path = out_dir.join(".uor-unproven.json");
+    write_file(&manifest_path, &unproven_manifest.to_pretty_json())?;
+    files.push(manifest_path.display().to_string());
+    let unproven_count = unproven_manifest.unproven_individual_count();
 
     // 5. Generate root UOR.lean
     let root_content = generate_root_import();
@@ -181,8 +173,33 @@ pub fn generate(ontology: &Ontology, out_dir: &Path) -> Result<LeanGenerationRep
         field_count: total_fields,
         enum_count,
         def_count: total_defs,
+        unproven_count,
         files,
     })
+}
+
+/// Removes the `UOR/` subtree of `out_dir`. Refuses to run unless
+/// a `lakefile.lean` is present in `out_dir` or its parent directory,
+/// as a hard safety guard against mis-pointed `--out` arguments.
+fn clean_out_dir(out_dir: &Path) -> Result<()> {
+    let has_lakefile_here = out_dir.join("lakefile.lean").exists();
+    let has_lakefile_parent = out_dir
+        .parent()
+        .map(|p| p.join("lakefile.lean").exists())
+        .unwrap_or(false);
+    if !has_lakefile_here && !has_lakefile_parent {
+        anyhow::bail!(
+            "Refusing to clean {}: no lakefile.lean found in this directory or its parent \
+             (not a Lean project root).",
+            out_dir.display()
+        );
+    }
+    let uor_dir = out_dir.join("UOR");
+    if uor_dir.exists() {
+        std::fs::remove_dir_all(&uor_dir)
+            .with_context(|| format!("Failed to remove {}", uor_dir.display()))?;
+    }
+    Ok(())
 }
 
 /// Builds the cross-namespace property-by-domain map.
@@ -211,20 +228,27 @@ pub fn build_all_classes_by_iri(ontology: &Ontology) -> HashMap<&str, &Class> {
     map
 }
 
-/// Generates a space-level import file (e.g., `UOR/Kernel.lean`).
-fn generate_space_import(doc: &str, modules: &[String]) -> String {
-    let mut buf = String::new();
-    let _ = writeln!(
-        buf,
-        "-- @generated by uor-lean from uor-ontology \u{2014} do not edit manually"
-    );
-    let _ = writeln!(buf, "--");
-    let _ = writeln!(buf, "-- {doc}");
-    buf.push('\n');
-    for m in modules {
-        let _ = writeln!(buf, "import {m}");
+/// Builds a map from individual IRI to the individual plus its owning
+/// `NamespaceModule`. The owning module is required when resolving an
+/// individual reference to its Lean path (`UOR.<Space>.<Module>.<name>`),
+/// because the Lean module name comes from the containing namespace's
+/// mapping entry.
+pub fn build_all_individuals_by_iri(
+    ontology: &Ontology,
+) -> HashMap<
+    &str,
+    (
+        &uor_ontology::model::Individual,
+        &uor_ontology::model::NamespaceModule,
+    ),
+> {
+    let mut map = HashMap::new();
+    for module in &ontology.namespaces {
+        for ind in &module.individuals {
+            map.insert(ind.id, (ind, module));
+        }
     }
-    buf
+    map
 }
 
 /// Generates the root `UOR.lean` import file.
@@ -239,8 +263,7 @@ fn generate_root_import() -> String {
     buf.push('\n');
     buf.push_str("import UOR.Primitives\n");
     buf.push_str("import UOR.Enums\n");
-    buf.push_str("import UOR.Kernel\n");
-    buf.push_str("import UOR.Bridge\n");
-    buf.push_str("import UOR.User\n");
+    buf.push_str("import UOR.Structures\n");
+    buf.push_str("import UOR.Individuals\n");
     buf
 }

@@ -339,7 +339,7 @@ fn generate_witt_level(f: &mut LeanFile) {
     f.line("structure WittLevel where");
     f.indented_doc_comment("The Witt vector length in bits.");
     f.line("  wittLength : Nat");
-    f.line("  deriving DecidableEq, Repr, BEq, Hashable");
+    f.line("  deriving DecidableEq, Repr, BEq, Hashable, Inhabited");
     f.blank();
     f.line("namespace WittLevel");
     f.blank();
@@ -375,11 +375,18 @@ pub fn enum_class_names() -> &'static [&'static str] {
     Ontology::enum_class_names()
 }
 
-/// Returns the set of individual types that map to enum variants (not constant modules).
+/// Returns the set of individual types that map ONLY to enum variants
+/// (not typed-def individuals). `UnaryOp`/`BinaryOp`/`Involution` are
+/// deliberately excluded: those are lifted into the synthetic
+/// `PrimitiveOp` enum, but they *also* have their individuals emitted
+/// as typed `def`s by `individuals::generate_all_individuals` so that
+/// structure-typed references to them (`op:D2n.generatedBy → neg`,
+/// `morphism:criticalComposition.lawComponents → neg`, etc.) can
+/// resolve through the subclass coercion chain. Only ontology enum
+/// classes — whose individuals have no structure declaration — are
+/// skipped by the individual emitter.
 pub fn enum_individual_types() -> Vec<&'static str> {
-    let mut types: Vec<&str> = vec!["UnaryOp", "BinaryOp", "Involution"];
-    types.extend_from_slice(Ontology::enum_class_names());
-    types
+    Ontology::enum_class_names().to_vec()
 }
 
 /// Generates PrimitiveOp method definitions from individual property data.

@@ -152,6 +152,7 @@ fn individual_value_to_turtle(value: &IndividualValue) -> String {
         IndividualValue::Str(s) => turtle_string(s),
         IndividualValue::Int(i) => format!("\"{}\"^^xsd:integer", i),
         IndividualValue::Bool(b) => format!("\"{}\"^^xsd:boolean", b),
+        IndividualValue::Float(x) => format!("\"{}\"^^xsd:decimal", x),
         IndividualValue::IriRef(iri) => format!("<{}>", iri),
         IndividualValue::List(items) => {
             // Encode as rdf:List
