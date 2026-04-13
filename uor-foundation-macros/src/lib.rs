@@ -34,6 +34,7 @@ mod address;
 mod codegen;
 mod conformance_parser;
 mod derives;
+mod generated;
 mod lexer;
 mod parser;
 mod surface;

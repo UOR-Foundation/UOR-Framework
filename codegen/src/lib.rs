@@ -17,6 +17,7 @@ pub mod emit;
 pub mod enforcement;
 pub mod enums;
 pub mod individuals;
+pub mod macros_assets;
 pub mod mapping;
 pub mod pipeline;
 pub mod traits;
@@ -162,6 +163,34 @@ pub fn generate(ontology: &Ontology, out_dir: &Path) -> Result<GenerationReport>
         .arg(&pipeline_path)
         .status();
     report.files.push("pipeline.rs".to_string());
+
+    // 8. Generate uor-foundation-macros/src/generated/ ontology assets.
+    //
+    // v0.2.1 Phase 8e: these were previously written by
+    // `uor-foundation-macros/build.rs` using `uor-ontology` as a build
+    // dep, which broke `cargo publish --dry-run` on the macros crate
+    // (path deps need a version and `uor-ontology` is publish = false).
+    // Moving generation here makes the macros crate a pure leaf with
+    // zero build deps.
+    //
+    // The target path is derived from `out_dir` (typically
+    // `foundation/src`) by walking up to the workspace root and across
+    // to `uor-foundation-macros/src/generated`. If the derived path's
+    // parent macros crate doesn't exist (e.g. when `generate` is called
+    // from a unit test with a tmp out_dir), we silently skip — the
+    // macros-crate assets are only generated in real codegen runs
+    // anchored at the workspace root.
+    if let Some(workspace_root) = out_dir.parent().and_then(|p| p.parent()) {
+        let macros_crate_dir = workspace_root.join("uor-foundation-macros");
+        if macros_crate_dir.is_dir() {
+            let macros_assets_dir = macros_crate_dir.join("src").join("generated");
+            let asset_files =
+                macros_assets::generate_macros_assets(ontology, &macros_assets_dir)?;
+            for f in asset_files {
+                report.files.push(f);
+            }
+        }
+    }
 
     Ok(report)
 }

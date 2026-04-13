@@ -6,10 +6,11 @@
 //! parameter, and dispatches to a per-form emitter that produces the correct
 //! Rust output for each declaration.
 //!
-//! v0.2.1 Phase 7c.2 + 7c.3:
+//! v0.2.1 Phase 7c.2 + 8e:
 //!
-//! - `KNOWN_KEYWORDS` and `SHAPE_REQUIRED_KEYS` are generated at macro-crate
-//!   build time from the ontology — see `build.rs` and the `include!`s below.
+//! - `KNOWN_KEYWORDS` and `SHAPE_REQUIRED_KEYS` are generated from the
+//!   ontology by `uor-crate` and checked in under `src/generated/`.
+//!   Regenerate with `cargo run --bin uor-crate`.
 //! - `compile_unit` expands to a real `Grounded<T>` via the foundation's
 //!   back-door minting API.
 //! - The other six forms (`dispatch_rule`, `witt_level`, `predicate`,
@@ -21,11 +22,10 @@ use quote::quote;
 use syn::parse::{Parse, ParseStream};
 use syn::{braced, Ident, Token, Type};
 
-// v0.2.1 Phase 7c.3: build.rs writes these from ontology walks. Reading the
-// artifacts at `include!` time means changing the ontology regenerates the
-// macro crate's surface automatically.
-include!(concat!(env!("OUT_DIR"), "/keywords.rs"));
-include!(concat!(env!("OUT_DIR"), "/shape_requirements.rs"));
+// v0.2.1 Phase 8e: ontology-derived keyword + shape-requirement tables.
+// Written by `uor-crate` into `src/generated/`.
+use crate::generated::keywords::KNOWN_KEYWORDS;
+use crate::generated::shape_requirements::SHAPE_REQUIRED_KEYS;
 
 /// A parsed conformance declaration. Carries the keyword, the identifier
 /// introduced by the declaration, the raw body text between braces, and the

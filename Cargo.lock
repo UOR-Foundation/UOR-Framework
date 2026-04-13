@@ -779,7 +779,6 @@ dependencies = [
  "syn",
  "trybuild",
  "uor-foundation",
- "uor-ontology",
 ]
 
 [[package]]
