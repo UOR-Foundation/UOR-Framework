@@ -1,0 +1,7 @@
+error[E0599]: no associated item named `W99` found for struct `WittLevel` in the current scope
+ --> tests/ui/uor_grounded_invalid_level.rs:5:1
+  |
+5 | #[uor_grounded(level = "W99")]
+  | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ associated item not found in `WittLevel`
+  |
+  = note: this error originates in the attribute macro `uor_grounded` (in Nightly builds, run with -Z macro-backtrace for more info)

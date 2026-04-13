@@ -10,6 +10,12 @@ use crate::Primitives;
 pub trait ProductiveStream<P: Primitives> {
     /// Always true by construction: every epoch terminates. Invariant, not computed.
     fn is_productive(&self) -> P::Boolean;
+    /// Associated type for `Term`.
+    type Term: crate::kernel::schema::Term<P>;
+    /// A term denoting a function from the current seed value to a pair (head, next_seed).
+    fn step_term(&self) -> &Self::Term;
+    /// IRI of a proof of stream productivity (coinductive well-foundedness).
+    fn productivity_witness(&self) -> &P::String;
 }
 
 /// A single bounded iteration within a productive stream. Each epoch is a complete reduction execution from Initialization through Convergence.

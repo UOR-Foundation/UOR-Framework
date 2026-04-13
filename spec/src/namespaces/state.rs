@@ -684,6 +684,28 @@ fn properties() -> Vec<Property> {
             domain: Some("https://uor.foundation/state/SessionComposition"),
             range: XSD_BOOLEAN,
         },
+        // v0.2.1: Conformance LeaseShape backing properties
+        Property {
+            id: "https://uor.foundation/state/linearSite",
+            label: "linearSite",
+            comment: "The site coordinate allocated linearly by this lease.",
+            kind: PropertyKind::Datatype,
+            functional: true,
+            required: false,
+            domain: Some("https://uor.foundation/state/ContextLease"),
+            range: XSD_NON_NEGATIVE_INTEGER,
+        },
+        Property {
+            id: "https://uor.foundation/state/leaseScope",
+            label: "leaseScope",
+            comment: "The lexical or session scope within which this lease is \
+                      valid.",
+            kind: PropertyKind::Datatype,
+            functional: true,
+            required: false,
+            domain: Some("https://uor.foundation/state/ContextLease"),
+            range: XSD_STRING,
+        },
     ]
 }
 

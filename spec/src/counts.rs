@@ -8,24 +8,48 @@
 pub const NAMESPACES: usize = 33;
 
 /// Total OWL classes across all namespaces.
-pub const CLASSES: usize = 441;
+///
+/// v0.2.1 Phase 1: +13 (5 verdict classes for Inhabitance — InhabitanceCertificate,
+/// InhabitanceImpossibilityWitness, InhabitanceSearchTrace, InhabitanceStep,
+/// InhabitanceCheckpoint; 4 resolver subclasses — InhabitanceResolver,
+/// TwoSatDecider, HornSatDecider, ResidualVerdictResolver; 1 schema:ValueTuple;
+/// 1 reduction:FailureField; 1 resolver:CertifyMapping; 1 conformance:PreludeExport).
+/// v0.2.1 Phase 7a: +3 (reduction:SatBound, reduction:TimingBound,
+/// type:ConstraintDefaults — parametric metadata for codegen).
+pub const CLASSES: usize = 457;
 
 /// Total properties including the global `uor:space` annotation.
-pub const PROPERTIES: usize = 890;
+///
+/// v0.2.1 Phase 1: +31.
+/// v0.2.1 Phase 7a: +7 (3 SatBound: maxVarCount/maxClauseCount/maxLiteralsPerClause;
+/// 2 TimingBound: preflightBudgetNs/runtimeBudgetNs; 1 type:defaultValue;
+/// 1 op:isRingOp — op:arity already existed as xsd:nonNegativeInteger).
+pub const PROPERTIES: usize = 928;
 
 /// Namespace-level properties only (excludes global annotation).
-pub const NAMESPACE_PROPERTIES: usize = 889;
+pub const NAMESPACE_PROPERTIES: usize = 927;
 
 /// Total named individuals across all namespaces.
 /// Includes 1870 AST term individuals (LiteralExpression / ForAllDeclaration)
 /// generated from identity lhs/rhs/forAll string values.
-pub const INDIVIDUALS: usize = 3358;
+///
+/// v0.2.1 Phase 1: +76.
+/// v0.2.1 Phase 7a: +5 (TwoSatBound, HornSatBound, PreflightTimingBound,
+/// RuntimeTimingBound, ResidueDefaultModulus).
+pub const INDIVIDUALS: usize = 3443;
 
 /// Number of SHACL test instance graphs.
-pub const SHACL_TESTS: usize = 276;
+///
+/// v0.2.1 Phase 7a: +1 (test278 SatBound/TimingBound/ConstraintDefaults fixture).
+pub const SHACL_TESTS: usize = 278;
 
 /// Total conformance checks in the full suite.
-pub const CONFORMANCE_CHECKS: usize = 471;
+///
+/// v0.2.1 Phase 1: +1 from the test277 SHACL fixture.
+/// v0.2.1 Phase 7a: +1 from test278 SatBound/TimingBound/ConstraintDefaults
+/// fixture. v0.2.1 Phase 7g: +1 from the `lean4/rigor` banned-primitives
+/// enforcement check.
+pub const CONFORMANCE_CHECKS: usize = 474;
 
 /// Number of amendments applied to the base ontology.
 pub const AMENDMENTS: usize = 95;
@@ -47,13 +71,17 @@ pub const USER_NAMESPACES: usize = 3;
 
 /// Number of trait methods generated (properties with domains,
 /// excluding enum-class-domain and cross-namespace-domain properties).
-pub const METHODS: usize = 853;
+///
+/// v0.2.1 Phase 1: +31. Phase 7a: +7 from new parametric metadata properties.
+pub const METHODS: usize = 891;
 
 /// Number of individual constant modules generated.
 pub const CONSTANT_MODULES: usize = 1501;
 
 /// Number of Lean 4 structures generated (classes minus enum classes).
-pub const LEAN_STRUCTURES: usize = 423;
+///
+/// v0.2.1 Phase 1: +13. Phase 7a: +3 (SatBound, TimingBound, ConstraintDefaults).
+pub const LEAN_STRUCTURES: usize = 426;
 
 /// Number of Lean 4 inductive + structure types generated for the enum layer.
 ///
@@ -70,7 +98,7 @@ pub const LEAN_INDUCTIVES: usize = 22;
 /// `CONSTANT_MODULES`, which counts the per-namespace-module constant
 /// files produced by the Rust codegen — those are container modules,
 /// not per-individual namespace blocks.
-pub const LEAN_CONSTANT_NAMESPACES: usize = 3258;
+pub const LEAN_CONSTANT_NAMESPACES: usize = 3343;
 
 /// Number of concept pages on the website (one per content/concepts/*.md file).
 pub const CONCEPT_PAGES: usize = 27;

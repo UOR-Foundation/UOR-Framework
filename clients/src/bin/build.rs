@@ -28,7 +28,9 @@ use std::path::PathBuf;
 
 use anyhow::{Context, Result};
 use clap::Parser;
-use uor_ontology::serializer::{ebnf, json_schema, jsonld, ntriples, owl_xml, shacl, turtle};
+use uor_ontology::serializer::{
+    conformance_ebnf, ebnf, json_schema, jsonld, ntriples, owl_xml, shacl, turtle,
+};
 use uor_ontology::Ontology;
 
 /// Build the UOR Foundation ontology artifacts.
@@ -88,6 +90,14 @@ fn main() -> Result<()> {
     fs::write(&ebnf_path, &ebnf_str)
         .with_context(|| format!("Failed to write {}", ebnf_path.display()))?;
     println!("  Written: {}", ebnf_path.display());
+
+    // v0.2.1: Conformance declaration grammar (parametric from
+    // conformance:Shape + PropertyConstraint surface metadata).
+    let conformance_ebnf_path = out.join("uor.conformance.ebnf");
+    let conformance_ebnf_str = conformance_ebnf::to_conformance_ebnf(ontology);
+    fs::write(&conformance_ebnf_path, &conformance_ebnf_str)
+        .with_context(|| format!("Failed to write {}", conformance_ebnf_path.display()))?;
+    println!("  Written: {}", conformance_ebnf_path.display());
 
     // OWL RDF/XML
     let owl_path = out.join("uor.foundation.owl");

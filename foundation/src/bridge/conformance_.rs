@@ -17,6 +17,8 @@ pub trait Shape<P: Primitives> {
     type PropertyConstraint: PropertyConstraint<P>;
     /// A required property in this shape.
     fn required_property(&self) -> &[Self::PropertyConstraint];
+    /// Top-level EBNF non-terminal name this Shape generates (e.g., "compile-unit-decl" for CompileUnitShape).
+    fn surface_form(&self) -> &P::String;
 }
 
 /// A single required property within a shape: the property URI, its expected range, minimum and maximum cardinality.
@@ -29,6 +31,10 @@ pub trait PropertyConstraint<P: Primitives> {
     fn min_count(&self) -> P::NonNegativeInteger;
     /// Maximum cardinality (0 = unbounded).
     fn max_count(&self) -> P::NonNegativeInteger;
+    /// Literal surface keyword used in the conformance grammar for this property constraint (e.g., "root_term", "witt_level_ceiling").
+    fn surface_keyword(&self) -> &P::String;
+    /// EBNF non-terminal that the value at this constraint slot must match (e.g., "program" for Term ranges, "name" for WittLevel ranges, "decimal-literal" for xsd:decimal, "domain-set" for non-functional IRI lists).
+    fn surface_production(&self) -> &P::String;
 }
 
 /// Shape for declaring a new WittLevel beyond Q3.
@@ -231,6 +237,14 @@ pub trait MintingSession<P: Primitives> {
     fn session_is_idempotent(&self) -> P::Boolean;
 }
 
+/// An ontology fact recording that a particular OWL class should appear in the foundation crate's `prelude` module re-exports. The v0.2.1 Rust codegen walks PreludeExport individuals filtered by exportsClass to assemble the prelude membership list.
+pub trait PreludeExport<P: Primitives> {
+    /// The OWL class IRI that the foundation crate's prelude module should re-export.
+    fn exports_class(&self) -> &P::String;
+    /// The Rust identifier under which the prelude exposes this symbol. Codegen uses this when the class's generated Rust name differs from a desired prelude alias.
+    fn export_rust_name(&self) -> &P::String;
+}
+
 /// Shape validating that a CompileUnit carries all required properties before reduction admission. The unitAddress property is NOT required — it is computed by stage_initialization after shape validation passes.
 pub mod compile_unit_shape {
     /// `requiredProperty`
@@ -240,6 +254,8 @@ pub mod compile_unit_shape {
         "https://uor.foundation/conformance/compileUnit_thermodynamicBudget_constraint",
         "https://uor.foundation/conformance/compileUnit_targetDomains_constraint",
     ];
+    /// `surfaceForm`
+    pub const SURFACE_FORM: &str = "compile-unit-decl";
     /// `targetClass` -> `CompileUnit`
     pub const TARGET_CLASS: &str = "https://uor.foundation/reduction/CompileUnit";
 }
@@ -254,6 +270,10 @@ pub mod compile_unit_root_term_constraint {
     pub const MAX_COUNT: i64 = 1;
     /// `minCount`
     pub const MIN_COUNT: i64 = 1;
+    /// `surfaceKeyword`
+    pub const SURFACE_KEYWORD: &str = "root_term";
+    /// `surfaceProduction`
+    pub const SURFACE_PRODUCTION: &str = "program";
 }
 
 /// Exactly one quantum level is required. Range is schema:WittLevel.
@@ -266,6 +286,10 @@ pub mod compile_unit_unit_witt_level_constraint {
     pub const MAX_COUNT: i64 = 1;
     /// `minCount`
     pub const MIN_COUNT: i64 = 1;
+    /// `surfaceKeyword`
+    pub const SURFACE_KEYWORD: &str = "witt_level_ceiling";
+    /// `surfaceProduction`
+    pub const SURFACE_PRODUCTION: &str = "name";
 }
 
 /// Exactly one thermodynamic budget is required. Shape validates presence and type; the BudgetSolvencyCheck preflight validates the value against the Landauer bound.
@@ -278,6 +302,10 @@ pub mod compile_unit_thermodynamic_budget_constraint {
     pub const MAX_COUNT: i64 = 1;
     /// `minCount`
     pub const MIN_COUNT: i64 = 1;
+    /// `surfaceKeyword`
+    pub const SURFACE_KEYWORD: &str = "thermodynamic_budget";
+    /// `surfaceProduction`
+    pub const SURFACE_PRODUCTION: &str = "decimal-literal";
 }
 
 /// At least one target verification domain is required. maxCount 0 means unbounded.
@@ -290,6 +318,10 @@ pub mod compile_unit_target_domains_constraint {
     pub const MAX_COUNT: i64 = 0;
     /// `minCount`
     pub const MIN_COUNT: i64 = 1;
+    /// `surfaceKeyword`
+    pub const SURFACE_KEYWORD: &str = "target_domains";
+    /// `surfaceProduction`
+    pub const SURFACE_PRODUCTION: &str = "domain-set";
 }
 
 /// Required property was not set on the builder.
@@ -306,3 +338,441 @@ pub mod value_check {}
 
 /// A term's quantum level annotation exceeds the CompileUnit ceiling, or binary operation operands are at different levels without an intervening lift or project.
 pub mod level_mismatch {}
+
+/// Shape instance validating predicate:DispatchRule declarations against the dispatch-rule-decl grammar.
+pub mod dispatch_shape_instance {
+    /// `requiredProperty`
+    pub const REQUIRED_PROPERTY: &[&str] = &[
+        "https://uor.foundation/conformance/dispatch_predicate_constraint",
+        "https://uor.foundation/conformance/dispatch_target_constraint",
+        "https://uor.foundation/conformance/dispatch_priority_constraint",
+    ];
+    /// `surfaceForm`
+    pub const SURFACE_FORM: &str = "dispatch-rule-decl";
+    /// `targetClass` -> `DispatchRule`
+    pub const TARGET_CLASS: &str = "https://uor.foundation/predicate/DispatchRule";
+}
+
+/// Exactly one predicate term selecting this dispatch rule.
+pub mod dispatch_predicate_constraint {
+    /// `constraintProperty` -> `dispatchPredicate`
+    pub const CONSTRAINT_PROPERTY: &str = "https://uor.foundation/predicate/dispatchPredicate";
+    /// `constraintRange` -> `Term`
+    pub const CONSTRAINT_RANGE: &str = "https://uor.foundation/schema/Term";
+    /// `maxCount`
+    pub const MAX_COUNT: i64 = 1;
+    /// `minCount`
+    pub const MIN_COUNT: i64 = 1;
+    /// `surfaceKeyword`
+    pub const SURFACE_KEYWORD: &str = "predicate";
+    /// `surfaceProduction`
+    pub const SURFACE_PRODUCTION: &str = "term";
+}
+
+/// The resolver class invoked when the predicate holds.
+pub mod dispatch_target_constraint {
+    /// `constraintProperty` -> `dispatchTarget`
+    pub const CONSTRAINT_PROPERTY: &str = "https://uor.foundation/predicate/dispatchTarget";
+    /// `constraintRange` -> `Resolver`
+    pub const CONSTRAINT_RANGE: &str = "https://uor.foundation/resolver/Resolver";
+    /// `maxCount`
+    pub const MAX_COUNT: i64 = 1;
+    /// `minCount`
+    pub const MIN_COUNT: i64 = 1;
+    /// `surfaceKeyword`
+    pub const SURFACE_KEYWORD: &str = "target_resolver";
+    /// `surfaceProduction`
+    pub const SURFACE_PRODUCTION: &str = "name";
+}
+
+/// Non-negative integer evaluation order; lower values evaluate first.
+pub mod dispatch_priority_constraint {
+    /// `constraintProperty` -> `dispatchPriority`
+    pub const CONSTRAINT_PROPERTY: &str = "https://uor.foundation/predicate/dispatchPriority";
+    /// `constraintRange` -> `nonNegativeInteger`
+    pub const CONSTRAINT_RANGE: &str = "http://www.w3.org/2001/XMLSchema#nonNegativeInteger";
+    /// `maxCount`
+    pub const MAX_COUNT: i64 = 1;
+    /// `minCount`
+    pub const MIN_COUNT: i64 = 1;
+    /// `surfaceKeyword`
+    pub const SURFACE_KEYWORD: &str = "priority";
+    /// `surfaceProduction`
+    pub const SURFACE_PRODUCTION: &str = "integer-literal";
+}
+
+/// Shape instance validating schema:WittLevel declarations against the witt-level-decl grammar.
+pub mod witt_level_shape_instance {
+    /// `requiredProperty`
+    pub const REQUIRED_PROPERTY: &[&str] = &[
+        "https://uor.foundation/conformance/wittLevel_bitWidth_constraint",
+        "https://uor.foundation/conformance/wittLevel_cycleSize_constraint",
+        "https://uor.foundation/conformance/wittLevel_predecessorLevel_constraint",
+    ];
+    /// `surfaceForm`
+    pub const SURFACE_FORM: &str = "witt-level-decl";
+    /// `targetClass` -> `WittLevel`
+    pub const TARGET_CLASS: &str = "https://uor.foundation/schema/WittLevel";
+}
+
+/// Bit width must equal 8·(k+1) for some non-negative integer k.
+pub mod witt_level_bit_width_constraint {
+    /// `constraintProperty` -> `bitsWidth`
+    pub const CONSTRAINT_PROPERTY: &str = "https://uor.foundation/schema/bitsWidth";
+    /// `constraintRange` -> `positiveInteger`
+    pub const CONSTRAINT_RANGE: &str = "http://www.w3.org/2001/XMLSchema#positiveInteger";
+    /// `maxCount`
+    pub const MAX_COUNT: i64 = 1;
+    /// `minCount`
+    pub const MIN_COUNT: i64 = 1;
+    /// `surfaceKeyword`
+    pub const SURFACE_KEYWORD: &str = "bit_width";
+    /// `surfaceProduction`
+    pub const SURFACE_PRODUCTION: &str = "integer-literal";
+}
+
+/// Cycle size must equal 2^bit_width.
+pub mod witt_level_cycle_size_constraint {
+    /// `constraintProperty` -> `cycleSize`
+    pub const CONSTRAINT_PROPERTY: &str = "https://uor.foundation/schema/cycleSize";
+    /// `constraintRange` -> `nonNegativeInteger`
+    pub const CONSTRAINT_RANGE: &str = "http://www.w3.org/2001/XMLSchema#nonNegativeInteger";
+    /// `maxCount`
+    pub const MAX_COUNT: i64 = 1;
+    /// `minCount`
+    pub const MIN_COUNT: i64 = 1;
+    /// `surfaceKeyword`
+    pub const SURFACE_KEYWORD: &str = "cycle_size";
+    /// `surfaceProduction`
+    pub const SURFACE_PRODUCTION: &str = "integer-literal";
+}
+
+/// The predecessor WittLevel individual whose nextWittLevel will be updated to point at this new level.
+pub mod witt_level_predecessor_level_constraint {
+    /// `constraintProperty` -> `wittLevelPredecessor`
+    pub const CONSTRAINT_PROPERTY: &str = "https://uor.foundation/schema/wittLevelPredecessor";
+    /// `constraintRange` -> `WittLevel`
+    pub const CONSTRAINT_RANGE: &str = "https://uor.foundation/schema/WittLevel";
+    /// `maxCount`
+    pub const MAX_COUNT: i64 = 1;
+    /// `minCount`
+    pub const MIN_COUNT: i64 = 1;
+    /// `surfaceKeyword`
+    pub const SURFACE_KEYWORD: &str = "predecessor_level";
+    /// `surfaceProduction`
+    pub const SURFACE_PRODUCTION: &str = "name";
+}
+
+/// Shape instance for predicate:Predicate declarations.
+pub mod predicate_shape_instance {
+    /// `requiredProperty`
+    pub const REQUIRED_PROPERTY: &[&str] = &[
+        "https://uor.foundation/conformance/predicate_inputType_constraint",
+        "https://uor.foundation/conformance/predicate_evaluator_constraint",
+        "https://uor.foundation/conformance/predicate_terminationWitness_constraint",
+    ];
+    /// `surfaceForm`
+    pub const SURFACE_FORM: &str = "predicate-decl";
+    /// `targetClass` -> `Predicate`
+    pub const TARGET_CLASS: &str = "https://uor.foundation/predicate/Predicate";
+}
+
+/// Input type the predicate evaluates over.
+pub mod predicate_input_type_constraint {
+    /// `constraintProperty` -> `evaluatesOver`
+    pub const CONSTRAINT_PROPERTY: &str = "https://uor.foundation/predicate/evaluatesOver";
+    /// `constraintRange` -> `TypeDefinition`
+    pub const CONSTRAINT_RANGE: &str = "https://uor.foundation/type/TypeDefinition";
+    /// `maxCount`
+    pub const MAX_COUNT: i64 = 1;
+    /// `minCount`
+    pub const MIN_COUNT: i64 = 1;
+    /// `surfaceKeyword`
+    pub const SURFACE_KEYWORD: &str = "input_type";
+    /// `surfaceProduction`
+    pub const SURFACE_PRODUCTION: &str = "type-expr";
+}
+
+/// The evaluator term producing a boolean.
+pub mod predicate_evaluator_constraint {
+    /// `constraintProperty` -> `evaluatorTerm`
+    pub const CONSTRAINT_PROPERTY: &str = "https://uor.foundation/predicate/evaluatorTerm";
+    /// `constraintRange` -> `Term`
+    pub const CONSTRAINT_RANGE: &str = "https://uor.foundation/schema/Term";
+    /// `maxCount`
+    pub const MAX_COUNT: i64 = 1;
+    /// `minCount`
+    pub const MIN_COUNT: i64 = 1;
+    /// `surfaceKeyword`
+    pub const SURFACE_KEYWORD: &str = "evaluator";
+    /// `surfaceProduction`
+    pub const SURFACE_PRODUCTION: &str = "term";
+}
+
+/// IRI of a proof:Proof attesting that the evaluator halts on all inputs.
+pub mod predicate_termination_witness_constraint {
+    /// `constraintProperty` -> `terminationWitness`
+    pub const CONSTRAINT_PROPERTY: &str = "https://uor.foundation/predicate/terminationWitness";
+    /// `constraintRange` -> `string`
+    pub const CONSTRAINT_RANGE: &str = "http://www.w3.org/2001/XMLSchema#string";
+    /// `maxCount`
+    pub const MAX_COUNT: i64 = 1;
+    /// `minCount`
+    pub const MIN_COUNT: i64 = 1;
+    /// `surfaceKeyword`
+    pub const SURFACE_KEYWORD: &str = "termination_witness";
+    /// `surfaceProduction`
+    pub const SURFACE_PRODUCTION: &str = "string-literal";
+}
+
+/// Shape instance for parallel:ParallelProduct declarations.
+pub mod parallel_shape_instance {
+    /// `requiredProperty`
+    pub const REQUIRED_PROPERTY: &[&str] = &[
+        "https://uor.foundation/conformance/parallel_sitePartition_constraint",
+        "https://uor.foundation/conformance/parallel_disjointnessWitness_constraint",
+    ];
+    /// `surfaceForm`
+    pub const SURFACE_FORM: &str = "parallel-decl";
+    /// `targetClass` -> `ParallelProduct`
+    pub const TARGET_CLASS: &str = "https://uor.foundation/parallel/ParallelProduct";
+}
+
+/// The site partition this parallel product is over.
+pub mod parallel_site_partition_constraint {
+    /// `constraintProperty` -> `sitePartition`
+    pub const CONSTRAINT_PROPERTY: &str = "https://uor.foundation/parallel/sitePartition";
+    /// `constraintRange` -> `Partition`
+    pub const CONSTRAINT_RANGE: &str = "https://uor.foundation/partition/Partition";
+    /// `maxCount`
+    pub const MAX_COUNT: i64 = 1;
+    /// `minCount`
+    pub const MIN_COUNT: i64 = 1;
+    /// `surfaceKeyword`
+    pub const SURFACE_KEYWORD: &str = "site_partition";
+    /// `surfaceProduction`
+    pub const SURFACE_PRODUCTION: &str = "name";
+}
+
+/// IRI of a proof of pairwise disjointness of the partition components.
+pub mod parallel_disjointness_witness_constraint {
+    /// `constraintProperty` -> `disjointnessWitness`
+    pub const CONSTRAINT_PROPERTY: &str = "https://uor.foundation/parallel/disjointnessWitness";
+    /// `constraintRange` -> `string`
+    pub const CONSTRAINT_RANGE: &str = "http://www.w3.org/2001/XMLSchema#string";
+    /// `maxCount`
+    pub const MAX_COUNT: i64 = 1;
+    /// `minCount`
+    pub const MIN_COUNT: i64 = 1;
+    /// `surfaceKeyword`
+    pub const SURFACE_KEYWORD: &str = "disjointness_witness";
+    /// `surfaceProduction`
+    pub const SURFACE_PRODUCTION: &str = "string-literal";
+}
+
+/// Shape instance for stream:ProductiveStream declarations.
+pub mod stream_shape_instance {
+    /// `requiredProperty`
+    pub const REQUIRED_PROPERTY: &[&str] = &[
+        "https://uor.foundation/conformance/stream_unfoldSeed_constraint",
+        "https://uor.foundation/conformance/stream_step_constraint",
+        "https://uor.foundation/conformance/stream_productivityWitness_constraint",
+    ];
+    /// `surfaceForm`
+    pub const SURFACE_FORM: &str = "stream-decl";
+    /// `targetClass` -> `ProductiveStream`
+    pub const TARGET_CLASS: &str = "https://uor.foundation/stream/ProductiveStream";
+}
+
+/// Initial seed value from which the stream unfolds.
+pub mod stream_unfold_seed_constraint {
+    /// `constraintProperty` -> `unfoldSeed`
+    pub const CONSTRAINT_PROPERTY: &str = "https://uor.foundation/stream/unfoldSeed";
+    /// `constraintRange` -> `Term`
+    pub const CONSTRAINT_RANGE: &str = "https://uor.foundation/schema/Term";
+    /// `maxCount`
+    pub const MAX_COUNT: i64 = 1;
+    /// `minCount`
+    pub const MIN_COUNT: i64 = 1;
+    /// `surfaceKeyword`
+    pub const SURFACE_KEYWORD: &str = "unfold_seed";
+    /// `surfaceProduction`
+    pub const SURFACE_PRODUCTION: &str = "term";
+}
+
+/// Function from current seed to (head, next_seed).
+pub mod stream_step_constraint {
+    /// `constraintProperty` -> `stepTerm`
+    pub const CONSTRAINT_PROPERTY: &str = "https://uor.foundation/stream/stepTerm";
+    /// `constraintRange` -> `Term`
+    pub const CONSTRAINT_RANGE: &str = "https://uor.foundation/schema/Term";
+    /// `maxCount`
+    pub const MAX_COUNT: i64 = 1;
+    /// `minCount`
+    pub const MIN_COUNT: i64 = 1;
+    /// `surfaceKeyword`
+    pub const SURFACE_KEYWORD: &str = "step";
+    /// `surfaceProduction`
+    pub const SURFACE_PRODUCTION: &str = "term";
+}
+
+/// IRI of a proof of stream productivity (coinductive well-foundedness).
+pub mod stream_productivity_witness_constraint {
+    /// `constraintProperty` -> `productivityWitness`
+    pub const CONSTRAINT_PROPERTY: &str = "https://uor.foundation/stream/productivityWitness";
+    /// `constraintRange` -> `string`
+    pub const CONSTRAINT_RANGE: &str = "http://www.w3.org/2001/XMLSchema#string";
+    /// `maxCount`
+    pub const MAX_COUNT: i64 = 1;
+    /// `minCount`
+    pub const MIN_COUNT: i64 = 1;
+    /// `surfaceKeyword`
+    pub const SURFACE_KEYWORD: &str = "productivity_witness";
+    /// `surfaceProduction`
+    pub const SURFACE_PRODUCTION: &str = "string-literal";
+}
+
+/// Shape instance for state:ContextLease declarations.
+pub mod lease_shape_instance {
+    /// `requiredProperty`
+    pub const REQUIRED_PROPERTY: &[&str] = &[
+        "https://uor.foundation/conformance/lease_linearSite_constraint",
+        "https://uor.foundation/conformance/lease_leaseScope_constraint",
+    ];
+    /// `surfaceForm`
+    pub const SURFACE_FORM: &str = "lease-decl";
+    /// `targetClass` -> `ContextLease`
+    pub const TARGET_CLASS: &str = "https://uor.foundation/state/ContextLease";
+}
+
+/// Site coordinate allocated linearly by this lease.
+pub mod lease_linear_site_constraint {
+    /// `constraintProperty` -> `linearSite`
+    pub const CONSTRAINT_PROPERTY: &str = "https://uor.foundation/state/linearSite";
+    /// `constraintRange` -> `nonNegativeInteger`
+    pub const CONSTRAINT_RANGE: &str = "http://www.w3.org/2001/XMLSchema#nonNegativeInteger";
+    /// `maxCount`
+    pub const MAX_COUNT: i64 = 1;
+    /// `minCount`
+    pub const MIN_COUNT: i64 = 1;
+    /// `surfaceKeyword`
+    pub const SURFACE_KEYWORD: &str = "linear_site";
+    /// `surfaceProduction`
+    pub const SURFACE_PRODUCTION: &str = "integer-literal";
+}
+
+/// Lexical or session scope within which the lease is valid.
+pub mod lease_lease_scope_constraint {
+    /// `constraintProperty` -> `leaseScope`
+    pub const CONSTRAINT_PROPERTY: &str = "https://uor.foundation/state/leaseScope";
+    /// `constraintRange` -> `string`
+    pub const CONSTRAINT_RANGE: &str = "http://www.w3.org/2001/XMLSchema#string";
+    /// `maxCount`
+    pub const MAX_COUNT: i64 = 1;
+    /// `minCount`
+    pub const MIN_COUNT: i64 = 1;
+    /// `surfaceKeyword`
+    pub const SURFACE_KEYWORD: &str = "lease_scope";
+    /// `surfaceProduction`
+    pub const SURFACE_PRODUCTION: &str = "string-literal";
+}
+
+/// Prelude re-export for schema:Datum.
+pub mod prelude_export_datum {
+    /// `exportsClass` -> `Datum`
+    pub const EXPORTS_CLASS: &str = "https://uor.foundation/schema/Datum";
+}
+
+/// Prelude re-export for schema:Term.
+pub mod prelude_export_term {
+    /// `exportsClass` -> `Term`
+    pub const EXPORTS_CLASS: &str = "https://uor.foundation/schema/Term";
+}
+
+/// Prelude re-export for schema:WittLevel.
+pub mod prelude_export_witt_level {
+    /// `exportsClass` -> `WittLevel`
+    pub const EXPORTS_CLASS: &str = "https://uor.foundation/schema/WittLevel";
+}
+
+/// Prelude re-export for reduction:CompileUnit.
+pub mod prelude_export_compile_unit {
+    /// `exportsClass` -> `CompileUnit`
+    pub const EXPORTS_CLASS: &str = "https://uor.foundation/reduction/CompileUnit";
+}
+
+/// Prelude re-export for conformance:CompileUnitBuilder.
+pub mod prelude_export_compile_unit_builder {
+    /// `exportsClass` -> `CompileUnitBuilder`
+    pub const EXPORTS_CLASS: &str = "https://uor.foundation/conformance/CompileUnitBuilder";
+}
+
+/// Prelude re-export for conformance:ValidatedWrapper (exposed in Rust as `Validated`).
+pub mod prelude_export_validated_wrapper {
+    /// `exportRustName`
+    pub const EXPORT_RUST_NAME: &str = "Validated";
+    /// `exportsClass` -> `ValidatedWrapper`
+    pub const EXPORTS_CLASS: &str = "https://uor.foundation/conformance/ValidatedWrapper";
+}
+
+/// Prelude re-export for conformance:ShapeViolationReport.
+pub mod prelude_export_shape_violation_report {
+    /// `exportsClass` -> `ShapeViolationReport`
+    pub const EXPORTS_CLASS: &str = "https://uor.foundation/conformance/ShapeViolationReport";
+}
+
+/// Prelude re-export for conformance:ValidationResult.
+pub mod prelude_export_validation_result {
+    /// `exportsClass` -> `ValidationResult`
+    pub const EXPORTS_CLASS: &str = "https://uor.foundation/conformance/ValidationResult";
+}
+
+/// Prelude re-export for cert:GroundingCertificate.
+pub mod prelude_export_grounding_certificate {
+    /// `exportsClass` -> `GroundingCertificate`
+    pub const EXPORTS_CLASS: &str = "https://uor.foundation/cert/GroundingCertificate";
+}
+
+/// Prelude re-export for cert:LiftChainCertificate.
+pub mod prelude_export_lift_chain_certificate {
+    /// `exportsClass` -> `LiftChainCertificate`
+    pub const EXPORTS_CLASS: &str = "https://uor.foundation/cert/LiftChainCertificate";
+}
+
+/// Prelude re-export for cert:InhabitanceCertificate (v0.2.1).
+pub mod prelude_export_inhabitance_certificate {
+    /// `exportsClass` -> `InhabitanceCertificate`
+    pub const EXPORTS_CLASS: &str = "https://uor.foundation/cert/InhabitanceCertificate";
+}
+
+/// Prelude re-export for cert:CompletenessCertificate.
+pub mod prelude_export_completeness_certificate {
+    /// `exportsClass` -> `CompletenessCertificate`
+    pub const EXPORTS_CLASS: &str = "https://uor.foundation/cert/CompletenessCertificate";
+}
+
+/// Prelude re-export for type:ConstrainedType.
+pub mod prelude_export_constrained_type {
+    /// `exportsClass` -> `ConstrainedType`
+    pub const EXPORTS_CLASS: &str = "https://uor.foundation/type/ConstrainedType";
+}
+
+/// Prelude re-export for type:CompleteType.
+pub mod prelude_export_complete_type {
+    /// `exportsClass` -> `CompleteType`
+    pub const EXPORTS_CLASS: &str = "https://uor.foundation/type/CompleteType";
+}
+
+/// Prelude re-export for state:GroundedContext.
+pub mod prelude_export_grounded_context {
+    /// `exportsClass` -> `GroundedContext`
+    pub const EXPORTS_CLASS: &str = "https://uor.foundation/state/GroundedContext";
+}
+
+/// Prelude re-export for the foundation enforcement TermArena type. Backed by conformance:WitnessDatum since TermArena has no direct OWL class but is the term-storage container.
+pub mod prelude_export_term_arena {
+    /// `exportRustName`
+    pub const EXPORT_RUST_NAME: &str = "TermArena";
+    /// `exportsClass` -> `WitnessDatum`
+    pub const EXPORTS_CLASS: &str = "https://uor.foundation/conformance/WitnessDatum";
+}

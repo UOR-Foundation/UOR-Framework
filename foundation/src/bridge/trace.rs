@@ -109,6 +109,14 @@ pub trait MeasurementOutcome<P: Primitives> {
     fn outcome_probability(&self) -> P::Decimal;
 }
 
+/// A subclass of trace:ComputationTrace specialised to inhabitance-search execution. Records the sequence of derivation:InhabitanceStep entries the resolver traversed and any derivation:InhabitanceCheckpoint entries it crossed.
+pub trait InhabitanceSearchTrace<P: Primitives>: ComputationTrace<P> {
+    /// Associated type for `InhabitanceCheckpoint`.
+    type InhabitanceCheckpoint: crate::bridge::derivation::InhabitanceCheckpoint<P>;
+    /// Checkpoints crossed by the inhabitance search. Each checkpoint marks an audit point where the resolver state can be restored if the search backtracks.
+    fn checkpoint(&self) -> &[Self::InhabitanceCheckpoint];
+}
+
 /// Canonical geodesic trace at quantum level Q0 (n=8). Demonstrates GD_1 through GD_3 at the base level.
 pub mod geodesic_q0 {
     /// `adiabaticallyOrdered`

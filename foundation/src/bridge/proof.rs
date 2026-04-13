@@ -123,6 +123,20 @@ pub trait InductionStep<P: Primitives>: DerivationTerm<P> {}
 /// A proof step performing exhaustive computation at a specific quantum level as verification witness.
 pub trait ComputationStep<P: Primitives>: DerivationTerm<P> {}
 
+/// A specialisation of proof:ImpossibilityWitness produced when the inhabitance search determines that the carrier of a ConstrainedType is empty. Aggregates into the existing proof:MorphospaceBoundary alongside other impossibility witnesses, inheriting its O(1) amortised lookup discipline for previously resolved signatures.
+pub trait InhabitanceImpossibilityWitness<P: Primitives>: ImpossibilityWitness<P> {
+    /// The Lean 4 by-contradiction derivation over the predicate vocabulary attesting that no value tuple satisfies the constraint system.
+    fn contradiction_proof(&self) -> &P::String;
+    /// Associated type for `ConstrainedType`.
+    type ConstrainedType: crate::user::type_::ConstrainedType<P>;
+    /// The type:ConstrainedType whose carrier this witness certifies as empty.
+    fn grounded(&self) -> &Self::ConstrainedType;
+    /// Associated type for `InhabitanceSearchTrace`.
+    type InhabitanceSearchTrace: crate::bridge::trace::InhabitanceSearchTrace<P>;
+    /// The audit trail of the inhabitance search up to the contradiction.
+    fn search_trace(&self) -> &Self::InhabitanceSearchTrace;
+}
+
 /// Follows from ZMod ring axioms. Lean4 tactic: `by ring`.
 pub mod ring_axiom {}
 
@@ -7964,6 +7978,54 @@ pub mod prf_cs_6 {
 pub mod prf_cs_7 {
     /// `provesIdentity` -> `CS_7`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/CS_7";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of IH_1 (inhabitance soundness): cert:InhabitanceCertificate(T).verified iff carrier(T) ≠ ∅.
+pub mod prf_ih_1 {
+    /// `provesIdentity` -> `IH_1`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/IH_1";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Cost identity for the 2-SAT decider on Is2SatShape instances. Inherited from the classical 2-SAT polynomial decision procedure.
+pub mod prf_ih_2a {
+    /// `provesIdentity` -> `IH_2a`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/IH_2a";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Cost identity for the Horn-SAT decider on IsHornShape instances. Inherited from the classical Horn-SAT polynomial decision procedure via unit propagation.
+pub mod prf_ih_2b {
+    /// `provesIdentity` -> `IH_2b`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/IH_2b";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Carrier preservation under basis reduction. Discharged against resolver:JacobianGuidedResolver and resolver:guidingJacobian vocabulary.
+pub mod prf_ih_3 {
+    /// `provesIdentity` -> `IH_3`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/IH_3";
     /// `strategy` -> `RingAxiom`
     pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`

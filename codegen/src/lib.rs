@@ -18,6 +18,7 @@ pub mod enforcement;
 pub mod enums;
 pub mod individuals;
 pub mod mapping;
+pub mod pipeline;
 pub mod traits;
 
 use std::collections::HashMap;
@@ -144,7 +145,7 @@ pub fn generate(ontology: &Ontology, out_dir: &Path) -> Result<GenerationReport>
     }
 
     // 6. Generate enforcement.rs (declarative enforcement types)
-    let enforcement_content = enforcement::generate_enforcement_module();
+    let enforcement_content = enforcement::generate_enforcement_module(ontology);
     let enforcement_path = out_dir.join("enforcement.rs");
     emit::write_file(&enforcement_path, &enforcement_content)?;
     // Run rustfmt on the generated file to ensure it matches cargo fmt output.
@@ -152,6 +153,15 @@ pub fn generate(ontology: &Ontology, out_dir: &Path) -> Result<GenerationReport>
         .arg(&enforcement_path)
         .status();
     report.files.push("enforcement.rs".to_string());
+
+    // 7. Generate pipeline.rs (v0.2.1 reduction pipeline driver)
+    let pipeline_content = pipeline::generate_pipeline_module(ontology);
+    let pipeline_path = out_dir.join("pipeline.rs");
+    emit::write_file(&pipeline_path, &pipeline_content)?;
+    let _ = std::process::Command::new("rustfmt")
+        .arg(&pipeline_path)
+        .status();
+    report.files.push("pipeline.rs".to_string());
 
     Ok(report)
 }
@@ -271,6 +281,7 @@ fn generate_lib_rs(ontology: &Ontology) -> String {
     f.line("pub mod enforcement;");
     f.line("pub mod enums;");
     f.line("pub mod kernel;");
+    f.line("pub mod pipeline;");
     f.line("pub mod user;");
     f.blank();
     f.line("pub use enums::*;");

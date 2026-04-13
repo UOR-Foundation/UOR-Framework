@@ -222,6 +222,19 @@ fn classes() -> Vec<Class> {
             subclass_of: &["https://uor.foundation/proof/DerivationTerm"],
             disjoint_with: &[],
         },
+        // v0.2.1: Inhabitance Verdict Instantiation
+        Class {
+            id: "https://uor.foundation/proof/InhabitanceImpossibilityWitness",
+            label: "InhabitanceImpossibilityWitness",
+            comment: "A specialisation of proof:ImpossibilityWitness produced \
+                      when the inhabitance search determines that the carrier \
+                      of a ConstrainedType is empty. Aggregates into the \
+                      existing proof:MorphospaceBoundary alongside other \
+                      impossibility witnesses, inheriting its O(1) amortised \
+                      lookup discipline for previously resolved signatures.",
+            subclass_of: &["https://uor.foundation/proof/ImpossibilityWitness"],
+            disjoint_with: &[],
+        },
     ]
 }
 
@@ -540,6 +553,41 @@ fn properties() -> Vec<Property> {
             required: false,
             domain: Some("https://uor.foundation/proof/Proof"),
             range: "https://uor.foundation/proof/DerivationTerm",
+        },
+        // v0.2.1: InhabitanceImpossibilityWitness properties
+        Property {
+            id: "https://uor.foundation/proof/contradictionProof",
+            label: "contradictionProof",
+            comment: "The Lean 4 by-contradiction derivation over the predicate \
+                      vocabulary attesting that no value tuple satisfies the \
+                      constraint system.",
+            kind: PropertyKind::Datatype,
+            functional: true,
+            required: false,
+            domain: Some("https://uor.foundation/proof/InhabitanceImpossibilityWitness"),
+            range: XSD_STRING,
+        },
+        Property {
+            id: "https://uor.foundation/proof/grounded",
+            label: "grounded",
+            comment: "The type:ConstrainedType whose carrier this witness \
+                      certifies as empty.",
+            kind: PropertyKind::Object,
+            functional: true,
+            required: false,
+            domain: Some("https://uor.foundation/proof/InhabitanceImpossibilityWitness"),
+            range: "https://uor.foundation/type/ConstrainedType",
+        },
+        Property {
+            id: "https://uor.foundation/proof/searchTrace",
+            label: "searchTrace",
+            comment: "The audit trail of the inhabitance search up to the \
+                      contradiction.",
+            kind: PropertyKind::Object,
+            functional: true,
+            required: false,
+            domain: Some("https://uor.foundation/proof/InhabitanceImpossibilityWitness"),
+            range: "https://uor.foundation/trace/InhabitanceSearchTrace",
         },
     ]
 }
@@ -16812,6 +16860,110 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/provesIdentity",
                     IndividualValue::IriRef("https://uor.foundation/op/CS_7"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
+                ),
+            ],
+        },
+        // v0.2.1: Inhabitance verdict identity proofs
+        Individual {
+            id: "https://uor.foundation/proof/prf_IH_1",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_IH_1",
+            comment: "Axiomatic derivation of IH_1 (inhabitance soundness): \
+                      cert:InhabitanceCertificate(T).verified iff carrier(T) \u{2260} \u{2205}.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/IH_1"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_IH_2a",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_IH_2a",
+            comment: "Cost identity for the 2-SAT decider on Is2SatShape \
+                      instances. Inherited from the classical 2-SAT polynomial \
+                      decision procedure.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/IH_2a"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_IH_2b",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_IH_2b",
+            comment: "Cost identity for the Horn-SAT decider on IsHornShape \
+                      instances. Inherited from the classical Horn-SAT \
+                      polynomial decision procedure via unit propagation.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/IH_2b"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_IH_3",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_IH_3",
+            comment: "Carrier preservation under basis reduction. Discharged \
+                      against resolver:JacobianGuidedResolver and \
+                      resolver:guidingJacobian vocabulary.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/IH_3"),
                 ),
                 (
                     "https://uor.foundation/proof/universalScope",

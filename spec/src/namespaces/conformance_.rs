@@ -308,6 +308,22 @@ fn classes() -> Vec<Class> {
             subclass_of: &[OWL_THING],
             disjoint_with: &[],
         },
+        // v0.2.1: Parametric prelude membership metadata. The Rust codegen
+        // walks PreludeExport individuals to emit the foundation::prelude
+        // module's `pub use` re-exports. Adding a new class to the prelude
+        // requires only a new PreludeExport individual referencing that
+        // class IRI.
+        Class {
+            id: "https://uor.foundation/conformance/PreludeExport",
+            label: "PreludeExport",
+            comment: "An ontology fact recording that a particular OWL class \
+                      should appear in the foundation crate's `prelude` \
+                      module re-exports. The v0.2.1 Rust codegen walks \
+                      PreludeExport individuals filtered by exportsClass to \
+                      assemble the prelude membership list.",
+            subclass_of: &[OWL_THING],
+            disjoint_with: &[],
+        },
     ]
 }
 
@@ -826,6 +842,70 @@ fn properties() -> Vec<Property> {
             domain: Some("https://uor.foundation/conformance/MintingSession"),
             range: XSD_BOOLEAN,
         },
+        // v0.2.1: Surface-grammar metadata for parametric uor.conformance.ebnf
+        // emission (the conformance ebnf serializer reads these to drive
+        // production names, keyword literals, and value-type slots).
+        Property {
+            id: "https://uor.foundation/conformance/surfaceForm",
+            label: "surfaceForm",
+            comment: "Top-level EBNF non-terminal name this Shape generates \
+                      (e.g., \"compile-unit-decl\" for CompileUnitShape).",
+            kind: PropertyKind::Datatype,
+            functional: true,
+            required: false,
+            domain: Some("https://uor.foundation/conformance/Shape"),
+            range: XSD_STRING,
+        },
+        Property {
+            id: "https://uor.foundation/conformance/surfaceKeyword",
+            label: "surfaceKeyword",
+            comment: "Literal surface keyword used in the conformance grammar \
+                      for this property constraint (e.g., \"root_term\", \
+                      \"witt_level_ceiling\").",
+            kind: PropertyKind::Datatype,
+            functional: true,
+            required: false,
+            domain: Some("https://uor.foundation/conformance/PropertyConstraint"),
+            range: XSD_STRING,
+        },
+        Property {
+            id: "https://uor.foundation/conformance/surfaceProduction",
+            label: "surfaceProduction",
+            comment: "EBNF non-terminal that the value at this constraint \
+                      slot must match (e.g., \"program\" for Term ranges, \
+                      \"name\" for WittLevel ranges, \"decimal-literal\" for \
+                      xsd:decimal, \"domain-set\" for non-functional IRI lists).",
+            kind: PropertyKind::Datatype,
+            functional: true,
+            required: false,
+            domain: Some("https://uor.foundation/conformance/PropertyConstraint"),
+            range: XSD_STRING,
+        },
+        // v0.2.1: PreludeExport metadata
+        Property {
+            id: "https://uor.foundation/conformance/exportsClass",
+            label: "exportsClass",
+            comment: "The OWL class IRI that the foundation crate's prelude \
+                      module should re-export.",
+            kind: PropertyKind::Object,
+            functional: true,
+            required: false,
+            domain: Some("https://uor.foundation/conformance/PreludeExport"),
+            range: OWL_CLASS,
+        },
+        Property {
+            id: "https://uor.foundation/conformance/exportRustName",
+            label: "exportRustName",
+            comment: "The Rust identifier under which the prelude exposes \
+                      this symbol. Codegen uses this when the class's \
+                      generated Rust name differs from a desired prelude \
+                      alias.",
+            kind: PropertyKind::Datatype,
+            functional: true,
+            required: false,
+            domain: Some("https://uor.foundation/conformance/PreludeExport"),
+            range: XSD_STRING,
+        },
     ]
 }
 
@@ -846,6 +926,10 @@ fn individuals() -> Vec<Individual> {
                     IndividualValue::IriRef(
                         "https://uor.foundation/reduction/CompileUnit",
                     ),
+                ),
+                (
+                    "https://uor.foundation/conformance/surfaceForm",
+                    IndividualValue::Str("compile-unit-decl"),
                 ),
                 (
                     "https://uor.foundation/conformance/requiredProperty",
@@ -899,6 +983,14 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/conformance/maxCount",
                     IndividualValue::Int(1),
                 ),
+                (
+                    "https://uor.foundation/conformance/surfaceKeyword",
+                    IndividualValue::Str("root_term"),
+                ),
+                (
+                    "https://uor.foundation/conformance/surfaceProduction",
+                    IndividualValue::Str("program"),
+                ),
             ],
         },
         Individual {
@@ -927,6 +1019,14 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/conformance/maxCount",
                     IndividualValue::Int(1),
+                ),
+                (
+                    "https://uor.foundation/conformance/surfaceKeyword",
+                    IndividualValue::Str("witt_level_ceiling"),
+                ),
+                (
+                    "https://uor.foundation/conformance/surfaceProduction",
+                    IndividualValue::Str("name"),
                 ),
             ],
         },
@@ -958,6 +1058,14 @@ fn individuals() -> Vec<Individual> {
                     "https://uor.foundation/conformance/maxCount",
                     IndividualValue::Int(1),
                 ),
+                (
+                    "https://uor.foundation/conformance/surfaceKeyword",
+                    IndividualValue::Str("thermodynamic_budget"),
+                ),
+                (
+                    "https://uor.foundation/conformance/surfaceProduction",
+                    IndividualValue::Str("decimal-literal"),
+                ),
             ],
         },
         Individual {
@@ -986,6 +1094,14 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/conformance/maxCount",
                     IndividualValue::Int(0),
+                ),
+                (
+                    "https://uor.foundation/conformance/surfaceKeyword",
+                    IndividualValue::Str("target_domains"),
+                ),
+                (
+                    "https://uor.foundation/conformance/surfaceProduction",
+                    IndividualValue::Str("domain-set"),
                 ),
             ],
         },
@@ -1030,6 +1146,1013 @@ fn individuals() -> Vec<Individual> {
                       are at different levels without an intervening \
                       lift or project.",
             properties: &[],
+        },
+        // ── v0.2.1: Surface-grammar metadata for the 6 conformance shapes
+        // not previously decomposed into PropertyConstraint individuals.
+        // Each shape carries a `surfaceForm` for the EBNF emitter and
+        // requiredProperty links to its constraints. Each constraint
+        // carries `surfaceKeyword` (the grammar literal) and
+        // `surfaceProduction` (the value-slot non-terminal).
+        //
+        // ── DispatchShape ──
+        Individual {
+            id: "https://uor.foundation/conformance/DispatchShapeInstance",
+            type_: "https://uor.foundation/conformance/Shape",
+            label: "DispatchShapeInstance",
+            comment: "Shape instance validating predicate:DispatchRule \
+                      declarations against the dispatch-rule-decl grammar.",
+            properties: &[
+                (
+                    "https://uor.foundation/conformance/targetClass",
+                    IndividualValue::IriRef(
+                        "https://uor.foundation/predicate/DispatchRule",
+                    ),
+                ),
+                (
+                    "https://uor.foundation/conformance/surfaceForm",
+                    IndividualValue::Str("dispatch-rule-decl"),
+                ),
+                (
+                    "https://uor.foundation/conformance/requiredProperty",
+                    IndividualValue::IriRef(
+                        "https://uor.foundation/conformance/dispatch_predicate_constraint",
+                    ),
+                ),
+                (
+                    "https://uor.foundation/conformance/requiredProperty",
+                    IndividualValue::IriRef(
+                        "https://uor.foundation/conformance/dispatch_target_constraint",
+                    ),
+                ),
+                (
+                    "https://uor.foundation/conformance/requiredProperty",
+                    IndividualValue::IriRef(
+                        "https://uor.foundation/conformance/dispatch_priority_constraint",
+                    ),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/conformance/dispatch_predicate_constraint",
+            type_: "https://uor.foundation/conformance/PropertyConstraint",
+            label: "dispatch_predicate_constraint",
+            comment: "Exactly one predicate term selecting this dispatch \
+                      rule.",
+            properties: &[
+                (
+                    "https://uor.foundation/conformance/constraintProperty",
+                    IndividualValue::IriRef(
+                        "https://uor.foundation/predicate/dispatchPredicate",
+                    ),
+                ),
+                (
+                    "https://uor.foundation/conformance/constraintRange",
+                    IndividualValue::IriRef(
+                        "https://uor.foundation/schema/Term",
+                    ),
+                ),
+                (
+                    "https://uor.foundation/conformance/minCount",
+                    IndividualValue::Int(1),
+                ),
+                (
+                    "https://uor.foundation/conformance/maxCount",
+                    IndividualValue::Int(1),
+                ),
+                (
+                    "https://uor.foundation/conformance/surfaceKeyword",
+                    IndividualValue::Str("predicate"),
+                ),
+                (
+                    "https://uor.foundation/conformance/surfaceProduction",
+                    IndividualValue::Str("term"),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/conformance/dispatch_target_constraint",
+            type_: "https://uor.foundation/conformance/PropertyConstraint",
+            label: "dispatch_target_constraint",
+            comment: "The resolver class invoked when the predicate holds.",
+            properties: &[
+                (
+                    "https://uor.foundation/conformance/constraintProperty",
+                    IndividualValue::IriRef(
+                        "https://uor.foundation/predicate/dispatchTarget",
+                    ),
+                ),
+                (
+                    "https://uor.foundation/conformance/constraintRange",
+                    IndividualValue::IriRef(
+                        "https://uor.foundation/resolver/Resolver",
+                    ),
+                ),
+                (
+                    "https://uor.foundation/conformance/minCount",
+                    IndividualValue::Int(1),
+                ),
+                (
+                    "https://uor.foundation/conformance/maxCount",
+                    IndividualValue::Int(1),
+                ),
+                (
+                    "https://uor.foundation/conformance/surfaceKeyword",
+                    IndividualValue::Str("target_resolver"),
+                ),
+                (
+                    "https://uor.foundation/conformance/surfaceProduction",
+                    IndividualValue::Str("name"),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/conformance/dispatch_priority_constraint",
+            type_: "https://uor.foundation/conformance/PropertyConstraint",
+            label: "dispatch_priority_constraint",
+            comment: "Non-negative integer evaluation order; lower values \
+                      evaluate first.",
+            properties: &[
+                (
+                    "https://uor.foundation/conformance/constraintProperty",
+                    IndividualValue::IriRef(
+                        "https://uor.foundation/predicate/dispatchPriority",
+                    ),
+                ),
+                (
+                    "https://uor.foundation/conformance/constraintRange",
+                    IndividualValue::IriRef(
+                        "http://www.w3.org/2001/XMLSchema#nonNegativeInteger",
+                    ),
+                ),
+                (
+                    "https://uor.foundation/conformance/minCount",
+                    IndividualValue::Int(1),
+                ),
+                (
+                    "https://uor.foundation/conformance/maxCount",
+                    IndividualValue::Int(1),
+                ),
+                (
+                    "https://uor.foundation/conformance/surfaceKeyword",
+                    IndividualValue::Str("priority"),
+                ),
+                (
+                    "https://uor.foundation/conformance/surfaceProduction",
+                    IndividualValue::Str("integer-literal"),
+                ),
+            ],
+        },
+        // ── WittLevelShape ──
+        Individual {
+            id: "https://uor.foundation/conformance/WittLevelShapeInstance",
+            type_: "https://uor.foundation/conformance/Shape",
+            label: "WittLevelShapeInstance",
+            comment: "Shape instance validating schema:WittLevel declarations \
+                      against the witt-level-decl grammar.",
+            properties: &[
+                (
+                    "https://uor.foundation/conformance/targetClass",
+                    IndividualValue::IriRef(
+                        "https://uor.foundation/schema/WittLevel",
+                    ),
+                ),
+                (
+                    "https://uor.foundation/conformance/surfaceForm",
+                    IndividualValue::Str("witt-level-decl"),
+                ),
+                (
+                    "https://uor.foundation/conformance/requiredProperty",
+                    IndividualValue::IriRef(
+                        "https://uor.foundation/conformance/wittLevel_bitWidth_constraint",
+                    ),
+                ),
+                (
+                    "https://uor.foundation/conformance/requiredProperty",
+                    IndividualValue::IriRef(
+                        "https://uor.foundation/conformance/wittLevel_cycleSize_constraint",
+                    ),
+                ),
+                (
+                    "https://uor.foundation/conformance/requiredProperty",
+                    IndividualValue::IriRef(
+                        "https://uor.foundation/conformance/wittLevel_predecessorLevel_constraint",
+                    ),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/conformance/wittLevel_bitWidth_constraint",
+            type_: "https://uor.foundation/conformance/PropertyConstraint",
+            label: "wittLevel_bitWidth_constraint",
+            comment: "Bit width must equal 8\u{00b7}(k+1) for some \
+                      non-negative integer k.",
+            properties: &[
+                (
+                    "https://uor.foundation/conformance/constraintProperty",
+                    IndividualValue::IriRef(
+                        "https://uor.foundation/schema/bitsWidth",
+                    ),
+                ),
+                (
+                    "https://uor.foundation/conformance/constraintRange",
+                    IndividualValue::IriRef(
+                        "http://www.w3.org/2001/XMLSchema#positiveInteger",
+                    ),
+                ),
+                (
+                    "https://uor.foundation/conformance/minCount",
+                    IndividualValue::Int(1),
+                ),
+                (
+                    "https://uor.foundation/conformance/maxCount",
+                    IndividualValue::Int(1),
+                ),
+                (
+                    "https://uor.foundation/conformance/surfaceKeyword",
+                    IndividualValue::Str("bit_width"),
+                ),
+                (
+                    "https://uor.foundation/conformance/surfaceProduction",
+                    IndividualValue::Str("integer-literal"),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/conformance/wittLevel_cycleSize_constraint",
+            type_: "https://uor.foundation/conformance/PropertyConstraint",
+            label: "wittLevel_cycleSize_constraint",
+            comment: "Cycle size must equal 2^bit_width.",
+            properties: &[
+                (
+                    "https://uor.foundation/conformance/constraintProperty",
+                    IndividualValue::IriRef(
+                        "https://uor.foundation/schema/cycleSize",
+                    ),
+                ),
+                (
+                    "https://uor.foundation/conformance/constraintRange",
+                    IndividualValue::IriRef(
+                        "http://www.w3.org/2001/XMLSchema#nonNegativeInteger",
+                    ),
+                ),
+                (
+                    "https://uor.foundation/conformance/minCount",
+                    IndividualValue::Int(1),
+                ),
+                (
+                    "https://uor.foundation/conformance/maxCount",
+                    IndividualValue::Int(1),
+                ),
+                (
+                    "https://uor.foundation/conformance/surfaceKeyword",
+                    IndividualValue::Str("cycle_size"),
+                ),
+                (
+                    "https://uor.foundation/conformance/surfaceProduction",
+                    IndividualValue::Str("integer-literal"),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/conformance/wittLevel_predecessorLevel_constraint",
+            type_: "https://uor.foundation/conformance/PropertyConstraint",
+            label: "wittLevel_predecessorLevel_constraint",
+            comment: "The predecessor WittLevel individual whose nextWittLevel \
+                      will be updated to point at this new level.",
+            properties: &[
+                (
+                    "https://uor.foundation/conformance/constraintProperty",
+                    IndividualValue::IriRef(
+                        "https://uor.foundation/schema/wittLevelPredecessor",
+                    ),
+                ),
+                (
+                    "https://uor.foundation/conformance/constraintRange",
+                    IndividualValue::IriRef(
+                        "https://uor.foundation/schema/WittLevel",
+                    ),
+                ),
+                (
+                    "https://uor.foundation/conformance/minCount",
+                    IndividualValue::Int(1),
+                ),
+                (
+                    "https://uor.foundation/conformance/maxCount",
+                    IndividualValue::Int(1),
+                ),
+                (
+                    "https://uor.foundation/conformance/surfaceKeyword",
+                    IndividualValue::Str("predecessor_level"),
+                ),
+                (
+                    "https://uor.foundation/conformance/surfaceProduction",
+                    IndividualValue::Str("name"),
+                ),
+            ],
+        },
+        // ── PredicateShape ──
+        Individual {
+            id: "https://uor.foundation/conformance/PredicateShapeInstance",
+            type_: "https://uor.foundation/conformance/Shape",
+            label: "PredicateShapeInstance",
+            comment: "Shape instance for predicate:Predicate declarations.",
+            properties: &[
+                (
+                    "https://uor.foundation/conformance/targetClass",
+                    IndividualValue::IriRef(
+                        "https://uor.foundation/predicate/Predicate",
+                    ),
+                ),
+                (
+                    "https://uor.foundation/conformance/surfaceForm",
+                    IndividualValue::Str("predicate-decl"),
+                ),
+                (
+                    "https://uor.foundation/conformance/requiredProperty",
+                    IndividualValue::IriRef(
+                        "https://uor.foundation/conformance/predicate_inputType_constraint",
+                    ),
+                ),
+                (
+                    "https://uor.foundation/conformance/requiredProperty",
+                    IndividualValue::IriRef(
+                        "https://uor.foundation/conformance/predicate_evaluator_constraint",
+                    ),
+                ),
+                (
+                    "https://uor.foundation/conformance/requiredProperty",
+                    IndividualValue::IriRef(
+                        "https://uor.foundation/conformance/predicate_terminationWitness_constraint",
+                    ),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/conformance/predicate_inputType_constraint",
+            type_: "https://uor.foundation/conformance/PropertyConstraint",
+            label: "predicate_inputType_constraint",
+            comment: "Input type the predicate evaluates over.",
+            properties: &[
+                (
+                    "https://uor.foundation/conformance/constraintProperty",
+                    IndividualValue::IriRef(
+                        "https://uor.foundation/predicate/evaluatesOver",
+                    ),
+                ),
+                (
+                    "https://uor.foundation/conformance/constraintRange",
+                    IndividualValue::IriRef(
+                        "https://uor.foundation/type/TypeDefinition",
+                    ),
+                ),
+                (
+                    "https://uor.foundation/conformance/minCount",
+                    IndividualValue::Int(1),
+                ),
+                (
+                    "https://uor.foundation/conformance/maxCount",
+                    IndividualValue::Int(1),
+                ),
+                (
+                    "https://uor.foundation/conformance/surfaceKeyword",
+                    IndividualValue::Str("input_type"),
+                ),
+                (
+                    "https://uor.foundation/conformance/surfaceProduction",
+                    IndividualValue::Str("type-expr"),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/conformance/predicate_evaluator_constraint",
+            type_: "https://uor.foundation/conformance/PropertyConstraint",
+            label: "predicate_evaluator_constraint",
+            comment: "The evaluator term producing a boolean.",
+            properties: &[
+                (
+                    "https://uor.foundation/conformance/constraintProperty",
+                    IndividualValue::IriRef(
+                        "https://uor.foundation/predicate/evaluatorTerm",
+                    ),
+                ),
+                (
+                    "https://uor.foundation/conformance/constraintRange",
+                    IndividualValue::IriRef(
+                        "https://uor.foundation/schema/Term",
+                    ),
+                ),
+                (
+                    "https://uor.foundation/conformance/minCount",
+                    IndividualValue::Int(1),
+                ),
+                (
+                    "https://uor.foundation/conformance/maxCount",
+                    IndividualValue::Int(1),
+                ),
+                (
+                    "https://uor.foundation/conformance/surfaceKeyword",
+                    IndividualValue::Str("evaluator"),
+                ),
+                (
+                    "https://uor.foundation/conformance/surfaceProduction",
+                    IndividualValue::Str("term"),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/conformance/predicate_terminationWitness_constraint",
+            type_: "https://uor.foundation/conformance/PropertyConstraint",
+            label: "predicate_terminationWitness_constraint",
+            comment: "IRI of a proof:Proof attesting that the evaluator \
+                      halts on all inputs.",
+            properties: &[
+                (
+                    "https://uor.foundation/conformance/constraintProperty",
+                    IndividualValue::IriRef(
+                        "https://uor.foundation/predicate/terminationWitness",
+                    ),
+                ),
+                (
+                    "https://uor.foundation/conformance/constraintRange",
+                    IndividualValue::IriRef(
+                        "http://www.w3.org/2001/XMLSchema#string",
+                    ),
+                ),
+                (
+                    "https://uor.foundation/conformance/minCount",
+                    IndividualValue::Int(1),
+                ),
+                (
+                    "https://uor.foundation/conformance/maxCount",
+                    IndividualValue::Int(1),
+                ),
+                (
+                    "https://uor.foundation/conformance/surfaceKeyword",
+                    IndividualValue::Str("termination_witness"),
+                ),
+                (
+                    "https://uor.foundation/conformance/surfaceProduction",
+                    IndividualValue::Str("string-literal"),
+                ),
+            ],
+        },
+        // ── ParallelShape ──
+        Individual {
+            id: "https://uor.foundation/conformance/ParallelShapeInstance",
+            type_: "https://uor.foundation/conformance/Shape",
+            label: "ParallelShapeInstance",
+            comment: "Shape instance for parallel:ParallelProduct declarations.",
+            properties: &[
+                (
+                    "https://uor.foundation/conformance/targetClass",
+                    IndividualValue::IriRef(
+                        "https://uor.foundation/parallel/ParallelProduct",
+                    ),
+                ),
+                (
+                    "https://uor.foundation/conformance/surfaceForm",
+                    IndividualValue::Str("parallel-decl"),
+                ),
+                (
+                    "https://uor.foundation/conformance/requiredProperty",
+                    IndividualValue::IriRef(
+                        "https://uor.foundation/conformance/parallel_sitePartition_constraint",
+                    ),
+                ),
+                (
+                    "https://uor.foundation/conformance/requiredProperty",
+                    IndividualValue::IriRef(
+                        "https://uor.foundation/conformance/parallel_disjointnessWitness_constraint",
+                    ),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/conformance/parallel_sitePartition_constraint",
+            type_: "https://uor.foundation/conformance/PropertyConstraint",
+            label: "parallel_sitePartition_constraint",
+            comment: "The site partition this parallel product is over.",
+            properties: &[
+                (
+                    "https://uor.foundation/conformance/constraintProperty",
+                    IndividualValue::IriRef(
+                        "https://uor.foundation/parallel/sitePartition",
+                    ),
+                ),
+                (
+                    "https://uor.foundation/conformance/constraintRange",
+                    IndividualValue::IriRef(
+                        "https://uor.foundation/partition/Partition",
+                    ),
+                ),
+                (
+                    "https://uor.foundation/conformance/minCount",
+                    IndividualValue::Int(1),
+                ),
+                (
+                    "https://uor.foundation/conformance/maxCount",
+                    IndividualValue::Int(1),
+                ),
+                (
+                    "https://uor.foundation/conformance/surfaceKeyword",
+                    IndividualValue::Str("site_partition"),
+                ),
+                (
+                    "https://uor.foundation/conformance/surfaceProduction",
+                    IndividualValue::Str("name"),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/conformance/parallel_disjointnessWitness_constraint",
+            type_: "https://uor.foundation/conformance/PropertyConstraint",
+            label: "parallel_disjointnessWitness_constraint",
+            comment: "IRI of a proof of pairwise disjointness of the \
+                      partition components.",
+            properties: &[
+                (
+                    "https://uor.foundation/conformance/constraintProperty",
+                    IndividualValue::IriRef(
+                        "https://uor.foundation/parallel/disjointnessWitness",
+                    ),
+                ),
+                (
+                    "https://uor.foundation/conformance/constraintRange",
+                    IndividualValue::IriRef(
+                        "http://www.w3.org/2001/XMLSchema#string",
+                    ),
+                ),
+                (
+                    "https://uor.foundation/conformance/minCount",
+                    IndividualValue::Int(1),
+                ),
+                (
+                    "https://uor.foundation/conformance/maxCount",
+                    IndividualValue::Int(1),
+                ),
+                (
+                    "https://uor.foundation/conformance/surfaceKeyword",
+                    IndividualValue::Str("disjointness_witness"),
+                ),
+                (
+                    "https://uor.foundation/conformance/surfaceProduction",
+                    IndividualValue::Str("string-literal"),
+                ),
+            ],
+        },
+        // ── StreamShape ──
+        Individual {
+            id: "https://uor.foundation/conformance/StreamShapeInstance",
+            type_: "https://uor.foundation/conformance/Shape",
+            label: "StreamShapeInstance",
+            comment: "Shape instance for stream:ProductiveStream declarations.",
+            properties: &[
+                (
+                    "https://uor.foundation/conformance/targetClass",
+                    IndividualValue::IriRef(
+                        "https://uor.foundation/stream/ProductiveStream",
+                    ),
+                ),
+                (
+                    "https://uor.foundation/conformance/surfaceForm",
+                    IndividualValue::Str("stream-decl"),
+                ),
+                (
+                    "https://uor.foundation/conformance/requiredProperty",
+                    IndividualValue::IriRef(
+                        "https://uor.foundation/conformance/stream_unfoldSeed_constraint",
+                    ),
+                ),
+                (
+                    "https://uor.foundation/conformance/requiredProperty",
+                    IndividualValue::IriRef(
+                        "https://uor.foundation/conformance/stream_step_constraint",
+                    ),
+                ),
+                (
+                    "https://uor.foundation/conformance/requiredProperty",
+                    IndividualValue::IriRef(
+                        "https://uor.foundation/conformance/stream_productivityWitness_constraint",
+                    ),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/conformance/stream_unfoldSeed_constraint",
+            type_: "https://uor.foundation/conformance/PropertyConstraint",
+            label: "stream_unfoldSeed_constraint",
+            comment: "Initial seed value from which the stream unfolds.",
+            properties: &[
+                (
+                    "https://uor.foundation/conformance/constraintProperty",
+                    IndividualValue::IriRef(
+                        "https://uor.foundation/stream/unfoldSeed",
+                    ),
+                ),
+                (
+                    "https://uor.foundation/conformance/constraintRange",
+                    IndividualValue::IriRef(
+                        "https://uor.foundation/schema/Term",
+                    ),
+                ),
+                (
+                    "https://uor.foundation/conformance/minCount",
+                    IndividualValue::Int(1),
+                ),
+                (
+                    "https://uor.foundation/conformance/maxCount",
+                    IndividualValue::Int(1),
+                ),
+                (
+                    "https://uor.foundation/conformance/surfaceKeyword",
+                    IndividualValue::Str("unfold_seed"),
+                ),
+                (
+                    "https://uor.foundation/conformance/surfaceProduction",
+                    IndividualValue::Str("term"),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/conformance/stream_step_constraint",
+            type_: "https://uor.foundation/conformance/PropertyConstraint",
+            label: "stream_step_constraint",
+            comment: "Function from current seed to (head, next_seed).",
+            properties: &[
+                (
+                    "https://uor.foundation/conformance/constraintProperty",
+                    IndividualValue::IriRef(
+                        "https://uor.foundation/stream/stepTerm",
+                    ),
+                ),
+                (
+                    "https://uor.foundation/conformance/constraintRange",
+                    IndividualValue::IriRef(
+                        "https://uor.foundation/schema/Term",
+                    ),
+                ),
+                (
+                    "https://uor.foundation/conformance/minCount",
+                    IndividualValue::Int(1),
+                ),
+                (
+                    "https://uor.foundation/conformance/maxCount",
+                    IndividualValue::Int(1),
+                ),
+                (
+                    "https://uor.foundation/conformance/surfaceKeyword",
+                    IndividualValue::Str("step"),
+                ),
+                (
+                    "https://uor.foundation/conformance/surfaceProduction",
+                    IndividualValue::Str("term"),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/conformance/stream_productivityWitness_constraint",
+            type_: "https://uor.foundation/conformance/PropertyConstraint",
+            label: "stream_productivityWitness_constraint",
+            comment: "IRI of a proof of stream productivity (coinductive \
+                      well-foundedness).",
+            properties: &[
+                (
+                    "https://uor.foundation/conformance/constraintProperty",
+                    IndividualValue::IriRef(
+                        "https://uor.foundation/stream/productivityWitness",
+                    ),
+                ),
+                (
+                    "https://uor.foundation/conformance/constraintRange",
+                    IndividualValue::IriRef(
+                        "http://www.w3.org/2001/XMLSchema#string",
+                    ),
+                ),
+                (
+                    "https://uor.foundation/conformance/minCount",
+                    IndividualValue::Int(1),
+                ),
+                (
+                    "https://uor.foundation/conformance/maxCount",
+                    IndividualValue::Int(1),
+                ),
+                (
+                    "https://uor.foundation/conformance/surfaceKeyword",
+                    IndividualValue::Str("productivity_witness"),
+                ),
+                (
+                    "https://uor.foundation/conformance/surfaceProduction",
+                    IndividualValue::Str("string-literal"),
+                ),
+            ],
+        },
+        // ── LeaseShape ──
+        Individual {
+            id: "https://uor.foundation/conformance/LeaseShapeInstance",
+            type_: "https://uor.foundation/conformance/Shape",
+            label: "LeaseShapeInstance",
+            comment: "Shape instance for state:ContextLease declarations.",
+            properties: &[
+                (
+                    "https://uor.foundation/conformance/targetClass",
+                    IndividualValue::IriRef(
+                        "https://uor.foundation/state/ContextLease",
+                    ),
+                ),
+                (
+                    "https://uor.foundation/conformance/surfaceForm",
+                    IndividualValue::Str("lease-decl"),
+                ),
+                (
+                    "https://uor.foundation/conformance/requiredProperty",
+                    IndividualValue::IriRef(
+                        "https://uor.foundation/conformance/lease_linearSite_constraint",
+                    ),
+                ),
+                (
+                    "https://uor.foundation/conformance/requiredProperty",
+                    IndividualValue::IriRef(
+                        "https://uor.foundation/conformance/lease_leaseScope_constraint",
+                    ),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/conformance/lease_linearSite_constraint",
+            type_: "https://uor.foundation/conformance/PropertyConstraint",
+            label: "lease_linearSite_constraint",
+            comment: "Site coordinate allocated linearly by this lease.",
+            properties: &[
+                (
+                    "https://uor.foundation/conformance/constraintProperty",
+                    IndividualValue::IriRef(
+                        "https://uor.foundation/state/linearSite",
+                    ),
+                ),
+                (
+                    "https://uor.foundation/conformance/constraintRange",
+                    IndividualValue::IriRef(
+                        "http://www.w3.org/2001/XMLSchema#nonNegativeInteger",
+                    ),
+                ),
+                (
+                    "https://uor.foundation/conformance/minCount",
+                    IndividualValue::Int(1),
+                ),
+                (
+                    "https://uor.foundation/conformance/maxCount",
+                    IndividualValue::Int(1),
+                ),
+                (
+                    "https://uor.foundation/conformance/surfaceKeyword",
+                    IndividualValue::Str("linear_site"),
+                ),
+                (
+                    "https://uor.foundation/conformance/surfaceProduction",
+                    IndividualValue::Str("integer-literal"),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/conformance/lease_leaseScope_constraint",
+            type_: "https://uor.foundation/conformance/PropertyConstraint",
+            label: "lease_leaseScope_constraint",
+            comment: "Lexical or session scope within which the lease is valid.",
+            properties: &[
+                (
+                    "https://uor.foundation/conformance/constraintProperty",
+                    IndividualValue::IriRef(
+                        "https://uor.foundation/state/leaseScope",
+                    ),
+                ),
+                (
+                    "https://uor.foundation/conformance/constraintRange",
+                    IndividualValue::IriRef(
+                        "http://www.w3.org/2001/XMLSchema#string",
+                    ),
+                ),
+                (
+                    "https://uor.foundation/conformance/minCount",
+                    IndividualValue::Int(1),
+                ),
+                (
+                    "https://uor.foundation/conformance/maxCount",
+                    IndividualValue::Int(1),
+                ),
+                (
+                    "https://uor.foundation/conformance/surfaceKeyword",
+                    IndividualValue::Str("lease_scope"),
+                ),
+                (
+                    "https://uor.foundation/conformance/surfaceProduction",
+                    IndividualValue::Str("string-literal"),
+                ),
+            ],
+        },
+        // ── v0.2.1: PreludeExport facts. The Rust codegen reads these to
+        // assemble foundation::prelude. Each individual carries the OWL
+        // class IRI and (optionally) the Rust alias name. The macros uor!
+        // and uor_ground! plus the Primitives trait are added by the
+        // codegen as static line entries — they are not OWL classes.
+        Individual {
+            id: "https://uor.foundation/conformance/preludeExport_Datum",
+            type_: "https://uor.foundation/conformance/PreludeExport",
+            label: "preludeExport_Datum",
+            comment: "Prelude re-export for schema:Datum.",
+            properties: &[(
+                "https://uor.foundation/conformance/exportsClass",
+                IndividualValue::IriRef("https://uor.foundation/schema/Datum"),
+            )],
+        },
+        Individual {
+            id: "https://uor.foundation/conformance/preludeExport_Term",
+            type_: "https://uor.foundation/conformance/PreludeExport",
+            label: "preludeExport_Term",
+            comment: "Prelude re-export for schema:Term.",
+            properties: &[(
+                "https://uor.foundation/conformance/exportsClass",
+                IndividualValue::IriRef("https://uor.foundation/schema/Term"),
+            )],
+        },
+        Individual {
+            id: "https://uor.foundation/conformance/preludeExport_WittLevel",
+            type_: "https://uor.foundation/conformance/PreludeExport",
+            label: "preludeExport_WittLevel",
+            comment: "Prelude re-export for schema:WittLevel.",
+            properties: &[(
+                "https://uor.foundation/conformance/exportsClass",
+                IndividualValue::IriRef("https://uor.foundation/schema/WittLevel"),
+            )],
+        },
+        Individual {
+            id: "https://uor.foundation/conformance/preludeExport_CompileUnit",
+            type_: "https://uor.foundation/conformance/PreludeExport",
+            label: "preludeExport_CompileUnit",
+            comment: "Prelude re-export for reduction:CompileUnit.",
+            properties: &[(
+                "https://uor.foundation/conformance/exportsClass",
+                IndividualValue::IriRef("https://uor.foundation/reduction/CompileUnit"),
+            )],
+        },
+        Individual {
+            id: "https://uor.foundation/conformance/preludeExport_CompileUnitBuilder",
+            type_: "https://uor.foundation/conformance/PreludeExport",
+            label: "preludeExport_CompileUnitBuilder",
+            comment: "Prelude re-export for conformance:CompileUnitBuilder.",
+            properties: &[(
+                "https://uor.foundation/conformance/exportsClass",
+                IndividualValue::IriRef(
+                    "https://uor.foundation/conformance/CompileUnitBuilder",
+                ),
+            )],
+        },
+        Individual {
+            id: "https://uor.foundation/conformance/preludeExport_ValidatedWrapper",
+            type_: "https://uor.foundation/conformance/PreludeExport",
+            label: "preludeExport_ValidatedWrapper",
+            comment: "Prelude re-export for conformance:ValidatedWrapper \
+                      (exposed in Rust as `Validated`).",
+            properties: &[
+                (
+                    "https://uor.foundation/conformance/exportsClass",
+                    IndividualValue::IriRef(
+                        "https://uor.foundation/conformance/ValidatedWrapper",
+                    ),
+                ),
+                (
+                    "https://uor.foundation/conformance/exportRustName",
+                    IndividualValue::Str("Validated"),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/conformance/preludeExport_ShapeViolationReport",
+            type_: "https://uor.foundation/conformance/PreludeExport",
+            label: "preludeExport_ShapeViolationReport",
+            comment: "Prelude re-export for conformance:ShapeViolationReport.",
+            properties: &[(
+                "https://uor.foundation/conformance/exportsClass",
+                IndividualValue::IriRef(
+                    "https://uor.foundation/conformance/ShapeViolationReport",
+                ),
+            )],
+        },
+        Individual {
+            id: "https://uor.foundation/conformance/preludeExport_ValidationResult",
+            type_: "https://uor.foundation/conformance/PreludeExport",
+            label: "preludeExport_ValidationResult",
+            comment: "Prelude re-export for conformance:ValidationResult.",
+            properties: &[(
+                "https://uor.foundation/conformance/exportsClass",
+                IndividualValue::IriRef(
+                    "https://uor.foundation/conformance/ValidationResult",
+                ),
+            )],
+        },
+        Individual {
+            id: "https://uor.foundation/conformance/preludeExport_GroundingCertificate",
+            type_: "https://uor.foundation/conformance/PreludeExport",
+            label: "preludeExport_GroundingCertificate",
+            comment: "Prelude re-export for cert:GroundingCertificate.",
+            properties: &[(
+                "https://uor.foundation/conformance/exportsClass",
+                IndividualValue::IriRef(
+                    "https://uor.foundation/cert/GroundingCertificate",
+                ),
+            )],
+        },
+        Individual {
+            id: "https://uor.foundation/conformance/preludeExport_LiftChainCertificate",
+            type_: "https://uor.foundation/conformance/PreludeExport",
+            label: "preludeExport_LiftChainCertificate",
+            comment: "Prelude re-export for cert:LiftChainCertificate.",
+            properties: &[(
+                "https://uor.foundation/conformance/exportsClass",
+                IndividualValue::IriRef(
+                    "https://uor.foundation/cert/LiftChainCertificate",
+                ),
+            )],
+        },
+        Individual {
+            id: "https://uor.foundation/conformance/preludeExport_InhabitanceCertificate",
+            type_: "https://uor.foundation/conformance/PreludeExport",
+            label: "preludeExport_InhabitanceCertificate",
+            comment: "Prelude re-export for cert:InhabitanceCertificate (v0.2.1).",
+            properties: &[(
+                "https://uor.foundation/conformance/exportsClass",
+                IndividualValue::IriRef(
+                    "https://uor.foundation/cert/InhabitanceCertificate",
+                ),
+            )],
+        },
+        Individual {
+            id: "https://uor.foundation/conformance/preludeExport_CompletenessCertificate",
+            type_: "https://uor.foundation/conformance/PreludeExport",
+            label: "preludeExport_CompletenessCertificate",
+            comment: "Prelude re-export for cert:CompletenessCertificate.",
+            properties: &[(
+                "https://uor.foundation/conformance/exportsClass",
+                IndividualValue::IriRef(
+                    "https://uor.foundation/cert/CompletenessCertificate",
+                ),
+            )],
+        },
+        Individual {
+            id: "https://uor.foundation/conformance/preludeExport_ConstrainedType",
+            type_: "https://uor.foundation/conformance/PreludeExport",
+            label: "preludeExport_ConstrainedType",
+            comment: "Prelude re-export for type:ConstrainedType.",
+            properties: &[(
+                "https://uor.foundation/conformance/exportsClass",
+                IndividualValue::IriRef(
+                    "https://uor.foundation/type/ConstrainedType",
+                ),
+            )],
+        },
+        Individual {
+            id: "https://uor.foundation/conformance/preludeExport_CompleteType",
+            type_: "https://uor.foundation/conformance/PreludeExport",
+            label: "preludeExport_CompleteType",
+            comment: "Prelude re-export for type:CompleteType.",
+            properties: &[(
+                "https://uor.foundation/conformance/exportsClass",
+                IndividualValue::IriRef(
+                    "https://uor.foundation/type/CompleteType",
+                ),
+            )],
+        },
+        Individual {
+            id: "https://uor.foundation/conformance/preludeExport_GroundedContext",
+            type_: "https://uor.foundation/conformance/PreludeExport",
+            label: "preludeExport_GroundedContext",
+            comment: "Prelude re-export for state:GroundedContext.",
+            properties: &[(
+                "https://uor.foundation/conformance/exportsClass",
+                IndividualValue::IriRef(
+                    "https://uor.foundation/state/GroundedContext",
+                ),
+            )],
+        },
+        Individual {
+            id: "https://uor.foundation/conformance/preludeExport_TermArena",
+            type_: "https://uor.foundation/conformance/PreludeExport",
+            label: "preludeExport_TermArena",
+            comment: "Prelude re-export for the foundation enforcement \
+                      TermArena type. Backed by conformance:WitnessDatum \
+                      since TermArena has no direct OWL class but is the \
+                      term-storage container.",
+            properties: &[
+                (
+                    "https://uor.foundation/conformance/exportsClass",
+                    IndividualValue::IriRef(
+                        "https://uor.foundation/conformance/WitnessDatum",
+                    ),
+                ),
+                (
+                    "https://uor.foundation/conformance/exportRustName",
+                    IndividualValue::Str("TermArena"),
+                ),
+            ],
         },
     ]
 }

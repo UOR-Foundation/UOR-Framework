@@ -350,6 +350,51 @@ fn classes() -> Vec<Class> {
             subclass_of: &[OWL_THING],
             disjoint_with: &[],
         },
+        // v0.2.1: Parametric PipelineFailure variant-field metadata.
+        // The Rust codegen reads FailureField individuals to generate one
+        // PipelineFailure enum variant per PipelineFailureReason individual,
+        // with named Rust fields read from the ofFailure / fieldName / \
+        // fieldType properties on each FailureField.
+        Class {
+            id: "https://uor.foundation/reduction/FailureField",
+            label: "FailureField",
+            comment: "An ontology fact describing a single field on a \
+                      reduction:PipelineFailureReason variant. The v0.2.1 \
+                      Rust codegen walks FailureField individuals filtered \
+                      by ofFailure to assemble the PipelineFailure enum's \
+                      variant fields. Adding a new field to a failure \
+                      variant requires only adding a new FailureField \
+                      individual.",
+            subclass_of: &[OWL_THING],
+            disjoint_with: &[],
+        },
+        // v0.2.1 Phase 7a.1: Parametric SAT-decider bounds. The Rust and
+        // Lean pipeline driver codegen read SatBound individuals at
+        // codegen time to bake the bounded 2-SAT / Horn-SAT decider
+        // constants (TWO_SAT_MAX_VARS, HORN_SAT_MAX_VARS) into the
+        // emitted source. No hand-written bound in Rust/Lean source.
+        Class {
+            id: "https://uor.foundation/reduction/SatBound",
+            label: "SatBound",
+            comment: "Declarative bound for SAT-fragment deciders. The v0.2.1 \
+                      pipeline driver reads these individuals at codegen time \
+                      to emit the bounded iterative Tarjan SCC (2-SAT) and \
+                      unit propagation (Horn-SAT) implementations.",
+            subclass_of: &[OWL_THING],
+            disjoint_with: &[],
+        },
+        // v0.2.1 Phase 7a.2: Parametric timing bounds for preflight/runtime
+        // stages. v0.2.1 ships the stubs returning Ok(()) but the bounds
+        // are carried in the ontology so future releases can plug in real
+        // timing checks without an API break.
+        Class {
+            id: "https://uor.foundation/reduction/TimingBound",
+            label: "TimingBound",
+            comment: "Declarative timing bound for reduction pipeline stages. \
+                      Values in nanoseconds at the v0.2.1 reference hardware.",
+            subclass_of: &[OWL_THING],
+            disjoint_with: &[],
+        },
     ]
 }
 
@@ -1333,6 +1378,94 @@ fn properties() -> Vec<Property> {
             domain: Some("https://uor.foundation/reduction/PreflightCheck"),
             range: XSD_NON_NEGATIVE_INTEGER,
         },
+        // v0.2.1: FailureField properties (parametric PipelineFailure metadata)
+        Property {
+            id: "https://uor.foundation/reduction/ofFailure",
+            label: "ofFailure",
+            comment: "The PipelineFailureReason (or class) this field belongs to.",
+            kind: PropertyKind::Object,
+            functional: true,
+            required: false,
+            domain: Some("https://uor.foundation/reduction/FailureField"),
+            range: OWL_THING,
+        },
+        Property {
+            id: "https://uor.foundation/reduction/fieldName",
+            label: "fieldName",
+            comment: "Snake_case name of the Rust field on the generated \
+                      PipelineFailure variant.",
+            kind: PropertyKind::Datatype,
+            functional: true,
+            required: false,
+            domain: Some("https://uor.foundation/reduction/FailureField"),
+            range: XSD_STRING,
+        },
+        Property {
+            id: "https://uor.foundation/reduction/fieldType",
+            label: "fieldType",
+            comment: "Rust type for the field, expressed as a literal type \
+                      string the codegen emits verbatim (e.g., \
+                      \"&'static str\", \"usize\", \"ReductionStep\").",
+            kind: PropertyKind::Datatype,
+            functional: true,
+            required: false,
+            domain: Some("https://uor.foundation/reduction/FailureField"),
+            range: XSD_STRING,
+        },
+        // v0.2.1 Phase 7a.1: SatBound properties.
+        Property {
+            id: "https://uor.foundation/reduction/maxVarCount",
+            label: "maxVarCount",
+            comment: "Maximum variable count the SAT decider supports.",
+            kind: PropertyKind::Datatype,
+            functional: true,
+            required: false,
+            domain: Some("https://uor.foundation/reduction/SatBound"),
+            range: XSD_NON_NEGATIVE_INTEGER,
+        },
+        Property {
+            id: "https://uor.foundation/reduction/maxClauseCount",
+            label: "maxClauseCount",
+            comment: "Maximum clause count the SAT decider supports.",
+            kind: PropertyKind::Datatype,
+            functional: true,
+            required: false,
+            domain: Some("https://uor.foundation/reduction/SatBound"),
+            range: XSD_NON_NEGATIVE_INTEGER,
+        },
+        Property {
+            id: "https://uor.foundation/reduction/maxLiteralsPerClause",
+            label: "maxLiteralsPerClause",
+            comment: "Maximum literals per clause (2 for 2-SAT, higher for Horn).",
+            kind: PropertyKind::Datatype,
+            functional: true,
+            required: false,
+            domain: Some("https://uor.foundation/reduction/SatBound"),
+            range: XSD_NON_NEGATIVE_INTEGER,
+        },
+        // v0.2.1 Phase 7a.2: TimingBound properties.
+        Property {
+            id: "https://uor.foundation/reduction/preflightBudgetNs",
+            label: "preflightBudgetNs",
+            comment: "Preflight-stage time budget in nanoseconds at the v0.2.1 \
+                      reference hardware.",
+            kind: PropertyKind::Datatype,
+            functional: true,
+            required: false,
+            domain: Some("https://uor.foundation/reduction/TimingBound"),
+            range: XSD_NON_NEGATIVE_INTEGER,
+        },
+        Property {
+            id: "https://uor.foundation/reduction/runtimeBudgetNs",
+            label: "runtimeBudgetNs",
+            comment: "Runtime-stage time budget in nanoseconds at the v0.2.1 \
+                      reference hardware.",
+            kind: PropertyKind::Datatype,
+            functional: true,
+            required: false,
+            domain: Some("https://uor.foundation/reduction/TimingBound"),
+            range: XSD_NON_NEGATIVE_INTEGER,
+        },
     ]
 }
 
@@ -2063,6 +2196,335 @@ fn individuals() -> Vec<Individual> {
                     IndividualValue::Float(0.75),
                 ),
             ],
+        },
+        // ── v0.2.1: FailureField individuals (parametric Rust PipelineFailure
+        // variant fields). One per (variant, field) pair. The codegen reads
+        // these to emit the foundation::PipelineFailure enum.
+        //
+        // DispatchMiss → query_iri, table_iri
+        Individual {
+            id: "https://uor.foundation/reduction/dispatchMiss_queryIri_field",
+            type_: "https://uor.foundation/reduction/FailureField",
+            label: "dispatchMiss_queryIri_field",
+            comment: "DispatchMiss field carrying the query IRI that failed \
+                      to dispatch.",
+            properties: &[
+                (
+                    "https://uor.foundation/reduction/ofFailure",
+                    IndividualValue::IriRef(
+                        "https://uor.foundation/reduction/DispatchMiss",
+                    ),
+                ),
+                (
+                    "https://uor.foundation/reduction/fieldName",
+                    IndividualValue::Str("query_iri"),
+                ),
+                (
+                    "https://uor.foundation/reduction/fieldType",
+                    IndividualValue::Str("&'static str"),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/reduction/dispatchMiss_tableIri_field",
+            type_: "https://uor.foundation/reduction/FailureField",
+            label: "dispatchMiss_tableIri_field",
+            comment: "DispatchMiss field carrying the dispatch table IRI \
+                      that failed to find a matching rule.",
+            properties: &[
+                (
+                    "https://uor.foundation/reduction/ofFailure",
+                    IndividualValue::IriRef(
+                        "https://uor.foundation/reduction/DispatchMiss",
+                    ),
+                ),
+                (
+                    "https://uor.foundation/reduction/fieldName",
+                    IndividualValue::Str("table_iri"),
+                ),
+                (
+                    "https://uor.foundation/reduction/fieldType",
+                    IndividualValue::Str("&'static str"),
+                ),
+            ],
+        },
+        // GroundingFailure → reason_iri
+        Individual {
+            id: "https://uor.foundation/reduction/groundingFailure_reasonIri_field",
+            type_: "https://uor.foundation/reduction/FailureField",
+            label: "groundingFailure_reasonIri_field",
+            comment: "GroundingFailure field carrying the morphism:GroundingMap \
+                      IRI whose image missed the ring.",
+            properties: &[
+                (
+                    "https://uor.foundation/reduction/ofFailure",
+                    IndividualValue::IriRef(
+                        "https://uor.foundation/reduction/GroundingFailure",
+                    ),
+                ),
+                (
+                    "https://uor.foundation/reduction/fieldName",
+                    IndividualValue::Str("reason_iri"),
+                ),
+                (
+                    "https://uor.foundation/reduction/fieldType",
+                    IndividualValue::Str("&'static str"),
+                ),
+            ],
+        },
+        // ConvergenceStall → stage, angle
+        Individual {
+            id: "https://uor.foundation/reduction/convergenceStall_stage_field",
+            type_: "https://uor.foundation/reduction/FailureField",
+            label: "convergenceStall_stage_field",
+            comment: "ConvergenceStall field carrying the IRI of the \
+                      ReductionStep at which the phase-rotation scheduler \
+                      stopped advancing.",
+            properties: &[
+                (
+                    "https://uor.foundation/reduction/ofFailure",
+                    IndividualValue::IriRef(
+                        "https://uor.foundation/reduction/ConvergenceStall",
+                    ),
+                ),
+                (
+                    "https://uor.foundation/reduction/fieldName",
+                    IndividualValue::Str("stage_iri"),
+                ),
+                (
+                    "https://uor.foundation/reduction/fieldType",
+                    IndividualValue::Str("&'static str"),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/reduction/convergenceStall_angle_field",
+            type_: "https://uor.foundation/reduction/FailureField",
+            label: "convergenceStall_angle_field",
+            comment: "ConvergenceStall field carrying the last \
+                      reduction:convergenceAngle reached, encoded as a \
+                      milli-radian integer to preserve `Eq` on PipelineFailure.",
+            properties: &[
+                (
+                    "https://uor.foundation/reduction/ofFailure",
+                    IndividualValue::IriRef(
+                        "https://uor.foundation/reduction/ConvergenceStall",
+                    ),
+                ),
+                (
+                    "https://uor.foundation/reduction/fieldName",
+                    IndividualValue::Str("angle_milliradians"),
+                ),
+                (
+                    "https://uor.foundation/reduction/fieldType",
+                    IndividualValue::Str("i64"),
+                ),
+            ],
+        },
+        // ContradictionDetected → at_step, trace_iri
+        Individual {
+            id: "https://uor.foundation/reduction/contradictionDetected_atStep_field",
+            type_: "https://uor.foundation/reduction/FailureField",
+            label: "contradictionDetected_atStep_field",
+            comment: "ContradictionDetected field carrying the \
+                      derivation:stepIndex of the accumulation step.",
+            properties: &[
+                (
+                    "https://uor.foundation/reduction/ofFailure",
+                    IndividualValue::IriRef(
+                        "https://uor.foundation/reduction/ContradictionDetected",
+                    ),
+                ),
+                (
+                    "https://uor.foundation/reduction/fieldName",
+                    IndividualValue::Str("at_step"),
+                ),
+                (
+                    "https://uor.foundation/reduction/fieldType",
+                    IndividualValue::Str("usize"),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/reduction/contradictionDetected_traceIri_field",
+            type_: "https://uor.foundation/reduction/FailureField",
+            label: "contradictionDetected_traceIri_field",
+            comment: "ContradictionDetected field pointing to the \
+                      trace:ComputationTrace record.",
+            properties: &[
+                (
+                    "https://uor.foundation/reduction/ofFailure",
+                    IndividualValue::IriRef(
+                        "https://uor.foundation/reduction/ContradictionDetected",
+                    ),
+                ),
+                (
+                    "https://uor.foundation/reduction/fieldName",
+                    IndividualValue::Str("trace_iri"),
+                ),
+                (
+                    "https://uor.foundation/reduction/fieldType",
+                    IndividualValue::Str("&'static str"),
+                ),
+            ],
+        },
+        // CoherenceViolation → site_position, constraint_iri
+        Individual {
+            id: "https://uor.foundation/reduction/coherenceViolation_sitePosition_field",
+            type_: "https://uor.foundation/reduction/FailureField",
+            label: "coherenceViolation_sitePosition_field",
+            comment: "CoherenceViolation field carrying the site position \
+                      where the conformance:PackageCoherenceCheck failed.",
+            properties: &[
+                (
+                    "https://uor.foundation/reduction/ofFailure",
+                    IndividualValue::IriRef(
+                        "https://uor.foundation/reduction/CoherenceViolation",
+                    ),
+                ),
+                (
+                    "https://uor.foundation/reduction/fieldName",
+                    IndividualValue::Str("site_position"),
+                ),
+                (
+                    "https://uor.foundation/reduction/fieldType",
+                    IndividualValue::Str("usize"),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/reduction/coherenceViolation_constraintIri_field",
+            type_: "https://uor.foundation/reduction/FailureField",
+            label: "coherenceViolation_constraintIri_field",
+            comment: "CoherenceViolation field carrying the failing \
+                      constraint IRI.",
+            properties: &[
+                (
+                    "https://uor.foundation/reduction/ofFailure",
+                    IndividualValue::IriRef(
+                        "https://uor.foundation/reduction/CoherenceViolation",
+                    ),
+                ),
+                (
+                    "https://uor.foundation/reduction/fieldName",
+                    IndividualValue::Str("constraint_iri"),
+                ),
+                (
+                    "https://uor.foundation/reduction/fieldType",
+                    IndividualValue::Str("&'static str"),
+                ),
+            ],
+        },
+        // failure:LiftObstructionFailure → site_position, obstruction_class_iri
+        // (Cross-namespace ofFailure pointing into the failure: namespace)
+        Individual {
+            id: "https://uor.foundation/reduction/liftObstruction_sitePosition_field",
+            type_: "https://uor.foundation/reduction/FailureField",
+            label: "liftObstruction_sitePosition_field",
+            comment: "LiftObstructionFailure field carrying the site position \
+                      from the resolver:LiftRefinementSuggestion.",
+            properties: &[
+                (
+                    "https://uor.foundation/reduction/ofFailure",
+                    IndividualValue::IriRef(
+                        "https://uor.foundation/failure/LiftObstructionFailure",
+                    ),
+                ),
+                (
+                    "https://uor.foundation/reduction/fieldName",
+                    IndividualValue::Str("site_position"),
+                ),
+                (
+                    "https://uor.foundation/reduction/fieldType",
+                    IndividualValue::Str("usize"),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/reduction/liftObstruction_obstructionClassIri_field",
+            type_: "https://uor.foundation/reduction/FailureField",
+            label: "liftObstruction_obstructionClassIri_field",
+            comment: "LiftObstructionFailure field carrying the obstruction \
+                      class IRI from the LiftRefinementSuggestion.",
+            properties: &[
+                (
+                    "https://uor.foundation/reduction/ofFailure",
+                    IndividualValue::IriRef(
+                        "https://uor.foundation/failure/LiftObstructionFailure",
+                    ),
+                ),
+                (
+                    "https://uor.foundation/reduction/fieldName",
+                    IndividualValue::Str("obstruction_class_iri"),
+                ),
+                (
+                    "https://uor.foundation/reduction/fieldType",
+                    IndividualValue::Str("&'static str"),
+                ),
+            ],
+        },
+        // v0.2.1 Phase 7a.1: SatBound individuals.
+        Individual {
+            id: "https://uor.foundation/reduction/TwoSatBound",
+            type_: "https://uor.foundation/reduction/SatBound",
+            label: "TwoSatBound",
+            comment: "v0.2.1 2-SAT decider bounds. Drives TWO_SAT_MAX_VARS and \
+                      the corresponding Lean fuel constant.",
+            properties: &[
+                (
+                    "https://uor.foundation/reduction/maxVarCount",
+                    IndividualValue::Int(256),
+                ),
+                (
+                    "https://uor.foundation/reduction/maxClauseCount",
+                    IndividualValue::Int(512),
+                ),
+                (
+                    "https://uor.foundation/reduction/maxLiteralsPerClause",
+                    IndividualValue::Int(2),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/reduction/HornSatBound",
+            type_: "https://uor.foundation/reduction/SatBound",
+            label: "HornSatBound",
+            comment: "v0.2.1 Horn-SAT decider bounds.",
+            properties: &[
+                (
+                    "https://uor.foundation/reduction/maxVarCount",
+                    IndividualValue::Int(256),
+                ),
+                (
+                    "https://uor.foundation/reduction/maxClauseCount",
+                    IndividualValue::Int(512),
+                ),
+                (
+                    "https://uor.foundation/reduction/maxLiteralsPerClause",
+                    IndividualValue::Int(8),
+                ),
+            ],
+        },
+        // v0.2.1 Phase 7a.2: TimingBound individuals.
+        Individual {
+            id: "https://uor.foundation/reduction/PreflightTimingBound",
+            type_: "https://uor.foundation/reduction/TimingBound",
+            label: "PreflightTimingBound",
+            comment: "v0.2.1 preflight-stage time budget.",
+            properties: &[(
+                "https://uor.foundation/reduction/preflightBudgetNs",
+                IndividualValue::Int(10_000_000),
+            )],
+        },
+        Individual {
+            id: "https://uor.foundation/reduction/RuntimeTimingBound",
+            type_: "https://uor.foundation/reduction/TimingBound",
+            label: "RuntimeTimingBound",
+            comment: "v0.2.1 runtime-stage time budget.",
+            properties: &[(
+                "https://uor.foundation/reduction/runtimeBudgetNs",
+                IndividualValue::Int(10_000_000),
+            )],
         },
     ]
 }

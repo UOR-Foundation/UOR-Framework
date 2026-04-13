@@ -132,3 +132,21 @@ pub trait ChainAuditTrail<P: Primitives> {
     /// Number of lift steps in this ChainAuditTrail. Must equal chainLength of the certified LiftChain. Distinct from witnessCount (domain-locked to CompletenessAuditTrail).
     fn chain_step_count(&self) -> P::NonNegativeInteger;
 }
+
+/// A ComputationCertificate verdict primitive that decides carrier non-emptiness on a type:ConstrainedType. Distinct from cert:CompletenessCertificate, which decides freeRank = 0 on the minimal basis. For ConstrainedType instances admitting multiple satisfying value tuples, InhabitanceCertificate.verified may be true while CompletenessCertificate.verified is false.
+pub trait InhabitanceCertificate<P: Primitives>:
+    crate::bridge::proof::ComputationCertificate<P> + Certificate<P>
+{
+    /// Associated type for `ValueTuple`.
+    type ValueTuple: crate::kernel::schema::ValueTuple<P>;
+    /// A specific value tuple in the carrier when verified is true; absent otherwise. The witness form for cert:InhabitanceCertificate.
+    fn witness(&self) -> &[Self::ValueTuple];
+    /// Associated type for `InhabitanceSearchTrace`.
+    type InhabitanceSearchTrace: crate::bridge::trace::InhabitanceSearchTrace<P>;
+    /// The audit trail of the inhabitance search that produced this certificate.
+    fn search_trace(&self) -> &Self::InhabitanceSearchTrace;
+    /// Associated type for `ConstrainedType`.
+    type ConstrainedType: crate::user::type_::ConstrainedType<P>;
+    /// The type:ConstrainedType this InhabitanceCertificate is issued for.
+    fn grounded(&self) -> &Self::ConstrainedType;
+}

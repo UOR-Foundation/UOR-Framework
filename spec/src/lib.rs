@@ -291,4 +291,191 @@ mod tests {
         assert!(schema.is_some());
         assert_eq!(schema.map(|m| m.namespace.prefix), Some("schema"));
     }
+
+    // ── v0.2.1 parametric metadata tests ───────────────────────────
+
+    /// v0.2.1: the five Inhabitance verdict classes resolve in the ontology.
+    #[test]
+    fn v021_inhabitance_classes_present() {
+        let ontology = Ontology::full();
+        let expected = [
+            "https://uor.foundation/cert/InhabitanceCertificate",
+            "https://uor.foundation/proof/InhabitanceImpossibilityWitness",
+            "https://uor.foundation/trace/InhabitanceSearchTrace",
+            "https://uor.foundation/derivation/InhabitanceStep",
+            "https://uor.foundation/derivation/InhabitanceCheckpoint",
+        ];
+        for iri in expected {
+            let found = ontology
+                .namespaces
+                .iter()
+                .flat_map(|m| m.classes.iter())
+                .any(|c| c.id == iri);
+            assert!(found, "missing v0.2.1 class: {iri}");
+        }
+    }
+
+    /// v0.2.1: every `resolver:Resolver` subclass with a CertifyMapping
+    /// individual must have non-empty `forResolver` / `producesCertificate`
+    /// / `producesWitness` values. Catches drift when a new resolver is
+    /// added to the ontology without the matching mapping.
+    #[test]
+    fn v021_resolver_certify_mappings_well_formed() {
+        let ontology = Ontology::full();
+        let mut mapping_count = 0usize;
+        for ns in &ontology.namespaces {
+            for ind in &ns.individuals {
+                if ind.type_ != "https://uor.foundation/resolver/CertifyMapping" {
+                    continue;
+                }
+                mapping_count += 1;
+                let for_resolver = ind
+                    .properties
+                    .iter()
+                    .find(|(k, _)| *k == "https://uor.foundation/resolver/forResolver");
+                let produces_cert = ind
+                    .properties
+                    .iter()
+                    .find(|(k, _)| *k == "https://uor.foundation/resolver/producesCertificate");
+                let produces_witness = ind
+                    .properties
+                    .iter()
+                    .find(|(k, _)| *k == "https://uor.foundation/resolver/producesWitness");
+                assert!(
+                    for_resolver.is_some(),
+                    "CertifyMapping {} missing forResolver",
+                    ind.id
+                );
+                assert!(
+                    produces_cert.is_some(),
+                    "CertifyMapping {} missing producesCertificate",
+                    ind.id
+                );
+                assert!(
+                    produces_witness.is_some(),
+                    "CertifyMapping {} missing producesWitness",
+                    ind.id
+                );
+            }
+        }
+        // v0.2.1 ships 4 mappings: Tower, Incremental, GroundingAware, Inhabitance.
+        assert!(
+            mapping_count >= 4,
+            "expected ≥4 CertifyMapping individuals, got {mapping_count}"
+        );
+    }
+
+    /// v0.2.1: every `conformance:Shape` individual must carry a
+    /// `surfaceForm` so the parametric EBNF emitter can produce a
+    /// production for it.
+    #[test]
+    fn v021_conformance_shapes_have_surface_form() {
+        let ontology = Ontology::full();
+        let surface_form_iri = "https://uor.foundation/conformance/surfaceForm";
+        for ns in &ontology.namespaces {
+            for ind in &ns.individuals {
+                if ind.type_ != "https://uor.foundation/conformance/Shape" {
+                    continue;
+                }
+                let has_surface = ind.properties.iter().any(|(k, _)| *k == surface_form_iri);
+                assert!(
+                    has_surface,
+                    "conformance:Shape {} missing surfaceForm annotation",
+                    ind.id
+                );
+            }
+        }
+    }
+
+    /// v0.2.1: every `reduction:PipelineFailureReason` individual must have
+    /// at least one `reduction:FailureField` individual referencing it.
+    #[test]
+    fn v021_pipeline_failure_fields_cover_all_reasons() {
+        let ontology = Ontology::full();
+        let reason_type = "https://uor.foundation/reduction/PipelineFailureReason";
+        let field_type = "https://uor.foundation/reduction/FailureField";
+        let of_failure_iri = "https://uor.foundation/reduction/ofFailure";
+        let all_inds: Vec<_> = ontology
+            .namespaces
+            .iter()
+            .flat_map(|m| m.individuals.iter())
+            .collect();
+        for ind in &all_inds {
+            if ind.type_ != reason_type {
+                continue;
+            }
+            // Check at least one FailureField points at this reason.
+            let covered = all_inds.iter().any(|f| {
+                f.type_ == field_type
+                    && f.properties.iter().any(|(k, v)| {
+                        *k == of_failure_iri
+                            && matches!(v, model::IndividualValue::IriRef(iri) if iri == &ind.id)
+                    })
+            });
+            assert!(
+                covered,
+                "reduction:PipelineFailureReason {} has no FailureField",
+                ind.id
+            );
+        }
+    }
+
+    /// v0.2.1: the `predicate:InhabitanceDispatchTable` has exactly 3
+    /// dispatch rules with distinct priorities {0, 1, 2}.
+    #[test]
+    fn v021_inhabitance_dispatch_table_well_formed() {
+        let ontology = Ontology::full();
+        let rule_type = "https://uor.foundation/predicate/DispatchRule";
+        let priority_iri = "https://uor.foundation/predicate/dispatchPriority";
+        let rules: Vec<_> = ontology
+            .namespaces
+            .iter()
+            .flat_map(|m| m.individuals.iter())
+            .filter(|i| {
+                i.type_ == rule_type
+                    && i.id
+                        .starts_with("https://uor.foundation/predicate/inhabitance_rule_")
+            })
+            .collect();
+        assert_eq!(rules.len(), 3, "expected 3 inhabitance dispatch rules");
+        let mut priorities: Vec<i64> = rules
+            .iter()
+            .filter_map(|r| {
+                r.properties.iter().find_map(|(k, v)| {
+                    if *k == priority_iri {
+                        if let model::IndividualValue::Int(n) = v {
+                            Some(*n)
+                        } else {
+                            None
+                        }
+                    } else {
+                        None
+                    }
+                })
+            })
+            .collect();
+        priorities.sort_unstable();
+        assert_eq!(priorities, vec![0, 1, 2]);
+    }
+
+    /// v0.2.1: every op:IH_* identity has a proof individual.
+    #[test]
+    fn v021_inhabitance_identities_have_proofs() {
+        let ontology = Ontology::full();
+        let identities = ["IH_1", "IH_2a", "IH_2b", "IH_3"];
+        for id_name in identities {
+            let id_iri = format!("https://uor.foundation/op/{id_name}");
+            let proof_found = ontology
+                .namespaces
+                .iter()
+                .flat_map(|m| m.individuals.iter())
+                .any(|ind| {
+                    ind.properties.iter().any(|(k, v)| {
+                        *k == "https://uor.foundation/proof/provesIdentity"
+                            && matches!(v, model::IndividualValue::IriRef(iri) if *iri == id_iri)
+                    })
+                });
+            assert!(proof_found, "op:{id_name} has no proof individual");
+        }
+    }
 }

@@ -156,6 +156,9 @@ pub trait HostBooleanLiteral<P: Primitives>: HostValue<P> {
     fn host_boolean(&self) -> P::Boolean;
 }
 
+/// An ordered tuple of values drawn from a type:ConstrainedType's carrier. Serves as the witness form for cert:InhabitanceCertificate when verified is true.
+pub trait ValueTuple<P: Primitives> {}
+
 /// Universal quantification (forall).
 pub mod universal {}
 
@@ -9483,6 +9486,66 @@ pub mod term_io_5_rhs {
 pub mod term_io_5_for_all {
     /// `variableName`
     pub const VARIABLE_NAME: &str = "BoundaryEffect e";
+}
+
+pub mod term_ih_1_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "InhabitanceCertificate(T).verified";
+}
+
+pub mod term_ih_1_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "carrier(T) ≠ ∅";
+}
+
+pub mod term_ih_1_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "T : type:ConstrainedType";
+}
+
+pub mod term_ih_2a_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "cost(TwoSatDecider, T)";
+}
+
+pub mod term_ih_2a_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "O(n + m)";
+}
+
+pub mod term_ih_2a_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "T : type:ConstrainedType | Is2SatShape(T)";
+}
+
+pub mod term_ih_2b_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "cost(HornSatDecider, T)";
+}
+
+pub mod term_ih_2b_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "O(n + m)";
+}
+
+pub mod term_ih_2b_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "T : type:ConstrainedType | IsHornShape(T)";
+}
+
+pub mod term_ih_3_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "carrier(reduce(T))";
+}
+
+pub mod term_ih_3_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "carrier(T)";
+}
+
+pub mod term_ih_3_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "T : type:ConstrainedType";
 }
 
 pub mod term_boundary_squared_zero_lhs {

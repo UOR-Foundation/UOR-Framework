@@ -3597,6 +3597,58 @@ def HT_8 : UOR.Kernel.Op.Identity UOR.Prims.Standard := {
   validKMax := none
 }
 
+-- Inhabitance soundness (bidirectional). For any type:ConstrainedType T, cert:InhabitanceCertificate(T) .verified is true iff the carrier of T is non-empty. Discharge: the verdict reified by cert:InhabitanceCertificate agrees with the denotational carrier-non-emptiness predicate, by direct unfolding of cert:verified against the predicate semantics.
+def IH_1 : UOR.Kernel.Op.Identity UOR.Prims.Standard := {
+  lhs := some (UOR.Kernel.Schema.term_IH_1_lhs.toTermExpression)
+  rhs := some (UOR.Kernel.Schema.term_IH_1_rhs.toTermExpression)
+  forAll := some (UOR.Kernel.Schema.term_IH_1_forAll)
+  verificationDomain := #[.algebraic]
+  verifiedAtLevel := #[]
+  universallyValid := some (true)
+  validityKind := some (.universal)
+  validKMin := none
+  validKMax := none
+}
+
+-- Inhabitance cost (2-SAT restriction). For instances T satisfying predicate:Is2SatShape, the cost of resolver:TwoSatDecider on T is inherited from the classical 2-SAT decision procedure: O(n+m) where n is the variable count and m the clause count. Unrestricted IH_2 would be equivalent to P = NP and is not adopted.
+def IH_2a : UOR.Kernel.Op.Identity UOR.Prims.Standard := {
+  lhs := some (UOR.Kernel.Schema.term_IH_2a_lhs.toTermExpression)
+  rhs := some (UOR.Kernel.Schema.term_IH_2a_rhs.toTermExpression)
+  forAll := some (UOR.Kernel.Schema.term_IH_2a_forAll)
+  verificationDomain := #[.analytical]
+  verifiedAtLevel := #[]
+  universallyValid := some (true)
+  validityKind := some (.universal)
+  validKMin := none
+  validKMax := none
+}
+
+-- Inhabitance cost (Horn-SAT restriction). For instances T satisfying predicate:IsHornShape, the cost of resolver:HornSatDecider on T is inherited from the classical Horn-SAT decision procedure via unit propagation: O(n+m).
+def IH_2b : UOR.Kernel.Op.Identity UOR.Prims.Standard := {
+  lhs := some (UOR.Kernel.Schema.term_IH_2b_lhs.toTermExpression)
+  rhs := some (UOR.Kernel.Schema.term_IH_2b_rhs.toTermExpression)
+  forAll := some (UOR.Kernel.Schema.term_IH_2b_forAll)
+  verificationDomain := #[.analytical]
+  verifiedAtLevel := #[]
+  universallyValid := some (true)
+  validityKind := some (.universal)
+  validKMin := none
+  validKMax := none
+}
+
+-- Carrier preservation under basis reduction. The constraint-nerve reduction performed during inhabitance search preserves the carrier of the input ConstrainedType. Discharged against resolver:JacobianGuidedResolver and resolver:guidingJacobian vocabulary.
+def IH_3 : UOR.Kernel.Op.Identity UOR.Prims.Standard := {
+  lhs := some (UOR.Kernel.Schema.term_IH_3_lhs.toTermExpression)
+  rhs := some (UOR.Kernel.Schema.term_IH_3_rhs.toTermExpression)
+  forAll := some (UOR.Kernel.Schema.term_IH_3_forAll)
+  verificationDomain := #[.algebraic]
+  verifiedAtLevel := #[]
+  universallyValid := some (true)
+  validityKind := some (.universal)
+  validKMin := none
+  validKMax := none
+}
+
 -- d_Δ as interaction cost between entities.
 def IN_1 : UOR.Kernel.Op.Identity UOR.Prims.Standard := {
   lhs := some (UOR.Kernel.Schema.term_IN_1_lhs.toTermExpression)
@@ -7810,6 +7862,7 @@ def accumulate : UOR.Kernel.Op.AccumulationOperation UOR.Prims.Standard := {
   hasGeometricCharacter := some (.siteBinding)
   inverse := none
   composedOf := none
+  isRingOp := none
 }
 
 -- Bitwise and: and(x, y) = x ∧ y. Commutative, associative.
@@ -7821,6 +7874,7 @@ def and : UOR.Kernel.Op.BinaryOp UOR.Prims.Standard := {
   hasGeometricCharacter := some (.hypercubeProjection)
   inverse := none
   composedOf := none
+  isRingOp := some (true)
 }
 
 -- Hypercube reflection: bnot(x) = (2^n - 1) ⊕ x (bitwise complement). The second generator of D_{2^n}. bnot(bnot(x)) = x.
@@ -7829,6 +7883,7 @@ def bnot : UOR.Kernel.Op.Involution UOR.Prims.Standard := {
   hasGeometricCharacter := some (.hypercubeReflection)
   inverse := none
   composedOf := none
+  isRingOp := some (true)
 }
 
 -- κ(S₁, S₂) = S₁ ∪ S₂: composes two sessions with disjoint leases into one. Commutative, associative (SR_8).
@@ -7858,6 +7913,7 @@ def compose_op : UOR.Kernel.Op.SessionCompositionOperation UOR.Prims.Standard :=
   hasGeometricCharacter := some (.sessionMerge)
   inverse := none
   composedOf := none
+  isRingOp := none
 }
 
 -- The foundational theorem of the UOR kernel: neg(bnot(x)) = succ(x) for all x in R_n. This identity links the two involutions (neg and bnot) to the successor operation, making succ derivable from neg and bnot.
@@ -7900,6 +7956,7 @@ def dispatch : UOR.Kernel.Op.DispatchOperation UOR.Prims.Standard := {
   hasGeometricCharacter := some (.constraintSelection)
   inverse := none
   composedOf := none
+  isRingOp := none
 }
 
 -- ι(s, C) = P(Π(G(s, C))): the φ-pipeline composed into a single inference step. Non-commutative, non-associative.
@@ -7930,6 +7987,7 @@ def infer : UOR.Kernel.Op.InferenceOperation UOR.Prims.Standard := {
   hasGeometricCharacter := some (.resolutionTraversal)
   inverse := none
   composedOf := none
+  isRingOp := none
 }
 
 -- Carry-carry joint satisfiability: two CarryConstraints are jointly satisfiable iff their bit-patterns have no conflicting positions.
@@ -7980,6 +8038,7 @@ def mul : UOR.Kernel.Op.BinaryOp UOR.Prims.Standard := {
   hasGeometricCharacter := some (.scaling)
   inverse := none
   composedOf := none
+  isRingOp := some (true)
 }
 
 -- Ring reflection: neg(x) = (-x) mod 2^n. One of the two generators of the dihedral group D_{2^n}. neg(neg(x)) = x (involution property).
@@ -7988,6 +8047,7 @@ def neg : UOR.Kernel.Op.Involution UOR.Prims.Standard := {
   hasGeometricCharacter := some (.ringReflection)
   inverse := none
   composedOf := none
+  isRingOp := some (true)
 }
 
 -- The dihedral group of order 2^(n+1), generated by neg (ring reflection) and bnot (hypercube reflection). Every element of this group acts as an isometry on the type space 𝒯_n.
@@ -8005,6 +8065,7 @@ def or : UOR.Kernel.Op.BinaryOp UOR.Prims.Standard := {
   hasGeometricCharacter := some (.hypercubeJoin)
   inverse := none
   composedOf := none
+  isRingOp := some (true)
 }
 
 -- λ(S, k) = (L₁, …, Lₖ): partitions a shared context into k disjoint leases. Non-commutative, non-associative.
@@ -8035,6 +8096,7 @@ def partition_op : UOR.Kernel.Op.LeasePartitionOperation UOR.Prims.Standard := {
   hasGeometricCharacter := some (.sitePartition)
   inverse := none
   composedOf := none
+  isRingOp := none
 }
 
 -- Ring → Constraints map: negation transforms a residue constraint.
@@ -8121,6 +8183,7 @@ def pred : UOR.Kernel.Op.UnaryOp UOR.Prims.Standard := {
   hasGeometricCharacter := some (.rotationInverse)
   inverse := none
   composedOf := some ("https://uor.foundation/op/bnot, https://uor.foundation/op/neg" : String)
+  isRingOp := some (true)
 }
 
 -- Successor: succ(x) = neg(bnot(x)) = (x + 1) mod 2^n. The critical identity: succ is the composition neg ∘ bnot.
@@ -8129,6 +8192,7 @@ def succ : UOR.Kernel.Op.UnaryOp UOR.Prims.Standard := {
   hasGeometricCharacter := some (.rotation)
   inverse := none
   composedOf := some ("https://uor.foundation/op/neg, https://uor.foundation/op/bnot" : String)
+  isRingOp := some (true)
 }
 
 -- ψ_1: Constraints → SimplicialComplex (nerve construction). Maps a set of constraints to its nerve simplicial complex.
@@ -8244,6 +8308,7 @@ def sub : UOR.Kernel.Op.BinaryOp UOR.Prims.Standard := {
   hasGeometricCharacter := some (.translation)
   inverse := none
   composedOf := none
+  isRingOp := some (true)
 }
 
 -- Ring addition: add(x, y) = (x + y) mod 2^n. Commutative, associative; identity element is 0.
@@ -8255,6 +8320,7 @@ def add : UOR.Kernel.Op.BinaryOp UOR.Prims.Standard := {
   hasGeometricCharacter := some (.translation)
   inverse := some (UOR.Kernel.Op.sub.toOperation)
   composedOf := none
+  isRingOp := some (true)
 }
 
 -- The Surface Symmetry Theorem: the composite P∘Π∘G is a well-typed morphism iff G and P share the same state:Frame F. When the shared-frame condition holds, the output lands in the type-equivalent neighbourhood of the source symbol.
@@ -8279,6 +8345,7 @@ def xor : UOR.Kernel.Op.BinaryOp UOR.Prims.Standard := {
   hasGeometricCharacter := some (.hypercubeTranslation)
   inverse := none
   composedOf := none
+  isRingOp := some (true)
 }
 
 end UOR.Kernel.Op

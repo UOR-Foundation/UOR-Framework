@@ -201,20 +201,56 @@ fn validate_witness_opacity(content: &str, report: &mut ConformanceReport) {
     }
 }
 
-/// Check that `GroundedCoord` has constructors q0 through q511.
+/// Check that `GroundedCoord` has constructors for every `schema:WittLevel`
+/// individual. v0.2.1 Phase 8b.7: walks `Ontology::full()` and asserts one
+/// `fn w{bits}(` constructor per level, matching the parametric emission
+/// in `generate_grounding_types`.
 fn validate_grounded_constructors(content: &str, report: &mut ConformanceReport) {
-    let constructors = ["fn q0(", "fn q1(", "fn q3(", "fn q7(", "fn q511("];
-    let all_present = constructors.iter().all(|c| content.contains(c));
+    use uor_ontology::model::IndividualValue;
+    let ontology = uor_ontology::Ontology::full();
+    let mut expected: Vec<String> = Vec::new();
+    for ns in &ontology.namespaces {
+        for ind in &ns.individuals {
+            if ind.type_ != "https://uor.foundation/schema/WittLevel" {
+                continue;
+            }
+            let bits = ind
+                .properties
+                .iter()
+                .find_map(|(k, v)| {
+                    if *k == "https://uor.foundation/schema/bitsWidth" {
+                        if let IndividualValue::Int(n) = v {
+                            return Some(*n);
+                        }
+                    }
+                    None
+                })
+                .unwrap_or(0);
+            if bits == 0 || bits % 8 != 0 || bits > 64 {
+                continue;
+            }
+            expected.push(format!("fn w{bits}("));
+        }
+    }
+    expected.sort();
+    let missing: Vec<String> = expected
+        .iter()
+        .filter(|c| !content.contains(c.as_str()))
+        .cloned()
+        .collect();
 
-    if all_present {
+    if missing.is_empty() {
         report.push(TestResult::pass(
             VALIDATOR,
-            "GroundedCoord has q0, q1, q3, q7, q511 constructors",
+            format!(
+                "GroundedCoord has {} W-level constructors matching schema:WittLevel",
+                expected.len()
+            ),
         ));
     } else {
         report.push(TestResult::fail(
             VALIDATOR,
-            "GroundedCoord must have q0, q1, q3, q7, q511 constructors",
+            format!("GroundedCoord missing constructors: {}", missing.join(", ")),
         ));
     }
 }
@@ -330,25 +366,57 @@ fn validate_macro_reexport(workspace: &Path, report: &mut ConformanceReport) {
     }
 }
 
-/// Check that const fn ring evaluators exist for supported levels.
+/// Check that const fn ring evaluators exist for every `schema:WittLevel`
+/// individual. v0.2.1 Phase 8b.7: walks the ontology and asserts one
+/// `const_ring_eval_w{bits}` helper per declared level, matching the
+/// parametric emission in `generate_const_ring_eval`.
 fn validate_const_ring_eval(content: &str, report: &mut ConformanceReport) {
-    let evaluators = [
-        "const_ring_eval_q0",
-        "const_ring_eval_q1",
-        "const_ring_eval_q3",
-        "const_ring_eval_q7",
-    ];
-    let all_present = evaluators.iter().all(|e| content.contains(e));
+    use uor_ontology::model::IndividualValue;
+    let ontology = uor_ontology::Ontology::full();
+    let mut expected: Vec<String> = Vec::new();
+    for ns in &ontology.namespaces {
+        for ind in &ns.individuals {
+            if ind.type_ != "https://uor.foundation/schema/WittLevel" {
+                continue;
+            }
+            let bits = ind
+                .properties
+                .iter()
+                .find_map(|(k, v)| {
+                    if *k == "https://uor.foundation/schema/bitsWidth" {
+                        if let IndividualValue::Int(n) = v {
+                            return Some(*n);
+                        }
+                    }
+                    None
+                })
+                .unwrap_or(0);
+            if bits == 0 || bits % 8 != 0 || bits > 64 {
+                continue;
+            }
+            expected.push(format!("const_ring_eval_w{bits}"));
+        }
+    }
+    expected.sort();
+    let missing: Vec<String> = expected
+        .iter()
+        .filter(|e| !content.contains(e.as_str()))
+        .cloned()
+        .collect();
+    let all_present = missing.is_empty();
 
     if all_present {
         report.push(TestResult::pass(
             VALIDATOR,
-            "const fn ring evaluators present for Q0, Q1, Q3, Q7",
+            format!(
+                "const fn ring evaluators present for {} Witt levels",
+                expected.len()
+            ),
         ));
     } else {
         report.push(TestResult::fail(
             VALIDATOR,
-            "Missing const fn ring evaluators for supported levels",
+            format!("Missing const fn ring evaluators: {}", missing.join(", ")),
         ));
     }
 }

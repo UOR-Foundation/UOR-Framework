@@ -289,7 +289,7 @@ fn emit_binding(name: &str, type_name: &str, value: &ParsedNode) -> TokenStream 
 }
 
 /// Emit an assertion. For ground assertions (no free variables), emits a
-/// `const` block that calls `const_ring_eval_q0` to verify equality at
+/// `const` block that calls `const_ring_eval_w8` to verify equality at
 /// compile time.
 fn emit_assertion(lhs: &ParsedNode, rhs: &ParsedNode) -> TokenStream {
     let surface_str = surface::serialize(&ParsedNode::Assertion {
@@ -341,7 +341,7 @@ fn is_ground(node: &ParsedNode) -> bool {
     }
 }
 
-/// Emit a const expression that evaluates a ground term using Q0 ring arithmetic.
+/// Emit a const expression that evaluates a ground term using W8 ring arithmetic.
 /// Returns a `proc_macro2::TokenStream` computing a `u8`.
 fn emit_const_eval(node: &ParsedNode) -> proc_macro2::TokenStream {
     match node {
@@ -354,7 +354,7 @@ fn emit_const_eval(node: &ParsedNode) -> proc_macro2::TokenStream {
             let a = emit_const_eval(&args[0]);
             let b = emit_const_eval(&args[1]);
             quote! {
-                uor_foundation::enforcement::const_ring_eval_q0(
+                uor_foundation::enforcement::const_ring_eval_w8(
                     uor_foundation::PrimitiveOp::#op_variant,
                     #a,
                     #b,
@@ -365,7 +365,7 @@ fn emit_const_eval(node: &ParsedNode) -> proc_macro2::TokenStream {
             let op_variant = op_to_primitive(op);
             let a = emit_const_eval(&args[0]);
             quote! {
-                uor_foundation::enforcement::const_ring_eval_unary_q0(
+                uor_foundation::enforcement::const_ring_eval_unary_w8(
                     uor_foundation::PrimitiveOp::#op_variant,
                     #a,
                 )

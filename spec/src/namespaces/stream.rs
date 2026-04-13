@@ -233,5 +233,28 @@ fn properties() -> Vec<Property> {
             domain: Some("https://uor.foundation/stream/ProductiveStream"),
             range: XSD_BOOLEAN,
         },
+        // v0.2.1: Conformance StreamShape backing properties
+        Property {
+            id: "https://uor.foundation/stream/stepTerm",
+            label: "stepTerm",
+            comment: "A term denoting a function from the current seed value \
+                      to a pair (head, next_seed).",
+            kind: PropertyKind::Object,
+            functional: true,
+            required: false,
+            domain: Some("https://uor.foundation/stream/ProductiveStream"),
+            range: "https://uor.foundation/schema/Term",
+        },
+        Property {
+            id: "https://uor.foundation/stream/productivityWitness",
+            label: "productivityWitness",
+            comment: "IRI of a proof of stream productivity (coinductive \
+                      well-foundedness).",
+            kind: PropertyKind::Datatype,
+            functional: true,
+            required: false,
+            domain: Some("https://uor.foundation/stream/ProductiveStream"),
+            range: XSD_STRING,
+        },
     ]
 }

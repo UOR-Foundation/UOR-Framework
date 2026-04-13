@@ -233,6 +233,16 @@ fn classes() -> Vec<Class> {
             subclass_of: &["https://uor.foundation/schema/HostValue"],
             disjoint_with: &[],
         },
+        // v0.2.1: Inhabitance witness carrier
+        Class {
+            id: "https://uor.foundation/schema/ValueTuple",
+            label: "ValueTuple",
+            comment: "An ordered tuple of values drawn from a type:ConstrainedType's \
+                      carrier. Serves as the witness form for cert:InhabitanceCertificate \
+                      when verified is true.",
+            subclass_of: &[OWL_THING],
+            disjoint_with: &[],
+        },
     ]
 }
 

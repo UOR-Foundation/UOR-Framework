@@ -364,6 +364,12 @@ pub trait SubtypingLattice<P: Primitives> {
     fn lattice_depth(&self) -> P::NonNegativeInteger;
 }
 
+/// Declarative defaults for type:Constraint subclasses, consumed by #\[derive(ConstrainedType)\] at macro-crate build time.
+pub trait ConstraintDefaults<P: Primitives> {
+    /// Default integer value for the named constraint default.
+    fn default_value(&self) -> P::Integer;
+}
+
 /// A single value from an ordered domain. siteCount = n (quantization bits).
 pub mod scalar_type {
     /// `structuralGrounding`
@@ -470,3 +476,9 @@ pub mod either_type {}
 
 /// The canonical A + Unit idiom for optional values.
 pub mod option_type {}
+
+/// Default modulus for ResidueConstraint when the #\[uor(residue = X)\] attribute omits the explicit modulus. 256 matches the v0.2.1 reference ring Z/(2^8)Z.
+pub mod residue_default_modulus {
+    /// `defaultValue`
+    pub const DEFAULT_VALUE: i64 = 256;
+}

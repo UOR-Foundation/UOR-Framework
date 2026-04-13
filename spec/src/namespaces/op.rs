@@ -746,6 +746,22 @@ fn properties() -> Vec<Property> {
             domain: Some("https://uor.foundation/op/ComposedOperation"),
             range: "https://uor.foundation/schema/TermExpression",
         },
+        // v0.2.1 Phase 7a.9: Parametric ring-op metadata. Lean codegen
+        // walks op:PrimitiveOp individuals filtered by op:isRingOp to
+        // emit one typeclass per op. Arity comes from the existing
+        // op:arity integer property (1=unary, 2=binary).
+        Property {
+            id: "https://uor.foundation/op/isRingOp",
+            label: "isRingOp",
+            comment: "True iff this Operation participates in the \
+                      Z/(2^n)Z ring-arithmetic vocabulary. Annotation drives \
+                      the Lean RingOp class generation in UOR/Enforcement.lean.",
+            kind: PropertyKind::Datatype,
+            functional: true,
+            required: false,
+            domain: Some("https://uor.foundation/op/Operation"),
+            range: XSD_BOOLEAN,
+        },
     ]
 }
 
@@ -1063,6 +1079,7 @@ fn raw_individuals_vec() -> Vec<Individual> {
                       (involution property).",
             properties: &[
                 ("https://uor.foundation/op/arity", IndividualValue::Int(1)),
+                ("https://uor.foundation/op/isRingOp", IndividualValue::Bool(true)),
                 (
                     "https://uor.foundation/op/hasGeometricCharacter",
                     IndividualValue::IriRef("https://uor.foundation/op/RingReflection"),
@@ -1077,6 +1094,7 @@ fn raw_individuals_vec() -> Vec<Individual> {
                       The second generator of D_{2^n}. bnot(bnot(x)) = x.",
             properties: &[
                 ("https://uor.foundation/op/arity", IndividualValue::Int(1)),
+                ("https://uor.foundation/op/isRingOp", IndividualValue::Bool(true)),
                 (
                     "https://uor.foundation/op/hasGeometricCharacter",
                     IndividualValue::IriRef("https://uor.foundation/op/HypercubeReflection"),
@@ -1091,6 +1109,7 @@ fn raw_individuals_vec() -> Vec<Individual> {
                       The critical identity: succ is the composition neg ∘ bnot.",
             properties: &[
                 ("https://uor.foundation/op/arity", IndividualValue::Int(1)),
+                ("https://uor.foundation/op/isRingOp", IndividualValue::Bool(true)),
                 (
                     "https://uor.foundation/op/hasGeometricCharacter",
                     IndividualValue::IriRef("https://uor.foundation/op/Rotation"),
@@ -1116,6 +1135,7 @@ fn raw_individuals_vec() -> Vec<Individual> {
                       The inverse of succ. pred is the composition bnot ∘ neg.",
             properties: &[
                 ("https://uor.foundation/op/arity", IndividualValue::Int(1)),
+                ("https://uor.foundation/op/isRingOp", IndividualValue::Bool(true)),
                 (
                     "https://uor.foundation/op/hasGeometricCharacter",
                     IndividualValue::IriRef("https://uor.foundation/op/RotationInverse"),
@@ -1141,6 +1161,7 @@ fn raw_individuals_vec() -> Vec<Individual> {
                       Commutative, associative; identity element is 0.",
             properties: &[
                 ("https://uor.foundation/op/arity", IndividualValue::Int(2)),
+                ("https://uor.foundation/op/isRingOp", IndividualValue::Bool(true)),
                 (
                     "https://uor.foundation/op/hasGeometricCharacter",
                     IndividualValue::IriRef("https://uor.foundation/op/Translation"),
@@ -1171,6 +1192,7 @@ fn raw_individuals_vec() -> Vec<Individual> {
                       Not commutative, not associative.",
             properties: &[
                 ("https://uor.foundation/op/arity", IndividualValue::Int(2)),
+                ("https://uor.foundation/op/isRingOp", IndividualValue::Bool(true)),
                 (
                     "https://uor.foundation/op/hasGeometricCharacter",
                     IndividualValue::IriRef("https://uor.foundation/op/Translation"),
@@ -1193,6 +1215,7 @@ fn raw_individuals_vec() -> Vec<Individual> {
                       Commutative, associative; identity element is 1.",
             properties: &[
                 ("https://uor.foundation/op/arity", IndividualValue::Int(2)),
+                ("https://uor.foundation/op/isRingOp", IndividualValue::Bool(true)),
                 (
                     "https://uor.foundation/op/hasGeometricCharacter",
                     IndividualValue::IriRef("https://uor.foundation/op/Scaling"),
@@ -1219,6 +1242,7 @@ fn raw_individuals_vec() -> Vec<Individual> {
                       Commutative, associative; identity element is 0.",
             properties: &[
                 ("https://uor.foundation/op/arity", IndividualValue::Int(2)),
+                ("https://uor.foundation/op/isRingOp", IndividualValue::Bool(true)),
                 (
                     "https://uor.foundation/op/hasGeometricCharacter",
                     IndividualValue::IriRef("https://uor.foundation/op/HypercubeTranslation"),
@@ -1245,6 +1269,7 @@ fn raw_individuals_vec() -> Vec<Individual> {
                       Commutative, associative.",
             properties: &[
                 ("https://uor.foundation/op/arity", IndividualValue::Int(2)),
+                ("https://uor.foundation/op/isRingOp", IndividualValue::Bool(true)),
                 (
                     "https://uor.foundation/op/hasGeometricCharacter",
                     IndividualValue::IriRef("https://uor.foundation/op/HypercubeProjection"),
@@ -1267,6 +1292,7 @@ fn raw_individuals_vec() -> Vec<Individual> {
                       Commutative, associative.",
             properties: &[
                 ("https://uor.foundation/op/arity", IndividualValue::Int(2)),
+                ("https://uor.foundation/op/isRingOp", IndividualValue::Bool(true)),
                 (
                     "https://uor.foundation/op/hasGeometricCharacter",
                     IndividualValue::IriRef("https://uor.foundation/op/HypercubeJoin"),
@@ -11689,6 +11715,103 @@ fn raw_individuals_vec() -> Vec<Individual> {
                  IndividualValue::Str("non-empty EffectTarget")),
                 ("https://uor.foundation/op/forAll",
                  IndividualValue::Str("BoundaryEffect e")),
+                ("https://uor.foundation/op/verificationDomain",
+                 IndividualValue::IriRef("https://uor.foundation/op/Algebraic")),
+                ("https://uor.foundation/op/universallyValid", IndividualValue::Bool(true)),
+                ("https://uor.foundation/op/validityKind",
+                 IndividualValue::IriRef("https://uor.foundation/op/Universal")),
+            ],
+        },
+        // v0.2.1: Inhabitance Verdict identities (IH_1, IH_2a, IH_2b, IH_3)
+        Individual {
+            id: "https://uor.foundation/op/IH_1",
+            type_: "https://uor.foundation/op/Identity",
+            label: "IH_1",
+            comment: "Inhabitance soundness (bidirectional). For any \
+                      type:ConstrainedType T, cert:InhabitanceCertificate(T) \
+                      .verified is true iff the carrier of T is non-empty. \
+                      Discharge: the verdict reified by cert:InhabitanceCertificate \
+                      agrees with the denotational carrier-non-emptiness \
+                      predicate, by direct unfolding of cert:verified \
+                      against the predicate semantics.",
+            properties: &[
+                ("https://uor.foundation/op/lhs",
+                 IndividualValue::Str("InhabitanceCertificate(T).verified")),
+                ("https://uor.foundation/op/rhs",
+                 IndividualValue::Str("carrier(T) \u{2260} \u{2205}")),
+                ("https://uor.foundation/op/forAll",
+                 IndividualValue::Str("T : type:ConstrainedType")),
+                ("https://uor.foundation/op/verificationDomain",
+                 IndividualValue::IriRef("https://uor.foundation/op/Algebraic")),
+                ("https://uor.foundation/op/universallyValid", IndividualValue::Bool(true)),
+                ("https://uor.foundation/op/validityKind",
+                 IndividualValue::IriRef("https://uor.foundation/op/Universal")),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/op/IH_2a",
+            type_: "https://uor.foundation/op/Identity",
+            label: "IH_2a",
+            comment: "Inhabitance cost (2-SAT restriction). For instances \
+                      T satisfying predicate:Is2SatShape, the cost of \
+                      resolver:TwoSatDecider on T is inherited from the \
+                      classical 2-SAT decision procedure: O(n+m) where n is \
+                      the variable count and m the clause count. Unrestricted \
+                      IH_2 would be equivalent to P = NP and is not adopted.",
+            properties: &[
+                ("https://uor.foundation/op/lhs",
+                 IndividualValue::Str("cost(TwoSatDecider, T)")),
+                ("https://uor.foundation/op/rhs",
+                 IndividualValue::Str("O(n + m)")),
+                ("https://uor.foundation/op/forAll",
+                 IndividualValue::Str("T : type:ConstrainedType | Is2SatShape(T)")),
+                ("https://uor.foundation/op/verificationDomain",
+                 IndividualValue::IriRef("https://uor.foundation/op/Analytical")),
+                ("https://uor.foundation/op/universallyValid", IndividualValue::Bool(true)),
+                ("https://uor.foundation/op/validityKind",
+                 IndividualValue::IriRef("https://uor.foundation/op/Universal")),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/op/IH_2b",
+            type_: "https://uor.foundation/op/Identity",
+            label: "IH_2b",
+            comment: "Inhabitance cost (Horn-SAT restriction). For instances \
+                      T satisfying predicate:IsHornShape, the cost of \
+                      resolver:HornSatDecider on T is inherited from the \
+                      classical Horn-SAT decision procedure via unit \
+                      propagation: O(n+m).",
+            properties: &[
+                ("https://uor.foundation/op/lhs",
+                 IndividualValue::Str("cost(HornSatDecider, T)")),
+                ("https://uor.foundation/op/rhs",
+                 IndividualValue::Str("O(n + m)")),
+                ("https://uor.foundation/op/forAll",
+                 IndividualValue::Str("T : type:ConstrainedType | IsHornShape(T)")),
+                ("https://uor.foundation/op/verificationDomain",
+                 IndividualValue::IriRef("https://uor.foundation/op/Analytical")),
+                ("https://uor.foundation/op/universallyValid", IndividualValue::Bool(true)),
+                ("https://uor.foundation/op/validityKind",
+                 IndividualValue::IriRef("https://uor.foundation/op/Universal")),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/op/IH_3",
+            type_: "https://uor.foundation/op/Identity",
+            label: "IH_3",
+            comment: "Carrier preservation under basis reduction. The \
+                      constraint-nerve reduction performed during inhabitance \
+                      search preserves the carrier of the input \
+                      ConstrainedType. Discharged against \
+                      resolver:JacobianGuidedResolver and \
+                      resolver:guidingJacobian vocabulary.",
+            properties: &[
+                ("https://uor.foundation/op/lhs",
+                 IndividualValue::Str("carrier(reduce(T))")),
+                ("https://uor.foundation/op/rhs",
+                 IndividualValue::Str("carrier(T)")),
+                ("https://uor.foundation/op/forAll",
+                 IndividualValue::Str("T : type:ConstrainedType")),
                 ("https://uor.foundation/op/verificationDomain",
                  IndividualValue::IriRef("https://uor.foundation/op/Algebraic")),
                 ("https://uor.foundation/op/universallyValid", IndividualValue::Bool(true)),

@@ -1403,6 +1403,16 @@ pub fn validate() -> ConformanceReport {
         tests::fixtures::TEST276_WITNESS_SITE_BUDGET,
         &mut report,
     );
+    run_test(
+        "test277_inhabitance_verdict",
+        tests::fixtures::TEST277_INHABITANCE_VERDICT,
+        &mut report,
+    );
+    run_test(
+        "test278_v021_cleanup_bounds",
+        tests::fixtures::TEST278_V021_CLEANUP_BOUNDS,
+        &mut report,
+    );
 
     // Verify test fixture count matches expected
     let test_count = report.results.len() - before_tests;

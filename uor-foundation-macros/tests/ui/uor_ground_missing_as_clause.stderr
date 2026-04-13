@@ -1,0 +1,27 @@
+error: macro expansion ignores `;` and any tokens following
+  --> tests/ui/uor_ground_missing_as_clause.rs:9:13
+   |
+ 9 |       let _ = uor_ground! {
+   |  _____________^
+10 | |         compile_unit foo {
+11 | |             root_term: { 0 };
+12 | |             witt_level_ceiling: W8;
+...  |
+16 | |     };
+   | |_____^ caused by the macro expansion here
+   |
+   = note: the usage of `uor_ground!` is likely invalid in expression context
+
+error: uor_ground! compile_unit requires a trailing `as Grounded<T>` type ascription so the macro can recover the type parameter at expansion time.
+  --> tests/ui/uor_ground_missing_as_clause.rs:9:13
+   |
+ 9 |       let _ = uor_ground! {
+   |  _____________^
+10 | |         compile_unit foo {
+11 | |             root_term: { 0 };
+12 | |             witt_level_ceiling: W8;
+...  |
+16 | |     };
+   | |_____^
+   |
+   = note: this error originates in the macro `uor_ground` (in Nightly builds, run with -Z macro-backtrace for more info)

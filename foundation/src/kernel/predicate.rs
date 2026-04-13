@@ -10,6 +10,12 @@ use crate::Primitives;
 pub trait Predicate<P: Primitives> {
     /// The OWL class of objects this predicate accepts as input.
     fn evaluates_over(&self) -> &P::String;
+    /// Associated type for `Term`.
+    type Term: crate::kernel::schema::Term<P>;
+    /// The evaluator term that must reduce to a boolean-shaped datum on every input of the declared input type.
+    fn evaluator_term(&self) -> &Self::Term;
+    /// An IRI or identifier of the proof:Proof / proof:ComputationCertificate attesting that the evaluator halts on all inputs.
+    fn termination_witness(&self) -> &P::String;
     /// Associated type for `DescentMeasure`.
     type DescentMeasure: crate::kernel::recursion::DescentMeasure<P>;
     /// A termination witness for user-declared predicates. Kernel predicates are total by construction; user-declared predicates must carry a descent measure certifying termination.
@@ -31,10 +37,10 @@ pub trait DispatchRule<P: Primitives> {
     type Predicate: Predicate<P>;
     /// The predicate that triggers this dispatch rule.
     fn dispatch_predicate(&self) -> &Self::Predicate;
-    /// Associated type for `Resolver`.
-    type Resolver: crate::bridge::resolver::Resolver<P>;
-    /// The resolver selected when the predicate is satisfied.
-    fn dispatch_target(&self) -> &Self::Resolver;
+    /// The resolver class selected when the predicate is satisfied. Range is the OWL class IRI of a resolver:Resolver subclass; v0.2.1 uses class IRIs so the codegen can construct façade structs.
+    fn dispatch_target(&self) -> &P::String;
+    /// Non-negative integer priority. Lower priority values are evaluated first; ties within a DispatchTable are resolved by declaration order.
+    fn dispatch_priority(&self) -> P::NonNegativeInteger;
     /// Position in the dispatch table (evaluation order).
     fn dispatch_index(&self) -> P::NonNegativeInteger;
 }
@@ -159,4 +165,60 @@ pub mod budget_exhausted {
 pub mod reduction_converged {
     /// `evaluatesOver` -> `ReductionState`
     pub const EVALUATES_OVER: &str = "https://uor.foundation/reduction/ReductionState";
+}
+
+/// True on ConstrainedType instances whose constraint nerve contains only disjunctions of width ≤ 2.
+pub mod is2_sat_shape {
+    /// `evaluatesOver` -> `ConstrainedType`
+    pub const EVALUATES_OVER: &str = "https://uor.foundation/type/ConstrainedType";
+}
+
+/// True on ConstrainedType instances whose disjunctions each contain at most one positive literal.
+pub mod is_horn_shape {
+    /// `evaluatesOver` -> `ConstrainedType`
+    pub const EVALUATES_OVER: &str = "https://uor.foundation/type/ConstrainedType";
+}
+
+/// Default (catch-all) predicate. True on ConstrainedType instances not classified by Is2SatShape or IsHornShape.
+pub mod is_residual_fragment {
+    /// `evaluatesOver` -> `ConstrainedType`
+    pub const EVALUATES_OVER: &str = "https://uor.foundation/type/ConstrainedType";
+}
+
+/// The predicate:DispatchTable governing resolver:InhabitanceResolver. Three rules form a partition of type:ConstrainedType: Is2SatShape → TwoSatDecider (priority 0), IsHornShape → HornSatDecider (priority 1), IsResidualFragment → ResidualVerdictResolver (priority 2, catch-all). Total coverage is enforced by reduction:DispatchCoverageCheck; DispatchMiss is unreachable for this table.
+pub mod inhabitance_dispatch_table {
+    /// `isExhaustive`
+    pub const IS_EXHAUSTIVE: bool = true;
+    /// `isMutuallyExclusive`
+    pub const IS_MUTUALLY_EXCLUSIVE: bool = true;
+}
+
+/// Dispatch rule 1 of InhabitanceDispatchTable: Is2SatShape → TwoSatDecider at priority 0.
+pub mod inhabitance_rule_2sat {
+    /// `dispatchPredicate` -> `Is2SatShape`
+    pub const DISPATCH_PREDICATE: &str = "https://uor.foundation/predicate/Is2SatShape";
+    /// `dispatchPriority`
+    pub const DISPATCH_PRIORITY: i64 = 0;
+    /// `dispatchTarget` -> `TwoSatDecider`
+    pub const DISPATCH_TARGET: &str = "https://uor.foundation/resolver/TwoSatDecider";
+}
+
+/// Dispatch rule 2 of InhabitanceDispatchTable: IsHornShape → HornSatDecider at priority 1.
+pub mod inhabitance_rule_horn {
+    /// `dispatchPredicate` -> `IsHornShape`
+    pub const DISPATCH_PREDICATE: &str = "https://uor.foundation/predicate/IsHornShape";
+    /// `dispatchPriority`
+    pub const DISPATCH_PRIORITY: i64 = 1;
+    /// `dispatchTarget` -> `HornSatDecider`
+    pub const DISPATCH_TARGET: &str = "https://uor.foundation/resolver/HornSatDecider";
+}
+
+/// Dispatch rule 3 (catch-all) of InhabitanceDispatchTable: IsResidualFragment → ResidualVerdictResolver at priority 2. Ensures total coverage.
+pub mod inhabitance_rule_residual {
+    /// `dispatchPredicate` -> `IsResidualFragment`
+    pub const DISPATCH_PREDICATE: &str = "https://uor.foundation/predicate/IsResidualFragment";
+    /// `dispatchPriority`
+    pub const DISPATCH_PRIORITY: i64 = 2;
+    /// `dispatchTarget` -> `ResidualVerdictResolver`
+    pub const DISPATCH_TARGET: &str = "https://uor.foundation/resolver/ResidualVerdictResolver";
 }

@@ -193,5 +193,27 @@ fn properties() -> Vec<Property> {
             domain: Some("https://uor.foundation/parallel/ParallelProduct"),
             range: XSD_BOOLEAN,
         },
+        // v0.2.1: Conformance ParallelShape backing properties
+        Property {
+            id: "https://uor.foundation/parallel/sitePartition",
+            label: "sitePartition",
+            comment: "The partition:Partition this parallel product is over.",
+            kind: PropertyKind::Object,
+            functional: true,
+            required: false,
+            domain: Some("https://uor.foundation/parallel/ParallelProduct"),
+            range: "https://uor.foundation/partition/Partition",
+        },
+        Property {
+            id: "https://uor.foundation/parallel/disjointnessWitness",
+            label: "disjointnessWitness",
+            comment: "IRI of a proof of pairwise disjointness of the partition \
+                      components.",
+            kind: PropertyKind::Datatype,
+            functional: true,
+            required: false,
+            domain: Some("https://uor.foundation/parallel/ParallelProduct"),
+            range: XSD_STRING,
+        },
     ]
 }

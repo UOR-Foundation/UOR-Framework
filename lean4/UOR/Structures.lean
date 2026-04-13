@@ -201,6 +201,19 @@ instance : Inhabited (MintingSession UOR.Prims.Standard) where
     sessionIsIdempotent := none
   }
 
+/-- An ontology fact recording that a particular OWL class should appear in the foundation crate's `prelude` module re-exports. The v0.2.1 Rust codegen walks PreludeExport individuals filtered by exportsClass to assemble the prelude membership list. -/
+structure PreludeExport (P : Primitives) where
+  /-- The OWL class IRI that the foundation crate's prelude module should re-export. -/
+  exportsClass : Option P.String
+  /-- The Rust identifier under which the prelude exposes this symbol. Codegen uses this when the class's generated Rust name differs from a desired prelude alias. -/
+  exportRustName : Option P.String
+
+instance : Inhabited (PreludeExport UOR.Prims.Standard) where
+  default := {
+    exportsClass := none
+    exportRustName := none
+  }
+
 /-- A single required property within a shape: the property URI, its expected range, minimum and maximum cardinality. -/
 structure PropertyConstraint (P : Primitives) where
   /-- The property URI that must be present. -/
@@ -211,6 +224,10 @@ structure PropertyConstraint (P : Primitives) where
   minCount : Option P.NonNegativeInteger
   /-- Maximum cardinality (0 = unbounded). -/
   maxCount : Option P.NonNegativeInteger
+  /-- Literal surface keyword used in the conformance grammar for this property constraint (e.g., "root_term", "witt_level_ceiling"). -/
+  surfaceKeyword : Option P.String
+  /-- EBNF non-terminal that the value at this constraint slot must match (e.g., "program" for Term ranges, "name" for WittLevel ranges, "decimal-literal" for xsd:decimal, "domain-set" for non-functional IRI lists). -/
+  surfaceProduction : Option P.String
 
 instance : Inhabited (PropertyConstraint UOR.Prims.Standard) where
   default := {
@@ -218,6 +235,8 @@ instance : Inhabited (PropertyConstraint UOR.Prims.Standard) where
     constraintRange := none
     minCount := none
     maxCount := none
+    surfaceKeyword := none
+    surfaceProduction := none
   }
 
 /-- A constraint shape that a Prism-declared extension must satisfy. Analogous to sh:NodeShape in SHACL. -/
@@ -226,11 +245,14 @@ structure Shape (P : Primitives) where
   targetClass : Option P.String
   /-- A required property in this shape. -/
   requiredProperty : Array (PropertyConstraint P)
+  /-- Top-level EBNF non-terminal name this Shape generates (e.g., "compile-unit-decl" for CompileUnitShape). -/
+  surfaceForm : Option P.String
 
 instance : Inhabited (Shape UOR.Prims.Standard) where
   default := {
     targetClass := none
     requiredProperty := #[]
+    surfaceForm := none
   }
 
 /-- Shape for declaring a new DispatchRule in a DispatchTable. -/
@@ -240,6 +262,7 @@ instance : Inhabited (DispatchShape UOR.Prims.Standard) where
   default := {
     targetClass := none
     requiredProperty := #[]
+    surfaceForm := none
   }
 
 /-- Shape for declaring an ExternalEffect. -/
@@ -249,6 +272,7 @@ instance : Inhabited (EffectShape UOR.Prims.Standard) where
   default := {
     targetClass := none
     requiredProperty := #[]
+    surfaceForm := none
   }
 
 /-- Shape for declaring a GroundingMap from surface data to the ring. -/
@@ -258,6 +282,7 @@ instance : Inhabited (GroundingShape UOR.Prims.Standard) where
   default := {
     targetClass := none
     requiredProperty := #[]
+    surfaceForm := none
   }
 
 /-- Shape for declaring a Lease with LinearSite allocation. -/
@@ -267,6 +292,7 @@ instance : Inhabited (LeaseShape UOR.Prims.Standard) where
   default := {
     targetClass := none
     requiredProperty := #[]
+    surfaceForm := none
   }
 
 /-- Shape for declaring a ParallelProduct. -/
@@ -276,6 +302,7 @@ instance : Inhabited (ParallelShape UOR.Prims.Standard) where
   default := {
     targetClass := none
     requiredProperty := #[]
+    surfaceForm := none
   }
 
 /-- Shape for user-declared predicates. Requires a bounded evaluator (termination witness) and input type declaration. -/
@@ -285,6 +312,7 @@ instance : Inhabited (PredicateShape UOR.Prims.Standard) where
   default := {
     targetClass := none
     requiredProperty := #[]
+    surfaceForm := none
   }
 
 /-- Structured violation diagnostic carrying the shape IRI, constraint IRI, property IRI, expected range, cardinality bounds, and violation kind. -/
@@ -322,6 +350,7 @@ instance : Inhabited (StreamShape UOR.Prims.Standard) where
   default := {
     targetClass := none
     requiredProperty := #[]
+    surfaceForm := none
   }
 
 /-- Generic validation-proof wrapper. Proves that the inner value was produced by the conformance checker, not fabricated by Prism code. -/
@@ -398,6 +427,7 @@ instance : Inhabited (WittLevelShape UOR.Prims.Standard) where
   default := {
     targetClass := none
     requiredProperty := #[]
+    surfaceForm := none
   }
 
 end UOR.Bridge.Conformance_
@@ -1133,6 +1163,22 @@ end UOR.Bridge.Query
 
 namespace UOR.Bridge.Resolver
 
+/-- An ontology fact recording that a resolver:Resolver subclass produces a specific cert:Certificate subclass on success and a specific proof:ImpossibilityWitness subclass on failure. The v0.2.1 Rust codegen reads CertifyMapping individuals to emit foundation::Certify trait impls for each resolver class, keeping the mapping data-driven rather than hand-tabulated in source. -/
+structure CertifyMapping (P : Primitives) where
+  /-- The resolver:Resolver subclass this CertifyMapping describes. -/
+  forResolver : Option P.String
+  /-- The cert:Certificate (or proof:ComputationCertificate) subclass this resolver produces on success. -/
+  producesCertificate : Option P.String
+  /-- The proof:ImpossibilityWitness subclass this resolver produces on failure. -/
+  producesWitness : Option P.String
+
+instance : Inhabited (CertifyMapping UOR.Prims.Standard) where
+  default := {
+    forResolver := none
+    producesCertificate := none
+    producesWitness := none
+  }
+
 /-- A strategy class that defines how a SessionResolver orders pending RelationQuery instances for dispatch. The policy reads the targetSite.freeRank of each pending query and applies an ordering function. -/
 structure ExecutionPolicy (P : Primitives)
 
@@ -1622,6 +1668,8 @@ structure Operation (P : Primitives) where
   inverse : Option (Operation P)
   /-- Ordered list of operations this operation is composed from. Uses rdf:List to preserve application order (first element applied innermost). E.g., succ = neg ∘ bnot is encoded as [op:neg, op:bnot] meaning neg applied to the result of bnot. -/
   composedOf : Option P.String
+  /-- True iff this Operation participates in the Z/(2^n)Z ring-arithmetic vocabulary. Annotation drives the Lean RingOp class generation in UOR/Enforcement.lean. -/
+  isRingOp : Option P.Boolean
 
 instance : Inhabited (Operation UOR.Prims.Standard) where
   default := {
@@ -1629,6 +1677,7 @@ instance : Inhabited (Operation UOR.Prims.Standard) where
     hasGeometricCharacter := none
     inverse := none
     composedOf := none
+    isRingOp := none
   }
 
 end UOR.Kernel.Op
@@ -1715,6 +1764,7 @@ instance : Inhabited (BinaryOp UOR.Prims.Standard) where
     hasGeometricCharacter := none
     inverse := none
     composedOf := none
+    isRingOp := none
   }
 
 /-- A group: a set with an associative binary operation, an identity element, and inverses for every element. -/
@@ -1754,6 +1804,7 @@ instance : Inhabited (UnaryOp UOR.Prims.Standard) where
     hasGeometricCharacter := none
     inverse := none
     composedOf := none
+    isRingOp := none
   }
 
 /-- A unary operation f such that f(f(x)) = x for all x in R_n. The two UOR involutions are neg (ring reflection) and bnot (hypercube reflection). -/
@@ -1765,6 +1816,7 @@ instance : Inhabited (Involution UOR.Prims.Standard) where
     hasGeometricCharacter := none
     inverse := none
     composedOf := none
+    isRingOp := none
   }
 
 /-- A record linking an op:Identity individual to a specific quantum level at which it has been verified. Non-functional: one WittLevelBinding per (Identity, WittLevel) pair verified. -/
@@ -1852,51 +1904,23 @@ instance : Inhabited (DescentMeasure UOR.Prims.Standard) where
 
 end UOR.Kernel.Recursion
 
-namespace UOR.Kernel.Predicate
-
-/-- A total, pure, boolean-valued function on a kernel object. Evaluation terminates for all inputs and produces no side effects. -/
-structure Predicate (P : Primitives) where
-  /-- The OWL class of objects this predicate accepts as input. -/
-  evaluatesOver : Option P.String
-  /-- A termination witness for user-declared predicates. Kernel predicates are total by construction; user-declared predicates must carry a descent measure certifying termination. -/
-  boundedEvaluator : Array (UOR.Kernel.Recursion.DescentMeasure P)
-
-instance : Inhabited (Predicate UOR.Prims.Standard) where
-  default := {
-    evaluatesOver := none
-    boundedEvaluator := #[]
-  }
-
-/-- A predicate over partition:SiteIndex. Used for site-level selection in geodesic resolution. -/
-structure SitePredicate (P : Primitives) extends Predicate P
-
-instance : Inhabited (SitePredicate UOR.Prims.Standard) where
-  default := {
-    evaluatesOver := none
-    boundedEvaluator := #[]
-  }
-
-/-- A predicate over state:Context or reduction:ReductionState. Used for reduction step guards. -/
-structure StatePredicate (P : Primitives) extends Predicate P
-
-instance : Inhabited (StatePredicate UOR.Prims.Standard) where
-  default := {
-    evaluatesOver := none
-    boundedEvaluator := #[]
-  }
-
-/-- A predicate over type:TypeDefinition. Used for resolver dispatch. -/
-structure TypePredicate (P : Primitives) extends Predicate P
-
-instance : Inhabited (TypePredicate UOR.Prims.Standard) where
-  default := {
-    evaluatesOver := none
-    boundedEvaluator := #[]
-  }
-
-end UOR.Kernel.Predicate
-
 namespace UOR.Kernel.Reduction
+
+/-- An ontology fact describing a single field on a reduction:PipelineFailureReason variant. The v0.2.1 Rust codegen walks FailureField individuals filtered by ofFailure to assemble the PipelineFailure enum's variant fields. Adding a new field to a failure variant requires only adding a new FailureField individual. -/
+structure FailureField (P : Primitives) where
+  /-- The PipelineFailureReason (or class) this field belongs to. -/
+  ofFailure : Option P.String
+  /-- Snake_case name of the Rust field on the generated PipelineFailure variant. -/
+  fieldName : Option P.String
+  /-- Rust type for the field, expressed as a literal type string the codegen emits verbatim (e.g., "&'static str", "usize", "ReductionStep"). -/
+  fieldType : Option P.String
+
+instance : Inhabited (FailureField UOR.Prims.Standard) where
+  default := {
+    ofFailure := none
+    fieldName := none
+    fieldType := none
+  }
 
 /-- Lifecycle of a partitioned context lease: Pending → Active → Released/Expired/Suspended. -/
 structure LeaseState (P : Primitives) where
@@ -1999,6 +2023,22 @@ instance : Inhabited (PropertyBind UOR.Prims.Standard) where
     bindValue := none
   }
 
+/-- Declarative bound for SAT-fragment deciders. The v0.2.1 pipeline driver reads these individuals at codegen time to emit the bounded iterative Tarjan SCC (2-SAT) and unit propagation (Horn-SAT) implementations. -/
+structure SatBound (P : Primitives) where
+  /-- Maximum variable count the SAT decider supports. -/
+  maxVarCount : Option P.NonNegativeInteger
+  /-- Maximum clause count the SAT decider supports. -/
+  maxClauseCount : Option P.NonNegativeInteger
+  /-- Maximum literals per clause (2 for 2-SAT, higher for Horn). -/
+  maxLiteralsPerClause : Option P.NonNegativeInteger
+
+instance : Inhabited (SatBound UOR.Prims.Standard) where
+  default := {
+    maxVarCount := none
+    maxClauseCount := none
+    maxLiteralsPerClause := none
+  }
+
 /-- Predicate testing whether a site coverage target is met. -/
 structure SiteCoveragePredicate (P : Primitives) extends PredicateExpression P where
   /-- The site coverage target expression. -/
@@ -2020,6 +2060,19 @@ structure TargetConvergenceAngle (P : Primitives) where
 instance : Inhabited (TargetConvergenceAngle UOR.Prims.Standard) where
   default := {
     targetAngle := none
+  }
+
+/-- Declarative timing bound for reduction pipeline stages. Values in nanoseconds at the v0.2.1 reference hardware. -/
+structure TimingBound (P : Primitives) where
+  /-- Preflight-stage time budget in nanoseconds at the v0.2.1 reference hardware. -/
+  preflightBudgetNs : Option P.NonNegativeInteger
+  /-- Runtime-stage time budget in nanoseconds at the v0.2.1 reference hardware. -/
+  runtimeBudgetNs : Option P.NonNegativeInteger
+
+instance : Inhabited (TimingBound UOR.Prims.Standard) where
+  default := {
+    preflightBudgetNs := none
+    runtimeBudgetNs := none
   }
 
 /-- State changes applied when a transition fires. Contains PropertyBind steps. -/
@@ -2587,6 +2640,60 @@ end UOR.Bridge.Derivation
 
 namespace UOR.Kernel.Predicate
 
+/-- A total, pure, boolean-valued function on a kernel object. Evaluation terminates for all inputs and produces no side effects. -/
+structure Predicate (P : Primitives) where
+  /-- The OWL class of objects this predicate accepts as input. -/
+  evaluatesOver : Option P.String
+  /-- The evaluator term that must reduce to a boolean-shaped datum on every input of the declared input type. -/
+  evaluatorTerm : Option (UOR.Kernel.Schema.Term P)
+  /-- An IRI or identifier of the proof:Proof / proof:ComputationCertificate attesting that the evaluator halts on all inputs. -/
+  terminationWitness : Option P.String
+  /-- A termination witness for user-declared predicates. Kernel predicates are total by construction; user-declared predicates must carry a descent measure certifying termination. -/
+  boundedEvaluator : Array (UOR.Kernel.Recursion.DescentMeasure P)
+
+instance : Inhabited (Predicate UOR.Prims.Standard) where
+  default := {
+    evaluatesOver := none
+    evaluatorTerm := none
+    terminationWitness := none
+    boundedEvaluator := #[]
+  }
+
+/-- A pair (Predicate, Target) where Target is a resolver:Resolver class. The kernel evaluates the predicate; if true, the target resolver is selected. -/
+structure DispatchRule (P : Primitives) where
+  /-- The predicate that triggers this dispatch rule. -/
+  dispatchPredicate : Option (Predicate P)
+  /-- The resolver class selected when the predicate is satisfied. Range is the OWL class IRI of a resolver:Resolver subclass; v0.2.1 uses class IRIs so the codegen can construct façade structs. -/
+  dispatchTarget : Option P.String
+  /-- Non-negative integer priority. Lower priority values are evaluated first; ties within a DispatchTable are resolved by declaration order. -/
+  dispatchPriority : Option P.NonNegativeInteger
+  /-- Position in the dispatch table (evaluation order). -/
+  dispatchIndex : Option P.NonNegativeInteger
+
+instance : Inhabited (DispatchRule UOR.Prims.Standard) where
+  default := {
+    dispatchPredicate := none
+    dispatchTarget := none
+    dispatchPriority := none
+    dispatchIndex := none
+  }
+
+/-- An ordered set of DispatchRules for a single dispatch point. Must satisfy exhaustiveness and mutual exclusion. -/
+structure DispatchTable (P : Primitives) where
+  /-- The ordered set of rules in this table. -/
+  dispatchRules : Array (DispatchRule P)
+  /-- True iff the disjunction of all dispatch predicates is a tautology over the input class. -/
+  isExhaustive : Option P.Boolean
+  /-- True iff no two dispatch predicates can be simultaneously true for any input. -/
+  isMutuallyExclusive : Option P.Boolean
+
+instance : Inhabited (DispatchTable UOR.Prims.Standard) where
+  default := {
+    dispatchRules := #[]
+    isExhaustive := none
+    isMutuallyExclusive := none
+  }
+
 /-- A single case in a pattern match: a Predicate and a result Term. The match evaluates predicates in order and returns the result of the first matching arm. -/
 structure MatchArm (P : Primitives) where
   /-- The predicate guarding this arm. -/
@@ -2611,6 +2718,39 @@ structure MatchExpression (P : Primitives) extends UOR.Kernel.Schema.Term P wher
 instance : Inhabited (MatchExpression UOR.Prims.Standard) where
   default := {
     matchArms := #[]
+  }
+
+/-- A predicate over partition:SiteIndex. Used for site-level selection in geodesic resolution. -/
+structure SitePredicate (P : Primitives) extends Predicate P
+
+instance : Inhabited (SitePredicate UOR.Prims.Standard) where
+  default := {
+    evaluatesOver := none
+    evaluatorTerm := none
+    terminationWitness := none
+    boundedEvaluator := #[]
+  }
+
+/-- A predicate over state:Context or reduction:ReductionState. Used for reduction step guards. -/
+structure StatePredicate (P : Primitives) extends Predicate P
+
+instance : Inhabited (StatePredicate UOR.Prims.Standard) where
+  default := {
+    evaluatesOver := none
+    evaluatorTerm := none
+    terminationWitness := none
+    boundedEvaluator := #[]
+  }
+
+/-- A predicate over type:TypeDefinition. Used for resolver dispatch. -/
+structure TypePredicate (P : Primitives) extends Predicate P
+
+instance : Inhabited (TypePredicate UOR.Prims.Standard) where
+  default := {
+    evaluatesOver := none
+    evaluatorTerm := none
+    terminationWitness := none
+    boundedEvaluator := #[]
   }
 
 end UOR.Kernel.Predicate
@@ -3198,6 +3338,12 @@ structure Triad (P : Primitives)
 instance : Inhabited (Triad UOR.Prims.Standard) where
   default := {}
 
+/-- An ordered tuple of values drawn from a type:ConstrainedType's carrier. Serves as the witness form for cert:InhabitanceCertificate when verified is true. -/
+structure ValueTuple (P : Primitives)
+
+instance : Inhabited (ValueTuple UOR.Prims.Standard) where
+  default := {}
+
 /-- A single variable binding: a variable name bound to a domain type (e.g., x in R_n). -/
 structure VariableBinding (P : Primitives) where
   /-- The domain type of a variable binding (e.g., schema:Ring, type:ConstrainedType). -/
@@ -3544,10 +3690,16 @@ namespace UOR.Kernel.Stream_
 structure ProductiveStream (P : Primitives) where
   /-- Always true by construction: every epoch terminates. Invariant, not computed. -/
   isProductive : Option P.Boolean
+  /-- A term denoting a function from the current seed value to a pair (head, next_seed). -/
+  stepTerm : Option (UOR.Kernel.Schema.Term P)
+  /-- IRI of a proof of stream productivity (coinductive well-foundedness). -/
+  productivityWitness : Option P.String
 
 instance : Inhabited (ProductiveStream UOR.Prims.Standard) where
   default := {
     isProductive := none
+    stepTerm := none
+    productivityWitness := none
   }
 
 end UOR.Kernel.Stream_
@@ -3647,32 +3799,6 @@ instance : Inhabited (MonoidalAssociator UOR.Prims.Standard) where
   }
 
 end UOR.Kernel.Monoidal
-
-namespace UOR.Kernel.Parallel
-
-/-- A ∥ B: two computations with provably disjoint site targets. Execution order does not affect the result. -/
-structure ParallelProduct (P : Primitives) where
-  /-- The left parallel component (itself a sequential computation). -/
-  leftComputation : Option (UOR.Kernel.Monoidal.MonoidalProduct P)
-  /-- The right parallel component. -/
-  rightComputation : Option (UOR.Kernel.Monoidal.MonoidalProduct P)
-  /-- The certificate proving site disjointness. -/
-  disjointnessCert : Option (DisjointnessCertificate P)
-  /-- True iff site targets have zero overlap (no SynchronizationPoints required). -/
-  isFullyDisjoint : Option P.Boolean
-  /-- Declares whether this parallel product commutes with disjoint effects per FX_4. -/
-  disjointnessCommutation : Option P.Boolean
-
-instance : Inhabited (ParallelProduct UOR.Prims.Standard) where
-  default := {
-    leftComputation := none
-    rightComputation := none
-    disjointnessCert := none
-    isFullyDisjoint := none
-    disjointnessCommutation := none
-  }
-
-end UOR.Kernel.Parallel
 
 namespace UOR.Kernel.Recursion
 
@@ -4536,6 +4662,16 @@ instance : Inhabited (CompositeConstraint UOR.Prims.Standard) where
     crossingCost := none
   }
 
+/-- Declarative defaults for type:Constraint subclasses, consumed by #[derive(ConstrainedType)] at macro-crate build time. -/
+structure ConstraintDefaults (P : Primitives) where
+  /-- Default integer value for the named constraint default. -/
+  defaultValue : Option P.Integer
+
+instance : Inhabited (ConstraintDefaults UOR.Prims.Standard) where
+  default := {
+    defaultValue := none
+  }
+
 /-- A constraint on factorization depth: the minimum and maximum number of irreducible factors. Pins sites by bounding the factorization tree depth. -/
 structure DepthConstraint (P : Primitives) extends Constraint P where
   /-- The minimum factorization depth required by a depth constraint. -/
@@ -4866,9 +5002,8 @@ instance : Inhabited (PartitionProduct UOR.Prims.Standard) where
 
 end UOR.Bridge.Partition
 
-namespace UOR.Mutual.Cluster0
+namespace UOR.Bridge.Resolver
 
-mutual
 /-- A strategy for resolving a type declaration into a partition of the ring. The kernel dispatches to a specific resolver based on the type's structure. -/
 structure Resolver (P : Primitives) where
   /-- The type of input this resolver accepts. -/
@@ -4878,49 +5013,13 @@ structure Resolver (P : Primitives) where
   /-- A human-readable description of the resolution strategy this resolver implements. -/
   strategy : Option (UOR.Kernel.Schema.TermExpression P)
   /-- The current resolution state of this resolver. -/
-  resolutionState : Option (UOR.Bridge.Resolver.ResolutionState P)
+  resolutionState : Option (ResolutionState P)
   /-- The computational complexity class of this resolver. Replaces the string-valued resolver:complexity property. -/
   hasComplexityClass : Option ComplexityClass
   /-- The dispatch table governing resolver selection for this resolver class. -/
-  dispatchTable : Option (DispatchTable P)
+  dispatchTable : Option (UOR.Kernel.Predicate.DispatchTable P)
   /-- The predicate that selects this specific resolver. When the predicate evaluates to true on an input type, this resolver is chosen. -/
   resolverPredicate : Option (UOR.Kernel.Predicate.TypePredicate P)
-
-/-- A pair (Predicate, Target) where Target is a resolver:Resolver class. The kernel evaluates the predicate; if true, the target resolver is selected. -/
-structure DispatchRule (P : Primitives) where
-  /-- The predicate that triggers this dispatch rule. -/
-  dispatchPredicate : Option (UOR.Kernel.Predicate.Predicate P)
-  /-- The resolver selected when the predicate is satisfied. -/
-  dispatchTarget : Option (Resolver P)
-  /-- Position in the dispatch table (evaluation order). -/
-  dispatchIndex : Option P.NonNegativeInteger
-
-/-- An ordered set of DispatchRules for a single dispatch point. Must satisfy exhaustiveness and mutual exclusion. -/
-structure DispatchTable (P : Primitives) where
-  /-- The ordered set of rules in this table. -/
-  dispatchRules : Array (DispatchRule P)
-  /-- True iff the disjunction of all dispatch predicates is a tautology over the input class. -/
-  isExhaustive : Option P.Boolean
-  /-- True iff no two dispatch predicates can be simultaneously true for any input. -/
-  isMutuallyExclusive : Option P.Boolean
-
-end
-
-end UOR.Mutual.Cluster0
-
-namespace UOR.Bridge.Resolver
-abbrev Resolver := UOR.Mutual.Cluster0.Resolver
-end UOR.Bridge.Resolver
-
-namespace UOR.Kernel.Predicate
-abbrev DispatchRule := UOR.Mutual.Cluster0.DispatchRule
-end UOR.Kernel.Predicate
-
-namespace UOR.Kernel.Predicate
-abbrev DispatchTable := UOR.Mutual.Cluster0.DispatchTable
-end UOR.Kernel.Predicate
-
-namespace UOR.Mutual.Cluster0
 
 instance : Inhabited (Resolver UOR.Prims.Standard) where
   default := {
@@ -4933,21 +5032,7 @@ instance : Inhabited (Resolver UOR.Prims.Standard) where
     resolverPredicate := none
   }
 
-instance : Inhabited (DispatchRule UOR.Prims.Standard) where
-  default := {
-    dispatchPredicate := none
-    dispatchTarget := none
-    dispatchIndex := none
-  }
-
-instance : Inhabited (DispatchTable UOR.Prims.Standard) where
-  default := {
-    dispatchRules := #[]
-    isExhaustive := none
-    isMutuallyExclusive := none
-  }
-
-end UOR.Mutual.Cluster0
+end UOR.Bridge.Resolver
 
 namespace UOR.Bridge.Conformance_
 
@@ -5067,6 +5152,34 @@ instance : Inhabited (HomotopyResolver UOR.Prims.Standard) where
     resolverPredicate := none
   }
 
+/-- A Resolver target that decides carrier non-emptiness on ConstrainedType instances whose disjunctions each contain at most one positive literal, via classical Horn-SAT unit propagation in O(n+m). Dispatch rule 2 of the InhabitanceDispatchTable. -/
+structure HornSatDecider (P : Primitives) extends Resolver P
+
+instance : Inhabited (HornSatDecider UOR.Prims.Standard) where
+  default := {
+    inputType := none
+    outputType := none
+    strategy := none
+    resolutionState := none
+    hasComplexityClass := none
+    dispatchTable := none
+    resolverPredicate := none
+  }
+
+/-- A Resolver whose dispatch is governed by a new predicate:InhabitanceDispatchTable. Returns either a cert:InhabitanceCertificate (verified true with witness) or a proof:InhabitanceImpossibilityWitness (verified false with contradiction proof). Inherits the dual-output termination discipline from resolver:TypeSynthesisResolver. -/
+structure InhabitanceResolver (P : Primitives) extends Resolver P
+
+instance : Inhabited (InhabitanceResolver UOR.Prims.Standard) where
+  default := {
+    inputType := none
+    outputType := none
+    strategy := none
+    resolutionState := none
+    hasComplexityClass := none
+    dispatchTable := none
+    resolverPredicate := none
+  }
+
 /-- A resolver that uses the Jacobian matrix to guide constraint selection, implementing DC_10: select the constraint that maximises total curvature reduction. -/
 structure JacobianGuidedResolver (P : Primitives) extends Resolver P
 
@@ -5107,6 +5220,20 @@ instance : Inhabited (MeasurementResolver UOR.Prims.Standard) where
     resolverPredicate := none
   }
 
+/-- A Resolver target for the catch-all default dispatch rule. Returns the residual-hard verdict without promising a polynomial bound; the verdict is well-formed but the cost identity is unbounded. Dispatch rule 3 of the InhabitanceDispatchTable ensuring total coverage (reduction:DispatchMiss is unreachable for this table). -/
+structure ResidualVerdictResolver (P : Primitives) extends Resolver P
+
+instance : Inhabited (ResidualVerdictResolver UOR.Prims.Standard) where
+  default := {
+    inputType := none
+    outputType := none
+    strategy := none
+    resolutionState := none
+    hasComplexityClass := none
+    dispatchTable := none
+    resolverPredicate := none
+  }
+
 /-- A resolver that handles superposed site states, computing amplitudes and determining when superposition collapses to a classical site assignment (Amendment 32). -/
 structure SuperpositionResolver (P : Primitives) extends Resolver P where
   /-- The amplitude vector of all branches maintained by this SuperpositionResolver during ψ-pipeline traversal. Encoded as a comma-separated list of decimal amplitudes. Must satisfy Σ|αᵢ|² = 1 (QM_5) after normalization. -/
@@ -5115,6 +5242,20 @@ structure SuperpositionResolver (P : Primitives) extends Resolver P where
 instance : Inhabited (SuperpositionResolver UOR.Prims.Standard) where
   default := {
     amplitudeVector := none
+    inputType := none
+    outputType := none
+    strategy := none
+    resolutionState := none
+    hasComplexityClass := none
+    dispatchTable := none
+    resolverPredicate := none
+  }
+
+/-- A Resolver target that decides carrier non-emptiness on ConstrainedType instances whose constraint nerve contains only disjunctions of width ≤ 2, via classical 2-SAT in O(n+m). Dispatch rule 1 of the InhabitanceDispatchTable. -/
+structure TwoSatDecider (P : Primitives) extends Resolver P
+
+instance : Inhabited (TwoSatDecider UOR.Prims.Standard) where
+  default := {
     inputType := none
     outputType := none
     strategy := none
@@ -5189,6 +5330,7 @@ instance : Inhabited (ComposedOperation UOR.Prims.Standard) where
     hasGeometricCharacter := none
     inverse := none
     composedOf := none
+    isRingOp := none
   }
 
 /-- α: Binding × Context → Context. Non-commutative, associative at convergence (SR_10), arity 2. -/
@@ -5225,6 +5367,7 @@ instance : Inhabited (AccumulationOperation UOR.Prims.Standard) where
     hasGeometricCharacter := none
     inverse := none
     composedOf := none
+    isRingOp := none
   }
 
 /-- δ: Query × ResolverRegistry → Resolver. Non-commutative, non-associative, arity 2. -/
@@ -5261,6 +5404,7 @@ instance : Inhabited (DispatchOperation UOR.Prims.Standard) where
     hasGeometricCharacter := none
     inverse := none
     composedOf := none
+    isRingOp := none
   }
 
 /-- ι = P ∘ Π ∘ G (the φ-pipeline composed). Non-commutative, non-associative, arity 2. -/
@@ -5300,6 +5444,7 @@ instance : Inhabited (InferenceOperation UOR.Prims.Standard) where
     hasGeometricCharacter := none
     inverse := none
     composedOf := none
+    isRingOp := none
   }
 
 /-- λ: SharedContext × ℕ → ContextLease^k. Non-commutative, non-associative, arity 2. -/
@@ -5339,6 +5484,7 @@ instance : Inhabited (LeasePartitionOperation UOR.Prims.Standard) where
     hasGeometricCharacter := none
     inverse := none
     composedOf := none
+    isRingOp := none
   }
 
 /-- κ: Session × Session → Session. Commutative (disjoint leases), associative (SR_8), arity 2. -/
@@ -5375,6 +5521,7 @@ instance : Inhabited (SessionCompositionOperation UOR.Prims.Standard) where
     hasGeometricCharacter := none
     inverse := none
     composedOf := none
+    isRingOp := none
   }
 
 end UOR.Kernel.Op
@@ -5404,6 +5551,38 @@ instance : Inhabited (OperadComposition UOR.Prims.Standard) where
   }
 
 end UOR.Kernel.Operad
+
+namespace UOR.Kernel.Parallel
+
+/-- A ∥ B: two computations with provably disjoint site targets. Execution order does not affect the result. -/
+structure ParallelProduct (P : Primitives) where
+  /-- The left parallel component (itself a sequential computation). -/
+  leftComputation : Option (UOR.Kernel.Monoidal.MonoidalProduct P)
+  /-- The right parallel component. -/
+  rightComputation : Option (UOR.Kernel.Monoidal.MonoidalProduct P)
+  /-- The certificate proving site disjointness. -/
+  disjointnessCert : Option (DisjointnessCertificate P)
+  /-- True iff site targets have zero overlap (no SynchronizationPoints required). -/
+  isFullyDisjoint : Option P.Boolean
+  /-- Declares whether this parallel product commutes with disjoint effects per FX_4. -/
+  disjointnessCommutation : Option P.Boolean
+  /-- The partition:Partition this parallel product is over. -/
+  sitePartition : Option (UOR.Bridge.Partition.Partition P)
+  /-- IRI of a proof of pairwise disjointness of the partition components. -/
+  disjointnessWitness : Option P.String
+
+instance : Inhabited (ParallelProduct UOR.Prims.Standard) where
+  default := {
+    leftComputation := none
+    rightComputation := none
+    disjointnessCert := none
+    isFullyDisjoint := none
+    disjointnessCommutation := none
+    sitePartition := none
+    disjointnessWitness := none
+  }
+
+end UOR.Kernel.Parallel
 
 namespace UOR.User.Morphism
 
@@ -6322,11 +6501,17 @@ structure ContextLease (P : Primitives) where
   leasedSites : Option (UOR.Bridge.Partition.FreeRank P)
   /-- The Session that holds this lease. -/
   leaseHolder : Option (Session P)
+  /-- The site coordinate allocated linearly by this lease. -/
+  linearSite : Option P.NonNegativeInteger
+  /-- The lexical or session scope within which this lease is valid. -/
+  leaseScope : Option P.String
 
 instance : Inhabited (ContextLease UOR.Prims.Standard) where
   default := {
     leasedSites := none
     leaseHolder := none
+    linearSite := none
+    leaseScope := none
   }
 
 end UOR.User.State
@@ -6563,6 +6748,26 @@ end UOR.Bridge.Resolver
 
 namespace UOR.Bridge.Derivation
 
+/-- A peer of derivation:SynthesisStep specialised to inhabitance search. Each step represents one navigation in the constraint nerve, either pinning a site to a value or confirming that a predicate evaluates true on the current partial assignment. -/
+structure InhabitanceStep (P : Primitives) extends SynthesisStep P where
+  /-- The ConstraintSearchState before this InhabitanceStep was taken. -/
+  priorState : Option (UOR.Bridge.Resolver.ConstraintSearchState P)
+  /-- The ConstraintSearchState after this InhabitanceStep was taken. -/
+  successorState : Option (UOR.Bridge.Resolver.ConstraintSearchState P)
+  /-- The predicate:DispatchRule whose evaluation drove this InhabitanceStep. -/
+  rule : Option (UOR.Kernel.Predicate.DispatchRule P)
+
+instance : Inhabited (InhabitanceStep UOR.Prims.Standard) where
+  default := {
+    priorState := none
+    successorState := none
+    rule := none
+    stepIndex := none
+    addedConstraint := none
+    signatureBefore := none
+    signatureAfter := none
+  }
+
 /-- A persistent snapshot of a ConstraintSearchState at a specific SynthesisStep, allowing a TypeSynthesisResolver to resume exploration after interruption. Essential at Q1+ scale where exhaustive synthesis is computationally significant. -/
 structure SynthesisCheckpoint (P : Primitives) where
   /-- The SynthesisStep at which this checkpoint was taken. -/
@@ -6572,6 +6777,18 @@ structure SynthesisCheckpoint (P : Primitives) where
 
 instance : Inhabited (SynthesisCheckpoint UOR.Prims.Standard) where
   default := {
+    checkpointStep := none
+    checkpointState := none
+  }
+
+/-- A peer of derivation:SynthesisCheckpoint specialised to inhabitance search. Marks an audit point where the resolver state can be restored if the search backtracks. -/
+structure InhabitanceCheckpoint (P : Primitives) extends SynthesisCheckpoint P where
+  /-- Ordinal index of this checkpoint within the InhabitanceSearchTrace's checkpoint sequence. -/
+  checkpointIndex : Option P.Integer
+
+instance : Inhabited (InhabitanceCheckpoint UOR.Prims.Standard) where
+  default := {
+    checkpointIndex := none
     checkpointStep := none
     checkpointState := none
   }
@@ -6601,6 +6818,93 @@ instance : Inhabited (MonodromyResolver UOR.Prims.Standard) where
   }
 
 end UOR.Bridge.Resolver
+
+namespace UOR.Bridge.Trace
+
+/-- A subclass of trace:ComputationTrace specialised to inhabitance-search execution. Records the sequence of derivation:InhabitanceStep entries the resolver traversed and any derivation:InhabitanceCheckpoint entries it crossed. -/
+structure InhabitanceSearchTrace (P : Primitives) extends ComputationTrace P where
+  /-- Checkpoints crossed by the inhabitance search. Each checkpoint marks an audit point where the resolver state can be restored if the search backtracks. -/
+  checkpoint : Array (UOR.Bridge.Derivation.InhabitanceCheckpoint P)
+
+instance : Inhabited (InhabitanceSearchTrace UOR.Prims.Standard) where
+  default := {
+    checkpoint := #[]
+    input := none
+    output := none
+    step := #[]
+    monodromy := none
+    certifiedBy := none
+    residualEntropy := none
+    isGeodesic := none
+    geodesicViolation := #[]
+    cumulativeEntropyCost := none
+    adiabaticallyOrdered := none
+    measurementEvent := #[]
+    isAR1Ordered := none
+    isDC10Selected := none
+  }
+
+end UOR.Bridge.Trace
+
+namespace UOR.Bridge.Cert
+
+/-- A ComputationCertificate verdict primitive that decides carrier non-emptiness on a type:ConstrainedType. Distinct from cert:CompletenessCertificate, which decides freeRank = 0 on the minimal basis. For ConstrainedType instances admitting multiple satisfying value tuples, InhabitanceCertificate.verified may be true while CompletenessCertificate.verified is false. -/
+structure InhabitanceCertificate (P : Primitives) extends UOR.Bridge.Proof.ComputationCertificate P, Certificate P where
+  /-- The audit trail of the inhabitance search that produced this certificate. -/
+  searchTrace : Option (UOR.Bridge.Trace.InhabitanceSearchTrace P)
+  /-- The type:ConstrainedType this InhabitanceCertificate is issued for. -/
+  grounded : Option (UOR.User.Type_.ConstrainedType P)
+
+instance : Inhabited (InhabitanceCertificate UOR.Prims.Standard) where
+  default := {
+    searchTrace := none
+    grounded := none
+    method := none
+    verified := none
+    wittLength := none
+    timestamp := none
+    certifies := none
+    atWittLevel := none
+    witness := #[]
+    provesIdentity := none
+    verifiedAtLevel := #[]
+    strategy := none
+    dependsOn := #[]
+    formalDerivation := none
+  }
+
+end UOR.Bridge.Cert
+
+namespace UOR.Bridge.Proof
+
+/-- A specialisation of proof:ImpossibilityWitness produced when the inhabitance search determines that the carrier of a ConstrainedType is empty. Aggregates into the existing proof:MorphospaceBoundary alongside other impossibility witnesses, inheriting its O(1) amortised lookup discipline for previously resolved signatures. -/
+structure InhabitanceImpossibilityWitness (P : Primitives) extends ImpossibilityWitness P where
+  /-- The Lean 4 by-contradiction derivation over the predicate vocabulary attesting that no value tuple satisfies the constraint system. -/
+  contradictionProof : Option P.String
+  /-- The type:ConstrainedType whose carrier this witness certifies as empty. -/
+  grounded : Option (UOR.User.Type_.ConstrainedType P)
+  /-- The audit trail of the inhabitance search up to the contradiction. -/
+  searchTrace : Option (UOR.Bridge.Trace.InhabitanceSearchTrace P)
+
+instance : Inhabited (InhabitanceImpossibilityWitness UOR.Prims.Standard) where
+  default := {
+    contradictionProof := none
+    grounded := none
+    searchTrace := none
+    impossibilityReason := none
+    impossibilityDomain := none
+    achievabilityStatus := none
+    verified := none
+    timestamp := none
+    witness := #[]
+    provesIdentity := none
+    verifiedAtLevel := #[]
+    strategy := none
+    dependsOn := #[]
+    formalDerivation := none
+  }
+
+end UOR.Bridge.Proof
 
 namespace UOR.User.Type_
 

@@ -490,6 +490,19 @@ fn classes() -> Vec<Class> {
             subclass_of: &[OWL_THING],
             disjoint_with: &[],
         },
+        // v0.2.1 Phase 7a.6: Parametric defaults for type:Constraint
+        // subclasses, consumed by #[derive(ConstrainedType)] at macro-crate
+        // build time via the keywords.rs/defaults.rs artifacts generated
+        // by uor-foundation-macros/build.rs.
+        Class {
+            id: "https://uor.foundation/type/ConstraintDefaults",
+            label: "ConstraintDefaults",
+            comment: "Declarative defaults for type:Constraint subclasses, \
+                      consumed by #[derive(ConstrainedType)] at macro-crate \
+                      build time.",
+            subclass_of: &[OWL_THING],
+            disjoint_with: &[],
+        },
     ]
 }
 
@@ -1428,6 +1441,17 @@ fn properties() -> Vec<Property> {
             domain: Some("https://uor.foundation/type/SubtypingLattice"),
             range: XSD_NON_NEGATIVE_INTEGER,
         },
+        // v0.2.1 Phase 7a.6: ConstraintDefaults single-value slot.
+        Property {
+            id: "https://uor.foundation/type/defaultValue",
+            label: "defaultValue",
+            comment: "Default integer value for the named constraint default.",
+            kind: PropertyKind::Datatype,
+            functional: true,
+            required: false,
+            domain: Some("https://uor.foundation/type/ConstraintDefaults"),
+            range: XSD_INTEGER,
+        },
     ]
 }
 
@@ -1677,6 +1701,21 @@ fn individuals() -> Vec<Individual> {
             label: "OptionType",
             comment: "The canonical A + Unit idiom for optional values.",
             properties: &[],
+        },
+        // v0.2.1 Phase 7a.6: ConstraintDefaults individual. Macros crate
+        // build.rs reads this to bake RESIDUE_DEFAULT_MODULUS into the
+        // derive macro's expansion, so no literal 256 appears in Rust src.
+        Individual {
+            id: "https://uor.foundation/type/ResidueDefaultModulus",
+            type_: "https://uor.foundation/type/ConstraintDefaults",
+            label: "ResidueDefaultModulus",
+            comment: "Default modulus for ResidueConstraint when the \
+                      #[uor(residue = X)] attribute omits the explicit \
+                      modulus. 256 matches the v0.2.1 reference ring Z/(2^8)Z.",
+            properties: &[(
+                "https://uor.foundation/type/defaultValue",
+                IndividualValue::Int(256),
+            )],
         },
     ]
 }

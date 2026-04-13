@@ -1,9 +1,13 @@
 //! Generates the `enforcement.rs` module for the `uor-foundation` crate.
 //!
 //! This module emits Layer 1 (opaque witnesses), Layer 2 (declarative builders),
-//! and the Term AST types that form the declarative enforcement surface.
+//! the Term AST, and the v0.2.1 ergonomics surface (sealed `OntologyTarget` /
+//! `Grounded<T>` wrappers, the `Certify` trait, the parametric `PipelineFailure`
+//! enum, ring-op phantom wrappers, fragment markers, dispatch tables, and the
+//! `prelude` module).
 
 use crate::emit::RustFile;
+use uor_ontology::model::{IndividualValue, Ontology};
 
 /// Generates the complete `enforcement.rs` module content.
 ///
@@ -11,14 +15,14 @@ use crate::emit::RustFile;
 ///
 /// This function is infallible but returns `String` for consistency.
 #[must_use]
-pub fn generate_enforcement_module() -> String {
+pub fn generate_enforcement_module(ontology: &Ontology) -> String {
     let mut f = RustFile::new(
         "Declarative enforcement types.\n\
          //!\n\
          //! This module contains the opaque witness types, declarative builders,\n\
-         //! and Term AST that form the declarative enforcement surface of the\n\
-         //! UOR Foundation crate. Prism code consumes these types but cannot\n\
-         //! construct the sealed ones directly.\n\
+         //! the Term AST, and the v0.2.1 ergonomics surface (sealed `Grounded<T>`,\n\
+         //! the `Certify` trait, `PipelineFailure`, ring-op phantom wrappers,\n\
+         //! fragment markers, dispatch tables, and the `prelude` module).\n\
          //!\n\
          //! # Layers\n\
          //!\n\
@@ -26,21 +30,37 @@ pub fn generate_enforcement_module() -> String {
          //!   `FreeRank` \\[private fields, no public constructors\\]\n\
          //! - **Layer 2** \\[Declarative Builders\\]: `CompileUnitBuilder`,\n\
          //!   `EffectDeclarationBuilder`, etc. \\[produce `Validated<T>` on success\\]\n\
-         //! - **Term AST**: `Term`, `TermArena`, `Binding`, `Assertion`, etc.",
+         //! - **Term AST**: `Term`, `TermArena`, `Binding`, `Assertion`, etc.\n\
+         //! - **v0.2.1 Ergonomics**: `OntologyTarget`, `GroundedShape`, `Grounded<T>`,\n\
+         //!   `Certify`, `PipelineFailure`, `RingOp<L>`, fragment markers,\n\
+         //!   `INHABITANCE_DISPATCH_TABLE`, and the `prelude` module.",
     );
 
     f.line("use crate::{PrimitiveOp, WittLevel, VerificationDomain, ViolationKind};");
+    f.line("use core::marker::PhantomData;");
     f.blank();
 
     generate_sealed_module(&mut f);
-    generate_datum_types(&mut f);
-    generate_grounding_types(&mut f);
+    generate_datum_types(&mut f, ontology);
+    generate_grounding_types(&mut f, ontology);
     generate_witness_types(&mut f);
     generate_term_ast(&mut f);
     generate_shape_violation(&mut f);
     generate_builders(&mut f);
-    generate_minting_session(&mut f);
-    generate_const_ring_eval(&mut f);
+    generate_minting_session(&mut f, ontology);
+    generate_const_ring_eval(&mut f, ontology);
+
+    // v0.2.1 ergonomics surface generators (parametric — read from ontology)
+    generate_ontology_target_trait(&mut f, ontology);
+    generate_grounded_wrapper(&mut f);
+    generate_pipeline_failure(&mut f, ontology);
+    generate_certify_trait(&mut f, ontology);
+    generate_ring_ops(&mut f, ontology);
+    generate_fragment_markers(&mut f, ontology);
+    generate_dispatch_tables(&mut f, ontology);
+    generate_validated_deref(&mut f);
+    generate_back_door_minting(&mut f);
+    generate_prelude(&mut f, ontology);
 
     f.finish()
 }
@@ -59,28 +79,85 @@ fn generate_sealed_module(f: &mut RustFile) {
     f.blank();
 }
 
-fn generate_datum_types(f: &mut RustFile) {
-    // DatumInner
-    f.doc_comment("Internal level-tagged ring value. Width determined by quantum level.");
+/// v0.2.1 Phase 8b.7: data-driven Witt level descriptors sourced from
+/// `schema:WittLevel` individuals in the ontology.
+///
+/// Each returned tuple is `(local_name, bits_width, byte_width)`:
+///
+/// - `local_name` is the ontology individual's local name (`W8`, `W16`,
+///   `W24`, `W32`, ...). This becomes the `DatumInner` variant name.
+/// - `bits_width` is the `schema:bitsWidth` annotation value.
+/// - `byte_width` is `bits_width.div_ceil(8)` — the payload size in bytes.
+///
+/// Sorted ascending by `bits_width` so the emitted enum variants appear
+/// in a deterministic small-to-large order.
+///
+/// v0.2.1 scope: the walk filters to levels whose `bits_width` is a
+/// multiple of 8 **and** fits into a native Rust int type (≤ 64 bits).
+/// W24 is emitted as a 3-byte variant backed by `u32` with a 24-bit mask
+/// for ring-op evaluation. Deeper levels (if the ontology adds e.g. W128)
+/// get stored but not ring-op-wired until the foundation grows a code
+/// path for the wider primitives.
+fn witt_levels(ontology: &Ontology) -> Vec<(String, u32, usize)> {
+    let mut levels: Vec<(String, u32, usize)> = Vec::new();
+    for ind in individuals_of_type(ontology, "https://uor.foundation/schema/WittLevel") {
+        let bits = ind
+            .properties
+            .iter()
+            .find_map(|(k, v)| {
+                if *k == "https://uor.foundation/schema/bitsWidth" {
+                    if let uor_ontology::model::IndividualValue::Int(n) = v {
+                        return Some(*n as u32);
+                    }
+                }
+                None
+            })
+            .unwrap_or(0);
+        if bits == 0 || bits % 8 != 0 || bits > 64 {
+            continue;
+        }
+        let byte_width = bits.div_ceil(8) as usize;
+        let local = local_name(ind.id).to_string();
+        levels.push((local, bits, byte_width));
+    }
+    levels.sort_by_key(|(_, bits, _)| *bits);
+    levels
+}
+
+/// Returns the smallest Rust `u*` type that can hold `bits` bits of a ring
+/// element. `bits` is the `schema:bitsWidth` annotation value. W24 uses
+/// `u32` with a `& 0xFFFFFF` mask at the arithmetic boundary.
+fn witt_rust_int_type(bits: u32) -> &'static str {
+    if bits <= 8 {
+        "u8"
+    } else if bits <= 16 {
+        "u16"
+    } else if bits <= 32 {
+        "u32"
+    } else {
+        "u64"
+    }
+}
+
+fn generate_datum_types(f: &mut RustFile, ontology: &Ontology) {
+    let levels = witt_levels(ontology);
+    // DatumInner — variants emitted parametrically from `schema:WittLevel`.
+    f.doc_comment("Internal level-tagged ring value. Width determined by the Witt level.");
+    f.doc_comment("Variants are emitted parametrically from `schema:WittLevel` individuals");
+    f.doc_comment("in the ontology; adding a new level to the ontology regenerates this enum.");
     f.doc_comment("Not publicly constructible \\[sealed within the crate\\].");
     f.line("#[derive(Debug, Clone, PartialEq, Eq)]");
     f.line("#[allow(clippy::large_enum_variant, dead_code)]");
     f.line("pub(crate) enum DatumInner {");
-    f.indented_doc_comment("Q0: 8-bit ring Z/256Z.");
-    f.line("    Q0([u8; 1]),");
-    f.indented_doc_comment("Q1: 16-bit ring Z/65536Z.");
-    f.line("    Q1([u8; 2]),");
-    f.indented_doc_comment("Q3: 32-bit ring Z/2^32Z.");
-    f.line("    Q3([u8; 4]),");
-    f.indented_doc_comment("Q7: 64-bit ring Z/2^64Z.");
-    f.line("    Q7([u8; 8]),");
-    f.indented_doc_comment("Q511: 4096-bit ring Z/2^4096Z.");
-    f.line("    Q511([u8; 512]),");
+    for (local, bits, bytes) in &levels {
+        f.indented_doc_comment(&format!("{local}: {bits}-bit ring Z/(2^{bits})Z."));
+        f.line(&format!("    {local}([u8; {bytes}]),"));
+    }
     f.line("}");
     f.blank();
 
-    // Datum
-    f.doc_comment("A ring element at its minting quantum level.");
+    // Datum public wrapper.
+    f.doc_comment("A ring element at its minting Witt level.");
     f.doc_comment("");
     f.doc_comment("Cannot be constructed outside the `uor_foundation` crate.");
     f.doc_comment("The only way to obtain a `Datum` is through reduction evaluation");
@@ -90,12 +167,10 @@ fn generate_datum_types(f: &mut RustFile) {
         "// A Datum is produced by reduction evaluation or the minting boundary —\n\
          // you never construct one directly.\n\
          fn inspect_datum(d: &uor_foundation::enforcement::Datum) {\n\
-         \x20   // Query its quantum level (Q0 = 8-bit, Q7 = 64-bit, etc.)\n\
+         \x20   // Query its Witt level (W8 = 8-bit, W32 = 32-bit, etc.)\n\
          \x20   let level = d.level();\n\
-         \n\
          \x20   // Datum width is determined by its level:\n\
-         \x20   //   Q0 → 1 byte,  Q1 → 2 bytes,  Q3 → 4 bytes,\n\
-         \x20   //   Q7 → 8 bytes, Q511 → 512 bytes\n\
+         \x20   //   W8 → 1 byte,  W16 → 2 bytes,  W24 → 3 bytes,  W32 → 4 bytes.\n\
          \x20   let bytes = d.as_bytes();\n\
          }",
         "rust,ignore",
@@ -112,11 +187,15 @@ fn generate_datum_types(f: &mut RustFile) {
     f.line("    #[must_use]");
     f.line("    pub const fn level(&self) -> WittLevel {");
     f.line("        match self.inner {");
-    f.line("            DatumInner::Q0(_) => WittLevel::W8,");
-    f.line("            DatumInner::Q1(_) => WittLevel::W16,");
-    f.line("            DatumInner::Q3(_) => WittLevel::new(32),");
-    f.line("            DatumInner::Q7(_) => WittLevel::new(64),");
-    f.line("            DatumInner::Q511(_) => WittLevel::new(4096),");
+    for (local, bits, _) in &levels {
+        // W8/W16 use the named constants; others use WittLevel::new.
+        let rhs = match *bits {
+            8 => "WittLevel::W8".to_string(),
+            16 => "WittLevel::W16".to_string(),
+            _ => format!("WittLevel::new({bits})"),
+        };
+        f.line(&format!("            DatumInner::{local}(_) => {rhs},"));
+    }
     f.line("        }");
     f.line("    }");
     f.blank();
@@ -125,33 +204,28 @@ fn generate_datum_types(f: &mut RustFile) {
     f.line("    #[must_use]");
     f.line("    pub fn as_bytes(&self) -> &[u8] {");
     f.line("        match &self.inner {");
-    f.line("            DatumInner::Q0(b) => b,");
-    f.line("            DatumInner::Q1(b) => b,");
-    f.line("            DatumInner::Q3(b) => b,");
-    f.line("            DatumInner::Q7(b) => b,");
-    f.line("            DatumInner::Q511(b) => b,");
+    for (local, _, _) in &levels {
+        f.line(&format!("            DatumInner::{local}(b) => b,"));
+    }
     f.line("        }");
     f.line("    }");
     f.line("}");
     f.blank();
 }
 
-fn generate_grounding_types(f: &mut RustFile) {
-    // GroundedCoordInner
+fn generate_grounding_types(f: &mut RustFile, ontology: &Ontology) {
+    let levels = witt_levels(ontology);
+    // GroundedCoordInner — variants emitted parametrically from
+    // `schema:WittLevel` individuals (same filter as `DatumInner`).
     f.doc_comment("Internal level-tagged coordinate value for grounding intermediates.");
+    f.doc_comment("Variant set mirrors `DatumInner`: one per `schema:WittLevel`.");
     f.line("#[derive(Debug, Clone, PartialEq, Eq)]");
     f.line("#[allow(clippy::large_enum_variant, dead_code)]");
     f.line("pub(crate) enum GroundedCoordInner {");
-    f.indented_doc_comment("Q0: 8-bit coordinate.");
-    f.line("    Q0([u8; 1]),");
-    f.indented_doc_comment("Q1: 16-bit coordinate.");
-    f.line("    Q1([u8; 2]),");
-    f.indented_doc_comment("Q3: 32-bit coordinate.");
-    f.line("    Q3([u8; 4]),");
-    f.indented_doc_comment("Q7: 64-bit coordinate.");
-    f.line("    Q7([u8; 8]),");
-    f.indented_doc_comment("Q511: 4096-bit coordinate.");
-    f.line("    Q511([u8; 512]),");
+    for (local, bits, bytes) in &levels {
+        f.indented_doc_comment(&format!("{local}: {bits}-bit coordinate."));
+        f.line(&format!("    {local}([u8; {bytes}]),"));
+    }
     f.line("}");
     f.blank();
 
@@ -161,24 +235,18 @@ fn generate_grounding_types(f: &mut RustFile) {
     f.doc_comment("Not a `Datum` \\[this is the narrow intermediate that a `Grounding`");
     f.doc_comment("impl produces\\]. The foundation validates and mints it into a `Datum`.");
     f.doc_comment("Uses the same closed level-tagged family as `Datum`, ensuring that");
-    f.doc_comment("coordinate width matches the target quantum level.");
+    f.doc_comment("coordinate width matches the target Witt level.");
     f.doc_example(
         "use uor_foundation::enforcement::GroundedCoord;\n\
          \n\
-         // Q0: 8-bit ring Z/256Z — lightweight, exhaustive-verification baseline\n\
-         let byte_coord = GroundedCoord::q0(42);\n\
+         // W8: 8-bit ring Z/256Z — lightweight, exhaustive-verification baseline\n\
+         let byte_coord = GroundedCoord::w8(42);\n\
          \n\
-         // Q1: 16-bit ring Z/65536Z — audio samples, small indices\n\
-         let short_coord = GroundedCoord::q1(1000);\n\
+         // W16: 16-bit ring Z/65536Z — audio samples, small indices\n\
+         let short_coord = GroundedCoord::w16(1000);\n\
          \n\
-         // Q3: 32-bit ring Z/2^32Z — pixel data, general-purpose integers\n\
-         let word_coord = GroundedCoord::q3(70_000);\n\
-         \n\
-         // Q7: 64-bit ring Z/2^64Z — cryptographic hashes, content addresses\n\
-         let wide_coord = GroundedCoord::q7(0xDEAD_BEEF_CAFE_BABE);\n\
-         \n\
-         // Q511: 4096-bit ring Z/2^4096Z — cryptographic/verification workloads\n\
-         let huge_coord = GroundedCoord::q511([0u8; 512]);",
+         // W32: 32-bit ring Z/2^32Z — pixel data, general-purpose integers\n\
+         let word_coord = GroundedCoord::w32(70_000);",
         "rust",
     );
     f.line("#[derive(Debug, Clone, PartialEq, Eq)]");
@@ -188,40 +256,46 @@ fn generate_grounding_types(f: &mut RustFile) {
     f.line("}");
     f.blank();
     f.line("impl GroundedCoord {");
-    f.indented_doc_comment("Construct a Q0 coordinate from a `u8` value.");
-    f.line("    #[inline]");
-    f.line("    #[must_use]");
-    f.line("    pub const fn q0(value: u8) -> Self {");
-    f.line("        Self { inner: GroundedCoordInner::Q0([value]) }");
-    f.line("    }");
-    f.blank();
-    f.indented_doc_comment("Construct a Q1 coordinate from a `u16` value (little-endian).");
-    f.line("    #[inline]");
-    f.line("    #[must_use]");
-    f.line("    pub const fn q1(value: u16) -> Self {");
-    f.line("        Self { inner: GroundedCoordInner::Q1(value.to_le_bytes()) }");
-    f.line("    }");
-    f.blank();
-    f.indented_doc_comment("Construct a Q3 coordinate from a `u32` value (little-endian).");
-    f.line("    #[inline]");
-    f.line("    #[must_use]");
-    f.line("    pub const fn q3(value: u32) -> Self {");
-    f.line("        Self { inner: GroundedCoordInner::Q3(value.to_le_bytes()) }");
-    f.line("    }");
-    f.blank();
-    f.indented_doc_comment("Construct a Q7 coordinate from a `u64` value (little-endian).");
-    f.line("    #[inline]");
-    f.line("    #[must_use]");
-    f.line("    pub const fn q7(value: u64) -> Self {");
-    f.line("        Self { inner: GroundedCoordInner::Q7(value.to_le_bytes()) }");
-    f.line("    }");
-    f.blank();
-    f.indented_doc_comment("Construct a Q511 coordinate from a 512-byte array (little-endian).");
-    f.line("    #[inline]");
-    f.line("    #[must_use]");
-    f.line("    pub const fn q511(bytes: [u8; 512]) -> Self {");
-    f.line("        Self { inner: GroundedCoordInner::Q511(bytes) }");
-    f.line("    }");
+    for (local, bits, bytes) in &levels {
+        let ctor = local.to_ascii_lowercase();
+        let rust_ty = witt_rust_int_type(*bits);
+        f.indented_doc_comment(&format!(
+            "Construct a {local} coordinate from a `{rust_ty}` value (little-endian)."
+        ));
+        f.line("    #[inline]");
+        f.line("    #[must_use]");
+        f.line(&format!(
+            "    pub const fn {ctor}(value: {rust_ty}) -> Self {{"
+        ));
+        // For W24 (3 bytes from u32), we need to mask and copy the low 3 bytes.
+        // For W8, the payload is [u8; 1] and the native to_le_bytes gives [u8; 1].
+        // Otherwise to_le_bytes gives exactly the needed byte_width.
+        let full_bytes = match rust_ty {
+            "u8" => 1,
+            "u16" => 2,
+            "u32" => 4,
+            _ => 8,
+        };
+        if *bytes == full_bytes {
+            f.line(&format!(
+                "        Self {{ inner: GroundedCoordInner::{local}(value.to_le_bytes()) }}"
+            ));
+        } else {
+            // Truncate to the ring's bit-width (e.g. W24 into 3 bytes).
+            f.line("        let full = value.to_le_bytes();");
+            f.line(&format!("        let mut out = [0u8; {bytes}];"));
+            f.line("        let mut i = 0;");
+            f.line(&format!("        while i < {bytes} {{"));
+            f.line("            out[i] = full[i];");
+            f.line("            i += 1;");
+            f.line("        }");
+            f.line(&format!(
+                "        Self {{ inner: GroundedCoordInner::{local}(out) }}"
+            ));
+        }
+        f.line("    }");
+        f.blank();
+    }
     f.line("}");
     f.blank();
 
@@ -234,18 +308,18 @@ fn generate_grounding_types(f: &mut RustFile) {
     f.doc_example(
         "use uor_foundation::enforcement::{GroundedCoord, GroundedTuple};\n\
          \n\
-         // A 2D pixel: (red, green) at Q0 (8-bit per channel)\n\
+         // A 2D pixel: (red, green) at W8 (8-bit per channel)\n\
          let pixel = GroundedTuple::new([\n\
-         \x20   GroundedCoord::q0(255), // red channel\n\
-         \x20   GroundedCoord::q0(128), // green channel\n\
+         \x20   GroundedCoord::w8(255), // red channel\n\
+         \x20   GroundedCoord::w8(128), // green channel\n\
          ]);\n\
          \n\
-         // An E8 lattice point: 8 coordinates at Q0\n\
+         // An E8 lattice point: 8 coordinates at W8\n\
          let lattice_point = GroundedTuple::new([\n\
-         \x20   GroundedCoord::q0(2), GroundedCoord::q0(0),\n\
-         \x20   GroundedCoord::q0(0), GroundedCoord::q0(0),\n\
-         \x20   GroundedCoord::q0(0), GroundedCoord::q0(0),\n\
-         \x20   GroundedCoord::q0(0), GroundedCoord::q0(0),\n\
+         \x20   GroundedCoord::w8(2), GroundedCoord::w8(0),\n\
+         \x20   GroundedCoord::w8(0), GroundedCoord::w8(0),\n\
+         \x20   GroundedCoord::w8(0), GroundedCoord::w8(0),\n\
+         \x20   GroundedCoord::w8(0), GroundedCoord::w8(0),\n\
          ]);",
         "rust",
     );
@@ -294,7 +368,7 @@ fn generate_grounding_types(f: &mut RustFile) {
          \x20       // Reject empty input at the boundary\n\
          \x20       let &byte = external.first()?;\n\
          \x20       // Apply the doubling map: b -> 2b mod 256\n\
-         \x20       Some(GroundedCoord::q0(byte.wrapping_mul(2)))\n\
+         \x20       Some(GroundedCoord::w8(byte.wrapping_mul(2)))\n\
          \x20   }\n\
          }",
         "rust,ignore",
@@ -1251,7 +1325,8 @@ fn generate_simple_builder(
     f.blank();
 }
 
-fn generate_minting_session(f: &mut RustFile) {
+fn generate_minting_session(f: &mut RustFile, ontology: &Ontology) {
+    let levels = witt_levels(ontology);
     f.doc_comment("Boundary session state tracker for the two-phase minting boundary.");
     f.doc_comment("");
     f.doc_comment("Records crossing count and idempotency flag. Private fields");
@@ -1308,11 +1383,11 @@ fn generate_minting_session(f: &mut RustFile) {
     f.line("    let _ = shape; // shape validation passed at builder time");
     f.line("    session.crossing_count += 1;");
     f.line("    let inner = match grounded.inner {");
-    f.line("        GroundedCoordInner::Q0(b) => DatumInner::Q0(b),");
-    f.line("        GroundedCoordInner::Q1(b) => DatumInner::Q1(b),");
-    f.line("        GroundedCoordInner::Q3(b) => DatumInner::Q3(b),");
-    f.line("        GroundedCoordInner::Q7(b) => DatumInner::Q7(b),");
-    f.line("        GroundedCoordInner::Q511(b) => DatumInner::Q511(b),");
+    for (local, _, _) in &levels {
+        f.line(&format!(
+            "        GroundedCoordInner::{local}(b) => DatumInner::{local}(b),"
+        ));
+    }
     f.line("    };");
     f.line("    Ok(Datum { inner })");
     f.line("}");
@@ -1353,153 +1428,1299 @@ fn generate_minting_session(f: &mut RustFile) {
     f.blank();
 }
 
-fn generate_const_ring_eval(f: &mut RustFile) {
-    f.doc_comment("Evaluate a binary ring operation on Q0 (8-bit, Z/256Z) at compile time.");
+fn generate_const_ring_eval(f: &mut RustFile, ontology: &Ontology) {
+    // v0.2.1 Phase 8b.7: emit one binary + one unary const helper per
+    // `schema:WittLevel` individual. Helper names follow the pattern
+    // `const_ring_eval_w{bits}` and `const_ring_eval_unary_w{bits}` so
+    // the ring-op phantom-struct impls in `generate_ring_ops` can find
+    // them mechanically.
+    //
+    // For non-power-of-2 bit widths (e.g. W24), the helper stores the
+    // value in the smallest-containing Rust primitive (`u32` for W24)
+    // and masks the result to the ring's bit width on every operation.
+    let levels = witt_levels(ontology);
+
+    f.doc_comment("Evaluate a binary ring operation at compile time.");
     f.doc_comment("");
-    f.doc_comment("This is the sole evaluator for ground assertions. The `uor!` proc macro");
-    f.doc_comment("delegates to this function; it never performs ring arithmetic itself.");
+    f.doc_comment("One helper is emitted per `schema:WittLevel` individual. The `uor!`");
+    f.doc_comment("proc macro delegates to these helpers; it never performs ring");
+    f.doc_comment("arithmetic itself.");
     f.doc_example(
-        "use uor_foundation::enforcement::{const_ring_eval_q0, const_ring_eval_unary_q0};\n\
+        "use uor_foundation::enforcement::{const_ring_eval_w8, const_ring_eval_unary_w8};\n\
          use uor_foundation::PrimitiveOp;\n\
          \n\
          // Ring arithmetic in Z/256Z: all operations wrap modulo 256.\n\
          \n\
          // Addition wraps: 200 + 100 = 300 -> 300 - 256 = 44\n\
-         assert_eq!(const_ring_eval_q0(PrimitiveOp::Add, 200, 100), 44);\n\
+         assert_eq!(const_ring_eval_w8(PrimitiveOp::Add, 200, 100), 44);\n\
          \n\
          // Multiplication: 3 * 5 = 15 (no wrap needed)\n\
-         assert_eq!(const_ring_eval_q0(PrimitiveOp::Mul, 3, 5), 15);\n\
+         assert_eq!(const_ring_eval_w8(PrimitiveOp::Mul, 3, 5), 15);\n\
          \n\
          // XOR: bitwise exclusive-or\n\
-         assert_eq!(const_ring_eval_q0(PrimitiveOp::Xor, 0b1010, 0b1100), 0b0110);\n\
+         assert_eq!(const_ring_eval_w8(PrimitiveOp::Xor, 0b1010, 0b1100), 0b0110);\n\
          \n\
          // Negation: neg(x) = 256 - x (additive inverse in Z/256Z)\n\
-         assert_eq!(const_ring_eval_unary_q0(PrimitiveOp::Neg, 1), 255);\n\
+         assert_eq!(const_ring_eval_unary_w8(PrimitiveOp::Neg, 1), 255);\n\
          \n\
          // The critical identity: neg(bnot(x)) = succ(x) for all x\n\
          let x = 42u8;\n\
-         let lhs = const_ring_eval_unary_q0(PrimitiveOp::Neg,\n\
-         \x20   const_ring_eval_unary_q0(PrimitiveOp::Bnot, x));\n\
-         let rhs = const_ring_eval_unary_q0(PrimitiveOp::Succ, x);\n\
+         let lhs = const_ring_eval_unary_w8(PrimitiveOp::Neg,\n\
+         \x20   const_ring_eval_unary_w8(PrimitiveOp::Bnot, x));\n\
+         let rhs = const_ring_eval_unary_w8(PrimitiveOp::Succ, x);\n\
          assert_eq!(lhs, rhs);",
         "rust",
     );
-    f.line("#[inline]");
-    f.line("#[must_use]");
-    f.line("pub const fn const_ring_eval_q0(op: PrimitiveOp, a: u8, b: u8) -> u8 {");
-    f.line("    match op {");
-    f.line("        PrimitiveOp::Add => a.wrapping_add(b),");
-    f.line("        PrimitiveOp::Sub => a.wrapping_sub(b),");
-    f.line("        PrimitiveOp::Mul => a.wrapping_mul(b),");
-    f.line("        PrimitiveOp::Xor => a ^ b,");
-    f.line("        PrimitiveOp::And => a & b,");
-    f.line("        PrimitiveOp::Or => a | b,");
-    f.line("        _ => 0,");
+
+    for (local, bits, _) in &levels {
+        let rust_ty = witt_rust_int_type(*bits);
+        let lower = local.to_ascii_lowercase();
+        // Mask for non-native-width levels (W24 uses u32 with 0xFFFFFF).
+        let native_bits: u32 = match rust_ty {
+            "u8" => 8,
+            "u16" => 16,
+            "u32" => 32,
+            "u64" => 64,
+            _ => 64,
+        };
+        let needs_mask = *bits != native_bits;
+        let mask_lit = if needs_mask {
+            format!("({0}u64 >> (64 - {1})) as {2}", u64::MAX, bits, rust_ty)
+        } else {
+            String::new()
+        };
+        let apply_mask = |expr: String| -> String {
+            if needs_mask {
+                format!("({expr}) & MASK")
+            } else {
+                expr
+            }
+        };
+
+        f.line("#[inline]");
+        f.line("#[must_use]");
+        f.line(&format!(
+            "pub const fn const_ring_eval_{lower}(op: PrimitiveOp, a: {rust_ty}, b: {rust_ty}) -> {rust_ty} {{"
+        ));
+        if needs_mask {
+            f.line(&format!("    const MASK: {rust_ty} = {mask_lit};"));
+        }
+        f.line("    match op {");
+        f.line(&format!(
+            "        PrimitiveOp::Add => {},",
+            apply_mask("a.wrapping_add(b)".to_string())
+        ));
+        f.line(&format!(
+            "        PrimitiveOp::Sub => {},",
+            apply_mask("a.wrapping_sub(b)".to_string())
+        ));
+        f.line(&format!(
+            "        PrimitiveOp::Mul => {},",
+            apply_mask("a.wrapping_mul(b)".to_string())
+        ));
+        f.line(&format!(
+            "        PrimitiveOp::Xor => {},",
+            apply_mask("a ^ b".to_string())
+        ));
+        f.line(&format!(
+            "        PrimitiveOp::And => {},",
+            apply_mask("a & b".to_string())
+        ));
+        f.line(&format!(
+            "        PrimitiveOp::Or => {},",
+            apply_mask("a | b".to_string())
+        ));
+        f.line("        _ => 0,");
+        f.line("    }");
+        f.line("}");
+        f.blank();
+
+        f.line("#[inline]");
+        f.line("#[must_use]");
+        f.line(&format!(
+            "pub const fn const_ring_eval_unary_{lower}(op: PrimitiveOp, a: {rust_ty}) -> {rust_ty} {{"
+        ));
+        if needs_mask {
+            f.line(&format!("    const MASK: {rust_ty} = {mask_lit};"));
+        }
+        f.line("    match op {");
+        f.line(&format!(
+            "        PrimitiveOp::Neg => {},",
+            apply_mask(format!("0{rust_ty}.wrapping_sub(a)"))
+        ));
+        f.line(&format!(
+            "        PrimitiveOp::Bnot => {},",
+            apply_mask("!a".to_string())
+        ));
+        f.line(&format!(
+            "        PrimitiveOp::Succ => {},",
+            apply_mask("a.wrapping_add(1)".to_string())
+        ));
+        f.line(&format!(
+            "        PrimitiveOp::Pred => {},",
+            apply_mask("a.wrapping_sub(1)".to_string())
+        ));
+        f.line("        _ => 0,");
+        f.line("    }");
+        f.line("}");
+        f.blank();
+    }
+}
+
+// ── v0.2.1 Ergonomics Surface Generators ─────────────────────────────────────
+//
+// Each generator below reads from `&Ontology` (passed at the top) so that
+// every emitted symbol traces to an ontology entity. There are no static
+// Rust mapping tables — adding a new resolver, certificate, dispatch table,
+// or prelude member requires only an ontology edit.
+
+/// Convert an IRI to its local name (everything after the last `/` or `#`).
+fn local_name(iri: &str) -> &str {
+    iri.rsplit_once(['/', '#']).map(|(_, n)| n).unwrap_or(iri)
+}
+
+/// Find an individual by IRI.
+fn find_individual<'a>(
+    ontology: &'a Ontology,
+    iri: &str,
+) -> Option<&'a uor_ontology::model::Individual> {
+    for ns in &ontology.namespaces {
+        for ind in &ns.individuals {
+            if ind.id == iri {
+                return Some(ind);
+            }
+        }
+    }
+    None
+}
+
+/// Read a property value off an individual; returns the matching IriRef or
+/// Str payload as a borrowed string.
+fn ind_prop_str<'a>(ind: &'a uor_ontology::model::Individual, prop_iri: &str) -> Option<&'a str> {
+    for (k, v) in ind.properties {
+        if *k == prop_iri {
+            return match v {
+                IndividualValue::IriRef(s) | IndividualValue::Str(s) => Some(s),
+                _ => None,
+            };
+        }
+    }
+    None
+}
+
+/// Collect all individuals of a given type.
+fn individuals_of_type<'a>(
+    ontology: &'a Ontology,
+    type_iri: &str,
+) -> Vec<&'a uor_ontology::model::Individual> {
+    let mut out = Vec::new();
+    for ns in &ontology.namespaces {
+        for ind in &ns.individuals {
+            if ind.type_ == type_iri {
+                out.push(ind);
+            }
+        }
+    }
+    out
+}
+
+/// Walk `resolver:CertifyMapping` individuals and collect the sorted
+/// unique local-names of the certificate classes and witness classes they
+/// reference. Used by Phase 7b.4 to verify the foundation's hand-rolled
+/// shim list matches what the ontology wires into `Certify`.
+fn collect_certify_mapping_targets(ontology: &Ontology) -> (Vec<String>, Vec<String>) {
+    let mut certs: std::collections::BTreeSet<String> = std::collections::BTreeSet::new();
+    let mut witnesses: std::collections::BTreeSet<String> = std::collections::BTreeSet::new();
+    for ind in individuals_of_type(ontology, "https://uor.foundation/resolver/CertifyMapping") {
+        if let Some(iri) = ind_prop_str(ind, "https://uor.foundation/resolver/producesCertificate")
+        {
+            certs.insert(local_name(iri).to_string());
+        }
+        if let Some(iri) = ind_prop_str(ind, "https://uor.foundation/resolver/producesWitness") {
+            witnesses.insert(local_name(iri).to_string());
+        }
+    }
+    (certs.into_iter().collect(), witnesses.into_iter().collect())
+}
+
+/// Verify that the hand-rolled shim list in [`generate_ontology_target_trait`]
+/// is a superset of the ontology's subclass closure. Panics at codegen time
+/// with a clear error if a class the ontology declares is missing from the
+/// shim list — this turns "the shim list matches the ontology" into a
+/// machine-checked invariant. Panic is intentional.
+#[allow(clippy::panic)]
+fn verify_shim_coverage(label: &str, expected: &[String], shim_names: &[&str]) {
+    let shim_set: std::collections::BTreeSet<&str> = shim_names.iter().copied().collect();
+    for name in expected {
+        if !shim_set.contains(name.as_str()) {
+            panic!(
+                "generate_ontology_target_trait: ontology declares {label} subclass `{name}` \
+                 but the hand-rolled shim list in codegen/src/enforcement.rs does not \
+                 include it. Add `{name}` to the shim list (and the OntologyTarget sealed \
+                 impls) or remove the class from the ontology."
+            );
+        }
+    }
+}
+
+// 2.1.a OntologyTarget — sealed marker trait for foundation-produced types.
+//
+// v0.2.1 ships a small set of **shim structs** (named after their ontology
+// local-name) that serve as type-system handles for `Validated<T>` and
+// `Certify` impls. The shims are zero-sized and `Default`-able so resolver
+// impls can produce concrete return values. They do not collide with the
+// `bridge::cert::*` / `bridge::proof::*` trait modules because they live in
+// the `enforcement` module and the prelude re-exports the enforcement shims
+// preferentially. Real instances are produced by the reduction pipeline (or
+// by `uor_ground!` macro expansion) through the back-door minting API.
+fn generate_ontology_target_trait(f: &mut RustFile, ontology: &Ontology) {
+    // v0.2.1 Phase 7b.4: the set of shim types is machine-verified against
+    // the ontology's `resolver:CertifyMapping` individuals — every certificate
+    // / witness class named in a CertifyMapping must appear in the shim
+    // list, or the codegen panics with a clear "missing shim" error.
+    //
+    // This narrows the verification to "everything v0.2.1 actually wires up"
+    // rather than "every subclass in the ontology" (the ontology has many
+    // certificate subclasses that are not yet resolver-backed).
+    let (expected_cert_names, expected_witness_names) = collect_certify_mapping_targets(ontology);
+    verify_shim_coverage(
+        "certificate",
+        &expected_cert_names,
+        &[
+            "GroundingCertificate",
+            "LiftChainCertificate",
+            "InhabitanceCertificate",
+            "CompletenessCertificate",
+        ],
+    );
+    verify_shim_coverage(
+        "impossibility witness",
+        &expected_witness_names,
+        // `ImpossibilityWitness` (the base class) is mapped to the foundation
+        // shim `GenericImpossibilityWitness` via the local-name handling in
+        // `generate_certify_trait`. Accept both local-names here.
+        &[
+            "ImpossibilityWitness",
+            "GenericImpossibilityWitness",
+            "InhabitanceImpossibilityWitness",
+        ],
+    );
+
+    f.doc_comment("Sealed marker trait identifying types produced by the foundation crate's");
+    f.doc_comment("conformance/reduction pipeline. v0.2.1 bounds `Validated<T>` on this trait");
+    f.doc_comment("so downstream crates cannot fabricate `Validated<UserType>` — user types");
+    f.doc_comment("cannot impl `OntologyTarget` because the supertrait is private.");
+    f.line("pub trait OntologyTarget: ontology_target_sealed::Sealed {}");
+    f.blank();
+
+    // v0.2.1 Phase 7b.1: certificate shims carry a real `witt_bits: u16`
+    // field populated by the pipeline (Phase 7b.1.b). The field enables
+    // `LiftChainCertificate::target_level()` to read the level the
+    // certificate was issued for — no hardcoded W8. Witness shims and
+    // ConstrainedTypeInput stay opaque because they are not Witt-indexed.
+    let certificate_shims: &[(&str, &str)] = &[
+        (
+            "GroundingCertificate",
+            "Sealed shim for `cert:GroundingCertificate`. Produced by GroundingAwareResolver.",
+        ),
+        (
+            "LiftChainCertificate",
+            "Sealed shim for `cert:LiftChainCertificate`. Carries the v0.2.1 \
+             `target_level()` accessor populated from the pipeline's StageOutcome.",
+        ),
+        (
+            "InhabitanceCertificate",
+            "Sealed shim for `cert:InhabitanceCertificate` (v0.2.1).",
+        ),
+        (
+            "CompletenessCertificate",
+            "Sealed shim for `cert:CompletenessCertificate`.",
+        ),
+    ];
+    let witness_shims: &[(&str, &str)] = &[
+        (
+            "GenericImpossibilityWitness",
+            "Sealed shim for `proof:ImpossibilityWitness`. Returned by completeness and \
+             grounding resolvers on failure.",
+        ),
+        (
+            "InhabitanceImpossibilityWitness",
+            "Sealed shim for `proof:InhabitanceImpossibilityWitness` (v0.2.1).",
+        ),
+    ];
+    let input_shims: &[(&str, &str)] = &[(
+        "ConstrainedTypeInput",
+        "Input shim for `type:ConstrainedType`. Used as `Certify::Input` for \
+             InhabitanceResolver, TowerCompletenessResolver, and \
+             IncrementalCompletenessResolver.",
+    )];
+
+    // Emit certificate shims with witt_bits field and hand-written Default
+    // that defaults to WittLevel::W32 (Certify::DEFAULT_LEVEL per Phase 7b.1.a).
+    for (name, doc) in certificate_shims {
+        f.doc_comment(doc);
+        f.line("#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]");
+        f.line(&format!("pub struct {name} {{"));
+        f.line("    witt_bits: u16,");
+        f.line("}");
+        f.blank();
+        // Hand-written Default — defaults to the Certify canonical level (W32).
+        f.line(&format!("impl Default for {name} {{"));
+        f.line("    #[inline]");
+        f.line("    fn default() -> Self {");
+        f.line("        Self { witt_bits: 32 }");
+        f.line("    }");
+        f.line("}");
+        f.blank();
+        // Crate-internal constructor used by the pipeline + back-door minting.
+        f.line(&format!("impl {name} {{"));
+        f.indented_doc_comment("Crate-internal constructor used by the pipeline to mint a");
+        f.indented_doc_comment("certificate carrying the Witt level the pipeline advanced to.");
+        f.line("    #[inline]");
+        f.line("    #[must_use]");
+        f.line("    #[allow(dead_code)]");
+        f.line("    pub(crate) const fn with_witt_bits(witt_bits: u16) -> Self {");
+        f.line("        Self { witt_bits }");
+        f.line("    }");
+        f.blank();
+        f.indented_doc_comment("Returns the Witt level the certificate was issued for. Sourced");
+        f.indented_doc_comment("from the pipeline's `StageOutcome.witt_bits` at minting time.");
+        f.line("    #[inline]");
+        f.line("    #[must_use]");
+        f.line("    pub const fn witt_bits(&self) -> u16 {");
+        f.line("        self.witt_bits");
+        f.line("    }");
+        f.line("}");
+        f.blank();
+    }
+
+    // Witness + input shims stay opaque.
+    for (name, doc) in witness_shims.iter().chain(input_shims.iter()) {
+        f.doc_comment(doc);
+        f.line("#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]");
+        f.line(&format!("pub struct {name} {{"));
+        f.line("    _private: (),");
+        f.line("}");
+        f.blank();
+    }
+
+    // LiftChainCertificate.target_level — reads the real witt_bits field.
+    f.line("impl LiftChainCertificate {");
+    f.indented_doc_comment("Returns the Witt level the certificate was issued for.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn target_level(&self) -> WittLevel {");
+    f.line("        WittLevel::new(self.witt_bits as u32)");
+    f.line("    }");
+    f.line("}");
+    f.blank();
+    f.line("impl InhabitanceCertificate {");
+    f.indented_doc_comment("Returns the witness value tuple bytes when `verified` is true.");
+    f.indented_doc_comment("v0.2.1 returns `None` on the shim; real witnesses come from the");
+    f.indented_doc_comment("macro back-door path.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn witness(&self) -> Option<&'static [u8]> {");
+    f.line("        None");
     f.line("    }");
     f.line("}");
     f.blank();
 
-    f.doc_comment("Evaluate a unary ring operation on Q0 (8-bit, Z/256Z) at compile time.");
-    f.line("#[inline]");
-    f.line("#[must_use]");
-    f.line("pub const fn const_ring_eval_unary_q0(op: PrimitiveOp, a: u8) -> u8 {");
-    f.line("    match op {");
-    f.line("        PrimitiveOp::Neg => 0u8.wrapping_sub(a),");
-    f.line("        PrimitiveOp::Bnot => !a,");
-    f.line("        PrimitiveOp::Succ => a.wrapping_add(1),");
-    f.line("        PrimitiveOp::Pred => a.wrapping_sub(1),");
-    f.line("        _ => 0,");
+    // Sealed module + impls — combine all three shim lists.
+    let all_shims: Vec<&(&str, &str)> = certificate_shims
+        .iter()
+        .chain(witness_shims.iter())
+        .chain(input_shims.iter())
+        .collect();
+    f.line("mod ontology_target_sealed {");
+    f.indented_doc_comment("Private supertrait. Not implementable outside this crate.");
+    f.line("    pub trait Sealed {}");
+    for (name, _) in &all_shims {
+        f.line(&format!("    impl Sealed for super::{name} {{}}"));
+    }
+    f.line("    impl Sealed for super::CompileUnit {}");
+    f.line("}");
+    f.blank();
+    for (name, _) in &all_shims {
+        f.line(&format!("impl OntologyTarget for {name} {{}}"));
+    }
+    f.line("impl OntologyTarget for CompileUnit {}");
+    f.blank();
+}
+
+// 2.1.b Grounded<T> — zero-overhead ground-state wrapper.
+fn generate_grounded_wrapper(f: &mut RustFile) {
+    f.doc_comment("Sealed marker trait identifying type:ConstrainedType subclasses that may");
+    f.doc_comment("appear as the parameter of `Grounded<T>`. Downstream crates implement");
+    f.doc_comment("this via `#[derive(ConstrainedType)]` from `uor-foundation-macros`,");
+    f.doc_comment("which gates impl emission through a back-door macro path.");
+    // GroundedShape sealing via a `#[doc(hidden)] pub` supertrait module.
+    // The module is `pub` so `#[derive(ConstrainedType)]` can legitimately
+    // write `impl uor_foundation::enforcement::__macro_internals::GroundedShapeSealed for T {}`.
+    // The `__macro_internals` prefix + `#[doc(hidden)]` keeps it out of
+    // rustdoc and signals the contract: only the derive macro should touch this.
+    f.doc_comment("Back-door supertrait for `GroundedShape`. Reachable via");
+    f.doc_comment("`uor_foundation::enforcement::__macro_internals::GroundedShapeSealed`.");
+    f.doc_comment("Only `#[derive(ConstrainedType)]` is supposed to impl it.");
+    f.line("#[doc(hidden)]");
+    f.line("pub mod __macro_internals {");
+    f.indented_doc_comment("Sealed supertrait of `GroundedShape`. Not part of the stable API.");
+    f.line("    pub trait GroundedShapeSealed {}");
+    f.indented_doc_comment("Built-in impl for the foundation's own ConstrainedTypeInput shim.");
+    f.line("    impl GroundedShapeSealed for super::ConstrainedTypeInput {}");
+    f.line("}");
+    f.line("pub trait GroundedShape: __macro_internals::GroundedShapeSealed {}");
+    f.line("impl<T: __macro_internals::GroundedShapeSealed> GroundedShape for T {}");
+    f.blank();
+
+    f.doc_comment("A binding entry in a `BindingsTable`. Pairs an address (u128 content");
+    f.doc_comment("hash of the query coordinate) with the bound bytes.");
+    f.line("#[derive(Debug, Clone, Copy)]");
+    f.line("pub struct BindingEntry {");
+    f.indented_doc_comment("Content-hashed query address.");
+    f.line("    pub address: u128,");
+    f.indented_doc_comment(
+        "Bound payload bytes (length determined by the WittLevel of the table).",
+    );
+    f.line("    pub bytes: &'static [u8],");
+    f.line("}");
+    f.blank();
+
+    f.doc_comment("A static, sorted-by-address binding table laid out for `op:GS_5` zero-step");
+    f.doc_comment("access. Looked up via binary search; the foundation guarantees the table");
+    f.doc_comment("is materialized at compile time from the attested `state:GroundedContext`.");
+    f.line("#[derive(Debug, Clone, Copy)]");
+    f.line("pub struct BindingsTable {");
+    f.indented_doc_comment("Entries, sorted ascending by `address`.");
+    f.line("    pub entries: &'static [BindingEntry],");
+    f.line("}");
+    f.blank();
+    f.line("impl BindingsTable {");
+    f.indented_doc_comment("Construct a `BindingsTable` from a sorted slice. Caller must ensure");
+    f.indented_doc_comment("ascending order; this is `pub(crate)` so only the macro back-door");
+    f.indented_doc_comment("path can construct one.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    #[allow(dead_code)]");
+    f.line("    pub(crate) const fn new(entries: &'static [BindingEntry]) -> Self {");
+    f.line("        Self { entries }");
     f.line("    }");
     f.line("}");
     f.blank();
 
-    // Q1 (u16)
-    f.doc_comment("Evaluate a binary ring operation on Q1 (16-bit, Z/65536Z) at compile time.");
-    f.line("#[inline]");
-    f.line("#[must_use]");
-    f.line("pub const fn const_ring_eval_q1(op: PrimitiveOp, a: u16, b: u16) -> u16 {");
-    f.line("    match op {");
-    f.line("        PrimitiveOp::Add => a.wrapping_add(b),");
-    f.line("        PrimitiveOp::Sub => a.wrapping_sub(b),");
-    f.line("        PrimitiveOp::Mul => a.wrapping_mul(b),");
-    f.line("        PrimitiveOp::Xor => a ^ b,");
-    f.line("        PrimitiveOp::And => a & b,");
-    f.line("        PrimitiveOp::Or => a | b,");
-    f.line("        _ => 0,");
+    f.doc_comment("The compile-time witness that `op:GS_4` holds for the value it carries:");
+    f.doc_comment("σ = 1, freeRank = 0, S = 0, T_ctx = 0. `Grounded<T>` is constructed only");
+    f.doc_comment("by the reduction pipeline (or by `uor_ground!` macro expansion) and");
+    f.doc_comment("provides `op:GS_5` zero-step binding access.");
+    f.doc_comment("");
+    f.doc_comment("The `T` parameter is informational — it enables distinct static types for");
+    f.doc_comment("distinct grounded shapes (so `Grounded<PixelQ8>` and `Grounded<MatrixRowQ32>`");
+    f.doc_comment("are not interchangeable) — and does not affect memory layout.");
+    f.line("#[derive(Debug, Clone)]");
+    f.line("pub struct Grounded<T: GroundedShape> {");
+    f.indented_doc_comment("The validated grounding certificate this wrapper carries.");
+    f.line("    validated: Validated<GroundingCertificate>,");
+    f.indented_doc_comment("The compile-time-materialized bindings table.");
+    f.line("    bindings: BindingsTable,");
+    f.indented_doc_comment("The Witt level the grounded value was minted at.");
+    f.line("    witt_level_bits: u16,");
+    f.indented_doc_comment("Content-address of the originating CompileUnit.");
+    f.line("    unit_address: u128,");
+    f.indented_doc_comment("Phantom type tying this `Grounded` to a specific `ConstrainedType`.");
+    f.line("    _phantom: PhantomData<T>,");
+    f.line("}");
+    f.blank();
+    f.line("impl<T: GroundedShape> Grounded<T> {");
+    f.indented_doc_comment("Returns the binding for the given query address, or `None` if not in");
+    f.indented_doc_comment("the table. Resolves in O(log n) via binary search; for true `op:GS_5`");
+    f.indented_doc_comment("zero-step access, downstream code uses statically-known indices.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub fn get_binding(&self, address: u128) -> Option<&'static [u8]> {");
+    f.line("        self.bindings");
+    f.line("            .entries");
+    f.line("            .binary_search_by_key(&address, |e| e.address)");
+    f.line("            .ok()");
+    f.line("            .map(|i| self.bindings.entries[i].bytes)");
+    f.line("    }");
+    f.blank();
+    f.indented_doc_comment("Iterate over all bindings in this grounded context.");
+    f.line("    #[inline]");
+    f.line("    pub fn iter_bindings(&self) -> impl Iterator<Item = &BindingEntry> + '_ {");
+    f.line("        self.bindings.entries.iter()");
+    f.line("    }");
+    f.blank();
+    f.indented_doc_comment("Returns the Witt level the grounded value was minted at.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn witt_level_bits(&self) -> u16 {");
+    f.line("        self.witt_level_bits");
+    f.line("    }");
+    f.blank();
+    f.indented_doc_comment("Returns the content-address of the originating CompileUnit.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn unit_address(&self) -> u128 {");
+    f.line("        self.unit_address");
+    f.line("    }");
+    f.blank();
+    f.indented_doc_comment("Returns the validated grounding certificate this wrapper carries.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn certificate(&self) -> &Validated<GroundingCertificate> {");
+    f.line("        &self.validated");
+    f.line("    }");
+    f.blank();
+    f.indented_doc_comment("Crate-internal constructor used by the macro back-door minting path.");
+    f.indented_doc_comment(
+        "Not callable from outside `uor-foundation` or its trusted macro crate.",
+    );
+    f.line("    #[inline]");
+    f.line("    #[allow(dead_code)]");
+    f.line("    pub(crate) const fn new_internal(");
+    f.line("        validated: Validated<GroundingCertificate>,");
+    f.line("        bindings: BindingsTable,");
+    f.line("        witt_level_bits: u16,");
+    f.line("        unit_address: u128,");
+    f.line("    ) -> Self {");
+    f.line("        Self {");
+    f.line("            validated,");
+    f.line("            bindings,");
+    f.line("            witt_level_bits,");
+    f.line("            unit_address,");
+    f.line("            _phantom: PhantomData,");
+    f.line("        }");
     f.line("    }");
     f.line("}");
     f.blank();
-    f.doc_comment("Evaluate a unary ring operation on Q1 (16-bit, Z/65536Z) at compile time.");
-    f.line("#[inline]");
-    f.line("#[must_use]");
-    f.line("pub const fn const_ring_eval_unary_q1(op: PrimitiveOp, a: u16) -> u16 {");
-    f.line("    match op {");
-    f.line("        PrimitiveOp::Neg => 0u16.wrapping_sub(a),");
-    f.line("        PrimitiveOp::Bnot => !a,");
-    f.line("        PrimitiveOp::Succ => a.wrapping_add(1),");
-    f.line("        PrimitiveOp::Pred => a.wrapping_sub(1),");
-    f.line("        _ => 0,");
+}
+
+// 2.1.d PipelineFailure — parametric over reduction:FailureField individuals.
+fn generate_pipeline_failure(f: &mut RustFile, ontology: &Ontology) {
+    f.doc_comment("The Rust-surface rendering of `reduction:PipelineFailureReason` and the");
+    f.doc_comment("v0.2.1 cross-namespace failure variants. Variant set and field shapes are");
+    f.doc_comment("generated parametrically by walking `reduction:FailureField` individuals;");
+    f.doc_comment("adding a new field requires only an ontology edit.");
+    f.line("#[derive(Debug, Clone, PartialEq)]");
+    f.line("#[non_exhaustive]");
+    f.line("pub enum PipelineFailure {");
+
+    // Walk all PipelineFailureReason individuals plus failure:LiftObstructionFailure
+    // and conformance:ShapeViolationReport (the latter wraps the existing struct).
+    let reasons = individuals_of_type(
+        ontology,
+        "https://uor.foundation/reduction/PipelineFailureReason",
+    );
+    let mut variant_specs: Vec<(String, Vec<(String, String)>)> = Vec::new();
+    for ind in &reasons {
+        let variant = local_name(ind.id).to_string();
+        let fields = collect_failure_fields(ontology, ind.id);
+        variant_specs.push((variant, fields));
+    }
+
+    // failure:LiftObstructionFailure variant
+    let lift_fields = collect_failure_fields(
+        ontology,
+        "https://uor.foundation/failure/LiftObstructionFailure",
+    );
+    if !lift_fields.is_empty() {
+        variant_specs.push(("LiftObstructionFailure".to_string(), lift_fields));
+    }
+
+    // conformance:ShapeViolationReport — wraps the existing ShapeViolation
+    // struct emitted by `generate_shape_violation` earlier in this file.
+    variant_specs.push((
+        "ShapeViolation".to_string(),
+        vec![("report".to_string(), "ShapeViolation".to_string())],
+    ));
+
+    for (variant, fields) in &variant_specs {
+        f.indented_doc_comment(&format!("`{variant}` failure variant."));
+        if fields.is_empty() {
+            f.line(&format!("    {variant},"));
+        } else {
+            f.line(&format!("    {variant} {{"));
+            for (name, ty) in fields {
+                f.line(&format!("        /// {name} field."));
+                f.line(&format!("        {name}: {ty},"));
+            }
+            f.line("    },");
+        }
+    }
+
+    f.line("}");
+    f.blank();
+
+    // Display impl for nice error rendering
+    f.line("impl core::fmt::Display for PipelineFailure {");
+    f.line("    fn fmt(&self, ff: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {");
+    f.line("        match self {");
+    for (variant, fields) in &variant_specs {
+        let pat: String = if fields.is_empty() {
+            format!("Self::{variant}")
+        } else {
+            let names: Vec<String> = fields.iter().map(|(n, _)| n.clone()).collect();
+            format!("Self::{variant} {{ {} }}", names.join(", "))
+        };
+        let body = if fields.is_empty() {
+            format!("write!(ff, \"{variant}\")")
+        } else if variant == "ShapeViolation" {
+            "write!(ff, \"ShapeViolation({:?})\", report)".to_string()
+        } else {
+            // Render IRI fields specifically; otherwise debug-print.
+            let parts: Vec<String> = fields.iter().map(|(n, _)| format!("{n}={{:?}}")).collect();
+            let names: Vec<String> = fields.iter().map(|(n, _)| n.clone()).collect();
+            format!(
+                "write!(ff, \"{}({})\", {})",
+                variant,
+                parts.join(", "),
+                names.join(", ")
+            )
+        };
+        f.line(&format!("            {pat} => {body},"));
+    }
+    f.line("        }");
     f.line("    }");
     f.line("}");
     f.blank();
 
-    // Q3 (u32)
-    f.doc_comment("Evaluate a binary ring operation on Q3 (32-bit, Z/2^32Z) at compile time.");
-    f.line("#[inline]");
-    f.line("#[must_use]");
-    f.line("pub const fn const_ring_eval_q3(op: PrimitiveOp, a: u32, b: u32) -> u32 {");
-    f.line("    match op {");
-    f.line("        PrimitiveOp::Add => a.wrapping_add(b),");
-    f.line("        PrimitiveOp::Sub => a.wrapping_sub(b),");
-    f.line("        PrimitiveOp::Mul => a.wrapping_mul(b),");
-    f.line("        PrimitiveOp::Xor => a ^ b,");
-    f.line("        PrimitiveOp::And => a & b,");
-    f.line("        PrimitiveOp::Or => a | b,");
-    f.line("        _ => 0,");
+    // No std::error::Error impl — uor-foundation is no_std and the Error
+    // trait isn't in core. Downstream crates that need Error can add their
+    // own newtype wrapper.
+    f.blank();
+}
+
+/// Walk reduction:FailureField individuals filtered by ofFailure == failure_iri,
+/// returning (field_name, field_type) tuples in declaration order.
+fn collect_failure_fields(ontology: &Ontology, failure_iri: &str) -> Vec<(String, String)> {
+    let mut out = Vec::new();
+    let fields = individuals_of_type(ontology, "https://uor.foundation/reduction/FailureField");
+    for f in fields {
+        let of = ind_prop_str(f, "https://uor.foundation/reduction/ofFailure");
+        if of != Some(failure_iri) {
+            continue;
+        }
+        let name = ind_prop_str(f, "https://uor.foundation/reduction/fieldName")
+            .unwrap_or("unknown")
+            .to_string();
+        let ty = ind_prop_str(f, "https://uor.foundation/reduction/fieldType")
+            .unwrap_or("()")
+            .to_string();
+        out.push((name, ty));
+    }
+    out
+}
+
+// 2.1.c Certify trait — one resolver façade struct + Certify impl per
+// resolver:CertifyMapping individual.
+fn generate_certify_trait(f: &mut RustFile, ontology: &Ontology) {
+    f.doc_comment("Sealed marker for impossibility witnesses (failure return type of `Certify`).");
+    f.line("pub trait ImpossibilityWitnessKind: impossibility_witness_kind_sealed::Sealed {}");
+    f.blank();
+    f.line("mod impossibility_witness_kind_sealed {");
+    f.indented_doc_comment("Private supertrait.");
+    f.line("    pub trait Sealed {}");
+    f.line("    impl Sealed for super::GenericImpossibilityWitness {}");
+    f.line("    impl Sealed for super::InhabitanceImpossibilityWitness {}");
+    f.line("}");
+    f.blank();
+    f.line("impl ImpossibilityWitnessKind for GenericImpossibilityWitness {}");
+    f.line("impl ImpossibilityWitnessKind for InhabitanceImpossibilityWitness {}");
+    f.blank();
+
+    // Certify trait definition — generic over the input type so downstream
+    // user types (via #[derive(ConstrainedType)]) can be passed directly to
+    // `certify` without going through the ConstrainedTypeInput shim.
+    f.doc_comment("The v0.2.1 verdict-producing trait. Each resolver façade impls `Certify`");
+    f.doc_comment("to expose the consumer-facing one-liner:");
+    f.doc_comment("");
+    f.doc_comment("```rust,ignore");
+    f.doc_comment("use uor_foundation::enforcement::*;");
+    f.doc_comment("use uor_foundation::pipeline::ConstrainedTypeShape;");
+    f.doc_comment("");
+    f.doc_comment("#[derive(ConstrainedType, Default)]");
+    f.doc_comment("struct Shape;");
+    f.doc_comment("");
+    f.doc_comment("let cert: Validated<LiftChainCertificate> =");
+    f.doc_comment("    TowerCompletenessResolver::new().certify(&Shape)?;");
+    f.doc_comment("let level: WittLevel = cert.target_level();");
+    f.doc_comment("```");
+    f.doc_comment("");
+    f.doc_comment("`Certify` is generic over the input type `I` so any user type");
+    f.doc_comment("implementing `ConstrainedTypeShape` (via `#[derive(ConstrainedType)]`)");
+    f.doc_comment("flows through the pipeline directly. The associated `Certificate` and");
+    f.doc_comment("`Witness` types are sealed via `OntologyTarget` / `ImpossibilityWitnessKind`.");
+    f.line("pub trait Certify<I: ?Sized> {");
+    f.indented_doc_comment("The certificate type returned on success.");
+    f.line("    type Certificate: OntologyTarget;");
+    f.indented_doc_comment("The impossibility witness type returned on failure.");
+    f.line("    type Witness: ImpossibilityWitnessKind;");
+    f.blank();
+    f.indented_doc_comment("The default Witt level this resolver certifies at when the");
+    f.indented_doc_comment("caller omits an explicit level via `certify`. v0.2.1 uses");
+    f.indented_doc_comment("`WittLevel::W32` as the canonical default per ergonomics-spec §3.2.");
+    f.line("    const DEFAULT_LEVEL: WittLevel = WittLevel::W32;");
+    f.blank();
+    f.indented_doc_comment("Run the resolver on `input` at the default Witt level and return");
+    f.indented_doc_comment("either a validated certificate or an impossibility witness.");
+    f.indented_doc_comment("");
+    f.indented_doc_comment("# Errors");
+    f.indented_doc_comment("");
+    f.indented_doc_comment("Returns `Self::Witness` when the resolver determines that no");
+    f.indented_doc_comment("certificate can be issued for `input`.");
+    f.line(
+        "    fn certify(&self, input: &I) -> Result<Validated<Self::Certificate>, Self::Witness> {",
+    );
+    f.line("        self.certify_at(input, Self::DEFAULT_LEVEL)");
+    f.line("    }");
+    f.blank();
+    f.indented_doc_comment("Run the resolver on `input` at an explicit Witt level.");
+    f.indented_doc_comment("");
+    f.indented_doc_comment("# Errors");
+    f.indented_doc_comment("");
+    f.indented_doc_comment("Returns `Self::Witness` when the resolver determines that no");
+    f.indented_doc_comment("certificate can be issued for `input` at `level`.");
+    f.line("    fn certify_at(&self, input: &I, level: WittLevel) -> Result<Validated<Self::Certificate>, Self::Witness>;");
+    f.line("}");
+    f.blank();
+
+    // Walk resolver:CertifyMapping individuals → emit one resolver struct + impl per
+    let mappings = individuals_of_type(ontology, "https://uor.foundation/resolver/CertifyMapping");
+    for m in mappings {
+        let resolver_iri = match ind_prop_str(m, "https://uor.foundation/resolver/forResolver") {
+            Some(s) => s,
+            None => continue,
+        };
+        let cert_iri = match ind_prop_str(m, "https://uor.foundation/resolver/producesCertificate")
+        {
+            Some(s) => s,
+            None => continue,
+        };
+        let witness_iri = match ind_prop_str(m, "https://uor.foundation/resolver/producesWitness") {
+            Some(s) => s,
+            None => continue,
+        };
+        let resolver_name = local_name(resolver_iri).to_string();
+        let cert_name = local_name(cert_iri).to_string();
+        // Map the witness IRI's local name through the OntologyTarget shim set.
+        let witness_name = match local_name(witness_iri) {
+            "ImpossibilityWitness" => "GenericImpossibilityWitness".to_string(),
+            other => other.to_string(),
+        };
+
+        f.doc_comment(&format!(
+            "v0.2.1 unit-struct façade for the `{resolver_name}` resolver class."
+        ));
+        f.doc_comment("");
+        f.doc_comment(&format!(
+            "Constructed via `{resolver_name}::new()`. Implements `Certify` so the"
+        ));
+        f.doc_comment("foundation's verdict surface is reachable as a single one-liner.");
+        f.line("#[derive(Debug, Default, Clone, Copy)]");
+        f.line(&format!("pub struct {resolver_name};"));
+        f.blank();
+        f.line(&format!("impl {resolver_name} {{"));
+        f.indented_doc_comment("Construct a new resolver façade.");
+        f.line("    #[inline]");
+        f.line("    #[must_use]");
+        f.line("    pub const fn new() -> Self {");
+        f.line("        Self");
+        f.line("    }");
+        f.line("}");
+        f.blank();
+        // v0.2.1: generic-input Certify impls. Shape-taking resolvers accept
+        // any `T: ConstrainedTypeShape`; GroundingAwareResolver takes the
+        // opaque `CompileUnit` input shim.
+        if resolver_name == "GroundingAwareResolver" {
+            f.line(&format!("impl Certify<CompileUnit> for {resolver_name} {{"));
+            f.line(&format!("    type Certificate = {cert_name};"));
+            f.line(&format!("    type Witness = {witness_name};"));
+            f.line("    fn certify_at(&self, input: &CompileUnit, level: WittLevel) -> Result<Validated<Self::Certificate>, Self::Witness> {");
+            f.line("        crate::pipeline::run_grounding_aware(input, level)");
+            f.line(&format!(
+                "            .map_err(|_| {witness_name}::default())"
+            ));
+            f.line("    }");
+            f.line("}");
+        } else {
+            f.line(&format!(
+                "impl<__T: crate::pipeline::ConstrainedTypeShape + ?Sized> Certify<__T> for {resolver_name} {{"
+            ));
+            f.line(&format!("    type Certificate = {cert_name};"));
+            f.line(&format!("    type Witness = {witness_name};"));
+            f.line("    fn certify_at(&self, input: &__T, level: WittLevel) -> Result<Validated<Self::Certificate>, Self::Witness> {");
+            let call = match resolver_name.as_str() {
+                "TowerCompletenessResolver" => {
+                    "crate::pipeline::run_tower_completeness(input, level)"
+                }
+                "IncrementalCompletenessResolver" => {
+                    "crate::pipeline::run_incremental_completeness(input, level)"
+                }
+                "InhabitanceResolver" => "crate::pipeline::run_inhabitance(input, level)",
+                _ => "Err(Default::default())",
+            };
+            if resolver_name == "InhabitanceResolver" {
+                f.line(&format!("        {call}"));
+            } else {
+                f.line(&format!(
+                    "        {call}.map_err(|_| {witness_name}::default())"
+                ));
+            }
+            f.line("    }");
+            f.line("}");
+        }
+        f.blank();
+    }
+}
+
+// 2.1.e RingOp<L> — phantom-typed ring operation wrappers.
+fn generate_ring_ops(f: &mut RustFile, ontology: &Ontology) {
+    // v0.2.1 Phase 8b.7: ring-op instances emitted parametrically per
+    // `schema:WittLevel`. One `W{bits}` marker struct + one impl per op.
+    let levels = witt_levels(ontology);
+
+    f.doc_comment("v0.2.1 phantom-typed ring operation surface. Each phantom struct binds a");
+    f.doc_comment("`WittLevel` at the type level so consumers can write");
+    f.doc_comment("`Mul::<W8>::apply(a, b)` for compile-time level-checked arithmetic.");
+    f.line("pub trait RingOp<L> {");
+    f.indented_doc_comment("Operand type at this level.");
+    f.line("    type Operand;");
+    f.indented_doc_comment("Apply this binary ring op.");
+    f.line("    fn apply(a: Self::Operand, b: Self::Operand) -> Self::Operand;");
+    f.line("}");
+    f.blank();
+
+    let ops = [
+        ("Mul", "Multiplicative ring op."),
+        ("Add", "Additive ring op."),
+        ("Sub", "Subtractive ring op."),
+        ("Xor", "Bitwise XOR ring op."),
+        ("And", "Bitwise AND ring op."),
+        ("Or", "Bitwise OR ring op."),
+    ];
+    for (name, doc) in &ops {
+        f.doc_comment(&format!("{doc} phantom-typed at level `L`."));
+        f.line("#[derive(Debug, Default, Clone, Copy)]");
+        f.line(&format!("pub struct {name}<L>(PhantomData<L>);"));
+        f.blank();
+    }
+
+    // Emit one W{bits} marker struct per Witt level.
+    for (local, bits, _) in &levels {
+        f.doc_comment(&format!(
+            "{local} marker — {bits}-bit Witt level reified at the type level."
+        ));
+        f.line("#[derive(Debug, Default, Clone, Copy)]");
+        f.line(&format!("pub struct {local};"));
+        f.blank();
+    }
+
+    let bin_ops = [
+        ("Mul", "PrimitiveOp::Mul"),
+        ("Add", "PrimitiveOp::Add"),
+        ("Sub", "PrimitiveOp::Sub"),
+        ("Xor", "PrimitiveOp::Xor"),
+        ("And", "PrimitiveOp::And"),
+        ("Or", "PrimitiveOp::Or"),
+    ];
+    for (local, bits, _) in &levels {
+        let rust_ty = witt_rust_int_type(*bits);
+        let lower = local.to_ascii_lowercase();
+        for (op, prim) in &bin_ops {
+            f.line(&format!("impl RingOp<{local}> for {op}<{local}> {{"));
+            f.line(&format!("    type Operand = {rust_ty};"));
+            f.line("    #[inline]");
+            f.line(&format!(
+                "    fn apply(a: {rust_ty}, b: {rust_ty}) -> {rust_ty} {{"
+            ));
+            f.line(&format!("        const_ring_eval_{lower}({prim}, a, b)"));
+            f.line("    }");
+            f.line("}");
+            f.blank();
+        }
+    }
+}
+
+// 2.1.f Fragment markers — zero-sized types per dispatch-rule classifier predicate.
+fn generate_fragment_markers(f: &mut RustFile, ontology: &Ontology) {
+    f.doc_comment("Sealed marker trait for fragment classifiers (Is2SatShape, IsHornShape,");
+    f.doc_comment("IsResidualFragment) emitted parametrically from the predicate individuals");
+    f.doc_comment("referenced by `predicate:InhabitanceDispatchTable`.");
+    f.line("pub trait FragmentMarker: fragment_sealed::Sealed {}");
+    f.blank();
+    f.line("mod fragment_sealed {");
+    f.indented_doc_comment("Private supertrait.");
+    f.line("    pub trait Sealed {}");
+
+    // Walk DispatchRule individuals; for each, find the dispatchPredicate
+    // and use its local name as the marker type.
+    let rules = individuals_of_type(ontology, "https://uor.foundation/predicate/DispatchRule");
+    let mut markers: std::collections::BTreeSet<String> = std::collections::BTreeSet::new();
+    for r in rules {
+        if let Some(pred_iri) =
+            ind_prop_str(r, "https://uor.foundation/predicate/dispatchPredicate")
+        {
+            // Only emit markers for predicates whose evaluatesOver is
+            // type:ConstrainedType (i.e. fragment classifiers).
+            if let Some(pind) = find_individual(ontology, pred_iri) {
+                if let Some(over) =
+                    ind_prop_str(pind, "https://uor.foundation/predicate/evaluatesOver")
+                {
+                    if over == "https://uor.foundation/type/ConstrainedType" {
+                        markers.insert(local_name(pred_iri).to_string());
+                    }
+                }
+            }
+        }
+    }
+    for m in &markers {
+        f.line(&format!("    impl Sealed for super::{m} {{}}"));
+    }
+    f.line("}");
+    f.blank();
+    for m in &markers {
+        f.doc_comment(&format!("Fragment marker for `predicate:{m}`. Zero-sized."));
+        f.line("#[derive(Debug, Default, Clone, Copy)]");
+        f.line(&format!("pub struct {m};"));
+        f.line(&format!("impl FragmentMarker for {m} {{}}"));
+        f.blank();
+    }
+}
+
+// 2.1.g Dispatch table consts — one `pub const` per predicate:DispatchTable individual.
+fn generate_dispatch_tables(f: &mut RustFile, ontology: &Ontology) {
+    f.doc_comment("A single dispatch rule entry pairing a predicate IRI, a target resolver");
+    f.doc_comment("name, and an evaluation priority.");
+    f.line("#[derive(Debug, Clone, Copy)]");
+    f.line("pub struct DispatchRule {");
+    f.indented_doc_comment("IRI of the predicate that selects this rule.");
+    f.line("    pub predicate_iri: &'static str,");
+    f.indented_doc_comment("IRI of the target resolver class invoked when the predicate holds.");
+    f.line("    pub target_resolver_iri: &'static str,");
+    f.indented_doc_comment("Evaluation order; lower values evaluate first.");
+    f.line("    pub priority: u32,");
+    f.line("}");
+    f.blank();
+
+    f.doc_comment("A static dispatch table — an ordered slice of `DispatchRule` entries.");
+    f.line("pub type DispatchTable = &'static [DispatchRule];");
+    f.blank();
+
+    // Walk predicate:DispatchTable individuals → for each, find associated
+    // DispatchRule individuals and emit a const slice.
+    let tables = individuals_of_type(ontology, "https://uor.foundation/predicate/DispatchTable");
+    for t in tables {
+        // Convert PascalCase / camelCase to SCREAMING_SNAKE_CASE.
+        let local = local_name(t.id);
+        let mut const_name = String::new();
+        for (i, ch) in local.chars().enumerate() {
+            if ch.is_uppercase() && i > 0 {
+                const_name.push('_');
+            }
+            const_name.push(ch.to_ascii_uppercase());
+        }
+        // Collect associated DispatchRule individuals via dispatchRules
+        // property OR (fallback) by name prefix matching the table.
+        let rules = individuals_of_type(ontology, "https://uor.foundation/predicate/DispatchRule");
+        // Sort rules by priority, falling back to declaration order.
+        let mut rule_specs: Vec<(u32, &str, &str)> = Vec::new();
+        for r in &rules {
+            // Filter rules to those associated with this table — for v0.2.1
+            // we identify by name prefix (inhabitance_rule_*) since the
+            // dispatchRules property hasn't been populated.
+            let local = local_name(r.id);
+            let table_local = local_name(t.id);
+            let table_prefix = table_local
+                .strip_suffix("DispatchTable")
+                .unwrap_or(table_local)
+                .to_lowercase();
+            if !local.starts_with(&format!("{table_prefix}_rule_")) {
+                continue;
+            }
+            let pred =
+                ind_prop_str(r, "https://uor.foundation/predicate/dispatchPredicate").unwrap_or("");
+            let tgt =
+                ind_prop_str(r, "https://uor.foundation/predicate/dispatchTarget").unwrap_or("");
+            // Priority comes from dispatchPriority (Int)
+            let prio: u32 = r
+                .properties
+                .iter()
+                .find_map(|(k, v)| {
+                    if *k == "https://uor.foundation/predicate/dispatchPriority" {
+                        if let IndividualValue::Int(i) = v {
+                            return Some(*i as u32);
+                        }
+                    }
+                    None
+                })
+                .unwrap_or(0);
+            rule_specs.push((prio, pred, tgt));
+        }
+        rule_specs.sort_by_key(|(p, _, _)| *p);
+
+        f.doc_comment(&format!(
+            "v0.2.1 dispatch table generated from `predicate:{}`.",
+            local_name(t.id)
+        ));
+        f.line(&format!("pub const {const_name}: DispatchTable = &["));
+        for (prio, pred, tgt) in &rule_specs {
+            f.line("    DispatchRule {");
+            f.line(&format!("        predicate_iri: \"{pred}\","));
+            f.line(&format!("        target_resolver_iri: \"{tgt}\","));
+            f.line(&format!("        priority: {prio},"));
+            f.line("    },");
+        }
+        f.line("];");
+        f.blank();
+    }
+}
+
+// 2.1.j Validated<T>::Deref so cert.target_level() works via auto-deref.
+fn generate_validated_deref(f: &mut RustFile) {
+    f.doc_comment("v0.2.1 `Deref` impl for `Validated<T: OntologyTarget>` so consumers can call");
+    f.doc_comment("certificate methods directly: `cert.target_level()` rather than");
+    f.doc_comment("`cert.inner().target_level()`. The bound `T: OntologyTarget` keeps the");
+    f.doc_comment("auto-deref scoped to foundation-produced types.");
+    f.line("impl<T: OntologyTarget> core::ops::Deref for Validated<T> {");
+    f.line("    type Target = T;");
+    f.line("    #[inline]");
+    f.line("    fn deref(&self) -> &T {");
+    f.line("        &self.inner");
     f.line("    }");
     f.line("}");
     f.blank();
-    f.doc_comment("Evaluate a unary ring operation on Q3 (32-bit, Z/2^32Z) at compile time.");
-    f.line("#[inline]");
-    f.line("#[must_use]");
-    f.line("pub const fn const_ring_eval_unary_q3(op: PrimitiveOp, a: u32) -> u32 {");
-    f.line("    match op {");
-    f.line("        PrimitiveOp::Neg => 0u32.wrapping_sub(a),");
-    f.line("        PrimitiveOp::Bnot => !a,");
-    f.line("        PrimitiveOp::Succ => a.wrapping_add(1),");
-    f.line("        PrimitiveOp::Pred => a.wrapping_sub(1),");
-    f.line("        _ => 0,");
+}
+
+// 2.1.i Back-door minting API — reachable only from uor-foundation-macros.
+fn generate_back_door_minting(f: &mut RustFile) {
+    f.doc_comment("Provenance witness sealing the macro back-door minting path. The only");
+    f.doc_comment("constructor is `__for_macro_crate`, named with the reserved");
+    f.doc_comment("`__uor_macro_*` prefix so the `uor::unsealed_grounded` lint can flag any");
+    f.doc_comment("call site outside the foundation's macro crate at review time. The");
+    f.doc_comment("proc-macro crate emits these calls inside generated token streams that");
+    f.doc_comment("are visible in `cargo expand` output.");
+    f.line("#[doc(hidden)]");
+    f.line("#[derive(Debug, Clone, Copy)]");
+    f.line("pub struct MacroProvenance {");
+    f.line("    _marker: (),");
+    f.line("}");
+    f.blank();
+    f.line("impl MacroProvenance {");
+    f.indented_doc_comment("The only constructor. Reachable only from `uor-foundation-macros`");
+    f.indented_doc_comment("via the `__for_macro_crate` symbol naming convention; the");
+    f.indented_doc_comment("`uor::unsealed_grounded` lint flags any call site outside the");
+    f.indented_doc_comment("approved modules.");
+    f.line("    #[doc(hidden)]");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn __for_macro_crate() -> Self {");
+    f.line("        Self { _marker: () }");
     f.line("    }");
     f.line("}");
     f.blank();
 
-    // Q7 (u64)
-    f.doc_comment("Evaluate a binary ring operation on Q7 (64-bit, Z/2^64Z) at compile time.");
+    f.doc_comment("Back-door constructor for `Validated<T>`. Reachable only from macro-");
+    f.doc_comment("generated token streams.");
+    f.line("#[doc(hidden)]");
     f.line("#[inline]");
-    f.line("#[must_use]");
-    f.line("pub const fn const_ring_eval_q7(op: PrimitiveOp, a: u64, b: u64) -> u64 {");
-    f.line("    match op {");
-    f.line("        PrimitiveOp::Add => a.wrapping_add(b),");
-    f.line("        PrimitiveOp::Sub => a.wrapping_sub(b),");
-    f.line("        PrimitiveOp::Mul => a.wrapping_mul(b),");
-    f.line("        PrimitiveOp::Xor => a ^ b,");
-    f.line("        PrimitiveOp::And => a & b,");
-    f.line("        PrimitiveOp::Or => a | b,");
-    f.line("        _ => 0,");
+    f.line("pub fn __uor_macro_mint_validated<T: OntologyTarget>(");
+    f.line("    _prov: MacroProvenance,");
+    f.line("    inner: T,");
+    f.line(") -> Validated<T> {");
+    f.line("    Validated {");
+    f.line("        inner,");
+    f.line("        _sealed: (),");
     f.line("    }");
     f.line("}");
     f.blank();
-    f.doc_comment("Evaluate a unary ring operation on Q7 (64-bit, Z/2^64Z) at compile time.");
+
+    f.doc_comment("Back-door constructor for `Grounded<T>`. Reachable only from macro-");
+    f.doc_comment("generated token streams.");
+    f.line("#[doc(hidden)]");
     f.line("#[inline]");
-    f.line("#[must_use]");
-    f.line("pub const fn const_ring_eval_unary_q7(op: PrimitiveOp, a: u64) -> u64 {");
-    f.line("    match op {");
-    f.line("        PrimitiveOp::Neg => 0u64.wrapping_sub(a),");
-    f.line("        PrimitiveOp::Bnot => !a,");
-    f.line("        PrimitiveOp::Succ => a.wrapping_add(1),");
-    f.line("        PrimitiveOp::Pred => a.wrapping_sub(1),");
-    f.line("        _ => 0,");
-    f.line("    }");
+    f.line("pub fn __uor_macro_mint_grounded<T: GroundedShape>(");
+    f.line("    _prov: MacroProvenance,");
+    f.line("    validated: Validated<GroundingCertificate>,");
+    f.line("    bindings: BindingsTable,");
+    f.line("    witt_level_bits: u16,");
+    f.line("    unit_address: u128,");
+    f.line(") -> Grounded<T> {");
+    f.line("    Grounded::new_internal(validated, bindings, witt_level_bits, unit_address)");
+    f.line("}");
+    f.blank();
+}
+
+// 2.1.h Prelude — re-exports the v0.2.1 surface.
+//
+// Phase 7b.3: membership is owned by `conformance:PreludeExport` ontology
+// individuals. Each individual's `exportsClass` (with optional
+// `exportRustName` override) maps to a symbol this function emits.
+//
+// The mapping from ontology class IRI → Rust symbol in `crate::enforcement::*`
+// scope is not 1:1 — several ontology classes flatten into internal shims
+// (e.g., `conformance:ValidatedWrapper` → `Validated`), and several foundation
+// types are not OWL classes (e.g., the ring-op markers `Mul`/`Add`/...,
+// `WittLevel`, `Primitives`, `Certify`). The generator therefore keeps an
+// **explicit allowlist** of known ontology class IRIs and their Rust symbol
+// names, plus a set of **static (non-OWL) entries**, and enforces that every
+// `PreludeExport` individual in the ontology is covered by one of them.
+//
+// This turns "the prelude is ontology-driven" into a machine-checked invariant:
+// adding a new `PreludeExport` individual without updating the codegen
+// mapping fails the codegen with a clear "unknown PreludeExport class" panic,
+// forcing the developer to make the mapping explicit. Panic is intentional
+// here — `#![deny(clippy::panic)]` is overridden for this one code path.
+#[allow(clippy::panic)]
+fn generate_prelude(f: &mut RustFile, ontology: &Ontology) {
+    // Map: ontology class IRI → Rust type name in `super::` scope.
+    // Entries whose RHS is `None` mean "skip re-exporting" — the ontology
+    // class doesn't correspond to a single foundation type (it's expressed
+    // as a trait, an internal shim, or a non-OWL symbol).
+    let known_mapping: &[(&str, Option<&str>)] = &[
+        ("https://uor.foundation/schema/Datum", Some("Datum")),
+        ("https://uor.foundation/schema/Term", Some("Term")),
+        // WittLevel is a foundation struct but lives at crate::WittLevel,
+        // not super::. Covered by the static `pub use crate::WittLevel` below.
+        ("https://uor.foundation/schema/WittLevel", None),
+        (
+            "https://uor.foundation/reduction/CompileUnit",
+            Some("CompileUnit"),
+        ),
+        (
+            "https://uor.foundation/conformance/CompileUnitBuilder",
+            Some("CompileUnitBuilder"),
+        ),
+        // ValidatedWrapper surfaces as `Validated`.
+        (
+            "https://uor.foundation/conformance/ValidatedWrapper",
+            Some("Validated"),
+        ),
+        (
+            "https://uor.foundation/conformance/ShapeViolationReport",
+            Some("ShapeViolation"),
+        ),
+        // ValidationResult is a Rust enum baked into the crate root, not
+        // under enforcement::.
+        ("https://uor.foundation/conformance/ValidationResult", None),
+        (
+            "https://uor.foundation/cert/GroundingCertificate",
+            Some("GroundingCertificate"),
+        ),
+        (
+            "https://uor.foundation/cert/LiftChainCertificate",
+            Some("LiftChainCertificate"),
+        ),
+        (
+            "https://uor.foundation/cert/InhabitanceCertificate",
+            Some("InhabitanceCertificate"),
+        ),
+        (
+            "https://uor.foundation/cert/CompletenessCertificate",
+            Some("CompletenessCertificate"),
+        ),
+        // ConstrainedType / CompleteType are trait/class domains in the
+        // bridge modules, not standalone foundation::enforcement types.
+        ("https://uor.foundation/type/ConstrainedType", None),
+        ("https://uor.foundation/type/CompleteType", None),
+        // GroundedContext is a state trait in foundation::user::state.
+        ("https://uor.foundation/state/GroundedContext", None),
+        // WitnessDatum backs the TermArena prelude entry (per
+        // preludeExport_TermArena's comment).
+        (
+            "https://uor.foundation/conformance/WitnessDatum",
+            Some("TermArena"),
+        ),
+    ];
+
+    // Walk PreludeExport individuals and verify every one maps.
+    let mut ontology_rust_names: std::collections::BTreeSet<String> =
+        std::collections::BTreeSet::new();
+    for ind in individuals_of_type(ontology, "https://uor.foundation/conformance/PreludeExport") {
+        let class_iri = match ind_prop_str(ind, "https://uor.foundation/conformance/exportsClass") {
+            Some(iri) => iri,
+            None => continue,
+        };
+        // Look up the IRI in the known mapping; panic if the ontology adds
+        // a PreludeExport for a class the codegen has never seen.
+        let entry = known_mapping.iter().find(|(iri, _)| *iri == class_iri);
+        let rust_name = match entry {
+            Some((_, Some(name))) => Some(name.to_string()),
+            Some((_, None)) => None, // mapped but intentionally skipped
+            None => panic!(
+                "generate_prelude: unknown conformance:PreludeExport class IRI `{class_iri}`. \
+                 Add it to `known_mapping` in codegen/src/enforcement.rs, mapping to the \
+                 Rust type name in foundation::enforcement scope or `None` if the class is \
+                 not a standalone foundation type."
+            ),
+        };
+        // Optional exportRustName override.
+        let alias = ind_prop_str(ind, "https://uor.foundation/conformance/exportRustName")
+            .map(|s| s.to_string());
+        let emitted_name = match (rust_name, alias) {
+            (Some(rust), Some(a)) if a != rust => Some(a),
+            (Some(rust), _) => Some(rust),
+            (None, _) => None,
+        };
+        if let Some(name) = emitted_name {
+            ontology_rust_names.insert(name);
+        }
+    }
+
+    // Non-OWL foundation symbols the prelude needs. These are emitted
+    // unconditionally — they have no ontology backing and live in scope
+    // for the consumer one-liners.
+    let non_owl_entries: &[&str] = &[
+        "Grounded",
+        "GroundedShape",
+        "OntologyTarget",
+        "ImpossibilityWitnessKind",
+        "Certify",
+        "PipelineFailure",
+        "BindingsTable",
+        "BindingEntry",
+        "TermArena",
+        "RingOp",
+        "Mul",
+        "Add",
+        "Sub",
+        "Xor",
+        "And",
+        "Or",
+        "W8",
+        "W16",
+        "FragmentMarker",
+        "ConstrainedTypeInput",
+        "GenericImpossibilityWitness",
+        "InhabitanceImpossibilityWitness",
+        "TowerCompletenessResolver",
+        "IncrementalCompletenessResolver",
+        "GroundingAwareResolver",
+        "InhabitanceResolver",
+    ];
+
+    f.doc_comment("v0.2.1 ergonomics prelude. Re-exports the core symbols downstream crates");
+    f.doc_comment("need for the consumer-facing one-liners.");
+    f.doc_comment("");
+    f.doc_comment("Ontology-driven: the set of certificate / type / builder symbols is");
+    f.doc_comment("sourced from `conformance:PreludeExport` individuals. Adding a new");
+    f.doc_comment("symbol to the prelude is an ontology edit, verified against the");
+    f.doc_comment("codegen's known-name mapping at build time.");
+    f.line("pub mod prelude {");
+    let mut emitted: std::collections::BTreeSet<String> = std::collections::BTreeSet::new();
+    // Ontology-derived entries (deterministic via BTreeSet ordering).
+    for name in &ontology_rust_names {
+        if emitted.insert(name.clone()) {
+            f.line(&format!("    pub use super::{name};"));
+        }
+    }
+    // Non-OWL entries.
+    for name in non_owl_entries {
+        if emitted.insert(name.to_string()) {
+            f.line(&format!("    pub use super::{name};"));
+        }
+    }
+    f.line("    pub use crate::{Primitives, WittLevel};");
+    f.line("    pub use uor_foundation_macros::uor;");
     f.line("}");
     f.blank();
 }

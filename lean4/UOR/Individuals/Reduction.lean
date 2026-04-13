@@ -90,6 +90,13 @@ def GroundingFailure : UOR.Kernel.Reduction.PipelineFailureReason UOR.Prims.Stan
   failureStage := none
 }
 
+-- v0.2.1 Horn-SAT decider bounds.
+def HornSatBound : UOR.Kernel.Reduction.SatBound UOR.Prims.Standard := {
+  maxVarCount := some ((256 : Nat))
+  maxClauseCount := some ((512 : Nat))
+  maxLiteralsPerClause := some ((8 : Nat))
+}
+
 -- Preflight result: reduction is infeasible.
 def InfeasibilityWitness : UOR.Kernel.Reduction.FeasibilityResult UOR.Prims.Standard := {
   feasibilityKind := some (("Infeasible" : String))
@@ -116,6 +123,12 @@ def PreflightTiming : UOR.Kernel.Reduction.PreflightCheck UOR.Prims.Standard := 
   preflightOrder := some ((4 : Nat))
 }
 
+-- v0.2.1 preflight-stage time budget.
+def PreflightTimingBound : UOR.Kernel.Reduction.TimingBound UOR.Prims.Standard := {
+  preflightBudgetNs := some ((10000000 : Nat))
+  runtimeBudgetNs := none
+}
+
 -- Lease has been explicitly released.
 def Released : UOR.Kernel.Reduction.LeaseState UOR.Prims.Standard := {
   leasePhase := some (("Released" : String))
@@ -128,9 +141,22 @@ def RuntimeTiming : UOR.Kernel.Reduction.PreflightCheck UOR.Prims.Standard := {
   preflightOrder := some ((5 : Nat))
 }
 
+-- v0.2.1 runtime-stage time budget.
+def RuntimeTimingBound : UOR.Kernel.Reduction.TimingBound UOR.Prims.Standard := {
+  preflightBudgetNs := none
+  runtimeBudgetNs := some ((10000000 : Nat))
+}
+
 -- Lease is temporarily suspended.
 def Suspended : UOR.Kernel.Reduction.LeaseState UOR.Prims.Standard := {
   leasePhase := some (("Suspended" : String))
+}
+
+-- v0.2.1 2-SAT decider bounds. Drives TWO_SAT_MAX_VARS and the corresponding Lean fuel constant.
+def TwoSatBound : UOR.Kernel.Reduction.SatBound UOR.Prims.Standard := {
+  maxVarCount := some ((256 : Nat))
+  maxClauseCount := some ((512 : Nat))
+  maxLiteralsPerClause := some ((2 : Nat))
 }
 
 -- An all-or-nothing atomic reduction transaction.
@@ -139,6 +165,48 @@ def atomic_transaction : UOR.Kernel.Reduction.ReductionTransaction UOR.Prims.Sta
   transactionOutcome := none
   transactionScope := none
   transactionStatus := none
+}
+
+-- CoherenceViolation field carrying the failing constraint IRI.
+def coherenceViolation_constraintIri_field : UOR.Kernel.Reduction.FailureField UOR.Prims.Standard := {
+  ofFailure := some (("https://uor.foundation/reduction/CoherenceViolation" : String))
+  fieldName := some (("constraint_iri" : String))
+  fieldType := some (("&'static str" : String))
+}
+
+-- CoherenceViolation field carrying the site position where the conformance:PackageCoherenceCheck failed.
+def coherenceViolation_sitePosition_field : UOR.Kernel.Reduction.FailureField UOR.Prims.Standard := {
+  ofFailure := some (("https://uor.foundation/reduction/CoherenceViolation" : String))
+  fieldName := some (("site_position" : String))
+  fieldType := some (("usize" : String))
+}
+
+-- ContradictionDetected field carrying the derivation:stepIndex of the accumulation step.
+def contradictionDetected_atStep_field : UOR.Kernel.Reduction.FailureField UOR.Prims.Standard := {
+  ofFailure := some (("https://uor.foundation/reduction/ContradictionDetected" : String))
+  fieldName := some (("at_step" : String))
+  fieldType := some (("usize" : String))
+}
+
+-- ContradictionDetected field pointing to the trace:ComputationTrace record.
+def contradictionDetected_traceIri_field : UOR.Kernel.Reduction.FailureField UOR.Prims.Standard := {
+  ofFailure := some (("https://uor.foundation/reduction/ContradictionDetected" : String))
+  fieldName := some (("trace_iri" : String))
+  fieldType := some (("&'static str" : String))
+}
+
+-- ConvergenceStall field carrying the last reduction:convergenceAngle reached, encoded as a milli-radian integer to preserve `Eq` on PipelineFailure.
+def convergenceStall_angle_field : UOR.Kernel.Reduction.FailureField UOR.Prims.Standard := {
+  ofFailure := some (("https://uor.foundation/reduction/ConvergenceStall" : String))
+  fieldName := some (("angle_milliradians" : String))
+  fieldType := some (("i64" : String))
+}
+
+-- ConvergenceStall field carrying the IRI of the ReductionStep at which the phase-rotation scheduler stopped advancing.
+def convergenceStall_stage_field : UOR.Kernel.Reduction.FailureField UOR.Prims.Standard := {
+  ofFailure := some (("https://uor.foundation/reduction/ConvergenceStall" : String))
+  fieldName := some (("stage_iri" : String))
+  fieldType := some (("&'static str" : String))
 }
 
 -- The default convergence target angle π.
@@ -151,6 +219,20 @@ def default_service_window : UOR.Kernel.Reduction.ServiceWindow UOR.Prims.Standa
   windowSize := some ((3 : Nat))
   windowOffset := some ((0 : Nat))
   baseContextRef := none
+}
+
+-- DispatchMiss field carrying the query IRI that failed to dispatch.
+def dispatchMiss_queryIri_field : UOR.Kernel.Reduction.FailureField UOR.Prims.Standard := {
+  ofFailure := some (("https://uor.foundation/reduction/DispatchMiss" : String))
+  fieldName := some (("query_iri" : String))
+  fieldType := some (("&'static str" : String))
+}
+
+-- DispatchMiss field carrying the dispatch table IRI that failed to find a matching rule.
+def dispatchMiss_tableIri_field : UOR.Kernel.Reduction.FailureField UOR.Prims.Standard := {
+  ofFailure := some (("https://uor.foundation/reduction/DispatchMiss" : String))
+  fieldName := some (("table_iri" : String))
+  fieldType := some (("&'static str" : String))
 }
 
 -- A trivially satisfied guard with no predicates.
@@ -166,9 +248,30 @@ def euler_reduction_instance : UOR.Kernel.Reduction.EulerReduction UOR.Prims.Sta
   composedOfMaps := #[]
 }
 
+-- GroundingFailure field carrying the morphism:GroundingMap IRI whose image missed the ring.
+def groundingFailure_reasonIri_field : UOR.Kernel.Reduction.FailureField UOR.Prims.Standard := {
+  ofFailure := some (("https://uor.foundation/reduction/GroundingFailure" : String))
+  fieldName := some (("reason_iri" : String))
+  fieldType := some (("&'static str" : String))
+}
+
 -- The identity effect: no state changes.
 def identity_effect : UOR.Kernel.Reduction.TransitionEffect UOR.Prims.Standard := {
   effectBindings := #[]
+}
+
+-- LiftObstructionFailure field carrying the obstruction class IRI from the LiftRefinementSuggestion.
+def liftObstruction_obstructionClassIri_field : UOR.Kernel.Reduction.FailureField UOR.Prims.Standard := {
+  ofFailure := some (("https://uor.foundation/failure/LiftObstructionFailure" : String))
+  fieldName := some (("obstruction_class_iri" : String))
+  fieldType := some (("&'static str" : String))
+}
+
+-- LiftObstructionFailure field carrying the site position from the resolver:LiftRefinementSuggestion.
+def liftObstruction_sitePosition_field : UOR.Kernel.Reduction.FailureField UOR.Prims.Standard := {
+  ofFailure := some (("https://uor.foundation/failure/LiftObstructionFailure" : String))
+  fieldName := some (("site_position" : String))
+  fieldType := some (("usize" : String))
 }
 
 -- A no-op property binding that changes nothing.

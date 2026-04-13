@@ -160,6 +160,26 @@ fn classes() -> Vec<Class> {
             subclass_of: &[OWL_THING],
             disjoint_with: &[],
         },
+        // v0.2.1: Inhabitance Verdict Instantiation.
+        // Multiple inheritance: ComputationCertificate (verdict role) and
+        // Certificate (so cert:verified, cert:wittLength, cert:timestamp
+        // inherit without re-declaration).
+        Class {
+            id: "https://uor.foundation/cert/InhabitanceCertificate",
+            label: "InhabitanceCertificate",
+            comment: "A ComputationCertificate verdict primitive that decides \
+                      carrier non-emptiness on a type:ConstrainedType. Distinct \
+                      from cert:CompletenessCertificate, which decides \
+                      freeRank = 0 on the minimal basis. For ConstrainedType \
+                      instances admitting multiple satisfying value tuples, \
+                      InhabitanceCertificate.verified may be true while \
+                      CompletenessCertificate.verified is false.",
+            subclass_of: &[
+                "https://uor.foundation/proof/ComputationCertificate",
+                "https://uor.foundation/cert/Certificate",
+            ],
+            disjoint_with: &[],
+        },
     ]
 }
 
@@ -460,6 +480,41 @@ fn properties() -> Vec<Property> {
             required: false,
             domain: Some("https://uor.foundation/cert/GeodesicEvidenceBundle"),
             range: XSD_BOOLEAN,
+        },
+        // v0.2.1: InhabitanceCertificate properties
+        Property {
+            id: "https://uor.foundation/cert/witness",
+            label: "witness",
+            comment: "A specific value tuple in the carrier when verified is \
+                      true; absent otherwise. The witness form for \
+                      cert:InhabitanceCertificate.",
+            kind: PropertyKind::Object,
+            functional: false,
+            required: false,
+            domain: Some("https://uor.foundation/cert/InhabitanceCertificate"),
+            range: "https://uor.foundation/schema/ValueTuple",
+        },
+        Property {
+            id: "https://uor.foundation/cert/searchTrace",
+            label: "searchTrace",
+            comment: "The audit trail of the inhabitance search that produced \
+                      this certificate.",
+            kind: PropertyKind::Object,
+            functional: true,
+            required: false,
+            domain: Some("https://uor.foundation/cert/InhabitanceCertificate"),
+            range: "https://uor.foundation/trace/InhabitanceSearchTrace",
+        },
+        Property {
+            id: "https://uor.foundation/cert/grounded",
+            label: "grounded",
+            comment: "The type:ConstrainedType this InhabitanceCertificate is \
+                      issued for.",
+            kind: PropertyKind::Object,
+            functional: true,
+            required: false,
+            domain: Some("https://uor.foundation/cert/InhabitanceCertificate"),
+            range: "https://uor.foundation/type/ConstrainedType",
         },
     ]
 }

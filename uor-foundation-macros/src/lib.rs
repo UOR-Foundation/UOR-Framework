@@ -1,7 +1,11 @@
 //! Proc macro crate for the UOR Foundation.
 //!
-//! Provides the `uor!` macro that parses the EBNF term grammar at compile time,
-//! producing typed `Term` ASTs in the `uor_foundation::enforcement` module.
+//! Provides the `uor!` macro (since v0.2.0) and the v0.2.1 ergonomics
+//! macros: `uor_ground!`, `#[derive(ConstrainedType)]`, `#[derive(CompileUnit)]`,
+//! and the `#[uor_grounded]` attribute. The v0.2.1 macros wire downstream code
+//! into the foundation's sealed-constructor minting path so the consumer-facing
+//! one-liners in `uor_foundation::enforcement::prelude` work end-to-end at
+//! compile time.
 //!
 //! # Usage
 //!
@@ -28,6 +32,8 @@
 
 mod address;
 mod codegen;
+mod conformance_parser;
+mod derives;
 mod lexer;
 mod parser;
 mod surface;
@@ -142,4 +148,102 @@ pub fn uor(input: TokenStream) -> TokenStream {
             quote::quote! { compile_error!(#msg); }.into()
         }
     }
+}
+
+/// The v0.2.1 ground-state DSL macro.
+///
+/// Parses a `conformance-program` production of `uor.conformance.ebnf` whose
+/// `compile_unit` body contains a term-language program. Lowers through the
+/// reduction pipeline at build time and expands to a `Grounded<T>` value via
+/// the foundation crate's back-door minting API.
+///
+/// In v0.2.1 the in-process pipeline driver is a stub: it parses the
+/// conformance grammar, validates the keyword set, and emits a back-door
+/// `Grounded<T>` constructor call for inputs in the smoke-test corpus.
+/// Non-corpus inputs produce a `compile_error!` citing the
+/// `reduction:ConvergenceStall` IRI for downstream tooling to surface.
+///
+/// # Examples
+///
+/// ```rust,ignore
+/// use uor_foundation::enforcement::prelude::*;
+///
+/// #[derive(ConstrainedType)]
+/// #[uor(residue = 65535, hamming = 16)]
+/// struct MatVec<const M: usize, const K: usize>;
+///
+/// let unit: Grounded<MatVec<64, 2048>> = uor_ground! {
+///     compile_unit matvec_q32 {
+///         root_term: { /* ... */ };
+///         witt_level_ceiling: W32;
+///         thermodynamic_budget: 2048.0;
+///         target_domains: { ComposedAlgebraic, ArithmeticValuation };
+///     }
+/// };
+/// ```
+#[proc_macro]
+pub fn uor_ground(input: TokenStream) -> TokenStream {
+    let input_str = input.to_string();
+    match conformance_parser::parse(&input_str) {
+        Ok(decl) => conformance_parser::emit_grounded(&decl),
+        Err(err) => {
+            let msg = format!(
+                "uor_ground! parse error: {err}\n\
+                 = reason: https://uor.foundation/reduction/ConvergenceStall\n\
+                 = run `cargo uor explain reduction:ConvergenceStall` for ontology context"
+            );
+            quote::quote! { compile_error!(#msg); }.into()
+        }
+    }
+}
+
+/// Derive `ConstrainedType` for a struct.
+///
+/// Generates a `GroundedShape` impl so the struct can appear as the type
+/// parameter of `Grounded<T>`. v0.2.1 emits the impl unconditionally; the
+/// `#[uor(residue = …, hamming = …, …)]` attributes are recorded as constants
+/// for downstream introspection.
+///
+/// # Examples
+///
+/// ```rust,ignore
+/// use uor_foundation_macros::ConstrainedType;
+///
+/// #[derive(ConstrainedType)]
+/// #[uor(residue = 255, hamming = 8)]
+/// struct Pixel(u8);
+/// ```
+#[proc_macro_derive(ConstrainedType, attributes(uor))]
+pub fn derive_constrained_type(input: TokenStream) -> TokenStream {
+    derives::derive_constrained_type(input)
+}
+
+/// Derive `CompileUnit` for a struct whose fields name the v0.2.1 builder
+/// inputs (`builder_root_term`, `builder_witt_level_ceiling`,
+/// `builder_thermodynamic_budget`, `builder_target_domains`).
+///
+/// Generates a `build_compile_unit(&self) -> CompileUnit` method that calls
+/// the v0.2.0 `CompileUnitBuilder` chain.
+#[proc_macro_derive(CompileUnit, attributes(uor))]
+pub fn derive_compile_unit(input: TokenStream) -> TokenStream {
+    derives::derive_compile_unit(input)
+}
+
+/// Attribute marker asserting that the function body lowers cleanly at the
+/// named Witt level.
+///
+/// v0.2.1 parses `level = "W8" | "W16" | "W24" | "W32"` and emits a
+/// `const _: ::uor_foundation::WittLevel = ::uor_foundation::WittLevel::WN;`
+/// static assertion after the function. Any undefined level name fails
+/// const evaluation at type-check time.
+///
+/// # Examples
+///
+/// ```rust,ignore
+/// #[uor_foundation_macros::uor_grounded(level = "W32")]
+/// fn matvec() -> Grounded<MatVec<64, 2048>> { /* ... */ }
+/// ```
+#[proc_macro_attribute]
+pub fn uor_grounded(attr: TokenStream, item: TokenStream) -> TokenStream {
+    derives::attr_uor_grounded(attr, item)
 }

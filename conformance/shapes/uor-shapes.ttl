@@ -1,5 +1,5 @@
 # UOR Foundation SHACL Shapes
-# Generated from ontology v0.1.5 — 441 NodeShapes.
+# Generated from ontology v0.2.1 — 457 NodeShapes.
 
 @prefix rdf:        <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix rdfs:       <http://www.w3.org/2000/01/rdf-schema#> .
@@ -84,7 +84,7 @@ uor-sh:ElementShape
         sh:datatype xsd:positiveInteger ;
     ] .
 
-# ── schema/ namespace (21) ────────────────────────
+# ── schema/ namespace (22) ────────────────────────
 
 uor-sh:DatumShape
     a               sh:NodeShape ;
@@ -377,6 +377,11 @@ uor-sh:HostBooleanLiteralShape
         sh:datatype xsd:boolean ;
     ] .
 
+uor-sh:ValueTupleShape
+    a               sh:NodeShape ;
+    sh:targetClass  schema:ValueTuple ;
+    rdfs:label      "ValueTupleShape" .
+
 # ── op/ namespace (19) ────────────────────────────
 
 uor-sh:OperationShape
@@ -406,6 +411,12 @@ uor-sh:OperationShape
         sh:minCount 1 ;
         sh:maxCount 1 ;
         sh:class rdf:List ;
+    ] ;
+    sh:property [
+        sh:path op:isRingOp ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:datatype xsd:boolean ;
     ] .
 
 uor-sh:UnaryOpShape
@@ -803,7 +814,7 @@ uor-sh:SessionQueryShape
         sh:class state:Session ;
     ] .
 
-# ── resolver/ namespace (26) ──────────────────────
+# ── resolver/ namespace (31) ──────────────────────
 
 uor-sh:ResolverShape
     a               sh:NodeShape ;
@@ -1169,6 +1180,49 @@ uor-sh:TowerCompletenessResolverShape
         sh:class resolver:IncrementalCompletenessResolver ;
     ] .
 
+uor-sh:InhabitanceResolverShape
+    a               sh:NodeShape ;
+    sh:targetClass  resolver:InhabitanceResolver ;
+    rdfs:label      "InhabitanceResolverShape" .
+
+uor-sh:TwoSatDeciderShape
+    a               sh:NodeShape ;
+    sh:targetClass  resolver:TwoSatDecider ;
+    rdfs:label      "TwoSatDeciderShape" .
+
+uor-sh:HornSatDeciderShape
+    a               sh:NodeShape ;
+    sh:targetClass  resolver:HornSatDecider ;
+    rdfs:label      "HornSatDeciderShape" .
+
+uor-sh:ResidualVerdictResolverShape
+    a               sh:NodeShape ;
+    sh:targetClass  resolver:ResidualVerdictResolver ;
+    rdfs:label      "ResidualVerdictResolverShape" .
+
+uor-sh:CertifyMappingShape
+    a               sh:NodeShape ;
+    sh:targetClass  resolver:CertifyMapping ;
+    rdfs:label      "CertifyMappingShape" ;
+    sh:property [
+        sh:path resolver:forResolver ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:class owl:Class ;
+    ] ;
+    sh:property [
+        sh:path resolver:producesCertificate ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:class owl:Class ;
+    ] ;
+    sh:property [
+        sh:path resolver:producesWitness ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:class owl:Class ;
+    ] .
+
 uor-sh:ExecutionPolicyShape
     a               sh:NodeShape ;
     sh:targetClass  resolver:ExecutionPolicy ;
@@ -1211,7 +1265,7 @@ uor-sh:ModuliResolverShape
         sh:class homology:DeformationComplex ;
     ] .
 
-# ── type/ namespace (39) ──────────────────────────
+# ── type/ namespace (40) ──────────────────────────
 
 uor-sh:TypeDefinitionShape
     a               sh:NodeShape ;
@@ -1802,6 +1856,17 @@ uor-sh:SubtypingLatticeShape
         sh:minCount 1 ;
         sh:maxCount 1 ;
         sh:datatype xsd:nonNegativeInteger ;
+    ] .
+
+uor-sh:ConstraintDefaultsShape
+    a               sh:NodeShape ;
+    sh:targetClass  type:ConstraintDefaults ;
+    rdfs:label      "ConstraintDefaultsShape" ;
+    sh:property [
+        sh:path type:defaultValue ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:datatype xsd:integer ;
     ] .
 
 # ── partition/ namespace (11) ─────────────────────
@@ -2525,12 +2590,6 @@ uor-sh:BaseMetricShape
         sh:class schema:TermExpression ;
     ] ;
     sh:property [
-        sh:path observable:referencesClass ;
-        sh:minCount 1 ;
-        sh:maxCount 1 ;
-        sh:class observable:Observable ;
-    ] ;
-    sh:property [
         sh:path observable:referencesIdentity ;
         sh:minCount 1 ;
         sh:maxCount 1 ;
@@ -3122,7 +3181,7 @@ uor-sh:GluingObstructionShape
         sh:class resolver:RefinementSuggestion ;
     ] .
 
-# ── proof/ namespace (16) ─────────────────────────
+# ── proof/ namespace (17) ─────────────────────────
 
 uor-sh:ProofShape
     a               sh:NodeShape ;
@@ -3328,7 +3387,30 @@ uor-sh:ComputationStepShape
     sh:targetClass  proof:ComputationStep ;
     rdfs:label      "ComputationStepShape" .
 
-# ── derivation/ namespace (8) ────────────────────
+uor-sh:InhabitanceImpossibilityWitnessShape
+    a               sh:NodeShape ;
+    sh:targetClass  proof:InhabitanceImpossibilityWitness ;
+    rdfs:label      "InhabitanceImpossibilityWitnessShape" ;
+    sh:property [
+        sh:path proof:contradictionProof ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:datatype xsd:string ;
+    ] ;
+    sh:property [
+        sh:path proof:grounded ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:class type:ConstrainedType ;
+    ] ;
+    sh:property [
+        sh:path proof:searchTrace ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:class trace:InhabitanceSearchTrace ;
+    ] .
+
+# ── derivation/ namespace (10) ────────────────────
 
 uor-sh:DerivationShape
     a               sh:NodeShape ;
@@ -3494,7 +3576,41 @@ uor-sh:SynthesisCheckpointShape
         sh:class resolver:ConstraintSearchState ;
     ] .
 
-# ── trace/ namespace (7) ─────────────────────────
+uor-sh:InhabitanceStepShape
+    a               sh:NodeShape ;
+    sh:targetClass  derivation:InhabitanceStep ;
+    rdfs:label      "InhabitanceStepShape" ;
+    sh:property [
+        sh:path derivation:priorState ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:class resolver:ConstraintSearchState ;
+    ] ;
+    sh:property [
+        sh:path derivation:successorState ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:class resolver:ConstraintSearchState ;
+    ] ;
+    sh:property [
+        sh:path derivation:rule ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:class predicate:DispatchRule ;
+    ] .
+
+uor-sh:InhabitanceCheckpointShape
+    a               sh:NodeShape ;
+    sh:targetClass  derivation:InhabitanceCheckpoint ;
+    rdfs:label      "InhabitanceCheckpointShape" ;
+    sh:property [
+        sh:path derivation:checkpointIndex ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:datatype xsd:integer ;
+    ] .
+
+# ── trace/ namespace (8) ─────────────────────────
 
 uor-sh:ComputationTraceShape
     a               sh:NodeShape ;
@@ -3640,13 +3756,7 @@ uor-sh:TraceMetricsShape
 uor-sh:GeodesicTraceShape
     a               sh:NodeShape ;
     sh:targetClass  trace:GeodesicTrace ;
-    rdfs:label      "GeodesicTraceShape" ;
-    sh:property [
-        sh:path trace:geodesicCertificate ;
-        sh:minCount 1 ;
-        sh:maxCount 1 ;
-        sh:class cert:GeodesicCertificate ;
-    ] .
+    rdfs:label      "GeodesicTraceShape" .
 
 uor-sh:GeodesicViolationShape
     a               sh:NodeShape ;
@@ -3705,7 +3815,16 @@ uor-sh:MeasurementOutcomeShape
         sh:datatype xsd:decimal ;
     ] .
 
-# ── cert/ namespace (13) ──────────────────────────
+uor-sh:InhabitanceSearchTraceShape
+    a               sh:NodeShape ;
+    sh:targetClass  trace:InhabitanceSearchTrace ;
+    rdfs:label      "InhabitanceSearchTraceShape" ;
+    sh:property [
+        sh:path trace:checkpoint ;
+        sh:class derivation:InhabitanceCheckpoint ;
+    ] .
+
+# ── cert/ namespace (14) ──────────────────────────
 
 uor-sh:CertificateShape
     a               sh:NodeShape ;
@@ -3926,6 +4045,27 @@ uor-sh:ChainAuditTrailShape
         sh:minCount 1 ;
         sh:maxCount 1 ;
         sh:datatype xsd:nonNegativeInteger ;
+    ] .
+
+uor-sh:InhabitanceCertificateShape
+    a               sh:NodeShape ;
+    sh:targetClass  cert:InhabitanceCertificate ;
+    rdfs:label      "InhabitanceCertificateShape" ;
+    sh:property [
+        sh:path cert:witness ;
+        sh:class schema:ValueTuple ;
+    ] ;
+    sh:property [
+        sh:path cert:searchTrace ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:class trace:InhabitanceSearchTrace ;
+    ] ;
+    sh:property [
+        sh:path cert:grounded ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:class type:ConstrainedType ;
     ] .
 
 # ── morphism/ namespace (20) ──────────────────────
@@ -4555,13 +4695,7 @@ uor-sh:SessionBoundaryShape
 uor-sh:GroundedContextShape
     a               sh:NodeShape ;
     sh:targetClass  state:GroundedContext ;
-    rdfs:label      "GroundedContextShape" ;
-    sh:property [
-        sh:path state:groundingCertificate ;
-        sh:minCount 1 ;
-        sh:maxCount 1 ;
-        sh:class cert:GroundingCertificate ;
-    ] .
+    rdfs:label      "GroundedContextShape" .
 
 uor-sh:GroundingWitnessShape
     a               sh:NodeShape ;
@@ -4630,6 +4764,18 @@ uor-sh:ContextLeaseShape
         sh:minCount 1 ;
         sh:maxCount 1 ;
         sh:class state:Session ;
+    ] ;
+    sh:property [
+        sh:path state:linearSite ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:datatype xsd:nonNegativeInteger ;
+    ] ;
+    sh:property [
+        sh:path state:leaseScope ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:datatype xsd:string ;
     ] .
 
 uor-sh:SessionCompositionShape
@@ -4659,7 +4805,7 @@ uor-sh:SessionCompositionShape
         sh:datatype xsd:boolean ;
     ] .
 
-# ── reduction/ namespace (38) ─────────────────────
+# ── reduction/ namespace (41) ─────────────────────
 
 uor-sh:EulerReductionShape
     a               sh:NodeShape ;
@@ -4669,7 +4815,7 @@ uor-sh:EulerReductionShape
         sh:path reduction:phaseParameter ;
         sh:minCount 1 ;
         sh:maxCount 1 ;
-        sh:datatype xsd:decimal ;
+        sh:datatype xsd:string ;
     ] ;
     sh:property [
         sh:path reduction:stageCount ;
@@ -4681,7 +4827,7 @@ uor-sh:EulerReductionShape
         sh:path reduction:convergenceAngle ;
         sh:minCount 1 ;
         sh:maxCount 1 ;
-        sh:datatype xsd:decimal ;
+        sh:datatype xsd:string ;
     ] ;
     sh:property [
         sh:path reduction:composedOfMaps ;
@@ -4696,13 +4842,13 @@ uor-sh:PhaseRotationSchedulerShape
         sh:path reduction:rotationSchedule ;
         sh:minCount 1 ;
         sh:maxCount 1 ;
-        sh:datatype xsd:decimal ;
+        sh:datatype xsd:string ;
     ] ;
     sh:property [
         sh:path reduction:baseAngle ;
         sh:minCount 1 ;
         sh:maxCount 1 ;
-        sh:datatype xsd:decimal ;
+        sh:datatype xsd:string ;
     ] .
 
 uor-sh:TargetConvergenceAngleShape
@@ -4713,7 +4859,7 @@ uor-sh:TargetConvergenceAngleShape
         sh:path reduction:targetAngle ;
         sh:minCount 1 ;
         sh:maxCount 1 ;
-        sh:datatype xsd:decimal ;
+        sh:datatype xsd:string ;
     ] .
 
 uor-sh:PhaseGateAttestationShape
@@ -4730,7 +4876,7 @@ uor-sh:PhaseGateAttestationShape
         sh:path reduction:gateExpectedPhase ;
         sh:minCount 1 ;
         sh:maxCount 1 ;
-        sh:datatype xsd:decimal ;
+        sh:datatype xsd:string ;
     ] ;
     sh:property [
         sh:path reduction:gateResult ;
@@ -4770,7 +4916,7 @@ uor-sh:ReductionStepShape
         sh:path reduction:expectedPhase ;
         sh:minCount 1 ;
         sh:maxCount 1 ;
-        sh:datatype xsd:decimal ;
+        sh:datatype xsd:string ;
     ] ;
     sh:property [
         sh:path reduction:entryGuard ;
@@ -4805,7 +4951,7 @@ uor-sh:ReductionStateShape
         sh:path reduction:phaseAngle ;
         sh:minCount 1 ;
         sh:maxCount 1 ;
-        sh:datatype xsd:decimal ;
+        sh:datatype xsd:string ;
     ] ;
     sh:property [
         sh:path reduction:pinnedMask ;
@@ -5024,7 +5170,7 @@ uor-sh:PipelineSuccessShape
         sh:path reduction:finalGrounding ;
         sh:minCount 1 ;
         sh:maxCount 1 ;
-        sh:datatype xsd:decimal ;
+        sh:datatype xsd:string ;
     ] .
 
 uor-sh:PipelineFailureReasonShape
@@ -5384,7 +5530,7 @@ uor-sh:CompileUnitShape
         sh:path reduction:thermodynamicBudget ;
         sh:minCount 1 ;
         sh:maxCount 1 ;
-        sh:datatype xsd:decimal ;
+        sh:datatype xsd:string ;
     ] ;
     sh:property [
         sh:path reduction:targetDomains ;
@@ -5395,6 +5541,69 @@ uor-sh:CompileUnitShape
         sh:minCount 1 ;
         sh:maxCount 1 ;
         sh:class u:Element ;
+    ] .
+
+uor-sh:FailureFieldShape
+    a               sh:NodeShape ;
+    sh:targetClass  reduction:FailureField ;
+    rdfs:label      "FailureFieldShape" ;
+    sh:property [
+        sh:path reduction:ofFailure ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:class owl:Thing ;
+    ] ;
+    sh:property [
+        sh:path reduction:fieldName ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:datatype xsd:string ;
+    ] ;
+    sh:property [
+        sh:path reduction:fieldType ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:datatype xsd:string ;
+    ] .
+
+uor-sh:SatBoundShape
+    a               sh:NodeShape ;
+    sh:targetClass  reduction:SatBound ;
+    rdfs:label      "SatBoundShape" ;
+    sh:property [
+        sh:path reduction:maxVarCount ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:datatype xsd:nonNegativeInteger ;
+    ] ;
+    sh:property [
+        sh:path reduction:maxClauseCount ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:datatype xsd:nonNegativeInteger ;
+    ] ;
+    sh:property [
+        sh:path reduction:maxLiteralsPerClause ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:datatype xsd:nonNegativeInteger ;
+    ] .
+
+uor-sh:TimingBoundShape
+    a               sh:NodeShape ;
+    sh:targetClass  reduction:TimingBound ;
+    rdfs:label      "TimingBoundShape" ;
+    sh:property [
+        sh:path reduction:preflightBudgetNs ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:datatype xsd:nonNegativeInteger ;
+    ] ;
+    sh:property [
+        sh:path reduction:runtimeBudgetNs ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:datatype xsd:nonNegativeInteger ;
     ] .
 
 # ── convergence/ namespace (5) ───────────────────
@@ -6045,6 +6254,18 @@ uor-sh:PredicateShape
         sh:class owl:Class ;
     ] ;
     sh:property [
+        sh:path predicate:evaluatorTerm ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:class schema:Term ;
+    ] ;
+    sh:property [
+        sh:path predicate:terminationWitness ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:datatype xsd:string ;
+    ] ;
+    sh:property [
         sh:path predicate:boundedEvaluator ;
         sh:class recursion:DescentMeasure ;
     ] .
@@ -6078,7 +6299,13 @@ uor-sh:DispatchRuleShape
         sh:path predicate:dispatchTarget ;
         sh:minCount 1 ;
         sh:maxCount 1 ;
-        sh:class resolver:Resolver ;
+        sh:class owl:Class ;
+    ] ;
+    sh:property [
+        sh:path predicate:dispatchPriority ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:datatype xsd:nonNegativeInteger ;
     ] ;
     sh:property [
         sh:path predicate:dispatchIndex ;
@@ -6198,6 +6425,18 @@ uor-sh:ParallelProductShape
         sh:minCount 1 ;
         sh:maxCount 1 ;
         sh:datatype xsd:boolean ;
+    ] ;
+    sh:property [
+        sh:path parallel:sitePartition ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:class partition:Partition ;
+    ] ;
+    sh:property [
+        sh:path parallel:disjointnessWitness ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:datatype xsd:string ;
     ] .
 
 uor-sh:DisjointnessCertificateShape
@@ -6257,6 +6496,18 @@ uor-sh:ProductiveStreamShape
         sh:minCount 1 ;
         sh:maxCount 1 ;
         sh:datatype xsd:boolean ;
+    ] ;
+    sh:property [
+        sh:path stream:stepTerm ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:class schema:Term ;
+    ] ;
+    sh:property [
+        sh:path stream:productivityWitness ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:datatype xsd:string ;
     ] .
 
 uor-sh:EpochShape
@@ -6844,7 +7095,7 @@ uor-sh:BoundarySessionShape
         sh:datatype xsd:nonNegativeInteger ;
     ] .
 
-# ── conformance/ namespace (30) ───────────────────
+# ── conformance/ namespace (31) ───────────────────
 
 uor-sh:ShapeShape
     a               sh:NodeShape ;
@@ -6859,6 +7110,12 @@ uor-sh:ShapeShape
     sh:property [
         sh:path conformance:requiredProperty ;
         sh:class conformance:PropertyConstraint ;
+    ] ;
+    sh:property [
+        sh:path conformance:surfaceForm ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:datatype xsd:string ;
     ] .
 
 uor-sh:PropertyConstraintShape
@@ -6888,6 +7145,18 @@ uor-sh:PropertyConstraintShape
         sh:minCount 1 ;
         sh:maxCount 1 ;
         sh:datatype xsd:nonNegativeInteger ;
+    ] ;
+    sh:property [
+        sh:path conformance:surfaceKeyword ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:datatype xsd:string ;
+    ] ;
+    sh:property [
+        sh:path conformance:surfaceProduction ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:datatype xsd:string ;
     ] .
 
 uor-sh:WittLevelShapeShape
@@ -7282,5 +7551,22 @@ uor-sh:MintingSessionShape
         sh:minCount 1 ;
         sh:maxCount 1 ;
         sh:datatype xsd:boolean ;
+    ] .
+
+uor-sh:PreludeExportShape
+    a               sh:NodeShape ;
+    sh:targetClass  conformance:PreludeExport ;
+    rdfs:label      "PreludeExportShape" ;
+    sh:property [
+        sh:path conformance:exportsClass ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:class owl:Class ;
+    ] ;
+    sh:property [
+        sh:path conformance:exportRustName ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:datatype xsd:string ;
     ] .
 

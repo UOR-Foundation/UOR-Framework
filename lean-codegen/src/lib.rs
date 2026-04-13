@@ -13,10 +13,13 @@
 )]
 
 pub mod emit;
+pub mod enforcement;
 pub mod enums;
 pub mod individuals;
 pub mod mapping;
+pub mod pipeline;
 pub mod primitives;
+pub mod rigor_patterns;
 pub mod structures;
 
 use std::collections::{HashMap, HashSet};
@@ -135,6 +138,36 @@ pub fn generate(ontology: &Ontology, out_dir: &Path) -> Result<LeanGenerationRep
     write_file(&manifest_path, &unproven_manifest.to_pretty_json())?;
     files.push(manifest_path.display().to_string());
     let unproven_count = unproven_manifest.unproven_individual_count();
+
+    // 4b. Generate Enforcement.lean (v0.2.1 ergonomics surface)
+    let enforcement_content = enforcement::generate_enforcement(ontology);
+    let enforcement_path = out_dir.join("UOR").join("Enforcement.lean");
+    write_file(&enforcement_path, &enforcement_content)?;
+    files.push(enforcement_path.display().to_string());
+
+    // 4c. Generate Pipeline.lean (v0.2.1 reduction pipeline driver)
+    let pipeline_content = pipeline::generate_pipeline(ontology);
+    let pipeline_path = out_dir.join("UOR").join("Pipeline.lean");
+    write_file(&pipeline_path, &pipeline_content)?;
+    files.push(pipeline_path.display().to_string());
+
+    // 4d. Generate Examples.lean (v0.2.1 worked examples)
+    let examples_content = enforcement::generate_examples(ontology);
+    let examples_path = out_dir.join("UOR").join("Examples.lean");
+    write_file(&examples_path, &examples_content)?;
+    files.push(examples_path.display().to_string());
+
+    // 4e. Generate Test.lean (v0.2.1 #guard assertions)
+    let test_content = enforcement::generate_test(ontology);
+    let test_path = out_dir.join("UOR").join("Test.lean");
+    write_file(&test_path, &test_content)?;
+    files.push(test_path.display().to_string());
+
+    // 4f. Generate Prelude.lean (v0.2.1 re-exports)
+    let prelude_content = enforcement::generate_prelude(ontology);
+    let prelude_path = out_dir.join("UOR").join("Prelude.lean");
+    write_file(&prelude_path, &prelude_content)?;
+    files.push(prelude_path.display().to_string());
 
     // 5. Generate root UOR.lean
     let root_content = generate_root_import();
@@ -265,5 +298,10 @@ fn generate_root_import() -> String {
     buf.push_str("import UOR.Enums\n");
     buf.push_str("import UOR.Structures\n");
     buf.push_str("import UOR.Individuals\n");
+    buf.push_str("import UOR.Enforcement\n");
+    buf.push_str("import UOR.Pipeline\n");
+    buf.push_str("import UOR.Examples\n");
+    buf.push_str("import UOR.Test\n");
+    buf.push_str("import UOR.Prelude\n");
     buf
 }

@@ -226,6 +226,28 @@ pub trait TowerCompletenessResolver<P: Primitives>: Resolver<P> {
     fn tower_step_resolver(&self) -> &Self::IncrementalCompletenessResolver;
 }
 
+/// A Resolver whose dispatch is governed by a new predicate:InhabitanceDispatchTable. Returns either a cert:InhabitanceCertificate (verified true with witness) or a proof:InhabitanceImpossibilityWitness (verified false with contradiction proof). Inherits the dual-output termination discipline from resolver:TypeSynthesisResolver.
+pub trait InhabitanceResolver<P: Primitives>: Resolver<P> {}
+
+/// A Resolver target that decides carrier non-emptiness on ConstrainedType instances whose constraint nerve contains only disjunctions of width ≤ 2, via classical 2-SAT in O(n+m). Dispatch rule 1 of the InhabitanceDispatchTable.
+pub trait TwoSatDecider<P: Primitives>: Resolver<P> {}
+
+/// A Resolver target that decides carrier non-emptiness on ConstrainedType instances whose disjunctions each contain at most one positive literal, via classical Horn-SAT unit propagation in O(n+m). Dispatch rule 2 of the InhabitanceDispatchTable.
+pub trait HornSatDecider<P: Primitives>: Resolver<P> {}
+
+/// A Resolver target for the catch-all default dispatch rule. Returns the residual-hard verdict without promising a polynomial bound; the verdict is well-formed but the cost identity is unbounded. Dispatch rule 3 of the InhabitanceDispatchTable ensuring total coverage (reduction:DispatchMiss is unreachable for this table).
+pub trait ResidualVerdictResolver<P: Primitives>: Resolver<P> {}
+
+/// An ontology fact recording that a resolver:Resolver subclass produces a specific cert:Certificate subclass on success and a specific proof:ImpossibilityWitness subclass on failure. The v0.2.1 Rust codegen reads CertifyMapping individuals to emit foundation::Certify trait impls for each resolver class, keeping the mapping data-driven rather than hand-tabulated in source.
+pub trait CertifyMapping<P: Primitives> {
+    /// The resolver:Resolver subclass this CertifyMapping describes.
+    fn for_resolver(&self) -> &P::String;
+    /// The cert:Certificate (or proof:ComputationCertificate) subclass this resolver produces on success.
+    fn produces_certificate(&self) -> &P::String;
+    /// The proof:ImpossibilityWitness subclass this resolver produces on failure.
+    fn produces_witness(&self) -> &P::String;
+}
+
 /// A strategy class that defines how a SessionResolver orders pending RelationQuery instances for dispatch. The policy reads the targetSite.freeRank of each pending query and applies an ordering function.
 /// Disjoint with: Resolver, ResolutionState, RefinementSuggestion.
 pub trait ExecutionPolicy<P: Primitives> {}
@@ -277,3 +299,45 @@ pub mod max_free_count_first {}
 
 /// Process queries whose targetSite is disjoint from all other pending queries' site sets first. Minimizes contention when operating against a SharedContext.
 pub mod disjoint_first {}
+
+/// TowerCompletenessResolver produces LiftChainCertificate on success and ImpossibilityWitness on failure.
+pub mod tower_certify_mapping {
+    /// `forResolver` -> `TowerCompletenessResolver`
+    pub const FOR_RESOLVER: &str = "https://uor.foundation/resolver/TowerCompletenessResolver";
+    /// `producesCertificate` -> `LiftChainCertificate`
+    pub const PRODUCES_CERTIFICATE: &str = "https://uor.foundation/cert/LiftChainCertificate";
+    /// `producesWitness` -> `ImpossibilityWitness`
+    pub const PRODUCES_WITNESS: &str = "https://uor.foundation/proof/ImpossibilityWitness";
+}
+
+/// IncrementalCompletenessResolver produces LiftChainCertificate (single-step) on success and ImpossibilityWitness on failure.
+pub mod incremental_certify_mapping {
+    /// `forResolver` -> `IncrementalCompletenessResolver`
+    pub const FOR_RESOLVER: &str =
+        "https://uor.foundation/resolver/IncrementalCompletenessResolver";
+    /// `producesCertificate` -> `LiftChainCertificate`
+    pub const PRODUCES_CERTIFICATE: &str = "https://uor.foundation/cert/LiftChainCertificate";
+    /// `producesWitness` -> `ImpossibilityWitness`
+    pub const PRODUCES_WITNESS: &str = "https://uor.foundation/proof/ImpossibilityWitness";
+}
+
+/// GroundingAwareResolver produces GroundingCertificate on success and ImpossibilityWitness on failure.
+pub mod grounding_aware_certify_mapping {
+    /// `forResolver` -> `GroundingAwareResolver`
+    pub const FOR_RESOLVER: &str = "https://uor.foundation/resolver/GroundingAwareResolver";
+    /// `producesCertificate` -> `GroundingCertificate`
+    pub const PRODUCES_CERTIFICATE: &str = "https://uor.foundation/cert/GroundingCertificate";
+    /// `producesWitness` -> `ImpossibilityWitness`
+    pub const PRODUCES_WITNESS: &str = "https://uor.foundation/proof/ImpossibilityWitness";
+}
+
+/// InhabitanceResolver produces InhabitanceCertificate on success and InhabitanceImpossibilityWitness on failure.
+pub mod inhabitance_certify_mapping {
+    /// `forResolver` -> `InhabitanceResolver`
+    pub const FOR_RESOLVER: &str = "https://uor.foundation/resolver/InhabitanceResolver";
+    /// `producesCertificate` -> `InhabitanceCertificate`
+    pub const PRODUCES_CERTIFICATE: &str = "https://uor.foundation/cert/InhabitanceCertificate";
+    /// `producesWitness` -> `InhabitanceImpossibilityWitness`
+    pub const PRODUCES_WITNESS: &str =
+        "https://uor.foundation/proof/InhabitanceImpossibilityWitness";
+}

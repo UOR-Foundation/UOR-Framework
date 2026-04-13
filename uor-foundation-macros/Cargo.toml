@@ -20,5 +20,9 @@ syn = { version = "2", features = ["full", "extra-traits"] }
 quote = "1"
 proc-macro2 = "1"
 
+[build-dependencies]
+uor-ontology = { path = "../spec" }
+
 [dev-dependencies]
 uor-foundation = { path = "../foundation" }
+trybuild = "1"

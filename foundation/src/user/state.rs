@@ -176,6 +176,10 @@ pub trait ContextLease<P: Primitives> {
     type Session: Session<P>;
     /// The Session that holds this lease.
     fn lease_holder(&self) -> &Self::Session;
+    /// The site coordinate allocated linearly by this lease.
+    fn linear_site(&self) -> P::NonNegativeInteger;
+    /// The lexical or session scope within which this lease is valid.
+    fn lease_scope(&self) -> &P::String;
 }
 
 /// Records that a Session was formed by merging the binding sets of two or more predecessor sessions. Valid only if all predecessor binding sets pass the cross-session consistency check (SR_8). An invalid composition attempt produces a ContradictionBoundary on the target session.

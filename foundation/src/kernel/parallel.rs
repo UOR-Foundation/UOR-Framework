@@ -22,6 +22,12 @@ pub trait ParallelProduct<P: Primitives> {
     fn is_fully_disjoint(&self) -> P::Boolean;
     /// Declares whether this parallel product commutes with disjoint effects per FX_4.
     fn disjointness_commutation(&self) -> P::Boolean;
+    /// Associated type for `Partition`.
+    type Partition: crate::bridge::partition::Partition<P>;
+    /// The partition:Partition this parallel product is over.
+    fn site_partition(&self) -> &Self::Partition;
+    /// IRI of a proof of pairwise disjointness of the partition components.
+    fn disjointness_witness(&self) -> &P::String;
 }
 
 /// A kernel-produced certificate attesting that the site targets of two computations are disjoint.

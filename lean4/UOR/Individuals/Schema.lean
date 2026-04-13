@@ -4434,6 +4434,70 @@ def term_HT_8_rhs : UOR.Kernel.Schema.LiteralExpression UOR.Prims.Standard := {
 }
 
 -- 
+def term_IH_1_forAll : UOR.Kernel.Schema.ForAllDeclaration UOR.Prims.Standard := {
+  boundVariables := #[]
+  quantifierKind := none
+}
+
+-- 
+def term_IH_1_lhs : UOR.Kernel.Schema.LiteralExpression UOR.Prims.Standard := {
+  literalValue := some (("InhabitanceCertificate(T).verified" : String))
+}
+
+-- 
+def term_IH_1_rhs : UOR.Kernel.Schema.LiteralExpression UOR.Prims.Standard := {
+  literalValue := some (("carrier(T) ≠ ∅" : String))
+}
+
+-- 
+def term_IH_2a_forAll : UOR.Kernel.Schema.ForAllDeclaration UOR.Prims.Standard := {
+  boundVariables := #[]
+  quantifierKind := none
+}
+
+-- 
+def term_IH_2a_lhs : UOR.Kernel.Schema.LiteralExpression UOR.Prims.Standard := {
+  literalValue := some (("cost(TwoSatDecider, T)" : String))
+}
+
+-- 
+def term_IH_2a_rhs : UOR.Kernel.Schema.LiteralExpression UOR.Prims.Standard := {
+  literalValue := some (("O(n + m)" : String))
+}
+
+-- 
+def term_IH_2b_forAll : UOR.Kernel.Schema.ForAllDeclaration UOR.Prims.Standard := {
+  boundVariables := #[]
+  quantifierKind := none
+}
+
+-- 
+def term_IH_2b_lhs : UOR.Kernel.Schema.LiteralExpression UOR.Prims.Standard := {
+  literalValue := some (("cost(HornSatDecider, T)" : String))
+}
+
+-- 
+def term_IH_2b_rhs : UOR.Kernel.Schema.LiteralExpression UOR.Prims.Standard := {
+  literalValue := some (("O(n + m)" : String))
+}
+
+-- 
+def term_IH_3_forAll : UOR.Kernel.Schema.ForAllDeclaration UOR.Prims.Standard := {
+  boundVariables := #[]
+  quantifierKind := none
+}
+
+-- 
+def term_IH_3_lhs : UOR.Kernel.Schema.LiteralExpression UOR.Prims.Standard := {
+  literalValue := some (("carrier(reduce(T))" : String))
+}
+
+-- 
+def term_IH_3_rhs : UOR.Kernel.Schema.LiteralExpression UOR.Prims.Standard := {
+  literalValue := some (("carrier(T)" : String))
+}
+
+-- 
 def term_IN_1_forAll : UOR.Kernel.Schema.ForAllDeclaration UOR.Prims.Standard := {
   boundVariables := #[]
   quantifierKind := none

@@ -97,6 +97,18 @@ fn classes() -> Vec<Class> {
             subclass_of: &[OWL_THING],
             disjoint_with: &[],
         },
+        // v0.2.1: Inhabitance Verdict Instantiation
+        Class {
+            id: "https://uor.foundation/trace/InhabitanceSearchTrace",
+            label: "InhabitanceSearchTrace",
+            comment: "A subclass of trace:ComputationTrace specialised to \
+                      inhabitance-search execution. Records the sequence of \
+                      derivation:InhabitanceStep entries the resolver \
+                      traversed and any derivation:InhabitanceCheckpoint \
+                      entries it crossed.",
+            subclass_of: &["https://uor.foundation/trace/ComputationTrace"],
+            disjoint_with: &[],
+        },
     ]
 }
 
@@ -425,6 +437,19 @@ fn properties() -> Vec<Property> {
             required: false,
             domain: Some("https://uor.foundation/trace/MeasurementOutcome"),
             range: XSD_DECIMAL,
+        },
+        // v0.2.1: InhabitanceSearchTrace property
+        Property {
+            id: "https://uor.foundation/trace/checkpoint",
+            label: "checkpoint",
+            comment: "Checkpoints crossed by the inhabitance search. Each \
+                      checkpoint marks an audit point where the resolver state \
+                      can be restored if the search backtracks.",
+            kind: PropertyKind::Object,
+            functional: false,
+            required: false,
+            domain: Some("https://uor.foundation/trace/InhabitanceSearchTrace"),
+            range: "https://uor.foundation/derivation/InhabitanceCheckpoint",
         },
     ]
 }

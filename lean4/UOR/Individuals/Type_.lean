@@ -28,6 +28,11 @@ def OptionType : UOR.User.Type_.SumType UOR.Prims.Standard := {
   contentAddress := none
 }
 
+-- Default modulus for ResidueConstraint when the #[uor(residue = X)] attribute omits the explicit modulus. 256 matches the v0.2.1 reference ring Z/(2^8)Z.
+def ResidueDefaultModulus : UOR.User.Type_.ConstraintDefaults UOR.Prims.Standard := {
+  defaultValue := some ((256 : Int))
+}
+
 -- A single value from an ordered domain. siteCount = n (quantization bits).
 def ScalarType : UOR.User.Type_.PrimitiveType UOR.Prims.Standard := {
   bitWidth := none

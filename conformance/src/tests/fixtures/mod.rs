@@ -198,6 +198,8 @@ mod test273_type_definition_sum;
 mod test274_witness_types;
 mod test275_reduction_advance;
 mod test276_witness_site_budget;
+mod test277_inhabitance_verdict;
+mod test278_v021_cleanup_bounds;
 mod test27_rewrite_rule;
 mod test28_measurement_unit;
 mod test29_triad_projection;
@@ -475,6 +477,8 @@ pub use test273_type_definition_sum::TEST273_TYPE_DEFINITION_SUM;
 pub use test274_witness_types::TEST274_WITNESS_TYPES;
 pub use test275_reduction_advance::TEST275_REDUCTION_ADVANCE;
 pub use test276_witness_site_budget::TEST276_WITNESS_SITE_BUDGET;
+pub use test277_inhabitance_verdict::TEST277_INHABITANCE_VERDICT;
+pub use test278_v021_cleanup_bounds::TEST278_V021_CLEANUP_BOUNDS;
 pub use test27_rewrite_rule::TEST27_REWRITE_RULE;
 pub use test28_measurement_unit::TEST28_MEASUREMENT_UNIT;
 pub use test29_triad_projection::TEST29_TRIAD_PROJECTION;
@@ -837,5 +841,7 @@ pub fn all_fixture_sources() -> Vec<&'static str> {
         TEST274_WITNESS_TYPES,
         TEST275_REDUCTION_ADVANCE,
         TEST276_WITNESS_SITE_BUDGET,
+        TEST277_INHABITANCE_VERDICT,
+        TEST278_V021_CLEANUP_BOUNDS,
     ]
 }

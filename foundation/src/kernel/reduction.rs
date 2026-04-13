@@ -414,6 +414,34 @@ pub trait CompileUnit<P: Primitives> {
     fn unit_address(&self) -> &Self::Element;
 }
 
+/// An ontology fact describing a single field on a reduction:PipelineFailureReason variant. The v0.2.1 Rust codegen walks FailureField individuals filtered by ofFailure to assemble the PipelineFailure enum's variant fields. Adding a new field to a failure variant requires only adding a new FailureField individual.
+pub trait FailureField<P: Primitives> {
+    /// The PipelineFailureReason (or class) this field belongs to.
+    fn of_failure(&self) -> &P::String;
+    /// Snake_case name of the Rust field on the generated PipelineFailure variant.
+    fn field_name(&self) -> &P::String;
+    /// Rust type for the field, expressed as a literal type string the codegen emits verbatim (e.g., "&'static str", "usize", "ReductionStep").
+    fn field_type(&self) -> &P::String;
+}
+
+/// Declarative bound for SAT-fragment deciders. The v0.2.1 pipeline driver reads these individuals at codegen time to emit the bounded iterative Tarjan SCC (2-SAT) and unit propagation (Horn-SAT) implementations.
+pub trait SatBound<P: Primitives> {
+    /// Maximum variable count the SAT decider supports.
+    fn max_var_count(&self) -> P::NonNegativeInteger;
+    /// Maximum clause count the SAT decider supports.
+    fn max_clause_count(&self) -> P::NonNegativeInteger;
+    /// Maximum literals per clause (2 for 2-SAT, higher for Horn).
+    fn max_literals_per_clause(&self) -> P::NonNegativeInteger;
+}
+
+/// Declarative timing bound for reduction pipeline stages. Values in nanoseconds at the v0.2.1 reference hardware.
+pub trait TimingBound<P: Primitives> {
+    /// Preflight-stage time budget in nanoseconds at the v0.2.1 reference hardware.
+    fn preflight_budget_ns(&self) -> P::NonNegativeInteger;
+    /// Runtime-stage time budget in nanoseconds at the v0.2.1 reference hardware.
+    fn runtime_budget_ns(&self) -> P::NonNegativeInteger;
+}
+
 /// Stage 0: initialize state vector to identity.
 pub mod stage_initialization {
     /// `expectedPhase`
@@ -755,4 +783,146 @@ pub mod back_pressure_default {
     /// `pressureThreshold`
     #[allow(clippy::approx_constant)]
     pub const PRESSURE_THRESHOLD: f64 = 0.75;
+}
+
+/// DispatchMiss field carrying the query IRI that failed to dispatch.
+pub mod dispatch_miss_query_iri_field {
+    /// `fieldName`
+    pub const FIELD_NAME: &str = "query_iri";
+    /// `fieldType`
+    pub const FIELD_TYPE: &str = "&'static str";
+    /// `ofFailure` -> `DispatchMiss`
+    pub const OF_FAILURE: &str = "https://uor.foundation/reduction/DispatchMiss";
+}
+
+/// DispatchMiss field carrying the dispatch table IRI that failed to find a matching rule.
+pub mod dispatch_miss_table_iri_field {
+    /// `fieldName`
+    pub const FIELD_NAME: &str = "table_iri";
+    /// `fieldType`
+    pub const FIELD_TYPE: &str = "&'static str";
+    /// `ofFailure` -> `DispatchMiss`
+    pub const OF_FAILURE: &str = "https://uor.foundation/reduction/DispatchMiss";
+}
+
+/// GroundingFailure field carrying the morphism:GroundingMap IRI whose image missed the ring.
+pub mod grounding_failure_reason_iri_field {
+    /// `fieldName`
+    pub const FIELD_NAME: &str = "reason_iri";
+    /// `fieldType`
+    pub const FIELD_TYPE: &str = "&'static str";
+    /// `ofFailure` -> `GroundingFailure`
+    pub const OF_FAILURE: &str = "https://uor.foundation/reduction/GroundingFailure";
+}
+
+/// ConvergenceStall field carrying the IRI of the ReductionStep at which the phase-rotation scheduler stopped advancing.
+pub mod convergence_stall_stage_field {
+    /// `fieldName`
+    pub const FIELD_NAME: &str = "stage_iri";
+    /// `fieldType`
+    pub const FIELD_TYPE: &str = "&'static str";
+    /// `ofFailure` -> `ConvergenceStall`
+    pub const OF_FAILURE: &str = "https://uor.foundation/reduction/ConvergenceStall";
+}
+
+/// ConvergenceStall field carrying the last reduction:convergenceAngle reached, encoded as a milli-radian integer to preserve `Eq` on PipelineFailure.
+pub mod convergence_stall_angle_field {
+    /// `fieldName`
+    pub const FIELD_NAME: &str = "angle_milliradians";
+    /// `fieldType`
+    pub const FIELD_TYPE: &str = "i64";
+    /// `ofFailure` -> `ConvergenceStall`
+    pub const OF_FAILURE: &str = "https://uor.foundation/reduction/ConvergenceStall";
+}
+
+/// ContradictionDetected field carrying the derivation:stepIndex of the accumulation step.
+pub mod contradiction_detected_at_step_field {
+    /// `fieldName`
+    pub const FIELD_NAME: &str = "at_step";
+    /// `fieldType`
+    pub const FIELD_TYPE: &str = "usize";
+    /// `ofFailure` -> `ContradictionDetected`
+    pub const OF_FAILURE: &str = "https://uor.foundation/reduction/ContradictionDetected";
+}
+
+/// ContradictionDetected field pointing to the trace:ComputationTrace record.
+pub mod contradiction_detected_trace_iri_field {
+    /// `fieldName`
+    pub const FIELD_NAME: &str = "trace_iri";
+    /// `fieldType`
+    pub const FIELD_TYPE: &str = "&'static str";
+    /// `ofFailure` -> `ContradictionDetected`
+    pub const OF_FAILURE: &str = "https://uor.foundation/reduction/ContradictionDetected";
+}
+
+/// CoherenceViolation field carrying the site position where the conformance:PackageCoherenceCheck failed.
+pub mod coherence_violation_site_position_field {
+    /// `fieldName`
+    pub const FIELD_NAME: &str = "site_position";
+    /// `fieldType`
+    pub const FIELD_TYPE: &str = "usize";
+    /// `ofFailure` -> `CoherenceViolation`
+    pub const OF_FAILURE: &str = "https://uor.foundation/reduction/CoherenceViolation";
+}
+
+/// CoherenceViolation field carrying the failing constraint IRI.
+pub mod coherence_violation_constraint_iri_field {
+    /// `fieldName`
+    pub const FIELD_NAME: &str = "constraint_iri";
+    /// `fieldType`
+    pub const FIELD_TYPE: &str = "&'static str";
+    /// `ofFailure` -> `CoherenceViolation`
+    pub const OF_FAILURE: &str = "https://uor.foundation/reduction/CoherenceViolation";
+}
+
+/// LiftObstructionFailure field carrying the site position from the resolver:LiftRefinementSuggestion.
+pub mod lift_obstruction_site_position_field {
+    /// `fieldName`
+    pub const FIELD_NAME: &str = "site_position";
+    /// `fieldType`
+    pub const FIELD_TYPE: &str = "usize";
+    /// `ofFailure` -> `LiftObstructionFailure`
+    pub const OF_FAILURE: &str = "https://uor.foundation/failure/LiftObstructionFailure";
+}
+
+/// LiftObstructionFailure field carrying the obstruction class IRI from the LiftRefinementSuggestion.
+pub mod lift_obstruction_obstruction_class_iri_field {
+    /// `fieldName`
+    pub const FIELD_NAME: &str = "obstruction_class_iri";
+    /// `fieldType`
+    pub const FIELD_TYPE: &str = "&'static str";
+    /// `ofFailure` -> `LiftObstructionFailure`
+    pub const OF_FAILURE: &str = "https://uor.foundation/failure/LiftObstructionFailure";
+}
+
+/// v0.2.1 2-SAT decider bounds. Drives TWO_SAT_MAX_VARS and the corresponding Lean fuel constant.
+pub mod two_sat_bound {
+    /// `maxClauseCount`
+    pub const MAX_CLAUSE_COUNT: i64 = 512;
+    /// `maxLiteralsPerClause`
+    pub const MAX_LITERALS_PER_CLAUSE: i64 = 2;
+    /// `maxVarCount`
+    pub const MAX_VAR_COUNT: i64 = 256;
+}
+
+/// v0.2.1 Horn-SAT decider bounds.
+pub mod horn_sat_bound {
+    /// `maxClauseCount`
+    pub const MAX_CLAUSE_COUNT: i64 = 512;
+    /// `maxLiteralsPerClause`
+    pub const MAX_LITERALS_PER_CLAUSE: i64 = 8;
+    /// `maxVarCount`
+    pub const MAX_VAR_COUNT: i64 = 256;
+}
+
+/// v0.2.1 preflight-stage time budget.
+pub mod preflight_timing_bound {
+    /// `preflightBudgetNs`
+    pub const PREFLIGHT_BUDGET_NS: i64 = 10000000;
+}
+
+/// v0.2.1 runtime-stage time budget.
+pub mod runtime_timing_bound {
+    /// `runtimeBudgetNs`
+    pub const RUNTIME_BUDGET_NS: i64 = 10000000;
 }

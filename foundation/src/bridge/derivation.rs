@@ -96,6 +96,26 @@ pub trait SynthesisCheckpoint<P: Primitives> {
     fn checkpoint_state(&self) -> &Self::ConstraintSearchState;
 }
 
+/// A peer of derivation:SynthesisStep specialised to inhabitance search. Each step represents one navigation in the constraint nerve, either pinning a site to a value or confirming that a predicate evaluates true on the current partial assignment.
+pub trait InhabitanceStep<P: Primitives>: SynthesisStep<P> {
+    /// Associated type for `ConstraintSearchState`.
+    type ConstraintSearchState: crate::bridge::resolver::ConstraintSearchState<P>;
+    /// The ConstraintSearchState before this InhabitanceStep was taken.
+    fn prior_state(&self) -> &Self::ConstraintSearchState;
+    /// The ConstraintSearchState after this InhabitanceStep was taken.
+    fn successor_state(&self) -> &Self::ConstraintSearchState;
+    /// Associated type for `DispatchRule`.
+    type DispatchRule: crate::kernel::predicate::DispatchRule<P>;
+    /// The predicate:DispatchRule whose evaluation drove this InhabitanceStep.
+    fn rule(&self) -> &Self::DispatchRule;
+}
+
+/// A peer of derivation:SynthesisCheckpoint specialised to inhabitance search. Marks an audit point where the resolver state can be restored if the search backtracks.
+pub trait InhabitanceCheckpoint<P: Primitives>: SynthesisCheckpoint<P> {
+    /// Ordinal index of this checkpoint within the InhabitanceSearchTrace's checkpoint sequence.
+    fn checkpoint_index(&self) -> P::Integer;
+}
+
 /// The rewrite rule applying the critical identity: neg(bnot(x)) → succ(x). Grounded in op:criticalIdentity.
 pub mod critical_identity_rule {
     /// `groundedIn` -> `criticalIdentity`

@@ -22,6 +22,8 @@ pub trait Operation<P: Primitives> {
     fn inverse(&self) -> &Self::OperationTarget;
     /// Ordered list of operations this operation is composed from. Uses rdf:List to preserve application order (first element applied innermost). E.g., succ = neg ∘ bnot is encoded as \[op:neg, op:bnot\] meaning neg applied to the result of bnot.
     fn composed_of(&self) -> &P::String;
+    /// True iff this Operation participates in the Z/(2^n)Z ring-arithmetic vocabulary. Annotation drives the Lean RingOp class generation in UOR/Enforcement.lean.
+    fn is_ring_op(&self) -> P::Boolean;
 }
 
 /// A unary operation on the ring: takes one datum and produces one datum.
@@ -9090,6 +9092,70 @@ pub mod io_5 {
     pub const LHS: &str = "https://uor.foundation/schema/term_IO_5_lhs";
     /// `rhs` -> `term_IO_5_rhs`
     pub const RHS: &str = "https://uor.foundation/schema/term_IO_5_rhs";
+    /// `universallyValid`
+    pub const UNIVERSALLY_VALID: bool = true;
+    /// `validityKind` -> `Universal`
+    pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
+    /// `verificationDomain` -> `Algebraic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
+}
+
+/// Inhabitance soundness (bidirectional). For any type:ConstrainedType T, cert:InhabitanceCertificate(T) .verified is true iff the carrier of T is non-empty. Discharge: the verdict reified by cert:InhabitanceCertificate agrees with the denotational carrier-non-emptiness predicate, by direct unfolding of cert:verified against the predicate semantics.
+pub mod ih_1 {
+    /// `forAll` -> `term_IH_1_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_IH_1_forAll";
+    /// `lhs` -> `term_IH_1_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_IH_1_lhs";
+    /// `rhs` -> `term_IH_1_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_IH_1_rhs";
+    /// `universallyValid`
+    pub const UNIVERSALLY_VALID: bool = true;
+    /// `validityKind` -> `Universal`
+    pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
+    /// `verificationDomain` -> `Algebraic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
+}
+
+/// Inhabitance cost (2-SAT restriction). For instances T satisfying predicate:Is2SatShape, the cost of resolver:TwoSatDecider on T is inherited from the classical 2-SAT decision procedure: O(n+m) where n is the variable count and m the clause count. Unrestricted IH_2 would be equivalent to P = NP and is not adopted.
+pub mod ih_2a {
+    /// `forAll` -> `term_IH_2a_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_IH_2a_forAll";
+    /// `lhs` -> `term_IH_2a_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_IH_2a_lhs";
+    /// `rhs` -> `term_IH_2a_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_IH_2a_rhs";
+    /// `universallyValid`
+    pub const UNIVERSALLY_VALID: bool = true;
+    /// `validityKind` -> `Universal`
+    pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
+    /// `verificationDomain` -> `Analytical`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Analytical";
+}
+
+/// Inhabitance cost (Horn-SAT restriction). For instances T satisfying predicate:IsHornShape, the cost of resolver:HornSatDecider on T is inherited from the classical Horn-SAT decision procedure via unit propagation: O(n+m).
+pub mod ih_2b {
+    /// `forAll` -> `term_IH_2b_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_IH_2b_forAll";
+    /// `lhs` -> `term_IH_2b_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_IH_2b_lhs";
+    /// `rhs` -> `term_IH_2b_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_IH_2b_rhs";
+    /// `universallyValid`
+    pub const UNIVERSALLY_VALID: bool = true;
+    /// `validityKind` -> `Universal`
+    pub const VALIDITY_KIND: &str = "https://uor.foundation/op/Universal";
+    /// `verificationDomain` -> `Analytical`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Analytical";
+}
+
+/// Carrier preservation under basis reduction. The constraint-nerve reduction performed during inhabitance search preserves the carrier of the input ConstrainedType. Discharged against resolver:JacobianGuidedResolver and resolver:guidingJacobian vocabulary.
+pub mod ih_3 {
+    /// `forAll` -> `term_IH_3_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_IH_3_forAll";
+    /// `lhs` -> `term_IH_3_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_IH_3_lhs";
+    /// `rhs` -> `term_IH_3_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_IH_3_rhs";
     /// `universallyValid`
     pub const UNIVERSALLY_VALID: bool = true;
     /// `validityKind` -> `Universal`

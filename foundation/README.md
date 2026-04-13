@@ -6,9 +6,9 @@ typed Rust traits. Import and implement.
 ## Contents
 
 - 33 namespaces
-- 441 OWL classes (one trait each)
-- 890 OWL properties (one method each)
-- 3358 named individuals (constants and enums)
+- 457 OWL classes (one trait each)
+- 928 OWL properties (one method each)
+- 3443 named individuals (constants and enums)
 - `enforcement` module with declarative builders and opaque witnesses
 - `uor!` proc macro for compile-time term-language DSL
 
@@ -16,7 +16,7 @@ typed Rust traits. Import and implement.
 
 ```toml
 [dependencies]
-uor-foundation = "0.2.0"
+uor-foundation = "0.2.1"
 ```
 
 ```rust

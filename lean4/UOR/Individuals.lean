@@ -4,6 +4,7 @@
 
 import UOR.Individuals.Schema
 import UOR.Individuals.Op
+import UOR.Individuals.Resolver
 import UOR.Individuals.Type_
 import UOR.Individuals.Observable
 import UOR.Individuals.Homology

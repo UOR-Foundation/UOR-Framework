@@ -396,26 +396,164 @@ fn validate_lakefile(workspace: &Path, report: &mut ConformanceReport) -> Result
     Ok(())
 }
 
-/// Audits for `sorry` in generated Lean 4 files (meta-validator, informational).
+/// Audits for `sorry` and other banned primitives in generated Lean 4 files.
+///
+/// v0.2.1 Phase 7g.1: this check is **load-bearing**, not informational.
+/// The published Lean surface must not contain:
+///
+/// - `sorry` — leaves a hole in the proof
+/// - `axiom ...` (except the single whitelisted `UOR_SEALED_PROVENANCE`)
+///   — unjustified assertion
+/// - `partial def` — non-reducible; blocks `by decide`
+/// - `native_decide` — trusts native compiler at elaboration
+/// - `unsafe` — escapes Lean's core guarantees
+/// - `@[extern]` — delegates to a native symbol
+/// - `@[implemented_by]` — substitutes a native implementation
+///
+/// The check greps each published `.lean` file line-by-line, strips line
+/// comments (so `-- TODO: avoid sorry` doesn't false-positive), and pushes
+/// one `fail` into the main report per banned occurrence. Zero tolerance.
 fn audit_sorry(lean_dir: &Path, report: &mut ConformanceReport) -> Result<()> {
-    let all_source = read_all_lean_files(lean_dir)?;
-    // Count occurrences of `sorry` as a standalone word
-    let sorry_count = all_source.matches(" sorry").count()
-        + all_source.matches("\nsorry").count()
-        + all_source.matches("\tsorry").count();
+    let violations = run_rigor_check(lean_dir)?;
 
-    if sorry_count == 0 {
+    if violations.is_empty() {
         report.push_meta(TestResult::pass(
             VALIDATOR,
             "No sorry found in generated Lean 4 source",
         ));
+        report.push(TestResult::pass(
+            "lean4/rigor",
+            "No banned primitives (sorry / unauthorized axiom / partial def / \
+             native_decide / unsafe / @[extern] / @[implemented_by]) found in \
+             published Lean 4 source",
+        ));
     } else {
+        // The meta-audit entry still reports so reviewers see the failure
+        // in the summary; the main report emits a single deterministic
+        // `lean4/rigor` FAIL so the fixed-count conformance check count
+        // stays stable regardless of how many violations exist.
         report.push_meta(TestResult::warn(
             VALIDATOR,
-            format!("{sorry_count} occurrences of sorry found in generated Lean 4 source"),
+            format!(
+                "{} banned-primitive violation(s) found in generated Lean 4 source",
+                violations.len()
+            ),
+        ));
+        let details = violations
+            .iter()
+            .map(|v| {
+                format!(
+                    "{}:{} — {} ({}): {}",
+                    v.file, v.line, v.reason, v.pattern, v.snippet
+                )
+            })
+            .collect::<Vec<_>>()
+            .join("\n  ");
+        report.push(TestResult::fail(
+            "lean4/rigor",
+            format!(
+                "{} banned-primitive violation(s) in published Lean 4 source:\n  {}",
+                violations.len(),
+                details
+            ),
         ));
     }
 
+    Ok(())
+}
+
+/// A single banned-primitive violation discovered by the rigor grep.
+struct RigorViolation {
+    file: String,
+    line: usize,
+    pattern: &'static str,
+    reason: &'static str,
+    snippet: String,
+}
+
+// v0.2.1 Phase 8b.6: banned-primitive table lives in
+// `uor_lean_codegen::rigor_patterns::BANNED_PATTERNS` as the single source of
+// truth shared with the codegen-time sanitizer. Any edit to the list updates
+// both enforcement layers simultaneously — no drift possible.
+use uor_lean_codegen::rigor_patterns::{ALLOWED_AXIOM, BANNED_PATTERNS as RIGOR_PATTERNS};
+
+/// Walk every `.lean` file under `<lean_dir>/UOR/` and collect every
+/// banned-primitive occurrence as a `RigorViolation`. The single whitelisted
+/// `axiom UOR_SEALED_PROVENANCE` (Phase 7g.3) is recognised and excluded.
+fn run_rigor_check(lean_dir: &Path) -> Result<Vec<RigorViolation>> {
+    let uor_dir = lean_dir.join("UOR");
+    let mut violations: Vec<RigorViolation> = Vec::new();
+    if !uor_dir.is_dir() {
+        return Ok(violations);
+    }
+    visit_rigor(&uor_dir, &mut violations)?;
+    Ok(violations)
+}
+
+fn visit_rigor(dir: &Path, out: &mut Vec<RigorViolation>) -> Result<()> {
+    let entries =
+        std::fs::read_dir(dir).with_context(|| format!("failed to read {}", dir.display()))?;
+    for entry in entries {
+        let entry = entry?;
+        let path = entry.path();
+        if path.is_dir() {
+            // Skip .lake build output.
+            if path
+                .file_name()
+                .and_then(|n| n.to_str())
+                .is_some_and(|n| n.starts_with('.'))
+            {
+                continue;
+            }
+            visit_rigor(&path, out)?;
+            continue;
+        }
+        if path.extension().and_then(|e| e.to_str()) != Some("lean") {
+            continue;
+        }
+        let source = std::fs::read_to_string(&path)
+            .with_context(|| format!("failed to read {}", path.display()))?;
+        for (line_idx, raw_line) in source.lines().enumerate() {
+            // Strip trailing line comments so `-- sorry` in a TODO doesn't
+            // false-positive. Lean line comments start with `--`.
+            let code = match raw_line.find("--") {
+                Some(idx) => &raw_line[..idx],
+                None => raw_line,
+            };
+            // Axiom check: reject any `axiom` declaration that is not
+            // `axiom UOR_SEALED_PROVENANCE`. We match at word boundary.
+            if let Some(axiom_pos) = code.find("axiom ") {
+                let rest = &code[axiom_pos + "axiom ".len()..];
+                // Read the following identifier (up to whitespace / colon).
+                let ident_end = rest
+                    .find(|c: char| c.is_whitespace() || c == ':' || c == '(')
+                    .unwrap_or(rest.len());
+                let ident = rest[..ident_end].trim();
+                if ident != ALLOWED_AXIOM && !ident.is_empty() {
+                    out.push(RigorViolation {
+                        file: path.display().to_string(),
+                        line: line_idx + 1,
+                        pattern: "axiom",
+                        reason:
+                            "unauthorized `axiom` (only `UOR_SEALED_PROVENANCE` is whitelisted)",
+                        snippet: code.trim().to_string(),
+                    });
+                }
+            }
+            // Substring check against the banned-patterns table.
+            for (pat, reason) in RIGOR_PATTERNS {
+                if code.contains(pat) {
+                    out.push(RigorViolation {
+                        file: path.display().to_string(),
+                        line: line_idx + 1,
+                        pattern: pat,
+                        reason,
+                        snippet: code.trim().to_string(),
+                    });
+                }
+            }
+        }
+    }
     Ok(())
 }
 

@@ -113,6 +113,27 @@ fn classes() -> Vec<Class> {
             subclass_of: &[OWL_THING],
             disjoint_with: &[],
         },
+        // v0.2.1: Inhabitance Verdict Instantiation
+        Class {
+            id: "https://uor.foundation/derivation/InhabitanceStep",
+            label: "InhabitanceStep",
+            comment: "A peer of derivation:SynthesisStep specialised to \
+                      inhabitance search. Each step represents one navigation \
+                      in the constraint nerve, either pinning a site to a \
+                      value or confirming that a predicate evaluates true on \
+                      the current partial assignment.",
+            subclass_of: &["https://uor.foundation/derivation/SynthesisStep"],
+            disjoint_with: &[],
+        },
+        Class {
+            id: "https://uor.foundation/derivation/InhabitanceCheckpoint",
+            label: "InhabitanceCheckpoint",
+            comment: "A peer of derivation:SynthesisCheckpoint specialised to \
+                      inhabitance search. Marks an audit point where the \
+                      resolver state can be restored if the search backtracks.",
+            subclass_of: &["https://uor.foundation/derivation/SynthesisCheckpoint"],
+            disjoint_with: &[],
+        },
     ]
 }
 
@@ -350,6 +371,55 @@ fn properties() -> Vec<Property> {
             required: false,
             domain: Some("https://uor.foundation/resolver/TowerCompletenessResolver"),
             range: "https://uor.foundation/derivation/SynthesisCheckpoint",
+        },
+        // v0.2.1: InhabitanceStep / InhabitanceCheckpoint properties.
+        // priorState/successorState rather than fromState/toState — the
+        // generated trait methods would otherwise be `fn from_state` and
+        // `fn to_state`, which trip clippy::wrong_self_convention (the
+        // `from_*` family is reserved for constructors).
+        Property {
+            id: "https://uor.foundation/derivation/priorState",
+            label: "priorState",
+            comment: "The ConstraintSearchState before this InhabitanceStep \
+                      was taken.",
+            kind: PropertyKind::Object,
+            functional: true,
+            required: false,
+            domain: Some("https://uor.foundation/derivation/InhabitanceStep"),
+            range: "https://uor.foundation/resolver/ConstraintSearchState",
+        },
+        Property {
+            id: "https://uor.foundation/derivation/successorState",
+            label: "successorState",
+            comment: "The ConstraintSearchState after this InhabitanceStep \
+                      was taken.",
+            kind: PropertyKind::Object,
+            functional: true,
+            required: false,
+            domain: Some("https://uor.foundation/derivation/InhabitanceStep"),
+            range: "https://uor.foundation/resolver/ConstraintSearchState",
+        },
+        Property {
+            id: "https://uor.foundation/derivation/rule",
+            label: "rule",
+            comment: "The predicate:DispatchRule whose evaluation drove this \
+                      InhabitanceStep.",
+            kind: PropertyKind::Object,
+            functional: true,
+            required: false,
+            domain: Some("https://uor.foundation/derivation/InhabitanceStep"),
+            range: "https://uor.foundation/predicate/DispatchRule",
+        },
+        Property {
+            id: "https://uor.foundation/derivation/checkpointIndex",
+            label: "checkpointIndex",
+            comment: "Ordinal index of this checkpoint within the \
+                      InhabitanceSearchTrace's checkpoint sequence.",
+            kind: PropertyKind::Datatype,
+            functional: true,
+            required: false,
+            domain: Some("https://uor.foundation/derivation/InhabitanceCheckpoint"),
+            range: XSD_INTEGER,
         },
     ]
 }

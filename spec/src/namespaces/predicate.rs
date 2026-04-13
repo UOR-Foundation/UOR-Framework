@@ -143,12 +143,15 @@ fn properties() -> Vec<Property> {
         Property {
             id: "https://uor.foundation/predicate/dispatchTarget",
             label: "dispatchTarget",
-            comment: "The resolver selected when the predicate is satisfied.",
+            comment: "The resolver class selected when the predicate is \
+                      satisfied. Range is the OWL class IRI of a \
+                      resolver:Resolver subclass; v0.2.1 uses class IRIs \
+                      so the codegen can construct façade structs.",
             kind: PropertyKind::Object,
             functional: true,
             required: false,
             domain: Some("https://uor.foundation/predicate/DispatchRule"),
-            range: "https://uor.foundation/resolver/Resolver",
+            range: OWL_CLASS,
         },
         Property {
             id: "https://uor.foundation/predicate/dispatchRules",
@@ -159,6 +162,44 @@ fn properties() -> Vec<Property> {
             required: false,
             domain: Some("https://uor.foundation/predicate/DispatchTable"),
             range: "https://uor.foundation/predicate/DispatchRule",
+        },
+        // v0.2.1: Dispatch-rule priority for deterministic evaluation order
+        Property {
+            id: "https://uor.foundation/predicate/dispatchPriority",
+            label: "dispatchPriority",
+            comment: "Non-negative integer priority. Lower priority values \
+                      are evaluated first; ties within a DispatchTable are \
+                      resolved by declaration order.",
+            kind: PropertyKind::Datatype,
+            functional: true,
+            required: false,
+            domain: Some("https://uor.foundation/predicate/DispatchRule"),
+            range: XSD_NON_NEGATIVE_INTEGER,
+        },
+        // v0.2.1: Conformance PredicateShape backing properties for
+        // user-declared predicate:Predicate individuals.
+        Property {
+            id: "https://uor.foundation/predicate/evaluatorTerm",
+            label: "evaluatorTerm",
+            comment: "The evaluator term that must reduce to a boolean-shaped \
+                      datum on every input of the declared input type.",
+            kind: PropertyKind::Object,
+            functional: true,
+            required: false,
+            domain: Some("https://uor.foundation/predicate/Predicate"),
+            range: "https://uor.foundation/schema/Term",
+        },
+        Property {
+            id: "https://uor.foundation/predicate/terminationWitness",
+            label: "terminationWitness",
+            comment: "An IRI or identifier of the proof:Proof / \
+                      proof:ComputationCertificate attesting that the \
+                      evaluator halts on all inputs.",
+            kind: PropertyKind::Datatype,
+            functional: true,
+            required: false,
+            domain: Some("https://uor.foundation/predicate/Predicate"),
+            range: XSD_STRING,
         },
         Property {
             id: "https://uor.foundation/predicate/guardPredicate",
@@ -405,6 +446,131 @@ fn individuals() -> Vec<Individual> {
                 EVALUATES_OVER,
                 IndividualValue::IriRef("https://uor.foundation/reduction/ReductionState"),
             )],
+        },
+        // v0.2.1: Inhabitance fragment classifier predicates
+        Individual {
+            id: "https://uor.foundation/predicate/Is2SatShape",
+            type_: "https://uor.foundation/predicate/TypePredicate",
+            label: "Is2SatShape",
+            comment: "True on ConstrainedType instances whose constraint \
+                      nerve contains only disjunctions of width \u{2264} 2.",
+            properties: &[(
+                EVALUATES_OVER,
+                IndividualValue::IriRef("https://uor.foundation/type/ConstrainedType"),
+            )],
+        },
+        Individual {
+            id: "https://uor.foundation/predicate/IsHornShape",
+            type_: "https://uor.foundation/predicate/TypePredicate",
+            label: "IsHornShape",
+            comment: "True on ConstrainedType instances whose disjunctions \
+                      each contain at most one positive literal.",
+            properties: &[(
+                EVALUATES_OVER,
+                IndividualValue::IriRef("https://uor.foundation/type/ConstrainedType"),
+            )],
+        },
+        Individual {
+            id: "https://uor.foundation/predicate/IsResidualFragment",
+            type_: "https://uor.foundation/predicate/TypePredicate",
+            label: "IsResidualFragment",
+            comment: "Default (catch-all) predicate. True on ConstrainedType \
+                      instances not classified by Is2SatShape or IsHornShape.",
+            properties: &[(
+                EVALUATES_OVER,
+                IndividualValue::IriRef("https://uor.foundation/type/ConstrainedType"),
+            )],
+        },
+        // v0.2.1: Inhabitance dispatch table and its three rules
+        Individual {
+            id: "https://uor.foundation/predicate/InhabitanceDispatchTable",
+            type_: "https://uor.foundation/predicate/DispatchTable",
+            label: "InhabitanceDispatchTable",
+            comment: "The predicate:DispatchTable governing \
+                      resolver:InhabitanceResolver. Three rules form a \
+                      partition of type:ConstrainedType: Is2SatShape \
+                      \u{2192} TwoSatDecider (priority 0), IsHornShape \
+                      \u{2192} HornSatDecider (priority 1), \
+                      IsResidualFragment \u{2192} ResidualVerdictResolver \
+                      (priority 2, catch-all). Total coverage is enforced \
+                      by reduction:DispatchCoverageCheck; DispatchMiss is \
+                      unreachable for this table.",
+            properties: &[
+                (
+                    "https://uor.foundation/predicate/isExhaustive",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/predicate/isMutuallyExclusive",
+                    IndividualValue::Bool(true),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/predicate/inhabitance_rule_2sat",
+            type_: "https://uor.foundation/predicate/DispatchRule",
+            label: "inhabitance_rule_2sat",
+            comment: "Dispatch rule 1 of InhabitanceDispatchTable: \
+                      Is2SatShape \u{2192} TwoSatDecider at priority 0.",
+            properties: &[
+                (
+                    "https://uor.foundation/predicate/dispatchPredicate",
+                    IndividualValue::IriRef("https://uor.foundation/predicate/Is2SatShape"),
+                ),
+                (
+                    "https://uor.foundation/predicate/dispatchTarget",
+                    IndividualValue::IriRef("https://uor.foundation/resolver/TwoSatDecider"),
+                ),
+                (
+                    "https://uor.foundation/predicate/dispatchPriority",
+                    IndividualValue::Int(0),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/predicate/inhabitance_rule_horn",
+            type_: "https://uor.foundation/predicate/DispatchRule",
+            label: "inhabitance_rule_horn",
+            comment: "Dispatch rule 2 of InhabitanceDispatchTable: \
+                      IsHornShape \u{2192} HornSatDecider at priority 1.",
+            properties: &[
+                (
+                    "https://uor.foundation/predicate/dispatchPredicate",
+                    IndividualValue::IriRef("https://uor.foundation/predicate/IsHornShape"),
+                ),
+                (
+                    "https://uor.foundation/predicate/dispatchTarget",
+                    IndividualValue::IriRef("https://uor.foundation/resolver/HornSatDecider"),
+                ),
+                (
+                    "https://uor.foundation/predicate/dispatchPriority",
+                    IndividualValue::Int(1),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/predicate/inhabitance_rule_residual",
+            type_: "https://uor.foundation/predicate/DispatchRule",
+            label: "inhabitance_rule_residual",
+            comment: "Dispatch rule 3 (catch-all) of InhabitanceDispatchTable: \
+                      IsResidualFragment \u{2192} ResidualVerdictResolver at \
+                      priority 2. Ensures total coverage.",
+            properties: &[
+                (
+                    "https://uor.foundation/predicate/dispatchPredicate",
+                    IndividualValue::IriRef("https://uor.foundation/predicate/IsResidualFragment"),
+                ),
+                (
+                    "https://uor.foundation/predicate/dispatchTarget",
+                    IndividualValue::IriRef(
+                        "https://uor.foundation/resolver/ResidualVerdictResolver",
+                    ),
+                ),
+                (
+                    "https://uor.foundation/predicate/dispatchPriority",
+                    IndividualValue::Int(2),
+                ),
+            ],
         },
     ]
 }

@@ -2138,6 +2138,11 @@ fn validate_certificate_issuance_coverage(report: &mut ConformanceReport) {
         "https://uor.foundation/cert/LiftChainCertificate",
         "https://uor.foundation/morphism/GroundingCertificate",
         "https://uor.foundation/parallel/DisjointnessCertificate",
+        // v0.2.1: InhabitanceCertificate is governed by IH_1 whose lhs
+        // and forAll reference the type by label, but the inheritance
+        // path goes through proof:ComputationCertificate first; the
+        // structural exemption captures the multi-parent case.
+        "https://uor.foundation/cert/InhabitanceCertificate",
     ]
     .into();
 
@@ -2563,7 +2568,15 @@ fn validate_iri_ref_targets(report: &mut ConformanceReport) {
 
     // Well-known external IRIs that are valid targets but not defined
     // in the ontology itself.
-    let known_external: HashSet<&str> = ["http://www.w3.org/2001/XMLSchema#decimal"].into();
+    let known_external: HashSet<&str> = [
+        "http://www.w3.org/2001/XMLSchema#decimal",
+        "http://www.w3.org/2001/XMLSchema#string",
+        "http://www.w3.org/2001/XMLSchema#integer",
+        "http://www.w3.org/2001/XMLSchema#nonNegativeInteger",
+        "http://www.w3.org/2001/XMLSchema#positiveInteger",
+        "http://www.w3.org/2001/XMLSchema#boolean",
+    ]
+    .into();
 
     let mut violations = Vec::new();
     for ns in &ontology.namespaces {
@@ -5129,6 +5142,21 @@ fn validate_legitimate_string_properties_only(report: &mut ConformanceReport) {
         // annotation-valued IRI reference (the metric describes a
         // class of phenomena, not a specific instance).
         "https://uor.foundation/observable/referencesClass",
+        // v0.2.1: Inhabitance Verdict Instantiation
+        "https://uor.foundation/proof/contradictionProof",
+        // v0.2.1: Conformance backing properties
+        "https://uor.foundation/predicate/terminationWitness",
+        "https://uor.foundation/parallel/disjointnessWitness",
+        "https://uor.foundation/stream/productivityWitness",
+        "https://uor.foundation/state/leaseScope",
+        // v0.2.1: Surface-grammar metadata for parametric ebnf emission
+        "https://uor.foundation/conformance/surfaceForm",
+        "https://uor.foundation/conformance/surfaceKeyword",
+        "https://uor.foundation/conformance/surfaceProduction",
+        "https://uor.foundation/conformance/exportRustName",
+        // v0.2.1: PipelineFailure variant-field metadata
+        "https://uor.foundation/reduction/fieldName",
+        "https://uor.foundation/reduction/fieldType",
     ]
     .into_iter()
     .collect();

@@ -3944,6 +3944,62 @@ def prf_HT_8 : UOR.Bridge.Proof.AxiomaticDerivation UOR.Prims.Standard := {
   formalDerivation := none
 }
 
+-- Axiomatic derivation of IH_1 (inhabitance soundness): cert:InhabitanceCertificate(T).verified iff carrier(T) ≠ ∅.
+def prf_IH_1 : UOR.Bridge.Proof.AxiomaticDerivation UOR.Prims.Standard := {
+  universalScope := some (true)
+  derivationWitness := #[]
+  verified := some (true)
+  timestamp := none
+  witness := #[]
+  provesIdentity := some (UOR.Kernel.Op.IH_1)
+  verifiedAtLevel := #[]
+  strategy := some (.ringAxiom)
+  dependsOn := #[]
+  formalDerivation := none
+}
+
+-- Cost identity for the 2-SAT decider on Is2SatShape instances. Inherited from the classical 2-SAT polynomial decision procedure.
+def prf_IH_2a : UOR.Bridge.Proof.AxiomaticDerivation UOR.Prims.Standard := {
+  universalScope := some (true)
+  derivationWitness := #[]
+  verified := some (true)
+  timestamp := none
+  witness := #[]
+  provesIdentity := some (UOR.Kernel.Op.IH_2a)
+  verifiedAtLevel := #[]
+  strategy := some (.ringAxiom)
+  dependsOn := #[]
+  formalDerivation := none
+}
+
+-- Cost identity for the Horn-SAT decider on IsHornShape instances. Inherited from the classical Horn-SAT polynomial decision procedure via unit propagation.
+def prf_IH_2b : UOR.Bridge.Proof.AxiomaticDerivation UOR.Prims.Standard := {
+  universalScope := some (true)
+  derivationWitness := #[]
+  verified := some (true)
+  timestamp := none
+  witness := #[]
+  provesIdentity := some (UOR.Kernel.Op.IH_2b)
+  verifiedAtLevel := #[]
+  strategy := some (.ringAxiom)
+  dependsOn := #[]
+  formalDerivation := none
+}
+
+-- Carrier preservation under basis reduction. Discharged against resolver:JacobianGuidedResolver and resolver:guidingJacobian vocabulary.
+def prf_IH_3 : UOR.Bridge.Proof.AxiomaticDerivation UOR.Prims.Standard := {
+  universalScope := some (true)
+  derivationWitness := #[]
+  verified := some (true)
+  timestamp := none
+  witness := #[]
+  provesIdentity := some (UOR.Kernel.Op.IH_3)
+  verifiedAtLevel := #[]
+  strategy := some (.ringAxiom)
+  dependsOn := #[]
+  formalDerivation := none
+}
+
 -- Axiomatic derivation of IN_1: interaction cost.
 def prf_IN_1 : UOR.Bridge.Proof.AxiomaticDerivation UOR.Prims.Standard := {
   universalScope := some (true)
