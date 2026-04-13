@@ -2,11 +2,28 @@
 // Each entry: (declaration keyword, &[required body keys]).
 // Sourced from conformance:Shape.requiredProperty -> PropertyConstraint.surfaceKeyword.
 pub const SHAPE_REQUIRED_KEYS: &[(&str, &[&str])] = &[
-    ("compile_unit", &["root_term", "witt_level_ceiling", "thermodynamic_budget", "target_domains"]),
-    ("dispatch_rule", &["predicate", "target_resolver", "priority"]),
+    (
+        "compile_unit",
+        &[
+            "root_term",
+            "witt_level_ceiling",
+            "thermodynamic_budget",
+            "target_domains",
+        ],
+    ),
+    (
+        "dispatch_rule",
+        &["predicate", "target_resolver", "priority"],
+    ),
     ("lease", &["linear_site", "lease_scope"]),
     ("parallel", &["site_partition", "disjointness_witness"]),
-    ("predicate", &["input_type", "evaluator", "termination_witness"]),
+    (
+        "predicate",
+        &["input_type", "evaluator", "termination_witness"],
+    ),
     ("stream", &["unfold_seed", "step", "productivity_witness"]),
-    ("witt_level", &["bit_width", "cycle_size", "predecessor_level"]),
+    (
+        "witt_level",
+        &["bit_width", "cycle_size", "predecessor_level"],
+    ),
 ];

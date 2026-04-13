@@ -184,10 +184,20 @@ pub fn generate(ontology: &Ontology, out_dir: &Path) -> Result<GenerationReport>
         let macros_crate_dir = workspace_root.join("uor-foundation-macros");
         if macros_crate_dir.is_dir() {
             let macros_assets_dir = macros_crate_dir.join("src").join("generated");
-            let asset_files =
-                macros_assets::generate_macros_assets(ontology, &macros_assets_dir)?;
+            let asset_files = macros_assets::generate_macros_assets(ontology, &macros_assets_dir)?;
             for f in asset_files {
                 report.files.push(f);
+            }
+            // Run rustfmt on each generated file so CI fmt check stays clean.
+            for name in [
+                "defaults.rs",
+                "keywords.rs",
+                "shape_requirements.rs",
+                "mod.rs",
+            ] {
+                let _ = std::process::Command::new("rustfmt")
+                    .arg(macros_assets_dir.join(name))
+                    .status();
             }
         }
     }
