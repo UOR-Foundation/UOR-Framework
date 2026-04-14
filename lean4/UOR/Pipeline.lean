@@ -167,4 +167,10 @@ instance : Certify InhabitanceResolver ConstrainedTypeInput where
   certify _ _ := runInhabitance #[] 32
   certifyAt _ _ lvl := runInhabitance #[] lvl
 
+instance : Certify MultiplicationResolver ConstrainedTypeInput where
+  Certificate := MultiplicationCertificate
+  Witness := GenericImpossibilityWitness
+  certify _ _ := .ok ⟨ {} ⟩
+  certifyAt _ _ _lvl := .ok ⟨ {} ⟩
+
 end UOR.Pipeline

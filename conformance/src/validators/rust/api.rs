@@ -96,6 +96,15 @@ fn check_pub_items_documented(workspace: &Path, report: &mut ConformanceReport) 
 /// This is a heuristic: looks for `struct *Error` or `enum *Error` declarations
 /// and verifies there is an `impl` block using `thiserror` or a manual impl.
 ///
+/// **`#![no_std]` exception**: files in crates that begin with `#![no_std]`
+/// (or have any module file that declares `#![no_std]`) cannot implement
+/// `std::error::Error`. `core::error::Error` is stable from Rust 1.81; with
+/// the workspace's MSRV at 1.70 (per `CLAUDE.md` §Toolchain), neither is
+/// available. Such files are exempt from this check; the foundation defines
+/// error types as plain types and downstream consumers convert them via
+/// `From` impls in the application layer where `std::error::Error` is
+/// available.
+///
 /// # Errors
 ///
 /// Returns an error if source files cannot be read.
@@ -115,6 +124,14 @@ fn check_error_types(workspace: &Path, report: &mut ConformanceReport) -> Result
 
         // Check for error types using thiserror (acceptable pattern)
         if content.contains("thiserror::Error") || content.contains("use thiserror") {
+            continue;
+        }
+
+        // `#![no_std]` crates cannot implement std::error::Error and (with
+        // MSRV 1.70) cannot implement core::error::Error either. Skip files
+        // belonging to such crates: walk up to find the crate root's lib.rs
+        // and check for the no_std attribute.
+        if file_in_no_std_crate(path) {
             continue;
         }
 
@@ -153,4 +170,26 @@ fn check_error_types(workspace: &Path, report: &mut ConformanceReport) -> Result
     }
 
     Ok(())
+}
+
+/// Returns true if the given file belongs to a crate whose `lib.rs` declares
+/// `#![no_std]`. Walks up the directory tree from the file looking for a `src`
+/// directory whose parent is a crate root; checks `src/lib.rs` for the
+/// `#![no_std]` attribute. Returns false if no enclosing crate is found or
+/// the crate root has no `lib.rs` (e.g., binary-only crates).
+fn file_in_no_std_crate(file: &Path) -> bool {
+    // Walk parents until we find one whose name is "src" (suggesting that
+    // its parent is the crate root).
+    let mut cursor = file.parent();
+    while let Some(dir) = cursor {
+        if dir.file_name().map(|n| n == "src").unwrap_or(false) {
+            let lib_rs = dir.join("lib.rs");
+            if let Ok(content) = std::fs::read_to_string(&lib_rs) {
+                return content.contains("#![no_std]");
+            }
+            return false;
+        }
+        cursor = dir.parent();
+    }
+    false
 }

@@ -162,6 +162,12 @@ pub trait ResidualEntropy<P: Primitives>: ThermoObservable<P> {}
 /// The minimum thermodynamic cost (in units of k_B T ln 2) of erasing one bit of site uncertainty. The UOR ring operates at β* = ln 2 — the Landauer temperature.
 pub trait LandauerCost<P: Primitives>: ThermoObservable<P> {}
 
+/// A sealed observable carrier for accumulated Landauer cost in nats. Monotonic within a single pipeline invocation. The UOR ring operates at the Landauer temperature (β* = ln 2), so this observable is a direct measure of irreversible bit-erasure performed by the computation up to the witness it accompanies.
+pub trait LandauerBudget<P: Primitives>: ThermoObservable<P> {
+    /// The accumulated Landauer cost carried by a LandauerBudget instance, measured in nats. Monotonic within a pipeline invocation. The unit is observable:Nats — every increment corresponds to a number of irreversible bit-erasures times ln 2 (op:OA_5).
+    fn landauer_nats(&self) -> P::Decimal;
+}
+
 /// The Shannon entropy of the reduction distribution P(j) = 2^{−j}. At the Landauer temperature, this equals ln 2 per reduction step — each step erases exactly one bit of site uncertainty.
 pub trait ReductionEntropy<P: Primitives>: ThermoObservable<P> {}
 

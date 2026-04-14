@@ -317,6 +317,20 @@ fn classes() -> Vec<Class> {
             subclass_of: &["https://uor.foundation/observable/ThermoObservable"],
             disjoint_with: &[],
         },
+        // v0.2.2 Phase A: LandauerBudget — sealed observable carrier for accumulated
+        // Landauer cost. Backs the Rust-side enforcement::LandauerBudget newtype, which
+        // is one of the two clocks of UorTime.
+        Class {
+            id: "https://uor.foundation/observable/LandauerBudget",
+            label: "LandauerBudget",
+            comment: "A sealed observable carrier for accumulated Landauer cost in nats. \
+                      Monotonic within a single pipeline invocation. The UOR ring operates \
+                      at the Landauer temperature (β* = ln 2), so this observable is a \
+                      direct measure of irreversible bit-erasure performed by the \
+                      computation up to the witness it accompanies.",
+            subclass_of: &["https://uor.foundation/observable/ThermoObservable"],
+            disjoint_with: &[],
+        },
         Class {
             id: "https://uor.foundation/observable/ReductionEntropy",
             label: "ReductionEntropy",
@@ -1097,6 +1111,21 @@ fn properties() -> Vec<Property> {
             required: false,
             domain: Some("https://uor.foundation/observable/BaseMetric"),
             range: "https://uor.foundation/schema/TermExpression",
+        },
+        // v0.2.2 Phase A: landauerNats — the single functional payload property of
+        // the LandauerBudget carrier. Records accumulated Landauer cost in observable:Nats.
+        Property {
+            id: "https://uor.foundation/observable/landauerNats",
+            label: "landauerNats",
+            comment: "The accumulated Landauer cost carried by a LandauerBudget instance, \
+                      measured in nats. Monotonic within a pipeline invocation. The unit is \
+                      observable:Nats — every increment corresponds to a number of \
+                      irreversible bit-erasures times ln 2 (op:OA_5).",
+            kind: PropertyKind::Datatype,
+            functional: true,
+            required: false,
+            domain: Some("https://uor.foundation/observable/LandauerBudget"),
+            range: XSD_DECIMAL,
         },
     ]
 }

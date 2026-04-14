@@ -335,6 +335,25 @@ fn classes() -> Vec<Class> {
             subclass_of: &["https://uor.foundation/resolver/Resolver"],
             disjoint_with: &[],
         },
+        // v0.2.2 Phase C.4 — MultiplicationResolver.
+        Class {
+            id: "https://uor.foundation/resolver/MultiplicationResolver",
+            label: "MultiplicationResolver",
+            comment: "A Resolver target that decides the cost-optimal Toom-Cook \
+                      splitting factor R for a Datum<L> \u{00d7} Datum<L> \
+                      multiplication at a given call-site context (stack budget \
+                      linear:stackBudgetBytes, const-eval regime). The decision \
+                      procedure is a pure derivation over a closed-form Landauer \
+                      cost function grounded in op:OA_5: for each admissible R, \
+                      the cost is (2R - 1) \u{00b7} (N/R)\u{00b2} \u{00b7} \
+                      64 \u{00b7} ln 2 nats (R > 1) or N\u{00b2} \u{00b7} 64 \
+                      \u{00b7} ln 2 nats (R = 1). The resolver picks the \
+                      cost-minimum R subject to stack-budget and const-eval \
+                      constraints and returns a cert:MultiplicationCertificate \
+                      recording the choice.",
+            subclass_of: &["https://uor.foundation/resolver/Resolver"],
+            disjoint_with: &[],
+        },
         // v0.2.1: parametric Certify-mapping metadata.
         // One CertifyMapping individual per resolver class encodes the
         // (resolver -> certificate, witness) triple. Codegen reads these
@@ -1128,6 +1147,35 @@ fn individuals() -> Vec<Individual> {
                     IndividualValue::IriRef(
                         "https://uor.foundation/proof/InhabitanceImpossibilityWitness",
                     ),
+                ),
+            ],
+        },
+        // v0.2.2 Phase C.4 — MultiplicationResolver CertifyMapping.
+        Individual {
+            id: "https://uor.foundation/resolver/multiplicationCertifyMapping",
+            type_: "https://uor.foundation/resolver/CertifyMapping",
+            label: "multiplicationCertifyMapping",
+            comment: "MultiplicationResolver produces MultiplicationCertificate \
+                      on success and ImpossibilityWitness on failure. The \
+                      resolver is total over admissible call-site contexts \
+                      (stack_budget_bytes > 0), so failure is unreachable for \
+                      well-formed inputs.",
+            properties: &[
+                (
+                    "https://uor.foundation/resolver/forResolver",
+                    IndividualValue::IriRef(
+                        "https://uor.foundation/resolver/MultiplicationResolver",
+                    ),
+                ),
+                (
+                    "https://uor.foundation/resolver/producesCertificate",
+                    IndividualValue::IriRef(
+                        "https://uor.foundation/cert/MultiplicationCertificate",
+                    ),
+                ),
+                (
+                    "https://uor.foundation/resolver/producesWitness",
+                    IndividualValue::IriRef("https://uor.foundation/proof/ImpossibilityWitness"),
                 ),
             ],
         },

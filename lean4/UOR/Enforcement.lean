@@ -89,6 +89,15 @@ instance : OntologyTarget CompletenessCertificate where sealed := trivial
 /-- Construct a CompletenessCertificate carrying the given Witt level. Used by the Lean pipeline driver to mint certificates with the real level. -/
 def CompletenessCertificate.withWittBits (witt : UInt16) : CompletenessCertificate := { wittBits := witt }
 
+/-- Sealed shim for cert:MultiplicationCertificate (v0.2.2 Phase C.4). -/
+structure MultiplicationCertificate where
+  wittBits : UInt16 := 32
+  deriving Inhabited, Repr
+instance : OntologyTarget MultiplicationCertificate where sealed := trivial
+
+/-- Construct a MultiplicationCertificate carrying the given Witt level. Used by the Lean pipeline driver to mint certificates with the real level. -/
+def MultiplicationCertificate.withWittBits (witt : UInt16) : MultiplicationCertificate := { wittBits := witt }
+
 /-- Returns the Witt level the certificate was issued for, sourced from the `wittBits` field populated by the pipeline. -/
 def LiftChainCertificate.targetLevel (cert : LiftChainCertificate) : Nat :=
   cert.wittBits.toNat
@@ -163,6 +172,11 @@ def GroundingAwareResolver.new : GroundingAwareResolver := {}
 structure InhabitanceResolver where
   private dummy : Unit := ()
 def InhabitanceResolver.new : InhabitanceResolver := {}
+
+/-- v0.2.1 façade structure for the MultiplicationResolver resolver class. The `Certify` instance lives in `UOR.Pipeline`. -/
+structure MultiplicationResolver where
+  private dummy : Unit := ()
+def MultiplicationResolver.new : MultiplicationResolver := {}
 
 /-- Witt level marker structures. Reified at the type level so consumers can bind `Mul.{W8}.apply a b` with compile-time level checking. -/
 structure W8 where

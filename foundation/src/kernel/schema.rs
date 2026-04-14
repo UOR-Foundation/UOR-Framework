@@ -218,14 +218,300 @@ pub mod w24 {
     pub const WITT_LEVEL_PREDECESSOR: &str = "https://uor.foundation/schema/W16";
 }
 
-/// Witt level 3: 32-bit ring Z/4294967296Z, 4,294,967,296 states. The highest named level in the spec. nextWittLevel is absent — Prism implementations may extend the chain.
+/// Witt level 3: 32-bit ring Z/4294967296Z, 4,294,967,296 states. The highest 32-bit-and-below named level in the v0.2.1 spec; v0.2.2 Phase C extends the tower with the dense and powers-of-two set.
 pub mod w32 {
     /// `bitsWidth`
     pub const BITS_WIDTH: i64 = 32;
     /// `cycleSize`
     pub const CYCLE_SIZE: i64 = 4294967296;
+    /// `nextWittLevel` -> `W40`
+    pub const NEXT_WITT_LEVEL: &str = "https://uor.foundation/schema/W40";
     /// `wittLevelPredecessor` -> `W24`
     pub const WITT_LEVEL_PREDECESSOR: &str = "https://uor.foundation/schema/W24";
+}
+
+/// Witt level 4: 40-bit ring Z/2^40 Z. Backed by u64 with a 40-bit mask at the arithmetic boundary. v0.2.2 Phase C.
+pub mod w40 {
+    /// `bitsWidth`
+    pub const BITS_WIDTH: i64 = 40;
+    /// `cycleSize`
+    pub const CYCLE_SIZE: i64 = 1099511627776;
+    /// `nextWittLevel` -> `W48`
+    pub const NEXT_WITT_LEVEL: &str = "https://uor.foundation/schema/W48";
+    /// `wittLevelPredecessor` -> `W32`
+    pub const WITT_LEVEL_PREDECESSOR: &str = "https://uor.foundation/schema/W32";
+}
+
+/// Witt level 5: 48-bit ring Z/2^48 Z. Backed by u64 with a 48-bit mask at the arithmetic boundary. v0.2.2 Phase C.
+pub mod w48 {
+    /// `bitsWidth`
+    pub const BITS_WIDTH: i64 = 48;
+    /// `cycleSize`
+    pub const CYCLE_SIZE: i64 = 281474976710656;
+    /// `nextWittLevel` -> `W56`
+    pub const NEXT_WITT_LEVEL: &str = "https://uor.foundation/schema/W56";
+    /// `wittLevelPredecessor` -> `W40`
+    pub const WITT_LEVEL_PREDECESSOR: &str = "https://uor.foundation/schema/W40";
+}
+
+/// Witt level 6: 56-bit ring Z/2^56 Z. Backed by u64 with a 56-bit mask at the arithmetic boundary. v0.2.2 Phase C.
+pub mod w56 {
+    /// `bitsWidth`
+    pub const BITS_WIDTH: i64 = 56;
+    /// `cycleSize`
+    pub const CYCLE_SIZE: i64 = 72057594037927936;
+    /// `nextWittLevel` -> `W64`
+    pub const NEXT_WITT_LEVEL: &str = "https://uor.foundation/schema/W64";
+    /// `wittLevelPredecessor` -> `W48`
+    pub const WITT_LEVEL_PREDECESSOR: &str = "https://uor.foundation/schema/W48";
+}
+
+/// Witt level 7: 64-bit ring Z/2^64 Z. Backed by u64 directly (exact fit; no mask). v0.2.2 Phase C. cycle_size = 2^64 exceeds i64 representation and is omitted; codegen derives it from bit_width.
+pub mod w64 {
+    /// `bitsWidth`
+    pub const BITS_WIDTH: i64 = 64;
+    /// `nextWittLevel` -> `W72`
+    pub const NEXT_WITT_LEVEL: &str = "https://uor.foundation/schema/W72";
+    /// `wittLevelPredecessor` -> `W56`
+    pub const WITT_LEVEL_PREDECESSOR: &str = "https://uor.foundation/schema/W56";
+}
+
+/// Witt level 8: 72-bit ring Z/2^72 Z. Backed by u128 with a 72-bit mask at the arithmetic boundary. v0.2.2 Phase C.
+pub mod w72 {
+    /// `bitsWidth`
+    pub const BITS_WIDTH: i64 = 72;
+    /// `nextWittLevel` -> `W80`
+    pub const NEXT_WITT_LEVEL: &str = "https://uor.foundation/schema/W80";
+    /// `wittLevelPredecessor` -> `W64`
+    pub const WITT_LEVEL_PREDECESSOR: &str = "https://uor.foundation/schema/W64";
+}
+
+/// Witt level 9: 80-bit ring Z/2^80 Z. Backed by u128 with an 80-bit mask at the arithmetic boundary. v0.2.2 Phase C.
+pub mod w80 {
+    /// `bitsWidth`
+    pub const BITS_WIDTH: i64 = 80;
+    /// `nextWittLevel` -> `W88`
+    pub const NEXT_WITT_LEVEL: &str = "https://uor.foundation/schema/W88";
+    /// `wittLevelPredecessor` -> `W72`
+    pub const WITT_LEVEL_PREDECESSOR: &str = "https://uor.foundation/schema/W72";
+}
+
+/// Witt level 10: 88-bit ring Z/2^88 Z. Backed by u128 with an 88-bit mask at the arithmetic boundary. v0.2.2 Phase C.
+pub mod w88 {
+    /// `bitsWidth`
+    pub const BITS_WIDTH: i64 = 88;
+    /// `nextWittLevel` -> `W96`
+    pub const NEXT_WITT_LEVEL: &str = "https://uor.foundation/schema/W96";
+    /// `wittLevelPredecessor` -> `W80`
+    pub const WITT_LEVEL_PREDECESSOR: &str = "https://uor.foundation/schema/W80";
+}
+
+/// Witt level 11: 96-bit ring Z/2^96 Z. Backed by u128 with a 96-bit mask at the arithmetic boundary. v0.2.2 Phase C.
+pub mod w96 {
+    /// `bitsWidth`
+    pub const BITS_WIDTH: i64 = 96;
+    /// `nextWittLevel` -> `W104`
+    pub const NEXT_WITT_LEVEL: &str = "https://uor.foundation/schema/W104";
+    /// `wittLevelPredecessor` -> `W88`
+    pub const WITT_LEVEL_PREDECESSOR: &str = "https://uor.foundation/schema/W88";
+}
+
+/// Witt level 12: 104-bit ring Z/2^104 Z. Backed by u128 with a 104-bit mask at the arithmetic boundary. v0.2.2 Phase C.
+pub mod w104 {
+    /// `bitsWidth`
+    pub const BITS_WIDTH: i64 = 104;
+    /// `nextWittLevel` -> `W112`
+    pub const NEXT_WITT_LEVEL: &str = "https://uor.foundation/schema/W112";
+    /// `wittLevelPredecessor` -> `W96`
+    pub const WITT_LEVEL_PREDECESSOR: &str = "https://uor.foundation/schema/W96";
+}
+
+/// Witt level 13: 112-bit ring Z/2^112 Z. Backed by u128 with a 112-bit mask at the arithmetic boundary. v0.2.2 Phase C.
+pub mod w112 {
+    /// `bitsWidth`
+    pub const BITS_WIDTH: i64 = 112;
+    /// `nextWittLevel` -> `W120`
+    pub const NEXT_WITT_LEVEL: &str = "https://uor.foundation/schema/W120";
+    /// `wittLevelPredecessor` -> `W104`
+    pub const WITT_LEVEL_PREDECESSOR: &str = "https://uor.foundation/schema/W104";
+}
+
+/// Witt level 14: 120-bit ring Z/2^120 Z. Backed by u128 with a 120-bit mask at the arithmetic boundary. v0.2.2 Phase C.
+pub mod w120 {
+    /// `bitsWidth`
+    pub const BITS_WIDTH: i64 = 120;
+    /// `nextWittLevel` -> `W128`
+    pub const NEXT_WITT_LEVEL: &str = "https://uor.foundation/schema/W128";
+    /// `wittLevelPredecessor` -> `W112`
+    pub const WITT_LEVEL_PREDECESSOR: &str = "https://uor.foundation/schema/W112";
+}
+
+/// Witt level 15: 128-bit ring Z/2^128 Z. Backed by u128 directly (exact fit; no mask). The largest native-backed Witt level; levels above W128 use the Limbs<N> generic kernel emitted in Phase C.3. v0.2.2 Phase C.
+pub mod w128 {
+    /// `bitsWidth`
+    pub const BITS_WIDTH: i64 = 128;
+    /// `nextWittLevel` -> `W160`
+    pub const NEXT_WITT_LEVEL: &str = "https://uor.foundation/schema/W160";
+    /// `wittLevelPredecessor` -> `W120`
+    pub const WITT_LEVEL_PREDECESSOR: &str = "https://uor.foundation/schema/W120";
+}
+
+/// Witt level: 160-bit ring (SHA-1 digest carrier). Backed by Limbs<3> with a 160-bit mask. v0.2.2 Phase C.
+pub mod w160 {
+    /// `bitsWidth`
+    pub const BITS_WIDTH: i64 = 160;
+    /// `nextWittLevel` -> `W192`
+    pub const NEXT_WITT_LEVEL: &str = "https://uor.foundation/schema/W192";
+    /// `wittLevelPredecessor` -> `W128`
+    pub const WITT_LEVEL_PREDECESSOR: &str = "https://uor.foundation/schema/W128";
+}
+
+/// Witt level: 192-bit ring (P-192 carrier). Backed by Limbs<3>. v0.2.2 Phase C.
+pub mod w192 {
+    /// `bitsWidth`
+    pub const BITS_WIDTH: i64 = 192;
+    /// `nextWittLevel` -> `W224`
+    pub const NEXT_WITT_LEVEL: &str = "https://uor.foundation/schema/W224";
+    /// `wittLevelPredecessor` -> `W160`
+    pub const WITT_LEVEL_PREDECESSOR: &str = "https://uor.foundation/schema/W160";
+}
+
+/// Witt level: 224-bit ring (SHA-224 digest carrier). Backed by Limbs<4> with a 224-bit mask. v0.2.2 Phase C.
+pub mod w224 {
+    /// `bitsWidth`
+    pub const BITS_WIDTH: i64 = 224;
+    /// `nextWittLevel` -> `W256`
+    pub const NEXT_WITT_LEVEL: &str = "https://uor.foundation/schema/W256";
+    /// `wittLevelPredecessor` -> `W192`
+    pub const WITT_LEVEL_PREDECESSOR: &str = "https://uor.foundation/schema/W192";
+}
+
+/// Witt level: 256-bit ring (SHA-256, blake3, secp256k1, P-256 carrier). Backed by Limbs<4> directly (exact fit; no mask). v0.2.2 Phase C.
+pub mod w256 {
+    /// `bitsWidth`
+    pub const BITS_WIDTH: i64 = 256;
+    /// `nextWittLevel` -> `W384`
+    pub const NEXT_WITT_LEVEL: &str = "https://uor.foundation/schema/W384";
+    /// `wittLevelPredecessor` -> `W224`
+    pub const WITT_LEVEL_PREDECESSOR: &str = "https://uor.foundation/schema/W224";
+}
+
+/// Witt level: 384-bit ring (SHA-384, P-384 carrier). Backed by Limbs<6> directly (exact fit; no mask). v0.2.2 Phase C.
+pub mod w384 {
+    /// `bitsWidth`
+    pub const BITS_WIDTH: i64 = 384;
+    /// `nextWittLevel` -> `W448`
+    pub const NEXT_WITT_LEVEL: &str = "https://uor.foundation/schema/W448";
+    /// `wittLevelPredecessor` -> `W256`
+    pub const WITT_LEVEL_PREDECESSOR: &str = "https://uor.foundation/schema/W256";
+}
+
+/// Witt level: 448-bit ring (Curve448 carrier). Backed by Limbs<7> directly (exact fit; no mask). v0.2.2 Phase C.
+pub mod w448 {
+    /// `bitsWidth`
+    pub const BITS_WIDTH: i64 = 448;
+    /// `nextWittLevel` -> `W512`
+    pub const NEXT_WITT_LEVEL: &str = "https://uor.foundation/schema/W512";
+    /// `wittLevelPredecessor` -> `W384`
+    pub const WITT_LEVEL_PREDECESSOR: &str = "https://uor.foundation/schema/W384";
+}
+
+/// Witt level: 512-bit ring (SHA-512 carrier). Backed by Limbs<8> directly (exact fit; no mask). v0.2.2 Phase C.
+pub mod w512 {
+    /// `bitsWidth`
+    pub const BITS_WIDTH: i64 = 512;
+    /// `nextWittLevel` -> `W520`
+    pub const NEXT_WITT_LEVEL: &str = "https://uor.foundation/schema/W520";
+    /// `wittLevelPredecessor` -> `W448`
+    pub const WITT_LEVEL_PREDECESSOR: &str = "https://uor.foundation/schema/W448";
+}
+
+/// Witt level: 520-bit ring (P-521 prime carrier, lower-bound). Backed by Limbs<9> with a 520-bit mask. v0.2.2 Phase C.
+pub mod w520 {
+    /// `bitsWidth`
+    pub const BITS_WIDTH: i64 = 520;
+    /// `nextWittLevel` -> `W528`
+    pub const NEXT_WITT_LEVEL: &str = "https://uor.foundation/schema/W528";
+    /// `wittLevelPredecessor` -> `W512`
+    pub const WITT_LEVEL_PREDECESSOR: &str = "https://uor.foundation/schema/W512";
+}
+
+/// Witt level: 528-bit ring (P-521 prime carrier, upper-bound; P-521 elements are constrained by an additional residue check). Backed by Limbs<9> with a 528-bit mask. v0.2.2 Phase C.
+pub mod w528 {
+    /// `bitsWidth`
+    pub const BITS_WIDTH: i64 = 528;
+    /// `nextWittLevel` -> `W1024`
+    pub const NEXT_WITT_LEVEL: &str = "https://uor.foundation/schema/W1024";
+    /// `wittLevelPredecessor` -> `W520`
+    pub const WITT_LEVEL_PREDECESSOR: &str = "https://uor.foundation/schema/W520";
+}
+
+/// Witt level: 1024-bit ring (RSA-1024 carrier). Backed by Limbs<16> directly (exact fit; no mask). v0.2.2 Phase C.
+pub mod w1024 {
+    /// `bitsWidth`
+    pub const BITS_WIDTH: i64 = 1024;
+    /// `nextWittLevel` -> `W2048`
+    pub const NEXT_WITT_LEVEL: &str = "https://uor.foundation/schema/W2048";
+    /// `wittLevelPredecessor` -> `W528`
+    pub const WITT_LEVEL_PREDECESSOR: &str = "https://uor.foundation/schema/W528";
+}
+
+/// Witt level: 2048-bit ring (RSA-2048 carrier). Backed by Limbs<32> directly (exact fit; no mask). v0.2.2 Phase C.
+pub mod w2048 {
+    /// `bitsWidth`
+    pub const BITS_WIDTH: i64 = 2048;
+    /// `nextWittLevel` -> `W4096`
+    pub const NEXT_WITT_LEVEL: &str = "https://uor.foundation/schema/W4096";
+    /// `wittLevelPredecessor` -> `W1024`
+    pub const WITT_LEVEL_PREDECESSOR: &str = "https://uor.foundation/schema/W1024";
+}
+
+/// Witt level: 4096-bit ring (RSA-4096, BFV/CKKS HE ring dimension carrier). Backed by Limbs<64>. v0.2.2 Phase C.
+pub mod w4096 {
+    /// `bitsWidth`
+    pub const BITS_WIDTH: i64 = 4096;
+    /// `nextWittLevel` -> `W8192`
+    pub const NEXT_WITT_LEVEL: &str = "https://uor.foundation/schema/W8192";
+    /// `wittLevelPredecessor` -> `W2048`
+    pub const WITT_LEVEL_PREDECESSOR: &str = "https://uor.foundation/schema/W2048";
+}
+
+/// Witt level: 8192-bit ring (lattice-based crypto carrier). Backed by Limbs<128>. v0.2.2 Phase C.
+pub mod w8192 {
+    /// `bitsWidth`
+    pub const BITS_WIDTH: i64 = 8192;
+    /// `nextWittLevel` -> `W12288`
+    pub const NEXT_WITT_LEVEL: &str = "https://uor.foundation/schema/W12288";
+    /// `wittLevelPredecessor` -> `W4096`
+    pub const WITT_LEVEL_PREDECESSOR: &str = "https://uor.foundation/schema/W4096";
+}
+
+/// Witt level: 12288-bit ring (BFV/BGV HE ring dimension at n=12288). Backed by Limbs<192>. v0.2.2 Phase C.
+pub mod w12288 {
+    /// `bitsWidth`
+    pub const BITS_WIDTH: i64 = 12288;
+    /// `nextWittLevel` -> `W16384`
+    pub const NEXT_WITT_LEVEL: &str = "https://uor.foundation/schema/W16384";
+    /// `wittLevelPredecessor` -> `W8192`
+    pub const WITT_LEVEL_PREDECESSOR: &str = "https://uor.foundation/schema/W8192";
+}
+
+/// Witt level: 16384-bit ring (post-quantum lattice parameter). Backed by Limbs<256>. v0.2.2 Phase C.
+pub mod w16384 {
+    /// `bitsWidth`
+    pub const BITS_WIDTH: i64 = 16384;
+    /// `nextWittLevel` -> `W32768`
+    pub const NEXT_WITT_LEVEL: &str = "https://uor.foundation/schema/W32768";
+    /// `wittLevelPredecessor` -> `W12288`
+    pub const WITT_LEVEL_PREDECESSOR: &str = "https://uor.foundation/schema/W12288";
+}
+
+/// Witt level: 32768-bit ring (post-quantum / extreme-precision arithmetic carrier). Backed by Limbs<512>. The highest foundation-shipped level in v0.2.2; downstream Prism implementations may declare higher levels via the `witt_level` conformance declaration form. v0.2.2 Phase C.
+pub mod w32768 {
+    /// `bitsWidth`
+    pub const BITS_WIDTH: i64 = 32768;
+    /// `wittLevelPredecessor` -> `W16384`
+    pub const WITT_LEVEL_PREDECESSOR: &str = "https://uor.foundation/schema/W16384";
 }
 
 pub mod term_critical_identity_lhs {

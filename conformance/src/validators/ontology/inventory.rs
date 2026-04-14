@@ -2143,6 +2143,11 @@ fn validate_certificate_issuance_coverage(report: &mut ConformanceReport) {
         // path goes through proof:ComputationCertificate first; the
         // structural exemption captures the multi-parent case.
         "https://uor.foundation/cert/InhabitanceCertificate",
+        // v0.2.2 Phase C.4: MultiplicationCertificate is the return type
+        // of the multiplication resolver; its governance is op:OA_5
+        // (Landauer pricing identity), already in the ontology. The
+        // resolver's closed-form cost function cites OA_5 in its rustdoc.
+        "https://uor.foundation/cert/MultiplicationCertificate",
     ]
     .into();
 

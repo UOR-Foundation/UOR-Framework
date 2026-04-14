@@ -1200,6 +1200,12 @@ uor-sh:ResidualVerdictResolverShape
     sh:targetClass  resolver:ResidualVerdictResolver ;
     rdfs:label      "ResidualVerdictResolverShape" .
 
+# v0.2.2 Phase C.4
+uor-sh:MultiplicationResolverShape
+    a               sh:NodeShape ;
+    sh:targetClass  resolver:MultiplicationResolver ;
+    rdfs:label      "MultiplicationResolverShape" .
+
 uor-sh:CertifyMappingShape
     a               sh:NodeShape ;
     sh:targetClass  resolver:CertifyMapping ;
@@ -2377,6 +2383,17 @@ uor-sh:LandauerCostShape
     a               sh:NodeShape ;
     sh:targetClass  observable:LandauerCost ;
     rdfs:label      "LandauerCostShape" .
+
+uor-sh:LandauerBudgetShape
+    a               sh:NodeShape ;
+    sh:targetClass  observable:LandauerBudget ;
+    rdfs:label      "LandauerBudgetShape" ;
+    sh:property [
+        sh:path observable:landauerNats ;
+        sh:minCount 0 ;
+        sh:maxCount 1 ;
+        sh:datatype xsd:decimal ;
+    ] .
 
 uor-sh:ReductionEntropyShape
     a               sh:NodeShape ;
@@ -4066,6 +4083,30 @@ uor-sh:InhabitanceCertificateShape
         sh:minCount 1 ;
         sh:maxCount 1 ;
         sh:class type:ConstrainedType ;
+    ] .
+
+# v0.2.2 Phase C.4
+uor-sh:MultiplicationCertificateShape
+    a               sh:NodeShape ;
+    sh:targetClass  cert:MultiplicationCertificate ;
+    rdfs:label      "MultiplicationCertificateShape" ;
+    sh:property [
+        sh:path cert:splittingFactor ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:datatype xsd:positiveInteger ;
+    ] ;
+    sh:property [
+        sh:path cert:subMultiplicationCount ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:datatype xsd:nonNegativeInteger ;
+    ] ;
+    sh:property [
+        sh:path cert:landauerCostNats ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:datatype xsd:decimal ;
     ] .
 
 # ── morphism/ namespace (20) ──────────────────────

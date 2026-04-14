@@ -29,6 +29,13 @@ def inhabitanceCertifyMapping : UOR.Bridge.Resolver.CertifyMapping UOR.Prims.Sta
   producesWitness := some (("https://uor.foundation/proof/InhabitanceImpossibilityWitness" : String))
 }
 
+-- MultiplicationResolver produces MultiplicationCertificate on success and ImpossibilityWitness on failure. The resolver is total over admissible call-site contexts (stack_budget_bytes > 0), so failure is unreachable for well-formed inputs.
+def multiplicationCertifyMapping : UOR.Bridge.Resolver.CertifyMapping UOR.Prims.Standard := {
+  forResolver := some (("https://uor.foundation/resolver/MultiplicationResolver" : String))
+  producesCertificate := some (("https://uor.foundation/cert/MultiplicationCertificate" : String))
+  producesWitness := some (("https://uor.foundation/proof/ImpossibilityWitness" : String))
+}
+
 -- TowerCompletenessResolver produces LiftChainCertificate on success and ImpossibilityWitness on failure.
 def towerCertifyMapping : UOR.Bridge.Resolver.CertifyMapping UOR.Prims.Standard := {
   forResolver := some (("https://uor.foundation/resolver/TowerCompletenessResolver" : String))

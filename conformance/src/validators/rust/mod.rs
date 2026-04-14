@@ -4,5 +4,9 @@
 //! conventions — items that clippy/rustfmt don't cover automatically.
 
 pub mod api;
+pub mod multiplication_resolver;
+pub mod phantom_tag;
 pub mod public_api_snapshot;
 pub mod style;
+pub mod uor_time_surface;
+pub mod witt_tower_completeness;

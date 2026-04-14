@@ -43,7 +43,7 @@ pub fn generate_enums(ontology: &Ontology) -> String {
     }
 
     // WittLevel — open-world structure (not inductive)
-    generate_witt_level(&mut f);
+    generate_witt_level(&mut f, ontology);
 
     f.finish()
 }
@@ -232,8 +232,11 @@ fn to_camel_case_variant(s: &str) -> String {
     }
 }
 
-/// Generates the WittLevel structure (open-world, not inductive).
-fn generate_witt_level(f: &mut LeanFile) {
+/// Generates the WittLevel structure (open-world, not inductive) and one
+/// `def Wn : WittLevel := ⟨n⟩` per `schema:WittLevel` individual in the
+/// ontology. v0.2.2 Phase C lifted the W8/W16/W24/W32 hardcoded set to a
+/// parametric walk so that adding a Witt level is a pure ontology edit.
+fn generate_witt_level(f: &mut LeanFile, ontology: &Ontology) {
     f.doc_comment("Witt vector length (multiples of 8). Open-world: any W_n is valid.");
     f.line("structure WittLevel where");
     f.indented_doc_comment("The Witt vector length in bits.");
@@ -242,14 +245,40 @@ fn generate_witt_level(f: &mut LeanFile) {
     f.blank();
     f.line("namespace WittLevel");
     f.blank();
-    f.doc_comment("Standard Witt level W8 (8-bit ring).");
-    f.line("def W8  : WittLevel := \u{27e8}8\u{27e9}");
-    f.doc_comment("Standard Witt level W16 (16-bit ring).");
-    f.line("def W16 : WittLevel := \u{27e8}16\u{27e9}");
-    f.doc_comment("Standard Witt level W24 (24-bit ring).");
-    f.line("def W24 : WittLevel := \u{27e8}24\u{27e9}");
-    f.doc_comment("Standard Witt level W32 (32-bit ring).");
-    f.line("def W32 : WittLevel := \u{27e8}32\u{27e9}");
+
+    // Walk schema:WittLevel individuals; emit one `def` per individual,
+    // sorted by bit width so the file is deterministic.
+    let witt_iri = "https://uor.foundation/schema/WittLevel";
+    let mut levels: Vec<(String, u64)> = Vec::new();
+    if let Some(schema_module) = ontology.find_namespace("schema") {
+        for ind in &schema_module.individuals {
+            if ind.type_ != witt_iri {
+                continue;
+            }
+            // Extract bitsWidth via the schema:bitsWidth property.
+            let bits = ind
+                .properties
+                .iter()
+                .find_map(|(k, v)| {
+                    if *k == "https://uor.foundation/schema/bitsWidth" {
+                        if let uor_ontology::model::IndividualValue::Int(n) = v {
+                            return Some(*n as u64);
+                        }
+                    }
+                    None
+                })
+                .unwrap_or(0);
+            if bits == 0 {
+                continue;
+            }
+            levels.push((ind.label.to_string(), bits));
+        }
+    }
+    levels.sort_by_key(|(_, b)| *b);
+    for (label, bits) in &levels {
+        f.doc_comment(&format!("Standard Witt level {label} ({bits}-bit ring)."));
+        let _ = writeln!(f.buf, "def {label} : WittLevel := \u{27e8}{bits}\u{27e9}");
+    }
     f.blank();
     f.doc_comment("Construct an arbitrary Witt level.");
     f.line("def new (n : Nat) : WittLevel := \u{27e8}n\u{27e9}");

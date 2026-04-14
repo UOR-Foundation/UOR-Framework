@@ -150,3 +150,13 @@ pub trait InhabitanceCertificate<P: Primitives>:
     /// The type:ConstrainedType this InhabitanceCertificate is issued for.
     fn grounded(&self) -> &Self::ConstrainedType;
 }
+
+/// A certificate attesting the cost-optimal Toom-Cook splitting factor R for a Datum<L> × Datum<L> multiplication at a given call-site context (stack budget, const-eval regime). Carries the chosen splitting factor, the recursive sub-multiplication count, and the accumulated Landauer cost in nats (priced per op:OA_5). Produced by resolver:MultiplicationResolver.
+pub trait MultiplicationCertificate<P: Primitives>: Certificate<P> {
+    /// The Toom-Cook splitting factor R chosen by the multiplication resolver. R = 1 is schoolbook (the const-eval bottom-out); R = 2 is Karatsuba; R >= 3 is Toom-k. The resolver picks the cost-optimal R subject to the call-site's stack budget and const-eval depth constraints.
+    fn splitting_factor(&self) -> P::PositiveInteger;
+    /// The number of recursive sub-multiplications the chosen splitting factor induces for one Datum<L> × Datum<L> multiplication at this call site. For splitting factor R, the count is (2R - 1) for R > 1, and 1 for R = 1.
+    fn sub_multiplication_count(&self) -> P::NonNegativeInteger;
+    /// The accumulated Landauer cost of the certified multiplication in nats, priced per op:OA_5 (each irreversible bit erasure costs ln 2 nats in the Archimedean completion). Unit: observable:Nats. The value is an xsd:decimal.
+    fn landauer_cost_nats(&self) -> P::Decimal;
+}

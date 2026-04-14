@@ -32,6 +32,8 @@ pub trait LinearBudget<P: Primitives> {
     fn budget_context(&self) -> &Self::Context;
     /// Number of unconsumed sites. Equals freeRank on the associated context.
     fn remaining_count(&self) -> P::NonNegativeInteger;
+    /// The stack budget available at the call site in bytes. On embedded targets this is compile-time-known; on std targets it is computed from the thread-local stack frame. Consumed by the MultiplicationResolver to bound the admissible Toom-Cook splitting factor R: deeper recursion requires more stack, so R is capped where stack would overflow.
+    fn stack_budget_bytes(&self) -> P::NonNegativeInteger;
 }
 
 /// A binding between a state:ContextLease and a subset of LinearSites. Formalizes what resources a lease claims.

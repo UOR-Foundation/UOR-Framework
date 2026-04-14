@@ -238,6 +238,9 @@ pub trait HornSatDecider<P: Primitives>: Resolver<P> {}
 /// A Resolver target for the catch-all default dispatch rule. Returns the residual-hard verdict without promising a polynomial bound; the verdict is well-formed but the cost identity is unbounded. Dispatch rule 3 of the InhabitanceDispatchTable ensuring total coverage (reduction:DispatchMiss is unreachable for this table).
 pub trait ResidualVerdictResolver<P: Primitives>: Resolver<P> {}
 
+/// A Resolver target that decides the cost-optimal Toom-Cook splitting factor R for a Datum<L> × Datum<L> multiplication at a given call-site context (stack budget linear:stackBudgetBytes, const-eval regime). The decision procedure is a pure derivation over a closed-form Landauer cost function grounded in op:OA_5: for each admissible R, the cost is (2R - 1) · (N/R)² · 64 · ln 2 nats (R > 1) or N² · 64 · ln 2 nats (R = 1). The resolver picks the cost-minimum R subject to stack-budget and const-eval constraints and returns a cert:MultiplicationCertificate recording the choice.
+pub trait MultiplicationResolver<P: Primitives>: Resolver<P> {}
+
 /// An ontology fact recording that a resolver:Resolver subclass produces a specific cert:Certificate subclass on success and a specific proof:ImpossibilityWitness subclass on failure. The v0.2.1 Rust codegen reads CertifyMapping individuals to emit foundation::Certify trait impls for each resolver class, keeping the mapping data-driven rather than hand-tabulated in source.
 pub trait CertifyMapping<P: Primitives> {
     /// The resolver:Resolver subclass this CertifyMapping describes.
@@ -340,4 +343,14 @@ pub mod inhabitance_certify_mapping {
     /// `producesWitness` -> `InhabitanceImpossibilityWitness`
     pub const PRODUCES_WITNESS: &str =
         "https://uor.foundation/proof/InhabitanceImpossibilityWitness";
+}
+
+/// MultiplicationResolver produces MultiplicationCertificate on success and ImpossibilityWitness on failure. The resolver is total over admissible call-site contexts (stack_budget_bytes > 0), so failure is unreachable for well-formed inputs.
+pub mod multiplication_certify_mapping {
+    /// `forResolver` -> `MultiplicationResolver`
+    pub const FOR_RESOLVER: &str = "https://uor.foundation/resolver/MultiplicationResolver";
+    /// `producesCertificate` -> `MultiplicationCertificate`
+    pub const PRODUCES_CERTIFICATE: &str = "https://uor.foundation/cert/MultiplicationCertificate";
+    /// `producesWitness` -> `ImpossibilityWitness`
+    pub const PRODUCES_WITNESS: &str = "https://uor.foundation/proof/ImpossibilityWitness";
 }

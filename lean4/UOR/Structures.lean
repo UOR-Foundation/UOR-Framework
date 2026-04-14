@@ -101,6 +101,27 @@ instance : Inhabited (IsometryCertificate UOR.Prims.Standard) where
     certifies := none
   }
 
+/-- A certificate attesting the cost-optimal Toom-Cook splitting factor R for a Datum<L> × Datum<L> multiplication at a given call-site context (stack budget, const-eval regime). Carries the chosen splitting factor, the recursive sub-multiplication count, and the accumulated Landauer cost in nats (priced per op:OA_5). Produced by resolver:MultiplicationResolver. -/
+structure MultiplicationCertificate (P : Primitives) extends Certificate P where
+  /-- The Toom-Cook splitting factor R chosen by the multiplication resolver. R = 1 is schoolbook (the const-eval bottom-out); R = 2 is Karatsuba; R >= 3 is Toom-k. The resolver picks the cost-optimal R subject to the call-site's stack budget and const-eval depth constraints. -/
+  splittingFactor : Option P.PositiveInteger
+  /-- The number of recursive sub-multiplications the chosen splitting factor induces for one Datum<L> × Datum<L> multiplication at this call site. For splitting factor R, the count is (2R - 1) for R > 1, and 1 for R = 1. -/
+  subMultiplicationCount : Option P.NonNegativeInteger
+  /-- The accumulated Landauer cost of the certified multiplication in nats, priced per op:OA_5 (each irreversible bit erasure costs ln 2 nats in the Archimedean completion). Unit: observable:Nats. The value is an xsd:decimal. -/
+  landauerCostNats : Option P.Decimal
+
+instance : Inhabited (MultiplicationCertificate UOR.Prims.Standard) where
+  default := {
+    splittingFactor := none
+    subMultiplicationCount := none
+    landauerCostNats := none
+    method := none
+    verified := none
+    wittLength := none
+    timestamp := none
+    certifies := none
+  }
+
 end UOR.Bridge.Cert
 
 namespace UOR.Bridge.Cohomology
@@ -903,6 +924,21 @@ structure ThermoObservable (P : Primitives) extends Observable P where
 
 instance : Inhabited (ThermoObservable UOR.Prims.Standard) where
   default := {
+    hardnessEstimate := none
+    value := none
+    source := none
+    target := none
+    hasUnit := none
+  }
+
+/-- A sealed observable carrier for accumulated Landauer cost in nats. Monotonic within a single pipeline invocation. The UOR ring operates at the Landauer temperature (β* = ln 2), so this observable is a direct measure of irreversible bit-erasure performed by the computation up to the witness it accompanies. -/
+structure LandauerBudget (P : Primitives) extends ThermoObservable P where
+  /-- The accumulated Landauer cost carried by a LandauerBudget instance, measured in nats. Monotonic within a pipeline invocation. The unit is observable:Nats — every increment corresponds to a number of irreversible bit-erasures times ln 2 (op:OA_5). -/
+  landauerNats : Option P.Decimal
+
+instance : Inhabited (LandauerBudget UOR.Prims.Standard) where
+  default := {
+    landauerNats := none
     hardnessEstimate := none
     value := none
     source := none
@@ -5230,6 +5266,20 @@ instance : Inhabited (MeasurementResolver UOR.Prims.Standard) where
     resolverPredicate := none
   }
 
+/-- A Resolver target that decides the cost-optimal Toom-Cook splitting factor R for a Datum<L> × Datum<L> multiplication at a given call-site context (stack budget linear:stackBudgetBytes, const-eval regime). The decision procedure is a pure derivation over a closed-form Landauer cost function grounded in op:OA_5: for each admissible R, the cost is (2R - 1) · (N/R)² · 64 · ln 2 nats (R > 1) or N² · 64 · ln 2 nats (R = 1). The resolver picks the cost-minimum R subject to stack-budget and const-eval constraints and returns a cert:MultiplicationCertificate recording the choice. -/
+structure MultiplicationResolver (P : Primitives) extends Resolver P
+
+instance : Inhabited (MultiplicationResolver UOR.Prims.Standard) where
+  default := {
+    inputType := none
+    outputType := none
+    strategy := none
+    resolutionState := none
+    hasComplexityClass := none
+    dispatchTable := none
+    resolverPredicate := none
+  }
+
 /-- A Resolver target for the catch-all default dispatch rule. Returns the residual-hard verdict without promising a polynomial bound; the verdict is well-formed but the cost identity is unbounded. Dispatch rule 3 of the InhabitanceDispatchTable ensuring total coverage (reduction:DispatchMiss is unreachable for this table). -/
 structure ResidualVerdictResolver (P : Primitives) extends Resolver P
 
@@ -5904,12 +5954,15 @@ structure LinearBudget (P : Primitives) where
   budgetContext : Option (UOR.User.State.Context P)
   /-- Number of unconsumed sites. Equals freeRank on the associated context. -/
   remainingCount : Option P.NonNegativeInteger
+  /-- The stack budget available at the call site in bytes. On embedded targets this is compile-time-known; on std targets it is computed from the thread-local stack frame. Consumed by the MultiplicationResolver to bound the admissible Toom-Cook splitting factor R: deeper recursion requires more stack, so R is capped where stack would overflow. -/
+  stackBudgetBytes : Option P.NonNegativeInteger
 
 instance : Inhabited (LinearBudget UOR.Prims.Standard) where
   default := {
     budgetSites := #[]
     budgetContext := none
     remainingCount := none
+    stackBudgetBytes := none
   }
 
 /-- A PinningEffect that consumes its target LinearSite. After application, the site is no longer available for pinning by any subsequent effect. -/

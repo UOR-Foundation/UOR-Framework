@@ -307,13 +307,69 @@ structure WittLevel where
 namespace WittLevel
 
 /-- Standard Witt level W8 (8-bit ring). -/
-def W8  : WittLevel := ⟨8⟩
+def W8 : WittLevel := ⟨8⟩
 /-- Standard Witt level W16 (16-bit ring). -/
 def W16 : WittLevel := ⟨16⟩
 /-- Standard Witt level W24 (24-bit ring). -/
 def W24 : WittLevel := ⟨24⟩
 /-- Standard Witt level W32 (32-bit ring). -/
 def W32 : WittLevel := ⟨32⟩
+/-- Standard Witt level W40 (40-bit ring). -/
+def W40 : WittLevel := ⟨40⟩
+/-- Standard Witt level W48 (48-bit ring). -/
+def W48 : WittLevel := ⟨48⟩
+/-- Standard Witt level W56 (56-bit ring). -/
+def W56 : WittLevel := ⟨56⟩
+/-- Standard Witt level W64 (64-bit ring). -/
+def W64 : WittLevel := ⟨64⟩
+/-- Standard Witt level W72 (72-bit ring). -/
+def W72 : WittLevel := ⟨72⟩
+/-- Standard Witt level W80 (80-bit ring). -/
+def W80 : WittLevel := ⟨80⟩
+/-- Standard Witt level W88 (88-bit ring). -/
+def W88 : WittLevel := ⟨88⟩
+/-- Standard Witt level W96 (96-bit ring). -/
+def W96 : WittLevel := ⟨96⟩
+/-- Standard Witt level W104 (104-bit ring). -/
+def W104 : WittLevel := ⟨104⟩
+/-- Standard Witt level W112 (112-bit ring). -/
+def W112 : WittLevel := ⟨112⟩
+/-- Standard Witt level W120 (120-bit ring). -/
+def W120 : WittLevel := ⟨120⟩
+/-- Standard Witt level W128 (128-bit ring). -/
+def W128 : WittLevel := ⟨128⟩
+/-- Standard Witt level W160 (160-bit ring). -/
+def W160 : WittLevel := ⟨160⟩
+/-- Standard Witt level W192 (192-bit ring). -/
+def W192 : WittLevel := ⟨192⟩
+/-- Standard Witt level W224 (224-bit ring). -/
+def W224 : WittLevel := ⟨224⟩
+/-- Standard Witt level W256 (256-bit ring). -/
+def W256 : WittLevel := ⟨256⟩
+/-- Standard Witt level W384 (384-bit ring). -/
+def W384 : WittLevel := ⟨384⟩
+/-- Standard Witt level W448 (448-bit ring). -/
+def W448 : WittLevel := ⟨448⟩
+/-- Standard Witt level W512 (512-bit ring). -/
+def W512 : WittLevel := ⟨512⟩
+/-- Standard Witt level W520 (520-bit ring). -/
+def W520 : WittLevel := ⟨520⟩
+/-- Standard Witt level W528 (528-bit ring). -/
+def W528 : WittLevel := ⟨528⟩
+/-- Standard Witt level W1024 (1024-bit ring). -/
+def W1024 : WittLevel := ⟨1024⟩
+/-- Standard Witt level W2048 (2048-bit ring). -/
+def W2048 : WittLevel := ⟨2048⟩
+/-- Standard Witt level W4096 (4096-bit ring). -/
+def W4096 : WittLevel := ⟨4096⟩
+/-- Standard Witt level W8192 (8192-bit ring). -/
+def W8192 : WittLevel := ⟨8192⟩
+/-- Standard Witt level W12288 (12288-bit ring). -/
+def W12288 : WittLevel := ⟨12288⟩
+/-- Standard Witt level W16384 (16384-bit ring). -/
+def W16384 : WittLevel := ⟨16384⟩
+/-- Standard Witt level W32768 (32768-bit ring). -/
+def W32768 : WittLevel := ⟨32768⟩
 
 /-- Construct an arbitrary Witt level. -/
 def new (n : Nat) : WittLevel := ⟨n⟩

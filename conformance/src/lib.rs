@@ -81,6 +81,21 @@ pub fn run_all(paths: &WorkspacePaths) -> anyhow::Result<ConformanceReport> {
     report.extend(validators::rust::public_api_snapshot::validate(
         &paths.workspace,
     )?);
+    // v0.2.2 Phase A: UorTime infrastructure surface check.
+    report.extend(validators::rust::uor_time_surface::validate(
+        &paths.workspace,
+    )?);
+    // v0.2.2 Phase B: phantom Tag on Grounded surface check.
+    report.extend(validators::rust::phantom_tag::validate(&paths.workspace)?);
+    // v0.2.2 Phase C: Witt tower completeness — one marker struct + ring-op
+    // impls per `schema:WittLevel` individual.
+    report.extend(validators::rust::witt_tower_completeness::validate(
+        &paths.workspace,
+    )?);
+    // v0.2.2 Phase C.4: multiplication resolver surface check.
+    report.extend(validators::rust::multiplication_resolver::validate(
+        &paths.workspace,
+    )?);
 
     // 2. Ontology inventory
     report.extend(validators::ontology::inventory::validate(&paths.artifacts)?);

@@ -174,6 +174,7 @@ fn emit_certificates(f: &mut LeanFile) {
         ("LiftChainCertificate", "Sealed shim for cert:LiftChainCertificate. Exposes the v0.2.1 `targetLevel` accessor."),
         ("InhabitanceCertificate", "Sealed shim for cert:InhabitanceCertificate (v0.2.1)."),
         ("CompletenessCertificate", "Sealed shim for cert:CompletenessCertificate."),
+        ("MultiplicationCertificate", "Sealed shim for cert:MultiplicationCertificate (v0.2.2 Phase C.4)."),
     ];
     for (name, doc) in &certs {
         f.doc_comment(doc);
@@ -385,7 +386,16 @@ pub fn emit_certify_instances(f: &mut LeanFile, ontology: &Ontology) {
             "_"
         };
         f.line(&format!("  certify _ {param_name} := {default_body}"));
-        f.line(&format!("  certifyAt _ {param_name} lvl := {at_body}"));
+        // Use `_lvl` when the resolver's at_body is a constant (no lvl
+        // reference) so Lean's unused-variable lint is satisfied.
+        let lvl_param = if at_body.contains("lvl") {
+            "lvl"
+        } else {
+            "_lvl"
+        };
+        f.line(&format!(
+            "  certifyAt _ {param_name} {lvl_param} := {at_body}"
+        ));
         f.blank();
     }
 }

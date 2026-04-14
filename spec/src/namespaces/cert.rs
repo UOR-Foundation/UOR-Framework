@@ -180,6 +180,19 @@ fn classes() -> Vec<Class> {
             ],
             disjoint_with: &[],
         },
+        // v0.2.2 Phase C.4 — MultiplicationCertificate.
+        Class {
+            id: "https://uor.foundation/cert/MultiplicationCertificate",
+            label: "MultiplicationCertificate",
+            comment: "A certificate attesting the cost-optimal Toom-Cook splitting \
+                      factor R for a Datum<L> × Datum<L> multiplication at a given \
+                      call-site context (stack budget, const-eval regime). Carries \
+                      the chosen splitting factor, the recursive sub-multiplication \
+                      count, and the accumulated Landauer cost in nats (priced per \
+                      op:OA_5). Produced by resolver:MultiplicationResolver.",
+            subclass_of: &["https://uor.foundation/cert/Certificate"],
+            disjoint_with: &[],
+        },
     ]
 }
 
@@ -515,6 +528,47 @@ fn properties() -> Vec<Property> {
             required: false,
             domain: Some("https://uor.foundation/cert/InhabitanceCertificate"),
             range: "https://uor.foundation/type/ConstrainedType",
+        },
+        // v0.2.2 Phase C.4 — MultiplicationCertificate evidence properties.
+        Property {
+            id: "https://uor.foundation/cert/splittingFactor",
+            label: "splittingFactor",
+            comment: "The Toom-Cook splitting factor R chosen by the multiplication \
+                      resolver. R = 1 is schoolbook (the const-eval bottom-out); \
+                      R = 2 is Karatsuba; R >= 3 is Toom-k. The resolver picks the \
+                      cost-optimal R subject to the call-site's stack budget and \
+                      const-eval depth constraints.",
+            kind: PropertyKind::Datatype,
+            functional: true,
+            required: false,
+            domain: Some("https://uor.foundation/cert/MultiplicationCertificate"),
+            range: XSD_POSITIVE_INTEGER,
+        },
+        Property {
+            id: "https://uor.foundation/cert/subMultiplicationCount",
+            label: "subMultiplicationCount",
+            comment: "The number of recursive sub-multiplications the chosen \
+                      splitting factor induces for one Datum<L> × Datum<L> \
+                      multiplication at this call site. For splitting factor R, \
+                      the count is (2R - 1) for R > 1, and 1 for R = 1.",
+            kind: PropertyKind::Datatype,
+            functional: true,
+            required: false,
+            domain: Some("https://uor.foundation/cert/MultiplicationCertificate"),
+            range: XSD_NON_NEGATIVE_INTEGER,
+        },
+        Property {
+            id: "https://uor.foundation/cert/landauerCostNats",
+            label: "landauerCostNats",
+            comment: "The accumulated Landauer cost of the certified multiplication \
+                      in nats, priced per op:OA_5 (each irreversible bit erasure \
+                      costs ln 2 nats in the Archimedean completion). Unit: \
+                      observable:Nats. The value is an xsd:decimal.",
+            kind: PropertyKind::Datatype,
+            functional: true,
+            required: false,
+            domain: Some("https://uor.foundation/cert/MultiplicationCertificate"),
+            range: XSD_DECIMAL,
         },
     ]
 }

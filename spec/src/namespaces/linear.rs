@@ -176,5 +176,22 @@ fn properties() -> Vec<Property> {
             domain: Some("https://uor.foundation/linear/LeaseAllocation"),
             range: XSD_POSITIVE_INTEGER,
         },
+        // v0.2.2 Phase C.4 — stack budget bytes.
+        Property {
+            id: "https://uor.foundation/linear/stackBudgetBytes",
+            label: "stackBudgetBytes",
+            comment: "The stack budget available at the call site in bytes. \
+                      On embedded targets this is compile-time-known; on std \
+                      targets it is computed from the thread-local stack frame. \
+                      Consumed by the MultiplicationResolver to bound the \
+                      admissible Toom-Cook splitting factor R: deeper recursion \
+                      requires more stack, so R is capped where stack would \
+                      overflow.",
+            kind: PropertyKind::Datatype,
+            functional: true,
+            required: false,
+            domain: Some("https://uor.foundation/linear/LinearBudget"),
+            range: XSD_NON_NEGATIVE_INTEGER,
+        },
     ]
 }

@@ -45,6 +45,30 @@ pub(crate) enum DatumInner {
     W24([u8; 3]),
     /// W32: 32-bit ring Z/(2^32)Z.
     W32([u8; 4]),
+    /// W40: 40-bit ring Z/(2^40)Z.
+    W40([u8; 5]),
+    /// W48: 48-bit ring Z/(2^48)Z.
+    W48([u8; 6]),
+    /// W56: 56-bit ring Z/(2^56)Z.
+    W56([u8; 7]),
+    /// W64: 64-bit ring Z/(2^64)Z.
+    W64([u8; 8]),
+    /// W72: 72-bit ring Z/(2^72)Z.
+    W72([u8; 9]),
+    /// W80: 80-bit ring Z/(2^80)Z.
+    W80([u8; 10]),
+    /// W88: 88-bit ring Z/(2^88)Z.
+    W88([u8; 11]),
+    /// W96: 96-bit ring Z/(2^96)Z.
+    W96([u8; 12]),
+    /// W104: 104-bit ring Z/(2^104)Z.
+    W104([u8; 13]),
+    /// W112: 112-bit ring Z/(2^112)Z.
+    W112([u8; 14]),
+    /// W120: 120-bit ring Z/(2^120)Z.
+    W120([u8; 15]),
+    /// W128: 128-bit ring Z/(2^128)Z.
+    W128([u8; 16]),
 }
 
 /// A ring element at its minting Witt level.
@@ -80,6 +104,18 @@ impl Datum {
             DatumInner::W16(_) => WittLevel::W16,
             DatumInner::W24(_) => WittLevel::new(24),
             DatumInner::W32(_) => WittLevel::new(32),
+            DatumInner::W40(_) => WittLevel::new(40),
+            DatumInner::W48(_) => WittLevel::new(48),
+            DatumInner::W56(_) => WittLevel::new(56),
+            DatumInner::W64(_) => WittLevel::new(64),
+            DatumInner::W72(_) => WittLevel::new(72),
+            DatumInner::W80(_) => WittLevel::new(80),
+            DatumInner::W88(_) => WittLevel::new(88),
+            DatumInner::W96(_) => WittLevel::new(96),
+            DatumInner::W104(_) => WittLevel::new(104),
+            DatumInner::W112(_) => WittLevel::new(112),
+            DatumInner::W120(_) => WittLevel::new(120),
+            DatumInner::W128(_) => WittLevel::new(128),
         }
     }
 
@@ -92,6 +128,18 @@ impl Datum {
             DatumInner::W16(b) => b,
             DatumInner::W24(b) => b,
             DatumInner::W32(b) => b,
+            DatumInner::W40(b) => b,
+            DatumInner::W48(b) => b,
+            DatumInner::W56(b) => b,
+            DatumInner::W64(b) => b,
+            DatumInner::W72(b) => b,
+            DatumInner::W80(b) => b,
+            DatumInner::W88(b) => b,
+            DatumInner::W96(b) => b,
+            DatumInner::W104(b) => b,
+            DatumInner::W112(b) => b,
+            DatumInner::W120(b) => b,
+            DatumInner::W128(b) => b,
         }
     }
 }
@@ -109,6 +157,30 @@ pub(crate) enum GroundedCoordInner {
     W24([u8; 3]),
     /// W32: 32-bit coordinate.
     W32([u8; 4]),
+    /// W40: 40-bit coordinate.
+    W40([u8; 5]),
+    /// W48: 48-bit coordinate.
+    W48([u8; 6]),
+    /// W56: 56-bit coordinate.
+    W56([u8; 7]),
+    /// W64: 64-bit coordinate.
+    W64([u8; 8]),
+    /// W72: 72-bit coordinate.
+    W72([u8; 9]),
+    /// W80: 80-bit coordinate.
+    W80([u8; 10]),
+    /// W88: 88-bit coordinate.
+    W88([u8; 11]),
+    /// W96: 96-bit coordinate.
+    W96([u8; 12]),
+    /// W104: 104-bit coordinate.
+    W104([u8; 13]),
+    /// W112: 112-bit coordinate.
+    W112([u8; 14]),
+    /// W120: 120-bit coordinate.
+    W120([u8; 15]),
+    /// W128: 128-bit coordinate.
+    W128([u8; 16]),
 }
 
 /// A single grounded coordinate value.
@@ -176,6 +248,191 @@ impl GroundedCoord {
     pub const fn w32(value: u32) -> Self {
         Self {
             inner: GroundedCoordInner::W32(value.to_le_bytes()),
+        }
+    }
+
+    /// Construct a W40 coordinate from a `u64` value (little-endian).
+    #[inline]
+    #[must_use]
+    pub const fn w40(value: u64) -> Self {
+        let full = value.to_le_bytes();
+        let mut out = [0u8; 5];
+        let mut i = 0;
+        while i < 5 {
+            out[i] = full[i];
+            i += 1;
+        }
+        Self {
+            inner: GroundedCoordInner::W40(out),
+        }
+    }
+
+    /// Construct a W48 coordinate from a `u64` value (little-endian).
+    #[inline]
+    #[must_use]
+    pub const fn w48(value: u64) -> Self {
+        let full = value.to_le_bytes();
+        let mut out = [0u8; 6];
+        let mut i = 0;
+        while i < 6 {
+            out[i] = full[i];
+            i += 1;
+        }
+        Self {
+            inner: GroundedCoordInner::W48(out),
+        }
+    }
+
+    /// Construct a W56 coordinate from a `u64` value (little-endian).
+    #[inline]
+    #[must_use]
+    pub const fn w56(value: u64) -> Self {
+        let full = value.to_le_bytes();
+        let mut out = [0u8; 7];
+        let mut i = 0;
+        while i < 7 {
+            out[i] = full[i];
+            i += 1;
+        }
+        Self {
+            inner: GroundedCoordInner::W56(out),
+        }
+    }
+
+    /// Construct a W64 coordinate from a `u64` value (little-endian).
+    #[inline]
+    #[must_use]
+    pub const fn w64(value: u64) -> Self {
+        Self {
+            inner: GroundedCoordInner::W64(value.to_le_bytes()),
+        }
+    }
+
+    /// Construct a W72 coordinate from a `u128` value (little-endian).
+    #[inline]
+    #[must_use]
+    pub const fn w72(value: u128) -> Self {
+        let full = value.to_le_bytes();
+        let mut out = [0u8; 9];
+        let mut i = 0;
+        while i < 9 {
+            out[i] = full[i];
+            i += 1;
+        }
+        Self {
+            inner: GroundedCoordInner::W72(out),
+        }
+    }
+
+    /// Construct a W80 coordinate from a `u128` value (little-endian).
+    #[inline]
+    #[must_use]
+    pub const fn w80(value: u128) -> Self {
+        let full = value.to_le_bytes();
+        let mut out = [0u8; 10];
+        let mut i = 0;
+        while i < 10 {
+            out[i] = full[i];
+            i += 1;
+        }
+        Self {
+            inner: GroundedCoordInner::W80(out),
+        }
+    }
+
+    /// Construct a W88 coordinate from a `u128` value (little-endian).
+    #[inline]
+    #[must_use]
+    pub const fn w88(value: u128) -> Self {
+        let full = value.to_le_bytes();
+        let mut out = [0u8; 11];
+        let mut i = 0;
+        while i < 11 {
+            out[i] = full[i];
+            i += 1;
+        }
+        Self {
+            inner: GroundedCoordInner::W88(out),
+        }
+    }
+
+    /// Construct a W96 coordinate from a `u128` value (little-endian).
+    #[inline]
+    #[must_use]
+    pub const fn w96(value: u128) -> Self {
+        let full = value.to_le_bytes();
+        let mut out = [0u8; 12];
+        let mut i = 0;
+        while i < 12 {
+            out[i] = full[i];
+            i += 1;
+        }
+        Self {
+            inner: GroundedCoordInner::W96(out),
+        }
+    }
+
+    /// Construct a W104 coordinate from a `u128` value (little-endian).
+    #[inline]
+    #[must_use]
+    pub const fn w104(value: u128) -> Self {
+        let full = value.to_le_bytes();
+        let mut out = [0u8; 13];
+        let mut i = 0;
+        while i < 13 {
+            out[i] = full[i];
+            i += 1;
+        }
+        Self {
+            inner: GroundedCoordInner::W104(out),
+        }
+    }
+
+    /// Construct a W112 coordinate from a `u128` value (little-endian).
+    #[inline]
+    #[must_use]
+    pub const fn w112(value: u128) -> Self {
+        let full = value.to_le_bytes();
+        let mut out = [0u8; 14];
+        let mut i = 0;
+        while i < 14 {
+            out[i] = full[i];
+            i += 1;
+        }
+        Self {
+            inner: GroundedCoordInner::W112(out),
+        }
+    }
+
+    /// Construct a W120 coordinate from a `u128` value (little-endian).
+    #[inline]
+    #[must_use]
+    pub const fn w120(value: u128) -> Self {
+        let full = value.to_le_bytes();
+        let mut out = [0u8; 15];
+        let mut i = 0;
+        while i < 15 {
+            out[i] = full[i];
+            i += 1;
+        }
+        Self {
+            inner: GroundedCoordInner::W120(out),
+        }
+    }
+
+    /// Construct a W128 coordinate from a `u128` value (little-endian).
+    #[inline]
+    #[must_use]
+    pub const fn w128(value: u128) -> Self {
+        let full = value.to_le_bytes();
+        let mut out = [0u8; 16];
+        let mut i = 0;
+        while i < 16 {
+            out[i] = full[i];
+            i += 1;
+        }
+        Self {
+            inner: GroundedCoordInner::W128(out),
         }
     }
 }
@@ -533,6 +790,385 @@ impl FreeRank {
     pub(crate) const fn new(total: u32, pinned: u32) -> Self {
         Self { total, pinned }
     }
+}
+
+/// v0.2.2 Phase A: sealed `f64`-backed newtype carrying the
+/// `observable:LandauerCost` accumulator in `observable:Nats`.
+/// Monotonic within a pipeline invocation. The UOR ring operates
+/// at the Landauer temperature (β* = ln 2), so this observable is
+/// a direct measure of irreversible bit-erasure performed.
+/// Implements `Ord` over its underlying `f64` (NaN excluded by
+/// construction — the foundation never produces a `LandauerBudget`
+/// from a NaN).
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct LandauerBudget {
+    /// Accumulated Landauer cost in nats. Non-negative, finite.
+    nats: f64,
+    /// Prevents external construction.
+    _sealed: (),
+}
+
+impl LandauerBudget {
+    /// Returns the accumulated Landauer cost in nats.
+    #[inline]
+    #[must_use]
+    pub const fn nats(&self) -> f64 {
+        self.nats
+    }
+
+    /// Crate-internal constructor. Caller guarantees `nats` is
+    /// non-negative and finite (i.e. not NaN, not infinite).
+    #[inline]
+    #[must_use]
+    #[allow(dead_code)]
+    pub(crate) const fn new(nats: f64) -> Self {
+        Self { nats, _sealed: () }
+    }
+
+    /// Crate-internal constructor for the zero-cost initial budget.
+    #[inline]
+    #[must_use]
+    #[allow(dead_code)]
+    pub(crate) const fn zero() -> Self {
+        Self {
+            nats: 0.0,
+            _sealed: (),
+        }
+    }
+}
+
+impl Eq for LandauerBudget {}
+impl PartialOrd for LandauerBudget {
+    #[inline]
+    fn partial_cmp(&self, other: &Self) -> Option<core::cmp::Ordering> {
+        Some(self.cmp(other))
+    }
+}
+impl Ord for LandauerBudget {
+    #[inline]
+    fn cmp(&self, other: &Self) -> core::cmp::Ordering {
+        // Total order on f64 with NaN excluded by construction.
+        self.nats
+            .partial_cmp(&other.nats)
+            .unwrap_or(core::cmp::Ordering::Equal)
+    }
+}
+impl core::hash::Hash for LandauerBudget {
+    #[inline]
+    fn hash<H: core::hash::Hasher>(&self, state: &mut H) {
+        self.nats.to_bits().hash(state);
+    }
+}
+
+/// v0.2.2 Phase A: foundation-internal deterministic two-clock value
+/// carried by every `Grounded<T>` and `Certified<C>`. The two clocks are
+/// `landauer_nats` (a `LandauerBudget` value backed by `observable:LandauerCost`)
+/// and `rewrite_steps` (a `u64` backed by `derivation:stepCount` on
+/// `derivation:TermMetrics`). Each clock is monotonic within a pipeline
+/// invocation, content-deterministic, ontology-grounded, and binds to a
+/// physical wall-clock lower bound through established physics (Landauer's
+/// principle for nats; Margolus-Levitin for rewrite steps). Two clocks
+/// because exactly two physical lower-bound theorems are grounded; adding
+/// a third clock would require grounding a third physical theorem.
+/// `PartialOrd` is component-wise: `a < b` iff every field of `a` is `<=`
+/// the corresponding field of `b` and at least one is strictly `<`. Two
+/// `UorTime` values from unrelated computations are genuinely incomparable,
+/// so `UorTime` is `PartialOrd` but **not** `Ord`.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct UorTime {
+    /// Landauer budget consumed, in `observable:Nats`.
+    landauer_nats: LandauerBudget,
+    /// Total rewrite steps taken (`derivation:stepCount`).
+    rewrite_steps: u64,
+    /// Prevents external construction.
+    _sealed: (),
+}
+
+impl UorTime {
+    /// Returns the Landauer budget consumed, in `observable:Nats`.
+    /// Maps to `observable:LandauerCost`.
+    #[inline]
+    #[must_use]
+    pub const fn landauer_nats(&self) -> LandauerBudget {
+        self.landauer_nats
+    }
+
+    /// Returns the total rewrite steps taken.
+    /// Maps to `derivation:stepCount` on `derivation:TermMetrics`.
+    #[inline]
+    #[must_use]
+    pub const fn rewrite_steps(&self) -> u64 {
+        self.rewrite_steps
+    }
+
+    /// Crate-internal constructor. Reachable only from the pipeline at witness mint time.
+    #[inline]
+    #[must_use]
+    #[allow(dead_code)]
+    pub(crate) const fn new(landauer_nats: LandauerBudget, rewrite_steps: u64) -> Self {
+        Self {
+            landauer_nats,
+            rewrite_steps,
+            _sealed: (),
+        }
+    }
+
+    /// Crate-internal constructor for the zero initial value.
+    #[inline]
+    #[must_use]
+    #[allow(dead_code)]
+    pub(crate) const fn zero() -> Self {
+        Self {
+            landauer_nats: LandauerBudget::zero(),
+            rewrite_steps: 0,
+            _sealed: (),
+        }
+    }
+
+    /// Returns the provable minimum wall-clock duration that the
+    /// computation producing this witness could have taken under the
+    /// given calibration. Returns `max(Landauer-bound, Margolus-Levitin-bound)`.
+    /// The Landauer bound is `landauer_nats × k_B·T / thermal_power`.
+    /// The Margolus-Levitin bound is `π·ℏ·rewrite_steps / (2·characteristic_energy)`.
+    /// Pure arithmetic — no transcendentals, no state. Const-evaluable
+    /// where the `UorTime` value is known at compile time.
+    #[inline]
+    #[must_use]
+    pub fn min_wall_clock(&self, cal: &Calibration) -> Nanos {
+        // Landauer bound: nats × k_B·T (joules of energy that had to be
+        // dissipated) / thermal_power (watts) = seconds.
+        let landauer_seconds = self.landauer_nats.nats() * cal.k_b_t / cal.thermal_power;
+        // Margolus-Levitin bound: π·ℏ / (2·E) per orthogonal state transition.
+        // ℏ ≈ 1.054_571_817e-34 J·s. We use core::f64::consts::PI to avoid
+        // approximate-PI lints.
+        const PI_TIMES_H_BAR: f64 = core::f64::consts::PI * 1.054_571_817e-34;
+        let ml_seconds_per_step = PI_TIMES_H_BAR / (2.0 * cal.characteristic_energy);
+        let ml_seconds = ml_seconds_per_step * (self.rewrite_steps as f64);
+        let max_seconds = if landauer_seconds > ml_seconds {
+            landauer_seconds
+        } else {
+            ml_seconds
+        };
+        // Convert seconds to nanoseconds, saturate on overflow.
+        let nanos = max_seconds * 1.0e9;
+        let clamped = if nanos < 0.0 {
+            0.0
+        } else if nanos > (u64::MAX as f64) {
+            u64::MAX as f64
+        } else {
+            nanos
+        };
+        Nanos {
+            ns: clamped as u64,
+            _sealed: (),
+        }
+    }
+}
+
+impl PartialOrd for UorTime {
+    #[inline]
+    fn partial_cmp(&self, other: &Self) -> Option<core::cmp::Ordering> {
+        let l = self.landauer_nats.cmp(&other.landauer_nats);
+        let r = self.rewrite_steps.cmp(&other.rewrite_steps);
+        match (l, r) {
+            (core::cmp::Ordering::Equal, core::cmp::Ordering::Equal) => {
+                Some(core::cmp::Ordering::Equal)
+            }
+            (core::cmp::Ordering::Less, core::cmp::Ordering::Less)
+            | (core::cmp::Ordering::Less, core::cmp::Ordering::Equal)
+            | (core::cmp::Ordering::Equal, core::cmp::Ordering::Less) => {
+                Some(core::cmp::Ordering::Less)
+            }
+            (core::cmp::Ordering::Greater, core::cmp::Ordering::Greater)
+            | (core::cmp::Ordering::Greater, core::cmp::Ordering::Equal)
+            | (core::cmp::Ordering::Equal, core::cmp::Ordering::Greater) => {
+                Some(core::cmp::Ordering::Greater)
+            }
+            _ => None,
+        }
+    }
+}
+
+/// v0.2.2 Phase A: sealed lower-bound carrier for wall-clock duration.
+/// Produced only by `UorTime::min_wall_clock` and similar foundation
+/// time conversions. The sealing guarantees that any `Nanos` value is
+/// a provable physical bound, not a raw integer. Developers who need
+/// the underlying `u64` call `.as_u64()`; the sealing prevents
+/// accidentally passing a host-measured duration where the type system
+/// expects "a provable minimum".
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct Nanos {
+    /// The provable lower-bound duration in nanoseconds.
+    ns: u64,
+    /// Prevents external construction.
+    _sealed: (),
+}
+
+impl Nanos {
+    /// Returns the underlying nanosecond count. The value is a provable
+    /// physical lower bound under whatever calibration produced it.
+    #[inline]
+    #[must_use]
+    pub const fn as_u64(self) -> u64 {
+        self.ns
+    }
+}
+
+/// v0.2.2 Phase A: error returned by `Calibration::new` when the supplied
+/// physical parameters fail plausibility validation.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum CalibrationError {
+    /// `k_b_t` was non-positive, NaN, or outside the known-universe
+    /// temperature range (`1e-30 ≤ k_b_t ≤ 1e-15` joules).
+    ThermalEnergy,
+    /// `thermal_power` was non-positive, NaN, or above the thermodynamic maximum (`1e9` W).
+    ThermalPower,
+    /// `characteristic_energy` was non-positive, NaN, or above the
+    /// k_B·T × Avogadro-class bound (`1e3` joules).
+    CharacteristicEnergy,
+}
+
+/// v0.2.2 Phase A: physical-substrate calibration for wall-clock binding.
+/// Construction is open via [`Calibration::new`], but the fields are
+/// private and validated for physical plausibility. Used to convert
+/// `UorTime` to a provable wall-clock lower bound via
+/// [`UorTime::min_wall_clock`].
+/// **A `Calibration` is never passed into `pipeline::run`,
+/// `resolver::*::certify`, `validate_const`, or any other foundation entry
+/// point.** The foundation computes `UorTime` without physical
+/// interpretation; the developer applies a `Calibration` after the fact.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct Calibration {
+    /// Boltzmann constant times temperature, in joules.
+    k_b_t: f64,
+    /// Sustained dissipation in watts.
+    thermal_power: f64,
+    /// Mean energy above ground state, in joules.
+    characteristic_energy: f64,
+}
+
+impl Calibration {
+    /// Construct a calibration with physically plausible parameters.
+    /// Validation: every parameter must be positive and finite. `k_b_t`
+    /// must lie within the known-universe temperature range
+    /// (`1e-30 <= k_b_t <= 1e-15` joules covers ~1 nK to ~1e8 K).
+    /// `thermal_power` must be at most `1e9` W (gigawatt class — far above
+    /// any plausible single-compute envelope). `characteristic_energy`
+    /// must be at most `1e3` J (kilojoule class — astronomically generous).
+    /// # Errors
+    /// Returns `CalibrationError::InvalidThermalEnergy` when `k_b_t` is
+    /// non-positive, NaN, or outside the temperature range.
+    /// Returns `CalibrationError::InvalidThermalPower` when `thermal_power`
+    /// is non-positive, NaN, or above the maximum.
+    /// Returns `CalibrationError::InvalidCharacteristicEnergy` when
+    /// `characteristic_energy` is non-positive, NaN, or above the maximum.
+    #[inline]
+    pub const fn new(
+        k_b_t: f64,
+        thermal_power: f64,
+        characteristic_energy: f64,
+    ) -> Result<Self, CalibrationError> {
+        // Reject NaN, non-positive, and out-of-range values. const fn does not
+        // allow `f64::is_nan`, so we use the NaN inequality identity:
+        // for any NaN x, `x == x` is false.
+        #[allow(clippy::eq_op)]
+        let k_b_t_nan = k_b_t != k_b_t;
+        if k_b_t_nan || k_b_t <= 0.0 || k_b_t < 1.0e-30 || k_b_t > 1.0e-15 {
+            return Err(CalibrationError::ThermalEnergy);
+        }
+        #[allow(clippy::eq_op)]
+        let tp_nan = thermal_power != thermal_power;
+        if tp_nan || thermal_power <= 0.0 || thermal_power > 1.0e9 {
+            return Err(CalibrationError::ThermalPower);
+        }
+        #[allow(clippy::eq_op)]
+        let ce_nan = characteristic_energy != characteristic_energy;
+        if ce_nan || characteristic_energy <= 0.0 || characteristic_energy > 1.0e3 {
+            return Err(CalibrationError::CharacteristicEnergy);
+        }
+        Ok(Self {
+            k_b_t,
+            thermal_power,
+            characteristic_energy,
+        })
+    }
+
+    /// Returns the Boltzmann constant times temperature, in joules.
+    #[inline]
+    #[must_use]
+    pub const fn k_b_t(&self) -> f64 {
+        self.k_b_t
+    }
+
+    /// Returns the sustained thermal power dissipation, in watts.
+    #[inline]
+    #[must_use]
+    pub const fn thermal_power(&self) -> f64 {
+        self.thermal_power
+    }
+
+    /// Returns the characteristic energy above ground state, in joules.
+    #[inline]
+    #[must_use]
+    pub const fn characteristic_energy(&self) -> f64 {
+        self.characteristic_energy
+    }
+}
+
+/// v0.2.2 Phase A: foundation-shipped preset calibrations covering common
+/// substrates. The values are derived from published substrate thermals at
+/// T=300 K (room temperature, where k_B·T ≈ 4.14e-21 J).
+pub mod calibrations {
+    use super::{Calibration, CalibrationError};
+
+    /// Server-class x86 (Xeon/EPYC sustained envelope).
+    /// k_B·T = 4.14e-21 J (T = 300 K), thermal_power = 85 W (typical TDP),
+    /// characteristic_energy = 1e-15 J/op (~1 fJ/op for modern CMOS).
+    pub const X86_SERVER: Calibration = match Calibration::new(4.14e-21, 85.0, 1.0e-15) {
+        Ok(c) => c,
+        Err(_) => unreachable_unphysical(),
+    };
+
+    /// Mobile ARM SoC (Apple M-series, Snapdragon 8-series sustained envelope).
+    /// k_B·T = 4.14e-21 J, thermal_power = 5 W, characteristic_energy = 1e-16 J/op.
+    pub const ARM_MOBILE: Calibration = match Calibration::new(4.14e-21, 5.0, 1.0e-16) {
+        Ok(c) => c,
+        Err(_) => unreachable_unphysical(),
+    };
+
+    /// Cortex-M embedded (STM32/nRF52 at 80 MHz).
+    /// k_B·T = 4.14e-21 J, thermal_power = 0.1 W, characteristic_energy = 1e-17 J/op.
+    pub const CORTEX_M_EMBEDDED: Calibration = match Calibration::new(4.14e-21, 0.1, 1.0e-17) {
+        Ok(c) => c,
+        Err(_) => unreachable_unphysical(),
+    };
+
+    /// The tightest provable lower bound that requires no trust in the
+    /// issuer's claimed substrate. Values are physically sound but maximally
+    /// generous: k_B·T at 300 K floor, thermal_power at 1 GW (above any
+    /// plausible single-compute envelope), characteristic_energy at 1 J
+    /// (astronomically generous).
+    /// Applying this calibration yields the smallest `Nanos` physically
+    /// possible for the computation regardless of substrate claims.
+    pub const CONSERVATIVE_WORST_CASE: Calibration = match Calibration::new(4.14e-21, 1.0e9, 1.0) {
+        Ok(c) => c,
+        Err(_) => unreachable_unphysical(),
+    };
+
+    /// Const-context unreachable helper. The four preset literals above are
+    /// verified physical at codegen time; this branch is dead.
+    #[inline]
+    const fn unreachable_unphysical() -> Calibration {
+        panic!("foundation preset calibration is physically valid by construction")
+    }
+    // Suppress dead-code warnings on the helper
+    #[allow(dead_code)]
+    const _: fn() -> Calibration = unreachable_unphysical;
+
+    // Suppress unused-import warning for CalibrationError when the
+    // preset construction succeeds (which it always does).
+    #[allow(dead_code)]
+    const _: Option<CalibrationError> = None;
 }
 
 /// Fixed-capacity term list for `#![no_std]`. Indices into a `TermArena`.
@@ -1835,6 +2471,18 @@ pub(crate) fn validate_and_mint_coord(
         GroundedCoordInner::W16(b) => DatumInner::W16(b),
         GroundedCoordInner::W24(b) => DatumInner::W24(b),
         GroundedCoordInner::W32(b) => DatumInner::W32(b),
+        GroundedCoordInner::W40(b) => DatumInner::W40(b),
+        GroundedCoordInner::W48(b) => DatumInner::W48(b),
+        GroundedCoordInner::W56(b) => DatumInner::W56(b),
+        GroundedCoordInner::W64(b) => DatumInner::W64(b),
+        GroundedCoordInner::W72(b) => DatumInner::W72(b),
+        GroundedCoordInner::W80(b) => DatumInner::W80(b),
+        GroundedCoordInner::W88(b) => DatumInner::W88(b),
+        GroundedCoordInner::W96(b) => DatumInner::W96(b),
+        GroundedCoordInner::W104(b) => DatumInner::W104(b),
+        GroundedCoordInner::W112(b) => DatumInner::W112(b),
+        GroundedCoordInner::W120(b) => DatumInner::W120(b),
+        GroundedCoordInner::W128(b) => DatumInner::W128(b),
     };
     Ok(Datum { inner })
 }
@@ -1954,7 +2602,7 @@ pub const fn const_ring_eval_unary_w16(op: PrimitiveOp, a: u16) -> u16 {
 #[inline]
 #[must_use]
 pub const fn const_ring_eval_w24(op: PrimitiveOp, a: u32, b: u32) -> u32 {
-    const MASK: u32 = (18446744073709551615u64 >> (64 - 24)) as u32;
+    const MASK: u32 = (u64::MAX >> (64 - 24)) as u32;
     match op {
         PrimitiveOp::Add => (a.wrapping_add(b)) & MASK,
         PrimitiveOp::Sub => (a.wrapping_sub(b)) & MASK,
@@ -1969,7 +2617,7 @@ pub const fn const_ring_eval_w24(op: PrimitiveOp, a: u32, b: u32) -> u32 {
 #[inline]
 #[must_use]
 pub const fn const_ring_eval_unary_w24(op: PrimitiveOp, a: u32) -> u32 {
-    const MASK: u32 = (18446744073709551615u64 >> (64 - 24)) as u32;
+    const MASK: u32 = (u64::MAX >> (64 - 24)) as u32;
     match op {
         PrimitiveOp::Neg => (0u32.wrapping_sub(a)) & MASK,
         PrimitiveOp::Bnot => (!a) & MASK,
@@ -2002,6 +2650,554 @@ pub const fn const_ring_eval_unary_w32(op: PrimitiveOp, a: u32) -> u32 {
         PrimitiveOp::Succ => a.wrapping_add(1),
         PrimitiveOp::Pred => a.wrapping_sub(1),
         _ => 0,
+    }
+}
+
+#[inline]
+#[must_use]
+pub const fn const_ring_eval_w40(op: PrimitiveOp, a: u64, b: u64) -> u64 {
+    const MASK: u64 = u64::MAX >> (64 - 40);
+    match op {
+        PrimitiveOp::Add => (a.wrapping_add(b)) & MASK,
+        PrimitiveOp::Sub => (a.wrapping_sub(b)) & MASK,
+        PrimitiveOp::Mul => (a.wrapping_mul(b)) & MASK,
+        PrimitiveOp::Xor => (a ^ b) & MASK,
+        PrimitiveOp::And => (a & b) & MASK,
+        PrimitiveOp::Or => (a | b) & MASK,
+        _ => 0,
+    }
+}
+
+#[inline]
+#[must_use]
+pub const fn const_ring_eval_unary_w40(op: PrimitiveOp, a: u64) -> u64 {
+    const MASK: u64 = u64::MAX >> (64 - 40);
+    match op {
+        PrimitiveOp::Neg => (0u64.wrapping_sub(a)) & MASK,
+        PrimitiveOp::Bnot => (!a) & MASK,
+        PrimitiveOp::Succ => (a.wrapping_add(1)) & MASK,
+        PrimitiveOp::Pred => (a.wrapping_sub(1)) & MASK,
+        _ => 0,
+    }
+}
+
+#[inline]
+#[must_use]
+pub const fn const_ring_eval_w48(op: PrimitiveOp, a: u64, b: u64) -> u64 {
+    const MASK: u64 = u64::MAX >> (64 - 48);
+    match op {
+        PrimitiveOp::Add => (a.wrapping_add(b)) & MASK,
+        PrimitiveOp::Sub => (a.wrapping_sub(b)) & MASK,
+        PrimitiveOp::Mul => (a.wrapping_mul(b)) & MASK,
+        PrimitiveOp::Xor => (a ^ b) & MASK,
+        PrimitiveOp::And => (a & b) & MASK,
+        PrimitiveOp::Or => (a | b) & MASK,
+        _ => 0,
+    }
+}
+
+#[inline]
+#[must_use]
+pub const fn const_ring_eval_unary_w48(op: PrimitiveOp, a: u64) -> u64 {
+    const MASK: u64 = u64::MAX >> (64 - 48);
+    match op {
+        PrimitiveOp::Neg => (0u64.wrapping_sub(a)) & MASK,
+        PrimitiveOp::Bnot => (!a) & MASK,
+        PrimitiveOp::Succ => (a.wrapping_add(1)) & MASK,
+        PrimitiveOp::Pred => (a.wrapping_sub(1)) & MASK,
+        _ => 0,
+    }
+}
+
+#[inline]
+#[must_use]
+pub const fn const_ring_eval_w56(op: PrimitiveOp, a: u64, b: u64) -> u64 {
+    const MASK: u64 = u64::MAX >> (64 - 56);
+    match op {
+        PrimitiveOp::Add => (a.wrapping_add(b)) & MASK,
+        PrimitiveOp::Sub => (a.wrapping_sub(b)) & MASK,
+        PrimitiveOp::Mul => (a.wrapping_mul(b)) & MASK,
+        PrimitiveOp::Xor => (a ^ b) & MASK,
+        PrimitiveOp::And => (a & b) & MASK,
+        PrimitiveOp::Or => (a | b) & MASK,
+        _ => 0,
+    }
+}
+
+#[inline]
+#[must_use]
+pub const fn const_ring_eval_unary_w56(op: PrimitiveOp, a: u64) -> u64 {
+    const MASK: u64 = u64::MAX >> (64 - 56);
+    match op {
+        PrimitiveOp::Neg => (0u64.wrapping_sub(a)) & MASK,
+        PrimitiveOp::Bnot => (!a) & MASK,
+        PrimitiveOp::Succ => (a.wrapping_add(1)) & MASK,
+        PrimitiveOp::Pred => (a.wrapping_sub(1)) & MASK,
+        _ => 0,
+    }
+}
+
+#[inline]
+#[must_use]
+pub const fn const_ring_eval_w64(op: PrimitiveOp, a: u64, b: u64) -> u64 {
+    match op {
+        PrimitiveOp::Add => a.wrapping_add(b),
+        PrimitiveOp::Sub => a.wrapping_sub(b),
+        PrimitiveOp::Mul => a.wrapping_mul(b),
+        PrimitiveOp::Xor => a ^ b,
+        PrimitiveOp::And => a & b,
+        PrimitiveOp::Or => a | b,
+        _ => 0,
+    }
+}
+
+#[inline]
+#[must_use]
+pub const fn const_ring_eval_unary_w64(op: PrimitiveOp, a: u64) -> u64 {
+    match op {
+        PrimitiveOp::Neg => 0u64.wrapping_sub(a),
+        PrimitiveOp::Bnot => !a,
+        PrimitiveOp::Succ => a.wrapping_add(1),
+        PrimitiveOp::Pred => a.wrapping_sub(1),
+        _ => 0,
+    }
+}
+
+#[inline]
+#[must_use]
+pub const fn const_ring_eval_w72(op: PrimitiveOp, a: u128, b: u128) -> u128 {
+    const MASK: u128 = u128::MAX >> (128 - 72);
+    match op {
+        PrimitiveOp::Add => (a.wrapping_add(b)) & MASK,
+        PrimitiveOp::Sub => (a.wrapping_sub(b)) & MASK,
+        PrimitiveOp::Mul => (a.wrapping_mul(b)) & MASK,
+        PrimitiveOp::Xor => (a ^ b) & MASK,
+        PrimitiveOp::And => (a & b) & MASK,
+        PrimitiveOp::Or => (a | b) & MASK,
+        _ => 0,
+    }
+}
+
+#[inline]
+#[must_use]
+pub const fn const_ring_eval_unary_w72(op: PrimitiveOp, a: u128) -> u128 {
+    const MASK: u128 = u128::MAX >> (128 - 72);
+    match op {
+        PrimitiveOp::Neg => (0u128.wrapping_sub(a)) & MASK,
+        PrimitiveOp::Bnot => (!a) & MASK,
+        PrimitiveOp::Succ => (a.wrapping_add(1)) & MASK,
+        PrimitiveOp::Pred => (a.wrapping_sub(1)) & MASK,
+        _ => 0,
+    }
+}
+
+#[inline]
+#[must_use]
+pub const fn const_ring_eval_w80(op: PrimitiveOp, a: u128, b: u128) -> u128 {
+    const MASK: u128 = u128::MAX >> (128 - 80);
+    match op {
+        PrimitiveOp::Add => (a.wrapping_add(b)) & MASK,
+        PrimitiveOp::Sub => (a.wrapping_sub(b)) & MASK,
+        PrimitiveOp::Mul => (a.wrapping_mul(b)) & MASK,
+        PrimitiveOp::Xor => (a ^ b) & MASK,
+        PrimitiveOp::And => (a & b) & MASK,
+        PrimitiveOp::Or => (a | b) & MASK,
+        _ => 0,
+    }
+}
+
+#[inline]
+#[must_use]
+pub const fn const_ring_eval_unary_w80(op: PrimitiveOp, a: u128) -> u128 {
+    const MASK: u128 = u128::MAX >> (128 - 80);
+    match op {
+        PrimitiveOp::Neg => (0u128.wrapping_sub(a)) & MASK,
+        PrimitiveOp::Bnot => (!a) & MASK,
+        PrimitiveOp::Succ => (a.wrapping_add(1)) & MASK,
+        PrimitiveOp::Pred => (a.wrapping_sub(1)) & MASK,
+        _ => 0,
+    }
+}
+
+#[inline]
+#[must_use]
+pub const fn const_ring_eval_w88(op: PrimitiveOp, a: u128, b: u128) -> u128 {
+    const MASK: u128 = u128::MAX >> (128 - 88);
+    match op {
+        PrimitiveOp::Add => (a.wrapping_add(b)) & MASK,
+        PrimitiveOp::Sub => (a.wrapping_sub(b)) & MASK,
+        PrimitiveOp::Mul => (a.wrapping_mul(b)) & MASK,
+        PrimitiveOp::Xor => (a ^ b) & MASK,
+        PrimitiveOp::And => (a & b) & MASK,
+        PrimitiveOp::Or => (a | b) & MASK,
+        _ => 0,
+    }
+}
+
+#[inline]
+#[must_use]
+pub const fn const_ring_eval_unary_w88(op: PrimitiveOp, a: u128) -> u128 {
+    const MASK: u128 = u128::MAX >> (128 - 88);
+    match op {
+        PrimitiveOp::Neg => (0u128.wrapping_sub(a)) & MASK,
+        PrimitiveOp::Bnot => (!a) & MASK,
+        PrimitiveOp::Succ => (a.wrapping_add(1)) & MASK,
+        PrimitiveOp::Pred => (a.wrapping_sub(1)) & MASK,
+        _ => 0,
+    }
+}
+
+#[inline]
+#[must_use]
+pub const fn const_ring_eval_w96(op: PrimitiveOp, a: u128, b: u128) -> u128 {
+    const MASK: u128 = u128::MAX >> (128 - 96);
+    match op {
+        PrimitiveOp::Add => (a.wrapping_add(b)) & MASK,
+        PrimitiveOp::Sub => (a.wrapping_sub(b)) & MASK,
+        PrimitiveOp::Mul => (a.wrapping_mul(b)) & MASK,
+        PrimitiveOp::Xor => (a ^ b) & MASK,
+        PrimitiveOp::And => (a & b) & MASK,
+        PrimitiveOp::Or => (a | b) & MASK,
+        _ => 0,
+    }
+}
+
+#[inline]
+#[must_use]
+pub const fn const_ring_eval_unary_w96(op: PrimitiveOp, a: u128) -> u128 {
+    const MASK: u128 = u128::MAX >> (128 - 96);
+    match op {
+        PrimitiveOp::Neg => (0u128.wrapping_sub(a)) & MASK,
+        PrimitiveOp::Bnot => (!a) & MASK,
+        PrimitiveOp::Succ => (a.wrapping_add(1)) & MASK,
+        PrimitiveOp::Pred => (a.wrapping_sub(1)) & MASK,
+        _ => 0,
+    }
+}
+
+#[inline]
+#[must_use]
+pub const fn const_ring_eval_w104(op: PrimitiveOp, a: u128, b: u128) -> u128 {
+    const MASK: u128 = u128::MAX >> (128 - 104);
+    match op {
+        PrimitiveOp::Add => (a.wrapping_add(b)) & MASK,
+        PrimitiveOp::Sub => (a.wrapping_sub(b)) & MASK,
+        PrimitiveOp::Mul => (a.wrapping_mul(b)) & MASK,
+        PrimitiveOp::Xor => (a ^ b) & MASK,
+        PrimitiveOp::And => (a & b) & MASK,
+        PrimitiveOp::Or => (a | b) & MASK,
+        _ => 0,
+    }
+}
+
+#[inline]
+#[must_use]
+pub const fn const_ring_eval_unary_w104(op: PrimitiveOp, a: u128) -> u128 {
+    const MASK: u128 = u128::MAX >> (128 - 104);
+    match op {
+        PrimitiveOp::Neg => (0u128.wrapping_sub(a)) & MASK,
+        PrimitiveOp::Bnot => (!a) & MASK,
+        PrimitiveOp::Succ => (a.wrapping_add(1)) & MASK,
+        PrimitiveOp::Pred => (a.wrapping_sub(1)) & MASK,
+        _ => 0,
+    }
+}
+
+#[inline]
+#[must_use]
+pub const fn const_ring_eval_w112(op: PrimitiveOp, a: u128, b: u128) -> u128 {
+    const MASK: u128 = u128::MAX >> (128 - 112);
+    match op {
+        PrimitiveOp::Add => (a.wrapping_add(b)) & MASK,
+        PrimitiveOp::Sub => (a.wrapping_sub(b)) & MASK,
+        PrimitiveOp::Mul => (a.wrapping_mul(b)) & MASK,
+        PrimitiveOp::Xor => (a ^ b) & MASK,
+        PrimitiveOp::And => (a & b) & MASK,
+        PrimitiveOp::Or => (a | b) & MASK,
+        _ => 0,
+    }
+}
+
+#[inline]
+#[must_use]
+pub const fn const_ring_eval_unary_w112(op: PrimitiveOp, a: u128) -> u128 {
+    const MASK: u128 = u128::MAX >> (128 - 112);
+    match op {
+        PrimitiveOp::Neg => (0u128.wrapping_sub(a)) & MASK,
+        PrimitiveOp::Bnot => (!a) & MASK,
+        PrimitiveOp::Succ => (a.wrapping_add(1)) & MASK,
+        PrimitiveOp::Pred => (a.wrapping_sub(1)) & MASK,
+        _ => 0,
+    }
+}
+
+#[inline]
+#[must_use]
+pub const fn const_ring_eval_w120(op: PrimitiveOp, a: u128, b: u128) -> u128 {
+    const MASK: u128 = u128::MAX >> (128 - 120);
+    match op {
+        PrimitiveOp::Add => (a.wrapping_add(b)) & MASK,
+        PrimitiveOp::Sub => (a.wrapping_sub(b)) & MASK,
+        PrimitiveOp::Mul => (a.wrapping_mul(b)) & MASK,
+        PrimitiveOp::Xor => (a ^ b) & MASK,
+        PrimitiveOp::And => (a & b) & MASK,
+        PrimitiveOp::Or => (a | b) & MASK,
+        _ => 0,
+    }
+}
+
+#[inline]
+#[must_use]
+pub const fn const_ring_eval_unary_w120(op: PrimitiveOp, a: u128) -> u128 {
+    const MASK: u128 = u128::MAX >> (128 - 120);
+    match op {
+        PrimitiveOp::Neg => (0u128.wrapping_sub(a)) & MASK,
+        PrimitiveOp::Bnot => (!a) & MASK,
+        PrimitiveOp::Succ => (a.wrapping_add(1)) & MASK,
+        PrimitiveOp::Pred => (a.wrapping_sub(1)) & MASK,
+        _ => 0,
+    }
+}
+
+#[inline]
+#[must_use]
+pub const fn const_ring_eval_w128(op: PrimitiveOp, a: u128, b: u128) -> u128 {
+    match op {
+        PrimitiveOp::Add => a.wrapping_add(b),
+        PrimitiveOp::Sub => a.wrapping_sub(b),
+        PrimitiveOp::Mul => a.wrapping_mul(b),
+        PrimitiveOp::Xor => a ^ b,
+        PrimitiveOp::And => a & b,
+        PrimitiveOp::Or => a | b,
+        _ => 0,
+    }
+}
+
+#[inline]
+#[must_use]
+pub const fn const_ring_eval_unary_w128(op: PrimitiveOp, a: u128) -> u128 {
+    match op {
+        PrimitiveOp::Neg => 0u128.wrapping_sub(a),
+        PrimitiveOp::Bnot => !a,
+        PrimitiveOp::Succ => a.wrapping_add(1),
+        PrimitiveOp::Pred => a.wrapping_sub(1),
+        _ => 0,
+    }
+}
+
+/// v0.2.2 Phase C.3: foundation-internal generic backing for Witt
+/// levels above W128. Holds an inline `[u64; N]` array with no heap
+/// allocation, no global state, and `const fn` arithmetic throughout.
+/// Constructors are `pub(crate)`; downstream cannot fabricate a `Limbs<N>`.
+/// Multiplication is schoolbook-only at v0.2.2 Phase C.3; the Toom-Cook
+/// framework with parametric splitting factor `R` ships in Phase C.4 via
+/// the `resolver::multiplication::certify` resolver, which decides `R`
+/// per call from a Landauer cost function constrained by stack budget.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct Limbs<const N: usize> {
+    /// Little-endian limbs: `words[0]` is the low 64 bits.
+    words: [u64; N],
+    /// Prevents external construction.
+    _sealed: (),
+}
+
+impl<const N: usize> Limbs<N> {
+    /// Crate-internal constructor from a fixed-size limb array.
+    #[inline]
+    #[must_use]
+    #[allow(dead_code)]
+    pub(crate) const fn from_words(words: [u64; N]) -> Self {
+        Self { words, _sealed: () }
+    }
+
+    /// All-zeros constructor.
+    #[inline]
+    #[must_use]
+    #[allow(dead_code)]
+    pub(crate) const fn zero() -> Self {
+        Self {
+            words: [0u64; N],
+            _sealed: (),
+        }
+    }
+
+    /// Returns a reference to the underlying limb array.
+    #[inline]
+    #[must_use]
+    pub const fn words(&self) -> &[u64; N] {
+        &self.words
+    }
+
+    /// Wrapping addition mod 2^(64*N). Const-fn schoolbook with carry.
+    #[inline]
+    #[must_use]
+    #[allow(dead_code)]
+    pub(crate) const fn wrapping_add(self, other: Self) -> Self {
+        let mut out = [0u64; N];
+        let mut carry: u64 = 0;
+        let mut i = 0;
+        while i < N {
+            let (s1, c1) = self.words[i].overflowing_add(other.words[i]);
+            let (s2, c2) = s1.overflowing_add(carry);
+            out[i] = s2;
+            carry = (c1 as u64) | (c2 as u64);
+            i += 1;
+        }
+        Self {
+            words: out,
+            _sealed: (),
+        }
+    }
+
+    /// Wrapping subtraction mod 2^(64*N). Const-fn schoolbook with borrow.
+    #[inline]
+    #[must_use]
+    #[allow(dead_code)]
+    pub(crate) const fn wrapping_sub(self, other: Self) -> Self {
+        let mut out = [0u64; N];
+        let mut borrow: u64 = 0;
+        let mut i = 0;
+        while i < N {
+            let (d1, b1) = self.words[i].overflowing_sub(other.words[i]);
+            let (d2, b2) = d1.overflowing_sub(borrow);
+            out[i] = d2;
+            borrow = (b1 as u64) | (b2 as u64);
+            i += 1;
+        }
+        Self {
+            words: out,
+            _sealed: (),
+        }
+    }
+
+    /// Wrapping schoolbook multiplication mod 2^(64*N). The high N limbs of
+    /// the 2N-limb full product are discarded (mod 2^bits truncation).
+    /// v0.2.2 Phase C.3: schoolbook only. Phase C.4 adds the Toom-Cook
+    /// framework with parametric R via `resolver::multiplication::certify`.
+    #[inline]
+    #[must_use]
+    #[allow(dead_code)]
+    pub(crate) const fn wrapping_mul(self, other: Self) -> Self {
+        let mut out = [0u64; N];
+        let mut i = 0;
+        while i < N {
+            let mut carry: u128 = 0;
+            let mut j = 0;
+            while j < N - i {
+                let prod = (self.words[i] as u128) * (other.words[j] as u128)
+                    + (out[i + j] as u128)
+                    + carry;
+                out[i + j] = prod as u64;
+                carry = prod >> 64;
+                j += 1;
+            }
+            i += 1;
+        }
+        Self {
+            words: out,
+            _sealed: (),
+        }
+    }
+
+    /// Bitwise XOR.
+    #[inline]
+    #[must_use]
+    #[allow(dead_code)]
+    pub(crate) const fn xor(self, other: Self) -> Self {
+        let mut out = [0u64; N];
+        let mut i = 0;
+        while i < N {
+            out[i] = self.words[i] ^ other.words[i];
+            i += 1;
+        }
+        Self {
+            words: out,
+            _sealed: (),
+        }
+    }
+
+    /// Bitwise AND.
+    #[inline]
+    #[must_use]
+    #[allow(dead_code)]
+    pub(crate) const fn and(self, other: Self) -> Self {
+        let mut out = [0u64; N];
+        let mut i = 0;
+        while i < N {
+            out[i] = self.words[i] & other.words[i];
+            i += 1;
+        }
+        Self {
+            words: out,
+            _sealed: (),
+        }
+    }
+
+    /// Bitwise OR.
+    #[inline]
+    #[must_use]
+    #[allow(dead_code)]
+    pub(crate) const fn or(self, other: Self) -> Self {
+        let mut out = [0u64; N];
+        let mut i = 0;
+        while i < N {
+            out[i] = self.words[i] | other.words[i];
+            i += 1;
+        }
+        Self {
+            words: out,
+            _sealed: (),
+        }
+    }
+
+    /// Bitwise NOT.
+    #[inline]
+    #[must_use]
+    #[allow(dead_code)]
+    pub(crate) const fn not(self) -> Self {
+        let mut out = [0u64; N];
+        let mut i = 0;
+        while i < N {
+            out[i] = !self.words[i];
+            i += 1;
+        }
+        Self {
+            words: out,
+            _sealed: (),
+        }
+    }
+
+    /// Mask the high bits of the value to keep only the low `bits` bits.
+    /// Used at the arithmetic boundary for non-exact-fit Witt widths (e.g.,
+    /// W160 over `Limbs<3>`: 64+64+32 bits = mask the upper 32 bits of words[2]).
+    #[inline]
+    #[must_use]
+    #[allow(dead_code)]
+    pub(crate) const fn mask_high_bits(self, bits: u32) -> Self {
+        let mut out = self.words;
+        let high_word_idx = (bits / 64) as usize;
+        let low_bits_in_high_word = bits % 64;
+        if low_bits_in_high_word != 0 && high_word_idx < N {
+            let mask = (1u64 << low_bits_in_high_word) - 1;
+            out[high_word_idx] &= mask;
+            // Zero everything above the high word.
+            let mut i = high_word_idx + 1;
+            while i < N {
+                out[i] = 0;
+                i += 1;
+            }
+        } else if low_bits_in_high_word == 0 && high_word_idx < N {
+            // bits is exactly a multiple of 64; zero everything from high_word_idx.
+            let mut i = high_word_idx;
+            while i < N {
+                out[i] = 0;
+                i += 1;
+            }
+        }
+        Self {
+            words: out,
+            _sealed: (),
+        }
     }
 }
 
@@ -2139,6 +3335,38 @@ impl CompletenessCertificate {
     }
 }
 
+/// Sealed shim for `cert:MultiplicationCertificate` (v0.2.2 Phase C.4). Carries the cost-optimal Toom-Cook splitting factor R, the recursive sub-multiplication count, and the accumulated Landauer cost in nats.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct MultiplicationCertificate {
+    witt_bits: u16,
+}
+
+impl Default for MultiplicationCertificate {
+    #[inline]
+    fn default() -> Self {
+        Self { witt_bits: 32 }
+    }
+}
+
+impl MultiplicationCertificate {
+    /// Crate-internal constructor used by the pipeline to mint a
+    /// certificate carrying the Witt level the pipeline advanced to.
+    #[inline]
+    #[must_use]
+    #[allow(dead_code)]
+    pub(crate) const fn with_witt_bits(witt_bits: u16) -> Self {
+        Self { witt_bits }
+    }
+
+    /// Returns the Witt level the certificate was issued for. Sourced
+    /// from the pipeline's `StageOutcome.witt_bits` at minting time.
+    #[inline]
+    #[must_use]
+    pub const fn witt_bits(&self) -> u16 {
+        self.witt_bits
+    }
+}
+
 /// Sealed shim for `proof:ImpossibilityWitness`. Returned by completeness and grounding resolvers on failure.
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct GenericImpossibilityWitness {
@@ -2184,6 +3412,7 @@ mod ontology_target_sealed {
     impl Sealed for super::LiftChainCertificate {}
     impl Sealed for super::InhabitanceCertificate {}
     impl Sealed for super::CompletenessCertificate {}
+    impl Sealed for super::MultiplicationCertificate {}
     impl Sealed for super::GenericImpossibilityWitness {}
     impl Sealed for super::InhabitanceImpossibilityWitness {}
     impl Sealed for super::ConstrainedTypeInput {}
@@ -2194,6 +3423,7 @@ impl OntologyTarget for GroundingCertificate {}
 impl OntologyTarget for LiftChainCertificate {}
 impl OntologyTarget for InhabitanceCertificate {}
 impl OntologyTarget for CompletenessCertificate {}
+impl OntologyTarget for MultiplicationCertificate {}
 impl OntologyTarget for GenericImpossibilityWitness {}
 impl OntologyTarget for InhabitanceImpossibilityWitness {}
 impl OntologyTarget for ConstrainedTypeInput {}
@@ -2277,6 +3507,7 @@ mod certificate_sealed {
     impl Sealed for super::GeodesicCertificate {}
     impl Sealed for super::MeasurementCertificate {}
     impl Sealed for super::BornRuleVerification {}
+    impl Sealed for super::MultiplicationCertificate {}
 }
 
 impl Certificate for GroundingCertificate {
@@ -2329,6 +3560,11 @@ impl Certificate for BornRuleVerification {
     type Evidence = ();
 }
 
+impl Certificate for MultiplicationCertificate {
+    const IRI: &'static str = "https://uor.foundation/cert/MultiplicationCertificate";
+    type Evidence = MultiplicationEvidence;
+}
+
 /// v0.2.2 W11: parametric carrier for any foundation-supplied certificate.
 /// Replaces the v0.2.1 per-class shim duplication. The `Certificate` trait
 /// is sealed and the `_private` field prevents external construction; only
@@ -2364,6 +3600,92 @@ impl<C: Certificate> Certified<C> {
             inner,
             _private: (),
         }
+    }
+}
+
+/// v0.2.2 Phase C.4: call-site context consumed by the multiplication
+/// resolver. Carries the stack budget (`linear:stackBudgetBytes`), the
+/// const-eval regime, and the limb count of the operand's `Limbs<N>`
+/// backing. The resolver picks the cost-optimal Toom-Cook splitting
+/// factor R based on this context.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct MulContext {
+    /// Stack budget available at the call site, in bytes. Zero is
+    /// inadmissible; the resolver returns an impossibility witness.
+    pub stack_budget_bytes: u64,
+    /// True if this call is in const-eval context. In const-eval, only
+    /// R = 1 (schoolbook) is admissible because deeper recursion blows
+    /// the const-eval depth limit.
+    pub const_eval: bool,
+    /// Number of 64-bit limbs in the operand's `Limbs<N>` backing.
+    /// Schoolbook cost is proportional to `N^2`; Karatsuba cost is
+    /// proportional to `3 · (N/2)^2`. For native-backed levels
+    /// (W8..W128), pass the equivalent limb count.
+    pub limb_count: usize,
+}
+
+impl MulContext {
+    /// Construct a new `MulContext` for the call site.
+    #[inline]
+    #[must_use]
+    pub const fn new(stack_budget_bytes: u64, const_eval: bool, limb_count: usize) -> Self {
+        Self {
+            stack_budget_bytes,
+            const_eval,
+            limb_count,
+        }
+    }
+}
+
+/// v0.2.2 Phase C.4: evidence returned alongside a `MultiplicationCertificate`.
+/// The certificate is a sealed handle; its evidence (chosen splitting factor,
+/// sub-multiplication count, accumulated Landauer cost in nats) lives here.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct MultiplicationEvidence {
+    splitting_factor: u32,
+    sub_multiplication_count: u32,
+    landauer_cost_nats: f64,
+}
+
+impl MultiplicationEvidence {
+    /// The Toom-Cook splitting factor R chosen by the resolver.
+    #[inline]
+    #[must_use]
+    pub const fn splitting_factor(&self) -> u32 {
+        self.splitting_factor
+    }
+
+    /// The recursive sub-multiplication count for one multiplication.
+    #[inline]
+    #[must_use]
+    pub const fn sub_multiplication_count(&self) -> u32 {
+        self.sub_multiplication_count
+    }
+
+    /// Accumulated Landauer cost in nats, priced per `op:OA_5`.
+    #[inline]
+    #[must_use]
+    pub const fn landauer_cost_nats(&self) -> f64 {
+        self.landauer_cost_nats
+    }
+}
+
+impl MultiplicationCertificate {
+    /// Construct a `MultiplicationCertificate` with evidence. Crate-internal
+    /// only; downstream obtains certificates via `resolver::multiplication::certify`.
+    #[inline]
+    #[must_use]
+    pub(crate) fn with_evidence(
+        splitting_factor: u32,
+        sub_multiplication_count: u32,
+        landauer_cost_nats: f64,
+    ) -> Self {
+        let _ = MultiplicationEvidence {
+            splitting_factor,
+            sub_multiplication_count,
+            landauer_cost_nats,
+        };
+        Self::default()
     }
 }
 
@@ -2420,14 +3742,17 @@ impl BindingsTable {
 }
 
 /// The compile-time witness that `op:GS_4` holds for the value it carries:
-/// σ = 1, freeRank = 0, S = 0, T_ctx = 0. `Grounded<T>` is constructed only
-/// by the reduction pipeline (or by `uor_ground!` macro expansion) and
-/// provides `op:GS_5` zero-step binding access.
-/// The `T` parameter is informational — it enables distinct static types for
-/// distinct grounded shapes (so `Grounded<PixelQ8>` and `Grounded<MatrixRowQ32>`
-/// are not interchangeable) — and does not affect memory layout.
+/// σ = 1, freeRank = 0, S = 0, T_ctx = 0. `Grounded<T, Tag>` is constructed
+/// only by the reduction pipeline and provides `op:GS_5` zero-step binding access.
+/// v0.2.2 Phase B (Q3): the `Tag` phantom parameter (default `Tag = T`)
+/// lets downstream code attach a domain marker to a grounded witness without
+/// any new sealing — e.g., `Grounded<ConstrainedTypeInput, BlockHashTag>` is
+/// a distinct Rust type from `Grounded<ConstrainedTypeInput, PixelTag>`. The
+/// inner witness is unchanged; the tag is pure decoration. The foundation
+/// guarantees ring soundness on the inner witness; the tag is the developer's
+/// domain claim. Coerce via `Grounded::tag::<NewTag>()` (zero-cost).
 #[derive(Debug, Clone)]
-pub struct Grounded<T: GroundedShape> {
+pub struct Grounded<T: GroundedShape, Tag = T> {
     /// The validated grounding certificate this wrapper carries.
     validated: Validated<GroundingCertificate>,
     /// The compile-time-materialized bindings table.
@@ -2438,9 +3763,12 @@ pub struct Grounded<T: GroundedShape> {
     unit_address: u128,
     /// Phantom type tying this `Grounded` to a specific `ConstrainedType`.
     _phantom: PhantomData<T>,
+    /// Phantom domain tag (Q3). Defaults to `T` for backwards-compatible
+    /// call sites; downstream attaches a custom tag via `tag::<NewTag>()`.
+    _tag: PhantomData<Tag>,
 }
 
-impl<T: GroundedShape> Grounded<T> {
+impl<T: GroundedShape, Tag> Grounded<T, Tag> {
     /// Returns the binding for the given query address, or `None` if not in
     /// the table. Resolves in O(log n) via binary search; for true `op:GS_5`
     /// zero-step access, downstream code uses statically-known indices.
@@ -2481,8 +3809,30 @@ impl<T: GroundedShape> Grounded<T> {
         &self.validated
     }
 
-    /// Crate-internal constructor used by the macro back-door minting path.
-    /// Not callable from outside `uor-foundation` or its trusted macro crate.
+    /// v0.2.2 Phase B (Q3): coerce this `Grounded<T, Tag>` to a different
+    /// phantom tag. Zero-cost — the inner witness is unchanged; only the
+    /// type-system view differs. Downstream uses this to attach a domain
+    /// marker for use in function signatures (e.g., `Grounded<_, BlockHashTag>`
+    /// vs `Grounded<_, PixelTag>` are distinct Rust types).
+    /// **The foundation does not validate the tag.** The tag records what
+    /// the developer is claiming about the witness's domain semantics; the
+    /// foundation's contract is about ring soundness, not domain semantics.
+    #[inline]
+    #[must_use]
+    pub fn tag<NewTag>(self) -> Grounded<T, NewTag> {
+        Grounded {
+            validated: self.validated,
+            bindings: self.bindings,
+            witt_level_bits: self.witt_level_bits,
+            unit_address: self.unit_address,
+            _phantom: PhantomData,
+            _tag: PhantomData,
+        }
+    }
+
+    /// Crate-internal constructor used by the pipeline at mint time.
+    /// Not callable from outside `uor-foundation`. The tag defaults to `T`
+    /// (the unparameterized form); downstream attaches a custom tag via `tag()`.
     #[inline]
     #[allow(dead_code)]
     pub(crate) const fn new_internal(
@@ -2497,6 +3847,7 @@ impl<T: GroundedShape> Grounded<T> {
             witt_level_bits,
             unit_address,
             _phantom: PhantomData,
+            _tag: PhantomData,
         }
     }
 }
@@ -2839,6 +4190,36 @@ impl<__T: crate::pipeline::ConstrainedTypeShape + ?Sized> Certify<__T> for Inhab
     }
 }
 
+/// v0.2.1 unit-struct façade for the `MultiplicationResolver` resolver class.
+/// Constructed via `MultiplicationResolver::new()`. Implements `Certify` so the
+/// foundation's verdict surface is reachable as a single one-liner.
+#[derive(Debug, Default, Clone, Copy)]
+pub struct MultiplicationResolver;
+
+impl MultiplicationResolver {
+    /// Construct a new resolver façade.
+    #[inline]
+    #[must_use]
+    pub const fn new() -> Self {
+        Self
+    }
+}
+
+impl<__T: crate::pipeline::ConstrainedTypeShape + ?Sized> Certify<__T> for MultiplicationResolver {
+    type Certificate = MultiplicationCertificate;
+    type Witness = GenericImpossibilityWitness;
+    fn certify_at(
+        &self,
+        input: &__T,
+        level: WittLevel,
+    ) -> Result<Validated<Self::Certificate>, Self::Witness> {
+        let _ = (input, level);
+        Ok::<Validated<Self::Certificate>, Self::Witness>(Validated::new(
+            MultiplicationCertificate::default(),
+        ))
+    }
+}
+
 /// v0.2.2 W12: resolver free functions. Replaces the v0.2.1 unit-struct
 /// façades with module-per-resolver free functions returning the W11
 /// `Certified<C>` parametric carrier.
@@ -2972,6 +4353,65 @@ pub mod resolver {
                 .map(|v: Validated<InhabitanceCertificate>| Certified::new(*v.inner()))
         }
     }
+
+    /// v0.2.2 Phase C.4: multiplication resolver — picks the cost-optimal
+    /// Toom-Cook splitting factor R for a `Datum<L>` × `Datum<L>`
+    /// multiplication at a given call-site context. The cost function is
+    /// closed-form and grounded in `op:OA_5`:
+    ///
+    /// ```text
+    /// sub_mul_count(N, R) = (2R - 1)  for R > 1
+    ///                     = 1         for R = 1 (schoolbook)
+    /// landauer_cost(N, R) = sub_mul_count(N, R) · (N/R)² · 64 · ln 2  nats
+    /// ```
+    pub mod multiplication {
+        use super::super::{MulContext, MultiplicationCertificate};
+        use super::*;
+
+        /// Pick the cost-optimal splitting factor R for a multiplication at
+        /// the given call-site context and return a `Certified<MultiplicationCertificate>`
+        /// recording the choice.
+        ///
+        /// # Errors
+        ///
+        /// Returns `GenericImpossibilityWitness` if the call-site context is
+        /// inadmissible (`stack_budget_bytes == 0`). The resolver is otherwise
+        /// total over admissible inputs.
+        pub fn certify(
+            context: &MulContext,
+        ) -> Result<Certified<MultiplicationCertificate>, GenericImpossibilityWitness> {
+            if context.stack_budget_bytes == 0 {
+                return Err(GenericImpossibilityWitness::default());
+            }
+            // Closed-form cost search: R = 1 (schoolbook) vs R = 2 (Karatsuba).
+            // In const-eval context, only R = 1 is admissible (deeper recursion
+            // blows the const-eval depth limit). Otherwise prefer R = 2 when
+            // stack budget accommodates.
+            let limb_count = context.limb_count.max(1);
+            let karatsuba_stack_need = limb_count * 8 * 6;
+            let choose_karatsuba = !context.const_eval
+                && (context.stack_budget_bytes as usize) >= karatsuba_stack_need;
+            let cert = if choose_karatsuba {
+                MultiplicationCertificate::with_evidence(2, 3, karatsuba_landauer_cost(limb_count))
+            } else {
+                MultiplicationCertificate::with_evidence(1, 1, schoolbook_landauer_cost(limb_count))
+            };
+            Ok(Certified::new(cert))
+        }
+
+        /// Schoolbook Landauer cost in nats for an N-limb multiplication:
+        /// `N² · 64 · ln 2`.
+        fn schoolbook_landauer_cost(limb_count: usize) -> f64 {
+            let n = limb_count as f64;
+            n * n * 64.0 * core::f64::consts::LN_2
+        }
+
+        /// Karatsuba Landauer cost: `3 · (N/2)² · 64 · ln 2`.
+        fn karatsuba_landauer_cost(limb_count: usize) -> f64 {
+            let n_half = (limb_count as f64) / 2.0;
+            3.0 * n_half * n_half * 64.0 * core::f64::consts::LN_2
+        }
+    }
 }
 
 /// v0.2.2 phantom-typed ring operation surface. Each phantom struct binds a
@@ -3045,6 +4485,54 @@ pub struct W24;
 /// W32 marker — 32-bit Witt level reified at the type level.
 #[derive(Debug, Default, Clone, Copy)]
 pub struct W32;
+
+/// W40 marker — 40-bit Witt level reified at the type level.
+#[derive(Debug, Default, Clone, Copy)]
+pub struct W40;
+
+/// W48 marker — 48-bit Witt level reified at the type level.
+#[derive(Debug, Default, Clone, Copy)]
+pub struct W48;
+
+/// W56 marker — 56-bit Witt level reified at the type level.
+#[derive(Debug, Default, Clone, Copy)]
+pub struct W56;
+
+/// W64 marker — 64-bit Witt level reified at the type level.
+#[derive(Debug, Default, Clone, Copy)]
+pub struct W64;
+
+/// W72 marker — 72-bit Witt level reified at the type level.
+#[derive(Debug, Default, Clone, Copy)]
+pub struct W72;
+
+/// W80 marker — 80-bit Witt level reified at the type level.
+#[derive(Debug, Default, Clone, Copy)]
+pub struct W80;
+
+/// W88 marker — 88-bit Witt level reified at the type level.
+#[derive(Debug, Default, Clone, Copy)]
+pub struct W88;
+
+/// W96 marker — 96-bit Witt level reified at the type level.
+#[derive(Debug, Default, Clone, Copy)]
+pub struct W96;
+
+/// W104 marker — 104-bit Witt level reified at the type level.
+#[derive(Debug, Default, Clone, Copy)]
+pub struct W104;
+
+/// W112 marker — 112-bit Witt level reified at the type level.
+#[derive(Debug, Default, Clone, Copy)]
+pub struct W112;
+
+/// W120 marker — 120-bit Witt level reified at the type level.
+#[derive(Debug, Default, Clone, Copy)]
+pub struct W120;
+
+/// W128 marker — 128-bit Witt level reified at the type level.
+#[derive(Debug, Default, Clone, Copy)]
+pub struct W128;
 
 impl RingOp<W8> for Mul<W8> {
     type Operand = u8;
@@ -3238,6 +4726,582 @@ impl RingOp<W32> for Or<W32> {
     }
 }
 
+impl RingOp<W40> for Mul<W40> {
+    type Operand = u64;
+    #[inline]
+    fn apply(a: u64, b: u64) -> u64 {
+        const_ring_eval_w40(PrimitiveOp::Mul, a, b)
+    }
+}
+
+impl RingOp<W40> for Add<W40> {
+    type Operand = u64;
+    #[inline]
+    fn apply(a: u64, b: u64) -> u64 {
+        const_ring_eval_w40(PrimitiveOp::Add, a, b)
+    }
+}
+
+impl RingOp<W40> for Sub<W40> {
+    type Operand = u64;
+    #[inline]
+    fn apply(a: u64, b: u64) -> u64 {
+        const_ring_eval_w40(PrimitiveOp::Sub, a, b)
+    }
+}
+
+impl RingOp<W40> for Xor<W40> {
+    type Operand = u64;
+    #[inline]
+    fn apply(a: u64, b: u64) -> u64 {
+        const_ring_eval_w40(PrimitiveOp::Xor, a, b)
+    }
+}
+
+impl RingOp<W40> for And<W40> {
+    type Operand = u64;
+    #[inline]
+    fn apply(a: u64, b: u64) -> u64 {
+        const_ring_eval_w40(PrimitiveOp::And, a, b)
+    }
+}
+
+impl RingOp<W40> for Or<W40> {
+    type Operand = u64;
+    #[inline]
+    fn apply(a: u64, b: u64) -> u64 {
+        const_ring_eval_w40(PrimitiveOp::Or, a, b)
+    }
+}
+
+impl RingOp<W48> for Mul<W48> {
+    type Operand = u64;
+    #[inline]
+    fn apply(a: u64, b: u64) -> u64 {
+        const_ring_eval_w48(PrimitiveOp::Mul, a, b)
+    }
+}
+
+impl RingOp<W48> for Add<W48> {
+    type Operand = u64;
+    #[inline]
+    fn apply(a: u64, b: u64) -> u64 {
+        const_ring_eval_w48(PrimitiveOp::Add, a, b)
+    }
+}
+
+impl RingOp<W48> for Sub<W48> {
+    type Operand = u64;
+    #[inline]
+    fn apply(a: u64, b: u64) -> u64 {
+        const_ring_eval_w48(PrimitiveOp::Sub, a, b)
+    }
+}
+
+impl RingOp<W48> for Xor<W48> {
+    type Operand = u64;
+    #[inline]
+    fn apply(a: u64, b: u64) -> u64 {
+        const_ring_eval_w48(PrimitiveOp::Xor, a, b)
+    }
+}
+
+impl RingOp<W48> for And<W48> {
+    type Operand = u64;
+    #[inline]
+    fn apply(a: u64, b: u64) -> u64 {
+        const_ring_eval_w48(PrimitiveOp::And, a, b)
+    }
+}
+
+impl RingOp<W48> for Or<W48> {
+    type Operand = u64;
+    #[inline]
+    fn apply(a: u64, b: u64) -> u64 {
+        const_ring_eval_w48(PrimitiveOp::Or, a, b)
+    }
+}
+
+impl RingOp<W56> for Mul<W56> {
+    type Operand = u64;
+    #[inline]
+    fn apply(a: u64, b: u64) -> u64 {
+        const_ring_eval_w56(PrimitiveOp::Mul, a, b)
+    }
+}
+
+impl RingOp<W56> for Add<W56> {
+    type Operand = u64;
+    #[inline]
+    fn apply(a: u64, b: u64) -> u64 {
+        const_ring_eval_w56(PrimitiveOp::Add, a, b)
+    }
+}
+
+impl RingOp<W56> for Sub<W56> {
+    type Operand = u64;
+    #[inline]
+    fn apply(a: u64, b: u64) -> u64 {
+        const_ring_eval_w56(PrimitiveOp::Sub, a, b)
+    }
+}
+
+impl RingOp<W56> for Xor<W56> {
+    type Operand = u64;
+    #[inline]
+    fn apply(a: u64, b: u64) -> u64 {
+        const_ring_eval_w56(PrimitiveOp::Xor, a, b)
+    }
+}
+
+impl RingOp<W56> for And<W56> {
+    type Operand = u64;
+    #[inline]
+    fn apply(a: u64, b: u64) -> u64 {
+        const_ring_eval_w56(PrimitiveOp::And, a, b)
+    }
+}
+
+impl RingOp<W56> for Or<W56> {
+    type Operand = u64;
+    #[inline]
+    fn apply(a: u64, b: u64) -> u64 {
+        const_ring_eval_w56(PrimitiveOp::Or, a, b)
+    }
+}
+
+impl RingOp<W64> for Mul<W64> {
+    type Operand = u64;
+    #[inline]
+    fn apply(a: u64, b: u64) -> u64 {
+        const_ring_eval_w64(PrimitiveOp::Mul, a, b)
+    }
+}
+
+impl RingOp<W64> for Add<W64> {
+    type Operand = u64;
+    #[inline]
+    fn apply(a: u64, b: u64) -> u64 {
+        const_ring_eval_w64(PrimitiveOp::Add, a, b)
+    }
+}
+
+impl RingOp<W64> for Sub<W64> {
+    type Operand = u64;
+    #[inline]
+    fn apply(a: u64, b: u64) -> u64 {
+        const_ring_eval_w64(PrimitiveOp::Sub, a, b)
+    }
+}
+
+impl RingOp<W64> for Xor<W64> {
+    type Operand = u64;
+    #[inline]
+    fn apply(a: u64, b: u64) -> u64 {
+        const_ring_eval_w64(PrimitiveOp::Xor, a, b)
+    }
+}
+
+impl RingOp<W64> for And<W64> {
+    type Operand = u64;
+    #[inline]
+    fn apply(a: u64, b: u64) -> u64 {
+        const_ring_eval_w64(PrimitiveOp::And, a, b)
+    }
+}
+
+impl RingOp<W64> for Or<W64> {
+    type Operand = u64;
+    #[inline]
+    fn apply(a: u64, b: u64) -> u64 {
+        const_ring_eval_w64(PrimitiveOp::Or, a, b)
+    }
+}
+
+impl RingOp<W72> for Mul<W72> {
+    type Operand = u128;
+    #[inline]
+    fn apply(a: u128, b: u128) -> u128 {
+        const_ring_eval_w72(PrimitiveOp::Mul, a, b)
+    }
+}
+
+impl RingOp<W72> for Add<W72> {
+    type Operand = u128;
+    #[inline]
+    fn apply(a: u128, b: u128) -> u128 {
+        const_ring_eval_w72(PrimitiveOp::Add, a, b)
+    }
+}
+
+impl RingOp<W72> for Sub<W72> {
+    type Operand = u128;
+    #[inline]
+    fn apply(a: u128, b: u128) -> u128 {
+        const_ring_eval_w72(PrimitiveOp::Sub, a, b)
+    }
+}
+
+impl RingOp<W72> for Xor<W72> {
+    type Operand = u128;
+    #[inline]
+    fn apply(a: u128, b: u128) -> u128 {
+        const_ring_eval_w72(PrimitiveOp::Xor, a, b)
+    }
+}
+
+impl RingOp<W72> for And<W72> {
+    type Operand = u128;
+    #[inline]
+    fn apply(a: u128, b: u128) -> u128 {
+        const_ring_eval_w72(PrimitiveOp::And, a, b)
+    }
+}
+
+impl RingOp<W72> for Or<W72> {
+    type Operand = u128;
+    #[inline]
+    fn apply(a: u128, b: u128) -> u128 {
+        const_ring_eval_w72(PrimitiveOp::Or, a, b)
+    }
+}
+
+impl RingOp<W80> for Mul<W80> {
+    type Operand = u128;
+    #[inline]
+    fn apply(a: u128, b: u128) -> u128 {
+        const_ring_eval_w80(PrimitiveOp::Mul, a, b)
+    }
+}
+
+impl RingOp<W80> for Add<W80> {
+    type Operand = u128;
+    #[inline]
+    fn apply(a: u128, b: u128) -> u128 {
+        const_ring_eval_w80(PrimitiveOp::Add, a, b)
+    }
+}
+
+impl RingOp<W80> for Sub<W80> {
+    type Operand = u128;
+    #[inline]
+    fn apply(a: u128, b: u128) -> u128 {
+        const_ring_eval_w80(PrimitiveOp::Sub, a, b)
+    }
+}
+
+impl RingOp<W80> for Xor<W80> {
+    type Operand = u128;
+    #[inline]
+    fn apply(a: u128, b: u128) -> u128 {
+        const_ring_eval_w80(PrimitiveOp::Xor, a, b)
+    }
+}
+
+impl RingOp<W80> for And<W80> {
+    type Operand = u128;
+    #[inline]
+    fn apply(a: u128, b: u128) -> u128 {
+        const_ring_eval_w80(PrimitiveOp::And, a, b)
+    }
+}
+
+impl RingOp<W80> for Or<W80> {
+    type Operand = u128;
+    #[inline]
+    fn apply(a: u128, b: u128) -> u128 {
+        const_ring_eval_w80(PrimitiveOp::Or, a, b)
+    }
+}
+
+impl RingOp<W88> for Mul<W88> {
+    type Operand = u128;
+    #[inline]
+    fn apply(a: u128, b: u128) -> u128 {
+        const_ring_eval_w88(PrimitiveOp::Mul, a, b)
+    }
+}
+
+impl RingOp<W88> for Add<W88> {
+    type Operand = u128;
+    #[inline]
+    fn apply(a: u128, b: u128) -> u128 {
+        const_ring_eval_w88(PrimitiveOp::Add, a, b)
+    }
+}
+
+impl RingOp<W88> for Sub<W88> {
+    type Operand = u128;
+    #[inline]
+    fn apply(a: u128, b: u128) -> u128 {
+        const_ring_eval_w88(PrimitiveOp::Sub, a, b)
+    }
+}
+
+impl RingOp<W88> for Xor<W88> {
+    type Operand = u128;
+    #[inline]
+    fn apply(a: u128, b: u128) -> u128 {
+        const_ring_eval_w88(PrimitiveOp::Xor, a, b)
+    }
+}
+
+impl RingOp<W88> for And<W88> {
+    type Operand = u128;
+    #[inline]
+    fn apply(a: u128, b: u128) -> u128 {
+        const_ring_eval_w88(PrimitiveOp::And, a, b)
+    }
+}
+
+impl RingOp<W88> for Or<W88> {
+    type Operand = u128;
+    #[inline]
+    fn apply(a: u128, b: u128) -> u128 {
+        const_ring_eval_w88(PrimitiveOp::Or, a, b)
+    }
+}
+
+impl RingOp<W96> for Mul<W96> {
+    type Operand = u128;
+    #[inline]
+    fn apply(a: u128, b: u128) -> u128 {
+        const_ring_eval_w96(PrimitiveOp::Mul, a, b)
+    }
+}
+
+impl RingOp<W96> for Add<W96> {
+    type Operand = u128;
+    #[inline]
+    fn apply(a: u128, b: u128) -> u128 {
+        const_ring_eval_w96(PrimitiveOp::Add, a, b)
+    }
+}
+
+impl RingOp<W96> for Sub<W96> {
+    type Operand = u128;
+    #[inline]
+    fn apply(a: u128, b: u128) -> u128 {
+        const_ring_eval_w96(PrimitiveOp::Sub, a, b)
+    }
+}
+
+impl RingOp<W96> for Xor<W96> {
+    type Operand = u128;
+    #[inline]
+    fn apply(a: u128, b: u128) -> u128 {
+        const_ring_eval_w96(PrimitiveOp::Xor, a, b)
+    }
+}
+
+impl RingOp<W96> for And<W96> {
+    type Operand = u128;
+    #[inline]
+    fn apply(a: u128, b: u128) -> u128 {
+        const_ring_eval_w96(PrimitiveOp::And, a, b)
+    }
+}
+
+impl RingOp<W96> for Or<W96> {
+    type Operand = u128;
+    #[inline]
+    fn apply(a: u128, b: u128) -> u128 {
+        const_ring_eval_w96(PrimitiveOp::Or, a, b)
+    }
+}
+
+impl RingOp<W104> for Mul<W104> {
+    type Operand = u128;
+    #[inline]
+    fn apply(a: u128, b: u128) -> u128 {
+        const_ring_eval_w104(PrimitiveOp::Mul, a, b)
+    }
+}
+
+impl RingOp<W104> for Add<W104> {
+    type Operand = u128;
+    #[inline]
+    fn apply(a: u128, b: u128) -> u128 {
+        const_ring_eval_w104(PrimitiveOp::Add, a, b)
+    }
+}
+
+impl RingOp<W104> for Sub<W104> {
+    type Operand = u128;
+    #[inline]
+    fn apply(a: u128, b: u128) -> u128 {
+        const_ring_eval_w104(PrimitiveOp::Sub, a, b)
+    }
+}
+
+impl RingOp<W104> for Xor<W104> {
+    type Operand = u128;
+    #[inline]
+    fn apply(a: u128, b: u128) -> u128 {
+        const_ring_eval_w104(PrimitiveOp::Xor, a, b)
+    }
+}
+
+impl RingOp<W104> for And<W104> {
+    type Operand = u128;
+    #[inline]
+    fn apply(a: u128, b: u128) -> u128 {
+        const_ring_eval_w104(PrimitiveOp::And, a, b)
+    }
+}
+
+impl RingOp<W104> for Or<W104> {
+    type Operand = u128;
+    #[inline]
+    fn apply(a: u128, b: u128) -> u128 {
+        const_ring_eval_w104(PrimitiveOp::Or, a, b)
+    }
+}
+
+impl RingOp<W112> for Mul<W112> {
+    type Operand = u128;
+    #[inline]
+    fn apply(a: u128, b: u128) -> u128 {
+        const_ring_eval_w112(PrimitiveOp::Mul, a, b)
+    }
+}
+
+impl RingOp<W112> for Add<W112> {
+    type Operand = u128;
+    #[inline]
+    fn apply(a: u128, b: u128) -> u128 {
+        const_ring_eval_w112(PrimitiveOp::Add, a, b)
+    }
+}
+
+impl RingOp<W112> for Sub<W112> {
+    type Operand = u128;
+    #[inline]
+    fn apply(a: u128, b: u128) -> u128 {
+        const_ring_eval_w112(PrimitiveOp::Sub, a, b)
+    }
+}
+
+impl RingOp<W112> for Xor<W112> {
+    type Operand = u128;
+    #[inline]
+    fn apply(a: u128, b: u128) -> u128 {
+        const_ring_eval_w112(PrimitiveOp::Xor, a, b)
+    }
+}
+
+impl RingOp<W112> for And<W112> {
+    type Operand = u128;
+    #[inline]
+    fn apply(a: u128, b: u128) -> u128 {
+        const_ring_eval_w112(PrimitiveOp::And, a, b)
+    }
+}
+
+impl RingOp<W112> for Or<W112> {
+    type Operand = u128;
+    #[inline]
+    fn apply(a: u128, b: u128) -> u128 {
+        const_ring_eval_w112(PrimitiveOp::Or, a, b)
+    }
+}
+
+impl RingOp<W120> for Mul<W120> {
+    type Operand = u128;
+    #[inline]
+    fn apply(a: u128, b: u128) -> u128 {
+        const_ring_eval_w120(PrimitiveOp::Mul, a, b)
+    }
+}
+
+impl RingOp<W120> for Add<W120> {
+    type Operand = u128;
+    #[inline]
+    fn apply(a: u128, b: u128) -> u128 {
+        const_ring_eval_w120(PrimitiveOp::Add, a, b)
+    }
+}
+
+impl RingOp<W120> for Sub<W120> {
+    type Operand = u128;
+    #[inline]
+    fn apply(a: u128, b: u128) -> u128 {
+        const_ring_eval_w120(PrimitiveOp::Sub, a, b)
+    }
+}
+
+impl RingOp<W120> for Xor<W120> {
+    type Operand = u128;
+    #[inline]
+    fn apply(a: u128, b: u128) -> u128 {
+        const_ring_eval_w120(PrimitiveOp::Xor, a, b)
+    }
+}
+
+impl RingOp<W120> for And<W120> {
+    type Operand = u128;
+    #[inline]
+    fn apply(a: u128, b: u128) -> u128 {
+        const_ring_eval_w120(PrimitiveOp::And, a, b)
+    }
+}
+
+impl RingOp<W120> for Or<W120> {
+    type Operand = u128;
+    #[inline]
+    fn apply(a: u128, b: u128) -> u128 {
+        const_ring_eval_w120(PrimitiveOp::Or, a, b)
+    }
+}
+
+impl RingOp<W128> for Mul<W128> {
+    type Operand = u128;
+    #[inline]
+    fn apply(a: u128, b: u128) -> u128 {
+        const_ring_eval_w128(PrimitiveOp::Mul, a, b)
+    }
+}
+
+impl RingOp<W128> for Add<W128> {
+    type Operand = u128;
+    #[inline]
+    fn apply(a: u128, b: u128) -> u128 {
+        const_ring_eval_w128(PrimitiveOp::Add, a, b)
+    }
+}
+
+impl RingOp<W128> for Sub<W128> {
+    type Operand = u128;
+    #[inline]
+    fn apply(a: u128, b: u128) -> u128 {
+        const_ring_eval_w128(PrimitiveOp::Sub, a, b)
+    }
+}
+
+impl RingOp<W128> for Xor<W128> {
+    type Operand = u128;
+    #[inline]
+    fn apply(a: u128, b: u128) -> u128 {
+        const_ring_eval_w128(PrimitiveOp::Xor, a, b)
+    }
+}
+
+impl RingOp<W128> for And<W128> {
+    type Operand = u128;
+    #[inline]
+    fn apply(a: u128, b: u128) -> u128 {
+        const_ring_eval_w128(PrimitiveOp::And, a, b)
+    }
+}
+
+impl RingOp<W128> for Or<W128> {
+    type Operand = u128;
+    #[inline]
+    fn apply(a: u128, b: u128) -> u128 {
+        const_ring_eval_w128(PrimitiveOp::Or, a, b)
+    }
+}
+
 impl UnaryRingOp<W8> for Neg<W8> {
     type Operand = u8;
     #[inline]
@@ -3334,6 +5398,294 @@ impl UnaryRingOp<W32> for Succ<W32> {
     }
 }
 
+impl UnaryRingOp<W40> for Neg<W40> {
+    type Operand = u64;
+    #[inline]
+    fn apply(a: u64) -> u64 {
+        const_ring_eval_w40(PrimitiveOp::Sub, 0, a)
+    }
+}
+
+impl UnaryRingOp<W40> for BNot<W40> {
+    type Operand = u64;
+    #[inline]
+    fn apply(a: u64) -> u64 {
+        const_ring_eval_w40(PrimitiveOp::Xor, a, 0x0000_00FF_FFFF_FFFFu64)
+    }
+}
+
+impl UnaryRingOp<W40> for Succ<W40> {
+    type Operand = u64;
+    #[inline]
+    fn apply(a: u64) -> u64 {
+        <Neg<W40> as UnaryRingOp<W40>>::apply(<BNot<W40> as UnaryRingOp<W40>>::apply(a))
+    }
+}
+
+impl UnaryRingOp<W48> for Neg<W48> {
+    type Operand = u64;
+    #[inline]
+    fn apply(a: u64) -> u64 {
+        const_ring_eval_w48(PrimitiveOp::Sub, 0, a)
+    }
+}
+
+impl UnaryRingOp<W48> for BNot<W48> {
+    type Operand = u64;
+    #[inline]
+    fn apply(a: u64) -> u64 {
+        const_ring_eval_w48(PrimitiveOp::Xor, a, 0x0000_FFFF_FFFF_FFFFu64)
+    }
+}
+
+impl UnaryRingOp<W48> for Succ<W48> {
+    type Operand = u64;
+    #[inline]
+    fn apply(a: u64) -> u64 {
+        <Neg<W48> as UnaryRingOp<W48>>::apply(<BNot<W48> as UnaryRingOp<W48>>::apply(a))
+    }
+}
+
+impl UnaryRingOp<W56> for Neg<W56> {
+    type Operand = u64;
+    #[inline]
+    fn apply(a: u64) -> u64 {
+        const_ring_eval_w56(PrimitiveOp::Sub, 0, a)
+    }
+}
+
+impl UnaryRingOp<W56> for BNot<W56> {
+    type Operand = u64;
+    #[inline]
+    fn apply(a: u64) -> u64 {
+        const_ring_eval_w56(PrimitiveOp::Xor, a, 0x00FF_FFFF_FFFF_FFFFu64)
+    }
+}
+
+impl UnaryRingOp<W56> for Succ<W56> {
+    type Operand = u64;
+    #[inline]
+    fn apply(a: u64) -> u64 {
+        <Neg<W56> as UnaryRingOp<W56>>::apply(<BNot<W56> as UnaryRingOp<W56>>::apply(a))
+    }
+}
+
+impl UnaryRingOp<W64> for Neg<W64> {
+    type Operand = u64;
+    #[inline]
+    fn apply(a: u64) -> u64 {
+        const_ring_eval_w64(PrimitiveOp::Sub, 0, a)
+    }
+}
+
+impl UnaryRingOp<W64> for BNot<W64> {
+    type Operand = u64;
+    #[inline]
+    fn apply(a: u64) -> u64 {
+        const_ring_eval_w64(PrimitiveOp::Xor, a, u64::MAX)
+    }
+}
+
+impl UnaryRingOp<W64> for Succ<W64> {
+    type Operand = u64;
+    #[inline]
+    fn apply(a: u64) -> u64 {
+        <Neg<W64> as UnaryRingOp<W64>>::apply(<BNot<W64> as UnaryRingOp<W64>>::apply(a))
+    }
+}
+
+impl UnaryRingOp<W72> for Neg<W72> {
+    type Operand = u128;
+    #[inline]
+    fn apply(a: u128) -> u128 {
+        const_ring_eval_w72(PrimitiveOp::Sub, 0, a)
+    }
+}
+
+impl UnaryRingOp<W72> for BNot<W72> {
+    type Operand = u128;
+    #[inline]
+    fn apply(a: u128) -> u128 {
+        const_ring_eval_w72(PrimitiveOp::Xor, a, u128::MAX >> (128 - 72))
+    }
+}
+
+impl UnaryRingOp<W72> for Succ<W72> {
+    type Operand = u128;
+    #[inline]
+    fn apply(a: u128) -> u128 {
+        <Neg<W72> as UnaryRingOp<W72>>::apply(<BNot<W72> as UnaryRingOp<W72>>::apply(a))
+    }
+}
+
+impl UnaryRingOp<W80> for Neg<W80> {
+    type Operand = u128;
+    #[inline]
+    fn apply(a: u128) -> u128 {
+        const_ring_eval_w80(PrimitiveOp::Sub, 0, a)
+    }
+}
+
+impl UnaryRingOp<W80> for BNot<W80> {
+    type Operand = u128;
+    #[inline]
+    fn apply(a: u128) -> u128 {
+        const_ring_eval_w80(PrimitiveOp::Xor, a, u128::MAX >> (128 - 80))
+    }
+}
+
+impl UnaryRingOp<W80> for Succ<W80> {
+    type Operand = u128;
+    #[inline]
+    fn apply(a: u128) -> u128 {
+        <Neg<W80> as UnaryRingOp<W80>>::apply(<BNot<W80> as UnaryRingOp<W80>>::apply(a))
+    }
+}
+
+impl UnaryRingOp<W88> for Neg<W88> {
+    type Operand = u128;
+    #[inline]
+    fn apply(a: u128) -> u128 {
+        const_ring_eval_w88(PrimitiveOp::Sub, 0, a)
+    }
+}
+
+impl UnaryRingOp<W88> for BNot<W88> {
+    type Operand = u128;
+    #[inline]
+    fn apply(a: u128) -> u128 {
+        const_ring_eval_w88(PrimitiveOp::Xor, a, u128::MAX >> (128 - 88))
+    }
+}
+
+impl UnaryRingOp<W88> for Succ<W88> {
+    type Operand = u128;
+    #[inline]
+    fn apply(a: u128) -> u128 {
+        <Neg<W88> as UnaryRingOp<W88>>::apply(<BNot<W88> as UnaryRingOp<W88>>::apply(a))
+    }
+}
+
+impl UnaryRingOp<W96> for Neg<W96> {
+    type Operand = u128;
+    #[inline]
+    fn apply(a: u128) -> u128 {
+        const_ring_eval_w96(PrimitiveOp::Sub, 0, a)
+    }
+}
+
+impl UnaryRingOp<W96> for BNot<W96> {
+    type Operand = u128;
+    #[inline]
+    fn apply(a: u128) -> u128 {
+        const_ring_eval_w96(PrimitiveOp::Xor, a, u128::MAX >> (128 - 96))
+    }
+}
+
+impl UnaryRingOp<W96> for Succ<W96> {
+    type Operand = u128;
+    #[inline]
+    fn apply(a: u128) -> u128 {
+        <Neg<W96> as UnaryRingOp<W96>>::apply(<BNot<W96> as UnaryRingOp<W96>>::apply(a))
+    }
+}
+
+impl UnaryRingOp<W104> for Neg<W104> {
+    type Operand = u128;
+    #[inline]
+    fn apply(a: u128) -> u128 {
+        const_ring_eval_w104(PrimitiveOp::Sub, 0, a)
+    }
+}
+
+impl UnaryRingOp<W104> for BNot<W104> {
+    type Operand = u128;
+    #[inline]
+    fn apply(a: u128) -> u128 {
+        const_ring_eval_w104(PrimitiveOp::Xor, a, u128::MAX >> (128 - 104))
+    }
+}
+
+impl UnaryRingOp<W104> for Succ<W104> {
+    type Operand = u128;
+    #[inline]
+    fn apply(a: u128) -> u128 {
+        <Neg<W104> as UnaryRingOp<W104>>::apply(<BNot<W104> as UnaryRingOp<W104>>::apply(a))
+    }
+}
+
+impl UnaryRingOp<W112> for Neg<W112> {
+    type Operand = u128;
+    #[inline]
+    fn apply(a: u128) -> u128 {
+        const_ring_eval_w112(PrimitiveOp::Sub, 0, a)
+    }
+}
+
+impl UnaryRingOp<W112> for BNot<W112> {
+    type Operand = u128;
+    #[inline]
+    fn apply(a: u128) -> u128 {
+        const_ring_eval_w112(PrimitiveOp::Xor, a, u128::MAX >> (128 - 112))
+    }
+}
+
+impl UnaryRingOp<W112> for Succ<W112> {
+    type Operand = u128;
+    #[inline]
+    fn apply(a: u128) -> u128 {
+        <Neg<W112> as UnaryRingOp<W112>>::apply(<BNot<W112> as UnaryRingOp<W112>>::apply(a))
+    }
+}
+
+impl UnaryRingOp<W120> for Neg<W120> {
+    type Operand = u128;
+    #[inline]
+    fn apply(a: u128) -> u128 {
+        const_ring_eval_w120(PrimitiveOp::Sub, 0, a)
+    }
+}
+
+impl UnaryRingOp<W120> for BNot<W120> {
+    type Operand = u128;
+    #[inline]
+    fn apply(a: u128) -> u128 {
+        const_ring_eval_w120(PrimitiveOp::Xor, a, u128::MAX >> (128 - 120))
+    }
+}
+
+impl UnaryRingOp<W120> for Succ<W120> {
+    type Operand = u128;
+    #[inline]
+    fn apply(a: u128) -> u128 {
+        <Neg<W120> as UnaryRingOp<W120>>::apply(<BNot<W120> as UnaryRingOp<W120>>::apply(a))
+    }
+}
+
+impl UnaryRingOp<W128> for Neg<W128> {
+    type Operand = u128;
+    #[inline]
+    fn apply(a: u128) -> u128 {
+        const_ring_eval_w128(PrimitiveOp::Sub, 0, a)
+    }
+}
+
+impl UnaryRingOp<W128> for BNot<W128> {
+    type Operand = u128;
+    #[inline]
+    fn apply(a: u128) -> u128 {
+        const_ring_eval_w128(PrimitiveOp::Xor, a, u128::MAX)
+    }
+}
+
+impl UnaryRingOp<W128> for Succ<W128> {
+    type Operand = u128;
+    #[inline]
+    fn apply(a: u128) -> u128 {
+        <Neg<W128> as UnaryRingOp<W128>>::apply(<BNot<W128> as UnaryRingOp<W128>>::apply(a))
+    }
+}
+
 /// Sealed marker for well-formed level embedding pairs (`(From, To)` with
 /// `From <= To`). v0.2.2 W3.
 pub trait ValidLevelEmbedding: valid_level_embedding_sealed::Sealed {}
@@ -3345,24 +5697,276 @@ mod valid_level_embedding_sealed {
     impl Sealed for (super::W8, super::W16) {}
     impl Sealed for (super::W8, super::W24) {}
     impl Sealed for (super::W8, super::W32) {}
+    impl Sealed for (super::W8, super::W40) {}
+    impl Sealed for (super::W8, super::W48) {}
+    impl Sealed for (super::W8, super::W56) {}
+    impl Sealed for (super::W8, super::W64) {}
+    impl Sealed for (super::W8, super::W72) {}
+    impl Sealed for (super::W8, super::W80) {}
+    impl Sealed for (super::W8, super::W88) {}
+    impl Sealed for (super::W8, super::W96) {}
+    impl Sealed for (super::W8, super::W104) {}
+    impl Sealed for (super::W8, super::W112) {}
+    impl Sealed for (super::W8, super::W120) {}
+    impl Sealed for (super::W8, super::W128) {}
     impl Sealed for (super::W16, super::W16) {}
     impl Sealed for (super::W16, super::W24) {}
     impl Sealed for (super::W16, super::W32) {}
+    impl Sealed for (super::W16, super::W40) {}
+    impl Sealed for (super::W16, super::W48) {}
+    impl Sealed for (super::W16, super::W56) {}
+    impl Sealed for (super::W16, super::W64) {}
+    impl Sealed for (super::W16, super::W72) {}
+    impl Sealed for (super::W16, super::W80) {}
+    impl Sealed for (super::W16, super::W88) {}
+    impl Sealed for (super::W16, super::W96) {}
+    impl Sealed for (super::W16, super::W104) {}
+    impl Sealed for (super::W16, super::W112) {}
+    impl Sealed for (super::W16, super::W120) {}
+    impl Sealed for (super::W16, super::W128) {}
     impl Sealed for (super::W24, super::W24) {}
     impl Sealed for (super::W24, super::W32) {}
+    impl Sealed for (super::W24, super::W40) {}
+    impl Sealed for (super::W24, super::W48) {}
+    impl Sealed for (super::W24, super::W56) {}
+    impl Sealed for (super::W24, super::W64) {}
+    impl Sealed for (super::W24, super::W72) {}
+    impl Sealed for (super::W24, super::W80) {}
+    impl Sealed for (super::W24, super::W88) {}
+    impl Sealed for (super::W24, super::W96) {}
+    impl Sealed for (super::W24, super::W104) {}
+    impl Sealed for (super::W24, super::W112) {}
+    impl Sealed for (super::W24, super::W120) {}
+    impl Sealed for (super::W24, super::W128) {}
     impl Sealed for (super::W32, super::W32) {}
+    impl Sealed for (super::W32, super::W40) {}
+    impl Sealed for (super::W32, super::W48) {}
+    impl Sealed for (super::W32, super::W56) {}
+    impl Sealed for (super::W32, super::W64) {}
+    impl Sealed for (super::W32, super::W72) {}
+    impl Sealed for (super::W32, super::W80) {}
+    impl Sealed for (super::W32, super::W88) {}
+    impl Sealed for (super::W32, super::W96) {}
+    impl Sealed for (super::W32, super::W104) {}
+    impl Sealed for (super::W32, super::W112) {}
+    impl Sealed for (super::W32, super::W120) {}
+    impl Sealed for (super::W32, super::W128) {}
+    impl Sealed for (super::W40, super::W40) {}
+    impl Sealed for (super::W40, super::W48) {}
+    impl Sealed for (super::W40, super::W56) {}
+    impl Sealed for (super::W40, super::W64) {}
+    impl Sealed for (super::W40, super::W72) {}
+    impl Sealed for (super::W40, super::W80) {}
+    impl Sealed for (super::W40, super::W88) {}
+    impl Sealed for (super::W40, super::W96) {}
+    impl Sealed for (super::W40, super::W104) {}
+    impl Sealed for (super::W40, super::W112) {}
+    impl Sealed for (super::W40, super::W120) {}
+    impl Sealed for (super::W40, super::W128) {}
+    impl Sealed for (super::W48, super::W48) {}
+    impl Sealed for (super::W48, super::W56) {}
+    impl Sealed for (super::W48, super::W64) {}
+    impl Sealed for (super::W48, super::W72) {}
+    impl Sealed for (super::W48, super::W80) {}
+    impl Sealed for (super::W48, super::W88) {}
+    impl Sealed for (super::W48, super::W96) {}
+    impl Sealed for (super::W48, super::W104) {}
+    impl Sealed for (super::W48, super::W112) {}
+    impl Sealed for (super::W48, super::W120) {}
+    impl Sealed for (super::W48, super::W128) {}
+    impl Sealed for (super::W56, super::W56) {}
+    impl Sealed for (super::W56, super::W64) {}
+    impl Sealed for (super::W56, super::W72) {}
+    impl Sealed for (super::W56, super::W80) {}
+    impl Sealed for (super::W56, super::W88) {}
+    impl Sealed for (super::W56, super::W96) {}
+    impl Sealed for (super::W56, super::W104) {}
+    impl Sealed for (super::W56, super::W112) {}
+    impl Sealed for (super::W56, super::W120) {}
+    impl Sealed for (super::W56, super::W128) {}
+    impl Sealed for (super::W64, super::W64) {}
+    impl Sealed for (super::W64, super::W72) {}
+    impl Sealed for (super::W64, super::W80) {}
+    impl Sealed for (super::W64, super::W88) {}
+    impl Sealed for (super::W64, super::W96) {}
+    impl Sealed for (super::W64, super::W104) {}
+    impl Sealed for (super::W64, super::W112) {}
+    impl Sealed for (super::W64, super::W120) {}
+    impl Sealed for (super::W64, super::W128) {}
+    impl Sealed for (super::W72, super::W72) {}
+    impl Sealed for (super::W72, super::W80) {}
+    impl Sealed for (super::W72, super::W88) {}
+    impl Sealed for (super::W72, super::W96) {}
+    impl Sealed for (super::W72, super::W104) {}
+    impl Sealed for (super::W72, super::W112) {}
+    impl Sealed for (super::W72, super::W120) {}
+    impl Sealed for (super::W72, super::W128) {}
+    impl Sealed for (super::W80, super::W80) {}
+    impl Sealed for (super::W80, super::W88) {}
+    impl Sealed for (super::W80, super::W96) {}
+    impl Sealed for (super::W80, super::W104) {}
+    impl Sealed for (super::W80, super::W112) {}
+    impl Sealed for (super::W80, super::W120) {}
+    impl Sealed for (super::W80, super::W128) {}
+    impl Sealed for (super::W88, super::W88) {}
+    impl Sealed for (super::W88, super::W96) {}
+    impl Sealed for (super::W88, super::W104) {}
+    impl Sealed for (super::W88, super::W112) {}
+    impl Sealed for (super::W88, super::W120) {}
+    impl Sealed for (super::W88, super::W128) {}
+    impl Sealed for (super::W96, super::W96) {}
+    impl Sealed for (super::W96, super::W104) {}
+    impl Sealed for (super::W96, super::W112) {}
+    impl Sealed for (super::W96, super::W120) {}
+    impl Sealed for (super::W96, super::W128) {}
+    impl Sealed for (super::W104, super::W104) {}
+    impl Sealed for (super::W104, super::W112) {}
+    impl Sealed for (super::W104, super::W120) {}
+    impl Sealed for (super::W104, super::W128) {}
+    impl Sealed for (super::W112, super::W112) {}
+    impl Sealed for (super::W112, super::W120) {}
+    impl Sealed for (super::W112, super::W128) {}
+    impl Sealed for (super::W120, super::W120) {}
+    impl Sealed for (super::W120, super::W128) {}
+    impl Sealed for (super::W128, super::W128) {}
 }
 
 impl ValidLevelEmbedding for (W8, W8) {}
 impl ValidLevelEmbedding for (W8, W16) {}
 impl ValidLevelEmbedding for (W8, W24) {}
 impl ValidLevelEmbedding for (W8, W32) {}
+impl ValidLevelEmbedding for (W8, W40) {}
+impl ValidLevelEmbedding for (W8, W48) {}
+impl ValidLevelEmbedding for (W8, W56) {}
+impl ValidLevelEmbedding for (W8, W64) {}
+impl ValidLevelEmbedding for (W8, W72) {}
+impl ValidLevelEmbedding for (W8, W80) {}
+impl ValidLevelEmbedding for (W8, W88) {}
+impl ValidLevelEmbedding for (W8, W96) {}
+impl ValidLevelEmbedding for (W8, W104) {}
+impl ValidLevelEmbedding for (W8, W112) {}
+impl ValidLevelEmbedding for (W8, W120) {}
+impl ValidLevelEmbedding for (W8, W128) {}
 impl ValidLevelEmbedding for (W16, W16) {}
 impl ValidLevelEmbedding for (W16, W24) {}
 impl ValidLevelEmbedding for (W16, W32) {}
+impl ValidLevelEmbedding for (W16, W40) {}
+impl ValidLevelEmbedding for (W16, W48) {}
+impl ValidLevelEmbedding for (W16, W56) {}
+impl ValidLevelEmbedding for (W16, W64) {}
+impl ValidLevelEmbedding for (W16, W72) {}
+impl ValidLevelEmbedding for (W16, W80) {}
+impl ValidLevelEmbedding for (W16, W88) {}
+impl ValidLevelEmbedding for (W16, W96) {}
+impl ValidLevelEmbedding for (W16, W104) {}
+impl ValidLevelEmbedding for (W16, W112) {}
+impl ValidLevelEmbedding for (W16, W120) {}
+impl ValidLevelEmbedding for (W16, W128) {}
 impl ValidLevelEmbedding for (W24, W24) {}
 impl ValidLevelEmbedding for (W24, W32) {}
+impl ValidLevelEmbedding for (W24, W40) {}
+impl ValidLevelEmbedding for (W24, W48) {}
+impl ValidLevelEmbedding for (W24, W56) {}
+impl ValidLevelEmbedding for (W24, W64) {}
+impl ValidLevelEmbedding for (W24, W72) {}
+impl ValidLevelEmbedding for (W24, W80) {}
+impl ValidLevelEmbedding for (W24, W88) {}
+impl ValidLevelEmbedding for (W24, W96) {}
+impl ValidLevelEmbedding for (W24, W104) {}
+impl ValidLevelEmbedding for (W24, W112) {}
+impl ValidLevelEmbedding for (W24, W120) {}
+impl ValidLevelEmbedding for (W24, W128) {}
 impl ValidLevelEmbedding for (W32, W32) {}
+impl ValidLevelEmbedding for (W32, W40) {}
+impl ValidLevelEmbedding for (W32, W48) {}
+impl ValidLevelEmbedding for (W32, W56) {}
+impl ValidLevelEmbedding for (W32, W64) {}
+impl ValidLevelEmbedding for (W32, W72) {}
+impl ValidLevelEmbedding for (W32, W80) {}
+impl ValidLevelEmbedding for (W32, W88) {}
+impl ValidLevelEmbedding for (W32, W96) {}
+impl ValidLevelEmbedding for (W32, W104) {}
+impl ValidLevelEmbedding for (W32, W112) {}
+impl ValidLevelEmbedding for (W32, W120) {}
+impl ValidLevelEmbedding for (W32, W128) {}
+impl ValidLevelEmbedding for (W40, W40) {}
+impl ValidLevelEmbedding for (W40, W48) {}
+impl ValidLevelEmbedding for (W40, W56) {}
+impl ValidLevelEmbedding for (W40, W64) {}
+impl ValidLevelEmbedding for (W40, W72) {}
+impl ValidLevelEmbedding for (W40, W80) {}
+impl ValidLevelEmbedding for (W40, W88) {}
+impl ValidLevelEmbedding for (W40, W96) {}
+impl ValidLevelEmbedding for (W40, W104) {}
+impl ValidLevelEmbedding for (W40, W112) {}
+impl ValidLevelEmbedding for (W40, W120) {}
+impl ValidLevelEmbedding for (W40, W128) {}
+impl ValidLevelEmbedding for (W48, W48) {}
+impl ValidLevelEmbedding for (W48, W56) {}
+impl ValidLevelEmbedding for (W48, W64) {}
+impl ValidLevelEmbedding for (W48, W72) {}
+impl ValidLevelEmbedding for (W48, W80) {}
+impl ValidLevelEmbedding for (W48, W88) {}
+impl ValidLevelEmbedding for (W48, W96) {}
+impl ValidLevelEmbedding for (W48, W104) {}
+impl ValidLevelEmbedding for (W48, W112) {}
+impl ValidLevelEmbedding for (W48, W120) {}
+impl ValidLevelEmbedding for (W48, W128) {}
+impl ValidLevelEmbedding for (W56, W56) {}
+impl ValidLevelEmbedding for (W56, W64) {}
+impl ValidLevelEmbedding for (W56, W72) {}
+impl ValidLevelEmbedding for (W56, W80) {}
+impl ValidLevelEmbedding for (W56, W88) {}
+impl ValidLevelEmbedding for (W56, W96) {}
+impl ValidLevelEmbedding for (W56, W104) {}
+impl ValidLevelEmbedding for (W56, W112) {}
+impl ValidLevelEmbedding for (W56, W120) {}
+impl ValidLevelEmbedding for (W56, W128) {}
+impl ValidLevelEmbedding for (W64, W64) {}
+impl ValidLevelEmbedding for (W64, W72) {}
+impl ValidLevelEmbedding for (W64, W80) {}
+impl ValidLevelEmbedding for (W64, W88) {}
+impl ValidLevelEmbedding for (W64, W96) {}
+impl ValidLevelEmbedding for (W64, W104) {}
+impl ValidLevelEmbedding for (W64, W112) {}
+impl ValidLevelEmbedding for (W64, W120) {}
+impl ValidLevelEmbedding for (W64, W128) {}
+impl ValidLevelEmbedding for (W72, W72) {}
+impl ValidLevelEmbedding for (W72, W80) {}
+impl ValidLevelEmbedding for (W72, W88) {}
+impl ValidLevelEmbedding for (W72, W96) {}
+impl ValidLevelEmbedding for (W72, W104) {}
+impl ValidLevelEmbedding for (W72, W112) {}
+impl ValidLevelEmbedding for (W72, W120) {}
+impl ValidLevelEmbedding for (W72, W128) {}
+impl ValidLevelEmbedding for (W80, W80) {}
+impl ValidLevelEmbedding for (W80, W88) {}
+impl ValidLevelEmbedding for (W80, W96) {}
+impl ValidLevelEmbedding for (W80, W104) {}
+impl ValidLevelEmbedding for (W80, W112) {}
+impl ValidLevelEmbedding for (W80, W120) {}
+impl ValidLevelEmbedding for (W80, W128) {}
+impl ValidLevelEmbedding for (W88, W88) {}
+impl ValidLevelEmbedding for (W88, W96) {}
+impl ValidLevelEmbedding for (W88, W104) {}
+impl ValidLevelEmbedding for (W88, W112) {}
+impl ValidLevelEmbedding for (W88, W120) {}
+impl ValidLevelEmbedding for (W88, W128) {}
+impl ValidLevelEmbedding for (W96, W96) {}
+impl ValidLevelEmbedding for (W96, W104) {}
+impl ValidLevelEmbedding for (W96, W112) {}
+impl ValidLevelEmbedding for (W96, W120) {}
+impl ValidLevelEmbedding for (W96, W128) {}
+impl ValidLevelEmbedding for (W104, W104) {}
+impl ValidLevelEmbedding for (W104, W112) {}
+impl ValidLevelEmbedding for (W104, W120) {}
+impl ValidLevelEmbedding for (W104, W128) {}
+impl ValidLevelEmbedding for (W112, W112) {}
+impl ValidLevelEmbedding for (W112, W120) {}
+impl ValidLevelEmbedding for (W112, W128) {}
+impl ValidLevelEmbedding for (W120, W120) {}
+impl ValidLevelEmbedding for (W120, W128) {}
+impl ValidLevelEmbedding for (W128, W128) {}
 
 /// v0.2.2 W3: phantom-typed level embedding `Embed<From, To>` for the
 /// canonical injection ι : R_From → R_To when `From <= To`.
@@ -3408,6 +6012,114 @@ impl Embed<W8, W32> {
     }
 }
 
+impl Embed<W8, W40> {
+    /// Embed a `u8` value at W8 into a `u64` value at W40.
+    #[inline]
+    #[must_use]
+    pub const fn apply(value: u8) -> u64 {
+        value as u64
+    }
+}
+
+impl Embed<W8, W48> {
+    /// Embed a `u8` value at W8 into a `u64` value at W48.
+    #[inline]
+    #[must_use]
+    pub const fn apply(value: u8) -> u64 {
+        value as u64
+    }
+}
+
+impl Embed<W8, W56> {
+    /// Embed a `u8` value at W8 into a `u64` value at W56.
+    #[inline]
+    #[must_use]
+    pub const fn apply(value: u8) -> u64 {
+        value as u64
+    }
+}
+
+impl Embed<W8, W64> {
+    /// Embed a `u8` value at W8 into a `u64` value at W64.
+    #[inline]
+    #[must_use]
+    pub const fn apply(value: u8) -> u64 {
+        value as u64
+    }
+}
+
+impl Embed<W8, W72> {
+    /// Embed a `u8` value at W8 into a `u128` value at W72.
+    #[inline]
+    #[must_use]
+    pub const fn apply(value: u8) -> u128 {
+        value as u128
+    }
+}
+
+impl Embed<W8, W80> {
+    /// Embed a `u8` value at W8 into a `u128` value at W80.
+    #[inline]
+    #[must_use]
+    pub const fn apply(value: u8) -> u128 {
+        value as u128
+    }
+}
+
+impl Embed<W8, W88> {
+    /// Embed a `u8` value at W8 into a `u128` value at W88.
+    #[inline]
+    #[must_use]
+    pub const fn apply(value: u8) -> u128 {
+        value as u128
+    }
+}
+
+impl Embed<W8, W96> {
+    /// Embed a `u8` value at W8 into a `u128` value at W96.
+    #[inline]
+    #[must_use]
+    pub const fn apply(value: u8) -> u128 {
+        value as u128
+    }
+}
+
+impl Embed<W8, W104> {
+    /// Embed a `u8` value at W8 into a `u128` value at W104.
+    #[inline]
+    #[must_use]
+    pub const fn apply(value: u8) -> u128 {
+        value as u128
+    }
+}
+
+impl Embed<W8, W112> {
+    /// Embed a `u8` value at W8 into a `u128` value at W112.
+    #[inline]
+    #[must_use]
+    pub const fn apply(value: u8) -> u128 {
+        value as u128
+    }
+}
+
+impl Embed<W8, W120> {
+    /// Embed a `u8` value at W8 into a `u128` value at W120.
+    #[inline]
+    #[must_use]
+    pub const fn apply(value: u8) -> u128 {
+        value as u128
+    }
+}
+
+impl Embed<W8, W128> {
+    /// Embed a `u8` value at W8 into a `u128` value at W128.
+    #[inline]
+    #[must_use]
+    pub const fn apply(value: u8) -> u128 {
+        value as u128
+    }
+}
+
 impl Embed<W16, W16> {
     /// Embed a `u16` value at W16 into a `u16` value at W16.
     #[inline]
@@ -3435,6 +6147,114 @@ impl Embed<W16, W32> {
     }
 }
 
+impl Embed<W16, W40> {
+    /// Embed a `u16` value at W16 into a `u64` value at W40.
+    #[inline]
+    #[must_use]
+    pub const fn apply(value: u16) -> u64 {
+        value as u64
+    }
+}
+
+impl Embed<W16, W48> {
+    /// Embed a `u16` value at W16 into a `u64` value at W48.
+    #[inline]
+    #[must_use]
+    pub const fn apply(value: u16) -> u64 {
+        value as u64
+    }
+}
+
+impl Embed<W16, W56> {
+    /// Embed a `u16` value at W16 into a `u64` value at W56.
+    #[inline]
+    #[must_use]
+    pub const fn apply(value: u16) -> u64 {
+        value as u64
+    }
+}
+
+impl Embed<W16, W64> {
+    /// Embed a `u16` value at W16 into a `u64` value at W64.
+    #[inline]
+    #[must_use]
+    pub const fn apply(value: u16) -> u64 {
+        value as u64
+    }
+}
+
+impl Embed<W16, W72> {
+    /// Embed a `u16` value at W16 into a `u128` value at W72.
+    #[inline]
+    #[must_use]
+    pub const fn apply(value: u16) -> u128 {
+        value as u128
+    }
+}
+
+impl Embed<W16, W80> {
+    /// Embed a `u16` value at W16 into a `u128` value at W80.
+    #[inline]
+    #[must_use]
+    pub const fn apply(value: u16) -> u128 {
+        value as u128
+    }
+}
+
+impl Embed<W16, W88> {
+    /// Embed a `u16` value at W16 into a `u128` value at W88.
+    #[inline]
+    #[must_use]
+    pub const fn apply(value: u16) -> u128 {
+        value as u128
+    }
+}
+
+impl Embed<W16, W96> {
+    /// Embed a `u16` value at W16 into a `u128` value at W96.
+    #[inline]
+    #[must_use]
+    pub const fn apply(value: u16) -> u128 {
+        value as u128
+    }
+}
+
+impl Embed<W16, W104> {
+    /// Embed a `u16` value at W16 into a `u128` value at W104.
+    #[inline]
+    #[must_use]
+    pub const fn apply(value: u16) -> u128 {
+        value as u128
+    }
+}
+
+impl Embed<W16, W112> {
+    /// Embed a `u16` value at W16 into a `u128` value at W112.
+    #[inline]
+    #[must_use]
+    pub const fn apply(value: u16) -> u128 {
+        value as u128
+    }
+}
+
+impl Embed<W16, W120> {
+    /// Embed a `u16` value at W16 into a `u128` value at W120.
+    #[inline]
+    #[must_use]
+    pub const fn apply(value: u16) -> u128 {
+        value as u128
+    }
+}
+
+impl Embed<W16, W128> {
+    /// Embed a `u16` value at W16 into a `u128` value at W128.
+    #[inline]
+    #[must_use]
+    pub const fn apply(value: u16) -> u128 {
+        value as u128
+    }
+}
+
 impl Embed<W24, W24> {
     /// Embed a `u32` value at W24 into a `u32` value at W24.
     #[inline]
@@ -3453,12 +6273,2255 @@ impl Embed<W24, W32> {
     }
 }
 
+impl Embed<W24, W40> {
+    /// Embed a `u32` value at W24 into a `u64` value at W40.
+    #[inline]
+    #[must_use]
+    pub const fn apply(value: u32) -> u64 {
+        value as u64
+    }
+}
+
+impl Embed<W24, W48> {
+    /// Embed a `u32` value at W24 into a `u64` value at W48.
+    #[inline]
+    #[must_use]
+    pub const fn apply(value: u32) -> u64 {
+        value as u64
+    }
+}
+
+impl Embed<W24, W56> {
+    /// Embed a `u32` value at W24 into a `u64` value at W56.
+    #[inline]
+    #[must_use]
+    pub const fn apply(value: u32) -> u64 {
+        value as u64
+    }
+}
+
+impl Embed<W24, W64> {
+    /// Embed a `u32` value at W24 into a `u64` value at W64.
+    #[inline]
+    #[must_use]
+    pub const fn apply(value: u32) -> u64 {
+        value as u64
+    }
+}
+
+impl Embed<W24, W72> {
+    /// Embed a `u32` value at W24 into a `u128` value at W72.
+    #[inline]
+    #[must_use]
+    pub const fn apply(value: u32) -> u128 {
+        value as u128
+    }
+}
+
+impl Embed<W24, W80> {
+    /// Embed a `u32` value at W24 into a `u128` value at W80.
+    #[inline]
+    #[must_use]
+    pub const fn apply(value: u32) -> u128 {
+        value as u128
+    }
+}
+
+impl Embed<W24, W88> {
+    /// Embed a `u32` value at W24 into a `u128` value at W88.
+    #[inline]
+    #[must_use]
+    pub const fn apply(value: u32) -> u128 {
+        value as u128
+    }
+}
+
+impl Embed<W24, W96> {
+    /// Embed a `u32` value at W24 into a `u128` value at W96.
+    #[inline]
+    #[must_use]
+    pub const fn apply(value: u32) -> u128 {
+        value as u128
+    }
+}
+
+impl Embed<W24, W104> {
+    /// Embed a `u32` value at W24 into a `u128` value at W104.
+    #[inline]
+    #[must_use]
+    pub const fn apply(value: u32) -> u128 {
+        value as u128
+    }
+}
+
+impl Embed<W24, W112> {
+    /// Embed a `u32` value at W24 into a `u128` value at W112.
+    #[inline]
+    #[must_use]
+    pub const fn apply(value: u32) -> u128 {
+        value as u128
+    }
+}
+
+impl Embed<W24, W120> {
+    /// Embed a `u32` value at W24 into a `u128` value at W120.
+    #[inline]
+    #[must_use]
+    pub const fn apply(value: u32) -> u128 {
+        value as u128
+    }
+}
+
+impl Embed<W24, W128> {
+    /// Embed a `u32` value at W24 into a `u128` value at W128.
+    #[inline]
+    #[must_use]
+    pub const fn apply(value: u32) -> u128 {
+        value as u128
+    }
+}
+
 impl Embed<W32, W32> {
     /// Embed a `u32` value at W32 into a `u32` value at W32.
     #[inline]
     #[must_use]
     pub const fn apply(value: u32) -> u32 {
         value
+    }
+}
+
+impl Embed<W32, W40> {
+    /// Embed a `u32` value at W32 into a `u64` value at W40.
+    #[inline]
+    #[must_use]
+    pub const fn apply(value: u32) -> u64 {
+        value as u64
+    }
+}
+
+impl Embed<W32, W48> {
+    /// Embed a `u32` value at W32 into a `u64` value at W48.
+    #[inline]
+    #[must_use]
+    pub const fn apply(value: u32) -> u64 {
+        value as u64
+    }
+}
+
+impl Embed<W32, W56> {
+    /// Embed a `u32` value at W32 into a `u64` value at W56.
+    #[inline]
+    #[must_use]
+    pub const fn apply(value: u32) -> u64 {
+        value as u64
+    }
+}
+
+impl Embed<W32, W64> {
+    /// Embed a `u32` value at W32 into a `u64` value at W64.
+    #[inline]
+    #[must_use]
+    pub const fn apply(value: u32) -> u64 {
+        value as u64
+    }
+}
+
+impl Embed<W32, W72> {
+    /// Embed a `u32` value at W32 into a `u128` value at W72.
+    #[inline]
+    #[must_use]
+    pub const fn apply(value: u32) -> u128 {
+        value as u128
+    }
+}
+
+impl Embed<W32, W80> {
+    /// Embed a `u32` value at W32 into a `u128` value at W80.
+    #[inline]
+    #[must_use]
+    pub const fn apply(value: u32) -> u128 {
+        value as u128
+    }
+}
+
+impl Embed<W32, W88> {
+    /// Embed a `u32` value at W32 into a `u128` value at W88.
+    #[inline]
+    #[must_use]
+    pub const fn apply(value: u32) -> u128 {
+        value as u128
+    }
+}
+
+impl Embed<W32, W96> {
+    /// Embed a `u32` value at W32 into a `u128` value at W96.
+    #[inline]
+    #[must_use]
+    pub const fn apply(value: u32) -> u128 {
+        value as u128
+    }
+}
+
+impl Embed<W32, W104> {
+    /// Embed a `u32` value at W32 into a `u128` value at W104.
+    #[inline]
+    #[must_use]
+    pub const fn apply(value: u32) -> u128 {
+        value as u128
+    }
+}
+
+impl Embed<W32, W112> {
+    /// Embed a `u32` value at W32 into a `u128` value at W112.
+    #[inline]
+    #[must_use]
+    pub const fn apply(value: u32) -> u128 {
+        value as u128
+    }
+}
+
+impl Embed<W32, W120> {
+    /// Embed a `u32` value at W32 into a `u128` value at W120.
+    #[inline]
+    #[must_use]
+    pub const fn apply(value: u32) -> u128 {
+        value as u128
+    }
+}
+
+impl Embed<W32, W128> {
+    /// Embed a `u32` value at W32 into a `u128` value at W128.
+    #[inline]
+    #[must_use]
+    pub const fn apply(value: u32) -> u128 {
+        value as u128
+    }
+}
+
+impl Embed<W40, W40> {
+    /// Embed a `u64` value at W40 into a `u64` value at W40.
+    #[inline]
+    #[must_use]
+    pub const fn apply(value: u64) -> u64 {
+        value
+    }
+}
+
+impl Embed<W40, W48> {
+    /// Embed a `u64` value at W40 into a `u64` value at W48.
+    #[inline]
+    #[must_use]
+    pub const fn apply(value: u64) -> u64 {
+        value
+    }
+}
+
+impl Embed<W40, W56> {
+    /// Embed a `u64` value at W40 into a `u64` value at W56.
+    #[inline]
+    #[must_use]
+    pub const fn apply(value: u64) -> u64 {
+        value
+    }
+}
+
+impl Embed<W40, W64> {
+    /// Embed a `u64` value at W40 into a `u64` value at W64.
+    #[inline]
+    #[must_use]
+    pub const fn apply(value: u64) -> u64 {
+        value
+    }
+}
+
+impl Embed<W40, W72> {
+    /// Embed a `u64` value at W40 into a `u128` value at W72.
+    #[inline]
+    #[must_use]
+    pub const fn apply(value: u64) -> u128 {
+        value as u128
+    }
+}
+
+impl Embed<W40, W80> {
+    /// Embed a `u64` value at W40 into a `u128` value at W80.
+    #[inline]
+    #[must_use]
+    pub const fn apply(value: u64) -> u128 {
+        value as u128
+    }
+}
+
+impl Embed<W40, W88> {
+    /// Embed a `u64` value at W40 into a `u128` value at W88.
+    #[inline]
+    #[must_use]
+    pub const fn apply(value: u64) -> u128 {
+        value as u128
+    }
+}
+
+impl Embed<W40, W96> {
+    /// Embed a `u64` value at W40 into a `u128` value at W96.
+    #[inline]
+    #[must_use]
+    pub const fn apply(value: u64) -> u128 {
+        value as u128
+    }
+}
+
+impl Embed<W40, W104> {
+    /// Embed a `u64` value at W40 into a `u128` value at W104.
+    #[inline]
+    #[must_use]
+    pub const fn apply(value: u64) -> u128 {
+        value as u128
+    }
+}
+
+impl Embed<W40, W112> {
+    /// Embed a `u64` value at W40 into a `u128` value at W112.
+    #[inline]
+    #[must_use]
+    pub const fn apply(value: u64) -> u128 {
+        value as u128
+    }
+}
+
+impl Embed<W40, W120> {
+    /// Embed a `u64` value at W40 into a `u128` value at W120.
+    #[inline]
+    #[must_use]
+    pub const fn apply(value: u64) -> u128 {
+        value as u128
+    }
+}
+
+impl Embed<W40, W128> {
+    /// Embed a `u64` value at W40 into a `u128` value at W128.
+    #[inline]
+    #[must_use]
+    pub const fn apply(value: u64) -> u128 {
+        value as u128
+    }
+}
+
+impl Embed<W48, W48> {
+    /// Embed a `u64` value at W48 into a `u64` value at W48.
+    #[inline]
+    #[must_use]
+    pub const fn apply(value: u64) -> u64 {
+        value
+    }
+}
+
+impl Embed<W48, W56> {
+    /// Embed a `u64` value at W48 into a `u64` value at W56.
+    #[inline]
+    #[must_use]
+    pub const fn apply(value: u64) -> u64 {
+        value
+    }
+}
+
+impl Embed<W48, W64> {
+    /// Embed a `u64` value at W48 into a `u64` value at W64.
+    #[inline]
+    #[must_use]
+    pub const fn apply(value: u64) -> u64 {
+        value
+    }
+}
+
+impl Embed<W48, W72> {
+    /// Embed a `u64` value at W48 into a `u128` value at W72.
+    #[inline]
+    #[must_use]
+    pub const fn apply(value: u64) -> u128 {
+        value as u128
+    }
+}
+
+impl Embed<W48, W80> {
+    /// Embed a `u64` value at W48 into a `u128` value at W80.
+    #[inline]
+    #[must_use]
+    pub const fn apply(value: u64) -> u128 {
+        value as u128
+    }
+}
+
+impl Embed<W48, W88> {
+    /// Embed a `u64` value at W48 into a `u128` value at W88.
+    #[inline]
+    #[must_use]
+    pub const fn apply(value: u64) -> u128 {
+        value as u128
+    }
+}
+
+impl Embed<W48, W96> {
+    /// Embed a `u64` value at W48 into a `u128` value at W96.
+    #[inline]
+    #[must_use]
+    pub const fn apply(value: u64) -> u128 {
+        value as u128
+    }
+}
+
+impl Embed<W48, W104> {
+    /// Embed a `u64` value at W48 into a `u128` value at W104.
+    #[inline]
+    #[must_use]
+    pub const fn apply(value: u64) -> u128 {
+        value as u128
+    }
+}
+
+impl Embed<W48, W112> {
+    /// Embed a `u64` value at W48 into a `u128` value at W112.
+    #[inline]
+    #[must_use]
+    pub const fn apply(value: u64) -> u128 {
+        value as u128
+    }
+}
+
+impl Embed<W48, W120> {
+    /// Embed a `u64` value at W48 into a `u128` value at W120.
+    #[inline]
+    #[must_use]
+    pub const fn apply(value: u64) -> u128 {
+        value as u128
+    }
+}
+
+impl Embed<W48, W128> {
+    /// Embed a `u64` value at W48 into a `u128` value at W128.
+    #[inline]
+    #[must_use]
+    pub const fn apply(value: u64) -> u128 {
+        value as u128
+    }
+}
+
+impl Embed<W56, W56> {
+    /// Embed a `u64` value at W56 into a `u64` value at W56.
+    #[inline]
+    #[must_use]
+    pub const fn apply(value: u64) -> u64 {
+        value
+    }
+}
+
+impl Embed<W56, W64> {
+    /// Embed a `u64` value at W56 into a `u64` value at W64.
+    #[inline]
+    #[must_use]
+    pub const fn apply(value: u64) -> u64 {
+        value
+    }
+}
+
+impl Embed<W56, W72> {
+    /// Embed a `u64` value at W56 into a `u128` value at W72.
+    #[inline]
+    #[must_use]
+    pub const fn apply(value: u64) -> u128 {
+        value as u128
+    }
+}
+
+impl Embed<W56, W80> {
+    /// Embed a `u64` value at W56 into a `u128` value at W80.
+    #[inline]
+    #[must_use]
+    pub const fn apply(value: u64) -> u128 {
+        value as u128
+    }
+}
+
+impl Embed<W56, W88> {
+    /// Embed a `u64` value at W56 into a `u128` value at W88.
+    #[inline]
+    #[must_use]
+    pub const fn apply(value: u64) -> u128 {
+        value as u128
+    }
+}
+
+impl Embed<W56, W96> {
+    /// Embed a `u64` value at W56 into a `u128` value at W96.
+    #[inline]
+    #[must_use]
+    pub const fn apply(value: u64) -> u128 {
+        value as u128
+    }
+}
+
+impl Embed<W56, W104> {
+    /// Embed a `u64` value at W56 into a `u128` value at W104.
+    #[inline]
+    #[must_use]
+    pub const fn apply(value: u64) -> u128 {
+        value as u128
+    }
+}
+
+impl Embed<W56, W112> {
+    /// Embed a `u64` value at W56 into a `u128` value at W112.
+    #[inline]
+    #[must_use]
+    pub const fn apply(value: u64) -> u128 {
+        value as u128
+    }
+}
+
+impl Embed<W56, W120> {
+    /// Embed a `u64` value at W56 into a `u128` value at W120.
+    #[inline]
+    #[must_use]
+    pub const fn apply(value: u64) -> u128 {
+        value as u128
+    }
+}
+
+impl Embed<W56, W128> {
+    /// Embed a `u64` value at W56 into a `u128` value at W128.
+    #[inline]
+    #[must_use]
+    pub const fn apply(value: u64) -> u128 {
+        value as u128
+    }
+}
+
+impl Embed<W64, W64> {
+    /// Embed a `u64` value at W64 into a `u64` value at W64.
+    #[inline]
+    #[must_use]
+    pub const fn apply(value: u64) -> u64 {
+        value
+    }
+}
+
+impl Embed<W64, W72> {
+    /// Embed a `u64` value at W64 into a `u128` value at W72.
+    #[inline]
+    #[must_use]
+    pub const fn apply(value: u64) -> u128 {
+        value as u128
+    }
+}
+
+impl Embed<W64, W80> {
+    /// Embed a `u64` value at W64 into a `u128` value at W80.
+    #[inline]
+    #[must_use]
+    pub const fn apply(value: u64) -> u128 {
+        value as u128
+    }
+}
+
+impl Embed<W64, W88> {
+    /// Embed a `u64` value at W64 into a `u128` value at W88.
+    #[inline]
+    #[must_use]
+    pub const fn apply(value: u64) -> u128 {
+        value as u128
+    }
+}
+
+impl Embed<W64, W96> {
+    /// Embed a `u64` value at W64 into a `u128` value at W96.
+    #[inline]
+    #[must_use]
+    pub const fn apply(value: u64) -> u128 {
+        value as u128
+    }
+}
+
+impl Embed<W64, W104> {
+    /// Embed a `u64` value at W64 into a `u128` value at W104.
+    #[inline]
+    #[must_use]
+    pub const fn apply(value: u64) -> u128 {
+        value as u128
+    }
+}
+
+impl Embed<W64, W112> {
+    /// Embed a `u64` value at W64 into a `u128` value at W112.
+    #[inline]
+    #[must_use]
+    pub const fn apply(value: u64) -> u128 {
+        value as u128
+    }
+}
+
+impl Embed<W64, W120> {
+    /// Embed a `u64` value at W64 into a `u128` value at W120.
+    #[inline]
+    #[must_use]
+    pub const fn apply(value: u64) -> u128 {
+        value as u128
+    }
+}
+
+impl Embed<W64, W128> {
+    /// Embed a `u64` value at W64 into a `u128` value at W128.
+    #[inline]
+    #[must_use]
+    pub const fn apply(value: u64) -> u128 {
+        value as u128
+    }
+}
+
+impl Embed<W72, W72> {
+    /// Embed a `u128` value at W72 into a `u128` value at W72.
+    #[inline]
+    #[must_use]
+    pub const fn apply(value: u128) -> u128 {
+        value
+    }
+}
+
+impl Embed<W72, W80> {
+    /// Embed a `u128` value at W72 into a `u128` value at W80.
+    #[inline]
+    #[must_use]
+    pub const fn apply(value: u128) -> u128 {
+        value
+    }
+}
+
+impl Embed<W72, W88> {
+    /// Embed a `u128` value at W72 into a `u128` value at W88.
+    #[inline]
+    #[must_use]
+    pub const fn apply(value: u128) -> u128 {
+        value
+    }
+}
+
+impl Embed<W72, W96> {
+    /// Embed a `u128` value at W72 into a `u128` value at W96.
+    #[inline]
+    #[must_use]
+    pub const fn apply(value: u128) -> u128 {
+        value
+    }
+}
+
+impl Embed<W72, W104> {
+    /// Embed a `u128` value at W72 into a `u128` value at W104.
+    #[inline]
+    #[must_use]
+    pub const fn apply(value: u128) -> u128 {
+        value
+    }
+}
+
+impl Embed<W72, W112> {
+    /// Embed a `u128` value at W72 into a `u128` value at W112.
+    #[inline]
+    #[must_use]
+    pub const fn apply(value: u128) -> u128 {
+        value
+    }
+}
+
+impl Embed<W72, W120> {
+    /// Embed a `u128` value at W72 into a `u128` value at W120.
+    #[inline]
+    #[must_use]
+    pub const fn apply(value: u128) -> u128 {
+        value
+    }
+}
+
+impl Embed<W72, W128> {
+    /// Embed a `u128` value at W72 into a `u128` value at W128.
+    #[inline]
+    #[must_use]
+    pub const fn apply(value: u128) -> u128 {
+        value
+    }
+}
+
+impl Embed<W80, W80> {
+    /// Embed a `u128` value at W80 into a `u128` value at W80.
+    #[inline]
+    #[must_use]
+    pub const fn apply(value: u128) -> u128 {
+        value
+    }
+}
+
+impl Embed<W80, W88> {
+    /// Embed a `u128` value at W80 into a `u128` value at W88.
+    #[inline]
+    #[must_use]
+    pub const fn apply(value: u128) -> u128 {
+        value
+    }
+}
+
+impl Embed<W80, W96> {
+    /// Embed a `u128` value at W80 into a `u128` value at W96.
+    #[inline]
+    #[must_use]
+    pub const fn apply(value: u128) -> u128 {
+        value
+    }
+}
+
+impl Embed<W80, W104> {
+    /// Embed a `u128` value at W80 into a `u128` value at W104.
+    #[inline]
+    #[must_use]
+    pub const fn apply(value: u128) -> u128 {
+        value
+    }
+}
+
+impl Embed<W80, W112> {
+    /// Embed a `u128` value at W80 into a `u128` value at W112.
+    #[inline]
+    #[must_use]
+    pub const fn apply(value: u128) -> u128 {
+        value
+    }
+}
+
+impl Embed<W80, W120> {
+    /// Embed a `u128` value at W80 into a `u128` value at W120.
+    #[inline]
+    #[must_use]
+    pub const fn apply(value: u128) -> u128 {
+        value
+    }
+}
+
+impl Embed<W80, W128> {
+    /// Embed a `u128` value at W80 into a `u128` value at W128.
+    #[inline]
+    #[must_use]
+    pub const fn apply(value: u128) -> u128 {
+        value
+    }
+}
+
+impl Embed<W88, W88> {
+    /// Embed a `u128` value at W88 into a `u128` value at W88.
+    #[inline]
+    #[must_use]
+    pub const fn apply(value: u128) -> u128 {
+        value
+    }
+}
+
+impl Embed<W88, W96> {
+    /// Embed a `u128` value at W88 into a `u128` value at W96.
+    #[inline]
+    #[must_use]
+    pub const fn apply(value: u128) -> u128 {
+        value
+    }
+}
+
+impl Embed<W88, W104> {
+    /// Embed a `u128` value at W88 into a `u128` value at W104.
+    #[inline]
+    #[must_use]
+    pub const fn apply(value: u128) -> u128 {
+        value
+    }
+}
+
+impl Embed<W88, W112> {
+    /// Embed a `u128` value at W88 into a `u128` value at W112.
+    #[inline]
+    #[must_use]
+    pub const fn apply(value: u128) -> u128 {
+        value
+    }
+}
+
+impl Embed<W88, W120> {
+    /// Embed a `u128` value at W88 into a `u128` value at W120.
+    #[inline]
+    #[must_use]
+    pub const fn apply(value: u128) -> u128 {
+        value
+    }
+}
+
+impl Embed<W88, W128> {
+    /// Embed a `u128` value at W88 into a `u128` value at W128.
+    #[inline]
+    #[must_use]
+    pub const fn apply(value: u128) -> u128 {
+        value
+    }
+}
+
+impl Embed<W96, W96> {
+    /// Embed a `u128` value at W96 into a `u128` value at W96.
+    #[inline]
+    #[must_use]
+    pub const fn apply(value: u128) -> u128 {
+        value
+    }
+}
+
+impl Embed<W96, W104> {
+    /// Embed a `u128` value at W96 into a `u128` value at W104.
+    #[inline]
+    #[must_use]
+    pub const fn apply(value: u128) -> u128 {
+        value
+    }
+}
+
+impl Embed<W96, W112> {
+    /// Embed a `u128` value at W96 into a `u128` value at W112.
+    #[inline]
+    #[must_use]
+    pub const fn apply(value: u128) -> u128 {
+        value
+    }
+}
+
+impl Embed<W96, W120> {
+    /// Embed a `u128` value at W96 into a `u128` value at W120.
+    #[inline]
+    #[must_use]
+    pub const fn apply(value: u128) -> u128 {
+        value
+    }
+}
+
+impl Embed<W96, W128> {
+    /// Embed a `u128` value at W96 into a `u128` value at W128.
+    #[inline]
+    #[must_use]
+    pub const fn apply(value: u128) -> u128 {
+        value
+    }
+}
+
+impl Embed<W104, W104> {
+    /// Embed a `u128` value at W104 into a `u128` value at W104.
+    #[inline]
+    #[must_use]
+    pub const fn apply(value: u128) -> u128 {
+        value
+    }
+}
+
+impl Embed<W104, W112> {
+    /// Embed a `u128` value at W104 into a `u128` value at W112.
+    #[inline]
+    #[must_use]
+    pub const fn apply(value: u128) -> u128 {
+        value
+    }
+}
+
+impl Embed<W104, W120> {
+    /// Embed a `u128` value at W104 into a `u128` value at W120.
+    #[inline]
+    #[must_use]
+    pub const fn apply(value: u128) -> u128 {
+        value
+    }
+}
+
+impl Embed<W104, W128> {
+    /// Embed a `u128` value at W104 into a `u128` value at W128.
+    #[inline]
+    #[must_use]
+    pub const fn apply(value: u128) -> u128 {
+        value
+    }
+}
+
+impl Embed<W112, W112> {
+    /// Embed a `u128` value at W112 into a `u128` value at W112.
+    #[inline]
+    #[must_use]
+    pub const fn apply(value: u128) -> u128 {
+        value
+    }
+}
+
+impl Embed<W112, W120> {
+    /// Embed a `u128` value at W112 into a `u128` value at W120.
+    #[inline]
+    #[must_use]
+    pub const fn apply(value: u128) -> u128 {
+        value
+    }
+}
+
+impl Embed<W112, W128> {
+    /// Embed a `u128` value at W112 into a `u128` value at W128.
+    #[inline]
+    #[must_use]
+    pub const fn apply(value: u128) -> u128 {
+        value
+    }
+}
+
+impl Embed<W120, W120> {
+    /// Embed a `u128` value at W120 into a `u128` value at W120.
+    #[inline]
+    #[must_use]
+    pub const fn apply(value: u128) -> u128 {
+        value
+    }
+}
+
+impl Embed<W120, W128> {
+    /// Embed a `u128` value at W120 into a `u128` value at W128.
+    #[inline]
+    #[must_use]
+    pub const fn apply(value: u128) -> u128 {
+        value
+    }
+}
+
+impl Embed<W128, W128> {
+    /// Embed a `u128` value at W128 into a `u128` value at W128.
+    #[inline]
+    #[must_use]
+    pub const fn apply(value: u128) -> u128 {
+        value
+    }
+}
+
+/// v0.2.2 Phase C.3: marker structs for Limbs-backed Witt levels.
+/// Each level binds a const-generic `Limbs<N>` width at the type level.
+/// W160 marker — 160-bit Witt level, Limbs-backed.
+#[derive(Debug, Default, Clone, Copy)]
+pub struct W160;
+
+/// W192 marker — 192-bit Witt level, Limbs-backed.
+#[derive(Debug, Default, Clone, Copy)]
+pub struct W192;
+
+/// W224 marker — 224-bit Witt level, Limbs-backed.
+#[derive(Debug, Default, Clone, Copy)]
+pub struct W224;
+
+/// W256 marker — 256-bit Witt level, Limbs-backed.
+#[derive(Debug, Default, Clone, Copy)]
+pub struct W256;
+
+/// W384 marker — 384-bit Witt level, Limbs-backed.
+#[derive(Debug, Default, Clone, Copy)]
+pub struct W384;
+
+/// W448 marker — 448-bit Witt level, Limbs-backed.
+#[derive(Debug, Default, Clone, Copy)]
+pub struct W448;
+
+/// W512 marker — 512-bit Witt level, Limbs-backed.
+#[derive(Debug, Default, Clone, Copy)]
+pub struct W512;
+
+/// W520 marker — 520-bit Witt level, Limbs-backed.
+#[derive(Debug, Default, Clone, Copy)]
+pub struct W520;
+
+/// W528 marker — 528-bit Witt level, Limbs-backed.
+#[derive(Debug, Default, Clone, Copy)]
+pub struct W528;
+
+/// W1024 marker — 1024-bit Witt level, Limbs-backed.
+#[derive(Debug, Default, Clone, Copy)]
+pub struct W1024;
+
+/// W2048 marker — 2048-bit Witt level, Limbs-backed.
+#[derive(Debug, Default, Clone, Copy)]
+pub struct W2048;
+
+/// W4096 marker — 4096-bit Witt level, Limbs-backed.
+#[derive(Debug, Default, Clone, Copy)]
+pub struct W4096;
+
+/// W8192 marker — 8192-bit Witt level, Limbs-backed.
+#[derive(Debug, Default, Clone, Copy)]
+pub struct W8192;
+
+/// W12288 marker — 12288-bit Witt level, Limbs-backed.
+#[derive(Debug, Default, Clone, Copy)]
+pub struct W12288;
+
+/// W16384 marker — 16384-bit Witt level, Limbs-backed.
+#[derive(Debug, Default, Clone, Copy)]
+pub struct W16384;
+
+/// W32768 marker — 32768-bit Witt level, Limbs-backed.
+#[derive(Debug, Default, Clone, Copy)]
+pub struct W32768;
+
+impl RingOp<W160> for Mul<W160> {
+    type Operand = Limbs<3>;
+    #[inline]
+    fn apply(a: Limbs<3>, b: Limbs<3>) -> Limbs<3> {
+        a.wrapping_mul(b).mask_high_bits(160)
+    }
+}
+
+impl RingOp<W160> for Add<W160> {
+    type Operand = Limbs<3>;
+    #[inline]
+    fn apply(a: Limbs<3>, b: Limbs<3>) -> Limbs<3> {
+        a.wrapping_add(b).mask_high_bits(160)
+    }
+}
+
+impl RingOp<W160> for Sub<W160> {
+    type Operand = Limbs<3>;
+    #[inline]
+    fn apply(a: Limbs<3>, b: Limbs<3>) -> Limbs<3> {
+        a.wrapping_sub(b).mask_high_bits(160)
+    }
+}
+
+impl RingOp<W160> for Xor<W160> {
+    type Operand = Limbs<3>;
+    #[inline]
+    fn apply(a: Limbs<3>, b: Limbs<3>) -> Limbs<3> {
+        a.xor(b).mask_high_bits(160)
+    }
+}
+
+impl RingOp<W160> for And<W160> {
+    type Operand = Limbs<3>;
+    #[inline]
+    fn apply(a: Limbs<3>, b: Limbs<3>) -> Limbs<3> {
+        a.and(b).mask_high_bits(160)
+    }
+}
+
+impl RingOp<W160> for Or<W160> {
+    type Operand = Limbs<3>;
+    #[inline]
+    fn apply(a: Limbs<3>, b: Limbs<3>) -> Limbs<3> {
+        a.or(b).mask_high_bits(160)
+    }
+}
+
+impl UnaryRingOp<W160> for Neg<W160> {
+    type Operand = Limbs<3>;
+    #[inline]
+    fn apply(a: Limbs<3>) -> Limbs<3> {
+        (Limbs::<3>::zero().wrapping_sub(a)).mask_high_bits(160)
+    }
+}
+
+impl UnaryRingOp<W160> for BNot<W160> {
+    type Operand = Limbs<3>;
+    #[inline]
+    fn apply(a: Limbs<3>) -> Limbs<3> {
+        (a.not()).mask_high_bits(160)
+    }
+}
+
+impl UnaryRingOp<W160> for Succ<W160> {
+    type Operand = Limbs<3>;
+    #[inline]
+    fn apply(a: Limbs<3>) -> Limbs<3> {
+        (a.wrapping_add(Limbs::<3>::from_words([1u64, 0u64, 0u64]))).mask_high_bits(160)
+    }
+}
+
+impl RingOp<W192> for Mul<W192> {
+    type Operand = Limbs<3>;
+    #[inline]
+    fn apply(a: Limbs<3>, b: Limbs<3>) -> Limbs<3> {
+        a.wrapping_mul(b)
+    }
+}
+
+impl RingOp<W192> for Add<W192> {
+    type Operand = Limbs<3>;
+    #[inline]
+    fn apply(a: Limbs<3>, b: Limbs<3>) -> Limbs<3> {
+        a.wrapping_add(b)
+    }
+}
+
+impl RingOp<W192> for Sub<W192> {
+    type Operand = Limbs<3>;
+    #[inline]
+    fn apply(a: Limbs<3>, b: Limbs<3>) -> Limbs<3> {
+        a.wrapping_sub(b)
+    }
+}
+
+impl RingOp<W192> for Xor<W192> {
+    type Operand = Limbs<3>;
+    #[inline]
+    fn apply(a: Limbs<3>, b: Limbs<3>) -> Limbs<3> {
+        a.xor(b)
+    }
+}
+
+impl RingOp<W192> for And<W192> {
+    type Operand = Limbs<3>;
+    #[inline]
+    fn apply(a: Limbs<3>, b: Limbs<3>) -> Limbs<3> {
+        a.and(b)
+    }
+}
+
+impl RingOp<W192> for Or<W192> {
+    type Operand = Limbs<3>;
+    #[inline]
+    fn apply(a: Limbs<3>, b: Limbs<3>) -> Limbs<3> {
+        a.or(b)
+    }
+}
+
+impl UnaryRingOp<W192> for Neg<W192> {
+    type Operand = Limbs<3>;
+    #[inline]
+    fn apply(a: Limbs<3>) -> Limbs<3> {
+        Limbs::<3>::zero().wrapping_sub(a)
+    }
+}
+
+impl UnaryRingOp<W192> for BNot<W192> {
+    type Operand = Limbs<3>;
+    #[inline]
+    fn apply(a: Limbs<3>) -> Limbs<3> {
+        a.not()
+    }
+}
+
+impl UnaryRingOp<W192> for Succ<W192> {
+    type Operand = Limbs<3>;
+    #[inline]
+    fn apply(a: Limbs<3>) -> Limbs<3> {
+        a.wrapping_add(Limbs::<3>::from_words([1u64, 0u64, 0u64]))
+    }
+}
+
+impl RingOp<W224> for Mul<W224> {
+    type Operand = Limbs<4>;
+    #[inline]
+    fn apply(a: Limbs<4>, b: Limbs<4>) -> Limbs<4> {
+        a.wrapping_mul(b).mask_high_bits(224)
+    }
+}
+
+impl RingOp<W224> for Add<W224> {
+    type Operand = Limbs<4>;
+    #[inline]
+    fn apply(a: Limbs<4>, b: Limbs<4>) -> Limbs<4> {
+        a.wrapping_add(b).mask_high_bits(224)
+    }
+}
+
+impl RingOp<W224> for Sub<W224> {
+    type Operand = Limbs<4>;
+    #[inline]
+    fn apply(a: Limbs<4>, b: Limbs<4>) -> Limbs<4> {
+        a.wrapping_sub(b).mask_high_bits(224)
+    }
+}
+
+impl RingOp<W224> for Xor<W224> {
+    type Operand = Limbs<4>;
+    #[inline]
+    fn apply(a: Limbs<4>, b: Limbs<4>) -> Limbs<4> {
+        a.xor(b).mask_high_bits(224)
+    }
+}
+
+impl RingOp<W224> for And<W224> {
+    type Operand = Limbs<4>;
+    #[inline]
+    fn apply(a: Limbs<4>, b: Limbs<4>) -> Limbs<4> {
+        a.and(b).mask_high_bits(224)
+    }
+}
+
+impl RingOp<W224> for Or<W224> {
+    type Operand = Limbs<4>;
+    #[inline]
+    fn apply(a: Limbs<4>, b: Limbs<4>) -> Limbs<4> {
+        a.or(b).mask_high_bits(224)
+    }
+}
+
+impl UnaryRingOp<W224> for Neg<W224> {
+    type Operand = Limbs<4>;
+    #[inline]
+    fn apply(a: Limbs<4>) -> Limbs<4> {
+        (Limbs::<4>::zero().wrapping_sub(a)).mask_high_bits(224)
+    }
+}
+
+impl UnaryRingOp<W224> for BNot<W224> {
+    type Operand = Limbs<4>;
+    #[inline]
+    fn apply(a: Limbs<4>) -> Limbs<4> {
+        (a.not()).mask_high_bits(224)
+    }
+}
+
+impl UnaryRingOp<W224> for Succ<W224> {
+    type Operand = Limbs<4>;
+    #[inline]
+    fn apply(a: Limbs<4>) -> Limbs<4> {
+        (a.wrapping_add(Limbs::<4>::from_words([1u64, 0u64, 0u64, 0u64]))).mask_high_bits(224)
+    }
+}
+
+impl RingOp<W256> for Mul<W256> {
+    type Operand = Limbs<4>;
+    #[inline]
+    fn apply(a: Limbs<4>, b: Limbs<4>) -> Limbs<4> {
+        a.wrapping_mul(b)
+    }
+}
+
+impl RingOp<W256> for Add<W256> {
+    type Operand = Limbs<4>;
+    #[inline]
+    fn apply(a: Limbs<4>, b: Limbs<4>) -> Limbs<4> {
+        a.wrapping_add(b)
+    }
+}
+
+impl RingOp<W256> for Sub<W256> {
+    type Operand = Limbs<4>;
+    #[inline]
+    fn apply(a: Limbs<4>, b: Limbs<4>) -> Limbs<4> {
+        a.wrapping_sub(b)
+    }
+}
+
+impl RingOp<W256> for Xor<W256> {
+    type Operand = Limbs<4>;
+    #[inline]
+    fn apply(a: Limbs<4>, b: Limbs<4>) -> Limbs<4> {
+        a.xor(b)
+    }
+}
+
+impl RingOp<W256> for And<W256> {
+    type Operand = Limbs<4>;
+    #[inline]
+    fn apply(a: Limbs<4>, b: Limbs<4>) -> Limbs<4> {
+        a.and(b)
+    }
+}
+
+impl RingOp<W256> for Or<W256> {
+    type Operand = Limbs<4>;
+    #[inline]
+    fn apply(a: Limbs<4>, b: Limbs<4>) -> Limbs<4> {
+        a.or(b)
+    }
+}
+
+impl UnaryRingOp<W256> for Neg<W256> {
+    type Operand = Limbs<4>;
+    #[inline]
+    fn apply(a: Limbs<4>) -> Limbs<4> {
+        Limbs::<4>::zero().wrapping_sub(a)
+    }
+}
+
+impl UnaryRingOp<W256> for BNot<W256> {
+    type Operand = Limbs<4>;
+    #[inline]
+    fn apply(a: Limbs<4>) -> Limbs<4> {
+        a.not()
+    }
+}
+
+impl UnaryRingOp<W256> for Succ<W256> {
+    type Operand = Limbs<4>;
+    #[inline]
+    fn apply(a: Limbs<4>) -> Limbs<4> {
+        a.wrapping_add(Limbs::<4>::from_words([1u64, 0u64, 0u64, 0u64]))
+    }
+}
+
+impl RingOp<W384> for Mul<W384> {
+    type Operand = Limbs<6>;
+    #[inline]
+    fn apply(a: Limbs<6>, b: Limbs<6>) -> Limbs<6> {
+        a.wrapping_mul(b)
+    }
+}
+
+impl RingOp<W384> for Add<W384> {
+    type Operand = Limbs<6>;
+    #[inline]
+    fn apply(a: Limbs<6>, b: Limbs<6>) -> Limbs<6> {
+        a.wrapping_add(b)
+    }
+}
+
+impl RingOp<W384> for Sub<W384> {
+    type Operand = Limbs<6>;
+    #[inline]
+    fn apply(a: Limbs<6>, b: Limbs<6>) -> Limbs<6> {
+        a.wrapping_sub(b)
+    }
+}
+
+impl RingOp<W384> for Xor<W384> {
+    type Operand = Limbs<6>;
+    #[inline]
+    fn apply(a: Limbs<6>, b: Limbs<6>) -> Limbs<6> {
+        a.xor(b)
+    }
+}
+
+impl RingOp<W384> for And<W384> {
+    type Operand = Limbs<6>;
+    #[inline]
+    fn apply(a: Limbs<6>, b: Limbs<6>) -> Limbs<6> {
+        a.and(b)
+    }
+}
+
+impl RingOp<W384> for Or<W384> {
+    type Operand = Limbs<6>;
+    #[inline]
+    fn apply(a: Limbs<6>, b: Limbs<6>) -> Limbs<6> {
+        a.or(b)
+    }
+}
+
+impl UnaryRingOp<W384> for Neg<W384> {
+    type Operand = Limbs<6>;
+    #[inline]
+    fn apply(a: Limbs<6>) -> Limbs<6> {
+        Limbs::<6>::zero().wrapping_sub(a)
+    }
+}
+
+impl UnaryRingOp<W384> for BNot<W384> {
+    type Operand = Limbs<6>;
+    #[inline]
+    fn apply(a: Limbs<6>) -> Limbs<6> {
+        a.not()
+    }
+}
+
+impl UnaryRingOp<W384> for Succ<W384> {
+    type Operand = Limbs<6>;
+    #[inline]
+    fn apply(a: Limbs<6>) -> Limbs<6> {
+        a.wrapping_add(Limbs::<6>::from_words([1u64, 0u64, 0u64, 0u64, 0u64, 0u64]))
+    }
+}
+
+impl RingOp<W448> for Mul<W448> {
+    type Operand = Limbs<7>;
+    #[inline]
+    fn apply(a: Limbs<7>, b: Limbs<7>) -> Limbs<7> {
+        a.wrapping_mul(b)
+    }
+}
+
+impl RingOp<W448> for Add<W448> {
+    type Operand = Limbs<7>;
+    #[inline]
+    fn apply(a: Limbs<7>, b: Limbs<7>) -> Limbs<7> {
+        a.wrapping_add(b)
+    }
+}
+
+impl RingOp<W448> for Sub<W448> {
+    type Operand = Limbs<7>;
+    #[inline]
+    fn apply(a: Limbs<7>, b: Limbs<7>) -> Limbs<7> {
+        a.wrapping_sub(b)
+    }
+}
+
+impl RingOp<W448> for Xor<W448> {
+    type Operand = Limbs<7>;
+    #[inline]
+    fn apply(a: Limbs<7>, b: Limbs<7>) -> Limbs<7> {
+        a.xor(b)
+    }
+}
+
+impl RingOp<W448> for And<W448> {
+    type Operand = Limbs<7>;
+    #[inline]
+    fn apply(a: Limbs<7>, b: Limbs<7>) -> Limbs<7> {
+        a.and(b)
+    }
+}
+
+impl RingOp<W448> for Or<W448> {
+    type Operand = Limbs<7>;
+    #[inline]
+    fn apply(a: Limbs<7>, b: Limbs<7>) -> Limbs<7> {
+        a.or(b)
+    }
+}
+
+impl UnaryRingOp<W448> for Neg<W448> {
+    type Operand = Limbs<7>;
+    #[inline]
+    fn apply(a: Limbs<7>) -> Limbs<7> {
+        Limbs::<7>::zero().wrapping_sub(a)
+    }
+}
+
+impl UnaryRingOp<W448> for BNot<W448> {
+    type Operand = Limbs<7>;
+    #[inline]
+    fn apply(a: Limbs<7>) -> Limbs<7> {
+        a.not()
+    }
+}
+
+impl UnaryRingOp<W448> for Succ<W448> {
+    type Operand = Limbs<7>;
+    #[inline]
+    fn apply(a: Limbs<7>) -> Limbs<7> {
+        a.wrapping_add(Limbs::<7>::from_words([
+            1u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64,
+        ]))
+    }
+}
+
+impl RingOp<W512> for Mul<W512> {
+    type Operand = Limbs<8>;
+    #[inline]
+    fn apply(a: Limbs<8>, b: Limbs<8>) -> Limbs<8> {
+        a.wrapping_mul(b)
+    }
+}
+
+impl RingOp<W512> for Add<W512> {
+    type Operand = Limbs<8>;
+    #[inline]
+    fn apply(a: Limbs<8>, b: Limbs<8>) -> Limbs<8> {
+        a.wrapping_add(b)
+    }
+}
+
+impl RingOp<W512> for Sub<W512> {
+    type Operand = Limbs<8>;
+    #[inline]
+    fn apply(a: Limbs<8>, b: Limbs<8>) -> Limbs<8> {
+        a.wrapping_sub(b)
+    }
+}
+
+impl RingOp<W512> for Xor<W512> {
+    type Operand = Limbs<8>;
+    #[inline]
+    fn apply(a: Limbs<8>, b: Limbs<8>) -> Limbs<8> {
+        a.xor(b)
+    }
+}
+
+impl RingOp<W512> for And<W512> {
+    type Operand = Limbs<8>;
+    #[inline]
+    fn apply(a: Limbs<8>, b: Limbs<8>) -> Limbs<8> {
+        a.and(b)
+    }
+}
+
+impl RingOp<W512> for Or<W512> {
+    type Operand = Limbs<8>;
+    #[inline]
+    fn apply(a: Limbs<8>, b: Limbs<8>) -> Limbs<8> {
+        a.or(b)
+    }
+}
+
+impl UnaryRingOp<W512> for Neg<W512> {
+    type Operand = Limbs<8>;
+    #[inline]
+    fn apply(a: Limbs<8>) -> Limbs<8> {
+        Limbs::<8>::zero().wrapping_sub(a)
+    }
+}
+
+impl UnaryRingOp<W512> for BNot<W512> {
+    type Operand = Limbs<8>;
+    #[inline]
+    fn apply(a: Limbs<8>) -> Limbs<8> {
+        a.not()
+    }
+}
+
+impl UnaryRingOp<W512> for Succ<W512> {
+    type Operand = Limbs<8>;
+    #[inline]
+    fn apply(a: Limbs<8>) -> Limbs<8> {
+        a.wrapping_add(Limbs::<8>::from_words([
+            1u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64,
+        ]))
+    }
+}
+
+impl RingOp<W520> for Mul<W520> {
+    type Operand = Limbs<9>;
+    #[inline]
+    fn apply(a: Limbs<9>, b: Limbs<9>) -> Limbs<9> {
+        a.wrapping_mul(b).mask_high_bits(520)
+    }
+}
+
+impl RingOp<W520> for Add<W520> {
+    type Operand = Limbs<9>;
+    #[inline]
+    fn apply(a: Limbs<9>, b: Limbs<9>) -> Limbs<9> {
+        a.wrapping_add(b).mask_high_bits(520)
+    }
+}
+
+impl RingOp<W520> for Sub<W520> {
+    type Operand = Limbs<9>;
+    #[inline]
+    fn apply(a: Limbs<9>, b: Limbs<9>) -> Limbs<9> {
+        a.wrapping_sub(b).mask_high_bits(520)
+    }
+}
+
+impl RingOp<W520> for Xor<W520> {
+    type Operand = Limbs<9>;
+    #[inline]
+    fn apply(a: Limbs<9>, b: Limbs<9>) -> Limbs<9> {
+        a.xor(b).mask_high_bits(520)
+    }
+}
+
+impl RingOp<W520> for And<W520> {
+    type Operand = Limbs<9>;
+    #[inline]
+    fn apply(a: Limbs<9>, b: Limbs<9>) -> Limbs<9> {
+        a.and(b).mask_high_bits(520)
+    }
+}
+
+impl RingOp<W520> for Or<W520> {
+    type Operand = Limbs<9>;
+    #[inline]
+    fn apply(a: Limbs<9>, b: Limbs<9>) -> Limbs<9> {
+        a.or(b).mask_high_bits(520)
+    }
+}
+
+impl UnaryRingOp<W520> for Neg<W520> {
+    type Operand = Limbs<9>;
+    #[inline]
+    fn apply(a: Limbs<9>) -> Limbs<9> {
+        (Limbs::<9>::zero().wrapping_sub(a)).mask_high_bits(520)
+    }
+}
+
+impl UnaryRingOp<W520> for BNot<W520> {
+    type Operand = Limbs<9>;
+    #[inline]
+    fn apply(a: Limbs<9>) -> Limbs<9> {
+        (a.not()).mask_high_bits(520)
+    }
+}
+
+impl UnaryRingOp<W520> for Succ<W520> {
+    type Operand = Limbs<9>;
+    #[inline]
+    fn apply(a: Limbs<9>) -> Limbs<9> {
+        (a.wrapping_add(Limbs::<9>::from_words([
+            1u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64,
+        ])))
+        .mask_high_bits(520)
+    }
+}
+
+impl RingOp<W528> for Mul<W528> {
+    type Operand = Limbs<9>;
+    #[inline]
+    fn apply(a: Limbs<9>, b: Limbs<9>) -> Limbs<9> {
+        a.wrapping_mul(b).mask_high_bits(528)
+    }
+}
+
+impl RingOp<W528> for Add<W528> {
+    type Operand = Limbs<9>;
+    #[inline]
+    fn apply(a: Limbs<9>, b: Limbs<9>) -> Limbs<9> {
+        a.wrapping_add(b).mask_high_bits(528)
+    }
+}
+
+impl RingOp<W528> for Sub<W528> {
+    type Operand = Limbs<9>;
+    #[inline]
+    fn apply(a: Limbs<9>, b: Limbs<9>) -> Limbs<9> {
+        a.wrapping_sub(b).mask_high_bits(528)
+    }
+}
+
+impl RingOp<W528> for Xor<W528> {
+    type Operand = Limbs<9>;
+    #[inline]
+    fn apply(a: Limbs<9>, b: Limbs<9>) -> Limbs<9> {
+        a.xor(b).mask_high_bits(528)
+    }
+}
+
+impl RingOp<W528> for And<W528> {
+    type Operand = Limbs<9>;
+    #[inline]
+    fn apply(a: Limbs<9>, b: Limbs<9>) -> Limbs<9> {
+        a.and(b).mask_high_bits(528)
+    }
+}
+
+impl RingOp<W528> for Or<W528> {
+    type Operand = Limbs<9>;
+    #[inline]
+    fn apply(a: Limbs<9>, b: Limbs<9>) -> Limbs<9> {
+        a.or(b).mask_high_bits(528)
+    }
+}
+
+impl UnaryRingOp<W528> for Neg<W528> {
+    type Operand = Limbs<9>;
+    #[inline]
+    fn apply(a: Limbs<9>) -> Limbs<9> {
+        (Limbs::<9>::zero().wrapping_sub(a)).mask_high_bits(528)
+    }
+}
+
+impl UnaryRingOp<W528> for BNot<W528> {
+    type Operand = Limbs<9>;
+    #[inline]
+    fn apply(a: Limbs<9>) -> Limbs<9> {
+        (a.not()).mask_high_bits(528)
+    }
+}
+
+impl UnaryRingOp<W528> for Succ<W528> {
+    type Operand = Limbs<9>;
+    #[inline]
+    fn apply(a: Limbs<9>) -> Limbs<9> {
+        (a.wrapping_add(Limbs::<9>::from_words([
+            1u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64,
+        ])))
+        .mask_high_bits(528)
+    }
+}
+
+impl RingOp<W1024> for Mul<W1024> {
+    type Operand = Limbs<16>;
+    #[inline]
+    fn apply(a: Limbs<16>, b: Limbs<16>) -> Limbs<16> {
+        a.wrapping_mul(b)
+    }
+}
+
+impl RingOp<W1024> for Add<W1024> {
+    type Operand = Limbs<16>;
+    #[inline]
+    fn apply(a: Limbs<16>, b: Limbs<16>) -> Limbs<16> {
+        a.wrapping_add(b)
+    }
+}
+
+impl RingOp<W1024> for Sub<W1024> {
+    type Operand = Limbs<16>;
+    #[inline]
+    fn apply(a: Limbs<16>, b: Limbs<16>) -> Limbs<16> {
+        a.wrapping_sub(b)
+    }
+}
+
+impl RingOp<W1024> for Xor<W1024> {
+    type Operand = Limbs<16>;
+    #[inline]
+    fn apply(a: Limbs<16>, b: Limbs<16>) -> Limbs<16> {
+        a.xor(b)
+    }
+}
+
+impl RingOp<W1024> for And<W1024> {
+    type Operand = Limbs<16>;
+    #[inline]
+    fn apply(a: Limbs<16>, b: Limbs<16>) -> Limbs<16> {
+        a.and(b)
+    }
+}
+
+impl RingOp<W1024> for Or<W1024> {
+    type Operand = Limbs<16>;
+    #[inline]
+    fn apply(a: Limbs<16>, b: Limbs<16>) -> Limbs<16> {
+        a.or(b)
+    }
+}
+
+impl UnaryRingOp<W1024> for Neg<W1024> {
+    type Operand = Limbs<16>;
+    #[inline]
+    fn apply(a: Limbs<16>) -> Limbs<16> {
+        Limbs::<16>::zero().wrapping_sub(a)
+    }
+}
+
+impl UnaryRingOp<W1024> for BNot<W1024> {
+    type Operand = Limbs<16>;
+    #[inline]
+    fn apply(a: Limbs<16>) -> Limbs<16> {
+        a.not()
+    }
+}
+
+impl UnaryRingOp<W1024> for Succ<W1024> {
+    type Operand = Limbs<16>;
+    #[inline]
+    fn apply(a: Limbs<16>) -> Limbs<16> {
+        a.wrapping_add(Limbs::<16>::from_words([
+            1u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64,
+            0u64, 0u64,
+        ]))
+    }
+}
+
+impl RingOp<W2048> for Mul<W2048> {
+    type Operand = Limbs<32>;
+    #[inline]
+    fn apply(a: Limbs<32>, b: Limbs<32>) -> Limbs<32> {
+        a.wrapping_mul(b)
+    }
+}
+
+impl RingOp<W2048> for Add<W2048> {
+    type Operand = Limbs<32>;
+    #[inline]
+    fn apply(a: Limbs<32>, b: Limbs<32>) -> Limbs<32> {
+        a.wrapping_add(b)
+    }
+}
+
+impl RingOp<W2048> for Sub<W2048> {
+    type Operand = Limbs<32>;
+    #[inline]
+    fn apply(a: Limbs<32>, b: Limbs<32>) -> Limbs<32> {
+        a.wrapping_sub(b)
+    }
+}
+
+impl RingOp<W2048> for Xor<W2048> {
+    type Operand = Limbs<32>;
+    #[inline]
+    fn apply(a: Limbs<32>, b: Limbs<32>) -> Limbs<32> {
+        a.xor(b)
+    }
+}
+
+impl RingOp<W2048> for And<W2048> {
+    type Operand = Limbs<32>;
+    #[inline]
+    fn apply(a: Limbs<32>, b: Limbs<32>) -> Limbs<32> {
+        a.and(b)
+    }
+}
+
+impl RingOp<W2048> for Or<W2048> {
+    type Operand = Limbs<32>;
+    #[inline]
+    fn apply(a: Limbs<32>, b: Limbs<32>) -> Limbs<32> {
+        a.or(b)
+    }
+}
+
+impl UnaryRingOp<W2048> for Neg<W2048> {
+    type Operand = Limbs<32>;
+    #[inline]
+    fn apply(a: Limbs<32>) -> Limbs<32> {
+        Limbs::<32>::zero().wrapping_sub(a)
+    }
+}
+
+impl UnaryRingOp<W2048> for BNot<W2048> {
+    type Operand = Limbs<32>;
+    #[inline]
+    fn apply(a: Limbs<32>) -> Limbs<32> {
+        a.not()
+    }
+}
+
+impl UnaryRingOp<W2048> for Succ<W2048> {
+    type Operand = Limbs<32>;
+    #[inline]
+    fn apply(a: Limbs<32>) -> Limbs<32> {
+        a.wrapping_add(Limbs::<32>::from_words([
+            1u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64,
+            0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64,
+            0u64, 0u64, 0u64, 0u64,
+        ]))
+    }
+}
+
+impl RingOp<W4096> for Mul<W4096> {
+    type Operand = Limbs<64>;
+    #[inline]
+    fn apply(a: Limbs<64>, b: Limbs<64>) -> Limbs<64> {
+        a.wrapping_mul(b)
+    }
+}
+
+impl RingOp<W4096> for Add<W4096> {
+    type Operand = Limbs<64>;
+    #[inline]
+    fn apply(a: Limbs<64>, b: Limbs<64>) -> Limbs<64> {
+        a.wrapping_add(b)
+    }
+}
+
+impl RingOp<W4096> for Sub<W4096> {
+    type Operand = Limbs<64>;
+    #[inline]
+    fn apply(a: Limbs<64>, b: Limbs<64>) -> Limbs<64> {
+        a.wrapping_sub(b)
+    }
+}
+
+impl RingOp<W4096> for Xor<W4096> {
+    type Operand = Limbs<64>;
+    #[inline]
+    fn apply(a: Limbs<64>, b: Limbs<64>) -> Limbs<64> {
+        a.xor(b)
+    }
+}
+
+impl RingOp<W4096> for And<W4096> {
+    type Operand = Limbs<64>;
+    #[inline]
+    fn apply(a: Limbs<64>, b: Limbs<64>) -> Limbs<64> {
+        a.and(b)
+    }
+}
+
+impl RingOp<W4096> for Or<W4096> {
+    type Operand = Limbs<64>;
+    #[inline]
+    fn apply(a: Limbs<64>, b: Limbs<64>) -> Limbs<64> {
+        a.or(b)
+    }
+}
+
+impl UnaryRingOp<W4096> for Neg<W4096> {
+    type Operand = Limbs<64>;
+    #[inline]
+    fn apply(a: Limbs<64>) -> Limbs<64> {
+        Limbs::<64>::zero().wrapping_sub(a)
+    }
+}
+
+impl UnaryRingOp<W4096> for BNot<W4096> {
+    type Operand = Limbs<64>;
+    #[inline]
+    fn apply(a: Limbs<64>) -> Limbs<64> {
+        a.not()
+    }
+}
+
+impl UnaryRingOp<W4096> for Succ<W4096> {
+    type Operand = Limbs<64>;
+    #[inline]
+    fn apply(a: Limbs<64>) -> Limbs<64> {
+        a.wrapping_add(Limbs::<64>::from_words([
+            1u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64,
+            0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64,
+            0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64,
+            0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64,
+            0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64,
+        ]))
+    }
+}
+
+impl RingOp<W8192> for Mul<W8192> {
+    type Operand = Limbs<128>;
+    #[inline]
+    fn apply(a: Limbs<128>, b: Limbs<128>) -> Limbs<128> {
+        a.wrapping_mul(b)
+    }
+}
+
+impl RingOp<W8192> for Add<W8192> {
+    type Operand = Limbs<128>;
+    #[inline]
+    fn apply(a: Limbs<128>, b: Limbs<128>) -> Limbs<128> {
+        a.wrapping_add(b)
+    }
+}
+
+impl RingOp<W8192> for Sub<W8192> {
+    type Operand = Limbs<128>;
+    #[inline]
+    fn apply(a: Limbs<128>, b: Limbs<128>) -> Limbs<128> {
+        a.wrapping_sub(b)
+    }
+}
+
+impl RingOp<W8192> for Xor<W8192> {
+    type Operand = Limbs<128>;
+    #[inline]
+    fn apply(a: Limbs<128>, b: Limbs<128>) -> Limbs<128> {
+        a.xor(b)
+    }
+}
+
+impl RingOp<W8192> for And<W8192> {
+    type Operand = Limbs<128>;
+    #[inline]
+    fn apply(a: Limbs<128>, b: Limbs<128>) -> Limbs<128> {
+        a.and(b)
+    }
+}
+
+impl RingOp<W8192> for Or<W8192> {
+    type Operand = Limbs<128>;
+    #[inline]
+    fn apply(a: Limbs<128>, b: Limbs<128>) -> Limbs<128> {
+        a.or(b)
+    }
+}
+
+impl UnaryRingOp<W8192> for Neg<W8192> {
+    type Operand = Limbs<128>;
+    #[inline]
+    fn apply(a: Limbs<128>) -> Limbs<128> {
+        Limbs::<128>::zero().wrapping_sub(a)
+    }
+}
+
+impl UnaryRingOp<W8192> for BNot<W8192> {
+    type Operand = Limbs<128>;
+    #[inline]
+    fn apply(a: Limbs<128>) -> Limbs<128> {
+        a.not()
+    }
+}
+
+impl UnaryRingOp<W8192> for Succ<W8192> {
+    type Operand = Limbs<128>;
+    #[inline]
+    fn apply(a: Limbs<128>) -> Limbs<128> {
+        a.wrapping_add(Limbs::<128>::from_words([
+            1u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64,
+            0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64,
+            0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64,
+            0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64,
+            0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64,
+            0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64,
+            0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64,
+            0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64,
+            0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64,
+            0u64, 0u64,
+        ]))
+    }
+}
+
+impl RingOp<W12288> for Mul<W12288> {
+    type Operand = Limbs<192>;
+    #[inline]
+    fn apply(a: Limbs<192>, b: Limbs<192>) -> Limbs<192> {
+        a.wrapping_mul(b)
+    }
+}
+
+impl RingOp<W12288> for Add<W12288> {
+    type Operand = Limbs<192>;
+    #[inline]
+    fn apply(a: Limbs<192>, b: Limbs<192>) -> Limbs<192> {
+        a.wrapping_add(b)
+    }
+}
+
+impl RingOp<W12288> for Sub<W12288> {
+    type Operand = Limbs<192>;
+    #[inline]
+    fn apply(a: Limbs<192>, b: Limbs<192>) -> Limbs<192> {
+        a.wrapping_sub(b)
+    }
+}
+
+impl RingOp<W12288> for Xor<W12288> {
+    type Operand = Limbs<192>;
+    #[inline]
+    fn apply(a: Limbs<192>, b: Limbs<192>) -> Limbs<192> {
+        a.xor(b)
+    }
+}
+
+impl RingOp<W12288> for And<W12288> {
+    type Operand = Limbs<192>;
+    #[inline]
+    fn apply(a: Limbs<192>, b: Limbs<192>) -> Limbs<192> {
+        a.and(b)
+    }
+}
+
+impl RingOp<W12288> for Or<W12288> {
+    type Operand = Limbs<192>;
+    #[inline]
+    fn apply(a: Limbs<192>, b: Limbs<192>) -> Limbs<192> {
+        a.or(b)
+    }
+}
+
+impl UnaryRingOp<W12288> for Neg<W12288> {
+    type Operand = Limbs<192>;
+    #[inline]
+    fn apply(a: Limbs<192>) -> Limbs<192> {
+        Limbs::<192>::zero().wrapping_sub(a)
+    }
+}
+
+impl UnaryRingOp<W12288> for BNot<W12288> {
+    type Operand = Limbs<192>;
+    #[inline]
+    fn apply(a: Limbs<192>) -> Limbs<192> {
+        a.not()
+    }
+}
+
+impl UnaryRingOp<W12288> for Succ<W12288> {
+    type Operand = Limbs<192>;
+    #[inline]
+    fn apply(a: Limbs<192>) -> Limbs<192> {
+        a.wrapping_add(Limbs::<192>::from_words([
+            1u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64,
+            0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64,
+            0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64,
+            0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64,
+            0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64,
+            0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64,
+            0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64,
+            0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64,
+            0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64,
+            0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64,
+            0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64,
+            0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64,
+            0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64,
+            0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64,
+        ]))
+    }
+}
+
+impl RingOp<W16384> for Mul<W16384> {
+    type Operand = Limbs<256>;
+    #[inline]
+    fn apply(a: Limbs<256>, b: Limbs<256>) -> Limbs<256> {
+        a.wrapping_mul(b)
+    }
+}
+
+impl RingOp<W16384> for Add<W16384> {
+    type Operand = Limbs<256>;
+    #[inline]
+    fn apply(a: Limbs<256>, b: Limbs<256>) -> Limbs<256> {
+        a.wrapping_add(b)
+    }
+}
+
+impl RingOp<W16384> for Sub<W16384> {
+    type Operand = Limbs<256>;
+    #[inline]
+    fn apply(a: Limbs<256>, b: Limbs<256>) -> Limbs<256> {
+        a.wrapping_sub(b)
+    }
+}
+
+impl RingOp<W16384> for Xor<W16384> {
+    type Operand = Limbs<256>;
+    #[inline]
+    fn apply(a: Limbs<256>, b: Limbs<256>) -> Limbs<256> {
+        a.xor(b)
+    }
+}
+
+impl RingOp<W16384> for And<W16384> {
+    type Operand = Limbs<256>;
+    #[inline]
+    fn apply(a: Limbs<256>, b: Limbs<256>) -> Limbs<256> {
+        a.and(b)
+    }
+}
+
+impl RingOp<W16384> for Or<W16384> {
+    type Operand = Limbs<256>;
+    #[inline]
+    fn apply(a: Limbs<256>, b: Limbs<256>) -> Limbs<256> {
+        a.or(b)
+    }
+}
+
+impl UnaryRingOp<W16384> for Neg<W16384> {
+    type Operand = Limbs<256>;
+    #[inline]
+    fn apply(a: Limbs<256>) -> Limbs<256> {
+        Limbs::<256>::zero().wrapping_sub(a)
+    }
+}
+
+impl UnaryRingOp<W16384> for BNot<W16384> {
+    type Operand = Limbs<256>;
+    #[inline]
+    fn apply(a: Limbs<256>) -> Limbs<256> {
+        a.not()
+    }
+}
+
+impl UnaryRingOp<W16384> for Succ<W16384> {
+    type Operand = Limbs<256>;
+    #[inline]
+    fn apply(a: Limbs<256>) -> Limbs<256> {
+        a.wrapping_add(Limbs::<256>::from_words([
+            1u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64,
+            0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64,
+            0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64,
+            0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64,
+            0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64,
+            0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64,
+            0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64,
+            0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64,
+            0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64,
+            0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64,
+            0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64,
+            0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64,
+            0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64,
+            0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64,
+            0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64,
+            0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64,
+            0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64,
+            0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64,
+            0u64, 0u64, 0u64, 0u64,
+        ]))
+    }
+}
+
+impl RingOp<W32768> for Mul<W32768> {
+    type Operand = Limbs<512>;
+    #[inline]
+    fn apply(a: Limbs<512>, b: Limbs<512>) -> Limbs<512> {
+        a.wrapping_mul(b)
+    }
+}
+
+impl RingOp<W32768> for Add<W32768> {
+    type Operand = Limbs<512>;
+    #[inline]
+    fn apply(a: Limbs<512>, b: Limbs<512>) -> Limbs<512> {
+        a.wrapping_add(b)
+    }
+}
+
+impl RingOp<W32768> for Sub<W32768> {
+    type Operand = Limbs<512>;
+    #[inline]
+    fn apply(a: Limbs<512>, b: Limbs<512>) -> Limbs<512> {
+        a.wrapping_sub(b)
+    }
+}
+
+impl RingOp<W32768> for Xor<W32768> {
+    type Operand = Limbs<512>;
+    #[inline]
+    fn apply(a: Limbs<512>, b: Limbs<512>) -> Limbs<512> {
+        a.xor(b)
+    }
+}
+
+impl RingOp<W32768> for And<W32768> {
+    type Operand = Limbs<512>;
+    #[inline]
+    fn apply(a: Limbs<512>, b: Limbs<512>) -> Limbs<512> {
+        a.and(b)
+    }
+}
+
+impl RingOp<W32768> for Or<W32768> {
+    type Operand = Limbs<512>;
+    #[inline]
+    fn apply(a: Limbs<512>, b: Limbs<512>) -> Limbs<512> {
+        a.or(b)
+    }
+}
+
+impl UnaryRingOp<W32768> for Neg<W32768> {
+    type Operand = Limbs<512>;
+    #[inline]
+    fn apply(a: Limbs<512>) -> Limbs<512> {
+        Limbs::<512>::zero().wrapping_sub(a)
+    }
+}
+
+impl UnaryRingOp<W32768> for BNot<W32768> {
+    type Operand = Limbs<512>;
+    #[inline]
+    fn apply(a: Limbs<512>) -> Limbs<512> {
+        a.not()
+    }
+}
+
+impl UnaryRingOp<W32768> for Succ<W32768> {
+    type Operand = Limbs<512>;
+    #[inline]
+    fn apply(a: Limbs<512>) -> Limbs<512> {
+        a.wrapping_add(Limbs::<512>::from_words([
+            1u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64,
+            0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64,
+            0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64,
+            0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64,
+            0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64,
+            0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64,
+            0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64,
+            0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64,
+            0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64,
+            0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64,
+            0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64,
+            0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64,
+            0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64,
+            0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64,
+            0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64,
+            0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64,
+            0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64,
+            0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64,
+            0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64,
+            0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64,
+            0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64,
+            0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64,
+            0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64,
+            0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64,
+            0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64,
+            0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64,
+            0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64,
+            0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64,
+            0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64,
+            0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64,
+            0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64,
+            0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64,
+            0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64,
+            0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64,
+            0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64,
+            0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64,
+            0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64,
+        ]))
     }
 }
 

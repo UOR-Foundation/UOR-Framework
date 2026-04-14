@@ -16,7 +16,11 @@ pub const NAMESPACES: usize = 33;
 /// 1 reduction:FailureField; 1 resolver:CertifyMapping; 1 conformance:PreludeExport).
 /// v0.2.1 Phase 7a: +3 (reduction:SatBound, reduction:TimingBound,
 /// type:ConstraintDefaults — parametric metadata for codegen).
-pub const CLASSES: usize = 457;
+/// v0.2.2 Phase A: +1 (observable:LandauerBudget — sealed carrier for accumulated
+/// Landauer cost; backs the Rust enforcement::LandauerBudget newtype that holds
+/// one of the two clocks of UorTime).
+/// v0.2.2 Phase C.4: +2 (cert:MultiplicationCertificate, resolver:MultiplicationResolver).
+pub const CLASSES: usize = 460;
 
 /// Total properties including the global `uor:space` annotation.
 ///
@@ -26,10 +30,14 @@ pub const CLASSES: usize = 457;
 /// 1 op:isRingOp — op:arity already existed as xsd:nonNegativeInteger).
 /// v0.2.2 W8: +4 (schema:triadStratum, schema:triadSpectrum, schema:triadAddress,
 /// state:groundedTriad — Triad bundling).
-pub const PROPERTIES: usize = 932;
+/// v0.2.2 Phase A: +1 (observable:landauerNats — accumulated Landauer cost on
+/// LandauerBudget, unit observable:Nats).
+/// v0.2.2 Phase C.4: +4 (cert:splittingFactor, cert:subMultiplicationCount,
+/// cert:landauerCostNats, linear:stackBudgetBytes).
+pub const PROPERTIES: usize = 937;
 
 /// Namespace-level properties only (excludes global annotation).
-pub const NAMESPACE_PROPERTIES: usize = 931;
+pub const NAMESPACE_PROPERTIES: usize = 936;
 
 /// Total named individuals across all namespaces.
 /// Includes 1870 AST term individuals (LiteralExpression / ForAllDeclaration)
@@ -41,12 +49,23 @@ pub const NAMESPACE_PROPERTIES: usize = 931;
 /// v0.2.2 W4+W14: +5 (morphism:DigestGroundingMap, morphism:BinaryGroundingMap,
 /// reduction:ShapeMismatch, two reduction:FailureField individuals for
 /// ShapeMismatch's `expected` and `got` fields).
-pub const INDIVIDUALS: usize = 3448;
+/// v0.2.2 Phase C.1: +4 (schema:W40, schema:W48, schema:W56, schema:W64 —
+/// dense u64-backed Witt levels).
+/// v0.2.2 Phase C.2: +8 (schema:W72, W80, W88, W96, W104, W112, W120, W128 —
+/// dense u128-backed Witt levels).
+/// v0.2.2 Phase C.3: +16 (schema:W160, W192, W224, W256, W384, W448, W512,
+/// W520, W528, W1024, W2048, W4096, W8192, W12288, W16384, W32768 —
+/// Limbs<N>-backed Witt levels covering semantically-meaningful intermediates
+/// and powers-of-two above native).
+/// v0.2.2 Phase C.4: +1 (resolver:multiplicationCertifyMapping).
+pub const INDIVIDUALS: usize = 3477;
 
 /// Number of SHACL test instance graphs.
 ///
 /// v0.2.1 Phase 7a: +1 (test278 SatBound/TimingBound/ConstraintDefaults fixture).
-pub const SHACL_TESTS: usize = 278;
+/// v0.2.2 Phase C.4: +1 (test279 MultiplicationCertificate +
+/// MultiplicationResolver + linear:stackBudgetBytes fixture).
+pub const SHACL_TESTS: usize = 279;
 
 /// Total conformance checks in the full suite.
 ///
@@ -56,7 +75,12 @@ pub const SHACL_TESTS: usize = 278;
 /// enforcement check.
 /// v0.2.2 W5: +1 from the `docs/psi_leakage` validator.
 /// v0.2.2 W6: +1 from the `rust/public_api_snapshot` validator.
-pub const CONFORMANCE_CHECKS: usize = 476;
+/// v0.2.2 Phase A: +1 from the `rust/uor_time_surface` validator.
+/// v0.2.2 Phase B: +1 from the `rust/phantom_tag` validator.
+/// v0.2.2 Phase C.4: +1 from the `test279` MultiplicationCertificate fixture.
+/// v0.2.2 Phase C verifiers: +1 from `rust/witt_tower_completeness`, +1 from
+/// `rust/multiplication_resolver`.
+pub const CONFORMANCE_CHECKS: usize = 481;
 
 /// Number of amendments applied to the base ontology.
 pub const AMENDMENTS: usize = 95;
@@ -82,7 +106,10 @@ pub const USER_NAMESPACES: usize = 3;
 /// v0.2.1 Phase 1: +31. Phase 7a: +7 from new parametric metadata properties.
 /// v0.2.2 W8: +4 (triadStratum, triadSpectrum, triadAddress on schema:Triad;
 /// groundedTriad on state:GroundedContext).
-pub const METHODS: usize = 895;
+/// v0.2.2 Phase A: +1 (landauerNats on observable:LandauerBudget).
+/// v0.2.2 Phase C.4: +4 (splittingFactor, subMultiplicationCount,
+/// landauerCostNats on MultiplicationCertificate; stackBudgetBytes on LinearBudget).
+pub const METHODS: usize = 900;
 
 /// Number of individual constant modules generated.
 pub const CONSTANT_MODULES: usize = 1501;
@@ -90,7 +117,8 @@ pub const CONSTANT_MODULES: usize = 1501;
 /// Number of Lean 4 structures generated (classes minus enum classes).
 ///
 /// v0.2.1 Phase 1: +13. Phase 7a: +3 (SatBound, TimingBound, ConstraintDefaults).
-pub const LEAN_STRUCTURES: usize = 426;
+/// v0.2.2 Phase C.4: +2 (MultiplicationCertificate, MultiplicationResolver).
+pub const LEAN_STRUCTURES: usize = 428;
 
 /// Number of Lean 4 inductive + structure types generated for the enum layer.
 ///
@@ -110,7 +138,15 @@ pub const LEAN_INDUCTIVES: usize = 22;
 ///
 /// v0.2.2 W4+W14: +5 (DigestGroundingMap, BinaryGroundingMap, ShapeMismatch,
 /// shapeMismatch_expected_field, shapeMismatch_got_field).
-pub const LEAN_CONSTANT_NAMESPACES: usize = 3348;
+/// v0.2.2 Phase C.4: +1 (multiplicationCertifyMapping — a resolver individual,
+/// not a WittLevel, so it gets a namespace block like the other CertifyMappings).
+///
+/// **Note**: WittLevel individuals (Phase C.1+) are NOT counted here. WittLevel
+/// is in `enum_class_names()` and its individuals are emitted as `def Wn` in
+/// `lean4/UOR/Enums.lean`, not as `namespace ... end` blocks. They contribute
+/// to the WittLevel def list (visible in `Enums.lean`) but not to the
+/// per-individual constant namespace count.
+pub const LEAN_CONSTANT_NAMESPACES: usize = 3349;
 
 /// Number of concept pages on the website (one per content/concepts/*.md file).
 pub const CONCEPT_PAGES: usize = 27;
