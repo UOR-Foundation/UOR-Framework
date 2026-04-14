@@ -1418,6 +1418,11 @@ pub fn validate() -> ConformanceReport {
         tests::fixtures::TEST279_MULTIPLICATION_CERTIFICATE,
         &mut report,
     );
+    run_test(
+        "test280_bridge_completion",
+        tests::fixtures::TEST280_BRIDGE_COMPLETION,
+        &mut report,
+    );
 
     // Verify test fixture count matches expected
     let test_count = report.results.len() - before_tests;

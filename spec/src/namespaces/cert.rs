@@ -193,6 +193,20 @@ fn classes() -> Vec<Class> {
             subclass_of: &["https://uor.foundation/cert/Certificate"],
             disjoint_with: &[],
         },
+        // v0.2.2 Phase E — PartitionCertificate attests the partition
+        // component classification of a Datum (Irreducible / Reducible /
+        // Units / Exterior).
+        Class {
+            id: "https://uor.foundation/cert/PartitionCertificate",
+            label: "PartitionCertificate",
+            comment: "A certificate attesting the partition component \
+                      classification of a Datum, assigning it to one of \
+                      Irreducible, Reducible, Units, or Exterior via the \
+                      partition:PartitionComponent enumeration. Produced by \
+                      the bridge partition walk during grounding.",
+            subclass_of: &["https://uor.foundation/cert/Certificate"],
+            disjoint_with: &[],
+        },
     ]
 }
 

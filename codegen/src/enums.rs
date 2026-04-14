@@ -139,6 +139,8 @@ pub fn detect_enums(ontology: &Ontology) -> Vec<DetectedEnum> {
     detect_vocabulary_enum(ontology, "schema", "QuantifierKind", &mut enums);
     detect_vocabulary_enum(ontology, "proof", "ProofStrategy", &mut enums);
     detect_vocabulary_enum(ontology, "conformance", "ViolationKind", &mut enums);
+    // v0.2.2 Phase E — PartitionComponent enum class.
+    detect_vocabulary_enum(ontology, "partition", "PartitionComponent", &mut enums);
 
     // 21. ProofModality enum (hardcoded — codegen enum, not an OWL class)
     enums.push(DetectedEnum {

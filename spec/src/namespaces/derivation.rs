@@ -146,6 +146,19 @@ fn classes() -> Vec<Class> {
             subclass_of: &["https://uor.foundation/observable/Observable"],
             disjoint_with: &[],
         },
+        // v0.2.2 Phase E — DerivationTrace: an ordered sequence of
+        // RewriteStep events produced by `Derivation::replay()`.
+        Class {
+            id: "https://uor.foundation/derivation/DerivationTrace",
+            label: "DerivationTrace",
+            comment: "An ordered sequence of derivation:RewriteStep events \
+                      produced by replaying a Derivation. Used by \
+                      uor-foundation-verify to re-derive a certificate from \
+                      a content-addressed trace without running the deciders. \
+                      The traceEventCount property records the trace length.",
+            subclass_of: &[OWL_THING],
+            disjoint_with: &[],
+        },
     ]
 }
 
@@ -432,6 +445,19 @@ fn properties() -> Vec<Property> {
             required: false,
             domain: Some("https://uor.foundation/derivation/InhabitanceCheckpoint"),
             range: XSD_INTEGER,
+        },
+        // v0.2.2 Phase E — trace event count on DerivationTrace.
+        Property {
+            id: "https://uor.foundation/derivation/traceEventCount",
+            label: "traceEventCount",
+            comment: "Number of RewriteStep events recorded in this \
+                      DerivationTrace. Used by Derivation::replay() to size \
+                      the fixed-capacity event arena without allocation.",
+            kind: PropertyKind::Datatype,
+            functional: true,
+            required: false,
+            domain: Some("https://uor.foundation/derivation/DerivationTrace"),
+            range: XSD_NON_NEGATIVE_INTEGER,
         },
     ]
 }

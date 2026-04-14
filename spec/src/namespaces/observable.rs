@@ -138,6 +138,31 @@ fn classes() -> Vec<Class> {
             subclass_of: &["https://uor.foundation/observable/MetricObservable"],
             disjoint_with: &[],
         },
+        // v0.2.2 Phase E — the grounding completion ratio observable.
+        Class {
+            id: "https://uor.foundation/observable/GroundingSigma",
+            label: "GroundingSigma",
+            comment: "Observes the grounding completion ratio \u{03C3} \u{2208} \
+                      [0, 1] of a context, where \u{03C3} = 1 indicates the \
+                      ground state (state:GroundedContext). Backs the \
+                      sigma_metric BaseMetric accessor on Grounded<T>.",
+            subclass_of: &["https://uor.foundation/observable/Observable"],
+            disjoint_with: &[],
+        },
+        // v0.2.2 Phase E — JacobianObservable: observes the per-site Jacobian
+        // row of a Datum at a particular WittLevel.
+        Class {
+            id: "https://uor.foundation/observable/JacobianObservable",
+            label: "JacobianObservable",
+            comment: "Observes the per-site Jacobian row of a Datum at a \
+                      particular WittLevel, computed as the sequence of \
+                      partial derivatives of the ring operation with respect \
+                      to each site coordinate. Backs the jacobian_metric \
+                      BaseMetric accessor on Grounded<T>; the Rust-side \
+                      JacobianMetric<L> is parametric over the level marker.",
+            subclass_of: &["https://uor.foundation/observable/Observable"],
+            disjoint_with: &[],
+        },
         // Measurement result types
         Class {
             id: "https://uor.foundation/observable/StratumValue",

@@ -389,6 +389,7 @@ impl Ontology {
             "VerificationDomain",
             "ViolationKind",
             "WittLevel",
+            "PartitionComponent",
         ]
     }
 }

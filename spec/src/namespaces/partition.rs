@@ -12,7 +12,7 @@
 //! **Space classification:** `bridge` — produced by the kernel, consumed by user-space.
 
 use crate::model::iris::*;
-use crate::model::{Class, Namespace, NamespaceModule, Property, PropertyKind, Space};
+use crate::model::{Class, Individual, Namespace, NamespaceModule, Property, PropertyKind, Space};
 
 /// Returns the `partition/` namespace module.
 #[must_use]
@@ -30,8 +30,46 @@ pub fn module() -> NamespaceModule {
         },
         classes: classes(),
         properties: properties(),
-        individuals: vec![],
+        individuals: individuals(),
     }
+}
+
+fn individuals() -> Vec<Individual> {
+    vec![
+        // v0.2.2 Phase E — PartitionComponent individuals (closed
+        // catalogue of 4 partition classifications).
+        Individual {
+            id: "https://uor.foundation/partition/Irreducible",
+            type_: "https://uor.foundation/partition/PartitionComponent",
+            label: "Irreducible",
+            comment: "The irreducible component: elements that admit no \
+                      non-trivial factorization within the ring.",
+            properties: &[],
+        },
+        Individual {
+            id: "https://uor.foundation/partition/Reducible",
+            type_: "https://uor.foundation/partition/PartitionComponent",
+            label: "Reducible",
+            comment: "The reducible component: elements that factor into \
+                      non-trivial parts.",
+            properties: &[],
+        },
+        Individual {
+            id: "https://uor.foundation/partition/Units",
+            type_: "https://uor.foundation/partition/PartitionComponent",
+            label: "Units",
+            comment: "The unit component: invertible elements of the ring.",
+            properties: &[],
+        },
+        Individual {
+            id: "https://uor.foundation/partition/Exterior",
+            type_: "https://uor.foundation/partition/PartitionComponent",
+            label: "Exterior",
+            comment: "The exterior component: elements outside the factorization \
+                      domain (e.g., zero or ring-boundary values).",
+            properties: &[],
+        },
+    ]
 }
 
 fn classes() -> Vec<Class> {
@@ -177,6 +215,18 @@ fn classes() -> Vec<Class> {
                       sites at the moment of observation. Used as the bound \
                       observable for the siteConstraintKind BoundConstraint.",
             subclass_of: &["https://uor.foundation/observable/Observable"],
+            disjoint_with: &[],
+        },
+        // v0.2.2 Phase E — enum class classifying partition components.
+        Class {
+            id: "https://uor.foundation/partition/PartitionComponent",
+            label: "PartitionComponent",
+            comment: "Closed enumeration of partition component kinds: \
+                      Irreducible (non-factorizable), Reducible (factorizable \
+                      into non-trivial parts), Units (invertible), Exterior \
+                      (outside the factorization domain). Codegen treats this \
+                      as an enum class with exactly 4 individuals.",
+            subclass_of: &[OWL_THING],
             disjoint_with: &[],
         },
     ]

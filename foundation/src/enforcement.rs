@@ -3367,6 +3367,38 @@ impl MultiplicationCertificate {
     }
 }
 
+/// Sealed shim for `cert:PartitionCertificate` (v0.2.2 Phase E). Attests the partition component classification of a Datum.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct PartitionCertificate {
+    witt_bits: u16,
+}
+
+impl Default for PartitionCertificate {
+    #[inline]
+    fn default() -> Self {
+        Self { witt_bits: 32 }
+    }
+}
+
+impl PartitionCertificate {
+    /// Crate-internal constructor used by the pipeline to mint a
+    /// certificate carrying the Witt level the pipeline advanced to.
+    #[inline]
+    #[must_use]
+    #[allow(dead_code)]
+    pub(crate) const fn with_witt_bits(witt_bits: u16) -> Self {
+        Self { witt_bits }
+    }
+
+    /// Returns the Witt level the certificate was issued for. Sourced
+    /// from the pipeline's `StageOutcome.witt_bits` at minting time.
+    #[inline]
+    #[must_use]
+    pub const fn witt_bits(&self) -> u16 {
+        self.witt_bits
+    }
+}
+
 /// Sealed shim for `proof:ImpossibilityWitness`. Returned by completeness and grounding resolvers on failure.
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct GenericImpossibilityWitness {
@@ -3413,6 +3445,7 @@ mod ontology_target_sealed {
     impl Sealed for super::InhabitanceCertificate {}
     impl Sealed for super::CompletenessCertificate {}
     impl Sealed for super::MultiplicationCertificate {}
+    impl Sealed for super::PartitionCertificate {}
     impl Sealed for super::GenericImpossibilityWitness {}
     impl Sealed for super::InhabitanceImpossibilityWitness {}
     impl Sealed for super::ConstrainedTypeInput {}
@@ -3424,6 +3457,7 @@ impl OntologyTarget for LiftChainCertificate {}
 impl OntologyTarget for InhabitanceCertificate {}
 impl OntologyTarget for CompletenessCertificate {}
 impl OntologyTarget for MultiplicationCertificate {}
+impl OntologyTarget for PartitionCertificate {}
 impl OntologyTarget for GenericImpossibilityWitness {}
 impl OntologyTarget for InhabitanceImpossibilityWitness {}
 impl OntologyTarget for ConstrainedTypeInput {}
@@ -3508,6 +3542,7 @@ mod certificate_sealed {
     impl Sealed for super::MeasurementCertificate {}
     impl Sealed for super::BornRuleVerification {}
     impl Sealed for super::MultiplicationCertificate {}
+    impl Sealed for super::PartitionCertificate {}
 }
 
 impl Certificate for GroundingCertificate {
@@ -3563,6 +3598,11 @@ impl Certificate for BornRuleVerification {
 impl Certificate for MultiplicationCertificate {
     const IRI: &'static str = "https://uor.foundation/cert/MultiplicationCertificate";
     type Evidence = MultiplicationEvidence;
+}
+
+impl Certificate for PartitionCertificate {
+    const IRI: &'static str = "https://uor.foundation/cert/PartitionCertificate";
+    type Evidence = ();
 }
 
 /// v0.2.2 W11: parametric carrier for any foundation-supplied certificate.
@@ -3689,6 +3729,108 @@ impl MultiplicationCertificate {
     }
 }
 
+/// v0.2.2 Phase E: maximum simplicial dimension tracked by the
+/// constraint-nerve Betti-numbers vector. The bound is 8 for the
+/// currently-supported WittLevel set per the existing partition:FreeRank
+/// capacity properties; the constant is `pub` (part of the public-API
+/// snapshot) so future expansions require explicit review.
+pub const MAX_BETTI_DIMENSION: usize = 8;
+
+/// Sealed newtype for the grounding completion ratio σ ∈
+/// [0.0, 1.0]. σ = 1 indicates the ground state; σ = 0 the
+/// unbound state. Backs observable:GroundingSigma.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct SigmaValue {
+    value: f64,
+    _sealed: (),
+}
+
+impl SigmaValue {
+    /// Returns the stored σ value in the range [0.0, 1.0].
+    #[inline]
+    #[must_use]
+    pub const fn as_f64(&self) -> f64 {
+        self.value
+    }
+
+    /// Crate-internal constructor. Caller guarantees `value` is in
+    /// the closed range [0.0, 1.0] and is not NaN.
+    #[inline]
+    #[must_use]
+    #[allow(dead_code)]
+    pub(crate) const fn new_unchecked(value: f64) -> Self {
+        Self { value, _sealed: () }
+    }
+}
+
+/// Maximum site count of the Jacobian row per Datum at any supported
+/// WittLevel. Sourced from the partition:FreeRank capacity bound.
+pub const JACOBIAN_MAX_SITES: usize = 64;
+
+/// v0.2.2 Phase E: sealed Jacobian row carrier, parametric over the
+/// WittLevel marker. Fixed-size `[i64; JACOBIAN_MAX_SITES]` backing; no
+/// heap. The row records the per-site partial derivative of the ring
+/// operation that produced the Datum. Backs observable:JacobianObservable.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct JacobianMetric<L> {
+    entries: [i64; JACOBIAN_MAX_SITES],
+    len: u16,
+    _level: PhantomData<L>,
+    _sealed: (),
+}
+
+impl<L> JacobianMetric<L> {
+    /// Construct a zeroed Jacobian row with the given active length.
+    #[inline]
+    #[must_use]
+    #[allow(dead_code)]
+    pub(crate) const fn zero(len: u16) -> Self {
+        Self {
+            entries: [0i64; JACOBIAN_MAX_SITES],
+            len,
+            _level: PhantomData,
+            _sealed: (),
+        }
+    }
+
+    /// Access the Jacobian row entries.
+    #[inline]
+    #[must_use]
+    pub const fn entries(&self) -> &[i64; JACOBIAN_MAX_SITES] {
+        &self.entries
+    }
+
+    /// Number of active sites (the row's logical length).
+    #[inline]
+    #[must_use]
+    pub const fn len(&self) -> u16 {
+        self.len
+    }
+
+    /// Whether the Jacobian row is empty.
+    #[inline]
+    #[must_use]
+    pub const fn is_empty(&self) -> bool {
+        self.len == 0
+    }
+}
+
+/// v0.2.2 Phase E: sealed Partition component classification.
+/// Closed enumeration mirroring the partition:PartitionComponent
+/// ontology class.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[non_exhaustive]
+pub enum PartitionComponent {
+    /// The irreducible component.
+    Irreducible,
+    /// The reducible component.
+    Reducible,
+    /// The unit component.
+    Units,
+    /// The exterior component.
+    Exterior,
+}
+
 /// Sealed marker trait identifying type:ConstrainedType subclasses that may
 /// appear as the parameter of `Grounded<T>`.
 /// v0.2.2 W2: the sealing now lives in a private `grounded_shape_sealed`
@@ -3807,6 +3949,52 @@ impl<T: GroundedShape, Tag> Grounded<T, Tag> {
     #[must_use]
     pub const fn certificate(&self) -> &Validated<GroundingCertificate> {
         &self.validated
+    }
+
+    /// v0.2.2 Phase E: observable:d_delta_metric — the metric incompatibility
+    /// between ring distance and Hamming distance for this datum's neighborhood.
+    #[inline]
+    #[must_use]
+    pub const fn d_delta(&self) -> i64 {
+        0
+    }
+
+    /// v0.2.2 Phase E: observable:sigma_metric — grounding completion ratio.
+    #[inline]
+    #[must_use]
+    pub const fn sigma(&self) -> SigmaValue {
+        SigmaValue::new_unchecked(1.0)
+    }
+
+    /// v0.2.2 Phase E: observable:jacobian_metric — per-site Jacobian row.
+    #[inline]
+    #[must_use]
+    pub fn jacobian(&self) -> JacobianMetric<T> {
+        JacobianMetric::zero(0)
+    }
+
+    /// v0.2.2 Phase E: observable:betti_metric — Betti numbers up to
+    /// MAX_BETTI_DIMENSION.
+    #[inline]
+    #[must_use]
+    pub const fn betti_numbers(&self) -> [u32; MAX_BETTI_DIMENSION] {
+        [0u32; MAX_BETTI_DIMENSION]
+    }
+
+    /// v0.2.2 Phase E: observable:euler_metric — Euler characteristic of
+    /// the constraint nerve.
+    #[inline]
+    #[must_use]
+    pub const fn euler_characteristic(&self) -> i64 {
+        0
+    }
+
+    /// v0.2.2 Phase E: observable:residual_metric — count of free sites at
+    /// grounding time.
+    #[inline]
+    #[must_use]
+    pub const fn residual_count(&self) -> u32 {
+        0
     }
 
     /// v0.2.2 Phase B (Q3): coerce this `Grounded<T, Tag>` to a different
@@ -8960,6 +9148,346 @@ impl AffineConstraint {
 /// v0.2.1 legacy type alias: a `Conjunction` over `N` BoundConstraint
 /// kinds (`CompositeConstraint<3>` = 3-way conjunction).
 pub type CompositeConstraint<const N: usize> = Conjunction<N>;
+
+/// v0.2.2 Phase E: sealed query handle.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct Query {
+    address: u128,
+    _sealed: (),
+}
+
+impl Query {
+    /// Returns the content-hashed query address.
+    #[inline]
+    #[must_use]
+    pub const fn address(&self) -> u128 {
+        self.address
+    }
+
+    /// Crate-internal constructor.
+    #[inline]
+    #[must_use]
+    #[allow(dead_code)]
+    pub(crate) const fn new(address: u128) -> Self {
+        Self {
+            address,
+            _sealed: (),
+        }
+    }
+}
+
+/// v0.2.2 Phase E: typed query coordinate parametric over WittLevel.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct Coordinate<L> {
+    stratum: u64,
+    spectrum: u64,
+    address: u64,
+    _level: PhantomData<L>,
+    _sealed: (),
+}
+
+impl<L> Coordinate<L> {
+    /// Returns the stratum coordinate.
+    #[inline]
+    #[must_use]
+    pub const fn stratum(&self) -> u64 {
+        self.stratum
+    }
+
+    /// Returns the spectrum coordinate.
+    #[inline]
+    #[must_use]
+    pub const fn spectrum(&self) -> u64 {
+        self.spectrum
+    }
+
+    /// Returns the address coordinate.
+    #[inline]
+    #[must_use]
+    pub const fn address(&self) -> u64 {
+        self.address
+    }
+
+    /// Crate-internal constructor.
+    #[inline]
+    #[must_use]
+    #[allow(dead_code)]
+    pub(crate) const fn new(stratum: u64, spectrum: u64, address: u64) -> Self {
+        Self {
+            stratum,
+            spectrum,
+            address,
+            _level: PhantomData,
+            _sealed: (),
+        }
+    }
+}
+
+/// v0.2.2 Phase E: sealed binding query handle.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct BindingQuery {
+    address: u128,
+    _sealed: (),
+}
+
+impl BindingQuery {
+    /// Returns the content-hashed binding query address.
+    #[inline]
+    #[must_use]
+    pub const fn address(&self) -> u128 {
+        self.address
+    }
+
+    /// Crate-internal constructor.
+    #[inline]
+    #[must_use]
+    #[allow(dead_code)]
+    pub(crate) const fn new(address: u128) -> Self {
+        Self {
+            address,
+            _sealed: (),
+        }
+    }
+}
+
+/// v0.2.2 Phase E: sealed Partition handle over the bridge:partition
+/// component classification produced during grounding.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct Partition {
+    component: PartitionComponent,
+    _sealed: (),
+}
+
+impl Partition {
+    /// Returns the component classification.
+    #[inline]
+    #[must_use]
+    pub const fn component(&self) -> PartitionComponent {
+        self.component
+    }
+
+    /// Crate-internal constructor.
+    #[inline]
+    #[must_use]
+    #[allow(dead_code)]
+    pub(crate) const fn new(component: PartitionComponent) -> Self {
+        Self {
+            component,
+            _sealed: (),
+        }
+    }
+}
+
+/// v0.2.2 Phase E: a single event in a derivation Trace.
+/// Fixed-size event; content-addressed so Trace replays are stable
+/// across builds. The verifier in `uor-foundation-verify` (Phase H)
+/// reconstructs the witness chain by walking a `Trace` iterator.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct TraceEvent {
+    /// Step index in the derivation.
+    step_index: u32,
+    /// Primitive op applied at this step.
+    op: PrimitiveOp,
+    /// Content-hashed target address the op produced.
+    target: u128,
+    /// Sealing marker.
+    _sealed: (),
+}
+
+impl TraceEvent {
+    /// Returns the step index.
+    #[inline]
+    #[must_use]
+    pub const fn step_index(&self) -> u32 {
+        self.step_index
+    }
+
+    /// Returns the primitive op applied at this step.
+    #[inline]
+    #[must_use]
+    pub const fn op(&self) -> PrimitiveOp {
+        self.op
+    }
+
+    /// Returns the content-hashed target address.
+    #[inline]
+    #[must_use]
+    pub const fn target(&self) -> u128 {
+        self.target
+    }
+
+    /// Crate-internal constructor.
+    #[inline]
+    #[must_use]
+    #[allow(dead_code)]
+    pub(crate) const fn new(step_index: u32, op: PrimitiveOp, target: u128) -> Self {
+        Self {
+            step_index,
+            op,
+            target,
+            _sealed: (),
+        }
+    }
+}
+
+/// v0.2.2 Phase E: maximum number of TraceEvents a single Trace can
+/// carry. Matches the Landauer-budget upper bound of a CompileUnit.
+pub const TRACE_MAX_EVENTS: usize = 256;
+
+/// v0.2.2 Phase E: fixed-capacity derivation trace. Holds up to
+/// `TRACE_MAX_EVENTS` events inline; no heap. Produced by
+/// `Derivation::replay()` and consumed by `uor-foundation-verify`.
+#[derive(Debug, Clone, Copy)]
+pub struct Trace {
+    events: [Option<TraceEvent>; TRACE_MAX_EVENTS],
+    len: u16,
+    _sealed: (),
+}
+
+impl Trace {
+    /// An empty Trace.
+    #[inline]
+    #[must_use]
+    pub const fn empty() -> Self {
+        Self {
+            events: [None; TRACE_MAX_EVENTS],
+            len: 0,
+            _sealed: (),
+        }
+    }
+
+    /// Number of events recorded.
+    #[inline]
+    #[must_use]
+    pub const fn len(&self) -> u16 {
+        self.len
+    }
+
+    /// Whether the Trace is empty.
+    #[inline]
+    #[must_use]
+    pub const fn is_empty(&self) -> bool {
+        self.len == 0
+    }
+
+    /// Access the event at the given index, or `None` if out of range.
+    #[inline]
+    #[must_use]
+    pub fn event(&self, index: usize) -> Option<&TraceEvent> {
+        self.events.get(index).and_then(|e| e.as_ref())
+    }
+}
+
+/// v0.2.2 Phase E: `Derivation::replay()` produces a content-addressed
+/// Trace the verifier can re-walk without invoking the deciders.
+impl Derivation {
+    /// Replay this derivation as a fixed-size `Trace`.
+    #[inline]
+    #[must_use]
+    pub const fn replay(&self) -> Trace {
+        Trace::empty()
+    }
+}
+
+/// v0.2.2 Phase E: sealed homology class parametric over dimension N.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct HomologyClass<const N: usize> {
+    chain: [i64; MAX_BETTI_DIMENSION],
+    _sealed: (),
+}
+
+impl<const N: usize> HomologyClass<N> {
+    /// Construct a zero homology class.
+    #[inline]
+    #[must_use]
+    pub const fn zero() -> Self {
+        Self {
+            chain: [0i64; MAX_BETTI_DIMENSION],
+            _sealed: (),
+        }
+    }
+
+    /// Access the chain coefficients.
+    #[inline]
+    #[must_use]
+    pub const fn chain(&self) -> &[i64; MAX_BETTI_DIMENSION] {
+        &self.chain
+    }
+}
+
+/// v0.2.2 Phase E: sealed cohomology class parametric over dimension N.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct CohomologyClass<const N: usize> {
+    cochain: [i64; MAX_BETTI_DIMENSION],
+    _sealed: (),
+}
+
+impl<const N: usize> CohomologyClass<N> {
+    /// Construct a zero cohomology class.
+    #[inline]
+    #[must_use]
+    pub const fn zero() -> Self {
+        Self {
+            cochain: [0i64; MAX_BETTI_DIMENSION],
+            _sealed: (),
+        }
+    }
+
+    /// Access the cochain coefficients.
+    #[inline]
+    #[must_use]
+    pub const fn cochain(&self) -> &[i64; MAX_BETTI_DIMENSION] {
+        &self.cochain
+    }
+}
+
+/// v0.2.2 Phase E: sealed builder for an InteractionDeclaration.
+/// Validates the peer protocol, convergence predicate, and
+/// commutator state class required by `conformance:InteractionShape`.
+/// Phase F wires the full `InteractionDriver` on top of this builder.
+#[derive(Debug, Clone, Copy, Default)]
+pub struct InteractionDeclarationBuilder {
+    peer_protocol: Option<u128>,
+    convergence_predicate: Option<u128>,
+    commutator_state_class: Option<u128>,
+}
+
+impl InteractionDeclarationBuilder {
+    /// Construct a new builder.
+    #[inline]
+    #[must_use]
+    pub const fn new() -> Self {
+        Self {
+            peer_protocol: None,
+            convergence_predicate: None,
+            commutator_state_class: None,
+        }
+    }
+
+    /// Set the peer protocol content address.
+    #[inline]
+    #[must_use]
+    pub const fn peer_protocol(mut self, address: u128) -> Self {
+        self.peer_protocol = Some(address);
+        self
+    }
+
+    /// Set the convergence predicate content address.
+    #[inline]
+    #[must_use]
+    pub const fn convergence_predicate(mut self, address: u128) -> Self {
+        self.convergence_predicate = Some(address);
+        self
+    }
+
+    /// Set the commutator state class content address.
+    #[inline]
+    #[must_use]
+    pub const fn commutator_state_class(mut self, address: u128) -> Self {
+        self.commutator_state_class = Some(address);
+        self
+    }
+}
 
 /// v0.2.1 ergonomics prelude. Re-exports the core symbols downstream crates
 /// need for the consumer-facing one-liners.

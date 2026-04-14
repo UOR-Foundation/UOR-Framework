@@ -99,6 +99,9 @@ fn detect_enums(ontology: &Ontology) -> Vec<DetectedEnum> {
     detect_vocabulary_enum(ontology, "proof", "ProofStrategy", &mut enums);
     detect_vocabulary_enum(ontology, "schema", "QuantifierKind", &mut enums);
     detect_vocabulary_enum(ontology, "conformance", "ViolationKind", &mut enums);
+    // v0.2.2 Phase E — PartitionComponent enum class (Irreducible /
+    // Reducible / Units / Exterior).
+    detect_vocabulary_enum(ontology, "partition", "PartitionComponent", &mut enums);
 
     // Hardcoded: ProofModality (Amendment 86: Empirical variant removed — EmpiricalVerification eliminated)
     enums.push(DetectedEnum {
@@ -420,8 +423,9 @@ mod tests {
     fn detect_all_enum_classes() {
         let ontology = uor_ontology::Ontology::full();
         let enums = detect_enums(ontology);
-        // 17 vocabulary + 4 hardcoded (Space, SiteState, PrimitiveOp, ProofModality)
-        assert_eq!(enums.len(), 21);
+        // 18 vocabulary (17 v0.2.1 + 1 v0.2.2 PartitionComponent) +
+        // 4 hardcoded (Space, SiteState, PrimitiveOp, ProofModality)
+        assert_eq!(enums.len(), 22);
     }
 
     #[test]
@@ -437,6 +441,6 @@ mod tests {
     fn witt_level_counted_separately() {
         let ontology = uor_ontology::Ontology::full();
         // count_enums = detect_enums().len() + 1 for WittLevel
-        assert_eq!(count_enums(ontology), 22);
+        assert_eq!(count_enums(ontology), 23);
     }
 }

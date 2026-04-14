@@ -122,6 +122,18 @@ instance : Inhabited (MultiplicationCertificate UOR.Prims.Standard) where
     certifies := none
   }
 
+/-- A certificate attesting the partition component classification of a Datum, assigning it to one of Irreducible, Reducible, Units, or Exterior via the partition:PartitionComponent enumeration. Produced by the bridge partition walk during grounding. -/
+structure PartitionCertificate (P : Primitives) extends Certificate P
+
+instance : Inhabited (PartitionCertificate UOR.Prims.Standard) where
+  default := {
+    method := none
+    verified := none
+    wittLength := none
+    timestamp := none
+    certifies := none
+  }
+
 end UOR.Bridge.Cert
 
 namespace UOR.Bridge.Cohomology
@@ -461,6 +473,16 @@ structure DerivationStep (P : Primitives)
 instance : Inhabited (DerivationStep UOR.Prims.Standard) where
   default := {}
 
+/-- An ordered sequence of derivation:RewriteStep events produced by replaying a Derivation. Used by uor-foundation-verify to re-derive a certificate from a content-addressed trace without running the deciders. The traceEventCount property records the trace length. -/
+structure DerivationTrace (P : Primitives) where
+  /-- Number of RewriteStep events recorded in this DerivationTrace. Used by Derivation::replay() to size the fixed-capacity event arena without allocation. -/
+  traceEventCount : Option P.NonNegativeInteger
+
+instance : Inhabited (DerivationTrace UOR.Prims.Standard) where
+  default := {
+    traceEventCount := none
+  }
+
 /-- Metrics describing the size and complexity of a term. -/
 structure TermMetrics (P : Primitives) where
   /-- The total number of rewrite steps in this derivation. -/
@@ -754,6 +776,17 @@ instance : Inhabited (GroundingObservable UOR.Prims.Standard) where
     hasUnit := none
   }
 
+/-- Observes the grounding completion ratio σ ∈ [0, 1] of a context, where σ = 1 indicates the ground state (state:GroundedContext). Backs the sigma_metric BaseMetric accessor on Grounded<T>. -/
+structure GroundingSigma (P : Primitives) extends Observable P
+
+instance : Inhabited (GroundingSigma UOR.Prims.Standard) where
+  default := {
+    value := none
+    source := none
+    target := none
+    hasUnit := none
+  }
+
 /-- An observable measuring holonomy: the accumulated transformation when traversing a closed path in the ring. -/
 structure HolonomyObservable (P : Primitives) extends Observable P
 
@@ -776,6 +809,17 @@ instance : Inhabited (Jacobian UOR.Prims.Standard) where
   default := {
     sitePosition := none
     derivativeValue := none
+    value := none
+    source := none
+    target := none
+    hasUnit := none
+  }
+
+/-- Observes the per-site Jacobian row of a Datum at a particular WittLevel, computed as the sequence of partial derivatives of the ring operation with respect to each site coordinate. Backs the jacobian_metric BaseMetric accessor on Grounded<T>; the Rust-side JacobianMetric<L> is parametric over the level marker. -/
+structure JacobianObservable (P : Primitives) extends Observable P
+
+instance : Inhabited (JacobianObservable UOR.Prims.Standard) where
+  default := {
     value := none
     source := none
     target := none

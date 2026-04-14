@@ -288,6 +288,18 @@ inductive ViolationKind where
   | levelMismatch : ViolationKind
   deriving DecidableEq, Repr, BEq, Hashable, Inhabited
 
+/-- Closed enumeration of partition component kinds: Irreducible (non-factorizable), Reducible (factorizable into non-trivial parts), Units (invertible), Exterior (outside the factorization domain). Codegen treats this as an enum class with exactly 4 individuals. -/
+inductive PartitionComponent where
+  /-- The irreducible component: elements that admit no non-trivial factorization within the ring. -/
+  | irreducible : PartitionComponent
+  /-- The reducible component: elements that factor into non-trivial parts. -/
+  | reducible : PartitionComponent
+  /-- The unit component: invertible elements of the ring. -/
+  | units : PartitionComponent
+  /-- The exterior component: elements outside the factorization domain (e.g., zero or ring-boundary values). -/
+  | exterior : PartitionComponent
+  deriving DecidableEq, Repr, BEq, Hashable, Inhabited
+
 /-- Proof modality classification. -/
 inductive ProofModality where
   /-- Exhaustive computation at a quantum level. -/

@@ -64,6 +64,12 @@ pub trait IncompatibilityMetric<P: Primitives>: MetricObservable<P> {}
 /// Observes a Datum's value modulo a configurable modulus. Used as the bound observable for BoundConstraint instances representing residue and affine constraint kinds (residueConstraintKind, affineConstraintKind).
 pub trait ValueModObservable<P: Primitives>: MetricObservable<P> {}
 
+/// Observes the grounding completion ratio σ ∈ \[0, 1\] of a context, where σ = 1 indicates the ground state (state:GroundedContext). Backs the sigma_metric BaseMetric accessor on Grounded<T>.
+pub trait GroundingSigma<P: Primitives>: Observable<P> {}
+
+/// Observes the per-site Jacobian row of a Datum at a particular WittLevel, computed as the sequence of partial derivatives of the ring operation with respect to each site coordinate. Backs the jacobian_metric BaseMetric accessor on Grounded<T>; the Rust-side JacobianMetric<L> is parametric over the level marker.
+pub trait JacobianObservable<P: Primitives>: Observable<P> {}
+
 /// The stratum index of a ring element.
 pub trait StratumValue<P: Primitives>: StratumObservable<P> {}
 

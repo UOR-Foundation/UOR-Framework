@@ -144,3 +144,15 @@ pub trait PartitionCoproduct<P: Primitives> {
 
 /// Observes the free-rank of the partition associated with a Datum's site context, recording the count of unbound sites at the moment of observation. Used as the bound observable for the siteConstraintKind BoundConstraint.
 pub trait FreeRankObservable<P: Primitives>: crate::bridge::observable::Observable<P> {}
+
+/// The irreducible component: elements that admit no non-trivial factorization within the ring.
+pub mod irreducible {}
+
+/// The reducible component: elements that factor into non-trivial parts.
+pub mod reducible {}
+
+/// The unit component: invertible elements of the ring.
+pub mod units {}
+
+/// The exterior component: elements outside the factorization domain (e.g., zero or ring-boundary values).
+pub mod exterior {}

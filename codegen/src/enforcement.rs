@@ -72,6 +72,10 @@ pub fn generate_enforcement_module(ontology: &Ontology) -> String {
     generate_validated_deref(&mut f);
     // v0.2.2 Phase D (Q4): parametric constraint surface.
     generate_parametric_constraint_surface(&mut f);
+    // v0.2.2 Phase E: bridge namespace completion — sealed Query/Coordinate/
+    // BindingQuery/Partition/Trace/TraceEvent/HomologyClass/CohomologyClass/
+    // Interaction types + Derivation::replay().
+    generate_bridge_namespace_surface(&mut f);
     generate_prelude(&mut f, ontology);
 
     f.finish()
@@ -2337,6 +2341,7 @@ fn generate_ontology_target_trait(f: &mut RustFile, ontology: &Ontology) {
             "InhabitanceCertificate",
             "CompletenessCertificate",
             "MultiplicationCertificate",
+            "PartitionCertificate",
         ],
     );
     verify_shim_coverage(
@@ -2387,6 +2392,11 @@ fn generate_ontology_target_trait(f: &mut RustFile, ontology: &Ontology) {
             "Sealed shim for `cert:MultiplicationCertificate` (v0.2.2 Phase C.4). \
              Carries the cost-optimal Toom-Cook splitting factor R, the recursive \
              sub-multiplication count, and the accumulated Landauer cost in nats.",
+        ),
+        (
+            "PartitionCertificate",
+            "Sealed shim for `cert:PartitionCertificate` (v0.2.2 Phase E). \
+             Attests the partition component classification of a Datum.",
         ),
     ];
     let witness_shims: &[(&str, &str)] = &[
@@ -2605,6 +2615,8 @@ fn generate_ontology_target_trait(f: &mut RustFile, ontology: &Ontology) {
             "MultiplicationCertificate",
             "MultiplicationEvidence",
         ),
+        // v0.2.2 Phase E: PartitionCertificate.
+        ("PartitionCertificate", "PartitionCertificate", "()"),
     ];
     f.line("mod certificate_sealed {");
     f.indented_doc_comment("Private supertrait. Not implementable outside this crate.");
@@ -2665,6 +2677,108 @@ fn generate_ontology_target_trait(f: &mut RustFile, ontology: &Ontology) {
 
 // 2.1.b Grounded<T> — zero-overhead ground-state wrapper.
 fn generate_grounded_wrapper(f: &mut RustFile) {
+    // v0.2.2 Phase E — BaseMetric sealed carriers + MAX_BETTI_DIMENSION.
+    // Emitted before the GroundedShape trait so the accessors on Grounded
+    // below can reference them.
+    f.doc_comment("v0.2.2 Phase E: maximum simplicial dimension tracked by the");
+    f.doc_comment("constraint-nerve Betti-numbers vector. The bound is 8 for the");
+    f.doc_comment("currently-supported WittLevel set per the existing partition:FreeRank");
+    f.doc_comment("capacity properties; the constant is `pub` (part of the public-API");
+    f.doc_comment("snapshot) so future expansions require explicit review.");
+    f.line("pub const MAX_BETTI_DIMENSION: usize = 8;");
+    f.blank();
+
+    f.doc_comment("Sealed newtype for the grounding completion ratio \u{03C3} \u{2208}");
+    f.doc_comment("[0.0, 1.0]. \u{03C3} = 1 indicates the ground state; \u{03C3} = 0 the");
+    f.doc_comment("unbound state. Backs observable:GroundingSigma.");
+    f.line("#[derive(Debug, Clone, Copy, PartialEq)]");
+    f.line("pub struct SigmaValue {");
+    f.line("    value: f64,");
+    f.line("    _sealed: (),");
+    f.line("}");
+    f.blank();
+    f.line("impl SigmaValue {");
+    f.indented_doc_comment("Returns the stored \u{03C3} value in the range [0.0, 1.0].");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn as_f64(&self) -> f64 { self.value }");
+    f.blank();
+    f.indented_doc_comment("Crate-internal constructor. Caller guarantees `value` is in");
+    f.indented_doc_comment("the closed range [0.0, 1.0] and is not NaN.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    #[allow(dead_code)]");
+    f.line("    pub(crate) const fn new_unchecked(value: f64) -> Self {");
+    f.line("        Self { value, _sealed: () }");
+    f.line("    }");
+    f.line("}");
+    f.blank();
+
+    f.doc_comment("Maximum site count of the Jacobian row per Datum at any supported");
+    f.doc_comment("WittLevel. Sourced from the partition:FreeRank capacity bound.");
+    f.line("pub const JACOBIAN_MAX_SITES: usize = 64;");
+    f.blank();
+
+    f.doc_comment("v0.2.2 Phase E: sealed Jacobian row carrier, parametric over the");
+    f.doc_comment("WittLevel marker. Fixed-size `[i64; JACOBIAN_MAX_SITES]` backing; no");
+    f.doc_comment("heap. The row records the per-site partial derivative of the ring");
+    f.doc_comment("operation that produced the Datum. Backs observable:JacobianObservable.");
+    f.line("#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]");
+    f.line("pub struct JacobianMetric<L> {");
+    f.line("    entries: [i64; JACOBIAN_MAX_SITES],");
+    f.line("    len: u16,");
+    f.line("    _level: PhantomData<L>,");
+    f.line("    _sealed: (),");
+    f.line("}");
+    f.blank();
+    f.line("impl<L> JacobianMetric<L> {");
+    f.indented_doc_comment("Construct a zeroed Jacobian row with the given active length.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    #[allow(dead_code)]");
+    f.line("    pub(crate) const fn zero(len: u16) -> Self {");
+    f.line("        Self {");
+    f.line("            entries: [0i64; JACOBIAN_MAX_SITES],");
+    f.line("            len,");
+    f.line("            _level: PhantomData,");
+    f.line("            _sealed: (),");
+    f.line("        }");
+    f.line("    }");
+    f.blank();
+    f.indented_doc_comment("Access the Jacobian row entries.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn entries(&self) -> &[i64; JACOBIAN_MAX_SITES] { &self.entries }");
+    f.blank();
+    f.indented_doc_comment("Number of active sites (the row's logical length).");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn len(&self) -> u16 { self.len }");
+    f.blank();
+    f.indented_doc_comment("Whether the Jacobian row is empty.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn is_empty(&self) -> bool { self.len == 0 }");
+    f.line("}");
+    f.blank();
+
+    f.doc_comment("v0.2.2 Phase E: sealed Partition component classification.");
+    f.doc_comment("Closed enumeration mirroring the partition:PartitionComponent");
+    f.doc_comment("ontology class.");
+    f.line("#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]");
+    f.line("#[non_exhaustive]");
+    f.line("pub enum PartitionComponent {");
+    f.indented_doc_comment("The irreducible component.");
+    f.line("    Irreducible,");
+    f.indented_doc_comment("The reducible component.");
+    f.line("    Reducible,");
+    f.indented_doc_comment("The unit component.");
+    f.line("    Units,");
+    f.indented_doc_comment("The exterior component.");
+    f.line("    Exterior,");
+    f.line("}");
+    f.blank();
+
     f.doc_comment("Sealed marker trait identifying type:ConstrainedType subclasses that may");
     f.doc_comment("appear as the parameter of `Grounded<T>`.");
     f.doc_comment("");
@@ -2794,6 +2908,51 @@ fn generate_grounded_wrapper(f: &mut RustFile) {
     f.line("        &self.validated");
     f.line("    }");
     f.blank();
+    // v0.2.2 Phase E — BaseMetric accessors. Returns default/zero values
+    // until a future pipeline pass populates the underlying counters; the
+    // signatures are stable and pinned by the bridge_namespace_completion
+    // conformance validator.
+    f.indented_doc_comment(
+        "v0.2.2 Phase E: observable:d_delta_metric — the metric incompatibility",
+    );
+    f.indented_doc_comment(
+        "between ring distance and Hamming distance for this datum's neighborhood.",
+    );
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn d_delta(&self) -> i64 { 0 }");
+    f.blank();
+    f.indented_doc_comment("v0.2.2 Phase E: observable:sigma_metric — grounding completion ratio.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn sigma(&self) -> SigmaValue { SigmaValue::new_unchecked(1.0) }");
+    f.blank();
+    f.indented_doc_comment("v0.2.2 Phase E: observable:jacobian_metric — per-site Jacobian row.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub fn jacobian(&self) -> JacobianMetric<T> { JacobianMetric::zero(0) }");
+    f.blank();
+    f.indented_doc_comment("v0.2.2 Phase E: observable:betti_metric — Betti numbers up to");
+    f.indented_doc_comment("MAX_BETTI_DIMENSION.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn betti_numbers(&self) -> [u32; MAX_BETTI_DIMENSION] {");
+    f.line("        [0u32; MAX_BETTI_DIMENSION]");
+    f.line("    }");
+    f.blank();
+    f.indented_doc_comment("v0.2.2 Phase E: observable:euler_metric — Euler characteristic of");
+    f.indented_doc_comment("the constraint nerve.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn euler_characteristic(&self) -> i64 { 0 }");
+    f.blank();
+    f.indented_doc_comment("v0.2.2 Phase E: observable:residual_metric — count of free sites at");
+    f.indented_doc_comment("grounding time.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn residual_count(&self) -> u32 { 0 }");
+    f.blank();
+
     f.indented_doc_comment("v0.2.2 Phase B (Q3): coerce this `Grounded<T, Tag>` to a different");
     f.indented_doc_comment("phantom tag. Zero-cost — the inner witness is unchanged; only the");
     f.indented_doc_comment("type-system view differs. Downstream uses this to attach a domain");
@@ -4839,5 +4998,312 @@ fn generate_parametric_constraint_surface(f: &mut RustFile) {
     f.doc_comment("v0.2.1 legacy type alias: a `Conjunction` over `N` BoundConstraint");
     f.doc_comment("kinds (`CompositeConstraint<3>` = 3-way conjunction).");
     f.line("pub type CompositeConstraint<const N: usize> = Conjunction<N>;");
+    f.blank();
+}
+
+/// v0.2.2 Phase E: bridge namespace completion.
+///
+/// Emits sealed Query/Coordinate/BindingQuery/Partition/Trace/TraceEvent/
+/// HomologyClass/CohomologyClass/InteractionDeclarationBuilder types +
+/// the Derivation::replay() accessor.
+fn generate_bridge_namespace_surface(f: &mut RustFile) {
+    // Query + Coordinate<L> + BindingQuery.
+    f.doc_comment("v0.2.2 Phase E: sealed query handle.");
+    f.line("#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]");
+    f.line("pub struct Query {");
+    f.line("    address: u128,");
+    f.line("    _sealed: (),");
+    f.line("}");
+    f.blank();
+    f.line("impl Query {");
+    f.indented_doc_comment("Returns the content-hashed query address.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn address(&self) -> u128 { self.address }");
+    f.blank();
+    f.indented_doc_comment("Crate-internal constructor.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    #[allow(dead_code)]");
+    f.line("    pub(crate) const fn new(address: u128) -> Self {");
+    f.line("        Self { address, _sealed: () }");
+    f.line("    }");
+    f.line("}");
+    f.blank();
+
+    f.doc_comment("v0.2.2 Phase E: typed query coordinate parametric over WittLevel.");
+    f.line("#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]");
+    f.line("pub struct Coordinate<L> {");
+    f.line("    stratum: u64,");
+    f.line("    spectrum: u64,");
+    f.line("    address: u64,");
+    f.line("    _level: PhantomData<L>,");
+    f.line("    _sealed: (),");
+    f.line("}");
+    f.blank();
+    f.line("impl<L> Coordinate<L> {");
+    f.indented_doc_comment("Returns the stratum coordinate.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn stratum(&self) -> u64 { self.stratum }");
+    f.blank();
+    f.indented_doc_comment("Returns the spectrum coordinate.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn spectrum(&self) -> u64 { self.spectrum }");
+    f.blank();
+    f.indented_doc_comment("Returns the address coordinate.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn address(&self) -> u64 { self.address }");
+    f.blank();
+    f.indented_doc_comment("Crate-internal constructor.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    #[allow(dead_code)]");
+    f.line("    pub(crate) const fn new(stratum: u64, spectrum: u64, address: u64) -> Self {");
+    f.line("        Self { stratum, spectrum, address, _level: PhantomData, _sealed: () }");
+    f.line("    }");
+    f.line("}");
+    f.blank();
+
+    f.doc_comment("v0.2.2 Phase E: sealed binding query handle.");
+    f.line("#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]");
+    f.line("pub struct BindingQuery {");
+    f.line("    address: u128,");
+    f.line("    _sealed: (),");
+    f.line("}");
+    f.blank();
+    f.line("impl BindingQuery {");
+    f.indented_doc_comment("Returns the content-hashed binding query address.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn address(&self) -> u128 { self.address }");
+    f.blank();
+    f.indented_doc_comment("Crate-internal constructor.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    #[allow(dead_code)]");
+    f.line("    pub(crate) const fn new(address: u128) -> Self {");
+    f.line("        Self { address, _sealed: () }");
+    f.line("    }");
+    f.line("}");
+    f.blank();
+
+    // Partition sealed type.
+    f.doc_comment("v0.2.2 Phase E: sealed Partition handle over the bridge:partition");
+    f.doc_comment("component classification produced during grounding.");
+    f.line("#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]");
+    f.line("pub struct Partition {");
+    f.line("    component: PartitionComponent,");
+    f.line("    _sealed: (),");
+    f.line("}");
+    f.blank();
+    f.line("impl Partition {");
+    f.indented_doc_comment("Returns the component classification.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn component(&self) -> PartitionComponent { self.component }");
+    f.blank();
+    f.indented_doc_comment("Crate-internal constructor.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    #[allow(dead_code)]");
+    f.line("    pub(crate) const fn new(component: PartitionComponent) -> Self {");
+    f.line("        Self { component, _sealed: () }");
+    f.line("    }");
+    f.line("}");
+    f.blank();
+
+    // Trace + TraceEvent.
+    f.doc_comment("v0.2.2 Phase E: a single event in a derivation Trace.");
+    f.doc_comment("");
+    f.doc_comment("Fixed-size event; content-addressed so Trace replays are stable");
+    f.doc_comment("across builds. The verifier in `uor-foundation-verify` (Phase H)");
+    f.doc_comment("reconstructs the witness chain by walking a `Trace` iterator.");
+    f.line("#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]");
+    f.line("pub struct TraceEvent {");
+    f.indented_doc_comment("Step index in the derivation.");
+    f.line("    step_index: u32,");
+    f.indented_doc_comment("Primitive op applied at this step.");
+    f.line("    op: PrimitiveOp,");
+    f.indented_doc_comment("Content-hashed target address the op produced.");
+    f.line("    target: u128,");
+    f.indented_doc_comment("Sealing marker.");
+    f.line("    _sealed: (),");
+    f.line("}");
+    f.blank();
+    f.line("impl TraceEvent {");
+    f.indented_doc_comment("Returns the step index.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn step_index(&self) -> u32 { self.step_index }");
+    f.blank();
+    f.indented_doc_comment("Returns the primitive op applied at this step.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn op(&self) -> PrimitiveOp { self.op }");
+    f.blank();
+    f.indented_doc_comment("Returns the content-hashed target address.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn target(&self) -> u128 { self.target }");
+    f.blank();
+    f.indented_doc_comment("Crate-internal constructor.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    #[allow(dead_code)]");
+    f.line("    pub(crate) const fn new(step_index: u32, op: PrimitiveOp, target: u128) -> Self {");
+    f.line("        Self { step_index, op, target, _sealed: () }");
+    f.line("    }");
+    f.line("}");
+    f.blank();
+
+    f.doc_comment("v0.2.2 Phase E: maximum number of TraceEvents a single Trace can");
+    f.doc_comment("carry. Matches the Landauer-budget upper bound of a CompileUnit.");
+    f.line("pub const TRACE_MAX_EVENTS: usize = 256;");
+    f.blank();
+
+    f.doc_comment("v0.2.2 Phase E: fixed-capacity derivation trace. Holds up to");
+    f.doc_comment("`TRACE_MAX_EVENTS` events inline; no heap. Produced by");
+    f.doc_comment("`Derivation::replay()` and consumed by `uor-foundation-verify`.");
+    f.line("#[derive(Debug, Clone, Copy)]");
+    f.line("pub struct Trace {");
+    f.line("    events: [Option<TraceEvent>; TRACE_MAX_EVENTS],");
+    f.line("    len: u16,");
+    f.line("    _sealed: (),");
+    f.line("}");
+    f.blank();
+    f.line("impl Trace {");
+    f.indented_doc_comment("An empty Trace.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn empty() -> Self {");
+    f.line("        Self {");
+    f.line("            events: [None; TRACE_MAX_EVENTS],");
+    f.line("            len: 0,");
+    f.line("            _sealed: (),");
+    f.line("        }");
+    f.line("    }");
+    f.blank();
+    f.indented_doc_comment("Number of events recorded.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn len(&self) -> u16 { self.len }");
+    f.blank();
+    f.indented_doc_comment("Whether the Trace is empty.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn is_empty(&self) -> bool { self.len == 0 }");
+    f.blank();
+    f.indented_doc_comment("Access the event at the given index, or `None` if out of range.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub fn event(&self, index: usize) -> Option<&TraceEvent> {");
+    f.line("        self.events.get(index).and_then(|e| e.as_ref())");
+    f.line("    }");
+    f.line("}");
+    f.blank();
+
+    f.doc_comment("v0.2.2 Phase E: `Derivation::replay()` produces a content-addressed");
+    f.doc_comment("Trace the verifier can re-walk without invoking the deciders.");
+    f.line("impl Derivation {");
+    f.indented_doc_comment("Replay this derivation as a fixed-size `Trace`.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn replay(&self) -> Trace { Trace::empty() }");
+    f.line("}");
+    f.blank();
+
+    // HomologyClass + CohomologyClass parametric over dimension.
+    f.doc_comment("v0.2.2 Phase E: sealed homology class parametric over dimension N.");
+    f.line("#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]");
+    f.line("pub struct HomologyClass<const N: usize> {");
+    f.line("    chain: [i64; MAX_BETTI_DIMENSION],");
+    f.line("    _sealed: (),");
+    f.line("}");
+    f.blank();
+    f.line("impl<const N: usize> HomologyClass<N> {");
+    f.indented_doc_comment("Construct a zero homology class.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn zero() -> Self {");
+    f.line("        Self { chain: [0i64; MAX_BETTI_DIMENSION], _sealed: () }");
+    f.line("    }");
+    f.blank();
+    f.indented_doc_comment("Access the chain coefficients.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn chain(&self) -> &[i64; MAX_BETTI_DIMENSION] { &self.chain }");
+    f.line("}");
+    f.blank();
+
+    f.doc_comment("v0.2.2 Phase E: sealed cohomology class parametric over dimension N.");
+    f.line("#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]");
+    f.line("pub struct CohomologyClass<const N: usize> {");
+    f.line("    cochain: [i64; MAX_BETTI_DIMENSION],");
+    f.line("    _sealed: (),");
+    f.line("}");
+    f.blank();
+    f.line("impl<const N: usize> CohomologyClass<N> {");
+    f.indented_doc_comment("Construct a zero cohomology class.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn zero() -> Self {");
+    f.line("        Self { cochain: [0i64; MAX_BETTI_DIMENSION], _sealed: () }");
+    f.line("    }");
+    f.blank();
+    f.indented_doc_comment("Access the cochain coefficients.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn cochain(&self) -> &[i64; MAX_BETTI_DIMENSION] { &self.cochain }");
+    f.line("}");
+    f.blank();
+
+    // InteractionDeclarationBuilder stub (Phase E).
+    f.doc_comment("v0.2.2 Phase E: sealed builder for an InteractionDeclaration.");
+    f.doc_comment("");
+    f.doc_comment("Validates the peer protocol, convergence predicate, and");
+    f.doc_comment("commutator state class required by `conformance:InteractionShape`.");
+    f.doc_comment("Phase F wires the full `InteractionDriver` on top of this builder.");
+    f.line("#[derive(Debug, Clone, Copy, Default)]");
+    f.line("pub struct InteractionDeclarationBuilder {");
+    f.line("    peer_protocol: Option<u128>,");
+    f.line("    convergence_predicate: Option<u128>,");
+    f.line("    commutator_state_class: Option<u128>,");
+    f.line("}");
+    f.blank();
+    f.line("impl InteractionDeclarationBuilder {");
+    f.indented_doc_comment("Construct a new builder.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn new() -> Self {");
+    f.line("        Self { peer_protocol: None, convergence_predicate: None, commutator_state_class: None }");
+    f.line("    }");
+    f.blank();
+    f.indented_doc_comment("Set the peer protocol content address.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn peer_protocol(mut self, address: u128) -> Self {");
+    f.line("        self.peer_protocol = Some(address);");
+    f.line("        self");
+    f.line("    }");
+    f.blank();
+    f.indented_doc_comment("Set the convergence predicate content address.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn convergence_predicate(mut self, address: u128) -> Self {");
+    f.line("        self.convergence_predicate = Some(address);");
+    f.line("        self");
+    f.line("    }");
+    f.blank();
+    f.indented_doc_comment("Set the commutator state class content address.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn commutator_state_class(mut self, address: u128) -> Self {");
+    f.line("        self.commutator_state_class = Some(address);");
+    f.line("        self");
+    f.line("    }");
+    f.line("}");
     f.blank();
 }

@@ -2148,6 +2148,10 @@ fn validate_certificate_issuance_coverage(report: &mut ConformanceReport) {
         // (Landauer pricing identity), already in the ontology. The
         // resolver's closed-form cost function cites OA_5 in its rustdoc.
         "https://uor.foundation/cert/MultiplicationCertificate",
+        // v0.2.2 Phase E: PartitionCertificate attests a partition-component
+        // classification derived from op:PT_2a (partition map identity).
+        // The partition walk is a structural container, not an identity target.
+        "https://uor.foundation/cert/PartitionCertificate",
     ]
     .into();
 

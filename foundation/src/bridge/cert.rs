@@ -160,3 +160,6 @@ pub trait MultiplicationCertificate<P: Primitives>: Certificate<P> {
     /// The accumulated Landauer cost of the certified multiplication in nats, priced per op:OA_5 (each irreversible bit erasure costs ln 2 nats in the Archimedean completion). Unit: observable:Nats. The value is an xsd:decimal.
     fn landauer_cost_nats(&self) -> P::Decimal;
 }
+
+/// A certificate attesting the partition component classification of a Datum, assigning it to one of Irreducible, Reducible, Units, or Exterior via the partition:PartitionComponent enumeration. Produced by the bridge partition walk during grounding.
+pub trait PartitionCertificate<P: Primitives>: Certificate<P> {}

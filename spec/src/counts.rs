@@ -26,7 +26,10 @@ pub const NAMESPACES: usize = 33;
 /// classes: BoundConstraint, BoundShape, Conjunction; +4 observable
 /// subclasses: observable:ValueModObservable, derivation:DerivationDepthObservable,
 /// carry:CarryDepthObservable, partition:FreeRankObservable).
-pub const CLASSES: usize = 460;
+/// v0.2.2 Phase E: +5 (cert:PartitionCertificate, partition:PartitionComponent,
+/// observable:GroundingSigma, observable:JacobianObservable,
+/// derivation:DerivationTrace).
+pub const CLASSES: usize = 465;
 
 /// Total properties including the global `uor:space` annotation.
 ///
@@ -42,10 +45,11 @@ pub const CLASSES: usize = 460;
 /// cert:landauerCostNats, linear:stackBudgetBytes).
 /// v0.2.2 Phase D (Q4): +4 (type:boundObservable, type:boundShape,
 /// type:boundArguments, type:conjuncts).
-pub const PROPERTIES: usize = 941;
+/// v0.2.2 Phase E: +1 (derivation:traceEventCount).
+pub const PROPERTIES: usize = 942;
 
 /// Namespace-level properties only (excludes global annotation).
-pub const NAMESPACE_PROPERTIES: usize = 940;
+pub const NAMESPACE_PROPERTIES: usize = 941;
 
 /// Total named individuals across all namespaces.
 /// Includes 1870 AST term individuals (LiteralExpression / ForAllDeclaration)
@@ -70,14 +74,17 @@ pub const NAMESPACE_PROPERTIES: usize = 940;
 /// GreaterEqBound, RangeContainBound, ResidueClassBound, AffineEqualBound;
 /// 6 BoundConstraint kind individuals: residue/hamming/depth/carry/site/affine
 /// ConstraintKind).
-pub const INDIVIDUALS: usize = 3489;
+/// v0.2.2 Phase E: +4 (partition:PartitionComponent individuals:
+/// Irreducible, Reducible, Units, Exterior).
+pub const INDIVIDUALS: usize = 3493;
 
 /// Number of SHACL test instance graphs.
 ///
 /// v0.2.1 Phase 7a: +1 (test278 SatBound/TimingBound/ConstraintDefaults fixture).
 /// v0.2.2 Phase C.4: +1 (test279 MultiplicationCertificate +
 /// MultiplicationResolver + linear:stackBudgetBytes fixture).
-pub const SHACL_TESTS: usize = 279;
+/// v0.2.2 Phase E: +1 (test280 Phase E bridge namespace completion fixture).
+pub const SHACL_TESTS: usize = 280;
 
 /// Total conformance checks in the full suite.
 ///
@@ -93,13 +100,15 @@ pub const SHACL_TESTS: usize = 279;
 /// v0.2.2 Phase C verifiers: +1 from `rust/witt_tower_completeness`, +1 from
 /// `rust/multiplication_resolver`.
 /// v0.2.2 Phase D verifier: +1 from `rust/parametric_constraints`.
-pub const CONFORMANCE_CHECKS: usize = 482;
+/// v0.2.2 Phase E: +1 from `rust/bridge_namespace_completion`, +1 from
+/// `test280_bridge_completion` SHACL fixture.
+pub const CONFORMANCE_CHECKS: usize = 484;
 
 /// Number of amendments applied to the base ontology.
 pub const AMENDMENTS: usize = 95;
 
 /// Number of classes that become Rust enums/structs (not traits).
-pub const ENUM_CLASSES: usize = 18;
+pub const ENUM_CLASSES: usize = 19;
 
 /// Number of `op:Identity` individuals (and corresponding proofs).
 pub const IDENTITY_COUNT: usize = 624;
@@ -126,7 +135,8 @@ pub const USER_NAMESPACES: usize = 3;
 /// BoundConstraint; conjuncts on Conjunction). The 11 properties previously
 /// on the 7 deleted constraint subclasses are retained under new domains
 /// (BoundConstraint or Conjunction), so no net loss.
-pub const METHODS: usize = 904;
+/// v0.2.2 Phase E: +1 (derivation:traceEventCount on DerivationTrace).
+pub const METHODS: usize = 905;
 
 /// Number of individual constant modules generated.
 pub const CONSTANT_MODULES: usize = 1501;
@@ -135,7 +145,9 @@ pub const CONSTANT_MODULES: usize = 1501;
 ///
 /// v0.2.1 Phase 1: +13. Phase 7a: +3 (SatBound, TimingBound, ConstraintDefaults).
 /// v0.2.2 Phase C.4: +2 (MultiplicationCertificate, MultiplicationResolver).
-pub const LEAN_STRUCTURES: usize = 428;
+/// v0.2.2 Phase E: +4 (PartitionCertificate, GroundingSigma, JacobianObservable,
+/// DerivationTrace; PartitionComponent is an enum class, not a structure).
+pub const LEAN_STRUCTURES: usize = 432;
 
 /// Number of Lean 4 inductive + structure types generated for the enum layer.
 ///
@@ -143,7 +155,7 @@ pub const LEAN_STRUCTURES: usize = 428;
 /// plus 3 hardcoded types not in the ontology's class list (`Space`,
 /// `SiteState`, `PrimitiveOp`), plus 1 `structure` for `WittLevel` (open-world,
 /// not an `inductive`). Total: 22.
-pub const LEAN_INDUCTIVES: usize = 22;
+pub const LEAN_INDUCTIVES: usize = 23;
 
 /// Number of Lean 4 individual constant namespaces generated.
 ///

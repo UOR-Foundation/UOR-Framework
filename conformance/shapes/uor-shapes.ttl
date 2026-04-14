@@ -2010,6 +2010,12 @@ uor-sh:FreeRankObservableShape
     sh:targetClass  partition:FreeRankObservable ;
     rdfs:label      "FreeRankObservableShape" .
 
+# v0.2.2 Phase E — partition component enum class.
+uor-sh:PartitionComponentShape
+    a               sh:NodeShape ;
+    sh:targetClass  partition:PartitionComponent ;
+    rdfs:label      "PartitionComponentShape" .
+
 uor-sh:PartitionProductShape
     a               sh:NodeShape ;
     sh:targetClass  partition:PartitionProduct ;
@@ -2154,6 +2160,18 @@ uor-sh:ValueModObservableShape
     a               sh:NodeShape ;
     sh:targetClass  observable:ValueModObservable ;
     rdfs:label      "ValueModObservableShape" .
+
+# v0.2.2 Phase E — the grounding completion ratio observable.
+uor-sh:GroundingSigmaShape
+    a               sh:NodeShape ;
+    sh:targetClass  observable:GroundingSigma ;
+    rdfs:label      "GroundingSigmaShape" .
+
+# v0.2.2 Phase E — the per-site Jacobian row observable.
+uor-sh:JacobianObservableShape
+    a               sh:NodeShape ;
+    sh:targetClass  observable:JacobianObservable ;
+    rdfs:label      "JacobianObservableShape" .
 
 uor-sh:StratumValueShape
     a               sh:NodeShape ;
@@ -3397,6 +3415,18 @@ uor-sh:DerivationDepthObservableShape
     sh:targetClass  derivation:DerivationDepthObservable ;
     rdfs:label      "DerivationDepthObservableShape" .
 
+# v0.2.2 Phase E — ordered DerivationTrace produced by Derivation::replay().
+uor-sh:DerivationTraceShape
+    a               sh:NodeShape ;
+    sh:targetClass  derivation:DerivationTrace ;
+    rdfs:label      "DerivationTraceShape" ;
+    sh:property [
+        sh:path derivation:traceEventCount ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:datatype xsd:nonNegativeInteger ;
+    ] .
+
 uor-sh:DerivationShape
     a               sh:NodeShape ;
     sh:targetClass  derivation:Derivation ;
@@ -4052,6 +4082,12 @@ uor-sh:InhabitanceCertificateShape
         sh:maxCount 1 ;
         sh:class type:ConstrainedType ;
     ] .
+
+# v0.2.2 Phase E
+uor-sh:PartitionCertificateShape
+    a               sh:NodeShape ;
+    sh:targetClass  cert:PartitionCertificate ;
+    rdfs:label      "PartitionCertificateShape" .
 
 # v0.2.2 Phase C.4
 uor-sh:MultiplicationCertificateShape

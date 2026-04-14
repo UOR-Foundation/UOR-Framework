@@ -567,6 +567,31 @@ impl fmt::Display for ViolationKind {
     }
 }
 
+/// Closed enumeration of partition component kinds: Irreducible (non-factorizable), Reducible (factorizable into non-trivial parts), Units (invertible), Exterior (outside the factorization domain). Codegen treats this as an enum class with exactly 4 individuals.
+#[repr(u8)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub enum PartitionComponent {
+    /// The irreducible component: elements that admit no non-trivial factorization within the ring.
+    Irreducible,
+    /// The reducible component: elements that factor into non-trivial parts.
+    Reducible,
+    /// The unit component: invertible elements of the ring.
+    Units,
+    /// The exterior component: elements outside the factorization domain (e.g., zero or ring-boundary values).
+    Exterior,
+}
+
+impl fmt::Display for PartitionComponent {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Irreducible => f.write_str("irreducible"),
+            Self::Reducible => f.write_str("reducible"),
+            Self::Units => f.write_str("units"),
+            Self::Exterior => f.write_str("exterior"),
+        }
+    }
+}
+
 /// The modality of a proof: computation (exhaustive verification at a specific quantum level) or axiomatic (derivation from ring axioms).
 #[repr(u8)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]

@@ -122,6 +122,12 @@ pub trait DerivationDepthObservable<P: Primitives>:
 {
 }
 
+/// An ordered sequence of derivation:RewriteStep events produced by replaying a Derivation. Used by uor-foundation-verify to re-derive a certificate from a content-addressed trace without running the deciders. The traceEventCount property records the trace length.
+pub trait DerivationTrace<P: Primitives> {
+    /// Number of RewriteStep events recorded in this DerivationTrace. Used by Derivation::replay() to size the fixed-capacity event arena without allocation.
+    fn trace_event_count(&self) -> P::NonNegativeInteger;
+}
+
 /// The rewrite rule applying the critical identity: neg(bnot(x)) → succ(x). Grounded in op:criticalIdentity.
 pub mod critical_identity_rule {
     /// `groundedIn` -> `criticalIdentity`

@@ -202,6 +202,7 @@ mod test277_inhabitance_verdict;
 mod test278_v021_cleanup_bounds;
 mod test279_multiplication_certificate;
 mod test27_rewrite_rule;
+mod test280_bridge_completion;
 mod test28_measurement_unit;
 mod test29_triad_projection;
 mod test2_primitives;
@@ -482,6 +483,7 @@ pub use test277_inhabitance_verdict::TEST277_INHABITANCE_VERDICT;
 pub use test278_v021_cleanup_bounds::TEST278_V021_CLEANUP_BOUNDS;
 pub use test279_multiplication_certificate::TEST279_MULTIPLICATION_CERTIFICATE;
 pub use test27_rewrite_rule::TEST27_REWRITE_RULE;
+pub use test280_bridge_completion::TEST280_BRIDGE_COMPLETION;
 pub use test28_measurement_unit::TEST28_MEASUREMENT_UNIT;
 pub use test29_triad_projection::TEST29_TRIAD_PROJECTION;
 pub use test2_primitives::TEST2_PRIMITIVES;
@@ -846,5 +848,6 @@ pub fn all_fixture_sources() -> Vec<&'static str> {
         TEST277_INHABITANCE_VERDICT,
         TEST278_V021_CLEANUP_BOUNDS,
         TEST279_MULTIPLICATION_CERTIFICATE,
+        TEST280_BRIDGE_COMPLETION,
     ]
 }
