@@ -860,7 +860,7 @@ fn validate_coordinate_kind_individuals(report: &mut ConformanceReport) {
     let ck_iris = [
         "https://uor.foundation/query/TwoAdicValuation",
         "https://uor.foundation/query/WalshHadamardImage",
-        "https://uor.foundation/query/RingElement",
+        "https://uor.foundation/query/Address",
     ];
 
     let mut all_found = true;

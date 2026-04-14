@@ -7,8 +7,8 @@ typed Rust traits. Import and implement.
 
 - 33 namespaces
 - 457 OWL classes (one trait each)
-- 928 OWL properties (one method each)
-- 3443 named individuals (constants and enums)
+- 932 OWL properties (one method each)
+- 3448 named individuals (constants and enums)
 - `enforcement` module with declarative builders and opaque witnesses
 - `uor!` proc macro for compile-time term-language DSL
 
@@ -16,7 +16,7 @@ typed Rust traits. Import and implement.
 
 ```toml
 [dependencies]
-uor-foundation = "0.2.1"
+uor-foundation = "0.2.2"
 ```
 
 ```rust
@@ -64,7 +64,7 @@ impl FreeRank<MyImpl> for MyFreeRank {
 | `bridge::cert` | Bridge | Kernel-produced attestation certificates for transforms, isometries, and involutions |
 | `user::morphism` | User | Runtime abstractions for maps between UOR objects: transforms, isometries, embeddings, and group actions |
 | `user::state` | User | Parameterized address spaces, context management, binding lifecycle, and state transitions |
-| `kernel::reduction` | Kernel | Sequential composition of ψ-maps into a parameterized reduction ψ = ψ_9 ∘ … ∘ ψ_1 |
+| `kernel::reduction` | Kernel | Sequential composition of the foundation's nine inter-algebra maps into a parameterized reduction pipeline |
 | `kernel::convergence` | Kernel | Hopf convergence tower: four levels R, C, H, O corresponding to the four normed division algebras of dimensions 1, 2, 4, 8 |
 | `kernel::division` | Kernel | The four normed division algebras R, C, H, O and the Cayley-Dickson construction |
 | `bridge::interaction` | Bridge | Multi-entity interaction: commutator states, associator triples, negotiation convergence |

@@ -308,6 +308,22 @@ pub mod json_grounding_map {
     pub const OUTPUT_CLASS: &str = "https://uor.foundation/u/Element";
 }
 
+/// A GroundingMap that maps fixed-size external byte strings to ring datums via a one-way digest function (e.g., SHA-256). Total but not invertible: every input grounds, but distinct inputs may collide; the inverse is computationally unbounded. Preserves no algebraic structure.
+pub mod digest_grounding_map {
+    /// `inputClass` -> `HostStringLiteral`
+    pub const INPUT_CLASS: &str = "https://uor.foundation/schema/HostStringLiteral";
+    /// `outputClass` -> `Element`
+    pub const OUTPUT_CLASS: &str = "https://uor.foundation/u/Element";
+}
+
+/// A GroundingMap that maps host-supplied byte sequences to ring datums via a fixed bit-pattern interpretation (e.g., little-endian unsigned integer reading). Total and invertible on its declared bit-width; preserves no algebraic structure beyond bit identity.
+pub mod binary_grounding_map {
+    /// `inputClass` -> `HostStringLiteral`
+    pub const INPUT_CLASS: &str = "https://uor.foundation/schema/HostStringLiteral";
+    /// `outputClass` -> `Element`
+    pub const OUTPUT_CLASS: &str = "https://uor.foundation/u/Element";
+}
+
 /// Projects partitions to integer symbol sequences.
 pub mod integer_projection_map {
     /// `inputClass` -> `Partition`

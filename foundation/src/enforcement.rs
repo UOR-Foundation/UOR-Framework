@@ -225,18 +225,112 @@ pub trait GroundedValue: sealed::Sealed {}
 impl GroundedValue for GroundedCoord {}
 impl<const N: usize> GroundedValue for GroundedTuple<N> {}
 
+/// v0.2.2 W4: sealed marker trait for the kind of a `Grounding` map.
+/// Implemented by exactly the `morphism:GroundingMap` individuals declared in
+/// the ontology; downstream cannot extend the kind set.
+pub trait GroundingMapKind: grounding_map_kind_sealed::Sealed {
+    /// The ontology IRI of this grounding map kind.
+    const ONTOLOGY_IRI: &'static str;
+}
+
+/// v0.2.2 W4: kinds whose grounding image is total over the input domain
+/// (every input grounds successfully).
+pub trait Total: GroundingMapKind {}
+
+/// v0.2.2 W4: kinds whose grounding map is injective and admits an inverse
+/// on its image.
+pub trait Invertible: GroundingMapKind {}
+
+/// v0.2.2 W4: kinds whose grounding map preserves the algebraic structure
+/// of the source domain (homomorphism-like).
+pub trait PreservesStructure: GroundingMapKind {}
+
+/// v0.2.2 W4: kinds whose grounding map preserves the metric of the source
+/// domain (isometry-like).
+pub trait PreservesMetric: GroundingMapKind {}
+
+/// v0.2.2 W4: kind for raw byte ingestion. Total and invertible; preserves bit identity only.
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct BinaryGroundingMap;
+
+/// v0.2.2 W4: kind for one-way digest functions (e.g., SHA-256). Total but not invertible; preserves no structure.
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct DigestGroundingMap;
+
+/// v0.2.2 W4: kind for integer surface symbols. Total, invertible, structure-preserving.
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct IntegerGroundingMap;
+
+/// v0.2.2 W4: kind for JSON host strings. Invertible on its image, structure-preserving.
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct JsonGroundingMap;
+
+/// v0.2.2 W4: kind for UTF-8 host strings. Invertible on its image, structure-preserving.
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct Utf8GroundingMap;
+
+mod grounding_map_kind_sealed {
+    /// Private supertrait. Not implementable outside this crate.
+    pub trait Sealed {}
+    impl Sealed for super::BinaryGroundingMap {}
+    impl Sealed for super::DigestGroundingMap {}
+    impl Sealed for super::IntegerGroundingMap {}
+    impl Sealed for super::JsonGroundingMap {}
+    impl Sealed for super::Utf8GroundingMap {}
+}
+
+impl GroundingMapKind for BinaryGroundingMap {
+    const ONTOLOGY_IRI: &'static str = "https://uor.foundation/morphism/BinaryGroundingMap";
+}
+
+impl GroundingMapKind for DigestGroundingMap {
+    const ONTOLOGY_IRI: &'static str = "https://uor.foundation/morphism/DigestGroundingMap";
+}
+
+impl GroundingMapKind for IntegerGroundingMap {
+    const ONTOLOGY_IRI: &'static str = "https://uor.foundation/morphism/IntegerGroundingMap";
+}
+
+impl GroundingMapKind for JsonGroundingMap {
+    const ONTOLOGY_IRI: &'static str = "https://uor.foundation/morphism/JsonGroundingMap";
+}
+
+impl GroundingMapKind for Utf8GroundingMap {
+    const ONTOLOGY_IRI: &'static str = "https://uor.foundation/morphism/Utf8GroundingMap";
+}
+
+impl Total for IntegerGroundingMap {}
+impl Invertible for IntegerGroundingMap {}
+impl PreservesStructure for IntegerGroundingMap {}
+
+impl Invertible for Utf8GroundingMap {}
+impl PreservesStructure for Utf8GroundingMap {}
+
+impl Invertible for JsonGroundingMap {}
+impl PreservesStructure for JsonGroundingMap {}
+
+impl Total for DigestGroundingMap {}
+
+impl Total for BinaryGroundingMap {}
+impl Invertible for BinaryGroundingMap {}
+
 /// Open trait for boundary crossing: external data to grounded intermediate.
 /// The foundation validates the returned value against the declared
 /// `GroundingShape` and mints it into a `Datum` if conformant.
+/// v0.2.2 W4 adds the `Map: GroundingMapKind` associated type — every impl
+/// must declare what *kind* of grounding map it is. Foundation operations
+/// that require structure preservation gate on `<G as Grounding>::Map: PreservesStructure`,
+/// and a digest-style impl is rejected at the call site.
 /// # Examples
 /// ```rust,ignore
-/// use uor_foundation::enforcement::{Grounding, GroundedCoord};
+/// use uor_foundation::enforcement::{Grounding, GroundedCoord, BinaryGroundingMap};
 ///
 /// /// Doubling grounding: maps each input byte b to 2b mod 256.
 /// struct DoublingGrounding;
 ///
 /// impl Grounding for DoublingGrounding {
 ///     type Output = GroundedCoord;
+///     type Map = BinaryGroundingMap;
 ///
 ///     fn ground(&self, external: &[u8]) -> Option<GroundedCoord> {
 ///         // Reject empty input at the boundary
@@ -252,16 +346,54 @@ pub trait Grounding {
     /// are permitted\].
     type Output: GroundedValue;
 
+    /// v0.2.2 W4: the kind of grounding map this impl is. Sealed to the
+    /// set of `morphism:GroundingMap` individuals declared in the
+    /// ontology. Every impl must declare the kind explicitly; if no kind
+    /// applies, use `BinaryGroundingMap` (the most permissive — total +
+    /// invertible, no structure preservation).
+    type Map: GroundingMapKind;
+
     /// Map external bytes into a grounded intermediate.
     /// The foundation handles validation and minting.
     /// Returns `None` if the input is malformed or undersized.
     fn ground(&self, external: &[u8]) -> Option<Self::Output>;
 }
 
+/// v0.2.2 W13: sealed marker trait for the validation phase at which a
+/// `Validated<T, Phase>` was witnessed. Implemented only by `CompileTime`
+/// and `Runtime`; downstream cannot extend.
+pub trait ValidationPhase: validation_phase_sealed::Sealed {}
+
+mod validation_phase_sealed {
+    /// Private supertrait. Not implementable outside this crate.
+    pub trait Sealed {}
+    impl Sealed for super::CompileTime {}
+    impl Sealed for super::Runtime {}
+}
+
+/// v0.2.2 W13: marker for compile-time validated witnesses produced by
+/// `validate_const()` and usable in `const` contexts. Convertible to
+/// `Validated<T, Runtime>` via `From`.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct CompileTime;
+impl ValidationPhase for CompileTime {}
+
+/// v0.2.2 W13: marker for runtime-validated witnesses produced by
+/// `validate()`. The default phase of `Validated<T>` so v0.2.1 call
+/// sites continue to compile.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct Runtime;
+impl ValidationPhase for Runtime {}
+
 /// Proof that a value was produced by the conformance checker,
 /// not fabricated by Prism code.
 /// The inner value and `_sealed` field are private, so `Validated<T>`
 /// can only be constructed within this crate.
+/// v0.2.2 W13: parameterized by a `Phase: ValidationPhase` discriminator.
+/// `Validated<T, CompileTime>` was witnessed by `validate_const()` and is
+/// usable in const contexts. `Validated<T, Runtime>` (the default) was
+/// witnessed by `validate()`. A `CompileTime` witness is convertible to
+/// a `Runtime` witness via `From`.
 /// # Examples
 /// ```rust,ignore
 /// use uor_foundation::enforcement::{CompileUnitBuilder, Term};
@@ -285,26 +417,44 @@ pub trait Grounding {
 /// let compile_unit = validated.inner();
 /// ```
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Validated<T> {
+pub struct Validated<T, Phase: ValidationPhase = Runtime> {
     /// The validated inner value.
     inner: T,
+    /// Phantom marker for the validation phase (`CompileTime` or `Runtime`).
+    _phase: PhantomData<Phase>,
     /// Prevents external construction.
     _sealed: (),
 }
 
-impl<T> Validated<T> {
+impl<T, Phase: ValidationPhase> Validated<T, Phase> {
     /// Returns a reference to the validated inner value.
     #[inline]
     #[must_use]
-    pub fn inner(&self) -> &T {
+    pub const fn inner(&self) -> &T {
         &self.inner
     }
 
-    /// Creates a new `Validated<T>` wrapper. Only callable within the crate.
+    /// Creates a new `Validated<T, Phase>` wrapper. Only callable within the crate.
     #[inline]
     #[allow(dead_code)]
     pub(crate) const fn new(inner: T) -> Self {
-        Self { inner, _sealed: () }
+        Self {
+            inner,
+            _phase: PhantomData,
+            _sealed: (),
+        }
+    }
+}
+
+/// v0.2.2 W13: a compile-time witness is usable wherever a runtime witness is required.
+impl<T> From<Validated<T, CompileTime>> for Validated<T, Runtime> {
+    #[inline]
+    fn from(value: Validated<T, CompileTime>) -> Self {
+        Self {
+            inner: value.inner,
+            _phase: PhantomData,
+            _sealed: (),
+        }
     }
 }
 
@@ -729,6 +879,22 @@ pub struct CompileUnit {
     level: WittLevel,
     /// The thermodynamic budget.
     budget: u64,
+}
+
+impl CompileUnit {
+    /// Returns the Witt level ceiling declared at validation time.
+    #[inline]
+    #[must_use]
+    pub const fn witt_level(&self) -> WittLevel {
+        self.level
+    }
+
+    /// Returns the thermodynamic budget declared at validation time.
+    #[inline]
+    #[must_use]
+    pub const fn thermodynamic_budget(&self) -> u64 {
+        self.budget
+    }
 }
 
 impl<'a> CompileUnitBuilder<'a> {
@@ -2033,22 +2199,194 @@ impl OntologyTarget for InhabitanceImpossibilityWitness {}
 impl OntologyTarget for ConstrainedTypeInput {}
 impl OntologyTarget for CompileUnit {}
 
-/// Sealed marker trait identifying type:ConstrainedType subclasses that may
-/// appear as the parameter of `Grounded<T>`. Downstream crates implement
-/// this via `#[derive(ConstrainedType)]` from `uor-foundation-macros`,
-/// which gates impl emission through a back-door macro path.
-/// Back-door supertrait for `GroundedShape`. Reachable via
-/// `uor_foundation::enforcement::__macro_internals::GroundedShapeSealed`.
-/// Only `#[derive(ConstrainedType)]` is supposed to impl it.
-#[doc(hidden)]
-pub mod __macro_internals {
-    /// Sealed supertrait of `GroundedShape`. Not part of the stable API.
-    pub trait GroundedShapeSealed {}
-    /// Built-in impl for the foundation's own ConstrainedTypeInput shim.
-    impl GroundedShapeSealed for super::ConstrainedTypeInput {}
+/// v0.2.2 W11: supporting evidence type for `CompletenessCertificate`.
+/// Linked from the certificate via the `Certificate::Evidence` associated type.
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct CompletenessAuditTrail {
+    _private: (),
 }
-pub trait GroundedShape: __macro_internals::GroundedShapeSealed {}
-impl<T: __macro_internals::GroundedShapeSealed> GroundedShape for T {}
+
+/// v0.2.2 W11: supporting evidence type for `LiftChainCertificate`.
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct ChainAuditTrail {
+    _private: (),
+}
+
+/// v0.2.2 W11: supporting evidence type for `GeodesicCertificate`.
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct GeodesicEvidenceBundle {
+    _private: (),
+}
+
+/// v0.2.2 W11: sealed carrier for `cert:TransformCertificate`.
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct TransformCertificate {
+    _private: (),
+}
+
+/// v0.2.2 W11: sealed carrier for `cert:IsometryCertificate`.
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct IsometryCertificate {
+    _private: (),
+}
+
+/// v0.2.2 W11: sealed carrier for `cert:InvolutionCertificate`.
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct InvolutionCertificate {
+    _private: (),
+}
+
+/// v0.2.2 W11: sealed carrier for `cert:GeodesicCertificate`.
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct GeodesicCertificate {
+    _private: (),
+}
+
+/// v0.2.2 W11: sealed carrier for `cert:MeasurementCertificate`.
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct MeasurementCertificate {
+    _private: (),
+}
+
+/// v0.2.2 W11: sealed carrier for `cert:BornRuleVerification`.
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct BornRuleVerification {
+    _private: (),
+}
+
+/// v0.2.2 W11: sealed marker trait for foundation-supplied certificate kinds.
+/// Implemented by every `cert:Certificate` subclass via codegen; not
+/// implementable outside this crate.
+pub trait Certificate: certificate_sealed::Sealed {
+    /// The ontology IRI of this certificate class.
+    const IRI: &'static str;
+    /// The structured evidence carried by this certificate (or `()` if none).
+    type Evidence;
+}
+
+mod certificate_sealed {
+    /// Private supertrait. Not implementable outside this crate.
+    pub trait Sealed {}
+    impl Sealed for super::GroundingCertificate {}
+    impl Sealed for super::LiftChainCertificate {}
+    impl Sealed for super::InhabitanceCertificate {}
+    impl Sealed for super::CompletenessCertificate {}
+    impl Sealed for super::TransformCertificate {}
+    impl Sealed for super::IsometryCertificate {}
+    impl Sealed for super::InvolutionCertificate {}
+    impl Sealed for super::GeodesicCertificate {}
+    impl Sealed for super::MeasurementCertificate {}
+    impl Sealed for super::BornRuleVerification {}
+}
+
+impl Certificate for GroundingCertificate {
+    const IRI: &'static str = "https://uor.foundation/cert/GroundingCertificate";
+    type Evidence = ();
+}
+
+impl Certificate for LiftChainCertificate {
+    const IRI: &'static str = "https://uor.foundation/cert/LiftChainCertificate";
+    type Evidence = ChainAuditTrail;
+}
+
+impl Certificate for InhabitanceCertificate {
+    const IRI: &'static str = "https://uor.foundation/cert/InhabitanceCertificate";
+    type Evidence = ();
+}
+
+impl Certificate for CompletenessCertificate {
+    const IRI: &'static str = "https://uor.foundation/cert/CompletenessCertificate";
+    type Evidence = CompletenessAuditTrail;
+}
+
+impl Certificate for TransformCertificate {
+    const IRI: &'static str = "https://uor.foundation/cert/TransformCertificate";
+    type Evidence = ();
+}
+
+impl Certificate for IsometryCertificate {
+    const IRI: &'static str = "https://uor.foundation/cert/IsometryCertificate";
+    type Evidence = ();
+}
+
+impl Certificate for InvolutionCertificate {
+    const IRI: &'static str = "https://uor.foundation/cert/InvolutionCertificate";
+    type Evidence = ();
+}
+
+impl Certificate for GeodesicCertificate {
+    const IRI: &'static str = "https://uor.foundation/cert/GeodesicCertificate";
+    type Evidence = GeodesicEvidenceBundle;
+}
+
+impl Certificate for MeasurementCertificate {
+    const IRI: &'static str = "https://uor.foundation/cert/MeasurementCertificate";
+    type Evidence = ();
+}
+
+impl Certificate for BornRuleVerification {
+    const IRI: &'static str = "https://uor.foundation/cert/BornRuleVerification";
+    type Evidence = ();
+}
+
+/// v0.2.2 W11: parametric carrier for any foundation-supplied certificate.
+/// Replaces the v0.2.1 per-class shim duplication. The `Certificate` trait
+/// is sealed and the `_private` field prevents external construction; only
+/// the foundation's pipeline / resolver paths produce `Certified<C>` values.
+#[derive(Debug, Clone)]
+pub struct Certified<C: Certificate> {
+    /// The certificate kind value carried by this wrapper.
+    inner: C,
+    /// Prevents external construction.
+    _private: (),
+}
+
+impl<C: Certificate> Certified<C> {
+    /// Returns a reference to the carried certificate kind value.
+    #[inline]
+    #[must_use]
+    pub const fn certificate(&self) -> &C {
+        &self.inner
+    }
+
+    /// Returns the ontology IRI of this certificate's kind.
+    #[inline]
+    #[must_use]
+    pub const fn iri(&self) -> &'static str {
+        C::IRI
+    }
+
+    /// Crate-internal constructor. Reachable only from the pipeline / resolver paths.
+    #[inline]
+    #[allow(dead_code)]
+    pub(crate) const fn new(inner: C) -> Self {
+        Self {
+            inner,
+            _private: (),
+        }
+    }
+}
+
+/// Sealed marker trait identifying type:ConstrainedType subclasses that may
+/// appear as the parameter of `Grounded<T>`.
+/// v0.2.2 W2: the sealing now lives in a private `grounded_shape_sealed`
+/// module — there is no `__macro_internals` back-door. The only impl is for
+/// the foundation-supplied `ConstrainedTypeInput` shim. Downstream code that
+/// needs to bind a user type as `T` in `Grounded<T>` does so via the
+/// compile-time-evidence pattern: declare a
+/// `const _VALIDATED_<T>: Validated<ConstrainedTypeInput, CompileTime> = ...;`
+/// module-scope evidence constant, and the foundation's pipeline binds it.
+mod grounded_shape_sealed {
+    /// Private supertrait. Not implementable outside this crate.
+    pub trait Sealed {}
+    impl Sealed for super::ConstrainedTypeInput {}
+}
+/// v0.2.2 W2: sealed marker trait for shapes that can appear as the parameter
+/// of `Grounded<T>`. Implemented only by `ConstrainedTypeInput`. Downstream
+/// user types bind to this trait via the compile-time-evidence pattern in a
+/// future v0.2.2 cookbook revision.
+pub trait GroundedShape: grounded_shape_sealed::Sealed {}
+impl GroundedShape for ConstrainedTypeInput {}
 
 /// A binding entry in a `BindingsTable`. Pairs an address (u128 content
 /// hash of the query coordinate) with the bound bytes.
@@ -2163,6 +2501,58 @@ impl<T: GroundedShape> Grounded<T> {
     }
 }
 
+/// v0.2.2 W8: triadic coordinate of a Datum at level `L`. Bundles the
+/// (stratum, spectrum, address) projection in one structurally-enforced
+/// type. No public constructor — `Triad<L>` is built only by foundation code
+/// at grounding time. Field access goes through the named accessors.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct Triad<L> {
+    /// The stratum coordinate (two-adic valuation).
+    stratum: u64,
+    /// The spectrum coordinate (Walsh-Hadamard image).
+    spectrum: u64,
+    /// The address coordinate (Braille-glyph address).
+    address: u64,
+    /// Phantom marker for the Witt level.
+    _level: PhantomData<L>,
+}
+
+impl<L> Triad<L> {
+    /// Returns the stratum component (`query:TwoAdicValuation` coordinate).
+    #[inline]
+    #[must_use]
+    pub const fn stratum(&self) -> u64 {
+        self.stratum
+    }
+
+    /// Returns the spectrum component (`query:WalshHadamardImage` coordinate).
+    #[inline]
+    #[must_use]
+    pub const fn spectrum(&self) -> u64 {
+        self.spectrum
+    }
+
+    /// Returns the address component (`query:Address` coordinate).
+    #[inline]
+    #[must_use]
+    pub const fn address(&self) -> u64 {
+        self.address
+    }
+
+    /// Crate-internal constructor. Reachable only from grounding-time minting.
+    #[inline]
+    #[must_use]
+    #[allow(dead_code)]
+    pub(crate) const fn new(stratum: u64, spectrum: u64, address: u64) -> Self {
+        Self {
+            stratum,
+            spectrum,
+            address,
+            _level: PhantomData,
+        }
+    }
+}
+
 /// The Rust-surface rendering of `reduction:PipelineFailureReason` and the
 /// v0.2.1 cross-namespace failure variants. Variant set and field shapes are
 /// generated parametrically by walking `reduction:FailureField` individuals;
@@ -2202,6 +2592,13 @@ pub enum PipelineFailure {
         site_position: usize,
         /// constraint_iri field.
         constraint_iri: &'static str,
+    },
+    /// `ShapeMismatch` failure variant.
+    ShapeMismatch {
+        /// expected field.
+        expected: &'static str,
+        /// got field.
+        got: &'static str,
     },
     /// `LiftObstructionFailure` failure variant.
     LiftObstructionFailure {
@@ -2252,6 +2649,9 @@ impl core::fmt::Display for PipelineFailure {
                 "CoherenceViolation(site_position={:?}, constraint_iri={:?})",
                 site_position, constraint_iri
             ),
+            Self::ShapeMismatch { expected, got } => {
+                write!(ff, "ShapeMismatch(expected={:?}, got={:?})", expected, got)
+            }
             Self::LiftObstructionFailure {
                 site_position,
                 obstruction_class_iri,
@@ -2439,7 +2839,142 @@ impl<__T: crate::pipeline::ConstrainedTypeShape + ?Sized> Certify<__T> for Inhab
     }
 }
 
-/// v0.2.1 phantom-typed ring operation surface. Each phantom struct binds a
+/// v0.2.2 W12: resolver free functions. Replaces the v0.2.1 unit-struct
+/// façades with module-per-resolver free functions returning the W11
+/// `Certified<C>` parametric carrier.
+pub mod resolver {
+    use super::{
+        Certified, CompileUnit, GenericImpossibilityWitness, GroundingCertificate,
+        InhabitanceCertificate, InhabitanceImpossibilityWitness, LiftChainCertificate, Validated,
+        WittLevel,
+    };
+
+    /// v0.2.2 W12: certify tower-completeness for a constrained type.
+    ///
+    /// Replaces `TowerCompletenessResolver::new().certify(input)` from v0.2.1.
+    /// Delegates to `crate::pipeline::run_tower_completeness` and wraps the
+    /// returned `LiftChainCertificate` in the W11 `Certified<_>` carrier.
+    ///
+    /// # Errors
+    ///
+    /// Returns `GenericImpossibilityWitness` when no certificate can be issued.
+    pub mod tower_completeness {
+        use super::*;
+        /// Certify at the canonical W32 level.
+        ///
+        /// # Errors
+        ///
+        /// Returns `GenericImpossibilityWitness` on failure.
+        pub fn certify<T: crate::pipeline::ConstrainedTypeShape + ?Sized>(
+            input: &T,
+        ) -> Result<Certified<LiftChainCertificate>, GenericImpossibilityWitness> {
+            certify_at(input, WittLevel::W32)
+        }
+
+        /// Certify at an explicit Witt level.
+        ///
+        /// # Errors
+        ///
+        /// Returns `GenericImpossibilityWitness` on failure.
+        pub fn certify_at<T: crate::pipeline::ConstrainedTypeShape + ?Sized>(
+            input: &T,
+            level: WittLevel,
+        ) -> Result<Certified<LiftChainCertificate>, GenericImpossibilityWitness> {
+            crate::pipeline::run_tower_completeness(input, level)
+                .map(|v| Certified::new(*v.inner()))
+                .map_err(|_| GenericImpossibilityWitness::default())
+        }
+    }
+
+    /// v0.2.2 W12: certify incremental completeness for a constrained type.
+    pub mod incremental_completeness {
+        use super::*;
+        /// Certify at the canonical W32 level.
+        ///
+        /// # Errors
+        ///
+        /// Returns `GenericImpossibilityWitness` on failure.
+        pub fn certify<T: crate::pipeline::ConstrainedTypeShape + ?Sized>(
+            input: &T,
+        ) -> Result<Certified<LiftChainCertificate>, GenericImpossibilityWitness> {
+            certify_at(input, WittLevel::W32)
+        }
+
+        /// Certify at an explicit Witt level.
+        ///
+        /// # Errors
+        ///
+        /// Returns `GenericImpossibilityWitness` on failure.
+        pub fn certify_at<T: crate::pipeline::ConstrainedTypeShape + ?Sized>(
+            input: &T,
+            level: WittLevel,
+        ) -> Result<Certified<LiftChainCertificate>, GenericImpossibilityWitness> {
+            crate::pipeline::run_incremental_completeness(input, level)
+                .map(|v| Certified::new(*v.inner()))
+                .map_err(|_| GenericImpossibilityWitness::default())
+        }
+    }
+
+    /// v0.2.2 W12: certify grounding-aware reduction for a CompileUnit.
+    pub mod grounding_aware {
+        use super::*;
+        /// Certify at the canonical W32 level.
+        ///
+        /// # Errors
+        ///
+        /// Returns `GenericImpossibilityWitness` on failure.
+        pub fn certify(
+            input: &CompileUnit,
+        ) -> Result<Certified<GroundingCertificate>, GenericImpossibilityWitness> {
+            certify_at(input, WittLevel::W32)
+        }
+
+        /// Certify at an explicit Witt level.
+        ///
+        /// # Errors
+        ///
+        /// Returns `GenericImpossibilityWitness` on failure.
+        pub fn certify_at(
+            input: &CompileUnit,
+            level: WittLevel,
+        ) -> Result<Certified<GroundingCertificate>, GenericImpossibilityWitness> {
+            crate::pipeline::run_grounding_aware(input, level)
+                .map(|v| Certified::new(*v.inner()))
+                .map_err(|_| GenericImpossibilityWitness::default())
+        }
+    }
+
+    /// v0.2.2 W12: certify inhabitance for a constrained type.
+    pub mod inhabitance {
+        use super::*;
+        /// Certify at the canonical W32 level.
+        ///
+        /// # Errors
+        ///
+        /// Returns `InhabitanceImpossibilityWitness` on failure.
+        pub fn certify<T: crate::pipeline::ConstrainedTypeShape + ?Sized>(
+            input: &T,
+        ) -> Result<Certified<InhabitanceCertificate>, InhabitanceImpossibilityWitness> {
+            certify_at(input, WittLevel::W32)
+        }
+
+        /// Certify at an explicit Witt level.
+        ///
+        /// # Errors
+        ///
+        /// Returns `InhabitanceImpossibilityWitness` on failure.
+        pub fn certify_at<T: crate::pipeline::ConstrainedTypeShape + ?Sized>(
+            input: &T,
+            level: WittLevel,
+        ) -> Result<Certified<InhabitanceCertificate>, InhabitanceImpossibilityWitness> {
+            let _ = (input, level);
+            crate::pipeline::run_inhabitance(input, level)
+                .map(|v: Validated<InhabitanceCertificate>| Certified::new(*v.inner()))
+        }
+    }
+}
+
+/// v0.2.2 phantom-typed ring operation surface. Each phantom struct binds a
 /// `WittLevel` at the type level so consumers can write
 /// `Mul::<W8>::apply(a, b)` for compile-time level-checked arithmetic.
 pub trait RingOp<L> {
@@ -2447,6 +2982,16 @@ pub trait RingOp<L> {
     type Operand;
     /// Apply this binary ring op.
     fn apply(a: Self::Operand, b: Self::Operand) -> Self::Operand;
+}
+
+/// v0.2.2 W3: unary phantom-typed ring operation surface. Mirrors `RingOp`
+/// for arity-1 operations (`Neg`, `BNot`, `Succ`) so consumers can write
+/// `Neg::<W8>::apply(a)` for compile-time level-checked unary arithmetic.
+pub trait UnaryRingOp<L> {
+    /// Operand type at this level.
+    type Operand;
+    /// Apply this unary ring op.
+    fn apply(a: Self::Operand) -> Self::Operand;
 }
 
 /// Multiplicative ring op. phantom-typed at level `L`.
@@ -2472,6 +3017,18 @@ pub struct And<L>(PhantomData<L>);
 /// Bitwise OR ring op. phantom-typed at level `L`.
 #[derive(Debug, Default, Clone, Copy)]
 pub struct Or<L>(PhantomData<L>);
+
+/// Ring negation (the canonical involution: x → -x). Phantom-typed at level `L` (v0.2.2 W3).
+#[derive(Debug, Default, Clone, Copy)]
+pub struct Neg<L>(PhantomData<L>);
+
+/// Bitwise NOT (the Hamming involution: x → (2^n - 1) XOR x). Phantom-typed at level `L` (v0.2.2 W3).
+#[derive(Debug, Default, Clone, Copy)]
+pub struct BNot<L>(PhantomData<L>);
+
+/// Successor (= Neg ∘ BNot per the critical composition law). Phantom-typed at level `L` (v0.2.2 W3).
+#[derive(Debug, Default, Clone, Copy)]
+pub struct Succ<L>(PhantomData<L>);
 
 /// W8 marker — 8-bit Witt level reified at the type level.
 #[derive(Debug, Default, Clone, Copy)]
@@ -2681,6 +3238,230 @@ impl RingOp<W32> for Or<W32> {
     }
 }
 
+impl UnaryRingOp<W8> for Neg<W8> {
+    type Operand = u8;
+    #[inline]
+    fn apply(a: u8) -> u8 {
+        const_ring_eval_w8(PrimitiveOp::Sub, 0, a)
+    }
+}
+
+impl UnaryRingOp<W8> for BNot<W8> {
+    type Operand = u8;
+    #[inline]
+    fn apply(a: u8) -> u8 {
+        const_ring_eval_w8(PrimitiveOp::Xor, a, u8::MAX)
+    }
+}
+
+impl UnaryRingOp<W8> for Succ<W8> {
+    type Operand = u8;
+    #[inline]
+    fn apply(a: u8) -> u8 {
+        <Neg<W8> as UnaryRingOp<W8>>::apply(<BNot<W8> as UnaryRingOp<W8>>::apply(a))
+    }
+}
+
+impl UnaryRingOp<W16> for Neg<W16> {
+    type Operand = u16;
+    #[inline]
+    fn apply(a: u16) -> u16 {
+        const_ring_eval_w16(PrimitiveOp::Sub, 0, a)
+    }
+}
+
+impl UnaryRingOp<W16> for BNot<W16> {
+    type Operand = u16;
+    #[inline]
+    fn apply(a: u16) -> u16 {
+        const_ring_eval_w16(PrimitiveOp::Xor, a, u16::MAX)
+    }
+}
+
+impl UnaryRingOp<W16> for Succ<W16> {
+    type Operand = u16;
+    #[inline]
+    fn apply(a: u16) -> u16 {
+        <Neg<W16> as UnaryRingOp<W16>>::apply(<BNot<W16> as UnaryRingOp<W16>>::apply(a))
+    }
+}
+
+impl UnaryRingOp<W24> for Neg<W24> {
+    type Operand = u32;
+    #[inline]
+    fn apply(a: u32) -> u32 {
+        const_ring_eval_w24(PrimitiveOp::Sub, 0, a)
+    }
+}
+
+impl UnaryRingOp<W24> for BNot<W24> {
+    type Operand = u32;
+    #[inline]
+    fn apply(a: u32) -> u32 {
+        const_ring_eval_w24(PrimitiveOp::Xor, a, 0x00FF_FFFFu32)
+    }
+}
+
+impl UnaryRingOp<W24> for Succ<W24> {
+    type Operand = u32;
+    #[inline]
+    fn apply(a: u32) -> u32 {
+        <Neg<W24> as UnaryRingOp<W24>>::apply(<BNot<W24> as UnaryRingOp<W24>>::apply(a))
+    }
+}
+
+impl UnaryRingOp<W32> for Neg<W32> {
+    type Operand = u32;
+    #[inline]
+    fn apply(a: u32) -> u32 {
+        const_ring_eval_w32(PrimitiveOp::Sub, 0, a)
+    }
+}
+
+impl UnaryRingOp<W32> for BNot<W32> {
+    type Operand = u32;
+    #[inline]
+    fn apply(a: u32) -> u32 {
+        const_ring_eval_w32(PrimitiveOp::Xor, a, u32::MAX)
+    }
+}
+
+impl UnaryRingOp<W32> for Succ<W32> {
+    type Operand = u32;
+    #[inline]
+    fn apply(a: u32) -> u32 {
+        <Neg<W32> as UnaryRingOp<W32>>::apply(<BNot<W32> as UnaryRingOp<W32>>::apply(a))
+    }
+}
+
+/// Sealed marker for well-formed level embedding pairs (`(From, To)` with
+/// `From <= To`). v0.2.2 W3.
+pub trait ValidLevelEmbedding: valid_level_embedding_sealed::Sealed {}
+
+mod valid_level_embedding_sealed {
+    /// Private supertrait. Not implementable outside this crate.
+    pub trait Sealed {}
+    impl Sealed for (super::W8, super::W8) {}
+    impl Sealed for (super::W8, super::W16) {}
+    impl Sealed for (super::W8, super::W24) {}
+    impl Sealed for (super::W8, super::W32) {}
+    impl Sealed for (super::W16, super::W16) {}
+    impl Sealed for (super::W16, super::W24) {}
+    impl Sealed for (super::W16, super::W32) {}
+    impl Sealed for (super::W24, super::W24) {}
+    impl Sealed for (super::W24, super::W32) {}
+    impl Sealed for (super::W32, super::W32) {}
+}
+
+impl ValidLevelEmbedding for (W8, W8) {}
+impl ValidLevelEmbedding for (W8, W16) {}
+impl ValidLevelEmbedding for (W8, W24) {}
+impl ValidLevelEmbedding for (W8, W32) {}
+impl ValidLevelEmbedding for (W16, W16) {}
+impl ValidLevelEmbedding for (W16, W24) {}
+impl ValidLevelEmbedding for (W16, W32) {}
+impl ValidLevelEmbedding for (W24, W24) {}
+impl ValidLevelEmbedding for (W24, W32) {}
+impl ValidLevelEmbedding for (W32, W32) {}
+
+/// v0.2.2 W3: phantom-typed level embedding `Embed<From, To>` for the
+/// canonical injection ι : R_From → R_To when `From <= To`.
+/// Implementations exist only for sealed `(From, To)` pairs in the
+/// `ValidLevelEmbedding` trait, so attempting an unsupported direction
+/// (e.g., `Embed<W32, W8>`) fails at compile time.
+#[derive(Debug, Default, Clone, Copy)]
+pub struct Embed<From, To>(PhantomData<(From, To)>);
+
+impl Embed<W8, W8> {
+    /// Embed a `u8` value at W8 into a `u8` value at W8.
+    #[inline]
+    #[must_use]
+    pub const fn apply(value: u8) -> u8 {
+        value
+    }
+}
+
+impl Embed<W8, W16> {
+    /// Embed a `u8` value at W8 into a `u16` value at W16.
+    #[inline]
+    #[must_use]
+    pub const fn apply(value: u8) -> u16 {
+        value as u16
+    }
+}
+
+impl Embed<W8, W24> {
+    /// Embed a `u8` value at W8 into a `u32` value at W24.
+    #[inline]
+    #[must_use]
+    pub const fn apply(value: u8) -> u32 {
+        value as u32
+    }
+}
+
+impl Embed<W8, W32> {
+    /// Embed a `u8` value at W8 into a `u32` value at W32.
+    #[inline]
+    #[must_use]
+    pub const fn apply(value: u8) -> u32 {
+        value as u32
+    }
+}
+
+impl Embed<W16, W16> {
+    /// Embed a `u16` value at W16 into a `u16` value at W16.
+    #[inline]
+    #[must_use]
+    pub const fn apply(value: u16) -> u16 {
+        value
+    }
+}
+
+impl Embed<W16, W24> {
+    /// Embed a `u16` value at W16 into a `u32` value at W24.
+    #[inline]
+    #[must_use]
+    pub const fn apply(value: u16) -> u32 {
+        value as u32
+    }
+}
+
+impl Embed<W16, W32> {
+    /// Embed a `u16` value at W16 into a `u32` value at W32.
+    #[inline]
+    #[must_use]
+    pub const fn apply(value: u16) -> u32 {
+        value as u32
+    }
+}
+
+impl Embed<W24, W24> {
+    /// Embed a `u32` value at W24 into a `u32` value at W24.
+    #[inline]
+    #[must_use]
+    pub const fn apply(value: u32) -> u32 {
+        value
+    }
+}
+
+impl Embed<W24, W32> {
+    /// Embed a `u32` value at W24 into a `u32` value at W32.
+    #[inline]
+    #[must_use]
+    pub const fn apply(value: u32) -> u32 {
+        value
+    }
+}
+
+impl Embed<W32, W32> {
+    /// Embed a `u32` value at W32 into a `u32` value at W32.
+    #[inline]
+    #[must_use]
+    pub const fn apply(value: u32) -> u32 {
+        value
+    }
+}
+
 /// Sealed marker trait for fragment classifiers (Is2SatShape, IsHornShape,
 /// IsResidualFragment) emitted parametrically from the predicate individuals
 /// referenced by `predicate:InhabitanceDispatchTable`.
@@ -2755,56 +3536,6 @@ impl<T: OntologyTarget> core::ops::Deref for Validated<T> {
     }
 }
 
-/// Provenance witness sealing the macro back-door minting path. The only
-/// constructor is `__for_macro_crate`, named with the reserved
-/// `__uor_macro_*` prefix so the `uor::unsealed_grounded` lint can flag any
-/// call site outside the foundation's macro crate at review time. The
-/// proc-macro crate emits these calls inside generated token streams that
-/// are visible in `cargo expand` output.
-#[doc(hidden)]
-#[derive(Debug, Clone, Copy)]
-pub struct MacroProvenance {
-    _marker: (),
-}
-
-impl MacroProvenance {
-    /// The only constructor. Reachable only from `uor-foundation-macros`
-    /// via the `__for_macro_crate` symbol naming convention; the
-    /// `uor::unsealed_grounded` lint flags any call site outside the
-    /// approved modules.
-    #[doc(hidden)]
-    #[inline]
-    #[must_use]
-    pub const fn __for_macro_crate() -> Self {
-        Self { _marker: () }
-    }
-}
-
-/// Back-door constructor for `Validated<T>`. Reachable only from macro-
-/// generated token streams.
-#[doc(hidden)]
-#[inline]
-pub fn __uor_macro_mint_validated<T: OntologyTarget>(
-    _prov: MacroProvenance,
-    inner: T,
-) -> Validated<T> {
-    Validated { inner, _sealed: () }
-}
-
-/// Back-door constructor for `Grounded<T>`. Reachable only from macro-
-/// generated token streams.
-#[doc(hidden)]
-#[inline]
-pub fn __uor_macro_mint_grounded<T: GroundedShape>(
-    _prov: MacroProvenance,
-    validated: Validated<GroundingCertificate>,
-    bindings: BindingsTable,
-    witt_level_bits: u16,
-    unit_address: u128,
-) -> Grounded<T> {
-    Grounded::new_internal(validated, bindings, witt_level_bits, unit_address)
-}
-
 /// v0.2.1 ergonomics prelude. Re-exports the core symbols downstream crates
 /// need for the consumer-facing one-liners.
 /// Ontology-driven: the set of certificate / type / builder symbols is
@@ -2814,40 +3545,70 @@ pub fn __uor_macro_mint_grounded<T: GroundedShape>(
 pub mod prelude {
     pub use super::Add;
     pub use super::And;
+    pub use super::BNot;
+    pub use super::BinaryGroundingMap;
     pub use super::BindingEntry;
     pub use super::BindingsTable;
+    pub use super::BornRuleVerification;
+    pub use super::Certificate;
+    pub use super::Certified;
     pub use super::Certify;
+    pub use super::ChainAuditTrail;
+    pub use super::CompileTime;
     pub use super::CompileUnit;
     pub use super::CompileUnitBuilder;
+    pub use super::CompletenessAuditTrail;
     pub use super::CompletenessCertificate;
     pub use super::ConstrainedTypeInput;
     pub use super::Datum;
+    pub use super::DigestGroundingMap;
+    pub use super::Embed;
     pub use super::FragmentMarker;
     pub use super::GenericImpossibilityWitness;
+    pub use super::GeodesicCertificate;
+    pub use super::GeodesicEvidenceBundle;
     pub use super::Grounded;
     pub use super::GroundedShape;
     pub use super::GroundingAwareResolver;
     pub use super::GroundingCertificate;
+    pub use super::GroundingMapKind;
     pub use super::ImpossibilityWitnessKind;
     pub use super::IncrementalCompletenessResolver;
     pub use super::InhabitanceCertificate;
     pub use super::InhabitanceImpossibilityWitness;
     pub use super::InhabitanceResolver;
+    pub use super::IntegerGroundingMap;
+    pub use super::Invertible;
+    pub use super::InvolutionCertificate;
+    pub use super::IsometryCertificate;
+    pub use super::JsonGroundingMap;
     pub use super::LiftChainCertificate;
+    pub use super::MeasurementCertificate;
     pub use super::Mul;
+    pub use super::Neg;
     pub use super::OntologyTarget;
     pub use super::Or;
     pub use super::PipelineFailure;
+    pub use super::PreservesMetric;
+    pub use super::PreservesStructure;
     pub use super::RingOp;
+    pub use super::Runtime;
     pub use super::ShapeViolation;
     pub use super::Sub;
+    pub use super::Succ;
     pub use super::Term;
     pub use super::TermArena;
+    pub use super::Total;
     pub use super::TowerCompletenessResolver;
+    pub use super::TransformCertificate;
+    pub use super::Triad;
+    pub use super::UnaryRingOp;
+    pub use super::Utf8GroundingMap;
+    pub use super::ValidLevelEmbedding;
     pub use super::Validated;
+    pub use super::ValidationPhase;
     pub use super::Xor;
     pub use super::W16;
     pub use super::W8;
-    pub use crate::{Primitives, WittLevel};
-    pub use uor_foundation_macros::uor;
+    pub use crate::{DefaultHostTypes, HostTypes, Primitives, WittLevel};
 }

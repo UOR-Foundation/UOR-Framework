@@ -10,6 +10,7 @@ namespace UOR.User.State
 
 -- The canonical ground-state witness: a GroundedContext at σ = 1, freeRank = 0, T_ctx = 0, S = 0 (SC_4). Demonstrates that full saturation is achievable and O(1) resolution (SC_5) is realized.
 def ground_state : UOR.User.State.GroundedContext UOR.Prims.Standard := {
+  groundedTriad := none
   binding := #[]
   capacity := none
   contentAddress := none

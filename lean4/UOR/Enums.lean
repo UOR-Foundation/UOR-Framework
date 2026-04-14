@@ -48,7 +48,7 @@ inductive PrimitiveOp where
   | or : PrimitiveOp
   deriving DecidableEq, Repr, BEq, Hashable, Inhabited
 
-/-- Metric axis for measurement. -/
+/-- A classification axis for constraints by their geometric effect. The three axes — vertical (ring/additive), horizontal (Hamming/bitwise), diagonal (incompatibility) — form the tri-metric coordinate system of UOR. -/
 inductive MetricAxis where
   /-- The vertical (ring/additive) metric axis. Constraints on this axis operate through ring arithmetic: residue classes, divisibility, and additive structure. -/
   | vertical : MetricAxis
@@ -58,7 +58,7 @@ inductive MetricAxis where
   | diagonal : MetricAxis
   deriving DecidableEq, Repr, BEq, Hashable, Inhabited
 
-/-- Geometric character of an operation. -/
+/-- The geometric role of a ring operation in the UOR dual-geometry (ring + hypercube). Every op:Operation individual references exactly one GeometricCharacter via op:hasGeometricCharacter. The nine canonical individuals correspond to the action types of the dihedral group D_{2^n}. -/
 inductive GeometricCharacter where
   /-- Reflection through the origin of the additive ring: neg(x) = -x mod 2^n. One of the two generators of D_{2^n}. -/
   | ringReflection : GeometricCharacter
@@ -90,7 +90,7 @@ inductive GeometricCharacter where
   | sessionMerge : GeometricCharacter
   deriving DecidableEq, Repr, BEq, Hashable, Inhabited
 
-/-- Domain of verification for identities. -/
+/-- A named mathematical discipline through which an algebraic identity is established and grounded. Every op:Identity individual references at least one VerificationDomain via op:verificationDomain. The nine canonical domain individuals are kernel-level constants defined in op/. -/
 inductive VerificationDomain where
   /-- Established by exhaustive traversal of R_n. Valid for all identities where the ring is finite. -/
   | enumerative : VerificationDomain
@@ -102,9 +102,9 @@ inductive VerificationDomain where
   | analytical : VerificationDomain
   /-- Established via entropy, Landauer bounds, or Boltzmann distributions. Covers site entropy (TH_), reversible computation (RC_), and phase transitions. -/
   | thermodynamic : VerificationDomain
-  /-- Established via simplicial homology, cohomology, or constraint nerve analysis. Covers homological algebra (HA_) and ψ-pipeline identities. -/
+  /-- Established via simplicial homology, cohomology, or constraint nerve analysis. Covers homological algebra (HA_) and the ψ-pipeline base chain ψ_1..ψ_6 (constraint nerve construction, chain functor, homology, Betti extraction, dualization, cohomology). -/
   | topological : VerificationDomain
-  /-- Established by the inter-algebra map structure of the resolution pipeline. Covers φ-maps (phi_1–phi_6) and ψ-maps (psi_1–psi_6). -/
+  /-- Established by the inter-algebra map structure of the resolution pipeline. Covers φ-maps (phi_1–phi_6) and the ψ-pipeline tower ψ_7..ψ_9 (Postnikov truncation, homotopy group extraction, k-invariant computation). The earlier ψ_1..ψ_6 chain (constraint nerve → simplicial homology) is established under op:Topological. -/
   | pipeline : VerificationDomain
   /-- Established by the composition of Analytical and Topological reasoning. The only domain requiring multiple op:verificationDomain assertions. Covers the UOR Index Theorem (IT_7a–IT_7d). -/
   | indexTheoretic : VerificationDomain
@@ -118,7 +118,7 @@ inductive VerificationDomain where
   | composedAlgebraic : VerificationDomain
   deriving DecidableEq, Repr, BEq, Hashable, Inhabited
 
-/-- Validity scope classification. -/
+/-- Root class for validity scope individuals. Instances are the four named scope kinds: Universal, ParametricLower, ParametricRange, and LevelSpecific. -/
 inductive ValidityScopeKind where
   /-- Holds for all k in N. No minimum k constraint. -/
   | universal : ValidityScopeKind
@@ -130,7 +130,7 @@ inductive ValidityScopeKind where
   | levelSpecific : ValidityScopeKind
   deriving DecidableEq, Repr, BEq, Hashable, Inhabited
 
-/-- Execution policy for composed operations. -/
+/-- A typed controlled vocabulary for ExecutionPolicy individuals. Follows the SessionBoundaryType pattern: a single class with named individuals rather than a subclass hierarchy. -/
 inductive ExecutionPolicyKind where
   /-- Process queries in arrival order. The implicit pre-Amendment 48 behavior. -/
   | fifoPolicy : ExecutionPolicyKind
@@ -142,7 +142,7 @@ inductive ExecutionPolicyKind where
   | disjointFirst : ExecutionPolicyKind
   deriving DecidableEq, Repr, BEq, Hashable, Inhabited
 
-/-- Computational complexity classification. -/
+/-- A computational complexity classification for resolvers. Each resolver's asymptotic runtime is typed as a named ComplexityClass individual rather than a free string. -/
 inductive ComplexityClass where
   /-- O(1) complexity — the resolver runs in constant time regardless of ring size. -/
   | constant : ComplexityClass
@@ -154,7 +154,7 @@ inductive ComplexityClass where
   | exponential : ComplexityClass
   deriving DecidableEq, Repr, BEq, Hashable, Inhabited
 
-/-- Rewrite rule classification. -/
+/-- A named rewrite rule that can be applied in a derivation step. Each RewriteRule individual represents a specific algebraic law or normalization strategy used during term rewriting. -/
 inductive RewriteRule where
   /-- The rewrite rule applying the critical identity: neg(bnot(x)) → succ(x). Grounded in op:criticalIdentity. -/
   | criticalIdentity : RewriteRule
@@ -170,7 +170,7 @@ inductive RewriteRule where
   | normalization : RewriteRule
   deriving DecidableEq, Repr, BEq, Hashable, Inhabited
 
-/-- Type variance annotation. -/
+/-- The variance of a structural type position under operad composition. One of Covariant, Contravariant, Invariant, or Bivariant. -/
 inductive VarianceAnnotation where
   /-- The structural position preserves TypeInclusion: if T₁ ≤ T₂, then F(T₁) ≤ F(T₂). -/
   | covariant : VarianceAnnotation
@@ -182,7 +182,7 @@ inductive VarianceAnnotation where
   | bivariant : VarianceAnnotation
   deriving DecidableEq, Repr, BEq, Hashable, Inhabited
 
-/-- Unit of measurement. -/
+/-- A unit of measurement for observable quantities. Each MeasurementUnit individual names a specific unit (bits, ring steps, dimensionless) replacing the string-valued observable:unit property. -/
 inductive MeasurementUnit where
   /-- Information-theoretic unit: the measurement is in bits (e.g., Hamming weight, entropy). -/
   | bits : MeasurementUnit
@@ -194,17 +194,17 @@ inductive MeasurementUnit where
   | nats : MeasurementUnit
   deriving DecidableEq, Repr, BEq, Hashable, Inhabited
 
-/-- Triad projection axis. -/
+/-- A classification of coordinate types that a CoordinateQuery can extract. Each TriadProjection individual names a specific coordinate system (stratum, spectrum, address) replacing the string-valued query:coordinate property. -/
 inductive TriadProjection where
   /-- The stratum coordinate: the layer position of a datum within the ring's stratification. -/
   | twoAdicValuation : TriadProjection
   /-- The spectrum coordinate: the spectral decomposition of a datum under the ring's Fourier analysis. -/
   | walshHadamardImage : TriadProjection
-  /-- The address coordinate: the content-addressable position of a datum in the Braille glyph encoding. -/
-  | ringElement : TriadProjection
+  /-- The address coordinate: the content-addressable position of a datum in the Braille glyph encoding. Renamed from RingElement in v0.2.2 W8 to unify vocabulary with the schema:Triad bundling properties. -/
+  | address : TriadProjection
   deriving DecidableEq, Repr, BEq, Hashable, Inhabited
 
-/-- Phase boundary classification. -/
+/-- A classification of phase boundary in the catastrophe diagram: period boundary (g divides 2^n − 1) or power-of-two boundary (g = 2^k). -/
 inductive PhaseBoundaryType where
   /-- A phase boundary where g divides 2^n − 1, meaning g is a period of the multiplicative structure of R_n. -/
   | period : PhaseBoundaryType
@@ -212,7 +212,7 @@ inductive PhaseBoundaryType where
   | powerOfTwo : PhaseBoundaryType
   deriving DecidableEq, Repr, BEq, Hashable, Inhabited
 
-/-- Grounding phase of resolution. -/
+/-- A typed controlled vocabulary for the three phases of context saturation: Open (σ = 0), PartialGrounding (0 < σ < 1), and FullGrounding (σ = 1). -/
 inductive GroundingPhase where
   /-- The context has σ = 0: no bindings accumulated, all sites are free. The initial phase of every session. -/
   | open : GroundingPhase
@@ -222,7 +222,7 @@ inductive GroundingPhase where
   | fullGrounding : GroundingPhase
   deriving DecidableEq, Repr, BEq, Hashable, Inhabited
 
-/-- Achievability status of a morphospace target. -/
+/-- The achievability classification of a topological signature in the morphospace. Either Achievable or Forbidden (witnessed by ImpossibilityWitness). -/
 inductive AchievabilityStatus where
   /-- The signature has been verified as achievable at some quantum level by an AxiomaticDerivation proof. -/
   | achievable : AchievabilityStatus
@@ -230,7 +230,7 @@ inductive AchievabilityStatus where
   | forbidden : AchievabilityStatus
   deriving DecidableEq, Repr, BEq, Hashable, Inhabited
 
-/-- Session boundary classification. -/
+/-- A typed controlled vocabulary for session boundary reasons. Each individual names a specific reason a context-reset boundary was triggered during a multi-turn session. -/
 inductive SessionBoundaryType where
   /-- The caller explicitly requested a context reset. All accumulated bindings are discarded. -/
   | explicitReset : SessionBoundaryType
@@ -240,7 +240,7 @@ inductive SessionBoundaryType where
   | contradictionBoundary : SessionBoundaryType
   deriving DecidableEq, Repr, BEq, Hashable, Inhabited
 
-/-- Strategy for proof compilation. -/
+/-- A controlled vocabulary of proof methods. Each proof individual carries exactly one strategy from this vocabulary, enabling compilation to verified theorem provers. -/
 inductive ProofStrategy where
   /-- Follows from ZMod ring axioms. Lean4 tactic: `by ring`. -/
   | ringAxiom : ProofStrategy
@@ -266,7 +266,7 @@ inductive ProofStrategy where
   | computation : ProofStrategy
   deriving DecidableEq, Repr, BEq, Hashable, Inhabited
 
-/-- Quantifier classification. -/
+/-- The kind of quantifier: Universal (forall) or Existential (exists). Controlled vocabulary with exactly 2 individuals. -/
 inductive QuantifierKind where
   /-- Universal quantification (forall). -/
   | universal : QuantifierKind
@@ -274,7 +274,7 @@ inductive QuantifierKind where
   | existential : QuantifierKind
   deriving DecidableEq, Repr, BEq, Hashable, Inhabited
 
-/-- SHACL violation classification. -/
+/-- The kind of shape violation: Missing, TypeMismatch, CardinalityViolation, ValueCheck, or LevelMismatch. -/
 inductive ViolationKind where
   /-- Required property was not set on the builder. -/
   | missing : ViolationKind
@@ -294,8 +294,6 @@ inductive ProofModality where
   | computation : ProofModality
   /-- Derivation from axioms and definitions. -/
   | axiomatic : ProofModality
-  /-- Empirical verification with measurement data. -/
-  | empirical : ProofModality
   /-- Structural induction on quantum level. -/
   | inductive : ProofModality
   deriving DecidableEq, Repr, BEq, Hashable, Inhabited

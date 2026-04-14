@@ -2,6 +2,7 @@
 //!
 //! All HTML is generated directly in Rust for determinism and zero dependencies.
 
+pub use uor_docs::renderer::escape_html;
 use uor_ontology::{IndividualValue, NamespaceModule, Ontology, PropertyKind};
 
 use crate::model::{BreadcrumbItem, ConceptPage, NamespaceSummary};
@@ -1336,14 +1337,6 @@ fn concept_title(slug: &str) -> String {
         .find(|(s, _, _)| *s == slug)
         .map(|(_, title, _)| (*title).to_string())
         .unwrap_or_else(|| slug.replace('-', " "))
-}
-
-/// Escapes HTML special characters.
-pub fn escape_html(s: &str) -> String {
-    s.replace('&', "&amp;")
-        .replace('<', "&lt;")
-        .replace('>', "&gt;")
-        .replace('"', "&quot;")
 }
 
 /// Extracts the local name from an IRI.

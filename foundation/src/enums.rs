@@ -110,7 +110,7 @@ impl fmt::Display for SiteState {
     }
 }
 
-/// The geometric character of an operation.
+/// The geometric role of a ring operation in the UOR dual-geometry (ring + hypercube). Every op:Operation individual references exactly one GeometricCharacter via op:hasGeometricCharacter. The nine canonical individuals correspond to the action types of the dihedral group D_{2^n}.
 #[repr(u8)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum GeometricCharacter {
@@ -165,7 +165,7 @@ impl fmt::Display for GeometricCharacter {
     }
 }
 
-/// The mathematical domain in which an identity is established.
+/// A named mathematical discipline through which an algebraic identity is established and grounded. Every op:Identity individual references at least one VerificationDomain via op:verificationDomain. The nine canonical domain individuals are kernel-level constants defined in op/.
 #[repr(u8)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum VerificationDomain {
@@ -179,9 +179,9 @@ pub enum VerificationDomain {
     Analytical,
     /// Established via entropy, Landauer bounds, or Boltzmann distributions. Covers site entropy (TH_), reversible computation (RC_), and phase transitions.
     Thermodynamic,
-    /// Established via simplicial homology, cohomology, or constraint nerve analysis. Covers homological algebra (HA_) and ψ-pipeline identities.
+    /// Established via simplicial homology, cohomology, or constraint nerve analysis. Covers homological algebra (HA_) and the ψ-pipeline base chain ψ_1..ψ_6 (constraint nerve construction, chain functor, homology, Betti extraction, dualization, cohomology).
     Topological,
-    /// Established by the inter-algebra map structure of the resolution pipeline. Covers φ-maps (phi_1–phi_6) and ψ-maps (psi_1–psi_6).
+    /// Established by the inter-algebra map structure of the resolution pipeline. Covers φ-maps (phi_1–phi_6) and the ψ-pipeline tower ψ_7..ψ_9 (Postnikov truncation, homotopy group extraction, k-invariant computation). The earlier ψ_1..ψ_6 chain (constraint nerve → simplicial homology) is established under op:Topological.
     Pipeline,
     /// Established by the composition of Analytical and Topological reasoning. The only domain requiring multiple op:verificationDomain assertions. Covers the UOR Index Theorem (IT_7a–IT_7d).
     IndexTheoretic,
@@ -214,7 +214,7 @@ impl fmt::Display for VerificationDomain {
     }
 }
 
-/// The computational complexity classification of a resolver.
+/// A computational complexity classification for resolvers. Each resolver's asymptotic runtime is typed as a named ComplexityClass individual rather than a free string.
 #[repr(u8)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum ComplexityClass {
@@ -239,7 +239,7 @@ impl fmt::Display for ComplexityClass {
     }
 }
 
-/// A named rewrite rule used in term rewriting derivations.
+/// A named rewrite rule that can be applied in a derivation step. Each RewriteRule individual represents a specific algebraic law or normalization strategy used during term rewriting.
 #[repr(u8)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum RewriteRule {
@@ -270,7 +270,7 @@ impl fmt::Display for RewriteRule {
     }
 }
 
-/// A unit of measurement for observable quantities.
+/// A unit of measurement for observable quantities. Each MeasurementUnit individual names a specific unit (bits, ring steps, dimensionless) replacing the string-valued observable:unit property.
 #[repr(u8)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum MeasurementUnit {
@@ -295,7 +295,7 @@ impl fmt::Display for MeasurementUnit {
     }
 }
 
-/// A classification of triad projection types for coordinate queries.
+/// A classification of coordinate types that a CoordinateQuery can extract. Each TriadProjection individual names a specific coordinate system (stratum, spectrum, address) replacing the string-valued query:coordinate property.
 #[repr(u8)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum TriadProjection {
@@ -303,8 +303,8 @@ pub enum TriadProjection {
     TwoAdicValuation,
     /// The spectrum coordinate: the spectral decomposition of a datum under the ring's Fourier analysis.
     WalshHadamardImage,
-    /// The address coordinate: the content-addressable position of a datum in the Braille glyph encoding.
-    RingElement,
+    /// The address coordinate: the content-addressable position of a datum in the Braille glyph encoding. Renamed from RingElement in v0.2.2 W8 to unify vocabulary with the schema:Triad bundling properties.
+    Address,
 }
 
 impl fmt::Display for TriadProjection {
@@ -312,12 +312,12 @@ impl fmt::Display for TriadProjection {
         match self {
             Self::TwoAdicValuation => f.write_str("two_adic_valuation"),
             Self::WalshHadamardImage => f.write_str("walsh_hadamard_image"),
-            Self::RingElement => f.write_str("ring_element"),
+            Self::Address => f.write_str("address"),
         }
     }
 }
 
-/// The reason type for a session context-reset boundary.
+/// A typed controlled vocabulary for session boundary reasons. Each individual names a specific reason a context-reset boundary was triggered during a multi-turn session.
 #[repr(u8)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum SessionBoundaryType {
@@ -339,7 +339,7 @@ impl fmt::Display for SessionBoundaryType {
     }
 }
 
-/// A classification of phase boundary in the catastrophe diagram.
+/// A classification of phase boundary in the catastrophe diagram: period boundary (g divides 2^n − 1) or power-of-two boundary (g = 2^k).
 #[repr(u8)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum PhaseBoundaryType {
@@ -358,7 +358,7 @@ impl fmt::Display for PhaseBoundaryType {
     }
 }
 
-/// The phase of grounding towards the ground state.
+/// A typed controlled vocabulary for the three phases of context saturation: Open (σ = 0), PartialGrounding (0 < σ < 1), and FullGrounding (σ = 1).
 #[repr(u8)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum GroundingPhase {
@@ -380,7 +380,7 @@ impl fmt::Display for GroundingPhase {
     }
 }
 
-/// Whether a signature is achievable or forbidden in the morphospace.
+/// The achievability classification of a topological signature in the morphospace. Either Achievable or Forbidden (witnessed by ImpossibilityWitness).
 #[repr(u8)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum AchievabilityStatus {
@@ -399,7 +399,7 @@ impl fmt::Display for AchievabilityStatus {
     }
 }
 
-/// The scope of validity for an identity across quantum levels.
+/// Root class for validity scope individuals. Instances are the four named scope kinds: Universal, ParametricLower, ParametricRange, and LevelSpecific.
 #[repr(u8)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum ValidityScopeKind {
@@ -424,7 +424,7 @@ impl fmt::Display for ValidityScopeKind {
     }
 }
 
-/// A typed controlled vocabulary for ExecutionPolicy scheduling strategies.
+/// A typed controlled vocabulary for ExecutionPolicy individuals. Follows the SessionBoundaryType pattern: a single class with named individuals rather than a subclass hierarchy.
 #[repr(u8)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum ExecutionPolicyKind {
@@ -449,7 +449,7 @@ impl fmt::Display for ExecutionPolicyKind {
     }
 }
 
-/// The variance of a structural type position under operad composition.
+/// The variance of a structural type position under operad composition. One of Covariant, Contravariant, Invariant, or Bivariant.
 #[repr(u8)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum VarianceAnnotation {
@@ -474,7 +474,7 @@ impl fmt::Display for VarianceAnnotation {
     }
 }
 
-/// The kind of quantifier: Universal (forall) or Existential (exists).
+/// The kind of quantifier: Universal (forall) or Existential (exists). Controlled vocabulary with exactly 2 individuals.
 #[repr(u8)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum QuantifierKind {
@@ -493,7 +493,7 @@ impl fmt::Display for QuantifierKind {
     }
 }
 
-/// A controlled vocabulary of proof methods for compilation to verified provers.
+/// A controlled vocabulary of proof methods. Each proof individual carries exactly one strategy from this vocabulary, enabling compilation to verified theorem provers.
 #[repr(u8)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum ProofStrategy {
@@ -539,7 +539,7 @@ impl fmt::Display for ProofStrategy {
     }
 }
 
-/// The kind of shape violation reported by a builder's validate method.
+/// The kind of shape violation: Missing, TypeMismatch, CardinalityViolation, ValueCheck, or LevelMismatch.
 #[repr(u8)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum ViolationKind {

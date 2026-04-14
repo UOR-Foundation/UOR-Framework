@@ -6,6 +6,8 @@
 use serde::Serialize;
 use uor_ontology::Ontology;
 
+use crate::renderer::escape_html;
+
 /// A PRISM pipeline stage definition.
 ///
 /// Fields: (display_name, section_id, match_key, is_prefix_match).
@@ -278,12 +280,4 @@ fn render_bs_item(
             html.push_str(&format!("{indent}</ul>\n{indent}</li>\n"));
         }
     }
-}
-
-/// Escapes HTML special characters.
-fn escape_html(s: &str) -> String {
-    s.replace('&', "&amp;")
-        .replace('<', "&lt;")
-        .replace('>', "&gt;")
-        .replace('"', "&quot;")
 }

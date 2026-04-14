@@ -17,7 +17,6 @@ pub mod emit;
 pub mod enforcement;
 pub mod enums;
 pub mod individuals;
-pub mod macros_assets;
 pub mod mapping;
 pub mod pipeline;
 pub mod traits;
@@ -118,7 +117,7 @@ pub fn generate(ontology: &Ontology, out_dir: &Path) -> Result<GenerationReport>
             .iter()
             .filter(|ind| {
                 let t = mapping::local_name(ind.type_);
-                t != "UnaryOp" && t != "BinaryOp" && t != "Involution" && t != "MetricAxis"
+                !mapping::ENUM_VARIANT_CLASS_NAMES.contains(&t)
             })
             .count();
 
@@ -164,43 +163,13 @@ pub fn generate(ontology: &Ontology, out_dir: &Path) -> Result<GenerationReport>
         .status();
     report.files.push("pipeline.rs".to_string());
 
-    // 8. Generate uor-foundation-macros/src/generated/ ontology assets.
-    //
-    // v0.2.1 Phase 8e: these were previously written by
-    // `uor-foundation-macros/build.rs` using `uor-ontology` as a build
-    // dep, which broke `cargo publish --dry-run` on the macros crate
-    // (path deps need a version and `uor-ontology` is publish = false).
-    // Moving generation here makes the macros crate a pure leaf with
-    // zero build deps.
-    //
-    // The target path is derived from `out_dir` (typically
-    // `foundation/src`) by walking up to the workspace root and across
-    // to `uor-foundation-macros/src/generated`. If the derived path's
-    // parent macros crate doesn't exist (e.g. when `generate` is called
-    // from a unit test with a tmp out_dir), we silently skip — the
-    // macros-crate assets are only generated in real codegen runs
-    // anchored at the workspace root.
-    if let Some(workspace_root) = out_dir.parent().and_then(|p| p.parent()) {
-        let macros_crate_dir = workspace_root.join("uor-foundation-macros");
-        if macros_crate_dir.is_dir() {
-            let macros_assets_dir = macros_crate_dir.join("src").join("generated");
-            let asset_files = macros_assets::generate_macros_assets(ontology, &macros_assets_dir)?;
-            for f in asset_files {
-                report.files.push(f);
-            }
-            // Run rustfmt on each generated file so CI fmt check stays clean.
-            for name in [
-                "defaults.rs",
-                "keywords.rs",
-                "shape_requirements.rs",
-                "mod.rs",
-            ] {
-                let _ = std::process::Command::new("rustfmt")
-                    .arg(macros_assets_dir.join(name))
-                    .status();
-            }
-        }
-    }
+    // v0.2.2 W15: the `uor-foundation-macros` crate is deleted in v0.2.2.
+    // No macro-crate ontology assets to generate. The proc macros it housed
+    // (`uor!`, `uor_ground!`, `#[derive(ConstrainedType)]`, `#[derive(CompileUnit)]`,
+    // `#[uor_grounded]`) are removed: the contract is enforced at the type and
+    // visibility level (sealed traits, `pub(crate)` constructors, the W6
+    // dylint group, the public-API snapshot), and the canonical builder
+    // surface is the public `Term::*` enum variants directly.
 
     Ok(report)
 }
@@ -234,83 +203,103 @@ fn generate_lib_rs(ontology: &Ontology) -> String {
          //! Version: {}\n\
          //!\n\
          //! This crate exports every ontology class as a trait, every property as a\n\
-         //! method, and every named individual as a constant. Implementations (like\n\
-         //! PRISM) import these traits and provide concrete types.\n\
+         //! method, and every named individual as a constant. Implementations import\n\
+         //! these traits and provide concrete types.\n\
          //!\n\
-         //! # Primitives\n\
+         //! # Principal data path\n\
          //!\n\
-         //! All traits are generic over [`Primitives`], a type family that lets\n\
-         //! implementors choose their own concrete representations for XSD types.\n\
+         //! v0.2.2 establishes a single sanctioned API path. Everything else has been\n\
+         //! deleted (no proc-macro back-doors, no second constructor for sealed types):\n\
+         //!\n\
+         //! ```text\n\
+         //!  host bytes  ──▶  impl Grounding<Map = …>  ──▶  Datum<L>   [W4: kind-typed]\n\
+         //!                                                  │\n\
+         //!                                                  ▼\n\
+         //!  builder.validate_const() │ .validate()  ──▶  Validated<T, Phase>\n\
+         //!                                                  │            [W2 + W13]\n\
+         //!                                                  ▼\n\
+         //!  pipeline::run::<T, P>(unit)  ──▶  Grounded<T>\n\
+         //!                                       │            [W14]\n\
+         //!                                       ▼\n\
+         //!                            .triad() → Triad<L>     [W8]\n\
+         //!                            .certificate()          [W11: Certified<C>]\n\
+         //! ```\n\
+         //!\n\
+         //! Every contract is enforced at the type and visibility level. Sealed traits,\n\
+         //! `pub(crate)` constructors, and the v0.2.2 conformance suite (W5 ψ-leakage gate,\n\
+         //! W6 public-API snapshot) catch any deviation.\n\
+         //!\n\
+         //! # HostTypes (v0.2.2 W10)\n\
+         //!\n\
+         //! Downstream chooses representations only for the four slots that genuinely\n\
+         //! vary across host environments. Witt-level integers, booleans, IRIs, and\n\
+         //! canonical bytes are foundation-owned and derived from `WittLevel`.\n\
          //!\n\
          //! ```rust,ignore\n\
-         //! struct MyImpl;\n\
-         //! impl uor_foundation::Primitives for MyImpl {{\n\
-         //!     type String = str;\n\
-         //!     type Integer = i64;\n\
-         //!     type NonNegativeInteger = u64;\n\
-         //!     type PositiveInteger = u64;\n\
-         //!     type Decimal = f64;\n\
-         //!     type Boolean = bool;\n\
+         //! use uor_foundation::{{HostTypes, DefaultHostTypes}};\n\
+         //!\n\
+         //! // Use the canonical defaults: f64 / i64 / str / [u8].\n\
+         //! type H = DefaultHostTypes;\n\
+         //!\n\
+         //! // Or override one slot:\n\
+         //! struct EmbeddedHost;\n\
+         //! impl HostTypes for EmbeddedHost {{\n\
+         //!     type Decimal = f32;        // override: tighter precision budget\n\
+         //!     type DateTime = i64;       // default\n\
+         //!     type HostString = str;     // default\n\
+         //!     type WitnessBytes = [u8];  // default\n\
          //! }}\n\
          //! ```\n\
          //!\n\
-         //! # Module Structure\n\
+         //! `Primitives` is retained as a deprecated alias for v0.2.1 backwards compatibility.\n\
+         //!\n\
+         //! # Module structure\n\
          //!\n\
          //! - [`kernel`] — Immutable foundation: addressing, schema, operations\n\
          //! - [`bridge`] — Kernel-computed, user-consumed: queries, resolution, partitions, proofs\n\
          //! - [`user`] — Runtime declarations: types, morphisms, state\n\
+         //! - [`enforcement`] — Sealed types and the principal-path entry surface\n\
+         //! - [`pipeline`] — `pipeline::run::<T, P>` and the resolver dispatch\n\
          //!\n\
-         //! # Enforcement Layer\n\
+         //! # Enforcement layer\n\
          //!\n\
-         //! The [`enforcement`] module provides concrete types (not generic over\n\
-         //! `Primitives`) for declarative validation. These form a three-layer\n\
-         //! pipeline:\n\
+         //! [`enforcement`] provides the sealed types that v0.2.2 forbids downstream\n\
+         //! from constructing directly:\n\
          //!\n\
-         //! **Layer 1 — Opaque Witnesses.** [`enforcement::Datum`],\n\
+         //! **Layer 1 — Opaque witnesses.** [`enforcement::Datum`],\n\
          //! [`enforcement::Validated`], [`enforcement::Derivation`],\n\
-         //! [`enforcement::FreeRank`]: sealed types with private fields that\n\
-         //! prove a value passed through the reduction evaluator or the two-phase\n\
-         //! minting boundary. Prism code consumes these but cannot fabricate them.\n\
+         //! [`enforcement::FreeRank`], [`enforcement::Grounded`],\n\
+         //! [`enforcement::Certified`], [`enforcement::Triad`]: sealed types with\n\
+         //! private fields. Only the foundation's pipeline / resolver paths produce them.\n\
          //!\n\
-         //! **Layer 2 — Declarative Builders.** [`enforcement::CompileUnitBuilder`]\n\
-         //! and 8 others collect the declarations required by each conformance\n\
-         //! shape, then call `validate()` to get a `Validated<T>` or a\n\
-         //! [`enforcement::ShapeViolation`] with machine-readable IRIs.\n\
+         //! **Layer 2 — Declarative builders.** [`enforcement::CompileUnitBuilder`]\n\
+         //! and 8 others collect declarations and emit `Validated<T, Phase>` on\n\
+         //! success or [`enforcement::ShapeViolation`] with a machine-readable IRI.\n\
          //!\n\
          //! **Layer 3 — Term AST.** [`enforcement::Term`] and\n\
-         //! [`enforcement::TermArena`]: stack-resident, `#![no_std]`-safe\n\
-         //! expression trees. Builders accept `Term` references (not closures),\n\
-         //! keeping Prism declarations within the term language.\n\
+         //! [`enforcement::TermArena`]: stack-resident, `#![no_std]`-safe expression\n\
+         //! trees. The `Term` enum's struct-variant constructors are the canonical\n\
+         //! builder API — there is no DSL macro in v0.2.2.\n\
          //!\n\
-         //! # The `uor!` Macro\n\
+         //! # Resolvers (v0.2.2 W12)\n\
          //!\n\
-         //! The re-exported [`uor!`] macro parses EBNF surface syntax at compile\n\
-         //! time and produces typed `Term` ASTs. Ground assertions (no free\n\
-         //! variables) are evaluated at compile time using the foundation's\n\
-         //! `const fn` ring arithmetic.\n\
+         //! Verdict-producing resolvers are free functions in module-per-resolver\n\
+         //! organization. Each function returns a `Result<Certified<Cert>, Witness>`:\n\
          //!\n\
-         //! ```rust,ignore\n\
-         //! use uor_foundation::uor;\n\
+         //! - `enforcement::resolver::inhabitance::certify(input)` — inhabitance verdict\n\
+         //! - `enforcement::resolver::tower_completeness::certify(input)` — tower completeness\n\
+         //! - `enforcement::resolver::incremental_completeness::certify(input)` — incremental\n\
+         //! - `enforcement::resolver::grounding_aware::certify(unit)` — grounding-aware\n\
          //!\n\
-         //! // Type declaration with constraints:\n\
-         //! let pixel = uor! {{ type Pixel {{ residue: 255; hamming: 8; }} }};\n\
+         //! # Migration from v0.2.1\n\
          //!\n\
-         //! // Operation composition (produces a TermArena):\n\
-         //! let expr = uor! {{ add(mul(3, 5), 7) }};\n\
-         //!\n\
-         //! // Ground assertion — checked at compile time:\n\
-         //! uor! {{ assert add(1, 2) = 3; }};\n\
-         //! ```\n\
-         //!\n\
-         //! # Getting Started\n\
-         //!\n\
-         //! 1. Implement [`Primitives`] for your concrete type family.\n\
-         //! 2. Use the [`enforcement`] builders to declare your types, effects,\n\
-         //!    and boundaries.\n\
-         //! 3. Use the [`uor!`] macro for term-language expressions.\n\
-         //! 4. The reduction evaluator validates and evaluates your declarations,\n\
-         //!    producing [`enforcement::Datum`] and [`enforcement::Derivation`]\n\
-         //!    witnesses.",
+         //! - `uor_ground!` macro                  → deleted; use `pipeline::run::<T, P>`\n\
+         //! - `#[derive(ConstrainedType)]`         → deleted; declare `const _VALIDATED: Validated<…, CompileTime>`\n\
+         //! - `#[uor_grounded(level = …)]`         → deleted; use phantom-typed `Mul::<W32>::apply(…)` etc.\n\
+         //! - `Primitives` trait                   → use `HostTypes` + `DefaultHostTypes`\n\
+         //! - 4 cert shim types                    → use `Certified<C>` parametric carrier\n\
+         //! - `Resolver::new().certify(…)` structs → `enforcement::resolver::name::certify(…)` functions\n\
+         //! - `run_pipeline(&datum, level)`        → `pipeline::run::<T, P>(validated_compile_unit)`",
         ontology.version,
     ));
 
@@ -324,15 +313,20 @@ fn generate_lib_rs(ontology: &Ontology) -> String {
     f.line("pub mod user;");
     f.blank();
     f.line("pub use enums::*;");
-    f.line("pub use uor_foundation_macros::uor;");
     f.blank();
 
-    // Primitives trait
+    // Primitives trait (v0.2.1 surface — retained for backwards compatibility).
     f.doc_comment("XSD primitive type family.");
     f.doc_comment("");
     f.doc_comment("Implementors choose concrete representations for each XSD type.");
     f.doc_comment("PRISM might use `u64` for integers at Q0, `u128` at higher quantum");
     f.doc_comment("levels, or a bignum library. The foundation does not constrain this choice.");
+    f.doc_comment("");
+    f.doc_comment("**v0.2.2 deprecation notice:** `Primitives` will be removed in a future");
+    f.doc_comment("version in favor of [`HostTypes`], which narrows the trait to the four");
+    f.doc_comment("slots that genuinely vary across host environments (`Decimal`, `DateTime`,");
+    f.doc_comment("`HostString`, `WitnessBytes`) and lets the foundation own the integer /");
+    f.doc_comment("boolean / IRI representation derived from `WittLevel`.");
     f.line("pub trait Primitives {");
     f.indented_doc_comment(
         "String type (`xsd:string`). Use `str` for borrowed, `String` for owned.",
@@ -348,6 +342,71 @@ fn generate_lib_rs(ontology: &Ontology) -> String {
     f.line("    type Decimal;");
     f.indented_doc_comment("Boolean type (`xsd:boolean`).");
     f.line("    type Boolean;");
+    f.line("}");
+    f.blank();
+
+    // v0.2.2 W10: HostTypes trait + DefaultHostTypes canonical impl.
+    f.doc_comment(
+        "v0.2.2 W10: narrow host-types trait that lets downstream choose representations",
+    );
+    f.doc_comment(
+        "only for the slots that genuinely vary across host environments. Foundation-owned",
+    );
+    f.doc_comment(
+        "types (Witt-level integers, booleans, IRIs, canonicalBytes) are derived from the",
+    );
+    f.doc_comment("`WittLevel` family and not exposed here.");
+    f.doc_comment("");
+    f.doc_comment(
+        "MSRV 1.70 forbids `associated_type_defaults`, so v0.2.2 ships [`DefaultHostTypes`]",
+    );
+    f.doc_comment("as the canonical default impl. Downstream can either use `DefaultHostTypes`");
+    f.doc_comment("directly or implement `HostTypes` on their own marker struct, optionally");
+    f.doc_comment("overriding individual associated types.");
+    f.line("pub trait HostTypes {");
+    f.indented_doc_comment(
+        "Real-number representation for kernel observables (entropies, amplitudes, rates).\n\
+         `DefaultHostTypes` selects `f64`. Override with `f128`, arbitrary-precision\n\
+         rational, or interval arithmetic as needed.",
+    );
+    f.line("    type Decimal;");
+    f.blank();
+    f.indented_doc_comment(
+        "Host event timestamp.\n\
+         `DefaultHostTypes` selects `i64` interpreted as Unix nanoseconds.\n\
+         Override with `i128` for wider range, or a domain-specific timestamp type.",
+    );
+    f.line("    type DateTime;");
+    f.blank();
+    f.indented_doc_comment(
+        "Host-supplied opaque string (NOT a foundation IRI).\n\
+         `DefaultHostTypes` selects `str`. Override with owned `String`, `Cow<'_, str>`, etc.",
+    );
+    f.line("    type HostString: ?Sized;");
+    f.blank();
+    f.indented_doc_comment(
+        "Host-supplied opaque byte sequence (NOT a foundation `canonicalBytes` constant).\n\
+         `DefaultHostTypes` selects `[u8]`. Override with owned `Vec<u8>`, `Bytes`, etc.",
+    );
+    f.line("    type WitnessBytes: ?Sized;");
+    f.line("}");
+    f.blank();
+
+    f.doc_comment(
+        "v0.2.2 W10: canonical default impl of [`HostTypes`]. Selects `f64`/`i64`/`str`/`[u8]`.",
+    );
+    f.doc_comment(
+        "Use as `type H = uor_foundation::DefaultHostTypes;` to inherit the defaults; replace",
+    );
+    f.doc_comment("with a downstream marker struct if any slot needs an override.");
+    f.line("#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]");
+    f.line("pub struct DefaultHostTypes;");
+    f.blank();
+    f.line("impl HostTypes for DefaultHostTypes {");
+    f.line("    type Decimal = f64;");
+    f.line("    type DateTime = i64;");
+    f.line("    type HostString = str;");
+    f.line("    type WitnessBytes = [u8];");
     f.line("}");
     f.blank();
 

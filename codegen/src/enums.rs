@@ -120,141 +120,25 @@ pub fn detect_enums(ontology: &Ontology) -> Vec<DetectedEnum> {
         non_exhaustive: false,
     });
 
-    // 5. GeometricCharacter enum — from named individuals of type op:GeometricCharacter
-    detect_vocabulary_enum(
-        ontology,
-        "op",
-        "GeometricCharacter",
-        "The geometric character of an operation.",
-        &mut enums,
-    );
-
-    // 6–11. Amendment 23: Six new vocabulary enums
-    detect_vocabulary_enum(
-        ontology,
-        "op",
-        "VerificationDomain",
-        "The mathematical domain in which an identity is established.",
-        &mut enums,
-    );
-    detect_vocabulary_enum(
-        ontology,
-        "resolver",
-        "ComplexityClass",
-        "The computational complexity classification of a resolver.",
-        &mut enums,
-    );
-    detect_vocabulary_enum(
-        ontology,
-        "derivation",
-        "RewriteRule",
-        "A named rewrite rule used in term rewriting derivations.",
-        &mut enums,
-    );
-    detect_vocabulary_enum(
-        ontology,
-        "observable",
-        "MeasurementUnit",
-        "A unit of measurement for observable quantities.",
-        &mut enums,
-    );
-    detect_vocabulary_enum(
-        ontology,
-        "query",
-        "TriadProjection",
-        "A classification of triad projection types for coordinate queries.",
-        &mut enums,
-    );
-
-    // 12. SessionBoundaryType enum — Amendment 27: Session-Scoped Resolution
-    detect_vocabulary_enum(
-        ontology,
-        "state",
-        "SessionBoundaryType",
-        "The reason type for a session context-reset boundary.",
-        &mut enums,
-    );
-
-    // 13. PhaseBoundaryType enum — Amendment 31: Phase Diagram
-    detect_vocabulary_enum(
-        ontology,
-        "observable",
-        "PhaseBoundaryType",
-        "A classification of phase boundary in the catastrophe diagram.",
-        &mut enums,
-    );
-
-    // 14. GroundingPhase enum — Amendment 33: Grounded Context Limit
-    detect_vocabulary_enum(
-        ontology,
-        "state",
-        "GroundingPhase",
-        "The phase of grounding towards the ground state.",
-        &mut enums,
-    );
-
-    // 15. AchievabilityStatus enum — Amendment 34: Morphospace Achievability
-    detect_vocabulary_enum(
-        ontology,
-        "observable",
-        "AchievabilityStatus",
-        "Whether a signature is achievable or forbidden in the morphospace.",
-        &mut enums,
-    );
-
-    // 16. ValidityScopeKind enum — Amendment 41: Arbitrary Qn Scaling
-    detect_vocabulary_enum(
-        ontology,
-        "op",
-        "ValidityScopeKind",
-        "The scope of validity for an identity across quantum levels.",
-        &mut enums,
-    );
-
-    // 17. ExecutionPolicyKind enum — Amendment 48: Multi-Session Coordination
-    detect_vocabulary_enum(
-        ontology,
-        "resolver",
-        "ExecutionPolicyKind",
-        "A typed controlled vocabulary for ExecutionPolicy scheduling strategies.",
-        &mut enums,
-    );
-
-    // 18. VarianceAnnotation enum — Amendment 77: Subtyping and Variance
-    detect_vocabulary_enum(
-        ontology,
-        "type",
-        "VarianceAnnotation",
-        "The variance of a structural type position under operad composition.",
-        &mut enums,
-    );
-
-    // 19. QuantifierKind enum (Amendment 89 — detected from schema/QuantifierKind individuals)
-    detect_vocabulary_enum(
-        ontology,
-        "schema",
-        "QuantifierKind",
-        "The kind of quantifier: Universal (forall) or Existential (exists).",
-        &mut enums,
-    );
-
-    // 20. ProofStrategy enum (Amendment 87 — detected from proof/ProofStrategy individuals)
-    detect_vocabulary_enum(
-        ontology,
-        "proof",
-        "ProofStrategy",
-        "A controlled vocabulary of proof methods for compilation to verified provers.",
-        &mut enums,
-    );
-
-    // 20. ViolationKind enum (Amendment 95 — Declarative enforcement)
-    detect_vocabulary_enum(
-        ontology,
-        "conformance",
-        "ViolationKind",
-        "The kind of shape violation reported by a builder's validate method.",
-        &mut enums,
-    );
+    // 5–20. Vocabulary enums — doc comments sourced from the ontology's own
+    // class definitions via `Ontology::enum_class_comment`, so Rust and Lean
+    // generators cannot drift.
+    detect_vocabulary_enum(ontology, "op", "GeometricCharacter", &mut enums);
+    detect_vocabulary_enum(ontology, "op", "VerificationDomain", &mut enums);
+    detect_vocabulary_enum(ontology, "resolver", "ComplexityClass", &mut enums);
+    detect_vocabulary_enum(ontology, "derivation", "RewriteRule", &mut enums);
+    detect_vocabulary_enum(ontology, "observable", "MeasurementUnit", &mut enums);
+    detect_vocabulary_enum(ontology, "query", "TriadProjection", &mut enums);
+    detect_vocabulary_enum(ontology, "state", "SessionBoundaryType", &mut enums);
+    detect_vocabulary_enum(ontology, "observable", "PhaseBoundaryType", &mut enums);
+    detect_vocabulary_enum(ontology, "state", "GroundingPhase", &mut enums);
+    detect_vocabulary_enum(ontology, "observable", "AchievabilityStatus", &mut enums);
+    detect_vocabulary_enum(ontology, "op", "ValidityScopeKind", &mut enums);
+    detect_vocabulary_enum(ontology, "resolver", "ExecutionPolicyKind", &mut enums);
+    detect_vocabulary_enum(ontology, "type", "VarianceAnnotation", &mut enums);
+    detect_vocabulary_enum(ontology, "schema", "QuantifierKind", &mut enums);
+    detect_vocabulary_enum(ontology, "proof", "ProofStrategy", &mut enums);
+    detect_vocabulary_enum(ontology, "conformance", "ViolationKind", &mut enums);
 
     // 21. ProofModality enum (hardcoded — codegen enum, not an OWL class)
     enums.push(DetectedEnum {
@@ -289,13 +173,16 @@ pub fn detect_enums(ontology: &Ontology) -> Vec<DetectedEnum> {
 /// Scans the specified namespace for individuals whose `type_` matches the
 /// class IRI `https://uor.foundation/{ns_prefix}/{class_name}`. Each individual
 /// becomes a variant, with the variant name taken from the IRI local name.
+/// The doc comment is looked up from the ontology's own class definition
+/// via [`Ontology::enum_class_comment`], so Rust and Lean generators cannot
+/// drift.
 fn detect_vocabulary_enum(
     ontology: &Ontology,
     ns_prefix: &str,
     class_name: &'static str,
-    comment: &'static str,
     enums: &mut Vec<DetectedEnum>,
 ) {
+    let comment = ontology.enum_class_comment(class_name).unwrap_or("");
     if let Some(module) = ontology.find_namespace(ns_prefix) {
         let class_iri_suffix = format!("/{class_name}");
         let mut variants: Vec<(String, String)> = module

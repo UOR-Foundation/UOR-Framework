@@ -79,129 +79,28 @@ fn detect_enums(ontology: &Ontology) -> Vec<DetectedEnum> {
     // PrimitiveOp — from individuals
     detect_primitive_op(ontology, &mut enums);
 
-    // Vocabulary enums — from ontology individuals
-    // MetricAxis — detected from type/ namespace (not op/)
-    detect_vocabulary_enum(
-        ontology,
-        "type",
-        "MetricAxis",
-        "Metric axis for measurement.",
-        &mut enums,
-    );
-    detect_vocabulary_enum(
-        ontology,
-        "op",
-        "GeometricCharacter",
-        "Geometric character of an operation.",
-        &mut enums,
-    );
-    detect_vocabulary_enum(
-        ontology,
-        "op",
-        "VerificationDomain",
-        "Domain of verification for identities.",
-        &mut enums,
-    );
-    detect_vocabulary_enum(
-        ontology,
-        "op",
-        "ValidityScopeKind",
-        "Validity scope classification.",
-        &mut enums,
-    );
-    detect_vocabulary_enum(
-        ontology,
-        "resolver",
-        "ExecutionPolicyKind",
-        "Execution policy for composed operations.",
-        &mut enums,
-    );
-    detect_vocabulary_enum(
-        ontology,
-        "resolver",
-        "ComplexityClass",
-        "Computational complexity classification.",
-        &mut enums,
-    );
-    detect_vocabulary_enum(
-        ontology,
-        "derivation",
-        "RewriteRule",
-        "Rewrite rule classification.",
-        &mut enums,
-    );
-    detect_vocabulary_enum(
-        ontology,
-        "type",
-        "VarianceAnnotation",
-        "Type variance annotation.",
-        &mut enums,
-    );
-    detect_vocabulary_enum(
-        ontology,
-        "observable",
-        "MeasurementUnit",
-        "Unit of measurement.",
-        &mut enums,
-    );
-    detect_vocabulary_enum(
-        ontology,
-        "query",
-        "TriadProjection",
-        "Triad projection axis.",
-        &mut enums,
-    );
-    detect_vocabulary_enum(
-        ontology,
-        "observable",
-        "PhaseBoundaryType",
-        "Phase boundary classification.",
-        &mut enums,
-    );
-    detect_vocabulary_enum(
-        ontology,
-        "state",
-        "GroundingPhase",
-        "Grounding phase of resolution.",
-        &mut enums,
-    );
-    detect_vocabulary_enum(
-        ontology,
-        "observable",
-        "AchievabilityStatus",
-        "Achievability status of a morphospace target.",
-        &mut enums,
-    );
-    detect_vocabulary_enum(
-        ontology,
-        "state",
-        "SessionBoundaryType",
-        "Session boundary classification.",
-        &mut enums,
-    );
-    detect_vocabulary_enum(
-        ontology,
-        "proof",
-        "ProofStrategy",
-        "Strategy for proof compilation.",
-        &mut enums,
-    );
-    detect_vocabulary_enum(
-        ontology,
-        "schema",
-        "QuantifierKind",
-        "Quantifier classification.",
-        &mut enums,
-    );
-    detect_vocabulary_enum(
-        ontology,
-        "conformance",
-        "ViolationKind",
-        "SHACL violation classification.",
-        &mut enums,
-    );
+    // Vocabulary enums — doc comments sourced from the ontology's own class
+    // definitions via `Ontology::enum_class_comment`, mirroring the Rust
+    // codegen so the two generators cannot drift.
+    detect_vocabulary_enum(ontology, "type", "MetricAxis", &mut enums);
+    detect_vocabulary_enum(ontology, "op", "GeometricCharacter", &mut enums);
+    detect_vocabulary_enum(ontology, "op", "VerificationDomain", &mut enums);
+    detect_vocabulary_enum(ontology, "op", "ValidityScopeKind", &mut enums);
+    detect_vocabulary_enum(ontology, "resolver", "ExecutionPolicyKind", &mut enums);
+    detect_vocabulary_enum(ontology, "resolver", "ComplexityClass", &mut enums);
+    detect_vocabulary_enum(ontology, "derivation", "RewriteRule", &mut enums);
+    detect_vocabulary_enum(ontology, "type", "VarianceAnnotation", &mut enums);
+    detect_vocabulary_enum(ontology, "observable", "MeasurementUnit", &mut enums);
+    detect_vocabulary_enum(ontology, "query", "TriadProjection", &mut enums);
+    detect_vocabulary_enum(ontology, "observable", "PhaseBoundaryType", &mut enums);
+    detect_vocabulary_enum(ontology, "state", "GroundingPhase", &mut enums);
+    detect_vocabulary_enum(ontology, "observable", "AchievabilityStatus", &mut enums);
+    detect_vocabulary_enum(ontology, "state", "SessionBoundaryType", &mut enums);
+    detect_vocabulary_enum(ontology, "proof", "ProofStrategy", &mut enums);
+    detect_vocabulary_enum(ontology, "schema", "QuantifierKind", &mut enums);
+    detect_vocabulary_enum(ontology, "conformance", "ViolationKind", &mut enums);
 
-    // Hardcoded: ProofModality
+    // Hardcoded: ProofModality (Amendment 86: Empirical variant removed — EmpiricalVerification eliminated)
     enums.push(DetectedEnum {
         name: "ProofModality".into(),
         comment: "Proof modality classification.".into(),
@@ -213,10 +112,6 @@ fn detect_enums(ontology: &Ontology) -> Vec<DetectedEnum> {
             (
                 "axiomatic".into(),
                 "Derivation from axioms and definitions.".into(),
-            ),
-            (
-                "empirical".into(),
-                "Empirical verification with measurement data.".into(),
             ),
             (
                 "inductive".into(),
@@ -256,13 +151,17 @@ fn detect_primitive_op(ontology: &Ontology, enums: &mut Vec<DetectedEnum>) {
 }
 
 /// Detects a vocabulary enum from individuals of a specific class in a namespace.
+///
+/// The doc comment is looked up from the ontology's own class definition via
+/// [`Ontology::enum_class_comment`], so the Rust and Lean generators cannot
+/// drift on enum-class documentation.
 fn detect_vocabulary_enum(
     ontology: &Ontology,
     ns_prefix: &str,
     class_name: &str,
-    comment: &str,
     enums: &mut Vec<DetectedEnum>,
 ) {
+    let comment = ontology.enum_class_comment(class_name).unwrap_or("");
     let module = match ontology.find_namespace(ns_prefix) {
         Some(m) => m,
         None => return,

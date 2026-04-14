@@ -60,7 +60,7 @@ All 3356 named individuals must be typed with a known OWL class:
 - 4 complexity class individuals: `resolver:ConstantTime`, `resolver:LogarithmicTime`, `resolver:LinearTime`, `resolver:ExponentialTime`
 - 6 rewrite rule individuals: `derivation:CriticalIdentityRule`, `derivation:InvolutionRule`, `derivation:AssociativityRule`, `derivation:CommutativityRule`, `derivation:IdentityElementRule`, `derivation:NormalizationRule`
 - 4 measurement unit individuals: `observable:Bits`, `observable:RingSteps`, `observable:Dimensionless`, `observable:Nats`
-- 3 triad projection individuals: `query:TwoAdicValuation`, `query:WalshHadamardImage`, `query:RingElement`
+- 3 triad projection individuals: `query:TwoAdicValuation`, `query:WalshHadamardImage`, `query:Address`
 - 3 session boundary type individuals: `state:ExplicitReset`, `state:ConvergenceBoundary`, `state:ContradictionBoundary`
 - 2 phase boundary type individuals: `observable:PeriodBoundary`, `observable:PowerOfTwoBoundary`
 - 3 grounding phase individuals: `state:Open`, `state:PartialGrounding`, `state:FullGrounding`

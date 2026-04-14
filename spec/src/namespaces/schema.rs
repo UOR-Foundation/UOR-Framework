@@ -62,7 +62,11 @@ fn classes() -> Vec<Class> {
             label: "Triad",
             comment: "A three-component structure encoding an element's position in \
                       the UOR address space: stratum (ring layer), spectrum (bit \
-                      pattern), and glyph (Braille address).",
+                      pattern), and address (content-addressable position in the \
+                      Braille glyph encoding). The three required functional \
+                      properties schema:triadStratum, schema:triadSpectrum, and \
+                      schema:triadAddress project a Triad onto its TwoAdicValuation, \
+                      WalshHadamardImage, and Address coordinates respectively.",
             subclass_of: &[OWL_THING],
             disjoint_with: &[],
         },
@@ -598,6 +602,48 @@ fn properties() -> Vec<Property> {
             required: false,
             domain: Some("https://uor.foundation/schema/HostBooleanLiteral"),
             range: XSD_BOOLEAN,
+        },
+        // v0.2.2 W8: Triad bundling — functional projection properties.
+        // These form the canonical observable triple of a Datum at grounding time:
+        // (stratum, spectrum, address). Cardinality-exactly-1 is enforced at the
+        // Rust surface by making the Triad<L> struct fields non-Option.
+        Property {
+            id: "https://uor.foundation/schema/triadStratum",
+            label: "triadStratum",
+            comment: "The stratum component of a Triad: the datum's two-adic \
+                      valuation, indexing its layer in the ring stratification. \
+                      Semantically corresponds to query:TwoAdicValuation.",
+            kind: PropertyKind::Datatype,
+            functional: true,
+            required: false,
+            domain: Some("https://uor.foundation/schema/Triad"),
+            range: XSD_NON_NEGATIVE_INTEGER,
+        },
+        Property {
+            id: "https://uor.foundation/schema/triadSpectrum",
+            label: "triadSpectrum",
+            comment: "The spectrum component of a Triad: the datum's \
+                      Walsh-Hadamard transform image, indexing its position in \
+                      the hypercube spectral decomposition. Semantically \
+                      corresponds to query:WalshHadamardImage.",
+            kind: PropertyKind::Datatype,
+            functional: true,
+            required: false,
+            domain: Some("https://uor.foundation/schema/Triad"),
+            range: XSD_NON_NEGATIVE_INTEGER,
+        },
+        Property {
+            id: "https://uor.foundation/schema/triadAddress",
+            label: "triadAddress",
+            comment: "The address component of a Triad: the datum's \
+                      content-addressable position in the ring's Braille glyph \
+                      encoding. Semantically corresponds to query:Address \
+                      (renamed from RingElement in v0.2.2 W8).",
+            kind: PropertyKind::Datatype,
+            functional: true,
+            required: false,
+            domain: Some("https://uor.foundation/schema/Triad"),
+            range: XSD_NON_NEGATIVE_INTEGER,
         },
     ]
 }

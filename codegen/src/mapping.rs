@@ -350,6 +350,14 @@ pub fn local_name(iri: &str) -> &str {
     after_slash.rsplit('#').next().unwrap_or(after_slash)
 }
 
+/// Class local names whose named individuals are emitted as enum variants
+/// (`PrimitiveOp`, `MetricAxis`), not as individual constant modules.
+///
+/// Used by `codegen/src/lib.rs` to filter individuals out of the
+/// constant-module count, and by `codegen/src/enums.rs` to select them
+/// for positive enum-variant matching.
+pub const ENUM_VARIANT_CLASS_NAMES: &[&str] = &["UnaryOp", "BinaryOp", "Involution", "MetricAxis"];
+
 /// Returns the crate-relative module path for a class IRI.
 ///
 /// E.g. `"https://uor.foundation/partition/Partition"` → `"crate::bridge::partition"`

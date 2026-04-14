@@ -13,7 +13,6 @@ keywords = ["ontology", "uor", "type-system", "traits", "semantic-web"]
 categories = ["data-structures", "science"]
 
 [dependencies]
-uor-foundation-macros = { version = "0.2.1", path = "../uor-foundation-macros" }
 
 [features]
 default = []

@@ -2,86 +2,106 @@
 
 //! UOR Foundation — typed Rust traits for the complete ontology.
 //!
-//! Version: 0.2.1
+//! Version: 0.2.2
 //!
 //! This crate exports every ontology class as a trait, every property as a
-//! method, and every named individual as a constant. Implementations (like
-//! PRISM) import these traits and provide concrete types.
+//! method, and every named individual as a constant. Implementations import
+//! these traits and provide concrete types.
 //!
-//! # Primitives
+//! # Principal data path
 //!
-//! All traits are generic over [`Primitives`], a type family that lets
-//! implementors choose their own concrete representations for XSD types.
+//! v0.2.2 establishes a single sanctioned API path. Everything else has been
+//! deleted (no proc-macro back-doors, no second constructor for sealed types):
+//!
+//! ```text
+//!  host bytes  ──▶  impl Grounding<Map = …>  ──▶  Datum<L>   [W4: kind-typed]
+//!                                                  │
+//!                                                  ▼
+//!  builder.validate_const() │ .validate()  ──▶  Validated<T, Phase>
+//!                                                  │            [W2 + W13]
+//!                                                  ▼
+//!  pipeline::run::<T, P>(unit)  ──▶  Grounded<T>
+//!                                       │            [W14]
+//!                                       ▼
+//!                            .triad() → Triad<L>     [W8]
+//!                            .certificate()          [W11: Certified<C>]
+//! ```
+//!
+//! Every contract is enforced at the type and visibility level. Sealed traits,
+//! `pub(crate)` constructors, and the v0.2.2 conformance suite (W5 ψ-leakage gate,
+//! W6 public-API snapshot) catch any deviation.
+//!
+//! # HostTypes (v0.2.2 W10)
+//!
+//! Downstream chooses representations only for the four slots that genuinely
+//! vary across host environments. Witt-level integers, booleans, IRIs, and
+//! canonical bytes are foundation-owned and derived from `WittLevel`.
 //!
 //! ```rust,ignore
-//! struct MyImpl;
-//! impl uor_foundation::Primitives for MyImpl {
-//!     type String = str;
-//!     type Integer = i64;
-//!     type NonNegativeInteger = u64;
-//!     type PositiveInteger = u64;
-//!     type Decimal = f64;
-//!     type Boolean = bool;
+//! use uor_foundation::{HostTypes, DefaultHostTypes};
+//!
+//! // Use the canonical defaults: f64 / i64 / str / [u8].
+//! type H = DefaultHostTypes;
+//!
+//! // Or override one slot:
+//! struct EmbeddedHost;
+//! impl HostTypes for EmbeddedHost {
+//!     type Decimal = f32;        // override: tighter precision budget
+//!     type DateTime = i64;       // default
+//!     type HostString = str;     // default
+//!     type WitnessBytes = [u8];  // default
 //! }
 //! ```
 //!
-//! # Module Structure
+//! `Primitives` is retained as a deprecated alias for v0.2.1 backwards compatibility.
+//!
+//! # Module structure
 //!
 //! - [`kernel`] — Immutable foundation: addressing, schema, operations
 //! - [`bridge`] — Kernel-computed, user-consumed: queries, resolution, partitions, proofs
 //! - [`user`] — Runtime declarations: types, morphisms, state
+//! - [`enforcement`] — Sealed types and the principal-path entry surface
+//! - [`pipeline`] — `pipeline::run::<T, P>` and the resolver dispatch
 //!
-//! # Enforcement Layer
+//! # Enforcement layer
 //!
-//! The [`enforcement`] module provides concrete types (not generic over
-//! `Primitives`) for declarative validation. These form a three-layer
-//! pipeline:
+//! [`enforcement`] provides the sealed types that v0.2.2 forbids downstream
+//! from constructing directly:
 //!
-//! **Layer 1 — Opaque Witnesses.** [`enforcement::Datum`],
+//! **Layer 1 — Opaque witnesses.** [`enforcement::Datum`],
 //! [`enforcement::Validated`], [`enforcement::Derivation`],
-//! [`enforcement::FreeRank`]: sealed types with private fields that
-//! prove a value passed through the reduction evaluator or the two-phase
-//! minting boundary. Prism code consumes these but cannot fabricate them.
+//! [`enforcement::FreeRank`], [`enforcement::Grounded`],
+//! [`enforcement::Certified`], [`enforcement::Triad`]: sealed types with
+//! private fields. Only the foundation's pipeline / resolver paths produce them.
 //!
-//! **Layer 2 — Declarative Builders.** [`enforcement::CompileUnitBuilder`]
-//! and 8 others collect the declarations required by each conformance
-//! shape, then call `validate()` to get a `Validated<T>` or a
-//! [`enforcement::ShapeViolation`] with machine-readable IRIs.
+//! **Layer 2 — Declarative builders.** [`enforcement::CompileUnitBuilder`]
+//! and 8 others collect declarations and emit `Validated<T, Phase>` on
+//! success or [`enforcement::ShapeViolation`] with a machine-readable IRI.
 //!
 //! **Layer 3 — Term AST.** [`enforcement::Term`] and
-//! [`enforcement::TermArena`]: stack-resident, `#![no_std]`-safe
-//! expression trees. Builders accept `Term` references (not closures),
-//! keeping Prism declarations within the term language.
+//! [`enforcement::TermArena`]: stack-resident, `#![no_std]`-safe expression
+//! trees. The `Term` enum's struct-variant constructors are the canonical
+//! builder API — there is no DSL macro in v0.2.2.
 //!
-//! # The `uor!` Macro
+//! # Resolvers (v0.2.2 W12)
 //!
-//! The re-exported [`uor!`] macro parses EBNF surface syntax at compile
-//! time and produces typed `Term` ASTs. Ground assertions (no free
-//! variables) are evaluated at compile time using the foundation's
-//! `const fn` ring arithmetic.
+//! Verdict-producing resolvers are free functions in module-per-resolver
+//! organization. Each function returns a `Result<Certified<Cert>, Witness>`:
 //!
-//! ```rust,ignore
-//! use uor_foundation::uor;
+//! - `enforcement::resolver::inhabitance::certify(input)` — inhabitance verdict
+//! - `enforcement::resolver::tower_completeness::certify(input)` — tower completeness
+//! - `enforcement::resolver::incremental_completeness::certify(input)` — incremental
+//! - `enforcement::resolver::grounding_aware::certify(unit)` — grounding-aware
 //!
-//! // Type declaration with constraints:
-//! let pixel = uor! { type Pixel { residue: 255; hamming: 8; } };
+//! # Migration from v0.2.1
 //!
-//! // Operation composition (produces a TermArena):
-//! let expr = uor! { add(mul(3, 5), 7) };
-//!
-//! // Ground assertion — checked at compile time:
-//! uor! { assert add(1, 2) = 3; };
-//! ```
-//!
-//! # Getting Started
-//!
-//! 1. Implement [`Primitives`] for your concrete type family.
-//! 2. Use the [`enforcement`] builders to declare your types, effects,
-//!    and boundaries.
-//! 3. Use the [`uor!`] macro for term-language expressions.
-//! 4. The reduction evaluator validates and evaluates your declarations,
-//!    producing [`enforcement::Datum`] and [`enforcement::Derivation`]
-//!    witnesses.
+//! - `uor_ground!` macro                  → deleted; use `pipeline::run::<T, P>`
+//! - `#[derive(ConstrainedType)]`         → deleted; declare `const _VALIDATED: Validated<…, CompileTime>`
+//! - `#[uor_grounded(level = …)]`         → deleted; use phantom-typed `Mul::<W32>::apply(…)` etc.
+//! - `Primitives` trait                   → use `HostTypes` + `DefaultHostTypes`
+//! - 4 cert shim types                    → use `Certified<C>` parametric carrier
+//! - `Resolver::new().certify(…)` structs → `enforcement::resolver::name::certify(…)` functions
+//! - `run_pipeline(&datum, level)`        → `pipeline::run::<T, P>(validated_compile_unit)`
 
 #![no_std]
 
@@ -93,12 +113,16 @@ pub mod pipeline;
 pub mod user;
 
 pub use enums::*;
-pub use uor_foundation_macros::uor;
 
 /// XSD primitive type family.
 /// Implementors choose concrete representations for each XSD type.
 /// PRISM might use `u64` for integers at Q0, `u128` at higher quantum
 /// levels, or a bignum library. The foundation does not constrain this choice.
+/// **v0.2.2 deprecation notice:** `Primitives` will be removed in a future
+/// version in favor of [`HostTypes`], which narrows the trait to the four
+/// slots that genuinely vary across host environments (`Decimal`, `DateTime`,
+/// `HostString`, `WitnessBytes`) and lets the foundation own the integer /
+/// boolean / IRI representation derived from `WittLevel`.
 pub trait Primitives {
     /// String type (`xsd:string`). Use `str` for borrowed, `String` for owned.
     type String: ?Sized;
@@ -112,4 +136,45 @@ pub trait Primitives {
     type Decimal;
     /// Boolean type (`xsd:boolean`).
     type Boolean;
+}
+
+/// v0.2.2 W10: narrow host-types trait that lets downstream choose representations
+/// only for the slots that genuinely vary across host environments. Foundation-owned
+/// types (Witt-level integers, booleans, IRIs, canonicalBytes) are derived from the
+/// `WittLevel` family and not exposed here.
+/// MSRV 1.70 forbids `associated_type_defaults`, so v0.2.2 ships [`DefaultHostTypes`]
+/// as the canonical default impl. Downstream can either use `DefaultHostTypes`
+/// directly or implement `HostTypes` on their own marker struct, optionally
+/// overriding individual associated types.
+pub trait HostTypes {
+    /// Real-number representation for kernel observables (entropies, amplitudes, rates).
+    /// `DefaultHostTypes` selects `f64`. Override with `f128`, arbitrary-precision
+    /// rational, or interval arithmetic as needed.
+    type Decimal;
+
+    /// Host event timestamp.
+    /// `DefaultHostTypes` selects `i64` interpreted as Unix nanoseconds.
+    /// Override with `i128` for wider range, or a domain-specific timestamp type.
+    type DateTime;
+
+    /// Host-supplied opaque string (NOT a foundation IRI).
+    /// `DefaultHostTypes` selects `str`. Override with owned `String`, `Cow<'_, str>`, etc.
+    type HostString: ?Sized;
+
+    /// Host-supplied opaque byte sequence (NOT a foundation `canonicalBytes` constant).
+    /// `DefaultHostTypes` selects `[u8]`. Override with owned `Vec<u8>`, `Bytes`, etc.
+    type WitnessBytes: ?Sized;
+}
+
+/// v0.2.2 W10: canonical default impl of [`HostTypes`]. Selects `f64`/`i64`/`str`/`[u8]`.
+/// Use as `type H = uor_foundation::DefaultHostTypes;` to inherit the defaults; replace
+/// with a downstream marker struct if any slot needs an override.
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct DefaultHostTypes;
+
+impl HostTypes for DefaultHostTypes {
+    type Decimal = f64;
+    type DateTime = i64;
+    type HostString = str;
+    type WitnessBytes = [u8];
 }

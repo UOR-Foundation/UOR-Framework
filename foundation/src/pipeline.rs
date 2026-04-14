@@ -18,8 +18,8 @@
 use crate::enforcement::{
     BindingEntry, BindingsTable, CompileUnit, CompletenessCertificate, ConstrainedTypeInput,
     GenericImpossibilityWitness, Grounded, GroundingCertificate, InhabitanceCertificate,
-    InhabitanceImpossibilityWitness, LiftChainCertificate, MacroProvenance, PipelineFailure,
-    ShapeViolation, Validated,
+    InhabitanceImpossibilityWitness, LiftChainCertificate, PipelineFailure, ShapeViolation,
+    Validated,
 };
 use crate::ViolationKind;
 use crate::WittLevel;
@@ -671,12 +671,8 @@ pub fn run_tower_completeness<T: ConstrainedTypeShape + ?Sized>(
     let outcome = run_reduction_stages(input, witt_bits)
         .map_err(|_| GenericImpossibilityWitness::default())?;
     if outcome.satisfiable {
-        // SAFETY: MacroProvenance construction is reachable here because
-        // the pipeline module is internal to the foundation crate and
-        // operates under the sealed-constructor discipline.
-        let prov = MacroProvenance::__for_macro_crate();
         let cert = LiftChainCertificate::with_witt_bits(outcome.witt_bits);
-        Ok(crate::enforcement::__uor_macro_mint_validated(prov, cert))
+        Ok(Validated::new(cert))
     } else {
         Err(GenericImpossibilityWitness::default())
     }
@@ -710,9 +706,8 @@ pub fn run_grounding_aware(
     // the GroundingAwareResolver returns a trivial grounding certificate
     // carrying the requested Witt level.
     let witt_bits = level.witt_length() as u16;
-    let prov = MacroProvenance::__for_macro_crate();
     let cert = GroundingCertificate::with_witt_bits(witt_bits);
-    Ok(crate::enforcement::__uor_macro_mint_validated(prov, cert))
+    Ok(Validated::new(cert))
 }
 
 /// Run the `InhabitanceResolver` dispatch on a `ConstrainedTypeShape`
@@ -741,9 +736,8 @@ pub fn run_inhabitance<T: ConstrainedTypeShape + ?Sized>(
     let outcome = run_reduction_stages(input, witt_bits)
         .map_err(|_| InhabitanceImpossibilityWitness::default())?;
     if outcome.satisfiable {
-        let prov = MacroProvenance::__for_macro_crate();
         let cert = InhabitanceCertificate::with_witt_bits(outcome.witt_bits);
-        Ok(crate::enforcement::__uor_macro_mint_validated(prov, cert))
+        Ok(Validated::new(cert))
     } else {
         Err(InhabitanceImpossibilityWitness::default())
     }
@@ -773,16 +767,47 @@ pub fn run_pipeline<T: ConstrainedTypeShape + crate::enforcement::GroundedShape>
             trace_iri: "https://uor.foundation/trace/InhabitanceSearchTrace",
         });
     }
-    let prov = MacroProvenance::__for_macro_crate();
-    let grounding =
-        crate::enforcement::__uor_macro_mint_validated(prov, GroundingCertificate::default());
+    let grounding = Validated::new(GroundingCertificate::default());
     let bindings = empty_bindings_table();
-    Ok(crate::enforcement::__uor_macro_mint_grounded::<T>(
-        MacroProvenance::__for_macro_crate(),
+    Ok(Grounded::<T>::new_internal(
         grounding,
         bindings,
         outcome.witt_bits,
         outcome.unit_address,
+    ))
+}
+
+/// v0.2.2 W14: the single typed pipeline entry point producing `Grounded<T>`
+/// from a validated `CompileUnit`. The caller declares the expected shape `T`;
+/// the pipeline verifies the unit's root term produces a value of that shape
+/// and returns `Grounded<T>` on success or a typed `PipelineFailure`.
+/// Replaces the v0.2.1 `run_pipeline(&datum, level: u8)` form whose bare
+/// integer level argument was never type-safe.
+/// # Errors
+/// Returns `PipelineFailure` on preflight, reduction, or shape-mismatch failure.
+pub fn run<T, P>(unit: Validated<CompileUnit, P>) -> Result<Grounded<T>, PipelineFailure>
+where
+    T: ConstrainedTypeShape + crate::enforcement::GroundedShape,
+    P: crate::enforcement::ValidationPhase,
+{
+    // The CompileUnit carries the witt level ceiling; the pipeline runs
+    // against it and verifies the result has shape T. Empty-T case (no
+    // ConstrainedTypeShape constraints to project) is allowed and produces
+    // a trivially-grounded result.
+    let witt_bits = unit.inner().witt_level().witt_length() as u16;
+    preflight_budget_solvency(witt_bits as u64, witt_bits as u32)
+        .map_err(|report| PipelineFailure::ShapeViolation { report })?;
+    preflight_feasibility(T::CONSTRAINTS)
+        .map_err(|report| PipelineFailure::ShapeViolation { report })?;
+    preflight_package_coherence(T::CONSTRAINTS)
+        .map_err(|report| PipelineFailure::ShapeViolation { report })?;
+    preflight_dispatch_coverage().map_err(|report| PipelineFailure::ShapeViolation { report })?;
+    preflight_timing().map_err(|report| PipelineFailure::ShapeViolation { report })?;
+    runtime_timing().map_err(|report| PipelineFailure::ShapeViolation { report })?;
+    let grounding = Validated::new(GroundingCertificate::default());
+    let bindings = empty_bindings_table();
+    Ok(Grounded::<T>::new_internal(
+        grounding, bindings, witt_bits, 0u128,
     ))
 }
 

@@ -9,6 +9,36 @@ open UOR.Primitives
 
 namespace UOR.User.Morphism
 
+-- A GroundingMap that maps host-supplied byte sequences to ring datums via a fixed bit-pattern interpretation (e.g., little-endian unsigned integer reading). Total and invertible on its declared bit-width; preserves no algebraic structure beyond bit identity.
+def BinaryGroundingMap : UOR.User.Morphism.GroundingMap UOR.Prims.Standard := {
+  groundingDerivation := none
+  symbolConstraints := #[]
+  source := none
+  target := none
+  preserves := #[]
+  trace := none
+  composesWith := #[]
+  preservedInvariant := none
+  inputClass := some (("https://uor.foundation/schema/HostStringLiteral" : String))
+  outputClass := some (("https://uor.foundation/u/Element" : String))
+  hasWitness := #[]
+}
+
+-- A GroundingMap that maps fixed-size external byte strings to ring datums via a one-way digest function (e.g., SHA-256). Total but not invertible: every input grounds, but distinct inputs may collide; the inverse is computationally unbounded. Preserves no algebraic structure.
+def DigestGroundingMap : UOR.User.Morphism.GroundingMap UOR.Prims.Standard := {
+  groundingDerivation := none
+  symbolConstraints := #[]
+  source := none
+  target := none
+  preserves := #[]
+  trace := none
+  composesWith := #[]
+  preservedInvariant := none
+  inputClass := some (("https://uor.foundation/schema/HostStringLiteral" : String))
+  outputClass := some (("https://uor.foundation/u/Element" : String))
+  hasWitness := #[]
+}
+
 -- Grounds integer surface symbols to ring addresses.
 def IntegerGroundingMap : UOR.User.Morphism.GroundingMap UOR.Prims.Standard := {
   groundingDerivation := none

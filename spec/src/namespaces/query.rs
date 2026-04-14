@@ -255,11 +255,13 @@ fn individuals() -> Vec<Individual> {
             properties: &[],
         },
         Individual {
-            id: "https://uor.foundation/query/RingElement",
+            id: "https://uor.foundation/query/Address",
             type_: "https://uor.foundation/query/TriadProjection",
-            label: "RingElement",
+            label: "Address",
             comment: "The address coordinate: the content-addressable position \
-                      of a datum in the Braille glyph encoding.",
+                      of a datum in the Braille glyph encoding. Renamed from \
+                      RingElement in v0.2.2 W8 to unify vocabulary with the \
+                      schema:Triad bundling properties.",
             properties: &[],
         },
     ]

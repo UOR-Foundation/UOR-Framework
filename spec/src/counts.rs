@@ -24,10 +24,12 @@ pub const CLASSES: usize = 457;
 /// v0.2.1 Phase 7a: +7 (3 SatBound: maxVarCount/maxClauseCount/maxLiteralsPerClause;
 /// 2 TimingBound: preflightBudgetNs/runtimeBudgetNs; 1 type:defaultValue;
 /// 1 op:isRingOp — op:arity already existed as xsd:nonNegativeInteger).
-pub const PROPERTIES: usize = 928;
+/// v0.2.2 W8: +4 (schema:triadStratum, schema:triadSpectrum, schema:triadAddress,
+/// state:groundedTriad — Triad bundling).
+pub const PROPERTIES: usize = 932;
 
 /// Namespace-level properties only (excludes global annotation).
-pub const NAMESPACE_PROPERTIES: usize = 927;
+pub const NAMESPACE_PROPERTIES: usize = 931;
 
 /// Total named individuals across all namespaces.
 /// Includes 1870 AST term individuals (LiteralExpression / ForAllDeclaration)
@@ -36,7 +38,10 @@ pub const NAMESPACE_PROPERTIES: usize = 927;
 /// v0.2.1 Phase 1: +76.
 /// v0.2.1 Phase 7a: +5 (TwoSatBound, HornSatBound, PreflightTimingBound,
 /// RuntimeTimingBound, ResidueDefaultModulus).
-pub const INDIVIDUALS: usize = 3443;
+/// v0.2.2 W4+W14: +5 (morphism:DigestGroundingMap, morphism:BinaryGroundingMap,
+/// reduction:ShapeMismatch, two reduction:FailureField individuals for
+/// ShapeMismatch's `expected` and `got` fields).
+pub const INDIVIDUALS: usize = 3448;
 
 /// Number of SHACL test instance graphs.
 ///
@@ -49,7 +54,9 @@ pub const SHACL_TESTS: usize = 278;
 /// v0.2.1 Phase 7a: +1 from test278 SatBound/TimingBound/ConstraintDefaults
 /// fixture. v0.2.1 Phase 7g: +1 from the `lean4/rigor` banned-primitives
 /// enforcement check.
-pub const CONFORMANCE_CHECKS: usize = 474;
+/// v0.2.2 W5: +1 from the `docs/psi_leakage` validator.
+/// v0.2.2 W6: +1 from the `rust/public_api_snapshot` validator.
+pub const CONFORMANCE_CHECKS: usize = 476;
 
 /// Number of amendments applied to the base ontology.
 pub const AMENDMENTS: usize = 95;
@@ -73,7 +80,9 @@ pub const USER_NAMESPACES: usize = 3;
 /// excluding enum-class-domain and cross-namespace-domain properties).
 ///
 /// v0.2.1 Phase 1: +31. Phase 7a: +7 from new parametric metadata properties.
-pub const METHODS: usize = 891;
+/// v0.2.2 W8: +4 (triadStratum, triadSpectrum, triadAddress on schema:Triad;
+/// groundedTriad on state:GroundedContext).
+pub const METHODS: usize = 895;
 
 /// Number of individual constant modules generated.
 pub const CONSTANT_MODULES: usize = 1501;
@@ -98,7 +107,10 @@ pub const LEAN_INDUCTIVES: usize = 22;
 /// `CONSTANT_MODULES`, which counts the per-namespace-module constant
 /// files produced by the Rust codegen — those are container modules,
 /// not per-individual namespace blocks.
-pub const LEAN_CONSTANT_NAMESPACES: usize = 3343;
+///
+/// v0.2.2 W4+W14: +5 (DigestGroundingMap, BinaryGroundingMap, ShapeMismatch,
+/// shapeMismatch_expected_field, shapeMismatch_got_field).
+pub const LEAN_CONSTANT_NAMESPACES: usize = 3348;
 
 /// Number of concept pages on the website (one per content/concepts/*.md file).
 pub const CONCEPT_PAGES: usize = 27;

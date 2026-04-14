@@ -1,10 +1,13 @@
 //! `reduction/` namespace — Euler reduction sequential composition.
 //!
 //! The `reduction/` namespace formalizes the sequential composition of
-//! \u{03c8}-maps into a parameterized reduction \u{03c8} = \u{03c8}_9 \u{2218} \u{2026} \u{2218} \u{03c8}_1,
-//! parameterized by the phase angle \u{03a9} = e^{i\u{03c0}/6}. It defines
-//! the six-stage pipeline, phase gate attestation, complex conjugate
-//! rollback, and epoch-based temporal segmentation.
+//! the foundation's nine inter-algebra maps into a parameterized reduction
+//! pipeline, parameterized by the phase angle \u{03a9} = e^{i\u{03c0}/6}. It
+//! defines the six-stage pipeline, phase gate attestation, complex conjugate
+//! rollback, and epoch-based temporal segmentation. (The internal proof
+//! identifiers for the inter-algebra maps live in the `proof/` and `op/`
+//! namespaces; consumer-facing names use `inter-algebra map` / `reduction
+//! stage` vocabulary.)
 //!
 //! - **Amendment 63**: 10 classes, 25 properties, reduction core formalization
 //! - **Amendment 64**: 10 classes, 20 properties, reduction expansion
@@ -30,9 +33,9 @@ pub fn module() -> NamespaceModule {
             prefix: "reduction",
             iri: NS_REDUCTION,
             label: "UOR Euler Reduction",
-            comment: "Sequential composition of \u{03c8}-maps into a parameterized \
-                      reduction \u{03c8} = \u{03c8}_9 \u{2218} \u{2026} \u{2218} \u{03c8}_1. \
-                      Defines stages, phase gates, rollback, and epochs.",
+            comment: "Sequential composition of the foundation's nine inter-algebra \
+                      maps into a parameterized reduction pipeline. Defines stages, \
+                      phase gates, rollback, and epochs.",
             space: Space::Kernel,
             imports: &[
                 NS_OP,
@@ -1870,6 +1873,24 @@ fn individuals() -> Vec<Individual> {
                 ),
             ],
         },
+        // v0.2.2 W14: ShapeMismatch — signals that pipeline::run::<T> produced
+        // a value of a shape other than the caller-declared T. Variant fields
+        // (expected, got) are added below via FailureField individuals.
+        Individual {
+            id: "https://uor.foundation/reduction/ShapeMismatch",
+            type_: "https://uor.foundation/reduction/PipelineFailureReason",
+            label: "ShapeMismatch",
+            comment: "Failure: the CompileUnit's root term produced a value of \
+                      a shape other than the caller-declared expected shape. \
+                      Introduced in v0.2.2 W14 as part of the typed \
+                      pipeline::run::<T> entry point.",
+            properties: &[
+                (
+                    "https://uor.foundation/reduction/failureKind",
+                    IndividualValue::Str("ShapeMismatch"),
+                ),
+            ],
+        },
         // PipelineSuccess individual (1)
         Individual {
             id: "https://uor.foundation/reduction/FullGroundingSuccess",
@@ -2408,6 +2429,54 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/reduction/fieldName",
                     IndividualValue::Str("constraint_iri"),
+                ),
+                (
+                    "https://uor.foundation/reduction/fieldType",
+                    IndividualValue::Str("&'static str"),
+                ),
+            ],
+        },
+        // v0.2.2 W14: ShapeMismatch field carrying the expected shape IRI.
+        Individual {
+            id: "https://uor.foundation/reduction/shapeMismatch_expected_field",
+            type_: "https://uor.foundation/reduction/FailureField",
+            label: "shapeMismatch_expected_field",
+            comment: "ShapeMismatch field carrying the expected shape IRI \
+                      declared by the caller of pipeline::run::<T>.",
+            properties: &[
+                (
+                    "https://uor.foundation/reduction/ofFailure",
+                    IndividualValue::IriRef(
+                        "https://uor.foundation/reduction/ShapeMismatch",
+                    ),
+                ),
+                (
+                    "https://uor.foundation/reduction/fieldName",
+                    IndividualValue::Str("expected"),
+                ),
+                (
+                    "https://uor.foundation/reduction/fieldType",
+                    IndividualValue::Str("&'static str"),
+                ),
+            ],
+        },
+        // v0.2.2 W14: ShapeMismatch field carrying the actual shape IRI.
+        Individual {
+            id: "https://uor.foundation/reduction/shapeMismatch_got_field",
+            type_: "https://uor.foundation/reduction/FailureField",
+            label: "shapeMismatch_got_field",
+            comment: "ShapeMismatch field carrying the actual shape IRI \
+                      produced by the CompileUnit's root term.",
+            properties: &[
+                (
+                    "https://uor.foundation/reduction/ofFailure",
+                    IndividualValue::IriRef(
+                        "https://uor.foundation/reduction/ShapeMismatch",
+                    ),
+                ),
+                (
+                    "https://uor.foundation/reduction/fieldName",
+                    IndividualValue::Str("got"),
                 ),
                 (
                     "https://uor.foundation/reduction/fieldType",

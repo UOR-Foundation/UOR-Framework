@@ -7,6 +7,7 @@
 use serde_json::{json, Map, Value};
 
 use crate::model::{IndividualValue, Ontology, PropertyKind};
+use crate::serializer::prefixes::STANDARD_PREFIXES;
 
 /// Serializes the complete UOR Foundation ontology to a JSON-LD `Value`.
 ///
@@ -30,18 +31,9 @@ fn build_context(ontology: &Ontology) -> Value {
     // JSON-LD 1.1 processing mode
     ctx.insert("@version".to_owned(), json!(1.1));
     // Standard semantic web prefixes
-    ctx.insert("owl".to_owned(), json!("http://www.w3.org/2002/07/owl#"));
-    ctx.insert(
-        "rdf".to_owned(),
-        json!("http://www.w3.org/1999/02/22-rdf-syntax-ns#"),
-    );
-    ctx.insert(
-        "rdfs".to_owned(),
-        json!("http://www.w3.org/2000/01/rdf-schema#"),
-    );
-    ctx.insert("xsd".to_owned(), json!("http://www.w3.org/2001/XMLSchema#"));
-    ctx.insert("sh".to_owned(), json!("http://www.w3.org/ns/shacl#"));
-    ctx.insert("uor".to_owned(), json!("https://uor.foundation/"));
+    for (prefix, iri) in STANDARD_PREFIXES {
+        ctx.insert((*prefix).to_owned(), json!(*iri));
+    }
     // UOR namespace prefixes
     for module in &ontology.namespaces {
         ctx.insert(

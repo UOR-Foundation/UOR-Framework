@@ -147,6 +147,12 @@ def RuntimeTimingBound : UOR.Kernel.Reduction.TimingBound UOR.Prims.Standard := 
   runtimeBudgetNs := some ((10000000 : Nat))
 }
 
+-- Failure: the CompileUnit's root term produced a value of a shape other than the caller-declared expected shape. Introduced in v0.2.2 W14 as part of the typed pipeline::run::<T> entry point.
+def ShapeMismatch : UOR.Kernel.Reduction.PipelineFailureReason UOR.Prims.Standard := {
+  failureKind := some (("ShapeMismatch" : String))
+  failureStage := none
+}
+
 -- Lease is temporarily suspended.
 def Suspended : UOR.Kernel.Reduction.LeaseState UOR.Prims.Standard := {
   leasePhase := some (("Suspended" : String))
@@ -284,6 +290,20 @@ def noop_bind : UOR.Kernel.Reduction.PropertyBind UOR.Prims.Standard := {
 def phase_schedule : UOR.Kernel.Reduction.PhaseRotationScheduler UOR.Prims.Standard := {
   rotationSchedule := some (("Ω⁰, Ω¹, Ω², Ω³, Ω⁴, Ω⁵" : String))
   baseAngle := some (("π/6" : String))
+}
+
+-- ShapeMismatch field carrying the expected shape IRI declared by the caller of pipeline::run::<T>.
+def shapeMismatch_expected_field : UOR.Kernel.Reduction.FailureField UOR.Prims.Standard := {
+  ofFailure := some (("https://uor.foundation/reduction/ShapeMismatch" : String))
+  fieldName := some (("expected" : String))
+  fieldType := some (("&'static str" : String))
+}
+
+-- ShapeMismatch field carrying the actual shape IRI produced by the CompileUnit's root term.
+def shapeMismatch_got_field : UOR.Kernel.Reduction.FailureField UOR.Prims.Standard := {
+  ofFailure := some (("https://uor.foundation/reduction/ShapeMismatch" : String))
+  fieldName := some (("got" : String))
+  fieldType := some (("&'static str" : String))
 }
 
 -- Stage 4: accumulate without contradiction (α consistent).

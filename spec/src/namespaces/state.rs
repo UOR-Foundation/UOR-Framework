@@ -706,6 +706,23 @@ fn properties() -> Vec<Property> {
             domain: Some("https://uor.foundation/state/ContextLease"),
             range: XSD_STRING,
         },
+        // v0.2.2 W8: Triad bundling — functional property linking a grounded
+        // context to the (stratum, spectrum, address) bundle of the datum it
+        // carries. Computed by the kernel at grounding time and immutable
+        // thereafter.
+        Property {
+            id: "https://uor.foundation/state/groundedTriad",
+            label: "groundedTriad",
+            comment: "The triadic coordinate of the datum carried in this \
+                      grounded context: its (stratum, spectrum, address) \
+                      bundle. Computed by the kernel at grounding time and \
+                      immutable thereafter.",
+            kind: PropertyKind::Object,
+            functional: true,
+            required: false,
+            domain: Some("https://uor.foundation/state/GroundedContext"),
+            range: "https://uor.foundation/schema/Triad",
+        },
     ]
 }
 

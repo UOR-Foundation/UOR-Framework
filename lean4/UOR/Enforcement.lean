@@ -130,6 +130,7 @@ inductive PipelineFailure where
   | ConvergenceStall
   | ContradictionDetected
   | CoherenceViolation
+  | ShapeMismatch
   | LiftObstructionFailure
   | ShapeViolation
   deriving Repr, BEq, Inhabited

@@ -2,6 +2,183 @@
 
 All notable changes to UOR-Framework are documented in this file.
 
+## v0.2.2 — 2026-04-14
+
+v0.2.2 closes the five v0.2.1 enforcement escape hatches, ships the three
+residual ontology items, addresses four deeper correctness items, and lands
+five cross-cutting items. **18 work items total.** Backwards compatibility is
+not a constraint; the release criterion is *no second path*.
+
+### BREAKING — surface deletions
+
+- **W1**: deleted `uor_ground!` macro (entire `uor-foundation-macros` crate).
+- **W2**: deleted `#[derive(ConstrainedType)]` and `#[derive(CompileUnit)]`.
+- **W3**: deleted `#[uor_grounded(level = "...")]` attribute.
+- **W15**: **deleted the entire `uor-foundation-macros` crate** from the
+  workspace. Removed from `Cargo.toml` workspace members. The pipeline now
+  uses direct `pub(crate)` constructors. The contract is enforced at the
+  type and visibility level, not at the macro level.
+- **W2 cascade**: deleted `__macro_internals::GroundedShapeSealed` back-door,
+  `MacroProvenance`, `__uor_macro_mint_validated`, `__uor_macro_mint_grounded`.
+
+### Ontology additions
+
+- **W7** (`spec/src/namespaces/op.rs`): corrected `op:Pipeline` and
+  `op:Topological` rdfs:comments to reflect the actual ψ_1..6 / ψ_7..9
+  inter-algebra map split. The earlier ψ_1..6 chain (constraint nerve →
+  simplicial homology) is established under `op:Topological`; the later
+  ψ_7..9 tower (Postnikov truncation, homotopy group extraction,
+  k-invariant computation) is established under `op:Pipeline`.
+- **W8** (`spec/src/namespaces/schema.rs`, `query.rs`, `state.rs`):
+  `schema:Triad` gains three functional projection properties
+  (`triadStratum`, `triadSpectrum`, `triadAddress`) bundling the canonical
+  observable triple of a Datum at grounding time. `query:RingElement`
+  renamed to `query:Address`. `state:groundedTriad` added on
+  `state:GroundedContext`.
+- **W4** (`spec/src/namespaces/morphism.rs`): two new GroundingMap individuals
+  — `morphism:DigestGroundingMap` (one-way hash; total but not invertible;
+  no structure preservation) and `morphism:BinaryGroundingMap` (raw byte
+  ingestion; total and invertible; no structure beyond bit identity).
+- **W14** (`spec/src/namespaces/reduction.rs`): added
+  `reduction:ShapeMismatch` PipelineFailureReason individual with two
+  FailureField individuals for the `expected` and `got` shape IRIs. The
+  parametric `PipelineFailure` enum codegen picks it up automatically.
+
+### Ontology counts (`spec/src/counts.rs`)
+
+- `PROPERTIES`: 928 → **932** (+4 W8 properties)
+- `NAMESPACE_PROPERTIES`: 927 → **931**
+- `INDIVIDUALS`: 3443 → **3448** (+5: 2 GroundingMap + 1 ShapeMismatch + 2 FailureField)
+- `METHODS`: 891 → **895**
+- `LEAN_CONSTANT_NAMESPACES`: 3343 → **3348**
+- `CONFORMANCE_CHECKS`: 474 → **476** (+2 new validators)
+
+### Rust enforcement surface (additions)
+
+- **W11** `enforcement::Certificate` sealed trait + `Certified<C>` parametric
+  carrier. Replaces the v0.2.1 per-class shim duplication. All 10
+  `cert:Certificate` subclasses now have a sealed Rust kind that implements
+  `Certificate` with an `IRI` constant and `Evidence` associated type.
+  Six previously-unshimmed classes (`TransformCertificate`,
+  `IsometryCertificate`, `InvolutionCertificate`, `GeodesicCertificate`,
+  `MeasurementCertificate`, `BornRuleVerification`) gain Rust visibility.
+  Supporting evidence types (`CompletenessAuditTrail`, `ChainAuditTrail`,
+  `GeodesicEvidenceBundle`) are exposed as concrete public structs.
+- **W12** `enforcement::resolver::*::certify` free functions replace the
+  v0.2.1 unit-struct façades:
+  - `enforcement::resolver::inhabitance::certify(input)`
+  - `enforcement::resolver::tower_completeness::certify(input)`
+  - `enforcement::resolver::incremental_completeness::certify(input)`
+  - `enforcement::resolver::grounding_aware::certify(unit)`
+
+  Each returns `Result<Certified<Cert>, Witness>`. The v0.2.1 unit structs
+  remain alongside the new free functions for the v0.2.2 release cycle.
+- **W4** `enforcement::Grounding` trait gains `type Map: GroundingMapKind`
+  associated type. Sealed marker traits `GroundingMapKind`,
+  `PreservesMetric`, `PreservesStructure`, `Total`, `Invertible` partition
+  the kinds by structural property. Foundation operations requiring
+  structure preservation gate on `<G as Grounding>::Map: PreservesStructure`
+  and reject digest-style impls at the call site. Five sealed kind structs
+  (`IntegerGroundingMap`, `Utf8GroundingMap`, `JsonGroundingMap`,
+  `DigestGroundingMap`, `BinaryGroundingMap`) implement the marker-trait
+  table from the v0.2.2 plan.
+- **W3** Unary phantom-typed ring ops (`Neg<L>`, `BNot<L>`, `Succ<L>`)
+  next to the existing binary `Add/Sub/Mul/And/Or/Xor<L>`. New `UnaryRingOp`
+  trait. New `Embed<From, To>` sealed level promotion (canonical injection
+  ι : R_n → R_n′ for n ≤ n′), gated by the sealed `ValidLevelEmbedding`
+  trait. Downward coercion is intentionally not supplied — projection is
+  lossy and goes through `morphism:ProjectionMap` instances.
+- **W13** `enforcement::Validated<T, Phase: ValidationPhase = Runtime>`
+  parametric phase. New sealed `ValidationPhase` trait with `CompileTime`
+  and `Runtime` markers. `From<Validated<T, CompileTime>> for
+  Validated<T, Runtime>` impl provides the subsumption: a compile-time
+  witness is usable wherever a runtime witness is required. The default
+  phase is `Runtime` so v0.2.1 call sites that wrote `Validated<T>`
+  continue to compile unchanged.
+- **W14** `pipeline::run<T, P>` typed entry point: consumes
+  `Validated<CompileUnit, P>`, returns `Result<Grounded<T>, PipelineFailure>`
+  for an explicit `T: GroundedShape` and `P: ValidationPhase`. New
+  `CompileUnit::witt_level()` and `CompileUnit::thermodynamic_budget()`
+  accessors. New `PipelineFailure::ShapeMismatch { expected, got }` variant
+  emitted automatically by the parametric `PipelineFailure` codegen from
+  the W14 ontology addition.
+- **W8** `enforcement::Triad<L>` struct: bundles the (stratum, spectrum,
+  address) projection of a Datum at grounding time. Phantom-typed at level
+  `L`, no public constructor — built only by foundation code. Field access
+  via `stratum()`, `spectrum()`, `address()` accessors.
+- **W10** `HostTypes` trait + `DefaultHostTypes` canonical impl. Narrows
+  the v0.2.1 six-slot `Primitives` trait to the four slots that genuinely
+  vary across host environments (`Decimal`, `DateTime`, `HostString`,
+  `WitnessBytes`). Foundation-owned types (Witt-level integers, booleans,
+  IRIs, canonical bytes) are derived from `WittLevel` and not exposed.
+  `Primitives` remains as a deprecated alias for v0.2.1 backwards
+  compatibility.
+
+### Conformance suite
+
+- **W5** new validator `docs/psi_leakage`: scans the consumer-facing crate
+  surface (`README.md`, `foundation/README.md`, `foundation/docs/`) for
+  unauthorized ψ vocabulary references. Mathematically correct internal use
+  in `proof/`, `op/`, `homology/`, `cohomology/`, `derivation/` is excluded.
+- **W6** new validator `rust/public_api_snapshot`: pins the exact set of
+  `pub` items in `uor-foundation`'s enforcement, lib, and pipeline modules
+  to a snapshot file at `foundation/tests/public-api.snapshot`. Drift
+  requires explicit snapshot update review. Initial baseline: **129
+  pinned symbols**.
+- v0.2.2 release artifact `public/uor.conformance.ebnf` joins
+  `public/uor.term.ebnf` as a complete release artifact emitted by
+  `cargo run --bin uor-build`. The conformance EBNF grammar is published
+  alongside the primary Term-language grammar.
+
+### Tests (W17)
+
+New test files under `foundation/tests/`:
+
+- `grounding_map_kind_markers.rs` — exact marker-trait coverage per W4 plan
+  table; one test per kind asserts which markers it implements.
+- `host_types_surface.rs` — pins the exact `HostTypes` shape, asserts
+  `DefaultHostTypes` selects `f64`/`i64`/`str`/`[u8]`, demonstrates an
+  embedded-host override.
+- `validated_phases.rs` — asserts `ValidationPhase` is implemented by
+  `CompileTime` and `Runtime`, that the default phase resolves to `Runtime`,
+  and that the `From<Validated<_, CompileTime>>` subsumption compiles.
+- `unary_ring_ops.rs` — exercises `Neg<W8>`, `BNot<W8>`, `Succ<W8>`,
+  `Neg<W32>`, plus `Embed<W8, W16>` and `Embed<W8, W32>` widening. Verifies
+  the critical-composition law `Succ = Neg ∘ BNot` directly.
+
+### Documentation (W18)
+
+- Crate-level `//!` rustdoc rewritten as a v0.2.2 principal-data-path
+  tutorial with an ASCII diagram showing the
+  `host bytes → Grounding<Map> → Datum → Validated<T, Phase> → pipeline::run::<T, P> → Grounded<T> → Triad<L>` flow.
+- Migration table from v0.2.1 to v0.2.2 (each deleted symbol mapped to its
+  v0.2.2 replacement) embedded in the crate-root rustdoc.
+- `enforcement::prelude` re-exports the full v0.2.2 surface
+  (`Certified`, `Triad`, `Certificate`, `GroundingMapKind`, marker traits,
+  cert kind structs, Validation phases, unary ring ops, Embed) alongside
+  the v0.2.1 carry-over symbols.
+
+### Deferred to v0.2.3+
+
+- **`uor-foundation-clippy` dylint crate**: the v0.2.2 plan §W6 envisioned
+  a dylint-based custom lint group for catching escape-hatch construction
+  attempts in downstream code. The contract is already enforced at the
+  type and visibility level (`pub(crate)` constructors, sealed traits,
+  the public-API snapshot validator), so the dylint adds defense-in-depth
+  rather than net-new safety. Deferred to v0.2.3 to avoid coupling the
+  toolchain to a specific Clippy/HIR pin.
+- **`Grounding`-combinator-only verification** (W4 "honest limit"): making
+  `ground()` implementable only via foundation-supplied combinators so the
+  foundation can verify (not just tag) that a `DigestGroundingMap` impl is
+  actually deterministic and total. This is the 1.0.0 stability prerequisite.
+- **Embedded developer cookbook** (W18 expansion): a `cookbook` module
+  with 10 doc-only recipes for common principal-path patterns. Deferred
+  to v0.2.3 alongside the rewritten consumer-facing concept docs.
+- **Website docs editorial sweep**: removing ψ from
+  `docs/content/concepts/` markdown pages. The v0.2.2 ψ-leakage gate is
+  scoped to the consumer-facing crate surface; the website sweep is a
+  separate editorial undertaking in v0.2.3.
+
 ## v0.2.1 — 2026-04-13
 
 v0.2.1 bundles the **Inhabitance Verdict Instantiation** ontology release with

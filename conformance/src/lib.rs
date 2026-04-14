@@ -77,6 +77,10 @@ pub fn run_all(paths: &WorkspacePaths) -> anyhow::Result<ConformanceReport> {
     // 1. Rust source standards
     report.extend(validators::rust::style::validate(&paths.workspace)?);
     report.extend(validators::rust::api::validate(&paths.workspace)?);
+    // v0.2.2 W6: public-API snapshot pin (drift detector).
+    report.extend(validators::rust::public_api_snapshot::validate(
+        &paths.workspace,
+    )?);
 
     // 2. Ontology inventory
     report.extend(validators::ontology::inventory::validate(&paths.artifacts)?);
@@ -138,6 +142,8 @@ pub fn run_all(paths: &WorkspacePaths) -> anyhow::Result<ConformanceReport> {
     report.extend(validators::docs::accuracy::validate(&paths.artifacts)?);
     report.extend(validators::docs::structure::validate(&paths.artifacts)?);
     report.extend(validators::docs::links::validate(&paths.artifacts)?);
+    // v0.2.2 W5: ψ vocabulary leak gate (consumer-facing surface).
+    report.extend(validators::docs::psi_leakage::validate(&paths.workspace)?);
 
     // 8. Website
     report.extend(validators::website::html::validate(&paths.artifacts)?);

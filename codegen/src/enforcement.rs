@@ -59,7 +59,6 @@ pub fn generate_enforcement_module(ontology: &Ontology) -> String {
     generate_fragment_markers(&mut f, ontology);
     generate_dispatch_tables(&mut f, ontology);
     generate_validated_deref(&mut f);
-    generate_back_door_minting(&mut f);
     generate_prelude(&mut f, ontology);
 
     f.finish()
@@ -350,19 +349,136 @@ fn generate_grounding_types(f: &mut RustFile, ontology: &Ontology) {
     f.line("impl<const N: usize> GroundedValue for GroundedTuple<N> {}");
     f.blank();
 
-    // Grounding open trait
+    // v0.2.2 W4: Grounding kind discriminator. The Grounding trait gains an
+    // associated `Map: GroundingMapKind` type that tags each impl with its
+    // semantic kind (digest, binary, integer, utf8, json). Sealed marker
+    // traits (`Total`, `Invertible`, `PreservesStructure`, `PreservesMetric`)
+    // partition the kinds by structural property, so foundation operations
+    // requiring (e.g.) `PreservesStructure` reject digest-grounding impls at
+    // the call site. The discrimination is structural-tagging — the
+    // foundation cannot verify the impl body matches the declared kind, but
+    // it can ensure that the kind is one of a fixed sealed set.
+    f.doc_comment("v0.2.2 W4: sealed marker trait for the kind of a `Grounding` map.");
+    f.doc_comment("Implemented by exactly the `morphism:GroundingMap` individuals declared in");
+    f.doc_comment("the ontology; downstream cannot extend the kind set.");
+    f.line("pub trait GroundingMapKind: grounding_map_kind_sealed::Sealed {");
+    f.indented_doc_comment("The ontology IRI of this grounding map kind.");
+    f.line("    const ONTOLOGY_IRI: &'static str;");
+    f.line("}");
+    f.blank();
+
+    f.doc_comment("v0.2.2 W4: kinds whose grounding image is total over the input domain");
+    f.doc_comment("(every input grounds successfully).");
+    f.line("pub trait Total: GroundingMapKind {}");
+    f.blank();
+    f.doc_comment("v0.2.2 W4: kinds whose grounding map is injective and admits an inverse");
+    f.doc_comment("on its image.");
+    f.line("pub trait Invertible: GroundingMapKind {}");
+    f.blank();
+    f.doc_comment("v0.2.2 W4: kinds whose grounding map preserves the algebraic structure");
+    f.doc_comment("of the source domain (homomorphism-like).");
+    f.line("pub trait PreservesStructure: GroundingMapKind {}");
+    f.blank();
+    f.doc_comment("v0.2.2 W4: kinds whose grounding map preserves the metric of the source");
+    f.doc_comment("domain (isometry-like).");
+    f.line("pub trait PreservesMetric: GroundingMapKind {}");
+    f.blank();
+
+    // Walk morphism:GroundingMap individuals and emit one unit struct per kind.
+    let kinds = individuals_of_type(ontology, "https://uor.foundation/morphism/GroundingMap");
+    let mut kind_names: Vec<String> = Vec::new();
+    for k in &kinds {
+        kind_names.push(local_name(k.id).to_string());
+    }
+    kind_names.sort();
+    kind_names.dedup();
+
+    for name in &kind_names {
+        let doc = match name.as_str() {
+            "IntegerGroundingMap" => "v0.2.2 W4: kind for integer surface symbols. Total, invertible, structure-preserving.",
+            "Utf8GroundingMap" => "v0.2.2 W4: kind for UTF-8 host strings. Invertible on its image, structure-preserving.",
+            "JsonGroundingMap" => "v0.2.2 W4: kind for JSON host strings. Invertible on its image, structure-preserving.",
+            "DigestGroundingMap" => "v0.2.2 W4: kind for one-way digest functions (e.g., SHA-256). Total but not invertible; preserves no structure.",
+            "BinaryGroundingMap" => "v0.2.2 W4: kind for raw byte ingestion. Total and invertible; preserves bit identity only.",
+            _ => "v0.2.2 W4: GroundingMap kind unit struct.",
+        };
+        f.doc_comment(doc);
+        f.line("#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]");
+        f.line(&format!("pub struct {name};"));
+        f.blank();
+    }
+
+    // Sealed module + GroundingMapKind impls.
+    f.line("mod grounding_map_kind_sealed {");
+    f.indented_doc_comment("Private supertrait. Not implementable outside this crate.");
+    f.line("    pub trait Sealed {}");
+    for name in &kind_names {
+        f.line(&format!("    impl Sealed for super::{name} {{}}"));
+    }
+    f.line("}");
+    f.blank();
+    for name in &kind_names {
+        f.line(&format!("impl GroundingMapKind for {name} {{"));
+        f.line(&format!(
+            "    const ONTOLOGY_IRI: &'static str = \"https://uor.foundation/morphism/{name}\";"
+        ));
+        f.line("}");
+        f.blank();
+    }
+
+    // Marker-trait impl table (per W4 plan):
+    //   IntegerGroundingMap : Total + Invertible + PreservesStructure
+    //   Utf8GroundingMap    : Invertible + PreservesStructure   (not Total — codec can fail)
+    //   JsonGroundingMap    : Invertible + PreservesStructure   (not Total — parser can fail)
+    //   DigestGroundingMap  : Total                              (not Invertible, no structure)
+    //   BinaryGroundingMap  : Total + Invertible                 (no structure preservation)
+    let marker_table: &[(&str, &[&str])] = &[
+        (
+            "IntegerGroundingMap",
+            &["Total", "Invertible", "PreservesStructure"],
+        ),
+        ("Utf8GroundingMap", &["Invertible", "PreservesStructure"]),
+        ("JsonGroundingMap", &["Invertible", "PreservesStructure"]),
+        ("DigestGroundingMap", &["Total"]),
+        ("BinaryGroundingMap", &["Total", "Invertible"]),
+    ];
+    for (kind_name, markers) in marker_table {
+        if !kind_names.iter().any(|n| n == *kind_name) {
+            continue;
+        }
+        for marker in *markers {
+            f.line(&format!("impl {marker} for {kind_name} {{}}"));
+        }
+        if !markers.is_empty() {
+            f.blank();
+        }
+    }
+
+    // Grounding open trait — extended with v0.2.2 W4 `Map: GroundingMapKind`
+    // associated type. Defaulted to `BinaryGroundingMap` so existing impls
+    // that don't declare a `Map` continue to type-check (the binary kind is
+    // the most permissive default — total + invertible, no structure
+    // preservation).
     f.doc_comment("Open trait for boundary crossing: external data to grounded intermediate.");
     f.doc_comment("");
     f.doc_comment("The foundation validates the returned value against the declared");
     f.doc_comment("`GroundingShape` and mints it into a `Datum` if conformant.");
+    f.doc_comment("");
+    f.doc_comment("v0.2.2 W4 adds the `Map: GroundingMapKind` associated type — every impl");
+    f.doc_comment("must declare what *kind* of grounding map it is. Foundation operations");
+    f.doc_comment(
+        "that require structure preservation gate on `<G as Grounding>::Map: PreservesStructure`,",
+    );
+    f.doc_comment("and a digest-style impl is rejected at the call site.");
     f.doc_example(
-        "use uor_foundation::enforcement::{Grounding, GroundedCoord};\n\
+        "use uor_foundation::enforcement::{Grounding, GroundedCoord, BinaryGroundingMap};\n\
          \n\
          /// Doubling grounding: maps each input byte b to 2b mod 256.\n\
          struct DoublingGrounding;\n\
          \n\
          impl Grounding for DoublingGrounding {\n\
          \x20   type Output = GroundedCoord;\n\
+         \x20   type Map = BinaryGroundingMap;\n\
          \n\
          \x20   fn ground(&self, external: &[u8]) -> Option<GroundedCoord> {\n\
          \x20       // Reject empty input at the boundary\n\
@@ -382,6 +498,15 @@ fn generate_grounding_types(f: &mut RustFile, ontology: &Ontology) {
     f.line("    type Output: GroundedValue;");
     f.blank();
     f.indented_doc_comment(
+        "v0.2.2 W4: the kind of grounding map this impl is. Sealed to the\n\
+         set of `morphism:GroundingMap` individuals declared in the\n\
+         ontology. Every impl must declare the kind explicitly; if no kind\n\
+         applies, use `BinaryGroundingMap` (the most permissive — total +\n\
+         invertible, no structure preservation).",
+    );
+    f.line("    type Map: GroundingMapKind;");
+    f.blank();
+    f.indented_doc_comment(
         "Map external bytes into a grounded intermediate.\n\
          The foundation handles validation and minting.\n\
          Returns `None` if the input is malformed or undersized.",
@@ -392,12 +517,52 @@ fn generate_grounding_types(f: &mut RustFile, ontology: &Ontology) {
 }
 
 fn generate_witness_types(f: &mut RustFile) {
-    // Validated<T>
+    // v0.2.2 W13: ValidationPhase — sealed marker for the validation phase
+    // (compile-time vs runtime) at which a Validated<T> was witnessed. The
+    // default phase is Runtime so v0.2.1 call sites that wrote Validated<T>
+    // continue to compile unchanged. Compile-time validation produces
+    // Validated<T, CompileTime>, which is convertible to Validated<T, Runtime>
+    // via the From impl below — a CompileTime witness is usable wherever a
+    // Runtime witness is.
+    f.doc_comment("v0.2.2 W13: sealed marker trait for the validation phase at which a");
+    f.doc_comment("`Validated<T, Phase>` was witnessed. Implemented only by `CompileTime`");
+    f.doc_comment("and `Runtime`; downstream cannot extend.");
+    f.line("pub trait ValidationPhase: validation_phase_sealed::Sealed {}");
+    f.blank();
+    f.line("mod validation_phase_sealed {");
+    f.indented_doc_comment("Private supertrait. Not implementable outside this crate.");
+    f.line("    pub trait Sealed {}");
+    f.line("    impl Sealed for super::CompileTime {}");
+    f.line("    impl Sealed for super::Runtime {}");
+    f.line("}");
+    f.blank();
+    f.doc_comment("v0.2.2 W13: marker for compile-time validated witnesses produced by");
+    f.doc_comment("`validate_const()` and usable in `const` contexts. Convertible to");
+    f.doc_comment("`Validated<T, Runtime>` via `From`.");
+    f.line("#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]");
+    f.line("pub struct CompileTime;");
+    f.line("impl ValidationPhase for CompileTime {}");
+    f.blank();
+    f.doc_comment("v0.2.2 W13: marker for runtime-validated witnesses produced by");
+    f.doc_comment("`validate()`. The default phase of `Validated<T>` so v0.2.1 call");
+    f.doc_comment("sites continue to compile.");
+    f.line("#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]");
+    f.line("pub struct Runtime;");
+    f.line("impl ValidationPhase for Runtime {}");
+    f.blank();
+
+    // Validated<T, Phase>
     f.doc_comment("Proof that a value was produced by the conformance checker,");
     f.doc_comment("not fabricated by Prism code.");
     f.doc_comment("");
     f.doc_comment("The inner value and `_sealed` field are private, so `Validated<T>`");
     f.doc_comment("can only be constructed within this crate.");
+    f.doc_comment("");
+    f.doc_comment("v0.2.2 W13: parameterized by a `Phase: ValidationPhase` discriminator.");
+    f.doc_comment("`Validated<T, CompileTime>` was witnessed by `validate_const()` and is");
+    f.doc_comment("usable in const contexts. `Validated<T, Runtime>` (the default) was");
+    f.doc_comment("witnessed by `validate()`. A `CompileTime` witness is convertible to");
+    f.doc_comment("a `Runtime` witness via `From`.");
     f.doc_example(
         "use uor_foundation::enforcement::{CompileUnitBuilder, Term};\n\
          use uor_foundation::{WittLevel, VerificationDomain};\n\
@@ -421,26 +586,42 @@ fn generate_witness_types(f: &mut RustFile) {
         "rust,ignore",
     );
     f.line("#[derive(Debug, Clone, PartialEq, Eq)]");
-    f.line("pub struct Validated<T> {");
+    f.line("pub struct Validated<T, Phase: ValidationPhase = Runtime> {");
     f.indented_doc_comment("The validated inner value.");
     f.line("    inner: T,");
+    f.indented_doc_comment("Phantom marker for the validation phase (`CompileTime` or `Runtime`).");
+    f.line("    _phase: PhantomData<Phase>,");
     f.indented_doc_comment("Prevents external construction.");
     f.line("    _sealed: (),");
     f.line("}");
     f.blank();
-    f.line("impl<T> Validated<T> {");
+    f.line("impl<T, Phase: ValidationPhase> Validated<T, Phase> {");
     f.indented_doc_comment("Returns a reference to the validated inner value.");
     f.line("    #[inline]");
     f.line("    #[must_use]");
-    f.line("    pub fn inner(&self) -> &T {");
+    f.line("    pub const fn inner(&self) -> &T {");
     f.line("        &self.inner");
     f.line("    }");
     f.blank();
-    f.indented_doc_comment("Creates a new `Validated<T>` wrapper. Only callable within the crate.");
+    f.indented_doc_comment(
+        "Creates a new `Validated<T, Phase>` wrapper. Only callable within the crate.",
+    );
     f.line("    #[inline]");
     f.line("    #[allow(dead_code)]");
     f.line("    pub(crate) const fn new(inner: T) -> Self {");
-    f.line("        Self { inner, _sealed: () }");
+    f.line("        Self { inner, _phase: PhantomData, _sealed: () }");
+    f.line("    }");
+    f.line("}");
+    f.blank();
+    // v0.2.2 W13: subsumption — a CompileTime witness is usable wherever a
+    // Runtime witness is required.
+    f.doc_comment(
+        "v0.2.2 W13: a compile-time witness is usable wherever a runtime witness is required.",
+    );
+    f.line("impl<T> From<Validated<T, CompileTime>> for Validated<T, Runtime> {");
+    f.line("    #[inline]");
+    f.line("    fn from(value: Validated<T, CompileTime>) -> Self {");
+    f.line("        Self { inner: value.inner, _phase: PhantomData, _sealed: () }");
     f.line("    }");
     f.line("}");
     f.blank();
@@ -899,6 +1080,22 @@ fn generate_builders(f: &mut RustFile) {
     f.line("    level: WittLevel,");
     f.indented_doc_comment("The thermodynamic budget.");
     f.line("    budget: u64,");
+    f.line("}");
+    f.blank();
+    f.line("impl CompileUnit {");
+    f.indented_doc_comment("Returns the Witt level ceiling declared at validation time.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn witt_level(&self) -> WittLevel {");
+    f.line("        self.level");
+    f.line("    }");
+    f.blank();
+    f.indented_doc_comment("Returns the thermodynamic budget declared at validation time.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn thermodynamic_budget(&self) -> u64 {");
+    f.line("        self.budget");
+    f.line("    }");
     f.line("}");
     f.blank();
 
@@ -1846,31 +2043,188 @@ fn generate_ontology_target_trait(f: &mut RustFile, ontology: &Ontology) {
     }
     f.line("impl OntologyTarget for CompileUnit {}");
     f.blank();
+
+    // ── v0.2.2 W11: Certified<C> parametric carrier ────────────────────────
+    //
+    // Replaces the per-shim duplication with one parametric carrier. Sealed
+    // `Certificate` trait scopes the kind set to ontology-declared classes;
+    // `Certified<C>` is the single struct that holds them. The 4 existing
+    // certificate shims gain `impl Certificate`, and the 6 cert subclasses
+    // not previously shimmed (Transform, Isometry, Involution, Geodesic,
+    // Measurement, BornRule) get sealed unit-struct emissions.
+    //
+    // Supporting evidence types (CompletenessAuditTrail, ChainAuditTrail,
+    // GeodesicEvidenceBundle) are emitted as public structs so they can
+    // appear as the `Evidence` associated type of their parent certificate.
+    f.doc_comment("v0.2.2 W11: supporting evidence type for `CompletenessCertificate`.");
+    f.doc_comment("Linked from the certificate via the `Certificate::Evidence` associated type.");
+    f.line("#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]");
+    f.line("pub struct CompletenessAuditTrail { _private: () }");
+    f.blank();
+    f.doc_comment("v0.2.2 W11: supporting evidence type for `LiftChainCertificate`.");
+    f.line("#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]");
+    f.line("pub struct ChainAuditTrail { _private: () }");
+    f.blank();
+    f.doc_comment("v0.2.2 W11: supporting evidence type for `GeodesicCertificate`.");
+    f.line("#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]");
+    f.line("pub struct GeodesicEvidenceBundle { _private: () }");
+    f.blank();
+
+    // The 6 cert subclasses not previously shimmed in enforcement. We emit
+    // them as sealed unit structs so they can be the `C` parameter of
+    // `Certified<C>`.
+    let new_cert_kinds: &[(&str, &str)] = &[
+        (
+            "TransformCertificate",
+            "v0.2.2 W11: sealed carrier for `cert:TransformCertificate`.",
+        ),
+        (
+            "IsometryCertificate",
+            "v0.2.2 W11: sealed carrier for `cert:IsometryCertificate`.",
+        ),
+        (
+            "InvolutionCertificate",
+            "v0.2.2 W11: sealed carrier for `cert:InvolutionCertificate`.",
+        ),
+        (
+            "GeodesicCertificate",
+            "v0.2.2 W11: sealed carrier for `cert:GeodesicCertificate`.",
+        ),
+        (
+            "MeasurementCertificate",
+            "v0.2.2 W11: sealed carrier for `cert:MeasurementCertificate`.",
+        ),
+        (
+            "BornRuleVerification",
+            "v0.2.2 W11: sealed carrier for `cert:BornRuleVerification`.",
+        ),
+    ];
+    for (name, doc) in new_cert_kinds {
+        f.doc_comment(doc);
+        f.line("#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]");
+        f.line(&format!("pub struct {name} {{ _private: () }}"));
+        f.blank();
+    }
+
+    f.doc_comment("v0.2.2 W11: sealed marker trait for foundation-supplied certificate kinds.");
+    f.doc_comment("Implemented by every `cert:Certificate` subclass via codegen; not");
+    f.doc_comment("implementable outside this crate.");
+    f.line("pub trait Certificate: certificate_sealed::Sealed {");
+    f.indented_doc_comment("The ontology IRI of this certificate class.");
+    f.line("    const IRI: &'static str;");
+    f.indented_doc_comment(
+        "The structured evidence carried by this certificate (or `()` if none).",
+    );
+    f.line("    type Evidence;");
+    f.line("}");
+    f.blank();
+
+    // The full set of cert classes. Existing shim names + new cert kind names.
+    // Each entry is (rust_name, ontology_local_name, evidence_type).
+    let all_certs: &[(&str, &str, &str)] = &[
+        ("GroundingCertificate", "GroundingCertificate", "()"),
+        (
+            "LiftChainCertificate",
+            "LiftChainCertificate",
+            "ChainAuditTrail",
+        ),
+        ("InhabitanceCertificate", "InhabitanceCertificate", "()"),
+        (
+            "CompletenessCertificate",
+            "CompletenessCertificate",
+            "CompletenessAuditTrail",
+        ),
+        ("TransformCertificate", "TransformCertificate", "()"),
+        ("IsometryCertificate", "IsometryCertificate", "()"),
+        ("InvolutionCertificate", "InvolutionCertificate", "()"),
+        (
+            "GeodesicCertificate",
+            "GeodesicCertificate",
+            "GeodesicEvidenceBundle",
+        ),
+        ("MeasurementCertificate", "MeasurementCertificate", "()"),
+        ("BornRuleVerification", "BornRuleVerification", "()"),
+    ];
+    f.line("mod certificate_sealed {");
+    f.indented_doc_comment("Private supertrait. Not implementable outside this crate.");
+    f.line("    pub trait Sealed {}");
+    for (rust_name, _, _) in all_certs {
+        f.line(&format!("    impl Sealed for super::{rust_name} {{}}"));
+    }
+    f.line("}");
+    f.blank();
+    for (rust_name, ont_local, evidence) in all_certs {
+        f.line(&format!("impl Certificate for {rust_name} {{"));
+        f.line(&format!(
+            "    const IRI: &'static str = \"https://uor.foundation/cert/{ont_local}\";"
+        ));
+        f.line(&format!("    type Evidence = {evidence};"));
+        f.line("}");
+        f.blank();
+    }
+
+    f.doc_comment("v0.2.2 W11: parametric carrier for any foundation-supplied certificate.");
+    f.doc_comment("Replaces the v0.2.1 per-class shim duplication. The `Certificate` trait");
+    f.doc_comment("is sealed and the `_private` field prevents external construction; only");
+    f.doc_comment("the foundation's pipeline / resolver paths produce `Certified<C>` values.");
+    f.line("#[derive(Debug, Clone)]");
+    f.line("pub struct Certified<C: Certificate> {");
+    f.indented_doc_comment("The certificate kind value carried by this wrapper.");
+    f.line("    inner: C,");
+    f.indented_doc_comment("Prevents external construction.");
+    f.line("    _private: (),");
+    f.line("}");
+    f.blank();
+    f.line("impl<C: Certificate> Certified<C> {");
+    f.indented_doc_comment("Returns a reference to the carried certificate kind value.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn certificate(&self) -> &C {");
+    f.line("        &self.inner");
+    f.line("    }");
+    f.blank();
+    f.indented_doc_comment("Returns the ontology IRI of this certificate's kind.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn iri(&self) -> &'static str {");
+    f.line("        C::IRI");
+    f.line("    }");
+    f.blank();
+    f.indented_doc_comment(
+        "Crate-internal constructor. Reachable only from the pipeline / resolver paths.",
+    );
+    f.line("    #[inline]");
+    f.line("    #[allow(dead_code)]");
+    f.line("    pub(crate) const fn new(inner: C) -> Self {");
+    f.line("        Self { inner, _private: () }");
+    f.line("    }");
+    f.line("}");
+    f.blank();
 }
 
 // 2.1.b Grounded<T> — zero-overhead ground-state wrapper.
 fn generate_grounded_wrapper(f: &mut RustFile) {
     f.doc_comment("Sealed marker trait identifying type:ConstrainedType subclasses that may");
-    f.doc_comment("appear as the parameter of `Grounded<T>`. Downstream crates implement");
-    f.doc_comment("this via `#[derive(ConstrainedType)]` from `uor-foundation-macros`,");
-    f.doc_comment("which gates impl emission through a back-door macro path.");
-    // GroundedShape sealing via a `#[doc(hidden)] pub` supertrait module.
-    // The module is `pub` so `#[derive(ConstrainedType)]` can legitimately
-    // write `impl uor_foundation::enforcement::__macro_internals::GroundedShapeSealed for T {}`.
-    // The `__macro_internals` prefix + `#[doc(hidden)]` keeps it out of
-    // rustdoc and signals the contract: only the derive macro should touch this.
-    f.doc_comment("Back-door supertrait for `GroundedShape`. Reachable via");
-    f.doc_comment("`uor_foundation::enforcement::__macro_internals::GroundedShapeSealed`.");
-    f.doc_comment("Only `#[derive(ConstrainedType)]` is supposed to impl it.");
-    f.line("#[doc(hidden)]");
-    f.line("pub mod __macro_internals {");
-    f.indented_doc_comment("Sealed supertrait of `GroundedShape`. Not part of the stable API.");
-    f.line("    pub trait GroundedShapeSealed {}");
-    f.indented_doc_comment("Built-in impl for the foundation's own ConstrainedTypeInput shim.");
-    f.line("    impl GroundedShapeSealed for super::ConstrainedTypeInput {}");
+    f.doc_comment("appear as the parameter of `Grounded<T>`.");
+    f.doc_comment("");
+    f.doc_comment("v0.2.2 W2: the sealing now lives in a private `grounded_shape_sealed`");
+    f.doc_comment("module — there is no `__macro_internals` back-door. The only impl is for");
+    f.doc_comment("the foundation-supplied `ConstrainedTypeInput` shim. Downstream code that");
+    f.doc_comment("needs to bind a user type as `T` in `Grounded<T>` does so via the");
+    f.doc_comment("compile-time-evidence pattern: declare a");
+    f.doc_comment("`const _VALIDATED_<T>: Validated<ConstrainedTypeInput, CompileTime> = ...;`");
+    f.doc_comment("module-scope evidence constant, and the foundation's pipeline binds it.");
+    f.line("mod grounded_shape_sealed {");
+    f.indented_doc_comment("Private supertrait. Not implementable outside this crate.");
+    f.line("    pub trait Sealed {}");
+    f.line("    impl Sealed for super::ConstrainedTypeInput {}");
     f.line("}");
-    f.line("pub trait GroundedShape: __macro_internals::GroundedShapeSealed {}");
-    f.line("impl<T: __macro_internals::GroundedShapeSealed> GroundedShape for T {}");
+    f.doc_comment("v0.2.2 W2: sealed marker trait for shapes that can appear as the parameter");
+    f.doc_comment("of `Grounded<T>`. Implemented only by `ConstrainedTypeInput`. Downstream");
+    f.doc_comment("user types bind to this trait via the compile-time-evidence pattern in a");
+    f.doc_comment("future v0.2.2 cookbook revision.");
+    f.line("pub trait GroundedShape: grounded_shape_sealed::Sealed {}");
+    f.line("impl GroundedShape for ConstrainedTypeInput {}");
     f.blank();
 
     f.doc_comment("A binding entry in a `BindingsTable`. Pairs an address (u128 content");
@@ -1990,6 +2344,66 @@ fn generate_grounded_wrapper(f: &mut RustFile) {
     f.line("            unit_address,");
     f.line("            _phantom: PhantomData,");
     f.line("        }");
+    f.line("    }");
+    f.line("}");
+    f.blank();
+
+    // ── v0.2.2 W8: Triad<L> bundling struct ────────────────────────────────
+    //
+    // The triadic coordinate of a Datum: (stratum, spectrum, address).
+    // Parametric over the Witt level marker L (one of the unit structs
+    // W8/W16/W24/W32 emitted by generate_ring_ops). Fields are private; only
+    // the foundation can construct a Triad. Accessors return u64 coordinate
+    // values — typed coordinate wrappers (TwoAdicValuation<L> etc.) are
+    // deferred to v0.2.3+ when the bridge::query rewrite happens.
+    f.doc_comment("v0.2.2 W8: triadic coordinate of a Datum at level `L`. Bundles the");
+    f.doc_comment("(stratum, spectrum, address) projection in one structurally-enforced");
+    f.doc_comment("type. No public constructor — `Triad<L>` is built only by foundation code");
+    f.doc_comment("at grounding time. Field access goes through the named accessors.");
+    f.line("#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]");
+    f.line("pub struct Triad<L> {");
+    f.indented_doc_comment("The stratum coordinate (two-adic valuation).");
+    f.line("    stratum: u64,");
+    f.indented_doc_comment("The spectrum coordinate (Walsh-Hadamard image).");
+    f.line("    spectrum: u64,");
+    f.indented_doc_comment("The address coordinate (Braille-glyph address).");
+    f.line("    address: u64,");
+    f.indented_doc_comment("Phantom marker for the Witt level.");
+    f.line("    _level: PhantomData<L>,");
+    f.line("}");
+    f.blank();
+    f.line("impl<L> Triad<L> {");
+    f.indented_doc_comment("Returns the stratum component (`query:TwoAdicValuation` coordinate).");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn stratum(&self) -> u64 {");
+    f.line("        self.stratum");
+    f.line("    }");
+    f.blank();
+    f.indented_doc_comment(
+        "Returns the spectrum component (`query:WalshHadamardImage` coordinate).",
+    );
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn spectrum(&self) -> u64 {");
+    f.line("        self.spectrum");
+    f.line("    }");
+    f.blank();
+    f.indented_doc_comment("Returns the address component (`query:Address` coordinate).");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn address(&self) -> u64 {");
+    f.line("        self.address");
+    f.line("    }");
+    f.blank();
+    f.indented_doc_comment(
+        "Crate-internal constructor. Reachable only from grounding-time minting.",
+    );
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    #[allow(dead_code)]");
+    f.line("    pub(crate) const fn new(stratum: u64, spectrum: u64, address: u64) -> Self {");
+    f.line("        Self { stratum, spectrum, address, _level: PhantomData }");
     f.line("    }");
     f.line("}");
     f.blank();
@@ -2271,15 +2685,174 @@ fn generate_certify_trait(f: &mut RustFile, ontology: &Ontology) {
         }
         f.blank();
     }
+
+    // ── v0.2.2 W12: resolver free functions ────────────────────────────────
+    //
+    // Replaces the v0.2.1 unit structs (`TowerCompletenessResolver::new()`,
+    // etc.) with free functions in `pub mod resolver`. The unit structs were
+    // decorative — there is no state. Free functions in module-per-resolver
+    // organization keep the namespace structure mirrored from the ontology
+    // (`resolver/InhabitanceResolver`, etc.) without the fictional state.
+    //
+    // Each free function returns `Result<Certified<Cert>, Witness>` where
+    // `Cert` is the W11 sealed cert kind and `Witness` is the existing
+    // impossibility witness shim. The Phase 3 test migration switches
+    // consumers from `Resolver::new().certify(...)` to
+    // `resolver::resolver_name::certify(...)`.
+    f.doc_comment("v0.2.2 W12: resolver free functions. Replaces the v0.2.1 unit-struct");
+    f.doc_comment("façades with module-per-resolver free functions returning the W11");
+    f.doc_comment("`Certified<C>` parametric carrier.");
+    f.line("pub mod resolver {");
+    f.line("    use super::{Certified, Validated, WittLevel,");
+    f.line("        CompileUnit, GenericImpossibilityWitness, InhabitanceImpossibilityWitness,");
+    f.line("        GroundingCertificate, LiftChainCertificate, InhabitanceCertificate};");
+    f.blank();
+    // Tower completeness
+    f.line("    /// v0.2.2 W12: certify tower-completeness for a constrained type.");
+    f.line("    ///");
+    f.line("    /// Replaces `TowerCompletenessResolver::new().certify(input)` from v0.2.1.");
+    f.line("    /// Delegates to `crate::pipeline::run_tower_completeness` and wraps the");
+    f.line("    /// returned `LiftChainCertificate` in the W11 `Certified<_>` carrier.");
+    f.line("    ///");
+    f.line("    /// # Errors");
+    f.line("    ///");
+    f.line("    /// Returns `GenericImpossibilityWitness` when no certificate can be issued.");
+    f.line("    pub mod tower_completeness {");
+    f.line("        use super::*;");
+    f.line("        /// Certify at the canonical W32 level.");
+    f.line("        ///");
+    f.line("        /// # Errors");
+    f.line("        ///");
+    f.line("        /// Returns `GenericImpossibilityWitness` on failure.");
+    f.line("        pub fn certify<T: crate::pipeline::ConstrainedTypeShape + ?Sized>(");
+    f.line("            input: &T,");
+    f.line("        ) -> Result<Certified<LiftChainCertificate>, GenericImpossibilityWitness> {");
+    f.line("            certify_at(input, WittLevel::W32)");
+    f.line("        }");
+    f.blank();
+    f.line("        /// Certify at an explicit Witt level.");
+    f.line("        ///");
+    f.line("        /// # Errors");
+    f.line("        ///");
+    f.line("        /// Returns `GenericImpossibilityWitness` on failure.");
+    f.line("        pub fn certify_at<T: crate::pipeline::ConstrainedTypeShape + ?Sized>(");
+    f.line("            input: &T,");
+    f.line("            level: WittLevel,");
+    f.line("        ) -> Result<Certified<LiftChainCertificate>, GenericImpossibilityWitness> {");
+    f.line("            crate::pipeline::run_tower_completeness(input, level)");
+    f.line("                .map(|v| Certified::new(*v.inner()))");
+    f.line("                .map_err(|_| GenericImpossibilityWitness::default())");
+    f.line("        }");
+    f.line("    }");
+    f.blank();
+    // Incremental completeness
+    f.line("    /// v0.2.2 W12: certify incremental completeness for a constrained type.");
+    f.line("    pub mod incremental_completeness {");
+    f.line("        use super::*;");
+    f.line("        /// Certify at the canonical W32 level.");
+    f.line("        ///");
+    f.line("        /// # Errors");
+    f.line("        ///");
+    f.line("        /// Returns `GenericImpossibilityWitness` on failure.");
+    f.line("        pub fn certify<T: crate::pipeline::ConstrainedTypeShape + ?Sized>(");
+    f.line("            input: &T,");
+    f.line("        ) -> Result<Certified<LiftChainCertificate>, GenericImpossibilityWitness> {");
+    f.line("            certify_at(input, WittLevel::W32)");
+    f.line("        }");
+    f.blank();
+    f.line("        /// Certify at an explicit Witt level.");
+    f.line("        ///");
+    f.line("        /// # Errors");
+    f.line("        ///");
+    f.line("        /// Returns `GenericImpossibilityWitness` on failure.");
+    f.line("        pub fn certify_at<T: crate::pipeline::ConstrainedTypeShape + ?Sized>(");
+    f.line("            input: &T,");
+    f.line("            level: WittLevel,");
+    f.line("        ) -> Result<Certified<LiftChainCertificate>, GenericImpossibilityWitness> {");
+    f.line("            crate::pipeline::run_incremental_completeness(input, level)");
+    f.line("                .map(|v| Certified::new(*v.inner()))");
+    f.line("                .map_err(|_| GenericImpossibilityWitness::default())");
+    f.line("        }");
+    f.line("    }");
+    f.blank();
+    // Grounding aware
+    f.line("    /// v0.2.2 W12: certify grounding-aware reduction for a CompileUnit.");
+    f.line("    pub mod grounding_aware {");
+    f.line("        use super::*;");
+    f.line("        /// Certify at the canonical W32 level.");
+    f.line("        ///");
+    f.line("        /// # Errors");
+    f.line("        ///");
+    f.line("        /// Returns `GenericImpossibilityWitness` on failure.");
+    f.line("        pub fn certify(");
+    f.line("            input: &CompileUnit,");
+    f.line("        ) -> Result<Certified<GroundingCertificate>, GenericImpossibilityWitness> {");
+    f.line("            certify_at(input, WittLevel::W32)");
+    f.line("        }");
+    f.blank();
+    f.line("        /// Certify at an explicit Witt level.");
+    f.line("        ///");
+    f.line("        /// # Errors");
+    f.line("        ///");
+    f.line("        /// Returns `GenericImpossibilityWitness` on failure.");
+    f.line("        pub fn certify_at(");
+    f.line("            input: &CompileUnit,");
+    f.line("            level: WittLevel,");
+    f.line("        ) -> Result<Certified<GroundingCertificate>, GenericImpossibilityWitness> {");
+    f.line("            crate::pipeline::run_grounding_aware(input, level)");
+    f.line("                .map(|v| Certified::new(*v.inner()))");
+    f.line("                .map_err(|_| GenericImpossibilityWitness::default())");
+    f.line("        }");
+    f.line("    }");
+    f.blank();
+    // Inhabitance
+    f.line("    /// v0.2.2 W12: certify inhabitance for a constrained type.");
+    f.line("    pub mod inhabitance {");
+    f.line("        use super::*;");
+    f.line("        /// Certify at the canonical W32 level.");
+    f.line("        ///");
+    f.line("        /// # Errors");
+    f.line("        ///");
+    f.line("        /// Returns `InhabitanceImpossibilityWitness` on failure.");
+    f.line("        pub fn certify<T: crate::pipeline::ConstrainedTypeShape + ?Sized>(");
+    f.line("            input: &T,");
+    f.line(
+        "        ) -> Result<Certified<InhabitanceCertificate>, InhabitanceImpossibilityWitness> {",
+    );
+    f.line("            certify_at(input, WittLevel::W32)");
+    f.line("        }");
+    f.blank();
+    f.line("        /// Certify at an explicit Witt level.");
+    f.line("        ///");
+    f.line("        /// # Errors");
+    f.line("        ///");
+    f.line("        /// Returns `InhabitanceImpossibilityWitness` on failure.");
+    f.line("        pub fn certify_at<T: crate::pipeline::ConstrainedTypeShape + ?Sized>(");
+    f.line("            input: &T,");
+    f.line("            level: WittLevel,");
+    f.line(
+        "        ) -> Result<Certified<InhabitanceCertificate>, InhabitanceImpossibilityWitness> {",
+    );
+    f.line("            let _ = (input, level);");
+    f.line("            crate::pipeline::run_inhabitance(input, level)");
+    f.line(
+        "                .map(|v: Validated<InhabitanceCertificate>| Certified::new(*v.inner()))",
+    );
+    f.line("        }");
+    f.line("    }");
+    f.line("}");
+    f.blank();
 }
 
 // 2.1.e RingOp<L> — phantom-typed ring operation wrappers.
 fn generate_ring_ops(f: &mut RustFile, ontology: &Ontology) {
     // v0.2.1 Phase 8b.7: ring-op instances emitted parametrically per
     // `schema:WittLevel`. One `W{bits}` marker struct + one impl per op.
+    // v0.2.2 W3: extends the binary surface with three unary phantom-typed
+    // ops (Neg, BNot, Succ) and adds Embed<From, To> for level promotion.
     let levels = witt_levels(ontology);
 
-    f.doc_comment("v0.2.1 phantom-typed ring operation surface. Each phantom struct binds a");
+    f.doc_comment("v0.2.2 phantom-typed ring operation surface. Each phantom struct binds a");
     f.doc_comment("`WittLevel` at the type level so consumers can write");
     f.doc_comment("`Mul::<W8>::apply(a, b)` for compile-time level-checked arithmetic.");
     f.line("pub trait RingOp<L> {");
@@ -2287,6 +2860,17 @@ fn generate_ring_ops(f: &mut RustFile, ontology: &Ontology) {
     f.line("    type Operand;");
     f.indented_doc_comment("Apply this binary ring op.");
     f.line("    fn apply(a: Self::Operand, b: Self::Operand) -> Self::Operand;");
+    f.line("}");
+    f.blank();
+
+    f.doc_comment("v0.2.2 W3: unary phantom-typed ring operation surface. Mirrors `RingOp`");
+    f.doc_comment("for arity-1 operations (`Neg`, `BNot`, `Succ`) so consumers can write");
+    f.doc_comment("`Neg::<W8>::apply(a)` for compile-time level-checked unary arithmetic.");
+    f.line("pub trait UnaryRingOp<L> {");
+    f.indented_doc_comment("Operand type at this level.");
+    f.line("    type Operand;");
+    f.indented_doc_comment("Apply this unary ring op.");
+    f.line("    fn apply(a: Self::Operand) -> Self::Operand;");
     f.line("}");
     f.blank();
 
@@ -2300,6 +2884,28 @@ fn generate_ring_ops(f: &mut RustFile, ontology: &Ontology) {
     ];
     for (name, doc) in &ops {
         f.doc_comment(&format!("{doc} phantom-typed at level `L`."));
+        f.line("#[derive(Debug, Default, Clone, Copy)]");
+        f.line(&format!("pub struct {name}<L>(PhantomData<L>);"));
+        f.blank();
+    }
+
+    // v0.2.2 W3: unary ops (Neg, BNot, Succ).
+    let unary_ops = [
+        (
+            "Neg",
+            "Ring negation (the canonical involution: x \u{2192} -x).",
+        ),
+        (
+            "BNot",
+            "Bitwise NOT (the Hamming involution: x \u{2192} (2^n - 1) XOR x).",
+        ),
+        (
+            "Succ",
+            "Successor (= Neg \u{2218} BNot per the critical composition law).",
+        ),
+    ];
+    for (name, doc) in &unary_ops {
+        f.doc_comment(&format!("{doc} Phantom-typed at level `L` (v0.2.2 W3)."));
         f.line("#[derive(Debug, Default, Clone, Copy)]");
         f.line(&format!("pub struct {name}<L>(PhantomData<L>);"));
         f.blank();
@@ -2334,6 +2940,133 @@ fn generate_ring_ops(f: &mut RustFile, ontology: &Ontology) {
                 "    fn apply(a: {rust_ty}, b: {rust_ty}) -> {rust_ty} {{"
             ));
             f.line(&format!("        const_ring_eval_{lower}({prim}, a, b)"));
+            f.line("    }");
+            f.line("}");
+            f.blank();
+        }
+    }
+
+    // v0.2.2 W3: unary op impls. Each unary op uses the existing
+    // const_ring_eval_w{bits} helpers by passing 0 as the second operand
+    // for Neg (-a = 0 - a), the all-ones mask for BNot (BNot(a) = a XOR mask),
+    // and computing Succ as Neg ∘ BNot per criticalComposition.
+    for (local, bits, _) in &levels {
+        let rust_ty = witt_rust_int_type(*bits);
+        let lower = local.to_ascii_lowercase();
+        // Mask = (1 << bits) - 1 for ring of size 2^bits.
+        // For W32 this is u32::MAX. For W24 the mask is 0x00FFFFFF cast into u32.
+        // For W8/W16 the mask saturates the rust_ty to its natural max.
+        let mask = match *bits {
+            8 => "u8::MAX".to_string(),
+            16 => "u16::MAX".to_string(),
+            24 => "0x00FF_FFFFu32".to_string(),
+            32 => "u32::MAX".to_string(),
+            _ => format!("(((1u64 << {bits}) - 1) as {rust_ty})"),
+        };
+        // Neg(a) = (0 - a) mod 2^bits = const_ring_eval_w*(Sub, 0, a)
+        f.line(&format!("impl UnaryRingOp<{local}> for Neg<{local}> {{"));
+        f.line(&format!("    type Operand = {rust_ty};"));
+        f.line("    #[inline]");
+        f.line(&format!("    fn apply(a: {rust_ty}) -> {rust_ty} {{"));
+        f.line(&format!(
+            "        const_ring_eval_{lower}(PrimitiveOp::Sub, 0, a)"
+        ));
+        f.line("    }");
+        f.line("}");
+        f.blank();
+        // BNot(a) = a XOR mask
+        f.line(&format!("impl UnaryRingOp<{local}> for BNot<{local}> {{"));
+        f.line(&format!("    type Operand = {rust_ty};"));
+        f.line("    #[inline]");
+        f.line(&format!("    fn apply(a: {rust_ty}) -> {rust_ty} {{"));
+        f.line(&format!(
+            "        const_ring_eval_{lower}(PrimitiveOp::Xor, a, {mask})"
+        ));
+        f.line("    }");
+        f.line("}");
+        f.blank();
+        // Succ(a) = Neg(BNot(a)) per criticalComposition
+        f.line(&format!("impl UnaryRingOp<{local}> for Succ<{local}> {{"));
+        f.line(&format!("    type Operand = {rust_ty};"));
+        f.line("    #[inline]");
+        f.line(&format!("    fn apply(a: {rust_ty}) -> {rust_ty} {{"));
+        f.line(&format!(
+            "        <Neg<{local}> as UnaryRingOp<{local}>>::apply(<BNot<{local}> as UnaryRingOp<{local}>>::apply(a))"
+        ));
+        f.line("    }");
+        f.line("}");
+        f.blank();
+    }
+
+    // v0.2.2 W3: Embed<From, To> — sealed level promotion (canonical
+    // injection ι : R_n → R_{n'} for n ≤ n'). Downward coercion (lossy
+    // projection) is NOT supplied — that goes through morphism:ProjectionMap
+    // instances, not through the ring-op surface.
+    f.doc_comment("Sealed marker for well-formed level embedding pairs (`(From, To)` with");
+    f.doc_comment("`From <= To`). v0.2.2 W3.");
+    f.line("pub trait ValidLevelEmbedding: valid_level_embedding_sealed::Sealed {}");
+    f.blank();
+    f.line("mod valid_level_embedding_sealed {");
+    f.indented_doc_comment("Private supertrait. Not implementable outside this crate.");
+    f.line("    pub trait Sealed {}");
+    // Emit Sealed impls for every (From, To) pair where From's bit width <= To's.
+    for (from_local, from_bits, _) in &levels {
+        for (to_local, to_bits, _) in &levels {
+            if from_bits <= to_bits {
+                f.line(&format!(
+                    "    impl Sealed for (super::{from_local}, super::{to_local}) {{}}"
+                ));
+            }
+        }
+    }
+    f.line("}");
+    f.blank();
+    for (from_local, from_bits, _) in &levels {
+        for (to_local, to_bits, _) in &levels {
+            if from_bits <= to_bits {
+                f.line(&format!(
+                    "impl ValidLevelEmbedding for ({from_local}, {to_local}) {{}}"
+                ));
+            }
+        }
+    }
+    f.blank();
+
+    f.doc_comment("v0.2.2 W3: phantom-typed level embedding `Embed<From, To>` for the");
+    f.doc_comment("canonical injection \u{03B9} : R_From \u{2192} R_To when `From <= To`.");
+    f.doc_comment("Implementations exist only for sealed `(From, To)` pairs in the");
+    f.doc_comment("`ValidLevelEmbedding` trait, so attempting an unsupported direction");
+    f.doc_comment("(e.g., `Embed<W32, W8>`) fails at compile time.");
+    f.line("#[derive(Debug, Default, Clone, Copy)]");
+    f.line("pub struct Embed<From, To>(PhantomData<(From, To)>);");
+    f.blank();
+
+    // Emit Embed::<From, To>::apply for every valid pair.
+    // The Rust type may coincide for distinct levels (e.g., W24 and W32 both
+    // use u32 with the W24 invariant being upper-byte zero), so we suppress
+    // the `unnecessary_cast` lint when from_ty == to_ty.
+    for (from_local, from_bits, _) in &levels {
+        for (to_local, to_bits, _) in &levels {
+            if from_bits > to_bits {
+                continue;
+            }
+            let from_ty = witt_rust_int_type(*from_bits);
+            let to_ty = witt_rust_int_type(*to_bits);
+            f.line(&format!("impl Embed<{from_local}, {to_local}> {{"));
+            f.indented_doc_comment(&format!(
+                "Embed a `{from_ty}` value at {from_local} into a `{to_ty}` value at {to_local}."
+            ));
+            f.line("    #[inline]");
+            f.line("    #[must_use]");
+            f.line(&format!(
+                "    pub const fn apply(value: {from_ty}) -> {to_ty} {{"
+            ));
+            if from_ty == to_ty {
+                f.line("        value");
+            } else {
+                // Widening cast: zero-extend From's bits into To's bits.
+                f.line(&format!("        value as {to_ty}"));
+            }
             f.line("    }");
             f.line("}");
             f.blank();
@@ -2491,65 +3224,6 @@ fn generate_validated_deref(f: &mut RustFile) {
     f.blank();
 }
 
-// 2.1.i Back-door minting API — reachable only from uor-foundation-macros.
-fn generate_back_door_minting(f: &mut RustFile) {
-    f.doc_comment("Provenance witness sealing the macro back-door minting path. The only");
-    f.doc_comment("constructor is `__for_macro_crate`, named with the reserved");
-    f.doc_comment("`__uor_macro_*` prefix so the `uor::unsealed_grounded` lint can flag any");
-    f.doc_comment("call site outside the foundation's macro crate at review time. The");
-    f.doc_comment("proc-macro crate emits these calls inside generated token streams that");
-    f.doc_comment("are visible in `cargo expand` output.");
-    f.line("#[doc(hidden)]");
-    f.line("#[derive(Debug, Clone, Copy)]");
-    f.line("pub struct MacroProvenance {");
-    f.line("    _marker: (),");
-    f.line("}");
-    f.blank();
-    f.line("impl MacroProvenance {");
-    f.indented_doc_comment("The only constructor. Reachable only from `uor-foundation-macros`");
-    f.indented_doc_comment("via the `__for_macro_crate` symbol naming convention; the");
-    f.indented_doc_comment("`uor::unsealed_grounded` lint flags any call site outside the");
-    f.indented_doc_comment("approved modules.");
-    f.line("    #[doc(hidden)]");
-    f.line("    #[inline]");
-    f.line("    #[must_use]");
-    f.line("    pub const fn __for_macro_crate() -> Self {");
-    f.line("        Self { _marker: () }");
-    f.line("    }");
-    f.line("}");
-    f.blank();
-
-    f.doc_comment("Back-door constructor for `Validated<T>`. Reachable only from macro-");
-    f.doc_comment("generated token streams.");
-    f.line("#[doc(hidden)]");
-    f.line("#[inline]");
-    f.line("pub fn __uor_macro_mint_validated<T: OntologyTarget>(");
-    f.line("    _prov: MacroProvenance,");
-    f.line("    inner: T,");
-    f.line(") -> Validated<T> {");
-    f.line("    Validated {");
-    f.line("        inner,");
-    f.line("        _sealed: (),");
-    f.line("    }");
-    f.line("}");
-    f.blank();
-
-    f.doc_comment("Back-door constructor for `Grounded<T>`. Reachable only from macro-");
-    f.doc_comment("generated token streams.");
-    f.line("#[doc(hidden)]");
-    f.line("#[inline]");
-    f.line("pub fn __uor_macro_mint_grounded<T: GroundedShape>(");
-    f.line("    _prov: MacroProvenance,");
-    f.line("    validated: Validated<GroundingCertificate>,");
-    f.line("    bindings: BindingsTable,");
-    f.line("    witt_level_bits: u16,");
-    f.line("    unit_address: u128,");
-    f.line(") -> Grounded<T> {");
-    f.line("    Grounded::new_internal(validated, bindings, witt_level_bits, unit_address)");
-    f.line("}");
-    f.blank();
-}
-
 // 2.1.h Prelude — re-exports the v0.2.1 surface.
 //
 // Phase 7b.3: membership is owned by `conformance:PreludeExport` ontology
@@ -2680,12 +3354,18 @@ fn generate_prelude(f: &mut RustFile, ontology: &Ontology) {
         "BindingEntry",
         "TermArena",
         "RingOp",
+        "UnaryRingOp",
         "Mul",
         "Add",
         "Sub",
         "Xor",
         "And",
         "Or",
+        "Neg",
+        "BNot",
+        "Succ",
+        "Embed",
+        "ValidLevelEmbedding",
         "W8",
         "W16",
         "FragmentMarker",
@@ -2696,6 +3376,35 @@ fn generate_prelude(f: &mut RustFile, ontology: &Ontology) {
         "IncrementalCompletenessResolver",
         "GroundingAwareResolver",
         "InhabitanceResolver",
+        // v0.2.2 W4: GroundingMapKind sealed marker traits + 5 kind structs.
+        "GroundingMapKind",
+        "Total",
+        "Invertible",
+        "PreservesStructure",
+        "PreservesMetric",
+        "IntegerGroundingMap",
+        "Utf8GroundingMap",
+        "JsonGroundingMap",
+        "DigestGroundingMap",
+        "BinaryGroundingMap",
+        // v0.2.2 W11: Certificate trait + Certified<C> parametric carrier.
+        "Certificate",
+        "Certified",
+        "TransformCertificate",
+        "IsometryCertificate",
+        "InvolutionCertificate",
+        "GeodesicCertificate",
+        "MeasurementCertificate",
+        "BornRuleVerification",
+        "CompletenessAuditTrail",
+        "ChainAuditTrail",
+        "GeodesicEvidenceBundle",
+        // v0.2.2 W13: Validated<T, Phase> parametric phases.
+        "ValidationPhase",
+        "CompileTime",
+        "Runtime",
+        // v0.2.2 W8: Triad bundling struct.
+        "Triad",
     ];
 
     f.doc_comment("v0.2.1 ergonomics prelude. Re-exports the core symbols downstream crates");
@@ -2719,8 +3428,7 @@ fn generate_prelude(f: &mut RustFile, ontology: &Ontology) {
             f.line(&format!("    pub use super::{name};"));
         }
     }
-    f.line("    pub use crate::{Primitives, WittLevel};");
-    f.line("    pub use uor_foundation_macros::uor;");
+    f.line("    pub use crate::{HostTypes, DefaultHostTypes, Primitives, WittLevel};");
     f.line("}");
     f.blank();
 }

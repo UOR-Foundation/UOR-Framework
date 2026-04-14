@@ -16,5 +16,6 @@ pub mod json_schema;
 pub mod jsonld;
 pub mod ntriples;
 pub mod owl_xml;
+pub mod prefixes;
 pub mod shacl;
 pub mod turtle;

@@ -117,3 +117,44 @@ pub fn normalize_comment(s: &str) -> String {
     // Escape [ and ] to prevent rustdoc from interpreting them as intra-doc links
     collapsed.replace('[', r"\[").replace(']', r"\]")
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn normalize_comment_preserves_plain_text() {
+        assert_eq!(normalize_comment("hello world"), "hello world");
+    }
+
+    #[test]
+    fn normalize_comment_collapses_whitespace() {
+        assert_eq!(
+            normalize_comment("one   two\n\tthree   four"),
+            "one two three four"
+        );
+    }
+
+    #[test]
+    fn normalize_comment_escapes_single_brackets() {
+        assert_eq!(
+            normalize_comment("a [name] reference"),
+            r"a \[name\] reference"
+        );
+    }
+
+    #[test]
+    fn normalize_comment_escapes_nested_brackets() {
+        assert_eq!(normalize_comment("[[a]]"), r"\[\[a\]\]");
+    }
+
+    #[test]
+    fn normalize_comment_empty_string() {
+        assert_eq!(normalize_comment(""), "");
+    }
+
+    #[test]
+    fn normalize_comment_whitespace_only() {
+        assert_eq!(normalize_comment("  \n\t  "), "");
+    }
+}

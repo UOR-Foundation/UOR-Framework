@@ -69,5 +69,5 @@ pub mod two_adic_valuation {}
 /// The spectrum coordinate: the spectral decomposition of a datum under the ring's Fourier analysis.
 pub mod walsh_hadamard_image {}
 
-/// The address coordinate: the content-addressable position of a datum in the Braille glyph encoding.
-pub mod ring_element {}
+/// The address coordinate: the content-addressable position of a datum in the Braille glyph encoding. Renamed from RingElement in v0.2.2 W8 to unify vocabulary with the schema:Triad bundling properties.
+pub mod address {}

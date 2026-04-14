@@ -936,6 +936,50 @@ fn individuals() -> Vec<Individual> {
                 ),
             ],
         },
+        // v0.2.2 W4: GroundingMap kind discriminator — two new individuals
+        // exposing kinds that the v0.2.2 Rust enforcement layer marks with
+        // specific PreservesStructure / Invertible / Total marker traits.
+        Individual {
+            id: "https://uor.foundation/morphism/DigestGroundingMap",
+            type_: "https://uor.foundation/morphism/GroundingMap",
+            label: "DigestGroundingMap",
+            comment: "A GroundingMap that maps fixed-size external byte \
+                      strings to ring datums via a one-way digest function \
+                      (e.g., SHA-256). Total but not invertible: every input \
+                      grounds, but distinct inputs may collide; the inverse \
+                      is computationally unbounded. Preserves no algebraic \
+                      structure.",
+            properties: &[
+                (
+                    "https://uor.foundation/morphism/inputClass",
+                    IndividualValue::IriRef("https://uor.foundation/schema/HostStringLiteral"),
+                ),
+                (
+                    "https://uor.foundation/morphism/outputClass",
+                    IndividualValue::IriRef("https://uor.foundation/u/Element"),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/morphism/BinaryGroundingMap",
+            type_: "https://uor.foundation/morphism/GroundingMap",
+            label: "BinaryGroundingMap",
+            comment: "A GroundingMap that maps host-supplied byte sequences \
+                      to ring datums via a fixed bit-pattern interpretation \
+                      (e.g., little-endian unsigned integer reading). Total \
+                      and invertible on its declared bit-width; preserves no \
+                      algebraic structure beyond bit identity.",
+            properties: &[
+                (
+                    "https://uor.foundation/morphism/inputClass",
+                    IndividualValue::IriRef("https://uor.foundation/schema/HostStringLiteral"),
+                ),
+                (
+                    "https://uor.foundation/morphism/outputClass",
+                    IndividualValue::IriRef("https://uor.foundation/u/Element"),
+                ),
+            ],
+        },
         Individual {
             id: "https://uor.foundation/morphism/IntegerProjectionMap",
             type_: "https://uor.foundation/morphism/ProjectionMap",

@@ -131,7 +131,12 @@ pub trait SessionBoundary<P: Primitives> {
 }
 
 /// A context that has reached full saturation: σ = 1, freeRank = 0, S = 0, T_ctx = 0 (SC_4). The ground state of the type system. All subsequent queries resolve in O(1) via SC_5.
-pub trait GroundedContext<P: Primitives>: Context<P> {}
+pub trait GroundedContext<P: Primitives>: Context<P> {
+    /// Associated type for `Triad`.
+    type Triad: crate::kernel::schema::Triad<P>;
+    /// The triadic coordinate of the datum carried in this grounded context: its (stratum, spectrum, address) bundle. Computed by the kernel at grounding time and immutable thereafter.
+    fn grounded_triad(&self) -> &Self::Triad;
+}
 
 /// Step-by-step evidence of the saturation process: records which bindings were applied, in what order, to reach full saturation.
 pub trait GroundingWitness<P: Primitives> {

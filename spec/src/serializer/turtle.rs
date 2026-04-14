@@ -4,6 +4,7 @@
 //! class definitions, property definitions, and named individuals.
 
 use crate::model::{IndividualValue, Ontology, PropertyKind};
+use crate::serializer::prefixes::STANDARD_PREFIXES;
 
 /// Serializes the complete UOR Foundation ontology to a Turtle string.
 ///
@@ -14,13 +15,11 @@ use crate::model::{IndividualValue, Ontology, PropertyKind};
 pub fn to_turtle(ontology: &Ontology) -> String {
     let mut out = String::with_capacity(128 * 1024);
 
-    // Prefix declarations
-    out.push_str("@prefix owl:  <http://www.w3.org/2002/07/owl#> .\n");
-    out.push_str("@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .\n");
-    out.push_str("@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .\n");
-    out.push_str("@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .\n");
-    out.push_str("@prefix sh:   <http://www.w3.org/ns/shacl#> .\n");
-    out.push_str("@prefix uor:  <https://uor.foundation/> .\n");
+    // Prefix declarations (aligned to a 6-character column for readability).
+    for (prefix, iri) in STANDARD_PREFIXES {
+        let head = format!("{prefix}:");
+        out.push_str(&format!("@prefix {head:<6}<{iri}> .\n"));
+    }
 
     for module in &ontology.namespaces {
         out.push_str(&format!(

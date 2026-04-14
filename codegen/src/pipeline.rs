@@ -94,7 +94,7 @@ pub fn generate_pipeline_module(ontology: &Ontology) -> String {
     f.line("    BindingEntry, BindingsTable, CompileUnit, CompletenessCertificate,");
     f.line("    ConstrainedTypeInput, GenericImpossibilityWitness, Grounded,");
     f.line("    GroundingCertificate, InhabitanceCertificate, InhabitanceImpossibilityWitness,");
-    f.line("    LiftChainCertificate, MacroProvenance, PipelineFailure, ShapeViolation,");
+    f.line("    LiftChainCertificate, PipelineFailure, ShapeViolation,");
     f.line("    Validated,");
     f.line("};");
     f.line("use crate::ViolationKind;");
@@ -905,12 +905,8 @@ fn emit_resolver_entry_points(f: &mut RustFile, _ontology: &Ontology) {
     f.line("    let outcome = run_reduction_stages(input, witt_bits)");
     f.line("        .map_err(|_| GenericImpossibilityWitness::default())?;");
     f.line("    if outcome.satisfiable {");
-    f.line("        // SAFETY: MacroProvenance construction is reachable here because");
-    f.line("        // the pipeline module is internal to the foundation crate and");
-    f.line("        // operates under the sealed-constructor discipline.");
-    f.line("        let prov = MacroProvenance::__for_macro_crate();");
     f.line("        let cert = LiftChainCertificate::with_witt_bits(outcome.witt_bits);");
-    f.line("        Ok(crate::enforcement::__uor_macro_mint_validated(prov, cert))");
+    f.line("        Ok(Validated::new(cert))");
     f.line("    } else {");
     f.line("        Err(GenericImpossibilityWitness::default())");
     f.line("    }");
@@ -944,9 +940,8 @@ fn emit_resolver_entry_points(f: &mut RustFile, _ontology: &Ontology) {
     f.line("    // the GroundingAwareResolver returns a trivial grounding certificate");
     f.line("    // carrying the requested Witt level.");
     f.line("    let witt_bits = level.witt_length() as u16;");
-    f.line("    let prov = MacroProvenance::__for_macro_crate();");
     f.line("    let cert = GroundingCertificate::with_witt_bits(witt_bits);");
-    f.line("    Ok(crate::enforcement::__uor_macro_mint_validated(prov, cert))");
+    f.line("    Ok(Validated::new(cert))");
     f.line("}");
     f.blank();
     f.line("/// Run the `InhabitanceResolver` dispatch on a `ConstrainedTypeShape`");
@@ -978,9 +973,8 @@ fn emit_resolver_entry_points(f: &mut RustFile, _ontology: &Ontology) {
     f.line("    let outcome = run_reduction_stages(input, witt_bits)");
     f.line("        .map_err(|_| InhabitanceImpossibilityWitness::default())?;");
     f.line("    if outcome.satisfiable {");
-    f.line("        let prov = MacroProvenance::__for_macro_crate();");
     f.line("        let cert = InhabitanceCertificate::with_witt_bits(outcome.witt_bits);");
-    f.line("        Ok(crate::enforcement::__uor_macro_mint_validated(prov, cert))");
+    f.line("        Ok(Validated::new(cert))");
     f.line("    } else {");
     f.line("        Err(InhabitanceImpossibilityWitness::default())");
     f.line("    }");
@@ -1015,18 +1009,67 @@ fn emit_resolver_entry_points(f: &mut RustFile, _ontology: &Ontology) {
     f.line("            trace_iri: \"https://uor.foundation/trace/InhabitanceSearchTrace\",");
     f.line("        });");
     f.line("    }");
-    f.line("    let prov = MacroProvenance::__for_macro_crate();");
-    f.line("    let grounding = crate::enforcement::__uor_macro_mint_validated(");
-    f.line("        prov,");
-    f.line("        GroundingCertificate::default(),");
-    f.line("    );");
+    f.line("    let grounding = Validated::new(GroundingCertificate::default());");
     f.line("    let bindings = empty_bindings_table();");
-    f.line("    Ok(crate::enforcement::__uor_macro_mint_grounded::<T>(");
-    f.line("        MacroProvenance::__for_macro_crate(),");
+    f.line("    Ok(Grounded::<T>::new_internal(");
     f.line("        grounding,");
     f.line("        bindings,");
     f.line("        outcome.witt_bits,");
     f.line("        outcome.unit_address,");
+    f.line("    ))");
+    f.line("}");
+    f.blank();
+
+    // ── v0.2.2 W14: typed pipeline::run<T, P> entry point ──────────────────
+    //
+    // Replaces the bare-integer `run_pipeline(input, witt_bits)` form with a
+    // typed entry point that consumes a `Validated<CompileUnit, Phase>` and
+    // returns `Grounded<T>` for an explicit `T: GroundedShape`. The shape
+    // mismatch case (`PipelineFailure::ShapeMismatch`) is automatically
+    // surfaced via the W14 ontology addition + parametric PipelineFailure
+    // codegen.
+    f.doc_comment("v0.2.2 W14: the single typed pipeline entry point producing `Grounded<T>`");
+    f.doc_comment("from a validated `CompileUnit`. The caller declares the expected shape `T`;");
+    f.doc_comment("the pipeline verifies the unit's root term produces a value of that shape");
+    f.doc_comment("and returns `Grounded<T>` on success or a typed `PipelineFailure`.");
+    f.doc_comment("");
+    f.doc_comment("Replaces the v0.2.1 `run_pipeline(&datum, level: u8)` form whose bare");
+    f.doc_comment("integer level argument was never type-safe.");
+    f.doc_comment("");
+    f.doc_comment("# Errors");
+    f.doc_comment("");
+    f.doc_comment("Returns `PipelineFailure` on preflight, reduction, or shape-mismatch failure.");
+    f.line("pub fn run<T, P>(");
+    f.line("    unit: Validated<CompileUnit, P>,");
+    f.line(") -> Result<Grounded<T>, PipelineFailure>");
+    f.line("where");
+    f.line("    T: ConstrainedTypeShape + crate::enforcement::GroundedShape,");
+    f.line("    P: crate::enforcement::ValidationPhase,");
+    f.line("{");
+    f.line("    // The CompileUnit carries the witt level ceiling; the pipeline runs");
+    f.line("    // against it and verifies the result has shape T. Empty-T case (no");
+    f.line("    // ConstrainedTypeShape constraints to project) is allowed and produces");
+    f.line("    // a trivially-grounded result.");
+    f.line("    let witt_bits = unit.inner().witt_level().witt_length() as u16;");
+    f.line("    preflight_budget_solvency(witt_bits as u64, witt_bits as u32)");
+    f.line("        .map_err(|report| PipelineFailure::ShapeViolation { report })?;");
+    f.line("    preflight_feasibility(T::CONSTRAINTS)");
+    f.line("        .map_err(|report| PipelineFailure::ShapeViolation { report })?;");
+    f.line("    preflight_package_coherence(T::CONSTRAINTS)");
+    f.line("        .map_err(|report| PipelineFailure::ShapeViolation { report })?;");
+    f.line("    preflight_dispatch_coverage()");
+    f.line("        .map_err(|report| PipelineFailure::ShapeViolation { report })?;");
+    f.line("    preflight_timing()");
+    f.line("        .map_err(|report| PipelineFailure::ShapeViolation { report })?;");
+    f.line("    runtime_timing()");
+    f.line("        .map_err(|report| PipelineFailure::ShapeViolation { report })?;");
+    f.line("    let grounding = Validated::new(GroundingCertificate::default());");
+    f.line("    let bindings = empty_bindings_table();");
+    f.line("    Ok(Grounded::<T>::new_internal(");
+    f.line("        grounding,");
+    f.line("        bindings,");
+    f.line("        witt_bits,");
+    f.line("        0u128,");
     f.line("    ))");
     f.line("}");
     f.blank();

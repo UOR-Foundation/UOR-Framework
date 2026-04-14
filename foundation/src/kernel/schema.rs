@@ -29,8 +29,15 @@ pub trait Datum<P: Primitives> {
 /// Disjoint with: Datum.
 pub trait Term<P: Primitives> {}
 
-/// A three-component structure encoding an element's position in the UOR address space: stratum (ring layer), spectrum (bit pattern), and glyph (Braille address).
-pub trait Triad<P: Primitives> {}
+/// A three-component structure encoding an element's position in the UOR address space: stratum (ring layer), spectrum (bit pattern), and address (content-addressable position in the Braille glyph encoding). The three required functional properties schema:triadStratum, schema:triadSpectrum, and schema:triadAddress project a Triad onto its TwoAdicValuation, WalshHadamardImage, and Address coordinates respectively.
+pub trait Triad<P: Primitives> {
+    /// The stratum component of a Triad: the datum's two-adic valuation, indexing its layer in the ring stratification. Semantically corresponds to query:TwoAdicValuation.
+    fn triad_stratum(&self) -> P::NonNegativeInteger;
+    /// The spectrum component of a Triad: the datum's Walsh-Hadamard transform image, indexing its position in the hypercube spectral decomposition. Semantically corresponds to query:WalshHadamardImage.
+    fn triad_spectrum(&self) -> P::NonNegativeInteger;
+    /// The address component of a Triad: the datum's content-addressable position in the ring's Braille glyph encoding. Semantically corresponds to query:Address (renamed from RingElement in v0.2.2 W8).
+    fn triad_address(&self) -> P::NonNegativeInteger;
+}
 
 /// A term that directly denotes a datum value. A Literal is a leaf node in the term language — it refers to a concrete Datum via schema:denotes without being a Datum itself.
 pub trait Literal<P: Primitives>: Term<P> + SurfaceSymbol<P> {

@@ -10,6 +10,10 @@ env:
   CARGO_TERM_COLOR: always
   RUST_BACKTRACE: 1
 
+concurrency:
+  group: pages-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   validate:
     name: Build, Test, and Conform
@@ -50,7 +54,9 @@ jobs:
         run: cargo check -p uor-foundation --no-default-features
 
       - name: Verify crate packaging (dry-run)
-        run: cargo publish --dry-run --allow-dirty -p uor-foundation-macros
+        run: |
+          cargo publish --dry-run --allow-dirty -p uor-foundation
+          cargo publish --dry-run --allow-dirty -p uor-foundation-macros
 
       - name: Generate Lean 4 formalization
         run: cargo run --bin uor-lean

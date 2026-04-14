@@ -283,6 +283,42 @@ impl Ontology {
             .find(|c| c.id == iri)
     }
 
+    /// Looks up a class by its local name (the last `/`-delimited segment of
+    /// its IRI). Used by both Rust and Lean codegen to resolve vocabulary-enum
+    /// class definitions without hardcoding IRIs.
+    #[must_use]
+    pub fn find_class_by_local_name(&self, local: &str) -> Option<&Class> {
+        let suffix = format!("/{local}");
+        self.namespaces
+            .iter()
+            .flat_map(|m| m.classes.iter())
+            .find(|c| c.id.ends_with(&suffix))
+    }
+
+    /// Returns the canonical doc comment for a vocabulary-enum class by local
+    /// name, looked up from the ontology's own class definitions.
+    ///
+    /// Used by both `codegen/` (Rust) and `lean-codegen/` to guarantee that
+    /// enum-class doc comments in the two generators cannot drift.
+    #[must_use]
+    pub fn enum_class_comment(&self, class_local_name: &str) -> Option<&'static str> {
+        self.find_class_by_local_name(class_local_name)
+            .map(|c| c.comment)
+    }
+
+    /// Returns the namespace prefix (e.g. `"op"`, `"resolver"`) owning a
+    /// vocabulary-enum class, looked up by local name.
+    #[must_use]
+    pub fn enum_class_namespace(&self, class_local_name: &str) -> Option<&'static str> {
+        let suffix = format!("/{class_local_name}");
+        for module in &self.namespaces {
+            if module.classes.iter().any(|c| c.id.ends_with(&suffix)) {
+                return Some(module.namespace.prefix);
+            }
+        }
+        None
+    }
+
     /// Looks up a property by its full IRI. Returns `None` if not found.
     #[must_use]
     pub fn find_property(&self, iri: &str) -> Option<&Property> {

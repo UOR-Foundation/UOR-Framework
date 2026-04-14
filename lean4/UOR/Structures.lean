@@ -3332,11 +3332,21 @@ structure SetExpression (P : Primitives) extends TermExpression P
 instance : Inhabited (SetExpression UOR.Prims.Standard) where
   default := {}
 
-/-- A three-component structure encoding an element's position in the UOR address space: stratum (ring layer), spectrum (bit pattern), and glyph (Braille address). -/
-structure Triad (P : Primitives)
+/-- A three-component structure encoding an element's position in the UOR address space: stratum (ring layer), spectrum (bit pattern), and address (content-addressable position in the Braille glyph encoding). The three required functional properties schema:triadStratum, schema:triadSpectrum, and schema:triadAddress project a Triad onto its TwoAdicValuation, WalshHadamardImage, and Address coordinates respectively. -/
+structure Triad (P : Primitives) where
+  /-- The stratum component of a Triad: the datum's two-adic valuation, indexing its layer in the ring stratification. Semantically corresponds to query:TwoAdicValuation. -/
+  triadStratum : Option P.NonNegativeInteger
+  /-- The spectrum component of a Triad: the datum's Walsh-Hadamard transform image, indexing its position in the hypercube spectral decomposition. Semantically corresponds to query:WalshHadamardImage. -/
+  triadSpectrum : Option P.NonNegativeInteger
+  /-- The address component of a Triad: the datum's content-addressable position in the ring's Braille glyph encoding. Semantically corresponds to query:Address (renamed from RingElement in v0.2.2 W8). -/
+  triadAddress : Option P.NonNegativeInteger
 
 instance : Inhabited (Triad UOR.Prims.Standard) where
-  default := {}
+  default := {
+    triadStratum := none
+    triadSpectrum := none
+    triadAddress := none
+  }
 
 /-- An ordered tuple of values drawn from a type:ConstrainedType's carrier. Serves as the witness form for cert:InhabitanceCertificate when verified is true. -/
 structure ValueTuple (P : Primitives)
@@ -6367,10 +6377,13 @@ end UOR.User.Morphism
 namespace UOR.User.State
 
 /-- A context that has reached full saturation: σ = 1, freeRank = 0, S = 0, T_ctx = 0 (SC_4). The ground state of the type system. All subsequent queries resolve in O(1) via SC_5. -/
-structure GroundedContext (P : Primitives) extends Context P
+structure GroundedContext (P : Primitives) extends Context P where
+  /-- The triadic coordinate of the datum carried in this grounded context: its (stratum, spectrum, address) bundle. Computed by the kernel at grounding time and immutable thereafter. -/
+  groundedTriad : Option (UOR.Kernel.Schema.Triad P)
 
 instance : Inhabited (GroundedContext UOR.Prims.Standard) where
   default := {
+    groundedTriad := none
     binding := #[]
     capacity := none
     contentAddress := none

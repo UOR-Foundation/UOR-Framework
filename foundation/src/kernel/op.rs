@@ -197,13 +197,13 @@ pub mod thermodynamic {
     pub const ENUM_VARIANT: &str = "https://uor.foundation/op/Thermodynamic";
 }
 
-/// Established via simplicial homology, cohomology, or constraint nerve analysis. Covers homological algebra (HA_) and ψ-pipeline identities.
+/// Established via simplicial homology, cohomology, or constraint nerve analysis. Covers homological algebra (HA_) and the ψ-pipeline base chain ψ_1..ψ_6 (constraint nerve construction, chain functor, homology, Betti extraction, dualization, cohomology).
 pub mod topological {
     /// `enumVariant` -> `Topological`
     pub const ENUM_VARIANT: &str = "https://uor.foundation/op/Topological";
 }
 
-/// Established by the inter-algebra map structure of the resolution pipeline. Covers φ-maps (phi_1–phi_6) and ψ-maps (psi_1–psi_6).
+/// Established by the inter-algebra map structure of the resolution pipeline. Covers φ-maps (phi_1–phi_6) and the ψ-pipeline tower ψ_7..ψ_9 (Postnikov truncation, homotopy group extraction, k-invariant computation). The earlier ψ_1..ψ_6 chain (constraint nerve → simplicial homology) is established under op:Topological.
 pub mod pipeline {
     /// `enumVariant` -> `Pipeline`
     pub const ENUM_VARIANT: &str = "https://uor.foundation/op/Pipeline";
