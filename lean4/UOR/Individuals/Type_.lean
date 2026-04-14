@@ -8,9 +8,17 @@ open UOR.Primitives
 
 namespace UOR.User.Type_
 
+-- Predicate form: `observable(datum) == offset + Σ αᵢ·generatorᵢ`. The datum's observable projection must equal an affine combination of the BoundConstraint's affine generators.
+def AffineEqualBound : UOR.User.Type_.BoundShape UOR.Prims.Standard := {
+}
+
 -- The canonical binary disjoint union type whose carrier is L + R.
 def EitherType : UOR.User.Type_.SumType UOR.Prims.Standard := {
   contentAddress := none
+}
+
+-- Predicate form: `observable(datum) == target`. Used by BoundConstraint instances asserting strict equality of a datum's observable projection to a target value.
+def EqualBound : UOR.User.Type_.BoundShape UOR.Prims.Standard := {
 }
 
 -- Nodes with edge constraints. Constraint nerve = graph topology.
@@ -23,9 +31,25 @@ def GraphType : UOR.User.Type_.ConstrainedType UOR.Prims.Standard := {
   contentAddress := none
 }
 
+-- Predicate form: `observable(datum) >= bound`.
+def GreaterEqBound : UOR.User.Type_.BoundShape UOR.Prims.Standard := {
+}
+
+-- Predicate form: `observable(datum) <= bound`. Used by hamming, depth, carry, and site-rank bound constraints.
+def LessEqBound : UOR.User.Type_.BoundShape UOR.Prims.Standard := {
+}
+
 -- The canonical A + Unit idiom for optional values.
 def OptionType : UOR.User.Type_.SumType UOR.Prims.Standard := {
   contentAddress := none
+}
+
+-- Predicate form: `lo <= observable(datum) <= hi`. The datum's observable projection must lie within the inclusive range `[lo, hi]`.
+def RangeContainBound : UOR.User.Type_.BoundShape UOR.Prims.Standard := {
+}
+
+-- Predicate form: `observable(datum) ≡ residue (mod modulus)`. Used by BoundConstraint instances asserting residue-class membership.
+def ResidueClassBound : UOR.User.Type_.BoundShape UOR.Prims.Standard := {
 }
 
 -- Default modulus for ResidueConstraint when the #[uor(residue = X)] attribute omits the explicit modulus. 256 matches the v0.2.1 reference ring Z/(2^8)Z.
@@ -81,6 +105,126 @@ def TreeType : UOR.User.Type_.ConstrainedType UOR.Prims.Standard := {
 def TupleType : UOR.User.Type_.ProductType UOR.Prims.Standard := {
   component := #[]
   contentAddress := none
+}
+
+-- Parametric replacement for the v0.2.1 AffineConstraint class: (observable:ValueModObservable, type:AffineEqualBound).
+def affineConstraintKind : UOR.User.Type_.BoundConstraint UOR.Prims.Standard := {
+  modulus := none
+  residue := none
+  carryPattern := none
+  minDepth := none
+  maxDepth := none
+  hammingBound := none
+  siteIndex := none
+  siteValue := none
+  affineOffset := none
+  affineGenerator := #[]
+  boundObservable := some ((default : UOR.Bridge.Observable.ValueModObservable UOR.Prims.Standard).toMetricObservable.toObservable)
+  boundShape := some (UOR.User.Type_.AffineEqualBound)
+  boundArguments := some (("offset=0" : String))
+  metricAxis := none
+  pinsSites := #[]
+  crossingCost := none
+}
+
+-- Parametric replacement for the v0.2.1 CarryConstraint class: (carry:CarryDepthObservable, type:LessEqBound).
+def carryConstraintKind : UOR.User.Type_.BoundConstraint UOR.Prims.Standard := {
+  modulus := none
+  residue := none
+  carryPattern := none
+  minDepth := none
+  maxDepth := none
+  hammingBound := none
+  siteIndex := none
+  siteValue := none
+  affineOffset := none
+  affineGenerator := #[]
+  boundObservable := some ((default : UOR.Kernel.Carry.CarryDepthObservable UOR.Prims.Standard).toObservable)
+  boundShape := some (UOR.User.Type_.LessEqBound)
+  boundArguments := some (("bound=0" : String))
+  metricAxis := none
+  pinsSites := #[]
+  crossingCost := none
+}
+
+-- Parametric replacement for the v0.2.1 DepthConstraint class: (derivation:DerivationDepthObservable, type:LessEqBound).
+def depthConstraintKind : UOR.User.Type_.BoundConstraint UOR.Prims.Standard := {
+  modulus := none
+  residue := none
+  carryPattern := none
+  minDepth := none
+  maxDepth := none
+  hammingBound := none
+  siteIndex := none
+  siteValue := none
+  affineOffset := none
+  affineGenerator := #[]
+  boundObservable := some ((default : UOR.Bridge.Derivation.DerivationDepthObservable UOR.Prims.Standard).toObservable)
+  boundShape := some (UOR.User.Type_.LessEqBound)
+  boundArguments := some (("min_depth=0;max_depth=0" : String))
+  metricAxis := none
+  pinsSites := #[]
+  crossingCost := none
+}
+
+-- Parametric replacement for the v0.2.1 HammingConstraint class: (observable:HammingMetric, type:LessEqBound). The Rust foundation exposes this kind via the `HammingConstraint` type alias with `pub const fn new(bound)`.
+def hammingConstraintKind : UOR.User.Type_.BoundConstraint UOR.Prims.Standard := {
+  modulus := none
+  residue := none
+  carryPattern := none
+  minDepth := none
+  maxDepth := none
+  hammingBound := none
+  siteIndex := none
+  siteValue := none
+  affineOffset := none
+  affineGenerator := #[]
+  boundObservable := some ((default : UOR.Bridge.Observable.HammingMetric UOR.Prims.Standard).toMetricObservable.toObservable)
+  boundShape := some (UOR.User.Type_.LessEqBound)
+  boundArguments := some (("bound=0" : String))
+  metricAxis := none
+  pinsSites := #[]
+  crossingCost := none
+}
+
+-- Parametric replacement for the v0.2.1 ResidueConstraint class: (observable:ValueModObservable, type:ResidueClassBound). The Rust foundation exposes this kind via the `ResidueConstraint` type alias with `pub const fn new(modulus, residue)`.
+def residueConstraintKind : UOR.User.Type_.BoundConstraint UOR.Prims.Standard := {
+  modulus := none
+  residue := none
+  carryPattern := none
+  minDepth := none
+  maxDepth := none
+  hammingBound := none
+  siteIndex := none
+  siteValue := none
+  affineOffset := none
+  affineGenerator := #[]
+  boundObservable := some ((default : UOR.Bridge.Observable.ValueModObservable UOR.Prims.Standard).toMetricObservable.toObservable)
+  boundShape := some (UOR.User.Type_.ResidueClassBound)
+  boundArguments := some (("modulus=256;residue=0" : String))
+  metricAxis := none
+  pinsSites := #[]
+  crossingCost := none
+}
+
+-- Parametric replacement for the v0.2.1 SiteConstraint class: (partition:FreeRankObservable, type:LessEqBound).
+def siteConstraintKind : UOR.User.Type_.BoundConstraint UOR.Prims.Standard := {
+  modulus := none
+  residue := none
+  carryPattern := none
+  minDepth := none
+  maxDepth := none
+  hammingBound := none
+  siteIndex := none
+  siteValue := none
+  affineOffset := none
+  affineGenerator := #[]
+  boundObservable := some ((default : UOR.Bridge.Partition.FreeRankObservable UOR.Prims.Standard).toObservable)
+  boundShape := some (UOR.User.Type_.LessEqBound)
+  boundArguments := some (("site_index=0" : String))
+  metricAxis := none
+  pinsSites := #[]
+  crossingCost := none
 }
 
 end UOR.User.Type_

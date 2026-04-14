@@ -13,10 +13,10 @@ Four concrete constraint kinds are provided, mutually disjoint:
 
 | Class | Description |
 |-------|-------------|
-| {@class https://uor.foundation/type/ResidueConstraint} | Membership in a residue class: x = r (mod m) |
-| {@class https://uor.foundation/type/CarryConstraint} | Carry propagation pattern in ring arithmetic |
-| {@class https://uor.foundation/type/DepthConstraint} | Bounds on factorization depth |
-| {@class https://uor.foundation/type/CompositeConstraint} | Composition of two or more simpler constraints |
+| {@ind https://uor.foundation/type/residueConstraintKind} | Membership in a residue class: x = r (mod m) |
+| {@ind https://uor.foundation/type/carryConstraintKind} | Carry propagation pattern in ring arithmetic |
+| {@ind https://uor.foundation/type/depthConstraintKind} | Bounds on factorization depth |
+| {@class https://uor.foundation/type/Conjunction} | Composition of two or more simpler constraints |
 
 A {@class https://uor.foundation/type/ConstrainedType} links to its constraints via
 {@prop https://uor.foundation/type/hasConstraint}.
@@ -54,7 +54,7 @@ how many axis boundaries a constraint must traverse.
 
 The property {@prop https://uor.foundation/type/pinsSites} declares which
 {@class https://uor.foundation/partition/SiteIndex} instances a constraint
-pins when applied. A {@class https://uor.foundation/type/CompositeConstraint}
+pins when applied. A {@class https://uor.foundation/type/Conjunction}
 pins the union of sites pinned by its components.
 
 ## Example: Residue + Depth

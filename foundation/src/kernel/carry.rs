@@ -59,3 +59,6 @@ pub trait EncodingQuality<P: Primitives> {
     /// Whether this encoding minimizes Σ d_Δ over observed pairs.
     fn is_optimal_encoding(&self) -> P::Boolean;
 }
+
+/// Observes the carry depth of a Datum in the W₂ tower, computed as the maximum carry-chain length in any operation producing it. Used as the bound observable for the carryConstraintKind BoundConstraint.
+pub trait CarryDepthObservable<P: Primitives>: crate::bridge::observable::Observable<P> {}

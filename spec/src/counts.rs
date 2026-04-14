@@ -20,6 +20,12 @@ pub const NAMESPACES: usize = 33;
 /// Landauer cost; backs the Rust enforcement::LandauerBudget newtype that holds
 /// one of the two clocks of UorTime).
 /// v0.2.2 Phase C.4: +2 (cert:MultiplicationCertificate, resolver:MultiplicationResolver).
+/// v0.2.2 Phase D (Q4): net 0 (-7 enumerated Constraint subclasses deleted:
+/// ResidueConstraint, CarryConstraint, DepthConstraint, CompositeConstraint,
+/// HammingConstraint, SiteConstraint, AffineConstraint; +3 parametric
+/// classes: BoundConstraint, BoundShape, Conjunction; +4 observable
+/// subclasses: observable:ValueModObservable, derivation:DerivationDepthObservable,
+/// carry:CarryDepthObservable, partition:FreeRankObservable).
 pub const CLASSES: usize = 460;
 
 /// Total properties including the global `uor:space` annotation.
@@ -34,10 +40,12 @@ pub const CLASSES: usize = 460;
 /// LandauerBudget, unit observable:Nats).
 /// v0.2.2 Phase C.4: +4 (cert:splittingFactor, cert:subMultiplicationCount,
 /// cert:landauerCostNats, linear:stackBudgetBytes).
-pub const PROPERTIES: usize = 937;
+/// v0.2.2 Phase D (Q4): +4 (type:boundObservable, type:boundShape,
+/// type:boundArguments, type:conjuncts).
+pub const PROPERTIES: usize = 941;
 
 /// Namespace-level properties only (excludes global annotation).
-pub const NAMESPACE_PROPERTIES: usize = 936;
+pub const NAMESPACE_PROPERTIES: usize = 940;
 
 /// Total named individuals across all namespaces.
 /// Includes 1870 AST term individuals (LiteralExpression / ForAllDeclaration)
@@ -58,7 +66,11 @@ pub const NAMESPACE_PROPERTIES: usize = 936;
 /// Limbs<N>-backed Witt levels covering semantically-meaningful intermediates
 /// and powers-of-two above native).
 /// v0.2.2 Phase C.4: +1 (resolver:multiplicationCertifyMapping).
-pub const INDIVIDUALS: usize = 3477;
+/// v0.2.2 Phase D (Q4): +12 (6 BoundShape individuals: EqualBound, LessEqBound,
+/// GreaterEqBound, RangeContainBound, ResidueClassBound, AffineEqualBound;
+/// 6 BoundConstraint kind individuals: residue/hamming/depth/carry/site/affine
+/// ConstraintKind).
+pub const INDIVIDUALS: usize = 3489;
 
 /// Number of SHACL test instance graphs.
 ///
@@ -80,7 +92,8 @@ pub const SHACL_TESTS: usize = 279;
 /// v0.2.2 Phase C.4: +1 from the `test279` MultiplicationCertificate fixture.
 /// v0.2.2 Phase C verifiers: +1 from `rust/witt_tower_completeness`, +1 from
 /// `rust/multiplication_resolver`.
-pub const CONFORMANCE_CHECKS: usize = 481;
+/// v0.2.2 Phase D verifier: +1 from `rust/parametric_constraints`.
+pub const CONFORMANCE_CHECKS: usize = 482;
 
 /// Number of amendments applied to the base ontology.
 pub const AMENDMENTS: usize = 95;
@@ -109,7 +122,11 @@ pub const USER_NAMESPACES: usize = 3;
 /// v0.2.2 Phase A: +1 (landauerNats on observable:LandauerBudget).
 /// v0.2.2 Phase C.4: +4 (splittingFactor, subMultiplicationCount,
 /// landauerCostNats on MultiplicationCertificate; stackBudgetBytes on LinearBudget).
-pub const METHODS: usize = 900;
+/// v0.2.2 Phase D (Q4): +4 (boundObservable, boundShape, boundArguments on
+/// BoundConstraint; conjuncts on Conjunction). The 11 properties previously
+/// on the 7 deleted constraint subclasses are retained under new domains
+/// (BoundConstraint or Conjunction), so no net loss.
+pub const METHODS: usize = 904;
 
 /// Number of individual constant modules generated.
 pub const CONSTANT_MODULES: usize = 1501;
@@ -146,7 +163,7 @@ pub const LEAN_INDUCTIVES: usize = 22;
 /// `lean4/UOR/Enums.lean`, not as `namespace ... end` blocks. They contribute
 /// to the WittLevel def list (visible in `Enums.lean`) but not to the
 /// per-individual constant namespace count.
-pub const LEAN_CONSTANT_NAMESPACES: usize = 3349;
+pub const LEAN_CONSTANT_NAMESPACES: usize = 3361;
 
 /// Number of concept pages on the website (one per content/concepts/*.md file).
 pub const CONCEPT_PAGES: usize = 27;

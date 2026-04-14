@@ -69,71 +69,6 @@ pub trait Constraint<P: Primitives> {
     fn crossing_cost(&self) -> P::NonNegativeInteger;
 }
 
-/// A constraint based on residue class membership: x ≡ r (mod m). Pins sites corresponding to the residue pattern.
-/// Disjoint with: CarryConstraint, DepthConstraint, CompositeConstraint, HammingConstraint, SiteConstraint, AffineConstraint.
-pub trait ResidueConstraint<P: Primitives>: Constraint<P> {
-    /// The modulus m of a residue constraint: x ≡ r (mod m).
-    fn modulus(&self) -> P::PositiveInteger;
-    /// The residue value r of a residue constraint: x ≡ r (mod m).
-    fn residue(&self) -> P::NonNegativeInteger;
-}
-
-/// A constraint based on carry propagation patterns in ring arithmetic. Pins sites corresponding to carry positions.
-/// Disjoint with: ResidueConstraint, DepthConstraint, CompositeConstraint, HammingConstraint, SiteConstraint, AffineConstraint.
-pub trait CarryConstraint<P: Primitives>: Constraint<P> {
-    /// Associated type for `Datum`.
-    type Datum: crate::kernel::schema::Datum<P>;
-    /// The carry propagation pattern of a carry constraint, expressed as a Datum at the appropriate quantum level.
-    fn carry_pattern(&self) -> &Self::Datum;
-}
-
-/// A constraint on factorization depth: the minimum and maximum number of irreducible factors. Pins sites by bounding the factorization tree depth.
-/// Disjoint with: ResidueConstraint, CarryConstraint, CompositeConstraint, HammingConstraint, SiteConstraint, AffineConstraint.
-pub trait DepthConstraint<P: Primitives>: Constraint<P> {
-    /// The minimum factorization depth required by a depth constraint.
-    fn min_depth(&self) -> P::NonNegativeInteger;
-    /// The maximum factorization depth allowed by a depth constraint.
-    fn max_depth(&self) -> P::NonNegativeInteger;
-}
-
-/// A constraint formed by composing two or more simpler constraints. The composite pins the union of sites pinned by its components.
-/// Disjoint with: ResidueConstraint, CarryConstraint, DepthConstraint, HammingConstraint, SiteConstraint, AffineConstraint.
-pub trait CompositeConstraint<P: Primitives>: Constraint<P> {
-    /// Associated type for `Constraint`.
-    type Constraint: Constraint<P>;
-    /// A component constraint of this composite constraint.
-    fn composed_from(&self) -> &[Self::Constraint];
-}
-
-/// Pins the Hamming weight of the Datum to at most the bound. The horizontal axis of the tri-metric.
-/// Disjoint with: ResidueConstraint, CarryConstraint, DepthConstraint, CompositeConstraint, SiteConstraint, AffineConstraint.
-pub trait HammingConstraint<P: Primitives>: Constraint<P> {
-    /// Upper bound on the Hamming weight of the Datum.
-    fn hamming_bound(&self) -> P::NonNegativeInteger;
-}
-
-/// Pins a single site coordinate to 0 or 1. The atomic unit of the site budget.
-/// Disjoint with: ResidueConstraint, CarryConstraint, DepthConstraint, CompositeConstraint, HammingConstraint, AffineConstraint.
-pub trait SiteConstraint<P: Primitives>: Constraint<P> {
-    /// Zero-based index of the pinned site coordinate.
-    fn site_index(&self) -> P::NonNegativeInteger;
-    /// Associated type for `Datum`.
-    type Datum: crate::kernel::schema::Datum<P>;
-    /// The value the pinned site coordinate must equal (a Datum in the set {0, 1}).
-    fn site_value(&self) -> &Self::Datum;
-}
-
-/// Pins the Datum to an affine subspace specified by an offset and a set of generators.
-/// Disjoint with: ResidueConstraint, CarryConstraint, DepthConstraint, CompositeConstraint, HammingConstraint, SiteConstraint.
-pub trait AffineConstraint<P: Primitives>: Constraint<P> {
-    /// Associated type for `Datum`.
-    type Datum: crate::kernel::schema::Datum<P>;
-    /// Constant offset defining the affine subspace.
-    fn affine_offset(&self) -> &Self::Datum;
-    /// A generator of the affine subspace. Non-functional: multiple generators span the subspace.
-    fn affine_generator(&self) -> &[Self::Datum];
-}
-
 /// A TypeDefinition certified to satisfy the UOR completeness criterion (IT_7d): its constraint nerve N(C) has Euler characteristic χ = n and all Betti numbers β_k = 0. A CompleteType guarantees that resolution closes the site budget in O(1) — no iterative refinement is required. Completeness is attested by a cert:CompletenessCertificate linked via cert:certifiedType. This class is not addressable from a type-expr position in the term language; references from term-language positions are rejected by the resolver.
 pub trait CompleteType<P: Primitives>: TypeDefinition<P> {}
 
@@ -370,6 +305,57 @@ pub trait ConstraintDefaults<P: Primitives> {
     fn default_value(&self) -> P::Integer;
 }
 
+/// Parametric constraint carrier consumed by the codegen to emit `BoundConstraint<O: Observable, B: BoundShape>` in the Rust foundation. The (observable, bound_shape) pair picks the predicate form; the typed datatype properties (modulus, residue, hammingBound, ...) carry the parameters for that specific kind. Replaces the seven v0.2.1 enumerated Constraint subclasses with a parametric form; the legacy names survive as Rust type aliases (ResidueConstraint, HammingConstraint, ...).
+pub trait BoundConstraint<P: Primitives>: Constraint<P> {
+    /// The modulus m of a residue constraint: x ≡ r (mod m).
+    fn modulus(&self) -> P::PositiveInteger;
+    /// The residue value r of a residue constraint: x ≡ r (mod m).
+    fn residue(&self) -> P::NonNegativeInteger;
+    /// Associated type for `Datum`.
+    type Datum: crate::kernel::schema::Datum<P>;
+    /// The carry propagation pattern of a carry constraint, expressed as a Datum at the appropriate quantum level.
+    fn carry_pattern(&self) -> &Self::Datum;
+    /// The minimum factorization depth required by a depth constraint.
+    fn min_depth(&self) -> P::NonNegativeInteger;
+    /// The maximum factorization depth allowed by a depth constraint.
+    fn max_depth(&self) -> P::NonNegativeInteger;
+    /// Upper bound on the Hamming weight of the Datum.
+    fn hamming_bound(&self) -> P::NonNegativeInteger;
+    /// Zero-based index of the pinned site coordinate.
+    fn site_index(&self) -> P::NonNegativeInteger;
+    /// The value the pinned site coordinate must equal (a Datum in the set {0, 1}).
+    fn site_value(&self) -> &Self::Datum;
+    /// Constant offset defining the affine subspace.
+    fn affine_offset(&self) -> &Self::Datum;
+    /// A generator of the affine subspace. Non-functional: multiple generators span the subspace.
+    fn affine_generator(&self) -> &[Self::Datum];
+    /// Associated type for `Observable`.
+    type Observable: crate::bridge::observable::Observable<P>;
+    /// The observable:Observable whose values this BoundConstraint bounds. Picks which datum projection is being constrained.
+    fn bound_observable(&self) -> &Self::Observable;
+    /// Associated type for `BoundShape`.
+    type BoundShape: BoundShape<P>;
+    /// The predicate form this BoundConstraint imposes on its bound observable. Closed enumeration with exactly six named individuals (EqualBound, LessEqBound, GreaterEqBound, RangeContainBound, ResidueClassBound, AffineEqualBound).
+    fn bound_shape(&self) -> &Self::BoundShape;
+    /// The BoundConstraint's parameters in canonical string form (e.g., 'modulus=256;residue=255' for a residue class bound). Non-functional — the string-form encoding is the canonical serialization; typed accessors on the Rust side unpack it via the per-type-alias constructors.
+    fn bound_arguments(&self) -> &P::String;
+}
+
+/// The predicate form a BoundConstraint imposes on its bound observable. Closed enumeration with exactly six named individuals (EqualBound, LessEqBound, GreaterEqBound, RangeContainBound, ResidueClassBound, AffineEqualBound). Adding a new bound shape is an ontology+grammar+codegen edit on the same protocol as adding a Witt level.
+pub trait BoundShape<P: Primitives> {}
+
+/// A conjunction of BoundConstraint instances. The conjuncts property is ordered. Replaces the v0.2.1 CompositeConstraint enumeration; the legacy name survives as a Rust type alias (CompositeConstraint<const N: usize> = Conjunction<N>).
+pub trait Conjunction<P: Primitives>: Constraint<P> {
+    /// Associated type for `Constraint`.
+    type Constraint: Constraint<P>;
+    /// A component constraint of this composite constraint.
+    fn composed_from(&self) -> &[Self::Constraint];
+    /// Associated type for `BoundConstraint`.
+    type BoundConstraint: BoundConstraint<P>;
+    /// An ordered list of BoundConstraint individuals that this Conjunction composes. Non-functional — multiple conjuncts span the conjunction.
+    fn conjuncts(&self) -> &[Self::BoundConstraint];
+}
+
 /// A single value from an ordered domain. siteCount = n (quantization bits).
 pub mod scalar_type {
     /// `structuralGrounding`
@@ -481,4 +467,83 @@ pub mod option_type {}
 pub mod residue_default_modulus {
     /// `defaultValue`
     pub const DEFAULT_VALUE: i64 = 256;
+}
+
+/// Predicate form: `observable(datum) == target`. Used by BoundConstraint instances asserting strict equality of a datum's observable projection to a target value.
+pub mod equal_bound {}
+
+/// Predicate form: `observable(datum) <= bound`. Used by hamming, depth, carry, and site-rank bound constraints.
+pub mod less_eq_bound {}
+
+/// Predicate form: `observable(datum) >= bound`.
+pub mod greater_eq_bound {}
+
+/// Predicate form: `lo <= observable(datum) <= hi`. The datum's observable projection must lie within the inclusive range `\[lo, hi\]`.
+pub mod range_contain_bound {}
+
+/// Predicate form: `observable(datum) ≡ residue (mod modulus)`. Used by BoundConstraint instances asserting residue-class membership.
+pub mod residue_class_bound {}
+
+/// Predicate form: `observable(datum) == offset + Σ αᵢ·generatorᵢ`. The datum's observable projection must equal an affine combination of the BoundConstraint's affine generators.
+pub mod affine_equal_bound {}
+
+/// Parametric replacement for the v0.2.1 ResidueConstraint class: (observable:ValueModObservable, type:ResidueClassBound). The Rust foundation exposes this kind via the `ResidueConstraint` type alias with `pub const fn new(modulus, residue)`.
+pub mod residue_constraint_kind {
+    /// `boundArguments`
+    pub const BOUND_ARGUMENTS: &str = "modulus=256;residue=0";
+    /// `boundObservable` -> `ValueModObservable`
+    pub const BOUND_OBSERVABLE: &str = "https://uor.foundation/observable/ValueModObservable";
+    /// `boundShape` -> `ResidueClassBound`
+    pub const BOUND_SHAPE: &str = "https://uor.foundation/type/ResidueClassBound";
+}
+
+/// Parametric replacement for the v0.2.1 HammingConstraint class: (observable:HammingMetric, type:LessEqBound). The Rust foundation exposes this kind via the `HammingConstraint` type alias with `pub const fn new(bound)`.
+pub mod hamming_constraint_kind {
+    /// `boundArguments`
+    pub const BOUND_ARGUMENTS: &str = "bound=0";
+    /// `boundObservable` -> `HammingMetric`
+    pub const BOUND_OBSERVABLE: &str = "https://uor.foundation/observable/HammingMetric";
+    /// `boundShape` -> `LessEqBound`
+    pub const BOUND_SHAPE: &str = "https://uor.foundation/type/LessEqBound";
+}
+
+/// Parametric replacement for the v0.2.1 DepthConstraint class: (derivation:DerivationDepthObservable, type:LessEqBound).
+pub mod depth_constraint_kind {
+    /// `boundArguments`
+    pub const BOUND_ARGUMENTS: &str = "min_depth=0;max_depth=0";
+    /// `boundObservable` -> `DerivationDepthObservable`
+    pub const BOUND_OBSERVABLE: &str =
+        "https://uor.foundation/derivation/DerivationDepthObservable";
+    /// `boundShape` -> `LessEqBound`
+    pub const BOUND_SHAPE: &str = "https://uor.foundation/type/LessEqBound";
+}
+
+/// Parametric replacement for the v0.2.1 CarryConstraint class: (carry:CarryDepthObservable, type:LessEqBound).
+pub mod carry_constraint_kind {
+    /// `boundArguments`
+    pub const BOUND_ARGUMENTS: &str = "bound=0";
+    /// `boundObservable` -> `CarryDepthObservable`
+    pub const BOUND_OBSERVABLE: &str = "https://uor.foundation/carry/CarryDepthObservable";
+    /// `boundShape` -> `LessEqBound`
+    pub const BOUND_SHAPE: &str = "https://uor.foundation/type/LessEqBound";
+}
+
+/// Parametric replacement for the v0.2.1 SiteConstraint class: (partition:FreeRankObservable, type:LessEqBound).
+pub mod site_constraint_kind {
+    /// `boundArguments`
+    pub const BOUND_ARGUMENTS: &str = "site_index=0";
+    /// `boundObservable` -> `FreeRankObservable`
+    pub const BOUND_OBSERVABLE: &str = "https://uor.foundation/partition/FreeRankObservable";
+    /// `boundShape` -> `LessEqBound`
+    pub const BOUND_SHAPE: &str = "https://uor.foundation/type/LessEqBound";
+}
+
+/// Parametric replacement for the v0.2.1 AffineConstraint class: (observable:ValueModObservable, type:AffineEqualBound).
+pub mod affine_constraint_kind {
+    /// `boundArguments`
+    pub const BOUND_ARGUMENTS: &str = "offset=0";
+    /// `boundObservable` -> `ValueModObservable`
+    pub const BOUND_OBSERVABLE: &str = "https://uor.foundation/observable/ValueModObservable";
+    /// `boundShape` -> `AffineEqualBound`
+    pub const BOUND_SHAPE: &str = "https://uor.foundation/type/AffineEqualBound";
 }

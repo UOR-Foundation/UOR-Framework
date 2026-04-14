@@ -81,6 +81,18 @@ fn classes() -> Vec<Class> {
             subclass_of: &[OWL_THING],
             disjoint_with: &[],
         },
+        // v0.2.2 Phase D (Q4) — observable backing the carryConstraintKind
+        // BoundConstraint individual.
+        Class {
+            id: "https://uor.foundation/carry/CarryDepthObservable",
+            label: "CarryDepthObservable",
+            comment: "Observes the carry depth of a Datum in the W\u{2082} \
+                      tower, computed as the maximum carry-chain length in \
+                      any operation producing it. Used as the bound \
+                      observable for the carryConstraintKind BoundConstraint.",
+            subclass_of: &["https://uor.foundation/observable/Observable"],
+            disjoint_with: &[],
+        },
     ]
 }
 

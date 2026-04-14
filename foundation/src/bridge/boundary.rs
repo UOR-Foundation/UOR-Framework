@@ -65,10 +65,10 @@ pub trait BoundaryProtocol<P: Primitives> {
     type TypeDefinition: crate::user::type_::TypeDefinition<P>;
     /// The type specification for boundary data.
     fn protocol_type(&self) -> &Self::TypeDefinition;
-    /// Associated type for `CompositeConstraint`.
-    type CompositeConstraint: crate::user::type_::CompositeConstraint<P>;
+    /// Associated type for `Conjunction`.
+    type Conjunction: crate::user::type_::Conjunction<P>;
     /// Sequencing constraints on boundary data.
-    fn protocol_ordering(&self) -> &Self::CompositeConstraint;
+    fn protocol_ordering(&self) -> &Self::Conjunction;
 }
 
 /// A Session that includes BoundaryEffects. Extends the session model to track which boundaries were crossed.

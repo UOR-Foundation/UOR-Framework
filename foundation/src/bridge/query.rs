@@ -35,7 +35,7 @@ pub trait RelationQuery<P: Primitives>: Query<P> {
     fn source_address(&self) -> &Self::Element;
     /// Associated type for `Constraint`.
     type Constraint: crate::user::type_::Constraint<P>;
-    /// The transformation type, expressed as a type:CompositeConstraint composed from the primitive basis. At inference time this is the output of an observable coordinate read on example pairs — computed from (d_R, d_H, d_I). Not an externally supplied input; read from the representation space.
+    /// The transformation type, expressed as a type:Conjunction composed from the primitive BoundConstraint basis. At inference time this is the output of an observable coordinate read on example pairs — computed from (d_R, d_H, d_I). Not an externally supplied input; read from the representation space.
     fn relation_type(&self) -> &Self::Constraint;
     /// Associated type for `FreeRank`.
     type FreeRank: crate::bridge::partition::FreeRank<P>;

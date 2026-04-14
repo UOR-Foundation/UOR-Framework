@@ -8599,6 +8599,368 @@ impl<T: OntologyTarget> core::ops::Deref for Validated<T> {
     }
 }
 
+mod bound_constraint_sealed {
+    /// Sealed supertrait for the closed Observable catalogue.
+    pub trait ObservableSealed {}
+    /// Sealed supertrait for the closed BoundShape catalogue.
+    pub trait BoundShapeSealed {}
+}
+
+/// Sealed marker trait identifying the closed catalogue of observables
+/// admissible in BoundConstraint. Implemented by unit structs emitted
+/// below per `observable:Observable` subclass referenced by a
+/// BoundConstraint kind individual.
+pub trait Observable: bound_constraint_sealed::ObservableSealed {
+    /// Ontology IRI of this observable class.
+    const IRI: &'static str;
+}
+
+/// Sealed marker trait identifying the closed catalogue of bound shapes.
+/// Exactly six individuals: EqualBound, LessEqBound, GreaterEqBound,
+/// RangeContainBound, ResidueClassBound, AffineEqualBound.
+pub trait BoundShape: bound_constraint_sealed::BoundShapeSealed {
+    /// Ontology IRI of this bound shape individual.
+    const IRI: &'static str;
+}
+
+/// Observes a Datum's value modulo a configurable modulus.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
+pub struct ValueModObservable;
+impl bound_constraint_sealed::ObservableSealed for ValueModObservable {}
+impl Observable for ValueModObservable {
+    const IRI: &'static str = "https://uor.foundation/observable/ValueModObservable";
+}
+
+/// Distance between two ring elements under the Hamming metric.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
+pub struct HammingMetric;
+impl bound_constraint_sealed::ObservableSealed for HammingMetric {}
+impl Observable for HammingMetric {
+    const IRI: &'static str = "https://uor.foundation/observable/HammingMetric";
+}
+
+/// Observes the derivation depth of a Datum.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
+pub struct DerivationDepthObservable;
+impl bound_constraint_sealed::ObservableSealed for DerivationDepthObservable {}
+impl Observable for DerivationDepthObservable {
+    const IRI: &'static str = "https://uor.foundation/derivation/DerivationDepthObservable";
+}
+
+/// Observes the carry depth of a Datum in the W₂ tower.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
+pub struct CarryDepthObservable;
+impl bound_constraint_sealed::ObservableSealed for CarryDepthObservable {}
+impl Observable for CarryDepthObservable {
+    const IRI: &'static str = "https://uor.foundation/carry/CarryDepthObservable";
+}
+
+/// Observes the free-rank of the partition associated with a Datum.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
+pub struct FreeRankObservable;
+impl bound_constraint_sealed::ObservableSealed for FreeRankObservable {}
+impl Observable for FreeRankObservable {
+    const IRI: &'static str = "https://uor.foundation/partition/FreeRankObservable";
+}
+
+/// Predicate form: `observable(datum) == target`.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
+pub struct EqualBound;
+impl bound_constraint_sealed::BoundShapeSealed for EqualBound {}
+impl BoundShape for EqualBound {
+    const IRI: &'static str = "https://uor.foundation/type/EqualBound";
+}
+
+/// Predicate form: `observable(datum) <= bound`.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
+pub struct LessEqBound;
+impl bound_constraint_sealed::BoundShapeSealed for LessEqBound {}
+impl BoundShape for LessEqBound {
+    const IRI: &'static str = "https://uor.foundation/type/LessEqBound";
+}
+
+/// Predicate form: `observable(datum) >= bound`.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
+pub struct GreaterEqBound;
+impl bound_constraint_sealed::BoundShapeSealed for GreaterEqBound {}
+impl BoundShape for GreaterEqBound {
+    const IRI: &'static str = "https://uor.foundation/type/GreaterEqBound";
+}
+
+/// Predicate form: `lo <= observable(datum) <= hi`.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
+pub struct RangeContainBound;
+impl bound_constraint_sealed::BoundShapeSealed for RangeContainBound {}
+impl BoundShape for RangeContainBound {
+    const IRI: &'static str = "https://uor.foundation/type/RangeContainBound";
+}
+
+/// Predicate form: `observable(datum) ≡ residue (mod modulus)`.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
+pub struct ResidueClassBound;
+impl bound_constraint_sealed::BoundShapeSealed for ResidueClassBound {}
+impl BoundShape for ResidueClassBound {
+    const IRI: &'static str = "https://uor.foundation/type/ResidueClassBound";
+}
+
+/// Predicate form: `observable(datum) == offset + affine combination`.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
+pub struct AffineEqualBound;
+impl bound_constraint_sealed::BoundShapeSealed for AffineEqualBound {}
+impl BoundShape for AffineEqualBound {
+    const IRI: &'static str = "https://uor.foundation/type/AffineEqualBound";
+}
+
+/// Parameter value type for `BoundConstraint` arguments.
+/// Sealed enum over the closed set of primitive kinds the bound-shape
+/// catalogue requires. No heap, no `String`.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum BoundArgValue {
+    /// Unsigned 64-bit integer.
+    U64(u64),
+    /// Signed 64-bit integer.
+    I64(i64),
+    /// Fixed 32-byte content-addressed value.
+    Bytes32([u8; 32]),
+}
+
+/// Fixed-size arguments carrier for a `BoundConstraint`.
+/// Holds up to eight `(name, value)` pairs inline. The closed
+/// bound-shape catalogue requires at most three parameters per kind;
+/// the extra slots are reserved for future kind additions without
+/// changing the carrier layout.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct BoundArguments {
+    entries: [Option<BoundArgEntry>; 8],
+}
+
+/// A single named parameter in a `BoundArguments` table.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct BoundArgEntry {
+    /// Parameter name (a `&'static str` intentional over heap-owned).
+    pub name: &'static str,
+    /// Parameter value.
+    pub value: BoundArgValue,
+}
+
+impl BoundArguments {
+    /// Construct an empty argument table.
+    #[inline]
+    #[must_use]
+    pub const fn empty() -> Self {
+        Self { entries: [None; 8] }
+    }
+
+    /// Construct a table with a single `(name, value)` pair.
+    #[inline]
+    #[must_use]
+    pub const fn single(name: &'static str, value: BoundArgValue) -> Self {
+        let mut entries = [None; 8];
+        entries[0] = Some(BoundArgEntry { name, value });
+        Self { entries }
+    }
+
+    /// Construct a table with two `(name, value)` pairs.
+    #[inline]
+    #[must_use]
+    pub const fn pair(
+        first: (&'static str, BoundArgValue),
+        second: (&'static str, BoundArgValue),
+    ) -> Self {
+        let mut entries = [None; 8];
+        entries[0] = Some(BoundArgEntry {
+            name: first.0,
+            value: first.1,
+        });
+        entries[1] = Some(BoundArgEntry {
+            name: second.0,
+            value: second.1,
+        });
+        Self { entries }
+    }
+
+    /// Access the stored entries.
+    #[inline]
+    #[must_use]
+    pub const fn entries(&self) -> &[Option<BoundArgEntry>; 8] {
+        &self.entries
+    }
+}
+
+/// Parametric constraint carrier (v0.2.2 Phase D).
+/// Generic over `O: Observable` and `B: BoundShape`. The seven
+/// legacy constraint kinds are preserved as type aliases over this
+/// carrier; see `ResidueConstraint`, `HammingConstraint`, etc. below.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct BoundConstraint<O: Observable, B: BoundShape> {
+    observable: O,
+    bound: B,
+    args: BoundArguments,
+    _sealed: (),
+}
+
+impl<O: Observable, B: BoundShape> BoundConstraint<O, B> {
+    /// Crate-internal constructor. Downstream obtains values through
+    /// the per-type-alias `pub const fn new` constructors.
+    #[inline]
+    #[must_use]
+    pub(crate) const fn from_parts(observable: O, bound: B, args: BoundArguments) -> Self {
+        Self {
+            observable,
+            bound,
+            args,
+            _sealed: (),
+        }
+    }
+
+    /// Access the bound observable.
+    #[inline]
+    #[must_use]
+    pub const fn observable(&self) -> &O {
+        &self.observable
+    }
+
+    /// Access the bound shape.
+    #[inline]
+    #[must_use]
+    pub const fn bound(&self) -> &B {
+        &self.bound
+    }
+
+    /// Access the bound arguments.
+    #[inline]
+    #[must_use]
+    pub const fn args(&self) -> &BoundArguments {
+        &self.args
+    }
+}
+
+/// Parametric conjunction of `BoundConstraint` kinds (v0.2.2 Phase D).
+/// Replaces the v0.2.1 `CompositeConstraint` enumeration; the legacy
+/// name survives as the type alias `CompositeConstraint<N>` below.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct Conjunction<const N: usize> {
+    len: usize,
+    _sealed: (),
+}
+
+impl<const N: usize> Conjunction<N> {
+    /// Construct a new Conjunction with `len` conjuncts.
+    #[inline]
+    #[must_use]
+    pub const fn new(len: usize) -> Self {
+        Self { len, _sealed: () }
+    }
+
+    /// The number of conjuncts in this Conjunction.
+    #[inline]
+    #[must_use]
+    pub const fn len(&self) -> usize {
+        self.len
+    }
+
+    /// Whether the Conjunction is empty.
+    #[inline]
+    #[must_use]
+    pub const fn is_empty(&self) -> bool {
+        self.len == 0
+    }
+}
+
+/// v0.2.1 legacy type alias: a `BoundConstraint` kind asserting
+/// residue-class membership (`value mod m == r`).
+pub type ResidueConstraint = BoundConstraint<ValueModObservable, ResidueClassBound>;
+
+impl ResidueConstraint {
+    /// Construct a residue constraint with the given modulus and residue.
+    #[inline]
+    #[must_use]
+    pub const fn new(modulus: u64, residue: u64) -> Self {
+        let args = BoundArguments::pair(
+            ("modulus", BoundArgValue::U64(modulus)),
+            ("residue", BoundArgValue::U64(residue)),
+        );
+        BoundConstraint::from_parts(ValueModObservable, ResidueClassBound, args)
+    }
+}
+
+/// v0.2.1 legacy type alias: a `BoundConstraint` kind bounding the
+/// Hamming weight of the Datum (`weight <= bound`).
+pub type HammingConstraint = BoundConstraint<HammingMetric, LessEqBound>;
+
+impl HammingConstraint {
+    /// Construct a Hamming constraint with the given upper bound.
+    #[inline]
+    #[must_use]
+    pub const fn new(bound: u64) -> Self {
+        let args = BoundArguments::single("bound", BoundArgValue::U64(bound));
+        BoundConstraint::from_parts(HammingMetric, LessEqBound, args)
+    }
+}
+
+/// v0.2.1 legacy type alias: a `BoundConstraint` kind bounding the
+/// derivation depth of the Datum.
+pub type DepthConstraint = BoundConstraint<DerivationDepthObservable, LessEqBound>;
+
+impl DepthConstraint {
+    /// Construct a depth constraint with min and max depths.
+    #[inline]
+    #[must_use]
+    pub const fn new(min_depth: u64, max_depth: u64) -> Self {
+        let args = BoundArguments::pair(
+            ("min_depth", BoundArgValue::U64(min_depth)),
+            ("max_depth", BoundArgValue::U64(max_depth)),
+        );
+        BoundConstraint::from_parts(DerivationDepthObservable, LessEqBound, args)
+    }
+}
+
+/// v0.2.1 legacy type alias: a `BoundConstraint` kind bounding the
+/// carry depth of the Datum in the W₂ tower.
+pub type CarryConstraint = BoundConstraint<CarryDepthObservable, LessEqBound>;
+
+impl CarryConstraint {
+    /// Construct a carry constraint with the given upper bound.
+    #[inline]
+    #[must_use]
+    pub const fn new(bound: u64) -> Self {
+        let args = BoundArguments::single("bound", BoundArgValue::U64(bound));
+        BoundConstraint::from_parts(CarryDepthObservable, LessEqBound, args)
+    }
+}
+
+/// v0.2.1 legacy type alias: a `BoundConstraint` kind pinning a
+/// single site coordinate.
+pub type SiteConstraint = BoundConstraint<FreeRankObservable, LessEqBound>;
+
+impl SiteConstraint {
+    /// Construct a site constraint with the given site index.
+    #[inline]
+    #[must_use]
+    pub const fn new(site_index: u64) -> Self {
+        let args = BoundArguments::single("site_index", BoundArgValue::U64(site_index));
+        BoundConstraint::from_parts(FreeRankObservable, LessEqBound, args)
+    }
+}
+
+/// v0.2.1 legacy type alias: a `BoundConstraint` kind pinning an
+/// affine relationship on the Datum's value projection.
+pub type AffineConstraint = BoundConstraint<ValueModObservable, AffineEqualBound>;
+
+impl AffineConstraint {
+    /// Construct an affine constraint with the given offset.
+    #[inline]
+    #[must_use]
+    pub const fn new(offset: u64) -> Self {
+        let args = BoundArguments::single("offset", BoundArgValue::U64(offset));
+        BoundConstraint::from_parts(ValueModObservable, AffineEqualBound, args)
+    }
+}
+
+/// v0.2.1 legacy type alias: a `Conjunction` over `N` BoundConstraint
+/// kinds (`CompositeConstraint<3>` = 3-way conjunction).
+pub type CompositeConstraint<const N: usize> = Conjunction<N>;
+
 /// v0.2.1 ergonomics prelude. Re-exports the core symbols downstream crates
 /// need for the consumer-facing one-liners.
 /// Ontology-driven: the set of certificate / type / builder symbols is

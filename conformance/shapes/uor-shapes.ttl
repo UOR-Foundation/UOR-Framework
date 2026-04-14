@@ -1363,101 +1363,45 @@ uor-sh:ConstraintShape
         sh:datatype xsd:nonNegativeInteger ;
     ] .
 
-uor-sh:ResidueConstraintShape
+# v0.2.2 Phase D (Q4) — parametric constraint shapes. Replaces the seven
+# enumerated constraint-kind shapes with BoundConstraint, BoundShape, and
+# Conjunction shapes. The (observable, shape) kind catalogue is represented
+# by six BoundConstraint individuals, each validated by BoundConstraintShape.
+uor-sh:BoundConstraintShape
     a               sh:NodeShape ;
-    sh:targetClass  type:ResidueConstraint ;
-    rdfs:label      "ResidueConstraintShape" ;
+    sh:targetClass  type:BoundConstraint ;
+    rdfs:label      "BoundConstraintShape" ;
     sh:property [
-        sh:path type:modulus ;
+        sh:path type:boundObservable ;
         sh:minCount 1 ;
         sh:maxCount 1 ;
-        sh:datatype xsd:positiveInteger ;
+        sh:class observable:Observable ;
     ] ;
     sh:property [
-        sh:path type:residue ;
+        sh:path type:boundShape ;
         sh:minCount 1 ;
         sh:maxCount 1 ;
-        sh:datatype xsd:nonNegativeInteger ;
-    ] .
-
-uor-sh:CarryConstraintShape
-    a               sh:NodeShape ;
-    sh:targetClass  type:CarryConstraint ;
-    rdfs:label      "CarryConstraintShape" ;
-    sh:property [
-        sh:path type:carryPattern ;
-        sh:minCount 1 ;
-        sh:maxCount 1 ;
-        sh:class schema:Datum ;
-    ] .
-
-uor-sh:DepthConstraintShape
-    a               sh:NodeShape ;
-    sh:targetClass  type:DepthConstraint ;
-    rdfs:label      "DepthConstraintShape" ;
-    sh:property [
-        sh:path type:minDepth ;
-        sh:minCount 1 ;
-        sh:maxCount 1 ;
-        sh:datatype xsd:nonNegativeInteger ;
+        sh:class type:BoundShape ;
     ] ;
     sh:property [
-        sh:path type:maxDepth ;
+        sh:path type:boundArguments ;
         sh:minCount 1 ;
         sh:maxCount 1 ;
-        sh:datatype xsd:nonNegativeInteger ;
+        sh:datatype xsd:string ;
     ] .
 
-uor-sh:CompositeConstraintShape
+uor-sh:BoundShapeShape
     a               sh:NodeShape ;
-    sh:targetClass  type:CompositeConstraint ;
-    rdfs:label      "CompositeConstraintShape" ;
-    sh:property [
-        sh:path type:composedFrom ;
-        sh:class type:Constraint ;
-    ] .
+    sh:targetClass  type:BoundShape ;
+    rdfs:label      "BoundShapeShape" .
 
-uor-sh:HammingConstraintShape
+uor-sh:ConjunctionShape
     a               sh:NodeShape ;
-    sh:targetClass  type:HammingConstraint ;
-    rdfs:label      "HammingConstraintShape" ;
+    sh:targetClass  type:Conjunction ;
+    rdfs:label      "ConjunctionShape" ;
     sh:property [
-        sh:path type:hammingBound ;
-        sh:minCount 1 ;
-        sh:maxCount 1 ;
-        sh:datatype xsd:nonNegativeInteger ;
-    ] .
-
-uor-sh:SiteConstraintShape
-    a               sh:NodeShape ;
-    sh:targetClass  type:SiteConstraint ;
-    rdfs:label      "SiteConstraintShape" ;
-    sh:property [
-        sh:path type:siteIndex ;
-        sh:minCount 1 ;
-        sh:maxCount 1 ;
-        sh:datatype xsd:nonNegativeInteger ;
-    ] ;
-    sh:property [
-        sh:path type:siteValue ;
-        sh:minCount 1 ;
-        sh:maxCount 1 ;
-        sh:class schema:Datum ;
-    ] .
-
-uor-sh:AffineConstraintShape
-    a               sh:NodeShape ;
-    sh:targetClass  type:AffineConstraint ;
-    rdfs:label      "AffineConstraintShape" ;
-    sh:property [
-        sh:path type:affineOffset ;
-        sh:minCount 1 ;
-        sh:maxCount 1 ;
-        sh:class schema:Datum ;
-    ] ;
-    sh:property [
-        sh:path type:affineGenerator ;
-        sh:class schema:Datum ;
+        sh:path type:conjuncts ;
+        sh:class type:BoundConstraint ;
     ] .
 
 uor-sh:MetricAxisShape
@@ -2060,6 +2004,12 @@ uor-sh:SiteBindingShape
         sh:class partition:SiteIndex ;
     ] .
 
+# v0.2.2 Phase D (Q4) — observable backing siteConstraintKind.
+uor-sh:FreeRankObservableShape
+    a               sh:NodeShape ;
+    sh:targetClass  partition:FreeRankObservable ;
+    rdfs:label      "FreeRankObservableShape" .
+
 uor-sh:PartitionProductShape
     a               sh:NodeShape ;
     sh:targetClass  partition:PartitionProduct ;
@@ -2198,6 +2148,12 @@ uor-sh:IncompatibilityMetricShape
     a               sh:NodeShape ;
     sh:targetClass  observable:IncompatibilityMetric ;
     rdfs:label      "IncompatibilityMetricShape" .
+
+# v0.2.2 Phase D (Q4) — observable for BoundConstraint value-mod residue/affine kinds.
+uor-sh:ValueModObservableShape
+    a               sh:NodeShape ;
+    sh:targetClass  observable:ValueModObservable ;
+    rdfs:label      "ValueModObservableShape" .
 
 uor-sh:StratumValueShape
     a               sh:NodeShape ;
@@ -2684,6 +2640,12 @@ uor-sh:EulerCharacteristicObservableShape
     ] .
 
 # ── carry/ namespace (5) ─────────────────────────
+
+# v0.2.2 Phase D (Q4) — observable backing carryConstraintKind.
+uor-sh:CarryDepthObservableShape
+    a               sh:NodeShape ;
+    sh:targetClass  carry:CarryDepthObservable ;
+    rdfs:label      "CarryDepthObservableShape" .
 
 uor-sh:CarryChainShape
     a               sh:NodeShape ;
@@ -3428,6 +3390,12 @@ uor-sh:InhabitanceImpossibilityWitnessShape
     ] .
 
 # ── derivation/ namespace (10) ────────────────────
+
+# v0.2.2 Phase D (Q4) — observable backing depthConstraintKind.
+uor-sh:DerivationDepthObservableShape
+    a               sh:NodeShape ;
+    sh:targetClass  derivation:DerivationDepthObservable ;
+    rdfs:label      "DerivationDepthObservableShape" .
 
 uor-sh:DerivationShape
     a               sh:NodeShape ;

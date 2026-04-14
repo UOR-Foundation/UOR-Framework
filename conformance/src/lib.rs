@@ -96,6 +96,10 @@ pub fn run_all(paths: &WorkspacePaths) -> anyhow::Result<ConformanceReport> {
     report.extend(validators::rust::multiplication_resolver::validate(
         &paths.workspace,
     )?);
+    // v0.2.2 Phase D (Q4): parametric constraint surface check.
+    report.extend(validators::rust::parametric_constraints::validate(
+        &paths.workspace,
+    )?);
 
     // 2. Ontology inventory
     report.extend(validators::ontology::inventory::validate(&paths.artifacts)?);

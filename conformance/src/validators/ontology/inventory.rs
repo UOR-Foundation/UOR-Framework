@@ -5162,6 +5162,12 @@ fn validate_legitimate_string_properties_only(report: &mut ConformanceReport) {
         // v0.2.1: PipelineFailure variant-field metadata
         "https://uor.foundation/reduction/fieldName",
         "https://uor.foundation/reduction/fieldType",
+        // v0.2.2 Phase D (Q4): BoundConstraint boundArguments carries
+        // the kind-specific parameters in canonical string form
+        // ("modulus=256;residue=0", "bound=0", etc.). String is the
+        // canonical serialization; typed accessors on the Rust side
+        // unpack via per-type-alias constructors.
+        "https://uor.foundation/type/boundArguments",
     ]
     .into_iter()
     .collect();
@@ -5346,12 +5352,19 @@ fn validate_constraint_completion(report: &mut ConformanceReport) {
     let ns = ontology.find_namespace("type");
     match ns {
         Some(m) => {
-            let new_classes = [
-                "https://uor.foundation/type/HammingConstraint",
-                "https://uor.foundation/type/SiteConstraint",
-                "https://uor.foundation/type/AffineConstraint",
+            // v0.2.2 Phase D: the 7 enumerated Constraint subclasses from
+            // Amendment 95 (Workstream 3) were folded into the parametric
+            // BoundConstraint<O, B> + Conjunction surface. The check moved
+            // from "the 3 Workstream 3 subclasses exist" to "the parametric
+            // classes, their 4 backing properties, and the 11 former
+            // subclass properties (re-parented to BoundConstraint /
+            // Conjunction) are all present".
+            let parametric_classes = [
+                "https://uor.foundation/type/BoundConstraint",
+                "https://uor.foundation/type/BoundShape",
+                "https://uor.foundation/type/Conjunction",
             ];
-            let classes_ok = new_classes
+            let classes_ok = parametric_classes
                 .iter()
                 .all(|iri| m.classes.iter().any(|c| c.id == *iri));
             let new_props = [
@@ -5360,6 +5373,10 @@ fn validate_constraint_completion(report: &mut ConformanceReport) {
                 "https://uor.foundation/type/siteValue",
                 "https://uor.foundation/type/affineOffset",
                 "https://uor.foundation/type/affineGenerator",
+                "https://uor.foundation/type/boundObservable",
+                "https://uor.foundation/type/boundShape",
+                "https://uor.foundation/type/boundArguments",
+                "https://uor.foundation/type/conjuncts",
             ];
             let props_ok = new_props
                 .iter()
@@ -5371,7 +5388,9 @@ fn validate_constraint_completion(report: &mut ConformanceReport) {
             if classes_ok && props_ok && carry_ok {
                 report.push(TestResult::pass(
                     validator,
-                    "Constraint completion: 3 classes, 5 properties, carryPattern retyped",
+                    "Constraint completion (parametric): BoundConstraint + \
+                     BoundShape + Conjunction classes, 4 parametric + 5 \
+                     kind-specific properties, carryPattern retyped",
                 ));
             } else {
                 report.push(TestResult::fail(

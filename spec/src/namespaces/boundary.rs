@@ -204,7 +204,7 @@ fn properties() -> Vec<Property> {
             functional: true,
             required: false,
             domain: Some("https://uor.foundation/boundary/BoundaryProtocol"),
-            range: "https://uor.foundation/type/CompositeConstraint",
+            range: "https://uor.foundation/type/Conjunction",
         },
         Property {
             id: "https://uor.foundation/boundary/sessionBoundaries",

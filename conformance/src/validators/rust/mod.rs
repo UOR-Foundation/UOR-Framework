@@ -5,6 +5,7 @@
 
 pub mod api;
 pub mod multiplication_resolver;
+pub mod parametric_constraints;
 pub mod phantom_tag;
 pub mod public_api_snapshot;
 pub mod style;

@@ -134,6 +134,18 @@ fn classes() -> Vec<Class> {
             subclass_of: &["https://uor.foundation/derivation/SynthesisCheckpoint"],
             disjoint_with: &[],
         },
+        // v0.2.2 Phase D (Q4) — observable backing the depthConstraintKind
+        // BoundConstraint individual.
+        Class {
+            id: "https://uor.foundation/derivation/DerivationDepthObservable",
+            label: "DerivationDepthObservable",
+            comment: "Observes the derivation depth of a Datum, computed as \
+                      the maximum nesting level of derivation:RewriteStep \
+                      applications producing it. Used as the bound \
+                      observable for the depthConstraintKind BoundConstraint.",
+            subclass_of: &["https://uor.foundation/observable/Observable"],
+            disjoint_with: &[],
+        },
     ]
 }
 

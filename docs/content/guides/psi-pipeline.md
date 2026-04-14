@@ -69,11 +69,11 @@ To implement the psi pipeline:
 Consider three constraints on R_4 = Z/16Z with 4 sites (site 0 through
 site 3):
 
-- **C_1**: {@class https://uor.foundation/type/ResidueConstraint} (mod 2,
+- **C_1**: {@ind https://uor.foundation/type/residueConstraintKind} (mod 2,
   residue 1) — pins site 0
-- **C_2**: {@class https://uor.foundation/type/DepthConstraint} (depth 1–2)
+- **C_2**: {@ind https://uor.foundation/type/depthConstraintKind} (depth 1–2)
   — pins sites 0 and 1
-- **C_3**: {@class https://uor.foundation/type/CarryConstraint} (pattern
+- **C_3**: {@ind https://uor.foundation/type/carryConstraintKind} (pattern
   "10") — pins site 1
 
 **psi_1 — Nerve construction.** Test all constraint subsets for

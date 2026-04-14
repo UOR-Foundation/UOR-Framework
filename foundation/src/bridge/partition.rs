@@ -141,3 +141,6 @@ pub trait PartitionCoproduct<P: Primitives> {
     /// The right operand partition of this coproduct.
     fn right_summand(&self) -> &Self::Partition;
 }
+
+/// Observes the free-rank of the partition associated with a Datum's site context, recording the count of unbound sites at the moment of observation. Used as the bound observable for the siteConstraintKind BoundConstraint.
+pub trait FreeRankObservable<P: Primitives>: crate::bridge::observable::Observable<P> {}

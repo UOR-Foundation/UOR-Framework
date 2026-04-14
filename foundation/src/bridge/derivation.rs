@@ -116,6 +116,12 @@ pub trait InhabitanceCheckpoint<P: Primitives>: SynthesisCheckpoint<P> {
     fn checkpoint_index(&self) -> P::Integer;
 }
 
+/// Observes the derivation depth of a Datum, computed as the maximum nesting level of derivation:RewriteStep applications producing it. Used as the bound observable for the depthConstraintKind BoundConstraint.
+pub trait DerivationDepthObservable<P: Primitives>:
+    crate::bridge::observable::Observable<P>
+{
+}
+
 /// The rewrite rule applying the critical identity: neg(bnot(x)) → succ(x). Grounded in op:criticalIdentity.
 pub mod critical_identity_rule {
     /// `groundedIn` -> `criticalIdentity`

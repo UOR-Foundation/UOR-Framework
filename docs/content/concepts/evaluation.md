@@ -40,9 +40,9 @@ the evaluation resolver enumerates satisfying assignments:
 
 - Each {@class https://uor.foundation/partition/SiteIndex} corresponds to
   a Boolean variable
-- A {@class https://uor.foundation/type/ResidueConstraint} with modulus 2
+- A {@ind https://uor.foundation/type/residueConstraintKind} with modulus 2
   fixes a variable's value
-- A {@class https://uor.foundation/type/CompositeConstraint} represents a clause
+- A {@class https://uor.foundation/type/Conjunction} represents a clause
   over multiple variables
 - The {@class https://uor.foundation/partition/IrreducibleSet} of the resulting
   partition contains the satisfying assignments

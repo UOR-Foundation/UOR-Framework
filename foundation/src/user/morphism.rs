@@ -126,10 +126,10 @@ pub trait ProjectionMap<P: Primitives>: Transform<P> {
     type Frame: crate::user::state::Frame<P>;
     /// The active frame — shared with the grounding that produced the query. The shared-frame condition (Surface Symmetry Theorem) requires G and P to reference the same frame.
     fn projection_frame(&self) -> &Self::Frame;
-    /// Associated type for `CompositeConstraint`.
-    type CompositeConstraint: crate::user::type_::CompositeConstraint<P>;
+    /// Associated type for `Conjunction`.
+    type Conjunction: crate::user::type_::Conjunction<P>;
     /// Ordering constraint determining the output symbol sequence. Domain-specific: syntactic position (NLP), row-major scan (ARC), temporal sequence (music).
-    fn projection_order(&self) -> &Self::CompositeConstraint;
+    fn projection_order(&self) -> &Self::Conjunction;
     /// Completeness criterion: does projecting the grounded source address recover a symbol in the same type class as the input? True iff the shared-frame condition holds.
     fn round_trip_coherence(&self) -> P::Boolean;
     /// When outputClass is a sequence type, the OWL class of individual sequence elements. Uses OWL2 punning.

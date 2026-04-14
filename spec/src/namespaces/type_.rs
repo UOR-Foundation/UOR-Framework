@@ -107,114 +107,13 @@ fn classes() -> Vec<Class> {
                 "https://uor.foundation/type/MetricAxis",
             ],
         },
-        Class {
-            id: "https://uor.foundation/type/ResidueConstraint",
-            label: "ResidueConstraint",
-            comment: "A constraint based on residue class membership: x ≡ r (mod m). \
-                      Pins sites corresponding to the residue pattern.",
-            subclass_of: &["https://uor.foundation/type/Constraint"],
-            disjoint_with: &[
-                "https://uor.foundation/type/CarryConstraint",
-                "https://uor.foundation/type/DepthConstraint",
-                "https://uor.foundation/type/CompositeConstraint",
-                "https://uor.foundation/type/HammingConstraint",
-                "https://uor.foundation/type/SiteConstraint",
-                "https://uor.foundation/type/AffineConstraint",
-            ],
-        },
-        Class {
-            id: "https://uor.foundation/type/CarryConstraint",
-            label: "CarryConstraint",
-            comment: "A constraint based on carry propagation patterns in ring \
-                      arithmetic. Pins sites corresponding to carry positions.",
-            subclass_of: &["https://uor.foundation/type/Constraint"],
-            disjoint_with: &[
-                "https://uor.foundation/type/ResidueConstraint",
-                "https://uor.foundation/type/DepthConstraint",
-                "https://uor.foundation/type/CompositeConstraint",
-                "https://uor.foundation/type/HammingConstraint",
-                "https://uor.foundation/type/SiteConstraint",
-                "https://uor.foundation/type/AffineConstraint",
-            ],
-        },
-        Class {
-            id: "https://uor.foundation/type/DepthConstraint",
-            label: "DepthConstraint",
-            comment: "A constraint on factorization depth: the minimum and maximum \
-                      number of irreducible factors. Pins sites by bounding the \
-                      factorization tree depth.",
-            subclass_of: &["https://uor.foundation/type/Constraint"],
-            disjoint_with: &[
-                "https://uor.foundation/type/ResidueConstraint",
-                "https://uor.foundation/type/CarryConstraint",
-                "https://uor.foundation/type/CompositeConstraint",
-                "https://uor.foundation/type/HammingConstraint",
-                "https://uor.foundation/type/SiteConstraint",
-                "https://uor.foundation/type/AffineConstraint",
-            ],
-        },
-        Class {
-            id: "https://uor.foundation/type/CompositeConstraint",
-            label: "CompositeConstraint",
-            comment: "A constraint formed by composing two or more simpler \
-                      constraints. The composite pins the union of sites \
-                      pinned by its components.",
-            subclass_of: &["https://uor.foundation/type/Constraint"],
-            disjoint_with: &[
-                "https://uor.foundation/type/ResidueConstraint",
-                "https://uor.foundation/type/CarryConstraint",
-                "https://uor.foundation/type/DepthConstraint",
-                "https://uor.foundation/type/HammingConstraint",
-                "https://uor.foundation/type/SiteConstraint",
-                "https://uor.foundation/type/AffineConstraint",
-            ],
-        },
-        // Amendment 95: Constraint completion (Workstream 3)
-        Class {
-            id: "https://uor.foundation/type/HammingConstraint",
-            label: "HammingConstraint",
-            comment: "Pins the Hamming weight of the Datum to at most the bound. \
-                      The horizontal axis of the tri-metric.",
-            subclass_of: &["https://uor.foundation/type/Constraint"],
-            disjoint_with: &[
-                "https://uor.foundation/type/ResidueConstraint",
-                "https://uor.foundation/type/CarryConstraint",
-                "https://uor.foundation/type/DepthConstraint",
-                "https://uor.foundation/type/CompositeConstraint",
-                "https://uor.foundation/type/SiteConstraint",
-                "https://uor.foundation/type/AffineConstraint",
-            ],
-        },
-        Class {
-            id: "https://uor.foundation/type/SiteConstraint",
-            label: "SiteConstraint",
-            comment: "Pins a single site coordinate to 0 or 1. The atomic unit \
-                      of the site budget.",
-            subclass_of: &["https://uor.foundation/type/Constraint"],
-            disjoint_with: &[
-                "https://uor.foundation/type/ResidueConstraint",
-                "https://uor.foundation/type/CarryConstraint",
-                "https://uor.foundation/type/DepthConstraint",
-                "https://uor.foundation/type/CompositeConstraint",
-                "https://uor.foundation/type/HammingConstraint",
-                "https://uor.foundation/type/AffineConstraint",
-            ],
-        },
-        Class {
-            id: "https://uor.foundation/type/AffineConstraint",
-            label: "AffineConstraint",
-            comment: "Pins the Datum to an affine subspace specified by an offset \
-                      and a set of generators.",
-            subclass_of: &["https://uor.foundation/type/Constraint"],
-            disjoint_with: &[
-                "https://uor.foundation/type/ResidueConstraint",
-                "https://uor.foundation/type/CarryConstraint",
-                "https://uor.foundation/type/DepthConstraint",
-                "https://uor.foundation/type/CompositeConstraint",
-                "https://uor.foundation/type/HammingConstraint",
-                "https://uor.foundation/type/SiteConstraint",
-            ],
-        },
+        // v0.2.2 Phase D: the seven enumerated Constraint subclasses
+        // (ResidueConstraint, CarryConstraint, DepthConstraint,
+        // CompositeConstraint, HammingConstraint, SiteConstraint,
+        // AffineConstraint) have been deleted. Their semantics are preserved
+        // by the parametric `BoundConstraint<O: Observable, B: BoundShape>`
+        // + `Conjunction<N>` surface declared below; the Rust codegen emits
+        // the legacy names as type aliases over the parametric carrier.
         Class {
             id: "https://uor.foundation/type/MetricAxis",
             label: "MetricAxis",
@@ -503,6 +402,46 @@ fn classes() -> Vec<Class> {
             subclass_of: &[OWL_THING],
             disjoint_with: &[],
         },
+        // v0.2.2 Phase D (Q4) — parametric constraint surface.
+        Class {
+            id: "https://uor.foundation/type/BoundConstraint",
+            label: "BoundConstraint",
+            comment: "Parametric constraint carrier consumed by the codegen to \
+                      emit `BoundConstraint<O: Observable, B: BoundShape>` in \
+                      the Rust foundation. The (observable, bound_shape) pair \
+                      picks the predicate form; the typed datatype properties \
+                      (modulus, residue, hammingBound, ...) carry the \
+                      parameters for that specific kind. Replaces the seven \
+                      v0.2.1 enumerated Constraint subclasses with a \
+                      parametric form; the legacy names survive as Rust type \
+                      aliases (ResidueConstraint, HammingConstraint, ...).",
+            subclass_of: &["https://uor.foundation/type/Constraint"],
+            disjoint_with: &[],
+        },
+        Class {
+            id: "https://uor.foundation/type/BoundShape",
+            label: "BoundShape",
+            comment: "The predicate form a BoundConstraint imposes on its \
+                      bound observable. Closed enumeration with exactly six \
+                      named individuals (EqualBound, LessEqBound, \
+                      GreaterEqBound, RangeContainBound, ResidueClassBound, \
+                      AffineEqualBound). Adding a new bound shape is an \
+                      ontology+grammar+codegen edit on the same protocol as \
+                      adding a Witt level.",
+            subclass_of: &[OWL_THING],
+            disjoint_with: &[],
+        },
+        Class {
+            id: "https://uor.foundation/type/Conjunction",
+            label: "Conjunction",
+            comment: "A conjunction of BoundConstraint instances. The \
+                      conjuncts property is ordered. Replaces the v0.2.1 \
+                      CompositeConstraint enumeration; the legacy name \
+                      survives as a Rust type alias \
+                      (CompositeConstraint<const N: usize> = Conjunction<N>).",
+            subclass_of: &["https://uor.foundation/type/Constraint"],
+            disjoint_with: &[],
+        },
     ]
 }
 
@@ -569,7 +508,7 @@ fn properties() -> Vec<Property> {
             kind: PropertyKind::Datatype,
             functional: true,
             required: false,
-            domain: Some("https://uor.foundation/type/ResidueConstraint"),
+            domain: Some("https://uor.foundation/type/BoundConstraint"),
             range: XSD_POSITIVE_INTEGER,
         },
         Property {
@@ -579,7 +518,7 @@ fn properties() -> Vec<Property> {
             kind: PropertyKind::Datatype,
             functional: true,
             required: false,
-            domain: Some("https://uor.foundation/type/ResidueConstraint"),
+            domain: Some("https://uor.foundation/type/BoundConstraint"),
             range: XSD_NON_NEGATIVE_INTEGER,
         },
         Property {
@@ -590,7 +529,7 @@ fn properties() -> Vec<Property> {
             kind: PropertyKind::Object,
             functional: true,
             required: false,
-            domain: Some("https://uor.foundation/type/CarryConstraint"),
+            domain: Some("https://uor.foundation/type/BoundConstraint"),
             range: "https://uor.foundation/schema/Datum",
         },
         Property {
@@ -601,7 +540,7 @@ fn properties() -> Vec<Property> {
             kind: PropertyKind::Datatype,
             functional: true,
             required: false,
-            domain: Some("https://uor.foundation/type/DepthConstraint"),
+            domain: Some("https://uor.foundation/type/BoundConstraint"),
             range: XSD_NON_NEGATIVE_INTEGER,
         },
         Property {
@@ -612,7 +551,7 @@ fn properties() -> Vec<Property> {
             kind: PropertyKind::Datatype,
             functional: true,
             required: false,
-            domain: Some("https://uor.foundation/type/DepthConstraint"),
+            domain: Some("https://uor.foundation/type/BoundConstraint"),
             range: XSD_NON_NEGATIVE_INTEGER,
         },
         Property {
@@ -622,7 +561,7 @@ fn properties() -> Vec<Property> {
             kind: PropertyKind::Object,
             functional: false,
             required: false,
-            domain: Some("https://uor.foundation/type/CompositeConstraint"),
+            domain: Some("https://uor.foundation/type/Conjunction"),
             range: "https://uor.foundation/type/Constraint",
         },
         // Amendment 95: Constraint completion properties (Workstream 3)
@@ -633,7 +572,7 @@ fn properties() -> Vec<Property> {
             kind: PropertyKind::Datatype,
             functional: true,
             required: false,
-            domain: Some("https://uor.foundation/type/HammingConstraint"),
+            domain: Some("https://uor.foundation/type/BoundConstraint"),
             range: XSD_NON_NEGATIVE_INTEGER,
         },
         Property {
@@ -643,7 +582,7 @@ fn properties() -> Vec<Property> {
             kind: PropertyKind::Datatype,
             functional: true,
             required: false,
-            domain: Some("https://uor.foundation/type/SiteConstraint"),
+            domain: Some("https://uor.foundation/type/BoundConstraint"),
             range: XSD_NON_NEGATIVE_INTEGER,
         },
         Property {
@@ -654,7 +593,7 @@ fn properties() -> Vec<Property> {
             kind: PropertyKind::Object,
             functional: true,
             required: false,
-            domain: Some("https://uor.foundation/type/SiteConstraint"),
+            domain: Some("https://uor.foundation/type/BoundConstraint"),
             range: "https://uor.foundation/schema/Datum",
         },
         Property {
@@ -664,7 +603,7 @@ fn properties() -> Vec<Property> {
             kind: PropertyKind::Object,
             functional: true,
             required: false,
-            domain: Some("https://uor.foundation/type/AffineConstraint"),
+            domain: Some("https://uor.foundation/type/BoundConstraint"),
             range: "https://uor.foundation/schema/Datum",
         },
         Property {
@@ -675,7 +614,7 @@ fn properties() -> Vec<Property> {
             kind: PropertyKind::Object,
             functional: false,
             required: false,
-            domain: Some("https://uor.foundation/type/AffineConstraint"),
+            domain: Some("https://uor.foundation/type/BoundConstraint"),
             range: "https://uor.foundation/schema/Datum",
         },
         Property {
@@ -1452,6 +1391,58 @@ fn properties() -> Vec<Property> {
             domain: Some("https://uor.foundation/type/ConstraintDefaults"),
             range: XSD_INTEGER,
         },
+        // v0.2.2 Phase D (Q4) — parametric constraint surface.
+        Property {
+            id: "https://uor.foundation/type/boundObservable",
+            label: "boundObservable",
+            comment: "The observable:Observable whose values this BoundConstraint \
+                      bounds. Picks which datum projection is being constrained.",
+            kind: PropertyKind::Object,
+            functional: true,
+            required: false,
+            domain: Some("https://uor.foundation/type/BoundConstraint"),
+            range: "https://uor.foundation/observable/Observable",
+        },
+        Property {
+            id: "https://uor.foundation/type/boundShape",
+            label: "boundShape",
+            comment: "The predicate form this BoundConstraint imposes on its \
+                      bound observable. Closed enumeration with exactly six \
+                      named individuals (EqualBound, LessEqBound, \
+                      GreaterEqBound, RangeContainBound, ResidueClassBound, \
+                      AffineEqualBound).",
+            kind: PropertyKind::Object,
+            functional: true,
+            required: false,
+            domain: Some("https://uor.foundation/type/BoundConstraint"),
+            range: "https://uor.foundation/type/BoundShape",
+        },
+        Property {
+            id: "https://uor.foundation/type/boundArguments",
+            label: "boundArguments",
+            comment: "The BoundConstraint's parameters in canonical string form \
+                      (e.g., 'modulus=256;residue=255' for a residue class bound). \
+                      Non-functional — the string-form encoding is the canonical \
+                      serialization; typed accessors on the Rust side unpack it \
+                      via the per-type-alias constructors.",
+            kind: PropertyKind::Datatype,
+            functional: true,
+            required: false,
+            domain: Some("https://uor.foundation/type/BoundConstraint"),
+            range: XSD_STRING,
+        },
+        Property {
+            id: "https://uor.foundation/type/conjuncts",
+            label: "conjuncts",
+            comment: "An ordered list of BoundConstraint individuals that this \
+                      Conjunction composes. Non-functional — multiple conjuncts \
+                      span the conjunction.",
+            kind: PropertyKind::Object,
+            functional: false,
+            required: false,
+            domain: Some("https://uor.foundation/type/Conjunction"),
+            range: "https://uor.foundation/type/BoundConstraint",
+        },
     ]
 }
 
@@ -1716,6 +1707,207 @@ fn individuals() -> Vec<Individual> {
                 "https://uor.foundation/type/defaultValue",
                 IndividualValue::Int(256),
             )],
+        },
+        // ─────────────────────────────────────────────────────────────────
+        // v0.2.2 Phase D — BoundShape individuals (closed catalogue of 6).
+        // ─────────────────────────────────────────────────────────────────
+        Individual {
+            id: "https://uor.foundation/type/EqualBound",
+            type_: "https://uor.foundation/type/BoundShape",
+            label: "EqualBound",
+            comment: "Predicate form: `observable(datum) == target`. Used by \
+                      BoundConstraint instances asserting strict equality of a \
+                      datum's observable projection to a target value.",
+            properties: &[],
+        },
+        Individual {
+            id: "https://uor.foundation/type/LessEqBound",
+            type_: "https://uor.foundation/type/BoundShape",
+            label: "LessEqBound",
+            comment: "Predicate form: `observable(datum) <= bound`. Used by \
+                      hamming, depth, carry, and site-rank bound constraints.",
+            properties: &[],
+        },
+        Individual {
+            id: "https://uor.foundation/type/GreaterEqBound",
+            type_: "https://uor.foundation/type/BoundShape",
+            label: "GreaterEqBound",
+            comment: "Predicate form: `observable(datum) >= bound`.",
+            properties: &[],
+        },
+        Individual {
+            id: "https://uor.foundation/type/RangeContainBound",
+            type_: "https://uor.foundation/type/BoundShape",
+            label: "RangeContainBound",
+            comment: "Predicate form: `lo <= observable(datum) <= hi`. The \
+                      datum's observable projection must lie within the \
+                      inclusive range `[lo, hi]`.",
+            properties: &[],
+        },
+        Individual {
+            id: "https://uor.foundation/type/ResidueClassBound",
+            type_: "https://uor.foundation/type/BoundShape",
+            label: "ResidueClassBound",
+            comment: "Predicate form: `observable(datum) ≡ residue (mod modulus)`. \
+                      Used by BoundConstraint instances asserting residue-class \
+                      membership.",
+            properties: &[],
+        },
+        Individual {
+            id: "https://uor.foundation/type/AffineEqualBound",
+            type_: "https://uor.foundation/type/BoundShape",
+            label: "AffineEqualBound",
+            comment: "Predicate form: `observable(datum) == offset + Σ αᵢ·generatorᵢ`. \
+                      The datum's observable projection must equal an affine \
+                      combination of the BoundConstraint's affine generators.",
+            properties: &[],
+        },
+        // ─────────────────────────────────────────────────────────────────
+        // v0.2.2 Phase D — BoundConstraint kind individuals (6 catalogued
+        // (observable, shape) pairs replacing the v0.2.1 enumerated
+        // subclasses).
+        // ─────────────────────────────────────────────────────────────────
+        Individual {
+            id: "https://uor.foundation/type/residueConstraintKind",
+            type_: "https://uor.foundation/type/BoundConstraint",
+            label: "residueConstraintKind",
+            comment: "Parametric replacement for the v0.2.1 ResidueConstraint \
+                      class: (observable:ValueModObservable, \
+                      type:ResidueClassBound). The Rust foundation exposes \
+                      this kind via the `ResidueConstraint` type alias with \
+                      `pub const fn new(modulus, residue)`.",
+            properties: &[
+                (
+                    "https://uor.foundation/type/boundObservable",
+                    IndividualValue::IriRef(
+                        "https://uor.foundation/observable/ValueModObservable",
+                    ),
+                ),
+                (
+                    "https://uor.foundation/type/boundShape",
+                    IndividualValue::IriRef("https://uor.foundation/type/ResidueClassBound"),
+                ),
+                (
+                    "https://uor.foundation/type/boundArguments",
+                    IndividualValue::Str("modulus=256;residue=0"),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/type/hammingConstraintKind",
+            type_: "https://uor.foundation/type/BoundConstraint",
+            label: "hammingConstraintKind",
+            comment: "Parametric replacement for the v0.2.1 HammingConstraint \
+                      class: (observable:HammingMetric, type:LessEqBound). The \
+                      Rust foundation exposes this kind via the \
+                      `HammingConstraint` type alias with \
+                      `pub const fn new(bound)`.",
+            properties: &[
+                (
+                    "https://uor.foundation/type/boundObservable",
+                    IndividualValue::IriRef("https://uor.foundation/observable/HammingMetric"),
+                ),
+                (
+                    "https://uor.foundation/type/boundShape",
+                    IndividualValue::IriRef("https://uor.foundation/type/LessEqBound"),
+                ),
+                (
+                    "https://uor.foundation/type/boundArguments",
+                    IndividualValue::Str("bound=0"),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/type/depthConstraintKind",
+            type_: "https://uor.foundation/type/BoundConstraint",
+            label: "depthConstraintKind",
+            comment: "Parametric replacement for the v0.2.1 DepthConstraint \
+                      class: (derivation:DerivationDepthObservable, \
+                      type:LessEqBound).",
+            properties: &[
+                (
+                    "https://uor.foundation/type/boundObservable",
+                    IndividualValue::IriRef(
+                        "https://uor.foundation/derivation/DerivationDepthObservable",
+                    ),
+                ),
+                (
+                    "https://uor.foundation/type/boundShape",
+                    IndividualValue::IriRef("https://uor.foundation/type/LessEqBound"),
+                ),
+                (
+                    "https://uor.foundation/type/boundArguments",
+                    IndividualValue::Str("min_depth=0;max_depth=0"),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/type/carryConstraintKind",
+            type_: "https://uor.foundation/type/BoundConstraint",
+            label: "carryConstraintKind",
+            comment: "Parametric replacement for the v0.2.1 CarryConstraint \
+                      class: (carry:CarryDepthObservable, type:LessEqBound).",
+            properties: &[
+                (
+                    "https://uor.foundation/type/boundObservable",
+                    IndividualValue::IriRef("https://uor.foundation/carry/CarryDepthObservable"),
+                ),
+                (
+                    "https://uor.foundation/type/boundShape",
+                    IndividualValue::IriRef("https://uor.foundation/type/LessEqBound"),
+                ),
+                (
+                    "https://uor.foundation/type/boundArguments",
+                    IndividualValue::Str("bound=0"),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/type/siteConstraintKind",
+            type_: "https://uor.foundation/type/BoundConstraint",
+            label: "siteConstraintKind",
+            comment: "Parametric replacement for the v0.2.1 SiteConstraint \
+                      class: (partition:FreeRankObservable, type:LessEqBound).",
+            properties: &[
+                (
+                    "https://uor.foundation/type/boundObservable",
+                    IndividualValue::IriRef(
+                        "https://uor.foundation/partition/FreeRankObservable",
+                    ),
+                ),
+                (
+                    "https://uor.foundation/type/boundShape",
+                    IndividualValue::IriRef("https://uor.foundation/type/LessEqBound"),
+                ),
+                (
+                    "https://uor.foundation/type/boundArguments",
+                    IndividualValue::Str("site_index=0"),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/type/affineConstraintKind",
+            type_: "https://uor.foundation/type/BoundConstraint",
+            label: "affineConstraintKind",
+            comment: "Parametric replacement for the v0.2.1 AffineConstraint \
+                      class: (observable:ValueModObservable, \
+                      type:AffineEqualBound).",
+            properties: &[
+                (
+                    "https://uor.foundation/type/boundObservable",
+                    IndividualValue::IriRef(
+                        "https://uor.foundation/observable/ValueModObservable",
+                    ),
+                ),
+                (
+                    "https://uor.foundation/type/boundShape",
+                    IndividualValue::IriRef("https://uor.foundation/type/AffineEqualBound"),
+                ),
+                (
+                    "https://uor.foundation/type/boundArguments",
+                    IndividualValue::Str("offset=0"),
+                ),
+            ],
         },
     ]
 }

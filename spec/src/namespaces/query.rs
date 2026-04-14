@@ -166,10 +166,11 @@ fn properties() -> Vec<Property> {
         Property {
             id: "https://uor.foundation/query/relationType",
             label: "relationType",
-            comment: "The transformation type, expressed as a type:CompositeConstraint composed \
-                      from the primitive basis. At inference time this is the output of an observable \
-                      coordinate read on example pairs — computed from (d_R, d_H, d_I). Not an \
-                      externally supplied input; read from the representation space.",
+            comment: "The transformation type, expressed as a type:Conjunction composed \
+                      from the primitive BoundConstraint basis. At inference time this is the \
+                      output of an observable coordinate read on example pairs — computed from \
+                      (d_R, d_H, d_I). Not an externally supplied input; read from the \
+                      representation space.",
             kind: PropertyKind::Object,
             functional: true,
             required: false,

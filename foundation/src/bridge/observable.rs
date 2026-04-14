@@ -61,6 +61,9 @@ pub trait HammingMetric<P: Primitives>: MetricObservable<P> {}
 /// The metric incompatibility between two ring elements: the divergence between their ring-metric and Hamming-metric distances, measuring geometric curvature.
 pub trait IncompatibilityMetric<P: Primitives>: MetricObservable<P> {}
 
+/// Observes a Datum's value modulo a configurable modulus. Used as the bound observable for BoundConstraint instances representing residue and affine constraint kinds (residueConstraintKind, affineConstraintKind).
+pub trait ValueModObservable<P: Primitives>: MetricObservable<P> {}
+
 /// The stratum index of a ring element.
 pub trait StratumValue<P: Primitives>: StratumObservable<P> {}
 

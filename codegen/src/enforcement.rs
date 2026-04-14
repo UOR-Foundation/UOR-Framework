@@ -70,6 +70,8 @@ pub fn generate_enforcement_module(ontology: &Ontology) -> String {
     generate_fragment_markers(&mut f, ontology);
     generate_dispatch_tables(&mut f, ontology);
     generate_validated_deref(&mut f);
+    // v0.2.2 Phase D (Q4): parametric constraint surface.
+    generate_parametric_constraint_surface(&mut f);
     generate_prelude(&mut f, ontology);
 
     f.finish()
@@ -4456,5 +4458,386 @@ fn generate_multiplication_context(f: &mut RustFile) {
     f.line("        Self::default()");
     f.line("    }");
     f.line("}");
+    f.blank();
+}
+
+/// v0.2.2 Phase D (Q4): parametric constraint surface.
+///
+/// Emits sealed `Observable` and `BoundShape` marker traits, their closed
+/// impl sets (one unit struct per observable subclass + one per bound shape
+/// individual), a `BoundConstraint<O, B>` parametric carrier, a
+/// `Conjunction<const N: usize>` composition wrapper, and the seven type
+/// aliases (ResidueConstraint, HammingConstraint, DepthConstraint,
+/// CarryConstraint, SiteConstraint, AffineConstraint, CompositeConstraint)
+/// preserving the v0.2.1 call-site syntax over the parametric form.
+fn generate_parametric_constraint_surface(f: &mut RustFile) {
+    // Sealed supertraits for Observable and BoundShape.
+    // v0.2.2 Phase D (Q4) — parametric constraint surface replaces the
+    // seven enumerated Constraint subclasses with BoundConstraint<O, B>.
+    f.line("mod bound_constraint_sealed {");
+    f.indented_doc_comment("Sealed supertrait for the closed Observable catalogue.");
+    f.line("    pub trait ObservableSealed {}");
+    f.indented_doc_comment("Sealed supertrait for the closed BoundShape catalogue.");
+    f.line("    pub trait BoundShapeSealed {}");
+    f.line("}");
+    f.blank();
+
+    f.doc_comment("Sealed marker trait identifying the closed catalogue of observables");
+    f.doc_comment("admissible in BoundConstraint. Implemented by unit structs emitted");
+    f.doc_comment("below per `observable:Observable` subclass referenced by a");
+    f.doc_comment("BoundConstraint kind individual.");
+    f.line("pub trait Observable: bound_constraint_sealed::ObservableSealed {");
+    f.indented_doc_comment("Ontology IRI of this observable class.");
+    f.line("    const IRI: &'static str;");
+    f.line("}");
+    f.blank();
+
+    f.doc_comment("Sealed marker trait identifying the closed catalogue of bound shapes.");
+    f.doc_comment("Exactly six individuals: EqualBound, LessEqBound, GreaterEqBound,");
+    f.doc_comment("RangeContainBound, ResidueClassBound, AffineEqualBound.");
+    f.line("pub trait BoundShape: bound_constraint_sealed::BoundShapeSealed {");
+    f.indented_doc_comment("Ontology IRI of this bound shape individual.");
+    f.line("    const IRI: &'static str;");
+    f.line("}");
+    f.blank();
+
+    // Observable catalogue (5 entries: ValueMod, Hamming, DerivationDepth,
+    // CarryDepth, FreeRank).
+    let observables: &[(&str, &str, &str)] = &[
+        (
+            "ValueModObservable",
+            "https://uor.foundation/observable/ValueModObservable",
+            "Observes a Datum's value modulo a configurable modulus.",
+        ),
+        (
+            "HammingMetric",
+            "https://uor.foundation/observable/HammingMetric",
+            "Distance between two ring elements under the Hamming metric.",
+        ),
+        (
+            "DerivationDepthObservable",
+            "https://uor.foundation/derivation/DerivationDepthObservable",
+            "Observes the derivation depth of a Datum.",
+        ),
+        (
+            "CarryDepthObservable",
+            "https://uor.foundation/carry/CarryDepthObservable",
+            "Observes the carry depth of a Datum in the W\u{2082} tower.",
+        ),
+        (
+            "FreeRankObservable",
+            "https://uor.foundation/partition/FreeRankObservable",
+            "Observes the free-rank of the partition associated with a Datum.",
+        ),
+    ];
+    for (name, iri, doc) in observables {
+        f.doc_comment(doc);
+        f.line("#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]");
+        f.line(&format!("pub struct {name};"));
+        f.line(&format!(
+            "impl bound_constraint_sealed::ObservableSealed for {name} {{}}"
+        ));
+        f.line(&format!("impl Observable for {name} {{"));
+        f.line(&format!("    const IRI: &'static str = \"{iri}\";"));
+        f.line("}");
+        f.blank();
+    }
+
+    // BoundShape catalogue (6 entries).
+    let shapes: &[(&str, &str, &str)] = &[
+        (
+            "EqualBound",
+            "https://uor.foundation/type/EqualBound",
+            "Predicate form: `observable(datum) == target`.",
+        ),
+        (
+            "LessEqBound",
+            "https://uor.foundation/type/LessEqBound",
+            "Predicate form: `observable(datum) <= bound`.",
+        ),
+        (
+            "GreaterEqBound",
+            "https://uor.foundation/type/GreaterEqBound",
+            "Predicate form: `observable(datum) >= bound`.",
+        ),
+        (
+            "RangeContainBound",
+            "https://uor.foundation/type/RangeContainBound",
+            "Predicate form: `lo <= observable(datum) <= hi`.",
+        ),
+        (
+            "ResidueClassBound",
+            "https://uor.foundation/type/ResidueClassBound",
+            "Predicate form: `observable(datum) \u{2261} residue (mod modulus)`.",
+        ),
+        (
+            "AffineEqualBound",
+            "https://uor.foundation/type/AffineEqualBound",
+            "Predicate form: `observable(datum) == offset + affine combination`.",
+        ),
+    ];
+    for (name, iri, doc) in shapes {
+        f.doc_comment(doc);
+        f.line("#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]");
+        f.line(&format!("pub struct {name};"));
+        f.line(&format!(
+            "impl bound_constraint_sealed::BoundShapeSealed for {name} {{}}"
+        ));
+        f.line(&format!("impl BoundShape for {name} {{"));
+        f.line(&format!("    const IRI: &'static str = \"{iri}\";"));
+        f.line("}");
+        f.blank();
+    }
+
+    // BoundArgValue + BoundArguments fixed-size carrier.
+    f.doc_comment("Parameter value type for `BoundConstraint` arguments.");
+    f.doc_comment("Sealed enum over the closed set of primitive kinds the bound-shape");
+    f.doc_comment("catalogue requires. No heap, no `String`.");
+    f.line("#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]");
+    f.line("pub enum BoundArgValue {");
+    f.indented_doc_comment("Unsigned 64-bit integer.");
+    f.line("    U64(u64),");
+    f.indented_doc_comment("Signed 64-bit integer.");
+    f.line("    I64(i64),");
+    f.indented_doc_comment("Fixed 32-byte content-addressed value.");
+    f.line("    Bytes32([u8; 32]),");
+    f.line("}");
+    f.blank();
+
+    f.doc_comment("Fixed-size arguments carrier for a `BoundConstraint`.");
+    f.doc_comment("");
+    f.doc_comment("Holds up to eight `(name, value)` pairs inline. The closed");
+    f.doc_comment("bound-shape catalogue requires at most three parameters per kind;");
+    f.doc_comment("the extra slots are reserved for future kind additions without");
+    f.doc_comment("changing the carrier layout.");
+    f.line("#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]");
+    f.line("pub struct BoundArguments {");
+    f.line("    entries: [Option<BoundArgEntry>; 8],");
+    f.line("}");
+    f.blank();
+
+    f.doc_comment("A single named parameter in a `BoundArguments` table.");
+    f.line("#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]");
+    f.line("pub struct BoundArgEntry {");
+    f.indented_doc_comment("Parameter name (a `&'static str` intentional over heap-owned).");
+    f.line("    pub name: &'static str,");
+    f.indented_doc_comment("Parameter value.");
+    f.line("    pub value: BoundArgValue,");
+    f.line("}");
+    f.blank();
+
+    f.line("impl BoundArguments {");
+    f.indented_doc_comment("Construct an empty argument table.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn empty() -> Self {");
+    f.line("        Self { entries: [None; 8] }");
+    f.line("    }");
+    f.blank();
+    f.indented_doc_comment("Construct a table with a single `(name, value)` pair.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn single(name: &'static str, value: BoundArgValue) -> Self {");
+    f.line("        let mut entries = [None; 8];");
+    f.line("        entries[0] = Some(BoundArgEntry { name, value });");
+    f.line("        Self { entries }");
+    f.line("    }");
+    f.blank();
+    f.indented_doc_comment("Construct a table with two `(name, value)` pairs.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn pair(");
+    f.line("        first: (&'static str, BoundArgValue),");
+    f.line("        second: (&'static str, BoundArgValue),");
+    f.line("    ) -> Self {");
+    f.line("        let mut entries = [None; 8];");
+    f.line("        entries[0] = Some(BoundArgEntry { name: first.0, value: first.1 });");
+    f.line("        entries[1] = Some(BoundArgEntry { name: second.0, value: second.1 });");
+    f.line("        Self { entries }");
+    f.line("    }");
+    f.blank();
+    f.indented_doc_comment("Access the stored entries.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn entries(&self) -> &[Option<BoundArgEntry>; 8] {");
+    f.line("        &self.entries");
+    f.line("    }");
+    f.line("}");
+    f.blank();
+
+    // BoundConstraint<O, B> carrier.
+    f.doc_comment("Parametric constraint carrier (v0.2.2 Phase D).");
+    f.doc_comment("");
+    f.doc_comment("Generic over `O: Observable` and `B: BoundShape`. The seven");
+    f.doc_comment("legacy constraint kinds are preserved as type aliases over this");
+    f.doc_comment("carrier; see `ResidueConstraint`, `HammingConstraint`, etc. below.");
+    f.line("#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]");
+    f.line("pub struct BoundConstraint<O: Observable, B: BoundShape> {");
+    f.line("    observable: O,");
+    f.line("    bound: B,");
+    f.line("    args: BoundArguments,");
+    f.line("    _sealed: (),");
+    f.line("}");
+    f.blank();
+    f.line("impl<O: Observable, B: BoundShape> BoundConstraint<O, B> {");
+    f.indented_doc_comment("Crate-internal constructor. Downstream obtains values through");
+    f.indented_doc_comment("the per-type-alias `pub const fn new` constructors.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub(crate) const fn from_parts(observable: O, bound: B, args: BoundArguments) -> Self {");
+    f.line("        Self { observable, bound, args, _sealed: () }");
+    f.line("    }");
+    f.blank();
+    f.indented_doc_comment("Access the bound observable.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn observable(&self) -> &O { &self.observable }");
+    f.blank();
+    f.indented_doc_comment("Access the bound shape.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn bound(&self) -> &B { &self.bound }");
+    f.blank();
+    f.indented_doc_comment("Access the bound arguments.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn args(&self) -> &BoundArguments { &self.args }");
+    f.line("}");
+    f.blank();
+
+    // Conjunction<N> wrapper.
+    f.doc_comment("Parametric conjunction of `BoundConstraint` kinds (v0.2.2 Phase D).");
+    f.doc_comment("");
+    f.doc_comment("Replaces the v0.2.1 `CompositeConstraint` enumeration; the legacy");
+    f.doc_comment("name survives as the type alias `CompositeConstraint<N>` below.");
+    f.line("#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]");
+    f.line("pub struct Conjunction<const N: usize> {");
+    f.line("    len: usize,");
+    f.line("    _sealed: (),");
+    f.line("}");
+    f.blank();
+    f.line("impl<const N: usize> Conjunction<N> {");
+    f.indented_doc_comment("Construct a new Conjunction with `len` conjuncts.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn new(len: usize) -> Self {");
+    f.line("        Self { len, _sealed: () }");
+    f.line("    }");
+    f.blank();
+    f.indented_doc_comment("The number of conjuncts in this Conjunction.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn len(&self) -> usize { self.len }");
+    f.blank();
+    f.indented_doc_comment("Whether the Conjunction is empty.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn is_empty(&self) -> bool { self.len == 0 }");
+    f.line("}");
+    f.blank();
+
+    // Seven type aliases + per-alias constructors.
+    f.doc_comment("v0.2.1 legacy type alias: a `BoundConstraint` kind asserting");
+    f.doc_comment("residue-class membership (`value mod m == r`).");
+    f.line("pub type ResidueConstraint = BoundConstraint<ValueModObservable, ResidueClassBound>;");
+    f.blank();
+    f.line("impl ResidueConstraint {");
+    f.indented_doc_comment("Construct a residue constraint with the given modulus and residue.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn new(modulus: u64, residue: u64) -> Self {");
+    f.line("        let args = BoundArguments::pair(");
+    f.line("            (\"modulus\", BoundArgValue::U64(modulus)),");
+    f.line("            (\"residue\", BoundArgValue::U64(residue)),");
+    f.line("        );");
+    f.line("        BoundConstraint::from_parts(ValueModObservable, ResidueClassBound, args)");
+    f.line("    }");
+    f.line("}");
+    f.blank();
+
+    f.doc_comment("v0.2.1 legacy type alias: a `BoundConstraint` kind bounding the");
+    f.doc_comment("Hamming weight of the Datum (`weight <= bound`).");
+    f.line("pub type HammingConstraint = BoundConstraint<HammingMetric, LessEqBound>;");
+    f.blank();
+    f.line("impl HammingConstraint {");
+    f.indented_doc_comment("Construct a Hamming constraint with the given upper bound.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn new(bound: u64) -> Self {");
+    f.line("        let args = BoundArguments::single(\"bound\", BoundArgValue::U64(bound));");
+    f.line("        BoundConstraint::from_parts(HammingMetric, LessEqBound, args)");
+    f.line("    }");
+    f.line("}");
+    f.blank();
+
+    f.doc_comment("v0.2.1 legacy type alias: a `BoundConstraint` kind bounding the");
+    f.doc_comment("derivation depth of the Datum.");
+    f.line("pub type DepthConstraint = BoundConstraint<DerivationDepthObservable, LessEqBound>;");
+    f.blank();
+    f.line("impl DepthConstraint {");
+    f.indented_doc_comment("Construct a depth constraint with min and max depths.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn new(min_depth: u64, max_depth: u64) -> Self {");
+    f.line("        let args = BoundArguments::pair(");
+    f.line("            (\"min_depth\", BoundArgValue::U64(min_depth)),");
+    f.line("            (\"max_depth\", BoundArgValue::U64(max_depth)),");
+    f.line("        );");
+    f.line("        BoundConstraint::from_parts(DerivationDepthObservable, LessEqBound, args)");
+    f.line("    }");
+    f.line("}");
+    f.blank();
+
+    f.doc_comment("v0.2.1 legacy type alias: a `BoundConstraint` kind bounding the");
+    f.doc_comment("carry depth of the Datum in the W\u{2082} tower.");
+    f.line("pub type CarryConstraint = BoundConstraint<CarryDepthObservable, LessEqBound>;");
+    f.blank();
+    f.line("impl CarryConstraint {");
+    f.indented_doc_comment("Construct a carry constraint with the given upper bound.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn new(bound: u64) -> Self {");
+    f.line("        let args = BoundArguments::single(\"bound\", BoundArgValue::U64(bound));");
+    f.line("        BoundConstraint::from_parts(CarryDepthObservable, LessEqBound, args)");
+    f.line("    }");
+    f.line("}");
+    f.blank();
+
+    f.doc_comment("v0.2.1 legacy type alias: a `BoundConstraint` kind pinning a");
+    f.doc_comment("single site coordinate.");
+    f.line("pub type SiteConstraint = BoundConstraint<FreeRankObservable, LessEqBound>;");
+    f.blank();
+    f.line("impl SiteConstraint {");
+    f.indented_doc_comment("Construct a site constraint with the given site index.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn new(site_index: u64) -> Self {");
+    f.line("        let args = BoundArguments::single(");
+    f.line("            \"site_index\",");
+    f.line("            BoundArgValue::U64(site_index),");
+    f.line("        );");
+    f.line("        BoundConstraint::from_parts(FreeRankObservable, LessEqBound, args)");
+    f.line("    }");
+    f.line("}");
+    f.blank();
+
+    f.doc_comment("v0.2.1 legacy type alias: a `BoundConstraint` kind pinning an");
+    f.doc_comment("affine relationship on the Datum's value projection.");
+    f.line("pub type AffineConstraint = BoundConstraint<ValueModObservable, AffineEqualBound>;");
+    f.blank();
+    f.line("impl AffineConstraint {");
+    f.indented_doc_comment("Construct an affine constraint with the given offset.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn new(offset: u64) -> Self {");
+    f.line("        let args = BoundArguments::single(\"offset\", BoundArgValue::U64(offset));");
+    f.line("        BoundConstraint::from_parts(ValueModObservable, AffineEqualBound, args)");
+    f.line("    }");
+    f.line("}");
+    f.blank();
+
+    f.doc_comment("v0.2.1 legacy type alias: a `Conjunction` over `N` BoundConstraint");
+    f.doc_comment("kinds (`CompositeConstraint<3>` = 3-way conjunction).");
+    f.line("pub type CompositeConstraint<const N: usize> = Conjunction<N>;");
     f.blank();
 }

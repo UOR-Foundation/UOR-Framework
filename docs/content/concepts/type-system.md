@@ -56,7 +56,7 @@ Types serve as the source for partition computations via
 
 A {@class https://uor.foundation/type/ConstrainedType} wraps a base type with
 additional constraints that restrict the set of valid values. Constraints
-are combined using {@class https://uor.foundation/type/CompositeConstraint}:
+are combined using {@class https://uor.foundation/type/Conjunction}:
 
 ```turtle
 <https://uor.foundation/instance/constrained-odd-shallow>
@@ -69,9 +69,9 @@ This constrained type accepts only values in Z/256Z that are odd (residue 1
 mod 2) and have valuation depth between 1 and 2. Each constraint pins
 specific sites of the Z/2Z fibration:
 
-- {@class https://uor.foundation/type/ResidueConstraint} (mod 2, residue 1)
+- {@ind https://uor.foundation/type/residueConstraintKind} (mod 2, residue 1)
   pins site 0.
-- {@class https://uor.foundation/type/DepthConstraint} (depth 1–2) pins
+- {@ind https://uor.foundation/type/depthConstraintKind} (depth 1–2) pins
   sites 0 and 1.
 
 ## Types and Free Rank

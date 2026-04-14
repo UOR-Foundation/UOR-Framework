@@ -632,6 +632,25 @@ instance : Inhabited (Observable UOR.Prims.Standard) where
     hasUnit := none
   }
 
+end UOR.Bridge.Observable
+
+namespace UOR.Bridge.Derivation
+
+/-- Observes the derivation depth of a Datum, computed as the maximum nesting level of derivation:RewriteStep applications producing it. Used as the bound observable for the depthConstraintKind BoundConstraint. -/
+structure DerivationDepthObservable (P : Primitives) extends UOR.Bridge.Observable.Observable P
+
+instance : Inhabited (DerivationDepthObservable UOR.Prims.Standard) where
+  default := {
+    value := none
+    source := none
+    target := none
+    hasUnit := none
+  }
+
+end UOR.Bridge.Derivation
+
+namespace UOR.Bridge.Observable
+
 /-- An observable measuring catastrophe-theoretic properties: thresholds at which qualitative changes occur in the partition. -/
 structure CatastropheObservable (P : Primitives) extends Observable P where
   /-- The ring dimension coordinate n in the (n, g) catastrophe phase diagram (PD_1 n-coordinate). -/
@@ -1031,6 +1050,17 @@ instance : Inhabited (TotalVariation UOR.Prims.Standard) where
     hasUnit := none
   }
 
+/-- Observes a Datum's value modulo a configurable modulus. Used as the bound observable for BoundConstraint instances representing residue and affine constraint kinds (residueConstraintKind, affineConstraintKind). -/
+structure ValueModObservable (P : Primitives) extends MetricObservable P
+
+instance : Inhabited (ValueModObservable UOR.Prims.Standard) where
+  default := {
+    value := none
+    source := none
+    target := none
+    hasUnit := none
+  }
+
 /-- The Whitehead product [α, β] ∈ πp+q−1 for α ∈ πp, β ∈ πq. -/
 structure WhiteheadProduct (P : Primitives) where
   /-- True iff this Whitehead product is trivial (zero in πp+q−1). -/
@@ -1055,6 +1085,17 @@ instance : Inhabited (WindingNumber UOR.Prims.Standard) where
 end UOR.Bridge.Observable
 
 namespace UOR.Bridge.Partition
+
+/-- Observes the free-rank of the partition associated with a Datum's site context, recording the count of unbound sites at the moment of observation. Used as the bound observable for the siteConstraintKind BoundConstraint. -/
+structure FreeRankObservable (P : Primitives) extends UOR.Bridge.Observable.Observable P
+
+instance : Inhabited (FreeRankObservable UOR.Prims.Standard) where
+  default := {
+    value := none
+    source := none
+    target := none
+    hasUnit := none
+  }
 
 /-- A single site coordinate in the iterated Z/2Z fibration. Each site represents one binary degree of freedom in the ring's structure. The total number of sites equals the quantum level n. -/
 structure SiteIndex (P : Primitives) where
@@ -1367,6 +1408,17 @@ instance : Inhabited (CarryChain UOR.Prims.Standard) where
     generateMask := none
     propagateMask := none
     killMask := none
+  }
+
+/-- Observes the carry depth of a Datum in the W₂ tower, computed as the maximum carry-chain length in any operation producing it. Used as the bound observable for the carryConstraintKind BoundConstraint. -/
+structure CarryDepthObservable (P : Primitives) extends UOR.Bridge.Observable.Observable P
+
+instance : Inhabited (CarryDepthObservable UOR.Prims.Standard) where
+  default := {
+    value := none
+    source := none
+    target := none
+    hasUnit := none
   }
 
 /-- A single carry event at site k. Three kinds: Generate (and(x_k, y_k) = 1), Propagate (xor(x_k, y_k) = 1 and c_k = 1), Kill (neither generate nor propagate). -/
@@ -4145,6 +4197,12 @@ end UOR.User.Morphism
 
 namespace UOR.User.Type_
 
+/-- The predicate form a BoundConstraint imposes on its bound observable. Closed enumeration with exactly six named individuals (EqualBound, LessEqBound, GreaterEqBound, RangeContainBound, ResidueClassBound, AffineEqualBound). Adding a new bound shape is an ontology+grammar+codegen edit on the same protocol as adding a Witt level. -/
+structure BoundShape (P : Primitives)
+
+instance : Inhabited (BoundShape UOR.Prims.Standard) where
+  default := {}
+
 /-- A composable predicate that refines a type by pinning one or more site coordinates. Constraints are the parameterization mechanism for ConstrainedType. -/
 structure Constraint (P : Primitives) where
   /-- The metric axis along which this constraint operates: vertical (ring), horizontal (Hamming), or diagonal (incompatibility). -/
@@ -4653,30 +4711,50 @@ end UOR.User.Morphism
 
 namespace UOR.User.Type_
 
-/-- Pins the Datum to an affine subspace specified by an offset and a set of generators. -/
-structure AffineConstraint (P : Primitives) extends Constraint P where
+/-- Parametric constraint carrier consumed by the codegen to emit `BoundConstraint<O: Observable, B: BoundShape>` in the Rust foundation. The (observable, bound_shape) pair picks the predicate form; the typed datatype properties (modulus, residue, hammingBound, ...) carry the parameters for that specific kind. Replaces the seven v0.2.1 enumerated Constraint subclasses with a parametric form; the legacy names survive as Rust type aliases (ResidueConstraint, HammingConstraint, ...). -/
+structure BoundConstraint (P : Primitives) extends Constraint P where
+  /-- The modulus m of a residue constraint: x ≡ r (mod m). -/
+  modulus : Option P.PositiveInteger
+  /-- The residue value r of a residue constraint: x ≡ r (mod m). -/
+  residue : Option P.NonNegativeInteger
+  /-- The carry propagation pattern of a carry constraint, expressed as a Datum at the appropriate quantum level. -/
+  carryPattern : Option (UOR.Kernel.Schema.Datum P)
+  /-- The minimum factorization depth required by a depth constraint. -/
+  minDepth : Option P.NonNegativeInteger
+  /-- The maximum factorization depth allowed by a depth constraint. -/
+  maxDepth : Option P.NonNegativeInteger
+  /-- Upper bound on the Hamming weight of the Datum. -/
+  hammingBound : Option P.NonNegativeInteger
+  /-- Zero-based index of the pinned site coordinate. -/
+  siteIndex : Option P.NonNegativeInteger
+  /-- The value the pinned site coordinate must equal (a Datum in the set {0, 1}). -/
+  siteValue : Option (UOR.Kernel.Schema.Datum P)
   /-- Constant offset defining the affine subspace. -/
   affineOffset : Option (UOR.Kernel.Schema.Datum P)
   /-- A generator of the affine subspace. Non-functional: multiple generators span the subspace. -/
   affineGenerator : Array (UOR.Kernel.Schema.Datum P)
+  /-- The observable:Observable whose values this BoundConstraint bounds. Picks which datum projection is being constrained. -/
+  boundObservable : Option (UOR.Bridge.Observable.Observable P)
+  /-- The predicate form this BoundConstraint imposes on its bound observable. Closed enumeration with exactly six named individuals (EqualBound, LessEqBound, GreaterEqBound, RangeContainBound, ResidueClassBound, AffineEqualBound). -/
+  boundShape : Option (BoundShape P)
+  /-- The BoundConstraint's parameters in canonical string form (e.g., 'modulus=256;residue=255' for a residue class bound). Non-functional — the string-form encoding is the canonical serialization; typed accessors on the Rust side unpack it via the per-type-alias constructors. -/
+  boundArguments : Option P.String
 
-instance : Inhabited (AffineConstraint UOR.Prims.Standard) where
+instance : Inhabited (BoundConstraint UOR.Prims.Standard) where
   default := {
+    modulus := none
+    residue := none
+    carryPattern := none
+    minDepth := none
+    maxDepth := none
+    hammingBound := none
+    siteIndex := none
+    siteValue := none
     affineOffset := none
     affineGenerator := #[]
-    metricAxis := none
-    pinsSites := #[]
-    crossingCost := none
-  }
-
-/-- A constraint based on carry propagation patterns in ring arithmetic. Pins sites corresponding to carry positions. -/
-structure CarryConstraint (P : Primitives) extends Constraint P where
-  /-- The carry propagation pattern of a carry constraint, expressed as a Datum at the appropriate quantum level. -/
-  carryPattern : Option (UOR.Kernel.Schema.Datum P)
-
-instance : Inhabited (CarryConstraint UOR.Prims.Standard) where
-  default := {
-    carryPattern := none
+    boundObservable := none
+    boundShape := none
+    boundArguments := none
     metricAxis := none
     pinsSites := #[]
     crossingCost := none
@@ -4695,14 +4773,17 @@ instance : Inhabited (CompletenessWitness UOR.Prims.Standard) where
     sitesClosed := none
   }
 
-/-- A constraint formed by composing two or more simpler constraints. The composite pins the union of sites pinned by its components. -/
-structure CompositeConstraint (P : Primitives) extends Constraint P where
+/-- A conjunction of BoundConstraint instances. The conjuncts property is ordered. Replaces the v0.2.1 CompositeConstraint enumeration; the legacy name survives as a Rust type alias (CompositeConstraint<const N: usize> = Conjunction<N>). -/
+structure Conjunction (P : Primitives) extends Constraint P where
   /-- A component constraint of this composite constraint. -/
   composedFrom : Array (Constraint P)
+  /-- An ordered list of BoundConstraint individuals that this Conjunction composes. Non-functional — multiple conjuncts span the conjunction. -/
+  conjuncts : Array (BoundConstraint P)
 
-instance : Inhabited (CompositeConstraint UOR.Prims.Standard) where
+instance : Inhabited (Conjunction UOR.Prims.Standard) where
   default := {
     composedFrom := #[]
+    conjuncts := #[]
     metricAxis := none
     pinsSites := #[]
     crossingCost := none
@@ -4716,22 +4797,6 @@ structure ConstraintDefaults (P : Primitives) where
 instance : Inhabited (ConstraintDefaults UOR.Prims.Standard) where
   default := {
     defaultValue := none
-  }
-
-/-- A constraint on factorization depth: the minimum and maximum number of irreducible factors. Pins sites by bounding the factorization tree depth. -/
-structure DepthConstraint (P : Primitives) extends Constraint P where
-  /-- The minimum factorization depth required by a depth constraint. -/
-  minDepth : Option P.NonNegativeInteger
-  /-- The maximum factorization depth allowed by a depth constraint. -/
-  maxDepth : Option P.NonNegativeInteger
-
-instance : Inhabited (DepthConstraint UOR.Prims.Standard) where
-  default := {
-    minDepth := none
-    maxDepth := none
-    metricAxis := none
-    pinsSites := #[]
-    crossingCost := none
   }
 
 /-- A topological signature (χ, β_k) that is formally impossible to achieve for any ConstrainedType. Witnessed by an ImpossibilityWitness in proof/. -/
@@ -4763,19 +4828,6 @@ instance : Inhabited (GaloisConnection UOR.Prims.Standard) where
     refinementDirection := none
     galoisClosureProperty := none
     galoisInteriorProperty := none
-  }
-
-/-- Pins the Hamming weight of the Datum to at most the bound. The horizontal axis of the tri-metric. -/
-structure HammingConstraint (P : Primitives) extends Constraint P where
-  /-- Upper bound on the Hamming weight of the Datum. -/
-  hammingBound : Option P.NonNegativeInteger
-
-instance : Inhabited (HammingConstraint UOR.Prims.Standard) where
-  default := {
-    hammingBound := none
-    metricAxis := none
-    pinsSites := #[]
-    crossingCost := none
   }
 
 /-- The algebraic obstruction to a WittLift inheriting the completeness of its base type. Computed as the image of the spectral sequence differential d_2. If trivial (zero), the base type's completeness lifts. If non-trivial, at least one additional constraint is needed at the new quantum level. -/
@@ -4820,38 +4872,6 @@ instance : Inhabited (ObstructionChain UOR.Prims.Standard) where
     isFlat := none
   }
 
-/-- A constraint based on residue class membership: x ≡ r (mod m). Pins sites corresponding to the residue pattern. -/
-structure ResidueConstraint (P : Primitives) extends Constraint P where
-  /-- The modulus m of a residue constraint: x ≡ r (mod m). -/
-  modulus : Option P.PositiveInteger
-  /-- The residue value r of a residue constraint: x ≡ r (mod m). -/
-  residue : Option P.NonNegativeInteger
-
-instance : Inhabited (ResidueConstraint UOR.Prims.Standard) where
-  default := {
-    modulus := none
-    residue := none
-    metricAxis := none
-    pinsSites := #[]
-    crossingCost := none
-  }
-
-/-- Pins a single site coordinate to 0 or 1. The atomic unit of the site budget. -/
-structure SiteConstraint (P : Primitives) extends Constraint P where
-  /-- Zero-based index of the pinned site coordinate. -/
-  siteIndex : Option P.NonNegativeInteger
-  /-- The value the pinned site coordinate must equal (a Datum in the set {0, 1}). -/
-  siteValue : Option (UOR.Kernel.Schema.Datum P)
-
-instance : Inhabited (SiteConstraint UOR.Prims.Standard) where
-  default := {
-    siteIndex := none
-    siteValue := none
-    metricAxis := none
-    pinsSites := #[]
-    crossingCost := none
-  }
-
 /-- The partial order on types induced by TypeInclusion. The top element is PrimitiveType (no constraints); the bottom elements are CompleteTypes (all sites pinned). -/
 structure SubtypingLattice (P : Primitives) where
   /-- Maximum chain length from PrimitiveType (top) to any CompleteType (bottom). Equals the site budget n at quantum level Q_k. -/
@@ -4881,7 +4901,7 @@ structure BoundaryProtocol (P : Primitives) where
   /-- The type specification for boundary data. -/
   protocolType : Option (UOR.User.Type_.TypeDefinition P)
   /-- Sequencing constraints on boundary data. -/
-  protocolOrdering : Option (UOR.User.Type_.CompositeConstraint P)
+  protocolOrdering : Option (UOR.User.Type_.Conjunction P)
 
 instance : Inhabited (BoundaryProtocol UOR.Prims.Standard) where
   default := {
@@ -6307,7 +6327,7 @@ structure ProjectionMap (P : Primitives) extends Transform P where
   /-- The active frame — shared with the grounding that produced the query. The shared-frame condition (Surface Symmetry Theorem) requires G and P to reference the same frame. -/
   projectionFrame : Option (UOR.User.State.Frame P)
   /-- Ordering constraint determining the output symbol sequence. Domain-specific: syntactic position (NLP), row-major scan (ARC), temporal sequence (music). -/
-  projectionOrder : Option (UOR.User.Type_.CompositeConstraint P)
+  projectionOrder : Option (UOR.User.Type_.Conjunction P)
   /-- Completeness criterion: does projecting the grounded source address recover a symbol in the same type class as the input? True iff the shared-frame condition holds. -/
   roundTripCoherence : Option P.Boolean
   /-- When outputClass is a sequence type, the OWL class of individual sequence elements. Uses OWL2 punning. -/
@@ -6374,7 +6394,7 @@ namespace UOR.Bridge.Query
 structure RelationQuery (P : Primitives) extends Query P where
   /-- The ring address of the grounded source symbol. -/
   sourceAddress : Option (UOR.Kernel.Address.Element P)
-  /-- The transformation type, expressed as a type:CompositeConstraint composed from the primitive basis. At inference time this is the output of an observable coordinate read on example pairs — computed from (d_R, d_H, d_I). Not an externally supplied input; read from the representation space. -/
+  /-- The transformation type, expressed as a type:Conjunction composed from the primitive BoundConstraint basis. At inference time this is the output of an observable coordinate read on example pairs — computed from (d_R, d_H, d_I). Not an externally supplied input; read from the representation space. -/
   relationType : Option (UOR.User.Type_.Constraint P)
   /-- The open site budget for the unknown target. Begins fully free; closes to isClosed = true upon resolution. -/
   targetSite : Option (UOR.Bridge.Partition.FreeRank P)

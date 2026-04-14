@@ -617,7 +617,7 @@ fn properties() -> Vec<Property> {
             functional: true,
             required: false,
             domain: Some("https://uor.foundation/morphism/ProjectionMap"),
-            range: "https://uor.foundation/type/CompositeConstraint",
+            range: "https://uor.foundation/type/Conjunction",
         },
         Property {
             id: "https://uor.foundation/morphism/roundTripCoherence",

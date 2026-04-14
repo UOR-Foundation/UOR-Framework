@@ -1,4 +1,5 @@
 foundation/src/enforcement.rs: const INHABITANCE_DISPATCH_TABLE
+foundation/src/enforcement.rs: enum BoundArgValue
 foundation/src/enforcement.rs: enum CalibrationError
 foundation/src/enforcement.rs: enum PipelineFailure
 foundation/src/enforcement.rs: enum Term
@@ -6,6 +7,7 @@ foundation/src/enforcement.rs: mod calibrations
 foundation/src/enforcement.rs: mod prelude
 foundation/src/enforcement.rs: mod resolver
 foundation/src/enforcement.rs: struct Add
+foundation/src/enforcement.rs: struct AffineEqualBound
 foundation/src/enforcement.rs: struct And
 foundation/src/enforcement.rs: struct Assertion
 foundation/src/enforcement.rs: struct BNot
@@ -14,8 +16,12 @@ foundation/src/enforcement.rs: struct Binding
 foundation/src/enforcement.rs: struct BindingEntry
 foundation/src/enforcement.rs: struct BindingsTable
 foundation/src/enforcement.rs: struct BornRuleVerification
+foundation/src/enforcement.rs: struct BoundArgEntry
+foundation/src/enforcement.rs: struct BoundArguments
+foundation/src/enforcement.rs: struct BoundConstraint
 foundation/src/enforcement.rs: struct BoundarySession
 foundation/src/enforcement.rs: struct Calibration
+foundation/src/enforcement.rs: struct CarryDepthObservable
 foundation/src/enforcement.rs: struct Certified
 foundation/src/enforcement.rs: struct ChainAuditTrail
 foundation/src/enforcement.rs: struct CompileTime
@@ -23,9 +29,11 @@ foundation/src/enforcement.rs: struct CompileUnit
 foundation/src/enforcement.rs: struct CompileUnitBuilder
 foundation/src/enforcement.rs: struct CompletenessAuditTrail
 foundation/src/enforcement.rs: struct CompletenessCertificate
+foundation/src/enforcement.rs: struct Conjunction
 foundation/src/enforcement.rs: struct ConstrainedTypeInput
 foundation/src/enforcement.rs: struct Datum
 foundation/src/enforcement.rs: struct Derivation
+foundation/src/enforcement.rs: struct DerivationDepthObservable
 foundation/src/enforcement.rs: struct DigestGroundingMap
 foundation/src/enforcement.rs: struct DispatchDeclaration
 foundation/src/enforcement.rs: struct DispatchDeclarationBuilder
@@ -33,10 +41,13 @@ foundation/src/enforcement.rs: struct DispatchRule
 foundation/src/enforcement.rs: struct EffectDeclaration
 foundation/src/enforcement.rs: struct EffectDeclarationBuilder
 foundation/src/enforcement.rs: struct Embed
+foundation/src/enforcement.rs: struct EqualBound
 foundation/src/enforcement.rs: struct FreeRank
+foundation/src/enforcement.rs: struct FreeRankObservable
 foundation/src/enforcement.rs: struct GenericImpossibilityWitness
 foundation/src/enforcement.rs: struct GeodesicCertificate
 foundation/src/enforcement.rs: struct GeodesicEvidenceBundle
+foundation/src/enforcement.rs: struct GreaterEqBound
 foundation/src/enforcement.rs: struct Grounded
 foundation/src/enforcement.rs: struct GroundedCoord
 foundation/src/enforcement.rs: struct GroundedTuple
@@ -44,6 +55,7 @@ foundation/src/enforcement.rs: struct GroundingAwareResolver
 foundation/src/enforcement.rs: struct GroundingCertificate
 foundation/src/enforcement.rs: struct GroundingDeclaration
 foundation/src/enforcement.rs: struct GroundingDeclarationBuilder
+foundation/src/enforcement.rs: struct HammingMetric
 foundation/src/enforcement.rs: struct IncrementalCompletenessResolver
 foundation/src/enforcement.rs: struct InhabitanceCertificate
 foundation/src/enforcement.rs: struct InhabitanceImpossibilityWitness
@@ -58,6 +70,7 @@ foundation/src/enforcement.rs: struct JsonGroundingMap
 foundation/src/enforcement.rs: struct LandauerBudget
 foundation/src/enforcement.rs: struct LeaseDeclaration
 foundation/src/enforcement.rs: struct LeaseDeclarationBuilder
+foundation/src/enforcement.rs: struct LessEqBound
 foundation/src/enforcement.rs: struct LiftChainCertificate
 foundation/src/enforcement.rs: struct Limbs
 foundation/src/enforcement.rs: struct MeasurementCertificate
@@ -73,6 +86,8 @@ foundation/src/enforcement.rs: struct ParallelDeclaration
 foundation/src/enforcement.rs: struct ParallelDeclarationBuilder
 foundation/src/enforcement.rs: struct PredicateDeclaration
 foundation/src/enforcement.rs: struct PredicateDeclarationBuilder
+foundation/src/enforcement.rs: struct RangeContainBound
+foundation/src/enforcement.rs: struct ResidueClassBound
 foundation/src/enforcement.rs: struct Runtime
 foundation/src/enforcement.rs: struct ShapeViolation
 foundation/src/enforcement.rs: struct SinkDeclaration
@@ -90,6 +105,7 @@ foundation/src/enforcement.rs: struct TypeDeclaration
 foundation/src/enforcement.rs: struct UorTime
 foundation/src/enforcement.rs: struct Utf8GroundingMap
 foundation/src/enforcement.rs: struct Validated
+foundation/src/enforcement.rs: struct ValueModObservable
 foundation/src/enforcement.rs: struct W1024
 foundation/src/enforcement.rs: struct W104
 foundation/src/enforcement.rs: struct W112
@@ -125,6 +141,7 @@ foundation/src/enforcement.rs: struct W96
 foundation/src/enforcement.rs: struct WittLevelDeclaration
 foundation/src/enforcement.rs: struct WittLevelDeclarationBuilder
 foundation/src/enforcement.rs: struct Xor
+foundation/src/enforcement.rs: trait BoundShape
 foundation/src/enforcement.rs: trait Certificate
 foundation/src/enforcement.rs: trait Certify
 foundation/src/enforcement.rs: trait FragmentMarker
@@ -134,6 +151,7 @@ foundation/src/enforcement.rs: trait Grounding
 foundation/src/enforcement.rs: trait GroundingMapKind
 foundation/src/enforcement.rs: trait ImpossibilityWitnessKind
 foundation/src/enforcement.rs: trait Invertible
+foundation/src/enforcement.rs: trait Observable
 foundation/src/enforcement.rs: trait OntologyTarget
 foundation/src/enforcement.rs: trait PreservesMetric
 foundation/src/enforcement.rs: trait PreservesStructure
@@ -142,7 +160,14 @@ foundation/src/enforcement.rs: trait Total
 foundation/src/enforcement.rs: trait UnaryRingOp
 foundation/src/enforcement.rs: trait ValidLevelEmbedding
 foundation/src/enforcement.rs: trait ValidationPhase
+foundation/src/enforcement.rs: type AffineConstraint
+foundation/src/enforcement.rs: type CarryConstraint
+foundation/src/enforcement.rs: type CompositeConstraint
+foundation/src/enforcement.rs: type DepthConstraint
 foundation/src/enforcement.rs: type DispatchTable
+foundation/src/enforcement.rs: type HammingConstraint
+foundation/src/enforcement.rs: type ResidueConstraint
+foundation/src/enforcement.rs: type SiteConstraint
 foundation/src/lib.rs: mod bridge
 foundation/src/lib.rs: mod enforcement
 foundation/src/lib.rs: mod enums

@@ -984,6 +984,57 @@ fn resolve_iriref_target<'a>(
         return Some(format!("(\"{iri}\" : String)"));
     }
 
+    // v0.2.2 Phase D: class-IRI fallback. The BoundConstraint kind
+    // individuals reference observable classes (ValueModObservable,
+    // HammingMetric, ...) via boundObservable. Since the field's Lean
+    // type is a class (e.g. `Observable P`), emit the class's default
+    // Inhabited value. The class lookup is precise: we only fall through
+    // if the IRI does not match any individual.
+    if !all_individuals_by_iri.contains_key(iri) {
+        if let Some(target_class) = all_classes_by_iri.get(iri) {
+            let target_local = local_name(target_class.id);
+            // Only accept the class-IRI fallback when the Lean field type
+            // syntactically contains the class's local name OR the local
+            // name of any ancestor of the class.
+            let direct_match = lean_type.contains(target_local);
+            let ancestor_chain = if direct_match {
+                None
+            } else {
+                ancestor_projection_chain(lean_type, target_class.id, all_classes_by_iri)
+            };
+            if direct_match || ancestor_chain.is_some() {
+                // Emit `(default : UOR.<Space>.<Module>.<ClassName>
+                // UOR.Prims.Standard)` — Individual `def`s are monomorphic
+                // at UOR.Prims.Standard; the Inhabited instance is
+                // guaranteed by the structure codegen in UOR.Structures.
+                // Chain `.to<Parent>` projections when the field type is
+                // a strict ancestor of the target class.
+                let qualified = ns_map
+                    .iter()
+                    .find_map(|(ns_iri, mapping)| {
+                        if target_class.id.starts_with(*ns_iri) {
+                            Some(format!(
+                                "(default : UOR.{}.{}.{} UOR.Prims.Standard)",
+                                mapping.space_module, mapping.file_module, target_local
+                            ))
+                        } else {
+                            None
+                        }
+                    })
+                    .unwrap_or_else(|| format!("(default : {target_local} UOR.Prims.Standard)"));
+                if let Some(chain) = ancestor_chain {
+                    let mut expr = qualified;
+                    for step in chain {
+                        expr.push_str(".to");
+                        expr.push_str(step);
+                    }
+                    return Some(expr);
+                }
+                return Some(qualified);
+            }
+        }
+    }
+
     let (target_ind, target_module) = all_individuals_by_iri.get(iri).copied()?;
     let target_type_local = local_name(target_ind.type_);
 

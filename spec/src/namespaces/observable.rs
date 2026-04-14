@@ -126,6 +126,18 @@ fn classes() -> Vec<Class> {
             subclass_of: &["https://uor.foundation/observable/MetricObservable"],
             disjoint_with: &[],
         },
+        // v0.2.2 Phase D (Q4) — bound observable for residue and affine
+        // BoundConstraint kinds.
+        Class {
+            id: "https://uor.foundation/observable/ValueModObservable",
+            label: "ValueModObservable",
+            comment: "Observes a Datum's value modulo a configurable modulus. \
+                      Used as the bound observable for BoundConstraint \
+                      instances representing residue and affine constraint \
+                      kinds (residueConstraintKind, affineConstraintKind).",
+            subclass_of: &["https://uor.foundation/observable/MetricObservable"],
+            disjoint_with: &[],
+        },
         // Measurement result types
         Class {
             id: "https://uor.foundation/observable/StratumValue",

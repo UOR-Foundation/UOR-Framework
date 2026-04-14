@@ -167,6 +167,18 @@ fn classes() -> Vec<Class> {
             subclass_of: &[OWL_THING],
             disjoint_with: &["https://uor.foundation/partition/PartitionProduct"],
         },
+        // v0.2.2 Phase D (Q4) — observable backing the siteConstraintKind
+        // BoundConstraint individual.
+        Class {
+            id: "https://uor.foundation/partition/FreeRankObservable",
+            label: "FreeRankObservable",
+            comment: "Observes the free-rank of the partition associated with \
+                      a Datum's site context, recording the count of unbound \
+                      sites at the moment of observation. Used as the bound \
+                      observable for the siteConstraintKind BoundConstraint.",
+            subclass_of: &["https://uor.foundation/observable/Observable"],
+            disjoint_with: &[],
+        },
     ]
 }
 
