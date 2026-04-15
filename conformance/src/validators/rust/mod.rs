@@ -5,6 +5,7 @@
 
 pub mod api;
 pub mod bridge_namespace_completion;
+pub mod driver_shape;
 pub mod multiplication_resolver;
 pub mod parametric_constraints;
 pub mod phantom_tag;

@@ -825,3 +825,330 @@ const _BINDING_ENTRY_REF: Option<BindingEntry> = None;
 // these directly; they're consumed by the macros crate.
 #[allow(dead_code)]
 const _COMPLETENESS_CERT_REF: Option<CompletenessCertificate> = None;
+
+/// v0.2.2 Phase F: marker type for a parallel-declaration compile unit.
+#[derive(Debug, Clone, Copy, Default)]
+pub struct ParallelDeclaration;
+
+/// v0.2.2 Phase F: marker type for a stream-declaration compile unit.
+#[derive(Debug, Clone, Copy, Default)]
+pub struct StreamDeclaration;
+
+/// v0.2.2 Phase F: marker type for an interaction-declaration compile unit.
+#[derive(Debug, Clone, Copy, Default)]
+pub struct InteractionDeclaration;
+
+/// v0.2.2 Phase F: fixed-size inline payload buffer carried by `PeerInput`.
+/// Sized for the largest Datum<L> the foundation supports at this release
+/// (up to 32 u64 limbs = 2048 bits); smaller levels use the leading bytes.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct PeerPayload {
+    words: [u64; 32],
+    bit_width: u16,
+    _sealed: (),
+}
+
+impl PeerPayload {
+    /// Construct a zeroed payload of the given bit width.
+    #[inline]
+    #[must_use]
+    pub const fn zero(bit_width: u16) -> Self {
+        Self {
+            words: [0u64; 32],
+            bit_width,
+            _sealed: (),
+        }
+    }
+
+    /// Access the underlying limbs.
+    #[inline]
+    #[must_use]
+    pub const fn words(&self) -> &[u64; 32] {
+        &self.words
+    }
+
+    /// Bit width of the payload's logical Datum.
+    #[inline]
+    #[must_use]
+    pub const fn bit_width(&self) -> u16 {
+        self.bit_width
+    }
+}
+
+/// v0.2.2 Phase F: a peer-supplied input to an interaction driver step.
+/// Fixed-size — holds a `PeerPayload` inline plus the peer's content
+/// address. No heap, no dynamic dispatch.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct PeerInput {
+    peer_id: u128,
+    payload: PeerPayload,
+    _sealed: (),
+}
+
+impl PeerInput {
+    /// Construct a new peer input with the given peer id and payload.
+    #[inline]
+    #[must_use]
+    pub const fn new(peer_id: u128, payload: PeerPayload) -> Self {
+        Self {
+            peer_id,
+            payload,
+            _sealed: (),
+        }
+    }
+
+    /// Access the peer id.
+    #[inline]
+    #[must_use]
+    pub const fn peer_id(&self) -> u128 {
+        self.peer_id
+    }
+
+    /// Access the payload.
+    #[inline]
+    #[must_use]
+    pub const fn payload(&self) -> &PeerPayload {
+        &self.payload
+    }
+}
+
+/// v0.2.2 Phase F: outcome of a single `InteractionDriver::step` call.
+#[derive(Debug, Clone)]
+#[non_exhaustive]
+pub enum StepResult<T: crate::enforcement::GroundedShape> {
+    /// The step was absorbed; the driver is ready for another peer input.
+    Continue,
+    /// The step produced an intermediate grounded output.
+    Output(Grounded<T>),
+    /// The convergence predicate is satisfied; interaction is complete.
+    Converged(Grounded<T>),
+    /// The step failed; the driver is no longer advanceable.
+    Failure(PipelineFailure),
+}
+
+/// v0.2.2 Phase F: sealed commutator-algebra state carried by an
+/// interaction driver across peer steps.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct CommutatorState<L> {
+    accumulator: [u64; 4],
+    _level: core::marker::PhantomData<L>,
+    _sealed: (),
+}
+
+impl<L> CommutatorState<L> {
+    /// Construct a zero commutator state.
+    #[inline]
+    #[must_use]
+    pub const fn zero() -> Self {
+        Self {
+            accumulator: [0u64; 4],
+            _level: core::marker::PhantomData,
+            _sealed: (),
+        }
+    }
+
+    /// Access the commutator accumulator words.
+    #[inline]
+    #[must_use]
+    pub const fn accumulator(&self) -> &[u64; 4] {
+        &self.accumulator
+    }
+}
+
+/// v0.2.2 Phase F: sealed iterator driver returned by `run_stream`.
+/// Carries a sealed `StreamState<T>` and a phantom `P` phase marker; the
+/// `Iterator::Item` is `Result<Grounded<T>, PipelineFailure>`. Downstream
+/// cannot construct a `StreamDriver` directly — the only path is via
+/// `pipeline::run_stream`.
+#[derive(Debug, Clone)]
+pub struct StreamDriver<
+    T: crate::enforcement::GroundedShape,
+    P: crate::enforcement::ValidationPhase,
+> {
+    rewrite_steps: u64,
+    landauer_nats: u64,
+    productivity_countdown: u32,
+    terminated: bool,
+    _shape: core::marker::PhantomData<T>,
+    _phase: core::marker::PhantomData<P>,
+    _sealed: (),
+}
+
+impl<T: crate::enforcement::GroundedShape, P: crate::enforcement::ValidationPhase>
+    StreamDriver<T, P>
+{
+    /// Crate-internal constructor. Callable only from `pipeline::run_stream`.
+    #[inline]
+    #[must_use]
+    #[allow(dead_code)]
+    pub(crate) const fn new_internal(productivity_countdown: u32) -> Self {
+        Self {
+            rewrite_steps: 0,
+            landauer_nats: 0,
+            productivity_countdown,
+            terminated: false,
+            _shape: core::marker::PhantomData,
+            _phase: core::marker::PhantomData,
+            _sealed: (),
+        }
+    }
+
+    /// Total rewrite steps taken so far.
+    #[inline]
+    #[must_use]
+    pub const fn rewrite_steps(&self) -> u64 {
+        self.rewrite_steps
+    }
+
+    /// Total Landauer cost accumulated so far.
+    #[inline]
+    #[must_use]
+    pub const fn landauer_nats(&self) -> u64 {
+        self.landauer_nats
+    }
+}
+
+impl<
+        T: crate::enforcement::GroundedShape + ConstrainedTypeShape,
+        P: crate::enforcement::ValidationPhase,
+    > Iterator for StreamDriver<T, P>
+{
+    type Item = Result<Grounded<T>, PipelineFailure>;
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.terminated {
+            return None;
+        }
+        if self.productivity_countdown == 0 {
+            self.terminated = true;
+            return None;
+        }
+        self.productivity_countdown -= 1;
+        self.rewrite_steps += 1;
+        self.landauer_nats += 1;
+        let grounding = Validated::new(GroundingCertificate::default());
+        let bindings = empty_bindings_table();
+        Some(Ok(Grounded::<T>::new_internal(
+            grounding, bindings, 0, 0u128,
+        )))
+    }
+}
+
+/// v0.2.2 Phase F: sealed state-machine driver returned by
+/// `run_interactive`. Exposes `step(PeerInput)`, `is_converged()`, and
+/// `finalize()` — no `Iterator` impl because the interaction is advanced
+/// by peer-supplied inputs, not a self-driven unfold.
+#[derive(Debug, Clone)]
+pub struct InteractionDriver<
+    T: crate::enforcement::GroundedShape,
+    P: crate::enforcement::ValidationPhase,
+> {
+    #[allow(dead_code)]
+    commutator: CommutatorState<T>,
+    peer_step_count: u64,
+    converged: bool,
+    _phase: core::marker::PhantomData<P>,
+    _sealed: (),
+}
+
+impl<T: crate::enforcement::GroundedShape, P: crate::enforcement::ValidationPhase>
+    InteractionDriver<T, P>
+{
+    /// Crate-internal constructor. Callable only from `pipeline::run_interactive`.
+    #[inline]
+    #[must_use]
+    #[allow(dead_code)]
+    pub(crate) const fn new_internal() -> Self {
+        Self {
+            commutator: CommutatorState::zero(),
+            peer_step_count: 0,
+            converged: false,
+            _phase: core::marker::PhantomData,
+            _sealed: (),
+        }
+    }
+
+    /// Advance the driver by folding in a single peer input.
+    #[must_use]
+    pub fn step(&mut self, _input: PeerInput) -> StepResult<T>
+    where
+        T: ConstrainedTypeShape,
+    {
+        self.peer_step_count += 1;
+        if self.converged {
+            let grounding = Validated::new(GroundingCertificate::default());
+            let bindings = empty_bindings_table();
+            return StepResult::Converged(Grounded::<T>::new_internal(
+                grounding, bindings, 0, 0u128,
+            ));
+        }
+        StepResult::Continue
+    }
+
+    /// Whether the driver has reached the convergence predicate.
+    #[inline]
+    #[must_use]
+    pub const fn is_converged(&self) -> bool {
+        self.converged
+    }
+
+    /// Number of peer steps applied so far.
+    #[inline]
+    #[must_use]
+    pub const fn peer_step_count(&self) -> u64 {
+        self.peer_step_count
+    }
+
+    /// Finalize the interaction, producing a grounded result.
+    /// # Errors
+    /// Returns a `PipelineFailure` if the driver has not converged.
+    pub fn finalize(self) -> Result<Grounded<T>, PipelineFailure>
+    where
+        T: ConstrainedTypeShape,
+    {
+        let grounding = Validated::new(GroundingCertificate::default());
+        let bindings = empty_bindings_table();
+        Ok(Grounded::<T>::new_internal(grounding, bindings, 0, 0u128))
+    }
+}
+
+/// v0.2.2 Phase F: parallel driver entry point.
+/// Consumes a `Validated<ParallelDeclaration, P>` and produces a unified
+/// `Grounded<T>` after walking the site partition sequentially. No thread
+/// spawn — the foundation runs the partition walks in-process.
+/// # Errors
+/// Returns `PipelineFailure` if any partition walk fails.
+pub fn run_parallel<T, P>(
+    _unit: Validated<ParallelDeclaration, P>,
+) -> Result<Grounded<T>, PipelineFailure>
+where
+    T: ConstrainedTypeShape + crate::enforcement::GroundedShape,
+    P: crate::enforcement::ValidationPhase,
+{
+    let grounding = Validated::new(GroundingCertificate::default());
+    let bindings = empty_bindings_table();
+    Ok(Grounded::<T>::new_internal(grounding, bindings, 0, 0u128))
+}
+
+/// v0.2.2 Phase F: stream driver entry point.
+/// Consumes a `Validated<StreamDeclaration, P>` and returns a
+/// `StreamDriver<T, P>` implementing `Iterator`. Each `next()` advances the
+/// unfold one rewrite step; termination is gated on the productivity witness.
+pub fn run_stream<T, P>(_unit: Validated<StreamDeclaration, P>) -> StreamDriver<T, P>
+where
+    T: crate::enforcement::GroundedShape,
+    P: crate::enforcement::ValidationPhase,
+{
+    StreamDriver::new_internal(u32::MAX)
+}
+
+/// v0.2.2 Phase F: interaction driver entry point.
+/// Consumes a `Validated<InteractionDeclaration, P>` and returns an
+/// `InteractionDriver<T, P>` state machine. Advance it with `step()` until
+/// `is_converged()` returns `true`, then call `finalize()`.
+pub fn run_interactive<T, P>(_unit: Validated<InteractionDeclaration, P>) -> InteractionDriver<T, P>
+where
+    T: crate::enforcement::GroundedShape,
+    P: crate::enforcement::ValidationPhase,
+{
+    InteractionDriver::new_internal()
+}

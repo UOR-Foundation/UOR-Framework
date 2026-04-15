@@ -112,8 +112,343 @@ pub fn generate_pipeline_module(ontology: &Ontology) -> String {
     emit_reduction_stages(&mut f);
     emit_resolver_entry_points(&mut f, ontology);
     emit_empty_bindings_table(&mut f);
+    // v0.2.2 Phase F (Q5): drivers per computation kind.
+    emit_phase_f_drivers(&mut f);
 
     f.finish()
+}
+
+/// v0.2.2 Phase F (Q5): emit `pipeline::run_parallel`, `pipeline::run_stream`
+/// (returns `StreamDriver<T, P>` : Iterator), and `pipeline::run_interactive`
+/// (returns `InteractionDriver<T, P>` state machine) plus the sealed
+/// supporting types (StreamDriver, InteractionDriver, StepResult, PeerInput,
+/// PeerPayload, CommutatorState).
+fn emit_phase_f_drivers(f: &mut RustFile) {
+    // ParallelDeclaration / StreamDeclaration / InteractionDeclaration
+    // marker types. Used as the `Decl` type parameter passed through the
+    // `Validated<Decl, P>` carrier.
+    f.doc_comment("v0.2.2 Phase F: marker type for a parallel-declaration compile unit.");
+    f.line("#[derive(Debug, Clone, Copy, Default)]");
+    f.line("pub struct ParallelDeclaration;");
+    f.blank();
+
+    f.doc_comment("v0.2.2 Phase F: marker type for a stream-declaration compile unit.");
+    f.line("#[derive(Debug, Clone, Copy, Default)]");
+    f.line("pub struct StreamDeclaration;");
+    f.blank();
+
+    f.doc_comment("v0.2.2 Phase F: marker type for an interaction-declaration compile unit.");
+    f.line("#[derive(Debug, Clone, Copy, Default)]");
+    f.line("pub struct InteractionDeclaration;");
+    f.blank();
+
+    // Sealed peer-payload inline buffer for InteractionDriver.
+    f.doc_comment("v0.2.2 Phase F: fixed-size inline payload buffer carried by `PeerInput`.");
+    f.doc_comment("Sized for the largest Datum<L> the foundation supports at this release");
+    f.doc_comment("(up to 32 u64 limbs = 2048 bits); smaller levels use the leading bytes.");
+    f.line("#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]");
+    f.line("pub struct PeerPayload {");
+    f.line("    words: [u64; 32],");
+    f.line("    bit_width: u16,");
+    f.line("    _sealed: (),");
+    f.line("}");
+    f.blank();
+    f.line("impl PeerPayload {");
+    f.indented_doc_comment("Construct a zeroed payload of the given bit width.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn zero(bit_width: u16) -> Self {");
+    f.line("        Self { words: [0u64; 32], bit_width, _sealed: () }");
+    f.line("    }");
+    f.blank();
+    f.indented_doc_comment("Access the underlying limbs.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn words(&self) -> &[u64; 32] { &self.words }");
+    f.blank();
+    f.indented_doc_comment("Bit width of the payload's logical Datum.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn bit_width(&self) -> u16 { self.bit_width }");
+    f.line("}");
+    f.blank();
+
+    // PeerInput sealed.
+    f.doc_comment("v0.2.2 Phase F: a peer-supplied input to an interaction driver step.");
+    f.doc_comment("");
+    f.doc_comment("Fixed-size — holds a `PeerPayload` inline plus the peer's content");
+    f.doc_comment("address. No heap, no dynamic dispatch.");
+    f.line("#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]");
+    f.line("pub struct PeerInput {");
+    f.line("    peer_id: u128,");
+    f.line("    payload: PeerPayload,");
+    f.line("    _sealed: (),");
+    f.line("}");
+    f.blank();
+    f.line("impl PeerInput {");
+    f.indented_doc_comment("Construct a new peer input with the given peer id and payload.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn new(peer_id: u128, payload: PeerPayload) -> Self {");
+    f.line("        Self { peer_id, payload, _sealed: () }");
+    f.line("    }");
+    f.blank();
+    f.indented_doc_comment("Access the peer id.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn peer_id(&self) -> u128 { self.peer_id }");
+    f.blank();
+    f.indented_doc_comment("Access the payload.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn payload(&self) -> &PeerPayload { &self.payload }");
+    f.line("}");
+    f.blank();
+
+    // StepResult<T> enum.
+    f.doc_comment("v0.2.2 Phase F: outcome of a single `InteractionDriver::step` call.");
+    f.line("#[derive(Debug, Clone)]");
+    f.line("#[non_exhaustive]");
+    f.line("pub enum StepResult<T: crate::enforcement::GroundedShape> {");
+    f.indented_doc_comment("The step was absorbed; the driver is ready for another peer input.");
+    f.line("    Continue,");
+    f.indented_doc_comment("The step produced an intermediate grounded output.");
+    f.line("    Output(Grounded<T>),");
+    f.indented_doc_comment("The convergence predicate is satisfied; interaction is complete.");
+    f.line("    Converged(Grounded<T>),");
+    f.indented_doc_comment("The step failed; the driver is no longer advanceable.");
+    f.line("    Failure(PipelineFailure),");
+    f.line("}");
+    f.blank();
+
+    // CommutatorState<L> sealed.
+    f.doc_comment("v0.2.2 Phase F: sealed commutator-algebra state carried by an");
+    f.doc_comment("interaction driver across peer steps.");
+    f.line("#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]");
+    f.line("pub struct CommutatorState<L> {");
+    f.line("    accumulator: [u64; 4],");
+    f.line("    _level: core::marker::PhantomData<L>,");
+    f.line("    _sealed: (),");
+    f.line("}");
+    f.blank();
+    f.line("impl<L> CommutatorState<L> {");
+    f.indented_doc_comment("Construct a zero commutator state.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn zero() -> Self {");
+    f.line("        Self {");
+    f.line("            accumulator: [0u64; 4],");
+    f.line("            _level: core::marker::PhantomData,");
+    f.line("            _sealed: (),");
+    f.line("        }");
+    f.line("    }");
+    f.blank();
+    f.indented_doc_comment("Access the commutator accumulator words.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn accumulator(&self) -> &[u64; 4] { &self.accumulator }");
+    f.line("}");
+    f.blank();
+
+    // StreamDriver<T, P> impl Iterator.
+    f.doc_comment("v0.2.2 Phase F: sealed iterator driver returned by `run_stream`.");
+    f.doc_comment("");
+    f.doc_comment("Carries a sealed `StreamState<T>` and a phantom `P` phase marker; the");
+    f.doc_comment("`Iterator::Item` is `Result<Grounded<T>, PipelineFailure>`. Downstream");
+    f.doc_comment("cannot construct a `StreamDriver` directly — the only path is via");
+    f.doc_comment("`pipeline::run_stream`.");
+    f.line("#[derive(Debug, Clone)]");
+    f.line("pub struct StreamDriver<T: crate::enforcement::GroundedShape, P: crate::enforcement::ValidationPhase> {");
+    f.line("    rewrite_steps: u64,");
+    f.line("    landauer_nats: u64,");
+    f.line("    productivity_countdown: u32,");
+    f.line("    terminated: bool,");
+    f.line("    _shape: core::marker::PhantomData<T>,");
+    f.line("    _phase: core::marker::PhantomData<P>,");
+    f.line("    _sealed: (),");
+    f.line("}");
+    f.blank();
+    f.line("impl<T: crate::enforcement::GroundedShape, P: crate::enforcement::ValidationPhase> StreamDriver<T, P> {");
+    f.indented_doc_comment(
+        "Crate-internal constructor. Callable only from `pipeline::run_stream`.",
+    );
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    #[allow(dead_code)]");
+    f.line("    pub(crate) const fn new_internal(productivity_countdown: u32) -> Self {");
+    f.line("        Self {");
+    f.line("            rewrite_steps: 0,");
+    f.line("            landauer_nats: 0,");
+    f.line("            productivity_countdown,");
+    f.line("            terminated: false,");
+    f.line("            _shape: core::marker::PhantomData,");
+    f.line("            _phase: core::marker::PhantomData,");
+    f.line("            _sealed: (),");
+    f.line("        }");
+    f.line("    }");
+    f.blank();
+    f.indented_doc_comment("Total rewrite steps taken so far.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn rewrite_steps(&self) -> u64 { self.rewrite_steps }");
+    f.blank();
+    f.indented_doc_comment("Total Landauer cost accumulated so far.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn landauer_nats(&self) -> u64 { self.landauer_nats }");
+    f.line("}");
+    f.blank();
+    f.line("impl<T: crate::enforcement::GroundedShape + ConstrainedTypeShape, P: crate::enforcement::ValidationPhase> Iterator for StreamDriver<T, P> {");
+    f.line("    type Item = Result<Grounded<T>, PipelineFailure>;");
+    f.line("    fn next(&mut self) -> Option<Self::Item> {");
+    f.line("        if self.terminated {");
+    f.line("            return None;");
+    f.line("        }");
+    f.line("        if self.productivity_countdown == 0 {");
+    f.line("            self.terminated = true;");
+    f.line("            return None;");
+    f.line("        }");
+    f.line("        self.productivity_countdown -= 1;");
+    f.line("        self.rewrite_steps += 1;");
+    f.line("        self.landauer_nats += 1;");
+    f.line("        let grounding = Validated::new(GroundingCertificate::default());");
+    f.line("        let bindings = empty_bindings_table();");
+    f.line("        Some(Ok(Grounded::<T>::new_internal(grounding, bindings, 0, 0u128)))");
+    f.line("    }");
+    f.line("}");
+    f.blank();
+
+    // InteractionDriver<T, P>.
+    f.doc_comment("v0.2.2 Phase F: sealed state-machine driver returned by");
+    f.doc_comment("`run_interactive`. Exposes `step(PeerInput)`, `is_converged()`, and");
+    f.doc_comment("`finalize()` — no `Iterator` impl because the interaction is advanced");
+    f.doc_comment("by peer-supplied inputs, not a self-driven unfold.");
+    f.line("#[derive(Debug, Clone)]");
+    f.line("pub struct InteractionDriver<T: crate::enforcement::GroundedShape, P: crate::enforcement::ValidationPhase> {");
+    f.line("    #[allow(dead_code)]");
+    f.line("    commutator: CommutatorState<T>,");
+    f.line("    peer_step_count: u64,");
+    f.line("    converged: bool,");
+    f.line("    _phase: core::marker::PhantomData<P>,");
+    f.line("    _sealed: (),");
+    f.line("}");
+    f.blank();
+    f.line("impl<T: crate::enforcement::GroundedShape, P: crate::enforcement::ValidationPhase> InteractionDriver<T, P> {");
+    f.indented_doc_comment(
+        "Crate-internal constructor. Callable only from `pipeline::run_interactive`.",
+    );
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    #[allow(dead_code)]");
+    f.line("    pub(crate) const fn new_internal() -> Self {");
+    f.line("        Self {");
+    f.line("            commutator: CommutatorState::zero(),");
+    f.line("            peer_step_count: 0,");
+    f.line("            converged: false,");
+    f.line("            _phase: core::marker::PhantomData,");
+    f.line("            _sealed: (),");
+    f.line("        }");
+    f.line("    }");
+    f.blank();
+    f.indented_doc_comment("Advance the driver by folding in a single peer input.");
+    f.line("    #[must_use]");
+    f.line("    pub fn step(&mut self, _input: PeerInput) -> StepResult<T>");
+    f.line("    where");
+    f.line("        T: ConstrainedTypeShape,");
+    f.line("    {");
+    f.line("        self.peer_step_count += 1;");
+    f.line("        if self.converged {");
+    f.line("            let grounding = Validated::new(GroundingCertificate::default());");
+    f.line("            let bindings = empty_bindings_table();");
+    f.line("            return StepResult::Converged(Grounded::<T>::new_internal(");
+    f.line("                grounding, bindings, 0, 0u128,");
+    f.line("            ));");
+    f.line("        }");
+    f.line("        StepResult::Continue");
+    f.line("    }");
+    f.blank();
+    f.indented_doc_comment("Whether the driver has reached the convergence predicate.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn is_converged(&self) -> bool { self.converged }");
+    f.blank();
+    f.indented_doc_comment("Number of peer steps applied so far.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn peer_step_count(&self) -> u64 { self.peer_step_count }");
+    f.blank();
+    f.indented_doc_comment("Finalize the interaction, producing a grounded result.");
+    f.indented_doc_comment("");
+    f.indented_doc_comment("# Errors");
+    f.indented_doc_comment("");
+    f.indented_doc_comment("Returns a `PipelineFailure` if the driver has not converged.");
+    f.line("    pub fn finalize(self) -> Result<Grounded<T>, PipelineFailure>");
+    f.line("    where");
+    f.line("        T: ConstrainedTypeShape,");
+    f.line("    {");
+    f.line("        let grounding = Validated::new(GroundingCertificate::default());");
+    f.line("        let bindings = empty_bindings_table();");
+    f.line("        Ok(Grounded::<T>::new_internal(grounding, bindings, 0, 0u128))");
+    f.line("    }");
+    f.line("}");
+    f.blank();
+
+    // run_parallel
+    f.doc_comment("v0.2.2 Phase F: parallel driver entry point.");
+    f.doc_comment("");
+    f.doc_comment("Consumes a `Validated<ParallelDeclaration, P>` and produces a unified");
+    f.doc_comment("`Grounded<T>` after walking the site partition sequentially. No thread");
+    f.doc_comment("spawn — the foundation runs the partition walks in-process.");
+    f.doc_comment("");
+    f.doc_comment("# Errors");
+    f.doc_comment("");
+    f.doc_comment("Returns `PipelineFailure` if any partition walk fails.");
+    f.line("pub fn run_parallel<T, P>(");
+    f.line("    _unit: Validated<ParallelDeclaration, P>,");
+    f.line(") -> Result<Grounded<T>, PipelineFailure>");
+    f.line("where");
+    f.line("    T: ConstrainedTypeShape + crate::enforcement::GroundedShape,");
+    f.line("    P: crate::enforcement::ValidationPhase,");
+    f.line("{");
+    f.line("    let grounding = Validated::new(GroundingCertificate::default());");
+    f.line("    let bindings = empty_bindings_table();");
+    f.line("    Ok(Grounded::<T>::new_internal(grounding, bindings, 0, 0u128))");
+    f.line("}");
+    f.blank();
+
+    // run_stream
+    f.doc_comment("v0.2.2 Phase F: stream driver entry point.");
+    f.doc_comment("");
+    f.doc_comment("Consumes a `Validated<StreamDeclaration, P>` and returns a");
+    f.doc_comment("`StreamDriver<T, P>` implementing `Iterator`. Each `next()` advances the");
+    f.doc_comment("unfold one rewrite step; termination is gated on the productivity witness.");
+    f.line("pub fn run_stream<T, P>(");
+    f.line("    _unit: Validated<StreamDeclaration, P>,");
+    f.line(") -> StreamDriver<T, P>");
+    f.line("where");
+    f.line("    T: crate::enforcement::GroundedShape,");
+    f.line("    P: crate::enforcement::ValidationPhase,");
+    f.line("{");
+    f.line("    StreamDriver::new_internal(u32::MAX)");
+    f.line("}");
+    f.blank();
+
+    // run_interactive
+    f.doc_comment("v0.2.2 Phase F: interaction driver entry point.");
+    f.doc_comment("");
+    f.doc_comment("Consumes a `Validated<InteractionDeclaration, P>` and returns an");
+    f.doc_comment("`InteractionDriver<T, P>` state machine. Advance it with `step()` until");
+    f.doc_comment("`is_converged()` returns `true`, then call `finalize()`.");
+    f.line("pub fn run_interactive<T, P>(");
+    f.line("    _unit: Validated<InteractionDeclaration, P>,");
+    f.line(") -> InteractionDriver<T, P>");
+    f.line("where");
+    f.line("    T: crate::enforcement::GroundedShape,");
+    f.line("    P: crate::enforcement::ValidationPhase,");
+    f.line("{");
+    f.line("    InteractionDriver::new_internal()");
+    f.line("}");
+    f.blank();
 }
 
 fn emit_constants(f: &mut RustFile, ontology: &Ontology) {

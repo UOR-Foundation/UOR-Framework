@@ -104,6 +104,8 @@ pub fn run_all(paths: &WorkspacePaths) -> anyhow::Result<ConformanceReport> {
     report.extend(validators::rust::bridge_namespace_completion::validate(
         &paths.workspace,
     )?);
+    // v0.2.2 Phase F: driver shape check.
+    report.extend(validators::rust::driver_shape::validate(&paths.workspace)?);
 
     // 2. Ontology inventory
     report.extend(validators::ontology::inventory::validate(&paths.artifacts)?);
