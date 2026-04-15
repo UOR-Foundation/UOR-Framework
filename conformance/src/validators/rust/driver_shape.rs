@@ -42,6 +42,24 @@ pub fn validate(workspace: &Path) -> Result<ConformanceReport> {
             "InteractionDeclaration",
             "pub struct InteractionDeclaration",
         ),
+        // v0.2.2 T2.7 (cleanup): payload accessors prove input-dependence.
+        (
+            "ParallelDeclaration::site_count",
+            "pub const fn site_count(&self) -> u64",
+        ),
+        (
+            "StreamDeclaration::productivity_bound",
+            "pub const fn productivity_bound(&self) -> u64",
+        ),
+        (
+            "InteractionDeclaration::convergence_seed",
+            "pub const fn convergence_seed(&self) -> u64",
+        ),
+        (
+            "InteractionDriver::commutator_acc field",
+            "commutator_acc: [u64; 4]",
+        ),
+        ("StreamDriver::seed field", "seed: u64"),
         // Sealed peer and commutator types.
         ("PeerPayload sealed", "pub struct PeerPayload"),
         ("PeerInput sealed", "pub struct PeerInput"),
@@ -62,7 +80,7 @@ pub fn validate(workspace: &Path) -> Result<ConformanceReport> {
         // InteractionDriver methods.
         (
             "InteractionDriver::step",
-            "pub fn step(&mut self, _input: PeerInput) -> StepResult<T>",
+            "pub fn step(&mut self, input: PeerInput) -> StepResult<T>",
         ),
         (
             "InteractionDriver::is_converged",

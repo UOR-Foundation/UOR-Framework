@@ -44,7 +44,7 @@ pub fn validate(workspace: &Path) -> Result<ConformanceReport> {
         ),
         (
             "JACOBIAN_MAX_SITES constant",
-            "pub const JACOBIAN_MAX_SITES: usize = 64;",
+            "pub const JACOBIAN_MAX_SITES: usize = 8;",
         ),
         ("TRACE_MAX_EVENTS constant", "pub const TRACE_MAX_EVENTS"),
         // Sealed BaseMetric carriers.
@@ -80,7 +80,17 @@ pub fn validate(workspace: &Path) -> Result<ConformanceReport> {
         ),
         (
             "Grounded::sigma accessor",
-            "pub const fn sigma(&self) -> SigmaValue",
+            "pub fn sigma(&self) -> SigmaValue",
+        ),
+        // v0.2.2 T2.6 (cleanup): BaseMetric field storage anchors.
+        ("Grounded::sigma_ppm field", "sigma_ppm: u32"),
+        (
+            "Grounded::jacobian_entries field",
+            "jacobian_entries: [i64; JACOBIAN_MAX_SITES]",
+        ),
+        (
+            "Grounded::betti_numbers field",
+            "betti_numbers: [u32; MAX_BETTI_DIMENSION]",
         ),
         (
             "Grounded::jacobian accessor",

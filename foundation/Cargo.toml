@@ -14,6 +14,12 @@ categories = ["data-structures", "science"]
 
 [dependencies]
 
+[dev-dependencies]
+# v0.2.2 T2.5 (cleanup): test-helpers crate exposing crate-internal
+# constructors via a #[doc(hidden)] back-door. Used by integration tests
+# that need to build Trace / TraceEvent / MulContext values directly.
+uor-foundation-test-helpers = { path = "../uor-foundation-test-helpers" }
+
 [features]
 # v0.2.2 Phase H: feature flag layout.
 # - `default` stays empty so the foundation is strictly no_std out of the box.

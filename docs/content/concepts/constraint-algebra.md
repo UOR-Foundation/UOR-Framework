@@ -23,16 +23,33 @@ A {@class https://uor.foundation/type/ConstrainedType} links to its constraints 
 
 ## Constraint Properties
 
-Each constraint kind has specialized parameters:
+v0.2.2 Phase D parametrized the constraint surface: instead of seven
+disjoint subclasses, every constraint is now a `BoundConstraint<O, B>`
+selecting one (`Observable`, `BoundShape`) pair from the closed catalogue.
+The legacy names survive as Rust type aliases (`ResidueConstraint`,
+`HammingConstraint`, ...) over the parametric carrier.
 
-| Property | Domain | Range | Description |
-|----------|--------|-------|-------------|
-| {@prop https://uor.foundation/type/modulus} | ResidueConstraint | xsd:positiveInteger | The modulus m |
-| {@prop https://uor.foundation/type/residue} | ResidueConstraint | xsd:nonNegativeInteger | The residue r |
-| {@prop https://uor.foundation/type/carryPattern} | CarryConstraint | xsd:string | Binary carry pattern |
-| {@prop https://uor.foundation/type/minDepth} | DepthConstraint | xsd:nonNegativeInteger | Minimum depth |
-| {@prop https://uor.foundation/type/maxDepth} | DepthConstraint | xsd:nonNegativeInteger | Maximum depth |
-| {@prop https://uor.foundation/type/composedFrom} | CompositeConstraint | Constraint | Component constraints |
+| Constraint kind | Observable | Bound shape |
+|---|---|---|
+| `ResidueConstraint` | `observable:ValueModObservable` | `type:ResidueClassBound` |
+| `HammingConstraint` | `observable:HammingMetric` | `type:LessEqBound` |
+| `DepthConstraint` | `derivation:DerivationDepthObservable` | `type:LessEqBound` |
+| `CarryConstraint` | `carry:CarryDepthObservable` | `type:LessEqBound` |
+| `SiteConstraint` | `partition:FreeRankObservable` | `type:LessEqBound` |
+| `AffineConstraint` | `observable:ValueModObservable` | `type:AffineEqualBound` |
+
+Each kind's parameters are passed via `BoundArguments`. The legacy
+property triples are retained on `BoundConstraint` for ergonomic access
+(modulus, residue, hammingBound, minDepth, maxDepth, etc.):
+
+| Property | Stored on | Range | Description |
+|----------|-----------|-------|-------------|
+| {@prop https://uor.foundation/type/modulus} | BoundConstraint | xsd:positiveInteger | The modulus m (residue / affine kinds) |
+| {@prop https://uor.foundation/type/residue} | BoundConstraint | xsd:nonNegativeInteger | The residue r |
+| {@prop https://uor.foundation/type/carryPattern} | BoundConstraint | xsd:string | Binary carry pattern |
+| {@prop https://uor.foundation/type/minDepth} | BoundConstraint | xsd:nonNegativeInteger | Minimum depth |
+| {@prop https://uor.foundation/type/maxDepth} | BoundConstraint | xsd:nonNegativeInteger | Maximum depth |
+| {@prop https://uor.foundation/type/composedFrom} | Conjunction | BoundConstraint | Component constraints |
 
 ## Metric Axes
 
@@ -59,18 +76,31 @@ pins the union of sites pinned by its components.
 
 ## Example: Residue + Depth
 
+In v0.2.2 Phase D, both kinds are `BoundConstraint` instances. The Rust
+call-site syntax stays compatible via the type aliases:
+
+```rust
+use uor_foundation::enforcement::{ResidueConstraint, DepthConstraint};
+let odd = ResidueConstraint::new(2, 1);
+let shallow = DepthConstraint::new(0, 2);
+```
+
+The Turtle representation uses the parametric form:
+
 ```turtle
 <https://uor.foundation/instance/constraint-odd>
-    a               type:ResidueConstraint ;
-    type:modulus     "2"^^xsd:positiveInteger ;
-    type:residue     "1"^^xsd:nonNegativeInteger ;
-    type:metricAxis  type:verticalAxis .
+    a                   type:BoundConstraint ;
+    type:boundObservable observable:ValueModObservable ;
+    type:boundShape      type:ResidueClassBound ;
+    type:boundArguments  "modulus=2;residue=1" ;
+    type:metricAxis      type:verticalAxis .
 
 <https://uor.foundation/instance/constraint-shallow>
-    a               type:DepthConstraint ;
-    type:minDepth   "0"^^xsd:nonNegativeInteger ;
-    type:maxDepth   "2"^^xsd:nonNegativeInteger ;
-    type:metricAxis  type:verticalAxis .
+    a                   type:BoundConstraint ;
+    type:boundObservable derivation:DerivationDepthObservable ;
+    type:boundShape      type:LessEqBound ;
+    type:boundArguments  "min_depth=0;max_depth=2" ;
+    type:metricAxis      type:verticalAxis .
 ```
 
 Each constraint pins specific sites tracked by the

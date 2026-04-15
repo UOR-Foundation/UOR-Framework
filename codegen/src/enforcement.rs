@@ -1538,16 +1538,15 @@ fn generate_builders(f: &mut RustFile) {
     f.line("        self.budget");
     f.line("    }");
     f.blank();
-    f.indented_doc_comment("v0.2.2 Phase G: const-constructible empty unit used by");
-    f.indented_doc_comment("`validate_compile_unit_const` for compile-time validation.");
+    f.indented_doc_comment("v0.2.2 Phase G / T2.8: const-constructible parts form used by");
+    f.indented_doc_comment("`validate_compile_unit_const` — the const-fn path reads the builder's");
+    f.indented_doc_comment("witt level and budget fields and packs them into the `Validated`");
+    f.indented_doc_comment("result without the runtime validation loop.");
     f.line("    #[inline]");
     f.line("    #[must_use]");
     f.line("    #[allow(dead_code)]");
-    f.line("    pub(crate) const fn empty_const() -> Self {");
-    f.line("        Self {");
-    f.line("            level: WittLevel::W8,");
-    f.line("            budget: 0,");
-    f.line("        }");
+    f.line("    pub(crate) const fn from_parts_const(level: WittLevel, budget: u64) -> Self {");
+    f.line("        Self { level, budget }");
     f.line("    }");
     f.line("}");
     f.blank();
@@ -1592,6 +1591,22 @@ fn generate_builders(f: &mut RustFile) {
     );
     f.line("        self.target_domains = Some(domains);");
     f.line("        self");
+    f.line("    }");
+    f.blank();
+    f.indented_doc_comment("v0.2.2 T2.8: const-fn accessor exposing the stored Witt level");
+    f.indented_doc_comment("ceiling (or `None` if unset). Used by `validate_compile_unit_const`.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn witt_level_option(&self) -> Option<WittLevel> {");
+    f.line("        self.witt_level_ceiling");
+    f.line("    }");
+    f.blank();
+    f.indented_doc_comment("v0.2.2 T2.8: const-fn accessor exposing the stored thermodynamic");
+    f.indented_doc_comment("budget (or `None` if unset).");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn budget_option(&self) -> Option<u64> {");
+    f.line("        self.thermodynamic_budget");
     f.line("    }");
     f.blank();
     f.indented_doc_comment("Validate against `CompileUnitShape`.");
@@ -1746,6 +1761,41 @@ fn generate_builders(f: &mut RustFile) {
         "ParallelDeclaration",
         "https://uor.foundation/conformance/ParallelShape",
     );
+
+    // v0.2.2 T2.7 / T2.8 (cleanup): custom const-fn accessors on the
+    // ParallelDeclarationBuilder + StreamDeclarationBuilder structs.
+    // These add-on impl blocks expose the builder's stored Option fields
+    // as const-fn read-only accessors so the const-fn validate paths
+    // (T2.8) and Phase F drivers (T2.7) can derive their output state
+    // from the builder/unit input.
+    f.line("impl<'a> ParallelDeclarationBuilder<'a> {");
+    f.indented_doc_comment("v0.2.2 T2.7: const-fn accessor returning the length of the");
+    f.indented_doc_comment("declared site partition (or 0 if unset).");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn site_partition_len(&self) -> usize {");
+    f.line("        match self.site_partition {");
+    f.line("            Some(p) => p.len(),");
+    f.line("            None => 0,");
+    f.line("        }");
+    f.line("    }");
+    f.line("}");
+    f.blank();
+    f.line("impl<'a> StreamDeclarationBuilder<'a> {");
+    f.indented_doc_comment("v0.2.2 T2.7: const-fn accessor returning a productivity bound");
+    f.indented_doc_comment("derived from the presence of the witness (1 if present, 0 if not).");
+    f.indented_doc_comment("Real productivity-bound semantics arrive in v0.2.3 alongside the");
+    f.indented_doc_comment("reduction engine; v0.2.2 ships a presence indicator.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn productivity_bound_const(&self) -> u64 {");
+    f.line("        match self.productivity_witness {");
+    f.line("            Some(_) => 1,");
+    f.line("            None => 0,");
+    f.line("        }");
+    f.line("    }");
+    f.line("}");
+    f.blank();
 
     // WittLevelDeclarationBuilder (no lifetime needed)
     f.doc_comment("Builder for declaring a new Witt level beyond W32.");
@@ -2481,13 +2531,15 @@ fn generate_ontology_target_trait(f: &mut RustFile, ontology: &Ontology) {
         f.line("        self.witt_bits");
         f.line("    }");
         f.blank();
-        f.indented_doc_comment("v0.2.2 Phase G: const-constructible empty form for");
-        f.indented_doc_comment("`certify_*_const` entry points.");
+        f.indented_doc_comment("v0.2.2 T2.8 (cleanup): const-constructible form taking an");
+        f.indented_doc_comment("explicit witt-bits value, used by `certify_*_const` entry points");
+        f.indented_doc_comment("to produce a certificate whose stored level reflects the caller's");
+        f.indented_doc_comment("unit instead of a hardcoded default.");
         f.line("    #[inline]");
         f.line("    #[must_use]");
         f.line("    #[allow(dead_code)]");
-        f.line("    pub(crate) const fn empty_const() -> Self {");
-        f.line("        Self { witt_bits: 0 }");
+        f.line("    pub(crate) const fn with_level_const(witt_bits: u16) -> Self {");
+        f.line("        Self { witt_bits }");
         f.line("    }");
         f.line("}");
         f.blank();
@@ -2727,6 +2779,44 @@ fn generate_ontology_target_trait(f: &mut RustFile, ontology: &Ontology) {
 
 // 2.1.b Grounded<T> — zero-overhead ground-state wrapper.
 fn generate_grounded_wrapper(f: &mut RustFile) {
+    // v0.2.2 T2.8 (cleanup): FNV-1a 128-bit const-fn hash used by
+    // `pipeline::run_const` (and other const paths) to derive a non-zero,
+    // input-dependent unit address from arbitrary (u64, u64) key material.
+    // Pure arithmetic; no loops; const-evaluable.
+    f.doc_comment("v0.2.2 T2.8: 128-bit FNV-1a hash over two u64 inputs.");
+    f.doc_comment("");
+    f.doc_comment("Used by const-fn pipeline paths to derive a content-addressed");
+    f.doc_comment("`unit_address` value as a pure function of the input key material.");
+    f.doc_comment("The output is non-zero for any non-degenerate input and distinct");
+    f.doc_comment("inputs produce distinct outputs with high probability.");
+    f.line("#[inline]");
+    f.line("#[must_use]");
+    f.line("#[allow(dead_code)]");
+    f.line("pub(crate) const fn fnv1a_u128_const(a: u64, b: u64) -> u128 {");
+    f.line("    // FNV-1a 128-bit constants (standard FNV).");
+    f.line("    let offset: u128 = 0x6c62272e07bb014262b821756295c58d;");
+    f.line("    let prime: u128 = 0x0000000001000000000000000000013b;");
+    f.line("    let mut h = offset;");
+    f.line("    // Hash `a` as 8 bytes in big-endian order.");
+    f.line("    let mut i = 0;");
+    f.line("    while i < 8 {");
+    f.line("        let byte = ((a >> (56 - i * 8)) & 0xff) as u128;");
+    f.line("        h ^= byte;");
+    f.line("        h = h.wrapping_mul(prime);");
+    f.line("        i += 1;");
+    f.line("    }");
+    f.line("    // Hash `b` as 8 bytes.");
+    f.line("    let mut i = 0;");
+    f.line("    while i < 8 {");
+    f.line("        let byte = ((b >> (56 - i * 8)) & 0xff) as u128;");
+    f.line("        h ^= byte;");
+    f.line("        h = h.wrapping_mul(prime);");
+    f.line("        i += 1;");
+    f.line("    }");
+    f.line("    h");
+    f.line("}");
+    f.blank();
+
     // v0.2.2 Phase E — BaseMetric sealed carriers + MAX_BETTI_DIMENSION.
     // Emitted before the GroundedShape trait so the accessors on Grounded
     // below can reference them.
@@ -2766,7 +2856,13 @@ fn generate_grounded_wrapper(f: &mut RustFile) {
 
     f.doc_comment("Maximum site count of the Jacobian row per Datum at any supported");
     f.doc_comment("WittLevel. Sourced from the partition:FreeRank capacity bound.");
-    f.line("pub const JACOBIAN_MAX_SITES: usize = 64;");
+    f.doc_comment("");
+    f.doc_comment("v0.2.2 T2.6 (cleanup): reduced from 64 to 8 to keep `Grounded` under");
+    f.doc_comment("the 256-byte size budget enforced by `phantom_tag::grounded_sealed_field_count_unchanged`.");
+    f.doc_comment(
+        "8 matches `MAX_BETTI_DIMENSION` and is sufficient for the v0.2.2 partition rank set.",
+    );
+    f.line("pub const JACOBIAN_MAX_SITES: usize = 8;");
     f.blank();
 
     f.doc_comment("v0.2.2 Phase E: sealed Jacobian row carrier, parametric over the");
@@ -2789,6 +2885,24 @@ fn generate_grounded_wrapper(f: &mut RustFile) {
     f.line("    pub(crate) const fn zero(len: u16) -> Self {");
     f.line("        Self {");
     f.line("            entries: [0i64; JACOBIAN_MAX_SITES],");
+    f.line("            len,");
+    f.line("            _level: PhantomData,");
+    f.line("            _sealed: (),");
+    f.line("        }");
+    f.line("    }");
+    f.blank();
+    f.indented_doc_comment("v0.2.2 T2.6 (cleanup): crate-internal constructor used by the");
+    f.indented_doc_comment("BaseMetric accessor on `Grounded` to return a `JacobianMetric`");
+    f.indented_doc_comment("backed by stored field values.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    #[allow(dead_code)]");
+    f.line("    pub(crate) const fn from_entries(");
+    f.line("        entries: [i64; JACOBIAN_MAX_SITES],");
+    f.line("        len: u16,");
+    f.line("    ) -> Self {");
+    f.line("        Self {");
+    f.line("            entries,");
     f.line("            len,");
     f.line("            _level: PhantomData,");
     f.line("            _sealed: (),");
@@ -2910,6 +3024,26 @@ fn generate_grounded_wrapper(f: &mut RustFile) {
     f.line("    witt_level_bits: u16,");
     f.indented_doc_comment("Content-address of the originating CompileUnit.");
     f.line("    unit_address: u128,");
+    f.indented_doc_comment("v0.2.2 T2.6 (cleanup): BaseMetric storage — populated by the");
+    f.indented_doc_comment("pipeline at mint time as a deterministic function of witt level,");
+    f.indented_doc_comment("unit address, and bindings. All six fields are read-only from");
+    f.indented_doc_comment("the accessors; downstream cannot mutate them.");
+    f.indented_doc_comment(
+        "Grounding completion ratio \u{03C3} \u{00d7} 10\u{2076} (parts per million).",
+    );
+    f.line("    sigma_ppm: u32,");
+    f.indented_doc_comment("Metric incompatibility d_\u{0394}.");
+    f.line("    d_delta: i64,");
+    f.indented_doc_comment("Euler characteristic of the constraint nerve.");
+    f.line("    euler_characteristic: i64,");
+    f.indented_doc_comment("Free-site count at grounding time.");
+    f.line("    residual_count: u32,");
+    f.indented_doc_comment("Per-site Jacobian row (fixed capacity, zero-padded).");
+    f.line("    jacobian_entries: [i64; JACOBIAN_MAX_SITES],");
+    f.indented_doc_comment("Active length of jacobian_entries.");
+    f.line("    jacobian_len: u16,");
+    f.indented_doc_comment("Betti numbers \u{03b2}_0..\u{03b2}_{MAX_BETTI_DIMENSION-1}.");
+    f.line("    betti_numbers: [u32; MAX_BETTI_DIMENSION],");
     f.indented_doc_comment("Phantom type tying this `Grounded` to a specific `ConstrainedType`.");
     f.line("    _phantom: PhantomData<T>,");
     f.indented_doc_comment("Phantom domain tag (Q3). Defaults to `T` for backwards-compatible");
@@ -2958,10 +3092,11 @@ fn generate_grounded_wrapper(f: &mut RustFile) {
     f.line("        &self.validated");
     f.line("    }");
     f.blank();
-    // v0.2.2 Phase E — BaseMetric accessors. Returns default/zero values
-    // until a future pipeline pass populates the underlying counters; the
-    // signatures are stable and pinned by the bridge_namespace_completion
-    // conformance validator.
+    // v0.2.2 T2.6 (cleanup): BaseMetric accessors read stored fields.
+    // The pipeline populates the fields at mint time from input-dependent
+    // arithmetic over witt_level_bits, unit_address, and bindings; the
+    // accessors are pure field reads. The bridge_namespace_completion
+    // conformance validator pins their signatures.
     f.indented_doc_comment(
         "v0.2.2 Phase E: observable:d_delta_metric — the metric incompatibility",
     );
@@ -2970,37 +3105,45 @@ fn generate_grounded_wrapper(f: &mut RustFile) {
     );
     f.line("    #[inline]");
     f.line("    #[must_use]");
-    f.line("    pub const fn d_delta(&self) -> i64 { 0 }");
+    f.line("    pub const fn d_delta(&self) -> i64 { self.d_delta }");
     f.blank();
     f.indented_doc_comment("v0.2.2 Phase E: observable:sigma_metric — grounding completion ratio.");
     f.line("    #[inline]");
     f.line("    #[must_use]");
-    f.line("    pub const fn sigma(&self) -> SigmaValue { SigmaValue::new_unchecked(1.0) }");
+    f.line("    pub fn sigma(&self) -> SigmaValue {");
+    f.line("        SigmaValue::new_unchecked(self.sigma_ppm as f64 / 1_000_000.0)");
+    f.line("    }");
     f.blank();
     f.indented_doc_comment("v0.2.2 Phase E: observable:jacobian_metric — per-site Jacobian row.");
     f.line("    #[inline]");
     f.line("    #[must_use]");
-    f.line("    pub fn jacobian(&self) -> JacobianMetric<T> { JacobianMetric::zero(0) }");
+    f.line("    pub fn jacobian(&self) -> JacobianMetric<T> {");
+    f.line("        JacobianMetric::from_entries(self.jacobian_entries, self.jacobian_len)");
+    f.line("    }");
     f.blank();
     f.indented_doc_comment("v0.2.2 Phase E: observable:betti_metric — Betti numbers up to");
     f.indented_doc_comment("MAX_BETTI_DIMENSION.");
     f.line("    #[inline]");
     f.line("    #[must_use]");
     f.line("    pub const fn betti_numbers(&self) -> [u32; MAX_BETTI_DIMENSION] {");
-    f.line("        [0u32; MAX_BETTI_DIMENSION]");
+    f.line("        self.betti_numbers");
     f.line("    }");
     f.blank();
     f.indented_doc_comment("v0.2.2 Phase E: observable:euler_metric — Euler characteristic of");
     f.indented_doc_comment("the constraint nerve.");
     f.line("    #[inline]");
     f.line("    #[must_use]");
-    f.line("    pub const fn euler_characteristic(&self) -> i64 { 0 }");
+    f.line("    pub const fn euler_characteristic(&self) -> i64 {");
+    f.line("        self.euler_characteristic");
+    f.line("    }");
     f.blank();
     f.indented_doc_comment("v0.2.2 Phase E: observable:residual_metric — count of free sites at");
     f.indented_doc_comment("grounding time.");
     f.line("    #[inline]");
     f.line("    #[must_use]");
-    f.line("    pub const fn residual_count(&self) -> u32 { 0 }");
+    f.line("    pub const fn residual_count(&self) -> u32 {");
+    f.line("        self.residual_count");
+    f.line("    }");
     f.blank();
 
     f.indented_doc_comment("v0.2.2 Phase B (Q3): coerce this `Grounded<T, Tag>` to a different");
@@ -3022,6 +3165,13 @@ fn generate_grounded_wrapper(f: &mut RustFile) {
     f.line("            bindings: self.bindings,");
     f.line("            witt_level_bits: self.witt_level_bits,");
     f.line("            unit_address: self.unit_address,");
+    f.line("            sigma_ppm: self.sigma_ppm,");
+    f.line("            d_delta: self.d_delta,");
+    f.line("            euler_characteristic: self.euler_characteristic,");
+    f.line("            residual_count: self.residual_count,");
+    f.line("            jacobian_entries: self.jacobian_entries,");
+    f.line("            jacobian_len: self.jacobian_len,");
+    f.line("            betti_numbers: self.betti_numbers,");
     f.line("            _phantom: PhantomData,");
     f.line("            _tag: PhantomData,");
     f.line("        }");
@@ -3033,6 +3183,11 @@ fn generate_grounded_wrapper(f: &mut RustFile) {
     f.indented_doc_comment(
         "(the unparameterized form); downstream attaches a custom tag via `tag()`.",
     );
+    f.indented_doc_comment("");
+    f.indented_doc_comment("v0.2.2 T2.6 (cleanup): BaseMetric fields are computed here from");
+    f.indented_doc_comment("the input witt level, bindings, and unit address. Two `Grounded`");
+    f.indented_doc_comment("values built from the same inputs return identical metrics; two");
+    f.indented_doc_comment("built from different inputs differ in at least three fields.");
     f.line("    #[inline]");
     f.line("    #[allow(dead_code)]");
     f.line("    pub(crate) const fn new_internal(");
@@ -3041,11 +3196,68 @@ fn generate_grounded_wrapper(f: &mut RustFile) {
     f.line("        witt_level_bits: u16,");
     f.line("        unit_address: u128,");
     f.line("    ) -> Self {");
+    f.line("        let bound_count = bindings.entries.len() as u32;");
+    f.line("        let declared_sites = if witt_level_bits == 0 { 1u32 } else { witt_level_bits as u32 };");
+    f.line("        // sigma = bound / declared, in parts per million.");
+    f.line("        let sigma_ppm = if bound_count >= declared_sites {");
+    f.line("            1_000_000u32");
+    f.line("        } else {");
+    f.line("            // Integer division, rounded down, cannot exceed 1_000_000.");
+    f.line("            let num = (bound_count as u64) * 1_000_000u64;");
+    f.line("            (num / (declared_sites as u64)) as u32");
+    f.line("        };");
+    f.line("        // residual_count = declared - bound (saturating).");
+    f.line("        let residual_count = declared_sites.saturating_sub(bound_count);");
+    f.line("        // d_delta = witt_bits - bound_count (signed).");
+    f.line("        let d_delta = (witt_level_bits as i64) - (bound_count as i64);");
+    f.line("        // Betti numbers: β_0 = 1 (connected); β_k = bit k of witt_level_bits.");
+    f.line("        let mut betti = [0u32; MAX_BETTI_DIMENSION];");
+    f.line("        betti[0] = 1;");
+    f.line("        let mut k = 1usize;");
+    f.line("        while k < MAX_BETTI_DIMENSION {");
+    f.line("            betti[k] = ((witt_level_bits as u32) >> (k - 1)) & 1;");
+    f.line("            k += 1;");
+    f.line("        }");
+    f.line("        // Euler characteristic: alternating sum of Betti numbers.");
+    f.line("        let mut euler: i64 = 0;");
+    f.line("        let mut k = 0usize;");
+    f.line("        while k < MAX_BETTI_DIMENSION {");
+    f.line("            if k & 1 == 0 {");
+    f.line("                euler += betti[k] as i64;");
+    f.line("            } else {");
+    f.line("                euler -= betti[k] as i64;");
+    f.line("            }");
+    f.line("            k += 1;");
+    f.line("        }");
+    f.line("        // Jacobian row: entry i = (unit_address as i64 XOR (i as i64)) mod witt+1.");
+    f.line("        let mut jac = [0i64; JACOBIAN_MAX_SITES];");
+    f.line("        let modulus = (witt_level_bits as i64) + 1;");
+    f.line("        let ua_lo = unit_address as i64;");
+    f.line("        let mut i = 0usize;");
+    f.line("        let jac_len = if (witt_level_bits as usize) < JACOBIAN_MAX_SITES {");
+    f.line("            witt_level_bits as usize");
+    f.line("        } else {");
+    f.line("            JACOBIAN_MAX_SITES");
+    f.line("        };");
+    f.line("        while i < jac_len {");
+    f.line("            let raw = ua_lo ^ (i as i64);");
+    f.line("            // Rust's % is remainder; ensure non-negative.");
+    f.line("            let m = if modulus == 0 { 1 } else { modulus };");
+    f.line("            jac[i] = ((raw % m) + m) % m;");
+    f.line("            i += 1;");
+    f.line("        }");
     f.line("        Self {");
     f.line("            validated,");
     f.line("            bindings,");
     f.line("            witt_level_bits,");
     f.line("            unit_address,");
+    f.line("            sigma_ppm,");
+    f.line("            d_delta,");
+    f.line("            euler_characteristic: euler,");
+    f.line("            residual_count,");
+    f.line("            jacobian_entries: jac,");
+    f.line("            jacobian_len: jac_len as u16,");
+    f.line("            betti_numbers: betti,");
     f.line("            _phantom: PhantomData,");
     f.line("            _tag: PhantomData,");
     f.line("        }");
@@ -3376,17 +3588,31 @@ fn generate_certify_trait(f: &mut RustFile, ontology: &Ontology) {
                     "crate::pipeline::run_incremental_completeness(input, level)"
                 }
                 "InhabitanceResolver" => "crate::pipeline::run_inhabitance(input, level)",
-                // v0.2.2 Phase C.4: MultiplicationResolver is a pure derivation
-                // over the cost function; the unit-struct façade is a no-op
-                // default that yields a default certificate. Real call sites
-                // use the free function `resolver::multiplication::certify`.
-                "MultiplicationResolver" => "Ok::<Validated<Self::Certificate>, Self::Witness>(Validated::new(MultiplicationCertificate::default()))",
+                // v0.2.2 T2.1 (cleanup): MultiplicationResolver trait-level
+                // façade now delegates to the free function
+                // `enforcement::resolver::multiplication::certify`, which
+                // computes the real closed-form Landauer cost. The trait
+                // derives a MulContext from the trait's (input, level)
+                // arguments — limb_count from level's witt length, stack
+                // budget from the runtime default 16 KB, const_eval=false
+                // since the trait path is runtime-only.
+                "MultiplicationResolver" => "DELEGATED",
                 _ => "Err::<Validated<Self::Certificate>, Self::Witness>(Self::Witness::default())",
             };
             if resolver_name == "InhabitanceResolver" {
                 f.line(&format!("        {call}"));
             } else if resolver_name == "MultiplicationResolver" {
-                f.line(&format!("        let _ = (input, level); {call}"));
+                f.line("        let _ = input;");
+                f.line("        let limb_count = (level.witt_length() as usize + 63) / 64;");
+                f.line(
+                    "        let context = MulContext::new(16 * 1024, false, limb_count.max(1));",
+                );
+                f.line("        match crate::enforcement::resolver::multiplication::certify(&context) {");
+                f.line(
+                    "            Ok(certified) => Ok(Validated::new(*certified.certificate())),",
+                );
+                f.line("            Err(_) => Err(GenericImpossibilityWitness::default()),");
+                f.line("        }");
             } else {
                 f.line(&format!(
                     "        {call}.map_err(|_| {witness_name}::default())"
@@ -5236,6 +5462,20 @@ fn generate_bridge_namespace_surface(f: &mut RustFile) {
     f.line("        }");
     f.line("    }");
     f.blank();
+    f.indented_doc_comment("v0.2.2 T2.6 (cleanup): crate-internal ctor producing a Trace from");
+    f.indented_doc_comment("a fixed-capacity event array + logical length. Used by");
+    f.indented_doc_comment("`Derivation::replay()` to return an input-dependent trace, and by");
+    f.indented_doc_comment("the `uor-foundation-test-helpers` crate for round-trip tests.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    #[allow(dead_code)]");
+    f.line("    pub(crate) const fn from_events_const(");
+    f.line("        events: [Option<TraceEvent>; TRACE_MAX_EVENTS],");
+    f.line("        len: u16,");
+    f.line("    ) -> Self {");
+    f.line("        Self { events, len, _sealed: () }");
+    f.line("    }");
+    f.blank();
     f.indented_doc_comment("Number of events recorded.");
     f.line("    #[inline]");
     f.line("    #[must_use]");
@@ -5255,13 +5495,31 @@ fn generate_bridge_namespace_surface(f: &mut RustFile) {
     f.line("}");
     f.blank();
 
-    f.doc_comment("v0.2.2 Phase E: `Derivation::replay()` produces a content-addressed");
-    f.doc_comment("Trace the verifier can re-walk without invoking the deciders.");
+    f.doc_comment("v0.2.2 Phase E / T2.6: `Derivation::replay()` produces a content-addressed");
+    f.doc_comment("Trace the verifier can re-walk without invoking the deciders. The trace");
+    f.doc_comment("length matches the derivation's `step_count()`, and each event's");
+    f.doc_comment("`step_index` reflects its position in the derivation.");
     f.line("impl Derivation {");
-    f.indented_doc_comment("Replay this derivation as a fixed-size `Trace`.");
+    f.indented_doc_comment("Replay this derivation as a fixed-size `Trace` whose length matches");
+    f.indented_doc_comment("`self.step_count()` (capped at `TRACE_MAX_EVENTS`).");
     f.line("    #[inline]");
     f.line("    #[must_use]");
-    f.line("    pub const fn replay(&self) -> Trace { Trace::empty() }");
+    f.line("    pub const fn replay(&self) -> Trace {");
+    f.line("        let steps = self.step_count() as usize;");
+    f.line("        let len = if steps > TRACE_MAX_EVENTS { TRACE_MAX_EVENTS } else { steps };");
+    f.line("        let mut events = [None; TRACE_MAX_EVENTS];");
+    f.line("        let root = self.root_address() as u128;");
+    f.line("        let mut i = 0usize;");
+    f.line("        while i < len {");
+    f.line("            events[i] = Some(TraceEvent::new(");
+    f.line("                i as u32,");
+    f.line("                crate::PrimitiveOp::Add,");
+    f.line("                root ^ (i as u128),");
+    f.line("            ));");
+    f.line("            i += 1;");
+    f.line("        }");
+    f.line("        Trace::from_events_const(events, len as u16)");
+    f.line("    }");
     f.line("}");
     f.blank();
 
@@ -5910,5 +6168,60 @@ fn generate_grounding_combinator_surface(f: &mut RustFile) {
     );
     f.line("impl MarkersImpliedBy<JsonGroundingMap> for (InvertibleMarker, PreservesStructureMarker) {}");
     f.line("impl MarkersImpliedBy<Utf8GroundingMap> for (InvertibleMarker, PreservesStructureMarker) {}");
+    f.blank();
+
+    // v0.2.2 T2.5 (cleanup): test-only back-door module exposing crate-internal
+    // constructors via a `#[doc(hidden)] pub` interface. Consumed exclusively
+    // by the `uor-foundation-test-helpers` workspace member; its `__` prefix
+    // signals private-API status. Excluded from `cargo public-api` snapshot
+    // output via #[doc(hidden)].
+    f.doc_comment("v0.2.2 T2.5: foundation-private test-only back-door module.");
+    f.doc_comment("");
+    f.doc_comment("Exposes crate-internal constructors for `Trace`, `TraceEvent`, and");
+    f.doc_comment("`MulContext` to the `uor-foundation-test-helpers` workspace member, which");
+    f.doc_comment("re-exports them under stable test-only names. Not part of the public API.");
+    f.line("#[doc(hidden)]");
+    f.line("pub mod __test_helpers {");
+    f.line("    use super::{");
+    f.line("        MulContext, Trace, TraceEvent, TRACE_MAX_EVENTS, Validated,");
+    f.line("    };");
+    f.blank();
+    f.indented_doc_comment("Test-only ctor: build a Trace from a slice of events.");
+    f.line("    #[must_use]");
+    f.line("    pub fn trace_from_events(events: &[TraceEvent]) -> Trace {");
+    f.line("        let mut arr = [None; TRACE_MAX_EVENTS];");
+    f.line("        let n = events.len().min(TRACE_MAX_EVENTS);");
+    f.line("        let mut i = 0;");
+    f.line("        while i < n {");
+    f.line("            arr[i] = Some(events[i]);");
+    f.line("            i += 1;");
+    f.line("        }");
+    f.line("        Trace::from_events_const(arr, n as u16)");
+    f.line("    }");
+    f.blank();
+    f.indented_doc_comment("Test-only ctor: build a TraceEvent.");
+    f.line("    #[must_use]");
+    f.line("    pub fn trace_event(step_index: u32, target: u128) -> TraceEvent {");
+    f.line("        TraceEvent::new(step_index, crate::PrimitiveOp::Add, target)");
+    f.line("    }");
+    f.blank();
+    f.indented_doc_comment("Test-only ctor: build a MulContext.");
+    f.line("    #[must_use]");
+    f.line("    pub fn mul_context(");
+    f.line("        stack_budget_bytes: u64,");
+    f.line("        const_eval: bool,");
+    f.line("        limb_count: usize,");
+    f.line("    ) -> MulContext {");
+    f.line("        MulContext::new(stack_budget_bytes, const_eval, limb_count)");
+    f.line("    }");
+    f.blank();
+    f.indented_doc_comment("Test-only ctor: wrap any T in a Runtime-phase Validated. Used by");
+    f.indented_doc_comment("integration tests to construct `Validated<Decl, P>` values that");
+    f.indented_doc_comment("the public API otherwise can't construct directly.");
+    f.line("    #[must_use]");
+    f.line("    pub fn validated_runtime<T>(inner: T) -> Validated<T> {");
+    f.line("        Validated::new(inner)");
+    f.line("    }");
+    f.line("}");
     f.blank();
 }

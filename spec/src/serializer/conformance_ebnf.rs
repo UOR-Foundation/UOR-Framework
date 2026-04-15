@@ -112,9 +112,95 @@ pub fn to_conformance_ebnf(ontology: &Ontology) -> String {
     emit_header(&mut out, ontology);
     emit_top_level(&mut out, ontology);
     emit_shape_productions(&mut out, ontology);
+    emit_phase_d_constraint_productions(&mut out);
     emit_lexical(&mut out);
 
     out
+}
+
+/// v0.2.2 Phase D / T2.3 (cleanup): emits the parametric constraint
+/// declaration grammar.
+///
+/// Emits `constraint-decl`, `conjunction-decl`, and the 6 legacy-sugar
+/// productions for the closed (observable, bound_shape) catalogue. The
+/// hand-coded preamble lands after the Shape walker. Adding a new pair
+/// requires editing both this emitter and the ontology individuals.
+fn emit_phase_d_constraint_productions(out: &mut String) {
+    out.push_str("(* ");
+    out.push_str(&"=".repeat(76));
+    out.push('\n');
+    out.push_str("   v0.2.2 Phase D / T2.3 — parametric constraint declaration grammar.\n");
+    out.push_str("   ");
+    out.push_str(&"=".repeat(76));
+    out.push_str(" *)\n\n");
+
+    out.push_str("(* Parametric constraint declaration. Selects an observable + bound\n");
+    out.push_str("   shape from the closed Phase D catalogue and supplies the\n");
+    out.push_str("   kind-specific arguments. *)\n");
+    out.push_str("constraint-decl        ::= \"constraint\" , identifier , \"{\" ,\n");
+    out.push_str(
+        "                             \"observable\" , \":\" , observable-iri , \";\" ,\n",
+    );
+    out.push_str("                             \"shape\" , \":\" , bound-shape-iri , \";\" ,\n");
+    out.push_str(
+        "                             \"args\" , \":\" , \"{\" , arg-list , \"}\" , \";\" ,\n",
+    );
+    out.push_str("                           \"}\" ;\n\n");
+
+    out.push_str("observable-iri         ::= \"observable:\" , (\n");
+    out.push_str("                             \"ValueModObservable\"\n");
+    out.push_str("                           | \"HammingMetric\" )\n");
+    out.push_str("                         | \"derivation:\" , \"DerivationDepthObservable\"\n");
+    out.push_str("                         | \"carry:\" , \"CarryDepthObservable\"\n");
+    out.push_str("                         | \"partition:\" , \"FreeRankObservable\" ;\n\n");
+
+    out.push_str("bound-shape-iri        ::= \"type:\" , (\n");
+    out.push_str("                             \"EqualBound\"\n");
+    out.push_str("                           | \"LessEqBound\"\n");
+    out.push_str("                           | \"GreaterEqBound\"\n");
+    out.push_str("                           | \"RangeContainBound\"\n");
+    out.push_str("                           | \"ResidueClassBound\"\n");
+    out.push_str("                           | \"AffineEqualBound\" ) ;\n\n");
+
+    out.push_str("arg-list               ::= arg , { \",\" , arg } ;\n");
+    out.push_str(
+        "arg                    ::= identifier , \":\" , ( integer-literal | datum-literal ) ;\n\n",
+    );
+
+    out.push_str("(* Conjunction of BoundConstraint instances, ordered. *)\n");
+    out.push_str("conjunction-decl       ::= \"conjunction\" , identifier , \"{\" ,\n");
+    out.push_str("                             \"conjuncts\" , \":\" , \"[\" ,\n");
+    out.push_str("                             identifier , { \",\" , identifier } ,\n");
+    out.push_str("                             \"]\" , \";\" ,\n");
+    out.push_str("                           \"}\" ;\n\n");
+
+    out.push_str("(* Legacy sugar forms (v0.2.1 compatibility — desugar to constraint-decl). *)\n");
+    out.push_str("residue-sugar          ::= \"residue\" , \"{\" ,\n");
+    out.push_str("                             \"modulus\" , \":\" , integer-literal , \";\" ,\n");
+    out.push_str("                             \"residue\" , \":\" , integer-literal , \";\" ,\n");
+    out.push_str("                           \"}\" ;\n");
+    out.push_str("hamming-sugar          ::= \"hamming\" , \"{\" ,\n");
+    out.push_str("                             \"bound\" , \":\" , integer-literal , \";\" ,\n");
+    out.push_str("                           \"}\" ;\n");
+    out.push_str("depth-sugar            ::= \"depth\" , \"{\" ,\n");
+    out.push_str(
+        "                             \"min_depth\" , \":\" , integer-literal , \";\" ,\n",
+    );
+    out.push_str(
+        "                             \"max_depth\" , \":\" , integer-literal , \";\" ,\n",
+    );
+    out.push_str("                           \"}\" ;\n");
+    out.push_str("carry-sugar            ::= \"carry\" , \"{\" ,\n");
+    out.push_str("                             \"bound\" , \":\" , integer-literal , \";\" ,\n");
+    out.push_str("                           \"}\" ;\n");
+    out.push_str("site-sugar             ::= \"site\" , \"{\" ,\n");
+    out.push_str(
+        "                             \"site_index\" , \":\" , integer-literal , \";\" ,\n",
+    );
+    out.push_str("                           \"}\" ;\n");
+    out.push_str("affine-sugar           ::= \"affine\" , \"{\" ,\n");
+    out.push_str("                             \"offset\" , \":\" , integer-literal , \";\" ,\n");
+    out.push_str("                           \"}\" ;\n\n");
 }
 
 fn emit_header(out: &mut String, ontology: &Ontology) {

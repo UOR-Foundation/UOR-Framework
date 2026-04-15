@@ -5420,7 +5420,7 @@ pub mod oa_4 {
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/ArithmeticValuation";
 }
 
-/// Entropy per δ-level equals the crossing cost: each application of the δ-operator (division by 2) costs ln 2 nats in the Archimedean completion, which is the per-bit Landauer cost. v0.2.2 Phase C.4: grounds cert:MultiplicationCertificate — every MultiplicationCertificate instance's cert:landauerCostNats field is the accumulated OA_5 cost over (2R-1) recursive sub-multiplications at the chosen splittingFactor R.
+/// Entropy per delta-level equals the crossing cost: each application of the delta-operator (division by 2) costs ln 2 nats in the Archimedean completion, which is the per-bit Landauer cost. v0.2.2 Phase C.4: grounds MultiplicationCertificate.
 pub mod oa_5 {
     /// `forAll` -> `term_OA_5_forAll`
     pub const FOR_ALL: &str = "https://uor.foundation/schema/term_OA_5_forAll";

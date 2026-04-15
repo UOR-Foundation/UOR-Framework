@@ -8,6 +8,7 @@ foundation/src/enforcement.rs: enum GroundingPrimitiveOp
 foundation/src/enforcement.rs: enum PartitionComponent
 foundation/src/enforcement.rs: enum PipelineFailure
 foundation/src/enforcement.rs: enum Term
+foundation/src/enforcement.rs: mod __test_helpers
 foundation/src/enforcement.rs: mod calibrations
 foundation/src/enforcement.rs: mod combinators
 foundation/src/enforcement.rs: mod prelude

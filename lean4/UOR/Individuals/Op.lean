@@ -4728,7 +4728,7 @@ def OA_4 : UOR.Kernel.Op.Identity UOR.Prims.Standard := {
   validKMax := none
 }
 
--- Entropy per δ-level equals the crossing cost: each application of the δ-operator (division by 2) costs ln 2 nats in the Archimedean completion, which is the per-bit Landauer cost. v0.2.2 Phase C.4: grounds cert:MultiplicationCertificate — every MultiplicationCertificate instance's cert:landauerCostNats field is the accumulated OA_5 cost over (2R-1) recursive sub-multiplications at the chosen splittingFactor R.
+-- Entropy per delta-level equals the crossing cost: each application of the delta-operator (division by 2) costs ln 2 nats in the Archimedean completion, which is the per-bit Landauer cost. v0.2.2 Phase C.4: grounds MultiplicationCertificate.
 def OA_5 : UOR.Kernel.Op.Identity UOR.Prims.Standard := {
   lhs := some (UOR.Kernel.Schema.term_OA_5_lhs.toTermExpression)
   rhs := some (UOR.Kernel.Schema.term_OA_5_rhs.toTermExpression)

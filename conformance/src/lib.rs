@@ -200,6 +200,16 @@ pub fn run_all(paths: &WorkspacePaths) -> anyhow::Result<ConformanceReport> {
     report.extend(validators::docs::concept_pages_count::validate(
         &paths.workspace,
     )?);
+    // v0.2.2 T2.3 (cleanup): EBNF constraint-decl production check.
+    report.extend(validators::rust::ebnf_constraint_decl::validate(
+        &paths.workspace,
+    )?);
+    // v0.2.2 T2.0 (cleanup): public API functional verification gate —
+    // shells to the foundation and verify-crate test binaries to assert
+    // every previously-hardcoded endpoint is functional and input-dependent.
+    report.extend(validators::rust::public_api_functional::validate(
+        &paths.workspace,
+    )?);
 
     // 8. Website
     report.extend(validators::website::html::validate(&paths.artifacts)?);

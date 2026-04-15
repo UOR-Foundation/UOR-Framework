@@ -6334,18 +6334,17 @@ pub mod term_oa_4_for_all {
 pub mod term_oa_5_lhs {
     /// `literalValue`
     pub const LITERAL_VALUE: &str =
-        "Information cost of δ (division by 2); grounds MultiplicationCertificate";
+        "Information cost of delta (division by 2); grounds MultiplicationCertificate";
 }
 
 pub mod term_oa_5_rhs {
     /// `literalValue`
-    pub const LITERAL_VALUE: &str = "ln 2 nats";
+    pub const LITERAL_VALUE: &str = "ln 2 nats per MultiplicationCertificate sub-multiplication";
 }
 
 pub mod term_oa_5_for_all {
     /// `variableName`
-    pub const VARIABLE_NAME: &str =
-        "p = 2; ∀ cert:MultiplicationCertificate c: c.landauerCostNats ≥ (2R-1) · (N/R)² · 64 · ln 2";
+    pub const VARIABLE_NAME: &str = "p = 2; every MultiplicationCertificate accumulates OA_5 cost";
 }
 
 pub mod term_ht_1_lhs {

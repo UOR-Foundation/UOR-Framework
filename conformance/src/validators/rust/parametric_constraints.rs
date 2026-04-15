@@ -107,9 +107,33 @@ pub fn validate(workspace: &Path) -> Result<ConformanceReport> {
         ),
     ];
 
+    // v0.2.2 T2.2 (cleanup): pipeline-side parametric ConstraintRef anchors.
+    // These live in foundation/src/pipeline.rs, not enforcement.rs.
+    let pipeline_path = workspace.join("foundation/src/pipeline.rs");
+    let pipeline_content = std::fs::read_to_string(&pipeline_path).unwrap_or_default();
+    let pipeline_required: &[(&str, &str)] = &[
+        (
+            "ConstraintRef::Bound parametric variant",
+            "observable_iri: &'static str,",
+        ),
+        (
+            "ConstraintRef::Conjunction parametric variant",
+            "Conjunction { conjuncts: &'static [ConstraintRef] },",
+        ),
+        (
+            "encode_constraint_to_clauses dispatch",
+            "pub(crate) const fn encode_constraint_to_clauses(",
+        ),
+    ];
+
     let mut missing: Vec<String> = Vec::new();
     for (label, anchor) in required {
         if !content.contains(*anchor) {
+            missing.push((*label).to_string());
+        }
+    }
+    for (label, anchor) in pipeline_required {
+        if !pipeline_content.contains(*anchor) {
             missing.push((*label).to_string());
         }
     }
@@ -119,7 +143,8 @@ pub fn validate(workspace: &Path) -> Result<ConformanceReport> {
             VALIDATOR,
             "Phase D parametric constraint surface complete: sealed Observable + \
              BoundShape catalogues, BoundConstraint<O, B> carrier, Conjunction<N> \
-             wrapper, and 7 legacy type aliases all present",
+             wrapper, 7 legacy type aliases, ConstraintRef parametric variants, \
+             and pub(crate) encode_constraint_to_clauses dispatch all present",
         ));
     } else {
         report.push(TestResult::fail_with_details(

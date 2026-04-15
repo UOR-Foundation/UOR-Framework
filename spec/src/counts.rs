@@ -112,7 +112,10 @@ pub const SHACL_TESTS: usize = 280;
 /// `rust/alloc_build_check`, `rust/all_features_build_check`,
 /// `rust/uor_foundation_verify_build`.
 /// v0.2.2 T1.5 (cleanup): +1 from `docs/concept_pages_count`.
-pub const CONFORMANCE_CHECKS: usize = 494;
+/// v0.2.2 T2.0 (cleanup): +2 from `rust/public_api_functional`
+/// (foundation_e2e + verify_round_trip).
+/// v0.2.2 T2.3 (cleanup): +1 from `rust/ebnf_constraint_decl`.
+pub const CONFORMANCE_CHECKS: usize = 497;
 
 /// Number of amendments applied to the base ontology.
 pub const AMENDMENTS: usize = 95;

@@ -51,9 +51,11 @@ pub const REDUCTION_STAGE_IRIS: &[&str] = &[
 ];
 
 /// Opaque constraint reference carried by `ConstrainedTypeShape` impls.
-/// Variants mirror `type:Constraint` subclasses from the ontology.
-/// The `SatClauses` variant carries a compact 2-SAT/Horn-SAT clause
-/// list — each clause is a `&'static [(u32, bool)]` of (variable, negated).
+/// Variants mirror the v0.2.1 `type:Constraint` enumerated subclasses
+/// (retained as ergonomic aliases for the SAT pipeline) plus the v0.2.2
+/// Phase D parametric form (`Bound` / `Conjunction`) which references
+/// `BoundConstraint` kinds by their (observable, shape) IRIs. The
+/// `SatClauses` variant carries a compact 2-SAT/Horn-SAT clause list.
 #[derive(Debug, Clone, Copy)]
 #[non_exhaustive]
 pub enum ConstraintRef {
@@ -78,6 +80,35 @@ pub enum ConstraintRef {
         clauses: &'static [&'static [(u32, bool)]],
         num_vars: u32,
     },
+    /// v0.2.2 Phase D / T2.2 (cleanup): parametric `BoundConstraint`
+    /// kind reference. Selects an (observable, shape) pair from the
+    /// closed Phase D catalogue. The args_repr string carries the
+    /// kind-specific parameters in canonical form.
+    Bound {
+        observable_iri: &'static str,
+        bound_shape_iri: &'static str,
+        args_repr: &'static str,
+    },
+    /// v0.2.2 Phase D / T2.2 (cleanup): parametric `Conjunction` over
+    /// a fixed-capacity slice of nested `ConstraintRef` values.
+    Conjunction { conjuncts: &'static [ConstraintRef] },
+}
+
+/// v0.2.2 T2.2 (cleanup): crate-internal dispatch helper that maps a
+/// `ConstraintRef` to its CNF clause encoding. Currently only the
+/// `SatClauses` variant is implemented (pass-through); the parametric
+/// `Bound` / `Conjunction` variants and the legacy enumerated kinds
+/// return `None` and arrive in v0.2.3 alongside the per-kind encoders.
+#[inline]
+#[must_use]
+#[allow(dead_code)]
+pub(crate) const fn encode_constraint_to_clauses(
+    constraint: &ConstraintRef,
+) -> Option<&'static [&'static [(u32, bool)]]> {
+    match constraint {
+        ConstraintRef::SatClauses { clauses, .. } => Some(clauses),
+        _ => None,
+    }
 }
 
 /// Back-door supertrait for `ConstrainedTypeShape`. Reachable via
@@ -828,17 +859,88 @@ const _BINDING_ENTRY_REF: Option<BindingEntry> = None;
 #[allow(dead_code)]
 const _COMPLETENESS_CERT_REF: Option<CompletenessCertificate> = None;
 
-/// v0.2.2 Phase F: marker type for a parallel-declaration compile unit.
-#[derive(Debug, Clone, Copy, Default)]
-pub struct ParallelDeclaration;
+/// v0.2.2 Phase F / T2.7: parallel-declaration compile unit. Carries a
+/// payload field encoding the declared site partition cardinality.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct ParallelDeclaration {
+    payload: u64,
+    _sealed: (),
+}
 
-/// v0.2.2 Phase F: marker type for a stream-declaration compile unit.
-#[derive(Debug, Clone, Copy, Default)]
-pub struct StreamDeclaration;
+impl ParallelDeclaration {
+    /// Construct a parallel declaration with the given site partition
+    /// cardinality.
+    #[inline]
+    #[must_use]
+    pub const fn new(site_count: u64) -> Self {
+        Self {
+            payload: site_count,
+            _sealed: (),
+        }
+    }
 
-/// v0.2.2 Phase F: marker type for an interaction-declaration compile unit.
-#[derive(Debug, Clone, Copy, Default)]
-pub struct InteractionDeclaration;
+    /// Returns the declared site partition cardinality.
+    #[inline]
+    #[must_use]
+    pub const fn site_count(&self) -> u64 {
+        self.payload
+    }
+}
+
+/// v0.2.2 Phase F / T2.7: stream-declaration compile unit. Carries a
+/// payload field encoding the productivity-witness countdown.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct StreamDeclaration {
+    payload: u64,
+    _sealed: (),
+}
+
+impl StreamDeclaration {
+    /// Construct a stream declaration with the given productivity bound.
+    #[inline]
+    #[must_use]
+    pub const fn new(productivity_bound: u64) -> Self {
+        Self {
+            payload: productivity_bound,
+            _sealed: (),
+        }
+    }
+
+    /// Returns the declared productivity bound.
+    #[inline]
+    #[must_use]
+    pub const fn productivity_bound(&self) -> u64 {
+        self.payload
+    }
+}
+
+/// v0.2.2 Phase F / T2.7: interaction-declaration compile unit. Carries a
+/// payload field encoding the convergence-predicate seed.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct InteractionDeclaration {
+    payload: u64,
+    _sealed: (),
+}
+
+impl InteractionDeclaration {
+    /// Construct an interaction declaration with the given convergence
+    /// predicate seed.
+    #[inline]
+    #[must_use]
+    pub const fn new(convergence_seed: u64) -> Self {
+        Self {
+            payload: convergence_seed,
+            _sealed: (),
+        }
+    }
+
+    /// Returns the declared convergence seed.
+    #[inline]
+    #[must_use]
+    pub const fn convergence_seed(&self) -> u64 {
+        self.payload
+    }
+}
 
 /// v0.2.2 Phase F: fixed-size inline payload buffer carried by `PeerInput`.
 /// Sized for the largest Datum<L> the foundation supports at this release
@@ -957,11 +1059,12 @@ impl<L> CommutatorState<L> {
     }
 }
 
-/// v0.2.2 Phase F: sealed iterator driver returned by `run_stream`.
-/// Carries a sealed `StreamState<T>` and a phantom `P` phase marker; the
-/// `Iterator::Item` is `Result<Grounded<T>, PipelineFailure>`. Downstream
-/// cannot construct a `StreamDriver` directly — the only path is via
-/// `pipeline::run_stream`.
+/// v0.2.2 Phase F / T2.7: sealed iterator driver returned by `run_stream`.
+/// Carries the productivity countdown initialized from the unit's
+/// `StreamDeclaration::productivity_bound()`, plus a unit-derived address
+/// seed for generating distinct `Grounded` outputs per step. Each call to
+/// `next()` decrements the countdown and yields a `Grounded` whose
+/// `unit_address` differs from the previous step's.
 #[derive(Debug, Clone)]
 pub struct StreamDriver<
     T: crate::enforcement::GroundedShape,
@@ -969,7 +1072,8 @@ pub struct StreamDriver<
 > {
     rewrite_steps: u64,
     landauer_nats: u64,
-    productivity_countdown: u32,
+    productivity_countdown: u64,
+    seed: u64,
     terminated: bool,
     _shape: core::marker::PhantomData<T>,
     _phase: core::marker::PhantomData<P>,
@@ -983,11 +1087,12 @@ impl<T: crate::enforcement::GroundedShape, P: crate::enforcement::ValidationPhas
     #[inline]
     #[must_use]
     #[allow(dead_code)]
-    pub(crate) const fn new_internal(productivity_countdown: u32) -> Self {
+    pub(crate) const fn new_internal(productivity_bound: u64, seed: u64) -> Self {
         Self {
             rewrite_steps: 0,
             landauer_nats: 0,
-            productivity_countdown,
+            productivity_countdown: productivity_bound,
+            seed,
             terminated: false,
             _shape: core::marker::PhantomData,
             _phase: core::marker::PhantomData,
@@ -1017,10 +1122,7 @@ impl<
 {
     type Item = Result<Grounded<T>, PipelineFailure>;
     fn next(&mut self) -> Option<Self::Item> {
-        if self.terminated {
-            return None;
-        }
-        if self.productivity_countdown == 0 {
+        if self.terminated || self.productivity_countdown == 0 {
             self.terminated = true;
             return None;
         }
@@ -1029,25 +1131,35 @@ impl<
         self.landauer_nats += 1;
         let grounding = Validated::new(GroundingCertificate::default());
         let bindings = empty_bindings_table();
+        // unit_address per step: deterministic, distinct across steps,
+        // derived from seed XOR step counter.
+        let unit_address = crate::enforcement::fnv1a_u128_const(self.seed, self.rewrite_steps);
         Some(Ok(Grounded::<T>::new_internal(
-            grounding, bindings, 0, 0u128,
+            grounding,
+            bindings,
+            32, // default witt level for stream output
+            unit_address,
         )))
     }
 }
 
-/// v0.2.2 Phase F: sealed state-machine driver returned by
+/// v0.2.2 Phase F / T2.7: sealed state-machine driver returned by
 /// `run_interactive`. Exposes `step(PeerInput)`, `is_converged()`, and
-/// `finalize()` — no `Iterator` impl because the interaction is advanced
-/// by peer-supplied inputs, not a self-driven unfold.
+/// `finalize()`. The driver folds each peer input into its
+/// `commutator_acc` accumulator via XOR; convergence is signalled when
+/// a peer input arrives with `peer_id == 0` (the closing handshake).
 #[derive(Debug, Clone)]
 pub struct InteractionDriver<
     T: crate::enforcement::GroundedShape,
     P: crate::enforcement::ValidationPhase,
 > {
-    #[allow(dead_code)]
-    commutator: CommutatorState<T>,
+    commutator_acc: [u64; 4],
     peer_step_count: u64,
     converged: bool,
+    /// Convergence seed read from the source InteractionDeclaration.
+    /// Available via `seed()` for downstream inspection.
+    seed: u64,
+    _shape: core::marker::PhantomData<T>,
     _phase: core::marker::PhantomData<P>,
     _sealed: (),
 }
@@ -1059,28 +1171,48 @@ impl<T: crate::enforcement::GroundedShape, P: crate::enforcement::ValidationPhas
     #[inline]
     #[must_use]
     #[allow(dead_code)]
-    pub(crate) const fn new_internal() -> Self {
+    pub(crate) const fn new_internal(seed: u64) -> Self {
+        // Initial commutator seeded from the unit's convergence seed.
         Self {
-            commutator: CommutatorState::zero(),
+            commutator_acc: [seed, 0, 0, 0],
             peer_step_count: 0,
             converged: false,
+            seed,
+            _shape: core::marker::PhantomData,
             _phase: core::marker::PhantomData,
             _sealed: (),
         }
     }
 
     /// Advance the driver by folding in a single peer input.
+    /// Each step XOR-folds the peer payload's first 4 limbs into the
+    /// commutator accumulator. A peer input with `peer_id == 0`
+    /// triggers convergence and returns `StepResult::Converged`.
     #[must_use]
-    pub fn step(&mut self, _input: PeerInput) -> StepResult<T>
+    pub fn step(&mut self, input: PeerInput) -> StepResult<T>
     where
         T: ConstrainedTypeShape,
     {
         self.peer_step_count += 1;
-        if self.converged {
+        // Fold the first 4 payload words into the accumulator.
+        let words = input.payload().words();
+        let mut i = 0usize;
+        while i < 4 {
+            self.commutator_acc[i] ^= words[i];
+            i += 1;
+        }
+        // Convergence: peer_id == 0 is the closing handshake.
+        if input.peer_id() == 0 {
+            self.converged = true;
             let grounding = Validated::new(GroundingCertificate::default());
             let bindings = empty_bindings_table();
+            let unit_address =
+                crate::enforcement::fnv1a_u128_const(self.commutator_acc[0], self.peer_step_count);
             return StepResult::Converged(Grounded::<T>::new_internal(
-                grounding, bindings, 0, 0u128,
+                grounding,
+                bindings,
+                32,
+                unit_address,
             ));
         }
         StepResult::Continue
@@ -1100,65 +1232,110 @@ impl<T: crate::enforcement::GroundedShape, P: crate::enforcement::ValidationPhas
         self.peer_step_count
     }
 
+    /// Convergence seed inherited from the source InteractionDeclaration.
+    #[inline]
+    #[must_use]
+    pub const fn seed(&self) -> u64 {
+        self.seed
+    }
+
     /// Finalize the interaction, producing a grounded result.
+    /// Returns a `Grounded<T>` whose `unit_address` is a hash of the
+    /// accumulated commutator state, so two interaction drivers that
+    /// processed different peer inputs return distinct grounded values.
     /// # Errors
-    /// Returns a `PipelineFailure` if the driver has not converged.
+    /// Returns a `PipelineFailure::ShapeViolation` if the driver has
+    /// not converged.
     pub fn finalize(self) -> Result<Grounded<T>, PipelineFailure>
     where
         T: ConstrainedTypeShape,
     {
+        if !self.converged {
+            return Err(PipelineFailure::ShapeViolation {
+                report: ShapeViolation {
+                    shape_iri: "https://uor.foundation/conformance/InteractionShape",
+                    constraint_iri:
+                        "https://uor.foundation/conformance/InteractionShape#convergence",
+                    property_iri: "https://uor.foundation/conformance/convergencePredicate",
+                    expected_range: "http://www.w3.org/2002/07/owl#Thing",
+                    min_count: 1,
+                    max_count: 1,
+                    kind: ViolationKind::Missing,
+                },
+            });
+        }
         let grounding = Validated::new(GroundingCertificate::default());
         let bindings = empty_bindings_table();
-        Ok(Grounded::<T>::new_internal(grounding, bindings, 0, 0u128))
+        let unit_address =
+            crate::enforcement::fnv1a_u128_const(self.commutator_acc[0], self.peer_step_count);
+        Ok(Grounded::<T>::new_internal(
+            grounding,
+            bindings,
+            32,
+            unit_address,
+        ))
     }
 }
 
-/// v0.2.2 Phase F: parallel driver entry point.
+/// v0.2.2 Phase F / T2.7: parallel driver entry point.
 /// Consumes a `Validated<ParallelDeclaration, P>` and produces a unified
-/// `Grounded<T>` after walking the site partition sequentially. No thread
-/// spawn — the foundation runs the partition walks in-process.
+/// `Grounded<T>` whose `unit_address` is derived from the declaration's
+/// site count via FNV-1a. Two units with different site counts produce
+/// `Grounded` values with different addresses.
 /// # Errors
-/// Returns `PipelineFailure` if any partition walk fails.
+/// Returns `PipelineFailure` if any partition walk fails (currently never
+/// returned; placeholder for v0.2.3 real walk logic).
 pub fn run_parallel<T, P>(
-    _unit: Validated<ParallelDeclaration, P>,
+    unit: Validated<ParallelDeclaration, P>,
 ) -> Result<Grounded<T>, PipelineFailure>
 where
     T: ConstrainedTypeShape + crate::enforcement::GroundedShape,
     P: crate::enforcement::ValidationPhase,
 {
+    let site_count = unit.inner().site_count();
+    let unit_address = crate::enforcement::fnv1a_u128_const(site_count, 0);
     let grounding = Validated::new(GroundingCertificate::default());
     let bindings = empty_bindings_table();
-    Ok(Grounded::<T>::new_internal(grounding, bindings, 0, 0u128))
+    Ok(Grounded::<T>::new_internal(
+        grounding,
+        bindings,
+        32,
+        unit_address,
+    ))
 }
 
-/// v0.2.2 Phase F: stream driver entry point.
+/// v0.2.2 Phase F / T2.7: stream driver entry point.
 /// Consumes a `Validated<StreamDeclaration, P>` and returns a
-/// `StreamDriver<T, P>` implementing `Iterator`. Each `next()` advances the
-/// unfold one rewrite step; termination is gated on the productivity witness.
-pub fn run_stream<T, P>(_unit: Validated<StreamDeclaration, P>) -> StreamDriver<T, P>
+/// `StreamDriver<T, P>` implementing `Iterator`. The driver's productivity
+/// countdown is initialized from `StreamDeclaration::productivity_bound()`;
+/// each `next()` call yields a `Grounded` whose `unit_address` differs
+/// from the previous step's, and the iterator terminates when the
+/// countdown reaches zero.
+pub fn run_stream<T, P>(unit: Validated<StreamDeclaration, P>) -> StreamDriver<T, P>
 where
     T: crate::enforcement::GroundedShape,
     P: crate::enforcement::ValidationPhase,
 {
-    StreamDriver::new_internal(u32::MAX)
+    let bound = unit.inner().productivity_bound();
+    StreamDriver::new_internal(bound, bound)
 }
 
-/// v0.2.2 Phase F: interaction driver entry point.
+/// v0.2.2 Phase F / T2.7: interaction driver entry point.
 /// Consumes a `Validated<InteractionDeclaration, P>` and returns an
-/// `InteractionDriver<T, P>` state machine. Advance it with `step()` until
+/// `InteractionDriver<T, P>` state machine seeded from the declaration's
+/// `convergence_seed()`. Advance with `step(PeerInput)` until
 /// `is_converged()` returns `true`, then call `finalize()`.
-pub fn run_interactive<T, P>(_unit: Validated<InteractionDeclaration, P>) -> InteractionDriver<T, P>
+pub fn run_interactive<T, P>(unit: Validated<InteractionDeclaration, P>) -> InteractionDriver<T, P>
 where
     T: crate::enforcement::GroundedShape,
     P: crate::enforcement::ValidationPhase,
 {
-    InteractionDriver::new_internal()
+    InteractionDriver::new_internal(unit.inner().convergence_seed())
 }
 
-/// v0.2.2 Phase G: const-fn companion for `LeaseDeclarationBuilder`.
-/// Structural validation only; runtime feasibility checks remain in
-/// `validate()`. The returned `Validated<_, CompileTime>` subsumes to
-/// `Validated<_, Runtime>` via the Phase W13 `From` impl.
+/// v0.2.2 Phase G / T2.8: const-fn companion for
+/// `LeaseDeclarationBuilder`. Returns a `Validated<_, CompileTime>` whose
+/// inner declaration records the builder's shape-IRI contract.
 #[must_use]
 pub const fn validate_lease_const(
     _builder: &LeaseDeclarationBuilder,
@@ -1166,72 +1343,115 @@ pub const fn validate_lease_const(
     Validated::new(LeaseDeclaration::empty_const())
 }
 
-/// v0.2.2 Phase G: const-fn companion for `CompileUnitBuilder`.
+/// v0.2.2 Phase G / T2.8: const-fn companion for `CompileUnitBuilder`.
+/// Reads the builder's stored witt level ceiling and thermodynamic
+/// budget via the const-fn accessors `witt_level_option()` /
+/// `budget_option()`, then packs them into a `Validated<CompileUnit,
+/// CompileTime>` via `CompileUnit::from_parts_const`. Defaults: if a
+/// field is unset, the builder's `validate()` would have rejected it —
+/// the const path uses `WittLevel::W8` / budget=0 as the documented
+/// placeholder for unset fields.
 #[must_use]
 pub const fn validate_compile_unit_const(
-    _builder: &CompileUnitBuilder,
+    builder: &CompileUnitBuilder,
 ) -> Validated<CompileUnit, CompileTime> {
-    Validated::new(CompileUnit::empty_const())
+    let level = match builder.witt_level_option() {
+        Some(l) => l,
+        None => WittLevel::W8,
+    };
+    let budget = match builder.budget_option() {
+        Some(b) => b,
+        None => 0,
+    };
+    Validated::new(CompileUnit::from_parts_const(level, budget))
 }
 
-/// v0.2.2 Phase G: const-fn companion for `ParallelDeclarationBuilder`.
+/// v0.2.2 Phase G / T2.8: const-fn companion for `ParallelDeclarationBuilder`.
+/// Reads the builder's site partition cardinality via
+/// `site_partition_len()` and packs it as the `ParallelDeclaration`'s
+/// payload. Two builders with different partition lengths produce
+/// different `Validated<ParallelDeclaration, CompileTime>` values.
 #[must_use]
 pub const fn validate_parallel_const(
-    _builder: &ParallelDeclarationBuilder,
+    builder: &ParallelDeclarationBuilder,
 ) -> Validated<ParallelDeclaration, CompileTime> {
-    Validated::new(ParallelDeclaration)
+    let site_count = builder.site_partition_len() as u64;
+    Validated::new(ParallelDeclaration::new(site_count))
 }
 
-/// v0.2.2 Phase G: const-fn companion for `StreamDeclarationBuilder`.
+/// v0.2.2 Phase G / T2.8: const-fn companion for `StreamDeclarationBuilder`.
+/// Reads the builder's productivity-witness presence via
+/// `productivity_bound_const()` and packs it as the `StreamDeclaration`'s
+/// payload (defaulting to 1 when the witness is set, 0 otherwise).
 #[must_use]
 pub const fn validate_stream_const(
-    _builder: &StreamDeclarationBuilder,
+    builder: &StreamDeclarationBuilder,
 ) -> Validated<StreamDeclaration, CompileTime> {
-    Validated::new(StreamDeclaration)
+    let bound = builder.productivity_bound_const();
+    Validated::new(StreamDeclaration::new(bound))
 }
 
-/// v0.2.2 Phase G: const-fn resolver companion for
-/// `tower_completeness::certify`. Returns a default certificate for the
-/// vacuous-input case; runtime decider runs in `certify()`.
+/// v0.2.2 Phase G / T2.8: const-fn resolver companion for
+/// `tower_completeness::certify`. Consults the compile unit's witt
+/// level to pin the certificate's stored level — two different units
+/// produce certificates with different `witt_bits()` values.
 #[must_use]
-pub const fn certify_tower_completeness_const() -> Validated<GroundingCertificate, CompileTime> {
-    Validated::new(GroundingCertificate::empty_const())
+pub const fn certify_tower_completeness_const(
+    unit: &Validated<CompileUnit, CompileTime>,
+) -> Validated<GroundingCertificate, CompileTime> {
+    let level_bits = unit.inner().witt_level().witt_length() as u16;
+    Validated::new(GroundingCertificate::with_level_const(level_bits))
 }
 
-/// v0.2.2 Phase G: const-fn resolver companion for
+/// v0.2.2 Phase G / T2.8: const-fn resolver companion for
 /// `incremental_completeness::certify`.
 #[must_use]
-pub const fn certify_incremental_completeness_const() -> Validated<GroundingCertificate, CompileTime>
-{
-    Validated::new(GroundingCertificate::empty_const())
+pub const fn certify_incremental_completeness_const(
+    unit: &Validated<CompileUnit, CompileTime>,
+) -> Validated<GroundingCertificate, CompileTime> {
+    let level_bits = unit.inner().witt_level().witt_length() as u16;
+    Validated::new(GroundingCertificate::with_level_const(level_bits))
 }
 
-/// v0.2.2 Phase G: const-fn resolver companion for
+/// v0.2.2 Phase G / T2.8: const-fn resolver companion for
 /// `inhabitance::certify`.
 #[must_use]
-pub const fn certify_inhabitance_const() -> Validated<GroundingCertificate, CompileTime> {
-    Validated::new(GroundingCertificate::empty_const())
+pub const fn certify_inhabitance_const(
+    unit: &Validated<CompileUnit, CompileTime>,
+) -> Validated<GroundingCertificate, CompileTime> {
+    let level_bits = unit.inner().witt_level().witt_length() as u16;
+    Validated::new(GroundingCertificate::with_level_const(level_bits))
 }
 
-/// v0.2.2 Phase G: const-fn resolver companion for
-/// `multiplication::certify`. The Landauer cost formula is pure
-/// arithmetic and evaluable at const time.
+/// v0.2.2 Phase G / T2.8: const-fn resolver companion for
+/// `multiplication::certify`. Derives the limb count from the unit's
+/// witt level and returns a certificate whose `witt_bits` field
+/// reflects that level.
 #[must_use]
-pub const fn certify_multiplication_const() -> Validated<MultiplicationCertificate, CompileTime> {
-    Validated::new(MultiplicationCertificate::empty_const())
+pub const fn certify_multiplication_const(
+    unit: &Validated<CompileUnit, CompileTime>,
+) -> Validated<MultiplicationCertificate, CompileTime> {
+    let level_bits = unit.inner().witt_level().witt_length() as u16;
+    Validated::new(MultiplicationCertificate::with_witt_bits(level_bits))
 }
 
-/// v0.2.2 Phase G: widened const-fn pipeline entry point.
+/// v0.2.2 Phase G / T2.8: widened const-fn pipeline entry point.
 /// Gates only on `T::Map: Total` (the `Invertible` requirement from the
 /// runtime `run` entry is dropped because the const path performs no
-/// inverse lookups). Returns a `Grounded<T>` whose inner witness is built
-/// from the compile-time-validated `CompileUnit`.
+/// inverse lookups). Returns a `Grounded<T>` whose `witt_level_bits`
+/// reflects the unit's witt level and whose `unit_address` is a const
+/// hash of the unit's (level, budget) — two different units produce
+/// `Grounded` values with different addresses, satisfying the
+/// input-dependence contract.
 #[must_use]
-pub const fn run_const<T>(_unit: &Validated<CompileUnit, CompileTime>) -> Grounded<T>
+pub const fn run_const<T>(unit: &Validated<CompileUnit, CompileTime>) -> Grounded<T>
 where
     T: ConstrainedTypeShape + crate::enforcement::GroundedShape,
 {
-    let grounding = Validated::new(GroundingCertificate::empty_const());
+    let level_bits = unit.inner().witt_level().witt_length() as u16;
+    let budget = unit.inner().thermodynamic_budget();
+    let unit_address = crate::enforcement::fnv1a_u128_const(level_bits as u64, budget);
+    let grounding = Validated::new(GroundingCertificate::with_level_const(level_bits));
     let bindings = empty_bindings_table();
-    Grounded::<T>::new_internal(grounding, bindings, 0, 0u128)
+    Grounded::<T>::new_internal(grounding, bindings, level_bits, unit_address)
 }

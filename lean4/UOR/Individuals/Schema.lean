@@ -5833,12 +5833,12 @@ def term_OA_5_forAll : UOR.Kernel.Schema.ForAllDeclaration UOR.Prims.Standard :=
 
 -- 
 def term_OA_5_lhs : UOR.Kernel.Schema.LiteralExpression UOR.Prims.Standard := {
-  literalValue := some (("Information cost of δ (division by 2); grounds MultiplicationCertificate" : String))
+  literalValue := some (("Information cost of delta (division by 2); grounds MultiplicationCertificate" : String))
 }
 
 -- 
 def term_OA_5_rhs : UOR.Kernel.Schema.LiteralExpression UOR.Prims.Standard := {
-  literalValue := some (("ln 2 nats" : String))
+  literalValue := some (("ln 2 nats per MultiplicationCertificate sub-multiplication" : String))
 }
 
 -- 

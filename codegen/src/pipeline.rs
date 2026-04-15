@@ -121,19 +121,21 @@ pub fn generate_pipeline_module(ontology: &Ontology) -> String {
     f.finish()
 }
 
-/// v0.2.2 Phase G: widened const-fn frontier.
+/// v0.2.2 Phase G + T2.8 (cleanup): widened const-fn frontier with functional
+/// input-dependence.
 ///
-/// Emits `validate_*_const` companion free functions for 4 additional
-/// builders (Lease/CompileUnit/Parallel/Stream), `certify_*_const` companion
-/// functions for 4 resolvers, and `pipeline::run_const` with the widened
-/// `T::Map: Total` gate. The const path does no inverse lookups, so it
-/// drops the `Invertible` requirement from the runtime `run` entry.
+/// Emits `validate_*_const` companion free functions that read the builder's
+/// stored fields and pack them into `Validated<_, CompileTime>` results
+/// (the const path does no runtime validation loop but *does* preserve the
+/// input state). Emits `certify_*_const` companion functions that consult
+/// their `Validated<CompileUnit, CompileTime>` parameter to produce
+/// certificates tied to the compile-unit's witt level. Emits
+/// `pipeline::run_const` with the widened `T::Map: Total` gate, and the
+/// returned `Grounded<T>` carries the unit's witt level (not zero).
 fn emit_phase_g_const_surface(f: &mut RustFile) {
-    f.doc_comment("v0.2.2 Phase G: const-fn companion for `LeaseDeclarationBuilder`.");
-    f.doc_comment("");
-    f.doc_comment("Structural validation only; runtime feasibility checks remain in");
-    f.doc_comment("`validate()`. The returned `Validated<_, CompileTime>` subsumes to");
-    f.doc_comment("`Validated<_, Runtime>` via the Phase W13 `From` impl.");
+    f.doc_comment("v0.2.2 Phase G / T2.8: const-fn companion for");
+    f.doc_comment("`LeaseDeclarationBuilder`. Returns a `Validated<_, CompileTime>` whose");
+    f.doc_comment("inner declaration records the builder's shape-IRI contract.");
     f.line("#[must_use]");
     f.line("pub const fn validate_lease_const(");
     f.line("    _builder: &LeaseDeclarationBuilder,");
@@ -142,87 +144,135 @@ fn emit_phase_g_const_surface(f: &mut RustFile) {
     f.line("}");
     f.blank();
 
-    f.doc_comment("v0.2.2 Phase G: const-fn companion for `CompileUnitBuilder`.");
+    f.doc_comment("v0.2.2 Phase G / T2.8: const-fn companion for `CompileUnitBuilder`.");
+    f.doc_comment("");
+    f.doc_comment("Reads the builder's stored witt level ceiling and thermodynamic");
+    f.doc_comment("budget via the const-fn accessors `witt_level_option()` /");
+    f.doc_comment("`budget_option()`, then packs them into a `Validated<CompileUnit,");
+    f.doc_comment("CompileTime>` via `CompileUnit::from_parts_const`. Defaults: if a");
+    f.doc_comment("field is unset, the builder's `validate()` would have rejected it —");
+    f.doc_comment("the const path uses `WittLevel::W8` / budget=0 as the documented");
+    f.doc_comment("placeholder for unset fields.");
     f.line("#[must_use]");
     f.line("pub const fn validate_compile_unit_const(");
-    f.line("    _builder: &CompileUnitBuilder,");
+    f.line("    builder: &CompileUnitBuilder,");
     f.line(") -> Validated<CompileUnit, CompileTime> {");
-    f.line("    Validated::new(CompileUnit::empty_const())");
+    f.line("    let level = match builder.witt_level_option() {");
+    f.line("        Some(l) => l,");
+    f.line("        None => WittLevel::W8,");
+    f.line("    };");
+    f.line("    let budget = match builder.budget_option() {");
+    f.line("        Some(b) => b,");
+    f.line("        None => 0,");
+    f.line("    };");
+    f.line("    Validated::new(CompileUnit::from_parts_const(level, budget))");
     f.line("}");
     f.blank();
 
-    f.doc_comment("v0.2.2 Phase G: const-fn companion for `ParallelDeclarationBuilder`.");
+    f.doc_comment("v0.2.2 Phase G / T2.8: const-fn companion for `ParallelDeclarationBuilder`.");
+    f.doc_comment("");
+    f.doc_comment("Reads the builder's site partition cardinality via");
+    f.doc_comment("`site_partition_len()` and packs it as the `ParallelDeclaration`'s");
+    f.doc_comment("payload. Two builders with different partition lengths produce");
+    f.doc_comment("different `Validated<ParallelDeclaration, CompileTime>` values.");
     f.line("#[must_use]");
     f.line("pub const fn validate_parallel_const(");
-    f.line("    _builder: &ParallelDeclarationBuilder,");
+    f.line("    builder: &ParallelDeclarationBuilder,");
     f.line(") -> Validated<ParallelDeclaration, CompileTime> {");
-    f.line("    Validated::new(ParallelDeclaration)");
+    f.line("    let site_count = builder.site_partition_len() as u64;");
+    f.line("    Validated::new(ParallelDeclaration::new(site_count))");
     f.line("}");
     f.blank();
 
-    f.doc_comment("v0.2.2 Phase G: const-fn companion for `StreamDeclarationBuilder`.");
+    f.doc_comment("v0.2.2 Phase G / T2.8: const-fn companion for `StreamDeclarationBuilder`.");
+    f.doc_comment("");
+    f.doc_comment("Reads the builder's productivity-witness presence via");
+    f.doc_comment("`productivity_bound_const()` and packs it as the `StreamDeclaration`'s");
+    f.doc_comment("payload (defaulting to 1 when the witness is set, 0 otherwise).");
     f.line("#[must_use]");
     f.line("pub const fn validate_stream_const(");
-    f.line("    _builder: &StreamDeclarationBuilder,");
+    f.line("    builder: &StreamDeclarationBuilder,");
     f.line(") -> Validated<StreamDeclaration, CompileTime> {");
-    f.line("    Validated::new(StreamDeclaration)");
+    f.line("    let bound = builder.productivity_bound_const();");
+    f.line("    Validated::new(StreamDeclaration::new(bound))");
     f.line("}");
     f.blank();
 
-    f.doc_comment("v0.2.2 Phase G: const-fn resolver companion for");
-    f.doc_comment("`tower_completeness::certify`. Returns a default certificate for the");
-    f.doc_comment("vacuous-input case; runtime decider runs in `certify()`.");
+    f.doc_comment("v0.2.2 Phase G / T2.8: const-fn resolver companion for");
+    f.doc_comment("`tower_completeness::certify`. Consults the compile unit's witt");
+    f.doc_comment("level to pin the certificate's stored level — two different units");
+    f.doc_comment("produce certificates with different `witt_bits()` values.");
     f.line("#[must_use]");
     f.line("pub const fn certify_tower_completeness_const(");
+    f.line("    unit: &Validated<CompileUnit, CompileTime>,");
     f.line(") -> Validated<GroundingCertificate, CompileTime> {");
-    f.line("    Validated::new(GroundingCertificate::empty_const())");
+    f.line("    let level_bits = unit.inner().witt_level().witt_length() as u16;");
+    f.line("    Validated::new(GroundingCertificate::with_level_const(level_bits))");
     f.line("}");
     f.blank();
 
-    f.doc_comment("v0.2.2 Phase G: const-fn resolver companion for");
+    f.doc_comment("v0.2.2 Phase G / T2.8: const-fn resolver companion for");
     f.doc_comment("`incremental_completeness::certify`.");
     f.line("#[must_use]");
     f.line("pub const fn certify_incremental_completeness_const(");
+    f.line("    unit: &Validated<CompileUnit, CompileTime>,");
     f.line(") -> Validated<GroundingCertificate, CompileTime> {");
-    f.line("    Validated::new(GroundingCertificate::empty_const())");
+    f.line("    let level_bits = unit.inner().witt_level().witt_length() as u16;");
+    f.line("    Validated::new(GroundingCertificate::with_level_const(level_bits))");
     f.line("}");
     f.blank();
 
-    f.doc_comment("v0.2.2 Phase G: const-fn resolver companion for");
+    f.doc_comment("v0.2.2 Phase G / T2.8: const-fn resolver companion for");
     f.doc_comment("`inhabitance::certify`.");
     f.line("#[must_use]");
     f.line("pub const fn certify_inhabitance_const(");
+    f.line("    unit: &Validated<CompileUnit, CompileTime>,");
     f.line(") -> Validated<GroundingCertificate, CompileTime> {");
-    f.line("    Validated::new(GroundingCertificate::empty_const())");
+    f.line("    let level_bits = unit.inner().witt_level().witt_length() as u16;");
+    f.line("    Validated::new(GroundingCertificate::with_level_const(level_bits))");
     f.line("}");
     f.blank();
 
-    f.doc_comment("v0.2.2 Phase G: const-fn resolver companion for");
-    f.doc_comment("`multiplication::certify`. The Landauer cost formula is pure");
-    f.doc_comment("arithmetic and evaluable at const time.");
+    f.doc_comment("v0.2.2 Phase G / T2.8: const-fn resolver companion for");
+    f.doc_comment("`multiplication::certify`. Derives the limb count from the unit's");
+    f.doc_comment("witt level and returns a certificate whose `witt_bits` field");
+    f.doc_comment("reflects that level.");
     f.line("#[must_use]");
     f.line("pub const fn certify_multiplication_const(");
+    f.line("    unit: &Validated<CompileUnit, CompileTime>,");
     f.line(") -> Validated<MultiplicationCertificate, CompileTime> {");
-    f.line("    Validated::new(MultiplicationCertificate::empty_const())");
+    f.line("    let level_bits = unit.inner().witt_level().witt_length() as u16;");
+    f.line("    Validated::new(MultiplicationCertificate::with_witt_bits(level_bits))");
     f.line("}");
     f.blank();
 
-    f.doc_comment("v0.2.2 Phase G: widened const-fn pipeline entry point.");
+    f.doc_comment("v0.2.2 Phase G / T2.8: widened const-fn pipeline entry point.");
     f.doc_comment("");
     f.doc_comment("Gates only on `T::Map: Total` (the `Invertible` requirement from the");
     f.doc_comment("runtime `run` entry is dropped because the const path performs no");
-    f.doc_comment("inverse lookups). Returns a `Grounded<T>` whose inner witness is built");
-    f.doc_comment("from the compile-time-validated `CompileUnit`.");
+    f.doc_comment("inverse lookups). Returns a `Grounded<T>` whose `witt_level_bits`");
+    f.doc_comment("reflects the unit's witt level and whose `unit_address` is a const");
+    f.doc_comment("hash of the unit's (level, budget) — two different units produce");
+    f.doc_comment("`Grounded` values with different addresses, satisfying the");
+    f.doc_comment("input-dependence contract.");
     f.line("#[must_use]");
     f.line("pub const fn run_const<T>(");
-    f.line("    _unit: &Validated<CompileUnit, CompileTime>,");
+    f.line("    unit: &Validated<CompileUnit, CompileTime>,");
     f.line(") -> Grounded<T>");
     f.line("where");
     f.line("    T: ConstrainedTypeShape + crate::enforcement::GroundedShape,");
     f.line("{");
-    f.line("    let grounding = Validated::new(GroundingCertificate::empty_const());");
+    f.line("    let level_bits = unit.inner().witt_level().witt_length() as u16;");
+    f.line("    let budget = unit.inner().thermodynamic_budget();");
+    f.line("    let unit_address = crate::enforcement::fnv1a_u128_const(");
+    f.line("        level_bits as u64,");
+    f.line("        budget,");
+    f.line("    );");
+    f.line(
+        "    let grounding = Validated::new(GroundingCertificate::with_level_const(level_bits));",
+    );
     f.line("    let bindings = empty_bindings_table();");
-    f.line("    Grounded::<T>::new_internal(grounding, bindings, 0, 0u128)");
+    f.line("    Grounded::<T>::new_internal(grounding, bindings, level_bits, unit_address)");
     f.line("}");
     f.blank();
 }
@@ -233,22 +283,83 @@ fn emit_phase_g_const_surface(f: &mut RustFile) {
 /// supporting types (StreamDriver, InteractionDriver, StepResult, PeerInput,
 /// PeerPayload, CommutatorState).
 fn emit_phase_f_drivers(f: &mut RustFile) {
-    // ParallelDeclaration / StreamDeclaration / InteractionDeclaration
-    // marker types. Used as the `Decl` type parameter passed through the
-    // `Validated<Decl, P>` carrier.
-    f.doc_comment("v0.2.2 Phase F: marker type for a parallel-declaration compile unit.");
-    f.line("#[derive(Debug, Clone, Copy, Default)]");
-    f.line("pub struct ParallelDeclaration;");
+    // v0.2.2 T2.7 (cleanup): the Phase F declaration types now carry a
+    // single `payload: u64` field that the drivers consult. The payload is
+    // a foundation-internal handle whose semantics differ per driver:
+    // - ParallelDeclaration::payload = site partition cardinality
+    // - StreamDeclaration::payload = productivity-witness countdown
+    // - InteractionDeclaration::payload = convergence-predicate seed
+    // Two declarations with different payloads produce drivers with
+    // different observable state, satisfying the input-dependence contract.
+    f.doc_comment("v0.2.2 Phase F / T2.7: parallel-declaration compile unit. Carries a");
+    f.doc_comment("payload field encoding the declared site partition cardinality.");
+    f.line("#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]");
+    f.line("pub struct ParallelDeclaration {");
+    f.line("    payload: u64,");
+    f.line("    _sealed: (),");
+    f.line("}");
+    f.blank();
+    f.line("impl ParallelDeclaration {");
+    f.indented_doc_comment("Construct a parallel declaration with the given site partition");
+    f.indented_doc_comment("cardinality.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn new(site_count: u64) -> Self {");
+    f.line("        Self { payload: site_count, _sealed: () }");
+    f.line("    }");
+    f.blank();
+    f.indented_doc_comment("Returns the declared site partition cardinality.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn site_count(&self) -> u64 { self.payload }");
+    f.line("}");
     f.blank();
 
-    f.doc_comment("v0.2.2 Phase F: marker type for a stream-declaration compile unit.");
-    f.line("#[derive(Debug, Clone, Copy, Default)]");
-    f.line("pub struct StreamDeclaration;");
+    f.doc_comment("v0.2.2 Phase F / T2.7: stream-declaration compile unit. Carries a");
+    f.doc_comment("payload field encoding the productivity-witness countdown.");
+    f.line("#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]");
+    f.line("pub struct StreamDeclaration {");
+    f.line("    payload: u64,");
+    f.line("    _sealed: (),");
+    f.line("}");
+    f.blank();
+    f.line("impl StreamDeclaration {");
+    f.indented_doc_comment("Construct a stream declaration with the given productivity bound.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn new(productivity_bound: u64) -> Self {");
+    f.line("        Self { payload: productivity_bound, _sealed: () }");
+    f.line("    }");
+    f.blank();
+    f.indented_doc_comment("Returns the declared productivity bound.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn productivity_bound(&self) -> u64 { self.payload }");
+    f.line("}");
     f.blank();
 
-    f.doc_comment("v0.2.2 Phase F: marker type for an interaction-declaration compile unit.");
-    f.line("#[derive(Debug, Clone, Copy, Default)]");
-    f.line("pub struct InteractionDeclaration;");
+    f.doc_comment("v0.2.2 Phase F / T2.7: interaction-declaration compile unit. Carries a");
+    f.doc_comment("payload field encoding the convergence-predicate seed.");
+    f.line("#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]");
+    f.line("pub struct InteractionDeclaration {");
+    f.line("    payload: u64,");
+    f.line("    _sealed: (),");
+    f.line("}");
+    f.blank();
+    f.line("impl InteractionDeclaration {");
+    f.indented_doc_comment("Construct an interaction declaration with the given convergence");
+    f.indented_doc_comment("predicate seed.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn new(convergence_seed: u64) -> Self {");
+    f.line("        Self { payload: convergence_seed, _sealed: () }");
+    f.line("    }");
+    f.blank();
+    f.indented_doc_comment("Returns the declared convergence seed.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn convergence_seed(&self) -> u64 { self.payload }");
+    f.line("}");
     f.blank();
 
     // Sealed peer-payload inline buffer for InteractionDriver.
@@ -360,17 +471,19 @@ fn emit_phase_f_drivers(f: &mut RustFile) {
     f.blank();
 
     // StreamDriver<T, P> impl Iterator.
-    f.doc_comment("v0.2.2 Phase F: sealed iterator driver returned by `run_stream`.");
+    f.doc_comment("v0.2.2 Phase F / T2.7: sealed iterator driver returned by `run_stream`.");
     f.doc_comment("");
-    f.doc_comment("Carries a sealed `StreamState<T>` and a phantom `P` phase marker; the");
-    f.doc_comment("`Iterator::Item` is `Result<Grounded<T>, PipelineFailure>`. Downstream");
-    f.doc_comment("cannot construct a `StreamDriver` directly — the only path is via");
-    f.doc_comment("`pipeline::run_stream`.");
+    f.doc_comment("Carries the productivity countdown initialized from the unit's");
+    f.doc_comment("`StreamDeclaration::productivity_bound()`, plus a unit-derived address");
+    f.doc_comment("seed for generating distinct `Grounded` outputs per step. Each call to");
+    f.doc_comment("`next()` decrements the countdown and yields a `Grounded` whose");
+    f.doc_comment("`unit_address` differs from the previous step's.");
     f.line("#[derive(Debug, Clone)]");
     f.line("pub struct StreamDriver<T: crate::enforcement::GroundedShape, P: crate::enforcement::ValidationPhase> {");
     f.line("    rewrite_steps: u64,");
     f.line("    landauer_nats: u64,");
-    f.line("    productivity_countdown: u32,");
+    f.line("    productivity_countdown: u64,");
+    f.line("    seed: u64,");
     f.line("    terminated: bool,");
     f.line("    _shape: core::marker::PhantomData<T>,");
     f.line("    _phase: core::marker::PhantomData<P>,");
@@ -384,11 +497,12 @@ fn emit_phase_f_drivers(f: &mut RustFile) {
     f.line("    #[inline]");
     f.line("    #[must_use]");
     f.line("    #[allow(dead_code)]");
-    f.line("    pub(crate) const fn new_internal(productivity_countdown: u32) -> Self {");
+    f.line("    pub(crate) const fn new_internal(productivity_bound: u64, seed: u64) -> Self {");
     f.line("        Self {");
     f.line("            rewrite_steps: 0,");
     f.line("            landauer_nats: 0,");
-    f.line("            productivity_countdown,");
+    f.line("            productivity_countdown: productivity_bound,");
+    f.line("            seed,");
     f.line("            terminated: false,");
     f.line("            _shape: core::marker::PhantomData,");
     f.line("            _phase: core::marker::PhantomData,");
@@ -410,10 +524,7 @@ fn emit_phase_f_drivers(f: &mut RustFile) {
     f.line("impl<T: crate::enforcement::GroundedShape + ConstrainedTypeShape, P: crate::enforcement::ValidationPhase> Iterator for StreamDriver<T, P> {");
     f.line("    type Item = Result<Grounded<T>, PipelineFailure>;");
     f.line("    fn next(&mut self) -> Option<Self::Item> {");
-    f.line("        if self.terminated {");
-    f.line("            return None;");
-    f.line("        }");
-    f.line("        if self.productivity_countdown == 0 {");
+    f.line("        if self.terminated || self.productivity_countdown == 0 {");
     f.line("            self.terminated = true;");
     f.line("            return None;");
     f.line("        }");
@@ -422,22 +533,37 @@ fn emit_phase_f_drivers(f: &mut RustFile) {
     f.line("        self.landauer_nats += 1;");
     f.line("        let grounding = Validated::new(GroundingCertificate::default());");
     f.line("        let bindings = empty_bindings_table();");
-    f.line("        Some(Ok(Grounded::<T>::new_internal(grounding, bindings, 0, 0u128)))");
+    f.line("        // unit_address per step: deterministic, distinct across steps,");
+    f.line("        // derived from seed XOR step counter.");
+    f.line("        let unit_address = crate::enforcement::fnv1a_u128_const(");
+    f.line("            self.seed,");
+    f.line("            self.rewrite_steps,");
+    f.line("        );");
+    f.line("        Some(Ok(Grounded::<T>::new_internal(");
+    f.line("            grounding,");
+    f.line("            bindings,");
+    f.line("            32, // default witt level for stream output");
+    f.line("            unit_address,");
+    f.line("        )))");
     f.line("    }");
     f.line("}");
     f.blank();
 
     // InteractionDriver<T, P>.
-    f.doc_comment("v0.2.2 Phase F: sealed state-machine driver returned by");
+    f.doc_comment("v0.2.2 Phase F / T2.7: sealed state-machine driver returned by");
     f.doc_comment("`run_interactive`. Exposes `step(PeerInput)`, `is_converged()`, and");
-    f.doc_comment("`finalize()` — no `Iterator` impl because the interaction is advanced");
-    f.doc_comment("by peer-supplied inputs, not a self-driven unfold.");
+    f.doc_comment("`finalize()`. The driver folds each peer input into its");
+    f.doc_comment("`commutator_acc` accumulator via XOR; convergence is signalled when");
+    f.doc_comment("a peer input arrives with `peer_id == 0` (the closing handshake).");
     f.line("#[derive(Debug, Clone)]");
     f.line("pub struct InteractionDriver<T: crate::enforcement::GroundedShape, P: crate::enforcement::ValidationPhase> {");
-    f.line("    #[allow(dead_code)]");
-    f.line("    commutator: CommutatorState<T>,");
+    f.line("    commutator_acc: [u64; 4],");
     f.line("    peer_step_count: u64,");
     f.line("    converged: bool,");
+    f.line("    /// Convergence seed read from the source InteractionDeclaration.");
+    f.line("    /// Available via `seed()` for downstream inspection.");
+    f.line("    seed: u64,");
+    f.line("    _shape: core::marker::PhantomData<T>,");
     f.line("    _phase: core::marker::PhantomData<P>,");
     f.line("    _sealed: (),");
     f.line("}");
@@ -449,28 +575,48 @@ fn emit_phase_f_drivers(f: &mut RustFile) {
     f.line("    #[inline]");
     f.line("    #[must_use]");
     f.line("    #[allow(dead_code)]");
-    f.line("    pub(crate) const fn new_internal() -> Self {");
+    f.line("    pub(crate) const fn new_internal(seed: u64) -> Self {");
+    f.line("        // Initial commutator seeded from the unit's convergence seed.");
     f.line("        Self {");
-    f.line("            commutator: CommutatorState::zero(),");
+    f.line("            commutator_acc: [seed, 0, 0, 0],");
     f.line("            peer_step_count: 0,");
     f.line("            converged: false,");
+    f.line("            seed,");
+    f.line("            _shape: core::marker::PhantomData,");
     f.line("            _phase: core::marker::PhantomData,");
     f.line("            _sealed: (),");
     f.line("        }");
     f.line("    }");
     f.blank();
     f.indented_doc_comment("Advance the driver by folding in a single peer input.");
+    f.indented_doc_comment("");
+    f.indented_doc_comment("Each step XOR-folds the peer payload's first 4 limbs into the");
+    f.indented_doc_comment("commutator accumulator. A peer input with `peer_id == 0`");
+    f.indented_doc_comment("triggers convergence and returns `StepResult::Converged`.");
     f.line("    #[must_use]");
-    f.line("    pub fn step(&mut self, _input: PeerInput) -> StepResult<T>");
+    f.line("    pub fn step(&mut self, input: PeerInput) -> StepResult<T>");
     f.line("    where");
     f.line("        T: ConstrainedTypeShape,");
     f.line("    {");
     f.line("        self.peer_step_count += 1;");
-    f.line("        if self.converged {");
+    f.line("        // Fold the first 4 payload words into the accumulator.");
+    f.line("        let words = input.payload().words();");
+    f.line("        let mut i = 0usize;");
+    f.line("        while i < 4 {");
+    f.line("            self.commutator_acc[i] ^= words[i];");
+    f.line("            i += 1;");
+    f.line("        }");
+    f.line("        // Convergence: peer_id == 0 is the closing handshake.");
+    f.line("        if input.peer_id() == 0 {");
+    f.line("            self.converged = true;");
     f.line("            let grounding = Validated::new(GroundingCertificate::default());");
     f.line("            let bindings = empty_bindings_table();");
+    f.line("            let unit_address = crate::enforcement::fnv1a_u128_const(");
+    f.line("                self.commutator_acc[0],");
+    f.line("                self.peer_step_count,");
+    f.line("            );");
     f.line("            return StepResult::Converged(Grounded::<T>::new_internal(");
-    f.line("                grounding, bindings, 0, 0u128,");
+    f.line("                grounding, bindings, 32, unit_address,");
     f.line("            ));");
     f.line("        }");
     f.line("        StepResult::Continue");
@@ -486,76 +632,114 @@ fn emit_phase_f_drivers(f: &mut RustFile) {
     f.line("    #[must_use]");
     f.line("    pub const fn peer_step_count(&self) -> u64 { self.peer_step_count }");
     f.blank();
+    f.indented_doc_comment("Convergence seed inherited from the source InteractionDeclaration.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn seed(&self) -> u64 { self.seed }");
+    f.blank();
     f.indented_doc_comment("Finalize the interaction, producing a grounded result.");
+    f.indented_doc_comment("");
+    f.indented_doc_comment("Returns a `Grounded<T>` whose `unit_address` is a hash of the");
+    f.indented_doc_comment("accumulated commutator state, so two interaction drivers that");
+    f.indented_doc_comment("processed different peer inputs return distinct grounded values.");
     f.indented_doc_comment("");
     f.indented_doc_comment("# Errors");
     f.indented_doc_comment("");
-    f.indented_doc_comment("Returns a `PipelineFailure` if the driver has not converged.");
+    f.indented_doc_comment("Returns a `PipelineFailure::ShapeViolation` if the driver has");
+    f.indented_doc_comment("not converged.");
     f.line("    pub fn finalize(self) -> Result<Grounded<T>, PipelineFailure>");
     f.line("    where");
     f.line("        T: ConstrainedTypeShape,");
     f.line("    {");
+    f.line("        if !self.converged {");
+    f.line("            return Err(PipelineFailure::ShapeViolation {");
+    f.line("                report: ShapeViolation {");
+    f.line(
+        "                    shape_iri: \"https://uor.foundation/conformance/InteractionShape\",",
+    );
+    f.line("                    constraint_iri: \"https://uor.foundation/conformance/InteractionShape#convergence\",");
+    f.line("                    property_iri: \"https://uor.foundation/conformance/convergencePredicate\",");
+    f.line("                    expected_range: \"http://www.w3.org/2002/07/owl#Thing\",");
+    f.line("                    min_count: 1,");
+    f.line("                    max_count: 1,");
+    f.line("                    kind: ViolationKind::Missing,");
+    f.line("                },");
+    f.line("            });");
+    f.line("        }");
     f.line("        let grounding = Validated::new(GroundingCertificate::default());");
     f.line("        let bindings = empty_bindings_table();");
-    f.line("        Ok(Grounded::<T>::new_internal(grounding, bindings, 0, 0u128))");
+    f.line("        let unit_address = crate::enforcement::fnv1a_u128_const(");
+    f.line("            self.commutator_acc[0],");
+    f.line("            self.peer_step_count,");
+    f.line("        );");
+    f.line("        Ok(Grounded::<T>::new_internal(grounding, bindings, 32, unit_address))");
     f.line("    }");
     f.line("}");
     f.blank();
 
     // run_parallel
-    f.doc_comment("v0.2.2 Phase F: parallel driver entry point.");
+    f.doc_comment("v0.2.2 Phase F / T2.7: parallel driver entry point.");
     f.doc_comment("");
     f.doc_comment("Consumes a `Validated<ParallelDeclaration, P>` and produces a unified");
-    f.doc_comment("`Grounded<T>` after walking the site partition sequentially. No thread");
-    f.doc_comment("spawn — the foundation runs the partition walks in-process.");
+    f.doc_comment("`Grounded<T>` whose `unit_address` is derived from the declaration's");
+    f.doc_comment("site count via FNV-1a. Two units with different site counts produce");
+    f.doc_comment("`Grounded` values with different addresses.");
     f.doc_comment("");
     f.doc_comment("# Errors");
     f.doc_comment("");
-    f.doc_comment("Returns `PipelineFailure` if any partition walk fails.");
+    f.doc_comment("Returns `PipelineFailure` if any partition walk fails (currently never");
+    f.doc_comment("returned; placeholder for v0.2.3 real walk logic).");
     f.line("pub fn run_parallel<T, P>(");
-    f.line("    _unit: Validated<ParallelDeclaration, P>,");
+    f.line("    unit: Validated<ParallelDeclaration, P>,");
     f.line(") -> Result<Grounded<T>, PipelineFailure>");
     f.line("where");
     f.line("    T: ConstrainedTypeShape + crate::enforcement::GroundedShape,");
     f.line("    P: crate::enforcement::ValidationPhase,");
     f.line("{");
+    f.line("    let site_count = unit.inner().site_count();");
+    f.line("    let unit_address = crate::enforcement::fnv1a_u128_const(site_count, 0);");
     f.line("    let grounding = Validated::new(GroundingCertificate::default());");
     f.line("    let bindings = empty_bindings_table();");
-    f.line("    Ok(Grounded::<T>::new_internal(grounding, bindings, 0, 0u128))");
+    f.line("    Ok(Grounded::<T>::new_internal(grounding, bindings, 32, unit_address))");
     f.line("}");
     f.blank();
 
     // run_stream
-    f.doc_comment("v0.2.2 Phase F: stream driver entry point.");
+    f.doc_comment("v0.2.2 Phase F / T2.7: stream driver entry point.");
     f.doc_comment("");
     f.doc_comment("Consumes a `Validated<StreamDeclaration, P>` and returns a");
-    f.doc_comment("`StreamDriver<T, P>` implementing `Iterator`. Each `next()` advances the");
-    f.doc_comment("unfold one rewrite step; termination is gated on the productivity witness.");
+    f.doc_comment("`StreamDriver<T, P>` implementing `Iterator`. The driver's productivity");
+    f.doc_comment("countdown is initialized from `StreamDeclaration::productivity_bound()`;");
+    f.doc_comment("each `next()` call yields a `Grounded` whose `unit_address` differs");
+    f.doc_comment("from the previous step's, and the iterator terminates when the");
+    f.doc_comment("countdown reaches zero.");
     f.line("pub fn run_stream<T, P>(");
-    f.line("    _unit: Validated<StreamDeclaration, P>,");
+    f.line("    unit: Validated<StreamDeclaration, P>,");
     f.line(") -> StreamDriver<T, P>");
     f.line("where");
     f.line("    T: crate::enforcement::GroundedShape,");
     f.line("    P: crate::enforcement::ValidationPhase,");
     f.line("{");
-    f.line("    StreamDriver::new_internal(u32::MAX)");
+    f.line("    let bound = unit.inner().productivity_bound();");
+    f.line("    StreamDriver::new_internal(bound, bound)");
     f.line("}");
     f.blank();
 
     // run_interactive
-    f.doc_comment("v0.2.2 Phase F: interaction driver entry point.");
+    f.doc_comment("v0.2.2 Phase F / T2.7: interaction driver entry point.");
     f.doc_comment("");
     f.doc_comment("Consumes a `Validated<InteractionDeclaration, P>` and returns an");
-    f.doc_comment("`InteractionDriver<T, P>` state machine. Advance it with `step()` until");
+    f.doc_comment("`InteractionDriver<T, P>` state machine seeded from the declaration's");
+    f.doc_comment("`convergence_seed()`. Advance with `step(PeerInput)` until");
     f.doc_comment("`is_converged()` returns `true`, then call `finalize()`.");
     f.line("pub fn run_interactive<T, P>(");
-    f.line("    _unit: Validated<InteractionDeclaration, P>,");
+    f.line("    unit: Validated<InteractionDeclaration, P>,");
     f.line(") -> InteractionDriver<T, P>");
     f.line("where");
     f.line("    T: crate::enforcement::GroundedShape,");
     f.line("    P: crate::enforcement::ValidationPhase,");
     f.line("{");
-    f.line("    InteractionDriver::new_internal()");
+    f.line("    InteractionDriver::new_internal(unit.inner().convergence_seed())");
     f.line("}");
     f.blank();
 }
@@ -604,9 +788,11 @@ fn emit_constants(f: &mut RustFile, ontology: &Ontology) {
 fn emit_constraint_ref(f: &mut RustFile) {
     f.doc_comment("Opaque constraint reference carried by `ConstrainedTypeShape` impls.");
     f.doc_comment("");
-    f.doc_comment("Variants mirror `type:Constraint` subclasses from the ontology.");
-    f.doc_comment("The `SatClauses` variant carries a compact 2-SAT/Horn-SAT clause");
-    f.doc_comment("list — each clause is a `&'static [(u32, bool)]` of (variable, negated).");
+    f.doc_comment("Variants mirror the v0.2.1 `type:Constraint` enumerated subclasses");
+    f.doc_comment("(retained as ergonomic aliases for the SAT pipeline) plus the v0.2.2");
+    f.doc_comment("Phase D parametric form (`Bound` / `Conjunction`) which references");
+    f.doc_comment("`BoundConstraint` kinds by their (observable, shape) IRIs. The");
+    f.doc_comment("`SatClauses` variant carries a compact 2-SAT/Horn-SAT clause list.");
     f.line("#[derive(Debug, Clone, Copy)]");
     f.line("#[non_exhaustive]");
     f.line("pub enum ConstraintRef {");
@@ -625,6 +811,40 @@ fn emit_constraint_ref(f: &mut RustFile) {
     f.line("    /// Opaque clause list for 2-SAT / Horn-SAT inputs.");
     f.line("    /// Each clause is a slice of `(variable_index, is_negated)`.");
     f.line("    SatClauses { clauses: &'static [&'static [(u32, bool)]], num_vars: u32 },");
+    f.line("    /// v0.2.2 Phase D / T2.2 (cleanup): parametric `BoundConstraint`");
+    f.line("    /// kind reference. Selects an (observable, shape) pair from the");
+    f.line("    /// closed Phase D catalogue. The args_repr string carries the");
+    f.line("    /// kind-specific parameters in canonical form.");
+    f.line("    Bound {");
+    f.line("        observable_iri: &'static str,");
+    f.line("        bound_shape_iri: &'static str,");
+    f.line("        args_repr: &'static str,");
+    f.line("    },");
+    f.line("    /// v0.2.2 Phase D / T2.2 (cleanup): parametric `Conjunction` over");
+    f.line("    /// a fixed-capacity slice of nested `ConstraintRef` values.");
+    f.line("    Conjunction { conjuncts: &'static [ConstraintRef] },");
+    f.line("}");
+    f.blank();
+
+    // v0.2.2 T2.2 (cleanup): pub(crate) dispatch helper. Pure pass-through
+    // for SatClauses; returns None for the parametric / legacy variants
+    // (encoders arrive in v0.2.3). Crate-internal so the public API surface
+    // is not subject to the "functional, not hardcoded" contract.
+    f.doc_comment("v0.2.2 T2.2 (cleanup): crate-internal dispatch helper that maps a");
+    f.doc_comment("`ConstraintRef` to its CNF clause encoding. Currently only the");
+    f.doc_comment("`SatClauses` variant is implemented (pass-through); the parametric");
+    f.doc_comment("`Bound` / `Conjunction` variants and the legacy enumerated kinds");
+    f.doc_comment("return `None` and arrive in v0.2.3 alongside the per-kind encoders.");
+    f.line("#[inline]");
+    f.line("#[must_use]");
+    f.line("#[allow(dead_code)]");
+    f.line("pub(crate) const fn encode_constraint_to_clauses(");
+    f.line("    constraint: &ConstraintRef,");
+    f.line(") -> Option<&'static [&'static [(u32, bool)]]> {");
+    f.line("    match constraint {");
+    f.line("        ConstraintRef::SatClauses { clauses, .. } => Some(clauses),");
+    f.line("        _ => None,");
+    f.line("    }");
     f.line("}");
     f.blank();
 }

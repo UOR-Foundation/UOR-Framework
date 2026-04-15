@@ -72,6 +72,12 @@ pub fn validate(workspace: &Path) -> Result<ConformanceReport> {
             "resolver::multiplication::certify free function",
             "pub fn certify(",
         ),
+        // v0.2.2 T2.1 (cleanup): trait-level Certify façade delegates to
+        // the free function instead of returning a default certificate.
+        (
+            "MultiplicationResolver trait delegation",
+            "crate::enforcement::resolver::multiplication::certify(&context)",
+        ),
     ];
 
     let mut missing: Vec<String> = Vec::new();

@@ -67,10 +67,14 @@ progress, enabling early detection of stalled resolutions.
 
 ```
 Iteration 0: 0/8 sites pinned  (convergenceRate = 0.0)
-Iteration 1: apply ResidueConstraint → 3/8 pinned (rate = 3.0)
-Iteration 2: apply CarryConstraint   → 6/8 pinned (rate = 3.0)
-Iteration 3: apply DepthConstraint   → 8/8 pinned (rate = 2.67, complete)
+Iteration 1: apply ResidueConstraint::new(8, 1) → 3/8 pinned (rate = 3.0)
+Iteration 2: apply CarryConstraint::new(2)      → 6/8 pinned (rate = 3.0)
+Iteration 3: apply DepthConstraint::new(0, 4)   → 8/8 pinned (rate = 2.67, complete)
 ```
+
+Each constraint is a `BoundConstraint<O, B>` instance constructed via the
+v0.2.1-compatible type-alias ctors. See
+[Constraint Algebra](constraint-algebra.html) for the parametric form.
 
 When resolution stalls (convergence rate drops to zero), the
 {@class https://uor.foundation/resolver/CechNerve} provides topological

@@ -15,6 +15,9 @@ categories = ["data-structures", "science"]
 [dependencies]
 uor-foundation = { path = "../foundation" }
 
+[dev-dependencies]
+uor-foundation-test-helpers = { path = "../uor-foundation-test-helpers" }
+
 [features]
 # Default build is strictly no_std. The `serde` feature enables byte-stream
 # trace deserialization via serde; it requires alloc and is off by default.

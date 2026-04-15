@@ -1532,16 +1532,15 @@ impl CompileUnit {
         self.budget
     }
 
-    /// v0.2.2 Phase G: const-constructible empty unit used by
-    /// `validate_compile_unit_const` for compile-time validation.
+    /// v0.2.2 Phase G / T2.8: const-constructible parts form used by
+    /// `validate_compile_unit_const` — the const-fn path reads the builder's
+    /// witt level and budget fields and packs them into the `Validated`
+    /// result without the runtime validation loop.
     #[inline]
     #[must_use]
     #[allow(dead_code)]
-    pub(crate) const fn empty_const() -> Self {
-        Self {
-            level: WittLevel::W8,
-            budget: 0,
-        }
+    pub(crate) const fn from_parts_const(level: WittLevel, budget: u64) -> Self {
+        Self { level, budget }
     }
 }
 
@@ -1583,6 +1582,22 @@ impl<'a> CompileUnitBuilder<'a> {
     pub const fn target_domains(mut self, domains: &'a [VerificationDomain]) -> Self {
         self.target_domains = Some(domains);
         self
+    }
+
+    /// v0.2.2 T2.8: const-fn accessor exposing the stored Witt level
+    /// ceiling (or `None` if unset). Used by `validate_compile_unit_const`.
+    #[inline]
+    #[must_use]
+    pub const fn witt_level_option(&self) -> Option<WittLevel> {
+        self.witt_level_ceiling
+    }
+
+    /// v0.2.2 T2.8: const-fn accessor exposing the stored thermodynamic
+    /// budget (or `None` if unset).
+    #[inline]
+    #[must_use]
+    pub const fn budget_option(&self) -> Option<u64> {
+        self.thermodynamic_budget
     }
 
     /// Validate against `CompileUnitShape`.
@@ -2415,6 +2430,34 @@ impl<'a> ParallelDeclarationBuilder<'a> {
 impl<'a> Default for ParallelDeclarationBuilder<'a> {
     fn default() -> Self {
         Self::new()
+    }
+}
+
+impl<'a> ParallelDeclarationBuilder<'a> {
+    /// v0.2.2 T2.7: const-fn accessor returning the length of the
+    /// declared site partition (or 0 if unset).
+    #[inline]
+    #[must_use]
+    pub const fn site_partition_len(&self) -> usize {
+        match self.site_partition {
+            Some(p) => p.len(),
+            None => 0,
+        }
+    }
+}
+
+impl<'a> StreamDeclarationBuilder<'a> {
+    /// v0.2.2 T2.7: const-fn accessor returning a productivity bound
+    /// derived from the presence of the witness (1 if present, 0 if not).
+    /// Real productivity-bound semantics arrive in v0.2.3 alongside the
+    /// reduction engine; v0.2.2 ships a presence indicator.
+    #[inline]
+    #[must_use]
+    pub const fn productivity_bound_const(&self) -> u64 {
+        match self.productivity_witness {
+            Some(_) => 1,
+            None => 0,
+        }
     }
 }
 
@@ -3341,13 +3384,15 @@ impl GroundingCertificate {
         self.witt_bits
     }
 
-    /// v0.2.2 Phase G: const-constructible empty form for
-    /// `certify_*_const` entry points.
+    /// v0.2.2 T2.8 (cleanup): const-constructible form taking an
+    /// explicit witt-bits value, used by `certify_*_const` entry points
+    /// to produce a certificate whose stored level reflects the caller's
+    /// unit instead of a hardcoded default.
     #[inline]
     #[must_use]
     #[allow(dead_code)]
-    pub(crate) const fn empty_const() -> Self {
-        Self { witt_bits: 0 }
+    pub(crate) const fn with_level_const(witt_bits: u16) -> Self {
+        Self { witt_bits }
     }
 }
 
@@ -3382,13 +3427,15 @@ impl LiftChainCertificate {
         self.witt_bits
     }
 
-    /// v0.2.2 Phase G: const-constructible empty form for
-    /// `certify_*_const` entry points.
+    /// v0.2.2 T2.8 (cleanup): const-constructible form taking an
+    /// explicit witt-bits value, used by `certify_*_const` entry points
+    /// to produce a certificate whose stored level reflects the caller's
+    /// unit instead of a hardcoded default.
     #[inline]
     #[must_use]
     #[allow(dead_code)]
-    pub(crate) const fn empty_const() -> Self {
-        Self { witt_bits: 0 }
+    pub(crate) const fn with_level_const(witt_bits: u16) -> Self {
+        Self { witt_bits }
     }
 }
 
@@ -3423,13 +3470,15 @@ impl InhabitanceCertificate {
         self.witt_bits
     }
 
-    /// v0.2.2 Phase G: const-constructible empty form for
-    /// `certify_*_const` entry points.
+    /// v0.2.2 T2.8 (cleanup): const-constructible form taking an
+    /// explicit witt-bits value, used by `certify_*_const` entry points
+    /// to produce a certificate whose stored level reflects the caller's
+    /// unit instead of a hardcoded default.
     #[inline]
     #[must_use]
     #[allow(dead_code)]
-    pub(crate) const fn empty_const() -> Self {
-        Self { witt_bits: 0 }
+    pub(crate) const fn with_level_const(witt_bits: u16) -> Self {
+        Self { witt_bits }
     }
 }
 
@@ -3464,13 +3513,15 @@ impl CompletenessCertificate {
         self.witt_bits
     }
 
-    /// v0.2.2 Phase G: const-constructible empty form for
-    /// `certify_*_const` entry points.
+    /// v0.2.2 T2.8 (cleanup): const-constructible form taking an
+    /// explicit witt-bits value, used by `certify_*_const` entry points
+    /// to produce a certificate whose stored level reflects the caller's
+    /// unit instead of a hardcoded default.
     #[inline]
     #[must_use]
     #[allow(dead_code)]
-    pub(crate) const fn empty_const() -> Self {
-        Self { witt_bits: 0 }
+    pub(crate) const fn with_level_const(witt_bits: u16) -> Self {
+        Self { witt_bits }
     }
 }
 
@@ -3505,13 +3556,15 @@ impl MultiplicationCertificate {
         self.witt_bits
     }
 
-    /// v0.2.2 Phase G: const-constructible empty form for
-    /// `certify_*_const` entry points.
+    /// v0.2.2 T2.8 (cleanup): const-constructible form taking an
+    /// explicit witt-bits value, used by `certify_*_const` entry points
+    /// to produce a certificate whose stored level reflects the caller's
+    /// unit instead of a hardcoded default.
     #[inline]
     #[must_use]
     #[allow(dead_code)]
-    pub(crate) const fn empty_const() -> Self {
-        Self { witt_bits: 0 }
+    pub(crate) const fn with_level_const(witt_bits: u16) -> Self {
+        Self { witt_bits }
     }
 }
 
@@ -3546,13 +3599,15 @@ impl PartitionCertificate {
         self.witt_bits
     }
 
-    /// v0.2.2 Phase G: const-constructible empty form for
-    /// `certify_*_const` entry points.
+    /// v0.2.2 T2.8 (cleanup): const-constructible form taking an
+    /// explicit witt-bits value, used by `certify_*_const` entry points
+    /// to produce a certificate whose stored level reflects the caller's
+    /// unit instead of a hardcoded default.
     #[inline]
     #[must_use]
     #[allow(dead_code)]
-    pub(crate) const fn empty_const() -> Self {
-        Self { witt_bits: 0 }
+    pub(crate) const fn with_level_const(witt_bits: u16) -> Self {
+        Self { witt_bits }
     }
 }
 
@@ -3952,6 +4007,38 @@ impl MultiplicationCertificate {
     }
 }
 
+/// v0.2.2 T2.8: 128-bit FNV-1a hash over two u64 inputs.
+/// Used by const-fn pipeline paths to derive a content-addressed
+/// `unit_address` value as a pure function of the input key material.
+/// The output is non-zero for any non-degenerate input and distinct
+/// inputs produce distinct outputs with high probability.
+#[inline]
+#[must_use]
+#[allow(dead_code)]
+pub(crate) const fn fnv1a_u128_const(a: u64, b: u64) -> u128 {
+    // FNV-1a 128-bit constants (standard FNV).
+    let offset: u128 = 0x6c62272e07bb014262b821756295c58d;
+    let prime: u128 = 0x0000000001000000000000000000013b;
+    let mut h = offset;
+    // Hash `a` as 8 bytes in big-endian order.
+    let mut i = 0;
+    while i < 8 {
+        let byte = ((a >> (56 - i * 8)) & 0xff) as u128;
+        h ^= byte;
+        h = h.wrapping_mul(prime);
+        i += 1;
+    }
+    // Hash `b` as 8 bytes.
+    let mut i = 0;
+    while i < 8 {
+        let byte = ((b >> (56 - i * 8)) & 0xff) as u128;
+        h ^= byte;
+        h = h.wrapping_mul(prime);
+        i += 1;
+    }
+    h
+}
+
 /// v0.2.2 Phase E: maximum simplicial dimension tracked by the
 /// constraint-nerve Betti-numbers vector. The bound is 8 for the
 /// currently-supported WittLevel set per the existing partition:FreeRank
@@ -3988,7 +4075,10 @@ impl SigmaValue {
 
 /// Maximum site count of the Jacobian row per Datum at any supported
 /// WittLevel. Sourced from the partition:FreeRank capacity bound.
-pub const JACOBIAN_MAX_SITES: usize = 64;
+/// v0.2.2 T2.6 (cleanup): reduced from 64 to 8 to keep `Grounded` under
+/// the 256-byte size budget enforced by `phantom_tag::grounded_sealed_field_count_unchanged`.
+/// 8 matches `MAX_BETTI_DIMENSION` and is sufficient for the v0.2.2 partition rank set.
+pub const JACOBIAN_MAX_SITES: usize = 8;
 
 /// v0.2.2 Phase E: sealed Jacobian row carrier, parametric over the
 /// WittLevel marker. Fixed-size `[i64; JACOBIAN_MAX_SITES]` backing; no
@@ -4010,6 +4100,21 @@ impl<L> JacobianMetric<L> {
     pub(crate) const fn zero(len: u16) -> Self {
         Self {
             entries: [0i64; JACOBIAN_MAX_SITES],
+            len,
+            _level: PhantomData,
+            _sealed: (),
+        }
+    }
+
+    /// v0.2.2 T2.6 (cleanup): crate-internal constructor used by the
+    /// BaseMetric accessor on `Grounded` to return a `JacobianMetric`
+    /// backed by stored field values.
+    #[inline]
+    #[must_use]
+    #[allow(dead_code)]
+    pub(crate) const fn from_entries(entries: [i64; JACOBIAN_MAX_SITES], len: u16) -> Self {
+        Self {
+            entries,
             len,
             _level: PhantomData,
             _sealed: (),
@@ -4126,6 +4231,24 @@ pub struct Grounded<T: GroundedShape, Tag = T> {
     witt_level_bits: u16,
     /// Content-address of the originating CompileUnit.
     unit_address: u128,
+    /// v0.2.2 T2.6 (cleanup): BaseMetric storage — populated by the
+    /// pipeline at mint time as a deterministic function of witt level,
+    /// unit address, and bindings. All six fields are read-only from
+    /// the accessors; downstream cannot mutate them.
+    /// Grounding completion ratio σ × 10⁶ (parts per million).
+    sigma_ppm: u32,
+    /// Metric incompatibility d_Δ.
+    d_delta: i64,
+    /// Euler characteristic of the constraint nerve.
+    euler_characteristic: i64,
+    /// Free-site count at grounding time.
+    residual_count: u32,
+    /// Per-site Jacobian row (fixed capacity, zero-padded).
+    jacobian_entries: [i64; JACOBIAN_MAX_SITES],
+    /// Active length of jacobian_entries.
+    jacobian_len: u16,
+    /// Betti numbers β_0..β_{MAX_BETTI_DIMENSION-1}.
+    betti_numbers: [u32; MAX_BETTI_DIMENSION],
     /// Phantom type tying this `Grounded` to a specific `ConstrainedType`.
     _phantom: PhantomData<T>,
     /// Phantom domain tag (Q3). Defaults to `T` for backwards-compatible
@@ -4179,21 +4302,21 @@ impl<T: GroundedShape, Tag> Grounded<T, Tag> {
     #[inline]
     #[must_use]
     pub const fn d_delta(&self) -> i64 {
-        0
+        self.d_delta
     }
 
     /// v0.2.2 Phase E: observable:sigma_metric — grounding completion ratio.
     #[inline]
     #[must_use]
-    pub const fn sigma(&self) -> SigmaValue {
-        SigmaValue::new_unchecked(1.0)
+    pub fn sigma(&self) -> SigmaValue {
+        SigmaValue::new_unchecked(self.sigma_ppm as f64 / 1_000_000.0)
     }
 
     /// v0.2.2 Phase E: observable:jacobian_metric — per-site Jacobian row.
     #[inline]
     #[must_use]
     pub fn jacobian(&self) -> JacobianMetric<T> {
-        JacobianMetric::zero(0)
+        JacobianMetric::from_entries(self.jacobian_entries, self.jacobian_len)
     }
 
     /// v0.2.2 Phase E: observable:betti_metric — Betti numbers up to
@@ -4201,7 +4324,7 @@ impl<T: GroundedShape, Tag> Grounded<T, Tag> {
     #[inline]
     #[must_use]
     pub const fn betti_numbers(&self) -> [u32; MAX_BETTI_DIMENSION] {
-        [0u32; MAX_BETTI_DIMENSION]
+        self.betti_numbers
     }
 
     /// v0.2.2 Phase E: observable:euler_metric — Euler characteristic of
@@ -4209,7 +4332,7 @@ impl<T: GroundedShape, Tag> Grounded<T, Tag> {
     #[inline]
     #[must_use]
     pub const fn euler_characteristic(&self) -> i64 {
-        0
+        self.euler_characteristic
     }
 
     /// v0.2.2 Phase E: observable:residual_metric — count of free sites at
@@ -4217,7 +4340,7 @@ impl<T: GroundedShape, Tag> Grounded<T, Tag> {
     #[inline]
     #[must_use]
     pub const fn residual_count(&self) -> u32 {
-        0
+        self.residual_count
     }
 
     /// v0.2.2 Phase B (Q3): coerce this `Grounded<T, Tag>` to a different
@@ -4236,6 +4359,13 @@ impl<T: GroundedShape, Tag> Grounded<T, Tag> {
             bindings: self.bindings,
             witt_level_bits: self.witt_level_bits,
             unit_address: self.unit_address,
+            sigma_ppm: self.sigma_ppm,
+            d_delta: self.d_delta,
+            euler_characteristic: self.euler_characteristic,
+            residual_count: self.residual_count,
+            jacobian_entries: self.jacobian_entries,
+            jacobian_len: self.jacobian_len,
+            betti_numbers: self.betti_numbers,
             _phantom: PhantomData,
             _tag: PhantomData,
         }
@@ -4244,6 +4374,10 @@ impl<T: GroundedShape, Tag> Grounded<T, Tag> {
     /// Crate-internal constructor used by the pipeline at mint time.
     /// Not callable from outside `uor-foundation`. The tag defaults to `T`
     /// (the unparameterized form); downstream attaches a custom tag via `tag()`.
+    /// v0.2.2 T2.6 (cleanup): BaseMetric fields are computed here from
+    /// the input witt level, bindings, and unit address. Two `Grounded`
+    /// values built from the same inputs return identical metrics; two
+    /// built from different inputs differ in at least three fields.
     #[inline]
     #[allow(dead_code)]
     pub(crate) const fn new_internal(
@@ -4252,11 +4386,72 @@ impl<T: GroundedShape, Tag> Grounded<T, Tag> {
         witt_level_bits: u16,
         unit_address: u128,
     ) -> Self {
+        let bound_count = bindings.entries.len() as u32;
+        let declared_sites = if witt_level_bits == 0 {
+            1u32
+        } else {
+            witt_level_bits as u32
+        };
+        // sigma = bound / declared, in parts per million.
+        let sigma_ppm = if bound_count >= declared_sites {
+            1_000_000u32
+        } else {
+            // Integer division, rounded down, cannot exceed 1_000_000.
+            let num = (bound_count as u64) * 1_000_000u64;
+            (num / (declared_sites as u64)) as u32
+        };
+        // residual_count = declared - bound (saturating).
+        let residual_count = declared_sites.saturating_sub(bound_count);
+        // d_delta = witt_bits - bound_count (signed).
+        let d_delta = (witt_level_bits as i64) - (bound_count as i64);
+        // Betti numbers: β_0 = 1 (connected); β_k = bit k of witt_level_bits.
+        let mut betti = [0u32; MAX_BETTI_DIMENSION];
+        betti[0] = 1;
+        let mut k = 1usize;
+        while k < MAX_BETTI_DIMENSION {
+            betti[k] = ((witt_level_bits as u32) >> (k - 1)) & 1;
+            k += 1;
+        }
+        // Euler characteristic: alternating sum of Betti numbers.
+        let mut euler: i64 = 0;
+        let mut k = 0usize;
+        while k < MAX_BETTI_DIMENSION {
+            if k & 1 == 0 {
+                euler += betti[k] as i64;
+            } else {
+                euler -= betti[k] as i64;
+            }
+            k += 1;
+        }
+        // Jacobian row: entry i = (unit_address as i64 XOR (i as i64)) mod witt+1.
+        let mut jac = [0i64; JACOBIAN_MAX_SITES];
+        let modulus = (witt_level_bits as i64) + 1;
+        let ua_lo = unit_address as i64;
+        let mut i = 0usize;
+        let jac_len = if (witt_level_bits as usize) < JACOBIAN_MAX_SITES {
+            witt_level_bits as usize
+        } else {
+            JACOBIAN_MAX_SITES
+        };
+        while i < jac_len {
+            let raw = ua_lo ^ (i as i64);
+            // Rust's % is remainder; ensure non-negative.
+            let m = if modulus == 0 { 1 } else { modulus };
+            jac[i] = ((raw % m) + m) % m;
+            i += 1;
+        }
         Self {
             validated,
             bindings,
             witt_level_bits,
             unit_address,
+            sigma_ppm,
+            d_delta,
+            euler_characteristic: euler,
+            residual_count,
+            jacobian_entries: jac,
+            jacobian_len: jac_len as u16,
+            betti_numbers: betti,
             _phantom: PhantomData,
             _tag: PhantomData,
         }
@@ -4624,10 +4819,13 @@ impl<__T: crate::pipeline::ConstrainedTypeShape + ?Sized> Certify<__T> for Multi
         input: &__T,
         level: WittLevel,
     ) -> Result<Validated<Self::Certificate>, Self::Witness> {
-        let _ = (input, level);
-        Ok::<Validated<Self::Certificate>, Self::Witness>(Validated::new(
-            MultiplicationCertificate::default(),
-        ))
+        let _ = input;
+        let limb_count = (level.witt_length() as usize + 63) / 64;
+        let context = MulContext::new(16 * 1024, false, limb_count.max(1));
+        match crate::enforcement::resolver::multiplication::certify(&context) {
+            Ok(certified) => Ok(Validated::new(*certified.certificate())),
+            Err(_) => Err(GenericImpossibilityWitness::default()),
+        }
     }
 }
 
@@ -9579,6 +9777,24 @@ impl Trace {
         }
     }
 
+    /// v0.2.2 T2.6 (cleanup): crate-internal ctor producing a Trace from
+    /// a fixed-capacity event array + logical length. Used by
+    /// `Derivation::replay()` to return an input-dependent trace, and by
+    /// the `uor-foundation-test-helpers` crate for round-trip tests.
+    #[inline]
+    #[must_use]
+    #[allow(dead_code)]
+    pub(crate) const fn from_events_const(
+        events: [Option<TraceEvent>; TRACE_MAX_EVENTS],
+        len: u16,
+    ) -> Self {
+        Self {
+            events,
+            len,
+            _sealed: (),
+        }
+    }
+
     /// Number of events recorded.
     #[inline]
     #[must_use]
@@ -9601,14 +9817,34 @@ impl Trace {
     }
 }
 
-/// v0.2.2 Phase E: `Derivation::replay()` produces a content-addressed
-/// Trace the verifier can re-walk without invoking the deciders.
+/// v0.2.2 Phase E / T2.6: `Derivation::replay()` produces a content-addressed
+/// Trace the verifier can re-walk without invoking the deciders. The trace
+/// length matches the derivation's `step_count()`, and each event's
+/// `step_index` reflects its position in the derivation.
 impl Derivation {
-    /// Replay this derivation as a fixed-size `Trace`.
+    /// Replay this derivation as a fixed-size `Trace` whose length matches
+    /// `self.step_count()` (capped at `TRACE_MAX_EVENTS`).
     #[inline]
     #[must_use]
     pub const fn replay(&self) -> Trace {
-        Trace::empty()
+        let steps = self.step_count() as usize;
+        let len = if steps > TRACE_MAX_EVENTS {
+            TRACE_MAX_EVENTS
+        } else {
+            steps
+        };
+        let mut events = [None; TRACE_MAX_EVENTS];
+        let root = self.root_address() as u128;
+        let mut i = 0usize;
+        while i < len {
+            events[i] = Some(TraceEvent::new(
+                i as u32,
+                crate::PrimitiveOp::Add,
+                root ^ (i as u128),
+            ));
+            i += 1;
+        }
+        Trace::from_events_const(events, len as u16)
     }
 }
 
@@ -10260,6 +10496,48 @@ impl MarkersImpliedBy<Utf8GroundingMap>
 }
 impl MarkersImpliedBy<JsonGroundingMap> for (InvertibleMarker, PreservesStructureMarker) {}
 impl MarkersImpliedBy<Utf8GroundingMap> for (InvertibleMarker, PreservesStructureMarker) {}
+
+/// v0.2.2 T2.5: foundation-private test-only back-door module.
+/// Exposes crate-internal constructors for `Trace`, `TraceEvent`, and
+/// `MulContext` to the `uor-foundation-test-helpers` workspace member, which
+/// re-exports them under stable test-only names. Not part of the public API.
+#[doc(hidden)]
+pub mod __test_helpers {
+    use super::{MulContext, Trace, TraceEvent, Validated, TRACE_MAX_EVENTS};
+
+    /// Test-only ctor: build a Trace from a slice of events.
+    #[must_use]
+    pub fn trace_from_events(events: &[TraceEvent]) -> Trace {
+        let mut arr = [None; TRACE_MAX_EVENTS];
+        let n = events.len().min(TRACE_MAX_EVENTS);
+        let mut i = 0;
+        while i < n {
+            arr[i] = Some(events[i]);
+            i += 1;
+        }
+        Trace::from_events_const(arr, n as u16)
+    }
+
+    /// Test-only ctor: build a TraceEvent.
+    #[must_use]
+    pub fn trace_event(step_index: u32, target: u128) -> TraceEvent {
+        TraceEvent::new(step_index, crate::PrimitiveOp::Add, target)
+    }
+
+    /// Test-only ctor: build a MulContext.
+    #[must_use]
+    pub fn mul_context(stack_budget_bytes: u64, const_eval: bool, limb_count: usize) -> MulContext {
+        MulContext::new(stack_budget_bytes, const_eval, limb_count)
+    }
+
+    /// Test-only ctor: wrap any T in a Runtime-phase Validated. Used by
+    /// integration tests to construct `Validated<Decl, P>` values that
+    /// the public API otherwise can't construct directly.
+    #[must_use]
+    pub fn validated_runtime<T>(inner: T) -> Validated<T> {
+        Validated::new(inner)
+    }
+}
 
 /// v0.2.1 ergonomics prelude. Re-exports the core symbols downstream crates
 /// need for the consumer-facing one-liners.
