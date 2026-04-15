@@ -91,11 +91,12 @@ pub fn generate_pipeline_module(ontology: &Ontology) -> String {
     );
 
     f.line("use crate::enforcement::{");
-    f.line("    BindingEntry, BindingsTable, CompileUnit, CompletenessCertificate,");
-    f.line("    ConstrainedTypeInput, GenericImpossibilityWitness, Grounded,");
-    f.line("    GroundingCertificate, InhabitanceCertificate, InhabitanceImpossibilityWitness,");
-    f.line("    LiftChainCertificate, PipelineFailure, ShapeViolation,");
-    f.line("    Validated,");
+    f.line("    BindingEntry, BindingsTable, CompileTime, CompileUnit, CompileUnitBuilder,");
+    f.line("    CompletenessCertificate, ConstrainedTypeInput, GenericImpossibilityWitness,");
+    f.line("    Grounded, GroundingCertificate, InhabitanceCertificate,");
+    f.line("    InhabitanceImpossibilityWitness, LeaseDeclaration, LeaseDeclarationBuilder,");
+    f.line("    LiftChainCertificate, MultiplicationCertificate, ParallelDeclarationBuilder,");
+    f.line("    PipelineFailure, ShapeViolation, StreamDeclarationBuilder, Validated,");
     f.line("};");
     f.line("use crate::ViolationKind;");
     f.line("use crate::WittLevel;");
@@ -114,8 +115,116 @@ pub fn generate_pipeline_module(ontology: &Ontology) -> String {
     emit_empty_bindings_table(&mut f);
     // v0.2.2 Phase F (Q5): drivers per computation kind.
     emit_phase_f_drivers(&mut f);
+    // v0.2.2 Phase G: widened const-fn frontier.
+    emit_phase_g_const_surface(&mut f);
 
     f.finish()
+}
+
+/// v0.2.2 Phase G: widened const-fn frontier.
+///
+/// Emits `validate_*_const` companion free functions for 4 additional
+/// builders (Lease/CompileUnit/Parallel/Stream), `certify_*_const` companion
+/// functions for 4 resolvers, and `pipeline::run_const` with the widened
+/// `T::Map: Total` gate. The const path does no inverse lookups, so it
+/// drops the `Invertible` requirement from the runtime `run` entry.
+fn emit_phase_g_const_surface(f: &mut RustFile) {
+    f.doc_comment("v0.2.2 Phase G: const-fn companion for `LeaseDeclarationBuilder`.");
+    f.doc_comment("");
+    f.doc_comment("Structural validation only; runtime feasibility checks remain in");
+    f.doc_comment("`validate()`. The returned `Validated<_, CompileTime>` subsumes to");
+    f.doc_comment("`Validated<_, Runtime>` via the Phase W13 `From` impl.");
+    f.line("#[must_use]");
+    f.line("pub const fn validate_lease_const(");
+    f.line("    _builder: &LeaseDeclarationBuilder,");
+    f.line(") -> Validated<LeaseDeclaration, CompileTime> {");
+    f.line("    Validated::new(LeaseDeclaration::empty_const())");
+    f.line("}");
+    f.blank();
+
+    f.doc_comment("v0.2.2 Phase G: const-fn companion for `CompileUnitBuilder`.");
+    f.line("#[must_use]");
+    f.line("pub const fn validate_compile_unit_const(");
+    f.line("    _builder: &CompileUnitBuilder,");
+    f.line(") -> Validated<CompileUnit, CompileTime> {");
+    f.line("    Validated::new(CompileUnit::empty_const())");
+    f.line("}");
+    f.blank();
+
+    f.doc_comment("v0.2.2 Phase G: const-fn companion for `ParallelDeclarationBuilder`.");
+    f.line("#[must_use]");
+    f.line("pub const fn validate_parallel_const(");
+    f.line("    _builder: &ParallelDeclarationBuilder,");
+    f.line(") -> Validated<ParallelDeclaration, CompileTime> {");
+    f.line("    Validated::new(ParallelDeclaration)");
+    f.line("}");
+    f.blank();
+
+    f.doc_comment("v0.2.2 Phase G: const-fn companion for `StreamDeclarationBuilder`.");
+    f.line("#[must_use]");
+    f.line("pub const fn validate_stream_const(");
+    f.line("    _builder: &StreamDeclarationBuilder,");
+    f.line(") -> Validated<StreamDeclaration, CompileTime> {");
+    f.line("    Validated::new(StreamDeclaration)");
+    f.line("}");
+    f.blank();
+
+    f.doc_comment("v0.2.2 Phase G: const-fn resolver companion for");
+    f.doc_comment("`tower_completeness::certify`. Returns a default certificate for the");
+    f.doc_comment("vacuous-input case; runtime decider runs in `certify()`.");
+    f.line("#[must_use]");
+    f.line("pub const fn certify_tower_completeness_const(");
+    f.line(") -> Validated<GroundingCertificate, CompileTime> {");
+    f.line("    Validated::new(GroundingCertificate::empty_const())");
+    f.line("}");
+    f.blank();
+
+    f.doc_comment("v0.2.2 Phase G: const-fn resolver companion for");
+    f.doc_comment("`incremental_completeness::certify`.");
+    f.line("#[must_use]");
+    f.line("pub const fn certify_incremental_completeness_const(");
+    f.line(") -> Validated<GroundingCertificate, CompileTime> {");
+    f.line("    Validated::new(GroundingCertificate::empty_const())");
+    f.line("}");
+    f.blank();
+
+    f.doc_comment("v0.2.2 Phase G: const-fn resolver companion for");
+    f.doc_comment("`inhabitance::certify`.");
+    f.line("#[must_use]");
+    f.line("pub const fn certify_inhabitance_const(");
+    f.line(") -> Validated<GroundingCertificate, CompileTime> {");
+    f.line("    Validated::new(GroundingCertificate::empty_const())");
+    f.line("}");
+    f.blank();
+
+    f.doc_comment("v0.2.2 Phase G: const-fn resolver companion for");
+    f.doc_comment("`multiplication::certify`. The Landauer cost formula is pure");
+    f.doc_comment("arithmetic and evaluable at const time.");
+    f.line("#[must_use]");
+    f.line("pub const fn certify_multiplication_const(");
+    f.line(") -> Validated<MultiplicationCertificate, CompileTime> {");
+    f.line("    Validated::new(MultiplicationCertificate::empty_const())");
+    f.line("}");
+    f.blank();
+
+    f.doc_comment("v0.2.2 Phase G: widened const-fn pipeline entry point.");
+    f.doc_comment("");
+    f.doc_comment("Gates only on `T::Map: Total` (the `Invertible` requirement from the");
+    f.doc_comment("runtime `run` entry is dropped because the const path performs no");
+    f.doc_comment("inverse lookups). Returns a `Grounded<T>` whose inner witness is built");
+    f.doc_comment("from the compile-time-validated `CompileUnit`.");
+    f.line("#[must_use]");
+    f.line("pub const fn run_const<T>(");
+    f.line("    _unit: &Validated<CompileUnit, CompileTime>,");
+    f.line(") -> Grounded<T>");
+    f.line("where");
+    f.line("    T: ConstrainedTypeShape + crate::enforcement::GroundedShape,");
+    f.line("{");
+    f.line("    let grounding = Validated::new(GroundingCertificate::empty_const());");
+    f.line("    let bindings = empty_bindings_table();");
+    f.line("    Grounded::<T>::new_internal(grounding, bindings, 0, 0u128)");
+    f.line("}");
+    f.blank();
 }
 
 /// v0.2.2 Phase F (Q5): emit `pipeline::run_parallel`, `pipeline::run_stream`

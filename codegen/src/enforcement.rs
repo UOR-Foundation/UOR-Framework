@@ -1534,6 +1534,18 @@ fn generate_builders(f: &mut RustFile) {
     f.line("    pub const fn thermodynamic_budget(&self) -> u64 {");
     f.line("        self.budget");
     f.line("    }");
+    f.blank();
+    f.indented_doc_comment("v0.2.2 Phase G: const-constructible empty unit used by");
+    f.indented_doc_comment("`validate_compile_unit_const` for compile-time validation.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    #[allow(dead_code)]");
+    f.line("    pub(crate) const fn empty_const() -> Self {");
+    f.line("        Self {");
+    f.line("            level: WittLevel::W8,");
+    f.line("            budget: 0,");
+    f.line("        }");
+    f.line("    }");
     f.line("}");
     f.blank();
 
@@ -1872,6 +1884,19 @@ fn generate_simple_builder(
     f.line(&format!("pub struct {result_name} {{"));
     f.indented_doc_comment("Shape IRI this declaration was validated against.");
     f.line("    pub shape_iri: &'static str,");
+    f.line("}");
+    f.blank();
+    // v0.2.2 Phase G: const-constructible empty form for const-fn
+    // validation paths.
+    f.line(&format!("impl {result_name} {{"));
+    f.indented_doc_comment("v0.2.2 Phase G: const-constructible empty form used by");
+    f.indented_doc_comment("`validate_*_const` companion functions.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    #[allow(dead_code)]");
+    f.line("    pub(crate) const fn empty_const() -> Self {");
+    f.line(&format!("        Self {{ shape_iri: \"{shape_iri}\" }}"));
+    f.line("    }");
     f.line("}");
     f.blank();
 
@@ -2452,6 +2477,15 @@ fn generate_ontology_target_trait(f: &mut RustFile, ontology: &Ontology) {
         f.line("    pub const fn witt_bits(&self) -> u16 {");
         f.line("        self.witt_bits");
         f.line("    }");
+        f.blank();
+        f.indented_doc_comment("v0.2.2 Phase G: const-constructible empty form for");
+        f.indented_doc_comment("`certify_*_const` entry points.");
+        f.line("    #[inline]");
+        f.line("    #[must_use]");
+        f.line("    #[allow(dead_code)]");
+        f.line("    pub(crate) const fn empty_const() -> Self {");
+        f.line("        Self { witt_bits: 0 }");
+        f.line("    }");
         f.line("}");
         f.blank();
     }
@@ -2568,6 +2602,19 @@ fn generate_ontology_target_trait(f: &mut RustFile, ontology: &Ontology) {
         f.doc_comment(doc);
         f.line("#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]");
         f.line(&format!("pub struct {name} {{ _private: () }}"));
+        f.blank();
+        // v0.2.2 Phase G: const-constructible empty form for
+        // `certify_*_const` entry points.
+        f.line(&format!("impl {name} {{"));
+        f.indented_doc_comment("v0.2.2 Phase G: const-constructible empty certificate used by");
+        f.indented_doc_comment("`certify_*_const` entry points.");
+        f.line("    #[inline]");
+        f.line("    #[must_use]");
+        f.line("    #[allow(dead_code)]");
+        f.line("    pub(crate) const fn empty_const() -> Self {");
+        f.line("        Self { _private: () }");
+        f.line("    }");
+        f.line("}");
         f.blank();
     }
 

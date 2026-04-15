@@ -196,6 +196,7 @@ foundation/src/lib.rs: trait Primitives
 foundation/src/lib.rs: use enums
 foundation/src/pipeline.rs: const PREFLIGHT_CHECK_IRIS
 foundation/src/pipeline.rs: const REDUCTION_STAGE_IRIS
+foundation/src/pipeline.rs: const fn
 foundation/src/pipeline.rs: enum ConstraintRef
 foundation/src/pipeline.rs: enum FragmentKind
 foundation/src/pipeline.rs: enum StepResult

@@ -106,6 +106,10 @@ pub fn run_all(paths: &WorkspacePaths) -> anyhow::Result<ConformanceReport> {
     )?);
     // v0.2.2 Phase F: driver shape check.
     report.extend(validators::rust::driver_shape::validate(&paths.workspace)?);
+    // v0.2.2 Phase G: widened const-fn frontier check.
+    report.extend(validators::rust::const_fn_frontier::validate(
+        &paths.workspace,
+    )?);
 
     // 2. Ontology inventory
     report.extend(validators::ontology::inventory::validate(&paths.artifacts)?);

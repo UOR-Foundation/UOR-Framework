@@ -1531,6 +1531,18 @@ impl CompileUnit {
     pub const fn thermodynamic_budget(&self) -> u64 {
         self.budget
     }
+
+    /// v0.2.2 Phase G: const-constructible empty unit used by
+    /// `validate_compile_unit_const` for compile-time validation.
+    #[inline]
+    #[must_use]
+    #[allow(dead_code)]
+    pub(crate) const fn empty_const() -> Self {
+        Self {
+            level: WittLevel::W8,
+            budget: 0,
+        }
+    }
 }
 
 impl<'a> CompileUnitBuilder<'a> {
@@ -1663,6 +1675,19 @@ pub struct EffectDeclaration {
     pub shape_iri: &'static str,
 }
 
+impl EffectDeclaration {
+    /// v0.2.2 Phase G: const-constructible empty form used by
+    /// `validate_*_const` companion functions.
+    #[inline]
+    #[must_use]
+    #[allow(dead_code)]
+    pub(crate) const fn empty_const() -> Self {
+        Self {
+            shape_iri: "https://uor.foundation/conformance/EffectShape",
+        }
+    }
+}
+
 impl<'a> EffectDeclarationBuilder<'a> {
     /// Creates a new empty builder.
     #[must_use]
@@ -1781,6 +1806,19 @@ pub struct GroundingDeclaration {
     pub shape_iri: &'static str,
 }
 
+impl GroundingDeclaration {
+    /// v0.2.2 Phase G: const-constructible empty form used by
+    /// `validate_*_const` companion functions.
+    #[inline]
+    #[must_use]
+    #[allow(dead_code)]
+    pub(crate) const fn empty_const() -> Self {
+        Self {
+            shape_iri: "https://uor.foundation/conformance/GroundingShape",
+        }
+    }
+}
+
 impl<'a> GroundingDeclarationBuilder<'a> {
     /// Creates a new empty builder.
     #[must_use]
@@ -1880,6 +1918,19 @@ pub struct DispatchDeclaration {
     pub shape_iri: &'static str,
 }
 
+impl DispatchDeclaration {
+    /// v0.2.2 Phase G: const-constructible empty form used by
+    /// `validate_*_const` companion functions.
+    #[inline]
+    #[must_use]
+    #[allow(dead_code)]
+    pub(crate) const fn empty_const() -> Self {
+        Self {
+            shape_iri: "https://uor.foundation/conformance/DispatchShape",
+        }
+    }
+}
+
 impl<'a> DispatchDeclarationBuilder<'a> {
     /// Creates a new empty builder.
     #[must_use]
@@ -1977,6 +2028,19 @@ pub struct LeaseDeclaration {
     pub shape_iri: &'static str,
 }
 
+impl LeaseDeclaration {
+    /// v0.2.2 Phase G: const-constructible empty form used by
+    /// `validate_*_const` companion functions.
+    #[inline]
+    #[must_use]
+    #[allow(dead_code)]
+    pub(crate) const fn empty_const() -> Self {
+        Self {
+            shape_iri: "https://uor.foundation/conformance/LeaseShape",
+        }
+    }
+}
+
 impl<'a> LeaseDeclarationBuilder<'a> {
     /// Creates a new empty builder.
     #[must_use]
@@ -2055,6 +2119,19 @@ pub struct StreamDeclarationBuilder<'a> {
 pub struct StreamDeclaration {
     /// Shape IRI this declaration was validated against.
     pub shape_iri: &'static str,
+}
+
+impl StreamDeclaration {
+    /// v0.2.2 Phase G: const-constructible empty form used by
+    /// `validate_*_const` companion functions.
+    #[inline]
+    #[must_use]
+    #[allow(dead_code)]
+    pub(crate) const fn empty_const() -> Self {
+        Self {
+            shape_iri: "https://uor.foundation/conformance/StreamShape",
+        }
+    }
 }
 
 impl<'a> StreamDeclarationBuilder<'a> {
@@ -2156,6 +2233,19 @@ pub struct PredicateDeclaration {
     pub shape_iri: &'static str,
 }
 
+impl PredicateDeclaration {
+    /// v0.2.2 Phase G: const-constructible empty form used by
+    /// `validate_*_const` companion functions.
+    #[inline]
+    #[must_use]
+    #[allow(dead_code)]
+    pub(crate) const fn empty_const() -> Self {
+        Self {
+            shape_iri: "https://uor.foundation/conformance/PredicateShape",
+        }
+    }
+}
+
 impl<'a> PredicateDeclarationBuilder<'a> {
     /// Creates a new empty builder.
     #[must_use]
@@ -2251,6 +2341,19 @@ pub struct ParallelDeclarationBuilder<'a> {
 pub struct ParallelDeclaration {
     /// Shape IRI this declaration was validated against.
     pub shape_iri: &'static str,
+}
+
+impl ParallelDeclaration {
+    /// v0.2.2 Phase G: const-constructible empty form used by
+    /// `validate_*_const` companion functions.
+    #[inline]
+    #[must_use]
+    #[allow(dead_code)]
+    pub(crate) const fn empty_const() -> Self {
+        Self {
+            shape_iri: "https://uor.foundation/conformance/ParallelShape",
+        }
+    }
 }
 
 impl<'a> ParallelDeclarationBuilder<'a> {
@@ -3237,6 +3340,15 @@ impl GroundingCertificate {
     pub const fn witt_bits(&self) -> u16 {
         self.witt_bits
     }
+
+    /// v0.2.2 Phase G: const-constructible empty form for
+    /// `certify_*_const` entry points.
+    #[inline]
+    #[must_use]
+    #[allow(dead_code)]
+    pub(crate) const fn empty_const() -> Self {
+        Self { witt_bits: 0 }
+    }
 }
 
 /// Sealed shim for `cert:LiftChainCertificate`. Carries the v0.2.1 `target_level()` accessor populated from the pipeline's StageOutcome.
@@ -3268,6 +3380,15 @@ impl LiftChainCertificate {
     #[must_use]
     pub const fn witt_bits(&self) -> u16 {
         self.witt_bits
+    }
+
+    /// v0.2.2 Phase G: const-constructible empty form for
+    /// `certify_*_const` entry points.
+    #[inline]
+    #[must_use]
+    #[allow(dead_code)]
+    pub(crate) const fn empty_const() -> Self {
+        Self { witt_bits: 0 }
     }
 }
 
@@ -3301,6 +3422,15 @@ impl InhabitanceCertificate {
     pub const fn witt_bits(&self) -> u16 {
         self.witt_bits
     }
+
+    /// v0.2.2 Phase G: const-constructible empty form for
+    /// `certify_*_const` entry points.
+    #[inline]
+    #[must_use]
+    #[allow(dead_code)]
+    pub(crate) const fn empty_const() -> Self {
+        Self { witt_bits: 0 }
+    }
 }
 
 /// Sealed shim for `cert:CompletenessCertificate`.
@@ -3332,6 +3462,15 @@ impl CompletenessCertificate {
     #[must_use]
     pub const fn witt_bits(&self) -> u16 {
         self.witt_bits
+    }
+
+    /// v0.2.2 Phase G: const-constructible empty form for
+    /// `certify_*_const` entry points.
+    #[inline]
+    #[must_use]
+    #[allow(dead_code)]
+    pub(crate) const fn empty_const() -> Self {
+        Self { witt_bits: 0 }
     }
 }
 
@@ -3365,6 +3504,15 @@ impl MultiplicationCertificate {
     pub const fn witt_bits(&self) -> u16 {
         self.witt_bits
     }
+
+    /// v0.2.2 Phase G: const-constructible empty form for
+    /// `certify_*_const` entry points.
+    #[inline]
+    #[must_use]
+    #[allow(dead_code)]
+    pub(crate) const fn empty_const() -> Self {
+        Self { witt_bits: 0 }
+    }
 }
 
 /// Sealed shim for `cert:PartitionCertificate` (v0.2.2 Phase E). Attests the partition component classification of a Datum.
@@ -3396,6 +3544,15 @@ impl PartitionCertificate {
     #[must_use]
     pub const fn witt_bits(&self) -> u16 {
         self.witt_bits
+    }
+
+    /// v0.2.2 Phase G: const-constructible empty form for
+    /// `certify_*_const` entry points.
+    #[inline]
+    #[must_use]
+    #[allow(dead_code)]
+    pub(crate) const fn empty_const() -> Self {
+        Self { witt_bits: 0 }
     }
 }
 
@@ -3488,10 +3645,32 @@ pub struct TransformCertificate {
     _private: (),
 }
 
+impl TransformCertificate {
+    /// v0.2.2 Phase G: const-constructible empty certificate used by
+    /// `certify_*_const` entry points.
+    #[inline]
+    #[must_use]
+    #[allow(dead_code)]
+    pub(crate) const fn empty_const() -> Self {
+        Self { _private: () }
+    }
+}
+
 /// v0.2.2 W11: sealed carrier for `cert:IsometryCertificate`.
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct IsometryCertificate {
     _private: (),
+}
+
+impl IsometryCertificate {
+    /// v0.2.2 Phase G: const-constructible empty certificate used by
+    /// `certify_*_const` entry points.
+    #[inline]
+    #[must_use]
+    #[allow(dead_code)]
+    pub(crate) const fn empty_const() -> Self {
+        Self { _private: () }
+    }
 }
 
 /// v0.2.2 W11: sealed carrier for `cert:InvolutionCertificate`.
@@ -3500,10 +3679,32 @@ pub struct InvolutionCertificate {
     _private: (),
 }
 
+impl InvolutionCertificate {
+    /// v0.2.2 Phase G: const-constructible empty certificate used by
+    /// `certify_*_const` entry points.
+    #[inline]
+    #[must_use]
+    #[allow(dead_code)]
+    pub(crate) const fn empty_const() -> Self {
+        Self { _private: () }
+    }
+}
+
 /// v0.2.2 W11: sealed carrier for `cert:GeodesicCertificate`.
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct GeodesicCertificate {
     _private: (),
+}
+
+impl GeodesicCertificate {
+    /// v0.2.2 Phase G: const-constructible empty certificate used by
+    /// `certify_*_const` entry points.
+    #[inline]
+    #[must_use]
+    #[allow(dead_code)]
+    pub(crate) const fn empty_const() -> Self {
+        Self { _private: () }
+    }
 }
 
 /// v0.2.2 W11: sealed carrier for `cert:MeasurementCertificate`.
@@ -3512,10 +3713,32 @@ pub struct MeasurementCertificate {
     _private: (),
 }
 
+impl MeasurementCertificate {
+    /// v0.2.2 Phase G: const-constructible empty certificate used by
+    /// `certify_*_const` entry points.
+    #[inline]
+    #[must_use]
+    #[allow(dead_code)]
+    pub(crate) const fn empty_const() -> Self {
+        Self { _private: () }
+    }
+}
+
 /// v0.2.2 W11: sealed carrier for `cert:BornRuleVerification`.
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct BornRuleVerification {
     _private: (),
+}
+
+impl BornRuleVerification {
+    /// v0.2.2 Phase G: const-constructible empty certificate used by
+    /// `certify_*_const` entry points.
+    #[inline]
+    #[must_use]
+    #[allow(dead_code)]
+    pub(crate) const fn empty_const() -> Self {
+        Self { _private: () }
+    }
 }
 
 /// v0.2.2 W11: sealed marker trait for foundation-supplied certificate kinds.

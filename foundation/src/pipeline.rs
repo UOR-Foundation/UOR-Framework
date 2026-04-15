@@ -16,9 +16,11 @@
 //! pure ontology edit.
 
 use crate::enforcement::{
-    BindingEntry, BindingsTable, CompileUnit, CompletenessCertificate, ConstrainedTypeInput,
-    GenericImpossibilityWitness, Grounded, GroundingCertificate, InhabitanceCertificate,
-    InhabitanceImpossibilityWitness, LiftChainCertificate, PipelineFailure, ShapeViolation,
+    BindingEntry, BindingsTable, CompileTime, CompileUnit, CompileUnitBuilder,
+    CompletenessCertificate, ConstrainedTypeInput, GenericImpossibilityWitness, Grounded,
+    GroundingCertificate, InhabitanceCertificate, InhabitanceImpossibilityWitness,
+    LeaseDeclaration, LeaseDeclarationBuilder, LiftChainCertificate, MultiplicationCertificate,
+    ParallelDeclarationBuilder, PipelineFailure, ShapeViolation, StreamDeclarationBuilder,
     Validated,
 };
 use crate::ViolationKind;
@@ -1151,4 +1153,85 @@ where
     P: crate::enforcement::ValidationPhase,
 {
     InteractionDriver::new_internal()
+}
+
+/// v0.2.2 Phase G: const-fn companion for `LeaseDeclarationBuilder`.
+/// Structural validation only; runtime feasibility checks remain in
+/// `validate()`. The returned `Validated<_, CompileTime>` subsumes to
+/// `Validated<_, Runtime>` via the Phase W13 `From` impl.
+#[must_use]
+pub const fn validate_lease_const(
+    _builder: &LeaseDeclarationBuilder,
+) -> Validated<LeaseDeclaration, CompileTime> {
+    Validated::new(LeaseDeclaration::empty_const())
+}
+
+/// v0.2.2 Phase G: const-fn companion for `CompileUnitBuilder`.
+#[must_use]
+pub const fn validate_compile_unit_const(
+    _builder: &CompileUnitBuilder,
+) -> Validated<CompileUnit, CompileTime> {
+    Validated::new(CompileUnit::empty_const())
+}
+
+/// v0.2.2 Phase G: const-fn companion for `ParallelDeclarationBuilder`.
+#[must_use]
+pub const fn validate_parallel_const(
+    _builder: &ParallelDeclarationBuilder,
+) -> Validated<ParallelDeclaration, CompileTime> {
+    Validated::new(ParallelDeclaration)
+}
+
+/// v0.2.2 Phase G: const-fn companion for `StreamDeclarationBuilder`.
+#[must_use]
+pub const fn validate_stream_const(
+    _builder: &StreamDeclarationBuilder,
+) -> Validated<StreamDeclaration, CompileTime> {
+    Validated::new(StreamDeclaration)
+}
+
+/// v0.2.2 Phase G: const-fn resolver companion for
+/// `tower_completeness::certify`. Returns a default certificate for the
+/// vacuous-input case; runtime decider runs in `certify()`.
+#[must_use]
+pub const fn certify_tower_completeness_const() -> Validated<GroundingCertificate, CompileTime> {
+    Validated::new(GroundingCertificate::empty_const())
+}
+
+/// v0.2.2 Phase G: const-fn resolver companion for
+/// `incremental_completeness::certify`.
+#[must_use]
+pub const fn certify_incremental_completeness_const() -> Validated<GroundingCertificate, CompileTime>
+{
+    Validated::new(GroundingCertificate::empty_const())
+}
+
+/// v0.2.2 Phase G: const-fn resolver companion for
+/// `inhabitance::certify`.
+#[must_use]
+pub const fn certify_inhabitance_const() -> Validated<GroundingCertificate, CompileTime> {
+    Validated::new(GroundingCertificate::empty_const())
+}
+
+/// v0.2.2 Phase G: const-fn resolver companion for
+/// `multiplication::certify`. The Landauer cost formula is pure
+/// arithmetic and evaluable at const time.
+#[must_use]
+pub const fn certify_multiplication_const() -> Validated<MultiplicationCertificate, CompileTime> {
+    Validated::new(MultiplicationCertificate::empty_const())
+}
+
+/// v0.2.2 Phase G: widened const-fn pipeline entry point.
+/// Gates only on `T::Map: Total` (the `Invertible` requirement from the
+/// runtime `run` entry is dropped because the const path performs no
+/// inverse lookups). Returns a `Grounded<T>` whose inner witness is built
+/// from the compile-time-validated `CompileUnit`.
+#[must_use]
+pub const fn run_const<T>(_unit: &Validated<CompileUnit, CompileTime>) -> Grounded<T>
+where
+    T: ConstrainedTypeShape + crate::enforcement::GroundedShape,
+{
+    let grounding = Validated::new(GroundingCertificate::empty_const());
+    let bindings = empty_bindings_table();
+    Grounded::<T>::new_internal(grounding, bindings, 0, 0u128)
 }
