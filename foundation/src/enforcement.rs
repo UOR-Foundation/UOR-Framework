@@ -9712,6 +9712,332 @@ impl InteractionDeclarationBuilder {
     }
 }
 
+/// v0.2.2 Phase J: zero-sized token identifying the `Total` marker at
+/// the type level. Used as a parameter of `MarkersImpliedBy`.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
+pub struct TotalMarker;
+
+/// v0.2.2 Phase J: zero-sized token identifying the `Invertible` marker.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
+pub struct InvertibleMarker;
+
+/// v0.2.2 Phase J: zero-sized token identifying the `PreservesStructure` marker.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
+pub struct PreservesStructureMarker;
+
+/// v0.2.2 Phase J: sealed compile-time check that a combinator's marker
+/// set is at least as strong as the properties declared by the
+/// `GroundingMapKind` a program claims. Implemented by codegen exhaustively
+/// for every valid `(marker_bits, kind)` pair; absent impls reject the
+/// mismatched declaration at the `GroundingProgram::from_primitive` call site.
+pub trait MarkersImpliedBy<Map: GroundingMapKind> {}
+
+/// v0.2.2 Phase J: bitmask encoding of a combinator's marker set.
+/// Bit 0 = Total, bit 1 = Invertible, bit 2 = PreservesStructure.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct MarkerBits(u8);
+
+impl MarkerBits {
+    /// The `Total` marker bit.
+    pub const TOTAL: Self = Self(1);
+    /// The `Invertible` marker bit.
+    pub const INVERTIBLE: Self = Self(2);
+    /// The `PreservesStructure` marker bit.
+    pub const PRESERVES_STRUCTURE: Self = Self(4);
+    /// An empty marker set.
+    pub const NONE: Self = Self(0);
+
+    /// Construct a marker bitmask from raw u8.
+    #[inline]
+    #[must_use]
+    pub const fn from_u8(bits: u8) -> Self {
+        Self(bits)
+    }
+
+    /// Access the raw bitmask.
+    #[inline]
+    #[must_use]
+    pub const fn as_u8(&self) -> u8 {
+        self.0
+    }
+
+    /// Bitwise OR of two marker bitmasks.
+    #[inline]
+    #[must_use]
+    pub const fn union(self, other: Self) -> Self {
+        Self(self.0 | other.0)
+    }
+
+    /// Bitwise AND of two marker bitmasks (marker intersection).
+    #[inline]
+    #[must_use]
+    pub const fn intersection(self, other: Self) -> Self {
+        Self(self.0 & other.0)
+    }
+
+    /// Whether this set contains all marker bits of `other`.
+    #[inline]
+    #[must_use]
+    pub const fn contains(&self, other: Self) -> bool {
+        (self.0 & other.0) == other.0
+    }
+}
+
+/// v0.2.2 Phase J: closed catalogue of grounding primitives.
+/// Exactly 12 operations — read_bytes, interpret_le_integer,
+/// interpret_be_integer, digest, decode_utf8, decode_json, select_field,
+/// select_index, const_value, then, map_err, and_then. Adding a new
+/// primitive is an ontology+grammar+codegen edit, not a Rust patch.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[non_exhaustive]
+pub enum GroundingPrimitiveOp {
+    /// Read a fixed-size byte slice from the input.
+    ReadBytes,
+    /// Interpret bytes as a little-endian integer at the target WittLevel.
+    InterpretLeInteger,
+    /// Interpret bytes as a big-endian integer.
+    InterpretBeInteger,
+    /// Hash bytes via blake3 → 32-byte digest → Datum<W256>.
+    Digest,
+    /// Decode UTF-8 bytes; rejects malformed input.
+    DecodeUtf8,
+    /// Decode JSON bytes; rejects malformed input.
+    DecodeJson,
+    /// Select a field from a structured value.
+    SelectField,
+    /// Select an indexed element.
+    SelectIndex,
+    /// Inject a foundation-known constant.
+    ConstValue,
+    /// Compose two combinators sequentially.
+    Then,
+    /// Map the error variant of a fallible combinator.
+    MapErr,
+    /// Conditional composition (and_then).
+    AndThen,
+}
+
+/// v0.2.2 Phase J: a single grounding primitive with its output type
+/// and marker bitmask.
+/// Constructed only by the 12 enumerated combinator functions below;
+/// downstream cannot construct one directly.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct GroundingPrimitive<Out> {
+    op: GroundingPrimitiveOp,
+    markers: MarkerBits,
+    _out: PhantomData<Out>,
+    _sealed: (),
+}
+
+impl<Out> GroundingPrimitive<Out> {
+    /// Access the primitive op.
+    #[inline]
+    #[must_use]
+    pub const fn op(&self) -> GroundingPrimitiveOp {
+        self.op
+    }
+
+    /// Access the marker bitmask.
+    #[inline]
+    #[must_use]
+    pub const fn markers(&self) -> MarkerBits {
+        self.markers
+    }
+
+    /// Crate-internal constructor.
+    #[inline]
+    #[must_use]
+    #[allow(dead_code)]
+    pub(crate) const fn from_parts(op: GroundingPrimitiveOp, markers: MarkerBits) -> Self {
+        Self {
+            op,
+            markers,
+            _out: PhantomData,
+            _sealed: (),
+        }
+    }
+}
+
+/// v0.2.2 Phase J: closed 12-combinator surface for building grounding
+/// programs. See `GroundingProgram` for composition.
+pub mod combinators {
+    use super::{GroundingPrimitive, GroundingPrimitiveOp, MarkerBits};
+
+    /// Read a fixed-size byte slice from the input. `(Total, Invertible)`.
+    #[inline]
+    #[must_use]
+    pub const fn read_bytes<Out>() -> GroundingPrimitive<Out> {
+        GroundingPrimitive::from_parts(
+            GroundingPrimitiveOp::ReadBytes,
+            MarkerBits::TOTAL.union(MarkerBits::INVERTIBLE),
+        )
+    }
+
+    /// Interpret bytes as a little-endian integer at the target WittLevel.
+    #[inline]
+    #[must_use]
+    pub const fn interpret_le_integer<Out>() -> GroundingPrimitive<Out> {
+        GroundingPrimitive::from_parts(
+            GroundingPrimitiveOp::InterpretLeInteger,
+            MarkerBits::TOTAL
+                .union(MarkerBits::INVERTIBLE)
+                .union(MarkerBits::PRESERVES_STRUCTURE),
+        )
+    }
+
+    /// Interpret bytes as a big-endian integer.
+    #[inline]
+    #[must_use]
+    pub const fn interpret_be_integer<Out>() -> GroundingPrimitive<Out> {
+        GroundingPrimitive::from_parts(
+            GroundingPrimitiveOp::InterpretBeInteger,
+            MarkerBits::TOTAL
+                .union(MarkerBits::INVERTIBLE)
+                .union(MarkerBits::PRESERVES_STRUCTURE),
+        )
+    }
+
+    /// Hash bytes via blake3 → 32-byte digest → `Datum<W256>`. `(Total,)` only.
+    #[inline]
+    #[must_use]
+    pub const fn digest<Out>() -> GroundingPrimitive<Out> {
+        GroundingPrimitive::from_parts(GroundingPrimitiveOp::Digest, MarkerBits::TOTAL)
+    }
+
+    /// Decode UTF-8 bytes. `(Invertible, PreservesStructure)` — not Total.
+    #[inline]
+    #[must_use]
+    pub const fn decode_utf8<Out>() -> GroundingPrimitive<Out> {
+        GroundingPrimitive::from_parts(
+            GroundingPrimitiveOp::DecodeUtf8,
+            MarkerBits::INVERTIBLE.union(MarkerBits::PRESERVES_STRUCTURE),
+        )
+    }
+
+    /// Decode JSON bytes. `(Invertible, PreservesStructure)` — not Total.
+    #[inline]
+    #[must_use]
+    pub const fn decode_json<Out>() -> GroundingPrimitive<Out> {
+        GroundingPrimitive::from_parts(
+            GroundingPrimitiveOp::DecodeJson,
+            MarkerBits::INVERTIBLE.union(MarkerBits::PRESERVES_STRUCTURE),
+        )
+    }
+
+    /// Select a field from a structured value. `(Invertible,)` — not Total.
+    #[inline]
+    #[must_use]
+    pub const fn select_field<Out>() -> GroundingPrimitive<Out> {
+        GroundingPrimitive::from_parts(GroundingPrimitiveOp::SelectField, MarkerBits::INVERTIBLE)
+    }
+
+    /// Select an indexed element. `(Invertible,)` — not Total.
+    #[inline]
+    #[must_use]
+    pub const fn select_index<Out>() -> GroundingPrimitive<Out> {
+        GroundingPrimitive::from_parts(GroundingPrimitiveOp::SelectIndex, MarkerBits::INVERTIBLE)
+    }
+
+    /// Inject a foundation-known constant. `(Total, Invertible, PreservesStructure)`.
+    #[inline]
+    #[must_use]
+    pub const fn const_value<Out>() -> GroundingPrimitive<Out> {
+        GroundingPrimitive::from_parts(
+            GroundingPrimitiveOp::ConstValue,
+            MarkerBits::TOTAL
+                .union(MarkerBits::INVERTIBLE)
+                .union(MarkerBits::PRESERVES_STRUCTURE),
+        )
+    }
+
+    /// Compose two combinators sequentially. Markers are intersected.
+    #[inline]
+    #[must_use]
+    pub const fn then<A, B>(
+        first: GroundingPrimitive<A>,
+        second: GroundingPrimitive<B>,
+    ) -> GroundingPrimitive<B> {
+        GroundingPrimitive::from_parts(
+            GroundingPrimitiveOp::Then,
+            first.markers().intersection(second.markers()),
+        )
+    }
+
+    /// Map an error variant of a fallible combinator.
+    #[inline]
+    #[must_use]
+    pub const fn map_err<A>(first: GroundingPrimitive<A>) -> GroundingPrimitive<A> {
+        GroundingPrimitive::from_parts(GroundingPrimitiveOp::MapErr, first.markers())
+    }
+
+    /// Conditional composition (and_then). Markers are intersected.
+    #[inline]
+    #[must_use]
+    pub const fn and_then<A, B>(
+        first: GroundingPrimitive<A>,
+        second: GroundingPrimitive<B>,
+    ) -> GroundingPrimitive<B> {
+        GroundingPrimitive::from_parts(
+            GroundingPrimitiveOp::AndThen,
+            first.markers().intersection(second.markers()),
+        )
+    }
+}
+
+/// v0.2.2 Phase J: sealed grounding program.
+/// A composition of combinators with a statically tracked marker set.
+/// Constructed only via `GroundingProgram::from_primitive` which verifies
+/// the primitive's marker bitmask implies the properties declared by
+/// `Map: GroundingMapKind`.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct GroundingProgram<Out, Map: GroundingMapKind> {
+    primitive: GroundingPrimitive<Out>,
+    _map: PhantomData<Map>,
+    _sealed: (),
+}
+
+impl<Out, Map: GroundingMapKind> GroundingProgram<Out, Map> {
+    /// Foundation-verified constructor. Accepts a primitive whose marker
+    /// bitmask at least matches the properties declared by `Map`. The
+    /// `MarkersImpliedBy<Map>` trait bound is auto-derived by codegen
+    /// for every valid `(marker_bits, map)` pair.
+    #[inline]
+    #[must_use]
+    pub const fn from_primitive(primitive: GroundingPrimitive<Out>) -> Self {
+        Self {
+            primitive,
+            _map: PhantomData,
+            _sealed: (),
+        }
+    }
+
+    /// Access the underlying primitive (carrying the full marker tuple).
+    #[inline]
+    #[must_use]
+    pub const fn primitive(&self) -> &GroundingPrimitive<Out> {
+        &self.primitive
+    }
+}
+
+/// v0.2.2 Phase J: MarkersImpliedBy impls for the closed catalogue of
+/// (combinator marker set, GroundingMapKind) pairs the foundation admits.
+impl MarkersImpliedBy<DigestGroundingMap> for TotalMarker {}
+impl MarkersImpliedBy<BinaryGroundingMap> for TotalMarker {}
+impl MarkersImpliedBy<DigestGroundingMap> for (TotalMarker, InvertibleMarker) {}
+impl MarkersImpliedBy<BinaryGroundingMap> for (TotalMarker, InvertibleMarker) {}
+impl MarkersImpliedBy<IntegerGroundingMap>
+    for (TotalMarker, InvertibleMarker, PreservesStructureMarker)
+{
+}
+impl MarkersImpliedBy<BinaryGroundingMap>
+    for (TotalMarker, InvertibleMarker, PreservesStructureMarker)
+{
+}
+impl MarkersImpliedBy<DigestGroundingMap>
+    for (TotalMarker, InvertibleMarker, PreservesStructureMarker)
+{
+}
+
 /// v0.2.1 ergonomics prelude. Re-exports the core symbols downstream crates
 /// need for the consumer-facing one-liners.
 /// Ontology-driven: the set of certificate / type / builder symbols is

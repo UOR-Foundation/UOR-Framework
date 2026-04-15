@@ -110,6 +110,10 @@ pub fn run_all(paths: &WorkspacePaths) -> anyhow::Result<ConformanceReport> {
     report.extend(validators::rust::const_fn_frontier::validate(
         &paths.workspace,
     )?);
+    // v0.2.2 Phase J: combinator-only grounding check.
+    report.extend(validators::rust::grounding_combinator_check::validate(
+        &paths.workspace,
+    )?);
 
     // 2. Ontology inventory
     report.extend(validators::ontology::inventory::validate(&paths.artifacts)?);

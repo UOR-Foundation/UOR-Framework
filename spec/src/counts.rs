@@ -104,7 +104,8 @@ pub const SHACL_TESTS: usize = 280;
 /// `test280_bridge_completion` SHACL fixture.
 /// v0.2.2 Phase F: +1 from `rust/driver_shape`.
 /// v0.2.2 Phase G: +1 from `rust/const_fn_frontier`.
-pub const CONFORMANCE_CHECKS: usize = 486;
+/// v0.2.2 Phase J: +1 from `rust/grounding_combinator_check`.
+pub const CONFORMANCE_CHECKS: usize = 487;
 
 /// Number of amendments applied to the base ontology.
 pub const AMENDMENTS: usize = 95;
