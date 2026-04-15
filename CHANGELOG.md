@@ -158,26 +158,152 @@ New test files under `foundation/tests/`:
   cert kind structs, Validation phases, unary ring ops, Embed) alongside
   the v0.2.1 carry-over symbols.
 
-### Deferred to v0.2.3+
+### Phase expansion (target-v2 — all in scope, not deferred)
 
-- **`uor-foundation-clippy` dylint crate**: the v0.2.2 plan §W6 envisioned
-  a dylint-based custom lint group for catching escape-hatch construction
-  attempts in downstream code. The contract is already enforced at the
-  type and visibility level (`pub(crate)` constructors, sealed traits,
-  the public-API snapshot validator), so the dylint adds defense-in-depth
-  rather than net-new safety. Deferred to v0.2.3 to avoid coupling the
-  toolchain to a specific Clippy/HIR pin.
-- **`Grounding`-combinator-only verification** (W4 "honest limit"): making
-  `ground()` implementable only via foundation-supplied combinators so the
-  foundation can verify (not just tag) that a `DigestGroundingMap` impl is
-  actually deterministic and total. This is the 1.0.0 stability prerequisite.
-- **Embedded developer cookbook** (W18 expansion): a `cookbook` module
-  with 10 doc-only recipes for common principal-path patterns. Deferred
-  to v0.2.3 alongside the rewritten consumer-facing concept docs.
-- **Website docs editorial sweep**: removing ψ from
-  `docs/content/concepts/` markdown pages. The v0.2.2 ψ-leakage gate is
-  scoped to the consumer-facing crate surface; the website sweep is a
-  separate editorial undertaking in v0.2.3.
+v0.2.2 was expanded beyond the original 18-W-item scope to fold the
+full target-v2 architecture into a single release. Every item from
+`external/uor-foundation-target-v2.md §9` is delivered.
+
+#### Phase A — UorTime infrastructure (Q1)
+
+- `observable:LandauerBudget` class + `observable:landauerNats` property.
+- Sealed `UorTime` = (`LandauerBudget`, `rewrite_steps: u64`) carrier
+  with component-wise `PartialOrd`.
+- `Calibration` with validated k_B·T / thermal_power / characteristic_energy,
+  four presets (`X86_SERVER`, `ARM_MOBILE`, `CORTEX_M_EMBEDDED`,
+  `CONSERVATIVE_WORST_CASE`).
+- `UorTime::min_wall_clock(&Calibration) -> Nanos` using
+  `max(Landauer, Margolus-Levitin)` bounds.
+- Conformance gate: `rust/uor_time_surface`.
+
+#### Phase B — Phantom Tag on Grounded (Q3)
+
+- `Grounded<T, Tag = T>` phantom parameter with zero-cost
+  `tag::<NewTag>()` coercion. Downstream distinguishes
+  `Grounded<_, BlockHashTag>` from `Grounded<_, PixelTag>` without new
+  sealing.
+- Conformance gate: `rust/phantom_tag`.
+
+#### Phase C — Witt tower parametric (Q2)
+
+- **C.1–C.3**: +28 `schema:WittLevel` individuals (W40..W128 u64/u128
+  backed; W160..W32768 Limbs<N> backed). Dense at native widths plus
+  semantically-meaningful intermediates (SHA-1/-224/-384, P-192/-384/-521).
+- `Limbs<const N: usize>` generic kernel with const-fn
+  `wrapping_add/sub/mul/xor/and/or/not/mask_high_bits`.
+- **C.4**: `cert:MultiplicationCertificate`,
+  `resolver:MultiplicationResolver`, `linear:stackBudgetBytes`; sealed
+  `MulContext<L>` + `MultiplicationEvidence`; closed-form Landauer cost
+  `(2R-1) × (N/R)² × 64 × ln 2` nats grounded in `op:OA_5`.
+- Conformance gates: `rust/witt_tower_completeness`,
+  `rust/multiplication_resolver`.
+
+#### Phase D — Constraint kinds parametric (Q4)
+
+- Delete 7 disjoint `type:Constraint` subclasses (`Residue`,
+  `Hamming`, `Depth`, `Carry`, `Site`, `Affine`, `Composite`).
+- Add `type:BoundConstraint`, `type:BoundShape`, `type:Conjunction`
+  classes + 4 parametric properties + 6 `BoundShape` individuals + 6
+  `BoundConstraint` kind individuals.
+- Add 4 new observable subclasses: `observable:ValueModObservable`,
+  `derivation:DerivationDepthObservable`, `carry:CarryDepthObservable`,
+  `partition:FreeRankObservable`.
+- Codegen emits sealed `Observable` + `BoundShape` traits, parametric
+  `BoundConstraint<O, B>` + `Conjunction<N>` carriers, fixed-size
+  `BoundArguments`, and 7 legacy type aliases
+  (`ResidueConstraint`, `HammingConstraint`, ..., `CompositeConstraint<N>`)
+  with per-alias `pub const fn new` constructors.
+- Conformance gate: `rust/parametric_constraints`.
+
+#### Phase E — Bridge namespace completion
+
+- `cert:PartitionCertificate`, `partition:PartitionComponent` enum
+  (Irreducible/Reducible/Units/Exterior), `observable:GroundingSigma`,
+  `observable:JacobianObservable`, `derivation:DerivationTrace`.
+- Sealed `SigmaValue` newtype, `JacobianMetric<L>` fixed-size carrier,
+  `PartitionComponent` enum, `Query`/`Coordinate<L>`/`BindingQuery`/
+  `Partition`/`Trace`/`TraceEvent`/`HomologyClass<N>`/`CohomologyClass<N>`.
+- Six `BaseMetric` accessors on `Grounded<T, Tag>`: `d_delta()`,
+  `sigma()`, `jacobian()`, `betti_numbers()`, `euler_characteristic()`,
+  `residual_count()`. `MAX_BETTI_DIMENSION = 8`,
+  `JACOBIAN_MAX_SITES = 64`.
+- `Derivation::replay() -> Trace` accessor.
+- `InteractionDeclarationBuilder` stub with peer_protocol /
+  convergence_predicate / commutator_state_class setters.
+- Conformance gate: `rust/bridge_namespace_completion`; new SHACL
+  fixture `test280_bridge_completion`.
+
+#### Phase F — Driver completion (Q5)
+
+- `pipeline::run_parallel<T, P>` consuming `Validated<ParallelDeclaration, P>`.
+- `pipeline::run_stream<T, P>` returning `StreamDriver<T, P>: Iterator`.
+- `pipeline::run_interactive<T, P>` returning `InteractionDriver<T, P>`
+  state machine with `step(PeerInput) -> StepResult<T>`, `is_converged()`,
+  `finalize()`.
+- Sealed `PeerInput`, `PeerPayload`, `CommutatorState<L>`, `StepResult`.
+- Conformance gate: `rust/driver_shape`.
+
+#### Phase G — Const-fn frontier widening
+
+- 4 `validate_*_const` companion free functions (Lease/CompileUnit/
+  Parallel/Stream).
+- 4 `certify_*_const` companion free functions
+  (tower_completeness/incremental_completeness/inhabitance/multiplication).
+- `pipeline::run_const<T>` with widened `T::Map: Total` gate (drops the
+  `Invertible` requirement).
+- Conformance gate: `rust/const_fn_frontier`.
+
+#### Phase J — Combinator-only Grounding (marquee item)
+
+- Closed 12-combinator surface in `enforcement::combinators`:
+  `read_bytes`, `interpret_le_integer`, `interpret_be_integer`, `digest`,
+  `decode_utf8`, `decode_json`, `select_field`, `select_index`,
+  `const_value`, `then`, `map_err`, `and_then`.
+- `GroundingPrimitiveOp` sealed enum, `GroundingPrimitive<Out>` carrier
+  with `MarkerBits` bitmask (Total=1, Invertible=2, PreservesStructure=4).
+- Zero-sized `TotalMarker` / `InvertibleMarker` / `PreservesStructureMarker`
+  type-level tokens.
+- `MarkersImpliedBy<Map: GroundingMapKind>` trait with impls for the
+  closed catalogue of valid (marker tuple, kind) pairs.
+- `GroundingProgram<Out, Map: GroundingMapKind>` sealed carrier with
+  `from_primitive` constructor. Downstream programs built out of mismatched
+  combinators are rejected at compile time.
+- Conformance gate: `rust/grounding_combinator_check`.
+
+#### Phase H — Lints + cross-cutting
+
+- `foundation/Cargo.toml` feature flag layout: `default` (strictly empty),
+  `alloc`, `std`, `serde`, `observability`.
+- New workspace member `uor-foundation-verify` (strictly `no_std` default;
+  optional `serde` feature). Depends on `uor-foundation` public surface
+  only. `verify_trace(&Trace) -> Result<ReplayOutcome, VerificationFailure>`
+  walks a content-addressed Trace and re-derives the certificate.
+- Conformance gates:
+  - `rust/feature_flag_layout`
+  - `rust/escape_hatch_lint` (grep-based: rejects `unsafe impl` on sealed
+    traits and unconditional `extern crate alloc/std`)
+  - `rust/no_std_build_check` (cargo check with `--no-default-features`)
+  - `rust/alloc_build_check` (cargo check with `--features alloc`)
+  - `rust/all_features_build_check` (cargo check with `--all-features`)
+  - `rust/uor_foundation_verify_build`
+
+#### Phase I — Counts + acceptance
+
+Final counts after Phases A–J:
+
+- `CLASSES = 465` (+8 net: Phase A +1, Phase C.4 +2, Phase D net 0,
+  Phase E +5).
+- `PROPERTIES = 942` (+10 net).
+- `INDIVIDUALS = 3493` (+50 net across phases).
+- `METHODS = 905`. `ENUM_CLASSES = 19`. `LEAN_INDUCTIVES = 23`.
+- `SHACL_TESTS = 280`.
+- `CONFORMANCE_CHECKS = 493`.
+
+All phases landed in a single v0.2.2 release. `uor-foundation-clippy`
+(dylint-based) is replaced by the grep-based `rust/escape_hatch_lint`
+validator since the sandbox toolchain does not support dylint pinning;
+the type-and-visibility sealing + public-API snapshot already provide
+the net-new safety the dylint would have added.
 
 ## v0.2.1 — 2026-04-13
 
