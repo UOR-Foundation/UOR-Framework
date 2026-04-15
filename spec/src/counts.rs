@@ -105,7 +105,11 @@ pub const SHACL_TESTS: usize = 280;
 /// v0.2.2 Phase F: +1 from `rust/driver_shape`.
 /// v0.2.2 Phase G: +1 from `rust/const_fn_frontier`.
 /// v0.2.2 Phase J: +1 from `rust/grounding_combinator_check`.
-pub const CONFORMANCE_CHECKS: usize = 487;
+/// v0.2.2 Phase H: +6 from `rust/feature_flag_layout`,
+/// `rust/escape_hatch_lint`, `rust/no_std_build_check`,
+/// `rust/alloc_build_check`, `rust/all_features_build_check`,
+/// `rust/uor_foundation_verify_build`.
+pub const CONFORMANCE_CHECKS: usize = 493;
 
 /// Number of amendments applied to the base ontology.
 pub const AMENDMENTS: usize = 95;

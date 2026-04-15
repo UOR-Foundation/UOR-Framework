@@ -114,6 +114,25 @@ pub fn run_all(paths: &WorkspacePaths) -> anyhow::Result<ConformanceReport> {
     report.extend(validators::rust::grounding_combinator_check::validate(
         &paths.workspace,
     )?);
+    // v0.2.2 Phase H: lints + cross-cutting.
+    report.extend(validators::rust::feature_flag_layout::validate(
+        &paths.workspace,
+    )?);
+    report.extend(validators::rust::escape_hatch_lint::validate(
+        &paths.workspace,
+    )?);
+    report.extend(validators::rust::no_std_build_check::validate(
+        &paths.workspace,
+    )?);
+    report.extend(validators::rust::alloc_build_check::validate(
+        &paths.workspace,
+    )?);
+    report.extend(validators::rust::all_features_build_check::validate(
+        &paths.workspace,
+    )?);
+    report.extend(validators::rust::uor_foundation_verify_build::validate(
+        &paths.workspace,
+    )?);
 
     // 2. Ontology inventory
     report.extend(validators::ontology::inventory::validate(&paths.artifacts)?);

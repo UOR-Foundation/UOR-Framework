@@ -684,6 +684,13 @@ name = "uor-foundation"
 version = "0.2.2"
 
 [[package]]
+name = "uor-foundation-verify"
+version = "0.2.2"
+dependencies = [
+ "uor-foundation",
+]
+
+[[package]]
 name = "uor-lean-codegen"
 version = "0.2.2"
 dependencies = [

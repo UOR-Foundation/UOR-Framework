@@ -15,4 +15,14 @@ categories = ["data-structures", "science"]
 [dependencies]
 
 [features]
+# v0.2.2 Phase H: feature flag layout.
+# - `default` stays empty so the foundation is strictly no_std out of the box.
+# - `alloc` enables optional alloc-dependent surface (trace serialization).
+# - `std` enables optional std-only surface (implies alloc).
+# - `serde` enables optional serde integration (implies alloc).
+# - `observability` enables optional observability surface (implies alloc).
 default = []
+alloc = []
+std = ["alloc"]
+serde = ["alloc"]
+observability = ["alloc"]
