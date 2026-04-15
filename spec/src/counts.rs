@@ -29,7 +29,9 @@ pub const NAMESPACES: usize = 33;
 /// v0.2.2 Phase E: +5 (cert:PartitionCertificate, partition:PartitionComponent,
 /// observable:GroundingSigma, observable:JacobianObservable,
 /// derivation:DerivationTrace).
-pub const CLASSES: usize = 465;
+/// v0.2.2 T1.2 (cleanup): +1 (conformance:InteractionShape — backing class
+/// for InteractionDeclarationBuilder, originally planned in Phase E).
+pub const CLASSES: usize = 466;
 
 /// Total properties including the global `uor:space` annotation.
 ///
@@ -109,7 +111,8 @@ pub const SHACL_TESTS: usize = 280;
 /// `rust/escape_hatch_lint`, `rust/no_std_build_check`,
 /// `rust/alloc_build_check`, `rust/all_features_build_check`,
 /// `rust/uor_foundation_verify_build`.
-pub const CONFORMANCE_CHECKS: usize = 493;
+/// v0.2.2 T1.5 (cleanup): +1 from `docs/concept_pages_count`.
+pub const CONFORMANCE_CHECKS: usize = 494;
 
 /// Number of amendments applied to the base ontology.
 pub const AMENDMENTS: usize = 95;
@@ -154,7 +157,8 @@ pub const CONSTANT_MODULES: usize = 1501;
 /// v0.2.2 Phase C.4: +2 (MultiplicationCertificate, MultiplicationResolver).
 /// v0.2.2 Phase E: +4 (PartitionCertificate, GroundingSigma, JacobianObservable,
 /// DerivationTrace; PartitionComponent is an enum class, not a structure).
-pub const LEAN_STRUCTURES: usize = 432;
+/// v0.2.2 T1.2 (cleanup): +1 (InteractionShape — regular structure).
+pub const LEAN_STRUCTURES: usize = 433;
 
 /// Number of Lean 4 inductive + structure types generated for the enum layer.
 ///
@@ -185,7 +189,17 @@ pub const LEAN_INDUCTIVES: usize = 23;
 pub const LEAN_CONSTANT_NAMESPACES: usize = 3361;
 
 /// Number of concept pages on the website (one per content/concepts/*.md file).
-pub const CONCEPT_PAGES: usize = 27;
+/// Number of concept pages on the website (one per `website/content/concepts/*.md`,
+/// excluding `prism.md` which is merged into the pipeline page).
+///
+/// v0.2.2 T1.5 (cleanup): corrected 27 → 12. The previous value (27) did not
+/// match either `website/content/concepts/` (12 files after excluding
+/// `prism.md`) or `docs/content/concepts/` (33 files). The discrepancy slipped
+/// through because no validator enforced the constant. The new
+/// `docs/concept_pages_count` validator walks `website/content/concepts/`
+/// (the authoritative site source) and asserts the count matches this
+/// constant.
+pub const CONCEPT_PAGES: usize = 12;
 
 /// Number of PRISM pipeline stages (Define / Resolve / Certify).
 pub const PIPELINE_STAGES: usize = 3;

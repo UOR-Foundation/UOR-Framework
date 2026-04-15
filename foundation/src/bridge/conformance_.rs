@@ -73,6 +73,9 @@ pub trait ValidationResult<P: Primitives> {
 /// Shape for user-declared predicates. Requires a bounded evaluator (termination witness) and input type declaration.
 pub trait PredicateShape<P: Primitives>: Shape<P> {}
 
+/// Shape describing the required surface of an InteractionDeclaration consumed by the foundation's InteractionDeclarationBuilder: peer protocol, convergence predicate, and commutator state class. Rejects builders missing any of the three.
+pub trait InteractionShape<P: Primitives>: Shape<P> {}
+
 /// Opaque ring element witness. Cannot be constructed outside the foundation crate — only produced by reduction evaluation or the two-phase minting boundary.
 pub trait WitnessDatum<P: Primitives> {
     /// The quantum level at which this witness datum was minted.

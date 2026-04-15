@@ -2143,17 +2143,41 @@ fn validate_certificate_issuance_coverage(report: &mut ConformanceReport) {
         // path goes through proof:ComputationCertificate first; the
         // structural exemption captures the multi-parent case.
         "https://uor.foundation/cert/InhabitanceCertificate",
-        // v0.2.2 Phase C.4: MultiplicationCertificate is the return type
-        // of the multiplication resolver; its governance is op:OA_5
-        // (Landauer pricing identity), already in the ontology. The
-        // resolver's closed-form cost function cites OA_5 in its rustdoc.
-        "https://uor.foundation/cert/MultiplicationCertificate",
-        // v0.2.2 Phase E: PartitionCertificate attests a partition-component
-        // classification derived from op:PT_2a (partition map identity).
-        // The partition walk is a structural container, not an identity target.
-        "https://uor.foundation/cert/PartitionCertificate",
+        // v0.2.2 T1.3 (cleanup): MultiplicationCertificate and
+        // PartitionCertificate exemptions were REMOVED. OA_5 and PT_2
+        // now explicitly cite the certificates in their rdfs:comment /
+        // forAll text; the text-based governance loop below picks them up.
     ]
     .into();
+
+    // v0.2.2 T1.3: after `rewrite_identity_ast_refs`, identity `lhs`/`rhs`/
+    // `forAll` values are IriRef pointers to `schema:term_*` individuals whose
+    // `literalValue` / `variableName` properties carry the original strings.
+    // Build a lookup table from term-individual IRI to its stored text so we
+    // can follow the reference when scanning for certificate governance.
+    let term_literal_prop = "https://uor.foundation/schema/literalValue";
+    let term_variable_prop = "https://uor.foundation/schema/variableName";
+    let literal_expression_type = "https://uor.foundation/schema/LiteralExpression";
+    let forall_declaration_type = "https://uor.foundation/schema/ForAllDeclaration";
+    let term_text_by_iri: HashMap<&str, &str> = ontology
+        .namespaces
+        .iter()
+        .flat_map(|m| m.individuals.iter())
+        .filter(|i| i.type_ == literal_expression_type || i.type_ == forall_declaration_type)
+        .filter_map(|i| {
+            i.properties.iter().find_map(|(k, v)| {
+                if *k == term_literal_prop || *k == term_variable_prop {
+                    if let IndividualValue::Str(s) = v {
+                        Some((i.id, *s))
+                    } else {
+                        None
+                    }
+                } else {
+                    None
+                }
+            })
+        })
+        .collect();
 
     let mut all_governed = true;
     for cert_class in &cert_subclasses {
@@ -2172,7 +2196,19 @@ fn validate_certificate_issuance_coverage(report: &mut ConformanceReport) {
                     IndividualValue::Str(s) => {
                         s.contains(cert_class.label) || s.contains(cert_class.id)
                     }
-                    IndividualValue::IriRef(iri) => iri.contains(cert_class.id),
+                    IndividualValue::IriRef(iri) => {
+                        // Direct class-IRI reference:
+                        if iri.contains(cert_class.id) {
+                            return true;
+                        }
+                        // v0.2.2 T1.3: follow `schema:term_*` refs to the
+                        // underlying LiteralExpression/ForAllDeclaration text.
+                        if let Some(text) = term_text_by_iri.get(*iri) {
+                            text.contains(cert_class.label) || text.contains(cert_class.id)
+                        } else {
+                            false
+                        }
+                    }
                     IndividualValue::List(iris) => {
                         iris.iter().any(|iri| iri.contains(cert_class.id))
                     }

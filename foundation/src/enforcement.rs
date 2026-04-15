@@ -9712,8 +9712,7 @@ impl InteractionDeclarationBuilder {
     }
 }
 
-/// v0.2.2 Phase J: zero-sized token identifying the `Total` marker at
-/// the type level. Used as a parameter of `MarkersImpliedBy`.
+/// v0.2.2 Phase J: zero-sized token identifying the `Total` marker.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
 pub struct TotalMarker;
 
@@ -9725,12 +9724,180 @@ pub struct InvertibleMarker;
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
 pub struct PreservesStructureMarker;
 
-/// v0.2.2 Phase J: sealed compile-time check that a combinator's marker
-/// set is at least as strong as the properties declared by the
-/// `GroundingMapKind` a program claims. Implemented by codegen exhaustively
-/// for every valid `(marker_bits, kind)` pair; absent impls reject the
-/// mismatched declaration at the `GroundingProgram::from_primitive` call site.
-pub trait MarkersImpliedBy<Map: GroundingMapKind> {}
+mod marker_tuple_sealed {
+    /// Private supertrait. Not implementable outside this crate.
+    pub trait Sealed {}
+}
+
+/// v0.2.2 Phase J: sealed marker-tuple trait. Implemented exhaustively by
+/// the closed catalogue of six admissible marker tuples in canonical order
+/// (Total, Invertible, PreservesStructure). Downstream cannot add new
+/// marker tuples; the seal anchors Phase J's compile-time correctness claim.
+pub trait MarkerTuple: marker_tuple_sealed::Sealed {}
+
+impl marker_tuple_sealed::Sealed for () {}
+impl MarkerTuple for () {}
+impl marker_tuple_sealed::Sealed for (TotalMarker,) {}
+impl MarkerTuple for (TotalMarker,) {}
+impl marker_tuple_sealed::Sealed for (TotalMarker, InvertibleMarker) {}
+impl MarkerTuple for (TotalMarker, InvertibleMarker) {}
+impl marker_tuple_sealed::Sealed for (TotalMarker, InvertibleMarker, PreservesStructureMarker) {}
+impl MarkerTuple for (TotalMarker, InvertibleMarker, PreservesStructureMarker) {}
+impl marker_tuple_sealed::Sealed for (InvertibleMarker,) {}
+impl MarkerTuple for (InvertibleMarker,) {}
+impl marker_tuple_sealed::Sealed for (InvertibleMarker, PreservesStructureMarker) {}
+impl MarkerTuple for (InvertibleMarker, PreservesStructureMarker) {}
+
+/// v0.2.2 Phase J: type-level set intersection of two marker tuples.
+/// Implemented exhaustively for every ordered pair in the closed catalogue.
+/// Composition combinators (`then`, `and_then`) use this trait to compute
+/// the output marker tuple of a composed primitive as the intersection of
+/// its two inputs' tuples. Because the catalogue is closed, the result is
+/// always another tuple in the catalogue — no open-world hazards.
+pub trait MarkerIntersection<Other: MarkerTuple>: MarkerTuple {
+    /// The intersection of `Self` and `Other` in the closed catalogue.
+    type Output: MarkerTuple;
+}
+
+impl MarkerIntersection<()> for () {
+    type Output = ();
+}
+impl MarkerIntersection<(TotalMarker,)> for () {
+    type Output = ();
+}
+impl MarkerIntersection<(TotalMarker, InvertibleMarker)> for () {
+    type Output = ();
+}
+impl MarkerIntersection<(TotalMarker, InvertibleMarker, PreservesStructureMarker)> for () {
+    type Output = ();
+}
+impl MarkerIntersection<(InvertibleMarker,)> for () {
+    type Output = ();
+}
+impl MarkerIntersection<(InvertibleMarker, PreservesStructureMarker)> for () {
+    type Output = ();
+}
+impl MarkerIntersection<()> for (TotalMarker,) {
+    type Output = ();
+}
+impl MarkerIntersection<(TotalMarker,)> for (TotalMarker,) {
+    type Output = (TotalMarker,);
+}
+impl MarkerIntersection<(TotalMarker, InvertibleMarker)> for (TotalMarker,) {
+    type Output = (TotalMarker,);
+}
+impl MarkerIntersection<(TotalMarker, InvertibleMarker, PreservesStructureMarker)>
+    for (TotalMarker,)
+{
+    type Output = (TotalMarker,);
+}
+impl MarkerIntersection<(InvertibleMarker,)> for (TotalMarker,) {
+    type Output = ();
+}
+impl MarkerIntersection<(InvertibleMarker, PreservesStructureMarker)> for (TotalMarker,) {
+    type Output = ();
+}
+impl MarkerIntersection<()> for (TotalMarker, InvertibleMarker) {
+    type Output = ();
+}
+impl MarkerIntersection<(TotalMarker,)> for (TotalMarker, InvertibleMarker) {
+    type Output = (TotalMarker,);
+}
+impl MarkerIntersection<(TotalMarker, InvertibleMarker)> for (TotalMarker, InvertibleMarker) {
+    type Output = (TotalMarker, InvertibleMarker);
+}
+impl MarkerIntersection<(TotalMarker, InvertibleMarker, PreservesStructureMarker)>
+    for (TotalMarker, InvertibleMarker)
+{
+    type Output = (TotalMarker, InvertibleMarker);
+}
+impl MarkerIntersection<(InvertibleMarker,)> for (TotalMarker, InvertibleMarker) {
+    type Output = (InvertibleMarker,);
+}
+impl MarkerIntersection<(InvertibleMarker, PreservesStructureMarker)>
+    for (TotalMarker, InvertibleMarker)
+{
+    type Output = (InvertibleMarker,);
+}
+impl MarkerIntersection<()> for (TotalMarker, InvertibleMarker, PreservesStructureMarker) {
+    type Output = ();
+}
+impl MarkerIntersection<(TotalMarker,)>
+    for (TotalMarker, InvertibleMarker, PreservesStructureMarker)
+{
+    type Output = (TotalMarker,);
+}
+impl MarkerIntersection<(TotalMarker, InvertibleMarker)>
+    for (TotalMarker, InvertibleMarker, PreservesStructureMarker)
+{
+    type Output = (TotalMarker, InvertibleMarker);
+}
+impl MarkerIntersection<(TotalMarker, InvertibleMarker, PreservesStructureMarker)>
+    for (TotalMarker, InvertibleMarker, PreservesStructureMarker)
+{
+    type Output = (TotalMarker, InvertibleMarker, PreservesStructureMarker);
+}
+impl MarkerIntersection<(InvertibleMarker,)>
+    for (TotalMarker, InvertibleMarker, PreservesStructureMarker)
+{
+    type Output = (InvertibleMarker,);
+}
+impl MarkerIntersection<(InvertibleMarker, PreservesStructureMarker)>
+    for (TotalMarker, InvertibleMarker, PreservesStructureMarker)
+{
+    type Output = (InvertibleMarker, PreservesStructureMarker);
+}
+impl MarkerIntersection<()> for (InvertibleMarker,) {
+    type Output = ();
+}
+impl MarkerIntersection<(TotalMarker,)> for (InvertibleMarker,) {
+    type Output = ();
+}
+impl MarkerIntersection<(TotalMarker, InvertibleMarker)> for (InvertibleMarker,) {
+    type Output = (InvertibleMarker,);
+}
+impl MarkerIntersection<(TotalMarker, InvertibleMarker, PreservesStructureMarker)>
+    for (InvertibleMarker,)
+{
+    type Output = (InvertibleMarker,);
+}
+impl MarkerIntersection<(InvertibleMarker,)> for (InvertibleMarker,) {
+    type Output = (InvertibleMarker,);
+}
+impl MarkerIntersection<(InvertibleMarker, PreservesStructureMarker)> for (InvertibleMarker,) {
+    type Output = (InvertibleMarker,);
+}
+impl MarkerIntersection<()> for (InvertibleMarker, PreservesStructureMarker) {
+    type Output = ();
+}
+impl MarkerIntersection<(TotalMarker,)> for (InvertibleMarker, PreservesStructureMarker) {
+    type Output = ();
+}
+impl MarkerIntersection<(TotalMarker, InvertibleMarker)>
+    for (InvertibleMarker, PreservesStructureMarker)
+{
+    type Output = (InvertibleMarker,);
+}
+impl MarkerIntersection<(TotalMarker, InvertibleMarker, PreservesStructureMarker)>
+    for (InvertibleMarker, PreservesStructureMarker)
+{
+    type Output = (InvertibleMarker, PreservesStructureMarker);
+}
+impl MarkerIntersection<(InvertibleMarker,)> for (InvertibleMarker, PreservesStructureMarker) {
+    type Output = (InvertibleMarker,);
+}
+impl MarkerIntersection<(InvertibleMarker, PreservesStructureMarker)>
+    for (InvertibleMarker, PreservesStructureMarker)
+{
+    type Output = (InvertibleMarker, PreservesStructureMarker);
+}
+
+/// v0.2.2 Phase J: compile-time check that a combinator's marker tuple
+/// carries every property declared by the `GroundingMapKind` a program
+/// claims. Implemented exhaustively by codegen for every valid `(tuple,
+/// map)` pair; absent impls reject the mismatched declaration at the
+/// `GroundingProgram::from_primitive` call site.
+pub trait MarkersImpliedBy<Map: GroundingMapKind>: MarkerTuple {}
 
 /// v0.2.2 Phase J: bitmask encoding of a combinator's marker set.
 /// Bit 0 = Total, bit 1 = Invertible, bit 2 = PreservesStructure.
@@ -9817,19 +9984,22 @@ pub enum GroundingPrimitiveOp {
     AndThen,
 }
 
-/// v0.2.2 Phase J: a single grounding primitive with its output type
-/// and marker bitmask.
+/// v0.2.2 Phase J: a single grounding primitive parametric over its output
+/// type `Out` and its type-level marker tuple `Markers`.
 /// Constructed only by the 12 enumerated combinator functions below;
-/// downstream cannot construct one directly.
+/// downstream cannot construct one directly. The `Markers` parameter
+/// defaults to `()` for backwards-compatible call sites, but each
+/// combinator returns a specific tuple — see `combinators::digest` etc.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub struct GroundingPrimitive<Out> {
+pub struct GroundingPrimitive<Out, Markers: MarkerTuple = ()> {
     op: GroundingPrimitiveOp,
     markers: MarkerBits,
     _out: PhantomData<Out>,
+    _markers: PhantomData<Markers>,
     _sealed: (),
 }
 
-impl<Out> GroundingPrimitive<Out> {
+impl<Out, Markers: MarkerTuple> GroundingPrimitive<Out, Markers> {
     /// Access the primitive op.
     #[inline]
     #[must_use]
@@ -9837,14 +10007,15 @@ impl<Out> GroundingPrimitive<Out> {
         self.op
     }
 
-    /// Access the marker bitmask.
+    /// Access the runtime marker bitmask (mirrors the type-level tuple).
     #[inline]
     #[must_use]
     pub const fn markers(&self) -> MarkerBits {
         self.markers
     }
 
-    /// Crate-internal constructor.
+    /// Crate-internal constructor. The type-level `Markers` tuple is
+    /// selected via turbofish at call sites inside the combinator functions.
     #[inline]
     #[must_use]
     #[allow(dead_code)]
@@ -9853,20 +10024,27 @@ impl<Out> GroundingPrimitive<Out> {
             op,
             markers,
             _out: PhantomData,
+            _markers: PhantomData,
             _sealed: (),
         }
     }
 }
 
 /// v0.2.2 Phase J: closed 12-combinator surface for building grounding
-/// programs. See `GroundingProgram` for composition.
+/// programs. See `GroundingProgram` for composition. Each leaf combinator
+/// returns a `GroundingPrimitive<Out, M>` carrying a specific marker tuple;
+/// the type parameter is what `GroundingProgram::from_primitive`'s
+/// `MarkersImpliedBy<Map>` bound checks at compile time.
 pub mod combinators {
-    use super::{GroundingPrimitive, GroundingPrimitiveOp, MarkerBits};
+    use super::{
+        GroundingPrimitive, GroundingPrimitiveOp, InvertibleMarker, MarkerBits, MarkerIntersection,
+        MarkerTuple, PreservesStructureMarker, TotalMarker,
+    };
 
     /// Read a fixed-size byte slice from the input. `(Total, Invertible)`.
     #[inline]
     #[must_use]
-    pub const fn read_bytes<Out>() -> GroundingPrimitive<Out> {
+    pub const fn read_bytes<Out>() -> GroundingPrimitive<Out, (TotalMarker, InvertibleMarker)> {
         GroundingPrimitive::from_parts(
             GroundingPrimitiveOp::ReadBytes,
             MarkerBits::TOTAL.union(MarkerBits::INVERTIBLE),
@@ -9876,7 +10054,8 @@ pub mod combinators {
     /// Interpret bytes as a little-endian integer at the target WittLevel.
     #[inline]
     #[must_use]
-    pub const fn interpret_le_integer<Out>() -> GroundingPrimitive<Out> {
+    pub const fn interpret_le_integer<Out>(
+    ) -> GroundingPrimitive<Out, (TotalMarker, InvertibleMarker, PreservesStructureMarker)> {
         GroundingPrimitive::from_parts(
             GroundingPrimitiveOp::InterpretLeInteger,
             MarkerBits::TOTAL
@@ -9888,7 +10067,8 @@ pub mod combinators {
     /// Interpret bytes as a big-endian integer.
     #[inline]
     #[must_use]
-    pub const fn interpret_be_integer<Out>() -> GroundingPrimitive<Out> {
+    pub const fn interpret_be_integer<Out>(
+    ) -> GroundingPrimitive<Out, (TotalMarker, InvertibleMarker, PreservesStructureMarker)> {
         GroundingPrimitive::from_parts(
             GroundingPrimitiveOp::InterpretBeInteger,
             MarkerBits::TOTAL
@@ -9900,14 +10080,15 @@ pub mod combinators {
     /// Hash bytes via blake3 → 32-byte digest → `Datum<W256>`. `(Total,)` only.
     #[inline]
     #[must_use]
-    pub const fn digest<Out>() -> GroundingPrimitive<Out> {
+    pub const fn digest<Out>() -> GroundingPrimitive<Out, (TotalMarker,)> {
         GroundingPrimitive::from_parts(GroundingPrimitiveOp::Digest, MarkerBits::TOTAL)
     }
 
     /// Decode UTF-8 bytes. `(Invertible, PreservesStructure)` — not Total.
     #[inline]
     #[must_use]
-    pub const fn decode_utf8<Out>() -> GroundingPrimitive<Out> {
+    pub const fn decode_utf8<Out>(
+    ) -> GroundingPrimitive<Out, (InvertibleMarker, PreservesStructureMarker)> {
         GroundingPrimitive::from_parts(
             GroundingPrimitiveOp::DecodeUtf8,
             MarkerBits::INVERTIBLE.union(MarkerBits::PRESERVES_STRUCTURE),
@@ -9917,7 +10098,8 @@ pub mod combinators {
     /// Decode JSON bytes. `(Invertible, PreservesStructure)` — not Total.
     #[inline]
     #[must_use]
-    pub const fn decode_json<Out>() -> GroundingPrimitive<Out> {
+    pub const fn decode_json<Out>(
+    ) -> GroundingPrimitive<Out, (InvertibleMarker, PreservesStructureMarker)> {
         GroundingPrimitive::from_parts(
             GroundingPrimitiveOp::DecodeJson,
             MarkerBits::INVERTIBLE.union(MarkerBits::PRESERVES_STRUCTURE),
@@ -9927,21 +10109,22 @@ pub mod combinators {
     /// Select a field from a structured value. `(Invertible,)` — not Total.
     #[inline]
     #[must_use]
-    pub const fn select_field<Out>() -> GroundingPrimitive<Out> {
+    pub const fn select_field<Out>() -> GroundingPrimitive<Out, (InvertibleMarker,)> {
         GroundingPrimitive::from_parts(GroundingPrimitiveOp::SelectField, MarkerBits::INVERTIBLE)
     }
 
     /// Select an indexed element. `(Invertible,)` — not Total.
     #[inline]
     #[must_use]
-    pub const fn select_index<Out>() -> GroundingPrimitive<Out> {
+    pub const fn select_index<Out>() -> GroundingPrimitive<Out, (InvertibleMarker,)> {
         GroundingPrimitive::from_parts(GroundingPrimitiveOp::SelectIndex, MarkerBits::INVERTIBLE)
     }
 
     /// Inject a foundation-known constant. `(Total, Invertible, PreservesStructure)`.
     #[inline]
     #[must_use]
-    pub const fn const_value<Out>() -> GroundingPrimitive<Out> {
+    pub const fn const_value<Out>(
+    ) -> GroundingPrimitive<Out, (TotalMarker, InvertibleMarker, PreservesStructureMarker)> {
         GroundingPrimitive::from_parts(
             GroundingPrimitiveOp::ConstValue,
             MarkerBits::TOTAL
@@ -9950,33 +10133,43 @@ pub mod combinators {
         )
     }
 
-    /// Compose two combinators sequentially. Markers are intersected.
+    /// Compose two combinators sequentially. Markers are intersected at
+    /// the type level via the `MarkerIntersection` trait.
     #[inline]
     #[must_use]
-    pub const fn then<A, B>(
-        first: GroundingPrimitive<A>,
-        second: GroundingPrimitive<B>,
-    ) -> GroundingPrimitive<B> {
+    pub fn then<A, B, MA, MB>(
+        first: GroundingPrimitive<A, MA>,
+        second: GroundingPrimitive<B, MB>,
+    ) -> GroundingPrimitive<B, <MA as MarkerIntersection<MB>>::Output>
+    where
+        MA: MarkerTuple + MarkerIntersection<MB>,
+        MB: MarkerTuple,
+    {
         GroundingPrimitive::from_parts(
             GroundingPrimitiveOp::Then,
             first.markers().intersection(second.markers()),
         )
     }
 
-    /// Map an error variant of a fallible combinator.
+    /// Map an error variant of a fallible combinator. Marker tuple
+    /// is preserved.
     #[inline]
     #[must_use]
-    pub const fn map_err<A>(first: GroundingPrimitive<A>) -> GroundingPrimitive<A> {
+    pub fn map_err<A, M: MarkerTuple>(first: GroundingPrimitive<A, M>) -> GroundingPrimitive<A, M> {
         GroundingPrimitive::from_parts(GroundingPrimitiveOp::MapErr, first.markers())
     }
 
     /// Conditional composition (and_then). Markers are intersected.
     #[inline]
     #[must_use]
-    pub const fn and_then<A, B>(
-        first: GroundingPrimitive<A>,
-        second: GroundingPrimitive<B>,
-    ) -> GroundingPrimitive<B> {
+    pub fn and_then<A, B, MA, MB>(
+        first: GroundingPrimitive<A, MA>,
+        second: GroundingPrimitive<B, MB>,
+    ) -> GroundingPrimitive<B, <MA as MarkerIntersection<MB>>::Output>
+    where
+        MA: MarkerTuple + MarkerIntersection<MB>,
+        MB: MarkerTuple,
+    {
         GroundingPrimitive::from_parts(
             GroundingPrimitiveOp::AndThen,
             first.markers().intersection(second.markers()),
@@ -9985,10 +10178,10 @@ pub mod combinators {
 }
 
 /// v0.2.2 Phase J: sealed grounding program.
-/// A composition of combinators with a statically tracked marker set.
-/// Constructed only via `GroundingProgram::from_primitive` which verifies
-/// the primitive's marker bitmask implies the properties declared by
-/// `Map: GroundingMapKind`.
+/// A composition of combinators with a statically tracked marker tuple.
+/// Constructed only via `GroundingProgram::from_primitive`, which requires
+/// via the `MarkersImpliedBy<Map>` trait bound that the primitive's marker
+/// tuple carries every property declared by `Map: GroundingMapKind`.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct GroundingProgram<Out, Map: GroundingMapKind> {
     primitive: GroundingPrimitive<Out>,
@@ -9998,20 +10191,40 @@ pub struct GroundingProgram<Out, Map: GroundingMapKind> {
 
 impl<Out, Map: GroundingMapKind> GroundingProgram<Out, Map> {
     /// Foundation-verified constructor. Accepts a primitive whose marker
-    /// bitmask at least matches the properties declared by `Map`. The
-    /// `MarkersImpliedBy<Map>` trait bound is auto-derived by codegen
-    /// for every valid `(marker_bits, map)` pair.
+    /// tuple satisfies `MarkersImpliedBy<Map>`. Programs built from
+    /// combinators whose marker tuple lacks a property `Map` requires are
+    /// rejected at compile time — this is Phase J's marquee correctness
+    /// claim: misdeclarations fail to compile.
+    /// # Example: valid program
+    /// ```
+    /// use uor_foundation::enforcement::{GroundingProgram, IntegerGroundingMap, combinators};
+    /// let prog: GroundingProgram<u64, IntegerGroundingMap> =
+    ///     GroundingProgram::from_primitive(combinators::interpret_le_integer::<u64>());
+    /// let _ = prog;
+    /// ```
+    /// # Example: rejected misdeclaration
+    /// ```compile_fail
+    /// use uor_foundation::enforcement::{GroundingProgram, IntegerGroundingMap, combinators};
+    /// // digest returns (TotalMarker,) which does NOT satisfy
+    /// // MarkersImpliedBy<IntegerGroundingMap> — the line below fails to compile.
+    /// let prog: GroundingProgram<[u8; 32], IntegerGroundingMap> =
+    ///     GroundingProgram::from_primitive(combinators::digest::<[u8; 32]>());
+    /// let _ = prog;
+    /// ```
     #[inline]
     #[must_use]
-    pub const fn from_primitive(primitive: GroundingPrimitive<Out>) -> Self {
+    pub fn from_primitive<Markers>(primitive: GroundingPrimitive<Out, Markers>) -> Self
+    where
+        Markers: MarkerTuple + MarkersImpliedBy<Map>,
+    {
         Self {
-            primitive,
+            primitive: GroundingPrimitive::from_parts(primitive.op(), primitive.markers()),
             _map: PhantomData,
             _sealed: (),
         }
     }
 
-    /// Access the underlying primitive (carrying the full marker tuple).
+    /// Access the underlying primitive (erased marker tuple).
     #[inline]
     #[must_use]
     pub const fn primitive(&self) -> &GroundingPrimitive<Out> {
@@ -10019,16 +10232,12 @@ impl<Out, Map: GroundingMapKind> GroundingProgram<Out, Map> {
     }
 }
 
-/// v0.2.2 Phase J: MarkersImpliedBy impls for the closed catalogue of
-/// (combinator marker set, GroundingMapKind) pairs the foundation admits.
-impl MarkersImpliedBy<DigestGroundingMap> for TotalMarker {}
-impl MarkersImpliedBy<BinaryGroundingMap> for TotalMarker {}
-impl MarkersImpliedBy<DigestGroundingMap> for (TotalMarker, InvertibleMarker) {}
+/// v0.2.2 Phase J: MarkersImpliedBy impls for the closed catalogue of valid
+/// (marker tuple, GroundingMapKind) pairs. These are the compile-time
+/// witnesses the foundation accepts; every absent pair is a rejection.
+impl MarkersImpliedBy<DigestGroundingMap> for (TotalMarker,) {}
 impl MarkersImpliedBy<BinaryGroundingMap> for (TotalMarker, InvertibleMarker) {}
-impl MarkersImpliedBy<IntegerGroundingMap>
-    for (TotalMarker, InvertibleMarker, PreservesStructureMarker)
-{
-}
+impl MarkersImpliedBy<DigestGroundingMap> for (TotalMarker, InvertibleMarker) {}
 impl MarkersImpliedBy<BinaryGroundingMap>
     for (TotalMarker, InvertibleMarker, PreservesStructureMarker)
 {
@@ -10037,6 +10246,20 @@ impl MarkersImpliedBy<DigestGroundingMap>
     for (TotalMarker, InvertibleMarker, PreservesStructureMarker)
 {
 }
+impl MarkersImpliedBy<IntegerGroundingMap>
+    for (TotalMarker, InvertibleMarker, PreservesStructureMarker)
+{
+}
+impl MarkersImpliedBy<JsonGroundingMap>
+    for (TotalMarker, InvertibleMarker, PreservesStructureMarker)
+{
+}
+impl MarkersImpliedBy<Utf8GroundingMap>
+    for (TotalMarker, InvertibleMarker, PreservesStructureMarker)
+{
+}
+impl MarkersImpliedBy<JsonGroundingMap> for (InvertibleMarker, PreservesStructureMarker) {}
+impl MarkersImpliedBy<Utf8GroundingMap> for (InvertibleMarker, PreservesStructureMarker) {}
 
 /// v0.2.1 ergonomics prelude. Re-exports the core symbols downstream crates
 /// need for the consumer-facing one-liners.

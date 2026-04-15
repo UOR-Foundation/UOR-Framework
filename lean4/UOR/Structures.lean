@@ -318,6 +318,16 @@ instance : Inhabited (GroundingShape UOR.Prims.Standard) where
     surfaceForm := none
   }
 
+/-- Shape describing the required surface of an InteractionDeclaration consumed by the foundation's InteractionDeclarationBuilder: peer protocol, convergence predicate, and commutator state class. Rejects builders missing any of the three. -/
+structure InteractionShape (P : Primitives) extends Shape P
+
+instance : Inhabited (InteractionShape UOR.Prims.Standard) where
+  default := {
+    targetClass := none
+    requiredProperty := #[]
+    surfaceForm := none
+  }
+
 /-- Shape for declaring a Lease with LinearSite allocation. -/
 structure LeaseShape (P : Primitives) extends Shape P
 

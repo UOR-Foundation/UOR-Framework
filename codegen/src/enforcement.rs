@@ -5367,10 +5367,9 @@ fn generate_bridge_namespace_surface(f: &mut RustFile) {
 /// combinators is rejected at compile time.
 #[allow(clippy::too_many_lines)]
 fn generate_grounding_combinator_surface(f: &mut RustFile) {
-    // Marker unit structs used in the MarkersImpliedBy type-level trait
-    // impls. These are zero-sized and only serve as type-level tokens.
-    f.doc_comment("v0.2.2 Phase J: zero-sized token identifying the `Total` marker at");
-    f.doc_comment("the type level. Used as a parameter of `MarkersImpliedBy`.");
+    // Marker unit structs — zero-sized, type-level tokens anchoring the
+    // closed catalogue of admissible marker tuples.
+    f.doc_comment("v0.2.2 Phase J: zero-sized token identifying the `Total` marker.");
     f.line("#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]");
     f.line("pub struct TotalMarker;");
     f.blank();
@@ -5385,14 +5384,147 @@ fn generate_grounding_combinator_surface(f: &mut RustFile) {
     f.line("pub struct PreservesStructureMarker;");
     f.blank();
 
-    // `MarkersImpliedBy<Map>` trait: the compile-time check that a tuple
-    // of markers implies the properties claimed by a GroundingMapKind.
-    f.doc_comment("v0.2.2 Phase J: sealed compile-time check that a combinator's marker");
-    f.doc_comment("set is at least as strong as the properties declared by the");
-    f.doc_comment("`GroundingMapKind` a program claims. Implemented by codegen exhaustively");
-    f.doc_comment("for every valid `(marker_bits, kind)` pair; absent impls reject the");
-    f.doc_comment("mismatched declaration at the `GroundingProgram::from_primitive` call site.");
-    f.line("pub trait MarkersImpliedBy<Map: GroundingMapKind> {}");
+    // Sealed supertrait — anchors `MarkerTuple`, `MarkerIntersection`,
+    // `MarkersImpliedBy` so downstream cannot add new marker tuples.
+    f.line("mod marker_tuple_sealed {");
+    f.indented_doc_comment("Private supertrait. Not implementable outside this crate.");
+    f.line("    pub trait Sealed {}");
+    f.line("}");
+    f.blank();
+
+    // MarkerTuple — closed catalogue of six admissible tuples.
+    f.doc_comment("v0.2.2 Phase J: sealed marker-tuple trait. Implemented exhaustively by");
+    f.doc_comment("the closed catalogue of six admissible marker tuples in canonical order");
+    f.doc_comment("(Total, Invertible, PreservesStructure). Downstream cannot add new");
+    f.doc_comment("marker tuples; the seal anchors Phase J's compile-time correctness claim.");
+    f.line("pub trait MarkerTuple: marker_tuple_sealed::Sealed {}");
+    f.blank();
+
+    f.line("impl marker_tuple_sealed::Sealed for () {}");
+    f.line("impl MarkerTuple for () {}");
+    f.line("impl marker_tuple_sealed::Sealed for (TotalMarker,) {}");
+    f.line("impl MarkerTuple for (TotalMarker,) {}");
+    f.line("impl marker_tuple_sealed::Sealed for (TotalMarker, InvertibleMarker) {}");
+    f.line("impl MarkerTuple for (TotalMarker, InvertibleMarker) {}");
+    f.line(
+        "impl marker_tuple_sealed::Sealed for (TotalMarker, InvertibleMarker, PreservesStructureMarker) {}",
+    );
+    f.line("impl MarkerTuple for (TotalMarker, InvertibleMarker, PreservesStructureMarker) {}");
+    f.line("impl marker_tuple_sealed::Sealed for (InvertibleMarker,) {}");
+    f.line("impl MarkerTuple for (InvertibleMarker,) {}");
+    f.line("impl marker_tuple_sealed::Sealed for (InvertibleMarker, PreservesStructureMarker) {}");
+    f.line("impl MarkerTuple for (InvertibleMarker, PreservesStructureMarker) {}");
+    f.blank();
+
+    // MarkerIntersection<Other> — type-level set intersection of marker tuples.
+    f.doc_comment("v0.2.2 Phase J: type-level set intersection of two marker tuples.");
+    f.doc_comment("");
+    f.doc_comment("Implemented exhaustively for every ordered pair in the closed catalogue.");
+    f.doc_comment("Composition combinators (`then`, `and_then`) use this trait to compute");
+    f.doc_comment("the output marker tuple of a composed primitive as the intersection of");
+    f.doc_comment("its two inputs' tuples. Because the catalogue is closed, the result is");
+    f.doc_comment("always another tuple in the catalogue — no open-world hazards.");
+    f.line("pub trait MarkerIntersection<Other: MarkerTuple>: MarkerTuple {");
+    f.indented_doc_comment("The intersection of `Self` and `Other` in the closed catalogue.");
+    f.line("    type Output: MarkerTuple;");
+    f.line("}");
+    f.blank();
+
+    // Emit the 36 MarkerIntersection impls programmatically.
+    // Canonical tuple order: (Total, Invertible, PreservesStructure).
+    let e_ = "()";
+    let t_ = "(TotalMarker,)";
+    let ti_ = "(TotalMarker, InvertibleMarker)";
+    let tis = "(TotalMarker, InvertibleMarker, PreservesStructureMarker)";
+    let i_ = "(InvertibleMarker,)";
+    let is_ = "(InvertibleMarker, PreservesStructureMarker)";
+    // Each row is (Self, [(Other, Intersection), ...]). Indexed by
+    // (T ∈ tuple, I ∈ tuple, S ∈ tuple) set membership.
+    let table: &[(&str, &[(&str, &str)])] = &[
+        (
+            e_,
+            &[
+                (e_, e_),
+                (t_, e_),
+                (ti_, e_),
+                (tis, e_),
+                (i_, e_),
+                (is_, e_),
+            ],
+        ),
+        (
+            t_,
+            &[
+                (e_, e_),
+                (t_, t_),
+                (ti_, t_),
+                (tis, t_),
+                (i_, e_),
+                (is_, e_),
+            ],
+        ),
+        (
+            ti_,
+            &[
+                (e_, e_),
+                (t_, t_),
+                (ti_, ti_),
+                (tis, ti_),
+                (i_, i_),
+                (is_, i_),
+            ],
+        ),
+        (
+            tis,
+            &[
+                (e_, e_),
+                (t_, t_),
+                (ti_, ti_),
+                (tis, tis),
+                (i_, i_),
+                (is_, is_),
+            ],
+        ),
+        (
+            i_,
+            &[
+                (e_, e_),
+                (t_, e_),
+                (ti_, i_),
+                (tis, i_),
+                (i_, i_),
+                (is_, i_),
+            ],
+        ),
+        (
+            is_,
+            &[
+                (e_, e_),
+                (t_, e_),
+                (ti_, i_),
+                (tis, is_),
+                (i_, i_),
+                (is_, is_),
+            ],
+        ),
+    ];
+    for (self_tup, row) in table.iter() {
+        for (other_tup, output_tup) in row.iter() {
+            f.line(&format!(
+                "impl MarkerIntersection<{other_tup}> for {self_tup} {{ type Output = {output_tup}; }}"
+            ));
+        }
+    }
+    f.blank();
+
+    // MarkersImpliedBy<Map> — compile-time check that a marker tuple carries
+    // enough properties to satisfy the GroundingMapKind's declared requirements.
+    f.doc_comment("v0.2.2 Phase J: compile-time check that a combinator's marker tuple");
+    f.doc_comment("carries every property declared by the `GroundingMapKind` a program");
+    f.doc_comment("claims. Implemented exhaustively by codegen for every valid `(tuple,");
+    f.doc_comment("map)` pair; absent impls reject the mismatched declaration at the");
+    f.doc_comment("`GroundingProgram::from_primitive` call site.");
+    f.line("pub trait MarkersImpliedBy<Map: GroundingMapKind>: MarkerTuple {}");
     f.blank();
 
     // Marker bitmask record. We use a bitmask-valued type parameter to
@@ -5481,109 +5613,136 @@ fn generate_grounding_combinator_surface(f: &mut RustFile) {
     f.line("}");
     f.blank();
 
-    // GroundingPrimitive<Out> carrier.
-    f.doc_comment("v0.2.2 Phase J: a single grounding primitive with its output type");
-    f.doc_comment("and marker bitmask.");
+    // GroundingPrimitive<Out, Markers> carrier — parametric over both the
+    // output type and the type-level marker tuple.
+    f.doc_comment("v0.2.2 Phase J: a single grounding primitive parametric over its output");
+    f.doc_comment("type `Out` and its type-level marker tuple `Markers`.");
     f.doc_comment("");
     f.doc_comment("Constructed only by the 12 enumerated combinator functions below;");
-    f.doc_comment("downstream cannot construct one directly.");
+    f.doc_comment("downstream cannot construct one directly. The `Markers` parameter");
+    f.doc_comment("defaults to `()` for backwards-compatible call sites, but each");
+    f.doc_comment("combinator returns a specific tuple — see `combinators::digest` etc.");
     f.line("#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]");
-    f.line("pub struct GroundingPrimitive<Out> {");
+    f.line("pub struct GroundingPrimitive<Out, Markers: MarkerTuple = ()> {");
     f.line("    op: GroundingPrimitiveOp,");
     f.line("    markers: MarkerBits,");
     f.line("    _out: PhantomData<Out>,");
+    f.line("    _markers: PhantomData<Markers>,");
     f.line("    _sealed: (),");
     f.line("}");
     f.blank();
-    f.line("impl<Out> GroundingPrimitive<Out> {");
+    f.line("impl<Out, Markers: MarkerTuple> GroundingPrimitive<Out, Markers> {");
     f.indented_doc_comment("Access the primitive op.");
     f.line("    #[inline]");
     f.line("    #[must_use]");
     f.line("    pub const fn op(&self) -> GroundingPrimitiveOp { self.op }");
     f.blank();
-    f.indented_doc_comment("Access the marker bitmask.");
+    f.indented_doc_comment("Access the runtime marker bitmask (mirrors the type-level tuple).");
     f.line("    #[inline]");
     f.line("    #[must_use]");
     f.line("    pub const fn markers(&self) -> MarkerBits { self.markers }");
     f.blank();
-    f.indented_doc_comment("Crate-internal constructor.");
+    f.indented_doc_comment("Crate-internal constructor. The type-level `Markers` tuple is");
+    f.indented_doc_comment("selected via turbofish at call sites inside the combinator functions.");
     f.line("    #[inline]");
     f.line("    #[must_use]");
     f.line("    #[allow(dead_code)]");
-    f.line("    pub(crate) const fn from_parts(op: GroundingPrimitiveOp, markers: MarkerBits) -> Self {");
-    f.line("        Self { op, markers, _out: PhantomData, _sealed: () }");
+    f.line("    pub(crate) const fn from_parts(");
+    f.line("        op: GroundingPrimitiveOp,");
+    f.line("        markers: MarkerBits,");
+    f.line("    ) -> Self {");
+    f.line("        Self { op, markers, _out: PhantomData, _markers: PhantomData, _sealed: () }");
     f.line("    }");
     f.line("}");
     f.blank();
 
-    // Emit the closed catalogue of 12 combinators.
+    // Emit the closed catalogue of 12 combinators. Each leaf combinator
+    // returns a `GroundingPrimitive<Out, M>` where M is its specific marker
+    // tuple — the type parameter is fixed by the return type signature.
     f.doc_comment("v0.2.2 Phase J: closed 12-combinator surface for building grounding");
-    f.doc_comment("programs. See `GroundingProgram` for composition.");
+    f.doc_comment("programs. See `GroundingProgram` for composition. Each leaf combinator");
+    f.doc_comment("returns a `GroundingPrimitive<Out, M>` carrying a specific marker tuple;");
+    f.doc_comment("the type parameter is what `GroundingProgram::from_primitive`'s");
+    f.doc_comment("`MarkersImpliedBy<Map>` bound checks at compile time.");
     f.line("pub mod combinators {");
-    f.line("    use super::{GroundingPrimitive, GroundingPrimitiveOp, MarkerBits};");
+    f.line("    use super::{");
+    f.line("        GroundingPrimitive, GroundingPrimitiveOp, InvertibleMarker,");
+    f.line("        MarkerBits, MarkerIntersection, MarkerTuple,");
+    f.line("        PreservesStructureMarker, TotalMarker,");
+    f.line("    };");
     f.blank();
-    let combinator_entries: &[(&str, &str, &str, &str)] = &[
+    // Each entry: (fn_name, op_variant, type_tuple, bits_expr, doc)
+    let combinator_entries: &[(&str, &str, &str, &str, &str)] = &[
         (
             "read_bytes",
             "ReadBytes",
+            "(TotalMarker, InvertibleMarker)",
             "TOTAL.union(MarkerBits::INVERTIBLE)",
             "Read a fixed-size byte slice from the input. `(Total, Invertible)`.",
         ),
         (
             "interpret_le_integer",
             "InterpretLeInteger",
+            "(TotalMarker, InvertibleMarker, PreservesStructureMarker)",
             "TOTAL.union(MarkerBits::INVERTIBLE).union(MarkerBits::PRESERVES_STRUCTURE)",
             "Interpret bytes as a little-endian integer at the target WittLevel.",
         ),
         (
             "interpret_be_integer",
             "InterpretBeInteger",
+            "(TotalMarker, InvertibleMarker, PreservesStructureMarker)",
             "TOTAL.union(MarkerBits::INVERTIBLE).union(MarkerBits::PRESERVES_STRUCTURE)",
             "Interpret bytes as a big-endian integer.",
         ),
         (
             "digest",
             "Digest",
+            "(TotalMarker,)",
             "TOTAL",
             "Hash bytes via blake3 → 32-byte digest → `Datum<W256>`. `(Total,)` only.",
         ),
         (
             "decode_utf8",
             "DecodeUtf8",
+            "(InvertibleMarker, PreservesStructureMarker)",
             "INVERTIBLE.union(MarkerBits::PRESERVES_STRUCTURE)",
             "Decode UTF-8 bytes. `(Invertible, PreservesStructure)` — not Total.",
         ),
         (
             "decode_json",
             "DecodeJson",
+            "(InvertibleMarker, PreservesStructureMarker)",
             "INVERTIBLE.union(MarkerBits::PRESERVES_STRUCTURE)",
             "Decode JSON bytes. `(Invertible, PreservesStructure)` — not Total.",
         ),
         (
             "select_field",
             "SelectField",
+            "(InvertibleMarker,)",
             "INVERTIBLE",
             "Select a field from a structured value. `(Invertible,)` — not Total.",
         ),
         (
             "select_index",
             "SelectIndex",
+            "(InvertibleMarker,)",
             "INVERTIBLE",
             "Select an indexed element. `(Invertible,)` — not Total.",
         ),
         (
             "const_value",
             "ConstValue",
+            "(TotalMarker, InvertibleMarker, PreservesStructureMarker)",
             "TOTAL.union(MarkerBits::INVERTIBLE).union(MarkerBits::PRESERVES_STRUCTURE)",
             "Inject a foundation-known constant. `(Total, Invertible, PreservesStructure)`.",
         ),
     ];
-    for (fn_name, op_variant, markers_expr, doc) in combinator_entries {
+    for (fn_name, op_variant, type_tuple, markers_expr, doc) in combinator_entries {
         f.line(&format!("    /// {doc}"));
         f.line("    #[inline]");
         f.line("    #[must_use]");
         f.line(&format!(
-            "    pub const fn {fn_name}<Out>() -> GroundingPrimitive<Out> {{"
+            "    pub const fn {fn_name}<Out>() -> GroundingPrimitive<Out, {type_tuple}> {{"
         ));
         f.line(&format!(
             "        GroundingPrimitive::from_parts(GroundingPrimitiveOp::{op_variant}, MarkerBits::{markers_expr})"
@@ -5592,37 +5751,48 @@ fn generate_grounding_combinator_surface(f: &mut RustFile) {
         f.blank();
     }
 
-    // Composition combinators: then, map_err, and_then. Each takes two
-    // primitives and intersects their markers.
-    f.line("    /// Compose two combinators sequentially. Markers are intersected.");
+    // Composition combinators: then, map_err, and_then. Each takes typed
+    // marker tuples and computes the intersection at the type level via the
+    // MarkerIntersection trait. The runtime `markers()` bitmask mirrors it.
+    f.line("    /// Compose two combinators sequentially. Markers are intersected at");
+    f.line("    /// the type level via the `MarkerIntersection` trait.");
     f.line("    #[inline]");
     f.line("    #[must_use]");
-    f.line("    pub const fn then<A, B>(");
-    f.line("        first: GroundingPrimitive<A>,");
-    f.line("        second: GroundingPrimitive<B>,");
-    f.line("    ) -> GroundingPrimitive<B> {");
+    f.line("    pub fn then<A, B, MA, MB>(");
+    f.line("        first: GroundingPrimitive<A, MA>,");
+    f.line("        second: GroundingPrimitive<B, MB>,");
+    f.line("    ) -> GroundingPrimitive<B, <MA as MarkerIntersection<MB>>::Output>");
+    f.line("    where");
+    f.line("        MA: MarkerTuple + MarkerIntersection<MB>,");
+    f.line("        MB: MarkerTuple,");
+    f.line("    {");
     f.line("        GroundingPrimitive::from_parts(");
     f.line("            GroundingPrimitiveOp::Then,");
     f.line("            first.markers().intersection(second.markers()),");
     f.line("        )");
     f.line("    }");
     f.blank();
-    f.line("    /// Map an error variant of a fallible combinator.");
+    f.line("    /// Map an error variant of a fallible combinator. Marker tuple");
+    f.line("    /// is preserved.");
     f.line("    #[inline]");
     f.line("    #[must_use]");
-    f.line("    pub const fn map_err<A>(");
-    f.line("        first: GroundingPrimitive<A>,");
-    f.line("    ) -> GroundingPrimitive<A> {");
+    f.line("    pub fn map_err<A, M: MarkerTuple>(");
+    f.line("        first: GroundingPrimitive<A, M>,");
+    f.line("    ) -> GroundingPrimitive<A, M> {");
     f.line("        GroundingPrimitive::from_parts(GroundingPrimitiveOp::MapErr, first.markers())");
     f.line("    }");
     f.blank();
     f.line("    /// Conditional composition (and_then). Markers are intersected.");
     f.line("    #[inline]");
     f.line("    #[must_use]");
-    f.line("    pub const fn and_then<A, B>(");
-    f.line("        first: GroundingPrimitive<A>,");
-    f.line("        second: GroundingPrimitive<B>,");
-    f.line("    ) -> GroundingPrimitive<B> {");
+    f.line("    pub fn and_then<A, B, MA, MB>(");
+    f.line("        first: GroundingPrimitive<A, MA>,");
+    f.line("        second: GroundingPrimitive<B, MB>,");
+    f.line("    ) -> GroundingPrimitive<B, <MA as MarkerIntersection<MB>>::Output>");
+    f.line("    where");
+    f.line("        MA: MarkerTuple + MarkerIntersection<MB>,");
+    f.line("        MB: MarkerTuple,");
+    f.line("    {");
     f.line("        GroundingPrimitive::from_parts(");
     f.line("            GroundingPrimitiveOp::AndThen,");
     f.line("            first.markers().intersection(second.markers()),");
@@ -5631,13 +5801,14 @@ fn generate_grounding_combinator_surface(f: &mut RustFile) {
     f.line("}");
     f.blank();
 
-    // GroundingProgram<Out, Map>.
+    // GroundingProgram<Out, Map> with the MarkersImpliedBy<Map> bound on
+    // `from_primitive`. Mismatched programs are rejected at compile time.
     f.doc_comment("v0.2.2 Phase J: sealed grounding program.");
     f.doc_comment("");
-    f.doc_comment("A composition of combinators with a statically tracked marker set.");
-    f.doc_comment("Constructed only via `GroundingProgram::from_primitive` which verifies");
-    f.doc_comment("the primitive's marker bitmask implies the properties declared by");
-    f.doc_comment("`Map: GroundingMapKind`.");
+    f.doc_comment("A composition of combinators with a statically tracked marker tuple.");
+    f.doc_comment("Constructed only via `GroundingProgram::from_primitive`, which requires");
+    f.doc_comment("via the `MarkersImpliedBy<Map>` trait bound that the primitive's marker");
+    f.doc_comment("tuple carries every property declared by `Map: GroundingMapKind`.");
     f.line("#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]");
     f.line("pub struct GroundingProgram<Out, Map: GroundingMapKind> {");
     f.line("    primitive: GroundingPrimitive<Out>,");
@@ -5647,16 +5818,59 @@ fn generate_grounding_combinator_surface(f: &mut RustFile) {
     f.blank();
     f.line("impl<Out, Map: GroundingMapKind> GroundingProgram<Out, Map> {");
     f.indented_doc_comment("Foundation-verified constructor. Accepts a primitive whose marker");
-    f.indented_doc_comment("bitmask at least matches the properties declared by `Map`. The");
-    f.indented_doc_comment("`MarkersImpliedBy<Map>` trait bound is auto-derived by codegen");
-    f.indented_doc_comment("for every valid `(marker_bits, map)` pair.");
+    f.indented_doc_comment("tuple satisfies `MarkersImpliedBy<Map>`. Programs built from");
+    f.indented_doc_comment("combinators whose marker tuple lacks a property `Map` requires are");
+    f.indented_doc_comment("rejected at compile time — this is Phase J's marquee correctness");
+    f.indented_doc_comment("claim: misdeclarations fail to compile.");
+    f.indented_doc_comment("");
+    f.indented_doc_comment("# Example: valid program");
+    f.indented_doc_comment("");
+    f.indented_doc_comment("```");
+    f.indented_doc_comment(
+        "use uor_foundation::enforcement::{GroundingProgram, IntegerGroundingMap, combinators};",
+    );
+    f.indented_doc_comment("let prog: GroundingProgram<u64, IntegerGroundingMap> =");
+    f.indented_doc_comment(
+        "    GroundingProgram::from_primitive(combinators::interpret_le_integer::<u64>());",
+    );
+    f.indented_doc_comment("let _ = prog;");
+    f.indented_doc_comment("```");
+    f.indented_doc_comment("");
+    f.indented_doc_comment("# Example: rejected misdeclaration");
+    f.indented_doc_comment("");
+    f.indented_doc_comment("```compile_fail");
+    f.indented_doc_comment(
+        "use uor_foundation::enforcement::{GroundingProgram, IntegerGroundingMap, combinators};",
+    );
+    f.indented_doc_comment("// digest returns (TotalMarker,) which does NOT satisfy");
+    f.indented_doc_comment(
+        "// MarkersImpliedBy<IntegerGroundingMap> — the line below fails to compile.",
+    );
+    f.indented_doc_comment("let prog: GroundingProgram<[u8; 32], IntegerGroundingMap> =");
+    f.indented_doc_comment(
+        "    GroundingProgram::from_primitive(combinators::digest::<[u8; 32]>());",
+    );
+    f.indented_doc_comment("let _ = prog;");
+    f.indented_doc_comment("```");
     f.line("    #[inline]");
     f.line("    #[must_use]");
-    f.line("    pub const fn from_primitive(primitive: GroundingPrimitive<Out>) -> Self {");
-    f.line("        Self { primitive, _map: PhantomData, _sealed: () }");
+    f.line("    pub fn from_primitive<Markers>(");
+    f.line("        primitive: GroundingPrimitive<Out, Markers>,");
+    f.line("    ) -> Self");
+    f.line("    where");
+    f.line("        Markers: MarkerTuple + MarkersImpliedBy<Map>,");
+    f.line("    {");
+    f.line("        Self {");
+    f.line("            primitive: GroundingPrimitive::from_parts(");
+    f.line("                primitive.op(),");
+    f.line("                primitive.markers(),");
+    f.line("            ),");
+    f.line("            _map: PhantomData,");
+    f.line("            _sealed: (),");
+    f.line("        }");
     f.line("    }");
     f.blank();
-    f.indented_doc_comment("Access the underlying primitive (carrying the full marker tuple).");
+    f.indented_doc_comment("Access the underlying primitive (erased marker tuple).");
     f.line("    #[inline]");
     f.line("    #[must_use]");
     f.line("    pub const fn primitive(&self) -> &GroundingPrimitive<Out> {");
@@ -5665,23 +5879,36 @@ fn generate_grounding_combinator_surface(f: &mut RustFile) {
     f.line("}");
     f.blank();
 
-    // MarkersImpliedBy<Map> impls for every sufficient (marker_bits, kind) pair.
-    // Note: we include this as a "proof of concept" — the foundation uses bitmask
-    // runtime comparison but the MarkersImpliedBy trait is the compile-time anchor.
-    f.doc_comment("v0.2.2 Phase J: MarkersImpliedBy impls for the closed catalogue of");
-    f.doc_comment("(combinator marker set, GroundingMapKind) pairs the foundation admits.");
-    f.line("impl MarkersImpliedBy<DigestGroundingMap> for TotalMarker {}");
-    f.line("impl MarkersImpliedBy<BinaryGroundingMap> for TotalMarker {}");
-    f.line("impl MarkersImpliedBy<DigestGroundingMap> for (TotalMarker, InvertibleMarker) {}");
+    // MarkersImpliedBy<Map> impls for every valid (tuple, map) pair.
+    // The rules:
+    // - BinaryGroundingMap requires {Total, Invertible}: tuples TI, TIS.
+    // - DigestGroundingMap requires {Total}: tuples T, TI, TIS.
+    // - IntegerGroundingMap requires {Total, Invertible, PreservesStructure}: tuple TIS.
+    // - JsonGroundingMap requires {Invertible, PreservesStructure}: tuples TIS, IS.
+    // - Utf8GroundingMap requires {Invertible, PreservesStructure}: tuples TIS, IS.
+    // 10 impls total.
+    f.doc_comment("v0.2.2 Phase J: MarkersImpliedBy impls for the closed catalogue of valid");
+    f.doc_comment("(marker tuple, GroundingMapKind) pairs. These are the compile-time");
+    f.doc_comment("witnesses the foundation accepts; every absent pair is a rejection.");
+    f.line("impl MarkersImpliedBy<DigestGroundingMap> for (TotalMarker,) {}");
     f.line("impl MarkersImpliedBy<BinaryGroundingMap> for (TotalMarker, InvertibleMarker) {}");
-    f.line(
-        "impl MarkersImpliedBy<IntegerGroundingMap> for (TotalMarker, InvertibleMarker, PreservesStructureMarker) {}",
-    );
+    f.line("impl MarkersImpliedBy<DigestGroundingMap> for (TotalMarker, InvertibleMarker) {}");
     f.line(
         "impl MarkersImpliedBy<BinaryGroundingMap> for (TotalMarker, InvertibleMarker, PreservesStructureMarker) {}",
     );
     f.line(
         "impl MarkersImpliedBy<DigestGroundingMap> for (TotalMarker, InvertibleMarker, PreservesStructureMarker) {}",
     );
+    f.line(
+        "impl MarkersImpliedBy<IntegerGroundingMap> for (TotalMarker, InvertibleMarker, PreservesStructureMarker) {}",
+    );
+    f.line(
+        "impl MarkersImpliedBy<JsonGroundingMap> for (TotalMarker, InvertibleMarker, PreservesStructureMarker) {}",
+    );
+    f.line(
+        "impl MarkersImpliedBy<Utf8GroundingMap> for (TotalMarker, InvertibleMarker, PreservesStructureMarker) {}",
+    );
+    f.line("impl MarkersImpliedBy<JsonGroundingMap> for (InvertibleMarker, PreservesStructureMarker) {}");
+    f.line("impl MarkersImpliedBy<Utf8GroundingMap> for (InvertibleMarker, PreservesStructureMarker) {}");
     f.blank();
 }

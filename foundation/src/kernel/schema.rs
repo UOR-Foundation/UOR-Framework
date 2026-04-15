@@ -4748,7 +4748,7 @@ pub mod term_pt_1_for_all {
 
 pub mod term_pt_2_lhs {
     /// `literalValue`
-    pub const LITERAL_VALUE: &str = "partition(A × B)";
+    pub const LITERAL_VALUE: &str = "partition(A × B); grounds PartitionCertificate";
 }
 
 pub mod term_pt_2_rhs {
@@ -4758,7 +4758,8 @@ pub mod term_pt_2_rhs {
 
 pub mod term_pt_2_for_all {
     /// `variableName`
-    pub const VARIABLE_NAME: &str = "A, B: TypeDefinition";
+    pub const VARIABLE_NAME: &str =
+        "A, B: TypeDefinition; ∀ cert:PartitionCertificate c: c.partitionComponent ∈ {Irreducible, Reducible, Units, Exterior}";
 }
 
 pub mod term_pt_3_lhs {
@@ -6332,7 +6333,8 @@ pub mod term_oa_4_for_all {
 
 pub mod term_oa_5_lhs {
     /// `literalValue`
-    pub const LITERAL_VALUE: &str = "Information cost of δ (division by 2)";
+    pub const LITERAL_VALUE: &str =
+        "Information cost of δ (division by 2); grounds MultiplicationCertificate";
 }
 
 pub mod term_oa_5_rhs {
@@ -6342,7 +6344,8 @@ pub mod term_oa_5_rhs {
 
 pub mod term_oa_5_for_all {
     /// `variableName`
-    pub const VARIABLE_NAME: &str = "p = 2";
+    pub const VARIABLE_NAME: &str =
+        "p = 2; ∀ cert:MultiplicationCertificate c: c.landauerCostNats ≥ (2R-1) · (N/R)² · 64 · ln 2";
 }
 
 pub mod term_ht_1_lhs {

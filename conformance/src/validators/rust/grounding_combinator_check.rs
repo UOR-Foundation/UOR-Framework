@@ -41,8 +41,8 @@ pub fn validate(workspace: &Path) -> Result<ConformanceReport> {
         // PrimitiveOp + GroundingPrimitive.
         ("GroundingPrimitiveOp enum", "pub enum GroundingPrimitiveOp"),
         (
-            "GroundingPrimitive<Out>",
-            "pub struct GroundingPrimitive<Out>",
+            "GroundingPrimitive<Out, Markers>",
+            "pub struct GroundingPrimitive<Out, Markers: MarkerTuple = ()>",
         ),
         // MarkerBits + marker tokens.
         ("MarkerBits struct", "pub struct MarkerBits"),
@@ -52,52 +52,70 @@ pub fn validate(workspace: &Path) -> Result<ConformanceReport> {
             "PreservesStructureMarker token",
             "pub struct PreservesStructureMarker;",
         ),
-        // MarkersImpliedBy trait.
+        // v0.2.2 T1.1: MarkerTuple + MarkerIntersection sealed traits.
+        (
+            "MarkerTuple sealed trait",
+            "pub trait MarkerTuple: marker_tuple_sealed::Sealed",
+        ),
+        (
+            "MarkerIntersection<Other> trait",
+            "pub trait MarkerIntersection<Other: MarkerTuple>: MarkerTuple",
+        ),
+        // MarkersImpliedBy trait + the bound on from_primitive.
         (
             "MarkersImpliedBy trait",
-            "pub trait MarkersImpliedBy<Map: GroundingMapKind>",
+            "pub trait MarkersImpliedBy<Map: GroundingMapKind>: MarkerTuple",
+        ),
+        (
+            "from_primitive MarkersImpliedBy bound",
+            "Markers: MarkerTuple + MarkersImpliedBy<Map>",
+        ),
+        // compile_fail doctest anchor — Phase J marquee correctness claim.
+        (
+            "GroundingProgram compile_fail doctest",
+            "compile_fail",
         ),
         // The 12 combinators in the combinators module.
         ("combinators module", "pub mod combinators {"),
         (
             "combinators::read_bytes",
-            "pub const fn read_bytes<Out>() -> GroundingPrimitive<Out>",
+            "pub const fn read_bytes<Out>() -> GroundingPrimitive<Out, (TotalMarker, InvertibleMarker)>",
         ),
         (
             "combinators::interpret_le_integer",
-            "pub const fn interpret_le_integer<Out>() -> GroundingPrimitive<Out>",
+            "pub const fn interpret_le_integer<Out>(",
         ),
         (
             "combinators::interpret_be_integer",
-            "pub const fn interpret_be_integer<Out>() -> GroundingPrimitive<Out>",
+            "pub const fn interpret_be_integer<Out>(",
         ),
         (
             "combinators::digest",
-            "pub const fn digest<Out>() -> GroundingPrimitive<Out>",
+            "pub const fn digest<Out>() -> GroundingPrimitive<Out, (TotalMarker,)>",
         ),
         (
             "combinators::decode_utf8",
-            "pub const fn decode_utf8<Out>() -> GroundingPrimitive<Out>",
+            "pub const fn decode_utf8<Out>(",
         ),
         (
             "combinators::decode_json",
-            "pub const fn decode_json<Out>() -> GroundingPrimitive<Out>",
+            "pub const fn decode_json<Out>(",
         ),
         (
             "combinators::select_field",
-            "pub const fn select_field<Out>() -> GroundingPrimitive<Out>",
+            "pub const fn select_field<Out>() -> GroundingPrimitive<Out, (InvertibleMarker,)>",
         ),
         (
             "combinators::select_index",
-            "pub const fn select_index<Out>() -> GroundingPrimitive<Out>",
+            "pub const fn select_index<Out>() -> GroundingPrimitive<Out, (InvertibleMarker,)>",
         ),
         (
             "combinators::const_value",
-            "pub const fn const_value<Out>() -> GroundingPrimitive<Out>",
+            "pub const fn const_value<Out>(",
         ),
-        ("combinators::then", "pub const fn then<A, B>("),
-        ("combinators::map_err", "pub const fn map_err<A>("),
-        ("combinators::and_then", "pub const fn and_then<A, B>("),
+        ("combinators::then", "pub fn then<A, B, MA, MB>("),
+        ("combinators::map_err", "pub fn map_err<A, M: MarkerTuple>("),
+        ("combinators::and_then", "pub fn and_then<A, B, MA, MB>("),
         // GroundingProgram<Out, Map>.
         (
             "GroundingProgram<Out, Map>",
@@ -105,7 +123,7 @@ pub fn validate(workspace: &Path) -> Result<ConformanceReport> {
         ),
         (
             "GroundingProgram::from_primitive",
-            "pub const fn from_primitive(primitive: GroundingPrimitive<Out>) -> Self",
+            "pub fn from_primitive<Markers>(",
         ),
     ];
 
@@ -119,10 +137,11 @@ pub fn validate(workspace: &Path) -> Result<ConformanceReport> {
     if missing.is_empty() {
         report.push(TestResult::pass(
             VALIDATOR,
-            "Phase J combinator-only grounding: exactly 12 combinators, \
-             GroundingPrimitive<Out>, GroundingPrimitiveOp, MarkerBits, \
-             3 marker tokens, MarkersImpliedBy<Map>, and GroundingProgram<Out, Map> \
-             all present",
+            "Phase J combinator-only grounding: 12 parametric combinators with \
+             typed marker tuples, MarkerTuple + MarkerIntersection + \
+             MarkersImpliedBy<Map> sealed traits, from_primitive bounded to \
+             reject misdeclarations at compile time, compile_fail doctest \
+             present, GroundingProgram<Out, Map> sealed carrier — all present",
         ));
     } else {
         report.push(TestResult::fail_with_details(

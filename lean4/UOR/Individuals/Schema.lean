@@ -5833,7 +5833,7 @@ def term_OA_5_forAll : UOR.Kernel.Schema.ForAllDeclaration UOR.Prims.Standard :=
 
 -- 
 def term_OA_5_lhs : UOR.Kernel.Schema.LiteralExpression UOR.Prims.Standard := {
-  literalValue := some (("Information cost of δ (division by 2)" : String))
+  literalValue := some (("Information cost of δ (division by 2); grounds MultiplicationCertificate" : String))
 }
 
 -- 
@@ -7081,7 +7081,7 @@ def term_PT_2_forAll : UOR.Kernel.Schema.ForAllDeclaration UOR.Prims.Standard :=
 
 -- 
 def term_PT_2_lhs : UOR.Kernel.Schema.LiteralExpression UOR.Prims.Standard := {
-  literalValue := some (("partition(A × B)" : String))
+  literalValue := some (("partition(A × B); grounds PartitionCertificate" : String))
 }
 
 -- 

@@ -1,5 +1,5 @@
 # UOR Foundation SHACL Shapes
-# Generated from ontology v0.2.1 — 457 NodeShapes.
+# Generated from ontology v0.2.2 — 466 NodeShapes (Phases A–J + T1 cleanup).
 
 @prefix rdf:        <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix rdfs:       <http://www.w3.org/2000/01/rdf-schema#> .
@@ -7266,6 +7266,12 @@ uor-sh:PredicateShapeShape
     a               sh:NodeShape ;
     sh:targetClass  conformance:PredicateShape ;
     rdfs:label      "PredicateShapeShape" .
+
+# v0.2.2 T1.2: InteractionShape backs InteractionDeclarationBuilder.
+uor-sh:InteractionShapeShape
+    a               sh:NodeShape ;
+    sh:targetClass  conformance:InteractionShape ;
+    rdfs:label      "InteractionShapeShape" .
 
 uor-sh:WitnessDatumShape
     a               sh:NodeShape ;

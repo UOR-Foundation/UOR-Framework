@@ -145,6 +145,19 @@ fn classes() -> Vec<Class> {
             subclass_of: &["https://uor.foundation/conformance/Shape"],
             disjoint_with: &[],
         },
+        // v0.2.2 T1.2: Shape backing the InteractionDeclarationBuilder
+        // validate path (originally planned for Phase E but not shipped).
+        Class {
+            id: "https://uor.foundation/conformance/InteractionShape",
+            label: "InteractionShape",
+            comment: "Shape describing the required surface of an \
+                      InteractionDeclaration consumed by the foundation's \
+                      InteractionDeclarationBuilder: peer protocol, \
+                      convergence predicate, and commutator state class. \
+                      Rejects builders missing any of the three.",
+            subclass_of: &["https://uor.foundation/conformance/Shape"],
+            disjoint_with: &[],
+        },
         // ── Amendment 95: Declarative enforcement types ──
         Class {
             id: "https://uor.foundation/conformance/WitnessDatum",

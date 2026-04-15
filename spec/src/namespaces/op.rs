@@ -5206,11 +5206,15 @@ fn raw_individuals_vec() -> Vec<Individual> {
             type_: "https://uor.foundation/op/Identity",
             label: "PT_2",
             comment: "Product type partition product: partition(A × B) = \
-                      partition(A) ⊗ partition(B).",
+                      partition(A) ⊗ partition(B). v0.2.2 T1.3: grounds \
+                      cert:PartitionCertificate — every PartitionCertificate \
+                      attests the PartitionComponent classification \
+                      (Irreducible / Reducible / Units / Exterior) derived \
+                      from this partition-map identity.",
             properties: &[
-                ("https://uor.foundation/op/lhs", IndividualValue::Str("partition(A × B)")),
+                ("https://uor.foundation/op/lhs", IndividualValue::Str("partition(A × B); grounds PartitionCertificate")),
                 ("https://uor.foundation/op/rhs", IndividualValue::Str("partition(A) ⊗ partition(B)")),
-                ("https://uor.foundation/op/forAll", IndividualValue::Str("A, B: TypeDefinition")),
+                ("https://uor.foundation/op/forAll", IndividualValue::Str("A, B: TypeDefinition; \u{2200} cert:PartitionCertificate c: c.partitionComponent \u{2208} {Irreducible, Reducible, Units, Exterior}")),
                 (
                     "https://uor.foundation/op/verificationDomain",
                     IndividualValue::IriRef("https://uor.foundation/op/Topological"),
@@ -7366,17 +7370,18 @@ fn raw_individuals_vec() -> Vec<Individual> {
             id: "https://uor.foundation/op/OA_5",
             type_: "https://uor.foundation/op/Identity",
             label: "OA_5",
-            comment: "Entropy per \u{03b4}-level equals the crossing cost: \
-                      each application of the \u{03b4}-operator (division by \
-                      2) costs ln 2 nats in the Archimedean completion, which \
-                      is the per-bit Landauer cost.",
+            comment: "Entropy per delta-level equals the crossing cost: each \
+                      application of the delta-operator (division by 2) costs \
+                      ln 2 nats in the Archimedean completion, which is the \
+                      per-bit Landauer cost. v0.2.2 Phase C.4: grounds \
+                      MultiplicationCertificate.",
             properties: &[
                 ("https://uor.foundation/op/lhs",
-                 IndividualValue::Str("Information cost of \u{03b4} (division by 2)")),
+                 IndividualValue::Str("Information cost of delta (division by 2); grounds MultiplicationCertificate")),
                 ("https://uor.foundation/op/rhs",
-                 IndividualValue::Str("ln 2 nats")),
+                 IndividualValue::Str("ln 2 nats per MultiplicationCertificate sub-multiplication")),
                 ("https://uor.foundation/op/forAll",
-                 IndividualValue::Str("p = 2")),
+                 IndividualValue::Str("p = 2; every MultiplicationCertificate accumulates OA_5 cost")),
                 (
                     "https://uor.foundation/op/verificationDomain",
                     IndividualValue::IriRef("https://uor.foundation/op/ArithmeticValuation"),

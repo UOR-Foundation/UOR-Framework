@@ -196,6 +196,10 @@ pub fn run_all(paths: &WorkspacePaths) -> anyhow::Result<ConformanceReport> {
     report.extend(validators::docs::links::validate(&paths.artifacts)?);
     // v0.2.2 W5: ψ vocabulary leak gate (consumer-facing surface).
     report.extend(validators::docs::psi_leakage::validate(&paths.workspace)?);
+    // v0.2.2 T1.5 (cleanup): concept page count matches CONCEPT_PAGES constant.
+    report.extend(validators::docs::concept_pages_count::validate(
+        &paths.workspace,
+    )?);
 
     // 8. Website
     report.extend(validators::website::html::validate(&paths.artifacts)?);

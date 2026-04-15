@@ -175,6 +175,8 @@ foundation/src/enforcement.rs: trait Grounding
 foundation/src/enforcement.rs: trait GroundingMapKind
 foundation/src/enforcement.rs: trait ImpossibilityWitnessKind
 foundation/src/enforcement.rs: trait Invertible
+foundation/src/enforcement.rs: trait MarkerIntersection
+foundation/src/enforcement.rs: trait MarkerTuple
 foundation/src/enforcement.rs: trait MarkersImpliedBy
 foundation/src/enforcement.rs: trait Observable
 foundation/src/enforcement.rs: trait OntologyTarget
