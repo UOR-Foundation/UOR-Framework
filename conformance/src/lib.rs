@@ -202,19 +202,16 @@ pub fn run_all(paths: &WorkspacePaths) -> anyhow::Result<ConformanceReport> {
     // v0.2.2 target-doc cross-reference validators (Workstream A):
     // structural checks against external/uor-foundation-target-v2.md
     // prescriptions. Catch drift that behavioral tests cannot observe.
-    report.extend(validators::rust::target::sealed_type_coverage::validate(
-        &paths.workspace,
-    )?);
-    report.extend(validators::rust::target::resolver_signature_shape::validate(&paths.workspace)?);
+    report.extend(validators::rust::target_doc::sealed_type_coverage::validate(&paths.workspace)?);
     report.extend(
-        validators::rust::target::constraint_encoder_completeness::validate(&paths.workspace)?,
+        validators::rust::target_doc::resolver_signature_shape::validate(&paths.workspace)?,
     );
-    report.extend(validators::rust::target::w4_grounding_closure::validate(
-        &paths.workspace,
-    )?);
-    report.extend(validators::rust::target::spectral_sequence_walk::validate(
-        &paths.workspace,
-    )?);
+    report.extend(
+        validators::rust::target_doc::constraint_encoder_completeness::validate(&paths.workspace)?,
+    );
+    report.extend(validators::rust::target_doc::w4_grounding_closure::validate(&paths.workspace)?);
+    report
+        .extend(validators::rust::target_doc::spectral_sequence_walk::validate(&paths.workspace)?);
 
     // 2. Ontology inventory
     report.extend(validators::ontology::inventory::validate(&paths.artifacts)?);

@@ -116,8 +116,8 @@ pub use enforcement::{
     CalibrationError, Certificate, CertificateKind, Certified, CompileUnit, CompileUnitBuilder,
     ContentAddress, ContentFingerprint, Derivation, Grounded, GroundingCertificate, Hasher,
     LandauerBudget, MultiplicationCertificate, Nanos, PipelineFailure, ReplayError, ShapeViolation,
-    Term, TermArena, TermList, Trace, TraceEvent, UorTime, Validated,
-    FINGERPRINT_MAX_BYTES, FINGERPRINT_MIN_BYTES, TRACE_MAX_EVENTS, TRACE_REPLAY_FORMAT_VERSION,
+    Term, TermArena, TermList, Trace, TraceEvent, UorTime, Validated, FINGERPRINT_MAX_BYTES,
+    FINGERPRINT_MIN_BYTES, TRACE_MAX_EVENTS, TRACE_REPLAY_FORMAT_VERSION,
 };
 
 /// Phase B (target §4.1 W10): narrow host-types trait — the only carrier for
