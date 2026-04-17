@@ -322,8 +322,8 @@ fn generate_lib_rs(ontology: &Ontology) -> String {
     f.line("    CalibrationError, Certificate, CertificateKind, Certified, CompileUnit, CompileUnitBuilder,");
     f.line("    ContentAddress, ContentFingerprint, Derivation, Grounded, GroundingCertificate, Hasher,");
     f.line("    LandauerBudget, MultiplicationCertificate, Nanos, PipelineFailure, ReplayError, ShapeViolation,");
-    f.line("    Term, TermArena, TermList, Trace, TraceEvent, UorTime, Validated,");
-    f.line("    FINGERPRINT_MAX_BYTES, FINGERPRINT_MIN_BYTES, TRACE_MAX_EVENTS, TRACE_REPLAY_FORMAT_VERSION,");
+    f.line("    Term, TermArena, TermList, Trace, TraceEvent, UorTime, Validated, FINGERPRINT_MAX_BYTES,");
+    f.line("    FINGERPRINT_MIN_BYTES, TRACE_MAX_EVENTS, TRACE_REPLAY_FORMAT_VERSION,");
     f.line("};");
     f.blank();
 
@@ -431,28 +431,81 @@ typed Rust traits. Import and implement.
 uor-foundation = "{version}"
 ```
 
-```rust
-use uor_foundation::Primitives;
+### HostTypes (target §4.1 W10)
 
-struct MyImpl;
-impl Primitives for MyImpl {{
-    type String = str;
-    type Integer = i64;
-    type NonNegativeInteger = u64;
-    type PositiveInteger = u64;
-    type Decimal = f64;
-    type Boolean = bool;
-}}
+Every foundation trait is parametric over `HostTypes` — a sealed bundle
+declaring the host-environment types the ontology references.
+`DefaultHostTypes` ships for the common case; downstream implementers
+supply their own `HostTypes` impl when they need non-default carriers.
+
+```rust
+use uor_foundation::{{DefaultHostTypes, HostTypes}};
+
+// Default bundle — satisfies every ring-adjacent surface. Ring
+// arithmetic is mono-sorted by construction of the term grammar: host
+// slots never participate.
+type H = DefaultHostTypes;
 ```
 
-Then implement any foundation trait with your chosen primitives:
+### Grounding maps (target §4.3)
+
+Downstream sources of external data bind to `GroundingMapKind` by
+implementing `Grounding` with a combinator `program()`. The foundation
+supplies `ground()` via the sealed `GroundingExt` extension trait — the
+program's marker tuple mechanically verifies that the declared `Map`
+matches the combinator decomposition.
+
+```rust
+use uor_foundation::enforcement::{{
+    combinators, BinaryGroundingMap, GroundedCoord, Grounding, GroundingExt,
+    GroundingProgram,
+}};
+
+struct ReadFirstByte;
+
+impl Grounding for ReadFirstByte {{
+    type Output = GroundedCoord;
+    type Map = BinaryGroundingMap;
+
+    // Downstream provides ONLY program(). `ground()` is foundation-owned
+    // via the sealed `GroundingExt` blanket impl.
+    fn program(&self) -> GroundingProgram<GroundedCoord, BinaryGroundingMap> {{
+        GroundingProgram::from_primitive(combinators::read_bytes::<GroundedCoord>())
+    }}
+}}
+
+// Callers reach ground() through the sealed extension trait.
+let g = ReadFirstByte;
+let coord: Option<GroundedCoord> = <ReadFirstByte as GroundingExt>::ground(&g, &[0x42]);
+```
+
+### Resolvers (target §4.2)
+
+Every resolver is a module with a `certify` free function that consumes
+a `&Validated<Input, P>` carrier and returns
+`Result<Certified<SuccessCert>, Certified<ImpossibilityWitness>>`.
 
 ```rust,ignore
-use uor_foundation::bridge::partition::FreeRank;
+use uor_foundation::enforcement::{{resolver, ConstrainedTypeInput}};
+use uor_foundation_test_helpers::{{validated_runtime, Fnv1aHasher16}};
 
-impl FreeRank<MyImpl> for MyFreeRank {{
-    // ...
-}}
+let input = validated_runtime(ConstrainedTypeInput::default());
+let cert = resolver::tower_completeness::certify::<_, _, Fnv1aHasher16>(&input)?;
+// cert: Certified<LiftChainCertificate>
+```
+
+The 22 resolver modules share this shape; the only exception is
+`multiplication::certify(&MulContext)` whose input is a self-validated
+shape (target §4.2 MulContext exemption).
+
+### Wall-clock (target §1.7)
+
+`UorTime` records three foundation-internal clocks; the wall-clock
+lower bound emerges from `min_wall_clock(&Calibration)`:
+
+```rust,ignore
+use uor_foundation::enforcement::calibrations::X86_SERVER;
+let min_nanos = grounded.uor_time().min_wall_clock(&X86_SERVER).as_u64();
 ```
 
 ## Module structure
@@ -464,8 +517,9 @@ impl FreeRank<MyImpl> for MyFreeRank {{
 
 ## Features
 
-This crate is `#![no_std]` with zero mandatory dependencies. The `uor!`
-proc macro (from `uor-foundation-macros`) parses term-language expressions
+This crate is `#![no_std]` with a single mandatory dependency on `libm`
+(always-on transcendental math per target §1.6). The `uor!` proc macro
+is re-exported from `uor-foundation` and parses term-language expressions
 at compile time.
 
 ## Substrate-pluggable hashing
