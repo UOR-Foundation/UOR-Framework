@@ -20,9 +20,9 @@
 #![deny(clippy::panic)]
 #![deny(clippy::missing_errors_doc)]
 
+use uor_foundation::enforcement::__test_helpers;
 use uor_foundation::enforcement::{
-    ContentFingerprint, Hasher, MulContext, Trace, TraceEvent, Validated, __test_helpers,
-    FINGERPRINT_MAX_BYTES,
+    ContentFingerprint, Hasher, MulContext, Trace, TraceEvent, Validated, FINGERPRINT_MAX_BYTES,
 };
 
 /// Test-only ctor: build a Trace from a slice of events with a
