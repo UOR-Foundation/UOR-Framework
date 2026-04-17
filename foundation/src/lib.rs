@@ -93,12 +93,11 @@
 //!
 //! # Scope note
 //!
-//! This crate is conformance-first: every surface the target architecture
-//! document (`external/uor-foundation-target-v2.md`) specifies is present,
-//! and every surface it rejects (e.g., the deleted v0.2.1 `Primitives` trait
-//! and unit-struct resolver façades) is absent. There is no migration layer,
-//! no deprecation aliases, and no compatibility shims — the crate is either
-//! in conformance with the target document or it isn't.
+//! This crate is conformance-first: every surface the ontology specifies
+//! is present, and every surface it rejects (e.g., the deleted v0.2.1
+//! `Primitives` trait and unit-struct resolver façades) is absent. There
+//! is no migration layer, no deprecation aliases, and no compatibility
+//! shims — the crate is either in conformance with the ontology or it isn't.
 
 #![no_std]
 

@@ -291,12 +291,11 @@ fn generate_lib_rs(ontology: &Ontology) -> String {
          //!\n\
          //! # Scope note\n\
          //!\n\
-         //! This crate is conformance-first: every surface the target architecture\n\
-         //! document (`external/uor-foundation-target-v2.md`) specifies is present,\n\
-         //! and every surface it rejects (e.g., the deleted v0.2.1 `Primitives` trait\n\
-         //! and unit-struct resolver façades) is absent. There is no migration layer,\n\
-         //! no deprecation aliases, and no compatibility shims — the crate is either\n\
-         //! in conformance with the target document or it isn't.",
+         //! This crate is conformance-first: every surface the ontology specifies\n\
+         //! is present, and every surface it rejects (e.g., the deleted v0.2.1\n\
+         //! `Primitives` trait and unit-struct resolver façades) is absent. There\n\
+         //! is no migration layer, no deprecation aliases, and no compatibility\n\
+         //! shims — the crate is either in conformance with the ontology or it isn't.",
         ontology.version,
     ));
 

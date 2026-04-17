@@ -199,9 +199,10 @@ pub fn run_all(paths: &WorkspacePaths) -> anyhow::Result<ConformanceReport> {
         &paths.workspace,
     )?);
 
-    // v0.2.2 target-doc cross-reference validators (Workstream A):
-    // structural checks against external/uor-foundation-target-v2.md
-    // prescriptions. Catch drift that behavioral tests cannot observe.
+    // v0.2.2 structural cross-reference validators (Workstream A):
+    // static-snapshot checks of the sealed surface, resolver signature
+    // shape, closed enumerations, and trait-shape invariants. Catch
+    // structural drift that behavioral tests cannot observe.
     report.extend(validators::rust::target_doc::sealed_type_coverage::validate(&paths.workspace)?);
     report.extend(
         validators::rust::target_doc::resolver_signature_shape::validate(&paths.workspace)?,

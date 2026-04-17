@@ -4,10 +4,9 @@ All notable changes to UOR-Framework are documented in this file.
 
 ## v0.2.2 production-readiness closure — 2026-04-17
 
-Brings `uor-foundation` to conformance with every §9 acceptance criterion of
-[external/uor-foundation-target-v2.md](external/uor-foundation-target-v2.md).
-Nothing deferred to a future version; every commitment is either satisfied
-or named in a failing validator. Conformance suite reports **532 passed, 0
+Brings `uor-foundation` to conformance with the full v0.2.2 architectural
+closure. Nothing deferred to a future version; every commitment is either
+satisfied or named in a failing validator. Conformance suite reports **532 passed, 0
 warnings, 0 failed**.
 
 ### Target-doc compliance
@@ -653,8 +652,8 @@ New test files under `foundation/tests/`:
 ### Phase expansion (target-v2 — all in scope, not deferred)
 
 v0.2.2 was expanded beyond the original 18-W-item scope to fold the
-full target-v2 architecture into a single release. Every item from
-`external/uor-foundation-target-v2.md §9` is delivered.
+full target architecture into a single release. Every acceptance item
+is delivered.
 
 #### Phase A — UorTime infrastructure (Q1)
 
