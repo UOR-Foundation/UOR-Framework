@@ -7,245 +7,245 @@
 use crate::enums::VerificationDomain;
 use crate::enums::ViolationKind;
 use crate::enums::WittLevel;
-use crate::Primitives;
+use crate::HostTypes;
 
 /// A constraint shape that a Prism-declared extension must satisfy. Analogous to sh:NodeShape in SHACL.
-pub trait Shape<P: Primitives> {
+pub trait Shape<H: HostTypes> {
     /// The OWL class that instances of this shape must belong to.
-    fn target_class(&self) -> &P::String;
+    fn target_class(&self) -> &H::HostString;
     /// Associated type for `PropertyConstraint`.
-    type PropertyConstraint: PropertyConstraint<P>;
+    type PropertyConstraint: PropertyConstraint<H>;
     /// A required property in this shape.
     fn required_property(&self) -> &[Self::PropertyConstraint];
     /// Top-level EBNF non-terminal name this Shape generates (e.g., "compile-unit-decl" for CompileUnitShape).
-    fn surface_form(&self) -> &P::String;
+    fn surface_form(&self) -> &H::HostString;
 }
 
 /// A single required property within a shape: the property URI, its expected range, minimum and maximum cardinality.
-pub trait PropertyConstraint<P: Primitives> {
+pub trait PropertyConstraint<H: HostTypes> {
     /// The property URI that must be present.
-    fn constraint_property(&self) -> &P::String;
+    fn constraint_property(&self) -> &H::HostString;
     /// The expected range of the required property.
-    fn constraint_range(&self) -> &P::String;
+    fn constraint_range(&self) -> &H::HostString;
     /// Minimum cardinality of the required property.
-    fn min_count(&self) -> P::NonNegativeInteger;
+    fn min_count(&self) -> u64;
     /// Maximum cardinality (0 = unbounded).
-    fn max_count(&self) -> P::NonNegativeInteger;
+    fn max_count(&self) -> u64;
     /// Literal surface keyword used in the conformance grammar for this property constraint (e.g., "root_term", "witt_level_ceiling").
-    fn surface_keyword(&self) -> &P::String;
+    fn surface_keyword(&self) -> &H::HostString;
     /// EBNF non-terminal that the value at this constraint slot must match (e.g., "program" for Term ranges, "name" for WittLevel ranges, "decimal-literal" for xsd:decimal, "domain-set" for non-functional IRI lists).
-    fn surface_production(&self) -> &P::String;
+    fn surface_production(&self) -> &H::HostString;
 }
 
 /// Shape for declaring a new WittLevel beyond Q3.
-pub trait WittLevelShape<P: Primitives>: Shape<P> {}
+pub trait WittLevelShape<H: HostTypes>: Shape<H> {}
 
 /// Shape for declaring an ExternalEffect.
-pub trait EffectShape<P: Primitives>: Shape<P> {}
+pub trait EffectShape<H: HostTypes>: Shape<H> {}
 
 /// Shape for declaring a ParallelProduct.
-pub trait ParallelShape<P: Primitives>: Shape<P> {}
+pub trait ParallelShape<H: HostTypes>: Shape<H> {}
 
 /// Shape for declaring a ProductiveStream (targets stream:Unfold, the coinductive constructor).
-pub trait StreamShape<P: Primitives>: Shape<P> {}
+pub trait StreamShape<H: HostTypes>: Shape<H> {}
 
 /// Shape for declaring a new DispatchRule in a DispatchTable.
-pub trait DispatchShape<P: Primitives>: Shape<P> {}
+pub trait DispatchShape<H: HostTypes>: Shape<H> {}
 
 /// Shape for declaring a Lease with LinearSite allocation.
-pub trait LeaseShape<P: Primitives>: Shape<P> {}
+pub trait LeaseShape<H: HostTypes>: Shape<H> {}
 
 /// Shape for declaring a GroundingMap from surface data to the ring.
-pub trait GroundingShape<P: Primitives>: Shape<P> {}
+pub trait GroundingShape<H: HostTypes>: Shape<H> {}
 
 /// The result of validating an extension against a shape: conforms (boolean), and violation details if non-conformant.
-pub trait ValidationResult<P: Primitives> {
+pub trait ValidationResult<H: HostTypes> {
     /// Associated type for `Shape`.
-    type Shape: Shape<P>;
+    type Shape: Shape<H>;
     /// The shape that was validated against.
     fn validation_shape(&self) -> &Self::Shape;
     /// The instance that was validated.
-    fn validation_target(&self) -> &P::String;
+    fn validation_target(&self) -> &H::HostString;
     /// True iff the target satisfies all constraints of the shape.
-    fn conforms(&self) -> P::Boolean;
+    fn conforms(&self) -> bool;
 }
 
 /// Shape for user-declared predicates. Requires a bounded evaluator (termination witness) and input type declaration.
-pub trait PredicateShape<P: Primitives>: Shape<P> {}
+pub trait PredicateShape<H: HostTypes>: Shape<H> {}
 
 /// Shape describing the required surface of an InteractionDeclaration consumed by the foundation's InteractionDeclarationBuilder: peer protocol, convergence predicate, and commutator state class. Rejects builders missing any of the three.
-pub trait InteractionShape<P: Primitives>: Shape<P> {}
+pub trait InteractionShape<H: HostTypes>: Shape<H> {}
 
 /// Opaque ring element witness. Cannot be constructed outside the foundation crate — only produced by reduction evaluation or the two-phase minting boundary.
-pub trait WitnessDatum<P: Primitives> {
+pub trait WitnessDatum<H: HostTypes> {
     /// The quantum level at which this witness datum was minted.
-    fn witness_level(&self) -> P::NonNegativeInteger;
+    fn witness_level(&self) -> u64;
     /// The raw byte representation of this witness datum.
-    fn witness_bytes(&self) -> &P::String;
+    fn witness_bytes(&self) -> &H::WitnessBytes;
 }
 
 /// Boundary crossing intermediate for a single grounded coordinate value. Not a WitnessDatum — must be validated and minted by the foundation.
-pub trait GroundedCoordinate<P: Primitives> {
+pub trait GroundedCoordinate<H: HostTypes> {
     /// The quantum level tag of this grounded coordinate.
     fn coordinate_level(&self) -> WittLevel;
 }
 
 /// Boundary crossing intermediate for a fixed-size array of GroundedCoordinate values. Stack-resident, no heap allocation.
-pub trait GroundedTuple<P: Primitives> {}
+pub trait GroundedTuple<H: HostTypes> {}
 
 /// Sealed marker trait class. Implemented only for GroundedCoordinate and GroundedTuple. Prevents downstream crates from substituting arbitrary types.
-pub trait GroundedValueMarker<P: Primitives> {}
+pub trait GroundedValueMarker<H: HostTypes> {}
 
 /// Generic validation-proof wrapper. Proves that the inner value was produced by the conformance checker, not fabricated by Prism code.
-pub trait ValidatedWrapper<P: Primitives> {
+pub trait ValidatedWrapper<H: HostTypes> {
     /// The validated inner value wrapped by this proof.
-    fn validated_inner(&self) -> &P::String;
+    fn validated_inner(&self) -> &H::HostString;
 }
 
 /// Opaque derivation trace that can only be extended by the rewrite engine. Records rewrite step count and root term content address.
-pub trait WitnessDerivation<P: Primitives> {}
+pub trait WitnessDerivation<H: HostTypes> {}
 
 /// Opaque site budget that can only be decremented by PinningEffect and incremented by UnbindingEffect — never by direct mutation.
-pub trait WitnessSiteBudget<P: Primitives> {}
+pub trait WitnessSiteBudget<H: HostTypes> {}
 
 /// Structured violation diagnostic carrying the shape IRI, constraint IRI, property IRI, expected range, cardinality bounds, and violation kind.
-pub trait ShapeViolationReport<P: Primitives> {
+pub trait ShapeViolationReport<H: HostTypes> {
     /// IRI of the conformance:Shape that was validated against.
-    fn shape_iri(&self) -> &P::String;
+    fn shape_iri(&self) -> &H::HostString;
     /// IRI of the specific PropertyConstraint that failed.
-    fn constraint_iri(&self) -> &P::String;
+    fn constraint_iri(&self) -> &H::HostString;
     /// IRI of the property that was missing or invalid.
-    fn property_iri(&self) -> &P::String;
+    fn property_iri(&self) -> &H::HostString;
     /// The expected range class IRI for the violated property.
-    fn expected_range(&self) -> &P::String;
+    fn expected_range(&self) -> &H::HostString;
     /// The minimum cardinality from the violated constraint.
-    fn violation_min_count(&self) -> P::NonNegativeInteger;
+    fn violation_min_count(&self) -> u64;
     /// The maximum cardinality from the violated constraint (0 = unbounded).
-    fn violation_max_count(&self) -> P::NonNegativeInteger;
+    fn violation_max_count(&self) -> u64;
     /// The kind of violation that occurred.
     fn violation_kind(&self) -> ViolationKind;
 }
 
 /// Builder for CompileUnit admission. Collects rootTerm, quantumLevelCeiling, thermodynamicBudget, and targetDomains. Validates against CompileUnitShape.
-pub trait CompileUnitBuilder<P: Primitives> {
+pub trait CompileUnitBuilder<H: HostTypes> {
     /// Associated type for `Term`.
-    type Term: crate::kernel::schema::Term<P>;
+    type Term: crate::kernel::schema::Term<H>;
     /// The root term expression for the CompileUnit.
     fn builder_root_term(&self) -> &Self::Term;
     /// The widest quantum level the computation may reference.
     fn builder_witt_level_ceiling(&self) -> WittLevel;
     /// Landauer-bounded energy budget in kBT ln 2 units.
-    fn builder_thermodynamic_budget(&self) -> P::Decimal;
+    fn builder_thermodynamic_budget(&self) -> H::Decimal;
     /// Verification domains targeted by the CompileUnit.
     fn builder_target_domains(&self) -> &[VerificationDomain];
 }
 
 /// Builder for EffectShape. Collects effect name, target sites, budget delta, and commutation flag.
-pub trait EffectDeclaration<P: Primitives> {
+pub trait EffectDeclaration<H: HostTypes> {
     /// The name of the declared effect.
-    fn effect_name(&self) -> &P::String;
+    fn effect_name(&self) -> &H::HostString;
     /// Site coordinates this effect reads or writes.
-    fn target_sites(&self) -> &[P::NonNegativeInteger];
+    fn target_sites(&self) -> &[u64];
     /// The site budget delta (positive = increment, negative = decrement).
-    fn budget_delta(&self) -> P::Integer;
+    fn budget_delta(&self) -> i64;
     /// Whether this effect commutes with effects on disjoint sites.
-    fn commutation_flag(&self) -> P::Boolean;
+    fn commutation_flag(&self) -> bool;
 }
 
 /// Builder for GroundingShape. Collects source type, ring mapping, and invertibility contract.
-pub trait GroundingDeclaration<P: Primitives> {
+pub trait GroundingDeclaration<H: HostTypes> {
     /// Associated type for `TypeDefinition`.
-    type TypeDefinition: crate::user::type_::TypeDefinition<P>;
+    type TypeDefinition: crate::user::type_::TypeDefinition<H>;
     /// The source type of incoming external data.
     fn grounding_source_type(&self) -> &Self::TypeDefinition;
     /// Description of the mapping from surface data to ring.
-    fn ring_mapping(&self) -> &P::String;
+    fn ring_mapping(&self) -> &H::HostString;
     /// Whether the grounding map is invertible.
-    fn invertibility_contract(&self) -> P::Boolean;
+    fn invertibility_contract(&self) -> bool;
 }
 
 /// Builder for DispatchShape. Collects predicate, target resolver, and dispatch priority.
-pub trait DispatchDeclaration<P: Primitives> {
+pub trait DispatchDeclaration<H: HostTypes> {
     /// Associated type for `PredicateExpression`.
-    type PredicateExpression: crate::kernel::reduction::PredicateExpression<P>;
+    type PredicateExpression: crate::kernel::reduction::PredicateExpression<H>;
     /// The predicate expression guarding this dispatch rule.
     fn dispatch_predicate(&self) -> &Self::PredicateExpression;
     /// Associated type for `Resolver`.
-    type Resolver: crate::bridge::resolver::Resolver<P>;
+    type Resolver: crate::bridge::resolver::Resolver<H>;
     /// The resolver to dispatch to when the predicate holds.
     fn target_resolver(&self) -> &Self::Resolver;
     /// Priority ordering for this dispatch rule (lower = first).
-    fn dispatch_priority(&self) -> P::NonNegativeInteger;
+    fn dispatch_priority(&self) -> u64;
 }
 
 /// Builder for LeaseShape. Collects linear site and lease scope.
-pub trait LeaseDeclaration<P: Primitives> {
+pub trait LeaseDeclaration<H: HostTypes> {
     /// The site coordinate allocated linearly by this lease.
-    fn linear_site(&self) -> P::NonNegativeInteger;
+    fn linear_site(&self) -> u64;
     /// The scope within which this lease is valid.
-    fn lease_scope(&self) -> &P::String;
+    fn lease_scope(&self) -> &H::HostString;
 }
 
 /// Builder for StreamShape. Collects unfold seed, step term, and productivity witness.
-pub trait StreamDeclaration<P: Primitives> {
+pub trait StreamDeclaration<H: HostTypes> {
     /// Associated type for `Term`.
-    type Term: crate::kernel::schema::Term<P>;
+    type Term: crate::kernel::schema::Term<H>;
     /// The seed term for the stream unfold constructor.
     fn unfold_seed(&self) -> &Self::Term;
     /// The step function term for the stream unfold.
     fn step_term(&self) -> &Self::Term;
     /// Evidence that the stream is productive (always produces a next element).
-    fn productivity_witness(&self) -> &P::String;
+    fn productivity_witness(&self) -> &H::HostString;
 }
 
 /// Builder for PredicateShape. Collects input type, evaluator term, and termination witness.
-pub trait PredicateDeclaration<P: Primitives> {
+pub trait PredicateDeclaration<H: HostTypes> {
     /// Associated type for `TypeDefinition`.
-    type TypeDefinition: crate::user::type_::TypeDefinition<P>;
+    type TypeDefinition: crate::user::type_::TypeDefinition<H>;
     /// The input type for the declared predicate.
     fn predicate_input_type(&self) -> &Self::TypeDefinition;
     /// Associated type for `Term`.
-    type Term: crate::kernel::schema::Term<P>;
+    type Term: crate::kernel::schema::Term<H>;
     /// The evaluator term for the declared predicate.
     fn evaluator_term(&self) -> &Self::Term;
     /// Evidence that the predicate evaluator terminates on all inputs.
-    fn termination_witness(&self) -> &P::String;
+    fn termination_witness(&self) -> &H::HostString;
 }
 
 /// Builder for ParallelShape. Collects site partition and disjointness witness.
-pub trait ParallelDeclaration<P: Primitives> {
+pub trait ParallelDeclaration<H: HostTypes> {
     /// Associated type for `Partition`.
-    type Partition: crate::bridge::partition::Partition<P>;
+    type Partition: crate::bridge::partition::Partition<H>;
     /// The site partition for the parallel composition.
     fn site_partition(&self) -> &Self::Partition;
     /// Evidence that the site partition components are pairwise disjoint.
-    fn disjointness_witness(&self) -> &P::String;
+    fn disjointness_witness(&self) -> &H::HostString;
 }
 
 /// Builder for WittLevelShape. Collects declared bit width, cycle size, and predecessor level.
-pub trait WittLevelDeclaration<P: Primitives> {
+pub trait WittLevelDeclaration<H: HostTypes> {
     /// The declared bit width for this quantum level.
-    fn declared_bit_width(&self) -> P::PositiveInteger;
+    fn declared_bit_width(&self) -> u64;
     /// The declared number of ring states at this level.
-    fn declared_cycle_size(&self) -> P::NonNegativeInteger;
+    fn declared_cycle_size(&self) -> u64;
     /// The predecessor quantum level in the chain.
     fn predecessor_level(&self) -> WittLevel;
 }
 
 /// Boundary session state tracker. Records crossing count and idempotency flag for the two-phase minting boundary.
-pub trait MintingSession<P: Primitives> {
+pub trait MintingSession<H: HostTypes> {
     /// Total boundary crossings in this minting session.
-    fn session_crossing_count(&self) -> P::NonNegativeInteger;
+    fn session_crossing_count(&self) -> u64;
     /// Whether applying this session's boundary effect twice equals applying it once.
-    fn session_is_idempotent(&self) -> P::Boolean;
+    fn session_is_idempotent(&self) -> bool;
 }
 
 /// An ontology fact recording that a particular OWL class should appear in the foundation crate's `prelude` module re-exports. The v0.2.1 Rust codegen walks PreludeExport individuals filtered by exportsClass to assemble the prelude membership list.
-pub trait PreludeExport<P: Primitives> {
+pub trait PreludeExport<H: HostTypes> {
     /// The OWL class IRI that the foundation crate's prelude module should re-export.
-    fn exports_class(&self) -> &P::String;
+    fn exports_class(&self) -> &H::HostString;
     /// The Rust identifier under which the prelude exposes this symbol. Codegen uses this when the class's generated Rust name differs from a desired prelude alias.
-    fn export_rust_name(&self) -> &P::String;
+    fn export_rust_name(&self) -> &H::HostString;
 }
 
 /// Shape validating that a CompileUnit carries all required properties before reduction admission. The unitAddress property is NOT required — it is computed by stage_initialization after shape validation passes.

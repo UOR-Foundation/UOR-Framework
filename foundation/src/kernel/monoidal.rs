@@ -4,42 +4,42 @@
 //!
 //! Space: Kernel
 
-use crate::Primitives;
+use crate::HostTypes;
 
 /// A ⊗ B: the sequential composition of two computations. Output of A feeds input of B.
-pub trait MonoidalProduct<P: Primitives> {
+pub trait MonoidalProduct<H: HostTypes> {
     /// Associated type for `ComputationDatum`.
-    type ComputationDatum: crate::user::morphism::ComputationDatum<P>;
+    type ComputationDatum: crate::user::morphism::ComputationDatum<H>;
     /// The left operand in the monoidal product A ⊗ B.
     fn left_operand(&self) -> &Self::ComputationDatum;
     /// The right operand in the monoidal product A ⊗ B.
     fn right_operand(&self) -> &Self::ComputationDatum;
     /// Associated type for `Datum`.
-    type Datum: crate::kernel::schema::Datum<P>;
+    type Datum: crate::kernel::schema::Datum<H>;
     /// The result datum of the composed computation A ⊗ B.
     fn composed_result(&self) -> &Self::Datum;
     /// σ(A⊗B) relationship: saturation of the sequential composition.
-    fn saturation_value(&self) -> P::Decimal;
+    fn saturation_value(&self) -> H::Decimal;
 }
 
 /// The identity computation I: passes input through unchanged. I ⊗ A ≅ A ≅ A ⊗ I.
-pub trait MonoidalUnit<P: Primitives> {
+pub trait MonoidalUnit<H: HostTypes> {
     /// Associated type for `Certificate`.
-    type Certificate: crate::bridge::cert::Certificate<P>;
+    type Certificate: crate::bridge::cert::Certificate<H>;
     /// Certificate witnessing I ⊗ A ≅ A ≅ A ⊗ I.
     fn unit_witness_ref(&self) -> &Self::Certificate;
 }
 
 /// The witness that (A⊗B)⊗C ≅ A⊗(B⊗C). The associativity isomorphism.
-pub trait MonoidalAssociator<P: Primitives> {
+pub trait MonoidalAssociator<H: HostTypes> {
     /// Associated type for `MonoidalProduct`.
-    type MonoidalProduct: MonoidalProduct<P>;
+    type MonoidalProduct: MonoidalProduct<H>;
     /// The left-grouped product (A⊗B)⊗C.
     fn associator_left(&self) -> &Self::MonoidalProduct;
     /// The right-grouped product A⊗(B⊗C).
     fn associator_right(&self) -> &Self::MonoidalProduct;
     /// Associated type for `Certificate`.
-    type Certificate: crate::bridge::cert::Certificate<P>;
+    type Certificate: crate::bridge::cert::Certificate<H>;
     /// Certificate witnessing the associativity isomorphism (A⊗B)⊗C ≅ A⊗(B⊗C).
     fn associator_witness_ref(&self) -> &Self::Certificate;
 }

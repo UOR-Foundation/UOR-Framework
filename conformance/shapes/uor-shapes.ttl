@@ -1,5 +1,6 @@
 # UOR Foundation SHACL Shapes
-# Generated from ontology v0.2.2 — 466 NodeShapes (Phases A–J + T1 cleanup).
+# Generated from ontology v0.2.2 — 468 NodeShapes (Phases A–J + T1 cleanup +
+# Workstream C: 2 impossibility cert subclasses).
 
 @prefix rdf:        <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix rdfs:       <http://www.w3.org/2000/01/rdf-schema#> .
@@ -7621,3 +7622,16 @@ uor-sh:PreludeExportShape
         sh:datatype xsd:string ;
     ] .
 
+# Workstream C (v0.2.2 closure): impossibility cert carriers for
+# resolver `certify` failure paths per target §4.2
+# `Certified<ImpossibilityWitness>`. Minimal NodeShapes — the certs
+# are sealed witnesses with no external properties to constrain.
+uor-sh:GenericImpossibilityCertificateShape
+    a               sh:NodeShape ;
+    sh:targetClass  cert:GenericImpossibilityCertificate ;
+    rdfs:label      "GenericImpossibilityCertificateShape" .
+
+uor-sh:InhabitanceImpossibilityCertificateShape
+    a               sh:NodeShape ;
+    sh:targetClass  cert:InhabitanceImpossibilityCertificate ;
+    rdfs:label      "InhabitanceImpossibilityCertificateShape" .

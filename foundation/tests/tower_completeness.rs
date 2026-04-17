@@ -1,95 +1,56 @@
-//! v0.2.1 integration test: TowerCompletenessResolver.certify().target_level().
+//! Phase B: TowerCompleteness / IncrementalCompleteness free-function verdicts.
 //!
-//! Exercises the consumer-facing one-liner from the v0.2.1 ergonomics spec:
+//! The v0.2.1 `Resolver::new().certify(&input)` unit-struct path is deleted
+//! per target §4.1 W12. The only verdict surface is the module-per-resolver
+//! free-function path:
 //!
 //! ```rust,ignore
-//! let cert: Validated<LiftChainCertificate> =
-//!     TowerCompletenessResolver::new().certify(&shape)?;
-//! let level: WittLevel = cert.target_level();
+//! use uor_foundation::enforcement::resolver::tower_completeness;
+//! let validated = uor_foundation_test_helpers::validated_runtime(my_input);
+//! let verdict = tower_completeness::certify::<_, _, MyHasher>(&validated)?;
 //! ```
 //!
-//! v0.2.1 ships the resolver façade as a stub that returns the witness on
-//! every input; this test verifies that the trait surface compiles and that
-//! `Validated<LiftChainCertificate>` exposes `target_level` via auto-deref.
+//! v0.2.2 closure (target §4.2): resolvers consume `&Validated<T, P>` and
+//! return `Result<Certified<C>, Certified<ImpossibilityWitness>>`.
 
-use uor_foundation::enforcement::{
-    Certify, ConstrainedTypeInput, GenericImpossibilityWitness, IncrementalCompletenessResolver,
-    LiftChainCertificate, TowerCompletenessResolver, Validated,
-};
+use uor_foundation::enforcement::resolver::{incremental_completeness, tower_completeness};
+use uor_foundation::enforcement::ConstrainedTypeInput;
 use uor_foundation::WittLevel;
+use uor_foundation_test_helpers::{validated_runtime, Fnv1aHasher16};
 
 #[test]
-fn tower_resolver_constructible_via_new() {
-    let _resolver = TowerCompletenessResolver::new();
+fn tower_completeness_certifies_vacuous_input_via_free_function() {
+    let input = validated_runtime(ConstrainedTypeInput::default());
+    let result = tower_completeness::certify::<_, _, Fnv1aHasher16>(&input);
+    assert!(result.is_ok(), "vacuous input must certify");
 }
 
 #[test]
-fn tower_resolver_vacuously_certifies_empty_input() {
-    // An empty ConstrainedTypeInput passes all 6 preflight checks and all 7
-    // reduction stages vacuously. The pipeline returns Ok(LiftChainCertificate)
-    // whose target_level defaults to W8 per the shim.
-    let resolver = TowerCompletenessResolver::new();
-    let input = ConstrainedTypeInput::default();
-    let result = resolver.certify(&input);
-    assert!(result.is_ok(), "vacuous input must produce Ok");
-    let _: GenericImpossibilityWitness = GenericImpossibilityWitness::default();
-}
-
-#[test]
-fn incremental_resolver_certify_signature() {
-    // IncrementalCompletenessResolver::certify has the expected type surface
-    // and returns Ok for vacuous inputs.
-    let resolver = IncrementalCompletenessResolver::new();
-    let input = ConstrainedTypeInput::default();
-    let result: Result<Validated<LiftChainCertificate>, GenericImpossibilityWitness> =
-        resolver.certify(&input);
+fn incremental_completeness_certify_signature() {
+    let input = validated_runtime(ConstrainedTypeInput::default());
+    let result = incremental_completeness::certify::<_, _, Fnv1aHasher16>(&input);
     assert!(result.is_ok());
 }
 
 #[test]
-fn lift_chain_certificate_has_target_level_accessor() {
-    // v0.2.1 Phase 7b.1: LiftChainCertificate::default() now carries the
-    // canonical W32 level (Certify::DEFAULT_LEVEL) instead of the hardcoded
-    // W8 used in earlier drafts.
-    let cert = LiftChainCertificate::default();
-    let level: WittLevel = cert.target_level();
-    assert_eq!(level.witt_length(), 32);
+fn tower_completeness_certify_at_w16_returns_w16_target_level() {
+    let input = validated_runtime(ConstrainedTypeInput::default());
+    let cert = tower_completeness::certify_at::<_, _, Fnv1aHasher16>(&input, WittLevel::W16)
+        .expect("w16 certifies");
+    assert_eq!(cert.certificate().target_level().witt_length(), 16);
 }
 
 #[test]
-fn tower_resolver_certify_at_w16_returns_w16_target_level() {
-    // Phase 7b.1 load-bearing test: `certify_at` with an explicit level
-    // propagates through the pipeline and the minted LiftChainCertificate
-    // carries that level back to the caller via `target_level()`.
-    let resolver = TowerCompletenessResolver::new();
-    let input = ConstrainedTypeInput::default();
-    let cert = resolver
-        .certify_at(&input, WittLevel::W16)
-        .expect("empty constrained type certifies");
-    assert_eq!(cert.target_level().witt_length(), 16);
+fn tower_completeness_certify_at_w24_returns_w24_target_level() {
+    let input = validated_runtime(ConstrainedTypeInput::default());
+    let cert = tower_completeness::certify_at::<_, _, Fnv1aHasher16>(&input, WittLevel::new(24))
+        .expect("w24 certifies");
+    assert_eq!(cert.certificate().target_level().witt_length(), 24);
 }
 
 #[test]
-fn tower_resolver_certify_at_w24_returns_w24_target_level() {
-    let resolver = TowerCompletenessResolver::new();
-    let input = ConstrainedTypeInput::default();
-    let cert = resolver
-        .certify_at(&input, WittLevel::new(24))
-        .expect("empty constrained type certifies");
-    assert_eq!(cert.target_level().witt_length(), 24);
+fn tower_completeness_certify_default_uses_w32() {
+    let input = validated_runtime(ConstrainedTypeInput::default());
+    let cert = tower_completeness::certify::<_, _, Fnv1aHasher16>(&input).expect("w32 certifies");
+    assert_eq!(cert.certificate().target_level().witt_length(), 32);
 }
-
-#[test]
-fn tower_resolver_default_certify_uses_w32() {
-    // Bare `.certify(&input)` (no explicit level) routes through
-    // Certify::DEFAULT_LEVEL = W32.
-    let resolver = TowerCompletenessResolver::new();
-    let input = ConstrainedTypeInput::default();
-    let cert = resolver.certify(&input).expect("empty certifies");
-    assert_eq!(cert.target_level().witt_length(), 32);
-}
-
-// Note: `LiftChainCertificate::with_witt_bits` is pub(crate) and exercised
-// indirectly through the `certify_at` tests above — the pipeline constructs
-// the certificate with that helper and the integration tests observe the
-// resulting `target_level()` value.

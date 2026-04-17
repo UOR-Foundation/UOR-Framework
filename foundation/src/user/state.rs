@@ -6,124 +6,124 @@
 
 use crate::enums::GroundingPhase;
 use crate::enums::SessionBoundaryType;
-use crate::Primitives;
+use crate::HostTypes;
 
 /// A bounded set of populated UOR addresses. The parameter space for a resolution cycle. Contexts hold bindings that map addresses to datum values.
 /// Disjoint with: Binding, Frame, Transition.
-pub trait Context<P: Primitives> {
+pub trait Context<H: HostTypes> {
     /// Associated type for `Binding`.
-    type Binding: Binding<P>;
+    type Binding: Binding<H>;
     /// A binding held in this context.
     fn binding(&self) -> &[Self::Binding];
     /// The maximum number of bindings this context can hold.
-    fn capacity(&self) -> P::PositiveInteger;
+    fn capacity(&self) -> u64;
     /// The content-derived address of this context, uniquely identifying its current state in the UOR address space.
-    fn content_address(&self) -> &P::String;
+    fn content_address(&self) -> &H::HostString;
     /// The Witt level of this context's address space.
-    fn witt_length(&self) -> P::PositiveInteger;
+    fn witt_length(&self) -> u64;
     /// The saturation degree σ ∈ \\[0, 1\\] of this context. Defined by SC_2: σ = (n − freeRank) / n.
-    fn grounding_degree(&self) -> P::Decimal;
+    fn grounding_degree(&self) -> H::Decimal;
     /// The context temperature T_ctx ∈ \\[0, ln 2\\]. Defined by SC_1: T_ctx = freeRank × ln 2 / n. At σ = 1, T_ctx = 0.
-    fn context_temperature(&self) -> P::Decimal;
+    fn context_temperature(&self) -> H::Decimal;
     /// Whether this context has reached full saturation (σ = 1). Equivalent to freeRank = 0, S = 0, T_ctx = 0 per SC_4.
-    fn is_grounded(&self) -> P::Boolean;
+    fn is_grounded(&self) -> bool;
     /// The current saturation phase of this context: Open, PartialGrounding, or FullGrounding.
     fn grounding_phase(&self) -> GroundingPhase;
     /// The number of free (unbound) sites remaining in this context. At saturation, residualFreeCount = 0.
-    fn residual_free_count(&self) -> P::NonNegativeInteger;
+    fn residual_free_count(&self) -> u64;
 }
 
 /// The association of a datum value with an address in a context. The write primitive: creating a binding populates an address.
 /// Disjoint with: Context, Frame, Transition.
-pub trait Binding<P: Primitives> {
+pub trait Binding<H: HostTypes> {
     /// Associated type for `Element`.
-    type Element: crate::kernel::address::Element<P>;
+    type Element: crate::kernel::address::Element<H>;
     /// The UOR address being bound in this binding.
     fn address(&self) -> &Self::Element;
     /// Associated type for `Datum`.
-    type Datum: crate::kernel::schema::Datum<P>;
+    type Datum: crate::kernel::schema::Datum<H>;
     /// The datum value bound to the address in this binding.
     fn content(&self) -> &Self::Datum;
     /// Associated type for `TypeDefinition`.
-    type TypeDefinition: crate::user::type_::TypeDefinition<P>;
+    type TypeDefinition: crate::user::type_::TypeDefinition<H>;
     /// The type under which this binding's datum is resolved.
     fn bound_type(&self) -> &[Self::TypeDefinition];
     /// The time at which this binding was created.
-    fn timestamp(&self) -> &P::String;
+    fn timestamp(&self) -> &H::WitnessBytes;
 }
 
 /// The visibility boundary determining which bindings are in scope for a given resolution. A frame is a view into a context: it selects which bindings the resolver sees.
 /// Disjoint with: Context, Binding, Transition.
-pub trait Frame<P: Primitives> {
+pub trait Frame<H: HostTypes> {
     /// Associated type for `Binding`.
-    type Binding: Binding<P>;
+    type Binding: Binding<H>;
     /// The bindings currently in scope for this frame.
     fn active_bindings(&self) -> &[Self::Binding];
     /// Associated type for `Context`.
-    type Context: Context<P>;
+    type Context: Context<H>;
     /// The context this frame is a view of.
     fn context(&self) -> &Self::Context;
     /// Associated type for `Constraint`.
-    type Constraint: crate::user::type_::Constraint<P>;
+    type Constraint: crate::user::type_::Constraint<H>;
     /// The type:Constraint determining which bindings from the context are visible in this frame. The resolver applies this constraint to filter the context's binding set, producing the frame's active bindings. An absent constraint means all bindings are visible.
     fn constraint(&self) -> &Self::Constraint;
 }
 
 /// A state change: the transformation of one context into another through binding or unbinding. The sequence of transitions is the application's computation history.
 /// Disjoint with: Context, Binding, Frame.
-pub trait Transition<P: Primitives> {
+pub trait Transition<H: HostTypes> {
     /// Associated type for `Context`.
-    type Context: Context<P>;
+    type Context: Context<H>;
     /// The context before this transition.
     fn from(&self) -> &Self::Context;
     /// The context after this transition.
     fn to(&self) -> &Self::Context;
     /// Associated type for `Binding`.
-    type Binding: Binding<P>;
+    type Binding: Binding<H>;
     /// Bindings added to the context in this transition.
     fn added_bindings(&self) -> &[Self::Binding];
     /// Bindings removed from the context in this transition.
     fn removed_bindings(&self) -> &[Self::Binding];
     /// Associated type for `ComputationTrace`.
-    type ComputationTrace: crate::bridge::trace::ComputationTrace<P>;
+    type ComputationTrace: crate::bridge::trace::ComputationTrace<H>;
     /// The computation trace recording the kernel operations that effected this state transition.
     fn trace(&self) -> &Self::ComputationTrace;
     /// Associated type for `TopologicalDelta`.
-    type TopologicalDelta: crate::user::morphism::TopologicalDelta<P>;
+    type TopologicalDelta: crate::user::morphism::TopologicalDelta<H>;
     /// A snapshot of topological invariants at this transition point.
     fn topological_snapshot(&self) -> &Self::TopologicalDelta;
 }
 
 /// A bounded sequence of RelationQuery/response pairs sharing a common state:Context. Sessions are the unit of coherent multi-turn reasoning in Prism.
-pub trait Session<P: Primitives> {
+pub trait Session<H: HostTypes> {
     /// Associated type for `Context`.
-    type Context: Context<P>;
+    type Context: Context<H>;
     /// The shared context holding all bindings accumulated across the queries in this session.
     fn session_bindings(&self) -> &Self::Context;
     /// The number of RelationQuery evaluations completed in this session.
-    fn session_queries(&self) -> P::NonNegativeInteger;
+    fn session_queries(&self) -> u64;
 }
 
 /// The mutable accumulator that appends state:Binding instances to a state:Context as each RelationQuery resolves. Tracks monotonic reduction of aggregate free site space.
-pub trait BindingAccumulator<P: Primitives> {
+pub trait BindingAccumulator<H: HostTypes> {
     /// Associated type for `FreeRank`.
-    type FreeRank: crate::bridge::partition::FreeRank<P>;
+    type FreeRank: crate::bridge::partition::FreeRank<H>;
     /// The aggregate FreeRank deficit across all accumulated bindings: the total remaining free sites that have not yet been closed by resolution. Decreases monotonically as the session progresses.
     fn aggregate_site_deficit(&self) -> &Self::FreeRank;
     /// Associated type for `Binding`.
-    type Binding: Binding<P>;
+    type Binding: Binding<H>;
     /// A binding accumulated by this accumulator from a resolved RelationQuery.
     fn accumulated_bindings(&self) -> &[Self::Binding];
 }
 
 /// Marks a context-reset event within a session stream. Records why the context was reset and provides a clean state:Context for subsequent queries.
-pub trait SessionBoundary<P: Primitives> {
+pub trait SessionBoundary<H: HostTypes> {
     /// A human-readable description of why this session boundary was triggered.
-    fn boundary_reason(&self) -> &P::String;
+    fn boundary_reason(&self) -> &H::HostString;
     /// The typed reason category for this session boundary.
     fn boundary_type(&self) -> SessionBoundaryType;
     /// Associated type for `Context`.
-    type Context: Context<P>;
+    type Context: Context<H>;
     /// The state:Context that was active before this boundary reset.
     fn prior_context(&self) -> &Self::Context;
     /// The clean state:Context produced after this boundary reset, ready for subsequent queries.
@@ -131,76 +131,76 @@ pub trait SessionBoundary<P: Primitives> {
 }
 
 /// A context that has reached full saturation: σ = 1, freeRank = 0, S = 0, T_ctx = 0 (SC_4). The ground state of the type system. All subsequent queries resolve in O(1) via SC_5.
-pub trait GroundedContext<P: Primitives>: Context<P> {
+pub trait GroundedContext<H: HostTypes>: Context<H> {
     /// Associated type for `Triad`.
-    type Triad: crate::kernel::schema::Triad<P>;
+    type Triad: crate::kernel::schema::Triad<H>;
     /// The triadic coordinate of the datum carried in this grounded context: its (stratum, spectrum, address) bundle. Computed by the kernel at grounding time and immutable thereafter.
     fn grounded_triad(&self) -> &Self::Triad;
 }
 
 /// Step-by-step evidence of the saturation process: records which bindings were applied, in what order, to reach full saturation.
-pub trait GroundingWitness<P: Primitives> {
+pub trait GroundingWitness<H: HostTypes> {
     /// Associated type for `Binding`.
-    type Binding: Binding<P>;
+    type Binding: Binding<H>;
     /// A binding that contributed to the saturation process, recorded in this GroundingWitness.
     fn witness_binding(&self) -> &[Self::Binding];
     /// The step index at which a particular binding was applied during the saturation process.
-    fn witness_step(&self) -> P::NonNegativeInteger;
+    fn witness_step(&self) -> u64;
 }
 
 /// An informational/monitoring record tracking the saturation progress of a specific domain within a context. Carries no formal authority — purely observational.
-pub trait DomainGroundingRecord<P: Primitives> {
+pub trait DomainGroundingRecord<H: HostTypes> {
     /// Associated type for `GroundedContext`.
-    type GroundedContext: GroundedContext<P>;
+    type GroundedContext: GroundedContext<H>;
     /// The GroundedContext that this DomainGroundingRecord monitors.
     fn grounded_context(&self) -> &Self::GroundedContext;
     /// Associated type for `TypeDefinition`.
-    type TypeDefinition: crate::user::type_::TypeDefinition<P>;
+    type TypeDefinition: crate::user::type_::TypeDefinition<H>;
     /// The domain within the context being tracked by this DomainGroundingRecord.
     fn grounded_domain(&self) -> &Self::TypeDefinition;
     /// The number of free sites remaining in the specific domain tracked by this DomainGroundingRecord.
-    fn domain_free_count(&self) -> P::NonNegativeInteger;
+    fn domain_free_count(&self) -> u64;
 }
 
 /// A Context visible to more than one Session simultaneously. Holds a set of ContextLease instances that partition its site coordinates among active sessions. Lease disjointness (SR_9) prevents concurrent write conflicts.
-pub trait SharedContext<P: Primitives>: Context<P> {
+pub trait SharedContext<H: HostTypes>: Context<H> {
     /// Associated type for `ContextLease`.
-    type ContextLease: ContextLease<P>;
+    type ContextLease: ContextLease<H>;
     /// A currently active ContextLease on this SharedContext.
     fn lease_set(&self) -> &[Self::ContextLease];
 }
 
 /// A bounded, exclusive claim on a set of site coordinates within a SharedContext, held by exactly one Session. When the session closes or hits a SessionBoundary, the lease is released and its sites become available for re-leasing.
 /// Disjoint with: Context, Binding, Frame, Transition.
-pub trait ContextLease<P: Primitives> {
+pub trait ContextLease<H: HostTypes> {
     /// Associated type for `FreeRank`.
-    type FreeRank: crate::bridge::partition::FreeRank<P>;
+    type FreeRank: crate::bridge::partition::FreeRank<H>;
     /// The subset of sites claimed by this lease. Must be disjoint from all other active leases on the same SharedContext (SR_9).
     fn leased_sites(&self) -> &Self::FreeRank;
     /// Associated type for `Session`.
-    type Session: Session<P>;
+    type Session: Session<H>;
     /// The Session that holds this lease.
     fn lease_holder(&self) -> &Self::Session;
     /// The site coordinate allocated linearly by this lease.
-    fn linear_site(&self) -> P::NonNegativeInteger;
+    fn linear_site(&self) -> u64;
     /// The lexical or session scope within which this lease is valid.
-    fn lease_scope(&self) -> &P::String;
+    fn lease_scope(&self) -> &H::HostString;
 }
 
 /// Records that a Session was formed by merging the binding sets of two or more predecessor sessions. Valid only if all predecessor binding sets pass the cross-session consistency check (SR_8). An invalid composition attempt produces a ContradictionBoundary on the target session.
-pub trait SessionComposition<P: Primitives> {
+pub trait SessionComposition<H: HostTypes> {
     /// Associated type for `Session`.
-    type Session: Session<P>;
+    type Session: Session<H>;
     /// A predecessor session contributing bindings to this composition. Non-functional: one composition may merge two or more sessions.
     fn composed_from(&self) -> &[Self::Session];
     /// Whether all predecessor binding sets passed the SR_8 consistency check. If false, the composition is invalid and must not be used as a session context.
-    fn composition_compatible(&self) -> P::Boolean;
+    fn composition_compatible(&self) -> bool;
     /// Associated type for `Context`.
-    type Context: Context<P>;
+    type Context: Context<H>;
     /// The merged Context produced by a valid composition. Only present when compositionCompatible = true.
     fn composition_result(&self) -> &Self::Context;
     /// Whether the LiftChain tower consistency check (SR_8 parametric extension) was performed across all Q_0 through Q_k levels. Required for compositions involving sessions at Q_1 or higher.
-    fn tower_consistency_verified(&self) -> P::Boolean;
+    fn tower_consistency_verified(&self) -> bool;
 }
 
 /// The caller explicitly requested a context reset. All accumulated bindings are discarded.

@@ -288,22 +288,36 @@ pub fn namespace_mappings() -> HashMap<&'static str, NamespaceMapping> {
     m
 }
 
-/// Maps an XSD IRI to the corresponding `P::` associated type expression.
+/// Maps an XSD IRI to the Rust type expression used in generated traits.
+///
+/// Phase B (target §4.1 W10): the four slots that genuinely vary across host
+/// environments (`xsd:string`, `xsd:decimal`, `xsd:hexBinary`, `xsd:dateTime`
+/// — though `dateTime` is excluded from the surface and mapped to the opaque
+/// byte slot) come from `H: HostTypes`. The remaining XSD types
+/// (`xsd:integer`, `xsd:nonNegativeInteger`, `xsd:positiveInteger`,
+/// `xsd:boolean`) are foundation-owned concrete types — the foundation picks
+/// `i64`/`u64`/`u64`/`bool` because these are the width-faithful, no_std-safe
+/// choices and do not vary across host environments.
+///
+/// The foundation's per-`WittLevel` integer representation (Datum<L>) is
+/// reached through `kernel::op` — it is not an XSD datatype and therefore
+/// not handled here.
 pub fn xsd_to_primitives_type(xsd_iri: &str) -> Option<&'static str> {
     match xsd_iri {
-        XSD_STRING => Some("P::String"),
-        XSD_INTEGER => Some("P::Integer"),
-        XSD_NON_NEGATIVE_INTEGER => Some("P::NonNegativeInteger"),
-        XSD_POSITIVE_INTEGER => Some("P::PositiveInteger"),
-        XSD_BOOLEAN => Some("P::Boolean"),
-        XSD_DECIMAL => Some("P::Decimal"),
-        XSD_DATETIME => Some("P::String"), // DateTime mapped to String for flexibility
-        XSD_HEX_BINARY => Some("P::String"), // HexBinary mapped to String
+        XSD_STRING => Some("H::HostString"),
+        XSD_INTEGER => Some("i64"),
+        XSD_NON_NEGATIVE_INTEGER => Some("u64"),
+        XSD_POSITIVE_INTEGER => Some("u64"),
+        XSD_BOOLEAN => Some("bool"),
+        XSD_DECIMAL => Some("H::Decimal"),
+        XSD_DATETIME => Some("H::WitnessBytes"),
+        XSD_HEX_BINARY => Some("H::WitnessBytes"),
         _ => None,
     }
 }
 
-/// Returns true if the XSD type is `?Sized` (i.e., String which maps to `str`).
+/// Returns true if the XSD type is `?Sized` (i.e., the host slots that map
+/// to unsized `str`/`[u8]`-like host-chosen types).
 pub fn xsd_is_unsized(xsd_iri: &str) -> bool {
     xsd_iri == XSD_STRING || xsd_iri == XSD_DATETIME || xsd_iri == XSD_HEX_BINARY
 }

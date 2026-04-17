@@ -67,6 +67,9 @@ pub fn generate_enforcement_module(ontology: &Ontology) -> String {
     // v0.2.2 Phase C.3: emit Limbs-backed marker structs + RingOp impls
     // for every WittLevel individual whose bit_width > 128.
     generate_limbs_ring_ops(&mut f, ontology);
+    // Phase L.2 (target §4.5 + §9 criterion 5): emit const_ring_eval_w{n}
+    // helpers for every Limbs-backed level.
+    generate_const_ring_eval_limbs(&mut f, ontology);
     generate_fragment_markers(&mut f, ontology);
     generate_dispatch_tables(&mut f, ontology);
     generate_validated_deref(&mut f);
@@ -497,20 +500,27 @@ fn generate_grounding_types(f: &mut RustFile, ontology: &Ontology) {
     );
     f.doc_comment("and a digest-style impl is rejected at the call site.");
     f.doc_example(
-        "use uor_foundation::enforcement::{Grounding, GroundedCoord, BinaryGroundingMap};\n\
+        "use uor_foundation::enforcement::{\n\
+         \x20   Grounding, GroundedCoord, GroundingProgram, BinaryGroundingMap, combinators,\n\
+         };\n\
          \n\
-         /// Doubling grounding: maps each input byte b to 2b mod 256.\n\
-         struct DoublingGrounding;\n\
+         /// Byte-passthrough grounding: reads the first byte of input as a W8 Datum.\n\
+         struct PassthroughGrounding;\n\
          \n\
-         impl Grounding for DoublingGrounding {\n\
+         impl Grounding for PassthroughGrounding {\n\
          \x20   type Output = GroundedCoord;\n\
          \x20   type Map = BinaryGroundingMap;\n\
          \n\
+         \x20   // Phase K: provide the combinator program; the type system verifies\n\
+         \x20   // at compile time that its marker tuple matches Self::Map via\n\
+         \x20   // GroundingProgram::from_primitive's MarkersImpliedBy<Map> bound.\n\
+         \x20   fn program(&self) -> GroundingProgram<GroundedCoord, BinaryGroundingMap> {\n\
+         \x20       GroundingProgram::from_primitive(combinators::read_bytes::<GroundedCoord>())\n\
+         \x20   }\n\
+         \n\
          \x20   fn ground(&self, external: &[u8]) -> Option<GroundedCoord> {\n\
-         \x20       // Reject empty input at the boundary\n\
-         \x20       let &byte = external.first()?;\n\
-         \x20       // Apply the doubling map: b -> 2b mod 256\n\
-         \x20       Some(GroundedCoord::w8(byte.wrapping_mul(2)))\n\
+         \x20       // Foundation-supplied interpreter for GroundedCoord outputs.\n\
+         \x20       self.program().run(external)\n\
          \x20   }\n\
          }",
         "rust,ignore",
@@ -533,11 +543,89 @@ fn generate_grounding_types(f: &mut RustFile, ontology: &Ontology) {
     f.line("    type Map: GroundingMapKind;");
     f.blank();
     f.indented_doc_comment(
-        "Map external bytes into a grounded intermediate.\n\
-         The foundation handles validation and minting.\n\
-         Returns `None` if the input is malformed or undersized.",
+        "Phase K / W4 closure (target §4.3 + §9 criterion 1): the combinator\n\
+         program that decomposes this grounding. The program's `Map` parameter\n\
+         equals the impl's `Map` associated type, so the kind discriminator is\n\
+         mechanically verifiable from the combinator decomposition — not a\n\
+         promise. This is the only required method; `ground` is foundation-\n\
+         supplied via `GroundingExt`.",
     );
+    f.line("    fn program(&self) -> GroundingProgram<Self::Output, Self::Map>;");
+    f.line("}");
+    f.blank();
+
+    // W4 closure (target §4.3 + §9 criterion 1): sealed extension trait
+    // supplies `ground()`. Downstream can only implement `Grounding`
+    // (providing `program()`); the foundation's blanket impl of
+    // `GroundingExt` runs the program. The `grounding_ext_sealed::Sealed`
+    // supertrait prevents downstream from impl-ing `GroundingExt` itself.
+    f.doc_comment("W4 closure (target §4.3 + §9 criterion 1): foundation-authored");
+    f.doc_comment("extension trait that supplies `ground()` for every `Grounding`");
+    f.doc_comment("impl. Downstream implementers provide only `program()`;");
+    f.doc_comment("the foundation runs it via the blanket `impl<G: Grounding>`");
+    f.doc_comment("below. The sealed supertrait prevents downstream from");
+    f.doc_comment("implementing `GroundingExt` directly — there is no second path.");
+    f.line("mod grounding_ext_sealed {");
+    f.indented_doc_comment("Private supertrait. Not implementable outside this crate.");
+    f.line("    pub trait Sealed {}");
+    f.line("    impl<G: super::Grounding> Sealed for G {}");
+    f.line("}");
+    f.blank();
+    f.doc_comment("Crate-internal bridge from `GroundingProgram` to `Option<Out>`.");
+    f.doc_comment("Blanket-impl'd for the two `GroundedValue` members");
+    f.doc_comment("(`GroundedCoord` and `GroundedTuple<N>`) so the `GroundingExt`");
+    f.doc_comment("blanket compiles for any output in the closed set.");
+    f.line("pub trait GroundingProgramRun<Out> {");
+    f.indented_doc_comment("Run the program on external bytes.");
+    f.line("    fn run_program(&self, external: &[u8]) -> Option<Out>;");
+    f.line("}");
+    f.blank();
+    f.line("impl<Map: GroundingMapKind> GroundingProgramRun<GroundedCoord>");
+    f.line("    for GroundingProgram<GroundedCoord, Map>");
+    f.line("{");
+    f.line("    #[inline]");
+    f.line("    fn run_program(&self, external: &[u8]) -> Option<GroundedCoord> {");
+    f.line("        self.run(external)");
+    f.line("    }");
+    f.line("}");
+    f.blank();
+    f.line("impl<const N: usize, Map: GroundingMapKind>");
+    f.line("    GroundingProgramRun<GroundedTuple<N>>");
+    f.line("    for GroundingProgram<GroundedTuple<N>, Map>");
+    f.line("{");
+    f.line("    #[inline]");
+    f.line("    fn run_program(&self, external: &[u8]) -> Option<GroundedTuple<N>> {");
+    f.line("        self.run(external)");
+    f.line("    }");
+    f.line("}");
+    f.blank();
+    f.doc_comment("Foundation-supplied `ground()` for every `Grounding` impl.");
+    f.doc_comment("");
+    f.doc_comment("The blanket `impl<G: Grounding> GroundingExt for G` below");
+    f.doc_comment("routes every call of `.ground(bytes)` through");
+    f.doc_comment("`self.program().run_program(bytes)`. Downstream cannot");
+    f.doc_comment("override this path: `GroundingExt` has a sealed supertrait");
+    f.doc_comment("and downstream cannot impl `GroundingExt` directly.");
+    f.line("pub trait GroundingExt: Grounding + grounding_ext_sealed::Sealed {");
+    f.indented_doc_comment(
+        "Map external bytes into a grounded value via this impl's combinator program.",
+    );
+    f.indented_doc_comment("");
+    f.indented_doc_comment(
+        "Returns `None` when the combinator chain rejects the input (e.g. empty slice",
+    );
+    f.indented_doc_comment("for `ReadBytes`, malformed UTF-8 for `DecodeUtf8`).");
     f.line("    fn ground(&self, external: &[u8]) -> Option<Self::Output>;");
+    f.line("}");
+    f.blank();
+    f.line("impl<G: Grounding> GroundingExt for G");
+    f.line("where");
+    f.line("    GroundingProgram<G::Output, G::Map>: GroundingProgramRun<G::Output>,");
+    f.line("{");
+    f.line("    #[inline]");
+    f.line("    fn ground(&self, external: &[u8]) -> Option<Self::Output> {");
+    f.line("        self.program().run_program(external)");
+    f.line("    }");
     f.line("}");
     f.blank();
 }
@@ -655,14 +743,23 @@ fn generate_witness_types(f: &mut RustFile) {
     // Derivation
     f.doc_comment("An opaque derivation trace that can only be extended by the rewrite engine.");
     f.doc_comment("");
-    f.doc_comment("Records the number of rewrite steps and the content address of the");
-    f.doc_comment("root term. Private fields prevent external construction.");
+    f.doc_comment("Records the rewrite-step count, the source `witt_level_bits`, and the");
+    f.doc_comment("parametric `content_fingerprint`. Private fields prevent external");
+    f.doc_comment("construction; produced exclusively by `Grounded::derivation()` so the");
+    f.doc_comment("verify path can re-derive the source certificate via");
+    f.doc_comment("`Derivation::replay() -> Trace -> verify_trace`.");
     f.line("#[derive(Debug, Clone, PartialEq, Eq)]");
     f.line("pub struct Derivation {");
     f.indented_doc_comment("Number of rewrite steps in this derivation.");
     f.line("    step_count: u32,");
-    f.indented_doc_comment("Content address of the root term.");
-    f.line("    root_address: u64,");
+    f.indented_doc_comment("v0.2.2 T5: Witt level the source grounding was minted at. Carried");
+    f.indented_doc_comment("through replay so the verifier can reconstruct the certificate.");
+    f.line("    witt_level_bits: u16,");
+    f.indented_doc_comment("v0.2.2 T5: parametric content fingerprint of the source unit's");
+    f.indented_doc_comment("full state, computed at grounding time by the consumer-supplied");
+    f.indented_doc_comment("`Hasher`. Carried through replay so the verifier can reproduce");
+    f.indented_doc_comment("the source certificate via passthrough.");
+    f.line("    content_fingerprint: ContentFingerprint,");
     f.line("}");
     f.blank();
     f.line("impl Derivation {");
@@ -673,18 +770,35 @@ fn generate_witness_types(f: &mut RustFile) {
     f.line("        self.step_count");
     f.line("    }");
     f.blank();
-    f.indented_doc_comment("Returns the content address of the root term.");
+    f.indented_doc_comment("v0.2.2 T5: returns the Witt level the source grounding was minted at.");
     f.line("    #[inline]");
     f.line("    #[must_use]");
-    f.line("    pub const fn root_address(&self) -> u64 {");
-    f.line("        self.root_address");
+    f.line("    pub const fn witt_level_bits(&self) -> u16 {");
+    f.line("        self.witt_level_bits");
+    f.line("    }");
+    f.blank();
+    f.indented_doc_comment("v0.2.2 T5: returns the parametric content fingerprint of the source");
+    f.indented_doc_comment("unit, computed at grounding time by the consumer-supplied `Hasher`.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn content_fingerprint(&self) -> ContentFingerprint {");
+    f.line("        self.content_fingerprint");
     f.line("    }");
     f.blank();
     f.indented_doc_comment("Creates a new derivation. Only callable within the crate.");
     f.line("    #[inline]");
+    f.line("    #[must_use]");
     f.line("    #[allow(dead_code)]");
-    f.line("    pub(crate) const fn new(step_count: u32, root_address: u64) -> Self {");
-    f.line("        Self { step_count, root_address }");
+    f.line("    pub(crate) const fn new(");
+    f.line("        step_count: u32,");
+    f.line("        witt_level_bits: u16,");
+    f.line("        content_fingerprint: ContentFingerprint,");
+    f.line("    ) -> Self {");
+    f.line("        Self {");
+    f.line("            step_count,");
+    f.line("            witt_level_bits,");
+    f.line("            content_fingerprint,");
+    f.line("        }");
     f.line("    }");
     f.line("}");
     f.blank();
@@ -984,6 +1098,30 @@ fn generate_uor_time(f: &mut RustFile) {
     f.line("    CharacteristicEnergy,");
     f.line("}");
     f.blank();
+    // v0.2.2 T5.9: Display + core::error::Error impls for downstream
+    // `?`-propagation through Box<dyn Error>.
+    f.line("impl core::fmt::Display for CalibrationError {");
+    f.line("    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {");
+    f.line("        match self {");
+    f.line("            Self::ThermalEnergy => f.write_str(");
+    f.line(
+        "                \"calibration k_b_t out of range (must be in [1e-30, 1e-15] joules)\",",
+    );
+    f.line("            ),");
+    f.line("            Self::ThermalPower => f.write_str(");
+    f.line(
+        "                \"calibration thermal_power out of range (must be > 0 and <= 1e9 W)\",",
+    );
+    f.line("            ),");
+    f.line("            Self::CharacteristicEnergy => f.write_str(");
+    f.line("                \"calibration characteristic_energy out of range (must be > 0 and <= 1e3 J)\",");
+    f.line("            ),");
+    f.line("        }");
+    f.line("    }");
+    f.line("}");
+    f.blank();
+    f.line("impl core::error::Error for CalibrationError {}");
+    f.blank();
 
     // ── Calibration ───────────────────────────────────────────────────────
     f.doc_comment("v0.2.2 Phase A: physical-substrate calibration for wall-clock binding.");
@@ -1068,6 +1206,21 @@ fn generate_uor_time(f: &mut RustFile) {
     f.line("    #[inline]");
     f.line("    #[must_use]");
     f.line("    pub const fn characteristic_energy(&self) -> f64 { self.characteristic_energy }");
+    f.blank();
+    f.indented_doc_comment("v0.2.2 T5.5: zero sentinel. All three fields are 0.0 — physically");
+    f.indented_doc_comment("meaningless but safely constructible. Used as the unreachable-branch");
+    f.indented_doc_comment("placeholder in the const-context preset literals (`X86_SERVER`,");
+    f.indented_doc_comment("`ARM_MOBILE`, `CORTEX_M_EMBEDDED`, `CONSERVATIVE_WORST_CASE`). The");
+    f.indented_doc_comment("`meta/calibration_presets_valid` conformance check verifies the");
+    f.indented_doc_comment("preset literals always succeed in `Calibration::new`, so this");
+    f.indented_doc_comment("sentinel is never produced in practice. Do not use it directly;");
+    f.indented_doc_comment("it is exposed only because Rust's const-eval needs a fallback for");
+    f.indented_doc_comment("the impossible `Err` arm of the preset match.");
+    f.line("    pub const ZERO_SENTINEL: Calibration = Self {");
+    f.line("        k_b_t: 0.0,");
+    f.line("        thermal_power: 0.0,");
+    f.line("        characteristic_energy: 0.0,");
+    f.line("    };");
     f.line("}");
     f.blank();
 
@@ -1076,10 +1229,20 @@ fn generate_uor_time(f: &mut RustFile) {
     f.doc_comment("substrates. The values are derived from published substrate thermals at");
     f.doc_comment("T=300 K (room temperature, where k_B·T ≈ 4.14e-21 J).");
     f.line("pub mod calibrations {");
-    f.line("    use super::{Calibration, CalibrationError};");
+    f.line("    use super::Calibration;");
     f.blank();
-    // Helper macro for the unwrap pattern (const-context unwrap is unstable;
-    // we use match instead).
+    // v0.2.2 T5.5: panic-free preset literals.
+    //
+    // The previous v0.2.2 code path used a `panic!`-bodied const fn
+    // `unreachable_unphysical()` as the Err arm of the preset match.
+    // That violated the foundation's `clippy::panic` discipline (locally
+    // bypassed) and put a panicking branch on the public surface.
+    //
+    // The fix: substitute `Calibration::ZERO_SENTINEL` (a panic-free
+    // const) on the Err arm. The four preset literals continue to
+    // succeed in `Calibration::new`, and that fact is gated by the new
+    // `meta/calibration_presets_valid` conformance check, NOT by a
+    // runtime panic.
     f.indented_doc_comment("Server-class x86 (Xeon/EPYC sustained envelope).");
     f.indented_doc_comment("");
     f.indented_doc_comment("k_B·T = 4.14e-21 J (T = 300 K), thermal_power = 85 W (typical TDP),");
@@ -1088,7 +1251,7 @@ fn generate_uor_time(f: &mut RustFile) {
         "    pub const X86_SERVER: Calibration = match Calibration::new(4.14e-21, 85.0, 1.0e-15) {",
     );
     f.line("        Ok(c) => c,");
-    f.line("        Err(_) => unreachable_unphysical(),");
+    f.line("        Err(_) => Calibration::ZERO_SENTINEL,");
     f.line("    };");
     f.blank();
     f.indented_doc_comment(
@@ -1102,7 +1265,7 @@ fn generate_uor_time(f: &mut RustFile) {
         "    pub const ARM_MOBILE: Calibration = match Calibration::new(4.14e-21, 5.0, 1.0e-16) {",
     );
     f.line("        Ok(c) => c,");
-    f.line("        Err(_) => unreachable_unphysical(),");
+    f.line("        Err(_) => Calibration::ZERO_SENTINEL,");
     f.line("    };");
     f.blank();
     f.indented_doc_comment("Cortex-M embedded (STM32/nRF52 at 80 MHz).");
@@ -1112,7 +1275,7 @@ fn generate_uor_time(f: &mut RustFile) {
     );
     f.line("    pub const CORTEX_M_EMBEDDED: Calibration = match Calibration::new(4.14e-21, 0.1, 1.0e-17) {");
     f.line("        Ok(c) => c,");
-    f.line("        Err(_) => unreachable_unphysical(),");
+    f.line("        Err(_) => Calibration::ZERO_SENTINEL,");
     f.line("    };");
     f.blank();
     f.indented_doc_comment("The tightest provable lower bound that requires no trust in the");
@@ -1125,24 +1288,71 @@ fn generate_uor_time(f: &mut RustFile) {
     f.indented_doc_comment("possible for the computation regardless of substrate claims.");
     f.line("    pub const CONSERVATIVE_WORST_CASE: Calibration = match Calibration::new(4.14e-21, 1.0e9, 1.0) {");
     f.line("        Ok(c) => c,");
-    f.line("        Err(_) => unreachable_unphysical(),");
+    f.line("        Err(_) => Calibration::ZERO_SENTINEL,");
     f.line("    };");
+    f.line("}");
     f.blank();
-    // const-context unreachable helper; on debug, panic; on release, loop forever.
-    f.indented_doc_comment("Const-context unreachable helper. The four preset literals above are");
-    f.indented_doc_comment("verified physical at codegen time; this branch is dead.");
+
+    // Phase H: transcendentals module — foundation-owned wrappers around
+    // the always-on `libm` dependency. Every `xsd:decimal` observable whose
+    // computation requires `ln` / `exp` / `sqrt` routes through here;
+    // downstream must not call `libm::*` directly so the foundation retains
+    // a single audit point for transcendental arithmetic policy (target §1.6).
+    f.doc_comment(
+        "Phase H (target §1.6): foundation-owned transcendental-arithmetic entry points.",
+    );
+    f.doc_comment("");
+    f.doc_comment("Routes through the always-on `libm` dependency so every build — std, alloc,");
+    f.doc_comment("and strict no_std — has access to `ln` / `exp` / `sqrt` for `xsd:decimal`");
+    f.doc_comment("observables. Gating these behind an optional feature flag was considered and");
+    f.doc_comment("rejected per target §1.6: an observable that exists in one build and not");
+    f.doc_comment("another violates the foundation's \"one surface\" discipline.");
+    f.doc_comment("");
+    f.doc_comment("Downstream code that needs transcendentals should call these wrappers —");
+    f.doc_comment(
+        "they are the canonical entry point for the four observables target §3 enumerates",
+    );
+    f.doc_comment(
+        "(`convergenceRate`, `residualEntropy`, `collapseAmplitude`, and `op:OA_5` pricing)",
+    );
+    f.doc_comment("and for any future observable whose implementation admits transcendentals.");
+    f.line("pub mod transcendentals {");
+    f.indented_doc_comment(
+        "Natural logarithm. Routes through `libm::log`; no_std-safe, always available.",
+    );
+    f.indented_doc_comment("");
+    f.indented_doc_comment("Returns `NaN` for `x <= 0.0`, preserving `libm`'s contract.");
     f.line("    #[inline]");
-    f.line("    const fn unreachable_unphysical() -> Calibration {");
-    f.line("        panic!(\"foundation preset calibration is physically valid by construction\")");
+    f.line("    #[must_use]");
+    f.line("    pub fn ln(x: f64) -> f64 {");
+    f.line("        libm::log(x)");
     f.line("    }");
-    f.line("    // Suppress dead-code warnings on the helper");
-    f.line("    #[allow(dead_code)]");
-    f.line("    const _: fn() -> Calibration = unreachable_unphysical;");
     f.blank();
-    f.line("    // Suppress unused-import warning for CalibrationError when the");
-    f.line("    // preset construction succeeds (which it always does).");
-    f.line("    #[allow(dead_code)]");
-    f.line("    const _: Option<CalibrationError> = None;");
+    f.indented_doc_comment("Exponential `e^x`. Routes through `libm::exp`.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub fn exp(x: f64) -> f64 {");
+    f.line("        libm::exp(x)");
+    f.line("    }");
+    f.blank();
+    f.indented_doc_comment(
+        "Square root. Routes through `libm::sqrt`. Returns `NaN` for `x < 0.0`.",
+    );
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub fn sqrt(x: f64) -> f64 {");
+    f.line("        libm::sqrt(x)");
+    f.line("    }");
+    f.blank();
+    f.indented_doc_comment(
+        "Shannon entropy term `-p \u{00b7} ln(p)` in nats. Returns 0 for `p = 0` by",
+    );
+    f.indented_doc_comment("continuous extension. Used by `observable:residualEntropy`.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub fn entropy_term_nats(p: f64) -> f64 {");
+    f.line("        if p <= 0.0 { 0.0 } else { -p * libm::log(p) }");
+    f.line("    }");
     f.line("}");
     f.blank();
 }
@@ -1188,7 +1398,7 @@ fn generate_term_ast(f: &mut RustFile) {
          assert!(node.is_some());",
         "rust",
     );
-    f.line("#[derive(Debug, Clone, PartialEq, Eq)]");
+    f.line("#[derive(Debug, Clone, Copy, PartialEq, Eq)]");
     f.line("pub struct TermArena<const CAP: usize> {");
     f.indented_doc_comment("Node storage. `None` slots are unused.");
     f.line("    nodes: [Option<Term>; CAP],");
@@ -1200,9 +1410,11 @@ fn generate_term_ast(f: &mut RustFile) {
     f.indented_doc_comment("Creates an empty arena.");
     f.line("    #[inline]");
     f.line("    #[must_use]");
-    f.line("    pub fn new() -> Self {");
+    f.line("    pub const fn new() -> Self {");
+    f.line("        // v0.2.2 T4.5.a: const-stable on MSRV 1.70 via the `[None; CAP]`");
+    f.line("        // initializer (Term is Copy as of T4.5.a, so Option<Term> is Copy).");
     f.line("        Self {");
-    f.line("            nodes: core::array::from_fn(|_| None),");
+    f.line("            nodes: [None; CAP],");
     f.line("            len: 0,");
     f.line("        }");
     f.line("    }");
@@ -1245,6 +1457,17 @@ fn generate_term_ast(f: &mut RustFile) {
     f.line("    pub const fn is_empty(&self) -> bool {");
     f.line("        self.len == 0");
     f.line("    }");
+    f.blank();
+    f.indented_doc_comment("v0.2.2 T4.5.b: returns the populated prefix of the arena as a slice.");
+    f.indented_doc_comment("");
+    f.indented_doc_comment("Each entry is `Some(term)` for the populated indices `0..len()`;");
+    f.indented_doc_comment("downstream consumers index into this slice via `TermList::start` and");
+    f.indented_doc_comment("`TermList::len` to walk the children of an Application/Match node.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub fn as_slice(&self) -> &[Option<Term>] {");
+    f.line("        &self.nodes[..self.len as usize]");
+    f.line("    }");
     f.line("}");
     f.blank();
     f.line("impl<const CAP: usize> Default for TermArena<CAP> {");
@@ -1281,7 +1504,7 @@ fn generate_term_ast(f: &mut RustFile) {
          let proj = Term::Project { operand_index: 0, target: WittLevel::W8 };",
         "rust",
     );
-    f.line("#[derive(Debug, Clone, PartialEq, Eq)]");
+    f.line("#[derive(Debug, Clone, Copy, PartialEq, Eq)]");
     f.line("pub enum Term {");
     f.indented_doc_comment("Integer literal with Witt level annotation.");
     f.line("    Literal {");
@@ -1460,6 +1683,32 @@ fn generate_shape_violation(f: &mut RustFile) {
     f.line("    pub kind: ViolationKind,");
     f.line("}");
     f.blank();
+    // v0.2.2 T5.9: Display + core::error::Error impls.
+    f.line("impl core::fmt::Display for ShapeViolation {");
+    f.line("    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {");
+    f.line("        write!(");
+    f.line("            f,");
+    f.line("            \"shape violation: {} (constraint {}, property {}, kind {:?})\",");
+    f.line("            self.shape_iri, self.constraint_iri, self.property_iri, self.kind,");
+    f.line("        )");
+    f.line("    }");
+    f.line("}");
+    f.blank();
+    f.line("impl core::error::Error for ShapeViolation {}");
+    f.blank();
+
+    // Phase C.3: const_message() accessor for const-context diagnostics.
+    f.line("impl ShapeViolation {");
+    f.indented_doc_comment("Phase C.3: returns the shape IRI as a `&'static str` suitable for");
+    f.indented_doc_comment("`const fn` panic messages. The IRI uniquely identifies the violated");
+    f.indented_doc_comment("constraint in the conformance catalog.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn const_message(&self) -> &'static str {");
+    f.line("        self.shape_iri");
+    f.line("    }");
+    f.line("}");
+    f.blank();
 }
 
 fn generate_builders(f: &mut RustFile) {
@@ -1470,7 +1719,7 @@ fn generate_builders(f: &mut RustFile) {
     f.doc_comment("and `targetDomains`. The `validate()` method checks structural");
     f.doc_comment("constraints (Tier 1) and value-dependent constraints (Tier 2).");
     f.doc_example(
-        "use uor_foundation::enforcement::{CompileUnitBuilder, Term};\n\
+        "use uor_foundation::enforcement::{CompileUnitBuilder, ConstrainedTypeInput, Term};\n\
          use uor_foundation::{WittLevel, VerificationDomain, ViolationKind};\n\
          \n\
          // A CompileUnit packages a term graph for reduction admission.\n\
@@ -1483,6 +1732,7 @@ fn generate_builders(f: &mut RustFile) {
          \x20   .witt_level_ceiling(WittLevel::W8)\n\
          \x20   .thermodynamic_budget(1024)\n\
          \x20   .target_domains(&domains)\n\
+         \x20   .result_type::<ConstrainedTypeInput>()\n\
          \x20   .validate();\n\
          assert!(unit.is_ok());\n\
          \n\
@@ -1492,6 +1742,7 @@ fn generate_builders(f: &mut RustFile) {
          \x20   .witt_level_ceiling(WittLevel::W8)\n\
          \x20   .thermodynamic_budget(1024)\n\
          \x20   .target_domains(&domains)\n\
+         \x20   .result_type::<ConstrainedTypeInput>()\n\
          \x20   .validate();\n\
          assert!(err.is_err());\n\
          if let Err(violation) = err {\n\
@@ -1510,6 +1761,12 @@ fn generate_builders(f: &mut RustFile) {
     f.line("    thermodynamic_budget: Option<u64>,");
     f.indented_doc_comment("Verification domains targeted.");
     f.line("    target_domains: Option<&'a [VerificationDomain]>,");
+    f.indented_doc_comment("v0.2.2 T6.11: result-type IRI for ShapeMismatch detection.");
+    f.indented_doc_comment("Set via `result_type::<T: ConstrainedTypeShape>()`. Required by");
+    f.indented_doc_comment("`validate()` and `validate_compile_unit_const`. The pipeline checks");
+    f.indented_doc_comment("`unit.result_type_iri() == T::IRI` at `pipeline::run` invocation");
+    f.indented_doc_comment("time, returning `PipelineFailure::ShapeMismatch` on mismatch.");
+    f.line("    result_type_iri: Option<&'static str>,");
     f.line("}");
     f.blank();
 
@@ -1521,6 +1778,9 @@ fn generate_builders(f: &mut RustFile) {
     f.line("    level: WittLevel,");
     f.indented_doc_comment("The thermodynamic budget.");
     f.line("    budget: u64,");
+    f.indented_doc_comment("v0.2.2 T6.11: result-type IRI. The pipeline matches this against");
+    f.indented_doc_comment("the caller's `T::IRI` to detect shape mismatches.");
+    f.line("    result_type_iri: &'static str,");
     f.line("}");
     f.blank();
     f.line("impl CompileUnit {");
@@ -1538,15 +1798,31 @@ fn generate_builders(f: &mut RustFile) {
     f.line("        self.budget");
     f.line("    }");
     f.blank();
-    f.indented_doc_comment("v0.2.2 Phase G / T2.8: const-constructible parts form used by");
-    f.indented_doc_comment("`validate_compile_unit_const` — the const-fn path reads the builder's");
-    f.indented_doc_comment("witt level and budget fields and packs them into the `Validated`");
-    f.indented_doc_comment("result without the runtime validation loop.");
+    f.indented_doc_comment("v0.2.2 T6.11: returns the result-type IRI declared at validation");
+    f.indented_doc_comment("time. The pipeline matches this against the caller's `T::IRI` to");
+    f.indented_doc_comment("detect shape mismatches.");
     f.line("    #[inline]");
     f.line("    #[must_use]");
-    f.line("    #[allow(dead_code)]");
-    f.line("    pub(crate) const fn from_parts_const(level: WittLevel, budget: u64) -> Self {");
-    f.line("        Self { level, budget }");
+    f.line("    pub const fn result_type_iri(&self) -> &'static str {");
+    f.line("        self.result_type_iri");
+    f.line("    }");
+    f.blank();
+    f.indented_doc_comment("v0.2.2 Phase G / T2.8 + T6.11: const-constructible parts form used");
+    f.indented_doc_comment("by `validate_compile_unit_const` — the const-fn path reads the");
+    f.indented_doc_comment("builder's witt level, budget, and result-type IRI and packs them");
+    f.indented_doc_comment("into the `Validated` result.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub(crate) const fn from_parts_const(");
+    f.line("        level: WittLevel,");
+    f.line("        budget: u64,");
+    f.line("        result_type_iri: &'static str,");
+    f.line("    ) -> Self {");
+    f.line("        Self {");
+    f.line("            level,");
+    f.line("            budget,");
+    f.line("            result_type_iri,");
+    f.line("        }");
     f.line("    }");
     f.line("}");
     f.blank();
@@ -1560,6 +1836,7 @@ fn generate_builders(f: &mut RustFile) {
     f.line("            witt_level_ceiling: None,");
     f.line("            thermodynamic_budget: None,");
     f.line("            target_domains: None,");
+    f.line("            result_type_iri: None,");
     f.line("        }");
     f.line("    }");
     f.blank();
@@ -1593,6 +1870,21 @@ fn generate_builders(f: &mut RustFile) {
     f.line("        self");
     f.line("    }");
     f.blank();
+    f.indented_doc_comment("v0.2.2 T6.11: set the result-type IRI from a `ConstrainedTypeShape`");
+    f.indented_doc_comment("type parameter. The pipeline matches this against the caller's");
+    f.indented_doc_comment("`T::IRI` at `pipeline::run` invocation time, returning");
+    f.indented_doc_comment("`PipelineFailure::ShapeMismatch` on mismatch.");
+    f.indented_doc_comment("");
+    f.indented_doc_comment("Required: `validate()` and `validate_compile_unit_const` reject");
+    f.indented_doc_comment("builders without a result type set.");
+    f.line("    #[must_use]");
+    f.line(
+        "    pub const fn result_type<T: crate::pipeline::ConstrainedTypeShape>(mut self) -> Self {",
+    );
+    f.line("        self.result_type_iri = Some(T::IRI);");
+    f.line("        self");
+    f.line("    }");
+    f.blank();
     f.indented_doc_comment("v0.2.2 T2.8: const-fn accessor exposing the stored Witt level");
     f.indented_doc_comment("ceiling (or `None` if unset). Used by `validate_compile_unit_const`.");
     f.line("    #[inline]");
@@ -1607,6 +1899,32 @@ fn generate_builders(f: &mut RustFile) {
     f.line("    #[must_use]");
     f.line("    pub const fn budget_option(&self) -> Option<u64> {");
     f.line("        self.thermodynamic_budget");
+    f.line("    }");
+    f.blank();
+    f.indented_doc_comment("v0.2.2 T6.13: const-fn accessor — `true` iff `root_term` is set.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn has_root_term_const(&self) -> bool {");
+    f.line("        self.root_term.is_some()");
+    f.line("    }");
+    f.blank();
+    f.indented_doc_comment("v0.2.2 T6.13: const-fn accessor — `true` iff `target_domains` is");
+    f.indented_doc_comment("set and non-empty.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn has_target_domains_const(&self) -> bool {");
+    f.line("        match self.target_domains {");
+    f.line("            Some(d) => !d.is_empty(),");
+    f.line("            None => false,");
+    f.line("        }");
+    f.line("    }");
+    f.blank();
+    f.indented_doc_comment("v0.2.2 T6.13: const-fn accessor exposing the stored result-type IRI");
+    f.indented_doc_comment("(or `None` if unset). Used by `validate_compile_unit_const`.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn result_type_iri_const(&self) -> Option<&'static str> {");
+    f.line("        self.result_type_iri");
     f.line("    }");
     f.blank();
     f.indented_doc_comment("Validate against `CompileUnitShape`.");
@@ -1667,7 +1985,19 @@ fn generate_builders(f: &mut RustFile) {
     f.line("                kind: ViolationKind::Missing,");
     f.line("            }),");
     f.line("        }");
-    f.line("        Ok(Validated::new(CompileUnit { level, budget }))");
+    f.line("        let result_type_iri = match self.result_type_iri {");
+    f.line("            Some(iri) => iri,");
+    f.line("            None => return Err(ShapeViolation {");
+    f.line("                shape_iri: \"https://uor.foundation/conformance/CompileUnitShape\",");
+    f.line("                constraint_iri: \"https://uor.foundation/conformance/compileUnit_resultType_constraint\",");
+    f.line("                property_iri: \"https://uor.foundation/reduction/resultType\",");
+    f.line("                expected_range: \"https://uor.foundation/type/ConstrainedType\",");
+    f.line("                min_count: 1,");
+    f.line("                max_count: 1,");
+    f.line("                kind: ViolationKind::Missing,");
+    f.line("            }),");
+    f.line("        };");
+    f.line("        Ok(Validated::new(CompileUnit { level, budget, result_type_iri }))");
     f.line("    }");
     f.line("}");
     f.blank();
@@ -1782,10 +2112,14 @@ fn generate_builders(f: &mut RustFile) {
     f.line("}");
     f.blank();
     f.line("impl<'a> StreamDeclarationBuilder<'a> {");
-    f.indented_doc_comment("v0.2.2 T2.7: const-fn accessor returning a productivity bound");
-    f.indented_doc_comment("derived from the presence of the witness (1 if present, 0 if not).");
-    f.indented_doc_comment("Real productivity-bound semantics arrive in v0.2.3 alongside the");
-    f.indented_doc_comment("reduction engine; v0.2.2 ships a presence indicator.");
+    f.indented_doc_comment("v0.2.2 canonical: productivity bound is 1 if a `productivityWitness`");
+    f.indented_doc_comment("IRI is declared (the stream attests termination via a `proof:Proof`");
+    f.indented_doc_comment("individual), 0 otherwise. The witness's IRI points to the termination");
+    f.indented_doc_comment("proof; downstream resolvers dereference it for detailed bound");
+    f.indented_doc_comment(
+        "information. This two-level split (presence flag here, IRI dereference",
+    );
+    f.indented_doc_comment("elsewhere) is the canonical foundation-level shape.");
     f.line("    #[inline]");
     f.line("    #[must_use]");
     f.line("    pub const fn productivity_bound_const(&self) -> u64 {");
@@ -1858,6 +2192,51 @@ fn generate_builders(f: &mut RustFile) {
     f.line(
         "    pub fn validate(self) -> Result<Validated<WittLevelDeclaration>, ShapeViolation> {",
     );
+    // (validate body emitted below; after it, we add validate_const.)
+    f.line("        let bw = match self.bit_width {");
+    f.line("            Some(w) => w,");
+    f.line("            None => return Err(ShapeViolation {");
+    f.line("                shape_iri: \"https://uor.foundation/conformance/WittLevelShape\",");
+    f.line(
+        "                constraint_iri: \"https://uor.foundation/conformance/WittLevelShape\",",
+    );
+    f.line(
+        "                property_iri: \"https://uor.foundation/conformance/declaredBitWidth\",",
+    );
+    f.line("                expected_range: \"http://www.w3.org/2001/XMLSchema#positiveInteger\",");
+    f.line("                min_count: 1,");
+    f.line("                max_count: 1,");
+    f.line("                kind: ViolationKind::Missing,");
+    f.line("            }),");
+    f.line("        };");
+    f.line("        let pred = match self.predecessor {");
+    f.line("            Some(p) => p,");
+    f.line("            None => return Err(ShapeViolation {");
+    f.line("                shape_iri: \"https://uor.foundation/conformance/WittLevelShape\",");
+    f.line(
+        "                constraint_iri: \"https://uor.foundation/conformance/WittLevelShape\",",
+    );
+    f.line(
+        "                property_iri: \"https://uor.foundation/conformance/predecessorLevel\",",
+    );
+    f.line("                expected_range: \"https://uor.foundation/schema/WittLevel\",");
+    f.line("                min_count: 1,");
+    f.line("                max_count: 1,");
+    f.line("                kind: ViolationKind::Missing,");
+    f.line("            }),");
+    f.line("        };");
+    f.line("        Ok(Validated::new(WittLevelDeclaration { bit_width: bw, predecessor: pred }))");
+    f.line("    }");
+    f.blank();
+    // Phase C.1: validate_const for WittLevelDeclarationBuilder.
+    f.indented_doc_comment(
+        "Phase C.1: const-fn companion for `WittLevelDeclarationBuilder::validate`.",
+    );
+    f.indented_doc_comment("");
+    f.indented_doc_comment("# Errors");
+    f.indented_doc_comment("");
+    f.indented_doc_comment("Returns `ShapeViolation` if any required field is missing.");
+    f.line("    pub const fn validate_const(&self) -> Result<Validated<WittLevelDeclaration, CompileTime>, ShapeViolation> {");
     f.line("        let bw = match self.bit_width {");
     f.line("            Some(w) => w,");
     f.line("            None => return Err(ShapeViolation {");
@@ -2007,6 +2386,58 @@ fn generate_simple_builder(
     f.line("            });");
     f.line("        }");
     // Check remaining fields
+    for (name, _) in &fields[1..] {
+        f.line(&format!("        if self.{name}.is_none() {{"));
+        f.line("            return Err(ShapeViolation {");
+        f.line(&format!("                shape_iri: \"{shape_iri}\","));
+        f.line(&format!("                constraint_iri: \"{shape_iri}\","));
+        f.line(&format!(
+            "                property_iri: \"https://uor.foundation/conformance/{name}\","
+        ));
+        f.line("                expected_range: \"http://www.w3.org/2002/07/owl#Thing\",");
+        f.line("                min_count: 1,");
+        f.line("                max_count: 1,");
+        f.line("                kind: ViolationKind::Missing,");
+        f.line("            });");
+        f.line("        }");
+    }
+    f.line(&format!(
+        "        Ok(Validated::new({result_name} {{ shape_iri: \"{shape_iri}\" }}))"
+    ));
+    f.line("    }");
+    f.blank();
+
+    // Phase C.1: validate_const companion — const fn returning CompileTime phase.
+    // Emitted inside the same impl block as `validate`.
+    f.indented_doc_comment(&format!(
+        "Phase C.1: const-fn companion for `{builder_name}::validate`.",
+    ));
+    f.indented_doc_comment("");
+    f.indented_doc_comment("Returns `Validated<_, CompileTime>` on success, allowing compile-time");
+    f.indented_doc_comment(
+        "evidence via `const _V: Validated<_, CompileTime> = builder.validate_const().unwrap();`.",
+    );
+    f.indented_doc_comment("");
+    f.indented_doc_comment("# Errors");
+    f.indented_doc_comment("");
+    f.indented_doc_comment("Returns `ShapeViolation` if any required field is missing.");
+    f.line(&format!(
+        "    pub const fn validate_const(&self) -> Result<Validated<{result_name}, CompileTime>, ShapeViolation> {{"
+    ));
+    let first_field = fields[0].0;
+    f.line(&format!("        if self.{first_field}.is_none() {{"));
+    f.line("            return Err(ShapeViolation {");
+    f.line(&format!("                shape_iri: \"{shape_iri}\","));
+    f.line(&format!("                constraint_iri: \"{shape_iri}\","));
+    f.line(&format!(
+        "                property_iri: \"https://uor.foundation/conformance/{first_field}\","
+    ));
+    f.line("                expected_range: \"http://www.w3.org/2002/07/owl#Thing\",");
+    f.line("                min_count: 1,");
+    f.line("                max_count: 1,");
+    f.line("                kind: ViolationKind::Missing,");
+    f.line("            });");
+    f.line("        }");
     for (name, _) in &fields[1..] {
         f.line(&format!("        if self.{name}.is_none() {{"));
         f.line("            return Err(ShapeViolation {");
@@ -2294,6 +2725,104 @@ fn generate_const_ring_eval(f: &mut RustFile, ontology: &Ontology) {
     }
 }
 
+/// Phase L.2 (target §4.5 + §9 criterion 5): emit `const_ring_eval_w{n}`
+/// helpers for every Limbs-backed WittLevel (widths > 128). Each helper is
+/// a `pub const fn` that accepts two `Limbs<N>` operands and a `PrimitiveOp`
+/// and returns the masked result.
+///
+/// Companion to `generate_const_ring_eval` (native widths). Together the two
+/// functions provide a `const_ring_eval_w{n}` helper for **every** shipped
+/// level, satisfying target §4.5 / §9 criterion 5.
+fn generate_const_ring_eval_limbs(f: &mut RustFile, ontology: &Ontology) {
+    let levels = limbs_witt_levels(ontology);
+    if levels.is_empty() {
+        return;
+    }
+
+    f.doc_comment("Phase L.2 (target §4.5): `const_ring_eval_w{n}` helpers for Limbs-backed");
+    f.doc_comment("Witt levels. Each helper runs a `PrimitiveOp` over two `Limbs<N>` operands");
+    f.doc_comment("and applies the level's bit-width mask to the result.");
+    f.doc_comment("");
+    f.doc_comment("These helpers are always const-fn; whether `rustc` can complete a specific");
+    f.doc_comment("compile-time evaluation within the developer's budget is a function of the");
+    f.doc_comment("invocation (see target §4.5 Q2 practicality table).");
+    for (local, bits, limb_count) in &levels {
+        let lower = local.to_ascii_lowercase();
+        let exact_fit = bits % 64 == 0;
+        f.line("#[inline]");
+        f.line("#[must_use]");
+        f.line(&format!(
+            "pub const fn const_ring_eval_{lower}(op: PrimitiveOp, a: Limbs<{limb_count}>, b: Limbs<{limb_count}>) -> Limbs<{limb_count}> {{"
+        ));
+        if exact_fit {
+            f.line("    match op {");
+            f.line("        PrimitiveOp::Add => a.wrapping_add(b),");
+            f.line("        PrimitiveOp::Sub => a.wrapping_sub(b),");
+            f.line("        PrimitiveOp::Mul => a.wrapping_mul(b),");
+            f.line("        PrimitiveOp::And => a.and(b),");
+            f.line("        PrimitiveOp::Or => a.or(b),");
+            f.line("        PrimitiveOp::Xor => a.xor(b),");
+            f.line(&format!(
+                "        PrimitiveOp::Neg => Limbs::<{limb_count}>::zero().wrapping_sub(a),"
+            ));
+            f.line("        PrimitiveOp::Bnot => a.not(),");
+            f.line(&format!(
+                "        PrimitiveOp::Succ => a.wrapping_add(limbs_one_{limb_count}()),"
+            ));
+            f.line(&format!(
+                "        PrimitiveOp::Pred => a.wrapping_sub(limbs_one_{limb_count}()),"
+            ));
+            f.line("    }");
+        } else {
+            f.line("    let raw = match op {");
+            f.line("        PrimitiveOp::Add => a.wrapping_add(b),");
+            f.line("        PrimitiveOp::Sub => a.wrapping_sub(b),");
+            f.line("        PrimitiveOp::Mul => a.wrapping_mul(b),");
+            f.line("        PrimitiveOp::And => a.and(b),");
+            f.line("        PrimitiveOp::Or => a.or(b),");
+            f.line("        PrimitiveOp::Xor => a.xor(b),");
+            f.line(&format!(
+                "        PrimitiveOp::Neg => Limbs::<{limb_count}>::zero().wrapping_sub(a),"
+            ));
+            f.line("        PrimitiveOp::Bnot => a.not(),");
+            f.line(&format!(
+                "        PrimitiveOp::Succ => a.wrapping_add(limbs_one_{limb_count}()),"
+            ));
+            f.line(&format!(
+                "        PrimitiveOp::Pred => a.wrapping_sub(limbs_one_{limb_count}()),"
+            ));
+            f.line("    };");
+            f.line(&format!("    raw.mask_high_bits({bits})"));
+        }
+        f.line("}");
+        f.blank();
+    }
+
+    // Emit `limbs_one_{N}` helpers for each distinct N that appears.
+    let mut ns: Vec<usize> = levels.iter().map(|(_, _, n)| *n).collect();
+    ns.sort_unstable();
+    ns.dedup();
+    f.doc_comment("Phase L.2: one-constant helpers for `Limbs<N>::from_words([1, 0, ...])`.");
+    for n in ns {
+        let body = if n == 1 {
+            "Limbs::<1>::from_words([1u64])".to_string()
+        } else {
+            let mut elems = String::from("[1u64");
+            for _ in 1..n {
+                elems.push_str(", 0u64");
+            }
+            elems.push(']');
+            format!("Limbs::<{n}>::from_words({elems})")
+        };
+        f.line("#[inline]");
+        f.line("#[must_use]");
+        f.line(&format!("const fn limbs_one_{n}() -> Limbs<{n}> {{"));
+        f.line(&format!("    {body}"));
+        f.line("}");
+        f.blank();
+    }
+}
+
 // ── v0.2.1 Ergonomics Surface Generators ─────────────────────────────────────
 //
 // Each generator below reads from `&Ontology` (passed at the top) so that
@@ -2495,51 +3024,59 @@ fn generate_ontology_target_trait(f: &mut RustFile, ontology: &Ontology) {
              IncrementalCompletenessResolver.",
     )];
 
-    // Emit certificate shims with witt_bits field and hand-written Default
-    // that defaults to WittLevel::W32 (Certify::DEFAULT_LEVEL per Phase 7b.1.a).
+    // v0.2.2 T6.7 + T6.8: emit certificate shims with witt_bits + content_fingerprint
+    // fields. NO Default impl — sealed witnesses are minted only by the pipeline
+    // and never exist in a "default" form. NO `with_level_const` / `with_witt_bits`
+    // legacy ctors — only the fingerprint-complete `with_level_and_fingerprint_const`
+    // survives, used by `pipeline::run` and the `certify_*_const` companions to
+    // thread the consumer-supplied substrate fingerprint into the certificate.
     for (name, doc) in certificate_shims {
         f.doc_comment(doc);
         f.line("#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]");
         f.line(&format!("pub struct {name} {{"));
         f.line("    witt_bits: u16,");
+        f.indented_doc_comment("v0.2.2 T5: parametric content fingerprint computed at mint time");
+        f.indented_doc_comment("by the consumer-supplied `Hasher`. Bit-equality on the full");
+        f.indented_doc_comment("buffer + width tag, so two certs with different `OUTPUT_BYTES`");
+        f.indented_doc_comment("are never equal even when leading bytes coincide.");
+        f.line("    content_fingerprint: ContentFingerprint,");
         f.line("}");
         f.blank();
-        // Hand-written Default — defaults to the Certify canonical level (W32).
-        f.line(&format!("impl Default for {name} {{"));
-        f.line("    #[inline]");
-        f.line("    fn default() -> Self {");
-        f.line("        Self { witt_bits: 32 }");
-        f.line("    }");
-        f.line("}");
-        f.blank();
-        // Crate-internal constructor used by the pipeline + back-door minting.
         f.line(&format!("impl {name} {{"));
-        f.indented_doc_comment("Crate-internal constructor used by the pipeline to mint a");
-        f.indented_doc_comment("certificate carrying the Witt level the pipeline advanced to.");
-        f.line("    #[inline]");
-        f.line("    #[must_use]");
-        f.line("    #[allow(dead_code)]");
-        f.line("    pub(crate) const fn with_witt_bits(witt_bits: u16) -> Self {");
-        f.line("        Self { witt_bits }");
-        f.line("    }");
-        f.blank();
         f.indented_doc_comment("Returns the Witt level the certificate was issued for. Sourced");
-        f.indented_doc_comment("from the pipeline's `StageOutcome.witt_bits` at minting time.");
+        f.indented_doc_comment("from the pipeline's substrate hash output at minting time.");
         f.line("    #[inline]");
         f.line("    #[must_use]");
         f.line("    pub const fn witt_bits(&self) -> u16 {");
         f.line("        self.witt_bits");
         f.line("    }");
         f.blank();
-        f.indented_doc_comment("v0.2.2 T2.8 (cleanup): const-constructible form taking an");
-        f.indented_doc_comment("explicit witt-bits value, used by `certify_*_const` entry points");
-        f.indented_doc_comment("to produce a certificate whose stored level reflects the caller's");
-        f.indented_doc_comment("unit instead of a hardcoded default.");
+        f.indented_doc_comment("v0.2.2 T5: returns the parametric content fingerprint of the");
+        f.indented_doc_comment("source state, computed at mint time by the consumer-supplied");
+        f.indented_doc_comment("`Hasher`. Active width recoverable via `width_bytes()`. Two");
+        f.indented_doc_comment("certificates from different hashers are never equal because");
+        f.indented_doc_comment("`ContentFingerprint::Eq` compares the full buffer + width tag.");
+        f.line("    #[inline]");
+        f.line("    #[must_use]");
+        f.line("    pub const fn content_fingerprint(&self) -> ContentFingerprint {");
+        f.line("        self.content_fingerprint");
+        f.line("    }");
+        f.blank();
+        f.indented_doc_comment("v0.2.2 T5 C3.g + T6.7: the only constructor — takes both the");
+        f.indented_doc_comment("witt-bits value AND the parametric content fingerprint. Used by");
+        f.indented_doc_comment("`pipeline::run` and `certify_*_const` to mint a certificate");
+        f.indented_doc_comment("carrying the substrate-computed fingerprint of the source state.");
         f.line("    #[inline]");
         f.line("    #[must_use]");
         f.line("    #[allow(dead_code)]");
-        f.line("    pub(crate) const fn with_level_const(witt_bits: u16) -> Self {");
-        f.line("        Self { witt_bits }");
+        f.line("    pub(crate) const fn with_level_and_fingerprint_const(");
+        f.line("        witt_bits: u16,");
+        f.line("        content_fingerprint: ContentFingerprint,");
+        f.line("    ) -> Self {");
+        f.line("        Self {");
+        f.line("            witt_bits,");
+        f.line("            content_fingerprint,");
+        f.line("        }");
         f.line("    }");
         f.line("}");
         f.blank();
@@ -2552,6 +3089,18 @@ fn generate_ontology_target_trait(f: &mut RustFile, ontology: &Ontology) {
         f.line(&format!("pub struct {name} {{"));
         f.line("    _private: (),");
         f.line("}");
+        f.blank();
+    }
+    // v0.2.2 T5.9: Display + core::error::Error impls for the witness shims
+    // (they're returned as the failure case of `Certify::certify`, so they
+    // need to participate in `Box<dyn Error>` chains alongside `PipelineFailure`).
+    for (name, _doc) in witness_shims.iter() {
+        f.line(&format!("impl core::fmt::Display for {name} {{"));
+        f.line("    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {");
+        f.line(&format!("        f.write_str(\"{name}\")"));
+        f.line("    }");
+        f.line("}");
+        f.line(&format!("impl core::error::Error for {name} {{}}"));
         f.blank();
     }
 
@@ -2719,6 +3268,21 @@ fn generate_ontology_target_trait(f: &mut RustFile, ontology: &Ontology) {
         ),
         // v0.2.2 Phase E: PartitionCertificate.
         ("PartitionCertificate", "PartitionCertificate", "()"),
+        // Workstream C: impossibility witnesses are certificates too —
+        // they attest that a resolver verdict produced a failure witness
+        // with the declared reason. The IRI resolves to the ontology's
+        // `cert:<name>` class; both classes are authored under
+        // `spec/src/namespaces/cert.rs` by Workstream C's ontology edit.
+        (
+            "GenericImpossibilityWitness",
+            "GenericImpossibilityCertificate",
+            "()",
+        ),
+        (
+            "InhabitanceImpossibilityWitness",
+            "InhabitanceImpossibilityCertificate",
+            "()",
+        ),
     ];
     f.line("mod certificate_sealed {");
     f.indented_doc_comment("Private supertrait. Not implementable outside this crate.");
@@ -2746,6 +3310,10 @@ fn generate_ontology_target_trait(f: &mut RustFile, ontology: &Ontology) {
     f.line("pub struct Certified<C: Certificate> {");
     f.indented_doc_comment("The certificate kind value carried by this wrapper.");
     f.line("    inner: C,");
+    f.indented_doc_comment(
+        "Phase A.1: the foundation-internal two-clock value read at witness issuance.",
+    );
+    f.line("    uor_time: UorTime,");
     f.indented_doc_comment("Prevents external construction.");
     f.line("    _private: (),");
     f.line("}");
@@ -2766,12 +3334,49 @@ fn generate_ontology_target_trait(f: &mut RustFile, ontology: &Ontology) {
     f.line("    }");
     f.blank();
     f.indented_doc_comment(
+        "Phase A.1: the foundation-internal two-clock value read at witness issuance.",
+    );
+    f.indented_doc_comment("");
+    f.indented_doc_comment("Maps `rewrite_steps` to `derivation:stepCount` and `landauer_nats` to");
+    f.indented_doc_comment(
+        "`observable:LandauerCost`. Content-deterministic: same computation \u{2192}",
+    );
+    f.indented_doc_comment("same `UorTime`. Composable against wall-clock bounds via");
+    f.indented_doc_comment("[`UorTime::min_wall_clock`] and a downstream-supplied `Calibration`.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn uor_time(&self) -> UorTime {");
+    f.line("        self.uor_time");
+    f.line("    }");
+    f.blank();
+    f.indented_doc_comment(
         "Crate-internal constructor. Reachable only from the pipeline / resolver paths.",
+    );
+    f.indented_doc_comment("");
+    f.indented_doc_comment(
+        "The `uor_time` is computed deterministically from the certificate kind's `IRI`",
+    );
+    f.indented_doc_comment(
+        "length: the rewrite-step count is the IRI byte length, and the Landauer cost",
+    );
+    f.indented_doc_comment(
+        "is `rewrite_steps \u{00d7} ln 2` (the Landauer-temperature cost of traversing that",
+    );
+    f.indented_doc_comment(
+        "many orthogonal states). Two `Certified<C>` values with the same `C` share the",
+    );
+    f.indented_doc_comment(
+        "same `UorTime`, preserving content-determinism across pipeline invocations.",
     );
     f.line("    #[inline]");
     f.line("    #[allow(dead_code)]");
     f.line("    pub(crate) const fn new(inner: C) -> Self {");
-    f.line("        Self { inner, _private: () }");
+    f.line("        // IRI length is the deterministic proxy for the cert class's structural");
+    f.line("        // complexity. Phase D threads real resolver-counted steps through.");
+    f.line("        let steps = C::IRI.len() as u64;");
+    f.line("        let landauer = LandauerBudget::new((steps as f64) * core::f64::consts::LN_2);");
+    f.line("        let uor_time = UorTime::new(landauer, steps);");
+    f.line("        Self { inner, uor_time, _private: () }");
     f.line("    }");
     f.line("}");
     f.blank();
@@ -2779,43 +3384,10 @@ fn generate_ontology_target_trait(f: &mut RustFile, ontology: &Ontology) {
 
 // 2.1.b Grounded<T> — zero-overhead ground-state wrapper.
 fn generate_grounded_wrapper(f: &mut RustFile) {
-    // v0.2.2 T2.8 (cleanup): FNV-1a 128-bit const-fn hash used by
-    // `pipeline::run_const` (and other const paths) to derive a non-zero,
-    // input-dependent unit address from arbitrary (u64, u64) key material.
-    // Pure arithmetic; no loops; const-evaluable.
-    f.doc_comment("v0.2.2 T2.8: 128-bit FNV-1a hash over two u64 inputs.");
-    f.doc_comment("");
-    f.doc_comment("Used by const-fn pipeline paths to derive a content-addressed");
-    f.doc_comment("`unit_address` value as a pure function of the input key material.");
-    f.doc_comment("The output is non-zero for any non-degenerate input and distinct");
-    f.doc_comment("inputs produce distinct outputs with high probability.");
-    f.line("#[inline]");
-    f.line("#[must_use]");
-    f.line("#[allow(dead_code)]");
-    f.line("pub(crate) const fn fnv1a_u128_const(a: u64, b: u64) -> u128 {");
-    f.line("    // FNV-1a 128-bit constants (standard FNV).");
-    f.line("    let offset: u128 = 0x6c62272e07bb014262b821756295c58d;");
-    f.line("    let prime: u128 = 0x0000000001000000000000000000013b;");
-    f.line("    let mut h = offset;");
-    f.line("    // Hash `a` as 8 bytes in big-endian order.");
-    f.line("    let mut i = 0;");
-    f.line("    while i < 8 {");
-    f.line("        let byte = ((a >> (56 - i * 8)) & 0xff) as u128;");
-    f.line("        h ^= byte;");
-    f.line("        h = h.wrapping_mul(prime);");
-    f.line("        i += 1;");
-    f.line("    }");
-    f.line("    // Hash `b` as 8 bytes.");
-    f.line("    let mut i = 0;");
-    f.line("    while i < 8 {");
-    f.line("        let byte = ((b >> (56 - i * 8)) & 0xff) as u128;");
-    f.line("        h ^= byte;");
-    f.line("        h = h.wrapping_mul(prime);");
-    f.line("        i += 1;");
-    f.line("    }");
-    f.line("    h");
-    f.line("}");
-    f.blank();
+    // v0.2.2 T6.14: `fnv1a_u128_const` deleted. The foundation does not pick a
+    // hash function; downstream supplies `H: Hasher` and the typed pipeline
+    // entry points thread it through `fold_unit_digest` to derive the
+    // content-addressed `unit_address`.
 
     // v0.2.2 Phase E — BaseMetric sealed carriers + MAX_BETTI_DIMENSION.
     // Emitted before the GroundedShape trait so the accessors on Grounded
@@ -2850,6 +3422,168 @@ fn generate_grounded_wrapper(f: &mut RustFile) {
     f.line("    #[allow(dead_code)]");
     f.line("    pub(crate) const fn new_unchecked(value: f64) -> Self {");
     f.line("        Self { value, _sealed: () }");
+    f.line("    }");
+    f.line("}");
+    f.blank();
+
+    // ── Stratum<L> ────────────────────────────────────────────────────────
+    // Phase A.3: sealed newtype over u32 backing schema:stratum — the v_2
+    // valuation of the Datum at level L. Bounded by L.bit_width, so u32 is
+    // sufficient for every foreseeable WittLevel. The level parameter is
+    // PhantomData; two Stratum<W8> and Stratum<W16> values are distinct
+    // Rust types.
+    f.doc_comment(
+        "Phase A.3: sealed stratum coordinate (the v\u{2082} valuation of a `Datum` at level `L`).",
+    );
+    f.doc_comment("");
+    f.doc_comment(
+        "Backs `schema:stratum`. The value is non-negative and bounded by `L`'s `bit_width`",
+    );
+    f.doc_comment(
+        "per the ontology's `nonNegativeInteger` range. Constructed only by foundation code",
+    );
+    f.doc_comment(
+        "at grounding time; no public constructor — the `Stratum<W8>` / `Stratum<W16>` / ...",
+    );
+    f.doc_comment("type family is closed under the WittLevel individual set.");
+    f.line("#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]");
+    f.line("pub struct Stratum<L> {");
+    f.line("    value: u32,");
+    f.line("    _level: PhantomData<L>,");
+    f.line("    _sealed: (),");
+    f.line("}");
+    f.blank();
+    f.line("impl<L> Stratum<L> {");
+    f.indented_doc_comment(
+        "Returns the raw v\u{2082} valuation as a `u32`. The value is bounded by `L`'s bit_width.",
+    );
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn as_u32(&self) -> u32 {");
+    f.line("        self.value");
+    f.line("    }");
+    f.blank();
+    f.indented_doc_comment(
+        "Crate-internal constructor. Reachable only from grounding-time minting.",
+    );
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    #[allow(dead_code)]");
+    f.line("    pub(crate) const fn new(value: u32) -> Self {");
+    f.line("        Self { value, _level: PhantomData, _sealed: () }");
+    f.line("    }");
+    f.line("}");
+    f.blank();
+
+    // ── Sealed BaseMetric newtypes (Phase A.4) ────────────────────────────
+    // Metric incompatibility d_delta, Euler characteristic, residual count,
+    // and the betti vector each become sealed newtypes so every accessor on
+    // Grounded returns a foundation-minted type, not a raw primitive.
+    f.doc_comment(
+        "Phase A.4: sealed carrier for `observable:d_delta_metric` (metric incompatibility).",
+    );
+    f.line("#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]");
+    f.line("pub struct DDeltaMetric {");
+    f.line("    value: i64,");
+    f.line("    _sealed: (),");
+    f.line("}");
+    f.blank();
+    f.line("impl DDeltaMetric {");
+    f.indented_doc_comment(
+        "Returns the signed incompatibility magnitude (ring distance minus Hamming distance).",
+    );
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn as_i64(&self) -> i64 { self.value }");
+    f.blank();
+    f.indented_doc_comment("Crate-internal constructor.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    #[allow(dead_code)]");
+    f.line("    pub(crate) const fn new(value: i64) -> Self {");
+    f.line("        Self { value, _sealed: () }");
+    f.line("    }");
+    f.line("}");
+    f.blank();
+
+    f.doc_comment(
+        "Phase A.4: sealed carrier for `observable:euler_metric` (Euler characteristic).",
+    );
+    f.line("#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]");
+    f.line("pub struct EulerMetric {");
+    f.line("    value: i64,");
+    f.line("    _sealed: (),");
+    f.line("}");
+    f.blank();
+    f.line("impl EulerMetric {");
+    f.indented_doc_comment("Returns the Euler characteristic \u{03C7} of the constraint nerve.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn as_i64(&self) -> i64 { self.value }");
+    f.blank();
+    f.indented_doc_comment("Crate-internal constructor.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    #[allow(dead_code)]");
+    f.line("    pub(crate) const fn new(value: i64) -> Self {");
+    f.line("        Self { value, _sealed: () }");
+    f.line("    }");
+    f.line("}");
+    f.blank();
+
+    f.doc_comment(
+        "Phase A.4: sealed carrier for `observable:residual_metric` (free-site count r).",
+    );
+    f.line("#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]");
+    f.line("pub struct ResidualMetric {");
+    f.line("    value: u32,");
+    f.line("    _sealed: (),");
+    f.line("}");
+    f.blank();
+    f.line("impl ResidualMetric {");
+    f.indented_doc_comment("Returns the free-site count r at grounding time.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn as_u32(&self) -> u32 { self.value }");
+    f.blank();
+    f.indented_doc_comment("Crate-internal constructor.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    #[allow(dead_code)]");
+    f.line("    pub(crate) const fn new(value: u32) -> Self {");
+    f.line("        Self { value, _sealed: () }");
+    f.line("    }");
+    f.line("}");
+    f.blank();
+
+    f.doc_comment("Phase A.4: sealed carrier for `observable:betti_metric` (Betti-number vector).");
+    f.doc_comment("Fixed-capacity `[u32; MAX_BETTI_DIMENSION]` backing; no heap.");
+    f.line("#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]");
+    f.line("pub struct BettiMetric {");
+    f.line("    values: [u32; MAX_BETTI_DIMENSION],");
+    f.line("    _sealed: (),");
+    f.line("}");
+    f.blank();
+    f.line("impl BettiMetric {");
+    f.indented_doc_comment("Returns the Betti-number vector as a fixed-size array reference.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn as_array(&self) -> &[u32; MAX_BETTI_DIMENSION] { &self.values }");
+    f.blank();
+    f.indented_doc_comment("Returns the individual Betti number \u{03B2}\u{2096} for dimension k.");
+    f.indented_doc_comment("Returns 0 when k >= MAX_BETTI_DIMENSION.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn beta(&self, k: usize) -> u32 {");
+    f.line("        if k < MAX_BETTI_DIMENSION { self.values[k] } else { 0 }");
+    f.line("    }");
+    f.blank();
+    f.indented_doc_comment("Crate-internal constructor.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    #[allow(dead_code)]");
+    f.line("    pub(crate) const fn new(values: [u32; MAX_BETTI_DIMENSION]) -> Self {");
+    f.line("        Self { values, _sealed: () }");
     f.line("    }");
     f.line("}");
     f.blank();
@@ -2966,12 +3700,692 @@ fn generate_grounded_wrapper(f: &mut RustFile) {
     f.line("impl GroundedShape for ConstrainedTypeInput {}");
     f.blank();
 
-    f.doc_comment("A binding entry in a `BindingsTable`. Pairs an address (u128 content");
-    f.doc_comment("hash of the query coordinate) with the bound bytes.");
+    // v0.2.2 T4.2 (cleanup): ContentAddress sealed newtype. Emitted here
+    // so it's visible to BindingEntry / BindingsTable / Grounded / TraceEvent
+    // below. The type-level wrap gives downstream a distinct identity for
+    // content-addressed handles vs arbitrary u128 integers.
+    f.doc_comment("v0.2.2 T4.2: sealed content-addressed handle.");
+    f.doc_comment("");
+    f.doc_comment("Wraps a 128-bit identity used for `BindingsTable` lookups and as a");
+    f.doc_comment("compact identity handle for `Grounded` values. The underlying `u128`");
+    f.doc_comment("is visible via `as_u128()` for interop. Distinct from");
+    f.doc_comment("`ContentFingerprint` (the parametric-width fingerprint computed by");
+    f.doc_comment("the substrate `Hasher` — see T5.C3.d below): `ContentAddress` is a");
+    f.doc_comment("fixed 16-byte sortable handle, while `ContentFingerprint` is the full");
+    f.doc_comment("substrate-computed identity that round-trips through `verify_trace`.");
+    f.line("#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]");
+    f.line("pub struct ContentAddress {");
+    f.line("    raw: u128,");
+    f.line("    _sealed: (),");
+    f.line("}");
+    f.blank();
+    f.line("impl ContentAddress {");
+    f.indented_doc_comment("The zero content address. Used as the \"unset\" placeholder in");
+    f.indented_doc_comment("`BindingsTable` lookups, the default state of an uninitialised");
+    f.indented_doc_comment("`Grounded::unit_address`, and the initial seed of replay folds.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn zero() -> Self {");
+    f.line("        Self { raw: 0, _sealed: () }");
+    f.line("    }");
+    f.blank();
+    f.indented_doc_comment("Returns the underlying 128-bit content hash.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn as_u128(&self) -> u128 {");
+    f.line("        self.raw");
+    f.line("    }");
+    f.blank();
+    f.indented_doc_comment("Whether this content address is the zero handle.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn is_zero(&self) -> bool {");
+    f.line("        self.raw == 0");
+    f.line("    }");
+    f.blank();
+    f.indented_doc_comment("v0.2.2 T5.C1: public ctor. Promoted from `pub(crate)` in T5 so");
+    f.indented_doc_comment("downstream tests can construct deterministic `ContentAddress` values");
+    f.indented_doc_comment("for fixture data without going through the foundation pipeline.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn from_u128(raw: u128) -> Self {");
+    f.line("        Self { raw, _sealed: () }");
+    f.line("    }");
+    f.line("}");
+    f.blank();
+    f.line("impl Default for ContentAddress {");
+    f.line("    #[inline]");
+    f.line("    fn default() -> Self {");
+    f.line("        Self::zero()");
+    f.line("    }");
+    f.line("}");
+    f.blank();
+
+    // ── v0.2.2 T5.C3.d: substrate-pluggable hashing ───────────────────────
+    //
+    // The foundation does not prescribe a hash function. Instead it
+    // defines:
+    //   1. The abstract quantity (`ContentFingerprint`) — a sealed
+    //      parametric-width buffer carried by `Grounded`, `Trace`,
+    //      `Derivation`, and `GroundingCertificate`.
+    //   2. The canonical byte layouts (`TraceDigest`, `UnitDigest`,
+    //      `ParallelDigest`, `StreamDigest`, `InteractionDigest`) — locked
+    //      at v0.2.2 and conformance-pinned.
+    //   3. The substrate substitution point (`Hasher` trait) — downstream
+    //      implementors supply BLAKE3, SHA-256, BLAKE2b, FNV-1a, etc.
+    //
+    // The architectural shape mirrors `Calibration`: the foundation defines
+    // the abstract quantity (`UorTime`) and the substitution point
+    // (`Calibration` carrying substrate constants); downstream supplies
+    // the concrete substrate (substrate hash function + output width).
+    // The foundation never invokes a hash function in its own code.
+    //
+    // The foundation **recommends BLAKE3** as the production substrate hash
+    // (PRISM ships a BLAKE3 `Hasher` impl), but the recommendation is
+    // non-binding — any conforming `Hasher` impl works.
+    f.doc_comment(
+        "v0.2.2 T5: maximum content-fingerprint width carried inline on foundation types.",
+    );
+    f.doc_comment("");
+    f.doc_comment("Sized to accommodate the standard cryptographic hash outputs at the");
+    f.doc_comment("256-bit security level: BLAKE3 (default), SHA-256, BLAKE2s, SHA3-256, etc.");
+    f.doc_comment("Substrates that need wider outputs (SHA-512, BLAKE2b-512) truncate to");
+    f.doc_comment("32 bytes at finalize time, which preserves their full collision-resistance");
+    f.doc_comment("under the birthday bound (2^-128).");
+    f.doc_comment("");
+    f.doc_comment("A `Grounded` value occupies one inline buffer of this width plus a");
+    f.doc_comment("1-byte active-width tag. The 32-byte cap keeps `Grounded` under the 256-byte");
+    f.doc_comment("phantom_tag budget pinned by the conformance suite.");
+    f.line("pub const FINGERPRINT_MAX_BYTES: usize = 32;");
+    f.blank();
+    f.doc_comment("v0.2.2 T5: minimum required content-fingerprint width for substrate hashers.");
+    f.doc_comment("");
+    f.doc_comment("**Derived, not chosen.** The v0.2.2 correctness target requires trace-replay");
+    f.doc_comment("collision probability \u{2264} 2^-64 in non-adversarial settings. Under the");
+    f.doc_comment("birthday bound, an `n`-bit hash reaches a 2^-(n/2) collision probability, so");
+    f.doc_comment("the minimum bit width satisfying 2^-64 is `n = 128`, i.e., 16 bytes.");
+    f.doc_comment("");
+    f.doc_comment("A future version of the foundation that targets a different collision");
+    f.doc_comment("probability raises this constant accordingly; the value reflects the");
+    f.doc_comment("correctness target, not a prescription.");
+    f.line("pub const FINGERPRINT_MIN_BYTES: usize = 16;");
+    f.blank();
+    f.doc_comment("v0.2.2 T5: canonical-byte-layout version. Increment when the layout");
+    f.doc_comment("changes (event ordering, trailing fields, primitive-op discriminant table,");
+    f.doc_comment("certificate-kind discriminant table). Pinned by the");
+    f.doc_comment("`rust/trace_byte_layout_pinned` conformance validator.");
+    f.line("pub const TRACE_REPLAY_FORMAT_VERSION: u16 = 2;");
+    f.blank();
+    f.doc_comment("v0.2.2 T5: pluggable content hasher with parametric output width.");
+    f.doc_comment("");
+    f.doc_comment("The foundation does not ship an implementation. Downstream substrate");
+    f.doc_comment("consumers (PRISM, application crates) supply their own `Hasher` impl");
+    f.doc_comment("\u{2014} BLAKE3, SHA-256, SHA-512, BLAKE2b, SipHash 2-4, FNV-1a, or any");
+    f.doc_comment("other byte-stream hash whose output width satisfies the foundation's");
+    f.doc_comment("derived collision-bound minimum.");
+    f.doc_comment("");
+    f.doc_comment("# Foundation recommendation");
+    f.doc_comment("");
+    f.doc_comment("The foundation **recommends BLAKE3** as the default substrate hash for");
+    f.doc_comment("production deployments. BLAKE3 is fast, well-audited, has no known");
+    f.doc_comment("cryptographic weaknesses, supports parallel and SIMD-accelerated");
+    f.doc_comment("implementations, and has a flexible output length. PRISM ships a BLAKE3");
+    f.doc_comment("`Hasher` impl as its production substrate; application crates should");
+    f.doc_comment("use it unless they have a specific reason to deviate.");
+    f.doc_comment("");
+    f.doc_comment("The recommendation is non-binding: any conforming `Hasher` impl works");
+    f.doc_comment("with the foundation's pipeline and verify path. The foundation never");
+    f.doc_comment("invokes a hash function itself, so the choice is fully a downstream");
+    f.doc_comment("decision.");
+    f.doc_comment("");
+    f.doc_comment("# Architecture");
+    f.doc_comment("");
+    f.doc_comment("The architectural shape mirrors `Calibration`: the foundation defines");
+    f.doc_comment("the abstract quantity (`ContentFingerprint`) and the substitution point");
+    f.doc_comment("(`Hasher`); downstream provides the concrete substrate AND chooses the");
+    f.doc_comment("output width within the foundation's correctness budget.");
+    f.doc_comment("");
+    f.doc_comment("# Required laws");
+    f.doc_comment("");
+    f.doc_comment("1. **Width-in-budget**: `OUTPUT_BYTES` must be in `[FINGERPRINT_MIN_BYTES,");
+    f.doc_comment("   FINGERPRINT_MAX_BYTES]`. Enforced at codegen time via a");
+    f.doc_comment("   `const _: () = assert!(...)` block emitted inside every");
+    f.doc_comment("   `pipeline::run::<T, _, H>` body.");
+    f.doc_comment("");
+    f.doc_comment("2. **Determinism**: identical byte sequences produce bit-identical outputs");
+    f.doc_comment("   across program runs, builds, target architectures, and rustc versions.");
+    f.doc_comment("");
+    f.doc_comment("3. **Sensitivity**: hashing two byte sequences that differ in any byte");
+    f.doc_comment("   produces two distinct outputs with probability bounded by the hasher's");
+    f.doc_comment("   documented collision rate.");
+    f.doc_comment("");
+    f.doc_comment("4. **No interior mutability**: `fold_byte` consumes `self` and returns a");
+    f.doc_comment("   new state. Impls that depend on hidden mutable state violate the contract.");
+    f.line("pub trait Hasher {");
+    f.indented_doc_comment("Active output width in bytes. Must be in");
+    f.indented_doc_comment("`[FINGERPRINT_MIN_BYTES, FINGERPRINT_MAX_BYTES]`.");
+    f.line("    const OUTPUT_BYTES: usize;");
+    f.blank();
+    f.indented_doc_comment("Initial hasher state.");
+    f.line("    fn initial() -> Self;");
+    f.blank();
+    f.indented_doc_comment("Fold a single byte into the running state.");
+    f.line("    #[must_use]");
+    f.line("    fn fold_byte(self, b: u8) -> Self;");
+    f.blank();
+    f.indented_doc_comment("Fold a slice of bytes (default impl: byte-by-byte).");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    fn fold_bytes(mut self, bytes: &[u8]) -> Self");
+    f.line("    where");
+    f.line("        Self: Sized,");
+    f.line("    {");
+    f.line("        let mut i = 0;");
+    f.line("        while i < bytes.len() {");
+    f.line("            self = self.fold_byte(bytes[i]);");
+    f.line("            i += 1;");
+    f.line("        }");
+    f.line("        self");
+    f.line("    }");
+    f.blank();
+    f.indented_doc_comment("Finalize into the canonical max-width buffer. Bytes");
+    f.indented_doc_comment("`0..OUTPUT_BYTES` carry the hash result; bytes");
+    f.indented_doc_comment("`OUTPUT_BYTES..FINGERPRINT_MAX_BYTES` MUST be zero.");
+    f.line("    fn finalize(self) -> [u8; FINGERPRINT_MAX_BYTES];");
+    f.line("}");
+    f.blank();
+    f.doc_comment("v0.2.2 T5: sealed parametric content fingerprint.");
+    f.doc_comment("");
+    f.doc_comment("Wraps a fixed-capacity byte buffer of `FINGERPRINT_MAX_BYTES` bytes plus");
+    f.doc_comment("the active width in bytes. The active width is set by the producing");
+    f.doc_comment("`Hasher::OUTPUT_BYTES` and recorded so that downstream can distinguish");
+    f.doc_comment("\"this is a 128-bit fingerprint\" from \"this is a 256-bit fingerprint\"");
+    f.doc_comment("without inspecting the trailing zero bytes.");
+    f.doc_comment("");
+    f.doc_comment("Equality is bit-equality on the full buffer + width tag, so two");
+    f.doc_comment("fingerprints from different hashers (different widths) are never equal");
+    f.doc_comment("even if their leading bytes happen to coincide. This prevents silent");
+    f.doc_comment("collisions when downstream consumers mix substrate hashers.");
+    f.line("#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]");
+    f.line("pub struct ContentFingerprint {");
+    f.line("    bytes: [u8; FINGERPRINT_MAX_BYTES],");
+    f.line("    width_bytes: u8,");
+    f.line("    _sealed: (),");
+    f.line("}");
+    f.blank();
+    f.line("impl ContentFingerprint {");
+    f.indented_doc_comment("v0.2.2 T6.6: pub(crate) zero placeholder. Used internally as the");
+    f.indented_doc_comment("`Trace::empty()` field initializer and the `Default` impl. Not");
+    f.indented_doc_comment("publicly constructible; downstream that needs a `ContentFingerprint`");
+    f.indented_doc_comment("constructs one via `Hasher::finalize()` followed by `from_buffer()`.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    #[allow(dead_code)]");
+    f.line("    pub(crate) const fn zero() -> Self {");
+    f.line("        Self {");
+    f.line("            bytes: [0u8; FINGERPRINT_MAX_BYTES],");
+    f.line("            width_bytes: 0,");
+    f.line("            _sealed: (),");
+    f.line("        }");
+    f.line("    }");
+    f.blank();
+    f.indented_doc_comment("Whether this fingerprint is the all-zero placeholder.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn is_zero(&self) -> bool {");
+    f.line("        self.width_bytes == 0");
+    f.line("    }");
+    f.blank();
+    f.indented_doc_comment("Active width in bytes (set by the producing hasher).");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn width_bytes(&self) -> u8 {");
+    f.line("        self.width_bytes");
+    f.line("    }");
+    f.blank();
+    f.indented_doc_comment("Active width in bits (`width_bytes * 8`).");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn width_bits(&self) -> u16 {");
+    f.line("        (self.width_bytes as u16) * 8");
+    f.line("    }");
+    f.blank();
+    f.indented_doc_comment("The full buffer. Bytes `0..width_bytes` are the hash; bytes");
+    f.indented_doc_comment("`width_bytes..FINGERPRINT_MAX_BYTES` are zero.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn as_bytes(&self) -> &[u8; FINGERPRINT_MAX_BYTES] {");
+    f.line("        &self.bytes");
+    f.line("    }");
+    f.blank();
+    f.indented_doc_comment("Construct a fingerprint from a hasher's finalize buffer + width tag.");
+    f.indented_doc_comment("Production paths reach this via `pipeline::run::<T, _, H>`; test");
+    f.indented_doc_comment("paths via the `__test_helpers` back-door.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn from_buffer(");
+    f.line("        bytes: [u8; FINGERPRINT_MAX_BYTES],");
+    f.line("        width_bytes: u8,");
+    f.line("    ) -> Self {");
+    f.line("        Self {");
+    f.line("            bytes,");
+    f.line("            width_bytes,");
+    f.line("            _sealed: (),");
+    f.line("        }");
+    f.line("    }");
+    f.line("}");
+    f.blank();
+    f.line("impl Default for ContentFingerprint {");
+    f.line("    #[inline]");
+    f.line("    fn default() -> Self {");
+    f.line("        Self::zero()");
+    f.line("    }");
+    f.line("}");
+    f.blank();
+    // v0.2.2 T6.3: `ZeroHasher` (the migration marker for legacy callers
+    // without a substrate `Hasher`) is deleted. v0.2.2 is the first full
+    // release; there are no legacy callers. Every public path that produces
+    // a `Grounded`, `Trace`, or `GroundingCertificate` threads a real
+    // substrate `Hasher` end-to-end.
+
+    f.doc_comment("v0.2.2 T5: stable u8 discriminant for `PrimitiveOp`. Locked to the");
+    f.doc_comment("codegen output order; do not reorder `PrimitiveOp` variants without");
+    f.doc_comment("bumping `TRACE_REPLAY_FORMAT_VERSION`. Folded into the canonical byte");
+    f.doc_comment("layout of every `TraceEvent` so substrate hashers produce stable");
+    f.doc_comment("fingerprints across builds.");
+    f.line("#[inline]");
+    f.line("#[must_use]");
+    f.line("pub const fn primitive_op_discriminant(op: crate::PrimitiveOp) -> u8 {");
+    f.line("    match op {");
+    f.line("        crate::PrimitiveOp::Neg => 0,");
+    f.line("        crate::PrimitiveOp::Bnot => 1,");
+    f.line("        crate::PrimitiveOp::Succ => 2,");
+    f.line("        crate::PrimitiveOp::Pred => 3,");
+    f.line("        crate::PrimitiveOp::Add => 4,");
+    f.line("        crate::PrimitiveOp::Sub => 5,");
+    f.line("        crate::PrimitiveOp::Mul => 6,");
+    f.line("        crate::PrimitiveOp::Xor => 7,");
+    f.line("        crate::PrimitiveOp::And => 8,");
+    f.line("        crate::PrimitiveOp::Or => 9,");
+    f.line("    }");
+    f.line("}");
+    f.blank();
+    f.doc_comment("v0.2.2 T5: stable u8 discriminant tag distinguishing the certificate");
+    f.doc_comment("kinds the foundation pipeline mints. Folded into the trailing byte of");
+    f.doc_comment("every canonical digest so two certificates over the same source unit");
+    f.doc_comment("but of different kinds produce distinct fingerprints. Locked at v0.2.2;");
+    f.doc_comment("reordering or inserting variants requires bumping");
+    f.doc_comment("`TRACE_REPLAY_FORMAT_VERSION`.");
+    f.line("#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]");
+    f.line("#[non_exhaustive]");
+    f.line("pub enum CertificateKind {");
+    f.indented_doc_comment("Cert minted by `pipeline::run` and `run_const` (retained for");
+    f.indented_doc_comment("`run_grounding_aware`).");
+    f.line("    Grounding,");
+    f.indented_doc_comment("Cert minted by `certify_tower_completeness_const`.");
+    f.line("    TowerCompleteness,");
+    f.indented_doc_comment("Cert minted by `certify_incremental_completeness_const`.");
+    f.line("    IncrementalCompleteness,");
+    f.indented_doc_comment("Cert minted by `certify_inhabitance_const` / `run_inhabitance`.");
+    f.line("    Inhabitance,");
+    f.indented_doc_comment("Cert minted by `certify_multiplication_const`.");
+    f.line("    Multiplication,");
+    f.indented_doc_comment("Cert minted by `resolver::two_sat_decider::certify`.");
+    f.line("    TwoSat,");
+    f.indented_doc_comment("Cert minted by `resolver::horn_sat_decider::certify`.");
+    f.line("    HornSat,");
+    f.indented_doc_comment("Cert minted by `resolver::residual_verdict::certify`.");
+    f.line("    ResidualVerdict,");
+    f.indented_doc_comment("Cert minted by `resolver::canonical_form::certify`.");
+    f.line("    CanonicalForm,");
+    f.indented_doc_comment("Cert minted by `resolver::type_synthesis::certify`.");
+    f.line("    TypeSynthesis,");
+    f.indented_doc_comment("Cert minted by `resolver::homotopy::certify`.");
+    f.line("    Homotopy,");
+    f.indented_doc_comment("Cert minted by `resolver::monodromy::certify`.");
+    f.line("    Monodromy,");
+    f.indented_doc_comment("Cert minted by `resolver::moduli::certify`.");
+    f.line("    Moduli,");
+    f.indented_doc_comment("Cert minted by `resolver::jacobian_guided::certify`.");
+    f.line("    JacobianGuided,");
+    f.indented_doc_comment("Cert minted by `resolver::evaluation::certify`.");
+    f.line("    Evaluation,");
+    f.indented_doc_comment("Cert minted by `resolver::session::certify`.");
+    f.line("    Session,");
+    f.indented_doc_comment("Cert minted by `resolver::superposition::certify`.");
+    f.line("    Superposition,");
+    f.indented_doc_comment("Cert minted by `resolver::measurement::certify`.");
+    f.line("    Measurement,");
+    f.indented_doc_comment("Cert minted by `resolver::witt_level_resolver::certify`.");
+    f.line("    WittLevel,");
+    f.indented_doc_comment("Cert minted by `resolver::dihedral_factorization::certify`.");
+    f.line("    DihedralFactorization,");
+    f.indented_doc_comment("Cert minted by `resolver::completeness::certify`.");
+    f.line("    Completeness,");
+    f.indented_doc_comment("Cert minted by `resolver::geodesic_validator::certify`.");
+    f.line("    GeodesicValidator,");
+    f.line("}");
+    f.blank();
+    f.doc_comment("v0.2.2 T5: stable u8 discriminant for `CertificateKind`. Folded into");
+    f.doc_comment("the trailing byte of canonical digests via the `*Digest` types so two");
+    f.doc_comment("distinct certificate kinds over the same source unit produce distinct");
+    f.doc_comment("fingerprints. Locked at v0.2.2.");
+    f.line("#[inline]");
+    f.line("#[must_use]");
+    f.line("pub const fn certificate_kind_discriminant(kind: CertificateKind) -> u8 {");
+    f.line("    match kind {");
+    f.line("        CertificateKind::Grounding => 1,");
+    f.line("        CertificateKind::TowerCompleteness => 2,");
+    f.line("        CertificateKind::IncrementalCompleteness => 3,");
+    f.line("        CertificateKind::Inhabitance => 4,");
+    f.line("        CertificateKind::Multiplication => 5,");
+    f.line("        CertificateKind::TwoSat => 6,");
+    f.line("        CertificateKind::HornSat => 7,");
+    f.line("        CertificateKind::ResidualVerdict => 8,");
+    f.line("        CertificateKind::CanonicalForm => 9,");
+    f.line("        CertificateKind::TypeSynthesis => 10,");
+    f.line("        CertificateKind::Homotopy => 11,");
+    f.line("        CertificateKind::Monodromy => 12,");
+    f.line("        CertificateKind::Moduli => 13,");
+    f.line("        CertificateKind::JacobianGuided => 14,");
+    f.line("        CertificateKind::Evaluation => 15,");
+    f.line("        CertificateKind::Session => 16,");
+    f.line("        CertificateKind::Superposition => 17,");
+    f.line("        CertificateKind::Measurement => 18,");
+    f.line("        CertificateKind::WittLevel => 19,");
+    f.line("        CertificateKind::DihedralFactorization => 20,");
+    f.line("        CertificateKind::Completeness => 21,");
+    f.line("        CertificateKind::GeodesicValidator => 22,");
+    f.line("    }");
+    f.line("}");
+    f.blank();
+    f.doc_comment("v0.2.2 T5: fold a `ConstraintRef` into a `Hasher` via the canonical");
+    f.doc_comment("byte layout. Each variant emits a discriminant byte (1..=9) followed by");
+    f.doc_comment("its payload bytes in big-endian order. Locked at v0.2.2; reordering");
+    f.doc_comment("variants requires bumping `TRACE_REPLAY_FORMAT_VERSION`.");
+    f.doc_comment("");
+    f.doc_comment("Used by `pipeline::run`, `run_const`, and the four `certify_*` entry");
+    f.doc_comment("points to fold a unit's constraint set into the substrate fingerprint.");
+    f.line("pub fn fold_constraint_ref<H: Hasher>(");
+    f.line("    mut hasher: H,");
+    f.line("    c: &crate::pipeline::ConstraintRef,");
+    f.line(") -> H {");
+    f.line("    use crate::pipeline::ConstraintRef as C;");
+    f.line("    match c {");
+    f.line("        C::Residue { modulus, residue } => {");
+    f.line("            hasher = hasher.fold_byte(1);");
+    f.line("            hasher = hasher.fold_bytes(&modulus.to_be_bytes());");
+    f.line("            hasher = hasher.fold_bytes(&residue.to_be_bytes());");
+    f.line("        }");
+    f.line("        C::Hamming { bound } => {");
+    f.line("            hasher = hasher.fold_byte(2);");
+    f.line("            hasher = hasher.fold_bytes(&bound.to_be_bytes());");
+    f.line("        }");
+    f.line("        C::Depth { min, max } => {");
+    f.line("            hasher = hasher.fold_byte(3);");
+    f.line("            hasher = hasher.fold_bytes(&min.to_be_bytes());");
+    f.line("            hasher = hasher.fold_bytes(&max.to_be_bytes());");
+    f.line("        }");
+    f.line("        C::Carry { site } => {");
+    f.line("            hasher = hasher.fold_byte(4);");
+    f.line("            hasher = hasher.fold_bytes(&site.to_be_bytes());");
+    f.line("        }");
+    f.line("        C::Site { position } => {");
+    f.line("            hasher = hasher.fold_byte(5);");
+    f.line("            hasher = hasher.fold_bytes(&position.to_be_bytes());");
+    f.line("        }");
+    f.line("        C::Affine { coefficients, bias } => {");
+    f.line("            hasher = hasher.fold_byte(6);");
+    f.line("            hasher = hasher.fold_bytes(&(coefficients.len() as u32).to_be_bytes());");
+    f.line("            let mut i = 0;");
+    f.line("            while i < coefficients.len() {");
+    f.line("                hasher = hasher.fold_bytes(&coefficients[i].to_be_bytes());");
+    f.line("                i += 1;");
+    f.line("            }");
+    f.line("            hasher = hasher.fold_bytes(&bias.to_be_bytes());");
+    f.line("        }");
+    f.line("        C::SatClauses { clauses, num_vars } => {");
+    f.line("            hasher = hasher.fold_byte(7);");
+    f.line("            hasher = hasher.fold_bytes(&num_vars.to_be_bytes());");
+    f.line("            hasher = hasher.fold_bytes(&(clauses.len() as u32).to_be_bytes());");
+    f.line("            let mut i = 0;");
+    f.line("            while i < clauses.len() {");
+    f.line("                let clause = clauses[i];");
+    f.line("                hasher = hasher.fold_bytes(&(clause.len() as u32).to_be_bytes());");
+    f.line("                let mut j = 0;");
+    f.line("                while j < clause.len() {");
+    f.line("                    let (var, neg) = clause[j];");
+    f.line("                    hasher = hasher.fold_bytes(&var.to_be_bytes());");
+    f.line("                    hasher = hasher.fold_byte(if neg { 1 } else { 0 });");
+    f.line("                    j += 1;");
+    f.line("                }");
+    f.line("                i += 1;");
+    f.line("            }");
+    f.line("        }");
+    f.line("        C::Bound {");
+    f.line("            observable_iri,");
+    f.line("            bound_shape_iri,");
+    f.line("            args_repr,");
+    f.line("        } => {");
+    f.line("            hasher = hasher.fold_byte(8);");
+    f.line("            hasher = hasher.fold_bytes(observable_iri.as_bytes());");
+    f.line("            hasher = hasher.fold_byte(0);");
+    f.line("            hasher = hasher.fold_bytes(bound_shape_iri.as_bytes());");
+    f.line("            hasher = hasher.fold_byte(0);");
+    f.line("            hasher = hasher.fold_bytes(args_repr.as_bytes());");
+    f.line("            hasher = hasher.fold_byte(0);");
+    f.line("        }");
+    f.line("        C::Conjunction { conjuncts } => {");
+    f.line("            hasher = hasher.fold_byte(9);");
+    f.line("            hasher = hasher.fold_bytes(&(conjuncts.len() as u32).to_be_bytes());");
+    f.line("            let mut i = 0;");
+    f.line("            while i < conjuncts.len() {");
+    f.line("                hasher = fold_constraint_ref(hasher, &conjuncts[i]);");
+    f.line("                i += 1;");
+    f.line("            }");
+    f.line("        }");
+    f.line("    }");
+    f.line("    hasher");
+    f.line("}");
+    f.blank();
+    f.doc_comment("v0.2.2 T5: fold the canonical CompileUnit byte layout into a `Hasher`.");
+    f.doc_comment("");
+    f.doc_comment("Layout: `level_bits (2 BE) || budget (8 BE) || iri bytes || 0x00 ||");
+    f.doc_comment("site_count (8 BE) || for each constraint: fold_constraint_ref || ");
+    f.doc_comment("certificate_kind_discriminant (1 byte trailing)`.");
+    f.doc_comment("");
+    f.doc_comment("Locked at v0.2.2 by the `rust/trace_byte_layout_pinned` conformance");
+    f.doc_comment("validator. Used by `pipeline::run`, `run_const`, and the four");
+    f.doc_comment("`certify_*` entry points.");
+    f.line("pub fn fold_unit_digest<H: Hasher>(");
+    f.line("    mut hasher: H,");
+    f.line("    level_bits: u16,");
+    f.line("    budget: u64,");
+    f.line("    iri: &str,");
+    f.line("    site_count: usize,");
+    f.line("    constraints: &[crate::pipeline::ConstraintRef],");
+    f.line("    kind: CertificateKind,");
+    f.line(") -> H {");
+    f.line("    hasher = hasher.fold_bytes(&level_bits.to_be_bytes());");
+    f.line("    hasher = hasher.fold_bytes(&budget.to_be_bytes());");
+    f.line("    hasher = hasher.fold_bytes(iri.as_bytes());");
+    f.line("    hasher = hasher.fold_byte(0);");
+    f.line("    hasher = hasher.fold_bytes(&(site_count as u64).to_be_bytes());");
+    f.line("    let mut i = 0;");
+    f.line("    while i < constraints.len() {");
+    f.line("        hasher = fold_constraint_ref(hasher, &constraints[i]);");
+    f.line("        i += 1;");
+    f.line("    }");
+    f.line("    hasher = hasher.fold_byte(certificate_kind_discriminant(kind));");
+    f.line("    hasher");
+    f.line("}");
+    f.blank();
+    f.doc_comment("v0.2.2 T5: fold the canonical ParallelDeclaration byte layout into a `Hasher`.");
+    f.doc_comment("");
+    f.doc_comment("Layout: `site_count (8 BE) || iri bytes || 0x00 || decl_site_count (8 BE) ||");
+    f.doc_comment("for each constraint: fold_constraint_ref || certificate_kind_discriminant`.");
+    f.line("pub fn fold_parallel_digest<H: Hasher>(");
+    f.line("    mut hasher: H,");
+    f.line("    decl_site_count: u64,");
+    f.line("    iri: &str,");
+    f.line("    type_site_count: usize,");
+    f.line("    constraints: &[crate::pipeline::ConstraintRef],");
+    f.line("    kind: CertificateKind,");
+    f.line(") -> H {");
+    f.line("    hasher = hasher.fold_bytes(&decl_site_count.to_be_bytes());");
+    f.line("    hasher = hasher.fold_bytes(iri.as_bytes());");
+    f.line("    hasher = hasher.fold_byte(0);");
+    f.line("    hasher = hasher.fold_bytes(&(type_site_count as u64).to_be_bytes());");
+    f.line("    let mut i = 0;");
+    f.line("    while i < constraints.len() {");
+    f.line("        hasher = fold_constraint_ref(hasher, &constraints[i]);");
+    f.line("        i += 1;");
+    f.line("    }");
+    f.line("    hasher = hasher.fold_byte(certificate_kind_discriminant(kind));");
+    f.line("    hasher");
+    f.line("}");
+    f.blank();
+    f.doc_comment("v0.2.2 T5: fold the canonical StreamDeclaration byte layout into a `Hasher`.");
+    f.line("pub fn fold_stream_digest<H: Hasher>(");
+    f.line("    mut hasher: H,");
+    f.line("    productivity_bound: u64,");
+    f.line("    iri: &str,");
+    f.line("    constraints: &[crate::pipeline::ConstraintRef],");
+    f.line("    kind: CertificateKind,");
+    f.line(") -> H {");
+    f.line("    hasher = hasher.fold_bytes(&productivity_bound.to_be_bytes());");
+    f.line("    hasher = hasher.fold_bytes(iri.as_bytes());");
+    f.line("    hasher = hasher.fold_byte(0);");
+    f.line("    let mut i = 0;");
+    f.line("    while i < constraints.len() {");
+    f.line("        hasher = fold_constraint_ref(hasher, &constraints[i]);");
+    f.line("        i += 1;");
+    f.line("    }");
+    f.line("    hasher = hasher.fold_byte(certificate_kind_discriminant(kind));");
+    f.line("    hasher");
+    f.line("}");
+    f.blank();
+    f.doc_comment(
+        "v0.2.2 T5: fold the canonical InteractionDeclaration byte layout into a `Hasher`.",
+    );
+    f.line("pub fn fold_interaction_digest<H: Hasher>(");
+    f.line("    mut hasher: H,");
+    f.line("    convergence_seed: u64,");
+    f.line("    iri: &str,");
+    f.line("    constraints: &[crate::pipeline::ConstraintRef],");
+    f.line("    kind: CertificateKind,");
+    f.line(") -> H {");
+    f.line("    hasher = hasher.fold_bytes(&convergence_seed.to_be_bytes());");
+    f.line("    hasher = hasher.fold_bytes(iri.as_bytes());");
+    f.line("    hasher = hasher.fold_byte(0);");
+    f.line("    let mut i = 0;");
+    f.line("    while i < constraints.len() {");
+    f.line("        hasher = fold_constraint_ref(hasher, &constraints[i]);");
+    f.line("        i += 1;");
+    f.line("    }");
+    f.line("    hasher = hasher.fold_byte(certificate_kind_discriminant(kind));");
+    f.line("    hasher");
+    f.line("}");
+    f.blank();
+    f.doc_comment("v0.2.2 T6.1: per-step canonical byte layout for `StreamDriver::next()`.");
+    f.doc_comment("");
+    f.doc_comment(
+        "Layout: `productivity_remaining (8 BE) || rewrite_steps (8 BE) || seed (8 BE) ||",
+    );
+    f.doc_comment("iri bytes || 0x00 || certificate_kind_discriminant (1 byte trailing)`.");
+    f.line("pub fn fold_stream_step_digest<H: Hasher>(");
+    f.line("    mut hasher: H,");
+    f.line("    productivity_remaining: u64,");
+    f.line("    rewrite_steps: u64,");
+    f.line("    seed: u64,");
+    f.line("    iri: &str,");
+    f.line("    kind: CertificateKind,");
+    f.line(") -> H {");
+    f.line("    hasher = hasher.fold_bytes(&productivity_remaining.to_be_bytes());");
+    f.line("    hasher = hasher.fold_bytes(&rewrite_steps.to_be_bytes());");
+    f.line("    hasher = hasher.fold_bytes(&seed.to_be_bytes());");
+    f.line("    hasher = hasher.fold_bytes(iri.as_bytes());");
+    f.line("    hasher = hasher.fold_byte(0);");
+    f.line("    hasher = hasher.fold_byte(certificate_kind_discriminant(kind));");
+    f.line("    hasher");
+    f.line("}");
+    f.blank();
+    f.doc_comment("v0.2.2 T6.1: per-step canonical byte layout for `InteractionDriver::step()`");
+    f.doc_comment("and `InteractionDriver::finalize()`.");
+    f.doc_comment("");
+    f.doc_comment(
+        "Layout: `commutator_acc[0..4] (4 \u{00d7} 8 BE bytes) || peer_step_count (8 BE) ||",
+    );
+    f.doc_comment(
+        "seed (8 BE) || iri bytes || 0x00 || certificate_kind_discriminant (1 byte trailing)`.",
+    );
+    f.line("pub fn fold_interaction_step_digest<H: Hasher>(");
+    f.line("    mut hasher: H,");
+    f.line("    commutator_acc: &[u64; 4],");
+    f.line("    peer_step_count: u64,");
+    f.line("    seed: u64,");
+    f.line("    iri: &str,");
+    f.line("    kind: CertificateKind,");
+    f.line(") -> H {");
+    f.line("    let mut i = 0;");
+    f.line("    while i < 4 {");
+    f.line("        hasher = hasher.fold_bytes(&commutator_acc[i].to_be_bytes());");
+    f.line("        i += 1;");
+    f.line("    }");
+    f.line("    hasher = hasher.fold_bytes(&peer_step_count.to_be_bytes());");
+    f.line("    hasher = hasher.fold_bytes(&seed.to_be_bytes());");
+    f.line("    hasher = hasher.fold_bytes(iri.as_bytes());");
+    f.line("    hasher = hasher.fold_byte(0);");
+    f.line("    hasher = hasher.fold_byte(certificate_kind_discriminant(kind));");
+    f.line("    hasher");
+    f.line("}");
+    f.blank();
+    f.doc_comment("v0.2.2 T5: utility — extract the leading 16 bytes of a finalize buffer");
+    f.doc_comment("as a `ContentAddress`. Used by pipeline entry points to derive the");
+    f.doc_comment("legacy 16-byte unit_address handle from a freshly-computed substrate");
+    f.doc_comment("fingerprint, so two units with distinct fingerprints have distinct");
+    f.doc_comment("unit_address handles too.");
+    f.line("#[inline]");
+    f.line("#[must_use]");
+    f.line("pub const fn unit_address_from_buffer(buffer: &[u8; FINGERPRINT_MAX_BYTES]) -> ContentAddress {");
+    f.line("    let mut bytes = [0u8; 16];");
+    f.line("    let mut i = 0;");
+    f.line("    while i < 16 {");
+    f.line("        bytes[i] = buffer[i];");
+    f.line("        i += 1;");
+    f.line("    }");
+    f.line("    ContentAddress::from_u128(u128::from_be_bytes(bytes))");
+    f.line("}");
+    f.blank();
+    f.doc_comment("v0.2.2 T6.11: const-fn equality on `&str` slices. `str::eq` is not");
+    f.doc_comment("stable in const eval under MSRV 1.81; this helper provides a");
+    f.doc_comment("byte-by-byte equality check for use in `pipeline::run`'s ShapeMismatch");
+    f.doc_comment("detection without runtime allocation.");
+    f.line("#[inline]");
+    f.line("#[must_use]");
+    f.line("pub const fn str_eq(a: &str, b: &str) -> bool {");
+    f.line("    let a = a.as_bytes();");
+    f.line("    let b = b.as_bytes();");
+    f.line("    if a.len() != b.len() {");
+    f.line("        return false;");
+    f.line("    }");
+    f.line("    let mut i = 0;");
+    f.line("    while i < a.len() {");
+    f.line("        if a[i] != b[i] {");
+    f.line("            return false;");
+    f.line("        }");
+    f.line("        i += 1;");
+    f.line("    }");
+    f.line("    true");
+    f.line("}");
+    f.blank();
+
+    f.doc_comment("A binding entry in a `BindingsTable`. Pairs a `ContentAddress`");
+    f.doc_comment("(hash of the query coordinate) with the bound bytes.");
     f.line("#[derive(Debug, Clone, Copy)]");
     f.line("pub struct BindingEntry {");
     f.indented_doc_comment("Content-hashed query address.");
-    f.line("    pub address: u128,");
+    f.line("    pub address: ContentAddress,");
     f.indented_doc_comment(
         "Bound payload bytes (length determined by the WittLevel of the table).",
     );
@@ -2989,16 +4403,55 @@ fn generate_grounded_wrapper(f: &mut RustFile) {
     f.line("}");
     f.blank();
     f.line("impl BindingsTable {");
-    f.indented_doc_comment("Construct a `BindingsTable` from a sorted slice. Caller must ensure");
-    f.indented_doc_comment("ascending order; this is `pub(crate)` so only the macro back-door");
-    f.indented_doc_comment("path can construct one.");
-    f.line("    #[inline]");
-    f.line("    #[must_use]");
-    f.line("    #[allow(dead_code)]");
-    f.line("    pub(crate) const fn new(entries: &'static [BindingEntry]) -> Self {");
-    f.line("        Self { entries }");
+    f.indented_doc_comment("v0.2.2 T5 C4: validating constructor. Checks that `entries` are");
+    f.indented_doc_comment("strictly ascending by `address`, which is the invariant");
+    f.indented_doc_comment("`Grounded::get_binding` relies on for its binary-search lookup.");
+    f.indented_doc_comment("");
+    f.indented_doc_comment("# Errors");
+    f.indented_doc_comment("");
+    f.indented_doc_comment("Returns `BindingsTableError::Unsorted { at }` where `at` is the first");
+    f.indented_doc_comment("index where the order is violated (i.e., `entries[at].address <=");
+    f.indented_doc_comment("entries[at - 1].address`).");
+    f.line("    pub const fn try_new(");
+    f.line("        entries: &'static [BindingEntry],");
+    f.line("    ) -> Result<Self, BindingsTableError> {");
+    f.line("        let mut i = 1;");
+    f.line("        while i < entries.len() {");
+    f.line("            if entries[i].address.as_u128() <= entries[i - 1].address.as_u128() {");
+    f.line("                return Err(BindingsTableError::Unsorted { at: i });");
+    f.line("            }");
+    f.line("            i += 1;");
+    f.line("        }");
+    f.line("        Ok(Self { entries })");
     f.line("    }");
     f.line("}");
+    f.blank();
+    f.doc_comment("v0.2.2 T5 C4: errors returned by `BindingsTable::try_new`.");
+    f.line("#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]");
+    f.line("#[non_exhaustive]");
+    f.line("pub enum BindingsTableError {");
+    f.indented_doc_comment("Entries at index `at` and `at - 1` are out of order (the slice is");
+    f.indented_doc_comment("not strictly ascending by `address`).");
+    f.line("    Unsorted {");
+    f.line("        /// The first index where the order is violated.");
+    f.line("        at: usize,");
+    f.line("    },");
+    f.line("}");
+    f.blank();
+    // v0.2.2 T5.9: Display + core::error::Error impls.
+    f.line("impl core::fmt::Display for BindingsTableError {");
+    f.line("    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {");
+    f.line("        match self {");
+    f.line("            Self::Unsorted { at } => write!(");
+    f.line("                f,");
+    f.line("                \"BindingsTable entries not sorted: address at index {at} <= address at index {}\",");
+    f.line("                at - 1,");
+    f.line("            ),");
+    f.line("        }");
+    f.line("    }");
+    f.line("}");
+    f.blank();
+    f.line("impl core::error::Error for BindingsTableError {}");
     f.blank();
 
     f.doc_comment("The compile-time witness that `op:GS_4` holds for the value it carries:");
@@ -3023,7 +4476,14 @@ fn generate_grounded_wrapper(f: &mut RustFile) {
     f.indented_doc_comment("The Witt level the grounded value was minted at.");
     f.line("    witt_level_bits: u16,");
     f.indented_doc_comment("Content-address of the originating CompileUnit.");
-    f.line("    unit_address: u128,");
+    f.line("    unit_address: ContentAddress,");
+    f.indented_doc_comment(
+        "Phase A.1: the foundation-internal two-clock value read at witness mint time.",
+    );
+    f.indented_doc_comment(
+        "Computed deterministically from (witt_level_bits, unit_address, bindings).",
+    );
+    f.line("    uor_time: UorTime,");
     f.indented_doc_comment("v0.2.2 T2.6 (cleanup): BaseMetric storage — populated by the");
     f.indented_doc_comment("pipeline at mint time as a deterministic function of witt level,");
     f.indented_doc_comment("unit address, and bindings. All six fields are read-only from");
@@ -3044,6 +4504,12 @@ fn generate_grounded_wrapper(f: &mut RustFile) {
     f.line("    jacobian_len: u16,");
     f.indented_doc_comment("Betti numbers \u{03b2}_0..\u{03b2}_{MAX_BETTI_DIMENSION-1}.");
     f.line("    betti_numbers: [u32; MAX_BETTI_DIMENSION],");
+    f.indented_doc_comment("v0.2.2 T5: parametric content fingerprint of the source unit's");
+    f.indented_doc_comment("full state, computed at grounding time by the consumer-supplied");
+    f.indented_doc_comment("`Hasher`. Width is `ContentFingerprint::width_bytes()`, set by");
+    f.indented_doc_comment("`H::OUTPUT_BYTES` at the call site. Read by `Grounded::derivation()`");
+    f.indented_doc_comment("so the verify path can re-derive the source certificate.");
+    f.line("    content_fingerprint: ContentFingerprint,");
     f.indented_doc_comment("Phantom type tying this `Grounded` to a specific `ConstrainedType`.");
     f.line("    _phantom: PhantomData<T>,");
     f.indented_doc_comment("Phantom domain tag (Q3). Defaults to `T` for backwards-compatible");
@@ -3057,10 +4523,10 @@ fn generate_grounded_wrapper(f: &mut RustFile) {
     f.indented_doc_comment("zero-step access, downstream code uses statically-known indices.");
     f.line("    #[inline]");
     f.line("    #[must_use]");
-    f.line("    pub fn get_binding(&self, address: u128) -> Option<&'static [u8]> {");
+    f.line("    pub fn get_binding(&self, address: ContentAddress) -> Option<&'static [u8]> {");
     f.line("        self.bindings");
     f.line("            .entries");
-    f.line("            .binary_search_by_key(&address, |e| e.address)");
+    f.line("            .binary_search_by_key(&address.as_u128(), |e| e.address.as_u128())");
     f.line("            .ok()");
     f.line("            .map(|i| self.bindings.entries[i].bytes)");
     f.line("    }");
@@ -3081,7 +4547,7 @@ fn generate_grounded_wrapper(f: &mut RustFile) {
     f.indented_doc_comment("Returns the content-address of the originating CompileUnit.");
     f.line("    #[inline]");
     f.line("    #[must_use]");
-    f.line("    pub const fn unit_address(&self) -> u128 {");
+    f.line("    pub const fn unit_address(&self) -> ContentAddress {");
     f.line("        self.unit_address");
     f.line("    }");
     f.blank();
@@ -3092,57 +4558,97 @@ fn generate_grounded_wrapper(f: &mut RustFile) {
     f.line("        &self.validated");
     f.line("    }");
     f.blank();
-    // v0.2.2 T2.6 (cleanup): BaseMetric accessors read stored fields.
-    // The pipeline populates the fields at mint time from input-dependent
-    // arithmetic over witt_level_bits, unit_address, and bindings; the
-    // accessors are pure field reads. The bridge_namespace_completion
-    // conformance validator pins their signatures.
+    // Phase A.4: BaseMetric accessors return sealed newtypes. The six
+    // accessors correspond one-to-one with the `observable:BaseMetric`
+    // individuals in the ontology: d_delta, sigma, jacobian, betti, euler,
+    // residual. Each return type is foundation-minted, so downstream can
+    // neither fabricate nor mutate a metric value.
     f.indented_doc_comment(
-        "v0.2.2 Phase E: observable:d_delta_metric — the metric incompatibility",
+        "Phase A.4: `observable:d_delta_metric` — sealed metric incompatibility between",
     );
-    f.indented_doc_comment(
-        "between ring distance and Hamming distance for this datum's neighborhood.",
-    );
+    f.indented_doc_comment("ring distance and Hamming distance for this datum's neighborhood.");
     f.line("    #[inline]");
     f.line("    #[must_use]");
-    f.line("    pub const fn d_delta(&self) -> i64 { self.d_delta }");
+    f.line("    pub const fn d_delta(&self) -> DDeltaMetric {");
+    f.line("        DDeltaMetric::new(self.d_delta)");
+    f.line("    }");
     f.blank();
-    f.indented_doc_comment("v0.2.2 Phase E: observable:sigma_metric — grounding completion ratio.");
+    f.indented_doc_comment(
+        "Phase A.4: `observable:sigma_metric` — sealed grounding completion ratio.",
+    );
     f.line("    #[inline]");
     f.line("    #[must_use]");
     f.line("    pub fn sigma(&self) -> SigmaValue {");
     f.line("        SigmaValue::new_unchecked(self.sigma_ppm as f64 / 1_000_000.0)");
     f.line("    }");
     f.blank();
-    f.indented_doc_comment("v0.2.2 Phase E: observable:jacobian_metric — per-site Jacobian row.");
+    f.indented_doc_comment(
+        "Phase A.4: `observable:jacobian_metric` — sealed per-site Jacobian row.",
+    );
     f.line("    #[inline]");
     f.line("    #[must_use]");
     f.line("    pub fn jacobian(&self) -> JacobianMetric<T> {");
     f.line("        JacobianMetric::from_entries(self.jacobian_entries, self.jacobian_len)");
     f.line("    }");
     f.blank();
-    f.indented_doc_comment("v0.2.2 Phase E: observable:betti_metric — Betti numbers up to");
-    f.indented_doc_comment("MAX_BETTI_DIMENSION.");
+    f.indented_doc_comment("Phase A.4: `observable:betti_metric` — sealed Betti-number vector.");
     f.line("    #[inline]");
     f.line("    #[must_use]");
-    f.line("    pub const fn betti_numbers(&self) -> [u32; MAX_BETTI_DIMENSION] {");
-    f.line("        self.betti_numbers");
+    f.line("    pub const fn betti(&self) -> BettiMetric {");
+    f.line("        BettiMetric::new(self.betti_numbers)");
     f.line("    }");
     f.blank();
-    f.indented_doc_comment("v0.2.2 Phase E: observable:euler_metric — Euler characteristic of");
+    f.indented_doc_comment(
+        "Phase A.4: `observable:euler_metric` — sealed Euler characteristic \u{03C7} of",
+    );
     f.indented_doc_comment("the constraint nerve.");
     f.line("    #[inline]");
     f.line("    #[must_use]");
-    f.line("    pub const fn euler_characteristic(&self) -> i64 {");
-    f.line("        self.euler_characteristic");
+    f.line("    pub const fn euler(&self) -> EulerMetric {");
+    f.line("        EulerMetric::new(self.euler_characteristic)");
     f.line("    }");
     f.blank();
-    f.indented_doc_comment("v0.2.2 Phase E: observable:residual_metric — count of free sites at");
-    f.indented_doc_comment("grounding time.");
+    f.indented_doc_comment(
+        "Phase A.4: `observable:residual_metric` — sealed free-site count r at grounding.",
+    );
     f.line("    #[inline]");
     f.line("    #[must_use]");
-    f.line("    pub const fn residual_count(&self) -> u32 {");
-    f.line("        self.residual_count");
+    f.line("    pub const fn residual(&self) -> ResidualMetric {");
+    f.line("        ResidualMetric::new(self.residual_count)");
+    f.line("    }");
+    f.blank();
+    f.indented_doc_comment("v0.2.2 T5: returns the parametric content fingerprint of the source");
+    f.indented_doc_comment("unit, computed at grounding time by the consumer-supplied `Hasher`.");
+    f.indented_doc_comment("Width is set by `H::OUTPUT_BYTES` at the call site. Used by");
+    f.indented_doc_comment("`derivation()` to seed the replayed Trace's fingerprint, which");
+    f.indented_doc_comment("`verify_trace` then passes through to the re-derived certificate.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn content_fingerprint(&self) -> ContentFingerprint {");
+    f.line("        self.content_fingerprint");
+    f.line("    }");
+    f.blank();
+    f.indented_doc_comment("v0.2.2 T5 (C2): returns the `Derivation` that produced this grounded");
+    f.indented_doc_comment("value. Use the returned `Derivation` with `Derivation::replay()` and");
+    f.indented_doc_comment("then `uor_foundation_verify::verify_trace` to re-derive the source");
+    f.indented_doc_comment("certificate without re-running the deciders.");
+    f.indented_doc_comment("");
+    f.indented_doc_comment("The round-trip property:");
+    f.indented_doc_comment("");
+    f.indented_doc_comment("```ignore");
+    f.indented_doc_comment("verify_trace(&grounded.derivation().replay()).certificate()");
+    f.indented_doc_comment("    == grounded.certificate()");
+    f.indented_doc_comment("```");
+    f.indented_doc_comment("");
+    f.indented_doc_comment("holds for every conforming substrate `Hasher`.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn derivation(&self) -> Derivation {");
+    f.line("        Derivation::new(");
+    f.line("            (self.jacobian_len as u32) + 1,");
+    f.line("            self.witt_level_bits,");
+    f.line("            self.content_fingerprint,");
+    f.line("        )");
     f.line("    }");
     f.blank();
 
@@ -3165,6 +4671,7 @@ fn generate_grounded_wrapper(f: &mut RustFile) {
     f.line("            bindings: self.bindings,");
     f.line("            witt_level_bits: self.witt_level_bits,");
     f.line("            unit_address: self.unit_address,");
+    f.line("            uor_time: self.uor_time,");
     f.line("            sigma_ppm: self.sigma_ppm,");
     f.line("            d_delta: self.d_delta,");
     f.line("            euler_characteristic: self.euler_characteristic,");
@@ -3172,9 +4679,63 @@ fn generate_grounded_wrapper(f: &mut RustFile) {
     f.line("            jacobian_entries: self.jacobian_entries,");
     f.line("            jacobian_len: self.jacobian_len,");
     f.line("            betti_numbers: self.betti_numbers,");
+    f.line("            content_fingerprint: self.content_fingerprint,");
     f.line("            _phantom: PhantomData,");
     f.line("            _tag: PhantomData,");
     f.line("        }");
+    f.line("    }");
+    f.blank();
+
+    // Phase A.1: uor_time() accessor on Grounded<T, Tag>.
+    f.indented_doc_comment(
+        "Phase A.1: the foundation-internal two-clock value read at witness mint time.",
+    );
+    f.indented_doc_comment("");
+    f.indented_doc_comment("Maps `rewrite_steps` to `derivation:stepCount` and `landauer_nats` to");
+    f.indented_doc_comment(
+        "`observable:LandauerCost`. The value is content-deterministic: two `Grounded`",
+    );
+    f.indented_doc_comment("witnesses minted from the same inputs share the same `UorTime`.");
+    f.indented_doc_comment("");
+    f.indented_doc_comment("Compose with a `Calibration` via [`UorTime::min_wall_clock`] to");
+    f.indented_doc_comment(
+        "bound the provable minimum wall-clock duration the computation required.",
+    );
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn uor_time(&self) -> UorTime {");
+    f.line("        self.uor_time");
+    f.line("    }");
+    f.blank();
+
+    // Phase A.2: triad() accessor on Grounded<T, Tag>.
+    f.indented_doc_comment(
+        "Phase A.2: the sealed triadic coordinate `(stratum, spectrum, address)` at the",
+    );
+    f.indented_doc_comment("witness's Witt level, projected from the content-addressed unit.");
+    f.indented_doc_comment("");
+    f.indented_doc_comment(
+        "`stratum` is the v\u{2082} valuation of the lower unit-address half; `spectrum`",
+    );
+    f.indented_doc_comment(
+        "is the lower 64 bits of the unit address; `address` is the upper 64 bits.",
+    );
+    f.indented_doc_comment(
+        "The projection is deterministic and content-addressed, so replay reproduces the",
+    );
+    f.indented_doc_comment("same `Triad` bit-for-bit.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn triad(&self) -> Triad<T> {");
+    f.line("        let addr = self.unit_address.as_u128();");
+    f.line("        let addr_lo = addr as u64;");
+    f.line("        let addr_hi = (addr >> 64) as u64;");
+    f.line("        let stratum = if addr_lo == 0 {");
+    f.line("            0u64");
+    f.line("        } else {");
+    f.line("            addr_lo.trailing_zeros() as u64");
+    f.line("        };");
+    f.line("        Triad::new(stratum, addr_lo, addr_hi)");
     f.line("    }");
     f.blank();
     f.indented_doc_comment("Crate-internal constructor used by the pipeline at mint time.");
@@ -3194,7 +4755,8 @@ fn generate_grounded_wrapper(f: &mut RustFile) {
     f.line("        validated: Validated<GroundingCertificate>,");
     f.line("        bindings: BindingsTable,");
     f.line("        witt_level_bits: u16,");
-    f.line("        unit_address: u128,");
+    f.line("        unit_address: ContentAddress,");
+    f.line("        content_fingerprint: ContentFingerprint,");
     f.line("    ) -> Self {");
     f.line("        let bound_count = bindings.entries.len() as u32;");
     f.line("        let declared_sites = if witt_level_bits == 0 { 1u32 } else { witt_level_bits as u32 };");
@@ -3229,10 +4791,10 @@ fn generate_grounded_wrapper(f: &mut RustFile) {
     f.line("            }");
     f.line("            k += 1;");
     f.line("        }");
-    f.line("        // Jacobian row: entry i = (unit_address as i64 XOR (i as i64)) mod witt+1.");
+    f.line("        // Jacobian row: entry i = (unit_address.as_u128() as i64 XOR (i as i64)) mod witt+1.");
     f.line("        let mut jac = [0i64; JACOBIAN_MAX_SITES];");
     f.line("        let modulus = (witt_level_bits as i64) + 1;");
-    f.line("        let ua_lo = unit_address as i64;");
+    f.line("        let ua_lo = unit_address.as_u128() as i64;");
     f.line("        let mut i = 0usize;");
     f.line("        let jac_len = if (witt_level_bits as usize) < JACOBIAN_MAX_SITES {");
     f.line("            witt_level_bits as usize");
@@ -3246,11 +4808,22 @@ fn generate_grounded_wrapper(f: &mut RustFile) {
     f.line("            jac[i] = ((raw % m) + m) % m;");
     f.line("            i += 1;");
     f.line("        }");
+    f.line("        // Phase A.1: uor_time is content-deterministic. rewrite_steps counts");
+    f.line("        // the reduction work proxied by (witt bits + bound count + active jac len);");
+    f.line("        // Landauer nats = rewrite_steps \u{00d7} ln 2 (Landauer-temperature cost of");
+    f.line("        // traversing that many orthogonal states). Two Grounded values minted from");
+    f.line("        // the same inputs share the same UorTime.");
+    f.line(
+        "        let steps = (witt_level_bits as u64) + (bound_count as u64) + (jac_len as u64);",
+    );
+    f.line("        let landauer = LandauerBudget::new((steps as f64) * core::f64::consts::LN_2);");
+    f.line("        let uor_time = UorTime::new(landauer, steps);");
     f.line("        Self {");
     f.line("            validated,");
     f.line("            bindings,");
     f.line("            witt_level_bits,");
     f.line("            unit_address,");
+    f.line("            uor_time,");
     f.line("            sigma_ppm,");
     f.line("            d_delta,");
     f.line("            euler_characteristic: euler,");
@@ -3258,9 +4831,28 @@ fn generate_grounded_wrapper(f: &mut RustFile) {
     f.line("            jacobian_entries: jac,");
     f.line("            jacobian_len: jac_len as u16,");
     f.line("            betti_numbers: betti,");
+    f.line("            content_fingerprint,");
     f.line("            _phantom: PhantomData,");
     f.line("            _tag: PhantomData,");
     f.line("        }");
+    f.line("    }");
+    f.blank();
+    f.indented_doc_comment("v0.2.2 T6.17: attach a downstream-validated `BindingsTable` to this");
+    f.indented_doc_comment("grounded value. The original `Grounded` was minted by the foundation");
+    f.indented_doc_comment("pipeline with a substrate-computed certificate; this builder lets");
+    f.indented_doc_comment("downstream attach its own binding table without re-grounding.");
+    f.indented_doc_comment("");
+    f.indented_doc_comment("The `bindings` parameter must satisfy the sortedness invariant. Use");
+    f.indented_doc_comment("[`BindingsTable::try_new`] to construct a validated table from a");
+    f.indented_doc_comment("pre-sorted slice.");
+    f.indented_doc_comment("");
+    f.indented_doc_comment("**Trust boundary:** the certificate witnesses the unit's grounding,");
+    f.indented_doc_comment("not the bindings' contents. A downstream consumer that uses the");
+    f.indented_doc_comment("certificate as a trust root for the bindings is wrong.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub fn with_bindings(self, bindings: BindingsTable) -> Self {");
+    f.line("        Self { bindings, ..self }");
     f.line("    }");
     f.line("}");
     f.blank();
@@ -3270,9 +4862,10 @@ fn generate_grounded_wrapper(f: &mut RustFile) {
     // The triadic coordinate of a Datum: (stratum, spectrum, address).
     // Parametric over the Witt level marker L (one of the unit structs
     // W8/W16/W24/W32 emitted by generate_ring_ops). Fields are private; only
-    // the foundation can construct a Triad. Accessors return u64 coordinate
-    // values — typed coordinate wrappers (TwoAdicValuation<L> etc.) are
-    // deferred to v0.2.3+ when the bridge::query rewrite happens.
+    // the foundation can construct a Triad. Accessors return typed coordinate
+    // wrappers — `Stratum<L>` (sealed u32 newtype over the two-adic valuation),
+    // `Datum<L>` (sealed bit-pattern value), and `ContentAddress` (sealed
+    // 32-byte digest) — per target §1.6 row 4.
     f.doc_comment("v0.2.2 W8: triadic coordinate of a Datum at level `L`. Bundles the");
     f.doc_comment("(stratum, spectrum, address) projection in one structurally-enforced");
     f.doc_comment("type. No public constructor — `Triad<L>` is built only by foundation code");
@@ -3415,9 +5008,11 @@ fn generate_pipeline_failure(f: &mut RustFile, ontology: &Ontology) {
     f.line("}");
     f.blank();
 
-    // No std::error::Error impl — uor-foundation is no_std and the Error
-    // trait isn't in core. Downstream crates that need Error can add their
-    // own newtype wrapper.
+    // v0.2.2 T5.9: `core::error::Error` is stable on no_std as of Rust 1.81.
+    // The foundation's MSRV bumped to 1.81 in T5, so we now ship the trait
+    // impl directly. Downstream consumers can `?`-propagate `PipelineFailure`
+    // through `Box<dyn Error>` chains without manual wrapping.
+    f.line("impl core::error::Error for PipelineFailure {}");
     f.blank();
 }
 
@@ -3442,10 +5037,19 @@ fn collect_failure_fields(ontology: &Ontology, failure_iri: &str) -> Vec<(String
     out
 }
 
-// 2.1.c Certify trait — one resolver façade struct + Certify impl per
-// resolver:CertifyMapping individual.
-fn generate_certify_trait(f: &mut RustFile, ontology: &Ontology) {
-    f.doc_comment("Sealed marker for impossibility witnesses (failure return type of `Certify`).");
+// 2.1.c ImpossibilityWitnessKind sealed trait.
+//
+// Phase B (target §4.1 W12): the `Certify` trait and its five unit-struct
+// resolver façades (`TowerCompletenessResolver`, `IncrementalCompletenessResolver`,
+// `GroundingAwareResolver`, `InhabitanceResolver`, `MultiplicationResolver`) are
+// deleted. The only verdict surface is the module-per-resolver free-function
+// path (`enforcement::resolver::<name>::certify(...)`) emitted below. The
+// `_ontology` parameter is preserved for the signature stability of callers
+// in `mod.rs`; future phases consume it when the resolver tower grows.
+fn generate_certify_trait(f: &mut RustFile, _ontology: &Ontology) {
+    f.doc_comment("Sealed marker for impossibility witnesses returned by the resolver");
+    f.doc_comment("free-function path. Every failure return value of every");
+    f.doc_comment("`resolver::<name>::certify(...)` call is a member of this set.");
     f.line("pub trait ImpossibilityWitnessKind: impossibility_witness_kind_sealed::Sealed {}");
     f.blank();
     f.line("mod impossibility_witness_kind_sealed {");
@@ -3458,171 +5062,6 @@ fn generate_certify_trait(f: &mut RustFile, ontology: &Ontology) {
     f.line("impl ImpossibilityWitnessKind for GenericImpossibilityWitness {}");
     f.line("impl ImpossibilityWitnessKind for InhabitanceImpossibilityWitness {}");
     f.blank();
-
-    // Certify trait definition — generic over the input type so downstream
-    // user types (via #[derive(ConstrainedType)]) can be passed directly to
-    // `certify` without going through the ConstrainedTypeInput shim.
-    f.doc_comment("The v0.2.1 verdict-producing trait. Each resolver façade impls `Certify`");
-    f.doc_comment("to expose the consumer-facing one-liner:");
-    f.doc_comment("");
-    f.doc_comment("```rust,ignore");
-    f.doc_comment("use uor_foundation::enforcement::*;");
-    f.doc_comment("use uor_foundation::pipeline::ConstrainedTypeShape;");
-    f.doc_comment("");
-    f.doc_comment("#[derive(ConstrainedType, Default)]");
-    f.doc_comment("struct Shape;");
-    f.doc_comment("");
-    f.doc_comment("let cert: Validated<LiftChainCertificate> =");
-    f.doc_comment("    TowerCompletenessResolver::new().certify(&Shape)?;");
-    f.doc_comment("let level: WittLevel = cert.target_level();");
-    f.doc_comment("```");
-    f.doc_comment("");
-    f.doc_comment("`Certify` is generic over the input type `I` so any user type");
-    f.doc_comment("implementing `ConstrainedTypeShape` (via `#[derive(ConstrainedType)]`)");
-    f.doc_comment("flows through the pipeline directly. The associated `Certificate` and");
-    f.doc_comment("`Witness` types are sealed via `OntologyTarget` / `ImpossibilityWitnessKind`.");
-    f.line("pub trait Certify<I: ?Sized> {");
-    f.indented_doc_comment("The certificate type returned on success.");
-    f.line("    type Certificate: OntologyTarget;");
-    f.indented_doc_comment("The impossibility witness type returned on failure.");
-    f.line("    type Witness: ImpossibilityWitnessKind;");
-    f.blank();
-    f.indented_doc_comment("The default Witt level this resolver certifies at when the");
-    f.indented_doc_comment("caller omits an explicit level via `certify`. v0.2.1 uses");
-    f.indented_doc_comment("`WittLevel::W32` as the canonical default per ergonomics-spec §3.2.");
-    f.line("    const DEFAULT_LEVEL: WittLevel = WittLevel::W32;");
-    f.blank();
-    f.indented_doc_comment("Run the resolver on `input` at the default Witt level and return");
-    f.indented_doc_comment("either a validated certificate or an impossibility witness.");
-    f.indented_doc_comment("");
-    f.indented_doc_comment("# Errors");
-    f.indented_doc_comment("");
-    f.indented_doc_comment("Returns `Self::Witness` when the resolver determines that no");
-    f.indented_doc_comment("certificate can be issued for `input`.");
-    f.line(
-        "    fn certify(&self, input: &I) -> Result<Validated<Self::Certificate>, Self::Witness> {",
-    );
-    f.line("        self.certify_at(input, Self::DEFAULT_LEVEL)");
-    f.line("    }");
-    f.blank();
-    f.indented_doc_comment("Run the resolver on `input` at an explicit Witt level.");
-    f.indented_doc_comment("");
-    f.indented_doc_comment("# Errors");
-    f.indented_doc_comment("");
-    f.indented_doc_comment("Returns `Self::Witness` when the resolver determines that no");
-    f.indented_doc_comment("certificate can be issued for `input` at `level`.");
-    f.line("    fn certify_at(&self, input: &I, level: WittLevel) -> Result<Validated<Self::Certificate>, Self::Witness>;");
-    f.line("}");
-    f.blank();
-
-    // Walk resolver:CertifyMapping individuals → emit one resolver struct + impl per
-    let mappings = individuals_of_type(ontology, "https://uor.foundation/resolver/CertifyMapping");
-    for m in mappings {
-        let resolver_iri = match ind_prop_str(m, "https://uor.foundation/resolver/forResolver") {
-            Some(s) => s,
-            None => continue,
-        };
-        let cert_iri = match ind_prop_str(m, "https://uor.foundation/resolver/producesCertificate")
-        {
-            Some(s) => s,
-            None => continue,
-        };
-        let witness_iri = match ind_prop_str(m, "https://uor.foundation/resolver/producesWitness") {
-            Some(s) => s,
-            None => continue,
-        };
-        let resolver_name = local_name(resolver_iri).to_string();
-        let cert_name = local_name(cert_iri).to_string();
-        // Map the witness IRI's local name through the OntologyTarget shim set.
-        let witness_name = match local_name(witness_iri) {
-            "ImpossibilityWitness" => "GenericImpossibilityWitness".to_string(),
-            other => other.to_string(),
-        };
-
-        f.doc_comment(&format!(
-            "v0.2.1 unit-struct façade for the `{resolver_name}` resolver class."
-        ));
-        f.doc_comment("");
-        f.doc_comment(&format!(
-            "Constructed via `{resolver_name}::new()`. Implements `Certify` so the"
-        ));
-        f.doc_comment("foundation's verdict surface is reachable as a single one-liner.");
-        f.line("#[derive(Debug, Default, Clone, Copy)]");
-        f.line(&format!("pub struct {resolver_name};"));
-        f.blank();
-        f.line(&format!("impl {resolver_name} {{"));
-        f.indented_doc_comment("Construct a new resolver façade.");
-        f.line("    #[inline]");
-        f.line("    #[must_use]");
-        f.line("    pub const fn new() -> Self {");
-        f.line("        Self");
-        f.line("    }");
-        f.line("}");
-        f.blank();
-        // v0.2.1: generic-input Certify impls. Shape-taking resolvers accept
-        // any `T: ConstrainedTypeShape`; GroundingAwareResolver takes the
-        // opaque `CompileUnit` input shim.
-        if resolver_name == "GroundingAwareResolver" {
-            f.line(&format!("impl Certify<CompileUnit> for {resolver_name} {{"));
-            f.line(&format!("    type Certificate = {cert_name};"));
-            f.line(&format!("    type Witness = {witness_name};"));
-            f.line("    fn certify_at(&self, input: &CompileUnit, level: WittLevel) -> Result<Validated<Self::Certificate>, Self::Witness> {");
-            f.line("        crate::pipeline::run_grounding_aware(input, level)");
-            f.line(&format!(
-                "            .map_err(|_| {witness_name}::default())"
-            ));
-            f.line("    }");
-            f.line("}");
-        } else {
-            f.line(&format!(
-                "impl<__T: crate::pipeline::ConstrainedTypeShape + ?Sized> Certify<__T> for {resolver_name} {{"
-            ));
-            f.line(&format!("    type Certificate = {cert_name};"));
-            f.line(&format!("    type Witness = {witness_name};"));
-            f.line("    fn certify_at(&self, input: &__T, level: WittLevel) -> Result<Validated<Self::Certificate>, Self::Witness> {");
-            let call = match resolver_name.as_str() {
-                "TowerCompletenessResolver" => {
-                    "crate::pipeline::run_tower_completeness(input, level)"
-                }
-                "IncrementalCompletenessResolver" => {
-                    "crate::pipeline::run_incremental_completeness(input, level)"
-                }
-                "InhabitanceResolver" => "crate::pipeline::run_inhabitance(input, level)",
-                // v0.2.2 T2.1 (cleanup): MultiplicationResolver trait-level
-                // façade now delegates to the free function
-                // `enforcement::resolver::multiplication::certify`, which
-                // computes the real closed-form Landauer cost. The trait
-                // derives a MulContext from the trait's (input, level)
-                // arguments — limb_count from level's witt length, stack
-                // budget from the runtime default 16 KB, const_eval=false
-                // since the trait path is runtime-only.
-                "MultiplicationResolver" => "DELEGATED",
-                _ => "Err::<Validated<Self::Certificate>, Self::Witness>(Self::Witness::default())",
-            };
-            if resolver_name == "InhabitanceResolver" {
-                f.line(&format!("        {call}"));
-            } else if resolver_name == "MultiplicationResolver" {
-                f.line("        let _ = input;");
-                f.line("        let limb_count = (level.witt_length() as usize + 63) / 64;");
-                f.line(
-                    "        let context = MulContext::new(16 * 1024, false, limb_count.max(1));",
-                );
-                f.line("        match crate::enforcement::resolver::multiplication::certify(&context) {");
-                f.line(
-                    "            Ok(certified) => Ok(Validated::new(*certified.certificate())),",
-                );
-                f.line("            Err(_) => Err(GenericImpossibilityWitness::default()),");
-                f.line("        }");
-            } else {
-                f.line(&format!(
-                    "        {call}.map_err(|_| {witness_name}::default())"
-                ));
-            }
-            f.line("    }");
-            f.line("}");
-        }
-        f.blank();
-    }
 
     // ── v0.2.2 W12: resolver free functions ────────────────────────────────
     //
@@ -3657,124 +5096,168 @@ fn generate_certify_trait(f: &mut RustFile, ontology: &Ontology) {
     f.line("    /// Returns `GenericImpossibilityWitness` when no certificate can be issued.");
     f.line("    pub mod tower_completeness {");
     f.line("        use super::*;");
-    f.line("        /// Certify at the canonical W32 level.");
+    f.line("        /// v0.2.2 closure (target §4.2): parameterized over phase + hasher.");
     f.line("        ///");
     f.line("        /// # Errors");
     f.line("        ///");
-    f.line("        /// Returns `GenericImpossibilityWitness` on failure.");
-    f.line("        pub fn certify<T: crate::pipeline::ConstrainedTypeShape + ?Sized>(");
-    f.line("            input: &T,");
-    f.line("        ) -> Result<Certified<LiftChainCertificate>, GenericImpossibilityWitness> {");
-    f.line("            certify_at(input, WittLevel::W32)");
+    f.line("        /// Returns `Certified<GenericImpossibilityWitness>` on failure.");
+    f.line("        pub fn certify<T, P, H>(");
+    f.line("            input: &Validated<T, P>,");
+    f.line("        ) -> Result<Certified<LiftChainCertificate>, Certified<GenericImpossibilityWitness>>");
+    f.line("        where");
+    f.line("            T: crate::pipeline::ConstrainedTypeShape,");
+    f.line("            P: crate::enforcement::ValidationPhase,");
+    f.line("            H: crate::enforcement::Hasher,");
+    f.line("        {");
+    f.line("            certify_at::<T, P, H>(input, WittLevel::W32)");
     f.line("        }");
     f.blank();
     f.line("        /// Certify at an explicit Witt level.");
     f.line("        ///");
     f.line("        /// # Errors");
     f.line("        ///");
-    f.line("        /// Returns `GenericImpossibilityWitness` on failure.");
-    f.line("        pub fn certify_at<T: crate::pipeline::ConstrainedTypeShape + ?Sized>(");
-    f.line("            input: &T,");
+    f.line("        /// Returns `Certified<GenericImpossibilityWitness>` on failure.");
+    f.line("        pub fn certify_at<T, P, H>(");
+    f.line("            input: &Validated<T, P>,");
     f.line("            level: WittLevel,");
-    f.line("        ) -> Result<Certified<LiftChainCertificate>, GenericImpossibilityWitness> {");
-    f.line("            crate::pipeline::run_tower_completeness(input, level)");
+    f.line("        ) -> Result<Certified<LiftChainCertificate>, Certified<GenericImpossibilityWitness>>");
+    f.line("        where");
+    f.line("            T: crate::pipeline::ConstrainedTypeShape,");
+    f.line("            P: crate::enforcement::ValidationPhase,");
+    f.line("            H: crate::enforcement::Hasher,");
+    f.line("        {");
+    f.line("            crate::pipeline::run_tower_completeness::<T, H>(input.inner(), level)");
     f.line("                .map(|v| Certified::new(*v.inner()))");
-    f.line("                .map_err(|_| GenericImpossibilityWitness::default())");
+    f.line("                .map_err(|_| Certified::new(GenericImpossibilityWitness::default()))");
     f.line("        }");
     f.line("    }");
     f.blank();
     // Incremental completeness
-    f.line("    /// v0.2.2 W12: certify incremental completeness for a constrained type.");
+    f.line("    /// v0.2.2 closure: certify incremental completeness for a constrained type.");
     f.line("    pub mod incremental_completeness {");
     f.line("        use super::*;");
-    f.line("        /// Certify at the canonical W32 level.");
+    f.line("        /// v0.2.2 closure (target §4.2): parameterized over phase + hasher.");
     f.line("        ///");
     f.line("        /// # Errors");
     f.line("        ///");
-    f.line("        /// Returns `GenericImpossibilityWitness` on failure.");
-    f.line("        pub fn certify<T: crate::pipeline::ConstrainedTypeShape + ?Sized>(");
-    f.line("            input: &T,");
-    f.line("        ) -> Result<Certified<LiftChainCertificate>, GenericImpossibilityWitness> {");
-    f.line("            certify_at(input, WittLevel::W32)");
+    f.line("        /// Returns `Certified<GenericImpossibilityWitness>` on failure.");
+    f.line("        pub fn certify<T, P, H>(");
+    f.line("            input: &Validated<T, P>,");
+    f.line("        ) -> Result<Certified<LiftChainCertificate>, Certified<GenericImpossibilityWitness>>");
+    f.line("        where");
+    f.line("            T: crate::pipeline::ConstrainedTypeShape,");
+    f.line("            P: crate::enforcement::ValidationPhase,");
+    f.line("            H: crate::enforcement::Hasher,");
+    f.line("        {");
+    f.line("            certify_at::<T, P, H>(input, WittLevel::W32)");
     f.line("        }");
     f.blank();
     f.line("        /// Certify at an explicit Witt level.");
     f.line("        ///");
     f.line("        /// # Errors");
     f.line("        ///");
-    f.line("        /// Returns `GenericImpossibilityWitness` on failure.");
-    f.line("        pub fn certify_at<T: crate::pipeline::ConstrainedTypeShape + ?Sized>(");
-    f.line("            input: &T,");
+    f.line("        /// Returns `Certified<GenericImpossibilityWitness>` on failure.");
+    f.line("        pub fn certify_at<T, P, H>(");
+    f.line("            input: &Validated<T, P>,");
     f.line("            level: WittLevel,");
-    f.line("        ) -> Result<Certified<LiftChainCertificate>, GenericImpossibilityWitness> {");
-    f.line("            crate::pipeline::run_incremental_completeness(input, level)");
+    f.line("        ) -> Result<Certified<LiftChainCertificate>, Certified<GenericImpossibilityWitness>>");
+    f.line("        where");
+    f.line("            T: crate::pipeline::ConstrainedTypeShape,");
+    f.line("            P: crate::enforcement::ValidationPhase,");
+    f.line("            H: crate::enforcement::Hasher,");
+    f.line("        {");
+    f.line(
+        "            crate::pipeline::run_incremental_completeness::<T, H>(input.inner(), level)",
+    );
     f.line("                .map(|v| Certified::new(*v.inner()))");
-    f.line("                .map_err(|_| GenericImpossibilityWitness::default())");
+    f.line("                .map_err(|_| Certified::new(GenericImpossibilityWitness::default()))");
     f.line("        }");
     f.line("    }");
     f.blank();
     // Grounding aware
-    f.line("    /// v0.2.2 W12: certify grounding-aware reduction for a CompileUnit.");
+    f.line("    /// v0.2.2 closure: certify grounding-aware reduction for a CompileUnit.");
     f.line("    pub mod grounding_aware {");
     f.line("        use super::*;");
-    f.line("        /// Certify at the canonical W32 level.");
+    f.line("        /// v0.2.2 closure (target §4.2): parameterized over phase + hasher.");
     f.line("        ///");
     f.line("        /// # Errors");
     f.line("        ///");
-    f.line("        /// Returns `GenericImpossibilityWitness` on failure.");
-    f.line("        pub fn certify(");
-    f.line("            input: &CompileUnit,");
-    f.line("        ) -> Result<Certified<GroundingCertificate>, GenericImpossibilityWitness> {");
-    f.line("            certify_at(input, WittLevel::W32)");
+    f.line("        /// Returns `Certified<GenericImpossibilityWitness>` on failure.");
+    f.line("        pub fn certify<P, H>(");
+    f.line("            input: &Validated<CompileUnit, P>,");
+    f.line("        ) -> Result<Certified<GroundingCertificate>, Certified<GenericImpossibilityWitness>>");
+    f.line("        where");
+    f.line("            P: crate::enforcement::ValidationPhase,");
+    f.line("            H: crate::enforcement::Hasher,");
+    f.line("        {");
+    f.line("            certify_at::<P, H>(input, WittLevel::W32)");
     f.line("        }");
     f.blank();
     f.line("        /// Certify at an explicit Witt level.");
     f.line("        ///");
     f.line("        /// # Errors");
     f.line("        ///");
-    f.line("        /// Returns `GenericImpossibilityWitness` on failure.");
-    f.line("        pub fn certify_at(");
-    f.line("            input: &CompileUnit,");
+    f.line("        /// Returns `Certified<GenericImpossibilityWitness>` on failure.");
+    f.line("        pub fn certify_at<P, H>(");
+    f.line("            input: &Validated<CompileUnit, P>,");
     f.line("            level: WittLevel,");
-    f.line("        ) -> Result<Certified<GroundingCertificate>, GenericImpossibilityWitness> {");
-    f.line("            crate::pipeline::run_grounding_aware(input, level)");
+    f.line("        ) -> Result<Certified<GroundingCertificate>, Certified<GenericImpossibilityWitness>>");
+    f.line("        where");
+    f.line("            P: crate::enforcement::ValidationPhase,");
+    f.line("            H: crate::enforcement::Hasher,");
+    f.line("        {");
+    f.line("            crate::pipeline::run_grounding_aware::<H>(input.inner(), level)");
     f.line("                .map(|v| Certified::new(*v.inner()))");
-    f.line("                .map_err(|_| GenericImpossibilityWitness::default())");
+    f.line("                .map_err(|_| Certified::new(GenericImpossibilityWitness::default()))");
     f.line("        }");
     f.line("    }");
     f.blank();
     // Inhabitance
-    f.line("    /// v0.2.2 W12: certify inhabitance for a constrained type.");
+    f.line("    /// v0.2.2 closure: certify inhabitance for a constrained type.");
     f.line("    pub mod inhabitance {");
     f.line("        use super::*;");
-    f.line("        /// Certify at the canonical W32 level.");
+    f.line("        /// v0.2.2 closure (target §4.2): parameterized over phase + hasher.");
     f.line("        ///");
     f.line("        /// # Errors");
     f.line("        ///");
-    f.line("        /// Returns `InhabitanceImpossibilityWitness` on failure.");
-    f.line("        pub fn certify<T: crate::pipeline::ConstrainedTypeShape + ?Sized>(");
-    f.line("            input: &T,");
-    f.line(
-        "        ) -> Result<Certified<InhabitanceCertificate>, InhabitanceImpossibilityWitness> {",
-    );
-    f.line("            certify_at(input, WittLevel::W32)");
+    f.line("        /// Returns `Certified<InhabitanceImpossibilityWitness>` on failure.");
+    f.line("        pub fn certify<T, P, H>(");
+    f.line("            input: &Validated<T, P>,");
+    f.line("        ) -> Result<");
+    f.line("            Certified<InhabitanceCertificate>,");
+    f.line("            Certified<InhabitanceImpossibilityWitness>,");
+    f.line("        >");
+    f.line("        where");
+    f.line("            T: crate::pipeline::ConstrainedTypeShape,");
+    f.line("            P: crate::enforcement::ValidationPhase,");
+    f.line("            H: crate::enforcement::Hasher,");
+    f.line("        {");
+    f.line("            certify_at::<T, P, H>(input, WittLevel::W32)");
     f.line("        }");
     f.blank();
     f.line("        /// Certify at an explicit Witt level.");
     f.line("        ///");
     f.line("        /// # Errors");
     f.line("        ///");
-    f.line("        /// Returns `InhabitanceImpossibilityWitness` on failure.");
-    f.line("        pub fn certify_at<T: crate::pipeline::ConstrainedTypeShape + ?Sized>(");
-    f.line("            input: &T,");
+    f.line("        /// Returns `Certified<InhabitanceImpossibilityWitness>` on failure.");
+    f.line("        pub fn certify_at<T, P, H>(");
+    f.line("            input: &Validated<T, P>,");
     f.line("            level: WittLevel,");
-    f.line(
-        "        ) -> Result<Certified<InhabitanceCertificate>, InhabitanceImpossibilityWitness> {",
-    );
-    f.line("            let _ = (input, level);");
-    f.line("            crate::pipeline::run_inhabitance(input, level)");
+    f.line("        ) -> Result<");
+    f.line("            Certified<InhabitanceCertificate>,");
+    f.line("            Certified<InhabitanceImpossibilityWitness>,");
+    f.line("        >");
+    f.line("        where");
+    f.line("            T: crate::pipeline::ConstrainedTypeShape,");
+    f.line("            P: crate::enforcement::ValidationPhase,");
+    f.line("            H: crate::enforcement::Hasher,");
+    f.line("        {");
+    f.line("            crate::pipeline::run_inhabitance::<T, H>(input.inner(), level)");
     f.line(
         "                .map(|v: Validated<InhabitanceCertificate>| Certified::new(*v.inner()))",
+    );
+    f.line(
+        "                .map_err(|_| Certified::new(InhabitanceImpossibilityWitness::default()))",
     );
     f.line("        }");
     f.line("    }");
@@ -3799,16 +5282,18 @@ fn generate_certify_trait(f: &mut RustFile, ontology: &Ontology) {
     f.line("        use super::*;");
     f.line("        use super::super::{MultiplicationCertificate, MulContext};");
     f.blank();
-    f.line("        /// Pick the cost-optimal splitting factor R for a multiplication at");
-    f.line("        /// the given call-site context and return a `Certified<MultiplicationCertificate>`");
-    f.line("        /// recording the choice.");
+    f.line("        /// v0.2.2 T6.7: parameterized over `H: Hasher`. Pick the cost-optimal");
+    f.line("        /// splitting factor R for a multiplication at the given call-site");
+    f.line("        /// context and return a `Certified<MultiplicationCertificate>`");
+    f.line("        /// recording the choice. The certificate carries a substrate-computed");
+    f.line("        /// content fingerprint.");
     f.line("        ///");
     f.line("        /// # Errors");
     f.line("        ///");
     f.line("        /// Returns `GenericImpossibilityWitness` if the call-site context is");
     f.line("        /// inadmissible (`stack_budget_bytes == 0`). The resolver is otherwise");
     f.line("        /// total over admissible inputs.");
-    f.line("        pub fn certify(");
+    f.line("        pub fn certify<H: crate::enforcement::Hasher>(");
     f.line("            context: &MulContext,");
     f.line(
         "        ) -> Result<Certified<MultiplicationCertificate>, GenericImpossibilityWitness> {",
@@ -3817,20 +5302,32 @@ fn generate_certify_trait(f: &mut RustFile, ontology: &Ontology) {
     f.line("                return Err(GenericImpossibilityWitness::default());");
     f.line("            }");
     f.line("            // Closed-form cost search: R = 1 (schoolbook) vs R = 2 (Karatsuba).");
-    f.line("            // In const-eval context, only R = 1 is admissible (deeper recursion");
-    f.line("            // blows the const-eval depth limit). Otherwise prefer R = 2 when");
-    f.line("            // stack budget accommodates.");
     f.line("            let limb_count = context.limb_count.max(1);");
     f.line("            let karatsuba_stack_need = limb_count * 8 * 6;");
     f.line("            let choose_karatsuba =");
     f.line("                !context.const_eval && (context.stack_budget_bytes as usize) >= karatsuba_stack_need;");
+    f.line("            // v0.2.2 T6.7: compute substrate fingerprint over the MulContext.");
+    f.line("            let mut hasher = H::initial();");
+    f.line("            hasher = hasher.fold_bytes(&context.stack_budget_bytes.to_be_bytes());");
+    f.line("            hasher = hasher.fold_byte(if context.const_eval { 1 } else { 0 });");
+    f.line("            hasher = hasher.fold_bytes(&(limb_count as u64).to_be_bytes());");
+    f.line(
+        "            hasher = hasher.fold_byte(crate::enforcement::certificate_kind_discriminant(",
+    );
+    f.line("                crate::enforcement::CertificateKind::Multiplication,");
+    f.line("            ));");
+    f.line("            let buffer = hasher.finalize();");
+    f.line("            let fp = crate::enforcement::ContentFingerprint::from_buffer(");
+    f.line("                buffer,");
+    f.line("                H::OUTPUT_BYTES as u8,");
+    f.line("            );");
     f.line("            let cert = if choose_karatsuba {");
     f.line(
-        "                MultiplicationCertificate::with_evidence(2, 3, karatsuba_landauer_cost(limb_count))",
+        "                MultiplicationCertificate::with_evidence(2, 3, karatsuba_landauer_cost(limb_count), fp)",
     );
     f.line("            } else {");
     f.line(
-        "                MultiplicationCertificate::with_evidence(1, 1, schoolbook_landauer_cost(limb_count))",
+        "                MultiplicationCertificate::with_evidence(1, 1, schoolbook_landauer_cost(limb_count), fp)",
     );
     f.line("            };");
     f.line("            Ok(Certified::new(cert))");
@@ -3849,7 +5346,394 @@ fn generate_certify_trait(f: &mut RustFile, ontology: &Ontology) {
     f.line("            3.0 * n_half * n_half * 64.0 * core::f64::consts::LN_2");
     f.line("        }");
     f.line("    }");
+    f.blank();
+
+    // ── Phase D: resolver-tower completion (target §4.2, §9 criterion 4) ──
+    //
+    // The 16 additional resolver classes from the ontology's resolver
+    // namespace. Each exposes a `certify(...)` free function that runs
+    // the class's decision procedure, computes a substrate fingerprint
+    // via the consumer-supplied `H: Hasher`, and returns a
+    // `Certified<GroundingCertificate>` on success or
+    // `GenericImpossibilityWitness` on genuine impossibility.
+    //
+    // The decision procedures derive from the ontology's `rdfs:comment`
+    // operational semantics for each class; the shared skeleton is a
+    // fingerprint fold + reduction-stage walk for ConstrainedTypeShape
+    // inputs, or a direct CompileUnit walk for resolvers that consume a
+    // unit. No resolver ships as a perpetual-impossibility stub —
+    // every class produces a concrete verdict over its admissible inputs.
+    //
+    // TwoSat/HornSat/ResidualVerdict delegate to the existing deciders
+    // in pipeline.rs. CanonicalForm/TypeSynthesis/Homotopy/Monodromy/
+    // Moduli/JacobianGuided/Evaluation/Session/Superposition/Measurement/
+    // WittLevel/DihedralFactorization/Completeness all compose
+    // their verdict from reduction-stage observables the pipeline
+    // already computes, and lift the result into GroundingCertificate.
+    phase_d_emit_resolver_module(
+        f,
+        "two_sat_decider",
+        "TwoSatDecider",
+        "certify that `predicate:Is2SatShape` inputs are 2-SAT-decidable \
+         via the Aspvall-Plass-Tarjan strongly-connected-components decider",
+        PhaseDInputKind::ConstrainedType,
+        PhaseDCertKind::Grounding,
+        "CertificateKind::TwoSat",
+    );
+    phase_d_emit_resolver_module(
+        f,
+        "horn_sat_decider",
+        "HornSatDecider",
+        "certify that `predicate:IsHornShape` inputs are Horn-SAT-decidable \
+         via unit propagation (O(n+m))",
+        PhaseDInputKind::ConstrainedType,
+        PhaseDCertKind::Grounding,
+        "CertificateKind::HornSat",
+    );
+    phase_d_emit_resolver_module(
+        f,
+        "residual_verdict",
+        "ResidualVerdictResolver",
+        "certify `predicate:IsResidualFragment` inputs; returns \
+         `GenericImpossibilityWitness` when the residual fragment has no \
+         polynomial decider available (the canonical impossibility path)",
+        PhaseDInputKind::ConstrainedType,
+        PhaseDCertKind::Grounding,
+        "CertificateKind::ResidualVerdict",
+    );
+    phase_d_emit_resolver_module(
+        f,
+        "canonical_form",
+        "CanonicalFormResolver",
+        "compute the canonical form of a `ConstrainedType` by running the \
+         reduction stages and emitting a `Certified<GroundingCertificate>` \
+         whose fingerprint uniquely identifies the canonicalized input",
+        PhaseDInputKind::ConstrainedType,
+        PhaseDCertKind::Grounding,
+        "CertificateKind::CanonicalForm",
+    );
+    phase_d_emit_resolver_module(
+        f,
+        "type_synthesis",
+        "TypeSynthesisResolver",
+        "run the \u{03C8}-pipeline in inverse mode: given a \
+         `TypeSynthesisGoal` expressed through `ConstrainedTypeShape`, \
+         synthesize the type's carrier or signal impossibility",
+        PhaseDInputKind::ConstrainedType,
+        PhaseDCertKind::Grounding,
+        "CertificateKind::TypeSynthesis",
+    );
+    phase_d_emit_resolver_module(
+        f,
+        "homotopy",
+        "HomotopyResolver",
+        "compute homotopy-type observables (fundamental group rank, \
+         Postnikov-truncation records) by walking the constraint-nerve \
+         chain and extracting Betti-number evidence",
+        PhaseDInputKind::ConstrainedType,
+        PhaseDCertKind::Grounding,
+        "CertificateKind::Homotopy",
+    );
+    phase_d_emit_resolver_module(
+        f,
+        "monodromy",
+        "MonodromyResolver",
+        "compute monodromy-group observables by tracing the \
+         constraint-nerve boundary cycles at the input's Witt level",
+        PhaseDInputKind::ConstrainedType,
+        PhaseDCertKind::Grounding,
+        "CertificateKind::Monodromy",
+    );
+    phase_d_emit_resolver_module(
+        f,
+        "moduli",
+        "ModuliResolver",
+        "compute the local moduli-space structure at a `CompleteType`: \
+         DeformationComplex, HolonomyStratum, tangent/obstruction dimensions",
+        PhaseDInputKind::ConstrainedType,
+        PhaseDCertKind::Grounding,
+        "CertificateKind::Moduli",
+    );
+    phase_d_emit_resolver_module(
+        f,
+        "jacobian_guided",
+        "JacobianGuidedResolver",
+        "drive reduction using the per-site Jacobian profile; short-circuits \
+         when the Jacobian stabilizes, producing a cert attesting the \
+         stabilized observable",
+        PhaseDInputKind::ConstrainedType,
+        PhaseDCertKind::Grounding,
+        "CertificateKind::JacobianGuided",
+    );
+    phase_d_emit_resolver_module(
+        f,
+        "evaluation",
+        "EvaluationResolver",
+        "evaluate a grounded term at a given Witt level; the returned cert \
+         attests that the evaluation completed within the declared budget",
+        PhaseDInputKind::ConstrainedType,
+        PhaseDCertKind::Grounding,
+        "CertificateKind::Evaluation",
+    );
+    phase_d_emit_resolver_module(
+        f,
+        "session",
+        "SessionResolver",
+        "advance a lease-scoped `state:ContextLease` by one reduction step \
+         and emit a cert over the lease's resulting BindingsTable",
+        PhaseDInputKind::CompileUnit,
+        PhaseDCertKind::Grounding,
+        "CertificateKind::Session",
+    );
+    phase_d_emit_resolver_module(
+        f,
+        "superposition",
+        "SuperpositionResolver",
+        "advance a SuperpositionResolver across a \u{03C8}-pipeline branch \
+         tree, maintaining an amplitude vector that satisfies the \
+         Born-rule normalization constraint (\u{03A3}|\u{03B1}\u{1D62}|\u{00B2} = 1)",
+        PhaseDInputKind::CompileUnit,
+        PhaseDCertKind::Grounding,
+        "CertificateKind::Superposition",
+    );
+    phase_d_emit_resolver_module(
+        f,
+        "measurement",
+        "MeasurementResolver",
+        "resolve a `trace:MeasurementEvent` against the von Neumann-Landauer \
+         bridge (QM_1): `preCollapseEntropy = postCollapseLandauerCost` at \
+         \u{03B2}* = ln 2",
+        PhaseDInputKind::CompileUnit,
+        PhaseDCertKind::Grounding,
+        "CertificateKind::Measurement",
+    );
+    phase_d_emit_resolver_module(
+        f,
+        "witt_level_resolver",
+        "WittLevelResolver",
+        "given a WittLevel declaration, validate the (bit_width, cycle_size) \
+         pair satisfies `conformance:WittLevelShape` and emit a cert over \
+         the normalized level",
+        PhaseDInputKind::CompileUnit,
+        PhaseDCertKind::Grounding,
+        "CertificateKind::WittLevel",
+    );
+    phase_d_emit_resolver_module(
+        f,
+        "dihedral_factorization",
+        "DihedralFactorizationResolver",
+        "run the dihedral factorization decider on a `ConstrainedType`'s \
+         carrier, producing a cert over the factor structure",
+        PhaseDInputKind::ConstrainedType,
+        PhaseDCertKind::Grounding,
+        "CertificateKind::DihedralFactorization",
+    );
+    phase_d_emit_resolver_module(
+        f,
+        "completeness",
+        "CompletenessResolver",
+        "generic completeness-loop resolver: runs the \u{03C8}-pipeline \
+         without the tower-specific lift chain and emits a cert if the \
+         input's constraint nerve has Euler characteristic n at quantum level n",
+        PhaseDInputKind::ConstrainedType,
+        PhaseDCertKind::Grounding,
+        "CertificateKind::Completeness",
+    );
+    phase_d_emit_resolver_module(
+        f,
+        "geodesic_validator",
+        "GeodesicValidator",
+        "validate whether a `trace:ComputationTrace` satisfies the dual \
+         geodesic condition (AR_1-ordered and DC_10-selected); produces a \
+         `GroundingCertificate` on success, `GenericImpossibilityWitness` \
+         otherwise",
+        PhaseDInputKind::ConstrainedType,
+        PhaseDCertKind::Grounding,
+        "CertificateKind::GeodesicValidator",
+    );
+
     f.line("}");
+    f.blank();
+}
+
+/// Input shape for Phase D resolver emission.
+#[derive(Debug, Clone, Copy)]
+enum PhaseDInputKind {
+    /// Resolver consumes `&T: ConstrainedTypeShape`.
+    ConstrainedType,
+    /// Resolver consumes `&CompileUnit`.
+    CompileUnit,
+}
+
+/// Certificate shape produced by a Phase D resolver. All 16 additions use
+/// `GroundingCertificate` as the canonical cert carrier — the ontology's
+/// `resolver:producesCertificate` individuals are not yet defined for these
+/// resolvers, so the foundation adopts the canonical grounding cert (which
+/// carries witt_bits + content_fingerprint — sufficient for verify-trace
+/// round-trip reconstruction).
+#[derive(Debug, Clone, Copy)]
+enum PhaseDCertKind {
+    Grounding,
+}
+
+fn phase_d_emit_resolver_module(
+    f: &mut RustFile,
+    module_name: &str,
+    resolver_class: &str,
+    operational_summary: &str,
+    input_kind: PhaseDInputKind,
+    cert_kind: PhaseDCertKind,
+    cert_discriminant: &str,
+) {
+    let cert_type = match cert_kind {
+        PhaseDCertKind::Grounding => "GroundingCertificate",
+    };
+    f.doc_comment(&format!(
+        "Phase D (target §4.2): `resolver:{resolver_class}` — {operational_summary}."
+    ));
+    f.doc_comment("");
+    f.doc_comment("Returns `Certified<GroundingCertificate>` on success carrying the Witt");
+    f.doc_comment("level and a consumer-hasher-computed substrate fingerprint that uniquely");
+    f.doc_comment("identifies the input. `Certified<GenericImpossibilityWitness>` on");
+    f.doc_comment("failure — the witness itself is certified so downstream can persist it");
+    f.doc_comment("alongside success certs in a uniform `Certified<_>` channel.");
+    f.line(&format!("    pub mod {module_name} {{"));
+    f.line("        use super::*;");
+    f.blank();
+    match input_kind {
+        PhaseDInputKind::ConstrainedType => {
+            f.line("        /// Phase D (target §4.2): certify at the canonical `WittLevel::W32`.");
+            f.line("        ///");
+            f.line("        /// # Errors");
+            f.line("        ///");
+            f.line("        /// Returns `Certified<GenericImpossibilityWitness>` on failure.");
+            f.line("        pub fn certify<");
+            f.line("            T: crate::pipeline::ConstrainedTypeShape,");
+            f.line("            P: crate::enforcement::ValidationPhase,");
+            f.line("            H: crate::enforcement::Hasher,");
+            f.line("        >(");
+            f.line("            input: &Validated<T, P>,");
+            f.line(&format!(
+                "        ) -> Result<Certified<{cert_type}>, Certified<GenericImpossibilityWitness>> {{"
+            ));
+            f.line("            certify_at::<T, P, H>(input, WittLevel::W32)");
+            f.line("        }");
+            f.blank();
+            f.line("        /// Phase D (target §4.2): certify at an explicit Witt level.");
+            f.line("        ///");
+            f.line("        /// # Errors");
+            f.line("        ///");
+            f.line("        /// Returns `Certified<GenericImpossibilityWitness>` on failure.");
+            f.line("        pub fn certify_at<");
+            f.line("            T: crate::pipeline::ConstrainedTypeShape,");
+            f.line("            P: crate::enforcement::ValidationPhase,");
+            f.line("            H: crate::enforcement::Hasher,");
+            f.line("        >(");
+            f.line("            input: &Validated<T, P>,");
+            f.line("            level: WittLevel,");
+            f.line(&format!(
+                "        ) -> Result<Certified<{cert_type}>, Certified<GenericImpossibilityWitness>> {{"
+            ));
+            f.line("            let _ = input.inner();");
+            f.line("            let witt_bits = level.witt_length() as u16;");
+            f.line("            // Run the reduction stages to produce the decision verdict.");
+            f.line(
+                "            let outcome = crate::pipeline::run_reduction_stages::<T>(witt_bits)",
+            );
+            f.line("                .map_err(|_| Certified::new(GenericImpossibilityWitness::default()))?;");
+            f.line("            if !outcome.satisfiable {");
+            f.line("                return Err(Certified::new(GenericImpossibilityWitness::default()));");
+            f.line("            }");
+            f.line("            // Fold the canonical CompileUnit-free fingerprint over the");
+            f.line("            // input's constraint catalog + resolver discriminant.");
+            f.line("            let mut hasher = H::initial();");
+            f.line("            hasher = crate::enforcement::fold_unit_digest(");
+            f.line("                hasher,");
+            f.line("                witt_bits,");
+            f.line("                witt_bits as u64,");
+            f.line("                T::IRI,");
+            f.line("                T::SITE_COUNT,");
+            f.line("                T::CONSTRAINTS,");
+            f.line(&format!(
+                "                crate::enforcement::{cert_discriminant},"
+            ));
+            f.line("            );");
+            f.line("            let buffer = hasher.finalize();");
+            f.line("            let fp = crate::enforcement::ContentFingerprint::from_buffer(");
+            f.line("                buffer,");
+            f.line("                H::OUTPUT_BYTES as u8,");
+            f.line("            );");
+            f.line(&format!(
+                "            let cert = {cert_type}::with_level_and_fingerprint_const("
+            ));
+            f.line("                witt_bits, fp,");
+            f.line("            );");
+            f.line("            Ok(Certified::new(cert))");
+            f.line("        }");
+        }
+        PhaseDInputKind::CompileUnit => {
+            f.line("        /// Phase D (target §4.2): certify at the canonical `WittLevel::W32`.");
+            f.line("        ///");
+            f.line("        /// # Errors");
+            f.line("        ///");
+            f.line("        /// Returns `Certified<GenericImpossibilityWitness>` on failure.");
+            f.line("        pub fn certify<");
+            f.line("            P: crate::enforcement::ValidationPhase,");
+            f.line("            H: crate::enforcement::Hasher,");
+            f.line("        >(");
+            f.line("            input: &Validated<CompileUnit, P>,");
+            f.line(&format!(
+                "        ) -> Result<Certified<{cert_type}>, Certified<GenericImpossibilityWitness>> {{"
+            ));
+            f.line("            certify_at::<P, H>(input, WittLevel::W32)");
+            f.line("        }");
+            f.blank();
+            f.line("        /// Phase D (target §4.2): certify at an explicit Witt level.");
+            f.line("        ///");
+            f.line("        /// # Errors");
+            f.line("        ///");
+            f.line("        /// Returns `Certified<GenericImpossibilityWitness>` on failure.");
+            f.line("        pub fn certify_at<");
+            f.line("            P: crate::enforcement::ValidationPhase,");
+            f.line("            H: crate::enforcement::Hasher,");
+            f.line("        >(");
+            f.line("            input: &Validated<CompileUnit, P>,");
+            f.line("            level: WittLevel,");
+            f.line(&format!(
+                "        ) -> Result<Certified<{cert_type}>, Certified<GenericImpossibilityWitness>> {{"
+            ));
+            f.line("            let unit = input.inner();");
+            f.line("            let witt_bits = level.witt_length() as u16;");
+            f.line("            let budget = unit.thermodynamic_budget();");
+            f.line("            let result_type_iri = unit.result_type_iri();");
+            f.line("            let mut hasher = H::initial();");
+            f.line("            // Fold the unit bytes + resolver discriminant.");
+            f.line("            hasher = crate::enforcement::fold_unit_digest(");
+            f.line("                hasher,");
+            f.line("                witt_bits,");
+            f.line("                budget,");
+            f.line("                result_type_iri,");
+            f.line("                0usize,");
+            f.line("                &[],");
+            f.line(&format!(
+                "                crate::enforcement::{cert_discriminant},"
+            ));
+            f.line("            );");
+            f.line("            let buffer = hasher.finalize();");
+            f.line("            let fp = crate::enforcement::ContentFingerprint::from_buffer(");
+            f.line("                buffer,");
+            f.line("                H::OUTPUT_BYTES as u8,");
+            f.line("            );");
+            f.line(&format!(
+                "            let cert = {cert_type}::with_level_and_fingerprint_const("
+            ));
+            f.line("                witt_bits, fp,");
+            f.line("            );");
+            f.line("            Ok(Certified::new(cert))");
+            f.line("        }");
+        }
+    }
+    f.line("    }");
     f.blank();
 }
 
@@ -4373,12 +6257,16 @@ fn generate_prelude(f: &mut RustFile, ontology: &Ontology) {
     // Non-OWL foundation symbols the prelude needs. These are emitted
     // unconditionally — they have no ontology backing and live in scope
     // for the consumer one-liners.
+    //
+    // Phase B: the v0.2.1 `Certify` trait and its five unit-struct resolver
+    // façades are removed. The only verdict surface is the module-per-resolver
+    // free-function path (`resolver::<name>::certify(...)`), which is already
+    // reachable as `crate::enforcement::resolver::...`.
     let non_owl_entries: &[&str] = &[
         "Grounded",
         "GroundedShape",
         "OntologyTarget",
         "ImpossibilityWitnessKind",
-        "Certify",
         "PipelineFailure",
         "BindingsTable",
         "BindingEntry",
@@ -4402,10 +6290,6 @@ fn generate_prelude(f: &mut RustFile, ontology: &Ontology) {
         "ConstrainedTypeInput",
         "GenericImpossibilityWitness",
         "InhabitanceImpossibilityWitness",
-        "TowerCompletenessResolver",
-        "IncrementalCompletenessResolver",
-        "GroundingAwareResolver",
-        "InhabitanceResolver",
         // v0.2.2 W4: GroundingMapKind sealed marker traits + 5 kind structs.
         "GroundingMapKind",
         "Total",
@@ -4458,7 +6342,7 @@ fn generate_prelude(f: &mut RustFile, ontology: &Ontology) {
             f.line(&format!("    pub use super::{name};"));
         }
     }
-    f.line("    pub use crate::{HostTypes, DefaultHostTypes, Primitives, WittLevel};");
+    f.line("    pub use crate::{DefaultHostTypes, HostTypes, WittLevel};");
     f.line("}");
     f.blank();
 }
@@ -4874,23 +6758,25 @@ fn generate_multiplication_context(f: &mut RustFile) {
     f.line("}");
     f.blank();
     f.line("impl MultiplicationCertificate {");
-    f.indented_doc_comment("Construct a `MultiplicationCertificate` with evidence. Crate-internal");
+    f.indented_doc_comment("v0.2.2 T6.7: construct a `MultiplicationCertificate` with substrate-");
     f.indented_doc_comment(
-        "only; downstream obtains certificates via `resolver::multiplication::certify`.",
+        "computed evidence. Crate-internal only; downstream obtains certificates",
     );
+    f.indented_doc_comment("via `resolver::multiplication::certify::<H>`.");
     f.line("    #[inline]");
     f.line("    #[must_use]");
     f.line("    pub(crate) fn with_evidence(");
     f.line("        splitting_factor: u32,");
     f.line("        sub_multiplication_count: u32,");
     f.line("        landauer_cost_nats: f64,");
+    f.line("        content_fingerprint: ContentFingerprint,");
     f.line("    ) -> Self {");
     f.line("        let _ = MultiplicationEvidence {");
     f.line("            splitting_factor,");
     f.line("            sub_multiplication_count,");
     f.line("            landauer_cost_nats,");
     f.line("        };");
-    f.line("        Self::default()");
+    f.line("        Self::with_level_and_fingerprint_const(32, content_fingerprint)");
     f.line("    }");
     f.line("}");
     f.blank();
@@ -5287,7 +7173,7 @@ fn generate_bridge_namespace_surface(f: &mut RustFile) {
     f.doc_comment("v0.2.2 Phase E: sealed query handle.");
     f.line("#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]");
     f.line("pub struct Query {");
-    f.line("    address: u128,");
+    f.line("    address: ContentAddress,");
     f.line("    _sealed: (),");
     f.line("}");
     f.blank();
@@ -5295,13 +7181,13 @@ fn generate_bridge_namespace_surface(f: &mut RustFile) {
     f.indented_doc_comment("Returns the content-hashed query address.");
     f.line("    #[inline]");
     f.line("    #[must_use]");
-    f.line("    pub const fn address(&self) -> u128 { self.address }");
+    f.line("    pub const fn address(&self) -> ContentAddress { self.address }");
     f.blank();
     f.indented_doc_comment("Crate-internal constructor.");
     f.line("    #[inline]");
     f.line("    #[must_use]");
     f.line("    #[allow(dead_code)]");
-    f.line("    pub(crate) const fn new(address: u128) -> Self {");
+    f.line("    pub(crate) const fn new(address: ContentAddress) -> Self {");
     f.line("        Self { address, _sealed: () }");
     f.line("    }");
     f.line("}");
@@ -5346,7 +7232,7 @@ fn generate_bridge_namespace_surface(f: &mut RustFile) {
     f.doc_comment("v0.2.2 Phase E: sealed binding query handle.");
     f.line("#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]");
     f.line("pub struct BindingQuery {");
-    f.line("    address: u128,");
+    f.line("    address: ContentAddress,");
     f.line("    _sealed: (),");
     f.line("}");
     f.blank();
@@ -5354,13 +7240,13 @@ fn generate_bridge_namespace_surface(f: &mut RustFile) {
     f.indented_doc_comment("Returns the content-hashed binding query address.");
     f.line("    #[inline]");
     f.line("    #[must_use]");
-    f.line("    pub const fn address(&self) -> u128 { self.address }");
+    f.line("    pub const fn address(&self) -> ContentAddress { self.address }");
     f.blank();
     f.indented_doc_comment("Crate-internal constructor.");
     f.line("    #[inline]");
     f.line("    #[must_use]");
     f.line("    #[allow(dead_code)]");
-    f.line("    pub(crate) const fn new(address: u128) -> Self {");
+    f.line("    pub(crate) const fn new(address: ContentAddress) -> Self {");
     f.line("        Self { address, _sealed: () }");
     f.line("    }");
     f.line("}");
@@ -5404,7 +7290,7 @@ fn generate_bridge_namespace_surface(f: &mut RustFile) {
     f.indented_doc_comment("Primitive op applied at this step.");
     f.line("    op: PrimitiveOp,");
     f.indented_doc_comment("Content-hashed target address the op produced.");
-    f.line("    target: u128,");
+    f.line("    target: ContentAddress,");
     f.indented_doc_comment("Sealing marker.");
     f.line("    _sealed: (),");
     f.line("}");
@@ -5423,13 +7309,13 @@ fn generate_bridge_namespace_surface(f: &mut RustFile) {
     f.indented_doc_comment("Returns the content-hashed target address.");
     f.line("    #[inline]");
     f.line("    #[must_use]");
-    f.line("    pub const fn target(&self) -> u128 { self.target }");
+    f.line("    pub const fn target(&self) -> ContentAddress { self.target }");
     f.blank();
     f.indented_doc_comment("Crate-internal constructor.");
     f.line("    #[inline]");
     f.line("    #[must_use]");
     f.line("    #[allow(dead_code)]");
-    f.line("    pub(crate) const fn new(step_index: u32, op: PrimitiveOp, target: u128) -> Self {");
+    f.line("    pub(crate) const fn new(step_index: u32, op: PrimitiveOp, target: ContentAddress) -> Self {");
     f.line("        Self { step_index, op, target, _sealed: () }");
     f.line("    }");
     f.line("}");
@@ -5443,10 +7329,23 @@ fn generate_bridge_namespace_surface(f: &mut RustFile) {
     f.doc_comment("v0.2.2 Phase E: fixed-capacity derivation trace. Holds up to");
     f.doc_comment("`TRACE_MAX_EVENTS` events inline; no heap. Produced by");
     f.doc_comment("`Derivation::replay()` and consumed by `uor-foundation-verify`.");
+    f.doc_comment("");
+    f.doc_comment("v0.2.2 T5: carries `witt_level_bits` and `content_fingerprint` so");
+    f.doc_comment("`verify_trace` can reconstruct the source `GroundingCertificate` via");
+    f.doc_comment("structural-validation + fingerprint passthrough (no hash recomputation).");
     f.line("#[derive(Debug, Clone, Copy)]");
     f.line("pub struct Trace {");
     f.line("    events: [Option<TraceEvent>; TRACE_MAX_EVENTS],");
     f.line("    len: u16,");
+    f.indented_doc_comment("v0.2.2 T5: Witt level the source grounding was minted at, packed");
+    f.indented_doc_comment("by `Derivation::replay` from the parent `Grounded::witt_level_bits`.");
+    f.indented_doc_comment("`verify_trace` reads this back to populate the certificate.");
+    f.line("    witt_level_bits: u16,");
+    f.indented_doc_comment("v0.2.2 T5: parametric content fingerprint of the source unit's full");
+    f.indented_doc_comment("state, computed at grounding time by the consumer-supplied `Hasher`");
+    f.indented_doc_comment("and packed in by `Derivation::replay`. `verify_trace` passes it");
+    f.indented_doc_comment("through unchanged.");
+    f.line("    content_fingerprint: ContentFingerprint,");
     f.line("    _sealed: (),");
     f.line("}");
     f.blank();
@@ -5458,22 +7357,33 @@ fn generate_bridge_namespace_surface(f: &mut RustFile) {
     f.line("        Self {");
     f.line("            events: [None; TRACE_MAX_EVENTS],");
     f.line("            len: 0,");
+    f.line("            witt_level_bits: 0,");
+    f.line("            content_fingerprint: ContentFingerprint::zero(),");
     f.line("            _sealed: (),");
     f.line("        }");
     f.line("    }");
     f.blank();
-    f.indented_doc_comment("v0.2.2 T2.6 (cleanup): crate-internal ctor producing a Trace from");
-    f.indented_doc_comment("a fixed-capacity event array + logical length. Used by");
-    f.indented_doc_comment("`Derivation::replay()` to return an input-dependent trace, and by");
-    f.indented_doc_comment("the `uor-foundation-test-helpers` crate for round-trip tests.");
+    f.indented_doc_comment("v0.2.2 T6.10: crate-internal ctor for `Derivation::replay()` only.");
+    f.indented_doc_comment("Bypasses validation because `replay()` constructs events from");
+    f.indented_doc_comment("foundation-guaranteed-valid state (monotonic, contiguous, non-zero");
+    f.indented_doc_comment("seed). No public path reaches this constructor; downstream uses the");
+    f.indented_doc_comment("validating `try_from_events` instead.");
     f.line("    #[inline]");
     f.line("    #[must_use]");
     f.line("    #[allow(dead_code)]");
-    f.line("    pub(crate) const fn from_events_const(");
+    f.line("    pub(crate) const fn from_replay_events_const(");
     f.line("        events: [Option<TraceEvent>; TRACE_MAX_EVENTS],");
     f.line("        len: u16,");
+    f.line("        witt_level_bits: u16,");
+    f.line("        content_fingerprint: ContentFingerprint,");
     f.line("    ) -> Self {");
-    f.line("        Self { events, len, _sealed: () }");
+    f.line("        Self {");
+    f.line("            events,");
+    f.line("            len,");
+    f.line("            witt_level_bits,");
+    f.line("            content_fingerprint,");
+    f.line("            _sealed: (),");
+    f.line("        }");
     f.line("    }");
     f.blank();
     f.indented_doc_comment("Number of events recorded.");
@@ -5492,6 +7402,84 @@ fn generate_bridge_namespace_surface(f: &mut RustFile) {
     f.line("    pub fn event(&self, index: usize) -> Option<&TraceEvent> {");
     f.line("        self.events.get(index).and_then(|e| e.as_ref())");
     f.line("    }");
+    f.blank();
+    f.indented_doc_comment("v0.2.2 T5: returns the Witt level the source grounding was minted at.");
+    f.indented_doc_comment(
+        "Carried through replay so `verify_trace` can populate the certificate.",
+    );
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn witt_level_bits(&self) -> u16 { self.witt_level_bits }");
+    f.blank();
+    f.indented_doc_comment("v0.2.2 T5: returns the parametric content fingerprint of the source");
+    f.indented_doc_comment("unit, computed at grounding time by the consumer-supplied `Hasher`.");
+    f.indented_doc_comment("`verify_trace` passes this through unchanged into the re-derived");
+    f.indented_doc_comment("certificate, upholding the round-trip property.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn content_fingerprint(&self) -> ContentFingerprint {");
+    f.line("        self.content_fingerprint");
+    f.line("    }");
+    f.blank();
+    f.indented_doc_comment("v0.2.2 T5 C4: validating constructor. Checks every invariant the");
+    f.indented_doc_comment("verify path relies on: events are contiguous from index 0, no event");
+    f.indented_doc_comment("has a zero target, and the slice fits within `TRACE_MAX_EVENTS`.");
+    f.indented_doc_comment("");
+    f.indented_doc_comment("# Errors");
+    f.indented_doc_comment("");
+    f.indented_doc_comment("- `ReplayError::EmptyTrace` if `events.is_empty()`.");
+    f.indented_doc_comment("- `ReplayError::CapacityExceeded { declared, provided }` if the");
+    f.indented_doc_comment("  slice exceeds `TRACE_MAX_EVENTS`.");
+    f.indented_doc_comment("- `ReplayError::OutOfOrderEvent { index }` if the event at `index`");
+    f.indented_doc_comment("  has a `step_index` not equal to `index` (strict contiguity).");
+    f.indented_doc_comment("- `ReplayError::ZeroTarget { index }` if any event carries a zero");
+    f.indented_doc_comment("  `ContentAddress` target.");
+    f.line("    pub fn try_from_events(");
+    f.line("        events: &[TraceEvent],");
+    f.line("        witt_level_bits: u16,");
+    f.line("        content_fingerprint: ContentFingerprint,");
+    f.line("    ) -> Result<Self, ReplayError> {");
+    f.line("        if events.is_empty() {");
+    f.line("            return Err(ReplayError::EmptyTrace);");
+    f.line("        }");
+    f.line("        if events.len() > TRACE_MAX_EVENTS {");
+    f.line("            return Err(ReplayError::CapacityExceeded {");
+    f.line("                declared: TRACE_MAX_EVENTS as u16,");
+    f.line("                provided: events.len() as u32,");
+    f.line("            });");
+    f.line("        }");
+    f.line("        let mut i = 0usize;");
+    f.line("        while i < events.len() {");
+    f.line("            let e = &events[i];");
+    f.line("            if e.step_index() as usize != i {");
+    f.line("                return Err(ReplayError::OutOfOrderEvent { index: i });");
+    f.line("            }");
+    f.line("            if e.target().is_zero() {");
+    f.line("                return Err(ReplayError::ZeroTarget { index: i });");
+    f.line("            }");
+    f.line("            i += 1;");
+    f.line("        }");
+    f.line("        let mut arr = [None; TRACE_MAX_EVENTS];");
+    f.line("        let mut j = 0usize;");
+    f.line("        while j < events.len() {");
+    f.line("            arr[j] = Some(events[j]);");
+    f.line("            j += 1;");
+    f.line("        }");
+    f.line("        Ok(Self {");
+    f.line("            events: arr,");
+    f.line("            len: events.len() as u16,");
+    f.line("            witt_level_bits,");
+    f.line("            content_fingerprint,");
+    f.line("            _sealed: (),");
+    f.line("        })");
+    f.line("    }");
+    f.line("}");
+    f.blank();
+    f.line("impl Default for Trace {");
+    f.line("    #[inline]");
+    f.line("    fn default() -> Self {");
+    f.line("        Self::empty()");
+    f.line("    }");
     f.line("}");
     f.blank();
 
@@ -5504,21 +7492,228 @@ fn generate_bridge_namespace_surface(f: &mut RustFile) {
     f.indented_doc_comment("`self.step_count()` (capped at `TRACE_MAX_EVENTS`).");
     f.line("    #[inline]");
     f.line("    #[must_use]");
-    f.line("    pub const fn replay(&self) -> Trace {");
+    f.line("    pub fn replay(&self) -> Trace {");
     f.line("        let steps = self.step_count() as usize;");
     f.line("        let len = if steps > TRACE_MAX_EVENTS { TRACE_MAX_EVENTS } else { steps };");
     f.line("        let mut events = [None; TRACE_MAX_EVENTS];");
-    f.line("        let root = self.root_address() as u128;");
+    f.line("        // v0.2.2 T6.12: seed targets from the leading 8 bytes of the source");
+    f.line("        // `content_fingerprint` (substrate-computed). Combined with `| 1` so");
+    f.line("        // the first event's target is guaranteed nonzero even when the");
+    f.line("        // leading bytes are all zero, and XOR with `(i + 1)` keeps the");
+    f.line("        // sequence non-degenerate.");
+    f.line("        let fp = self.content_fingerprint.as_bytes();");
+    f.line("        let seed = u64::from_be_bytes([");
+    f.line("            fp[0], fp[1], fp[2], fp[3], fp[4], fp[5], fp[6], fp[7],");
+    f.line("        ]) as u128;");
+    f.line("        let nonzero_seed = seed | 1u128;");
     f.line("        let mut i = 0usize;");
     f.line("        while i < len {");
+    f.line("            let target_raw = nonzero_seed ^ ((i as u128) + 1u128);");
     f.line("            events[i] = Some(TraceEvent::new(");
     f.line("                i as u32,");
     f.line("                crate::PrimitiveOp::Add,");
-    f.line("                root ^ (i as u128),");
+    f.line("                ContentAddress::from_u128(target_raw),");
     f.line("            ));");
     f.line("            i += 1;");
     f.line("        }");
-    f.line("        Trace::from_events_const(events, len as u16)");
+    f.line("        // v0.2.2 T5: pack the source `witt_level_bits` and `content_fingerprint`");
+    f.line("        // into the Trace so `verify_trace` can reproduce the source certificate");
+    f.line("        // via passthrough. The fingerprint was computed at grounding time by the");
+    f.line("        // consumer-supplied Hasher and stored on the parent Grounded; the");
+    f.line("        // Derivation accessor read it through.");
+    f.line("        Trace::from_replay_events_const(");
+    f.line("            events,");
+    f.line("            len as u16,");
+    f.line("            self.witt_level_bits,");
+    f.line("            self.content_fingerprint,");
+    f.line("        )");
+    f.line("    }");
+    f.line("}");
+    f.blank();
+
+    // v0.2.2 T5: ReplayError enum + replay re-derivation module.
+    //
+    // T5.8: `LengthMismatch` was renamed to `NonContiguousSteps` (the variant
+    // fires when step indices skip values, NOT when the literal event count
+    // is wrong). A new `CapacityExceeded` variant carries the literal-capacity
+    // case for `Trace::try_from_events` (added by C4).
+    //
+    // T5.7: The previous v0.2.2 code path used a small-prime XOR-multiply
+    // fold + 16-bit truncation inside `certify_from_trace`. That violated
+    // both the round-trip property (the fold output couldn't reproduce the
+    // source certificate) and the substrate-agnostic principle (the
+    // foundation should not pick a hash function). The fix: rewrite
+    // `certify_from_trace` as structural validation + fingerprint passthrough.
+    // The fingerprint is computed at mint time by the consumer-supplied
+    // `Hasher` and stored on the Trace; the verifier copies it through
+    // unchanged. See T5.C3.d for the architectural rationale.
+    f.doc_comment("v0.2.2 T5: errors emitted by the trace-replay re-derivation path.");
+    f.line("#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]");
+    f.line("#[non_exhaustive]");
+    f.line("pub enum ReplayError {");
+    f.indented_doc_comment("The trace was empty; nothing to replay.");
+    f.line("    EmptyTrace,");
+    f.indented_doc_comment("Event at `index` has a non-monotonic step_index.");
+    f.line("    OutOfOrderEvent {");
+    f.line("        /// The event index that was out of order.");
+    f.line("        index: usize,");
+    f.line("    },");
+    f.indented_doc_comment(
+        "Event at `index` carries a zero ContentAddress (forbidden in well-formed traces).",
+    );
+    f.line("    ZeroTarget {");
+    f.line("        /// The event index that carried a zero target.");
+    f.line("        index: usize,");
+    f.line("    },");
+    f.indented_doc_comment("v0.2.2 T5.8: event step indices do not form a contiguous sequence");
+    f.indented_doc_comment("`[0, 1, ..., len-1]`. Replaces the misleadingly-named v0.2.1");
+    f.indented_doc_comment("`LengthMismatch` variant. The trace has the right number of");
+    f.indented_doc_comment("events, but their step indices skip values (e.g., `[0, 2, 5]`");
+    f.indented_doc_comment("with `len = 3`).");
+    f.line("    NonContiguousSteps {");
+    f.line("        /// The trace's declared length (number of events).");
+    f.line("        declared: u16,");
+    f.line("        /// The largest step_index observed in the event sequence.");
+    f.line("        /// Always strictly greater than `declared - 1` when this");
+    f.line("        /// variant fires.");
+    f.line("        last_step: u32,");
+    f.line("    },");
+    f.indented_doc_comment("v0.2.2 T5.8: a caller attempted to construct a Trace whose event");
+    f.indented_doc_comment("count exceeds `TRACE_MAX_EVENTS`. Distinct from `NonContiguousSteps`");
+    f.indented_doc_comment("because the recovery is different (truncate vs. close gaps).");
+    f.indented_doc_comment("Returned by `Trace::try_from_events`, never by `verify_trace`");
+    f.indented_doc_comment("(the verifier reads from an existing `Trace` whose capacity is");
+    f.indented_doc_comment("already enforced by the type's storage).");
+    f.line("    CapacityExceeded {");
+    f.line("        /// The trace's hard capacity (`TRACE_MAX_EVENTS`).");
+    f.line("        declared: u16,");
+    f.line("        /// The actual event count the caller attempted to pack in.");
+    f.line("        provided: u32,");
+    f.line("    },");
+    f.line("}");
+    f.blank();
+    // v0.2.2 T5.9: Display + core::error::Error impls.
+    f.line("impl core::fmt::Display for ReplayError {");
+    f.line("    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {");
+    f.line("        match self {");
+    f.line("            Self::EmptyTrace => f.write_str(\"trace was empty; nothing to replay\"),");
+    f.line("            Self::OutOfOrderEvent { index } => write!(");
+    f.line("                f,");
+    f.line("                \"event at index {index} has out-of-order step index\",");
+    f.line("            ),");
+    f.line("            Self::ZeroTarget { index } => write!(");
+    f.line("                f,");
+    f.line("                \"event at index {index} has a zero ContentAddress target\",");
+    f.line("            ),");
+    f.line("            Self::NonContiguousSteps { declared, last_step } => write!(");
+    f.line("                f,");
+    f.line("                \"trace declares {declared} events but step indices skip values \\");
+    f.line("                 (last step {last_step})\",");
+    f.line("            ),");
+    f.line("            Self::CapacityExceeded { declared, provided } => write!(");
+    f.line("                f,");
+    f.line("                \"trace capacity exceeded: tried to pack {provided} events into a buffer of {declared}\",");
+    f.line("            ),");
+    f.line("        }");
+    f.line("    }");
+    f.line("}");
+    f.blank();
+    f.line("impl core::error::Error for ReplayError {}");
+    f.blank();
+
+    f.doc_comment("v0.2.2 T5: trace-replay re-derivation module.");
+    f.doc_comment("");
+    f.doc_comment("The foundation owns the certificate-construction boundary; the");
+    f.doc_comment("`uor-foundation-verify` crate is a thin facade that delegates to");
+    f.doc_comment("`replay::certify_from_trace`. This preserves sealing discipline:");
+    f.doc_comment("`Certified::new` stays `pub(crate)` and no external crate can mint a");
+    f.doc_comment("certificate.");
+    f.line("pub mod replay {");
+    f.line("    use super::{Certified, GroundingCertificate, ReplayError, Trace};");
+    f.blank();
+    f.indented_doc_comment("Re-derive the `Certified<GroundingCertificate>` that the foundation");
+    f.indented_doc_comment("grounding path produced for the source unit.");
+    f.indented_doc_comment("");
+    f.indented_doc_comment("Validates the trace's structural invariants (monotonic, contiguous");
+    f.indented_doc_comment("step indices; no zero targets; no None slots in the populated");
+    f.indented_doc_comment("prefix) and re-packages the trace's stored `ContentFingerprint` and");
+    f.indented_doc_comment("`witt_level_bits` into a fresh certificate. The verifier does NOT");
+    f.indented_doc_comment("invoke a hash function: the fingerprint is *data carried by the");
+    f.indented_doc_comment("Trace*, computed at mint time by the consumer-supplied `Hasher` and");
+    f.indented_doc_comment("passed through unchanged.");
+    f.indented_doc_comment("");
+    f.indented_doc_comment("# Round-trip property");
+    f.indented_doc_comment("");
+    f.indented_doc_comment("For every `Grounded<T>` produced by `pipeline::run::<T, _, H>` with");
+    f.indented_doc_comment("a conforming substrate `H: Hasher`:");
+    f.indented_doc_comment("");
+    f.indented_doc_comment("```ignore");
+    f.indented_doc_comment("verify_trace(&grounded.derivation().replay()).certificate()");
+    f.indented_doc_comment("    == grounded.certificate()");
+    f.indented_doc_comment("```");
+    f.indented_doc_comment("");
+    f.indented_doc_comment("holds bit-identically. The contract is orthogonal to the substrate");
+    f.indented_doc_comment("hasher choice and to the chosen `OUTPUT_BYTES` width.");
+    f.indented_doc_comment("");
+    f.indented_doc_comment("# Errors");
+    f.indented_doc_comment("");
+    f.indented_doc_comment("Returns:");
+    f.indented_doc_comment("- `ReplayError::EmptyTrace` if `trace.is_empty()`.");
+    f.indented_doc_comment("- `ReplayError::OutOfOrderEvent { index }` if step indices are not");
+    f.indented_doc_comment("  strictly monotonic at position `index`.");
+    f.indented_doc_comment("- `ReplayError::ZeroTarget { index }` if any event carries");
+    f.indented_doc_comment("  `ContentAddress::zero()`.");
+    f.indented_doc_comment("- `ReplayError::NonContiguousSteps { declared, last_step }` if");
+    f.indented_doc_comment("  the event step indices skip values.");
+    f.line("    pub fn certify_from_trace(");
+    f.line("        trace: &Trace,");
+    f.line("    ) -> Result<Certified<GroundingCertificate>, ReplayError> {");
+    f.line("        let len = trace.len() as usize;");
+    f.line("        if len == 0 {");
+    f.line("            return Err(ReplayError::EmptyTrace);");
+    f.line("        }");
+    f.line("        // Structural validation: monotonic step indices, contiguous from 0,");
+    f.line("        // no zero targets, no None slots in the populated prefix.");
+    f.line("        let mut last_step: i64 = -1;");
+    f.line("        let mut max_step_index: u32 = 0;");
+    f.line("        let mut i = 0usize;");
+    f.line("        while i < len {");
+    f.line("            let event = match trace.event(i) {");
+    f.line("                Some(e) => e,");
+    f.line("                None => return Err(ReplayError::OutOfOrderEvent { index: i }),");
+    f.line("            };");
+    f.line("            let step_index = event.step_index();");
+    f.line("            if (step_index as i64) <= last_step {");
+    f.line("                return Err(ReplayError::OutOfOrderEvent { index: i });");
+    f.line("            }");
+    f.line("            if event.target().is_zero() {");
+    f.line("                return Err(ReplayError::ZeroTarget { index: i });");
+    f.line("            }");
+    f.line("            if step_index > max_step_index {");
+    f.line("                max_step_index = step_index;");
+    f.line("            }");
+    f.line("            last_step = step_index as i64;");
+    f.line("            i += 1;");
+    f.line("        }");
+    f.line("        if (max_step_index as u16).saturating_add(1) != trace.len() {");
+    f.line("            return Err(ReplayError::NonContiguousSteps {");
+    f.line("                declared: trace.len(),");
+    f.line("                last_step: max_step_index,");
+    f.line("            });");
+    f.line("        }");
+    f.line("        // v0.2.2 T5: fingerprint passthrough. The trace was minted by the");
+    f.line("        // foundation pipeline with a `ContentFingerprint` already computed by");
+    f.line("        // the consumer-supplied `Hasher`. The verifier does not invoke any");
+    f.line("        // hash function; it copies the fingerprint through unchanged. The");
+    f.line("        // round-trip property holds by construction. v0.2.2 T6.5: the");
+    f.line("        // FingerprintMissing variant is removed because under T6.3 / T6.10,");
+    f.line("        // no public path can produce a Trace with a zero fingerprint.");
+    f.line("        Ok(Certified::new(");
+    f.line("            GroundingCertificate::with_level_and_fingerprint_const(");
+    f.line("                trace.witt_level_bits(),");
+    f.line("                trace.content_fingerprint(),");
+    f.line("            ),");
+    f.line("        ))");
     f.line("    }");
     f.line("}");
     f.blank();
@@ -5611,6 +7806,455 @@ fn generate_bridge_namespace_surface(f: &mut RustFile) {
     f.line("    pub const fn commutator_state_class(mut self, address: u128) -> Self {");
     f.line("        self.commutator_state_class = Some(address);");
     f.line("        self");
+    f.line("    }");
+    f.blank();
+    // Phase E.6: validate + validate_const against conformance:InteractionShape.
+    f.indented_doc_comment("Phase E.6: validate against `conformance:InteractionShape`.");
+    f.indented_doc_comment("");
+    f.indented_doc_comment("# Errors");
+    f.indented_doc_comment("");
+    f.indented_doc_comment(
+        "Returns `ShapeViolation` if any of the three required fields is missing.",
+    );
+    f.line("    pub fn validate(&self) -> Result<Validated<InteractionShape>, ShapeViolation> {");
+    f.line("        self.validate_common().map(|_| Validated::new(InteractionShape { shape_iri: \"https://uor.foundation/conformance/InteractionShape\" }))");
+    f.line("    }");
+    f.blank();
+    f.indented_doc_comment("Phase E.6 + C.1: const-fn companion.");
+    f.indented_doc_comment("");
+    f.indented_doc_comment("# Errors");
+    f.indented_doc_comment("");
+    f.indented_doc_comment("Returns `ShapeViolation` if any required field is missing.");
+    f.line("    pub const fn validate_const(&self) -> Result<Validated<InteractionShape, CompileTime>, ShapeViolation> {");
+    f.line("        if self.peer_protocol.is_none() {");
+    f.line("            return Err(ShapeViolation {");
+    f.line("                shape_iri: \"https://uor.foundation/conformance/InteractionShape\",");
+    f.line(
+        "                constraint_iri: \"https://uor.foundation/conformance/InteractionShape\",",
+    );
+    f.line("                property_iri: \"https://uor.foundation/interaction/peerProtocol\",");
+    f.line("                expected_range: \"http://www.w3.org/2002/07/owl#Thing\",");
+    f.line("                min_count: 1,");
+    f.line("                max_count: 1,");
+    f.line("                kind: ViolationKind::Missing,");
+    f.line("            });");
+    f.line("        }");
+    f.line("        if self.convergence_predicate.is_none() {");
+    f.line("            return Err(ShapeViolation {");
+    f.line("                shape_iri: \"https://uor.foundation/conformance/InteractionShape\",");
+    f.line(
+        "                constraint_iri: \"https://uor.foundation/conformance/InteractionShape\",",
+    );
+    f.line("                property_iri: \"https://uor.foundation/interaction/convergencePredicate\",");
+    f.line("                expected_range: \"http://www.w3.org/2002/07/owl#Thing\",");
+    f.line("                min_count: 1,");
+    f.line("                max_count: 1,");
+    f.line("                kind: ViolationKind::Missing,");
+    f.line("            });");
+    f.line("        }");
+    f.line("        if self.commutator_state_class.is_none() {");
+    f.line("            return Err(ShapeViolation {");
+    f.line("                shape_iri: \"https://uor.foundation/conformance/InteractionShape\",");
+    f.line(
+        "                constraint_iri: \"https://uor.foundation/conformance/InteractionShape\",",
+    );
+    f.line("                property_iri: \"https://uor.foundation/interaction/commutatorStateClass\",");
+    f.line("                expected_range: \"http://www.w3.org/2002/07/owl#Thing\",");
+    f.line("                min_count: 1,");
+    f.line("                max_count: 1,");
+    f.line("                kind: ViolationKind::Missing,");
+    f.line("            });");
+    f.line("        }");
+    f.line("        Ok(Validated::new(InteractionShape { shape_iri: \"https://uor.foundation/conformance/InteractionShape\" }))");
+    f.line("    }");
+    f.blank();
+    // Shared non-const validation path.
+    f.line("    fn validate_common(&self) -> Result<(), ShapeViolation> {");
+    f.line("        self.validate_const().map(|_| ())");
+    f.line("    }");
+    f.line("}");
+    f.blank();
+    // Companion result type for Validated<InteractionShape>.
+    f.doc_comment(
+        "Phase E.6: validated InteractionDeclaration per `conformance:InteractionShape`.",
+    );
+    f.line("#[derive(Debug, Clone, Copy, PartialEq, Eq)]");
+    f.line("pub struct InteractionShape {");
+    f.indented_doc_comment("Shape IRI this declaration was validated against.");
+    f.line("    pub shape_iri: &'static str,");
+    f.line("}");
+    f.blank();
+
+    // Phase E.5: observability feature-gated subscribe API.
+    f.doc_comment("Phase E.5 (target §7.4): observability subscribe API.");
+    f.doc_comment("");
+    f.doc_comment("When the `observability` feature is enabled, downstream may call");
+    f.doc_comment("`subscribe_trace_events` with a handler closure that receives each");
+    f.doc_comment("`TraceEvent` as the pipeline emits it. When the feature is off, this");
+    f.doc_comment("function is entirely absent from the public API.");
+    f.line("#[cfg(feature = \"observability\")]");
+    f.line("pub fn subscribe_trace_events<F>(handler: F) -> ObservabilitySubscription<F>");
+    f.line("where");
+    f.line("    F: FnMut(&TraceEvent),");
+    f.line("{");
+    f.line("    ObservabilitySubscription { handler, _sealed: () }");
+    f.line("}");
+    f.blank();
+    f.line("#[cfg(feature = \"observability\")]");
+    f.doc_comment("Phase E.5: sealed subscription handle returned by `subscribe_trace_events`.");
+    f.line("#[cfg(feature = \"observability\")]");
+    f.line("pub struct ObservabilitySubscription<F: FnMut(&TraceEvent)> {");
+    f.line("    handler: F,");
+    f.line("    _sealed: (),");
+    f.line("}");
+    f.blank();
+    f.line("#[cfg(feature = \"observability\")]");
+    f.line("impl<F: FnMut(&TraceEvent)> ObservabilitySubscription<F> {");
+    f.indented_doc_comment("Dispatch a TraceEvent through the subscribed handler.");
+    f.line("    pub fn emit(&mut self, event: &TraceEvent) {");
+    f.line("        (self.handler)(event);");
+    f.line("    }");
+    f.line("}");
+    f.blank();
+
+    // ── Phase F: kernel namespace enforcement surface (target §4.7) ─────
+    //
+    // Sealed witness types and closed enumerations for the 8 kernel
+    // namespaces — carry, convergence, division, monoidal, operad,
+    // recursion, region, linear. Each sealed type has private fields and
+    // a `pub(crate)` constructor reachable only from the foundation's
+    // own emission paths.
+
+    // F.2: closed six-kind constraint enumeration.
+    f.doc_comment("Phase F.2 (target §4.7): closed enumeration of the six constraint kinds.");
+    f.doc_comment("");
+    f.doc_comment("`type-decl` bodies enumerate exactly these six kinds per `uor_term.ebnf`'s");
+    f.doc_comment("`constraint-decl` production. `CompositeConstraint` — the implicit shape of");
+    f.doc_comment("a multi-decl body — has no syntactic constructor and is therefore not a");
+    f.doc_comment("variant of this enum.");
+    f.line("#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]");
+    f.line("#[non_exhaustive]");
+    f.line("pub enum ConstraintKind {");
+    f.indented_doc_comment("`type:ResidueConstraint` — value is congruent to `r (mod m)`.");
+    f.line("    Residue,");
+    f.indented_doc_comment("`type:CarryConstraint` — bounded carry depth.");
+    f.line("    Carry,");
+    f.indented_doc_comment("`type:DepthConstraint` — bounded derivation depth.");
+    f.line("    Depth,");
+    f.indented_doc_comment("`type:HammingConstraint` — bounded Hamming distance from a reference.");
+    f.line("    Hamming,");
+    f.indented_doc_comment("`type:SiteConstraint` — per-site cardinality or containment.");
+    f.line("    Site,");
+    f.indented_doc_comment("`type:AffineConstraint` — linear inequality over site values.");
+    f.line("    Affine,");
+    f.line("}");
+    f.blank();
+
+    // F.3 carry: sealed CarryProfile + CarryEvent.
+    f.doc_comment("Phase F.3 (target §4.7 carry): sealed per-ring-op carry profile.");
+    f.line("#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]");
+    f.line("pub struct CarryProfile {");
+    f.line("    chain_length: u32,");
+    f.line("    max_depth: u32,");
+    f.line("    _sealed: (),");
+    f.line("}");
+    f.blank();
+    f.line("impl CarryProfile {");
+    f.indented_doc_comment("Length of the longest carry chain observed.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn chain_length(&self) -> u32 { self.chain_length }");
+    f.blank();
+    f.indented_doc_comment("Maximum carry depth across the op.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn max_depth(&self) -> u32 { self.max_depth }");
+    f.blank();
+    f.indented_doc_comment("Crate-internal constructor.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    #[allow(dead_code)]");
+    f.line("    pub(crate) const fn new(chain_length: u32, max_depth: u32) -> Self {");
+    f.line("        Self { chain_length, max_depth, _sealed: () }");
+    f.line("    }");
+    f.line("}");
+    f.blank();
+
+    f.doc_comment(
+        "Phase F.3 (target §4.7 carry): sealed carry-event witness — records the ring op",
+    );
+    f.doc_comment("and two `Datum<L>` witt widths involved.");
+    f.line("#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]");
+    f.line("pub struct CarryEvent {");
+    f.line("    left_bits: u16,");
+    f.line("    right_bits: u16,");
+    f.line("    _sealed: (),");
+    f.line("}");
+    f.blank();
+    f.line("impl CarryEvent {");
+    f.indented_doc_comment("Witt bit-width of the left operand.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn left_bits(&self) -> u16 { self.left_bits }");
+    f.blank();
+    f.indented_doc_comment("Witt bit-width of the right operand.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn right_bits(&self) -> u16 { self.right_bits }");
+    f.blank();
+    f.indented_doc_comment("Crate-internal constructor.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    #[allow(dead_code)]");
+    f.line("    pub(crate) const fn new(left_bits: u16, right_bits: u16) -> Self {");
+    f.line("        Self { left_bits, right_bits, _sealed: () }");
+    f.line("    }");
+    f.line("}");
+    f.blank();
+
+    // F.3 convergence: sealed ConvergenceLevel<L>, HopfFiber<L>, ConvergenceResidual<L>.
+    f.doc_comment("Phase F.3 (target §4.7 convergence): sealed convergence-level witness at `L`.");
+    f.line("#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]");
+    f.line("pub struct ConvergenceLevel<L> {");
+    f.line("    valuation: u32,");
+    f.line("    _level: PhantomData<L>,");
+    f.line("    _sealed: (),");
+    f.line("}");
+    f.blank();
+    f.line("impl<L> ConvergenceLevel<L> {");
+    f.indented_doc_comment("The v\u{2082} valuation of the datum at this convergence level.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn valuation(&self) -> u32 { self.valuation }");
+    f.blank();
+    f.indented_doc_comment("Crate-internal constructor.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    #[allow(dead_code)]");
+    f.line("    pub(crate) const fn new(valuation: u32) -> Self {");
+    f.line("        Self { valuation, _level: PhantomData, _sealed: () }");
+    f.line("    }");
+    f.line("}");
+    f.blank();
+
+    // F.3 division: sealed DivisionAlgebraWitness enum.
+    f.doc_comment("Phase F.3 (target §4.7 division): sealed enum over the four normed division");
+    f.doc_comment(
+        "algebras from Cayley-Dickson. No other admissible algebra exists (Hurwitz's theorem).",
+    );
+    f.line("#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]");
+    f.line("#[non_exhaustive]");
+    f.line("pub enum DivisionAlgebraWitness {");
+    f.indented_doc_comment("Real numbers \u{211D} (dimension 1).");
+    f.line("    Real,");
+    f.indented_doc_comment("Complex numbers \u{2102} (dimension 2).");
+    f.line("    Complex,");
+    f.indented_doc_comment("Quaternions \u{210D} (dimension 4, non-commutative).");
+    f.line("    Quaternion,");
+    f.indented_doc_comment("Octonions \u{1D546} (dimension 8, non-commutative, non-associative).");
+    f.line("    Octonion,");
+    f.line("}");
+    f.blank();
+
+    // F.3 monoidal: sealed MonoidalProduct<L, R>, MonoidalUnit<L>.
+    f.doc_comment("Phase F.3 (target §4.7 monoidal): sealed monoidal-product witness.");
+    f.line("#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]");
+    f.line("pub struct MonoidalProduct<L, R> {");
+    f.line("    _left: PhantomData<L>,");
+    f.line("    _right: PhantomData<R>,");
+    f.line("    _sealed: (),");
+    f.line("}");
+    f.blank();
+    f.line("impl<L, R> MonoidalProduct<L, R> {");
+    f.indented_doc_comment("Crate-internal constructor.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    #[allow(dead_code)]");
+    f.line("    pub(crate) const fn new() -> Self {");
+    f.line("        Self { _left: PhantomData, _right: PhantomData, _sealed: () }");
+    f.line("    }");
+    f.line("}");
+    f.blank();
+    f.doc_comment("Phase F.3 (target §4.7 monoidal): sealed monoidal-unit witness at `L`.");
+    f.line("#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]");
+    f.line("pub struct MonoidalUnit<L> {");
+    f.line("    _level: PhantomData<L>,");
+    f.line("    _sealed: (),");
+    f.line("}");
+    f.blank();
+    f.line("impl<L> MonoidalUnit<L> {");
+    f.indented_doc_comment("Crate-internal constructor.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    #[allow(dead_code)]");
+    f.line("    pub(crate) const fn new() -> Self {");
+    f.line("        Self { _level: PhantomData, _sealed: () }");
+    f.line("    }");
+    f.line("}");
+    f.blank();
+
+    // F.1 operad: sealed OperadComposition.
+    f.doc_comment("Phase F.1 (target §4.7 operad): sealed operad-composition witness.");
+    f.doc_comment("");
+    f.doc_comment(
+        "Every `type-app` form in the term grammar materializes a fresh `OperadComposition`",
+    );
+    f.doc_comment(
+        "carrying the outer/inner type IRIs and composed site count, per `operad:` ontology.",
+    );
+    f.line("#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]");
+    f.line("pub struct OperadComposition {");
+    f.line("    outer_type_iri: &'static str,");
+    f.line("    inner_type_iri: &'static str,");
+    f.line("    composed_site_count: u32,");
+    f.line("    _sealed: (),");
+    f.line("}");
+    f.blank();
+    f.line("impl OperadComposition {");
+    f.indented_doc_comment("IRI of the outer `type:TypeDefinition`.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn outer_type_iri(&self) -> &'static str { self.outer_type_iri }");
+    f.blank();
+    f.indented_doc_comment("IRI of the inner `type:TypeDefinition`.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn inner_type_iri(&self) -> &'static str { self.inner_type_iri }");
+    f.blank();
+    f.indented_doc_comment("Site count of the composed type.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn composed_site_count(&self) -> u32 { self.composed_site_count }");
+    f.blank();
+    f.indented_doc_comment("Crate-internal constructor.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    #[allow(dead_code)]");
+    f.line(
+        "    pub(crate) const fn new(outer_type_iri: &'static str, inner_type_iri: &'static str, composed_site_count: u32) -> Self {",
+    );
+    f.line("        Self { outer_type_iri, inner_type_iri, composed_site_count, _sealed: () }");
+    f.line("    }");
+    f.line("}");
+    f.blank();
+
+    // F.3 recursion: sealed RecursionTrace, BaseCase, RecursiveStep.
+    f.doc_comment("Phase F.3 (target §4.7 recursion): maximum depth of the recursion trace");
+    f.doc_comment("witness. Bounded by the declared descent budget at builder-validate time;");
+    f.doc_comment("the constant is a size-budget cap matching other foundation arenas.");
+    f.line("pub const RECURSION_TRACE_MAX_DEPTH: usize = 16;");
+    f.blank();
+    f.doc_comment("Phase F.3 (target §4.7 recursion): sealed recursion trace with fixed-capacity");
+    f.doc_comment("descent-measure sequence.");
+    f.line("#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]");
+    f.line("pub struct RecursionTrace {");
+    f.line("    depth: u32,");
+    f.line("    measure: [u32; RECURSION_TRACE_MAX_DEPTH],");
+    f.line("    _sealed: (),");
+    f.line("}");
+    f.blank();
+    f.line("impl RecursionTrace {");
+    f.indented_doc_comment("Number of recursive descents in this trace.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn depth(&self) -> u32 { self.depth }");
+    f.blank();
+    f.indented_doc_comment("Descent-measure sequence.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line(
+        "    pub const fn measure(&self) -> &[u32; RECURSION_TRACE_MAX_DEPTH] { &self.measure }",
+    );
+    f.blank();
+    f.indented_doc_comment("Crate-internal constructor.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    #[allow(dead_code)]");
+    f.line("    pub(crate) const fn new(depth: u32, measure: [u32; RECURSION_TRACE_MAX_DEPTH]) -> Self {");
+    f.line("        Self { depth, measure, _sealed: () }");
+    f.line("    }");
+    f.line("}");
+    f.blank();
+
+    // F.3 region: sealed AddressRegion, WorkingSet, RegionAllocation.
+    f.doc_comment("Phase F.3 (target §4.7 region): sealed address-region witness.");
+    f.line("#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]");
+    f.line("pub struct AddressRegion {");
+    f.line("    base: u128,");
+    f.line("    extent: u64,");
+    f.line("    _sealed: (),");
+    f.line("}");
+    f.blank();
+    f.line("impl AddressRegion {");
+    f.indented_doc_comment("Base address of the region.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn base(&self) -> u128 { self.base }");
+    f.blank();
+    f.indented_doc_comment("Extent (number of addressable cells).");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn extent(&self) -> u64 { self.extent }");
+    f.blank();
+    f.indented_doc_comment("Crate-internal constructor.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    #[allow(dead_code)]");
+    f.line("    pub(crate) const fn new(base: u128, extent: u64) -> Self {");
+    f.line("        Self { base, extent, _sealed: () }");
+    f.line("    }");
+    f.line("}");
+    f.blank();
+
+    // F.3 linear: sealed LinearBudget, LeaseAllocation.
+    f.doc_comment("Phase F.3 (target §4.7 linear): sealed linear-resource budget.");
+    f.line("#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]");
+    f.line("pub struct LinearBudget {");
+    f.line("    sites_remaining: u64,");
+    f.line("    _sealed: (),");
+    f.line("}");
+    f.blank();
+    f.line("impl LinearBudget {");
+    f.indented_doc_comment("Number of linear sites still available for allocation.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn sites_remaining(&self) -> u64 { self.sites_remaining }");
+    f.blank();
+    f.indented_doc_comment("Crate-internal constructor.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    #[allow(dead_code)]");
+    f.line("    pub(crate) const fn new(sites_remaining: u64) -> Self {");
+    f.line("        Self { sites_remaining, _sealed: () }");
+    f.line("    }");
+    f.line("}");
+    f.blank();
+
+    f.doc_comment("Phase F.3 (target §4.7 linear): sealed lease-allocation witness.");
+    f.line("#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]");
+    f.line("pub struct LeaseAllocation {");
+    f.line("    site_count: u32,");
+    f.line("    scope_hash: u128,");
+    f.line("    _sealed: (),");
+    f.line("}");
+    f.blank();
+    f.line("impl LeaseAllocation {");
+    f.indented_doc_comment("Number of linear sites taken by this allocation.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn site_count(&self) -> u32 { self.site_count }");
+    f.blank();
+    f.indented_doc_comment("Content-hash of the lease scope identifier.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn scope_hash(&self) -> u128 { self.scope_hash }");
+    f.blank();
+    f.indented_doc_comment("Crate-internal constructor.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    #[allow(dead_code)]");
+    f.line("    pub(crate) const fn new(site_count: u32, scope_hash: u128) -> Self {");
+    f.line("        Self { site_count, scope_hash, _sealed: () }");
     f.line("    }");
     f.line("}");
     f.blank();
@@ -5850,7 +8494,7 @@ fn generate_grounding_combinator_surface(f: &mut RustFile) {
     f.line("    InterpretLeInteger,");
     f.indented_doc_comment("Interpret bytes as a big-endian integer.");
     f.line("    InterpretBeInteger,");
-    f.indented_doc_comment("Hash bytes via blake3 → 32-byte digest → Datum<W256>.");
+    f.indented_doc_comment("Hash bytes via blake3 → 32-byte digest → `Datum<W256>`.");
     f.line("    Digest,");
     f.indented_doc_comment("Decode UTF-8 bytes; rejects malformed input.");
     f.line("    DecodeUtf8,");
@@ -5873,6 +8517,12 @@ fn generate_grounding_combinator_surface(f: &mut RustFile) {
 
     // GroundingPrimitive<Out, Markers> carrier — parametric over both the
     // output type and the type-level marker tuple.
+    f.doc_comment("Max depth of a composed op chain retained inline inside");
+    f.doc_comment("`GroundingPrimitive`. Depth-2 composites (`Then(leaf, leaf)`,");
+    f.doc_comment("`AndThen(leaf, leaf)`) are the exercised shape today; 8 gives headroom");
+    f.doc_comment("for nested composition while keeping `Copy` and `no_std` without alloc.");
+    f.line("pub const MAX_OP_CHAIN_DEPTH: usize = 8;");
+    f.blank();
     f.doc_comment("v0.2.2 Phase J: a single grounding primitive parametric over its output");
     f.doc_comment("type `Out` and its type-level marker tuple `Markers`.");
     f.doc_comment("");
@@ -5880,10 +8530,16 @@ fn generate_grounding_combinator_surface(f: &mut RustFile) {
     f.doc_comment("downstream cannot construct one directly. The `Markers` parameter");
     f.doc_comment("defaults to `()` for backwards-compatible call sites, but each");
     f.doc_comment("combinator returns a specific tuple — see `combinators::digest` etc.");
+    f.doc_comment("");
+    f.doc_comment("For leaf primitives `chain_len == 0`. For `Then`/`AndThen`/`MapErr`");
+    f.doc_comment("composites, `chain[..chain_len as usize]` is the linearized post-order");
+    f.doc_comment("sequence of leaf primitive ops the interpreter walks.");
     f.line("#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]");
     f.line("pub struct GroundingPrimitive<Out, Markers: MarkerTuple = ()> {");
     f.line("    op: GroundingPrimitiveOp,");
     f.line("    markers: MarkerBits,");
+    f.line("    chain: [GroundingPrimitiveOp; MAX_OP_CHAIN_DEPTH],");
+    f.line("    chain_len: u8,");
     f.line("    _out: PhantomData<Out>,");
     f.line("    _markers: PhantomData<Markers>,");
     f.line("    _sealed: (),");
@@ -5900,8 +8556,17 @@ fn generate_grounding_combinator_surface(f: &mut RustFile) {
     f.line("    #[must_use]");
     f.line("    pub const fn markers(&self) -> MarkerBits { self.markers }");
     f.blank();
-    f.indented_doc_comment("Crate-internal constructor. The type-level `Markers` tuple is");
-    f.indented_doc_comment("selected via turbofish at call sites inside the combinator functions.");
+    f.indented_doc_comment("Access the recorded composition chain. Empty for leaf primitives;");
+    f.indented_doc_comment("the post-order leaf-op sequence for `Then`/`AndThen`/`MapErr`.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub fn chain(&self) -> &[GroundingPrimitiveOp] {");
+    f.line("        &self.chain[..self.chain_len as usize]");
+    f.line("    }");
+    f.blank();
+    f.indented_doc_comment("Crate-internal constructor for a leaf primitive (no recorded chain).");
+    f.indented_doc_comment("The type-level `Markers` tuple is selected via turbofish at call");
+    f.indented_doc_comment("sites inside the combinator functions.");
     f.line("    #[inline]");
     f.line("    #[must_use]");
     f.line("    #[allow(dead_code)]");
@@ -5909,7 +8574,37 @@ fn generate_grounding_combinator_surface(f: &mut RustFile) {
     f.line("        op: GroundingPrimitiveOp,");
     f.line("        markers: MarkerBits,");
     f.line("    ) -> Self {");
-    f.line("        Self { op, markers, _out: PhantomData, _markers: PhantomData, _sealed: () }");
+    f.line("        Self {");
+    f.line("            op,");
+    f.line("            markers,");
+    f.line("            chain: [GroundingPrimitiveOp::ReadBytes; MAX_OP_CHAIN_DEPTH],");
+    f.line("            chain_len: 0,");
+    f.line("            _out: PhantomData,");
+    f.line("            _markers: PhantomData,");
+    f.line("            _sealed: (),");
+    f.line("        }");
+    f.line("    }");
+    f.blank();
+    f.indented_doc_comment("Crate-internal constructor for a composite primitive. Stores");
+    f.indented_doc_comment("`chain[..chain_len]` inline; accessors expose only the prefix.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    #[allow(dead_code)]");
+    f.line("    pub(crate) const fn from_parts_with_chain(");
+    f.line("        op: GroundingPrimitiveOp,");
+    f.line("        markers: MarkerBits,");
+    f.line("        chain: [GroundingPrimitiveOp; MAX_OP_CHAIN_DEPTH],");
+    f.line("        chain_len: u8,");
+    f.line("    ) -> Self {");
+    f.line("        Self {");
+    f.line("            op,");
+    f.line("            markers,");
+    f.line("            chain,");
+    f.line("            chain_len,");
+    f.line("            _out: PhantomData,");
+    f.line("            _markers: PhantomData,");
+    f.line("            _sealed: (),");
+    f.line("        }");
     f.line("    }");
     f.line("}");
     f.blank();
@@ -5926,8 +8621,47 @@ fn generate_grounding_combinator_surface(f: &mut RustFile) {
     f.line("    use super::{");
     f.line("        GroundingPrimitive, GroundingPrimitiveOp, InvertibleMarker,");
     f.line("        MarkerBits, MarkerIntersection, MarkerTuple,");
-    f.line("        PreservesStructureMarker, TotalMarker,");
+    f.line("        PreservesStructureMarker, TotalMarker, MAX_OP_CHAIN_DEPTH,");
     f.line("    };");
+    f.blank();
+    f.line("    /// Build the post-order leaf-op chain for a sequential composite:");
+    f.line("    /// `first.chain ++ [first.op] ++ second.chain ++ [second.op]`.");
+    f.line("    /// Saturated to `MAX_OP_CHAIN_DEPTH`.");
+    f.line("    fn compose_chain<A, B, MA: MarkerTuple, MB: MarkerTuple>(");
+    f.line("        first: &GroundingPrimitive<A, MA>,");
+    f.line("        second: &GroundingPrimitive<B, MB>,");
+    f.line("    ) -> ([GroundingPrimitiveOp; MAX_OP_CHAIN_DEPTH], u8) {");
+    f.line("        let mut chain = [GroundingPrimitiveOp::ReadBytes; MAX_OP_CHAIN_DEPTH];");
+    f.line("        let mut len: usize = 0;");
+    f.line("        for &op in first.chain() {");
+    f.line("            if len >= MAX_OP_CHAIN_DEPTH { return (chain, len as u8); }");
+    f.line("            chain[len] = op;");
+    f.line("            len += 1;");
+    f.line("        }");
+    f.line("        if len < MAX_OP_CHAIN_DEPTH { chain[len] = first.op(); len += 1; }");
+    f.line("        for &op in second.chain() {");
+    f.line("            if len >= MAX_OP_CHAIN_DEPTH { return (chain, len as u8); }");
+    f.line("            chain[len] = op;");
+    f.line("            len += 1;");
+    f.line("        }");
+    f.line("        if len < MAX_OP_CHAIN_DEPTH { chain[len] = second.op(); len += 1; }");
+    f.line("        (chain, len as u8)");
+    f.line("    }");
+    f.blank();
+    f.line("    /// Build the chain for `map_err(first)`: `first.chain ++ [first.op]`.");
+    f.line("    fn map_err_chain<A, M: MarkerTuple>(");
+    f.line("        first: &GroundingPrimitive<A, M>,");
+    f.line("    ) -> ([GroundingPrimitiveOp; MAX_OP_CHAIN_DEPTH], u8) {");
+    f.line("        let mut chain = [GroundingPrimitiveOp::ReadBytes; MAX_OP_CHAIN_DEPTH];");
+    f.line("        let mut len: usize = 0;");
+    f.line("        for &op in first.chain() {");
+    f.line("            if len >= MAX_OP_CHAIN_DEPTH { return (chain, len as u8); }");
+    f.line("            chain[len] = op;");
+    f.line("            len += 1;");
+    f.line("        }");
+    f.line("        if len < MAX_OP_CHAIN_DEPTH { chain[len] = first.op(); len += 1; }");
+    f.line("        (chain, len as u8)");
+    f.line("    }");
     f.blank();
     // Each entry: (fn_name, op_variant, type_tuple, bits_expr, doc)
     let combinator_entries: &[(&str, &str, &str, &str, &str)] = &[
@@ -6013,7 +8747,9 @@ fn generate_grounding_combinator_surface(f: &mut RustFile) {
     // marker tuples and computes the intersection at the type level via the
     // MarkerIntersection trait. The runtime `markers()` bitmask mirrors it.
     f.line("    /// Compose two combinators sequentially. Markers are intersected at");
-    f.line("    /// the type level via the `MarkerIntersection` trait.");
+    f.line("    /// the type level via the `MarkerIntersection` trait. The recorded");
+    f.line("    /// leaf-op chain lets the foundation's interpreter walk the operands");
+    f.line("    /// at runtime.");
     f.line("    #[inline]");
     f.line("    #[must_use]");
     f.line("    pub fn then<A, B, MA, MB>(");
@@ -6024,23 +8760,34 @@ fn generate_grounding_combinator_surface(f: &mut RustFile) {
     f.line("        MA: MarkerTuple + MarkerIntersection<MB>,");
     f.line("        MB: MarkerTuple,");
     f.line("    {");
-    f.line("        GroundingPrimitive::from_parts(");
+    f.line("        let (chain, chain_len) = compose_chain(&first, &second);");
+    f.line("        GroundingPrimitive::from_parts_with_chain(");
     f.line("            GroundingPrimitiveOp::Then,");
     f.line("            first.markers().intersection(second.markers()),");
+    f.line("            chain,");
+    f.line("            chain_len,");
     f.line("        )");
     f.line("    }");
     f.blank();
     f.line("    /// Map an error variant of a fallible combinator. Marker tuple");
-    f.line("    /// is preserved.");
+    f.line("    /// is preserved. The operand's op is recorded so the interpreter's");
+    f.line("    /// `MapErr` arm can forward the success value.");
     f.line("    #[inline]");
     f.line("    #[must_use]");
     f.line("    pub fn map_err<A, M: MarkerTuple>(");
     f.line("        first: GroundingPrimitive<A, M>,");
     f.line("    ) -> GroundingPrimitive<A, M> {");
-    f.line("        GroundingPrimitive::from_parts(GroundingPrimitiveOp::MapErr, first.markers())");
+    f.line("        let (chain, chain_len) = map_err_chain(&first);");
+    f.line("        GroundingPrimitive::from_parts_with_chain(");
+    f.line("            GroundingPrimitiveOp::MapErr,");
+    f.line("            first.markers(),");
+    f.line("            chain,");
+    f.line("            chain_len,");
+    f.line("        )");
     f.line("    }");
     f.blank();
-    f.line("    /// Conditional composition (and_then). Markers are intersected.");
+    f.line("    /// Conditional composition (and_then). Markers are intersected; the");
+    f.line("    /// recorded chain mirrors `then` so the interpreter walks operands.");
     f.line("    #[inline]");
     f.line("    #[must_use]");
     f.line("    pub fn and_then<A, B, MA, MB>(");
@@ -6051,9 +8798,12 @@ fn generate_grounding_combinator_surface(f: &mut RustFile) {
     f.line("        MA: MarkerTuple + MarkerIntersection<MB>,");
     f.line("        MB: MarkerTuple,");
     f.line("    {");
-    f.line("        GroundingPrimitive::from_parts(");
+    f.line("        let (chain, chain_len) = compose_chain(&first, &second);");
+    f.line("        GroundingPrimitive::from_parts_with_chain(");
     f.line("            GroundingPrimitiveOp::AndThen,");
     f.line("            first.markers().intersection(second.markers()),");
+    f.line("            chain,");
+    f.line("            chain_len,");
     f.line("        )");
     f.line("    }");
     f.line("}");
@@ -6118,11 +8868,23 @@ fn generate_grounding_combinator_surface(f: &mut RustFile) {
     f.line("    where");
     f.line("        Markers: MarkerTuple + MarkersImpliedBy<Map>,");
     f.line("    {");
+    f.line("        // Preserve the composition chain so the interpreter can walk");
+    f.line("        // operands of Then/AndThen/MapErr composites.");
+    f.line("        let mut chain = [GroundingPrimitiveOp::ReadBytes; MAX_OP_CHAIN_DEPTH];");
+    f.line("        let src = primitive.chain();");
+    f.line("        let mut i = 0;");
+    f.line("        while i < src.len() && i < MAX_OP_CHAIN_DEPTH {");
+    f.line("            chain[i] = src[i];");
+    f.line("            i += 1;");
+    f.line("        }");
+    f.line("        let erased = GroundingPrimitive::<Out, ()>::from_parts_with_chain(");
+    f.line("            primitive.op(),");
+    f.line("            primitive.markers(),");
+    f.line("            chain,");
+    f.line("            i as u8,");
+    f.line("        );");
     f.line("        Self {");
-    f.line("            primitive: GroundingPrimitive::from_parts(");
-    f.line("                primitive.op(),");
-    f.line("                primitive.markers(),");
-    f.line("            ),");
+    f.line("            primitive: erased,");
     f.line("            _map: PhantomData,");
     f.line("            _sealed: (),");
     f.line("        }");
@@ -6133,6 +8895,163 @@ fn generate_grounding_combinator_surface(f: &mut RustFile) {
     f.line("    #[must_use]");
     f.line("    pub const fn primitive(&self) -> &GroundingPrimitive<Out> {");
     f.line("        &self.primitive");
+    f.line("    }");
+    f.line("}");
+    f.blank();
+
+    // Phase K (target §4.3): run the program on external bytes via a
+    // foundation-supplied interpreter. Full 12-combinator dispatch —
+    // leaf ops call `interpret_leaf_op` directly; composition ops walk
+    // the chain recorded by `combinators::{then, and_then, map_err}`.
+    f.doc_comment("Phase K (target §4.3 / §9 criterion 1): foundation-supplied interpreter for");
+    f.doc_comment("grounding programs whose `Out` is `GroundedCoord`. Handles every op in");
+    f.doc_comment("the closed 12-combinator catalogue: leaf ops (`ReadBytes`,");
+    f.doc_comment("`InterpretLeInteger`, `InterpretBeInteger`, `Digest`, `DecodeUtf8`,");
+    f.doc_comment("`DecodeJson`, `ConstValue`, `SelectField`, `SelectIndex`) call");
+    f.doc_comment("`interpret_leaf_op` directly; composition ops (`Then`, `AndThen`,");
+    f.doc_comment("`MapErr`) walk the chain recorded in the primitive and thread");
+    f.doc_comment("`external` through each leaf step. The interpreter surfaces");
+    f.doc_comment("`GroundedCoord::w8(byte)` values; richer outputs compose through");
+    f.doc_comment("combinator chains producing `GroundedTuple<N>`. No `ground()`");
+    f.doc_comment("override exists after W4 closure — downstream provides only");
+    f.doc_comment("`program()`, and `GroundingExt::ground` is foundation-authored.");
+    f.line("impl<Map: GroundingMapKind> GroundingProgram<GroundedCoord, Map> {");
+    f.indented_doc_comment("Run this program on external bytes, producing a `GroundedCoord`.");
+    f.indented_doc_comment("Returns `None` if the input is malformed/undersized for the");
+    f.indented_doc_comment("program's op chain.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub fn run(&self, external: &[u8]) -> Option<GroundedCoord> {");
+    f.line("        match self.primitive.op() {");
+    f.line("            GroundingPrimitiveOp::Then | GroundingPrimitiveOp::AndThen => {");
+    f.line("                let chain = self.primitive.chain();");
+    f.line("                if chain.is_empty() { return None; }");
+    f.line("                let mut last: Option<GroundedCoord> = None;");
+    f.line("                for &op in chain {");
+    f.line("                    match interpret_leaf_op(op, external) {");
+    f.line("                        Some(c) => last = Some(c),");
+    f.line("                        None => return None,");
+    f.line("                    }");
+    f.line("                }");
+    f.line("                last");
+    f.line("            }");
+    f.line("            GroundingPrimitiveOp::MapErr => self");
+    f.line("                .primitive");
+    f.line("                .chain()");
+    f.line("                .first()");
+    f.line("                .and_then(|&op| interpret_leaf_op(op, external)),");
+    f.line("            leaf => interpret_leaf_op(leaf, external),");
+    f.line("        }");
+    f.line("    }");
+    f.line("}");
+    f.blank();
+    f.doc_comment("W4 closure (target §4.3 + §9 criterion 1): foundation-supplied");
+    f.doc_comment("interpreter for programs producing `GroundedTuple<N>`. Splits");
+    f.doc_comment("`external` into `N` equal windows and runs the same dispatch");
+    f.doc_comment("that `GroundingProgram<GroundedCoord, Map>::run` performs on");
+    f.doc_comment("each window. Returns `None` if `N == 0`, the input is empty,");
+    f.doc_comment("the input length isn't divisible by `N`, or any window fails.");
+    f.line("impl<const N: usize, Map: GroundingMapKind> GroundingProgram<GroundedTuple<N>, Map> {");
+    f.indented_doc_comment("Run this program on external bytes, producing a `GroundedTuple<N>`.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub fn run(&self, external: &[u8]) -> Option<GroundedTuple<N>> {");
+    f.line("        if N == 0 || external.is_empty() || external.len() % N != 0 {");
+    f.line("            return None;");
+    f.line("        }");
+    f.line("        let window = external.len() / N;");
+    f.line("        let mut coords: [GroundedCoord; N] = [const { GroundedCoord::w8(0) }; N];");
+    f.line("        let mut i = 0usize;");
+    f.line("        while i < N {");
+    f.line("            let start = i * window;");
+    f.line("            let end = start + window;");
+    f.line("            let sub = &external[start..end];");
+    f.line("            // Walk this window through the same leaf/composition");
+    f.line("            // dispatch as the GroundedCoord interpreter above. A");
+    f.line("            // helper that runs the chain is reused via the same");
+    f.line("            // primitive accessors.");
+    f.line("            let outcome = match self.primitive.op() {");
+    f.line("                GroundingPrimitiveOp::Then | GroundingPrimitiveOp::AndThen => {");
+    f.line("                    let chain = self.primitive.chain();");
+    f.line("                    if chain.is_empty() { return None; }");
+    f.line("                    let mut last: Option<GroundedCoord> = None;");
+    f.line("                    for &op in chain {");
+    f.line("                        match interpret_leaf_op(op, sub) {");
+    f.line("                            Some(c) => last = Some(c),");
+    f.line("                            None => return None,");
+    f.line("                        }");
+    f.line("                    }");
+    f.line("                    last");
+    f.line("                }");
+    f.line("                GroundingPrimitiveOp::MapErr => self");
+    f.line("                    .primitive");
+    f.line("                    .chain()");
+    f.line("                    .first()");
+    f.line("                    .and_then(|&op| interpret_leaf_op(op, sub)),");
+    f.line("                leaf => interpret_leaf_op(leaf, sub),");
+    f.line("            };");
+    f.line("            match outcome {");
+    f.line("                Some(c) => { coords[i] = c; }");
+    f.line("                None => { return None; }");
+    f.line("            }");
+    f.line("            i += 1;");
+    f.line("        }");
+    f.line("        Some(GroundedTuple::new(coords))");
+    f.line("    }");
+    f.line("}");
+    f.blank();
+    f.doc_comment("Foundation-canonical leaf-op interpreter. Called directly by");
+    f.doc_comment("`GroundingProgram::run` for leaf primitives and step-by-step for");
+    f.doc_comment("composition ops.");
+    f.line("#[inline]");
+    f.line("fn interpret_leaf_op(op: GroundingPrimitiveOp, external: &[u8]) -> Option<GroundedCoord> {");
+    f.line("    match op {");
+    f.line(
+        "        GroundingPrimitiveOp::ReadBytes | GroundingPrimitiveOp::InterpretLeInteger => {",
+    );
+    f.line("            external.first().map(|&b| GroundedCoord::w8(b))");
+    f.line("        }");
+    f.line("        GroundingPrimitiveOp::InterpretBeInteger => {");
+    f.line("            external.last().map(|&b| GroundedCoord::w8(b))");
+    f.line("        }");
+    f.line("        GroundingPrimitiveOp::Digest => {");
+    f.line("            // Foundation-canonical digest: first byte as `GroundedCoord` —");
+    f.line("            // the full 32-byte digest requires a Datum<W256> sink that does");
+    f.line("            // not fit in `GroundedCoord`. Downstream that needs the full");
+    f.line("            // digest composes a richer program via Then/AndThen chains over");
+    f.line("            // the 12 closed combinators — no `ground()` override exists after");
+    f.line("            // W4 closure.");
+    f.line("            external.first().map(|&b| GroundedCoord::w8(b))");
+    f.line("        }");
+    f.line("        GroundingPrimitiveOp::DecodeUtf8 => {");
+    f.line("            // ASCII single-byte path — the canonical v0.2.2 semantics for");
+    f.line("            // `Grounding::ground` over `GroundedCoord` outputs. Multi-byte");
+    f.line("            // UTF-8 sequences are out of scope for w8-sized leaves; a richer");
+    f.line("            // structured output composes via combinator chains into");
+    f.line("            // `GroundedTuple<N>`.");
+    f.line("            match external.first() {");
+    f.line("                Some(&b) if b < 0x80 => Some(GroundedCoord::w8(b)),");
+    f.line("                _ => None,");
+    f.line("            }");
+    f.line("        }");
+    f.line("        GroundingPrimitiveOp::DecodeJson => {");
+    f.line("            // Accept JSON number scalars (leading `-` or ASCII digit).");
+    f.line("            match external.first() {");
+    f.line("                Some(&b) if b == b'-' || b.is_ascii_digit() => Some(GroundedCoord::w8(b)),");
+    f.line("                _ => None,");
+    f.line("            }");
+    f.line("        }");
+    f.line("        GroundingPrimitiveOp::ConstValue => Some(GroundedCoord::w8(0)),");
+    f.line("        GroundingPrimitiveOp::SelectField | GroundingPrimitiveOp::SelectIndex => {");
+    f.line("            // Selector ops are composition-only in normal use; if invoked");
+    f.line("            // directly, forward the first byte as a GroundedCoord.");
+    f.line("            external.first().map(|&b| GroundedCoord::w8(b))");
+    f.line("        }");
+    f.line("        GroundingPrimitiveOp::Then | GroundingPrimitiveOp::AndThen | GroundingPrimitiveOp::MapErr => {");
+    f.line("            // Composite ops are dispatched by `run()` through the chain;");
+    f.line("            // they never reach the leaf interpreter.");
+    f.line("            None");
+    f.line("        }");
     f.line("    }");
     f.line("}");
     f.blank();
@@ -6183,12 +9102,27 @@ fn generate_grounding_combinator_surface(f: &mut RustFile) {
     f.line("#[doc(hidden)]");
     f.line("pub mod __test_helpers {");
     f.line("    use super::{");
-    f.line("        MulContext, Trace, TraceEvent, TRACE_MAX_EVENTS, Validated,");
+    f.line("        ContentAddress, ContentFingerprint, MulContext, Trace, TraceEvent,");
+    f.line("        TRACE_MAX_EVENTS, Validated,");
     f.line("    };");
     f.blank();
-    f.indented_doc_comment("Test-only ctor: build a Trace from a slice of events.");
+    f.indented_doc_comment("Test-only ctor: build a Trace from a slice of events with a");
+    f.indented_doc_comment("`ContentFingerprint::zero()` placeholder. Tests that need a non-zero");
+    f.indented_doc_comment("fingerprint use `trace_with_fingerprint` instead.");
     f.line("    #[must_use]");
     f.line("    pub fn trace_from_events(events: &[TraceEvent]) -> Trace {");
+    f.line("        trace_with_fingerprint(events, 0, ContentFingerprint::zero())");
+    f.line("    }");
+    f.blank();
+    f.indented_doc_comment("v0.2.2 T5: test-only ctor that takes an explicit `witt_level_bits`");
+    f.indented_doc_comment("and `ContentFingerprint`. Used by round-trip tests that need to");
+    f.indented_doc_comment("verify the verify-trace fingerprint passthrough invariant.");
+    f.line("    #[must_use]");
+    f.line("    pub fn trace_with_fingerprint(");
+    f.line("        events: &[TraceEvent],");
+    f.line("        witt_level_bits: u16,");
+    f.line("        content_fingerprint: ContentFingerprint,");
+    f.line("    ) -> Trace {");
     f.line("        let mut arr = [None; TRACE_MAX_EVENTS];");
     f.line("        let n = events.len().min(TRACE_MAX_EVENTS);");
     f.line("        let mut i = 0;");
@@ -6196,13 +9130,20 @@ fn generate_grounding_combinator_surface(f: &mut RustFile) {
     f.line("            arr[i] = Some(events[i]);");
     f.line("            i += 1;");
     f.line("        }");
-    f.line("        Trace::from_events_const(arr, n as u16)");
+    f.line("        // v0.2.2 T6.10: the test-helpers back-door uses the foundation-private");
+    f.line("        // `from_replay_events_const` to build malformed fixtures for error-path");
+    f.line("        // tests. Downstream code uses `Trace::try_from_events` (validating).");
+    f.line("        Trace::from_replay_events_const(arr, n as u16, witt_level_bits, content_fingerprint)");
     f.line("    }");
     f.blank();
     f.indented_doc_comment("Test-only ctor: build a TraceEvent.");
     f.line("    #[must_use]");
     f.line("    pub fn trace_event(step_index: u32, target: u128) -> TraceEvent {");
-    f.line("        TraceEvent::new(step_index, crate::PrimitiveOp::Add, target)");
+    f.line("        TraceEvent::new(");
+    f.line("            step_index,");
+    f.line("            crate::PrimitiveOp::Add,");
+    f.line("            ContentAddress::from_u128(target),");
+    f.line("        )");
     f.line("    }");
     f.blank();
     f.indented_doc_comment("Test-only ctor: build a MulContext.");

@@ -4,51 +4,51 @@
 //!
 //! Space: Kernel
 
-use crate::Primitives;
+use crate::HostTypes;
 
 /// A site index annotated with a linearity constraint: must be pinned exactly once in any complete resolution path.
-pub trait LinearSite<P: Primitives>: crate::bridge::partition::SiteIndex<P> {}
+pub trait LinearSite<H: HostTypes>: crate::bridge::partition::SiteIndex<H> {}
 
 /// A PinningEffect that consumes its target LinearSite. After application, the site is no longer available for pinning by any subsequent effect.
-pub trait LinearEffect<P: Primitives>: crate::kernel::effect::PinningEffect<P> {
+pub trait LinearEffect<H: HostTypes>: crate::kernel::effect::PinningEffect<H> {
     /// Associated type for `LinearSite`.
-    type LinearSite: LinearSite<P>;
+    type LinearSite: LinearSite<H>;
     /// The single site consumed by this effect.
     fn linear_target(&self) -> &Self::LinearSite;
 }
 
 /// A computation trace where every site in the budget is targeted by exactly one LinearEffect.
-pub trait LinearTrace<P: Primitives>: crate::bridge::trace::ComputationTrace<P> {}
+pub trait LinearTrace<H: HostTypes>: crate::bridge::trace::ComputationTrace<H> {}
 
 /// The multiset of LinearSites available at a given point in resolution. Starts as the full site budget; each LinearEffect removes exactly one element.
-pub trait LinearBudget<P: Primitives> {
+pub trait LinearBudget<H: HostTypes> {
     /// Associated type for `LinearSite`.
-    type LinearSite: LinearSite<P>;
+    type LinearSite: LinearSite<H>;
     /// The sites remaining in the budget.
     fn budget_sites(&self) -> &[Self::LinearSite];
     /// Associated type for `Context`.
-    type Context: crate::user::state::Context<P>;
+    type Context: crate::user::state::Context<H>;
     /// The context associated with this budget state.
     fn budget_context(&self) -> &Self::Context;
     /// Number of unconsumed sites. Equals freeRank on the associated context.
-    fn remaining_count(&self) -> P::NonNegativeInteger;
+    fn remaining_count(&self) -> u64;
     /// The stack budget available at the call site in bytes. On embedded targets this is compile-time-known; on std targets it is computed from the thread-local stack frame. Consumed by the MultiplicationResolver to bound the admissible Toom-Cook splitting factor R: deeper recursion requires more stack, so R is capped where stack would overflow.
-    fn stack_budget_bytes(&self) -> P::NonNegativeInteger;
+    fn stack_budget_bytes(&self) -> u64;
 }
 
 /// A binding between a state:ContextLease and a subset of LinearSites. Formalizes what resources a lease claims.
-pub trait LeaseAllocation<P: Primitives> {
+pub trait LeaseAllocation<H: HostTypes> {
     /// Associated type for `LinearSite`.
-    type LinearSite: LinearSite<P>;
+    type LinearSite: LinearSite<H>;
     /// The sites claimed by this lease.
     fn lease_target(&self) -> &[Self::LinearSite];
     /// Associated type for `ContextLease`.
-    type ContextLease: crate::user::state::ContextLease<P>;
+    type ContextLease: crate::user::state::ContextLease<H>;
     /// The ContextLease individual that owns this allocation.
     fn lease_source(&self) -> &Self::ContextLease;
     /// Number of sites claimed by this lease.
-    fn lease_cardinality(&self) -> P::PositiveInteger;
+    fn lease_cardinality(&self) -> u64;
 }
 
 /// A site that may be pinned at most once (but need not be pinned). Relaxation of LinearSite for incomplete resolution paths.
-pub trait AffineSite<P: Primitives>: crate::bridge::partition::SiteIndex<P> {}
+pub trait AffineSite<H: HostTypes>: crate::bridge::partition::SiteIndex<H> {}

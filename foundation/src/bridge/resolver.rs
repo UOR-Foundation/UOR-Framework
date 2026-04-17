@@ -7,274 +7,274 @@
 use crate::enums::ComplexityClass;
 use crate::enums::MetricAxis;
 use crate::enums::WittLevel;
-use crate::Primitives;
+use crate::HostTypes;
 
 /// A strategy for resolving a type declaration into a partition of the ring. The kernel dispatches to a specific resolver based on the type's structure.
 /// Disjoint with: ResolutionState, RefinementSuggestion.
-pub trait Resolver<P: Primitives> {
+pub trait Resolver<H: HostTypes> {
     /// Associated type for `TypeDefinition`.
-    type TypeDefinition: crate::user::type_::TypeDefinition<P>;
+    type TypeDefinition: crate::user::type_::TypeDefinition<H>;
     /// The type of input this resolver accepts.
     fn input_type(&self) -> &Self::TypeDefinition;
     /// Associated type for `Partition`.
-    type Partition: crate::bridge::partition::Partition<P>;
+    type Partition: crate::bridge::partition::Partition<H>;
     /// The type of output this resolver produces. For all UOR resolvers, the output is a partition:Partition.
     fn output_type(&self) -> &Self::Partition;
     /// Associated type for `TermExpression`.
-    type TermExpression: crate::kernel::schema::TermExpression<P>;
+    type TermExpression: crate::kernel::schema::TermExpression<H>;
     /// A human-readable description of the resolution strategy this resolver implements.
     fn strategy(&self) -> &Self::TermExpression;
     /// Associated type for `ResolutionState`.
-    type ResolutionState: ResolutionState<P>;
+    type ResolutionState: ResolutionState<H>;
     /// The current resolution state of this resolver.
     fn resolution_state(&self) -> &Self::ResolutionState;
     /// The computational complexity class of this resolver. Replaces the string-valued resolver:complexity property.
     fn has_complexity_class(&self) -> ComplexityClass;
     /// Associated type for `DispatchTable`.
-    type DispatchTable: crate::kernel::predicate::DispatchTable<P>;
+    type DispatchTable: crate::kernel::predicate::DispatchTable<H>;
     /// The dispatch table governing resolver selection for this resolver class.
     fn dispatch_table(&self) -> &Self::DispatchTable;
     /// Associated type for `TypePredicate`.
-    type TypePredicate: crate::kernel::predicate::TypePredicate<P>;
+    type TypePredicate: crate::kernel::predicate::TypePredicate<H>;
     /// The predicate that selects this specific resolver. When the predicate evaluates to true on an input type, this resolver is chosen.
     fn resolver_predicate(&self) -> &Self::TypePredicate;
 }
 
 /// Resolves types by factoring the ring under dihedral group action. Identifies orbits under D_{2^n} to determine irreducibility boundaries.
-pub trait DihedralFactorizationResolver<P: Primitives>: Resolver<P> {}
+pub trait DihedralFactorizationResolver<H: HostTypes>: Resolver<H> {}
 
 /// Resolves types by computing canonical forms via term rewriting. Applies the critical identity and normalization rules to reduce terms to unique canonical representatives.
-pub trait CanonicalFormResolver<P: Primitives>: Resolver<P> {}
+pub trait CanonicalFormResolver<H: HostTypes>: Resolver<H> {}
 
 /// Resolves types by direct evaluation: applies operations to enumerate ring elements and classify them as irreducible, reducible, unit, or exterior.
-pub trait EvaluationResolver<P: Primitives>: Resolver<P> {}
+pub trait EvaluationResolver<H: HostTypes>: Resolver<H> {}
 
 /// The current state of an iterative resolution: tracks how many iterations have been performed, whether the resolution is complete, and the current site deficit.
 /// Disjoint with: Resolver, RefinementSuggestion.
-pub trait ResolutionState<P: Primitives> {
+pub trait ResolutionState<H: HostTypes> {
     /// Whether this resolution is complete: all sites are pinned and the partition is fully determined.
-    fn is_complete(&self) -> P::Boolean;
+    fn is_complete(&self) -> bool;
     /// The number of refinement iterations performed so far.
-    fn iteration_count(&self) -> P::NonNegativeInteger;
+    fn iteration_count(&self) -> u64;
     /// Associated type for `FreeRank`.
-    type FreeRank: crate::bridge::partition::FreeRank<P>;
+    type FreeRank: crate::bridge::partition::FreeRank<H>;
     /// The site budget showing the remaining unpinned sites. When all sites are pinned, the deficit is zero and resolution is complete.
     fn site_deficit(&self) -> &Self::FreeRank;
     /// Associated type for `RefinementSuggestion`.
-    type RefinementSuggestion: RefinementSuggestion<P>;
+    type RefinementSuggestion: RefinementSuggestion<H>;
     /// A refinement suggestion for advancing this resolution.
     fn suggestion(&self) -> &[Self::RefinementSuggestion];
     /// The rate at which sites are being pinned per iteration. A higher rate indicates faster convergence toward a complete resolution.
-    fn convergence_rate(&self) -> P::Decimal;
+    fn convergence_rate(&self) -> H::Decimal;
     /// Associated type for `CechNerve`.
-    type CechNerve: CechNerve<P>;
+    type CechNerve: CechNerve<H>;
     /// The constraint nerve associated with this resolution state.
     fn cech_nerve(&self) -> &Self::CechNerve;
     /// The residual Shannon entropy of the resolution state: S = freeRank × ln 2. Measures remaining uncertainty.
-    fn residual_entropy(&self) -> P::Decimal;
+    fn residual_entropy(&self) -> H::Decimal;
     /// Whether all Betti numbers of the constraint nerve are zero, indicating no topological obstructions to resolution.
-    fn topologically_complete(&self) -> P::Boolean;
+    fn topologically_complete(&self) -> bool;
     /// The Euler characteristic χ(N(C)) of the active constraint nerve at this resolution state. IT_7d requires this value to equal n (the quantum level) for resolution to be complete. Cached here to avoid recomputing the full ψ pipeline on each iteration check.
-    fn nerve_euler_characteristic(&self) -> P::Integer;
+    fn nerve_euler_characteristic(&self) -> i64;
     /// Associated type for `Jacobian`.
-    type Jacobian: crate::bridge::observable::Jacobian<P>;
+    type Jacobian: crate::bridge::observable::Jacobian<H>;
     /// The Jacobian observable guiding constraint selection at this resolution state (DC_10).
     fn guiding_jacobian(&self) -> &Self::Jacobian;
 }
 
 /// A suggestion from the resolver for how to refine an incomplete resolution: which metric axis to explore, which class to narrow to, and which sites to target.
 /// Disjoint with: Resolver, ResolutionState.
-pub trait RefinementSuggestion<P: Primitives> {
+pub trait RefinementSuggestion<H: HostTypes> {
     /// The metric axis this suggestion recommends exploring.
     fn suggested_axis(&self) -> MetricAxis;
     /// The constraint class this suggestion recommends applying.
-    fn suggested_class(&self) -> &P::String;
+    fn suggested_class(&self) -> &H::HostString;
     /// Associated type for `SiteIndex`.
-    type SiteIndex: crate::bridge::partition::SiteIndex<P>;
+    type SiteIndex: crate::bridge::partition::SiteIndex<H>;
     /// The site coordinates this suggestion targets for pinning.
     fn target_sites(&self) -> &[Self::SiteIndex];
 }
 
 /// The simplicial complex whose vertices are constraints and where a k-simplex exists iff the corresponding k+1 constraints have nonempty intersection. The nerve's topology governs resolution convergence: trivial homology ↔ smooth convergence, non-trivial homology ↔ potential stalls.
-pub trait CechNerve<P: Primitives>:
-    crate::bridge::homology::SimplicialComplex<P> + crate::bridge::homology::KanComplex<P>
+pub trait CechNerve<H: HostTypes>:
+    crate::bridge::homology::SimplicialComplex<H> + crate::bridge::homology::KanComplex<H>
 {
 }
 
 /// A specialisation of Resolver driving the completeness certification loop. Accepts a CompletenessCandidate, runs the ψ-pipeline (reading nerveEulerCharacteristic from ResolutionState), and either issues a CompletenessCertificate or produces a RefinementSuggestion.
-pub trait CompletenessResolver<P: Primitives>: Resolver<P> {
+pub trait CompletenessResolver<H: HostTypes>: Resolver<H> {
     /// Associated type for `CompletenessCandidate`.
-    type CompletenessCandidate: crate::user::type_::CompletenessCandidate<P>;
+    type CompletenessCandidate: crate::user::type_::CompletenessCandidate<H>;
     /// The CompletenessCandidate this resolver is certifying.
     fn completeness_target(&self) -> &Self::CompletenessCandidate;
 }
 
 /// A Resolver parameterised by quantum level. The same resolver strategy runs at any quantum level n ≥ 1 by substituting the appropriate R_n ring.
-pub trait WittLevelResolver<P: Primitives>: Resolver<P> {
+pub trait WittLevelResolver<H: HostTypes>: Resolver<H> {
     /// The quantum level this resolver instance is configured for.
     fn quantum_level(&self) -> WittLevel;
 }
 
 /// A Resolver that maintains a BindingAccumulator across multiple RelationQuery evaluations. The top-level resolver for multi-turn Prism deployments.
-pub trait SessionResolver<P: Primitives>: Resolver<P> {
+pub trait SessionResolver<H: HostTypes>: Resolver<H> {
     /// Associated type for `BindingAccumulator`.
-    type BindingAccumulator: crate::user::state::BindingAccumulator<P>;
+    type BindingAccumulator: crate::user::state::BindingAccumulator<H>;
     /// The BindingAccumulator this session resolver maintains across multiple RelationQuery evaluations.
     fn session_accumulator(&self) -> &Self::BindingAccumulator;
     /// Associated type for `ExecutionPolicy`.
-    type ExecutionPolicy: ExecutionPolicy<P>;
+    type ExecutionPolicy: ExecutionPolicy<H>;
     /// The ordering strategy this resolver applies to pending queries. Defaults to FifoPolicy if unset.
     fn execution_policy(&self) -> &Self::ExecutionPolicy;
 }
 
 /// A Resolver that runs the ψ-pipeline in inverse mode. Accepts a TypeSynthesisGoal and returns a TypeSynthesisResult. Internally maintains a ConstraintSearchState tracking which constraint combinations have been explored and which Betti profiles they realise.
-pub trait TypeSynthesisResolver<P: Primitives>: Resolver<P> {
+pub trait TypeSynthesisResolver<H: HostTypes>: Resolver<H> {
     /// Associated type for `TypeSynthesisGoal`.
-    type TypeSynthesisGoal: crate::user::type_::TypeSynthesisGoal<P>;
+    type TypeSynthesisGoal: crate::user::type_::TypeSynthesisGoal<H>;
     /// The goal this type synthesis resolver is working to achieve.
     fn synthesis_goal(&self) -> &Self::TypeSynthesisGoal;
 }
 
 /// Internal resolver state tracking the boundary of explored constraint combinations during synthesis. Carries exploredCount, currentCandidate, and a link to the best SynthesisSignature achieved so far.
-pub trait ConstraintSearchState<P: Primitives> {
+pub trait ConstraintSearchState<H: HostTypes> {
     /// Number of constraint combinations evaluated so far during synthesis.
-    fn explored_count(&self) -> P::NonNegativeInteger;
+    fn explored_count(&self) -> u64;
     /// Associated type for `ConstrainedType`.
-    type ConstrainedType: crate::user::type_::ConstrainedType<P>;
+    type ConstrainedType: crate::user::type_::ConstrainedType<H>;
     /// The type candidate currently being evaluated during synthesis.
     fn current_candidate(&self) -> &Self::ConstrainedType;
 }
 
 /// A Resolver that determines whether a CompleteType T at Q_n lifts to a CompleteType at Q_{n+1} without re-running the full ψ-pipeline from scratch. It computes the SpectralSequencePage sequence, reads the LiftObstruction, and either confirms the lift or returns a LiftRefinementSuggestion.
-pub trait IncrementalCompletenessResolver<P: Primitives>: Resolver<P> {
+pub trait IncrementalCompletenessResolver<H: HostTypes>: Resolver<H> {
     /// Associated type for `WittLift`.
-    type WittLift: crate::user::type_::WittLift<P>;
+    type WittLift: crate::user::type_::WittLift<H>;
     /// The WittLift this incremental completeness resolver is evaluating.
     fn lift_target(&self) -> &Self::WittLift;
 }
 
 /// A RefinementSuggestion produced when a WittLift has a non-trivial LiftObstruction. Specialises RefinementSuggestion with liftSitePosition (the new bit position n+1) and obstructionClass.
-pub trait LiftRefinementSuggestion<P: Primitives>: RefinementSuggestion<P> {
+pub trait LiftRefinementSuggestion<H: HostTypes>: RefinementSuggestion<H> {
     /// The new site position at Q_{n+1} that the lift refinement suggestion targets.
     fn lift_site_position(&self) -> &Self::SiteIndex;
     /// Associated type for `LiftObstructionClass`.
-    type LiftObstructionClass: crate::bridge::observable::LiftObstructionClass<P>;
+    type LiftObstructionClass: crate::bridge::observable::LiftObstructionClass<H>;
     /// The obstruction class this lift refinement suggestion is designed to kill.
     fn obstruction_class(&self) -> &Self::LiftObstructionClass;
 }
 
 /// A Resolver that computes the HolonomyGroup of a ConstrainedType by enumerating closed paths in the constraint nerve and accumulating DihedralElement values. Outputs a MonodromyClass and classifies the type as FlatType or TwistedType.
-pub trait MonodromyResolver<P: Primitives>: Resolver<P> {
+pub trait MonodromyResolver<H: HostTypes>: Resolver<H> {
     /// Associated type for `ConstrainedType`.
-    type ConstrainedType: crate::user::type_::ConstrainedType<P>;
+    type ConstrainedType: crate::user::type_::ConstrainedType<H>;
     /// The type whose holonomy this monodromy resolver is computing.
     fn monodromy_target(&self) -> &Self::ConstrainedType;
     /// Associated type for `HolonomyGroup`.
-    type HolonomyGroup: crate::bridge::observable::HolonomyGroup<P>;
+    type HolonomyGroup: crate::bridge::observable::HolonomyGroup<H>;
     /// The HolonomyGroup produced by this monodromy resolver run.
     fn holonomy_result(&self) -> &Self::HolonomyGroup;
 }
 
 /// A resolver that uses the Jacobian matrix to guide constraint selection, implementing DC_10: select the constraint that maximises total curvature reduction.
-pub trait JacobianGuidedResolver<P: Primitives>: Resolver<P> {}
+pub trait JacobianGuidedResolver<H: HostTypes>: Resolver<H> {}
 
 /// A resolver that handles superposed site states, computing amplitudes and determining when superposition collapses to a classical site assignment (Amendment 32).
-pub trait SuperpositionResolver<P: Primitives>: Resolver<P> {
+pub trait SuperpositionResolver<H: HostTypes>: Resolver<H> {
     /// The amplitude vector of all branches maintained by this SuperpositionResolver during ψ-pipeline traversal. Encoded as a comma-separated list of decimal amplitudes. Must satisfy Σ|αᵢ|² = 1 (QM_5) after normalization.
-    fn amplitude_vector(&self) -> P::Decimal;
+    fn amplitude_vector(&self) -> H::Decimal;
 }
 
 /// A resolver that exploits accumulated session bindings at full saturation (σ = 1) to provide O(1) resolution via direct coordinate reads (SC_5).
-pub trait GroundingAwareResolver<P: Primitives>: Resolver<P> {
+pub trait GroundingAwareResolver<H: HostTypes>: Resolver<H> {
     /// Whether this resolver used the saturation shortcut (SC_5) to bypass the ψ-pipeline and return a direct coordinate read.
-    fn used_grounding(&self) -> P::Boolean;
+    fn used_grounding(&self) -> bool;
 }
 
 /// A resolver that validates whether a ComputationTrace satisfies the dual geodesic condition (AR_1-ordered and DC_10-selected). Produces GeodesicViolation individuals on failure.
-pub trait GeodesicValidator<P: Primitives>: Resolver<P> {
+pub trait GeodesicValidator<H: HostTypes>: Resolver<H> {
     /// Associated type for `GeodesicTrace`.
-    type GeodesicTrace: crate::bridge::trace::GeodesicTrace<P>;
+    type GeodesicTrace: crate::bridge::trace::GeodesicTrace<H>;
     /// The GeodesicTrace being validated by this GeodesicValidator.
     fn validate_geodesic(&self) -> &Self::GeodesicTrace;
 }
 
 /// A resolver that handles projective collapse of SuperposedSiteState components. Issues MeasurementCertificate upon successful collapse with QM_1 verification.
-pub trait MeasurementResolver<P: Primitives>: Resolver<P> {
+pub trait MeasurementResolver<H: HostTypes>: Resolver<H> {
     /// The amplitude of the SuperposedSiteState prior to projective collapse by this MeasurementResolver.
-    fn collapse_amplitude(&self) -> P::Decimal;
+    fn collapse_amplitude(&self) -> H::Decimal;
     /// The site index that was collapsed (pinned to a classical value) by the projective measurement.
-    fn collapsed_site(&self) -> P::NonNegativeInteger;
+    fn collapsed_site(&self) -> u64;
     /// The classical value obtained from the projective collapse. Either 0 or 1 for a single-site measurement.
-    fn measurement_outcome(&self) -> P::NonNegativeInteger;
+    fn measurement_outcome(&self) -> u64;
     /// The full vector of all branch amplitudes before projective collapse. Recorded by the MeasurementResolver to enable Born rule verification (QM_5): P(outcome k) = |α_k|².
-    fn prior_amplitude_vector(&self) -> P::Decimal;
+    fn prior_amplitude_vector(&self) -> H::Decimal;
 }
 
 /// A Resolver that constructs a LiftChain from liftSourceLevel to an arbitrary liftTargetLevel Q_k by iterating IncrementalCompletenessResolver step by step.
-pub trait TowerCompletenessResolver<P: Primitives>: Resolver<P> {
+pub trait TowerCompletenessResolver<H: HostTypes>: Resolver<H> {
     /// The level at which the tower starts.
     fn tower_source_level(&self) -> WittLevel;
     /// The level to which the tower is being built.
     fn tower_target_level(&self) -> WittLevel;
     /// Associated type for `LiftChain`.
-    type LiftChain: crate::user::type_::LiftChain<P>;
+    type LiftChain: crate::user::type_::LiftChain<H>;
     /// The LiftChain under construction.
     fn current_chain(&self) -> &Self::LiftChain;
     /// Associated type for `IncrementalCompletenessResolver`.
-    type IncrementalCompletenessResolver: IncrementalCompletenessResolver<P>;
+    type IncrementalCompletenessResolver: IncrementalCompletenessResolver<H>;
     /// The IncrementalCompletenessResolver used for each single-step lift.
     fn tower_step_resolver(&self) -> &Self::IncrementalCompletenessResolver;
 }
 
 /// A Resolver whose dispatch is governed by a new predicate:InhabitanceDispatchTable. Returns either a cert:InhabitanceCertificate (verified true with witness) or a proof:InhabitanceImpossibilityWitness (verified false with contradiction proof). Inherits the dual-output termination discipline from resolver:TypeSynthesisResolver.
-pub trait InhabitanceResolver<P: Primitives>: Resolver<P> {}
+pub trait InhabitanceResolver<H: HostTypes>: Resolver<H> {}
 
 /// A Resolver target that decides carrier non-emptiness on ConstrainedType instances whose constraint nerve contains only disjunctions of width ≤ 2, via classical 2-SAT in O(n+m). Dispatch rule 1 of the InhabitanceDispatchTable.
-pub trait TwoSatDecider<P: Primitives>: Resolver<P> {}
+pub trait TwoSatDecider<H: HostTypes>: Resolver<H> {}
 
 /// A Resolver target that decides carrier non-emptiness on ConstrainedType instances whose disjunctions each contain at most one positive literal, via classical Horn-SAT unit propagation in O(n+m). Dispatch rule 2 of the InhabitanceDispatchTable.
-pub trait HornSatDecider<P: Primitives>: Resolver<P> {}
+pub trait HornSatDecider<H: HostTypes>: Resolver<H> {}
 
 /// A Resolver target for the catch-all default dispatch rule. Returns the residual-hard verdict without promising a polynomial bound; the verdict is well-formed but the cost identity is unbounded. Dispatch rule 3 of the InhabitanceDispatchTable ensuring total coverage (reduction:DispatchMiss is unreachable for this table).
-pub trait ResidualVerdictResolver<P: Primitives>: Resolver<P> {}
+pub trait ResidualVerdictResolver<H: HostTypes>: Resolver<H> {}
 
-/// A Resolver target that decides the cost-optimal Toom-Cook splitting factor R for a Datum<L> × Datum<L> multiplication at a given call-site context (stack budget linear:stackBudgetBytes, const-eval regime). The decision procedure is a pure derivation over a closed-form Landauer cost function grounded in op:OA_5: for each admissible R, the cost is (2R - 1) · (N/R)² · 64 · ln 2 nats (R > 1) or N² · 64 · ln 2 nats (R = 1). The resolver picks the cost-minimum R subject to stack-budget and const-eval constraints and returns a cert:MultiplicationCertificate recording the choice.
-pub trait MultiplicationResolver<P: Primitives>: Resolver<P> {}
+/// A Resolver target that decides the cost-optimal Toom-Cook splitting factor R for a Datum\<L\> × Datum\<L\> multiplication at a given call-site context (stack budget linear:stackBudgetBytes, const-eval regime). The decision procedure is a pure derivation over a closed-form Landauer cost function grounded in op:OA_5: for each admissible R, the cost is (2R - 1) · (N/R)² · 64 · ln 2 nats (R > 1) or N² · 64 · ln 2 nats (R = 1). The resolver picks the cost-minimum R subject to stack-budget and const-eval constraints and returns a cert:MultiplicationCertificate recording the choice.
+pub trait MultiplicationResolver<H: HostTypes>: Resolver<H> {}
 
 /// An ontology fact recording that a resolver:Resolver subclass produces a specific cert:Certificate subclass on success and a specific proof:ImpossibilityWitness subclass on failure. The v0.2.1 Rust codegen reads CertifyMapping individuals to emit foundation::Certify trait impls for each resolver class, keeping the mapping data-driven rather than hand-tabulated in source.
-pub trait CertifyMapping<P: Primitives> {
+pub trait CertifyMapping<H: HostTypes> {
     /// The resolver:Resolver subclass this CertifyMapping describes.
-    fn for_resolver(&self) -> &P::String;
+    fn for_resolver(&self) -> &H::HostString;
     /// The cert:Certificate (or proof:ComputationCertificate) subclass this resolver produces on success.
-    fn produces_certificate(&self) -> &P::String;
+    fn produces_certificate(&self) -> &H::HostString;
     /// The proof:ImpossibilityWitness subclass this resolver produces on failure.
-    fn produces_witness(&self) -> &P::String;
+    fn produces_witness(&self) -> &H::HostString;
 }
 
 /// A strategy class that defines how a SessionResolver orders pending RelationQuery instances for dispatch. The policy reads the targetSite.freeRank of each pending query and applies an ordering function.
 /// Disjoint with: Resolver, ResolutionState, RefinementSuggestion.
-pub trait ExecutionPolicy<P: Primitives> {}
+pub trait ExecutionPolicy<H: HostTypes> {}
 
 /// A resolver that runs the extended ψ-pipeline (ψ_7–ψ_9) to compute the full homotopy type of a CechNerve. Returns HomotopyGroup observables and PostnikovTruncation records.
-pub trait HomotopyResolver<P: Primitives>: Resolver<P> {
+pub trait HomotopyResolver<H: HostTypes>: Resolver<H> {
     /// Associated type for `CechNerve`.
-    type CechNerve: CechNerve<P>;
+    type CechNerve: CechNerve<H>;
     /// The CechNerve whose homotopy type this resolver computes.
     fn homotopy_target(&self) -> &Self::CechNerve;
     /// Associated type for `HomotopyGroup`.
-    type HomotopyGroup: crate::bridge::observable::HomotopyGroup<P>;
+    type HomotopyGroup: crate::bridge::observable::HomotopyGroup<H>;
     /// A HomotopyGroup observable produced by this resolver.
     fn homotopy_result(&self) -> &[Self::HomotopyGroup];
 }
 
 /// A resolver that computes the local structure of the moduli space at a given CompleteType: constructs the DeformationComplex, determines the HolonomyStratum, and computes tangent/obstruction dimensions.
-pub trait ModuliResolver<P: Primitives>: Resolver<P> {
+pub trait ModuliResolver<H: HostTypes>: Resolver<H> {
     /// Associated type for `CompleteType`.
-    type CompleteType: crate::user::type_::CompleteType<P>;
+    type CompleteType: crate::user::type_::CompleteType<H>;
     /// The CompleteType whose local moduli structure this resolver computes.
     fn moduli_target(&self) -> &Self::CompleteType;
     /// Associated type for `DeformationComplex`.
-    type DeformationComplex: crate::bridge::homology::DeformationComplex<P>;
+    type DeformationComplex: crate::bridge::homology::DeformationComplex<H>;
     /// The DeformationComplex constructed by this resolver.
     fn moduli_deformation(&self) -> &Self::DeformationComplex;
 }

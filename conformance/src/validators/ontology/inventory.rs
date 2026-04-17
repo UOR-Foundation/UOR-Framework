@@ -2147,6 +2147,13 @@ fn validate_certificate_issuance_coverage(report: &mut ConformanceReport) {
         // PartitionCertificate exemptions were REMOVED. OA_5 and PT_2
         // now explicitly cite the certificates in their rdfs:comment /
         // forAll text; the text-based governance loop below picks them up.
+        // Workstream C (v0.2.2 closure): impossibility certificates are
+        // the failure-path carriers for resolver `certify` functions.
+        // They are minted only when the resolver's decision procedure
+        // produces no success witness; no separate `op:Identity` governs
+        // them — the governing identity is the resolver's own semantics.
+        "https://uor.foundation/cert/GenericImpossibilityCertificate",
+        "https://uor.foundation/cert/InhabitanceImpossibilityCertificate",
     ]
     .into();
 

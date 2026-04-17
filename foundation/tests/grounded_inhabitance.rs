@@ -1,21 +1,14 @@
-//! v0.2.1 integration test: InhabitanceResolver Certify path.
+//! Phase B: InhabitanceResolver free-function path and dispatch-table tests.
 //!
-//! Exercises the consumer-facing one-liner:
-//!
-//! ```rust,ignore
-//! let cert: Validated<InhabitanceCertificate> =
-//!     InhabitanceResolver::new().certify(&shape)?;
-//! ```
-//!
-//! v0.2.1 ships the resolver façade as a stub that returns the impossibility
-//! witness on every input. The full pipeline driver lands in a follow-up
-//! release. This test verifies the trait surface compiles and exercises both
-//! the success and failure return shapes.
+//! The v0.2.1 `Resolver::new().certify(&input)` unit-struct path is deleted.
+//! The free-function path `enforcement::resolver::inhabitance::certify(...)` is
+//! the only verdict surface.
 
+use uor_foundation::enforcement::resolver::inhabitance;
 use uor_foundation::enforcement::{
-    Certify, ConstrainedTypeInput, InhabitanceImpossibilityWitness, InhabitanceResolver,
-    INHABITANCE_DISPATCH_TABLE,
+    ConstrainedTypeInput, InhabitanceImpossibilityWitness, INHABITANCE_DISPATCH_TABLE,
 };
+use uor_foundation_test_helpers::{validated_runtime, Fnv1aHasher16};
 
 #[test]
 fn inhabitance_dispatch_table_has_three_rules() {
@@ -51,19 +44,11 @@ fn inhabitance_dispatch_target_resolvers_match_ontology() {
 
 #[test]
 fn inhabitance_resolver_vacuous_satisfies_empty_input() {
-    // An empty ConstrainedTypeInput carries no constraints (SITE_COUNT = 0,
-    // CONSTRAINTS = &[]). The reduction pipeline classifies this as
-    // residual-with-no-SatClauses, which is vacuously satisfiable: every
-    // value tuple in the (empty) carrier trivially satisfies the (empty)
-    // constraint set. The resolver therefore mints a Validated<InhabitanceCertificate>.
-    let resolver = InhabitanceResolver::new();
-    let input = ConstrainedTypeInput::default();
-    let result = resolver.certify(&input);
+    let input = validated_runtime(ConstrainedTypeInput::default());
+    let result = inhabitance::certify::<_, _, Fnv1aHasher16>(&input);
     assert!(
         result.is_ok(),
-        "InhabitanceResolver must return Ok for vacuous (no-constraint) inputs"
+        "inhabitance::certify must return Ok for vacuous (no-constraint) inputs"
     );
-    // Verify the witness helper is reachable (default impl returns None per
-    // the v0.2.1 shim semantics — real witness tuples come from uor_ground!).
     let _unused: InhabitanceImpossibilityWitness = InhabitanceImpossibilityWitness::default();
 }

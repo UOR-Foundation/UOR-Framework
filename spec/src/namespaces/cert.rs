@@ -207,6 +207,33 @@ fn classes() -> Vec<Class> {
             subclass_of: &["https://uor.foundation/cert/Certificate"],
             disjoint_with: &[],
         },
+        // Workstream C — impossibility certificates. Target §4.2 requires
+        // resolver `certify` functions to return `Certified<…>` on both
+        // success and failure sides; these two cert classes are the failure
+        // carriers for the Phase C + Phase D resolvers respectively.
+        Class {
+            id: "https://uor.foundation/cert/GenericImpossibilityCertificate",
+            label: "GenericImpossibilityCertificate",
+            comment: "A certificate attesting that a resolver's verdict path \
+                      produced a generic impossibility witness — the input \
+                      failed the resolver's admissibility precondition or \
+                      decision procedure in a way not covered by a more-\
+                      specific witness. Returned by every Phase D resolver \
+                      on failure.",
+            subclass_of: &["https://uor.foundation/cert/Certificate"],
+            disjoint_with: &[],
+        },
+        Class {
+            id: "https://uor.foundation/cert/InhabitanceImpossibilityCertificate",
+            label: "InhabitanceImpossibilityCertificate",
+            comment: "A certificate attesting that the inhabitance decider \
+                      concluded the input is unsatisfiable — there is no \
+                      value in the carrier that satisfies the declared \
+                      constraint conjunction. Returned by \
+                      `resolver::inhabitance::certify` on failure.",
+            subclass_of: &["https://uor.foundation/cert/Certificate"],
+            disjoint_with: &[],
+        },
     ]
 }
 

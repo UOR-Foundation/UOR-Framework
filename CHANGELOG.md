@@ -2,6 +2,94 @@
 
 All notable changes to UOR-Framework are documented in this file.
 
+## v0.2.2 production-readiness closure — 2026-04-17
+
+Brings `uor-foundation` to conformance with every §9 acceptance criterion of
+[external/uor-foundation-target-v2.md](external/uor-foundation-target-v2.md).
+Nothing deferred to a future version; every commitment is either satisfied
+or named in a failing validator. Conformance suite reports **532 passed, 0
+warnings, 0 failed**.
+
+### Target-doc compliance
+
+- **§9 criterion 1 (W4 closure).** `Grounding::ground` is removed from the
+  `Grounding` trait. Foundation supplies it via a sealed `GroundingExt`
+  extension trait whose blanket `impl<G: Grounding> GroundingExt for G`
+  calls `self.program().run_program(external)`. Downstream impls provide
+  only `program()`. The kind discriminator is mechanically verified from
+  the combinator decomposition via `MarkersImpliedBy<Map>` — not a promise.
+  `GroundingProgram<GroundedTuple<N>, Map>::run` is added alongside the
+  existing `GroundedCoord` specialization; the sealed `GroundingProgramRun`
+  trait blanket-impl's both.
+
+- **§9 criterion 4 (resolver tower complete).** Adds `geodesic_validator`
+  (22nd Phase D resolver) with `CertificateKind::GeodesicValidator`
+  (discriminant 22). Every Phase D and Phase C `certify` function now
+  consumes `&Validated<Input, P>` (phase-generic) and returns
+  `Result<Certified<SuccessCert>, Certified<ImpossibilityWitness>>`.
+  Implementations of `Certificate` for `GenericImpossibilityWitness` and
+  `InhabitanceImpossibilityWitness` enable uniform `Certified<_>` wrapping
+  on both sides of the `Result`. New ontology classes
+  `cert:GenericImpossibilityCertificate` and
+  `cert:InhabitanceImpossibilityCertificate` back the impossibility-cert
+  IRIs. The one exception — `multiplication::certify(&MulContext)` —
+  is whitelisted by the `rust/target/resolver_signature_shape` validator
+  because `MulContext` is a self-validated shape.
+
+- **§9 criterion 9 (escape-hatch lint coverage).** `SEALED_TYPES` in
+  `rust/escape_hatch_lint` grows from 23 to 38 entries, covering every
+  Rust-typed row of target §2 plus `SpectralSequencePage`. Specifically
+  adds the 14 builder-output types (`CompileUnit`, `EffectDeclaration`,
+  `DispatchDeclaration`, `DispatchRule`, `PredicateDeclaration`,
+  `ParallelDeclaration`, `StreamDeclaration`, `LeaseDeclaration`,
+  `WittLevelDeclaration`, `InteractionDeclaration`, `GroundingDeclaration`,
+  `TypeDeclaration`, `SourceDeclaration`, `SinkDeclaration`).
+
+- **§1.5 + §4.7 (closed six-kind constraint set).** Every `ConstraintRef`
+  variant — `Residue`, `Carry`, `Depth`, `Hamming`, `Site`, `Affine`,
+  `SatClauses`, `Bound`, `Conjunction` — has an explicit arm in
+  `encode_constraint_to_clauses` (no `_ => None` catch-all).
+  `preflight_feasibility` performs direct per-kind satisfiability checks
+  for the five direct-decidable kinds plus `Affine` single-row consistency
+  plus `Conjunction` recursive satisfiability.
+
+- **Ontology contract (incremental completeness).** New sealed kernel type
+  `SpectralSequencePage` with accessors for `page_index`,
+  `from_level_bits`, `to_level_bits`, `differential_vanished`, and
+  `obstruction_class_iri`. `run_incremental_completeness` walks each
+  `Q_n → Q_{n+1}` step from W8 up to the target level, constructs a
+  `SpectralSequencePage` per step, halts on the first non-vanishing
+  differential with a `GenericImpossibilityWitness` whose obstruction-class
+  IRI is `https://uor.foundation/type/LiftObstruction`.
+
+### Conformance suite
+
+- Five new `rust/target/*` cross-reference validators pin the above
+  commitments structurally: `sealed_type_coverage`,
+  `resolver_signature_shape`, `constraint_encoder_completeness`,
+  `w4_grounding_closure`, `spectral_sequence_walk`. `CONFORMANCE_CHECKS`:
+  527 → 532.
+
+- New behavior tests: `behavior_grounding_ext_sealed.rs`,
+  `behavior_constraint_kinds.rs`. Extended tests:
+  `behavior_grounding_interpreter.rs` (GroundedTuple<N>),
+  `behavior_resolver_tower.rs` (geodesic_validator, spectral walk).
+
+### Breaking changes
+
+- `Grounding` trait: `fn ground` removed. Downstream impls that already
+  delegated to `self.program().run(external)` migrate silently (no known
+  downstream override sites exist). Custom overrides must move into
+  `program()` combinator compositions.
+
+- `resolver::*::certify` signatures: input `&T` → `&Validated<T, P>`,
+  error type `GenericImpossibilityWitness` / `InhabitanceImpossibilityWitness`
+  → `Certified<…>` wrappers.
+
+- `TRACE_REPLAY_FORMAT_VERSION` bumped 1 → 2 (already landed earlier in
+  this cycle; the per-resolver `CertificateKind` variants expanded the
+  enum from 5 to 22).
+
 ## v0.2.2 cleanup — 2026-04-15
 
 Post-phase-J cleanup pass removing every hardcoded public-API endpoint and
@@ -68,9 +156,10 @@ pure function of its inputs, **not return constants**.
   encode_constraint_to_clauses` dispatch**. Pipeline-internal scaffolding
   for Phase D's parametric constraint surface. The dispatch helper is
   `pub(crate)` — not on the public API — so the "functional, not hardcoded"
-  contract doesn't apply; the pass-through for `SatClauses` is correct
-  per-variant. Per-kind encoders for the 6 `(observable, shape)` pairs
-  arrive in v0.2.3.
+  contract doesn't apply. The v0.2.2 closure (Workstream E) fills every
+  variant with its canonical clause encoding; the six direct-decidable
+  kinds emit EMPTY after preflight validation, Affine emits a single-row
+  consistency check, Conjunction reduces via recursive satisfiability.
 
 - **T2.3 — Phase D EBNF `constraint-decl` production**. Hand-coded preamble
   in `spec/src/serializer/conformance_ebnf.rs` emitting the parametric
@@ -160,10 +249,217 @@ pure function of its inputs, **not return constants**.
   (carry-depth pinning roadmap line clarified as "now a `BoundConstraint`
   kind in v0.2.2 Phase D").
 
-- **T3.2 — Top-3 concept pages**: deferred to v0.2.3 (editorial-only,
-  not blocking conformance or correctness).
-
 - **T3.3 — This CHANGELOG entry**.
+
+### Tier 4 — public API completion (publish blockers + ContentAddress + real `verify_trace`)
+
+A focused public-API audit of `uor-foundation` and `uor-foundation-verify`
+surfaced four work items that had to land before `cargo publish` would
+accept the verify crate. Tier 4 lands those, completing the v0.2.2
+public-API surface.
+
+- **T4.1 — `uor-foundation-verify` publish blockers**. Hoisted
+  `uor-foundation` to `[workspace.dependencies]` with explicit
+  `version = "0.2.2", path = "foundation"` so cargo publish accepts the
+  manifest (path-only deps are rejected for published crates). Added the
+  missing `uor-foundation-verify/README.md` (~50 lines) so `readme = "README.md"`
+  in Cargo.toml resolves.
+
+- **T4.2 — `ContentAddress` sealed newtype + propagation**. New sealed
+  `ContentAddress` type wrapping a 128-bit content hash, with `zero()`,
+  `as_u128()`, `is_zero()`, `Default`, and a crate-internal `from_u128`
+  ctor. Migrated every place the public surface carried a content-addressed
+  `u128` to `ContentAddress`: `BindingEntry::address`, `BindingsTable::get_binding`,
+  `Grounded::unit_address` (field + accessor + `new_internal` parameter),
+  `TraceEvent::target` (field + accessor + `new` parameter), `Query::address`
+  (accessor + `new`), `BindingQuery::address` (accessor + `new`), and
+  `StageOutcome::unit_address`. Internal helpers (`fnv1a_u128_const`,
+  `hash_constraints`) still return raw `u128`; every call site wraps the
+  result via `ContentAddress::from_u128` at the boundary. Downstream now
+  has a type-level distinction between content-addressed handles and
+  arbitrary integers.
+
+- **T4.3 — `verify_trace` real certificate re-derivation**. New
+  `pub mod replay` in `uor_foundation::enforcement` with
+  `certify_from_trace(&Trace) -> Result<Certified<GroundingCertificate>, ReplayError>`,
+  a `pub enum ReplayError` (`EmptyTrace`, `OutOfOrderEvent`, `ZeroTarget`,
+  `LengthMismatch`), and a per-`PrimitiveOp` `primitive_op_weight` lookup
+  using small odd primes. The fold walks each event in order, XOR-multiplies
+  the running accumulator by the op weight, and packs the low 16 bits into
+  the certificate's `witt_bits` field with bit 0 forced set so the result
+  is non-zero by construction. Sealing discipline preserved:
+  `Certified::new` stays `pub(crate)`; the foundation owns certificate
+  construction. The `uor-foundation-verify` crate is rewritten as a thin
+  façade re-exporting `certify_from_trace` under the `verify_trace` name,
+  plus the relevant foundation types. Deleted `ReplayOutcome`,
+  `VerificationFailure`, `op_at`, `CapacityExceeded` from the verify crate
+  — all dead under the new façade.
+
+- **T4.4 — `Derivation::replay` nonzero-target guarantee**. The replay
+  walk seeds targets from `(root_address | 1) ^ ((i + 1) as u128)` so the
+  first event's target is guaranteed non-zero even when `root_address == 0`,
+  and the sequence stays non-degenerate across `i`. This means
+  `certify_from_trace` never rejects a legitimate replay output via the
+  `ZeroTarget` guard.
+
+- **T4.5 — Polish items**:
+  - `TermArena::new` is now `pub const fn` (uses `[None; CAP]` initializer
+    for MSRV-1.70 compatibility; `Term` gained `Copy` so `Option<Term>` is
+    Copy and the const initializer works).
+  - New `TermArena::as_slice(&self) -> &[Option<Term>]` accessor returning
+    the populated prefix; combined with `TermList`'s pub `start`/`len`
+    fields, downstream can now walk the children of an Application/Match
+    node from the public API.
+  - `uor_foundation::lib.rs` now re-exports the commonly-used types from
+    `enforcement::*` so downstream imports use short paths
+    (`uor_foundation::ContentAddress` instead of
+    `uor_foundation::enforcement::ContentAddress`).
+  - Removed the stale `#[allow(dead_code)]` on
+    `CompileUnit::from_parts_const` (used since T2.8 — the allow is
+    obsolete and would mask future regressions).
+  - Verify crate's round_trip test rewritten with 6 tests (previously 5),
+    each asserting a concrete outcome on the re-derived certificate or
+    the rejection path: empty/single-event/monotonic/out-of-order/zero-target/
+    distinct-traces. Each test is a true behavioral assertion — none are
+    signature-lock stubs.
+
+### Tier 5 — public API correctness pass (substrate-pluggable hashing + parametric fingerprint)
+
+A focused public-API correctness audit revealed that several Tier 2 endpoints
+satisfied input-dependence only along a tiny fraction of their inputs' state.
+Tier 5 fixes every wrong-answer-on-the-public-API hazard and lands the
+parametric `Hasher` + `ContentFingerprint` substitution point so the
+foundation never prescribes a hash function (same architectural pattern as
+`Calibration`: foundation defines the abstract quantity, downstream supplies
+the substrate). Tier 5 also pulls forward six items previously on the
+follow-on roadmap into the v0.2.2 closure.
+
+- **C1 — `pipeline::run<T, P, H>` actually runs the pipeline.** Pre-T5 the
+  marquee typed entry point ran six preflights and then constructed a
+  `Grounded<T>` with `ContentAddress::zero()`, skipping `run_reduction_stages`
+  entirely. Post-T5 it calls the reduction stages, propagates failure as
+  `PipelineFailure::ContradictionDetected`, and threads the consumer-supplied
+  substrate `H: Hasher` through `fold_unit_digest` to compute a parametric
+  content fingerprint from the unit's full state.
+
+- **C2 — `Grounded::derivation()` accessor.** The verify path documents
+  `derivation.replay()` as the marquee usage but pre-T5 the only way to
+  construct a `Derivation` was `pub(crate)`. T5 adds
+  `pub const fn derivation(&self) -> Derivation` on `Grounded<T, Tag>` so
+  downstream can walk the full `pipeline::run → grounded → derivation()
+  → derivation.replay() → verify_trace` chain via public API.
+
+- **C3 — `verify_trace` upholds the round-trip property via substrate-
+  pluggable hashing + fingerprint passthrough.** The pre-T5 `certify_from_trace`
+  used a small-prime XOR-multiply fold + 16-bit truncation that defeated both
+  the round-trip property and the substrate-agnostic principle. The fix:
+    - `Trace`, `Derivation`, `Grounded`, and `GroundingCertificate` all gain
+      a `content_fingerprint: ContentFingerprint` field. `Trace` and
+      `Derivation` also gain `witt_level_bits: u16`.
+    - `Hasher` trait + `ContentFingerprint` sealed parametric carrier +
+      `FINGERPRINT_MIN_BYTES = 16` / `FINGERPRINT_MAX_BYTES = 32` constants
+      + `ZeroHasher` migration marker are emitted in the foundation source.
+      The foundation ships **no** `impl Hasher for FoundationType` — the
+      substrate is downstream-supplied (BLAKE3 recommended for production;
+      PRISM ships a BLAKE3 impl).
+    - Both the chosen hash function AND its output width are downstream
+      decisions. `Hasher::OUTPUT_BYTES` is an associated constant in
+      `[FINGERPRINT_MIN_BYTES, FINGERPRINT_MAX_BYTES]`. The min is *derived*
+      from the v0.2.2 collision-bound target (≤ 2^-64 under the birthday
+      bound), not chosen.
+    - `certify_from_trace` is now structural validation + fingerprint
+      passthrough. The verifier never invokes a hash function — the
+      fingerprint is data carried by the Trace, computed at mint time by the
+      consumer-supplied `Hasher`, and passed through unchanged.
+    - The round-trip property
+      `verify_trace(grounded.derivation().replay()) == Ok(grounded.certificate())`
+      now holds bit-identically for any conforming substrate `H`. The
+      `t5_grounded_derivation_replay_round_trips_via_verify_trace` integration
+      test exercises the full path with `Fnv1aHasher16` from test-helpers.
+
+- **C4 — Validating constructors for `Trace` and `BindingsTable`.** Pre-T5
+  the `pub(crate)` constructors accepted arbitrary input, and the test-helpers
+  back-door exposed them transitively. A consumer could hold a `Trace` with
+  non-monotonic step indices, zero targets, `None` slots in the populated
+  prefix, OR a `BindingsTable` with unsorted entries (which silently breaks
+  `Grounded::get_binding`'s binary search). T5 adds:
+    - `pub fn Trace::try_from_events(events, witt_level_bits, content_fingerprint)`
+      validating constructor + corresponding `ReplayError::CapacityExceeded`
+      variant.
+    - `pub const fn BindingsTable::try_new(entries)` validating constructor +
+      new `BindingsTableError::Unsorted { at }` variant.
+    - The unsafe `BindingsTable::new` is renamed to `new_unchecked`; the
+      foundation's only call site (`empty_bindings_table`) is sound because
+      the empty slice is vacuously sorted.
+
+- **C5 — `unreachable_unphysical()` panic on `mod calibrations`'s public
+  const path is replaced.** The four preset constants (`X86_SERVER`,
+  `ARM_MOBILE`, `CORTEX_M_EMBEDDED`, `CONSERVATIVE_WORST_CASE`) now substitute
+  `Calibration::ZERO_SENTINEL` on the impossible `Err` arm rather than
+  invoking `panic!`. The conformance suite still validates the preset
+  literals are physically valid (they are; the `Err` arm is unreachable in
+  practice). The foundation's `clippy::panic` discipline is restored.
+
+- **C6 — `run_const`, `run_parallel`, and the four `certify_*_const` thread
+  the consumer-supplied `Hasher`.** Pre-T5 these endpoints fingerprinted only
+  a strict subset of their input state (e.g., `run_const` hashed only
+  `(level_bits, budget)` ignoring `T::IRI`, `T::SITE_COUNT`, and
+  `T::CONSTRAINTS`). Post-T5 each takes `H: Hasher` and walks
+  `fold_unit_digest` (or the corresponding Parallel/Stream/Interaction
+  variant) over the full input state, packing the result into the
+  certificate's `content_fingerprint` field. Each `certify_*_const` passes
+  a distinct `CertificateKind` discriminant byte so two certify calls over
+  the same source unit produce distinguishable fingerprints.
+    - The `certify_*_const` functions are no longer `const fn` (trait method
+      dispatch on `H::initial()`/`fold_byte`/`finalize` is not const-eval-
+      friendly under MSRV 1.81). The const-fn frontier is preserved by a new
+      `pipeline::run_const_zero<T>` entry point that bypasses trait dispatch
+      via the `ZeroHasher` marker.
+
+- **T5.7 — Delete `primitive_op_weight` + XOR-multiply fold from the replay
+  module.** Architecturally subsumed by C3.d's `Hasher` trait. The foundation
+  no longer ships any hash function bodies — only the trait, the canonical
+  byte layouts (`fold_unit_digest` / `fold_parallel_digest` / `fold_stream_digest`
+  / `fold_interaction_digest` / `fold_constraint_ref`), the `ZeroHasher`
+  no-op marker, and the discriminant tables (`primitive_op_discriminant`,
+  `certificate_kind_discriminant`).
+
+- **T5.8 — Rename `ReplayError::LengthMismatch` → `NonContiguousSteps`** +
+  add `CapacityExceeded { declared, provided }` variant + add
+  `FingerprintMissing` variant (returned when `verify_trace` is called on a
+  trace whose stored fingerprint is `ContentFingerprint::zero()`).
+
+- **T5.9 — `core::error::Error` impls for all 6 public error types** +
+  workspace MSRV bump from 1.70 to **1.81** (where `core::error::Error` is
+  stable for `no_std`). `CalibrationError`, `ShapeViolation`, `PipelineFailure`,
+  `ReplayError`, `BindingsTableError`, and `GenericImpossibilityWitness` all
+  implement `core::fmt::Display` + `core::error::Error`, so downstream
+  consumers can `?`-propagate them through `Box<dyn Error>` chains.
+
+- **T5.10 — `StreamDriver::is_terminated()` accessor.** Parallel to
+  `InteractionDriver::is_converged()`; lets downstream observe termination
+  state without a destructive `next()` call.
+
+- **T5.11 — Complete `lib.rs` re-exports.** Every public type a downstream
+  consumer reaches for now resolves via the short `uor_foundation::*` path:
+  `Hasher`, `ContentFingerprint`, `ZeroHasher`, `CertificateKind`,
+  `BindingsTableError`, `CalibrationError`, `PipelineFailure`,
+  `LandauerBudget`, `Nanos`, `Term`, `TermArena`, `TermList`, `Certificate`,
+  `FINGERPRINT_MIN_BYTES`, `FINGERPRINT_MAX_BYTES`, `TRACE_MAX_EVENTS`,
+  `TRACE_REPLAY_FORMAT_VERSION`. The verify crate's re-exports gain the same
+  set plus `PrimitiveOp`.
+
+- **T5.12 — `verify_trace` doc rewrite.** The pre-T5 doc claimed
+  "two structurally-distinct traces produce two distinct certificates" —
+  false at the 1/65536 collision rate of the lossy 16-bit truncation. The
+  post-T5 doc explains the actual contract: structural validation +
+  fingerprint passthrough; round-trip property; substrate-agnostic; foundation
+  recommends BLAKE3 for production; non-binding recommendation.
+
+22 e2e tests pass (13 pre-T5 + 9 new T5 tests covering C1, C2, C3, C4, C6,
+T5.9, T5.10, T5.11). 11 verify-crate round_trip tests pass (was 6 pre-T5,
+expanded to cover non-contiguous steps, parametric width, deterministic
+re-derivation).
 
 ### Counts after cleanup
 
@@ -174,11 +470,22 @@ pure function of its inputs, **not return constants**.
 - `CONFORMANCE_CHECKS = 497` (+4: docs/concept_pages_count, rust/ebnf_constraint_decl,
   rust/public_api_functional/foundation_e2e, rust/public_api_functional/verify_round_trip)
 - Workspace members: 11 → 12 (added `uor-foundation-test-helpers`)
+- **MSRV bumped 1.70 → 1.81** (Tier 5: unlocks `core::error::Error` for `no_std`)
+- **`FINGERPRINT_MAX_BYTES = 32`** (Tier 5: cap on inline content-fingerprint width
+  carried by `Grounded` / `Trace` / `Derivation` / `GroundingCertificate`. Sized to
+  hold the standard 256-bit cryptographic-hash outputs (BLAKE3, SHA-256, BLAKE2s)
+  without exceeding the 256-byte `Grounded` budget pinned by `phantom_tag`.)
+- **`FINGERPRINT_MIN_BYTES = 16`** (Tier 5: derived from the v0.2.2 ≤ 2^-64 collision
+  bound under the birthday rate; not a prescription.)
 
 ### Verification
 
 `cargo run --bin uor-conformance` reports **497 passed, 0 warnings, 0 failed**
-from a clean checkout. `cargo test --workspace` runs all foundation
+from a clean checkout. After Tier 4, `uor-foundation-verify`'s manifest
+satisfies cargo publish's dependency-version requirement (the `path`-only
+form is hoisted to a workspace dep with explicit `version = "0.2.2"`),
+and the round_trip suite contains 6 tests that re-derive certificates
+end-to-end. `cargo test --workspace` runs all foundation
 integration tests (uor_time, phantom_tag, parametric_constraints,
 witt_tower_dense, witt_tower_limbs, public_api_e2e + ~10 others) and the
 verify-crate round_trip tests, all green. The compile_fail doctest in

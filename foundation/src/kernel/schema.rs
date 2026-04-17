@@ -6,71 +6,71 @@
 
 use crate::enums::QuantifierKind;
 use crate::enums::WittLevel;
-use crate::Primitives;
+use crate::HostTypes;
 
 /// An element of the ring Z/(2^n)Z at a specific Witt level n. The primary semantic value type. Disjoint from Term: datums are values, terms are syntactic expressions that evaluate to datums.
 /// Disjoint with: Term.
-pub trait Datum<P: Primitives> {
+pub trait Datum<H: HostTypes> {
     /// The integer value of a datum element. For a Datum in Z/(2^n)Z, this is an integer in \[0, 2^n).
-    fn value(&self) -> P::NonNegativeInteger;
+    fn value(&self) -> u64;
     /// The Witt level n of a datum, where the datum's ring is Z/(2^n)Z. Determines the bit width and modulus of the datum.
-    fn witt_length(&self) -> P::PositiveInteger;
+    fn witt_length(&self) -> u64;
     /// The ring-layer index of a datum, indicating its position in the stratification of Z/(2^n)Z.
-    fn stratum(&self) -> P::NonNegativeInteger;
+    fn stratum(&self) -> u64;
     /// The bit-pattern representation of a datum, encoding its position in the hypercube geometry of Z/(2^n)Z.
-    fn spectrum(&self) -> P::NonNegativeInteger;
+    fn spectrum(&self) -> u64;
     /// Associated type for `Element`.
-    type Element: crate::kernel::address::Element<P>;
+    type Element: crate::kernel::address::Element<H>;
     /// The content-addressable element associated with this datum, linking the algebraic value to its identifier.
     fn element(&self) -> &Self::Element;
 }
 
 /// A syntactic expression in the UOR term language. Terms are evaluated to produce Datums. Disjoint from Datum.
 /// Disjoint with: Datum.
-pub trait Term<P: Primitives> {}
+pub trait Term<H: HostTypes> {}
 
 /// A three-component structure encoding an element's position in the UOR address space: stratum (ring layer), spectrum (bit pattern), and address (content-addressable position in the Braille glyph encoding). The three required functional properties schema:triadStratum, schema:triadSpectrum, and schema:triadAddress project a Triad onto its TwoAdicValuation, WalshHadamardImage, and Address coordinates respectively.
-pub trait Triad<P: Primitives> {
+pub trait Triad<H: HostTypes> {
     /// The stratum component of a Triad: the datum's two-adic valuation, indexing its layer in the ring stratification. Semantically corresponds to query:TwoAdicValuation.
-    fn triad_stratum(&self) -> P::NonNegativeInteger;
+    fn triad_stratum(&self) -> u64;
     /// The spectrum component of a Triad: the datum's Walsh-Hadamard transform image, indexing its position in the hypercube spectral decomposition. Semantically corresponds to query:WalshHadamardImage.
-    fn triad_spectrum(&self) -> P::NonNegativeInteger;
+    fn triad_spectrum(&self) -> u64;
     /// The address component of a Triad: the datum's content-addressable position in the ring's Braille glyph encoding. Semantically corresponds to query:Address (renamed from RingElement in v0.2.2 W8).
-    fn triad_address(&self) -> P::NonNegativeInteger;
+    fn triad_address(&self) -> u64;
 }
 
 /// A term that directly denotes a datum value. A Literal is a leaf node in the term language — it refers to a concrete Datum via schema:denotes without being a Datum itself.
-pub trait Literal<P: Primitives>: Term<P> + SurfaceSymbol<P> {
+pub trait Literal<H: HostTypes>: Term<H> + SurfaceSymbol<H> {
     /// Associated type for `Datum`.
-    type Datum: Datum<P>;
+    type Datum: Datum<H>;
     /// The datum value that a Literal term denotes. Bridges the Term/Datum disjointness: a Literal refers to a Datum without being one. Evaluation of a Literal produces its denoted Datum.
     fn denotes(&self) -> &Self::Datum;
 }
 
 /// A term formed by applying an operation to one or more argument terms. The application's value is the result of evaluating the operator on the evaluated arguments.
-pub trait Application<P: Primitives>: Term<P> {
+pub trait Application<H: HostTypes>: Term<H> {
     /// Associated type for `Operation`.
-    type Operation: crate::kernel::op::Operation<P>;
+    type Operation: crate::kernel::op::Operation<H>;
     /// The operation applied in an Application term.
     fn operator(&self) -> &Self::Operation;
     /// Associated type for `Term`.
-    type Term: Term<P>;
+    type Term: Term<H>;
     /// An argument term in an Application. The ordering of arguments follows rdf:List semantics.
     fn argument(&self) -> &[Self::Term];
 }
 
 /// The ambient ring Z/(2^n)Z at a specific Witt level n. The Ring is the primary data structure of the UOR kernel. Its two generators (negation and complement) produce the dihedral group D_{2^n} that governs the invariance frame.
-pub trait Ring<P: Primitives> {
+pub trait Ring<H: HostTypes> {
     /// The bit width n of the ring Z/(2^n)Z. Distinct from schema:wittLength on Datum — ringWittLength is the container's bit width; datum wittLength is a membership property.
-    fn ring_witt_length(&self) -> P::PositiveInteger;
+    fn ring_witt_length(&self) -> u64;
     /// The modulus 2^n of the ring. Equals 2 raised to the power of ringWittLength.
-    fn modulus(&self) -> P::PositiveInteger;
+    fn modulus(&self) -> u64;
     /// Associated type for `Datum`.
-    type Datum: Datum<P>;
+    type Datum: Datum<H>;
     /// The generator element π₁ (value = 1) of the ring. Under iterated successor application, π₁ generates all ring elements.
     fn generator(&self) -> &Self::Datum;
     /// Associated type for `Involution`.
-    type Involution: crate::kernel::op::Involution<P>;
+    type Involution: crate::kernel::op::Involution<H>;
     /// The ring reflection involution: neg(x) = (-x) mod 2^n. One of the two generators of the dihedral group D_{2^n}.
     fn negation(&self) -> &Self::Involution;
     /// The hypercube reflection involution: bnot(x) = (2^n - 1) ⊕ x. The second generator of the dihedral group D_{2^n}.
@@ -80,56 +80,56 @@ pub trait Ring<P: Primitives> {
 }
 
 /// The concrete ring Z/(2^16)Z at Witt level 16. Subclass of schema:Ring. Carries 65,536 elements. W16Ring is the first extension of the default Q0 ring and is the target of Amendment 26's universality proofs.
-pub trait W16Ring<P: Primitives>: Ring<P> {
+pub trait W16Ring<H: HostTypes>: Ring<H> {
     /// Bit width of the Q1 ring: 16.
-    fn w16bit_width(&self) -> P::PositiveInteger;
+    fn w16bit_width(&self) -> u64;
     /// Carrier set size of the Q1 ring: 65,536 elements.
-    fn w16capacity(&self) -> P::PositiveInteger;
+    fn w16capacity(&self) -> u64;
 }
 
 /// Root AST node for parsed EBNF term expressions. Identity lhs/rhs values are instances of TermExpression subtypes. Maps to the `term` production in the EBNF grammar.
-pub trait TermExpression<P: Primitives> {}
+pub trait TermExpression<H: HostTypes> {}
 
 /// A leaf AST node: an integer literal, variable reference, or named constant.
-pub trait LiteralExpression<P: Primitives>: TermExpression<P> {
+pub trait LiteralExpression<H: HostTypes>: TermExpression<H> {
     /// The string representation of a literal expression value (e.g., '42', 'x', 'pi1').
-    fn literal_value(&self) -> &P::String;
+    fn literal_value(&self) -> &H::HostString;
 }
 
 /// An AST node representing operator application: an operator applied to an argument list (e.g., add(x, y)).
-pub trait ApplicationExpression<P: Primitives>: TermExpression<P> {
+pub trait ApplicationExpression<H: HostTypes>: TermExpression<H> {
     /// Associated type for `Operation`.
-    type Operation: crate::kernel::op::Operation<P>;
+    type Operation: crate::kernel::op::Operation<H>;
     /// The operator in an application expression (e.g., op:add, op:neg).
     fn expression_operator(&self) -> &Self::Operation;
     /// Associated type for `TermExpression`.
-    type TermExpression: TermExpression<P>;
+    type TermExpression: TermExpression<H>;
     /// The argument list of an application expression. Non-functional: an application may take multiple arguments.
     fn arguments(&self) -> &[Self::TermExpression];
 }
 
 /// An AST node for infix relations and logical connectives (e.g., x <= y, P -> Q, a = b).
-pub trait InfixExpression<P: Primitives>: TermExpression<P> {
+pub trait InfixExpression<H: HostTypes>: TermExpression<H> {
     /// Associated type for `TermExpression`.
-    type TermExpression: TermExpression<P>;
+    type TermExpression: TermExpression<H>;
     /// The left operand of an infix expression.
     fn left_operand(&self) -> &Self::TermExpression;
     /// The right operand of an infix expression.
     fn right_operand(&self) -> &Self::TermExpression;
     /// The operator symbol in an infix expression (e.g., '=', '\u{2264}', '\u{2192}').
-    fn infix_operator(&self) -> &P::String;
+    fn infix_operator(&self) -> &H::HostString;
 }
 
 /// An AST node for set-builder notation (e.g., {x : P(x)}).
-pub trait SetExpression<P: Primitives>: TermExpression<P> {}
+pub trait SetExpression<H: HostTypes>: TermExpression<H> {}
 
 /// An AST node for function composition (f compose g).
-pub trait CompositionExpression<P: Primitives>: TermExpression<P> {}
+pub trait CompositionExpression<H: HostTypes>: TermExpression<H> {}
 
 /// A structured quantifier binding: typed variable declarations with a domain and quantifier kind (universal or existential). Replaces the string-valued op:forAll property.
-pub trait ForAllDeclaration<P: Primitives> {
+pub trait ForAllDeclaration<H: HostTypes> {
     /// Associated type for `VariableBinding`.
-    type VariableBinding: VariableBinding<P>;
+    type VariableBinding: VariableBinding<H>;
     /// The variable bindings in a quantifier declaration. Non-functional: a ForAllDeclaration may bind multiple variables.
     fn bound_variables(&self) -> &[Self::VariableBinding];
     /// The kind of quantifier: Universal or Existential.
@@ -137,34 +137,34 @@ pub trait ForAllDeclaration<P: Primitives> {
 }
 
 /// A single variable binding: a variable name bound to a domain type (e.g., x in R_n).
-pub trait VariableBinding<P: Primitives> {
+pub trait VariableBinding<H: HostTypes> {
     /// The domain type of a variable binding (e.g., schema:Ring, type:ConstrainedType).
-    fn variable_domain(&self) -> &P::String;
+    fn variable_domain(&self) -> &H::HostString;
     /// The name of a bound variable (e.g., 'x', 'y', 'n').
-    fn variable_name(&self) -> &P::String;
+    fn variable_name(&self) -> &H::HostString;
 }
 
 /// An abstract leaf value that a grounding map can accept as surface input. Has no direct instances: every SurfaceSymbol is either a Datum-denoting schema:Literal or an xsd-typed schema:HostValue, and the two cases are disjoint.
-pub trait SurfaceSymbol<P: Primitives> {}
+pub trait SurfaceSymbol<H: HostTypes> {}
 
 /// An xsd-typed value that denotes a host datatype rather than a ring datum. Used in property-position slots whose range is xsd and as the host-side input of a grounding map.
 /// Disjoint with: Term, Datum.
-pub trait HostValue<P: Primitives>: SurfaceSymbol<P> {}
+pub trait HostValue<H: HostTypes>: SurfaceSymbol<H> {}
 
 /// A host string literal carrying an xsd:string value.
-pub trait HostStringLiteral<P: Primitives>: HostValue<P> {
+pub trait HostStringLiteral<H: HostTypes>: HostValue<H> {
     /// The string value carried by a HostStringLiteral.
-    fn host_string(&self) -> &P::String;
+    fn host_string(&self) -> &H::HostString;
 }
 
 /// A host boolean literal carrying an xsd:boolean value.
-pub trait HostBooleanLiteral<P: Primitives>: HostValue<P> {
+pub trait HostBooleanLiteral<H: HostTypes>: HostValue<H> {
     /// The boolean value carried by a HostBooleanLiteral.
-    fn host_boolean(&self) -> P::Boolean;
+    fn host_boolean(&self) -> bool;
 }
 
 /// An ordered tuple of values drawn from a type:ConstrainedType's carrier. Serves as the witness form for cert:InhabitanceCertificate when verified is true.
-pub trait ValueTuple<P: Primitives> {}
+pub trait ValueTuple<H: HostTypes> {}
 
 /// Universal quantification (forall).
 pub mod universal {}
@@ -346,7 +346,7 @@ pub mod w120 {
     pub const WITT_LEVEL_PREDECESSOR: &str = "https://uor.foundation/schema/W112";
 }
 
-/// Witt level 15: 128-bit ring Z/2^128 Z. Backed by u128 directly (exact fit; no mask). The largest native-backed Witt level; levels above W128 use the Limbs<N> generic kernel emitted in Phase C.3. v0.2.2 Phase C.
+/// Witt level 15: 128-bit ring Z/2^128 Z. Backed by u128 directly (exact fit; no mask). The largest native-backed Witt level; levels above W128 use the Limbs\<N\> generic kernel emitted in Phase C.3. v0.2.2 Phase C.
 pub mod w128 {
     /// `bitsWidth`
     pub const BITS_WIDTH: i64 = 128;

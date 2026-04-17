@@ -4,78 +4,78 @@
 //!
 //! Space: User
 
-use crate::Primitives;
+use crate::HostTypes;
 
 /// A map between UOR objects. The root abstraction: source, target, and optionally what structure (if any) is preserved. This is what cert:TransformCertificate certifies.
 /// Disjoint with: CompositionLaw.
-pub trait Transform<P: Primitives> {
+pub trait Transform<H: HostTypes> {
     /// The domain of the transform.
-    fn source(&self) -> &P::String;
+    fn source(&self) -> &H::HostString;
     /// The codomain of the transform.
-    fn target(&self) -> &P::String;
+    fn target(&self) -> &H::HostString;
     /// The structure preserved by this transform (if any). E.g., a ring homomorphism preserves addition and multiplication.
     fn preserves_count(&self) -> usize;
     /// Returns the item at `index`. Must satisfy `index < self.preserves_count()`.
-    fn preserves_at(&self, index: usize) -> &P::String;
+    fn preserves_at(&self, index: usize) -> &H::HostString;
     /// Associated type for `ComputationTrace`.
-    type ComputationTrace: crate::bridge::trace::ComputationTrace<P>;
+    type ComputationTrace: crate::bridge::trace::ComputationTrace<H>;
     /// The computation trace that realized this transform at runtime. A Transform is an abstraction; a trace is the kernel's record of how it was executed via concrete operations.
     fn trace(&self) -> &Self::ComputationTrace;
     /// Associated type for `Transform`.
-    type TransformTarget: Transform<P>;
+    type TransformTarget: Transform<H>;
     /// A transform that this transform can be composed with. The target of this transform must match the source of the composed transform.
     fn composes_with(&self) -> &[Self::TransformTarget];
     /// Associated type for `Identity`.
-    type Identity: crate::kernel::op::Identity<P>;
+    type Identity: crate::kernel::op::Identity<H>;
     /// The identity preserved by this transform (reference to the op:Identity that the transform commutes with).
     fn preserved_invariant(&self) -> &Self::Identity;
     /// The OWL class of inputs this transform accepts. Uses OWL2 punning so the value is a class IRI treated as an individual at this position.
-    fn input_class(&self) -> &P::String;
+    fn input_class(&self) -> &H::HostString;
     /// The OWL class of outputs this transform produces. Uses OWL2 punning.
-    fn output_class(&self) -> &P::String;
+    fn output_class(&self) -> &H::HostString;
     /// Associated type for `Witness`.
-    type Witness: Witness<P>;
+    type Witness: Witness<H>;
     /// Zero or more witness pairs documenting specific input/output bindings of this transform.
     fn has_witness(&self) -> &[Self::Witness];
 }
 
 /// A transform that preserves metric structure with respect to a specified metric. In UOR, isometry is metric-relative: neg is a ring isometry, bnot is a Hamming isometry. A transform can be an isometry with respect to one metric but not the other. This is what cert:IsometryCertificate certifies.
 /// Disjoint with: Composition.
-pub trait Isometry<P: Primitives>: Transform<P> {
+pub trait Isometry<H: HostTypes>: Transform<H> {
     /// Associated type for `MetricObservable`.
-    type MetricObservable: crate::bridge::observable::MetricObservable<P>;
+    type MetricObservable: crate::bridge::observable::MetricObservable<H>;
     /// The specific metric this isometry preserves. Points to observable:RingMetric or observable:HammingMetric. A transform that preserves both is an isometry of the full UOR geometry. A transform that preserves one but not the other has nontrivial curvature — observable:CurvatureObservable measures this gap.
     fn preserves_metric(&self) -> &[Self::MetricObservable];
 }
 
 /// An injective, structure-preserving transform across quantum levels. The canonical instance is the level embedding ι : R_n → R_{n'} (n < n'), which preserves addition, multiplication, and content addressing.
 /// Disjoint with: Composition.
-pub trait Embedding<P: Primitives>: Transform<P> {
+pub trait Embedding<H: HostTypes>: Transform<H> {
     /// The quantum level n of the source ring for an embedding.
-    fn source_quantum(&self) -> P::PositiveInteger;
+    fn source_quantum(&self) -> u64;
     /// The quantum level n' of the target ring for an embedding. Must satisfy n' > n (embeddings go to larger rings).
-    fn target_quantum(&self) -> P::PositiveInteger;
+    fn target_quantum(&self) -> u64;
     /// Certificate that this embedding's addressing diagram commutes: glyph ∘ ι ∘ addresses is well-defined and injective.
     fn address_coherence(&self) -> &Self::Identity;
 }
 
 /// The mechanism by which a group applies transforms systematically to a set. Each group element induces a transform of the set. The dihedral action on type space is an action by isometries — every element of D_{2^n} produces an isometric transform of 𝒯_n.
-pub trait Action<P: Primitives> {
+pub trait Action<H: HostTypes> {
     /// Associated type for `Group`.
-    type Group: crate::kernel::op::Group<P>;
+    type Group: crate::kernel::op::Group<H>;
     /// The group acting in this group action.
     fn group(&self) -> &Self::Group;
     /// The set being acted upon by this group action.
-    fn acting_on(&self) -> &P::String;
+    fn acting_on(&self) -> &H::HostString;
     /// Whether every transform induced by this action is an isometry. True for the dihedral action on 𝒯_n (Frame Theorem).
-    fn action_isometry(&self) -> P::Boolean;
+    fn action_isometry(&self) -> bool;
 }
 
 /// A transform formed by composing two or more transforms sequentially. The categorical composition operation that turns transforms into a category.
 /// Disjoint with: Isometry, Embedding, Identity.
-pub trait Composition<P: Primitives>: Transform<P> {
+pub trait Composition<H: HostTypes>: Transform<H> {
     /// Associated type for `Transform`.
-    type Transform: Transform<P>;
+    type Transform: Transform<H>;
     /// The transform that results from this composition.
     fn composition_result(&self) -> &Self::Transform;
     /// A component transform of this composition.
@@ -84,22 +84,22 @@ pub trait Composition<P: Primitives>: Transform<P> {
 
 /// The identity transform on a type: maps every element to itself. The categorical identity morphism.
 /// Disjoint with: Composition.
-pub trait Identity<P: Primitives>: Transform<P> {
+pub trait Identity<H: HostTypes>: Transform<H> {
     /// Associated type for `TypeDefinition`.
-    type TypeDefinition: crate::user::type_::TypeDefinition<P>;
+    type TypeDefinition: crate::user::type_::TypeDefinition<H>;
     /// The type on which this identity transform acts.
     fn identity_on(&self) -> &Self::TypeDefinition;
 }
 
 /// A law governing how operations compose. Records whether the composition is associative, commutative, and what the result operation is. The critical composition law (neg ∘ bnot = succ) is the foundational instance.
 /// Disjoint with: Transform.
-pub trait CompositionLaw<P: Primitives> {
+pub trait CompositionLaw<H: HostTypes> {
     /// Whether this composition law is associative.
-    fn is_associative(&self) -> P::Boolean;
+    fn is_associative(&self) -> bool;
     /// Whether this composition law is commutative.
-    fn is_commutative(&self) -> P::Boolean;
+    fn is_commutative(&self) -> bool;
     /// Associated type for `Operation`.
-    type Operation: crate::kernel::op::Operation<P>;
+    type Operation: crate::kernel::op::Operation<H>;
     /// An operation that is a component of this composition law.
     fn law_components(&self) -> &[Self::Operation];
     /// The operation that results from this composition law.
@@ -108,68 +108,68 @@ pub trait CompositionLaw<P: Primitives> {
 
 /// A Transform mapping a surface symbol (any schema:Literal) to its ring datum (a schema:Datum) via the content-addressing bijection. Typed, derivation-witnessed, constraint-preserving map from surface to coordinate. Applies identically across NLP tokens, ARC-AGI grid cells, MIDI notes, pixels, sensor readings, and logical propositions.
 /// Disjoint with: ProjectionMap.
-pub trait GroundingMap<P: Primitives>: Transform<P> {
+pub trait GroundingMap<H: HostTypes>: Transform<H> {
     /// Associated type for `Derivation`.
-    type Derivation: crate::bridge::derivation::Derivation<P>;
+    type Derivation: crate::bridge::derivation::Derivation<H>;
     /// The derivation witnessing the content-addressing computation that produced the grounded address from the surface symbol.
     fn grounding_derivation(&self) -> &Self::Derivation;
     /// Associated type for `Constraint`.
-    type Constraint: crate::user::type_::Constraint<P>;
+    type Constraint: crate::user::type_::Constraint<H>;
     /// A typed attribute preserved by this grounding. Non-functional: one assertion per active constraint axis (vertical, horizontal, diagonal).
     fn symbol_constraints(&self) -> &[Self::Constraint];
 }
 
 /// A Transform mapping a resolved partition:Partition (address neighbourhood) to an ordered sequence of surface symbols. Output ordering determined by the active state:Frame — the same constraint frame that decomposed the input symbol sequence.
 /// Disjoint with: GroundingMap.
-pub trait ProjectionMap<P: Primitives>: Transform<P> {
+pub trait ProjectionMap<H: HostTypes>: Transform<H> {
     /// Associated type for `Frame`.
-    type Frame: crate::user::state::Frame<P>;
+    type Frame: crate::user::state::Frame<H>;
     /// The active frame — shared with the grounding that produced the query. The shared-frame condition (Surface Symmetry Theorem) requires G and P to reference the same frame.
     fn projection_frame(&self) -> &Self::Frame;
     /// Associated type for `Conjunction`.
-    type Conjunction: crate::user::type_::Conjunction<P>;
+    type Conjunction: crate::user::type_::Conjunction<H>;
     /// Ordering constraint determining the output symbol sequence. Domain-specific: syntactic position (NLP), row-major scan (ARC), temporal sequence (music).
     fn projection_order(&self) -> &Self::Conjunction;
     /// Completeness criterion: does projecting the grounded source address recover a symbol in the same type class as the input? True iff the shared-frame condition holds.
-    fn round_trip_coherence(&self) -> P::Boolean;
+    fn round_trip_coherence(&self) -> bool;
     /// When outputClass is a sequence type, the OWL class of individual sequence elements. Uses OWL2 punning.
-    fn output_element_class(&self) -> &P::String;
+    fn output_element_class(&self) -> &H::HostString;
 }
 
 /// A certificate attesting that a specific grounding round-trip (P∘Π∘G) satisfied the shared-frame condition and landed in the type-equivalent neighbourhood of the source symbol. Witnesses the Surface Symmetry Theorem (op:surfaceSymmetry) for one specific symbol instance.
-pub trait GroundingCertificate<P: Primitives>: crate::bridge::cert::Certificate<P> {
+pub trait GroundingCertificate<H: HostTypes>: crate::bridge::cert::Certificate<H> {
     /// Associated type for `GroundingMap`.
-    type GroundingMap: GroundingMap<P>;
+    type GroundingMap: GroundingMap<H>;
     /// The GroundingMap used in this certified round-trip.
     fn grounding_cert_map(&self) -> &Self::GroundingMap;
     /// Associated type for `ProjectionMap`.
-    type ProjectionMap: ProjectionMap<P>;
+    type ProjectionMap: ProjectionMap<H>;
     /// The ProjectionMap used in this certified round-trip.
     fn grounding_cert_projection(&self) -> &Self::ProjectionMap;
     /// Associated type for `Literal`.
-    type Literal: crate::kernel::schema::Literal<P>;
+    type Literal: crate::kernel::schema::Literal<H>;
     /// The surface symbol that entered the grounding boundary.
     fn grounding_cert_source_symbol(&self) -> &Self::Literal;
     /// Associated type for `Element`.
-    type Element: crate::kernel::address::Element<P>;
+    type Element: crate::kernel::address::Element<H>;
     /// The ring address the symbol was grounded to.
     fn grounding_cert_address(&self) -> &Self::Element;
 }
 
 /// A topological delta: records changes in topological invariants (Betti numbers, Euler characteristic, nerve structure) before and after a morphism.
-pub trait TopologicalDelta<P: Primitives> {
+pub trait TopologicalDelta<H: HostTypes> {
     /// Associated type for `BettiNumber`.
-    type BettiNumber: crate::bridge::observable::BettiNumber<P>;
+    type BettiNumber: crate::bridge::observable::BettiNumber<H>;
     /// Betti numbers before the morphism.
     fn bettis_before(&self) -> &Self::BettiNumber;
     /// Betti numbers after the morphism.
     fn bettis_after(&self) -> &Self::BettiNumber;
     /// Euler characteristic before the morphism.
-    fn euler_before(&self) -> P::Integer;
+    fn euler_before(&self) -> i64;
     /// Euler characteristic after the morphism.
-    fn euler_after(&self) -> P::Integer;
+    fn euler_after(&self) -> i64;
     /// Associated type for `SimplicialComplex`.
-    type SimplicialComplex: crate::bridge::homology::SimplicialComplex<P>;
+    type SimplicialComplex: crate::bridge::homology::SimplicialComplex<H>;
     /// Constraint nerve (simplicial complex) before the morphism.
     fn nerve_before(&self) -> &Self::SimplicialComplex;
     /// Constraint nerve (simplicial complex) after the morphism.
@@ -177,9 +177,9 @@ pub trait TopologicalDelta<P: Primitives> {
 }
 
 /// A datum whose ring value is the content address of a cert:TransformCertificate. Represents a certified computation as a first-class value within the ring.
-pub trait ComputationDatum<P: Primitives>: crate::kernel::schema::Datum<P> {
+pub trait ComputationDatum<H: HostTypes>: crate::kernel::schema::Datum<H> {
     /// Associated type for `TransformCertificate`.
-    type TransformCertificate: crate::bridge::cert::TransformCertificate<P>;
+    type TransformCertificate: crate::bridge::cert::TransformCertificate<H>;
     /// The certificate this computation datum encodes.
     fn referenced_certificate(&self) -> &Self::TransformCertificate;
     /// The content address of the referenced certificate.
@@ -187,35 +187,35 @@ pub trait ComputationDatum<P: Primitives>: crate::kernel::schema::Datum<P> {
 }
 
 /// A transform that applies a ComputationDatum to an input datum, producing an output datum. The output inherits the certificate of the ComputationDatum.
-pub trait ApplicationMorphism<P: Primitives>: Transform<P> {
+pub trait ApplicationMorphism<H: HostTypes>: Transform<H> {
     /// Associated type for `ComputationDatum`.
-    type ComputationDatum: ComputationDatum<P>;
+    type ComputationDatum: ComputationDatum<H>;
     /// The computation being applied.
     fn application_target(&self) -> &Self::ComputationDatum;
     /// Associated type for `Datum`.
-    type Datum: crate::kernel::schema::Datum<P>;
+    type Datum: crate::kernel::schema::Datum<H>;
     /// The input datum to the application.
     fn application_input(&self) -> &Self::Datum;
 }
 
 /// A ComputationDatum formed by fixing some but not all inputs of a multi-argument transform.
-pub trait PartialApplication<P: Primitives>: ComputationDatum<P> {
+pub trait PartialApplication<H: HostTypes>: ComputationDatum<H> {
     /// Associated type for `ComputationDatum`.
-    type ComputationDatum: ComputationDatum<P>;
+    type ComputationDatum: ComputationDatum<H>;
     /// The base computation being partially applied.
     fn partial_base(&self) -> &Self::ComputationDatum;
     /// Associated type for `Datum`.
-    type Datum: crate::kernel::schema::Datum<P>;
+    type Datum: crate::kernel::schema::Datum<H>;
     /// The arguments already bound.
     fn bound_arguments(&self) -> &[Self::Datum];
     /// Number of unbound arguments remaining.
-    fn remaining_arity(&self) -> P::PositiveInteger;
+    fn remaining_arity(&self) -> u64;
 }
 
 /// A ComputationDatum representing the composition f ∘ g of two ComputationDatums. Certified iff both components are certified and range(g) = domain(f).
-pub trait TransformComposition<P: Primitives>: ComputationDatum<P> {
+pub trait TransformComposition<H: HostTypes>: ComputationDatum<H> {
     /// Associated type for `ComputationDatum`.
-    type ComputationDatum: ComputationDatum<P>;
+    type ComputationDatum: ComputationDatum<H>;
     /// The outer function f in f ∘ g.
     fn composition_left(&self) -> &Self::ComputationDatum;
     /// The inner function g in f ∘ g.
@@ -223,50 +223,50 @@ pub trait TransformComposition<P: Primitives>: ComputationDatum<P> {
 }
 
 /// Abstract supertype for one specific input/output pair witnessing a Transform.
-pub trait Witness<P: Primitives> {}
+pub trait Witness<H: HostTypes> {}
 
 /// One specific surface symbol mapped to one specific grounded address by some GroundingMap.
 /// Disjoint with: ProjectionWitness.
-pub trait GroundingWitness<P: Primitives>: Witness<P> {
+pub trait GroundingWitness<H: HostTypes>: Witness<H> {
     /// Associated type for `SurfaceSymbol`.
-    type SurfaceSymbol: crate::kernel::schema::SurfaceSymbol<P>;
+    type SurfaceSymbol: crate::kernel::schema::SurfaceSymbol<H>;
     /// The surface symbol that is the source of this grounding witness.
     fn surface_symbol(&self) -> &Self::SurfaceSymbol;
     /// Associated type for `Element`.
-    type Element: crate::kernel::address::Element<P>;
+    type Element: crate::kernel::address::Element<H>;
     /// The resolved ring address that is the target of this grounding witness.
     fn grounded_address(&self) -> &Self::Element;
 }
 
 /// One specific input partition mapped to one specific surface symbol sequence by some ProjectionMap.
 /// Disjoint with: GroundingWitness.
-pub trait ProjectionWitness<P: Primitives>: Witness<P> {
+pub trait ProjectionWitness<H: HostTypes>: Witness<H> {
     /// Associated type for `Partition`.
-    type Partition: crate::bridge::partition::Partition<P>;
+    type Partition: crate::bridge::partition::Partition<H>;
     /// The resolved partition (address neighbourhood) that this projection witness projects back to surface symbols.
     fn projection_source(&self) -> &Self::Partition;
     /// Associated type for `SymbolSequence`.
-    type SymbolSequence: SymbolSequence<P>;
+    type SymbolSequence: SymbolSequence<H>;
     /// The single SymbolSequence produced by this projection witness.
     fn projection_output(&self) -> &Self::SymbolSequence;
 }
 
 /// An ordered sequence of surface symbols. Elements are reified as SequenceElement individuals with explicit position indices.
-pub trait SymbolSequence<P: Primitives> {
+pub trait SymbolSequence<H: HostTypes> {
     /// Associated type for `SequenceElement`.
-    type SequenceElement: SequenceElement<P>;
+    type SequenceElement: SequenceElement<H>;
     /// Membership of a SymbolSequence. The sequence is reconstructed by sorting elements by elementIndex.
     fn has_element(&self) -> &[Self::SequenceElement];
 }
 
 /// One position in a SymbolSequence: a reified (value, index) pair.
-pub trait SequenceElement<P: Primitives> {
+pub trait SequenceElement<H: HostTypes> {
     /// Associated type for `SurfaceSymbol`.
-    type SurfaceSymbol: crate::kernel::schema::SurfaceSymbol<P>;
+    type SurfaceSymbol: crate::kernel::schema::SurfaceSymbol<H>;
     /// The surface symbol value of this sequence element.
     fn element_value(&self) -> &Self::SurfaceSymbol;
     /// The zero-based position of this element in the sequence.
-    fn element_index(&self) -> P::NonNegativeInteger;
+    fn element_index(&self) -> u64;
 }
 
 /// The critical composition law: neg ∘ bnot = succ. This is the operational form of the critical identity theorem. The composition of the two involutions (neg, bnot) yields the successor operation. Non-associative and non-commutative.

@@ -4,38 +4,38 @@
 //!
 //! Space: Bridge
 
-use crate::Primitives;
+use crate::HostTypes;
 
 /// Two entities sharing sites through composed operations. Properties: entityA, entityB, sharedSiteMask, commutatorNorm.
-pub trait InteractionContext<P: Primitives> {
+pub trait InteractionContext<H: HostTypes> {
     /// Associated type for `TermExpression`.
-    type TermExpression: crate::kernel::schema::TermExpression<P>;
+    type TermExpression: crate::kernel::schema::TermExpression<H>;
     /// First entity in the interaction context.
     fn entity_a(&self) -> &Self::TermExpression;
     /// Second entity in the interaction context.
     fn entity_b(&self) -> &Self::TermExpression;
     /// Bitmask identifying which sites are shared between the two entities.
-    fn shared_site_mask(&self) -> P::NonNegativeInteger;
+    fn shared_site_mask(&self) -> u64;
     /// The norm of the commutator on shared sites. Zero iff the operators commute.
-    fn commutator_norm(&self) -> P::Decimal;
+    fn commutator_norm(&self) -> H::Decimal;
 }
 
 /// The norm ‖\[δ_A, ι_B\]‖ on shared sites. Zero iff operators commute on the shared domain.
-pub trait CommutatorState<P: Primitives> {
+pub trait CommutatorState<H: HostTypes> {
     /// The computed commutator norm value.
-    fn commutator_value(&self) -> P::Decimal;
+    fn commutator_value(&self) -> H::Decimal;
 }
 
 /// The norm of the three-way associator on shared sites.
-pub trait AssociatorState<P: Primitives> {
+pub trait AssociatorState<H: HostTypes> {
     /// The norm of the three-way associator on shared sites.
-    fn associator_norm(&self) -> P::Decimal;
+    fn associator_norm(&self) -> H::Decimal;
 }
 
 /// Three entities whose interaction exhibits non-associativity due to read-write interleaving.
-pub trait AssociatorTriple<P: Primitives> {
+pub trait AssociatorTriple<H: HostTypes> {
     /// Associated type for `Datum`.
-    type Datum: crate::kernel::schema::Datum<P>;
+    type Datum: crate::kernel::schema::Datum<H>;
     /// First component datum in the associator triple.
     fn triple_component_a(&self) -> &Self::Datum;
     /// Second component datum in the associator triple.
@@ -43,61 +43,61 @@ pub trait AssociatorTriple<P: Primitives> {
     /// Third component datum in the associator triple.
     fn triple_component_c(&self) -> &Self::Datum;
     /// Associated type for `Observable`.
-    type Observable: crate::bridge::observable::Observable<P>;
+    type Observable: crate::bridge::observable::Observable<H>;
     /// Reference to the observable describing the associativity profile.
     fn associator_profile_ref(&self) -> &Self::Observable;
     /// The maximum norm of the associator for this triple.
-    fn associator_norm_value(&self) -> P::Decimal;
+    fn associator_norm_value(&self) -> H::Decimal;
 }
 
 /// A site shared by all three entities in an AssociatorTriple.
-pub trait ThreeWaySite<P: Primitives> {
+pub trait ThreeWaySite<H: HostTypes> {
     /// The position index of the shared site.
-    fn site_position(&self) -> P::NonNegativeInteger;
+    fn site_position(&self) -> u64;
     /// Value under left-associative grouping (AB)C.
-    fn left_grouping_value(&self) -> P::Decimal;
+    fn left_grouping_value(&self) -> H::Decimal;
     /// Value under right-associative grouping A(BC).
-    fn right_grouping_value(&self) -> P::Decimal;
+    fn right_grouping_value(&self) -> H::Decimal;
     /// Whether this site is pinned by a lease constraint.
-    fn is_pinned(&self) -> P::Boolean;
+    fn is_pinned(&self) -> bool;
     /// Associated type for `TermExpression`.
-    type TermExpression: crate::kernel::schema::TermExpression<P>;
+    type TermExpression: crate::kernel::schema::TermExpression<H>;
     /// Identifier of the entity pair that pins this site.
     fn pinning_pair(&self) -> &Self::TermExpression;
 }
 
 /// Sequence of CommutatorStates across interaction steps.
-pub trait NegotiationTrace<P: Primitives> {
+pub trait NegotiationTrace<H: HostTypes> {
     /// Number of steps in the negotiation trace.
-    fn negotiation_steps(&self) -> P::NonNegativeInteger;
+    fn negotiation_steps(&self) -> u64;
     /// Whether the trace converges to zero commutator or zero associator.
-    fn is_convergent(&self) -> P::Boolean;
+    fn is_convergent(&self) -> bool;
     /// The number of steps in a negotiation trace.
-    fn trace_length(&self) -> P::NonNegativeInteger;
+    fn trace_length(&self) -> u64;
     /// The rate at which the negotiation trace converges.
-    fn convergence_rate(&self) -> P::Decimal;
+    fn convergence_rate(&self) -> H::Decimal;
     /// Associated type for `TermExpression`.
-    type TermExpression: crate::kernel::schema::TermExpression<P>;
+    type TermExpression: crate::kernel::schema::TermExpression<H>;
     /// The terminal value of the negotiation trace.
     fn terminal_value(&self) -> &Self::TermExpression;
 }
 
 /// Sequence of AssociatorStates across interaction steps.
-pub trait MutualModelTrace<P: Primitives> {
+pub trait MutualModelTrace<H: HostTypes> {
     /// Whether the mutual model trace converges.
-    fn model_convergent(&self) -> P::Boolean;
+    fn model_convergent(&self) -> bool;
 }
 
 /// Simplicial complex of N-entity coupling.
-pub trait InteractionNerve<P: Primitives> {
+pub trait InteractionNerve<H: HostTypes> {
     /// Maximum dimension of the interaction nerve simplicial complex.
-    fn nerve_dimension(&self) -> P::NonNegativeInteger;
+    fn nerve_dimension(&self) -> u64;
     /// Betti number sequence of the interaction nerve.
-    fn nerve_betti_numbers(&self) -> P::NonNegativeInteger;
+    fn nerve_betti_numbers(&self) -> u64;
 }
 
 /// IC(A,B) = κ(session(A,B)). Combined interaction-composition operator.
-pub trait InteractionComposition<P: Primitives> {
+pub trait InteractionComposition<H: HostTypes> {
     /// Depth of the interaction composition reification.
-    fn reification_depth(&self) -> P::NonNegativeInteger;
+    fn reification_depth(&self) -> u64;
 }

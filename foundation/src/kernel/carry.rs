@@ -4,61 +4,61 @@
 //!
 //! Space: Kernel
 
-use crate::Primitives;
+use crate::HostTypes;
 
 /// The Boolean function chain c_{k+1} = or(and(x_k, y_k), and(xor(x_k, y_k), c_k)). The carry chain is the algebraic mechanism behind the incompatibility metric d_Δ.
-pub trait CarryChain<P: Primitives> {
+pub trait CarryChain<H: HostTypes> {
     /// The number of sites in this carry chain.
-    fn chain_length(&self) -> P::NonNegativeInteger;
+    fn chain_length(&self) -> u64;
     /// Bit mask of site positions where carry is generated: and(x_k, y_k) = 1.
-    fn generate_mask(&self) -> P::NonNegativeInteger;
+    fn generate_mask(&self) -> u64;
     /// Bit mask of site positions where carry propagates: xor(x_k, y_k) = 1.
-    fn propagate_mask(&self) -> P::NonNegativeInteger;
+    fn propagate_mask(&self) -> u64;
     /// Bit mask of site positions where carry is killed: neither generated nor propagated.
-    fn kill_mask(&self) -> P::NonNegativeInteger;
+    fn kill_mask(&self) -> u64;
 }
 
 /// A single carry event at site k. Three kinds: Generate (and(x_k, y_k) = 1), Propagate (xor(x_k, y_k) = 1 and c_k = 1), Kill (neither generate nor propagate).
-pub trait CarryEvent<P: Primitives> {
+pub trait CarryEvent<H: HostTypes> {
     /// The kind of carry event: Generate, Propagate, or Kill.
-    fn event_kind(&self) -> P::NonNegativeInteger;
+    fn event_kind(&self) -> u64;
     /// The site index k at which this carry event occurs.
-    fn site_position(&self) -> P::NonNegativeInteger;
+    fn site_position(&self) -> u64;
 }
 
 /// The complete carry pattern for an addition x + y. Aggregates carry events across all sites into counts and position masks.
-pub trait CarryProfile<P: Primitives> {
+pub trait CarryProfile<H: HostTypes> {
     /// The total number of carry events in this profile.
-    fn carry_count(&self) -> P::NonNegativeInteger;
+    fn carry_count(&self) -> u64;
     /// The longest consecutive propagation run in this profile.
-    fn max_propagation_length(&self) -> P::NonNegativeInteger;
+    fn max_propagation_length(&self) -> u64;
     /// Associated type for `CarryChain`.
-    type CarryChain: CarryChain<P>;
+    type CarryChain: CarryChain<H>;
     /// The carry chain that this profile summarizes.
     fn profile_chain(&self) -> &Self::CarryChain;
 }
 
 /// A mapping from a finite symbol set S to Z/(2^k)Z where 2^k ≥ |S|. Determines how domain values are represented as ring elements.
-pub trait EncodingConfiguration<P: Primitives> {
+pub trait EncodingConfiguration<H: HostTypes> {
     /// The cardinality of the symbol set S being encoded.
-    fn symbol_set_size(&self) -> P::PositiveInteger;
+    fn symbol_set_size(&self) -> u64;
     /// The number of bits k used for encoding (2^k ≥ |S|).
-    fn quantization_bits(&self) -> P::PositiveInteger;
+    fn quantization_bits(&self) -> u64;
     /// Associated type for `TermExpression`.
-    type TermExpression: crate::kernel::schema::TermExpression<P>;
+    type TermExpression: crate::kernel::schema::TermExpression<H>;
     /// String representation of the mapping from symbols to ring elements.
     fn encoding_map(&self) -> &Self::TermExpression;
 }
 
 /// The d_Δ quality metric for an encoding over observed data. Measures how well an encoding minimizes carry-induced metric incompatibility.
-pub trait EncodingQuality<P: Primitives> {
+pub trait EncodingQuality<H: HostTypes> {
     /// The mean d_Δ over observed pairs for this encoding.
-    fn mean_delta(&self) -> P::Decimal;
+    fn mean_delta(&self) -> H::Decimal;
     /// The ratio of distinguishable pairs to total pairs under this encoding.
-    fn discrimination_ratio(&self) -> P::Decimal;
+    fn discrimination_ratio(&self) -> H::Decimal;
     /// Whether this encoding minimizes Σ d_Δ over observed pairs.
-    fn is_optimal_encoding(&self) -> P::Boolean;
+    fn is_optimal_encoding(&self) -> bool;
 }
 
 /// Observes the carry depth of a Datum in the W₂ tower, computed as the maximum carry-chain length in any operation producing it. Used as the bound observable for the carryConstraintKind BoundConstraint.
-pub trait CarryDepthObservable<P: Primitives>: crate::bridge::observable::Observable<P> {}
+pub trait CarryDepthObservable<H: HostTypes>: crate::bridge::observable::Observable<H> {}

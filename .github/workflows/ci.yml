@@ -24,6 +24,9 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt, clippy
+          # Phase J (target §7.5) configuration 1: bare-metal no_std target
+          # is a required build for every PR.
+          targets: thumbv7em-none-eabihf
 
       - name: Cache cargo registry
         uses: actions/cache@v4
@@ -50,13 +53,27 @@ jobs:
       - name: Verify no drift in generated code
         run: git diff --exit-code foundation/src/
 
-      - name: Check generated crate (no deps)
+      # Phase J (target §7.5): three required no_std build configurations.
+      - name: Build foundation — bare-metal no_std (config 1)
+        run: cargo build -p uor-foundation --no-default-features --target thumbv7em-none-eabihf
+
+      - name: Build foundation — alloc-additive (config 2)
+        run: cargo build -p uor-foundation --no-default-features --features alloc
+
+      - name: Build foundation — all features (config 3)
+        run: cargo build -p uor-foundation --all-features
+
+      - name: Check generated crate (no deps, host target)
         run: cargo check -p uor-foundation --no-default-features
 
+      # Phase J (target §7.3): ψ-leakage CI gate. Scans consumer-facing
+      # surfaces for the character ψ and fails on any hit outside the
+      # allowlist in conformance::validators::docs::psi_leakage.
+      - name: Phase J ψ-leakage gate
+        run: cargo xtask check-psi
+
       - name: Verify crate packaging (dry-run)
-        run: |
-          cargo publish --dry-run --allow-dirty -p uor-foundation
-          cargo publish --dry-run --allow-dirty -p uor-foundation-macros
+        run: cargo publish --dry-run --allow-dirty -p uor-foundation
 
       - name: Generate Lean 4 formalization
         run: cargo run --bin uor-lean

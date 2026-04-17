@@ -5,8 +5,7 @@
 //!   `limb_count` fields.
 //! - `MultiplicationEvidence` struct with `splitting_factor`,
 //!   `sub_multiplication_count`, `landauer_cost_nats` accessors.
-//! - `MultiplicationCertificate` sealed shim (already verified elsewhere but
-//!   checked here as a co-located sanity check).
+//! - `MultiplicationCertificate` sealed shim.
 //! - `resolver::multiplication::certify` free function.
 
 use std::path::Path;
@@ -70,13 +69,7 @@ pub fn validate(workspace: &Path) -> Result<ConformanceReport> {
         ),
         (
             "resolver::multiplication::certify free function",
-            "pub fn certify(",
-        ),
-        // v0.2.2 T2.1 (cleanup): trait-level Certify façade delegates to
-        // the free function instead of returning a default certificate.
-        (
-            "MultiplicationResolver trait delegation",
-            "crate::enforcement::resolver::multiplication::certify(&context)",
+            "pub fn certify<H: crate::enforcement::Hasher>(",
         ),
     ];
 
@@ -92,7 +85,7 @@ pub fn validate(workspace: &Path) -> Result<ConformanceReport> {
             VALIDATOR,
             "Phase C.4 multiplication resolver surface complete: MulContext, \
              MultiplicationEvidence, MultiplicationCertificate, and \
-             resolver::multiplication::certify all present",
+             resolver::multiplication::certify free function all present",
         ));
     } else {
         report.push(TestResult::fail_with_details(

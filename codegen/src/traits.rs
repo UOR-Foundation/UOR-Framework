@@ -88,22 +88,24 @@ pub fn generate_namespace_module(
 
     let skip_classes = enum_class_names();
 
-    // Determine imports needed
-    let mut needs_primitives = false;
+    // Determine imports needed. Phase B (target §4.1 W10): the `H: HostTypes`
+    // parameter replaces the deleted `P: Primitives`. The same heuristic
+    // applies — any trait whose class has a property or a non-owl-Thing
+    // supertrait receives the generic parameter.
+    let mut needs_host_types = false;
     for prop in &module.properties {
         if prop.domain.is_some() && prop.kind != PropertyKind::Annotation {
-            needs_primitives = true;
+            needs_host_types = true;
             break;
         }
     }
-    // Also check if any class has supertrait that needs P
     for class in &module.classes {
         if skip_classes.contains(local_name(class.id)) {
             continue;
         }
         for _parent in class.subclass_of {
             if *_parent != OWL_THING {
-                needs_primitives = true;
+                needs_host_types = true;
             }
         }
     }
@@ -134,13 +136,13 @@ pub fn generate_namespace_module(
         }
     }
 
-    // Emit imports in alphabetical order (enum imports before Primitives)
+    // Emit imports in alphabetical order (enum imports before HostTypes).
     enum_imports.sort_unstable();
     for imp in &enum_imports {
         let _ = writeln!(f.buf, "use crate::enums::{imp};");
     }
-    if needs_primitives {
-        f.line("use crate::Primitives;");
+    if needs_host_types {
+        f.line("use crate::HostTypes;");
     }
     f.blank();
 
@@ -201,8 +203,10 @@ fn generate_trait(
         let _ = writeln!(f.buf, "/// Disjoint with: {}.", disjoints.join(", "));
     }
 
-    // All traits in this crate take P: Primitives for consistency
-    let p_param = "<P: Primitives>";
+    // Phase B: every trait takes `<H: HostTypes>` for consistency. The
+    // `Primitives` trait is deleted; `HostTypes` is the only host-environment
+    // slot carrier (three slots: `Decimal`, `HostString`, `WitnessBytes`).
+    let p_param = "<H: HostTypes>";
 
     // Supertrait bounds
     let supertraits = build_supertrait_bounds(class, ns_map, current_ns_iri);
@@ -311,9 +315,9 @@ fn generate_property_method(
                     }
                 }
                 None => {
-                    // Unknown XSD type — fall back to String ref
+                    // Unknown XSD type — fall back to host-string ref.
                     f.indented_doc_comment(&comment);
-                    let _ = writeln!(f.buf, "    fn {method_name}(&self) -> &P::String;");
+                    let _ = writeln!(f.buf, "    fn {method_name}(&self) -> &H::HostString;");
                 }
             }
         }
@@ -332,19 +336,19 @@ fn generate_property_method(
                     let _ = writeln!(f.buf, "    fn {method_name}(&self) -> &[{enum_path}];");
                 }
             } else if is_owl_thing || is_owl_class || is_rdf_list {
-                // Generic object — use a string IRI reference
+                // Generic object — use a host-string IRI reference.
                 f.indented_doc_comment(&comment);
                 if prop.functional {
-                    let _ = writeln!(f.buf, "    fn {method_name}(&self) -> &P::String;");
+                    let _ = writeln!(f.buf, "    fn {method_name}(&self) -> &H::HostString;");
                 } else {
-                    // Non-functional unsized: emit count + indexed getter
+                    // Non-functional unsized: emit count + indexed getter.
                     let _ = writeln!(f.buf, "    fn {method_name}_count(&self) -> usize;");
                     f.indented_doc_comment(&format!(
                         "Returns the item at `index`. Must satisfy `index < self.{method_name}_count()`."
                     ));
                     let _ = writeln!(
                         f.buf,
-                        "    fn {method_name}_at(&self, index: usize) -> &P::String;"
+                        "    fn {method_name}_at(&self, index: usize) -> &H::HostString;"
                     );
                 }
             } else {
@@ -362,10 +366,10 @@ fn generate_property_method(
                     let is_cross_ns = !prop.range.starts_with(current_ns_iri);
                     let trait_bound = if is_cross_ns {
                         class_trait_path(prop.range, ns_map)
-                            .map(|p| format!("{p}<P>"))
-                            .unwrap_or_else(|| format!("{range_local}<P>"))
+                            .map(|p| format!("{p}<H>"))
+                            .unwrap_or_else(|| format!("{range_local}<H>"))
                     } else {
-                        format!("{range_local}<P>")
+                        format!("{range_local}<H>")
                     };
 
                     let _ = writeln!(f.buf, "    /// Associated type for `{range_local}`.");
@@ -424,12 +428,12 @@ fn build_supertrait_bounds(
 
         if is_cross_ns {
             if let Some(path) = class_trait_path(parent_iri, ns_map) {
-                bounds.push(format!("{path}<P>"));
+                bounds.push(format!("{path}<H>"));
             } else {
-                bounds.push(format!("{parent_local}<P>"));
+                bounds.push(format!("{parent_local}<H>"));
             }
         } else {
-            bounds.push(format!("{parent_local}<P>"));
+            bounds.push(format!("{parent_local}<H>"));
         }
     }
 

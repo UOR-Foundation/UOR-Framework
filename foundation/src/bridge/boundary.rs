@@ -4,79 +4,79 @@
 //!
 //! Space: Bridge
 
-use crate::Primitives;
+use crate::HostTypes;
 
 /// A typed interface point between the kernel and the external world. Every data flow into or out of the ring crosses exactly one IOBoundary.
-pub trait IOBoundary<P: Primitives> {}
+pub trait IOBoundary<H: HostTypes> {}
 
 /// A typed source of external data entering the ring. Carries an expected TypeDefinition describing the shape of incoming data.
-pub trait Source<P: Primitives>: IOBoundary<P> {
+pub trait Source<H: HostTypes>: IOBoundary<H> {
     /// Associated type for `TypeDefinition`.
-    type TypeDefinition: crate::user::type_::TypeDefinition<P>;
+    type TypeDefinition: crate::user::type_::TypeDefinition<H>;
     /// The expected type of data arriving from this source.
     fn source_type(&self) -> &Self::TypeDefinition;
     /// Associated type for `GroundingMap`.
-    type GroundingMap: crate::user::morphism::GroundingMap<P>;
+    type GroundingMap: crate::user::morphism::GroundingMap<H>;
     /// The grounding map that transforms incoming surface data to ring datums.
     fn source_grounding(&self) -> &Self::GroundingMap;
 }
 
 /// A typed destination for data leaving the ring. Carries an expected TypeDefinition describing the shape of outgoing data.
-pub trait Sink<P: Primitives>: IOBoundary<P> {
+pub trait Sink<H: HostTypes>: IOBoundary<H> {
     /// Associated type for `TypeDefinition`.
-    type TypeDefinition: crate::user::type_::TypeDefinition<P>;
+    type TypeDefinition: crate::user::type_::TypeDefinition<H>;
     /// The expected type of data departing through this sink.
     fn sink_type(&self) -> &Self::TypeDefinition;
     /// Associated type for `ProjectionMap`.
-    type ProjectionMap: crate::user::morphism::ProjectionMap<P>;
+    type ProjectionMap: crate::user::morphism::ProjectionMap<H>;
     /// The projection map that transforms ring datums to outgoing surface data.
     fn sink_projection(&self) -> &Self::ProjectionMap;
 }
 
 /// An effect that crosses the kernel/external boundary. Specializes effect:ExternalEffect with explicit source or sink binding.
-pub trait BoundaryEffect<P: Primitives>: crate::kernel::effect::ExternalEffect<P> {
+pub trait BoundaryEffect<H: HostTypes>: crate::kernel::effect::ExternalEffect<H> {
     /// Associated type for `IOBoundary`.
-    type IOBoundary: IOBoundary<P>;
+    type IOBoundary: IOBoundary<H>;
     /// The boundary this effect crosses.
     fn effect_boundary(&self) -> &Self::IOBoundary;
     /// True iff applying the boundary effect twice produces the same result as applying it once.
-    fn is_idempotent(&self) -> P::Boolean;
+    fn is_idempotent(&self) -> bool;
 }
 
 /// A BoundaryEffect that reads from a Source and produces a datum in the ring.
-pub trait IngestEffect<P: Primitives>: BoundaryEffect<P> {
+pub trait IngestEffect<H: HostTypes>: BoundaryEffect<H> {
     /// Associated type for `Source`.
-    type Source: Source<P>;
+    type Source: Source<H>;
     /// The source being read.
     fn ingest_source(&self) -> &Self::Source;
 }
 
 /// A BoundaryEffect that writes a ring datum to a Sink.
-pub trait EmitEffect<P: Primitives>: BoundaryEffect<P> {
+pub trait EmitEffect<H: HostTypes>: BoundaryEffect<H> {
     /// Associated type for `Sink`.
-    type Sink: Sink<P>;
+    type Sink: Sink<H>;
     /// The sink being written to.
     fn emit_sink(&self) -> &Self::Sink;
 }
 
 /// A specification of the data shape, ordering, and framing constraints for data crossing a boundary.
-pub trait BoundaryProtocol<P: Primitives> {
+pub trait BoundaryProtocol<H: HostTypes> {
     /// Associated type for `TypeDefinition`.
-    type TypeDefinition: crate::user::type_::TypeDefinition<P>;
+    type TypeDefinition: crate::user::type_::TypeDefinition<H>;
     /// The type specification for boundary data.
     fn protocol_type(&self) -> &Self::TypeDefinition;
     /// Associated type for `Conjunction`.
-    type Conjunction: crate::user::type_::Conjunction<P>;
+    type Conjunction: crate::user::type_::Conjunction<H>;
     /// Sequencing constraints on boundary data.
     fn protocol_ordering(&self) -> &Self::Conjunction;
 }
 
 /// A Session that includes BoundaryEffects. Extends the session model to track which boundaries were crossed.
-pub trait BoundarySession<P: Primitives>: crate::user::state::Session<P> {
+pub trait BoundarySession<H: HostTypes>: crate::user::state::Session<H> {
     /// Associated type for `IOBoundary`.
-    type IOBoundary: IOBoundary<P>;
+    type IOBoundary: IOBoundary<H>;
     /// The boundaries crossed during this session.
     fn session_boundaries(&self) -> &[Self::IOBoundary];
     /// Total number of boundary crossings in this session.
-    fn crossing_count(&self) -> P::NonNegativeInteger;
+    fn crossing_count(&self) -> u64;
 }

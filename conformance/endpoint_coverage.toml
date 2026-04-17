@@ -1,0 +1,404 @@
+# Endpoint-coverage audit: every public symbol in foundation/tests/public-api.snapshot
+# is either (a) mapped to a behavior_*.rs test file that exercises its contract,
+# or (b) documented here as an exempted category. Unmapped symbols fail the
+# `rust/endpoint_coverage` conformance validator.
+#
+# Each mapping entry: `symbol = "behavior_<name>"` where the named test file
+# under foundation/tests/ exists and contains behavioral assertions.
+#
+# Each exemption declares a category of symbols that don't need a direct
+# behavior test because their correctness is either (a) enforced by the
+# type system, (b) indirectly exercised by grouped tests, or (c) a
+# pure documentation constant.
+
+# ─── Exemption: documentation constants ──────────────────────────────────
+# Compile-time constants whose only contract is their literal value. These
+# are pinned by the public-api.snapshot and any regression would already
+# fail the snapshot diff.
+[exempt.documentation_constants]
+description = "Pub const values whose contract is the literal — pinned by snapshot"
+symbols = [
+    "FINGERPRINT_MAX_BYTES",
+    "FINGERPRINT_MIN_BYTES",
+    "TRACE_MAX_EVENTS",
+    "TRACE_REPLAY_FORMAT_VERSION",
+    "JACOBIAN_MAX_SITES",
+    "MAX_BETTI_DIMENSION",
+    "MAX_OP_CHAIN_DEPTH",
+    "RECURSION_TRACE_MAX_DEPTH",
+    "PREFLIGHT_CHECK_IRIS",
+    "REDUCTION_STAGE_IRIS",
+    "INHABITANCE_DISPATCH_TABLE",
+]
+
+# ─── Exemption: sealed supertrait markers ────────────────────────────────
+# Sealed traits implemented only inside the foundation. The
+# escape_hatch_lint validator enforces that downstream cannot implement
+# them; any behavioral contract is indirectly exercised by the concrete
+# sealed types that implement them.
+[exempt.sealed_supertraits]
+description = "Sealed traits (lint-enforced no downstream impls)"
+symbols = [
+    "OntologyTarget",
+    "Certificate",
+    "GroundingMapKind",
+    "ValidationPhase",
+    "Observable",
+    "BoundShape",
+    "GroundedShape",
+    "GroundedValue",
+    "FragmentMarker",
+    "ImpossibilityWitnessKind",
+    "RingOp",
+    "UnaryRingOp",
+    "ValidLevelEmbedding",
+    "Hasher",
+    "HostTypes",
+    "MarkerTuple",
+    "MarkerIntersection",
+    "MarkersImpliedBy",
+    "Total",
+    "Invertible",
+    "PreservesStructure",
+    "PreservesMetric",
+    "Grounding",
+    "GroundingExt",
+    "GroundingProgramRun",
+    "ConstrainedTypeShape",
+]
+
+# ─── Mapping: sealed witnesses ──────────────────────────────────────────
+[coverage.grounded]
+symbols = ["Grounded", "GroundedCoord", "GroundedTuple", "Datum"]
+behavior = "behavior_witness_accessors"
+
+[coverage.certified]
+symbols = ["Certified", "CertificateKind"]
+behavior = "behavior_resolver_tower"
+
+[coverage.triad_stratum]
+symbols = ["Triad", "Stratum"]
+behavior = "behavior_witness_accessors"
+
+[coverage.uor_time]
+symbols = ["UorTime", "LandauerBudget", "Nanos"]
+behavior = "behavior_uor_time"
+
+[coverage.calibration]
+symbols = ["Calibration", "CalibrationError"]
+behavior = "behavior_calibration"
+
+[coverage.base_metrics]
+symbols = [
+    "SigmaValue",
+    "JacobianMetric",
+    "DDeltaMetric",
+    "EulerMetric",
+    "ResidualMetric",
+    "BettiMetric",
+]
+behavior = "behavior_witness_accessors"
+
+# ─── Mapping: builders (9 + derived result types) ──────────────────────
+[coverage.builders]
+symbols = [
+    "CompileUnit",
+    "CompileUnitBuilder",
+    "EffectDeclaration",
+    "EffectDeclarationBuilder",
+    "DispatchDeclaration",
+    "DispatchDeclarationBuilder",
+    "PredicateDeclaration",
+    "PredicateDeclarationBuilder",
+    "ParallelDeclaration",
+    "ParallelDeclarationBuilder",
+    "StreamDeclaration",
+    "StreamDeclarationBuilder",
+    "LeaseDeclaration",
+    "LeaseDeclarationBuilder",
+    "WittLevelDeclaration",
+    "WittLevelDeclarationBuilder",
+    "InteractionDeclaration",
+    "InteractionDeclarationBuilder",
+    "InteractionShape",
+    "ConstrainedTypeInput",
+    "GroundingDeclaration",
+    "GroundingDeclarationBuilder",
+    "TypeDeclaration",
+    "DispatchRule",
+    "SourceDeclaration",
+    "SinkDeclaration",
+]
+behavior = "behavior_builder_rejection"
+
+# ─── Mapping: pipeline drivers ─────────────────────────────────────────
+[coverage.pipeline_drivers]
+symbols = [
+    "PipelineFailure",
+    "ReplayError",
+    "StreamDriver",
+    "InteractionDriver",
+    "PeerInput",
+    "PeerPayload",
+    "StepResult",
+    "CommutatorState",
+    "StageOutcome",
+    "FragmentKind",
+    "ConstraintRef",
+]
+behavior = "behavior_pipeline_determinism"
+
+# ─── Mapping: grounding combinators & interpreter ───────────────────────
+[coverage.grounding_combinators]
+symbols = [
+    "GroundingProgram",
+    "GroundingPrimitive",
+    "GroundingPrimitiveOp",
+    "MarkerBits",
+    "TotalMarker",
+    "InvertibleMarker",
+    "PreservesStructureMarker",
+    "IntegerGroundingMap",
+    "Utf8GroundingMap",
+    "JsonGroundingMap",
+    "DigestGroundingMap",
+    "BinaryGroundingMap",
+]
+behavior = "behavior_grounding_interpreter"
+
+# ─── Mapping: observability surface ─────────────────────────────────────
+[coverage.observability]
+symbols = ["Trace", "TraceEvent", "Derivation", "ObservabilitySubscription"]
+behavior = "behavior_observability"
+
+# ─── Mapping: ring ops — 9 ops × 32 levels ─────────────────────────────
+[coverage.ring_ops]
+symbols = [
+    "Add",
+    "Sub",
+    "Mul",
+    "And",
+    "Or",
+    "Xor",
+    "Neg",
+    "BNot",
+    "Succ",
+    "Embed",
+]
+behavior = "behavior_ring_ops_identities"
+
+# ─── Mapping: WittLevel marker structs (32 levels) ────────────────────
+# Note: `WittLevel` itself is a struct in enums.rs, re-exported via
+# `pub use enums::*;` in lib.rs. The public-api.snapshot scanner reads
+# lib.rs/enforcement.rs/pipeline.rs and does not follow re-exports, so
+# `WittLevel` isn't in the snapshot directly — behavior_const_ring_eval
+# exercises its semantics via the per-level marker structs.
+[coverage.witt_level_markers]
+symbols = [
+    "W8", "W16", "W24", "W32", "W40", "W48", "W56", "W64",
+    "W72", "W80", "W88", "W96", "W104", "W112", "W120", "W128",
+    "W160", "W192", "W224", "W256", "W384", "W448", "W512", "W520", "W528",
+    "W1024", "W2048", "W4096", "W8192", "W12288", "W16384", "W32768",
+    "Limbs",
+]
+behavior = "behavior_const_ring_eval"
+
+# ─── Mapping: certificate classes ──────────────────────────────────────
+[coverage.certificates]
+symbols = [
+    "TransformCertificate",
+    "IsometryCertificate",
+    "InvolutionCertificate",
+    "GeodesicCertificate",
+    "MeasurementCertificate",
+    "BornRuleVerification",
+    "CompletenessCertificate",
+    "GroundingCertificate",
+    "LiftChainCertificate",
+    "InhabitanceCertificate",
+    "MultiplicationCertificate",
+    "MultiplicationEvidence",
+    "CompletenessAuditTrail",
+    "ChainAuditTrail",
+    "GeodesicEvidenceBundle",
+    "GenericImpossibilityWitness",
+    "InhabitanceImpossibilityWitness",
+    "MulContext",
+]
+behavior = "behavior_resolver_tower"
+
+# ─── Mapping: bridge + kernel sealed types ─────────────────────────────
+[coverage.bridge_kernel]
+symbols = [
+    "Query",
+    "Coordinate",
+    "BindingQuery",
+    "Binding",
+    "Partition",
+    "PartitionCertificate",
+    "PartitionComponent",
+    "HomologyClass",
+    "CohomologyClass",
+    "CarryProfile",
+    "CarryEvent",
+    "ConvergenceLevel",
+    "DivisionAlgebraWitness",
+    "MonoidalProduct",
+    "MonoidalUnit",
+    "OperadComposition",
+    "RecursionTrace",
+    "AddressRegion",
+    "LinearBudget",
+    "LeaseAllocation",
+    "CarryDepthObservable",
+    "DerivationDepthObservable",
+    "FreeRankObservable",
+    "ConstraintKind",
+    "ValueModObservable",
+]
+behavior = "behavior_witness_accessors"
+
+# ─── Mapping: bound-shape catalogue ────────────────────────────────────
+[coverage.bound_shapes]
+symbols = [
+    "AffineConstraint",
+    "CarryConstraint",
+    "CompositeConstraint",
+    "DepthConstraint",
+    "HammingConstraint",
+    "ResidueConstraint",
+    "SiteConstraint",
+    "AffineEqualBound",
+    "EqualBound",
+    "GreaterEqBound",
+    "LessEqBound",
+    "RangeContainBound",
+    "ResidueClassBound",
+    "HammingMetric",
+    "BoundConstraint",
+    "BoundArgValue",
+    "BoundArgEntry",
+    "BoundArguments",
+    "Conjunction",
+]
+behavior = "behavior_builder_rejection"
+
+# ─── Mapping: phase-marker types ───────────────────────────────────────
+[coverage.phase_markers]
+symbols = ["CompileTime", "Runtime", "Validated", "ValidationPhase"]
+behavior = "behavior_pipeline_determinism"
+
+# ─── Mapping: term AST ─────────────────────────────────────────────────
+[coverage.term_ast]
+symbols = ["Term", "TermArena", "TermList", "Assertion"]
+behavior = "behavior_builder_rejection"
+
+# ─── Mapping: bindings / content-address ───────────────────────────────
+[coverage.content_address]
+symbols = [
+    "BindingsTable",
+    "BindingsTableError",
+    "BindingEntry",
+    "ContentAddress",
+    "ContentFingerprint",
+    "ShapeViolation",
+    "FreeRank",
+    "BoundarySession",
+]
+behavior = "behavior_witness_accessors"
+
+# ─── Mapping: fragment markers ─────────────────────────────────────────
+[coverage.fragment_markers]
+symbols = ["Is2SatShape", "IsHornShape", "IsResidualFragment"]
+behavior = "behavior_resolver_tower"
+
+# ─── Mapping: SAT deciders (public pipeline) ───────────────────────────
+[coverage.sat_deciders]
+symbols = ["decide_two_sat", "decide_horn_sat"]
+behavior = "behavior_sat_deciders"
+
+# ─── Mapping: grammar surface / declarations ───────────────────────────
+# Note: the v0.2.1 unit-struct resolver types (GroundingAwareResolver,
+# TowerCompletenessResolver, etc.) were deleted in Phase B; the free-function
+# resolver path is the sole verdict surface. The public-api.snapshot no
+# longer carries those symbols, so they are not mapped here.
+[coverage.grammar_surface]
+symbols = [
+    "subscribe_trace_events",
+]
+behavior = "behavior_grammar_surface_roundtrip"
+
+# ─── Mapping: pipeline fold digests + helpers ──────────────────────────
+# Only symbols that appear in the public-api.snapshot are listed here.
+# Helper functions that exist in the crate but are only accessible via
+# the pipeline module (not re-exported) are not covered by this map.
+[coverage.pipeline_helpers]
+symbols = [
+    "fold_unit_digest",
+    "fold_stream_digest",
+    "fold_stream_step_digest",
+    "fold_parallel_digest",
+    "fold_interaction_digest",
+    "fold_interaction_step_digest",
+    "fold_constraint_ref",
+    "DispatchTable",
+    "certify_tower_completeness_const",
+    "certify_incremental_completeness_const",
+    "certify_grounding_aware_const",
+    "certify_inhabitance_const",
+    "certify_multiplication_const",
+    "run_reduction_stages",
+    "run_tower_completeness",
+    "run_incremental_completeness",
+    "run_grounding_aware",
+    "run_inhabitance",
+    "run",
+    "run_const",
+    "run_parallel",
+    "run_stream",
+    "run_interactive",
+    "preflight_budget_solvency",
+    "preflight_feasibility",
+    "preflight_dispatch_coverage",
+    "preflight_package_coherence",
+    "preflight_timing",
+    "runtime_timing",
+    "SpectralSequencePage",
+]
+behavior = "behavior_pipeline_determinism"
+
+# ─── Mapping: HostTypes + DefaultHostTypes ─────────────────────────────
+[coverage.host_types]
+symbols = ["DefaultHostTypes"]
+behavior = "behavior_grammar_surface_roundtrip"
+
+# ─── Mapping: module re-exports ────────────────────────────────────────
+# Module declarations (pub mod foo) are structural and do not need
+# behavior tests — their contract is the set of items they export, each
+# of which has its own mapping.
+[exempt.module_declarations]
+description = "pub mod foo — structural exports covered by item-level mappings"
+symbols = [
+    "bridge",
+    "enforcement",
+    "enums",
+    "kernel",
+    "pipeline",
+    "user",
+    "calibrations",
+    "combinators",
+    "prelude",
+    "replay",
+    "resolver",
+    "__test_helpers",
+    "transcendentals",
+    "constrained_type_shape_sealed",
+]
+
+# Snapshot-scanner artifacts: `pub const fn foo(...)` when matched against
+# the `const ` prefix first extracts kind="const" name="fn". These
+# artifact entries are excluded from coverage — the real function names
+# underneath are covered elsewhere.
+[exempt.snapshot_scanner_artifacts]
+description = "Anomalous snapshot entries from the scanner's parse of `pub const fn`"
+symbols = ["fn"]

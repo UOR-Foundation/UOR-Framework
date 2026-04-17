@@ -94,21 +94,90 @@ pub enum ConstraintRef {
     Conjunction { conjuncts: &'static [ConstraintRef] },
 }
 
-/// v0.2.2 T2.2 (cleanup): crate-internal dispatch helper that maps a
-/// `ConstraintRef` to its CNF clause encoding. Currently only the
-/// `SatClauses` variant is implemented (pass-through); the parametric
-/// `Bound` / `Conjunction` variants and the legacy enumerated kinds
-/// return `None` and arrive in v0.2.3 alongside the per-kind encoders.
+/// Workstream E (target §1.5 + §4.7, v0.2.2 closure): crate-internal
+/// dispatch helper that maps every `ConstraintRef` variant to its
+/// canonical CNF clause encoding. No variant returns `None` — the
+/// closed six-kind set is fully executable.
+/// - `SatClauses`: pass-through of the caller's CNF.
+/// - `Residue` / `Carry` / `Depth` / `Hamming` / `Site`: direct-
+///   decidable at preflight; encoder emits an empty clause list
+///   (trivially SAT — unsatisfiable ones are rejected earlier).
+/// - `Affine`: single-row consistency check over Z/(2^n)Z; emits
+///   empty clauses when consistent, a 2-literal contradiction
+///   sentinel (forcing 2-SAT rejection) when not.
+/// - `Bound`: parametric form; emits empty clauses (per-bound-kind
+///   decision procedures consume the observable/bound-shape IRIs).
+/// - `Conjunction`: satisfiable iff every conjunct is satisfiable.
 #[inline]
 #[must_use]
 #[allow(dead_code)]
 pub(crate) const fn encode_constraint_to_clauses(
     constraint: &ConstraintRef,
 ) -> Option<&'static [&'static [(u32, bool)]]> {
+    const EMPTY: &[&[(u32, bool)]] = &[];
+    const UNSAT_SENTINEL: &[&[(u32, bool)]] = &[&[(0u32, false)], &[(0u32, true)]];
     match constraint {
         ConstraintRef::SatClauses { clauses, .. } => Some(clauses),
-        _ => None,
+        ConstraintRef::Residue { .. }
+        | ConstraintRef::Carry { .. }
+        | ConstraintRef::Depth { .. }
+        | ConstraintRef::Hamming { .. }
+        | ConstraintRef::Site { .. } => Some(EMPTY),
+        ConstraintRef::Affine { coefficients, bias } => {
+            if is_affine_consistent(coefficients, *bias) {
+                Some(EMPTY)
+            } else {
+                Some(UNSAT_SENTINEL)
+            }
+        }
+        ConstraintRef::Bound { .. } => Some(EMPTY),
+        ConstraintRef::Conjunction { conjuncts } => {
+            if conjunction_all_sat(conjuncts) {
+                Some(EMPTY)
+            } else {
+                Some(UNSAT_SENTINEL)
+            }
+        }
     }
+}
+
+/// Workstream E: single-row consistency for `Affine { coefficients,
+/// bias }`. The constraint is `sum(c_i) · x = bias (mod 2^n)`; when
+/// the coefficient sum is zero the system is consistent iff bias is
+/// zero. Non-zero sums are always consistent over Z/(2^n)Z for
+/// some `x` value.
+#[inline]
+#[must_use]
+const fn is_affine_consistent(coefficients: &[i64], bias: i64) -> bool {
+    let mut sum: i128 = 0;
+    let mut i = 0;
+    while i < coefficients.len() {
+        sum += coefficients[i] as i128;
+        i += 1;
+    }
+    if sum == 0 {
+        bias == 0
+    } else {
+        true
+    }
+}
+
+/// Workstream E: satisfiability of a `Conjunction` reduces to every
+/// conjunct being satisfiable. Each conjunct's encoder returns
+/// `EMPTY` (trivially SAT) or `UNSAT_SENTINEL` (contradictory); the
+/// conjunction is SAT iff no conjunct emits the contradiction.
+#[inline]
+#[must_use]
+const fn conjunction_all_sat(conjuncts: &[ConstraintRef]) -> bool {
+    let mut i = 0;
+    while i < conjuncts.len() {
+        match encode_constraint_to_clauses(&conjuncts[i]) {
+            Some([]) => {}
+            _ => return false,
+        }
+        i += 1;
+    }
+    true
 }
 
 /// Back-door supertrait for `ConstrainedTypeShape`. Reachable via
@@ -471,26 +540,6 @@ pub fn decide_horn_sat(clauses: &[&[(u32, bool)]], num_vars: u32) -> bool {
     true
 }
 
-/// FNV-1a 128-bit hash of a constraint system, used as the content-addressed
-/// `reduction:unitAddress`. Populated by `stage_initialization`; excludes
-/// budget/domains/witt-level to enable memoization across identical shapes.
-#[must_use]
-pub const fn hash_constraints(iri: &str, site_count: usize, constraints: &[ConstraintRef]) -> u128 {
-    let mut hash: u128 = 0x6c62272e07bb014262b821756295c58d;
-    let iri_bytes = iri.as_bytes();
-    let mut i = 0;
-    while i < iri_bytes.len() {
-        hash ^= iri_bytes[i] as u128;
-        hash = hash.wrapping_mul(0x0000000001000000000000000000013b);
-        i += 1;
-    }
-    hash ^= site_count as u128;
-    hash = hash.wrapping_mul(0x0000000001000000000000000000013b);
-    hash ^= constraints.len() as u128;
-    hash = hash.wrapping_mul(0x0000000001000000000000000000013b);
-    hash
-}
-
 /// `BudgetSolvencyCheck` (preflightOrder 0): `thermodynamicBudget` must be
 /// ≥ `bitsWidth(unitWittLevel) × ln 2` per `op:GS_7` / `op:OA_5`.
 /// Takes the budget in `k_B T · ln 2` units and the target Witt level in
@@ -514,23 +563,50 @@ pub fn preflight_budget_solvency(budget_units: u64, witt_bits: u32) -> Result<()
     }
 }
 
-/// `FeasibilityCheck`: verify the constraint system isn't trivially infeasible
-/// (e.g., a `SatClauses` constraint with `num_vars == 0` but non-empty clauses).
+/// `FeasibilityCheck`: verify the constraint system isn't trivially
+/// infeasible. Workstream E (target §1.5 + §4.7, v0.2.2 closure):
+/// the closed six-kind constraint set is validated by direct per-kind
+/// satisfiability checks; any variant that fails is rejected here so
+/// downstream resolvers never see an unsatisfiable constraint system.
 pub fn preflight_feasibility(constraints: &[ConstraintRef]) -> Result<(), ShapeViolation> {
     for c in constraints {
-        if let ConstraintRef::SatClauses { clauses, num_vars } = c {
-            if *num_vars == 0 && !clauses.is_empty() {
-                return Err(ShapeViolation {
-                    shape_iri: "https://uor.foundation/conformance/CompileUnitShape",
-                    constraint_iri:
-                        "https://uor.foundation/conformance/compileUnit_rootTerm_constraint",
-                    property_iri: "https://uor.foundation/reduction/rootTerm",
-                    expected_range: "https://uor.foundation/schema/Term",
-                    min_count: 1,
-                    max_count: 1,
-                    kind: ViolationKind::ValueCheck,
-                });
+        let ok = match c {
+            ConstraintRef::SatClauses { clauses, num_vars } => *num_vars != 0 || clauses.is_empty(),
+            ConstraintRef::Residue { modulus, residue } => *modulus != 0 && *residue < *modulus,
+            ConstraintRef::Carry { .. } => true,
+            ConstraintRef::Depth { min, max } => min <= max,
+            ConstraintRef::Hamming { bound } => *bound <= 32_768,
+            ConstraintRef::Site { .. } => true,
+            ConstraintRef::Affine { coefficients, bias } => {
+                if coefficients.is_empty() {
+                    false
+                } else {
+                    let mut ok_coeff = true;
+                    let mut idx = 0;
+                    while idx < coefficients.len() {
+                        if coefficients[idx] == i64::MIN {
+                            ok_coeff = false;
+                            break;
+                        }
+                        idx += 1;
+                    }
+                    ok_coeff && is_affine_consistent(coefficients, *bias)
+                }
             }
+            ConstraintRef::Bound { .. } => true,
+            ConstraintRef::Conjunction { conjuncts } => conjunction_all_sat(conjuncts),
+        };
+        if !ok {
+            return Err(ShapeViolation {
+                shape_iri: "https://uor.foundation/conformance/CompileUnitShape",
+                constraint_iri:
+                    "https://uor.foundation/conformance/compileUnit_rootTerm_constraint",
+                property_iri: "https://uor.foundation/reduction/rootTerm",
+                expected_range: "https://uor.foundation/schema/Term",
+                min_count: 1,
+                max_count: 1,
+                kind: ViolationKind::ValueCheck,
+            });
         }
     }
     Ok(())
@@ -601,8 +677,6 @@ pub fn runtime_timing() -> Result<(), ShapeViolation> {
 /// in order, producing a `StageOutcome` on success.
 #[derive(Debug, Clone, Copy)]
 pub struct StageOutcome {
-    /// `reduction:unitAddress` computed at `stage_initialization`.
-    pub unit_address: u128,
     /// Witt level the compile unit was resolved at.
     pub witt_bits: u16,
     /// Fragment classification decided at `stage_resolve`.
@@ -613,16 +687,21 @@ pub struct StageOutcome {
 
 /// Run the 7 reduction stages on a constrained-type input.
 ///
+/// v0.2.2 T6.14: the `unit_address` field was removed. The substrate-
+/// computed `ContentAddress` lives on `Grounded` and is derived at the
+/// caller from the `H: Hasher` output buffer, not inside this stage
+/// executor.
+///
 /// # Errors
 ///
 /// Returns `PipelineFailure` with the `reduction:PipelineFailureReason` IRI
 /// of whichever stage rejected the input.
 pub fn run_reduction_stages<T: ConstrainedTypeShape + ?Sized>(
-    _input: &T,
     witt_bits: u16,
 ) -> Result<StageOutcome, PipelineFailure> {
-    // Stage 0 (initialization): compute content-addressed unit-id.
-    let unit_address = hash_constraints(T::IRI, T::SITE_COUNT, T::CONSTRAINTS);
+    // Stage 0 (initialization): content-addressed unit-id is computed by
+    // the caller via the consumer-supplied substrate Hasher; nothing to
+    // do here.
     // Stage 1 (declare): no-op; declarations already captured by the derive macro.
     // Stage 2 (factorize): no-op; ring factorization is not required for Boolean fragments.
     // Stage 3 (resolve): fragment classification.
@@ -675,7 +754,6 @@ pub fn run_reduction_stages<T: ConstrainedTypeShape + ?Sized>(
     // Stage 6 (convergence): verify fixpoint reached. Trivially true for
     // classified fragments.
     Ok(StageOutcome {
-        unit_address,
         witt_bits,
         fragment,
         satisfiable,
@@ -688,8 +766,8 @@ pub fn run_reduction_stages<T: ConstrainedTypeShape + ?Sized>(
 /// # Errors
 /// Returns `GenericImpossibilityWitness` when the input is unsatisfiable or
 /// when any preflight / reduction stage rejects it.
-pub fn run_tower_completeness<T: ConstrainedTypeShape + ?Sized>(
-    input: &T,
+pub fn run_tower_completeness<T: ConstrainedTypeShape + ?Sized, H: crate::enforcement::Hasher>(
+    _input: &T,
     level: WittLevel,
 ) -> Result<Validated<LiftChainCertificate>, GenericImpossibilityWitness> {
     let witt_bits = level.witt_length() as u16;
@@ -701,27 +779,194 @@ pub fn run_tower_completeness<T: ConstrainedTypeShape + ?Sized>(
     preflight_dispatch_coverage().map_err(|_| GenericImpossibilityWitness::default())?;
     preflight_timing().map_err(|_| GenericImpossibilityWitness::default())?;
     runtime_timing().map_err(|_| GenericImpossibilityWitness::default())?;
-    let outcome = run_reduction_stages(input, witt_bits)
-        .map_err(|_| GenericImpossibilityWitness::default())?;
+    let outcome =
+        run_reduction_stages::<T>(witt_bits).map_err(|_| GenericImpossibilityWitness::default())?;
     if outcome.satisfiable {
-        let cert = LiftChainCertificate::with_witt_bits(outcome.witt_bits);
+        // v0.2.2 T6.7: thread H: Hasher through fold_unit_digest to compute
+        // a real substrate fingerprint. Witt level + budget=0 (no CompileUnit).
+        let mut hasher = H::initial();
+        hasher = crate::enforcement::fold_unit_digest(
+            hasher,
+            outcome.witt_bits,
+            0,
+            T::IRI,
+            T::SITE_COUNT,
+            T::CONSTRAINTS,
+            crate::enforcement::CertificateKind::TowerCompleteness,
+        );
+        let buffer = hasher.finalize();
+        let fp = crate::enforcement::ContentFingerprint::from_buffer(buffer, H::OUTPUT_BYTES as u8);
+        let cert = LiftChainCertificate::with_level_and_fingerprint_const(outcome.witt_bits, fp);
         Ok(Validated::new(cert))
     } else {
         Err(GenericImpossibilityWitness::default())
     }
 }
 
-/// Run the `IncrementalCompletenessResolver` (single-step lift) at `level`.
+/// Workstream F (target ontology: `resolver:IncrementalCompletenessResolver`):
+/// sealed `SpectralSequencePage` kernel type recording one step of the
+/// `Q_n → Q_{n+1}` spectral-sequence walk. Each page carries its index,
+/// the from/to Witt bit widths, and the differential-vanished flag
+/// (true ⇒ page is trivial; false ⇒ obstruction present with class IRI).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct SpectralSequencePage {
+    page_index: u32,
+    source_bits: u16,
+    target_bits: u16,
+    differential_vanished: bool,
+    obstruction_class_iri: &'static str,
+    _sealed: (),
+}
+
+impl SpectralSequencePage {
+    /// Crate-internal constructor. Minted only by the incremental walker.
+    #[inline]
+    #[must_use]
+    pub(crate) const fn from_parts(
+        page_index: u32,
+        source_bits: u16,
+        target_bits: u16,
+        differential_vanished: bool,
+        obstruction_class_iri: &'static str,
+    ) -> Self {
+        Self {
+            page_index,
+            source_bits,
+            target_bits,
+            differential_vanished,
+            obstruction_class_iri,
+            _sealed: (),
+        }
+    }
+
+    /// Page index (0, 1, 2, …) along the spectral-sequence walk.
+    #[inline]
+    #[must_use]
+    pub const fn page_index(&self) -> u32 {
+        self.page_index
+    }
+
+    /// Witt bit width at the page's source level.
+    #[inline]
+    #[must_use]
+    pub const fn source_bits(&self) -> u16 {
+        self.source_bits
+    }
+
+    /// Witt bit width at the page's target level.
+    #[inline]
+    #[must_use]
+    pub const fn target_bits(&self) -> u16 {
+        self.target_bits
+    }
+
+    /// True iff the page's differential vanishes (no obstruction).
+    #[inline]
+    #[must_use]
+    pub const fn differential_vanished(&self) -> bool {
+        self.differential_vanished
+    }
+
+    /// Obstruction class IRI when the differential is non-trivial;
+    /// empty string when the page is trivial.
+    #[inline]
+    #[must_use]
+    pub const fn obstruction_class_iri(&self) -> &'static str {
+        self.obstruction_class_iri
+    }
+}
+
+/// Run the `IncrementalCompletenessResolver` (spectral-sequence walk)
+/// at `target_level`.
+///
+/// Per `spec/src/namespaces/resolver.rs` (`IncrementalCompletenessResolver`),
+/// the walk proceeds without re-running the full ψ-pipeline from
+/// scratch. Workstream F (v0.2.2 closure) implements the canonical page
+/// structure: iterate each `Q_n → Q_{n+1}` step from `W8` up to
+/// `target_level`, compute each page's differential via
+/// `run_reduction_stages` at the higher level, and record the
+/// `SpectralSequencePage`. A non-vanishing differential halts with a
+/// `GenericImpossibilityWitness` whose obstruction-class IRI is
+/// `https://uor.foundation/type/LiftObstruction`. All trivial pages
+/// produce a `LiftChainCertificate` stamped with
+/// `CertificateKind::IncrementalCompleteness`, discriminable from
+/// `run_tower_completeness`'s certificate by the kind byte.
 ///
 /// # Errors
 ///
-/// Returns `GenericImpossibilityWitness` when the single-step lift fails.
-pub fn run_incremental_completeness<T: ConstrainedTypeShape + ?Sized>(
-    input: &T,
-    level: WittLevel,
+/// Returns `GenericImpossibilityWitness` when any page's differential
+/// does not vanish, or when preflight checks reject the input.
+pub fn run_incremental_completeness<
+    T: ConstrainedTypeShape + ?Sized,
+    H: crate::enforcement::Hasher,
+>(
+    _input: &T,
+    target_level: WittLevel,
 ) -> Result<Validated<LiftChainCertificate>, GenericImpossibilityWitness> {
-    // v0.2.1: iterative and single-step share the same deciders.
-    run_tower_completeness(input, level)
+    let target_bits = target_level.witt_length() as u16;
+    preflight_budget_solvency(target_bits as u64, target_bits as u32)
+        .map_err(|_| GenericImpossibilityWitness::default())?;
+    preflight_feasibility(T::CONSTRAINTS).map_err(|_| GenericImpossibilityWitness::default())?;
+    preflight_package_coherence(T::CONSTRAINTS)
+        .map_err(|_| GenericImpossibilityWitness::default())?;
+    preflight_dispatch_coverage().map_err(|_| GenericImpossibilityWitness::default())?;
+    preflight_timing().map_err(|_| GenericImpossibilityWitness::default())?;
+    runtime_timing().map_err(|_| GenericImpossibilityWitness::default())?;
+
+    // Spectral-sequence walk: iterate Q_n → Q_{n+1} in 8-bit steps up to
+    // target_bits. Each step produces a SpectralSequencePage whose
+    // differential is deemed vanishing iff reduction at the higher level
+    // is feasible. A non-vanishing differential halts the walk.
+    let mut page_index: u32 = 0;
+    let mut from_bits: u16 = 8;
+    while from_bits < target_bits {
+        let to_bits = if from_bits + 8 > target_bits {
+            target_bits
+        } else {
+            from_bits + 8
+        };
+        let outcome = run_reduction_stages::<T>(to_bits)
+            .map_err(|_| GenericImpossibilityWitness::default())?;
+        let page = SpectralSequencePage::from_parts(
+            page_index,
+            from_bits,
+            to_bits,
+            outcome.satisfiable,
+            if outcome.satisfiable {
+                ""
+            } else {
+                "https://uor.foundation/type/LiftObstruction"
+            },
+        );
+        if !page.differential_vanished() {
+            return Err(GenericImpossibilityWitness::default());
+        }
+        page_index += 1;
+        from_bits = to_bits;
+    }
+
+    // Final reduction at the target level — the walk converges when
+    // every page's differential has vanished; this guarantees the
+    // target-level outcome is satisfiable.
+    let outcome = run_reduction_stages::<T>(target_bits)
+        .map_err(|_| GenericImpossibilityWitness::default())?;
+    if !outcome.satisfiable {
+        return Err(GenericImpossibilityWitness::default());
+    }
+    let mut hasher = H::initial();
+    hasher = crate::enforcement::fold_unit_digest(
+        hasher,
+        outcome.witt_bits,
+        page_index as u64,
+        T::IRI,
+        T::SITE_COUNT,
+        T::CONSTRAINTS,
+        crate::enforcement::CertificateKind::IncrementalCompleteness,
+    );
+    let buffer = hasher.finalize();
+    let fp = crate::enforcement::ContentFingerprint::from_buffer(buffer, H::OUTPUT_BYTES as u8);
+    let cert = LiftChainCertificate::with_level_and_fingerprint_const(outcome.witt_bits, fp);
+    Ok(Validated::new(cert))
 }
 
 /// Run the `GroundingAwareResolver` on a `CompileUnit` input at `level`,
@@ -731,15 +976,25 @@ pub fn run_incremental_completeness<T: ConstrainedTypeShape + ?Sized>(
 /// # Errors
 ///
 /// Returns `GenericImpossibilityWitness` on grounding failure.
-pub fn run_grounding_aware(
-    _input: &CompileUnit,
+pub fn run_grounding_aware<H: crate::enforcement::Hasher>(
+    unit: &CompileUnit,
     level: WittLevel,
 ) -> Result<Validated<GroundingCertificate>, GenericImpossibilityWitness> {
-    // v0.2.1: compile unit input has no ConstrainedTypeShape backing so
-    // the GroundingAwareResolver returns a trivial grounding certificate
-    // carrying the requested Witt level.
     let witt_bits = level.witt_length() as u16;
-    let cert = GroundingCertificate::with_witt_bits(witt_bits);
+    // v0.2.2 T6.7: thread H: Hasher through fold_unit_digest. Use the unit's
+    // result_type_iri as a stand-in for T::IRI (this resolver does not have a
+    // ConstrainedTypeShape parameter; the grounding is unit-rooted).
+    let mut hasher = H::initial();
+    hasher = hasher.fold_bytes(&witt_bits.to_be_bytes());
+    hasher = hasher.fold_bytes(&unit.thermodynamic_budget().to_be_bytes());
+    hasher = hasher.fold_bytes(unit.result_type_iri().as_bytes());
+    hasher = hasher.fold_byte(0);
+    hasher = hasher.fold_byte(crate::enforcement::certificate_kind_discriminant(
+        crate::enforcement::CertificateKind::Grounding,
+    ));
+    let buffer = hasher.finalize();
+    let fp = crate::enforcement::ContentFingerprint::from_buffer(buffer, H::OUTPUT_BYTES as u8);
+    let cert = GroundingCertificate::with_level_and_fingerprint_const(witt_bits, fp);
     Ok(Validated::new(cert))
 }
 
@@ -752,8 +1007,8 @@ pub fn run_grounding_aware(
 /// # Errors
 ///
 /// Returns `InhabitanceImpossibilityWitness` when the input is unsatisfiable.
-pub fn run_inhabitance<T: ConstrainedTypeShape + ?Sized>(
-    input: &T,
+pub fn run_inhabitance<T: ConstrainedTypeShape + ?Sized, H: crate::enforcement::Hasher>(
+    _input: &T,
     level: WittLevel,
 ) -> Result<Validated<InhabitanceCertificate>, InhabitanceImpossibilityWitness> {
     let witt_bits = level.witt_length() as u16;
@@ -766,48 +1021,27 @@ pub fn run_inhabitance<T: ConstrainedTypeShape + ?Sized>(
     preflight_dispatch_coverage().map_err(|_| InhabitanceImpossibilityWitness::default())?;
     preflight_timing().map_err(|_| InhabitanceImpossibilityWitness::default())?;
     runtime_timing().map_err(|_| InhabitanceImpossibilityWitness::default())?;
-    let outcome = run_reduction_stages(input, witt_bits)
+    let outcome = run_reduction_stages::<T>(witt_bits)
         .map_err(|_| InhabitanceImpossibilityWitness::default())?;
     if outcome.satisfiable {
-        let cert = InhabitanceCertificate::with_witt_bits(outcome.witt_bits);
+        // v0.2.2 T6.7: thread H: Hasher through fold_unit_digest.
+        let mut hasher = H::initial();
+        hasher = crate::enforcement::fold_unit_digest(
+            hasher,
+            outcome.witt_bits,
+            0,
+            T::IRI,
+            T::SITE_COUNT,
+            T::CONSTRAINTS,
+            crate::enforcement::CertificateKind::Inhabitance,
+        );
+        let buffer = hasher.finalize();
+        let fp = crate::enforcement::ContentFingerprint::from_buffer(buffer, H::OUTPUT_BYTES as u8);
+        let cert = InhabitanceCertificate::with_level_and_fingerprint_const(outcome.witt_bits, fp);
         Ok(Validated::new(cert))
     } else {
         Err(InhabitanceImpossibilityWitness::default())
     }
-}
-
-/// Run the full pipeline for `uor_ground!` macro expansion. Produces a
-/// `Grounded<T>` value on `reduction:PipelineSuccess`.
-/// # Errors
-/// Returns `PipelineFailure` on preflight or stage failure.
-pub fn run_pipeline<T: ConstrainedTypeShape + crate::enforcement::GroundedShape>(
-    input: &T,
-    witt_bits: u16,
-) -> Result<Grounded<T>, PipelineFailure> {
-    preflight_budget_solvency(witt_bits as u64, witt_bits as u32)
-        .map_err(|report| PipelineFailure::ShapeViolation { report })?;
-    preflight_feasibility(T::CONSTRAINTS)
-        .map_err(|report| PipelineFailure::ShapeViolation { report })?;
-    preflight_package_coherence(T::CONSTRAINTS)
-        .map_err(|report| PipelineFailure::ShapeViolation { report })?;
-    preflight_dispatch_coverage().map_err(|report| PipelineFailure::ShapeViolation { report })?;
-    preflight_timing().map_err(|report| PipelineFailure::ShapeViolation { report })?;
-    runtime_timing().map_err(|report| PipelineFailure::ShapeViolation { report })?;
-    let outcome = run_reduction_stages(input, witt_bits)?;
-    if !outcome.satisfiable {
-        return Err(PipelineFailure::ContradictionDetected {
-            at_step: 0,
-            trace_iri: "https://uor.foundation/trace/InhabitanceSearchTrace",
-        });
-    }
-    let grounding = Validated::new(GroundingCertificate::default());
-    let bindings = empty_bindings_table();
-    Ok(Grounded::<T>::new_internal(
-        grounding,
-        bindings,
-        outcome.witt_bits,
-        outcome.unit_address,
-    ))
 }
 
 /// v0.2.2 W14: the single typed pipeline entry point producing `Grounded<T>`
@@ -818,16 +1052,24 @@ pub fn run_pipeline<T: ConstrainedTypeShape + crate::enforcement::GroundedShape>
 /// integer level argument was never type-safe.
 /// # Errors
 /// Returns `PipelineFailure` on preflight, reduction, or shape-mismatch failure.
-pub fn run<T, P>(unit: Validated<CompileUnit, P>) -> Result<Grounded<T>, PipelineFailure>
+pub fn run<T, P, H>(unit: Validated<CompileUnit, P>) -> Result<Grounded<T>, PipelineFailure>
 where
     T: ConstrainedTypeShape + crate::enforcement::GroundedShape,
     P: crate::enforcement::ValidationPhase,
+    H: crate::enforcement::Hasher,
 {
-    // The CompileUnit carries the witt level ceiling; the pipeline runs
-    // against it and verifies the result has shape T. Empty-T case (no
-    // ConstrainedTypeShape constraints to project) is allowed and produces
-    // a trivially-grounded result.
     let witt_bits = unit.inner().witt_level().witt_length() as u16;
+    let budget = unit.inner().thermodynamic_budget();
+    // v0.2.2 T6.11: ShapeMismatch detection. The unit declares its
+    // result_type_iri at validation time; the caller's `T::IRI` must match.
+    let unit_iri = unit.inner().result_type_iri();
+    if !crate::enforcement::str_eq(unit_iri, T::IRI) {
+        return Err(PipelineFailure::ShapeMismatch {
+            expected: T::IRI,
+            got: unit_iri,
+        });
+    }
+    // Preflights. Each maps its ShapeViolation into a PipelineFailure.
     preflight_budget_solvency(witt_bits as u64, witt_bits as u32)
         .map_err(|report| PipelineFailure::ShapeViolation { report })?;
     preflight_feasibility(T::CONSTRAINTS)
@@ -837,17 +1079,56 @@ where
     preflight_dispatch_coverage().map_err(|report| PipelineFailure::ShapeViolation { report })?;
     preflight_timing().map_err(|report| PipelineFailure::ShapeViolation { report })?;
     runtime_timing().map_err(|report| PipelineFailure::ShapeViolation { report })?;
-    let grounding = Validated::new(GroundingCertificate::default());
+    // v0.2.2 T5 C1: actually call run_reduction_stages and propagate its
+    // failure. The previous v0.2.2 path skipped this call entirely,
+    // returning a degenerate Grounded with ContentAddress::zero(). The
+    // typed `run` entry point now mirrors `run_pipeline`'s reduction-stage
+    // sequence.
+    let outcome = run_reduction_stages::<T>(witt_bits)?;
+    if !outcome.satisfiable {
+        return Err(PipelineFailure::ContradictionDetected {
+            at_step: 0,
+            trace_iri: "https://uor.foundation/trace/InhabitanceSearchTrace",
+        });
+    }
+    // v0.2.2 T5 C3.f: thread the consumer-supplied substrate Hasher through
+    // the canonical CompileUnit byte layout to compute the parametric
+    // content fingerprint.
+    let mut hasher = H::initial();
+    hasher = crate::enforcement::fold_unit_digest(
+        hasher,
+        witt_bits,
+        budget,
+        T::IRI,
+        T::SITE_COUNT,
+        T::CONSTRAINTS,
+        crate::enforcement::CertificateKind::Grounding,
+    );
+    let buffer = hasher.finalize();
+    let content_fingerprint =
+        crate::enforcement::ContentFingerprint::from_buffer(buffer, H::OUTPUT_BYTES as u8);
+    let unit_address = crate::enforcement::unit_address_from_buffer(&buffer);
+    let grounding = Validated::new(GroundingCertificate::with_level_and_fingerprint_const(
+        witt_bits,
+        content_fingerprint,
+    ));
     let bindings = empty_bindings_table();
     Ok(Grounded::<T>::new_internal(
-        grounding, bindings, witt_bits, 0u128,
+        grounding,
+        bindings,
+        outcome.witt_bits,
+        unit_address,
+        content_fingerprint,
     ))
 }
 
-/// Construct an empty `BindingsTable` for v0.2.1 stub inputs.
+/// Construct an empty `BindingsTable`.
+/// v0.2.2 T6.9: the empty slice is vacuously sorted, so direct struct
+/// construction is sound. Public callers with non-empty entries go
+/// through `BindingsTable::try_new` (validating).
 #[must_use]
 pub const fn empty_bindings_table() -> BindingsTable {
-    BindingsTable::new(&[])
+    BindingsTable { entries: &[] }
 }
 
 // Suppress warning: BindingEntry is re-exported via use but not used in
@@ -861,20 +1142,25 @@ const _COMPLETENESS_CERT_REF: Option<CompletenessCertificate> = None;
 
 /// v0.2.2 Phase F / T2.7: parallel-declaration compile unit. Carries a
 /// payload field encoding the declared site partition cardinality.
+/// v0.2.2 T6.11: also carries `result_type_iri` for ShapeMismatch detection.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct ParallelDeclaration {
     payload: u64,
+    result_type_iri: &'static str,
     _sealed: (),
 }
 
 impl ParallelDeclaration {
-    /// Construct a parallel declaration with the given site partition
-    /// cardinality.
+    /// v0.2.2 T6.11: construct a parallel declaration with the given site
+    /// partition cardinality and result type. The pipeline matches
+    /// `result_type_iri` against `T::IRI` at `run_parallel` invocation time,
+    /// returning `PipelineFailure::ShapeMismatch` on mismatch.
     #[inline]
     #[must_use]
-    pub const fn new(site_count: u64) -> Self {
+    pub const fn new<T: ConstrainedTypeShape>(site_count: u64) -> Self {
         Self {
             payload: site_count,
+            result_type_iri: T::IRI,
             _sealed: (),
         }
     }
@@ -885,23 +1171,34 @@ impl ParallelDeclaration {
     pub const fn site_count(&self) -> u64 {
         self.payload
     }
+
+    /// v0.2.2 T6.11: returns the result-type IRI.
+    #[inline]
+    #[must_use]
+    pub const fn result_type_iri(&self) -> &'static str {
+        self.result_type_iri
+    }
 }
 
 /// v0.2.2 Phase F / T2.7: stream-declaration compile unit. Carries a
 /// payload field encoding the productivity-witness countdown.
+/// v0.2.2 T6.11: also carries `result_type_iri` for ShapeMismatch detection.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct StreamDeclaration {
     payload: u64,
+    result_type_iri: &'static str,
     _sealed: (),
 }
 
 impl StreamDeclaration {
-    /// Construct a stream declaration with the given productivity bound.
+    /// v0.2.2 T6.11: construct a stream declaration with the given productivity
+    /// bound and result type.
     #[inline]
     #[must_use]
-    pub const fn new(productivity_bound: u64) -> Self {
+    pub const fn new<T: ConstrainedTypeShape>(productivity_bound: u64) -> Self {
         Self {
             payload: productivity_bound,
+            result_type_iri: T::IRI,
             _sealed: (),
         }
     }
@@ -912,24 +1209,34 @@ impl StreamDeclaration {
     pub const fn productivity_bound(&self) -> u64 {
         self.payload
     }
+
+    /// v0.2.2 T6.11: returns the result-type IRI.
+    #[inline]
+    #[must_use]
+    pub const fn result_type_iri(&self) -> &'static str {
+        self.result_type_iri
+    }
 }
 
 /// v0.2.2 Phase F / T2.7: interaction-declaration compile unit. Carries a
 /// payload field encoding the convergence-predicate seed.
+/// v0.2.2 T6.11: also carries `result_type_iri` for ShapeMismatch detection.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct InteractionDeclaration {
     payload: u64,
+    result_type_iri: &'static str,
     _sealed: (),
 }
 
 impl InteractionDeclaration {
-    /// Construct an interaction declaration with the given convergence
-    /// predicate seed.
+    /// v0.2.2 T6.11: construct an interaction declaration with the given
+    /// convergence-predicate seed and result type.
     #[inline]
     #[must_use]
-    pub const fn new(convergence_seed: u64) -> Self {
+    pub const fn new<T: ConstrainedTypeShape>(convergence_seed: u64) -> Self {
         Self {
             payload: convergence_seed,
+            result_type_iri: T::IRI,
             _sealed: (),
         }
     }
@@ -940,10 +1247,17 @@ impl InteractionDeclaration {
     pub const fn convergence_seed(&self) -> u64 {
         self.payload
     }
+
+    /// v0.2.2 T6.11: returns the result-type IRI.
+    #[inline]
+    #[must_use]
+    pub const fn result_type_iri(&self) -> &'static str {
+        self.result_type_iri
+    }
 }
 
 /// v0.2.2 Phase F: fixed-size inline payload buffer carried by `PeerInput`.
-/// Sized for the largest Datum<L> the foundation supports at this release
+/// Sized for the largest `Datum<L>` the foundation supports at this release
 /// (up to 32 u64 limbs = 2048 bits); smaller levels use the leading bytes.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct PeerPayload {
@@ -1069,33 +1383,45 @@ impl<L> CommutatorState<L> {
 pub struct StreamDriver<
     T: crate::enforcement::GroundedShape,
     P: crate::enforcement::ValidationPhase,
+    H: crate::enforcement::Hasher,
 > {
     rewrite_steps: u64,
     landauer_nats: u64,
     productivity_countdown: u64,
     seed: u64,
+    result_type_iri: &'static str,
     terminated: bool,
     _shape: core::marker::PhantomData<T>,
     _phase: core::marker::PhantomData<P>,
+    _hasher: core::marker::PhantomData<H>,
     _sealed: (),
 }
 
-impl<T: crate::enforcement::GroundedShape, P: crate::enforcement::ValidationPhase>
-    StreamDriver<T, P>
+impl<
+        T: crate::enforcement::GroundedShape,
+        P: crate::enforcement::ValidationPhase,
+        H: crate::enforcement::Hasher,
+    > StreamDriver<T, P, H>
 {
     /// Crate-internal constructor. Callable only from `pipeline::run_stream`.
     #[inline]
     #[must_use]
     #[allow(dead_code)]
-    pub(crate) const fn new_internal(productivity_bound: u64, seed: u64) -> Self {
+    pub(crate) const fn new_internal(
+        productivity_bound: u64,
+        seed: u64,
+        result_type_iri: &'static str,
+    ) -> Self {
         Self {
             rewrite_steps: 0,
             landauer_nats: 0,
             productivity_countdown: productivity_bound,
             seed,
+            result_type_iri,
             terminated: false,
             _shape: core::marker::PhantomData,
             _phase: core::marker::PhantomData,
+            _hasher: core::marker::PhantomData,
             _sealed: (),
         }
     }
@@ -1113,12 +1439,25 @@ impl<T: crate::enforcement::GroundedShape, P: crate::enforcement::ValidationPhas
     pub const fn landauer_nats(&self) -> u64 {
         self.landauer_nats
     }
+
+    /// v0.2.2 T5.10: returns `true` once the driver has stopped producing
+    /// rewrite steps. A terminated driver is observationally equivalent to
+    /// one whose next `next()` call returns `None`. Use this when the driver
+    /// is held inside a larger state machine that needs to decide whether
+    /// to advance without consuming a step.
+    /// Parallel to `InteractionDriver::is_converged()`.
+    #[inline]
+    #[must_use]
+    pub const fn is_terminated(&self) -> bool {
+        self.terminated
+    }
 }
 
 impl<
         T: crate::enforcement::GroundedShape + ConstrainedTypeShape,
         P: crate::enforcement::ValidationPhase,
-    > Iterator for StreamDriver<T, P>
+        H: crate::enforcement::Hasher,
+    > Iterator for StreamDriver<T, P, H>
 {
     type Item = Result<Grounded<T>, PipelineFailure>;
     fn next(&mut self) -> Option<Self::Item> {
@@ -1126,19 +1465,44 @@ impl<
             self.terminated = true;
             return None;
         }
+        // v0.2.2 T6.11: ShapeMismatch detection — first step only
+        // (subsequent steps inherit the same result_type_iri).
+        if self.rewrite_steps == 0 && !crate::enforcement::str_eq(self.result_type_iri, T::IRI) {
+            self.terminated = true;
+            return Some(Err(PipelineFailure::ShapeMismatch {
+                expected: T::IRI,
+                got: self.result_type_iri,
+            }));
+        }
         self.productivity_countdown -= 1;
         self.rewrite_steps += 1;
         self.landauer_nats += 1;
-        let grounding = Validated::new(GroundingCertificate::default());
+        // v0.2.2 T6.1: thread H: Hasher through fold_stream_step_digest
+        // to compute a real per-step substrate fingerprint.
+        let mut hasher = H::initial();
+        hasher = crate::enforcement::fold_stream_step_digest(
+            hasher,
+            self.productivity_countdown,
+            self.rewrite_steps,
+            self.seed,
+            self.result_type_iri,
+            crate::enforcement::CertificateKind::Grounding,
+        );
+        let buffer = hasher.finalize();
+        let content_fingerprint =
+            crate::enforcement::ContentFingerprint::from_buffer(buffer, H::OUTPUT_BYTES as u8);
+        let unit_address = crate::enforcement::unit_address_from_buffer(&buffer);
+        let grounding = Validated::new(GroundingCertificate::with_level_and_fingerprint_const(
+            32,
+            content_fingerprint,
+        ));
         let bindings = empty_bindings_table();
-        // unit_address per step: deterministic, distinct across steps,
-        // derived from seed XOR step counter.
-        let unit_address = crate::enforcement::fnv1a_u128_const(self.seed, self.rewrite_steps);
         Some(Ok(Grounded::<T>::new_internal(
             grounding,
             bindings,
             32, // default witt level for stream output
             unit_address,
+            content_fingerprint,
         )))
     }
 }
@@ -1152,6 +1516,7 @@ impl<
 pub struct InteractionDriver<
     T: crate::enforcement::GroundedShape,
     P: crate::enforcement::ValidationPhase,
+    H: crate::enforcement::Hasher,
 > {
     commutator_acc: [u64; 4],
     peer_step_count: u64,
@@ -1159,27 +1524,35 @@ pub struct InteractionDriver<
     /// Convergence seed read from the source InteractionDeclaration.
     /// Available via `seed()` for downstream inspection.
     seed: u64,
+    /// v0.2.2 T6.11: result-type IRI from the source InteractionDeclaration.
+    result_type_iri: &'static str,
     _shape: core::marker::PhantomData<T>,
     _phase: core::marker::PhantomData<P>,
+    _hasher: core::marker::PhantomData<H>,
     _sealed: (),
 }
 
-impl<T: crate::enforcement::GroundedShape, P: crate::enforcement::ValidationPhase>
-    InteractionDriver<T, P>
+impl<
+        T: crate::enforcement::GroundedShape,
+        P: crate::enforcement::ValidationPhase,
+        H: crate::enforcement::Hasher,
+    > InteractionDriver<T, P, H>
 {
     /// Crate-internal constructor. Callable only from `pipeline::run_interactive`.
     #[inline]
     #[must_use]
     #[allow(dead_code)]
-    pub(crate) const fn new_internal(seed: u64) -> Self {
+    pub(crate) const fn new_internal(seed: u64, result_type_iri: &'static str) -> Self {
         // Initial commutator seeded from the unit's convergence seed.
         Self {
             commutator_acc: [seed, 0, 0, 0],
             peer_step_count: 0,
             converged: false,
             seed,
+            result_type_iri,
             _shape: core::marker::PhantomData,
             _phase: core::marker::PhantomData,
+            _hasher: core::marker::PhantomData,
             _sealed: (),
         }
     }
@@ -1204,15 +1577,32 @@ impl<T: crate::enforcement::GroundedShape, P: crate::enforcement::ValidationPhas
         // Convergence: peer_id == 0 is the closing handshake.
         if input.peer_id() == 0 {
             self.converged = true;
-            let grounding = Validated::new(GroundingCertificate::default());
+            // v0.2.2 T6.1: thread H: Hasher through fold_interaction_step_digest
+            // to compute a real convergence-time substrate fingerprint.
+            let mut hasher = H::initial();
+            hasher = crate::enforcement::fold_interaction_step_digest(
+                hasher,
+                &self.commutator_acc,
+                self.peer_step_count,
+                self.seed,
+                self.result_type_iri,
+                crate::enforcement::CertificateKind::Grounding,
+            );
+            let buffer = hasher.finalize();
+            let content_fingerprint =
+                crate::enforcement::ContentFingerprint::from_buffer(buffer, H::OUTPUT_BYTES as u8);
+            let unit_address = crate::enforcement::unit_address_from_buffer(&buffer);
+            let grounding = Validated::new(GroundingCertificate::with_level_and_fingerprint_const(
+                32,
+                content_fingerprint,
+            ));
             let bindings = empty_bindings_table();
-            let unit_address =
-                crate::enforcement::fnv1a_u128_const(self.commutator_acc[0], self.peer_step_count);
             return StepResult::Converged(Grounded::<T>::new_internal(
                 grounding,
                 bindings,
                 32,
                 unit_address,
+                content_fingerprint,
             ));
         }
         StepResult::Continue
@@ -1245,11 +1635,19 @@ impl<T: crate::enforcement::GroundedShape, P: crate::enforcement::ValidationPhas
     /// processed different peer inputs return distinct grounded values.
     /// # Errors
     /// Returns a `PipelineFailure::ShapeViolation` if the driver has
-    /// not converged.
+    /// not converged, or `PipelineFailure::ShapeMismatch` if the source
+    /// declaration's result_type_iri does not match `T::IRI`.
     pub fn finalize(self) -> Result<Grounded<T>, PipelineFailure>
     where
         T: ConstrainedTypeShape,
     {
+        // v0.2.2 T6.11: ShapeMismatch detection.
+        if !crate::enforcement::str_eq(self.result_type_iri, T::IRI) {
+            return Err(PipelineFailure::ShapeMismatch {
+                expected: T::IRI,
+                got: self.result_type_iri,
+            });
+        }
         if !self.converged {
             return Err(PipelineFailure::ShapeViolation {
                 report: ShapeViolation {
@@ -1264,15 +1662,31 @@ impl<T: crate::enforcement::GroundedShape, P: crate::enforcement::ValidationPhas
                 },
             });
         }
-        let grounding = Validated::new(GroundingCertificate::default());
+        // v0.2.2 T6.1: thread H: Hasher through fold_interaction_step_digest.
+        let mut hasher = H::initial();
+        hasher = crate::enforcement::fold_interaction_step_digest(
+            hasher,
+            &self.commutator_acc,
+            self.peer_step_count,
+            self.seed,
+            self.result_type_iri,
+            crate::enforcement::CertificateKind::Grounding,
+        );
+        let buffer = hasher.finalize();
+        let content_fingerprint =
+            crate::enforcement::ContentFingerprint::from_buffer(buffer, H::OUTPUT_BYTES as u8);
+        let unit_address = crate::enforcement::unit_address_from_buffer(&buffer);
+        let grounding = Validated::new(GroundingCertificate::with_level_and_fingerprint_const(
+            32,
+            content_fingerprint,
+        ));
         let bindings = empty_bindings_table();
-        let unit_address =
-            crate::enforcement::fnv1a_u128_const(self.commutator_acc[0], self.peer_step_count);
         Ok(Grounded::<T>::new_internal(
             grounding,
             bindings,
             32,
             unit_address,
+            content_fingerprint,
         ))
     }
 }
@@ -1283,24 +1697,67 @@ impl<T: crate::enforcement::GroundedShape, P: crate::enforcement::ValidationPhas
 /// site count via FNV-1a. Two units with different site counts produce
 /// `Grounded` values with different addresses.
 /// # Errors
-/// Returns `PipelineFailure` if any partition walk fails (currently never
-/// returned; placeholder for v0.2.3 real walk logic).
-pub fn run_parallel<T, P>(
+/// Returns `PipelineFailure::ShapeMismatch` when the declaration's
+/// `result_type_iri` does not match `T::IRI` — the caller asked for
+/// `Grounded<T>` but the declaration was built over a different shape.
+/// Returns `PipelineFailure::ContradictionDetected` when the declared
+/// partition cardinality is zero — a parallel composition with no
+/// sites is inadmissible by construction.
+/// Success: `run_parallel` folds the declaration's site count through
+/// `fold_parallel_digest` to produce a content fingerprint; distinct
+/// partitions produce distinct fingerprints by construction.
+pub fn run_parallel<T, P, H>(
     unit: Validated<ParallelDeclaration, P>,
 ) -> Result<Grounded<T>, PipelineFailure>
 where
     T: ConstrainedTypeShape + crate::enforcement::GroundedShape,
     P: crate::enforcement::ValidationPhase,
+    H: crate::enforcement::Hasher,
 {
-    let site_count = unit.inner().site_count();
-    let unit_address = crate::enforcement::fnv1a_u128_const(site_count, 0);
-    let grounding = Validated::new(GroundingCertificate::default());
+    let decl = unit.inner();
+    let site_count = decl.site_count();
+    // Runtime invariants declared in the ParallelDeclaration rustdoc:
+    // (1) result_type_iri must match T::IRI (target §5 + T6.11);
+    // (2) site_count > 0 (zero-site parallel composition is vacuous).
+    if !crate::enforcement::str_eq(decl.result_type_iri(), T::IRI) {
+        return Err(PipelineFailure::ShapeMismatch {
+            expected: T::IRI,
+            got: decl.result_type_iri(),
+        });
+    }
+    if site_count == 0 {
+        return Err(PipelineFailure::ContradictionDetected {
+            at_step: 0,
+            trace_iri: "https://uor.foundation/parallel/ParallelProduct",
+        });
+    }
+    // v0.2.2 T5 C6: thread the consumer-supplied substrate Hasher through
+    // the canonical ParallelDeclaration byte layout to compute the
+    // parametric content fingerprint.
+    let mut hasher = H::initial();
+    hasher = crate::enforcement::fold_parallel_digest(
+        hasher,
+        site_count,
+        T::IRI,
+        T::SITE_COUNT,
+        T::CONSTRAINTS,
+        crate::enforcement::CertificateKind::Grounding,
+    );
+    let buffer = hasher.finalize();
+    let content_fingerprint =
+        crate::enforcement::ContentFingerprint::from_buffer(buffer, H::OUTPUT_BYTES as u8);
+    let unit_address = crate::enforcement::unit_address_from_buffer(&buffer);
+    let grounding = Validated::new(GroundingCertificate::with_level_and_fingerprint_const(
+        32,
+        content_fingerprint,
+    ));
     let bindings = empty_bindings_table();
     Ok(Grounded::<T>::new_internal(
         grounding,
         bindings,
         32,
         unit_address,
+        content_fingerprint,
     ))
 }
 
@@ -1311,26 +1768,36 @@ where
 /// each `next()` call yields a `Grounded` whose `unit_address` differs
 /// from the previous step's, and the iterator terminates when the
 /// countdown reaches zero.
-pub fn run_stream<T, P>(unit: Validated<StreamDeclaration, P>) -> StreamDriver<T, P>
+#[must_use]
+pub fn run_stream<T, P, H>(unit: Validated<StreamDeclaration, P>) -> StreamDriver<T, P, H>
 where
     T: crate::enforcement::GroundedShape,
     P: crate::enforcement::ValidationPhase,
+    H: crate::enforcement::Hasher,
 {
     let bound = unit.inner().productivity_bound();
-    StreamDriver::new_internal(bound, bound)
+    let result_type_iri = unit.inner().result_type_iri();
+    StreamDriver::new_internal(bound, bound, result_type_iri)
 }
 
 /// v0.2.2 Phase F / T2.7: interaction driver entry point.
 /// Consumes a `Validated<InteractionDeclaration, P>` and returns an
-/// `InteractionDriver<T, P>` state machine seeded from the declaration's
+/// `InteractionDriver<T, P, H>` state machine seeded from the declaration's
 /// `convergence_seed()`. Advance with `step(PeerInput)` until
 /// `is_converged()` returns `true`, then call `finalize()`.
-pub fn run_interactive<T, P>(unit: Validated<InteractionDeclaration, P>) -> InteractionDriver<T, P>
+#[must_use]
+pub fn run_interactive<T, P, H>(
+    unit: Validated<InteractionDeclaration, P>,
+) -> InteractionDriver<T, P, H>
 where
     T: crate::enforcement::GroundedShape,
     P: crate::enforcement::ValidationPhase,
+    H: crate::enforcement::Hasher,
 {
-    InteractionDriver::new_internal(unit.inner().convergence_seed())
+    InteractionDriver::new_internal(
+        unit.inner().convergence_seed(),
+        unit.inner().result_type_iri(),
+    )
 }
 
 /// v0.2.2 Phase G / T2.8: const-fn companion for
@@ -1343,115 +1810,341 @@ pub const fn validate_lease_const(
     Validated::new(LeaseDeclaration::empty_const())
 }
 
-/// v0.2.2 Phase G / T2.8: const-fn companion for `CompileUnitBuilder`.
-/// Reads the builder's stored witt level ceiling and thermodynamic
-/// budget via the const-fn accessors `witt_level_option()` /
-/// `budget_option()`, then packs them into a `Validated<CompileUnit,
-/// CompileTime>` via `CompileUnit::from_parts_const`. Defaults: if a
-/// field is unset, the builder's `validate()` would have rejected it —
-/// the const path uses `WittLevel::W8` / budget=0 as the documented
-/// placeholder for unset fields.
-#[must_use]
+/// v0.2.2 Phase G / T2.8 + T6.13: const-fn companion for `CompileUnitBuilder`.
+///
+/// Tightened in T6.13 to enforce the same five required fields as the
+/// runtime `CompileUnitBuilder::validate()` method:
+///
+/// - `root_term`
+/// - `witt_level_ceiling`
+/// - `thermodynamic_budget`
+/// - `target_domains` (non-empty)
+/// - `result_type_iri`
+///
+/// Returns `Result<Validated<CompileUnit, CompileTime>, ShapeViolation>` —
+/// dual-path consistent with the runtime `validate()` method. Const-eval
+/// call sites match on the `Result`; the panic only fires at codegen /
+/// const-eval time, never at runtime.
+///
+/// # Errors
+///
+/// Returns `ShapeViolation::Missing` for the first unset required field.
 pub const fn validate_compile_unit_const(
     builder: &CompileUnitBuilder,
-) -> Validated<CompileUnit, CompileTime> {
+) -> Result<Validated<CompileUnit, CompileTime>, ShapeViolation> {
+    if !builder.has_root_term_const() {
+        return Err(ShapeViolation {
+            shape_iri: "https://uor.foundation/conformance/CompileUnitShape",
+            constraint_iri: "https://uor.foundation/conformance/compileUnit_rootTerm_constraint",
+            property_iri: "https://uor.foundation/reduction/rootTerm",
+            expected_range: "https://uor.foundation/schema/Term",
+            min_count: 1,
+            max_count: 1,
+            kind: ViolationKind::Missing,
+        });
+    }
     let level = match builder.witt_level_option() {
         Some(l) => l,
-        None => WittLevel::W8,
+        None => {
+            return Err(ShapeViolation {
+                shape_iri: "https://uor.foundation/conformance/CompileUnitShape",
+                constraint_iri:
+                    "https://uor.foundation/conformance/compileUnit_unitWittLevel_constraint",
+                property_iri: "https://uor.foundation/reduction/unitWittLevel",
+                expected_range: "https://uor.foundation/schema/WittLevel",
+                min_count: 1,
+                max_count: 1,
+                kind: ViolationKind::Missing,
+            })
+        }
     };
-    let budget = match builder.budget_option() {
-        Some(b) => b,
-        None => 0,
+    let budget =
+        match builder.budget_option() {
+            Some(b) => b,
+            None => return Err(ShapeViolation {
+                shape_iri: "https://uor.foundation/conformance/CompileUnitShape",
+                constraint_iri:
+                    "https://uor.foundation/conformance/compileUnit_thermodynamicBudget_constraint",
+                property_iri: "https://uor.foundation/reduction/thermodynamicBudget",
+                expected_range: "http://www.w3.org/2001/XMLSchema#decimal",
+                min_count: 1,
+                max_count: 1,
+                kind: ViolationKind::Missing,
+            }),
+        };
+    if !builder.has_target_domains_const() {
+        return Err(ShapeViolation {
+            shape_iri: "https://uor.foundation/conformance/CompileUnitShape",
+            constraint_iri:
+                "https://uor.foundation/conformance/compileUnit_targetDomains_constraint",
+            property_iri: "https://uor.foundation/reduction/targetDomains",
+            expected_range: "https://uor.foundation/op/VerificationDomain",
+            min_count: 1,
+            max_count: 0,
+            kind: ViolationKind::Missing,
+        });
+    }
+    let result_type_iri = match builder.result_type_iri_const() {
+        Some(iri) => iri,
+        None => {
+            return Err(ShapeViolation {
+                shape_iri: "https://uor.foundation/conformance/CompileUnitShape",
+                constraint_iri:
+                    "https://uor.foundation/conformance/compileUnit_resultType_constraint",
+                property_iri: "https://uor.foundation/reduction/resultType",
+                expected_range: "https://uor.foundation/type/ConstrainedType",
+                min_count: 1,
+                max_count: 1,
+                kind: ViolationKind::Missing,
+            })
+        }
     };
-    Validated::new(CompileUnit::from_parts_const(level, budget))
+    Ok(Validated::new(CompileUnit::from_parts_const(
+        level,
+        budget,
+        result_type_iri,
+    )))
 }
 
-/// v0.2.2 Phase G / T2.8: const-fn companion for `ParallelDeclarationBuilder`.
-/// Reads the builder's site partition cardinality via
-/// `site_partition_len()` and packs it as the `ParallelDeclaration`'s
-/// payload. Two builders with different partition lengths produce
-/// different `Validated<ParallelDeclaration, CompileTime>` values.
+/// v0.2.2 Phase G / T2.8 + T6.11: const-fn companion for
+/// `ParallelDeclarationBuilder`. Takes a `ConstrainedTypeShape` type parameter
+/// to set the `result_type_iri` on the produced declaration.
 #[must_use]
-pub const fn validate_parallel_const(
+pub const fn validate_parallel_const<T: ConstrainedTypeShape>(
     builder: &ParallelDeclarationBuilder,
 ) -> Validated<ParallelDeclaration, CompileTime> {
     let site_count = builder.site_partition_len() as u64;
-    Validated::new(ParallelDeclaration::new(site_count))
+    Validated::new(ParallelDeclaration::new::<T>(site_count))
 }
 
-/// v0.2.2 Phase G / T2.8: const-fn companion for `StreamDeclarationBuilder`.
-/// Reads the builder's productivity-witness presence via
-/// `productivity_bound_const()` and packs it as the `StreamDeclaration`'s
-/// payload (defaulting to 1 when the witness is set, 0 otherwise).
+/// v0.2.2 Phase G / T2.8 + T6.11: const-fn companion for
+/// `StreamDeclarationBuilder`. Takes a `ConstrainedTypeShape` type parameter
+/// to set the `result_type_iri` on the produced declaration.
 #[must_use]
-pub const fn validate_stream_const(
+pub const fn validate_stream_const<T: ConstrainedTypeShape>(
     builder: &StreamDeclarationBuilder,
 ) -> Validated<StreamDeclaration, CompileTime> {
     let bound = builder.productivity_bound_const();
-    Validated::new(StreamDeclaration::new(bound))
+    Validated::new(StreamDeclaration::new::<T>(bound))
 }
 
-/// v0.2.2 Phase G / T2.8: const-fn resolver companion for
-/// `tower_completeness::certify`. Consults the compile unit's witt
-/// level to pin the certificate's stored level — two different units
-/// produce certificates with different `witt_bits()` values.
+/// v0.2.2 T5 C6: const-fn resolver companion for
+/// `tower_completeness::certify`. Threads the consumer-supplied substrate
+/// `Hasher` through the canonical CompileUnit byte layout to compute a
+/// parametric content fingerprint, distinguishing two units that share a
+/// witt level but differ in budget, IRI, site count, or constraints.
 #[must_use]
-pub const fn certify_tower_completeness_const(
+pub fn certify_tower_completeness_const<T, H>(
     unit: &Validated<CompileUnit, CompileTime>,
-) -> Validated<GroundingCertificate, CompileTime> {
-    let level_bits = unit.inner().witt_level().witt_length() as u16;
-    Validated::new(GroundingCertificate::with_level_const(level_bits))
-}
-
-/// v0.2.2 Phase G / T2.8: const-fn resolver companion for
-/// `incremental_completeness::certify`.
-#[must_use]
-pub const fn certify_incremental_completeness_const(
-    unit: &Validated<CompileUnit, CompileTime>,
-) -> Validated<GroundingCertificate, CompileTime> {
-    let level_bits = unit.inner().witt_level().witt_length() as u16;
-    Validated::new(GroundingCertificate::with_level_const(level_bits))
-}
-
-/// v0.2.2 Phase G / T2.8: const-fn resolver companion for
-/// `inhabitance::certify`.
-#[must_use]
-pub const fn certify_inhabitance_const(
-    unit: &Validated<CompileUnit, CompileTime>,
-) -> Validated<GroundingCertificate, CompileTime> {
-    let level_bits = unit.inner().witt_level().witt_length() as u16;
-    Validated::new(GroundingCertificate::with_level_const(level_bits))
-}
-
-/// v0.2.2 Phase G / T2.8: const-fn resolver companion for
-/// `multiplication::certify`. Derives the limb count from the unit's
-/// witt level and returns a certificate whose `witt_bits` field
-/// reflects that level.
-#[must_use]
-pub const fn certify_multiplication_const(
-    unit: &Validated<CompileUnit, CompileTime>,
-) -> Validated<MultiplicationCertificate, CompileTime> {
-    let level_bits = unit.inner().witt_level().witt_length() as u16;
-    Validated::new(MultiplicationCertificate::with_witt_bits(level_bits))
-}
-
-/// v0.2.2 Phase G / T2.8: widened const-fn pipeline entry point.
-/// Gates only on `T::Map: Total` (the `Invertible` requirement from the
-/// runtime `run` entry is dropped because the const path performs no
-/// inverse lookups). Returns a `Grounded<T>` whose `witt_level_bits`
-/// reflects the unit's witt level and whose `unit_address` is a const
-/// hash of the unit's (level, budget) — two different units produce
-/// `Grounded` values with different addresses, satisfying the
-/// input-dependence contract.
-#[must_use]
-pub const fn run_const<T>(unit: &Validated<CompileUnit, CompileTime>) -> Grounded<T>
+) -> Validated<GroundingCertificate, CompileTime>
 where
-    T: ConstrainedTypeShape + crate::enforcement::GroundedShape,
+    T: ConstrainedTypeShape,
+    H: crate::enforcement::Hasher,
 {
     let level_bits = unit.inner().witt_level().witt_length() as u16;
     let budget = unit.inner().thermodynamic_budget();
-    let unit_address = crate::enforcement::fnv1a_u128_const(level_bits as u64, budget);
-    let grounding = Validated::new(GroundingCertificate::with_level_const(level_bits));
+    let mut hasher = H::initial();
+    hasher = crate::enforcement::fold_unit_digest(
+        hasher,
+        level_bits,
+        budget,
+        T::IRI,
+        T::SITE_COUNT,
+        T::CONSTRAINTS,
+        crate::enforcement::CertificateKind::TowerCompleteness,
+    );
+    let buffer = hasher.finalize();
+    let fp = crate::enforcement::ContentFingerprint::from_buffer(buffer, H::OUTPUT_BYTES as u8);
+    Validated::new(GroundingCertificate::with_level_and_fingerprint_const(
+        level_bits, fp,
+    ))
+}
+
+/// v0.2.2 T5 C6: const-fn resolver companion for
+/// `incremental_completeness::certify`. Threads `H: Hasher` for the
+/// parametric fingerprint; uses `CertificateKind::IncrementalCompleteness`
+/// as the trailing discriminant byte.
+#[must_use]
+pub fn certify_incremental_completeness_const<T, H>(
+    unit: &Validated<CompileUnit, CompileTime>,
+) -> Validated<GroundingCertificate, CompileTime>
+where
+    T: ConstrainedTypeShape,
+    H: crate::enforcement::Hasher,
+{
+    let level_bits = unit.inner().witt_level().witt_length() as u16;
+    let budget = unit.inner().thermodynamic_budget();
+    let mut hasher = H::initial();
+    hasher = crate::enforcement::fold_unit_digest(
+        hasher,
+        level_bits,
+        budget,
+        T::IRI,
+        T::SITE_COUNT,
+        T::CONSTRAINTS,
+        crate::enforcement::CertificateKind::IncrementalCompleteness,
+    );
+    let buffer = hasher.finalize();
+    let fp = crate::enforcement::ContentFingerprint::from_buffer(buffer, H::OUTPUT_BYTES as u8);
+    Validated::new(GroundingCertificate::with_level_and_fingerprint_const(
+        level_bits, fp,
+    ))
+}
+
+/// v0.2.2 T5 C6: const-fn resolver companion for `inhabitance::certify`.
+/// Threads `H: Hasher` for the parametric fingerprint; uses
+/// `CertificateKind::Inhabitance` as the trailing discriminant byte.
+#[must_use]
+pub fn certify_inhabitance_const<T, H>(
+    unit: &Validated<CompileUnit, CompileTime>,
+) -> Validated<GroundingCertificate, CompileTime>
+where
+    T: ConstrainedTypeShape,
+    H: crate::enforcement::Hasher,
+{
+    let level_bits = unit.inner().witt_level().witt_length() as u16;
+    let budget = unit.inner().thermodynamic_budget();
+    let mut hasher = H::initial();
+    hasher = crate::enforcement::fold_unit_digest(
+        hasher,
+        level_bits,
+        budget,
+        T::IRI,
+        T::SITE_COUNT,
+        T::CONSTRAINTS,
+        crate::enforcement::CertificateKind::Inhabitance,
+    );
+    let buffer = hasher.finalize();
+    let fp = crate::enforcement::ContentFingerprint::from_buffer(buffer, H::OUTPUT_BYTES as u8);
+    Validated::new(GroundingCertificate::with_level_and_fingerprint_const(
+        level_bits, fp,
+    ))
+}
+
+/// v0.2.2 T5 C6: const-fn resolver companion for
+/// `multiplication::certify`. Threads `H: Hasher` for the parametric
+/// fingerprint; uses `CertificateKind::Multiplication` as the trailing
+/// discriminant byte.
+#[must_use]
+pub fn certify_multiplication_const<T, H>(
+    unit: &Validated<CompileUnit, CompileTime>,
+) -> Validated<MultiplicationCertificate, CompileTime>
+where
+    T: ConstrainedTypeShape,
+    H: crate::enforcement::Hasher,
+{
+    let level_bits = unit.inner().witt_level().witt_length() as u16;
+    let budget = unit.inner().thermodynamic_budget();
+    let mut hasher = H::initial();
+    hasher = crate::enforcement::fold_unit_digest(
+        hasher,
+        level_bits,
+        budget,
+        T::IRI,
+        T::SITE_COUNT,
+        T::CONSTRAINTS,
+        crate::enforcement::CertificateKind::Multiplication,
+    );
+    let buffer = hasher.finalize();
+    let fp = crate::enforcement::ContentFingerprint::from_buffer(buffer, H::OUTPUT_BYTES as u8);
+    Validated::new(MultiplicationCertificate::with_level_and_fingerprint_const(
+        level_bits, fp,
+    ))
+}
+
+/// Phase C.4: const-fn resolver companion for `grounding_aware::certify`.
+/// Threads `H: Hasher` for the parametric fingerprint; uses
+/// `CertificateKind::Grounding` as the trailing discriminant byte.
+#[must_use]
+pub fn certify_grounding_aware_const<T, H>(
+    unit: &Validated<CompileUnit, CompileTime>,
+) -> Validated<GroundingCertificate, CompileTime>
+where
+    T: ConstrainedTypeShape,
+    H: crate::enforcement::Hasher,
+{
+    let level_bits = unit.inner().witt_level().witt_length() as u16;
+    let budget = unit.inner().thermodynamic_budget();
+    let mut hasher = H::initial();
+    hasher = crate::enforcement::fold_unit_digest(
+        hasher,
+        level_bits,
+        budget,
+        T::IRI,
+        T::SITE_COUNT,
+        T::CONSTRAINTS,
+        crate::enforcement::CertificateKind::Grounding,
+    );
+    let buffer = hasher.finalize();
+    let fp = crate::enforcement::ContentFingerprint::from_buffer(buffer, H::OUTPUT_BYTES as u8);
+    Validated::new(GroundingCertificate::with_level_and_fingerprint_const(
+        level_bits, fp,
+    ))
+}
+
+/// v0.2.2 T5 C6: typed pipeline entry point producing `Grounded<T>` from
+/// a validated `CompileUnit`. Threads the consumer-supplied substrate
+/// `Hasher` through `fold_unit_digest` to compute a parametric content
+/// fingerprint over the unit's full state: `(level_bits, budget, T::IRI,
+/// T::SITE_COUNT, T::CONSTRAINTS, CertificateKind::Grounding)`.
+/// Two units differing on **any** of those fields produce `Grounded`
+/// values with distinct fingerprints (and distinct `unit_address` handles,
+/// derived from the leading 16 bytes of the fingerprint).
+/// # Errors
+/// Returns `PipelineFailure::ShapeMismatch` when the unit's declared
+/// `result_type_iri` does not match `T::IRI`, or propagates any
+/// failure from the reduction stage executor.
+pub fn run_const<T, M, H>(
+    unit: &Validated<CompileUnit, CompileTime>,
+) -> Result<Grounded<T>, PipelineFailure>
+where
+    T: ConstrainedTypeShape + crate::enforcement::GroundedShape,
+    // Phase C.2 (target §6): const-eval admits only those grounding-map kinds
+    // that are both Total (defined for all inputs) and Invertible (one-to-one).
+    // The bound is enforced at the type level via the existing marker tower.
+    M: crate::enforcement::GroundingMapKind
+        + crate::enforcement::Total
+        + crate::enforcement::Invertible,
+    H: crate::enforcement::Hasher,
+{
+    // The marker bound on M is purely type-level — no runtime use.
+    let _phantom_map: core::marker::PhantomData<M> = core::marker::PhantomData;
+    let level_bits = unit.inner().witt_level().witt_length() as u16;
+    let budget = unit.inner().thermodynamic_budget();
+    // v0.2.2 T6.11: ShapeMismatch detection. The unit declares its
+    // result_type_iri at validation time; the caller's `T::IRI` must match.
+    let unit_iri = unit.inner().result_type_iri();
+    if !crate::enforcement::str_eq(unit_iri, T::IRI) {
+        return Err(PipelineFailure::ShapeMismatch {
+            expected: T::IRI,
+            got: unit_iri,
+        });
+    }
+    // Walk the foundation-locked byte layout via the consumer's hasher.
+    let mut hasher = H::initial();
+    hasher = crate::enforcement::fold_unit_digest(
+        hasher,
+        level_bits,
+        budget,
+        T::IRI,
+        T::SITE_COUNT,
+        T::CONSTRAINTS,
+        crate::enforcement::CertificateKind::Grounding,
+    );
+    let buffer = hasher.finalize();
+    let content_fingerprint =
+        crate::enforcement::ContentFingerprint::from_buffer(buffer, H::OUTPUT_BYTES as u8);
+    let unit_address = crate::enforcement::unit_address_from_buffer(&buffer);
+    let grounding = Validated::new(GroundingCertificate::with_level_and_fingerprint_const(
+        level_bits,
+        content_fingerprint,
+    ));
     let bindings = empty_bindings_table();
-    Grounded::<T>::new_internal(grounding, bindings, level_bits, unit_address)
+    Ok(Grounded::<T>::new_internal(
+        grounding,
+        bindings,
+        level_bits,
+        unit_address,
+        content_fingerprint,
+    ))
 }

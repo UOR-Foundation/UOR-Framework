@@ -4,46 +4,46 @@
 //!
 //! Space: Kernel
 
-use crate::Primitives;
+use crate::HostTypes;
 
 /// An algebra over R that is a division ring with multiplicative norm. Exactly four exist (Hurwitz theorem): R, C, H, O.
-pub trait NormedDivisionAlgebra<P: Primitives> {
+pub trait NormedDivisionAlgebra<H: HostTypes> {
     /// The dimension of this division algebra (1, 2, 4, or 8).
-    fn algebra_dimension(&self) -> P::NonNegativeInteger;
+    fn algebra_dimension(&self) -> u64;
     /// Whether multiplication in this algebra is commutative.
-    fn is_commutative(&self) -> P::Boolean;
+    fn is_commutative(&self) -> bool;
     /// Whether multiplication in this algebra is associative.
-    fn is_associative(&self) -> P::Boolean;
+    fn is_associative(&self) -> bool;
     /// The basis elements of this division algebra.
-    fn basis_elements(&self) -> &P::String;
+    fn basis_elements(&self) -> &H::HostString;
     /// Associated type for `MultiplicationTable`.
-    type MultiplicationTable: MultiplicationTable<P>;
+    type MultiplicationTable: MultiplicationTable<H>;
     /// The multiplication table for this algebra.
     fn algebra_multiplication_table(&self) -> &Self::MultiplicationTable;
 }
 
 /// The doubling construction that builds each division algebra from the previous: R → C → H → O.
-pub trait CayleyDicksonConstruction<P: Primitives> {
+pub trait CayleyDicksonConstruction<H: HostTypes> {
     /// Associated type for `NormedDivisionAlgebra`.
-    type NormedDivisionAlgebra: NormedDivisionAlgebra<P>;
+    type NormedDivisionAlgebra: NormedDivisionAlgebra<H>;
     /// The source algebra of the Cayley-Dickson doubling.
     fn cayley_dickson_source(&self) -> &Self::NormedDivisionAlgebra;
     /// The target algebra of the Cayley-Dickson doubling.
     fn cayley_dickson_target(&self) -> &Self::NormedDivisionAlgebra;
     /// The new basis element adjoined by this doubling step.
-    fn adjoined_element(&self) -> &P::String;
+    fn adjoined_element(&self) -> &H::HostString;
     /// The conjugation and multiplication rule for the adjoined element.
-    fn conjugation_rule(&self) -> &P::String;
+    fn conjugation_rule(&self) -> &H::HostString;
 }
 
 /// The explicit product rules for a division algebra’s basis elements.
-pub trait MultiplicationTable<P: Primitives> {}
+pub trait MultiplicationTable<H: HostTypes> {}
 
 /// The commutator \[a,b\] = ab − ba. Zero for R and C; non-zero for H and O.
-pub trait AlgebraCommutator<P: Primitives> {}
+pub trait AlgebraCommutator<H: HostTypes> {}
 
 /// The associator \[a,b,c\] = (ab)c − a(bc). Zero for R, C, H; non-zero for O.
-pub trait AlgebraAssociator<P: Primitives> {}
+pub trait AlgebraAssociator<H: HostTypes> {}
 
 /// The real numbers R: dimension 1, commutative, associative.
 pub mod real_algebra {

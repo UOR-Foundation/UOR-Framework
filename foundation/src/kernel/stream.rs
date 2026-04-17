@@ -4,77 +4,77 @@
 //!
 //! Space: Kernel
 
-use crate::Primitives;
+use crate::HostTypes;
 
 /// An unbounded sequence of reduction epochs where each epoch terminates and produces a well-typed output. The coinductive dual of a finite computation.
-pub trait ProductiveStream<P: Primitives> {
+pub trait ProductiveStream<H: HostTypes> {
     /// Always true by construction: every epoch terminates. Invariant, not computed.
-    fn is_productive(&self) -> P::Boolean;
+    fn is_productive(&self) -> bool;
     /// Associated type for `Term`.
-    type Term: crate::kernel::schema::Term<P>;
+    type Term: crate::kernel::schema::Term<H>;
     /// A term denoting a function from the current seed value to a pair (head, next_seed).
     fn step_term(&self) -> &Self::Term;
     /// IRI of a proof of stream productivity (coinductive well-foundedness).
-    fn productivity_witness(&self) -> &P::String;
+    fn productivity_witness(&self) -> &H::HostString;
 }
 
 /// A single bounded iteration within a productive stream. Each epoch is a complete reduction execution from Initialization through Convergence.
-pub trait Epoch<P: Primitives> {
+pub trait Epoch<H: HostTypes> {
     /// Associated type for `EulerReduction`.
-    type EulerReduction: crate::kernel::reduction::EulerReduction<P>;
+    type EulerReduction: crate::kernel::reduction::EulerReduction<H>;
     /// The reduction execution for this epoch.
     fn epoch_reduction(&self) -> &Self::EulerReduction;
     /// Associated type for `Datum`.
-    type Datum: crate::kernel::schema::Datum<P>;
+    type Datum: crate::kernel::schema::Datum<H>;
     /// The output datum produced by this epoch.
     fn epoch_output(&self) -> &Self::Datum;
     /// Associated type for `Context`.
-    type Context: crate::user::state::Context<P>;
+    type Context: crate::user::state::Context<H>;
     /// The context at the start of this epoch.
     fn epoch_context(&self) -> &Self::Context;
     /// Zero-based index of this epoch in the stream.
-    fn epoch_index(&self) -> P::NonNegativeInteger;
+    fn epoch_index(&self) -> u64;
 }
 
 /// The transition point between consecutive epochs. Carries the continuation context and the epoch output.
-pub trait EpochBoundary<P: Primitives> {
+pub trait EpochBoundary<H: HostTypes> {
     /// Associated type for `Epoch`.
-    type Epoch: Epoch<P>;
+    type Epoch: Epoch<H>;
     /// The epoch that just completed.
     fn boundary_from(&self) -> &Self::Epoch;
     /// The epoch about to begin.
     fn boundary_to(&self) -> &Self::Epoch;
     /// Associated type for `Context`.
-    type Context: crate::user::state::Context<P>;
+    type Context: crate::user::state::Context<H>;
     /// The context carried across the boundary.
     fn continuation_context(&self) -> &Self::Context;
 }
 
 /// A finite prefix of a productive stream: the first k epochs and their outputs. Every finite prefix is computable in finite time.
-pub trait StreamPrefix<P: Primitives> {
+pub trait StreamPrefix<H: HostTypes> {
     /// Associated type for `Epoch`.
-    type Epoch: Epoch<P>;
+    type Epoch: Epoch<H>;
     /// The epochs in this prefix (ordered by stream:epochIndex).
     fn prefix_epochs(&self) -> &[Self::Epoch];
     /// Number of epochs in this prefix.
-    fn prefix_length(&self) -> P::PositiveInteger;
+    fn prefix_length(&self) -> u64;
 }
 
 /// A transform between productive streams: maps each epoch of the source to an epoch of the target while preserving the productive property.
-pub trait StreamMorphism<P: Primitives>: crate::user::morphism::Transform<P> {}
+pub trait StreamMorphism<H: HostTypes>: crate::user::morphism::Transform<H> {}
 
 /// The coinductive constructor: given an initial context and a step function (a morphism:ComputationDatum), produces a ProductiveStream. The step function must be certified to always reach reduction convergence.
-pub trait Unfold<P: Primitives> {
+pub trait Unfold<H: HostTypes> {
     /// Associated type for `Context`.
-    type Context: crate::user::state::Context<P>;
+    type Context: crate::user::state::Context<H>;
     /// The initial context for the stream.
     fn unfold_seed(&self) -> &Self::Context;
     /// Associated type for `ComputationDatum`.
-    type ComputationDatum: crate::user::morphism::ComputationDatum<P>;
+    type ComputationDatum: crate::user::morphism::ComputationDatum<H>;
     /// The certified step function producing each epoch.
     fn unfold_step(&self) -> &Self::ComputationDatum;
     /// Associated type for `ProductiveStream`.
-    type ProductiveStream: ProductiveStream<P>;
+    type ProductiveStream: ProductiveStream<H>;
     /// The stream produced by this unfold.
     fn unfold_result(&self) -> &Self::ProductiveStream;
 }

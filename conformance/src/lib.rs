@@ -114,6 +114,51 @@ pub fn run_all(paths: &WorkspacePaths) -> anyhow::Result<ConformanceReport> {
     report.extend(validators::rust::grounding_combinator_check::validate(
         &paths.workspace,
     )?);
+    // Phase H (target §1.6): libm always-on dependency + transcendentals module.
+    report.extend(validators::rust::libm_dependency::validate(
+        &paths.workspace,
+    )?);
+    // Phase G (target §1.5): grammar-surface coverage.
+    report.extend(validators::rust::grammar_surface_coverage::validate(
+        &paths.workspace,
+    )?);
+    // Phase D (target §4.2): resolver-tower completion.
+    report.extend(validators::rust::resolver_tower::validate(
+        &paths.workspace,
+    )?);
+    // Phase E (target §4.6): bridge namespace enforcement additions.
+    report.extend(validators::rust::bridge_enforcement::validate(
+        &paths.workspace,
+    )?);
+    // Phase F (target §4.7): kernel namespace sealed witnesses + closed enumerations.
+    report.extend(validators::rust::kernel_enforcement::validate(
+        &paths.workspace,
+    )?);
+    // Phase K (target §4.3 / §9 criterion 1): W4 closure via combinator program.
+    report.extend(validators::rust::w4_closure::validate(&paths.workspace)?);
+    // Phase L.2 (target §4.5 / §9 criterion 5): const-ring-eval coverage.
+    report.extend(validators::rust::const_ring_eval_coverage::validate(
+        &paths.workspace,
+    )?);
+    // Phase M.3 (target §5): driver must-use discipline.
+    report.extend(validators::rust::driver_must_use::validate(
+        &paths.workspace,
+    )?);
+    // Correctness Layer 2: behavioral tests invoked as conformance checks.
+    // Each behavior_*.rs test contributes one pass/fail line here, so an
+    // incorrect endpoint fails conformance.
+    report.extend(validators::rust::correctness::validate(&paths.workspace)?);
+    // Correctness Layer 3: test-quality gate. Reject vacuous-assertion
+    // patterns in behavior_*.rs so weak tests can't slip through.
+    report.extend(validators::rust::test_assertion_depth::validate(
+        &paths.workspace,
+    )?);
+    // Correctness Layer 4: endpoint-coverage gate. Every public symbol
+    // in public-api.snapshot must map to a behavior test or an audited
+    // exemption in endpoint_coverage.toml.
+    report.extend(validators::rust::endpoint_coverage::validate(
+        &paths.workspace,
+    )?);
     // v0.2.2 Phase H: lints + cross-cutting.
     report.extend(validators::rust::feature_flag_layout::validate(
         &paths.workspace,
@@ -131,6 +176,43 @@ pub fn run_all(paths: &WorkspacePaths) -> anyhow::Result<ConformanceReport> {
         &paths.workspace,
     )?);
     report.extend(validators::rust::uor_foundation_verify_build::validate(
+        &paths.workspace,
+    )?);
+    // v0.2.2 T6.18: calibration preset literals validity.
+    report.extend(validators::rust::calibration_presets_valid::validate(
+        &paths.workspace,
+    )?);
+    // v0.2.2 T6.19: pipeline entry points thread H: Hasher.
+    report.extend(validators::rust::pipeline_run_threads_input::validate(
+        &paths.workspace,
+    )?);
+    // v0.2.2 T6.20: verify-trace round-trip discipline.
+    report.extend(validators::rust::verify_trace_round_trip::validate(
+        &paths.workspace,
+    )?);
+    // v0.2.2 T6.21: trace byte layout pinned.
+    report.extend(validators::rust::trace_byte_layout_pinned::validate(
+        &paths.workspace,
+    )?);
+    // v0.2.2 T6.22: error trait completeness.
+    report.extend(validators::rust::error_trait_completeness::validate(
+        &paths.workspace,
+    )?);
+
+    // v0.2.2 target-doc cross-reference validators (Workstream A):
+    // structural checks against external/uor-foundation-target-v2.md
+    // prescriptions. Catch drift that behavioral tests cannot observe.
+    report.extend(validators::rust::target::sealed_type_coverage::validate(
+        &paths.workspace,
+    )?);
+    report.extend(validators::rust::target::resolver_signature_shape::validate(&paths.workspace)?);
+    report.extend(
+        validators::rust::target::constraint_encoder_completeness::validate(&paths.workspace)?,
+    );
+    report.extend(validators::rust::target::w4_grounding_closure::validate(
+        &paths.workspace,
+    )?);
+    report.extend(validators::rust::target::spectral_sequence_walk::validate(
         &paths.workspace,
     )?);
 

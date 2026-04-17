@@ -76,6 +76,18 @@ instance : Inhabited (CompletenessAuditTrail UOR.Prims.Standard) where
     witnessCount := none
   }
 
+/-- A certificate attesting that a resolver's verdict path produced a generic impossibility witness — the input failed the resolver's admissibility precondition or decision procedure in a way not covered by a more-specific witness. Returned by every Phase D resolver on failure. -/
+structure GenericImpossibilityCertificate (P : Primitives) extends Certificate P
+
+instance : Inhabited (GenericImpossibilityCertificate UOR.Prims.Standard) where
+  default := {
+    method := none
+    verified := none
+    wittLength := none
+    timestamp := none
+    certifies := none
+  }
+
 /-- A structured evidence bundle attesting that each sub-predicate of the geodesic condition (GD_6) holds independently: isAR1Ordered and isDC10Selected. Linked from GeodesicCertificate via evidenceBundle. -/
 structure GeodesicEvidenceBundle (P : Primitives) where
   /-- True iff the linked GeodesicTrace is ordered by the AR_1 canonical rewriting rule (smallest lexicographic representative first). -/
@@ -87,6 +99,18 @@ instance : Inhabited (GeodesicEvidenceBundle UOR.Prims.Standard) where
   default := {
     isAR1Ordered := none
     isDC10Selected := none
+  }
+
+/-- A certificate attesting that the inhabitance decider concluded the input is unsatisfiable — there is no value in the carrier that satisfies the declared constraint conjunction. Returned by `resolver::inhabitance::certify` on failure. -/
+structure InhabitanceImpossibilityCertificate (P : Primitives) extends Certificate P
+
+instance : Inhabited (InhabitanceImpossibilityCertificate UOR.Prims.Standard) where
+  default := {
+    method := none
+    verified := none
+    wittLength := none
+    timestamp := none
+    certifies := none
   }
 
 /-- A certificate attesting that a morphism:Isometry preserves metric distances. Certifies the transform is a metric isometry with respect to the specified metric. -/

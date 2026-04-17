@@ -70,13 +70,18 @@ pub fn validate(workspace: &Path) -> Result<ConformanceReport> {
         ("InteractionDriver<T, P>", "pub struct InteractionDriver<"),
         (
             "StreamDriver Iterator impl",
-            "Iterator for StreamDriver<T, P>",
+            "Iterator for StreamDriver<T, P, H>",
         ),
         // Pipeline entry points.
-        ("pipeline::run", "pub fn run<T, P>("),
-        ("pipeline::run_parallel", "pub fn run_parallel<T, P>("),
-        ("pipeline::run_stream", "pub fn run_stream<T, P>("),
-        ("pipeline::run_interactive", "pub fn run_interactive<T, P>("),
+        // v0.2.2 T6.1: every driver entry point threads an `H: Hasher` type
+        // parameter for the parametric substrate fingerprint.
+        ("pipeline::run", "pub fn run<T, P, H>("),
+        ("pipeline::run_parallel", "pub fn run_parallel<T, P, H>("),
+        ("pipeline::run_stream", "pub fn run_stream<T, P, H>("),
+        (
+            "pipeline::run_interactive",
+            "pub fn run_interactive<T, P, H>(",
+        ),
         // InteractionDriver methods.
         (
             "InteractionDriver::step",

@@ -4,20 +4,20 @@
 //!
 //! Space: Kernel
 
-use crate::Primitives;
+use crate::HostTypes;
 
 /// The composition structure on the eight structural types. Governs how types nest.
-pub trait StructuralOperad<P: Primitives> {
+pub trait StructuralOperad<H: HostTypes> {
     /// Associated type for `StructuralOperad`.
-    type StructuralOperadTarget: StructuralOperad<P>;
+    type StructuralOperadTarget: StructuralOperad<H>;
     /// The structural operad defining this composition.
     fn operad_structure(&self) -> &Self::StructuralOperadTarget;
 }
 
 /// A specific nesting: outer type F applied to inner type G.
-pub trait OperadComposition<P: Primitives> {
+pub trait OperadComposition<H: HostTypes> {
     /// Associated type for `TypeDefinition`.
-    type TypeDefinition: crate::user::type_::TypeDefinition<P>;
+    type TypeDefinition: crate::user::type_::TypeDefinition<H>;
     /// The outer type F in the nesting F(G).
     fn outer_type(&self) -> &Self::TypeDefinition;
     /// The inner type G in the nesting F(G).
@@ -25,9 +25,9 @@ pub trait OperadComposition<P: Primitives> {
     /// The resulting composed type F(G).
     fn composed_type(&self) -> &Self::TypeDefinition;
     /// Site count of the composed type F(G).
-    fn composed_site_count(&self) -> P::NonNegativeInteger;
+    fn composed_site_count(&self) -> u64;
     /// Associated type for `GroundingMap`.
-    type GroundingMap: crate::user::morphism::GroundingMap<P>;
+    type GroundingMap: crate::user::morphism::GroundingMap<H>;
     /// Grounding of the composed type F(G).
     fn composed_grounding(&self) -> &Self::GroundingMap;
 }

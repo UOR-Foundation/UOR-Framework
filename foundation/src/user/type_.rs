@@ -6,267 +6,267 @@
 
 use crate::enums::MetricAxis;
 use crate::enums::WittLevel;
-use crate::Primitives;
+use crate::HostTypes;
 
 /// A runtime type declaration. The root class for all UOR types. Each TypeDefinition, when resolved, produces a partition of the ring at the specified quantum level.
 /// Disjoint with: Constraint, MetricAxis.
-pub trait TypeDefinition<P: Primitives> {
+pub trait TypeDefinition<H: HostTypes> {
     /// Associated type for `Element`.
-    type Element: crate::kernel::address::Element<P>;
+    type Element: crate::kernel::address::Element<H>;
     /// The content-derived address of this type definition, uniquely identifying the type in the UOR address space.
     fn content_address(&self) -> &Self::Element;
 }
 
 /// A primitive type defined by a fixed bit width. The carrier is the entire ring Z/(2^n)Z at the specified quantum level.
-pub trait PrimitiveType<P: Primitives>: TypeDefinition<P> {
+pub trait PrimitiveType<H: HostTypes>: TypeDefinition<H> {
     /// The bit width of a primitive type (the quantum level n). The carrier is Z/(2^n)Z.
-    fn bit_width(&self) -> P::PositiveInteger;
+    fn bit_width(&self) -> u64;
 }
 
 /// A product (Cartesian) type formed from multiple component types. The carrier is the product of the component carriers.
-pub trait ProductType<P: Primitives>: TypeDefinition<P> {
+pub trait ProductType<H: HostTypes>: TypeDefinition<H> {
     /// Associated type for `TypeDefinition`.
-    type TypeDefinition: TypeDefinition<P>;
+    type TypeDefinition: TypeDefinition<H>;
     /// A component type in a product type.
     fn component(&self) -> &[Self::TypeDefinition];
 }
 
 /// A sum (disjoint union) type formed from multiple variant types. The carrier is the disjoint union of the variant carriers.
-pub trait SumType<P: Primitives>: TypeDefinition<P> {}
+pub trait SumType<H: HostTypes>: TypeDefinition<H> {}
 
 /// A type formed by constraining a base type with a predicate. The carrier is the subset of the base carrier satisfying the constraint.
-pub trait ConstrainedType<P: Primitives>: TypeDefinition<P> {
+pub trait ConstrainedType<H: HostTypes>: TypeDefinition<H> {
     /// Associated type for `TypeDefinition`.
-    type TypeDefinition: TypeDefinition<P>;
+    type TypeDefinition: TypeDefinition<H>;
     /// The base type that a constrained type restricts.
     fn base_type(&self) -> &Self::TypeDefinition;
     /// Associated type for `Constraint`.
-    type Constraint: Constraint<P>;
+    type Constraint: Constraint<H>;
     /// A typed constraint object applied to this constrained type. Replaces the deprecated string-based type:constraint property.
     fn has_constraint(&self) -> &[Self::Constraint];
     /// Associated type for `HolonomyGroup`.
-    type HolonomyGroup: crate::bridge::observable::HolonomyGroup<P>;
+    type HolonomyGroup: crate::bridge::observable::HolonomyGroup<H>;
     /// The HolonomyGroup of this type. Computed by the MonodromyResolver.
     fn holonomy_group(&self) -> &Self::HolonomyGroup;
     /// Associated type for `MonodromyClass`.
-    type MonodromyClass: crate::bridge::observable::MonodromyClass<P>;
+    type MonodromyClass: crate::bridge::observable::MonodromyClass<H>;
     /// The MonodromyClass classifying this type as flat or twisted.
     fn monodromy_class(&self) -> &Self::MonodromyClass;
     /// Whether this ConstrainedType has been classified as FlatType or TwistedType by the MonodromyResolver. The MN_8 identity guarantees this is a bivalent classification: holonomyClassified(T) iff isFlatType(T) xor isTwistedType(T).
-    fn holonomy_classified(&self) -> P::Boolean;
+    fn holonomy_classified(&self) -> bool;
 }
 
 /// A composable predicate that refines a type by pinning one or more site coordinates. Constraints are the parameterization mechanism for ConstrainedType.
 /// Disjoint with: TypeDefinition, MetricAxis.
-pub trait Constraint<P: Primitives> {
+pub trait Constraint<H: HostTypes> {
     /// The metric axis along which this constraint operates: vertical (ring), horizontal (Hamming), or diagonal (incompatibility).
     fn metric_axis(&self) -> MetricAxis;
     /// Associated type for `SiteIndex`.
-    type SiteIndex: crate::bridge::partition::SiteIndex<P>;
+    type SiteIndex: crate::bridge::partition::SiteIndex<H>;
     /// A site coordinate that this constraint pins when applied.
     fn pins_sites(&self) -> &[Self::SiteIndex];
     /// The cost of applying this constraint in terms of axis crossings: the number of metric boundaries that must be traversed.
-    fn crossing_cost(&self) -> P::NonNegativeInteger;
+    fn crossing_cost(&self) -> u64;
 }
 
 /// A TypeDefinition certified to satisfy the UOR completeness criterion (IT_7d): its constraint nerve N(C) has Euler characteristic χ = n and all Betti numbers β_k = 0. A CompleteType guarantees that resolution closes the site budget in O(1) — no iterative refinement is required. Completeness is attested by a cert:CompletenessCertificate linked via cert:certifiedType. This class is not addressable from a type-expr position in the term language; references from term-language positions are rejected by the resolver.
-pub trait CompleteType<P: Primitives>: TypeDefinition<P> {}
+pub trait CompleteType<H: HostTypes>: TypeDefinition<H> {}
 
 /// A ConstrainedType actively undergoing the completeness certification pipeline. Links to the resolver:ResolutionState tracking the current iteration and to the resolver:CechNerve being computed. Disjoint from CompleteType (which is already certified). This class is not addressable from a type-expr position in the term language; references from term-language positions are rejected by the resolver.
 /// Disjoint with: CompleteType.
-pub trait CompletenessCandidate<P: Primitives>: ConstrainedType<P> {
+pub trait CompletenessCandidate<H: HostTypes>: ConstrainedType<H> {
     /// Associated type for `ConstrainedType`.
-    type ConstrainedType: ConstrainedType<P>;
+    type ConstrainedType: ConstrainedType<H>;
     /// The ConstrainedType being evaluated for completeness by this CompletenessCandidate.
     fn completeness_candidate(&self) -> &[Self::ConstrainedType];
     /// Associated type for `CechNerve`.
-    type CechNerve: crate::bridge::resolver::CechNerve<P>;
+    type CechNerve: crate::bridge::resolver::CechNerve<H>;
     /// The constraint nerve being computed for this candidate. The CompletenessResolver reads χ(N(C)) from this nerve at each iteration via resolver:nerveEulerCharacteristic.
     fn candidate_nerve(&self) -> &Self::CechNerve;
 }
 
 /// A record of a single site-closing event: one constraint application that reduced the FreeRank deficit. Carries the applied constraint and the sitesClosed count. Forms the ordered audit trail between ConstrainedType and CompleteType.
-pub trait CompletenessWitness<P: Primitives> {
+pub trait CompletenessWitness<H: HostTypes> {
     /// Associated type for `Constraint`.
-    type Constraint: Constraint<P>;
+    type Constraint: Constraint<H>;
     /// The constraint applied in this witness step.
     fn witness_constraint(&self) -> &Self::Constraint;
     /// Number of sites closed by this witness step.
-    fn sites_closed(&self) -> P::NonNegativeInteger;
+    fn sites_closed(&self) -> u64;
 }
 
 /// A specification of the desired topological properties of a type to be synthesised. Carries a target Euler characteristic (targetEulerCharacteristic) and a target Betti profile (zero or more targetBettiNumber assertions). The minimal goal for O(1) resolution is: targetEulerCharacteristic = n and all targetBettiNumber = 0 — the IT_7d profile.
-pub trait TypeSynthesisGoal<P: Primitives> {
+pub trait TypeSynthesisGoal<H: HostTypes> {
     /// The target χ(N(C)) value. For O(1) resolution: set equal to n (the quantum level).
-    fn target_euler_characteristic(&self) -> P::Integer;
+    fn target_euler_characteristic(&self) -> i64;
     /// Non-functional. Each assertion specifies a target Betti number value for a given homological degree. Multiple assertions permitted, one per degree.
-    fn target_betti_number(&self) -> &[P::NonNegativeInteger];
+    fn target_betti_number(&self) -> &[u64];
     /// Whether the target signature of this TypeSynthesisGoal is a ForbiddenSignature. If true, synthesis is provably impossible.
-    fn target_forbidden(&self) -> P::Boolean;
+    fn target_forbidden(&self) -> bool;
 }
 
 /// The output of a TypeSynthesisResolver run. Contains the SynthesizedType, the realised topological signature (as a SynthesisSignature), and the SynthesisTrace recording the construction steps.
-pub trait TypeSynthesisResult<P: Primitives> {}
+pub trait TypeSynthesisResult<H: HostTypes> {}
 
 /// A ConstrainedType produced by the TypeSynthesisResolver. Distinguished from a hand-authored ConstrainedType by the presence of a type:synthesisResult link. May or may not be a CompleteType, depending on the synthesis goal. This class is not addressable from a type-expr position in the term language; references from term-language positions are rejected by the resolver.
-pub trait SynthesizedType<P: Primitives>: ConstrainedType<P> {
+pub trait SynthesizedType<H: HostTypes>: ConstrainedType<H> {
     /// Associated type for `TypeSynthesisResult`.
-    type TypeSynthesisResult: TypeSynthesisResult<P>;
+    type TypeSynthesisResult: TypeSynthesisResult<H>;
     /// Links a SynthesizedType back to the synthesis run that produced it.
     fn synthesis_result(&self) -> &Self::TypeSynthesisResult;
 }
 
 /// The minimal set of constraints in the SynthesizedType's constraint set that is sufficient to realise the target topological signature. The minimality criterion is that removing any single member changes the realised signature.
-pub trait MinimalConstraintBasis<P: Primitives> {
+pub trait MinimalConstraintBasis<H: HostTypes> {
     /// Associated type for `Constraint`.
-    type Constraint: Constraint<P>;
+    type Constraint: Constraint<H>;
     /// Non-functional. One assertion per constraint in the minimal basis.
     fn basis_constraint(&self) -> &[Self::Constraint];
     /// The cardinality of the minimal basis. The theoretical lower bound is n (one constraint per site).
-    fn basis_size(&self) -> P::NonNegativeInteger;
+    fn basis_size(&self) -> u64;
 }
 
 /// A ConstrainedType T' over R_{n+1} obtained by extending a ConstrainedType T over R_n. Carries a link to the base type (liftBase), the quantum level it lifts to (liftTargetLevel), and the LiftObstruction (if the lift fails to transfer completeness). A WittLift is a CompleteType iff its LiftObstruction is trivial.
-pub trait WittLift<P: Primitives> {
+pub trait WittLift<H: HostTypes> {
     /// Associated type for `ConstrainedType`.
-    type ConstrainedType: ConstrainedType<P>;
+    type ConstrainedType: ConstrainedType<H>;
     /// The base type being lifted to the next quantum level.
     fn lift_base(&self) -> &Self::ConstrainedType;
     /// The quantum level this lift targets.
     fn lift_target_level(&self) -> WittLevel;
     /// Associated type for `LiftObstruction`.
-    type LiftObstruction: LiftObstruction<P>;
+    type LiftObstruction: LiftObstruction<H>;
     /// The LiftObstruction for this lift. Trivial (zero class) iff the lift inherits completeness.
     fn lift_obstruction(&self) -> &Self::LiftObstruction;
 }
 
 /// The algebraic obstruction to a WittLift inheriting the completeness of its base type. Computed as the image of the spectral sequence differential d_2. If trivial (zero), the base type's completeness lifts. If non-trivial, at least one additional constraint is needed at the new quantum level.
-pub trait LiftObstruction<P: Primitives> {
+pub trait LiftObstruction<H: HostTypes> {
     /// True iff the obstruction class is zero — the base type's completeness transfers to the lifted quantum level without additional constraints.
-    fn obstruction_trivial(&self) -> P::Boolean;
+    fn obstruction_trivial(&self) -> bool;
     /// Associated type for `SiteIndex`.
-    type SiteIndex: crate::bridge::partition::SiteIndex<P>;
+    type SiteIndex: crate::bridge::partition::SiteIndex<H>;
     /// The site at the new quantum level where the obstruction is located. Ranges over the new bit position introduced at Q_{n+1}.
     fn obstruction_site(&self) -> &Self::SiteIndex;
 }
 
 /// A ConstrainedType whose HolonomyGroup is non-trivial — at least one closed constraint path produces a non-identity dihedral element. A TwistedType may still be a CompleteType (IT_7d is a homological, not holonomic, criterion), but its resolution paths require tracking dihedral accumulation. This class is not addressable from a type-expr position in the term language; references from term-language positions are rejected by the resolver.
 /// Disjoint with: FlatType.
-pub trait TwistedType<P: Primitives>: ConstrainedType<P> {}
+pub trait TwistedType<H: HostTypes>: ConstrainedType<H> {}
 
 /// A ConstrainedType whose HolonomyGroup is trivial — all closed constraint paths have identity monodromy. The constraint configuration is topologically flat: resolution is path-independent. This class is not addressable from a type-expr position in the term language; references from term-language positions are rejected by the resolver.
 /// Disjoint with: TwistedType.
-pub trait FlatType<P: Primitives>: ConstrainedType<P> {}
+pub trait FlatType<H: HostTypes>: ConstrainedType<H> {}
 
 /// A type representing a superposition of site states where sites carry complex amplitudes rather than binary pinned/free assignments. Ontological realisation of RC_5 (Amendment 32). This class is not addressable from a type-expr position in the term language; references from term-language positions are rejected by the resolver.
-pub trait SuperposedSiteState<P: Primitives>: TypeDefinition<P> {
+pub trait SuperposedSiteState<H: HostTypes>: TypeDefinition<H> {
     /// The amplitude coefficient for this superposed site state.
-    fn amplitude(&self) -> P::Decimal;
+    fn amplitude(&self) -> H::Decimal;
     /// Whether the amplitude vector of this SuperposedSiteState satisfies the normalization condition Σ|αᵢ|² = 1 (QM_5). Set by the SuperpositionResolver after verification.
-    fn normalization_verified(&self) -> P::Boolean;
+    fn normalization_verified(&self) -> bool;
 }
 
 /// A topological signature (χ, β_k) that is formally impossible to achieve for any ConstrainedType. Witnessed by an ImpossibilityWitness in proof/.
-pub trait ForbiddenSignature<P: Primitives> {}
+pub trait ForbiddenSignature<H: HostTypes> {}
 
 /// A site state that has undergone projective collapse from a SuperposedSiteState to a definitive classical value. Topologically equivalent to a classically pinned site (QM_2).
-pub trait CollapsedSiteState<P: Primitives> {
+pub trait CollapsedSiteState<H: HostTypes> {
     /// Associated type for `SuperposedSiteState`.
-    type SuperposedSiteState: SuperposedSiteState<P>;
+    type SuperposedSiteState: SuperposedSiteState<H>;
     /// The SuperposedSiteState from which this CollapsedSiteState was produced by projective measurement.
     fn collapsed_from(&self) -> &Self::SuperposedSiteState;
     /// The amplitude of the surviving branch after projective collapse. |α|² is the probability of this outcome under the Born rule.
-    fn surviving_amplitude(&self) -> P::Decimal;
+    fn surviving_amplitude(&self) -> H::Decimal;
 }
 
 /// An ordered composition of WittLift steps from liftSourceLevel (Q_j) to liftTargetLevel (Q_k) for any j < k. The canonical object certifying type completeness at arbitrary Q_k.
-pub trait LiftChain<P: Primitives> {
+pub trait LiftChain<H: HostTypes> {
     /// The quantum level at the base of the chain.
     fn lift_source_level(&self) -> WittLevel;
     /// The number of WittLift steps in the chain (k - j).
-    fn chain_length(&self) -> P::NonNegativeInteger;
+    fn chain_length(&self) -> u64;
     /// Associated type for `WittLift`.
-    type WittLift: WittLift<P>;
+    type WittLift: WittLift<H>;
     /// A WittLift step in this chain. Non-functional: one per step.
     fn chain_step(&self) -> &[Self::WittLift];
     /// Associated type for `ObstructionChain`.
-    type ObstructionChain: ObstructionChain<P>;
+    type ObstructionChain: ObstructionChain<H>;
     /// The full obstruction history of this chain.
     fn chain_obstruction_profile(&self) -> &Self::ObstructionChain;
     /// The basis size of the CompleteType at the chain target level.
-    fn resolved_basis_size(&self) -> P::NonNegativeInteger;
+    fn resolved_basis_size(&self) -> u64;
 }
 
 /// The complete ordered sequence of LiftObstruction records encountered and resolved along a LiftChain. An empty ObstructionChain means the tower is flat.
-pub trait ObstructionChain<P: Primitives> {
+pub trait ObstructionChain<H: HostTypes> {
     /// Associated type for `LiftObstruction`.
-    type LiftObstruction: LiftObstruction<P>;
+    type LiftObstruction: LiftObstruction<H>;
     /// A non-trivial LiftObstruction in this chain. Non-functional.
     fn obstruction_at(&self) -> &[Self::LiftObstruction];
     /// Total number of non-trivial LiftObstruction records.
-    fn obstruction_count(&self) -> P::NonNegativeInteger;
+    fn obstruction_count(&self) -> u64;
     /// True iff obstructionCount = 0 (flat tower).
-    fn is_flat(&self) -> P::Boolean;
+    fn is_flat(&self) -> bool;
 }
 
 /// The space of all CompleteTypes over R_n at a given quantum level.
-pub trait ModuliSpace<P: Primitives> {
+pub trait ModuliSpace<H: HostTypes> {
     /// The quantum level at which this moduli space is defined.
     fn moduli_witt_level(&self) -> WittLevel;
     /// Associated type for `CompleteType`.
-    type CompleteType: CompleteType<P>;
+    type CompleteType: CompleteType<H>;
     /// A CompleteType that is a point of this moduli space.
     fn moduli_point(&self) -> &[Self::CompleteType];
     /// The dimension of this moduli space.
-    fn moduli_dimension(&self) -> P::NonNegativeInteger;
+    fn moduli_dimension(&self) -> u64;
 }
 
 /// A stratum indexed by a conjugacy class of subgroups of D_{2^n}.
-pub trait HolonomyStratum<P: Primitives> {
+pub trait HolonomyStratum<H: HostTypes> {
     /// Associated type for `MonodromyClass`.
-    type MonodromyClass: crate::bridge::observable::MonodromyClass<P>;
+    type MonodromyClass: crate::bridge::observable::MonodromyClass<H>;
     /// The MonodromyClass indexing this stratum.
     fn stratum_holonomy_class(&self) -> &Self::MonodromyClass;
     /// The codimension of this stratum within the moduli space.
-    fn stratum_codimension(&self) -> P::NonNegativeInteger;
+    fn stratum_codimension(&self) -> u64;
     /// Associated type for `ModuliSpace`.
-    type ModuliSpace: ModuliSpace<P>;
+    type ModuliSpace: ModuliSpace<H>;
     /// The moduli space containing this stratum.
     fn stratum_moduli(&self) -> &Self::ModuliSpace;
 }
 
 /// A one-parameter family of constraint configurations parameterizing a path.
-pub trait DeformationFamily<P: Primitives> {
+pub trait DeformationFamily<H: HostTypes> {
     /// Associated type for `CompleteType`.
-    type CompleteType: CompleteType<P>;
+    type CompleteType: CompleteType<H>;
     /// A CompleteType along the deformation path.
     fn family_parameter(&self) -> &[Self::CompleteType];
     /// Whether every member of this deformation family remains a CompleteType.
-    fn family_preserves_completeness(&self) -> P::Boolean;
+    fn family_preserves_completeness(&self) -> bool;
 }
 
 /// The versal deformation of a CompleteType T.
-pub trait VersalDeformation<P: Primitives> {
+pub trait VersalDeformation<H: HostTypes> {
     /// Associated type for `CompleteType`.
-    type CompleteType: CompleteType<P>;
+    type CompleteType: CompleteType<H>;
     /// The CompleteType at the base of this versal deformation.
     fn versal_base(&self) -> &Self::CompleteType;
     /// The dimension of the versal deformation space.
-    fn versal_dimension(&self) -> P::NonNegativeInteger;
+    fn versal_dimension(&self) -> u64;
 }
 
 /// The map induced by WittLift from one moduli space to the next.
-pub trait ModuliTowerMap<P: Primitives> {
+pub trait ModuliTowerMap<H: HostTypes> {
     /// Associated type for `ModuliSpace`.
-    type ModuliSpace: ModuliSpace<P>;
+    type ModuliSpace: ModuliSpace<H>;
     /// The source moduli space of this tower map.
     fn tower_map_source(&self) -> &Self::ModuliSpace;
 }
 
 /// The adjunction between the type lattice and the site lattice. The upper adjoint is type closure; the lower adjoint is site interior. σ = lower adjoint evaluation; r = complement of upper adjoint image.
-pub trait GaloisConnection<P: Primitives> {
+pub trait GaloisConnection<H: HostTypes> {
     /// Associated type for `TermExpression`.
-    type TermExpression: crate::kernel::schema::TermExpression<P>;
+    type TermExpression: crate::kernel::schema::TermExpression<H>;
     /// The upper adjoint (type closure) of the Galois connection, expressed as a symbolic formula string.
     fn upper_adjoint(&self) -> &Self::TermExpression;
     /// The lower adjoint (site interior) of the Galois connection, expressed as a symbolic formula string.
@@ -274,7 +274,7 @@ pub trait GaloisConnection<P: Primitives> {
     /// The fixpoint condition for the Galois connection: when upper(lower(T)) = T, the type is complete.
     fn fixpoint_condition(&self) -> &Self::TermExpression;
     /// Description of the refinement direction: ascending in type lattice corresponds to descending in site freedom.
-    fn refinement_direction(&self) -> P::NonNegativeInteger;
+    fn refinement_direction(&self) -> u64;
     /// The closure property of a Galois connection.
     fn galois_closure_property(&self) -> &Self::TermExpression;
     /// The interior property of a Galois connection.
@@ -282,47 +282,47 @@ pub trait GaloisConnection<P: Primitives> {
 }
 
 /// A morphism T₁ → T₂ witnessing that T₁ is a subtype of T₂: the constraint set of T₁ is a superset of the constraint set of T₂.
-pub trait TypeInclusion<P: Primitives>: crate::user::morphism::Transform<P> {
+pub trait TypeInclusion<H: HostTypes>: crate::user::morphism::Transform<H> {
     /// Associated type for `ConstrainedType`.
-    type ConstrainedType: ConstrainedType<P>;
+    type ConstrainedType: ConstrainedType<H>;
     /// The subtype (more constraints).
     fn inclusion_source(&self) -> &Self::ConstrainedType;
     /// The supertype (fewer constraints).
     fn inclusion_target(&self) -> &Self::ConstrainedType;
     /// True iff constraints(source) ⊇ constraints(target). Computed, not asserted.
-    fn inclusion_witness(&self) -> P::Boolean;
+    fn inclusion_witness(&self) -> bool;
 }
 
 /// The partial order on types induced by TypeInclusion. The top element is PrimitiveType (no constraints); the bottom elements are CompleteTypes (all sites pinned).
-pub trait SubtypingLattice<P: Primitives> {
+pub trait SubtypingLattice<H: HostTypes> {
     /// Maximum chain length from PrimitiveType (top) to any CompleteType (bottom). Equals the site budget n at quantum level Q_k.
-    fn lattice_depth(&self) -> P::NonNegativeInteger;
+    fn lattice_depth(&self) -> u64;
 }
 
 /// Declarative defaults for type:Constraint subclasses, consumed by #\[derive(ConstrainedType)\] at macro-crate build time.
-pub trait ConstraintDefaults<P: Primitives> {
+pub trait ConstraintDefaults<H: HostTypes> {
     /// Default integer value for the named constraint default.
-    fn default_value(&self) -> P::Integer;
+    fn default_value(&self) -> i64;
 }
 
-/// Parametric constraint carrier consumed by the codegen to emit `BoundConstraint<O: Observable, B: BoundShape>` in the Rust foundation. The (observable, bound_shape) pair picks the predicate form; the typed datatype properties (modulus, residue, hammingBound, ...) carry the parameters for that specific kind. Replaces the seven v0.2.1 enumerated Constraint subclasses with a parametric form; the legacy names survive as Rust type aliases (ResidueConstraint, HammingConstraint, ...).
-pub trait BoundConstraint<P: Primitives>: Constraint<P> {
+/// Parametric constraint carrier consumed by the codegen to emit `BoundConstraint\<O: Observable, B: BoundShape\>` in the Rust foundation. The (observable, bound_shape) pair picks the predicate form; the typed datatype properties (modulus, residue, hammingBound, ...) carry the parameters for that specific kind. Replaces the seven v0.2.1 enumerated Constraint subclasses with a parametric form; the legacy names survive as Rust type aliases (ResidueConstraint, HammingConstraint, ...).
+pub trait BoundConstraint<H: HostTypes>: Constraint<H> {
     /// The modulus m of a residue constraint: x ≡ r (mod m).
-    fn modulus(&self) -> P::PositiveInteger;
+    fn modulus(&self) -> u64;
     /// The residue value r of a residue constraint: x ≡ r (mod m).
-    fn residue(&self) -> P::NonNegativeInteger;
+    fn residue(&self) -> u64;
     /// Associated type for `Datum`.
-    type Datum: crate::kernel::schema::Datum<P>;
+    type Datum: crate::kernel::schema::Datum<H>;
     /// The carry propagation pattern of a carry constraint, expressed as a Datum at the appropriate quantum level.
     fn carry_pattern(&self) -> &Self::Datum;
     /// The minimum factorization depth required by a depth constraint.
-    fn min_depth(&self) -> P::NonNegativeInteger;
+    fn min_depth(&self) -> u64;
     /// The maximum factorization depth allowed by a depth constraint.
-    fn max_depth(&self) -> P::NonNegativeInteger;
+    fn max_depth(&self) -> u64;
     /// Upper bound on the Hamming weight of the Datum.
-    fn hamming_bound(&self) -> P::NonNegativeInteger;
+    fn hamming_bound(&self) -> u64;
     /// Zero-based index of the pinned site coordinate.
-    fn site_index(&self) -> P::NonNegativeInteger;
+    fn site_index(&self) -> u64;
     /// The value the pinned site coordinate must equal (a Datum in the set {0, 1}).
     fn site_value(&self) -> &Self::Datum;
     /// Constant offset defining the affine subspace.
@@ -330,28 +330,28 @@ pub trait BoundConstraint<P: Primitives>: Constraint<P> {
     /// A generator of the affine subspace. Non-functional: multiple generators span the subspace.
     fn affine_generator(&self) -> &[Self::Datum];
     /// Associated type for `Observable`.
-    type Observable: crate::bridge::observable::Observable<P>;
+    type Observable: crate::bridge::observable::Observable<H>;
     /// The observable:Observable whose values this BoundConstraint bounds. Picks which datum projection is being constrained.
     fn bound_observable(&self) -> &Self::Observable;
     /// Associated type for `BoundShape`.
-    type BoundShape: BoundShape<P>;
+    type BoundShape: BoundShape<H>;
     /// The predicate form this BoundConstraint imposes on its bound observable. Closed enumeration with exactly six named individuals (EqualBound, LessEqBound, GreaterEqBound, RangeContainBound, ResidueClassBound, AffineEqualBound).
     fn bound_shape(&self) -> &Self::BoundShape;
     /// The BoundConstraint's parameters in canonical string form (e.g., 'modulus=256;residue=255' for a residue class bound). Non-functional — the string-form encoding is the canonical serialization; typed accessors on the Rust side unpack it via the per-type-alias constructors.
-    fn bound_arguments(&self) -> &P::String;
+    fn bound_arguments(&self) -> &H::HostString;
 }
 
 /// The predicate form a BoundConstraint imposes on its bound observable. Closed enumeration with exactly six named individuals (EqualBound, LessEqBound, GreaterEqBound, RangeContainBound, ResidueClassBound, AffineEqualBound). Adding a new bound shape is an ontology+grammar+codegen edit on the same protocol as adding a Witt level.
-pub trait BoundShape<P: Primitives> {}
+pub trait BoundShape<H: HostTypes> {}
 
-/// A conjunction of BoundConstraint instances. The conjuncts property is ordered. Replaces the v0.2.1 CompositeConstraint enumeration; the legacy name survives as a Rust type alias (CompositeConstraint<const N: usize> = Conjunction<N>).
-pub trait Conjunction<P: Primitives>: Constraint<P> {
+/// A conjunction of BoundConstraint instances. The conjuncts property is ordered. Replaces the v0.2.1 CompositeConstraint enumeration; the legacy name survives as a Rust type alias (CompositeConstraint\<const N: usize\> = Conjunction\<N\>).
+pub trait Conjunction<H: HostTypes>: Constraint<H> {
     /// Associated type for `Constraint`.
-    type Constraint: Constraint<P>;
+    type Constraint: Constraint<H>;
     /// A component constraint of this composite constraint.
     fn composed_from(&self) -> &[Self::Constraint];
     /// Associated type for `BoundConstraint`.
-    type BoundConstraint: BoundConstraint<P>;
+    type BoundConstraint: BoundConstraint<H>;
     /// An ordered list of BoundConstraint individuals that this Conjunction composes. Non-functional — multiple conjuncts span the conjunction.
     fn conjuncts(&self) -> &[Self::BoundConstraint];
 }

@@ -4,64 +4,64 @@
 //!
 //! Space: Kernel
 
-use crate::Primitives;
+use crate::HostTypes;
 
 /// A level in the convergence tower. Four instances: R (dim 1), C (dim 2), H (dim 4), O (dim 8).
-pub trait ConvergenceLevel<P: Primitives> {
+pub trait ConvergenceLevel<H: HostTypes> {
     /// The dimension of the division algebra at this level (1, 2, 4, or 8).
-    fn algebra_dimension(&self) -> P::NonNegativeInteger;
+    fn algebra_dimension(&self) -> u64;
     /// The Betti number signature at this convergence level.
-    fn betti_signature(&self) -> &P::String;
+    fn betti_signature(&self) -> &H::HostString;
     /// Associated type for `HopfFiber`.
-    type HopfFiber: HopfFiber<P>;
+    type HopfFiber: HopfFiber<H>;
     /// The Hopf fiber associated with this convergence level.
     fn fiber_type(&self) -> &Self::HopfFiber;
     /// The characteristic identity at this convergence level (existence, feedback, choice, self-reference).
-    fn characteristic_identity(&self) -> &P::String;
+    fn characteristic_identity(&self) -> &H::HostString;
     /// Human-readable name of this convergence level.
-    fn level_name(&self) -> &P::String;
+    fn level_name(&self) -> &H::HostString;
 }
 
 /// The fiber of the Hopf fibration at a convergence level. Four instances: S⁰, S¹, S³, S⁷.
-pub trait HopfFiber<P: Primitives> {
+pub trait HopfFiber<H: HostTypes> {
     /// The dimension of the Hopf fiber sphere.
-    fn fiber_dimension(&self) -> P::NonNegativeInteger;
+    fn fiber_dimension(&self) -> u64;
     /// The total space of the Hopf fibration.
-    fn total_space(&self) -> &P::String;
+    fn total_space(&self) -> &H::HostString;
     /// The base space of the Hopf fibration.
-    fn base_space(&self) -> &P::String;
+    fn base_space(&self) -> &H::HostString;
     /// The fiber sphere designation (e.g. S⁰, S¹).
-    fn fiber_sphere(&self) -> &P::String;
+    fn fiber_sphere(&self) -> &H::HostString;
 }
 
 /// The unresolved structure at a convergence level. The β_{2^k−1} = 1 Betti number that persists.
-pub trait ConvergenceResidual<P: Primitives> {
+pub trait ConvergenceResidual<H: HostTypes> {
     /// The persistent Betti number at this residual.
-    fn residual_betti(&self) -> P::NonNegativeInteger;
+    fn residual_betti(&self) -> u64;
     /// The dimension at which the residual persists.
-    fn residual_dimension(&self) -> P::NonNegativeInteger;
+    fn residual_dimension(&self) -> u64;
 }
 
 /// The subspace U(1) ⊂ SU(2) selected when pairwise interaction converges.
-pub trait CommutativeSubspace<P: Primitives> {
+pub trait CommutativeSubspace<H: HostTypes> {
     /// Associated type for `CommutativeSubspace`.
-    type CommutativeSubspaceTarget: CommutativeSubspace<P>;
+    type CommutativeSubspaceTarget: CommutativeSubspace<H>;
     /// The commutative subspace selected by pairwise convergence.
     fn subspace_ref(&self) -> &Self::CommutativeSubspaceTarget;
     /// Associated type for `Commutator`.
-    type Commutator: crate::bridge::observable::Commutator<P>;
+    type Commutator: crate::bridge::observable::Commutator<H>;
     /// Reference to the commutator pair for this convergence.
     fn commutator_ref(&self) -> &Self::Commutator;
 }
 
 /// The subspace H ⊂ O selected when triple interaction converges.
-pub trait AssociativeSubalgebra<P: Primitives> {
+pub trait AssociativeSubalgebra<H: HostTypes> {
     /// Associated type for `AssociativeSubalgebra`.
-    type AssociativeSubalgebraTarget: AssociativeSubalgebra<P>;
+    type AssociativeSubalgebraTarget: AssociativeSubalgebra<H>;
     /// The associative subalgebra selected by triple convergence.
     fn subalgebra_ref(&self) -> &Self::AssociativeSubalgebraTarget;
     /// Associated type for `AssociatorTriple`.
-    type AssociatorTriple: crate::bridge::interaction::AssociatorTriple<P>;
+    type AssociatorTriple: crate::bridge::interaction::AssociatorTriple<H>;
     /// Reference to the associator triple for this convergence.
     fn associator_ref(&self) -> &Self::AssociatorTriple;
 }

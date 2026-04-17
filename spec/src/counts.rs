@@ -31,7 +31,10 @@ pub const NAMESPACES: usize = 33;
 /// derivation:DerivationTrace).
 /// v0.2.2 T1.2 (cleanup): +1 (conformance:InteractionShape — backing class
 /// for InteractionDeclarationBuilder, originally planned in Phase E).
-pub const CLASSES: usize = 466;
+/// Workstream C (v0.2.2 closure): +2 (cert:GenericImpossibilityCertificate
+/// and cert:InhabitanceImpossibilityCertificate — the cert carriers for
+/// resolver failure paths per target §4.2 `Certified<ImpossibilityWitness>`).
+pub const CLASSES: usize = 468;
 
 /// Total properties including the global `uor:space` annotation.
 ///
@@ -115,7 +118,21 @@ pub const SHACL_TESTS: usize = 280;
 /// v0.2.2 T2.0 (cleanup): +2 from `rust/public_api_functional`
 /// (foundation_e2e + verify_round_trip).
 /// v0.2.2 T2.3 (cleanup): +1 from `rust/ebnf_constraint_decl`.
-pub const CONFORMANCE_CHECKS: usize = 497;
+/// v0.2.2 T6: +5 from `rust/calibration_presets_valid`,
+/// `rust/pipeline_run_threads_input`, `rust/verify_trace_round_trip`,
+/// `rust/trace_byte_layout_pinned`, `rust/error_trait_completeness`.
+/// Phase A: +4 from sealed BaseMetric newtypes + Stratum + accessor anchors.
+/// Phase B: -4 from deleted Primitives checks; Phase H: +1 libm validator;
+/// Phase J.5: +1 no_std public-API snapshot companion.
+/// Phase G: +1 grammar-surface coverage validator; Phase D: +1 resolver tower.
+/// Phase E: +1 bridge enforcement validator; Phase F: +1 kernel enforcement;
+/// Phase K: +1 W4 closure validator; Phase L: +1 const-ring-eval coverage;
+/// Phase M: +1 driver must-use discipline.
+/// Correctness suite: +14 Layer-2 behavioral tests + 1 test_assertion_depth + 1 endpoint_coverage.
+/// Workstream A: +5 target-doc cross-reference validators (sealed_type_coverage,
+/// resolver_signature_shape, constraint_encoder_completeness, w4_grounding_closure,
+/// spectral_sequence_walk).
+pub const CONFORMANCE_CHECKS: usize = 532;
 
 /// Number of amendments applied to the base ontology.
 pub const AMENDMENTS: usize = 95;

@@ -73,10 +73,17 @@ pub fn validate(workspace: &Path) -> Result<ConformanceReport> {
             "InteractionDeclarationBuilder",
             "pub struct InteractionDeclarationBuilder",
         ),
-        // Six BaseMetric accessors on Grounded.
+        // Phase A.4: sealed BaseMetric newtype carriers.
+        ("DDeltaMetric sealed type", "pub struct DDeltaMetric"),
+        ("EulerMetric sealed type", "pub struct EulerMetric"),
+        ("ResidualMetric sealed type", "pub struct ResidualMetric"),
+        ("BettiMetric sealed type", "pub struct BettiMetric"),
+        // Phase A.3: sealed stratum newtype.
+        ("Stratum<L> sealed type", "pub struct Stratum<L>"),
+        // Six BaseMetric accessors on Grounded now return sealed newtypes.
         (
             "Grounded::d_delta accessor",
-            "pub const fn d_delta(&self) -> i64",
+            "pub const fn d_delta(&self) -> DDeltaMetric",
         ),
         (
             "Grounded::sigma accessor",
@@ -97,21 +104,31 @@ pub fn validate(workspace: &Path) -> Result<ConformanceReport> {
             "pub fn jacobian(&self) -> JacobianMetric<T>",
         ),
         (
-            "Grounded::betti_numbers accessor",
-            "pub const fn betti_numbers(&self) -> [u32; MAX_BETTI_DIMENSION]",
+            "Grounded::betti accessor",
+            "pub const fn betti(&self) -> BettiMetric",
         ),
         (
-            "Grounded::euler_characteristic accessor",
-            "pub const fn euler_characteristic(&self) -> i64",
+            "Grounded::euler accessor",
+            "pub const fn euler(&self) -> EulerMetric",
         ),
         (
-            "Grounded::residual_count accessor",
-            "pub const fn residual_count(&self) -> u32",
+            "Grounded::residual accessor",
+            "pub const fn residual(&self) -> ResidualMetric",
         ),
-        // Derivation::replay accessor.
+        // Phase A.1: uor_time accessors on Grounded and Certified.
+        (
+            "Grounded::uor_time accessor",
+            "pub const fn uor_time(&self) -> UorTime",
+        ),
+        (
+            "Grounded::triad accessor",
+            "pub const fn triad(&self) -> Triad<T>",
+        ),
+        // Derivation::replay accessor (v0.2.2 T6.12: no longer const fn;
+        // seeds from `content_fingerprint` bytes at runtime).
         (
             "Derivation::replay accessor",
-            "pub const fn replay(&self) -> Trace",
+            "pub fn replay(&self) -> Trace",
         ),
     ];
 

@@ -8,299 +8,299 @@ use crate::enums::AchievabilityStatus;
 use crate::enums::MeasurementUnit;
 use crate::enums::PhaseBoundaryType;
 use crate::enums::WittLevel;
-use crate::Primitives;
+use crate::HostTypes;
 
 /// A measurable quantity in the UOR Framework. All observables are kernel-computed and user-consumed.
-pub trait Observable<P: Primitives> {
+pub trait Observable<H: HostTypes> {
     /// The numeric value of an observable measurement.
-    fn value(&self) -> P::Decimal;
+    fn value(&self) -> H::Decimal;
     /// The source object of this measurement (datum, partition, or path start point).
-    fn source(&self) -> &P::String;
+    fn source(&self) -> &H::HostString;
     /// The target object of this measurement (for metrics and path-end measurements).
-    fn target(&self) -> &P::String;
+    fn target(&self) -> &H::HostString;
     /// The measurement unit of this observable. Replaces the string-valued observable:unit property with a typed reference to a MeasurementUnit individual.
     fn has_unit(&self) -> MeasurementUnit;
 }
 
 /// An observable measuring stratum-level properties: position within the ring's layer structure.
-pub trait StratumObservable<P: Primitives>: Observable<P> {}
+pub trait StratumObservable<H: HostTypes>: Observable<H> {}
 
 /// An observable measuring geometric distance between ring elements under a specific metric.
-pub trait MetricObservable<P: Primitives>: Observable<P> {}
+pub trait MetricObservable<H: HostTypes>: Observable<H> {}
 
 /// An observable measuring properties of paths through the ring: path length, total variation, winding number.
-pub trait PathObservable<P: Primitives>: Observable<P> {}
+pub trait PathObservable<H: HostTypes>: Observable<H> {}
 
 /// An observable measuring reduction properties: the length and count of operation sequences.
-pub trait ReductionObservable<P: Primitives>: Observable<P> {}
+pub trait ReductionObservable<H: HostTypes>: Observable<H> {}
 
 /// An observable measuring catastrophe-theoretic properties: thresholds at which qualitative changes occur in the partition.
-pub trait CatastropheObservable<P: Primitives>: Observable<P> {
+pub trait CatastropheObservable<H: HostTypes>: Observable<H> {
     /// The ring dimension coordinate n in the (n, g) catastrophe phase diagram (PD_1 n-coordinate).
-    fn phase_n(&self) -> P::PositiveInteger;
+    fn phase_n(&self) -> u64;
     /// The group-order coordinate g in the (n, g) catastrophe phase diagram (PD_1 g-coordinate).
-    fn phase_g(&self) -> P::PositiveInteger;
+    fn phase_g(&self) -> u64;
     /// True when g divides 2^n − 1, placing this observable on a resonance line in the phase diagram (PD_4).
-    fn on_resonance_line(&self) -> P::Boolean;
+    fn on_resonance_line(&self) -> bool;
     /// The type of phase boundary at this point in the catastrophe diagram: PeriodBoundary or PowerOfTwoBoundary (PD_2).
     fn phase_boundary_type(&self) -> PhaseBoundaryType;
 }
 
 /// An observable measuring the curvature of the UOR geometry: the gap between ring-isometry and Hamming-isometry for a given transform.
-pub trait CurvatureObservable<P: Primitives>: Observable<P> {}
+pub trait CurvatureObservable<H: HostTypes>: Observable<H> {}
 
 /// An observable measuring holonomy: the accumulated transformation when traversing a closed path in the ring.
-pub trait HolonomyObservable<P: Primitives>: Observable<P> {}
+pub trait HolonomyObservable<H: HostTypes>: Observable<H> {}
 
 /// Distance between two ring elements under the ring metric: d_R(x, y) = |x - y| mod 2^n.
-pub trait RingMetric<P: Primitives>: MetricObservable<P> {}
+pub trait RingMetric<H: HostTypes>: MetricObservable<H> {}
 
 /// Distance between two ring elements under the Hamming metric: the number of bit positions where they differ.
-pub trait HammingMetric<P: Primitives>: MetricObservable<P> {}
+pub trait HammingMetric<H: HostTypes>: MetricObservable<H> {}
 
 /// The metric incompatibility between two ring elements: the divergence between their ring-metric and Hamming-metric distances, measuring geometric curvature.
-pub trait IncompatibilityMetric<P: Primitives>: MetricObservable<P> {}
+pub trait IncompatibilityMetric<H: HostTypes>: MetricObservable<H> {}
 
 /// Observes a Datum's value modulo a configurable modulus. Used as the bound observable for BoundConstraint instances representing residue and affine constraint kinds (residueConstraintKind, affineConstraintKind).
-pub trait ValueModObservable<P: Primitives>: MetricObservable<P> {}
+pub trait ValueModObservable<H: HostTypes>: MetricObservable<H> {}
 
-/// Observes the grounding completion ratio σ ∈ \[0, 1\] of a context, where σ = 1 indicates the ground state (state:GroundedContext). Backs the sigma_metric BaseMetric accessor on Grounded<T>.
-pub trait GroundingSigma<P: Primitives>: Observable<P> {}
+/// Observes the grounding completion ratio σ ∈ \[0, 1\] of a context, where σ = 1 indicates the ground state (state:GroundedContext). Backs the sigma_metric BaseMetric accessor on Grounded\<T\>.
+pub trait GroundingSigma<H: HostTypes>: Observable<H> {}
 
-/// Observes the per-site Jacobian row of a Datum at a particular WittLevel, computed as the sequence of partial derivatives of the ring operation with respect to each site coordinate. Backs the jacobian_metric BaseMetric accessor on Grounded<T>; the Rust-side JacobianMetric<L> is parametric over the level marker.
-pub trait JacobianObservable<P: Primitives>: Observable<P> {}
+/// Observes the per-site Jacobian row of a Datum at a particular WittLevel, computed as the sequence of partial derivatives of the ring operation with respect to each site coordinate. Backs the jacobian_metric BaseMetric accessor on Grounded\<T\>; the Rust-side JacobianMetric\<L\> is parametric over the level marker.
+pub trait JacobianObservable<H: HostTypes>: Observable<H> {}
 
 /// The stratum index of a ring element.
-pub trait StratumValue<P: Primitives>: StratumObservable<P> {}
+pub trait StratumValue<H: HostTypes>: StratumObservable<H> {}
 
 /// The difference in stratum between two ring elements.
-pub trait StratumDelta<P: Primitives>: StratumObservable<P> {}
+pub trait StratumDelta<H: HostTypes>: StratumObservable<H> {}
 
 /// The sequence of strata traversed by a path through the ring.
-pub trait StratumTrajectory<P: Primitives>: StratumObservable<P> {}
+pub trait StratumTrajectory<H: HostTypes>: StratumObservable<H> {}
 
 /// The length of a path through the ring, measured in operation steps.
-pub trait PathLength<P: Primitives>: PathObservable<P> {}
+pub trait PathLength<H: HostTypes>: PathObservable<H> {}
 
 /// The total variation of a path: the sum of metric distances between consecutive elements.
-pub trait TotalVariation<P: Primitives>: PathObservable<P> {}
+pub trait TotalVariation<H: HostTypes>: PathObservable<H> {}
 
 /// The winding number of a closed path: the number of times the path wraps around the ring.
-pub trait WindingNumber<P: Primitives>: PathObservable<P> {}
+pub trait WindingNumber<H: HostTypes>: PathObservable<H> {}
 
 /// The number of operation applications in a reduction sequence.
-pub trait ReductionLength<P: Primitives>: ReductionObservable<P> {}
+pub trait ReductionLength<H: HostTypes>: ReductionObservable<H> {}
 
 /// The number of distinct reduction sequences in a computation.
-pub trait ReductionCount<P: Primitives>: ReductionObservable<P> {}
+pub trait ReductionCount<H: HostTypes>: ReductionObservable<H> {}
 
 /// A critical value at which a qualitative change occurs in the partition structure.
-pub trait CatastropheThreshold<P: Primitives>: CatastropheObservable<P> {}
+pub trait CatastropheThreshold<H: HostTypes>: CatastropheObservable<H> {}
 
 /// The number of catastrophe events (qualitative partition changes) in a computation.
-pub trait CatastropheCount<P: Primitives>: CatastropheObservable<P> {}
+pub trait CatastropheCount<H: HostTypes>: CatastropheObservable<H> {}
 
 /// The commutator \[f, g\](x) = f(g(x)) - g(f(x)) of two operations, measuring their non-commutativity.
-pub trait Commutator<P: Primitives>: CurvatureObservable<P> {}
+pub trait Commutator<H: HostTypes>: CurvatureObservable<H> {}
 
 /// The integrated curvature over a region of type space: the total metric incompatibility accumulated.
-pub trait CurvatureFlux<P: Primitives>: CurvatureObservable<P> {}
+pub trait CurvatureFlux<H: HostTypes>: CurvatureObservable<H> {}
 
 /// The monodromy of a closed path: the net transformation accumulated when traversing a loop in the type space.
-pub trait Monodromy<P: Primitives>: HolonomyObservable<P> {
+pub trait Monodromy<H: HostTypes>: HolonomyObservable<H> {
     /// Associated type for `ClosedConstraintPath`.
-    type ClosedConstraintPath: ClosedConstraintPath<P>;
+    type ClosedConstraintPath: ClosedConstraintPath<H>;
     /// The closed path that generates this monodromy value.
     fn monodromy_loop(&self) -> &Self::ClosedConstraintPath;
     /// Associated type for `DihedralElement`.
-    type DihedralElement: DihedralElement<P>;
+    type DihedralElement: DihedralElement<H>;
     /// The dihedral element g in D_{2^n} accumulated when traversing the loop. The monodromy is trivial iff this element is the group identity.
     fn monodromy_element(&self) -> &Self::DihedralElement;
     /// True iff the monodromyElement is the identity in D_{2^n}.
-    fn is_trivial_monodromy(&self) -> P::Boolean;
+    fn is_trivial_monodromy(&self) -> bool;
 }
 
 /// The parallel transport of a vector along a path: the canonical lift of the path to the tangent bundle of the ring.
-pub trait ParallelTransport<P: Primitives>: HolonomyObservable<P> {}
+pub trait ParallelTransport<H: HostTypes>: HolonomyObservable<H> {}
 
 /// An element of the dihedral group D_{2^n} acting on the type space. Each dihedral element induces an isometry of 𝒯_n.
-pub trait DihedralElement<P: Primitives>: HolonomyObservable<P> {
+pub trait DihedralElement<H: HostTypes>: HolonomyObservable<H> {
     /// Associated type for `Operation`.
-    type Operation: crate::kernel::op::Operation<P>;
+    type Operation: crate::kernel::op::Operation<H>;
     /// Non-functional. One assertion per generator in the normal form of the element — the sequence of neg and/or bnot operations that realises this dihedral element when composed.
     fn dihedral_element_value(&self) -> &[Self::Operation];
     /// True iff this element is the group identity (the trivial monodromy value).
-    fn is_identity_element(&self) -> P::Boolean;
+    fn is_identity_element(&self) -> bool;
     /// The order of this element in D_{2^n}: the smallest k >= 1 such that g^k = id. For neg and bnot: order 2.
-    fn element_order(&self) -> P::PositiveInteger;
+    fn element_order(&self) -> u64;
     /// The rotation exponent k ∈ \\[0, 2^n) of this dihedral element in the standard representation r^k s^s. Together with reflectionBit, uniquely identifies the element within D_\{2^n\}.
-    fn rotation_exponent(&self) -> P::NonNegativeInteger;
+    fn rotation_exponent(&self) -> u64;
     /// The reflection flag s ∈ \{0,1\} of this dihedral element. False = pure rotation (r^k), true = reflection (r^k·s). D_7 defines composition: (r^a s^p)(r^b s^q) = r^(a + (-1)^p b) s^(p XOR q).
-    fn reflection_bit(&self) -> P::Boolean;
+    fn reflection_bit(&self) -> bool;
 }
 
 /// Site-by-site curvature decomposition. J_k measures the discrete derivative of the incompatibility metric at site position k: J_k = |d_R(x, succ(x)) - d_H(x, succ(x))| restricted to position k.
-pub trait Jacobian<P: Primitives>: CurvatureObservable<P> {
+pub trait Jacobian<H: HostTypes>: CurvatureObservable<H> {
     /// The site position k at which this Jacobian entry is measured.
-    fn site_position(&self) -> P::NonNegativeInteger;
+    fn site_position(&self) -> u64;
     /// The discrete derivative value at this site position.
-    fn derivative_value(&self) -> P::Decimal;
+    fn derivative_value(&self) -> H::Decimal;
 }
 
 /// An observable measuring a topological invariant of the resolution space. Topological observables are invariant under continuous deformations of the constraint configuration.
-pub trait TopologicalObservable<P: Primitives>: Observable<P> {
+pub trait TopologicalObservable<H: HostTypes>: Observable<H> {
     /// The dimension k of the topological observable (e.g., the degree of the Betti number or the dimension of the spectral gap).
-    fn dimension(&self) -> P::NonNegativeInteger;
+    fn dimension(&self) -> u64;
 }
 
 /// The rank of a homology group of the constraint nerve. β_k = rank(H_k(N(C))) counts the k-dimensional holes in the constraint configuration.
-pub trait BettiNumber<P: Primitives>: TopologicalObservable<P> {}
+pub trait BettiNumber<H: HostTypes>: TopologicalObservable<H> {}
 
 /// The smallest positive eigenvalue of the constraint nerve Laplacian. Controls the convergence rate of iterative resolution: larger gap = faster convergence.
-pub trait SpectralGap<P: Primitives>: TopologicalObservable<P> {}
+pub trait SpectralGap<H: HostTypes>: TopologicalObservable<H> {}
 
 /// An observable measuring thermodynamic properties of the resolution process: residual entropy, Landauer cost, and reduction distribution statistics.
-pub trait ThermoObservable<P: Primitives>: Observable<P> {
+pub trait ThermoObservable<H: HostTypes>: Observable<H> {
     /// An estimated computational hardness for a ThermoObservable, connecting thermodynamic cost to complexity (TH_9 realisation).
-    fn hardness_estimate(&self) -> P::Decimal;
+    fn hardness_estimate(&self) -> H::Decimal;
 }
 
 /// S_residual: the residual Shannon entropy of the site distribution after partial resolution. Computed as S = (Σ κ_k − χ(N(C))) × ln 2 (IT_7b). Unit: Nats.
-pub trait ResidualEntropy<P: Primitives>: ThermoObservable<P> {}
+pub trait ResidualEntropy<H: HostTypes>: ThermoObservable<H> {}
 
 /// The minimum thermodynamic cost (in units of k_B T ln 2) of erasing one bit of site uncertainty. The UOR ring operates at β* = ln 2 — the Landauer temperature.
-pub trait LandauerCost<P: Primitives>: ThermoObservable<P> {}
+pub trait LandauerCost<H: HostTypes>: ThermoObservable<H> {}
 
 /// A sealed observable carrier for accumulated Landauer cost in nats. Monotonic within a single pipeline invocation. The UOR ring operates at the Landauer temperature (β* = ln 2), so this observable is a direct measure of irreversible bit-erasure performed by the computation up to the witness it accompanies.
-pub trait LandauerBudget<P: Primitives>: ThermoObservable<P> {
+pub trait LandauerBudget<H: HostTypes>: ThermoObservable<H> {
     /// The accumulated Landauer cost carried by a LandauerBudget instance, measured in nats. Monotonic within a pipeline invocation. The unit is observable:Nats — every increment corresponds to a number of irreversible bit-erasures times ln 2 (op:OA_5).
-    fn landauer_nats(&self) -> P::Decimal;
+    fn landauer_nats(&self) -> H::Decimal;
 }
 
 /// The Shannon entropy of the reduction distribution P(j) = 2^{−j}. At the Landauer temperature, this equals ln 2 per reduction step — each step erases exactly one bit of site uncertainty.
-pub trait ReductionEntropy<P: Primitives>: ThermoObservable<P> {}
+pub trait ReductionEntropy<H: HostTypes>: ThermoObservable<H> {}
 
 /// A named topological signature: a pair (realised Euler characteristic, realised Betti profile). Linked from TypeSynthesisResult. Allows comparison between the goal signature and the actually achieved signature.
-pub trait SynthesisSignature<P: Primitives> {
+pub trait SynthesisSignature<H: HostTypes> {
     /// The Euler characteristic actually achieved by this synthesis signature.
-    fn realised_euler(&self) -> P::Integer;
+    fn realised_euler(&self) -> i64;
     /// Non-functional. Realised Betti number values, one assertion per homological degree.
-    fn realised_betti(&self) -> &[P::NonNegativeInteger];
+    fn realised_betti(&self) -> &[u64];
     /// The achievability classification of this observable's topological signature in the morphospace.
     fn achievability_status(&self) -> AchievabilityStatus;
     /// Whether this signature has been empirically verified as achievable at some quantum level.
-    fn is_achievable(&self) -> P::Boolean;
+    fn is_achievable(&self) -> bool;
     /// Whether this signature has been formally proven impossible by an ImpossibilityWitness.
-    fn is_forbidden(&self) -> P::Boolean;
+    fn is_forbidden(&self) -> bool;
     /// Associated type for `Proof`.
-    type Proof: crate::bridge::proof::Proof<P>;
+    type Proof: crate::bridge::proof::Proof<H>;
     /// The proof individual (ImpossibilityWitness or AxiomaticDerivation) that grounds this signature's achievability classification.
     fn achievability_witness(&self) -> &Self::Proof;
 }
 
 /// A single page E_r of the quantum level spectral sequence. Carries the page index r and the differential d_r. The sequence converges when all differentials vanish — typically by E_3 for simple constraint configurations.
-pub trait SpectralSequencePage<P: Primitives> {
+pub trait SpectralSequencePage<H: HostTypes> {
     /// The page r of this spectral sequence page. r=1 is the initial page; convergence is declared when all d_r are zero.
-    fn page_index(&self) -> P::NonNegativeInteger;
+    fn page_index(&self) -> u64;
     /// True iff d_r = 0 on this page — no further corrections to the lifted homology.
-    fn differential_is_zero(&self) -> P::Boolean;
+    fn differential_is_zero(&self) -> bool;
     /// The page index r at which the spectral sequence converged (all subsequent differentials zero).
-    fn converged_at(&self) -> P::NonNegativeInteger;
+    fn converged_at(&self) -> u64;
     /// Associated type for `PostnikovTruncation`.
-    type PostnikovTruncation: crate::bridge::homology::PostnikovTruncation<P>;
+    type PostnikovTruncation: crate::bridge::homology::PostnikovTruncation<H>;
     /// The Postnikov truncation associated with this spectral sequence page.
     fn postnikov_truncation(&self) -> &Self::PostnikovTruncation;
 }
 
 /// The cohomology class in H^2(N(C(T))) representing the LiftObstruction for a specific WittLift. The class is zero iff the obstruction is trivial. When non-zero, it indexes the specific site pair at Q_{n+1} that cannot be closed by the lifted constraint set alone.
-pub trait LiftObstructionClass<P: Primitives> {
+pub trait LiftObstructionClass<H: HostTypes> {
     /// Associated type for `CohomologyGroup`.
-    type CohomologyGroup: crate::bridge::cohomology::CohomologyGroup<P>;
+    type CohomologyGroup: crate::bridge::cohomology::CohomologyGroup<H>;
     /// The cohomology class in H^2(N(C(T))) representing this obstruction.
     fn obstruction_class(&self) -> &Self::CohomologyGroup;
 }
 
 /// A classification of a type's holonomy: the subgroup of D_{2^n} generated by all Monodromy observables computed over closed paths in the type's constraint nerve. Trivial iff every closed constraint path returns to its starting site assignment without net dihedral transformation.
-pub trait MonodromyClass<P: Primitives> {}
+pub trait MonodromyClass<H: HostTypes> {}
 
 /// The holonomy group of a ConstrainedType: the group of all Monodromy elements achievable by closed paths in the constraint nerve. Always a subgroup of D_{2^n}. Trivial iff the type has trivial monodromy everywhere; equals D_{2^n} iff paths involving both neg and bnot involutions are present.
-pub trait HolonomyGroup<P: Primitives> {
+pub trait HolonomyGroup<H: HostTypes> {
     /// Associated type for `DihedralElement`.
-    type DihedralElement: DihedralElement<P>;
+    type DihedralElement: DihedralElement<H>;
     /// Non-functional. The generators of the holonomy group: one DihedralElement per generating monodromy.
     fn holonomy_group(&self) -> &[Self::DihedralElement];
     /// The order of the holonomy group as a subgroup of D_{2^n}. For a FlatType: 1. For full dihedral holonomy: 2^{n+1}.
-    fn holonomy_group_order(&self) -> P::PositiveInteger;
+    fn holonomy_group_order(&self) -> u64;
 }
 
 /// A sequence of constraint applications forming a closed loop in the constraint nerve — beginning and ending at the same site assignment. The Monodromy of the loop is the net DihedralElement accumulated when traversing it.
-pub trait ClosedConstraintPath<P: Primitives> {
+pub trait ClosedConstraintPath<H: HostTypes> {
     /// The number of constraint application steps in this closed path.
-    fn path_length(&self) -> P::NonNegativeInteger;
+    fn path_length(&self) -> u64;
     /// Associated type for `Constraint`.
-    type Constraint: crate::user::type_::Constraint<P>;
+    type Constraint: crate::user::type_::Constraint<H>;
     /// Non-functional. The ordered sequence of constraints traversed. One assertion per step.
     fn path_constraints(&self) -> &[Self::Constraint];
 }
 
 /// The k-th homotopy group πk(N(C), v) of the constraint nerve based at vertex v.
-pub trait HomotopyGroup<P: Primitives> {
+pub trait HomotopyGroup<H: HostTypes> {
     /// The dimension k of this homotopy group πk.
-    fn homotopy_dimension(&self) -> P::NonNegativeInteger;
+    fn homotopy_dimension(&self) -> u64;
     /// The rank of this homotopy group (number of free generators).
-    fn homotopy_rank(&self) -> P::NonNegativeInteger;
+    fn homotopy_rank(&self) -> u64;
     /// Associated type for `Constraint`.
-    type Constraint: crate::user::type_::Constraint<P>;
+    type Constraint: crate::user::type_::Constraint<H>;
     /// The basepoint vertex v at which this homotopy group is computed.
     fn homotopy_basepoint(&self) -> &Self::Constraint;
 }
 
 /// The image of πk(N(C)) → Aut(sitek) for k > 1. Generalises the MN_6 monodromy homomorphism.
-pub trait HigherMonodromy<P: Primitives> {
+pub trait HigherMonodromy<H: HostTypes> {
     /// The dimension k > 1 at which this higher monodromy acts.
-    fn higher_monodromy_dimension(&self) -> P::NonNegativeInteger;
+    fn higher_monodromy_dimension(&self) -> u64;
 }
 
 /// The Whitehead product \[α, β\] ∈ πp+q−1 for α ∈ πp, β ∈ πq.
-pub trait WhiteheadProduct<P: Primitives> {
+pub trait WhiteheadProduct<H: HostTypes> {
     /// True iff this Whitehead product is trivial (zero in πp+q−1).
-    fn whitehead_trivial(&self) -> P::Boolean;
+    fn whitehead_trivial(&self) -> bool;
 }
 
 /// A record of the holonomy stratification of the moduli space at a given quantum level: the list of HolonomyStrata, their codimensions, and their relationship to the MorphospaceBoundary.
-pub trait StratificationRecord<P: Primitives> {
+pub trait StratificationRecord<H: HostTypes> {
     /// The quantum level at which this stratification is computed.
     fn stratification_level(&self) -> WittLevel;
     /// Associated type for `HolonomyStratum`.
-    type HolonomyStratum: crate::user::type_::HolonomyStratum<P>;
+    type HolonomyStratum: crate::user::type_::HolonomyStratum<H>;
     /// A HolonomyStratum in this stratification record.
     fn stratification_stratum(&self) -> &[Self::HolonomyStratum];
 }
 
 /// Superclass for the six universal measurements. Every computation on the ring produces these six quantities: d_Δ, σ, J_k, β_k, χ, r.
-pub trait BaseMetric<P: Primitives>: Observable<P> {
+pub trait BaseMetric<H: HostTypes>: Observable<H> {
     /// The mathematical domain of this base metric.
-    fn metric_domain(&self) -> &P::String;
+    fn metric_domain(&self) -> &H::HostString;
     /// The mathematical range (codomain) of this base metric.
-    fn metric_range(&self) -> &P::String;
+    fn metric_range(&self) -> &H::HostString;
     /// Associated type for `TermExpression`.
-    type TermExpression: crate::kernel::schema::TermExpression<P>;
+    type TermExpression: crate::kernel::schema::TermExpression<H>;
     /// How this metric composes with others in the measurement tower.
     fn metric_composition(&self) -> &Self::TermExpression;
     /// Associated type for `Identity`.
-    type Identity: crate::kernel::op::Identity<P>;
+    type Identity: crate::kernel::op::Identity<H>;
     /// The existing identity that defines this base metric.
     fn references_identity(&self) -> &Self::Identity;
     /// The unit of measurement for this base metric.
     fn metric_unit(&self) -> MeasurementUnit;
     /// The precision or resolution of this base metric.
-    fn metric_precision(&self) -> P::NonNegativeInteger;
+    fn metric_precision(&self) -> u64;
     /// Monotonicity property of this metric (e.g., non-decreasing).
     fn metric_monotonicity(&self) -> &Self::TermExpression;
     /// The decomposition rule for this metric into sub-metrics.
     fn metric_decomposition(&self) -> &Self::TermExpression;
     /// The position of this metric in the metric tower.
-    fn metric_tower_position(&self) -> P::NonNegativeInteger;
+    fn metric_tower_position(&self) -> u64;
     /// The computational cost of evaluating this metric.
     fn metric_computation_cost(&self) -> &Self::TermExpression;
     /// Upper or lower bound on the metric value.
@@ -308,17 +308,17 @@ pub trait BaseMetric<P: Primitives>: Observable<P> {
 }
 
 /// The grounding metric σ = pinned sites / total sites. Ranges from 0 (no sites pinned) to 1 (fully grounded).
-pub trait GroundingObservable<P: Primitives>: Observable<P> {
+pub trait GroundingObservable<H: HostTypes>: Observable<H> {
     /// The count of pinned sites (numerator of σ).
-    fn saturation_numerator(&self) -> P::NonNegativeInteger;
+    fn saturation_numerator(&self) -> u64;
     /// The total site count (denominator of σ).
-    fn saturation_denominator(&self) -> P::PositiveInteger;
+    fn saturation_denominator(&self) -> u64;
 }
 
 /// The Euler characteristic χ = Σ(−1)^k β_k of the constraint nerve. An integer-valued topological invariant.
-pub trait EulerCharacteristicObservable<P: Primitives>: Observable<P> {
+pub trait EulerCharacteristicObservable<H: HostTypes>: Observable<H> {
     /// Associated type for `TermExpression`.
-    type TermExpression: crate::kernel::schema::TermExpression<P>;
+    type TermExpression: crate::kernel::schema::TermExpression<H>;
     /// The alternating sum formula for Euler characteristic.
     fn alternating_sum(&self) -> &Self::TermExpression;
 }

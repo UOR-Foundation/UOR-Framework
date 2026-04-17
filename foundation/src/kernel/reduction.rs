@@ -6,166 +6,166 @@
 
 use crate::enums::VerificationDomain;
 use crate::enums::WittLevel;
-use crate::Primitives;
+use crate::HostTypes;
 
 /// The composite endofunctor ψ = ψ_9 ∘ … ∘ ψ_1, parameterized by Ω = e^{iπ/6}.
-pub trait EulerReduction<P: Primitives> {
+pub trait EulerReduction<H: HostTypes> {
     /// The base phase parameter Ω for this reduction (e.g., e^{iπ/6}).
-    fn phase_parameter(&self) -> &P::String;
+    fn phase_parameter(&self) -> &H::HostString;
     /// The number of stages in this reduction.
-    fn stage_count(&self) -> P::NonNegativeInteger;
+    fn stage_count(&self) -> u64;
     /// The cumulative phase angle at which the reduction converges.
-    fn convergence_angle(&self) -> &P::String;
+    fn convergence_angle(&self) -> &H::HostString;
     /// Associated type for `TermExpression`.
-    type TermExpression: crate::kernel::schema::TermExpression<P>;
+    type TermExpression: crate::kernel::schema::TermExpression<H>;
     /// The ordered list of ψ-maps that compose this reduction.
     fn composed_of_maps(&self) -> &[Self::TermExpression];
 }
 
 /// Schedule Ω⁰, Ω¹, …, Ω⁵ assigning a phase angle to each stage of the reduction.
-pub trait PhaseRotationScheduler<P: Primitives> {
+pub trait PhaseRotationScheduler<H: HostTypes> {
     /// String representation of the rotation schedule Ω⁰, Ω¹, …, Ω⁵.
-    fn rotation_schedule(&self) -> &P::String;
+    fn rotation_schedule(&self) -> &H::HostString;
     /// The base angle π/6 from which the schedule is derived.
-    fn base_angle(&self) -> &P::String;
+    fn base_angle(&self) -> &H::HostString;
 }
 
 /// The angle at which the reduction terminates (default: π).
-pub trait TargetConvergenceAngle<P: Primitives> {
+pub trait TargetConvergenceAngle<H: HostTypes> {
     /// The target convergence angle (default: π).
-    fn target_angle(&self) -> &P::String;
+    fn target_angle(&self) -> &H::HostString;
 }
 
 /// Validation at each stage boundary checking that the accumulated phase angle matches the expected Ω^k.
-pub trait PhaseGateAttestation<P: Primitives> {
+pub trait PhaseGateAttestation<H: HostTypes> {
     /// Associated type for `ReductionStep`.
-    type ReductionStep: ReductionStep<P>;
+    type ReductionStep: ReductionStep<H>;
     /// The reduction stage at which this gate is applied.
     fn gate_stage(&self) -> &Self::ReductionStep;
     /// The expected phase angle Ω^k at this gate.
-    fn gate_expected_phase(&self) -> &P::String;
+    fn gate_expected_phase(&self) -> &H::HostString;
     /// Whether the phase gate check passed or failed.
-    fn gate_result(&self) -> P::Boolean;
+    fn gate_result(&self) -> bool;
 }
 
 /// Recovery operation when a phase gate fails: z → z̄. Involutory: applying twice yields the original value.
-pub trait ComplexConjugateRollback<P: Primitives> {
+pub trait ComplexConjugateRollback<H: HostTypes> {
     /// Associated type for `ReductionStep`.
-    type ReductionStep: ReductionStep<P>;
+    type ReductionStep: ReductionStep<H>;
     /// The reduction stage to which execution rolls back on gate failure.
     fn rollback_target(&self) -> &Self::ReductionStep;
 }
 
 /// A named stage of the reduction. The standard reduction has six stages (Initialization through Convergence).
-pub trait ReductionStep<P: Primitives> {
+pub trait ReductionStep<H: HostTypes> {
     /// Zero-based index of this stage in the reduction.
-    fn stage_index(&self) -> P::NonNegativeInteger;
+    fn stage_index(&self) -> u64;
     /// Human-readable name of this reduction stage.
-    fn stage_name(&self) -> &P::String;
+    fn stage_name(&self) -> &H::HostString;
     /// The expected phase angle Ω^k at this stage.
-    fn expected_phase(&self) -> &P::String;
+    fn expected_phase(&self) -> &H::HostString;
     /// Associated type for `StatePredicate`.
-    type StatePredicate: crate::kernel::predicate::StatePredicate<P>;
+    type StatePredicate: crate::kernel::predicate::StatePredicate<H>;
     /// A typed predicate evaluated on the current ReductionState. Must be satisfied to enter this stage.
     fn entry_guard(&self) -> &Self::StatePredicate;
     /// A typed predicate that must be satisfied before the reduction advances past this stage.
     fn exit_guard(&self) -> &Self::StatePredicate;
     /// Associated type for `Effect`.
-    type Effect: crate::kernel::effect::Effect<P>;
+    type Effect: crate::kernel::effect::Effect<H>;
     /// The effect applied by this stage upon successful exit.
     fn stage_effect(&self) -> &Self::Effect;
 }
 
 /// State of reduction execution at a specific point, including the current stage, phase angle, and pinned mask.
-pub trait ReductionState<P: Primitives> {
+pub trait ReductionState<H: HostTypes> {
     /// Associated type for `ReductionStep`.
-    type ReductionStep: ReductionStep<P>;
+    type ReductionStep: ReductionStep<H>;
     /// The reduction stage at which execution is currently positioned.
     fn current_stage(&self) -> &Self::ReductionStep;
     /// The accumulated phase angle at the current point.
-    fn phase_angle(&self) -> &P::String;
+    fn phase_angle(&self) -> &H::HostString;
     /// Bit mask of sites that are pinned (resolved) at this point.
-    fn pinned_mask(&self) -> P::NonNegativeInteger;
+    fn pinned_mask(&self) -> u64;
     /// The number of free (unresolved) sites at this point.
-    fn free_rank(&self) -> P::NonNegativeInteger;
+    fn free_rank(&self) -> u64;
     /// Associated type for `TermExpression`.
-    type TermExpression: crate::kernel::schema::TermExpression<P>;
+    type TermExpression: crate::kernel::schema::TermExpression<H>;
     /// The site state descriptor within a reduction state.
     fn site_state(&self) -> &Self::TermExpression;
 }
 
 /// Guard-effect pair governing stage transitions in the reduction. The guard must be satisfied before the effect is applied.
-pub trait ReductionRule<P: Primitives> {
+pub trait ReductionRule<H: HostTypes> {
     /// Associated type for `GuardedTransition`.
-    type GuardedTransition: crate::kernel::predicate::GuardedTransition<P>;
+    type GuardedTransition: crate::kernel::predicate::GuardedTransition<H>;
     /// A typed GuardedTransition from predicate/ governing the stage transition.
     fn transition_guard(&self) -> &Self::GuardedTransition;
     /// Associated type for `TermExpression`.
-    type TermExpression: crate::kernel::schema::TermExpression<P>;
+    type TermExpression: crate::kernel::schema::TermExpression<H>;
     /// The effect applied when this transition fires.
     fn transition_effect(&self) -> &Self::TermExpression;
     /// Whether this transition advances to the next stage.
-    fn transition_advance(&self) -> P::Boolean;
+    fn transition_advance(&self) -> bool;
 }
 
 /// Temporal segment of reduction execution. Each epoch represents one complete pass through the reduction stages.
-pub trait Epoch<P: Primitives> {
+pub trait Epoch<H: HostTypes> {
     /// Zero-based index of this epoch in the reduction execution.
-    fn epoch_index(&self) -> P::NonNegativeInteger;
+    fn epoch_index(&self) -> u64;
     /// Associated type for `TermExpression`.
-    type TermExpression: crate::kernel::schema::TermExpression<P>;
+    type TermExpression: crate::kernel::schema::TermExpression<H>;
     /// Metadata or summary datum for this epoch.
     fn epoch_datum(&self) -> &Self::TermExpression;
 }
 
 /// Transition between epochs. Carries metadata about the epoch boundary crossing.
-pub trait EpochBoundary<P: Primitives> {
+pub trait EpochBoundary<H: HostTypes> {
     /// Associated type for `TermExpression`.
-    type TermExpression: crate::kernel::schema::TermExpression<P>;
+    type TermExpression: crate::kernel::schema::TermExpression<H>;
     /// The type of epoch boundary crossing (e.g., normal, forced, timeout).
     fn epoch_boundary_type(&self) -> &Self::TermExpression;
     /// Whether grounding was preserved across the epoch boundary.
-    fn preserved_grounding(&self) -> P::Boolean;
+    fn preserved_grounding(&self) -> bool;
 }
 
 /// A Boolean expression over the reduction state. The atomic guard unit.
-pub trait PredicateExpression<P: Primitives> {
+pub trait PredicateExpression<H: HostTypes> {
     /// The state field this predicate tests.
-    fn predicate_field(&self) -> &P::String;
+    fn predicate_field(&self) -> &H::HostString;
     /// The comparison operator (e.g., '=', '<', '>=').
-    fn predicate_operator(&self) -> &P::String;
+    fn predicate_operator(&self) -> &H::HostString;
     /// The value against which the field is compared.
-    fn predicate_value(&self) -> &P::String;
+    fn predicate_value(&self) -> &H::HostString;
 }
 
 /// A conjunction of PredicateExpressions that must hold for a transition to fire.
-pub trait GuardExpression<P: Primitives> {
+pub trait GuardExpression<H: HostTypes> {
     /// Associated type for `PredicateExpression`.
-    type PredicateExpression: PredicateExpression<P>;
+    type PredicateExpression: PredicateExpression<H>;
     /// The predicate expressions that compose this guard.
     fn guard_predicates(&self) -> &[Self::PredicateExpression];
 }
 
 /// State changes applied when a transition fires. Contains PropertyBind steps.
-pub trait TransitionEffect<P: Primitives> {
+pub trait TransitionEffect<H: HostTypes> {
     /// Associated type for `PropertyBind`.
-    type PropertyBind: PropertyBind<P>;
+    type PropertyBind: PropertyBind<H>;
     /// The property bind steps applied by this effect.
     fn effect_bindings(&self) -> &[Self::PropertyBind];
 }
 
 /// A single site pinning: target site + value.
-pub trait PropertyBind<P: Primitives> {
+pub trait PropertyBind<H: HostTypes> {
     /// The target site identifier for this binding.
-    fn bind_target(&self) -> &P::String;
+    fn bind_target(&self) -> &H::HostString;
     /// The value to pin the target site to.
-    fn bind_value(&self) -> &P::String;
+    fn bind_value(&self) -> &H::HostString;
 }
 
 /// Advancement from one ReductionStep to the next.
-pub trait ReductionAdvance<P: Primitives> {
+pub trait ReductionAdvance<H: HostTypes> {
     /// Associated type for `ReductionStep`.
-    type ReductionStep: ReductionStep<P>;
+    type ReductionStep: ReductionStep<H>;
     /// The source stage of the advancement.
     fn advance_from(&self) -> &Self::ReductionStep;
     /// The target stage of the advancement.
@@ -173,23 +173,23 @@ pub trait ReductionAdvance<P: Primitives> {
 }
 
 /// A sliding window over recent epochs providing BaseContext.
-pub trait ServiceWindow<P: Primitives> {
+pub trait ServiceWindow<H: HostTypes> {
     /// The number of recent epochs in this service window.
-    fn window_size(&self) -> P::NonNegativeInteger;
+    fn window_size(&self) -> u64;
     /// The starting epoch offset of this service window.
-    fn window_offset(&self) -> P::NonNegativeInteger;
+    fn window_offset(&self) -> u64;
     /// Associated type for `TermExpression`.
-    type TermExpression: crate::kernel::schema::TermExpression<P>;
+    type TermExpression: crate::kernel::schema::TermExpression<H>;
     /// Reference to the base context provided by this service window.
     fn base_context_ref(&self) -> &Self::TermExpression;
 }
 
 /// An atomic group of state changes within the reduction.
-pub trait ReductionTransaction<P: Primitives> {
+pub trait ReductionTransaction<H: HostTypes> {
     /// The execution policy for this transaction (e.g., AllOrNothing, BestEffort).
-    fn transaction_policy(&self) -> &P::String;
+    fn transaction_policy(&self) -> &H::HostString;
     /// Associated type for `TermExpression`.
-    type TermExpression: crate::kernel::schema::TermExpression<P>;
+    type TermExpression: crate::kernel::schema::TermExpression<H>;
     /// The outcome of this transaction (e.g., committed, rolled back).
     fn transaction_outcome(&self) -> &Self::TermExpression;
     /// The scope of sites affected by this transaction.
@@ -199,89 +199,89 @@ pub trait ReductionTransaction<P: Primitives> {
 }
 
 /// Successful termination (FullGrounding).
-pub trait PipelineSuccess<P: Primitives> {
+pub trait PipelineSuccess<H: HostTypes> {
     /// Whether full grounding was achieved.
-    fn grounding_reached(&self) -> P::Boolean;
+    fn grounding_reached(&self) -> bool;
     /// The final grounding level achieved on pipeline success.
-    fn final_grounding(&self) -> &P::String;
+    fn final_grounding(&self) -> &H::HostString;
 }
 
 /// Typed failure: DispatchMiss, GroundingFailure, ConvergenceStall, etc.
-pub trait PipelineFailureReason<P: Primitives> {
+pub trait PipelineFailureReason<H: HostTypes> {
     /// The kind of pipeline failure (e.g., DispatchMiss, ConvergenceStall).
-    fn failure_kind(&self) -> &P::String;
+    fn failure_kind(&self) -> &H::HostString;
     /// Associated type for `TermExpression`.
-    type TermExpression: crate::kernel::schema::TermExpression<P>;
+    type TermExpression: crate::kernel::schema::TermExpression<H>;
     /// The reduction stage at which the pipeline failure occurred.
     fn failure_stage(&self) -> &Self::TermExpression;
 }
 
 /// A pre-execution validation: feasibility, dispatch coverage, coherence.
-pub trait PreflightCheck<P: Primitives> {
+pub trait PreflightCheck<H: HostTypes> {
     /// The kind of preflight check (e.g., feasibility, dispatch coverage).
-    fn preflight_kind(&self) -> &P::String;
+    fn preflight_kind(&self) -> &H::HostString;
     /// Associated type for `TermExpression`.
-    type TermExpression: crate::kernel::schema::TermExpression<P>;
+    type TermExpression: crate::kernel::schema::TermExpression<H>;
     /// The result of the preflight check (e.g., pass, fail).
     fn preflight_result(&self) -> &Self::TermExpression;
     /// Zero-based execution order for preflight checks. Lower indices execute first. BudgetSolvencyCheck (order 0) must precede all others.
-    fn preflight_order(&self) -> P::NonNegativeInteger;
+    fn preflight_order(&self) -> u64;
 }
 
 /// Result of a preflight check: feasibility witness or infeasibility witness.
-pub trait FeasibilityResult<P: Primitives> {
+pub trait FeasibilityResult<H: HostTypes> {
     /// The kind of feasibility result (e.g., Feasible, Infeasible).
-    fn feasibility_kind(&self) -> &P::String;
+    fn feasibility_kind(&self) -> &H::HostString;
     /// The witness justifying the feasibility or infeasibility result.
-    fn feasibility_witness(&self) -> &P::String;
+    fn feasibility_witness(&self) -> &H::HostString;
     /// Associated type for `TermExpression`.
-    type TermExpression: crate::kernel::schema::TermExpression<P>;
+    type TermExpression: crate::kernel::schema::TermExpression<H>;
     /// The kind of infeasibility detected.
     fn infeasibility_kind(&self) -> &Self::TermExpression;
 }
 
 /// Lifecycle of a partitioned context lease: Pending → Active → Released/Expired/Suspended.
-pub trait LeaseState<P: Primitives> {
+pub trait LeaseState<H: HostTypes> {
     /// The lifecycle phase of a lease (e.g., Pending, Active, Released).
-    fn lease_phase(&self) -> &P::String;
+    fn lease_phase(&self) -> &H::HostString;
 }
 
 /// A context lease with lifecycle tracking.
-pub trait ManagedLease<P: Primitives> {
+pub trait ManagedLease<H: HostTypes> {
     /// Associated type for `TermExpression`.
-    type TermExpression: crate::kernel::schema::TermExpression<P>;
+    type TermExpression: crate::kernel::schema::TermExpression<H>;
     /// Unique identifier for this managed lease.
     fn managed_lease_id(&self) -> &Self::TermExpression;
     /// Associated type for `LeaseState`.
-    type LeaseState: LeaseState<P>;
+    type LeaseState: LeaseState<H>;
     /// The current lifecycle state of this managed lease.
     fn lease_lifecycle(&self) -> &Self::LeaseState;
     /// The epoch at which this managed lease expires.
-    fn expiry_epoch(&self) -> P::NonNegativeInteger;
+    fn expiry_epoch(&self) -> u64;
     /// The total site budget allocated to this managed lease.
-    fn lease_budget(&self) -> P::NonNegativeInteger;
+    fn lease_budget(&self) -> u64;
 }
 
 /// Snapshot of lease state at a point in time.
-pub trait LeaseCheckpoint<P: Primitives> {
+pub trait LeaseCheckpoint<H: HostTypes> {
     /// The epoch index at which this checkpoint was taken.
-    fn checkpoint_epoch(&self) -> P::NonNegativeInteger;
+    fn checkpoint_epoch(&self) -> u64;
     /// Associated type for `ReductionState`.
-    type ReductionState: ReductionState<P>;
+    type ReductionState: ReductionState<H>;
     /// The reduction state captured at this checkpoint.
     fn checkpoint_state(&self) -> &Self::ReductionState;
     /// The remaining site budget at this checkpoint.
-    fn lease_remaining_budget(&self) -> P::NonNegativeInteger;
+    fn lease_remaining_budget(&self) -> u64;
 }
 
 /// Flow control when reduction produces faster than downstream can consume.
-pub trait BackPressureSignal<P: Primitives> {
+pub trait BackPressureSignal<H: HostTypes> {
     /// The current back-pressure level (e.g., Low, Medium, High).
-    fn pressure_level(&self) -> &P::String;
+    fn pressure_level(&self) -> &H::HostString;
     /// The threshold at which back-pressure activates.
-    fn pressure_threshold(&self) -> P::Decimal;
+    fn pressure_threshold(&self) -> H::Decimal;
     /// Associated type for `TermExpression`.
-    type TermExpression: crate::kernel::schema::TermExpression<P>;
+    type TermExpression: crate::kernel::schema::TermExpression<H>;
     /// The source stage emitting back-pressure.
     fn source_stage(&self) -> &Self::TermExpression;
     /// The target stage receiving back-pressure.
@@ -289,35 +289,35 @@ pub trait BackPressureSignal<P: Primitives> {
 }
 
 /// Queries postponed to a future epoch.
-pub trait DeferredQuerySet<P: Primitives> {
+pub trait DeferredQuerySet<H: HostTypes> {
     /// The number of queries in this deferred set.
-    fn deferred_count(&self) -> P::NonNegativeInteger;
+    fn deferred_count(&self) -> u64;
     /// The epoch in which these queries were deferred.
-    fn deferral_epoch(&self) -> P::NonNegativeInteger;
+    fn deferral_epoch(&self) -> u64;
     /// Associated type for `TermExpression`.
-    type TermExpression: crate::kernel::schema::TermExpression<P>;
+    type TermExpression: crate::kernel::schema::TermExpression<H>;
     /// The reason for deferring these queries.
     fn deferral_reason(&self) -> &Self::TermExpression;
 }
 
 /// Transfer of a lease from one computation to another.
-pub trait SubleaseTransfer<P: Primitives> {
+pub trait SubleaseTransfer<H: HostTypes> {
     /// Associated type for `TermExpression`.
-    type TermExpression: crate::kernel::schema::TermExpression<P>;
+    type TermExpression: crate::kernel::schema::TermExpression<H>;
     /// The lease being transferred from.
     fn source_lease_ref(&self) -> &Self::TermExpression;
     /// The lease being transferred to.
     fn target_lease_ref(&self) -> &Self::TermExpression;
     /// The site budget transferred between leases.
-    fn transferred_budget(&self) -> P::NonNegativeInteger;
+    fn transferred_budget(&self) -> u64;
     /// Whether the sublease transfer has been completed.
-    fn transfer_completed(&self) -> P::Boolean;
+    fn transfer_completed(&self) -> bool;
 }
 
 /// Predicate comparing a state field against a value.
-pub trait ComparisonPredicate<P: Primitives>: PredicateExpression<P> {
+pub trait ComparisonPredicate<H: HostTypes>: PredicateExpression<H> {
     /// Associated type for `TermExpression`.
-    type TermExpression: crate::kernel::schema::TermExpression<P>;
+    type TermExpression: crate::kernel::schema::TermExpression<H>;
     /// The state field tested by this comparison predicate.
     fn comparison_field(&self) -> &Self::TermExpression;
     /// The comparison operator (e.g., '=', '<', '>=').
@@ -327,33 +327,33 @@ pub trait ComparisonPredicate<P: Primitives>: PredicateExpression<P> {
 }
 
 /// Conjunction (AND) of multiple predicates.
-pub trait ConjunctionPredicate<P: Primitives>: PredicateExpression<P> {
+pub trait ConjunctionPredicate<H: HostTypes>: PredicateExpression<H> {
     /// Associated type for `TermExpression`.
-    type TermExpression: crate::kernel::schema::TermExpression<P>;
+    type TermExpression: crate::kernel::schema::TermExpression<H>;
     /// A conjunct predicate in a conjunction.
     fn conjuncts(&self) -> &[Self::TermExpression];
 }
 
 /// Disjunction (OR) of multiple predicates.
-pub trait DisjunctionPredicate<P: Primitives>: PredicateExpression<P> {
+pub trait DisjunctionPredicate<H: HostTypes>: PredicateExpression<H> {
     /// Associated type for `TermExpression`.
-    type TermExpression: crate::kernel::schema::TermExpression<P>;
+    type TermExpression: crate::kernel::schema::TermExpression<H>;
     /// A disjunct predicate in a disjunction.
     fn disjuncts(&self) -> &[Self::TermExpression];
 }
 
 /// Negation (NOT) of a single predicate.
-pub trait NegationPredicate<P: Primitives>: PredicateExpression<P> {
+pub trait NegationPredicate<H: HostTypes>: PredicateExpression<H> {
     /// Associated type for `TermExpression`.
-    type TermExpression: crate::kernel::schema::TermExpression<P>;
+    type TermExpression: crate::kernel::schema::TermExpression<H>;
     /// The predicate being negated.
     fn negated_predicate(&self) -> &Self::TermExpression;
 }
 
 /// Predicate testing membership of an element in a set.
-pub trait MembershipPredicate<P: Primitives>: PredicateExpression<P> {
+pub trait MembershipPredicate<H: HostTypes>: PredicateExpression<H> {
     /// Associated type for `TermExpression`.
-    type TermExpression: crate::kernel::schema::TermExpression<P>;
+    type TermExpression: crate::kernel::schema::TermExpression<H>;
     /// The set against which membership is tested.
     fn membership_set(&self) -> &Self::TermExpression;
     /// The element being tested for set membership.
@@ -361,21 +361,21 @@ pub trait MembershipPredicate<P: Primitives>: PredicateExpression<P> {
 }
 
 /// Predicate testing whether grounding exceeds a threshold.
-pub trait GroundingPredicate<P: Primitives>: PredicateExpression<P> {
+pub trait GroundingPredicate<H: HostTypes>: PredicateExpression<H> {
     /// The grounding threshold above which the predicate holds.
-    fn grounding_threshold(&self) -> P::NonNegativeInteger;
+    fn grounding_threshold(&self) -> u64;
 }
 
 /// Predicate testing whether a site coverage target is met.
-pub trait SiteCoveragePredicate<P: Primitives>: PredicateExpression<P> {
+pub trait SiteCoveragePredicate<H: HostTypes>: PredicateExpression<H> {
     /// The site coverage target expression.
-    fn coverage_target(&self) -> P::NonNegativeInteger;
+    fn coverage_target(&self) -> u64;
 }
 
 /// Predicate testing equality of two expressions.
-pub trait EqualsPredicate<P: Primitives>: PredicateExpression<P> {
+pub trait EqualsPredicate<H: HostTypes>: PredicateExpression<H> {
     /// Associated type for `TermExpression`.
-    type TermExpression: crate::kernel::schema::TermExpression<P>;
+    type TermExpression: crate::kernel::schema::TermExpression<H>;
     /// The left-hand side of an equality test.
     fn equality_left(&self) -> &Self::TermExpression;
     /// The right-hand side of an equality test.
@@ -383,63 +383,63 @@ pub trait EqualsPredicate<P: Primitives>: PredicateExpression<P> {
 }
 
 /// Predicate testing that a field is non-null.
-pub trait NonNullPredicate<P: Primitives>: PredicateExpression<P> {
+pub trait NonNullPredicate<H: HostTypes>: PredicateExpression<H> {
     /// The field that must be non-null.
-    fn non_null_field(&self) -> P::NonNegativeInteger;
+    fn non_null_field(&self) -> u64;
 }
 
 /// Predicate testing whether a query is a subtype of a given type.
-pub trait QuerySubtypePredicate<P: Primitives>: PredicateExpression<P> {
+pub trait QuerySubtypePredicate<H: HostTypes>: PredicateExpression<H> {
     /// Associated type for `TermExpression`.
-    type TermExpression: crate::kernel::schema::TermExpression<P>;
+    type TermExpression: crate::kernel::schema::TermExpression<H>;
     /// The query type reference for subtype testing.
     fn query_type_ref(&self) -> &Self::TermExpression;
 }
 
 /// The typed input graph submitted to the reduction pipeline. Packages a root Term, target quantum level, verification domains, and thermodynamic budget. Stage 0 accepts exactly one CompileUnit and initializes the reduction state vector from it.
-pub trait CompileUnit<P: Primitives> {
+pub trait CompileUnit<H: HostTypes> {
     /// Associated type for `TermExpression`.
-    type TermExpression: crate::kernel::schema::TermExpression<P>;
+    type TermExpression: crate::kernel::schema::TermExpression<H>;
     /// The root term expression of a CompileUnit — the top-level syntactic node from which all sub-expressions descend.
     fn root_term(&self) -> &Self::TermExpression;
     /// The quantum level at which this CompileUnit operates.
     fn unit_witt_level(&self) -> WittLevel;
     /// The Landauer-bounded energy budget for this CompileUnit's resolution, measured in k_B T ln 2 units.
-    fn thermodynamic_budget(&self) -> &P::String;
+    fn thermodynamic_budget(&self) -> &H::HostString;
     /// The verification domain(s) targeted by this CompileUnit.
     fn target_domains(&self) -> &[VerificationDomain];
     /// Associated type for `Element`.
-    type Element: crate::kernel::address::Element<P>;
+    type Element: crate::kernel::address::Element<H>;
     /// Content-addressable identifier computed as the u:Element of the root term’s transitive closure. Computed by stage_initialization, not declared by the submitter. Excludes budget, domains, and quantum level to enable memoization.
     fn unit_address(&self) -> &Self::Element;
 }
 
 /// An ontology fact describing a single field on a reduction:PipelineFailureReason variant. The v0.2.1 Rust codegen walks FailureField individuals filtered by ofFailure to assemble the PipelineFailure enum's variant fields. Adding a new field to a failure variant requires only adding a new FailureField individual.
-pub trait FailureField<P: Primitives> {
+pub trait FailureField<H: HostTypes> {
     /// The PipelineFailureReason (or class) this field belongs to.
-    fn of_failure(&self) -> &P::String;
+    fn of_failure(&self) -> &H::HostString;
     /// Snake_case name of the Rust field on the generated PipelineFailure variant.
-    fn field_name(&self) -> &P::String;
+    fn field_name(&self) -> &H::HostString;
     /// Rust type for the field, expressed as a literal type string the codegen emits verbatim (e.g., "&'static str", "usize", "ReductionStep").
-    fn field_type(&self) -> &P::String;
+    fn field_type(&self) -> &H::HostString;
 }
 
 /// Declarative bound for SAT-fragment deciders. The v0.2.1 pipeline driver reads these individuals at codegen time to emit the bounded iterative Tarjan SCC (2-SAT) and unit propagation (Horn-SAT) implementations.
-pub trait SatBound<P: Primitives> {
+pub trait SatBound<H: HostTypes> {
     /// Maximum variable count the SAT decider supports.
-    fn max_var_count(&self) -> P::NonNegativeInteger;
+    fn max_var_count(&self) -> u64;
     /// Maximum clause count the SAT decider supports.
-    fn max_clause_count(&self) -> P::NonNegativeInteger;
+    fn max_clause_count(&self) -> u64;
     /// Maximum literals per clause (2 for 2-SAT, higher for Horn).
-    fn max_literals_per_clause(&self) -> P::NonNegativeInteger;
+    fn max_literals_per_clause(&self) -> u64;
 }
 
 /// Declarative timing bound for reduction pipeline stages. Values in nanoseconds at the v0.2.1 reference hardware.
-pub trait TimingBound<P: Primitives> {
+pub trait TimingBound<H: HostTypes> {
     /// Preflight-stage time budget in nanoseconds at the v0.2.1 reference hardware.
-    fn preflight_budget_ns(&self) -> P::NonNegativeInteger;
+    fn preflight_budget_ns(&self) -> u64;
     /// Runtime-stage time budget in nanoseconds at the v0.2.1 reference hardware.
-    fn runtime_budget_ns(&self) -> P::NonNegativeInteger;
+    fn runtime_budget_ns(&self) -> u64;
 }
 
 /// Stage 0: initialize state vector to identity.
@@ -632,7 +632,7 @@ pub mod coherence_violation {
     pub const FAILURE_KIND: &str = "CoherenceViolation";
 }
 
-/// Failure: the CompileUnit's root term produced a value of a shape other than the caller-declared expected shape. Introduced in v0.2.2 W14 as part of the typed pipeline::run::<T> entry point.
+/// Failure: the CompileUnit's root term produced a value of a shape other than the caller-declared expected shape. Introduced in v0.2.2 W14 as part of the typed pipeline::run::\<T\> entry point.
 pub mod shape_mismatch {
     /// `failureKind`
     pub const FAILURE_KIND: &str = "ShapeMismatch";
@@ -881,7 +881,7 @@ pub mod coherence_violation_constraint_iri_field {
     pub const OF_FAILURE: &str = "https://uor.foundation/reduction/CoherenceViolation";
 }
 
-/// ShapeMismatch field carrying the expected shape IRI declared by the caller of pipeline::run::<T>.
+/// ShapeMismatch field carrying the expected shape IRI declared by the caller of pipeline::run::\<T\>.
 pub mod shape_mismatch_expected_field {
     /// `fieldName`
     pub const FIELD_NAME: &str = "expected";

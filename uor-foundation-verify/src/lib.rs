@@ -1,12 +1,37 @@
-//! UOR Foundation — trace-replay verifier.
+//! Trace-replay verifier for the UOR Foundation.
 //!
-//! A strictly `no_std` verifier that re-derives a `Certified<C>` from a
-//! content-addressed `Trace` (produced by `Derivation::replay()` in
-//! `uor-foundation`) without re-running the deciders. The verifier walks
-//! the trace event sequence, reconstructs the witness chain, and returns
-//! the re-issued certificate.
+//! v0.2.2 T5 — this crate is a thin façade over
+//! [`uor_foundation::enforcement::replay::certify_from_trace`], which validates
+//! a [`Trace`] produced by [`uor_foundation::enforcement::Derivation::replay`]
+//! and re-derives a [`Certified<GroundingCertificate>`] via **structural
+//! validation + fingerprint passthrough**. The verifier does NOT invoke any
+//! hash function — the parametric [`ContentFingerprint`] is *data carried by
+//! the Trace*, computed at mint time by the consumer-supplied [`Hasher`] and
+//! passed through unchanged.
 //!
-//! v0.2.2 Phase H deliverable of the UOR Foundation v0.2.2 release.
+//! # Substrate-agnostic hashing
+//!
+//! The foundation does not prescribe a hash function. Downstream substrate
+//! consumers (PRISM, application crates) supply their own [`Hasher`] impl —
+//! BLAKE3 (recommended for production), SHA-256, BLAKE2b, FNV-1a, or any
+//! conforming impl. The architectural shape mirrors `Calibration`: the
+//! foundation defines the abstract quantity ([`ContentFingerprint`]) and the
+//! substitution point ([`Hasher`]); downstream provides the concrete
+//! substrate AND chooses the output width within the foundation's correctness
+//! budget (`[FINGERPRINT_MIN_BYTES, FINGERPRINT_MAX_BYTES]`).
+//!
+//! # Round-trip property
+//!
+//! For every `Grounded<T>` value produced by `pipeline::run::<T, _, H>` with
+//! a conforming substrate `H: Hasher`:
+//!
+//! ```ignore
+//! verify_trace(&grounded.derivation().replay()).certificate()
+//!     == grounded.certificate()
+//! ```
+//!
+//! holds bit-identically. The contract is orthogonal to the substrate hasher
+//! choice and to the chosen `OUTPUT_BYTES` width.
 
 #![no_std]
 #![deny(missing_docs)]
@@ -15,79 +40,60 @@
 #![deny(clippy::panic)]
 #![deny(clippy::missing_errors_doc)]
 
-use uor_foundation::enforcement::{Trace, TraceEvent};
+pub use uor_foundation::enforcement::replay::certify_from_trace;
+pub use uor_foundation::enforcement::{
+    BindingsTableError, Certificate, CertificateKind, Certified, ContentAddress,
+    ContentFingerprint, GroundingCertificate, Hasher, ReplayError, Trace, TraceEvent,
+    FINGERPRINT_MAX_BYTES, FINGERPRINT_MIN_BYTES, TRACE_MAX_EVENTS, TRACE_REPLAY_FORMAT_VERSION,
+};
+pub use uor_foundation::PrimitiveOp;
 
-/// Reason a trace replay failed.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-#[non_exhaustive]
-pub enum VerificationFailure {
-    /// The trace was empty when a non-empty replay was expected.
-    EmptyTrace,
-    /// A trace event had an out-of-range step index.
-    OutOfRangeEvent {
-        /// The offending event index.
-        index: usize,
-    },
-    /// The trace's event count exceeds the foundation-declared capacity.
-    CapacityExceeded,
-}
-
-/// Replay a derivation trace and re-derive the certificate.
+/// Verify a trace by re-deriving its certificate via structural validation +
+/// fingerprint passthrough.
 ///
-/// The verifier walks the `trace.event(i)` iterator for `i` in
-/// `[0, trace.len())` and reconstructs the certificate by folding the
-/// events through the ring-operation algebra. No deciders are invoked;
-/// this is a pure replay of the already-witnessed operations.
+/// Validates the trace's structural invariants (monotonic, contiguous step
+/// indices; no zero targets; no `None` slots in the populated prefix) and
+/// re-packages the trace's stored [`ContentFingerprint`] and `witt_level_bits`
+/// into a fresh [`Certified<GroundingCertificate>`]. The verifier never
+/// invokes a hash function: the fingerprint is *data carried by the Trace*,
+/// computed at mint time by the consumer-supplied [`Hasher`] and copied
+/// through unchanged. This makes the round-trip property orthogonal to:
+///
+///   - the choice of hash function (BLAKE3, SHA-256, BLAKE2b, FNV-1a, ...)
+///   - the choice of output width (any value in
+///     `[FINGERPRINT_MIN_BYTES, FINGERPRINT_MAX_BYTES]`)
+///
+/// The foundation **recommends BLAKE3** as the default substrate hasher for
+/// production deployments. PRISM ships a BLAKE3 [`Hasher`] impl; application
+/// crates should use it unless they have a specific reason to deviate. The
+/// recommendation is non-binding — any conforming [`Hasher`] impl works.
 ///
 /// # Errors
 ///
-/// Returns `VerificationFailure` if the trace is malformed or its event
-/// count exceeds the foundation-declared capacity.
-pub fn verify_trace(trace: &Trace) -> Result<ReplayOutcome, VerificationFailure> {
-    if trace.is_empty() {
-        return Err(VerificationFailure::EmptyTrace);
-    }
-    let n = trace.len() as usize;
-    let mut last_step: u32 = 0;
-    let mut rewrite_steps: u64 = 0;
-    let mut i = 0usize;
-    while i < n {
-        let event = match trace.event(i) {
-            Some(e) => e,
-            None => return Err(VerificationFailure::OutOfRangeEvent { index: i }),
-        };
-        if event.step_index() < last_step {
-            return Err(VerificationFailure::OutOfRangeEvent { index: i });
-        }
-        last_step = event.step_index();
-        rewrite_steps += 1;
-        i += 1;
-    }
-    Ok(ReplayOutcome {
-        rewrite_steps,
-        last_step_index: last_step,
-    })
-}
-
-/// Stub inspection helper: returns the primitive op of the event at
-/// the given index.
+/// Returns:
 ///
-/// # Errors
+///   - [`ReplayError::EmptyTrace`] if `trace.is_empty()`.
+///   - [`ReplayError::OutOfOrderEvent`] if event step indices are not strictly
+///     monotonic at the reported `index`.
+///   - [`ReplayError::ZeroTarget`] if any event carries `ContentAddress::zero()`
+///     (forbidden in well-formed traces).
+///   - [`ReplayError::NonContiguousSteps`] if event step indices skip values
+///     (e.g., `[0, 2, 5]` with `len = 3`).
 ///
-/// Returns `VerificationFailure::OutOfRangeEvent` if `index` is beyond
-/// the trace's length.
-pub fn op_at(trace: &Trace, index: usize) -> Result<&TraceEvent, VerificationFailure> {
-    trace
-        .event(index)
-        .ok_or(VerificationFailure::OutOfRangeEvent { index })
-}
-
-/// Outcome of a successful trace replay: the number of rewrite steps
-/// the verifier walked and the final step index.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub struct ReplayOutcome {
-    /// Number of rewrite events the verifier successfully replayed.
-    pub rewrite_steps: u64,
-    /// The largest step index encountered in the trace.
-    pub last_step_index: u32,
+/// # Example
+///
+/// ```no_run
+/// use uor_foundation::enforcement::Derivation;
+/// use uor_foundation_verify::verify_trace;
+///
+/// # fn example(derivation: &Derivation) {
+/// let trace = derivation.replay();
+/// let certified = verify_trace(&trace).expect("trace verifies");
+/// let fingerprint = certified.certificate().content_fingerprint();
+/// # let _ = fingerprint;
+/// # }
+/// ```
+#[inline]
+pub fn verify_trace(trace: &Trace) -> Result<Certified<GroundingCertificate>, ReplayError> {
+    certify_from_trace(trace)
 }

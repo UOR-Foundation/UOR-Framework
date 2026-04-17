@@ -4,20 +4,20 @@
 //!
 //! Space: Kernel
 
-use crate::Primitives;
+use crate::HostTypes;
 
 /// A content-addressable ring element. Each Element uniquely identifies a piece of content via its hash-derived identifier.
-pub trait Element<P: Primitives> {
+pub trait Element<H: HostTypes> {
     /// The number of Braille glyphs in an address string.
-    fn length(&self) -> P::NonNegativeInteger;
+    fn length(&self) -> u64;
     /// The datum that this address references. Inverse of schema:glyph.
-    fn addresses(&self) -> &P::String;
+    fn addresses(&self) -> &H::HostString;
     /// The content hash of this address. Format: (blake3|sha256) colon followed by 64 lowercase hex characters. The algorithm prefix must match u:digestAlgorithm.
-    fn digest(&self) -> &P::String;
+    fn digest(&self) -> &H::HostString;
     /// The hash algorithm used to produce u:digest. Allowed values: 'blake3' (primary), 'sha256' (secondary).
-    fn digest_algorithm(&self) -> &P::String;
+    fn digest_algorithm(&self) -> &H::HostString;
     /// The canonical byte serialisation of the addressed datum, per Amendment 43 section 2: header(k) || le_bytes(x, k+1). This is the exact byte string hashed to produce u:digest.
-    fn canonical_bytes(&self) -> &P::String;
+    fn canonical_bytes(&self) -> &H::WitnessBytes;
     /// The Witt level n of this element. The element encodes a datum in R_n = Z/(2^n)Z.
-    fn witt_length(&self) -> P::PositiveInteger;
+    fn witt_length(&self) -> u64;
 }

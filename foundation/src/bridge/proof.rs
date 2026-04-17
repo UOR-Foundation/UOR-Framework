@@ -8,20 +8,20 @@ use crate::enums::AchievabilityStatus;
 use crate::enums::ProofStrategy;
 use crate::enums::VerificationDomain;
 use crate::enums::WittLevel;
-use crate::Primitives;
+use crate::HostTypes;
 
 /// A kernel-produced attestation that a given algebraic property holds. The root class for all proof types.
-pub trait Proof<P: Primitives> {
+pub trait Proof<H: HostTypes> {
     /// Whether this proof has been verified by the kernel.
-    fn verified(&self) -> P::Boolean;
+    fn verified(&self) -> bool;
     /// The time at which this proof was produced.
-    fn timestamp(&self) -> &P::String;
+    fn timestamp(&self) -> &H::WitnessBytes;
     /// Associated type for `WitnessData`.
-    type WitnessData: WitnessData<P>;
+    type WitnessData: WitnessData<H>;
     /// Supporting witness data for this proof.
     fn witness(&self) -> &[Self::WitnessData];
     /// Associated type for `Identity`.
-    type Identity: crate::kernel::op::Identity<P>;
+    type Identity: crate::kernel::op::Identity<H>;
     /// The algebraic identity this proof establishes. Provides a canonical object reference alongside the existing proof:criticalIdentity string property, which remains for human readability.
     fn proves_identity(&self) -> &Self::Identity;
     /// The specific quantum level at which an empirical verification or impossibility witness was established.
@@ -31,51 +31,51 @@ pub trait Proof<P: Primitives> {
     /// An identity that this proof depends on as a lemma. Forms the proof dependency DAG. Leaf proofs (provable from definitions alone) have no dependsOn assertions.
     fn depends_on(&self) -> &[Self::Identity];
     /// Associated type for `DerivationTerm`.
-    type DerivationTerm: DerivationTerm<P>;
+    type DerivationTerm: DerivationTerm<H>;
     /// The formal proof construction term: a DerivationTerm AST node encoding the tactic script, lemma chain, or induction scaffold that constitutes the proof.
     fn formal_derivation(&self) -> &Self::DerivationTerm;
 }
 
 /// A proof of coherence: the type system and ring structure are mutually consistent at a given quantum level.
-pub trait CoherenceProof<P: Primitives>: Proof<P> {}
+pub trait CoherenceProof<H: HostTypes>: Proof<H> {}
 
 /// A proof confirmed by exhaustive execution over R_n at a specific quantum level. The kernel ran the identity against all 2^n inputs and observed that it holds. The proof:atWittLevel property records the level; proof:witness links to the WitnessData. CriticalIdentityProof is a subclass of ComputationCertificate.
-pub trait ComputationCertificate<P: Primitives>: Proof<P> {
+pub trait ComputationCertificate<H: HostTypes>: Proof<H> {
     /// The quantum level at which this computation certificate was produced. A ComputationCertificate at schema:Q0 confirms the identity holds for all 256 inputs of R_8. A certificate at schema:Q1 confirms it for all 65,536 inputs of R_16.
     fn at_witt_level(&self) -> WittLevel;
 }
 
 /// A proof that follows from previously established axioms or definitions by equational, structural, or topological reasoning. The proof:derivationWitness property links to a derivation:Derivation individual recording the rewrite chain. All pipeline, constraint, observable, and topological identities are AxiomaticDerivations.
-pub trait AxiomaticDerivation<P: Primitives>: Proof<P> {
+pub trait AxiomaticDerivation<H: HostTypes>: Proof<H> {
     /// True when this axiomatic derivation holds for all quantum levels by the definition of Z/(2^n)Z. False when the derivation depends on a property specific to a particular ring size. All current AxiomaticDerivation individuals in the spec carry universalScope true.
-    fn universal_scope(&self) -> P::Boolean;
+    fn universal_scope(&self) -> bool;
     /// Associated type for `Derivation`.
-    type Derivation: crate::bridge::derivation::Derivation<P>;
+    type Derivation: crate::bridge::derivation::Derivation<H>;
     /// The derivation chain that witnesses this axiomatic derivation. Links a proof:AxiomaticDerivation to the derivation:Derivation individual recording the rewrite sequence. Optional at the spec level — the conformance suite requires only that the proof individual exists; full derivation chains live in generated artifacts.
     fn derivation_witness(&self) -> &[Self::Derivation];
 }
 
 /// A proof of the critical identity: neg(bnot(x)) = succ(x) for all x in R_n. This is the foundational theorem of the UOR kernel.
-pub trait CriticalIdentityProof<P: Primitives>: ComputationCertificate<P> {}
+pub trait CriticalIdentityProof<H: HostTypes>: ComputationCertificate<H> {}
 
 /// Supporting data for a proof: specific examples, counter-examples checked, or intermediate computation results.
-pub trait WitnessData<P: Primitives> {
+pub trait WitnessData<H: HostTypes> {
     /// A specific input value used as a witness for the critical identity check.
-    fn x(&self) -> &[P::Integer];
+    fn x(&self) -> &[i64];
     /// The value bnot(x) for a witness x.
-    fn bnot_x(&self) -> &[P::Integer];
+    fn bnot_x(&self) -> &[i64];
     /// The value neg(bnot(x)) for a witness x.
-    fn neg_bnot_x(&self) -> &[P::Integer];
+    fn neg_bnot_x(&self) -> &[i64];
     /// The value succ(x) for a witness x.
-    fn succ_x(&self) -> &[P::Integer];
+    fn succ_x(&self) -> &[i64];
     /// Whether the identity neg(bnot(x)) = succ(x) holds for this specific witness.
-    fn holds(&self) -> &[P::Boolean];
+    fn holds(&self) -> &[bool];
 }
 
 /// A formal witness that a topological signature (χ, β_k) is impossible to achieve for any ConstrainedType. Carries the algebraic reason and the verification domain grounding the impossibility.
-pub trait ImpossibilityWitness<P: Primitives>: Proof<P> {
+pub trait ImpossibilityWitness<H: HostTypes>: Proof<H> {
     /// Human-readable statement of the algebraic reason the signature is impossible (e.g., 'β₀ = 0 violates MS_1').
-    fn impossibility_reason(&self) -> &P::String;
+    fn impossibility_reason(&self) -> &H::HostString;
     /// The verification domain grounding the impossibility (e.g., Pipeline for β₀ = 0, Algebraic for χ > n).
     fn impossibility_domain(&self) -> VerificationDomain;
     /// The achievability classification of a proof-linked observable signature: Achievable or Forbidden.
@@ -83,56 +83,56 @@ pub trait ImpossibilityWitness<P: Primitives>: Proof<P> {
 }
 
 /// A formal record of a morphospace boundary point — either an achievable or forbidden topological signature. Aggregated by MorphospaceBoundary to form the queryable morphospace map.
-pub trait MorphospaceRecord<P: Primitives> {
+pub trait MorphospaceRecord<H: HostTypes> {
     /// Whether this MorphospaceRecord represents an impossibility boundary (from below) or an achievability boundary (from above).
     fn boundary_type(&self) -> AchievabilityStatus;
 }
 
 /// An aggregate of ImpossibilityWitness instances forming the queryable morphospace map. SPARQL over this structure answers achievability queries in O(1).
-pub trait MorphospaceBoundary<P: Primitives> {
+pub trait MorphospaceBoundary<H: HostTypes> {
     /// Associated type for `MorphospaceRecord`.
-    type MorphospaceRecord: MorphospaceRecord<P>;
+    type MorphospaceRecord: MorphospaceRecord<H>;
     /// Links a MorphospaceBoundary to one of its constituent MorphospaceRecord individuals.
     fn morphospace_record(&self) -> &[Self::MorphospaceRecord];
 }
 
 /// A proof by structural induction on the quantum level index k. Carries a base case proof, an inductive step proof, and the minimum k for which the induction holds.
-pub trait InductiveProof<P: Primitives>: Proof<P> {
+pub trait InductiveProof<H: HostTypes>: Proof<H> {
     /// Associated type for `Proof`.
-    type Proof: Proof<P>;
+    type Proof: Proof<H>;
     /// The proof that the claim holds at the base level k_0.
     fn base_case(&self) -> &Self::Proof;
     /// The proof that if the claim holds at Q_k, it holds at Q_{k+1}.
     fn inductive_step(&self) -> &Self::Proof;
     /// The minimum k for which the induction is valid.
-    fn valid_for_kat_least(&self) -> P::NonNegativeInteger;
+    fn valid_for_kat_least(&self) -> u64;
 }
 
 /// Root AST node for proof construction terms. Distinct from schema:TermExpression which represents mathematical terms; DerivationTerm represents proof constructions (tactic applications, lemma invocations, induction scaffolding).
-pub trait DerivationTerm<P: Primitives> {}
+pub trait DerivationTerm<H: HostTypes> {}
 
 /// A proof step applying a named tactic (from ProofStrategy) with arguments. Maps to a Lean4 tactic invocation.
-pub trait TacticApplication<P: Primitives>: DerivationTerm<P> {}
+pub trait TacticApplication<H: HostTypes>: DerivationTerm<H> {}
 
 /// A proof step invoking a previously proved identity as a lemma. References the identity via proof:dependsOn.
-pub trait LemmaInvocation<P: Primitives>: DerivationTerm<P> {}
+pub trait LemmaInvocation<H: HostTypes>: DerivationTerm<H> {}
 
 /// A proof step performing structural induction: base case derivation, inductive hypothesis, and step derivation.
-pub trait InductionStep<P: Primitives>: DerivationTerm<P> {}
+pub trait InductionStep<H: HostTypes>: DerivationTerm<H> {}
 
 /// A proof step performing exhaustive computation at a specific quantum level as verification witness.
-pub trait ComputationStep<P: Primitives>: DerivationTerm<P> {}
+pub trait ComputationStep<H: HostTypes>: DerivationTerm<H> {}
 
 /// A specialisation of proof:ImpossibilityWitness produced when the inhabitance search determines that the carrier of a ConstrainedType is empty. Aggregates into the existing proof:MorphospaceBoundary alongside other impossibility witnesses, inheriting its O(1) amortised lookup discipline for previously resolved signatures.
-pub trait InhabitanceImpossibilityWitness<P: Primitives>: ImpossibilityWitness<P> {
+pub trait InhabitanceImpossibilityWitness<H: HostTypes>: ImpossibilityWitness<H> {
     /// The Lean 4 by-contradiction derivation over the predicate vocabulary attesting that no value tuple satisfies the constraint system.
-    fn contradiction_proof(&self) -> &P::String;
+    fn contradiction_proof(&self) -> &H::HostString;
     /// Associated type for `ConstrainedType`.
-    type ConstrainedType: crate::user::type_::ConstrainedType<P>;
+    type ConstrainedType: crate::user::type_::ConstrainedType<H>;
     /// The type:ConstrainedType whose carrier this witness certifies as empty.
     fn grounded(&self) -> &Self::ConstrainedType;
     /// Associated type for `InhabitanceSearchTrace`.
-    type InhabitanceSearchTrace: crate::bridge::trace::InhabitanceSearchTrace<P>;
+    type InhabitanceSearchTrace: crate::bridge::trace::InhabitanceSearchTrace<H>;
     /// The audit trail of the inhabitance search up to the contradiction.
     fn search_trace(&self) -> &Self::InhabitanceSearchTrace;
 }

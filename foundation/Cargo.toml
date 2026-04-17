@@ -13,6 +13,15 @@ keywords = ["ontology", "uor", "type-system", "traits", "semantic-web"]
 categories = ["data-structures", "science"]
 
 [dependencies]
+# Phase H (target §1.6): always-on transcendental math via `libm`.
+# `core::f64` exposes only basic arithmetic; `xsd:decimal` observables
+# (convergence rate, residual entropy, collapse amplitude, k_B T · ln 2
+# pricing at op:OA_5) require `ln` / `exp` / `sqrt`. Gating these behind a
+# feature flag was considered and rejected: an observable that exists in
+# one build and not another violates the "one surface" discipline.
+# `libm` is a small, MIT-licensed, no_std-safe pure-Rust implementation of
+# `<math.h>`; it composes transparently with embedded toolchains.
+libm = "0.2"
 
 [dev-dependencies]
 # v0.2.2 T2.5 (cleanup): test-helpers crate exposing crate-internal

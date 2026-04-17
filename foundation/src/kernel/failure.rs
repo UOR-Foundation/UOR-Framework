@@ -4,85 +4,85 @@
 //!
 //! Space: Kernel
 
-use crate::Primitives;
+use crate::HostTypes;
 
 /// The outcome of a computation that may fail: either a Success carrying a datum, or a Failure carrying a typed reason. The coproduct of the success and failure cases.
-pub trait ComputationResult<P: Primitives> {}
+pub trait ComputationResult<H: HostTypes> {}
 
 /// A computation that reached convergence and produced a valid datum. Carries the output datum and the computation certificate.
-pub trait Success<P: Primitives>: ComputationResult<P> {
+pub trait Success<H: HostTypes>: ComputationResult<H> {
     /// Associated type for `Datum`.
-    type Datum: crate::kernel::schema::Datum<P>;
+    type Datum: crate::kernel::schema::Datum<H>;
     /// The output datum of a successful computation.
     fn result_datum(&self) -> &Self::Datum;
     /// Associated type for `ComputationCertificate`.
-    type ComputationCertificate: crate::bridge::proof::ComputationCertificate<P>;
+    type ComputationCertificate: crate::bridge::proof::ComputationCertificate<H>;
     /// The certificate attesting the computation’s correctness.
     fn result_certificate(&self) -> &Self::ComputationCertificate;
 }
 
 /// A computation that could not reach convergence. Carries a typed FailureReason and the reduction state at the point of failure.
-pub trait Failure<P: Primitives>: ComputationResult<P> {
+pub trait Failure<H: HostTypes>: ComputationResult<H> {
     /// Associated type for `FailureReason`.
-    type FailureReason: FailureReason<P>;
+    type FailureReason: FailureReason<H>;
     /// The typed reason for failure.
     fn failure_reason(&self) -> &Self::FailureReason;
     /// Associated type for `ReductionState`.
-    type ReductionState: crate::kernel::reduction::ReductionState<P>;
+    type ReductionState: crate::kernel::reduction::ReductionState<H>;
     /// The reduction state at the point of failure.
     fn failure_state(&self) -> &Self::ReductionState;
     /// Associated type for `ReductionStep`.
-    type ReductionStep: crate::kernel::reduction::ReductionStep<P>;
+    type ReductionStep: crate::kernel::reduction::ReductionStep<H>;
     /// The reduction step where failure occurred.
     fn failure_stage(&self) -> &Self::ReductionStep;
     /// Associated type for `Recovery`.
-    type Recovery: Recovery<P>;
+    type Recovery: Recovery<H>;
     /// Available recovery strategies for this failure.
     fn recovery_strategy(&self) -> &[Self::Recovery];
     /// The reduction step index at which failure occurred.
-    fn failure_depth(&self) -> P::NonNegativeInteger;
+    fn failure_depth(&self) -> u64;
 }
 
 /// A typed classification of why a computation failed.
-pub trait FailureReason<P: Primitives> {}
+pub trait FailureReason<H: HostTypes> {}
 
 /// A reduction step guard evaluated to false and no alternative transition exists.
-pub trait GuardFailure<P: Primitives>: FailureReason<P> {}
+pub trait GuardFailure<H: HostTypes>: FailureReason<H> {}
 
 /// Two constraints in the type’s constraint set are jointly unsatisfiable.
-pub trait ConstraintContradiction<P: Primitives>: FailureReason<P> {}
+pub trait ConstraintContradiction<H: HostTypes>: FailureReason<H> {}
 
 /// The linear budget was exhausted before resolution completed.
-pub trait SiteExhaustion<P: Primitives>: FailureReason<P> {}
+pub trait SiteExhaustion<H: HostTypes>: FailureReason<H> {}
 
 /// A WittLift encountered a non-trivial obstruction that could not be resolved.
-pub trait LiftObstructionFailure<P: Primitives>: FailureReason<P> {}
+pub trait LiftObstructionFailure<H: HostTypes>: FailureReason<H> {}
 
 /// A computation that produces a ComputationResult rather than a guaranteed datum. The general case of all computations.
-pub trait PartialComputation<P: Primitives> {
+pub trait PartialComputation<H: HostTypes> {
     /// True iff the computation is a TotalComputation (no possible failure path).
-    fn is_total(&self) -> P::Boolean;
+    fn is_total(&self) -> bool;
 }
 
 /// A computation where the FailureReason type is empty — failure is structurally impossible.
-pub trait TotalComputation<P: Primitives>: PartialComputation<P> {}
+pub trait TotalComputation<H: HostTypes>: PartialComputation<H> {}
 
 /// A strategy for converting a Failure into a Success by modifying the computation path.
-pub trait Recovery<P: Primitives> {
+pub trait Recovery<H: HostTypes> {
     /// Associated type for `Effect`.
-    type Effect: crate::kernel::effect::Effect<P>;
+    type Effect: crate::kernel::effect::Effect<H>;
     /// The effect applied to recover from failure.
     fn recovery_effect(&self) -> &Self::Effect;
     /// Associated type for `ReductionStep`.
-    type ReductionStep: crate::kernel::reduction::ReductionStep<P>;
+    type ReductionStep: crate::kernel::reduction::ReductionStep<H>;
     /// The reduction step to retry after recovery.
     fn recovery_target(&self) -> &Self::ReductionStep;
 }
 
 /// The rule for how failures compose under monoidal and parallel products.
-pub trait FailurePropagation<P: Primitives> {
+pub trait FailurePropagation<H: HostTypes> {
     /// Associated type for `FailureReason`.
-    type FailureReason: FailureReason<P>;
+    type FailureReason: FailureReason<H>;
     /// Which failure reasons propagate through this composition.
     fn propagation_rule(&self) -> &[Self::FailureReason];
 }

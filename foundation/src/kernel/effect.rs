@@ -4,47 +4,47 @@
 //!
 //! Space: Kernel
 
-use crate::Primitives;
+use crate::HostTypes;
 
 /// A typed endomorphism on state:Context. Maps one site-budget configuration to another. The atomic unit of state mutation in the kernel.
-pub trait Effect<P: Primitives> {
+pub trait Effect<H: HostTypes> {
     /// Associated type for `EffectTarget`.
-    type EffectTarget: EffectTarget<P>;
+    type EffectTarget: EffectTarget<H>;
     /// The site coordinates this effect touches.
     fn effect_target(&self) -> &Self::EffectTarget;
     /// Associated type for `Context`.
-    type Context: crate::user::state::Context<P>;
+    type Context: crate::user::state::Context<H>;
     /// The context before effect application.
     fn pre_context(&self) -> &Self::Context;
     /// The context after effect application.
     fn post_context(&self) -> &Self::Context;
     /// Change in freeRank: −1 for PinningEffect, +1 for UnbindingEffect, 0 for PhaseEffect.
-    fn free_rank_delta(&self) -> P::Integer;
+    fn free_rank_delta(&self) -> i64;
     /// Position within a CompositeEffect sequence.
-    fn composite_index(&self) -> P::NonNegativeInteger;
+    fn composite_index(&self) -> u64;
     /// Computed: true iff effectTargets are disjoint with the compared effect. Derived from DisjointnessWitness existence.
-    fn is_commutative_with(&self) -> P::Boolean;
+    fn is_commutative_with(&self) -> bool;
 }
 
 /// An effect that has a well-defined inverse. PinningEffect and PhaseEffect are reversible; ExternalEffect and CompositeEffect are not in general.
-pub trait ReversibleEffect<P: Primitives>: Effect<P> {}
+pub trait ReversibleEffect<H: HostTypes>: Effect<H> {}
 
 /// Pins a single free site to a definite value. Decrements freeRank by exactly 1. The effect produced by constraint resolution.
-pub trait PinningEffect<P: Primitives>: ReversibleEffect<P> {}
+pub trait PinningEffect<H: HostTypes>: ReversibleEffect<H> {}
 
 /// Releases a pinned site back to free state. Increments freeRank by exactly 1. The effect produced by session boundary reset.
-pub trait UnbindingEffect<P: Primitives>: Effect<P> {}
+pub trait UnbindingEffect<H: HostTypes>: Effect<H> {}
 
 /// Rotates the reduction phase angle by Ω^k. Does not alter the site budget. The effect produced by reduction step transitions.
-pub trait PhaseEffect<P: Primitives>: ReversibleEffect<P> {
+pub trait PhaseEffect<H: HostTypes>: ReversibleEffect<H> {
     /// The phase rotation applied, expressed as Ω^k.
-    fn phase_angle_delta(&self) -> P::Decimal;
+    fn phase_angle_delta(&self) -> H::Decimal;
 }
 
 /// An ordered sequence of effects applied atomically. The composition E₁ ; E₂ applies E₁ then E₂.
-pub trait CompositeEffect<P: Primitives>: Effect<P> {
+pub trait CompositeEffect<H: HostTypes>: Effect<H> {
     /// Associated type for `Effect`.
-    type Effect: Effect<P>;
+    type Effect: Effect<H>;
     /// The first effect in the composite sequence.
     fn composite_head(&self) -> &Self::Effect;
     /// Subsequent effects in the composite sequence (ordered by effect:compositeIndex).
@@ -52,27 +52,27 @@ pub trait CompositeEffect<P: Primitives>: Effect<P> {
 }
 
 /// An opaque effect declared by a Prism implementation. The kernel treats it as a site-budget transformation satisfying the declared commutation contract. Must carry an effect:externalEffectShape linking to a conformance:EffectShape.
-pub trait ExternalEffect<P: Primitives>: Effect<P> {
+pub trait ExternalEffect<H: HostTypes>: Effect<H> {
     /// Associated type for `EffectShape`.
-    type EffectShape: crate::bridge::conformance_::EffectShape<P>;
+    type EffectShape: crate::bridge::conformance_::EffectShape<H>;
     /// The conformance shape that this external effect satisfies.
     fn external_effect_shape(&self) -> &Self::EffectShape;
 }
 
 /// The set of site coordinates that an effect reads or writes. Determines commutation.
-pub trait EffectTarget<P: Primitives> {
+pub trait EffectTarget<H: HostTypes> {
     /// Associated type for `SiteIndex`.
-    type SiteIndex: crate::bridge::partition::SiteIndex<P>;
+    type SiteIndex: crate::bridge::partition::SiteIndex<H>;
     /// The individual site coordinates in this target set.
     fn target_sites(&self) -> &[Self::SiteIndex];
     /// Number of site coordinates in this target set.
-    fn target_cardinality(&self) -> P::NonNegativeInteger;
+    fn target_cardinality(&self) -> u64;
 }
 
 /// A certificate that two EffectTargets have empty intersection, enabling commutative reordering.
-pub trait DisjointnessWitness<P: Primitives> {
+pub trait DisjointnessWitness<H: HostTypes> {
     /// Associated type for `EffectTarget`.
-    type EffectTarget: EffectTarget<P>;
+    type EffectTarget: EffectTarget<H>;
     /// The left target in the disjointness claim.
     fn disjointness_left(&self) -> &Self::EffectTarget;
     /// The right target in the disjointness claim.

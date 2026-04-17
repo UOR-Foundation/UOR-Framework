@@ -6,119 +6,119 @@
 
 use crate::enums::ProofStrategy;
 use crate::enums::WittLevel;
-use crate::Primitives;
+use crate::HostTypes;
 
 /// A kernel-produced attestation. The root class for all certificate types.
-pub trait Certificate<P: Primitives> {
+pub trait Certificate<H: HostTypes> {
     /// The verification method used to produce this certificate (e.g., 'exhaustive_check', 'symbolic_proof', 'sampling').
     fn method(&self) -> ProofStrategy;
     /// Whether this certificate has been verified by the kernel.
-    fn verified(&self) -> P::Boolean;
+    fn verified(&self) -> bool;
     /// The Witt level at which this certificate was produced.
-    fn witt_length(&self) -> P::PositiveInteger;
+    fn witt_length(&self) -> u64;
     /// The time at which this certificate was issued.
-    fn timestamp(&self) -> &P::String;
+    fn timestamp(&self) -> &H::WitnessBytes;
     /// The resource this certificate attests to. Links a certificate to the observable, transform, or other entity it covers.
-    fn certifies(&self) -> &P::String;
+    fn certifies(&self) -> &H::HostString;
 }
 
 /// A certificate attesting to the properties of a morphism:Transform. Certifies that the transform maps source to target correctly.
-pub trait TransformCertificate<P: Primitives>: Certificate<P> {
+pub trait TransformCertificate<H: HostTypes>: Certificate<H> {
     /// Associated type for `TermExpression`.
-    type TermExpression: crate::kernel::schema::TermExpression<P>;
+    type TermExpression: crate::kernel::schema::TermExpression<H>;
     /// The type of transform this certificate attests to (e.g., 'isometry', 'embedding', 'action').
     fn transform_type(&self) -> &Self::TermExpression;
 }
 
 /// A certificate attesting that a morphism:Isometry preserves metric distances. Certifies the transform is a metric isometry with respect to the specified metric.
-pub trait IsometryCertificate<P: Primitives>: Certificate<P> {}
+pub trait IsometryCertificate<H: HostTypes>: Certificate<H> {}
 
 /// A certificate attesting that an operation is an involution: f(f(x)) = x for all x in R_n.
-pub trait InvolutionCertificate<P: Primitives>: Certificate<P> {
+pub trait InvolutionCertificate<H: HostTypes>: Certificate<H> {
     /// Associated type for `Operation`.
-    type Operation: crate::kernel::op::Operation<P>;
+    type Operation: crate::kernel::op::Operation<H>;
     /// The operation this certificate applies to.
     fn operation(&self) -> &Self::Operation;
 }
 
 /// A certificate attesting that a type:CompleteType satisfies IT_7d: its constraint nerve has χ = n and all Betti numbers β_k = 0. Issued by the kernel after running the full ψ pipeline on the type's constraint set.
-pub trait CompletenessCertificate<P: Primitives>: Certificate<P> {
+pub trait CompletenessCertificate<H: HostTypes>: Certificate<H> {
     /// Associated type for `CompleteType`.
-    type CompleteType: crate::user::type_::CompleteType<P>;
+    type CompleteType: crate::user::type_::CompleteType<H>;
     /// The TypeDefinition whose completeness this certificate attests. The kernel issues this certificate after running the ψ pipeline on the type's constraint set and confirming IT_7d.
     fn certified_type(&self) -> &Self::CompleteType;
     /// Associated type for `CompletenessAuditTrail`.
-    type CompletenessAuditTrail: CompletenessAuditTrail<P>;
+    type CompletenessAuditTrail: CompletenessAuditTrail<H>;
     /// The audit trail attesting the certification provenance. Links a CompletenessCertificate to its ordered sequence of CompletenessWitness records.
     fn audit_trail(&self) -> &Self::CompletenessAuditTrail;
 }
 
 /// An ordered collection of CompletenessWitness records belonging to a CompletenessCertificate. Provides full provenance of the certification process: every constraint applied, every site closed, in sequence.
-pub trait CompletenessAuditTrail<P: Primitives> {
+pub trait CompletenessAuditTrail<H: HostTypes> {
     /// Total number of witness steps in this audit trail.
-    fn witness_count(&self) -> P::NonNegativeInteger;
+    fn witness_count(&self) -> u64;
 }
 
 /// A certificate attesting that a state:GroundedContext has reached full saturation (σ = 1, freeRank = 0, S = 0, T_ctx = 0) per SC_4. The session-layer dual of CompletenessCertificate.
-pub trait GroundingCertificate<P: Primitives>: Certificate<P> {
+pub trait GroundingCertificate<H: HostTypes>: Certificate<H> {
     /// Associated type for `GroundedContext`.
-    type GroundedContext: crate::user::state::GroundedContext<P>;
+    type GroundedContext: crate::user::state::GroundedContext<H>;
     /// The GroundedContext whose full saturation this certificate attests. Uses IRI string (cert cannot import state).
     fn certified_grounding(&self) -> &Self::GroundedContext;
     /// Associated type for `GroundingWitness`.
-    type GroundingWitness: crate::user::state::GroundingWitness<P>;
+    type GroundingWitness: crate::user::state::GroundingWitness<H>;
     /// The GroundingWitness providing step-by-step evidence of the saturation process.
     fn grounding_witness(&self) -> &Self::GroundingWitness;
 }
 
 /// A certificate attesting that a trace:GeodesicTrace satisfies both GD_1 conditions: AR_1-ordered and DC_10-selected. Transforms ComputationTrace from descriptive to normative.
-pub trait GeodesicCertificate<P: Primitives>: Certificate<P> {
+pub trait GeodesicCertificate<H: HostTypes>: Certificate<H> {
     /// Associated type for `GeodesicTrace`.
-    type GeodesicTrace: crate::bridge::trace::GeodesicTrace<P>;
+    type GeodesicTrace: crate::bridge::trace::GeodesicTrace<H>;
     /// The GeodesicTrace whose geodesic status this certificate attests. Uses IRI string (cert cannot import trace).
     fn certified_geodesic(&self) -> &Self::GeodesicTrace;
     /// The computation trace that this GeodesicCertificate covers. Redundant with certifiedGeodesic but expresses the inverse direction for queryability.
     fn geodesic_trace(&self) -> &Self::GeodesicTrace;
     /// Associated type for `GeodesicEvidenceBundle`.
-    type GeodesicEvidenceBundle: GeodesicEvidenceBundle<P>;
+    type GeodesicEvidenceBundle: GeodesicEvidenceBundle<H>;
     /// The GeodesicEvidenceBundle attesting to the decomposed sub-predicates (isAR1Ordered, isDC10Selected) of this GeodesicCertificate's geodesic claim.
     fn evidence_bundle(&self) -> &Self::GeodesicEvidenceBundle;
 }
 
 /// A certificate attesting that a trace:MeasurementEvent respected the von Neumann–Landauer bridge (QM_1): preCollapseEntropy = postCollapseLandauerCost at β* = ln 2.
-pub trait MeasurementCertificate<P: Primitives>: Certificate<P> {
+pub trait MeasurementCertificate<H: HostTypes>: Certificate<H> {
     /// Associated type for `MeasurementEvent`.
-    type MeasurementEvent: crate::bridge::trace::MeasurementEvent<P>;
+    type MeasurementEvent: crate::bridge::trace::MeasurementEvent<H>;
     /// The MeasurementEvent whose QM_1 compliance this certificate attests. Uses IRI string (cert cannot import trace).
     fn certified_measurement(&self) -> &Self::MeasurementEvent;
     /// The von Neumann entropy S_vN of the pre-measurement SuperposedSiteState, recorded by this certificate.
-    fn von_neumann_entropy(&self) -> P::Decimal;
+    fn von_neumann_entropy(&self) -> H::Decimal;
     /// The Landauer cost incurred by the projective collapse, recorded by this certificate. Equals vonNeumannEntropy at β* = ln 2 per QM_1.
-    fn landauer_cost(&self) -> P::Decimal;
+    fn landauer_cost(&self) -> H::Decimal;
 }
 
 /// A structured evidence bundle attesting that each sub-predicate of the geodesic condition (GD_6) holds independently: isAR1Ordered and isDC10Selected. Linked from GeodesicCertificate via evidenceBundle.
-pub trait GeodesicEvidenceBundle<P: Primitives> {
+pub trait GeodesicEvidenceBundle<H: HostTypes> {
     /// True iff the linked GeodesicTrace is ordered by the AR_1 canonical rewriting rule (smallest lexicographic representative first).
-    fn is_ar1_ordered(&self) -> P::Boolean;
+    fn is_ar1_ordered(&self) -> bool;
     /// True iff each constraint in the trace was selected by the DC_10 Jacobian oracle at the step where it was applied.
-    fn is_dc10_selected(&self) -> P::Boolean;
+    fn is_dc10_selected(&self) -> bool;
 }
 
 /// A certificate attesting that a MeasurementEvent outcome probability matches the Born rule: P(outcome k) = |α_k|² (QM_5). Linked from MeasurementCertificate to provide probability distribution verification.
-pub trait BornRuleVerification<P: Primitives>: Certificate<P> {
+pub trait BornRuleVerification<H: HostTypes>: Certificate<H> {
     /// Whether this BornRuleVerification certificate confirms that all outcome probabilities match the Born rule (QM_5): P(k) = |α_k|² for every site k.
-    fn born_rule_verified(&self) -> P::Boolean;
+    fn born_rule_verified(&self) -> bool;
 }
 
 /// A kernel-issued certificate attesting that a LiftChain from liftSourceLevel to liftTargetLevel is complete.
-pub trait LiftChainCertificate<P: Primitives>: Certificate<P> {
+pub trait LiftChainCertificate<H: HostTypes>: Certificate<H> {
     /// Associated type for `LiftChain`.
-    type LiftChain: crate::user::type_::LiftChain<P>;
+    type LiftChain: crate::user::type_::LiftChain<H>;
     /// The LiftChain this certificate attests to.
     fn certified_chain(&self) -> &Self::LiftChain;
     /// Associated type for `ChainAuditTrail`.
-    type ChainAuditTrail: ChainAuditTrail<P>;
+    type ChainAuditTrail: ChainAuditTrail<H>;
     /// The ordered per-step evidence for this certificate.
     fn chain_audit_trail(&self) -> &Self::ChainAuditTrail;
     /// The quantum level Q_k at which the certificate was issued.
@@ -128,38 +128,44 @@ pub trait LiftChainCertificate<P: Primitives>: Certificate<P> {
 }
 
 /// An ordered collection of per-step evidence records for a LiftChainCertificate.
-pub trait ChainAuditTrail<P: Primitives> {
+pub trait ChainAuditTrail<H: HostTypes> {
     /// Number of lift steps in this ChainAuditTrail. Must equal chainLength of the certified LiftChain. Distinct from witnessCount (domain-locked to CompletenessAuditTrail).
-    fn chain_step_count(&self) -> P::NonNegativeInteger;
+    fn chain_step_count(&self) -> u64;
 }
 
 /// A ComputationCertificate verdict primitive that decides carrier non-emptiness on a type:ConstrainedType. Distinct from cert:CompletenessCertificate, which decides freeRank = 0 on the minimal basis. For ConstrainedType instances admitting multiple satisfying value tuples, InhabitanceCertificate.verified may be true while CompletenessCertificate.verified is false.
-pub trait InhabitanceCertificate<P: Primitives>:
-    crate::bridge::proof::ComputationCertificate<P> + Certificate<P>
+pub trait InhabitanceCertificate<H: HostTypes>:
+    crate::bridge::proof::ComputationCertificate<H> + Certificate<H>
 {
     /// Associated type for `ValueTuple`.
-    type ValueTuple: crate::kernel::schema::ValueTuple<P>;
+    type ValueTuple: crate::kernel::schema::ValueTuple<H>;
     /// A specific value tuple in the carrier when verified is true; absent otherwise. The witness form for cert:InhabitanceCertificate.
     fn witness(&self) -> &[Self::ValueTuple];
     /// Associated type for `InhabitanceSearchTrace`.
-    type InhabitanceSearchTrace: crate::bridge::trace::InhabitanceSearchTrace<P>;
+    type InhabitanceSearchTrace: crate::bridge::trace::InhabitanceSearchTrace<H>;
     /// The audit trail of the inhabitance search that produced this certificate.
     fn search_trace(&self) -> &Self::InhabitanceSearchTrace;
     /// Associated type for `ConstrainedType`.
-    type ConstrainedType: crate::user::type_::ConstrainedType<P>;
+    type ConstrainedType: crate::user::type_::ConstrainedType<H>;
     /// The type:ConstrainedType this InhabitanceCertificate is issued for.
     fn grounded(&self) -> &Self::ConstrainedType;
 }
 
-/// A certificate attesting the cost-optimal Toom-Cook splitting factor R for a Datum<L> × Datum<L> multiplication at a given call-site context (stack budget, const-eval regime). Carries the chosen splitting factor, the recursive sub-multiplication count, and the accumulated Landauer cost in nats (priced per op:OA_5). Produced by resolver:MultiplicationResolver.
-pub trait MultiplicationCertificate<P: Primitives>: Certificate<P> {
+/// A certificate attesting the cost-optimal Toom-Cook splitting factor R for a Datum\<L\> × Datum\<L\> multiplication at a given call-site context (stack budget, const-eval regime). Carries the chosen splitting factor, the recursive sub-multiplication count, and the accumulated Landauer cost in nats (priced per op:OA_5). Produced by resolver:MultiplicationResolver.
+pub trait MultiplicationCertificate<H: HostTypes>: Certificate<H> {
     /// The Toom-Cook splitting factor R chosen by the multiplication resolver. R = 1 is schoolbook (the const-eval bottom-out); R = 2 is Karatsuba; R >= 3 is Toom-k. The resolver picks the cost-optimal R subject to the call-site's stack budget and const-eval depth constraints.
-    fn splitting_factor(&self) -> P::PositiveInteger;
-    /// The number of recursive sub-multiplications the chosen splitting factor induces for one Datum<L> × Datum<L> multiplication at this call site. For splitting factor R, the count is (2R - 1) for R > 1, and 1 for R = 1.
-    fn sub_multiplication_count(&self) -> P::NonNegativeInteger;
+    fn splitting_factor(&self) -> u64;
+    /// The number of recursive sub-multiplications the chosen splitting factor induces for one Datum\<L\> × Datum\<L\> multiplication at this call site. For splitting factor R, the count is (2R - 1) for R > 1, and 1 for R = 1.
+    fn sub_multiplication_count(&self) -> u64;
     /// The accumulated Landauer cost of the certified multiplication in nats, priced per op:OA_5 (each irreversible bit erasure costs ln 2 nats in the Archimedean completion). Unit: observable:Nats. The value is an xsd:decimal.
-    fn landauer_cost_nats(&self) -> P::Decimal;
+    fn landauer_cost_nats(&self) -> H::Decimal;
 }
 
 /// A certificate attesting the partition component classification of a Datum, assigning it to one of Irreducible, Reducible, Units, or Exterior via the partition:PartitionComponent enumeration. Produced by the bridge partition walk during grounding.
-pub trait PartitionCertificate<P: Primitives>: Certificate<P> {}
+pub trait PartitionCertificate<H: HostTypes>: Certificate<H> {}
+
+/// A certificate attesting that a resolver's verdict path produced a generic impossibility witness — the input failed the resolver's admissibility precondition or decision procedure in a way not covered by a more-specific witness. Returned by every Phase D resolver on failure.
+pub trait GenericImpossibilityCertificate<H: HostTypes>: Certificate<H> {}
+
+/// A certificate attesting that the inhabitance decider concluded the input is unsatisfiable — there is no value in the carrier that satisfies the declared constraint conjunction. Returned by `resolver::inhabitance::certify` on failure.
+pub trait InhabitanceImpossibilityCertificate<H: HostTypes>: Certificate<H> {}

@@ -8,120 +8,120 @@ use crate::enums::GeometricCharacter;
 use crate::enums::ValidityScopeKind;
 use crate::enums::VerificationDomain;
 use crate::enums::WittLevel;
-use crate::Primitives;
+use crate::HostTypes;
 
 /// An operation on the ring Z/(2^n)Z. The root class for all UOR kernel operations.
-pub trait Operation<P: Primitives> {
+pub trait Operation<H: HostTypes> {
     /// The number of arguments this operation takes. 1 for unary operations, 2 for binary operations.
-    fn arity(&self) -> P::NonNegativeInteger;
+    fn arity(&self) -> u64;
     /// The geometric role of this operation in the UOR ring and hypercube geometry. Functional: each operation has exactly one geometric character.
     fn has_geometric_character(&self) -> GeometricCharacter;
     /// Associated type for `Operation`.
-    type OperationTarget: Operation<P>;
+    type OperationTarget: Operation<H>;
     /// The inverse operation: the operation inv_op such that op(x, inv_op(x)) = e for all x, where e is the identity.
     fn inverse(&self) -> &Self::OperationTarget;
     /// Ordered list of operations this operation is composed from. Uses rdf:List to preserve application order (first element applied innermost). E.g., succ = neg ∘ bnot is encoded as \[op:neg, op:bnot\] meaning neg applied to the result of bnot.
-    fn composed_of(&self) -> &P::String;
+    fn composed_of(&self) -> &H::HostString;
     /// True iff this Operation participates in the Z/(2^n)Z ring-arithmetic vocabulary. Annotation drives the Lean RingOp class generation in UOR/Enforcement.lean.
-    fn is_ring_op(&self) -> P::Boolean;
+    fn is_ring_op(&self) -> bool;
 }
 
 /// A unary operation on the ring: takes one datum and produces one datum.
-pub trait UnaryOp<P: Primitives>: Operation<P> {}
+pub trait UnaryOp<H: HostTypes>: Operation<H> {}
 
 /// A binary operation on the ring: takes two datums and produces one datum.
-pub trait BinaryOp<P: Primitives>: Operation<P> {
+pub trait BinaryOp<H: HostTypes>: Operation<H> {
     /// Whether this binary operation satisfies op(x,y) = op(y,x) for all x, y in R_n.
-    fn commutative(&self) -> P::Boolean;
+    fn commutative(&self) -> bool;
     /// Whether this binary operation satisfies op(op(x,y),z) = op(x,op(y,z)) for all x, y, z in R_n.
-    fn associative(&self) -> P::Boolean;
+    fn associative(&self) -> bool;
     /// The identity element of this binary operation: the value e such that op(x, e) = op(e, x) = x for all x in R_n.
-    fn identity(&self) -> P::Integer;
+    fn identity(&self) -> i64;
 }
 
 /// A unary operation f such that f(f(x)) = x for all x in R_n. The two UOR involutions are neg (ring reflection) and bnot (hypercube reflection).
-pub trait Involution<P: Primitives>: UnaryOp<P> {}
+pub trait Involution<H: HostTypes>: UnaryOp<H> {}
 
 /// An algebraic identity: a statement that two expressions are equal for all inputs. The critical identity is neg(bnot(x)) = succ(x) for all x in R_n.
-pub trait Identity<P: Primitives> {
+pub trait Identity<H: HostTypes> {
     /// Associated type for `TermExpression`.
-    type TermExpression: crate::kernel::schema::TermExpression<P>;
+    type TermExpression: crate::kernel::schema::TermExpression<H>;
     /// The left-hand side of an algebraic identity as a typed AST node (schema:TermExpression).
     fn lhs(&self) -> &Self::TermExpression;
     /// The right-hand side of an algebraic identity as a typed AST node (schema:TermExpression).
     fn rhs(&self) -> &Self::TermExpression;
     /// Associated type for `ForAllDeclaration`.
-    type ForAllDeclaration: crate::kernel::schema::ForAllDeclaration<P>;
+    type ForAllDeclaration: crate::kernel::schema::ForAllDeclaration<H>;
     /// The quantifier scope: a typed declaration of the variable(s) over which this identity holds.
     fn for_all(&self) -> &Self::ForAllDeclaration;
     /// The mathematical discipline(s) through which this identity is established. Range is op:VerificationDomain. Non-functional: composite identities (e.g. IT_7a–IT_7d) reference multiple domain individuals.
     fn verification_domain(&self) -> &[VerificationDomain];
     /// Associated type for `WittLevelBinding`.
-    type WittLevelBinding: WittLevelBinding<P>;
+    type WittLevelBinding: WittLevelBinding<H>;
     /// Links an Identity individual to a WittLevelBinding attesting verification at a specific quantum level. Non-functional: one binding per (Identity, WittLevel) pair.
     fn verified_at_level(&self) -> &[Self::WittLevelBinding];
     /// True iff this identity holds for all n ≥ 1 (proved symbolically by induction on the ring axioms, not just exhaustively at Q0). Identities that reference 8-bit-specific constants receive universallyValid = false.
-    fn universally_valid(&self) -> P::Boolean;
+    fn universally_valid(&self) -> bool;
     /// The structured validity scope of this identity, replacing the binary universallyValid flag. Required on all new Identity individuals.
     fn validity_kind(&self) -> ValidityScopeKind;
     /// Minimum quantum level index k for ParametricLower and ParametricRange scopes.
-    fn valid_kmin(&self) -> P::NonNegativeInteger;
+    fn valid_kmin(&self) -> u64;
     /// Maximum quantum level index k (inclusive) for ParametricRange scope.
-    fn valid_kmax(&self) -> P::NonNegativeInteger;
+    fn valid_kmax(&self) -> u64;
 }
 
 /// A group: a set with an associative binary operation, an identity element, and inverses for every element.
-pub trait Group<P: Primitives> {
+pub trait Group<H: HostTypes> {
     /// Associated type for `Operation`.
-    type Operation: Operation<P>;
+    type Operation: Operation<H>;
     /// An operation that generates this group. The dihedral group D_{2^n} is generated by op:neg and op:bnot.
     fn generated_by(&self) -> &[Self::Operation];
     /// The number of elements in the group. For D_{2^n}, the order is 2^(n+1).
-    fn order(&self) -> P::PositiveInteger;
+    fn order(&self) -> u64;
 }
 
 /// The dihedral group D_{2^n} of order 2^(n+1), generated by the ring reflection (neg) and the hypercube reflection (bnot). This group governs the symmetry of the UOR type space.
-pub trait DihedralGroup<P: Primitives>: Group<P> {}
+pub trait DihedralGroup<H: HostTypes>: Group<H> {}
 
 /// A record linking an op:Identity individual to a specific quantum level at which it has been verified. Non-functional: one WittLevelBinding per (Identity, WittLevel) pair verified.
-pub trait WittLevelBinding<P: Primitives> {
+pub trait WittLevelBinding<H: HostTypes> {
     /// The quantum level at which this WittLevelBinding was verified.
     fn binding_level(&self) -> WittLevel;
 }
 
 /// A verification domain at the intersection of quantum superposition and classical thermodynamics. Identities in this domain require both SuperpositionDomain and Thermodynamic reasoning simultaneously.
-pub trait QuantumThermodynamicDomain<P: Primitives> {}
+pub trait QuantumThermodynamicDomain<H: HostTypes> {}
 
 /// An operation formed by composing ring operations, witnessed by op:composedOf and morphism/CompositionLaw.
-pub trait ComposedOperation<P: Primitives>:
-    Operation<P> + crate::user::morphism::Composition<P>
+pub trait ComposedOperation<H: HostTypes>:
+    Operation<H> + crate::user::morphism::Composition<H>
 {
     /// Associated type for `Operation`.
-    type Operation: Operation<P>;
+    type Operation: Operation<H>;
     /// References a constituent operation of a ComposedOperation. Non-functional: a composed operation may reference multiple constituent operations.
     fn composed_of_ops(&self) -> &[Self::Operation];
     /// Associated type for `TypeDefinition`.
-    type TypeDefinition: crate::user::type_::TypeDefinition<P>;
+    type TypeDefinition: crate::user::type_::TypeDefinition<H>;
     /// The domain type of a composed operation.
     fn operator_domain_type(&self) -> &Self::TypeDefinition;
     /// The range type of a composed operation.
     fn operator_range_type(&self) -> &Self::TypeDefinition;
     /// The computational complexity class of a composed operation.
-    fn operator_complexity(&self) -> &P::String;
+    fn operator_complexity(&self) -> &H::HostString;
     /// Whether this composed operation is idempotent.
-    fn operator_idempotent(&self) -> P::Boolean;
+    fn operator_idempotent(&self) -> bool;
     /// The number of constituent operations in a composed operation.
-    fn composed_operator_count(&self) -> P::NonNegativeInteger;
+    fn composed_operator_count(&self) -> u64;
     /// Whether applying this operation twice yields the identity.
-    fn is_involutory(&self) -> P::Boolean;
+    fn is_involutory(&self) -> bool;
     /// Associated type for `TermExpression`.
-    type TermExpression: crate::kernel::schema::TermExpression<P>;
+    type TermExpression: crate::kernel::schema::TermExpression<H>;
     /// Description of the convergence guarantee for this operation.
     fn convergence_guarantee(&self) -> &Self::TermExpression;
 }
 
 /// δ: Query × ResolverRegistry → Resolver. Non-commutative, non-associative, arity 2.
-pub trait DispatchOperation<P: Primitives>: ComposedOperation<P> {
+pub trait DispatchOperation<H: HostTypes>: ComposedOperation<H> {
     /// The source selector for a dispatch operation.
     fn dispatch_source(&self) -> &Self::Operation;
     /// The target resolver for a dispatch operation.
@@ -129,7 +129,7 @@ pub trait DispatchOperation<P: Primitives>: ComposedOperation<P> {
 }
 
 /// ι = P ∘ Π ∘ G (the φ-pipeline composed). Non-commutative, non-associative, arity 2.
-pub trait InferenceOperation<P: Primitives>: ComposedOperation<P> {
+pub trait InferenceOperation<H: HostTypes>: ComposedOperation<H> {
     /// The source data for an inference operation.
     fn inference_source(&self) -> &Self::Operation;
     /// The target type for an inference operation.
@@ -139,7 +139,7 @@ pub trait InferenceOperation<P: Primitives>: ComposedOperation<P> {
 }
 
 /// α: Binding × Context → Context. Non-commutative, associative at convergence (SR_10), arity 2.
-pub trait AccumulationOperation<P: Primitives>: ComposedOperation<P> {
+pub trait AccumulationOperation<H: HostTypes>: ComposedOperation<H> {
     /// The base value for an accumulation operation.
     fn accumulation_base(&self) -> &Self::TermExpression;
     /// The binding accumulator for an accumulation operation.
@@ -147,17 +147,17 @@ pub trait AccumulationOperation<P: Primitives>: ComposedOperation<P> {
 }
 
 /// λ: SharedContext × ℕ → ContextLease^k. Non-commutative, non-associative, arity 2.
-pub trait LeasePartitionOperation<P: Primitives>: ComposedOperation<P> {
+pub trait LeasePartitionOperation<H: HostTypes>: ComposedOperation<H> {
     /// The source context for a lease partition operation.
     fn lease_source(&self) -> &Self::Operation;
     /// The partition factor for a lease partition operation.
     fn lease_factor(&self) -> &Self::Operation;
     /// The number of partitions in a lease partition operation.
-    fn lease_partition_count(&self) -> P::NonNegativeInteger;
+    fn lease_partition_count(&self) -> u64;
 }
 
 /// κ: Session × Session → Session. Commutative (disjoint leases), associative (SR_8), arity 2.
-pub trait SessionCompositionOperation<P: Primitives>: ComposedOperation<P> {
+pub trait SessionCompositionOperation<H: HostTypes>: ComposedOperation<H> {
     /// The left session in a session composition operation.
     fn composition_left_session(&self) -> &Self::Operation;
     /// The right session in a session composition operation.
@@ -165,7 +165,7 @@ pub trait SessionCompositionOperation<P: Primitives>: ComposedOperation<P> {
 }
 
 /// A structured group presentation: generators and relations as typed data rather than prose strings.
-pub trait GroupPresentation<P: Primitives> {}
+pub trait GroupPresentation<H: HostTypes> {}
 
 /// Established by exhaustive traversal of R_n. Valid for all identities where the ring is finite.
 pub mod enumerative {

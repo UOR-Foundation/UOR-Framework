@@ -1,0 +1,193 @@
+//! Behavioral contract for pipeline driver content-determinism and
+//! input-dependence.
+//!
+//! Target §1.7 + §5: every driver (`run`, `run_const`, `run_parallel`,
+//! `run_stream`, `run_interactive`) is content-deterministic. Two calls on
+//! equal inputs must produce witnesses whose every observable is equal;
+//! two calls on unequal inputs must differ on at least one observable
+//! (usually `content_fingerprint` + `unit_address`).
+//!
+//! A regression where the pipeline accidentally introduces non-determinism
+//! (wall-clock time, RNG, uninitialized memory) would break verify-trace
+//! round-trips. This test pins the contract.
+
+use uor_foundation::enforcement::{
+    CompileTime, CompileUnit, CompileUnitBuilder, ConstrainedTypeInput, Grounded,
+    IntegerGroundingMap, Term, Validated,
+};
+use uor_foundation::pipeline::{
+    run, run_const, run_parallel, run_stream, validate_compile_unit_const, ParallelDeclaration,
+    StreamDeclaration, StreamDriver,
+};
+use uor_foundation::{VerificationDomain, WittLevel};
+use uor_foundation_test_helpers::{validated_runtime, Fnv1aHasher16};
+
+static SENTINEL_TERMS: &[Term] = &[Term::Literal {
+    value: 1,
+    level: WittLevel::W8,
+}];
+static SENTINEL_DOMAINS: &[VerificationDomain] = &[VerificationDomain::Enumerative];
+
+fn build(level: WittLevel, budget: u64) -> Validated<CompileUnit, CompileTime> {
+    let builder = CompileUnitBuilder::new()
+        .root_term(SENTINEL_TERMS)
+        .witt_level_ceiling(level)
+        .thermodynamic_budget(budget)
+        .target_domains(SENTINEL_DOMAINS)
+        .result_type::<ConstrainedTypeInput>();
+    validate_compile_unit_const(&builder).expect("fixture")
+}
+
+// ─── pipeline::run determinism ──────────────────────────────────────────
+
+#[test]
+fn pipeline_run_equal_inputs_produce_equal_grounded() {
+    let a: Grounded<ConstrainedTypeInput> =
+        run::<ConstrainedTypeInput, _, Fnv1aHasher16>(build(WittLevel::W32, 100)).expect("a");
+    let b: Grounded<ConstrainedTypeInput> =
+        run::<ConstrainedTypeInput, _, Fnv1aHasher16>(build(WittLevel::W32, 100)).expect("b");
+    assert_eq!(a.witt_level_bits(), b.witt_level_bits());
+    assert_eq!(a.unit_address(), b.unit_address());
+    assert_eq!(a.content_fingerprint(), b.content_fingerprint());
+    assert_eq!(a.uor_time(), b.uor_time());
+}
+
+#[test]
+fn pipeline_run_differing_budgets_differ_on_fingerprint() {
+    let a: Grounded<ConstrainedTypeInput> =
+        run::<ConstrainedTypeInput, _, Fnv1aHasher16>(build(WittLevel::W32, 100)).expect("a");
+    let b: Grounded<ConstrainedTypeInput> =
+        run::<ConstrainedTypeInput, _, Fnv1aHasher16>(build(WittLevel::W32, 200)).expect("b");
+    assert_ne!(
+        a.content_fingerprint(),
+        b.content_fingerprint(),
+        "different budgets must produce different content_fingerprints"
+    );
+    assert_ne!(
+        a.unit_address(),
+        b.unit_address(),
+        "different budgets must produce different unit_addresses"
+    );
+}
+
+#[test]
+fn pipeline_run_differing_witt_levels_differ_on_witt_bits() {
+    let a: Grounded<ConstrainedTypeInput> =
+        run::<ConstrainedTypeInput, _, Fnv1aHasher16>(build(WittLevel::W8, 100)).expect("a");
+    let b: Grounded<ConstrainedTypeInput> =
+        run::<ConstrainedTypeInput, _, Fnv1aHasher16>(build(WittLevel::W32, 100)).expect("b");
+    assert_ne!(a.witt_level_bits(), b.witt_level_bits());
+    assert_ne!(a.content_fingerprint(), b.content_fingerprint());
+}
+
+// ─── pipeline::run_const determinism ────────────────────────────────────
+
+#[test]
+fn pipeline_run_const_equal_inputs_produce_equal_grounded() {
+    let unit = build(WittLevel::W16, 77);
+    let a: Grounded<ConstrainedTypeInput> =
+        run_const::<ConstrainedTypeInput, IntegerGroundingMap, Fnv1aHasher16>(&unit).expect("a");
+    let b: Grounded<ConstrainedTypeInput> =
+        run_const::<ConstrainedTypeInput, IntegerGroundingMap, Fnv1aHasher16>(&unit).expect("b");
+    assert_eq!(a.content_fingerprint(), b.content_fingerprint());
+    assert_eq!(a.uor_time(), b.uor_time());
+    assert_eq!(a.triad(), b.triad());
+}
+
+#[test]
+fn pipeline_run_and_run_const_agree_for_same_unit() {
+    // run and run_const should produce identical witnesses for compile-time-
+    // validated inputs (modulo the `Grounding<Map>` marker which is
+    // type-level only). The fingerprint is substrate-driven by the Hasher
+    // alone, so they match.
+    let unit = build(WittLevel::W16, 55);
+    // run takes Validated<_, P> by value; clone the validated wrapper via
+    // re-building to avoid Phase mismatch.
+    let unit_for_run = build(WittLevel::W16, 55);
+    let a: Grounded<ConstrainedTypeInput> =
+        run_const::<ConstrainedTypeInput, IntegerGroundingMap, Fnv1aHasher16>(&unit)
+            .expect("const");
+    let b: Grounded<ConstrainedTypeInput> =
+        run::<ConstrainedTypeInput, _, Fnv1aHasher16>(unit_for_run).expect("runtime");
+    assert_eq!(
+        a.content_fingerprint(),
+        b.content_fingerprint(),
+        "run_const and run must produce the same fingerprint for equal CompileUnits"
+    );
+}
+
+// ─── pipeline::run_parallel input-dependence ────────────────────────────
+
+#[test]
+fn pipeline_run_parallel_different_site_counts_produce_different_witnesses() {
+    let unit_3: Validated<ParallelDeclaration> =
+        validated_runtime(ParallelDeclaration::new::<ConstrainedTypeInput>(3));
+    let unit_7: Validated<ParallelDeclaration> =
+        validated_runtime(ParallelDeclaration::new::<ConstrainedTypeInput>(7));
+    let g_3: Grounded<ConstrainedTypeInput> =
+        run_parallel::<ConstrainedTypeInput, _, Fnv1aHasher16>(unit_3).expect("3");
+    let g_7: Grounded<ConstrainedTypeInput> =
+        run_parallel::<ConstrainedTypeInput, _, Fnv1aHasher16>(unit_7).expect("7");
+    assert_ne!(
+        g_3.unit_address(),
+        g_7.unit_address(),
+        "different site counts must produce different unit_addresses"
+    );
+}
+
+#[test]
+fn pipeline_run_parallel_zero_site_count_is_rejected() {
+    // Workstream G closure (target §5): `run_parallel` returns `Err` when
+    // site_count == 0 (vacuous parallel composition) or when the declared
+    // result_type_iri mismatches T::IRI (shape mismatch).
+    let zero_site: Validated<ParallelDeclaration> =
+        validated_runtime(ParallelDeclaration::new::<ConstrainedTypeInput>(0));
+    let result = run_parallel::<ConstrainedTypeInput, _, Fnv1aHasher16>(zero_site);
+    assert!(
+        result.is_err(),
+        "run_parallel must reject site_count == 0 as inadmissible"
+    );
+}
+
+#[test]
+fn pipeline_run_parallel_equal_site_counts_produce_equal_witnesses() {
+    let u_a: Validated<ParallelDeclaration> =
+        validated_runtime(ParallelDeclaration::new::<ConstrainedTypeInput>(5));
+    let u_b: Validated<ParallelDeclaration> =
+        validated_runtime(ParallelDeclaration::new::<ConstrainedTypeInput>(5));
+    let g_a = run_parallel::<ConstrainedTypeInput, _, Fnv1aHasher16>(u_a).expect("a");
+    let g_b = run_parallel::<ConstrainedTypeInput, _, Fnv1aHasher16>(u_b).expect("b");
+    assert_eq!(g_a.unit_address(), g_b.unit_address());
+    assert_eq!(g_a.content_fingerprint(), g_b.content_fingerprint());
+}
+
+// ─── StreamDriver step-distinctness contract ────────────────────────────
+
+#[test]
+fn stream_driver_successive_steps_have_distinct_unit_addresses() {
+    let unit: Validated<StreamDeclaration> =
+        validated_runtime(StreamDeclaration::new::<ConstrainedTypeInput>(3));
+    let mut driver: StreamDriver<ConstrainedTypeInput, _, Fnv1aHasher16> = run_stream(unit);
+    // Pull three steps; assert successive unit_addresses differ.
+    let first = driver.next().expect("step 1").expect("ok");
+    let second = driver.next().expect("step 2").expect("ok");
+    assert_ne!(
+        first.unit_address(),
+        second.unit_address(),
+        "successive StreamDriver steps must produce distinct unit_addresses"
+    );
+}
+
+#[test]
+fn stream_driver_terminates_after_productivity_bound_steps() {
+    // Productivity bound = 2 → step 1 Some, step 2 Some, step 3 None.
+    let unit: Validated<StreamDeclaration> =
+        validated_runtime(StreamDeclaration::new::<ConstrainedTypeInput>(2));
+    let mut driver: StreamDriver<ConstrainedTypeInput, _, Fnv1aHasher16> = run_stream(unit);
+    assert!(driver.next().is_some(), "step 1");
+    assert!(driver.next().is_some(), "step 2");
+    assert!(
+        driver.next().is_none(),
+        "step 3 must be None (productivity bound reached)"
+    );
+}

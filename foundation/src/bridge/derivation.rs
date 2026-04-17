@@ -5,37 +5,37 @@
 //! Space: Bridge
 
 use crate::enums::RewriteRule;
-use crate::Primitives;
+use crate::HostTypes;
 
 /// A complete term rewriting witness: the full sequence of rewrite steps transforming an original term into its canonical form.
-pub trait Derivation<P: Primitives> {
+pub trait Derivation<H: HostTypes> {
     /// Associated type for `Term`.
-    type Term: crate::kernel::schema::Term<P>;
+    type Term: crate::kernel::schema::Term<H>;
     /// The term at the start of the derivation, before any rewriting.
     fn original_term(&self) -> &Self::Term;
     /// The canonical form produced at the end of the derivation.
     fn canonical_term(&self) -> &Self::Term;
     /// Associated type for `Datum`.
-    type Datum: crate::kernel::schema::Datum<P>;
+    type Datum: crate::kernel::schema::Datum<H>;
     /// The datum value obtained by evaluating the canonical term.
     fn result(&self) -> &Self::Datum;
     /// Associated type for `RewriteStep`.
-    type RewriteStep: RewriteStep<P>;
+    type RewriteStep: RewriteStep<H>;
     /// A rewrite step in this derivation.
     fn step(&self) -> &[Self::RewriteStep];
     /// Associated type for `TermMetrics`.
-    type TermMetrics: TermMetrics<P>;
+    type TermMetrics: TermMetrics<H>;
     /// Metrics for the canonical term produced by this derivation.
     fn term_metrics(&self) -> &Self::TermMetrics;
 }
 
 /// An abstract step in a derivation. Concrete subclasses are RewriteStep (term-level rewriting) and RefinementStep (type-level refinement).
-pub trait DerivationStep<P: Primitives> {}
+pub trait DerivationStep<H: HostTypes> {}
 
 /// A single rewrite step in a derivation: the application of one rewrite rule to transform a term.
-pub trait RewriteStep<P: Primitives>: DerivationStep<P> {
+pub trait RewriteStep<H: HostTypes>: DerivationStep<H> {
     /// Associated type for `Term`.
-    type Term: crate::kernel::schema::Term<P>;
+    type Term: crate::kernel::schema::Term<H>;
     /// The term before this rewrite step.
     fn from(&self) -> &Self::Term;
     /// The term after this rewrite step.
@@ -45,39 +45,39 @@ pub trait RewriteStep<P: Primitives>: DerivationStep<P> {
 }
 
 /// A type-level refinement step: the application of a constraint to narrow a type, pinning additional site coordinates. Complements RewriteStep (term-level) in the derivation hierarchy.
-pub trait RefinementStep<P: Primitives>: DerivationStep<P> {
+pub trait RefinementStep<H: HostTypes>: DerivationStep<H> {
     /// Associated type for `TypeDefinition`.
-    type TypeDefinition: crate::user::type_::TypeDefinition<P>;
+    type TypeDefinition: crate::user::type_::TypeDefinition<H>;
     /// The type before this refinement step was applied.
     fn previous_type(&self) -> &Self::TypeDefinition;
     /// Associated type for `Constraint`.
-    type Constraint: crate::user::type_::Constraint<P>;
+    type Constraint: crate::user::type_::Constraint<H>;
     /// The constraint that was applied in this refinement step.
     fn applied_constraint(&self) -> &Self::Constraint;
     /// The type after this refinement step was applied.
     fn refined_type(&self) -> &Self::TypeDefinition;
     /// The number of site coordinates pinned by this refinement step.
-    fn sites_closed(&self) -> P::NonNegativeInteger;
+    fn sites_closed(&self) -> u64;
 }
 
 /// Metrics describing the size and complexity of a term.
-pub trait TermMetrics<P: Primitives> {
+pub trait TermMetrics<H: HostTypes> {
     /// The total number of rewrite steps in this derivation.
-    fn step_count(&self) -> P::NonNegativeInteger;
+    fn step_count(&self) -> u64;
     /// The number of nodes in the canonical term's syntax tree.
-    fn term_size(&self) -> P::NonNegativeInteger;
+    fn term_size(&self) -> u64;
 }
 
 /// A single step in the construction of a SynthesizedType: one constraint added to the synthesis candidate and the resulting change in the constraint nerve's topological signature. Ordered by derivation:stepIndex. Analogous to derivation:RewriteStep in the forward pipeline.
-pub trait SynthesisStep<P: Primitives> {
+pub trait SynthesisStep<H: HostTypes> {
     /// Zero-based sequential index of this step within the synthesis derivation.
-    fn step_index(&self) -> P::NonNegativeInteger;
+    fn step_index(&self) -> u64;
     /// Associated type for `Constraint`.
-    type Constraint: crate::user::type_::Constraint<P>;
+    type Constraint: crate::user::type_::Constraint<H>;
     /// The constraint added in this synthesis step.
     fn added_constraint(&self) -> &Self::Constraint;
     /// Associated type for `SynthesisSignature`.
-    type SynthesisSignature: crate::bridge::observable::SynthesisSignature<P>;
+    type SynthesisSignature: crate::bridge::observable::SynthesisSignature<H>;
     /// The constraint nerve signature before this synthesis step.
     fn signature_before(&self) -> &Self::SynthesisSignature;
     /// The constraint nerve signature after this synthesis step.
@@ -85,47 +85,47 @@ pub trait SynthesisStep<P: Primitives> {
 }
 
 /// A persistent snapshot of a ConstraintSearchState at a specific SynthesisStep, allowing a TypeSynthesisResolver to resume exploration after interruption. Essential at Q1+ scale where exhaustive synthesis is computationally significant.
-pub trait SynthesisCheckpoint<P: Primitives> {
+pub trait SynthesisCheckpoint<H: HostTypes> {
     /// Associated type for `SynthesisStep`.
-    type SynthesisStep: SynthesisStep<P>;
+    type SynthesisStep: SynthesisStep<H>;
     /// The SynthesisStep at which this checkpoint was taken.
     fn checkpoint_step(&self) -> &Self::SynthesisStep;
     /// Associated type for `ConstraintSearchState`.
-    type ConstraintSearchState: crate::bridge::resolver::ConstraintSearchState<P>;
+    type ConstraintSearchState: crate::bridge::resolver::ConstraintSearchState<H>;
     /// The ConstraintSearchState snapshot captured by this checkpoint.
     fn checkpoint_state(&self) -> &Self::ConstraintSearchState;
 }
 
 /// A peer of derivation:SynthesisStep specialised to inhabitance search. Each step represents one navigation in the constraint nerve, either pinning a site to a value or confirming that a predicate evaluates true on the current partial assignment.
-pub trait InhabitanceStep<P: Primitives>: SynthesisStep<P> {
+pub trait InhabitanceStep<H: HostTypes>: SynthesisStep<H> {
     /// Associated type for `ConstraintSearchState`.
-    type ConstraintSearchState: crate::bridge::resolver::ConstraintSearchState<P>;
+    type ConstraintSearchState: crate::bridge::resolver::ConstraintSearchState<H>;
     /// The ConstraintSearchState before this InhabitanceStep was taken.
     fn prior_state(&self) -> &Self::ConstraintSearchState;
     /// The ConstraintSearchState after this InhabitanceStep was taken.
     fn successor_state(&self) -> &Self::ConstraintSearchState;
     /// Associated type for `DispatchRule`.
-    type DispatchRule: crate::kernel::predicate::DispatchRule<P>;
+    type DispatchRule: crate::kernel::predicate::DispatchRule<H>;
     /// The predicate:DispatchRule whose evaluation drove this InhabitanceStep.
     fn rule(&self) -> &Self::DispatchRule;
 }
 
 /// A peer of derivation:SynthesisCheckpoint specialised to inhabitance search. Marks an audit point where the resolver state can be restored if the search backtracks.
-pub trait InhabitanceCheckpoint<P: Primitives>: SynthesisCheckpoint<P> {
+pub trait InhabitanceCheckpoint<H: HostTypes>: SynthesisCheckpoint<H> {
     /// Ordinal index of this checkpoint within the InhabitanceSearchTrace's checkpoint sequence.
-    fn checkpoint_index(&self) -> P::Integer;
+    fn checkpoint_index(&self) -> i64;
 }
 
 /// Observes the derivation depth of a Datum, computed as the maximum nesting level of derivation:RewriteStep applications producing it. Used as the bound observable for the depthConstraintKind BoundConstraint.
-pub trait DerivationDepthObservable<P: Primitives>:
-    crate::bridge::observable::Observable<P>
+pub trait DerivationDepthObservable<H: HostTypes>:
+    crate::bridge::observable::Observable<H>
 {
 }
 
 /// An ordered sequence of derivation:RewriteStep events produced by replaying a Derivation. Used by uor-foundation-verify to re-derive a certificate from a content-addressed trace without running the deciders. The traceEventCount property records the trace length.
-pub trait DerivationTrace<P: Primitives> {
+pub trait DerivationTrace<H: HostTypes> {
     /// Number of RewriteStep events recorded in this DerivationTrace. Used by Derivation::replay() to size the fixed-capacity event arena without allocation.
-    fn trace_event_count(&self) -> P::NonNegativeInteger;
+    fn trace_event_count(&self) -> u64;
 }
 
 /// The rewrite rule applying the critical identity: neg(bnot(x)) → succ(x). Grounded in op:criticalIdentity.

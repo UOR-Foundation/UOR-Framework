@@ -4,36 +4,36 @@
 //!
 //! Space: Kernel
 
-use crate::Primitives;
+use crate::HostTypes;
 
 /// A ∥ B: two computations with provably disjoint site targets. Execution order does not affect the result.
-pub trait ParallelProduct<P: Primitives> {
+pub trait ParallelProduct<H: HostTypes> {
     /// Associated type for `MonoidalProduct`.
-    type MonoidalProduct: crate::kernel::monoidal::MonoidalProduct<P>;
+    type MonoidalProduct: crate::kernel::monoidal::MonoidalProduct<H>;
     /// The left parallel component (itself a sequential computation).
     fn left_computation(&self) -> &Self::MonoidalProduct;
     /// The right parallel component.
     fn right_computation(&self) -> &Self::MonoidalProduct;
     /// Associated type for `DisjointnessCertificate`.
-    type DisjointnessCertificate: DisjointnessCertificate<P>;
+    type DisjointnessCertificate: DisjointnessCertificate<H>;
     /// The certificate proving site disjointness.
     fn disjointness_cert(&self) -> &Self::DisjointnessCertificate;
     /// True iff site targets have zero overlap (no SynchronizationPoints required).
-    fn is_fully_disjoint(&self) -> P::Boolean;
+    fn is_fully_disjoint(&self) -> bool;
     /// Declares whether this parallel product commutes with disjoint effects per FX_4.
-    fn disjointness_commutation(&self) -> P::Boolean;
+    fn disjointness_commutation(&self) -> bool;
     /// Associated type for `Partition`.
-    type Partition: crate::bridge::partition::Partition<P>;
+    type Partition: crate::bridge::partition::Partition<H>;
     /// The partition:Partition this parallel product is over.
     fn site_partition(&self) -> &Self::Partition;
     /// IRI of a proof of pairwise disjointness of the partition components.
-    fn disjointness_witness(&self) -> &P::String;
+    fn disjointness_witness(&self) -> &H::HostString;
 }
 
 /// A kernel-produced certificate attesting that the site targets of two computations are disjoint.
-pub trait DisjointnessCertificate<P: Primitives>: crate::bridge::cert::Certificate<P> {
+pub trait DisjointnessCertificate<H: HostTypes>: crate::bridge::cert::Certificate<H> {
     /// Associated type for `EffectTarget`.
-    type EffectTarget: crate::kernel::effect::EffectTarget<P>;
+    type EffectTarget: crate::kernel::effect::EffectTarget<H>;
     /// The site target of the left computation.
     fn cert_left_target(&self) -> &Self::EffectTarget;
     /// The site target of the right computation.
@@ -41,22 +41,22 @@ pub trait DisjointnessCertificate<P: Primitives>: crate::bridge::cert::Certifica
 }
 
 /// A point where two parallel computations must agree on shared state before proceeding. Only applicable when parallelism is partial.
-pub trait SynchronizationPoint<P: Primitives> {
+pub trait SynchronizationPoint<H: HostTypes> {
     /// Associated type for `SiteIndex`.
-    type SiteIndex: crate::bridge::partition::SiteIndex<P>;
+    type SiteIndex: crate::bridge::partition::SiteIndex<H>;
     /// The shared sites requiring synchronization.
     fn sync_sites(&self) -> &[Self::SiteIndex];
 }
 
 /// A computation trace recording interleaved steps from two parallel computations. Valid iff every interleaving produces the same final context.
-pub trait ParallelTrace<P: Primitives>: crate::bridge::trace::ComputationTrace<P> {}
+pub trait ParallelTrace<H: HostTypes>: crate::bridge::trace::ComputationTrace<H> {}
 
 /// A partition of the total site budget into disjoint subsets, one per parallel component. The sum of subset cardinalities equals the total site budget.
-pub trait SitePartitioning<P: Primitives> {
+pub trait SitePartitioning<H: HostTypes> {
     /// Associated type for `EffectTarget`.
-    type EffectTarget: crate::kernel::effect::EffectTarget<P>;
+    type EffectTarget: crate::kernel::effect::EffectTarget<H>;
     /// The disjoint subsets composing the full site budget.
     fn partition_components(&self) -> &[Self::EffectTarget];
     /// Number of parallel components.
-    fn component_count(&self) -> P::PositiveInteger;
+    fn component_count(&self) -> u64;
 }

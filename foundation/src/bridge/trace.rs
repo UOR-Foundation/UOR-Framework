@@ -4,115 +4,115 @@
 //!
 //! Space: Bridge
 
-use crate::Primitives;
+use crate::HostTypes;
 
 /// A complete record of a kernel computation: the input, output, every operation step, and accumulated metrics.
-pub trait ComputationTrace<P: Primitives> {
+pub trait ComputationTrace<H: HostTypes> {
     /// Associated type for `Datum`.
-    type Datum: crate::kernel::schema::Datum<P>;
+    type Datum: crate::kernel::schema::Datum<H>;
     /// The input datum of this computation.
     fn input(&self) -> &Self::Datum;
     /// The output datum of this computation.
     fn output(&self) -> &Self::Datum;
     /// Associated type for `ComputationStep`.
-    type ComputationStep: ComputationStep<P>;
+    type ComputationStep: ComputationStep<H>;
     /// A computation step in this trace.
     fn step(&self) -> &[Self::ComputationStep];
     /// Associated type for `DihedralElement`.
-    type DihedralElement: crate::bridge::observable::DihedralElement<P>;
+    type DihedralElement: crate::bridge::observable::DihedralElement<H>;
     /// The monodromy accumulated by this computation: the net dihedral group element produced by the full operation sequence.
     fn monodromy(&self) -> &Self::DihedralElement;
     /// Associated type for `Certificate`.
-    type Certificate: crate::bridge::cert::Certificate<P>;
+    type Certificate: crate::bridge::cert::Certificate<H>;
     /// The certificate that attests to the correctness of this computation trace.
     fn certified_by(&self) -> &Self::Certificate;
     /// Associated type for `ResidualEntropy`.
-    type ResidualEntropy: crate::bridge::observable::ResidualEntropy<P>;
+    type ResidualEntropy: crate::bridge::observable::ResidualEntropy<H>;
     /// The residual entropy observable remaining after this computation trace, linking to the ThermoObservable taxonomy (TH_9 connection).
     fn residual_entropy(&self) -> &Self::ResidualEntropy;
     /// Whether this computation trace satisfies the dual geodesic condition (GD_1): AR_1-ordered and DC_10-selected.
-    fn is_geodesic(&self) -> P::Boolean;
+    fn is_geodesic(&self) -> bool;
     /// Associated type for `GeodesicViolation`.
-    type GeodesicViolation: GeodesicViolation<P>;
+    type GeodesicViolation: GeodesicViolation<H>;
     /// A GeodesicViolation record indicating where the trace deviated from the geodesic condition.
     fn geodesic_violation(&self) -> &[Self::GeodesicViolation];
     /// The total entropy cost accumulated across all steps of a trace. On a geodesic, equals freeRank_initial × ln 2 (GD_3).
-    fn cumulative_entropy_cost(&self) -> P::Decimal;
+    fn cumulative_entropy_cost(&self) -> H::Decimal;
     /// Whether the step sequence of this trace follows the AR_1 adiabatic ordering (decreasing freeRank × cost-per-site).
-    fn adiabatically_ordered(&self) -> P::Boolean;
+    fn adiabatically_ordered(&self) -> bool;
     /// Associated type for `MeasurementEvent`.
-    type MeasurementEvent: MeasurementEvent<P>;
+    type MeasurementEvent: MeasurementEvent<H>;
     /// A MeasurementEvent step within this computation trace.
     fn measurement_event(&self) -> &[Self::MeasurementEvent];
     /// Whether this computation trace has steps ordered by the AR_1 adiabatic metric (decreasing freeRank × cost-per-site). One of the two sub-predicates of isGeodesic (GD_6).
-    fn is_ar1_ordered(&self) -> P::Boolean;
+    fn is_ar1_ordered(&self) -> bool;
     /// Whether each step of this computation trace was selected by the DC_10 Jacobian criterion (maximal J_k among free sites). One of the two sub-predicates of isGeodesic (GD_6).
-    fn is_dc10_selected(&self) -> P::Boolean;
+    fn is_dc10_selected(&self) -> bool;
 }
 
 /// A single step in a computation trace: one operation applied to produce one output from one or more inputs.
-pub trait ComputationStep<P: Primitives> {
+pub trait ComputationStep<H: HostTypes> {
     /// Associated type for `Datum`.
-    type Datum: crate::kernel::schema::Datum<P>;
+    type Datum: crate::kernel::schema::Datum<H>;
     /// The input datum of this computation step.
     fn from(&self) -> &Self::Datum;
     /// The output datum of this computation step.
     fn to(&self) -> &Self::Datum;
     /// Associated type for `Operation`.
-    type Operation: crate::kernel::op::Operation<P>;
+    type Operation: crate::kernel::op::Operation<H>;
     /// The operation applied in this computation step.
     fn operation(&self) -> &Self::Operation;
     /// The zero-based sequential index of this step within its trace.
-    fn index(&self) -> P::NonNegativeInteger;
+    fn index(&self) -> u64;
     /// The entropy cost of a single computation step. On a geodesic, this equals ln 2 for every step (GD_2).
-    fn step_entropy_cost(&self) -> P::Decimal;
+    fn step_entropy_cost(&self) -> H::Decimal;
     /// The Jacobian value J_k at this step, used by the GeodesicValidator to check DC_10 maximality.
-    fn jacobian_at_step(&self) -> P::Decimal;
+    fn jacobian_at_step(&self) -> H::Decimal;
 }
 
 /// Summary metrics for a computation trace: total steps, accumulated ring distance, and accumulated Hamming distance.
-pub trait TraceMetrics<P: Primitives> {
+pub trait TraceMetrics<H: HostTypes> {
     /// Total number of computation steps in this trace.
-    fn step_count(&self) -> P::NonNegativeInteger;
+    fn step_count(&self) -> u64;
     /// Total ring-metric distance accumulated across all steps.
-    fn total_ring_distance(&self) -> P::NonNegativeInteger;
+    fn total_ring_distance(&self) -> u64;
     /// Total Hamming-metric distance accumulated across all steps.
-    fn total_hamming_distance(&self) -> P::NonNegativeInteger;
+    fn total_hamming_distance(&self) -> u64;
 }
 
 /// A computation trace that satisfies the dual geodesic condition (GD_1): AR_1-ordered and DC_10-selected. The path of least dissipation through the resolution landscape.
-pub trait GeodesicTrace<P: Primitives>: ComputationTrace<P> {}
+pub trait GeodesicTrace<H: HostTypes>: ComputationTrace<H> {}
 
 /// A record of a geodesic condition violation at a specific step of a computation trace. Produced by GeodesicValidator when J_k(step_i) < max_\{free\} J_k(state_i).
-pub trait GeodesicViolation<P: Primitives> {
+pub trait GeodesicViolation<H: HostTypes> {
     /// Human-readable description of why a geodesic violation occurred, citing the step index and the unused higher-J_k option.
-    fn violation_reason(&self) -> &P::String;
+    fn violation_reason(&self) -> &H::HostString;
 }
 
 /// A specialized computation step recording a single projective collapse of a SuperposedSiteState. Carries pre-collapse entropy and post-collapse Landauer cost (QM_1).
-pub trait MeasurementEvent<P: Primitives>: ComputationStep<P> {
+pub trait MeasurementEvent<H: HostTypes>: ComputationStep<H> {
     /// The von Neumann entropy S_vN of the SuperposedSiteState before projective collapse.
-    fn pre_collapse_entropy(&self) -> P::Decimal;
+    fn pre_collapse_entropy(&self) -> H::Decimal;
     /// The Landauer cost incurred by the projective collapse. Equals preCollapseEntropy at β* = ln 2 (QM_1).
-    fn post_collapse_landauer_cost(&self) -> P::Decimal;
+    fn post_collapse_landauer_cost(&self) -> H::Decimal;
     /// The step index within the enclosing ComputationTrace at which this projective collapse occurred.
-    fn collapse_step(&self) -> P::NonNegativeInteger;
+    fn collapse_step(&self) -> u64;
     /// The full pre-collapse amplitude vector of all branches at the time of measurement. Enables Born rule verification (QM_5): P(outcome k) = |α_k|² / Σ|αᵢ|².
-    fn amplitude_vector(&self) -> P::Decimal;
+    fn amplitude_vector(&self) -> H::Decimal;
 }
 
 /// A single outcome of a projective measurement on a SuperposedSiteState, recording the classical site index (outcomeValue) and its Born-rule probability |α_k|² (outcomeProbability). Multiple outcomes form the probability distribution of a measurement.
-pub trait MeasurementOutcome<P: Primitives> {
+pub trait MeasurementOutcome<H: HostTypes> {
     /// The classical site index selected by projective collapse in this measurement outcome.
-    fn outcome_value(&self) -> P::NonNegativeInteger;
+    fn outcome_value(&self) -> u64;
     /// The Born-rule probability of this measurement outcome: |α_k|² where α_k is the amplitude of the collapsed site.
-    fn outcome_probability(&self) -> P::Decimal;
+    fn outcome_probability(&self) -> H::Decimal;
 }
 
 /// A subclass of trace:ComputationTrace specialised to inhabitance-search execution. Records the sequence of derivation:InhabitanceStep entries the resolver traversed and any derivation:InhabitanceCheckpoint entries it crossed.
-pub trait InhabitanceSearchTrace<P: Primitives>: ComputationTrace<P> {
+pub trait InhabitanceSearchTrace<H: HostTypes>: ComputationTrace<H> {
     /// Associated type for `InhabitanceCheckpoint`.
-    type InhabitanceCheckpoint: crate::bridge::derivation::InhabitanceCheckpoint<P>;
+    type InhabitanceCheckpoint: crate::bridge::derivation::InhabitanceCheckpoint<H>;
     /// Checkpoints crossed by the inhabitance search. Each checkpoint marks an audit point where the resolver state can be restored if the search backtracks.
     fn checkpoint(&self) -> &[Self::InhabitanceCheckpoint];
 }

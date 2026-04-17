@@ -4,90 +4,90 @@
 //!
 //! Space: Bridge
 
-use crate::Primitives;
+use crate::HostTypes;
 
 /// A cochain group: the dual of a chain group, maps chains to coefficients.
-pub trait CochainGroup<P: Primitives> {
+pub trait CochainGroup<H: HostTypes> {
     /// The degree k of this cochain group C^k.
-    fn cochain_degree(&self) -> P::Integer;
+    fn cochain_degree(&self) -> i64;
     /// The rank (dimension) of this cochain group.
-    fn cochain_rank(&self) -> P::NonNegativeInteger;
+    fn cochain_rank(&self) -> u64;
     /// Associated type for `ChainGroup`.
-    type ChainGroup: crate::bridge::homology::ChainGroup<P>;
+    type ChainGroup: crate::bridge::homology::ChainGroup<H>;
     /// The chain group that this cochain group is dual to.
     fn dual_of(&self) -> &Self::ChainGroup;
 }
 
 /// The coboundary operator δ^k: C^k → C^{k+1}. Satisfies δ² = 0.
-pub trait CoboundaryOperator<P: Primitives> {
+pub trait CoboundaryOperator<H: HostTypes> {
     /// Associated type for `CochainGroup`.
-    type CochainGroup: CochainGroup<P>;
+    type CochainGroup: CochainGroup<H>;
     /// The source cochain group of this coboundary operator.
     fn coboundary_source(&self) -> &Self::CochainGroup;
     /// The target cochain group of this coboundary operator.
     fn coboundary_target(&self) -> &Self::CochainGroup;
     /// Whether this coboundary operator satisfies δ² = 0.
-    fn satisfies_coboundary_squared_zero(&self) -> P::Boolean;
+    fn satisfies_coboundary_squared_zero(&self) -> bool;
 }
 
 /// A cochain complex: a sequence of cochain groups connected by coboundary operators.
-pub trait CochainComplex<P: Primitives> {
+pub trait CochainComplex<H: HostTypes> {
     /// Associated type for `CochainGroup`.
-    type CochainGroup: CochainGroup<P>;
+    type CochainGroup: CochainGroup<H>;
     /// A cochain group belonging to this cochain complex.
     fn has_cochain_group(&self) -> &[Self::CochainGroup];
     /// Associated type for `CoboundaryOperator`.
-    type CoboundaryOperator: CoboundaryOperator<P>;
+    type CoboundaryOperator: CoboundaryOperator<H>;
     /// A coboundary operator belonging to this cochain complex.
     fn has_coboundary(&self) -> &[Self::CoboundaryOperator];
 }
 
 /// The k-th cohomology group H^k = ker(δ^k) / im(δ^{k-1}). Measures k-dimensional obstructions.
-pub trait CohomologyGroup<P: Primitives> {
+pub trait CohomologyGroup<H: HostTypes> {
     /// The degree k of this cohomology group H^k.
-    fn cohomology_degree(&self) -> P::Integer;
+    fn cohomology_degree(&self) -> i64;
     /// The rank (dimension) of this cohomology group.
-    fn cohomology_rank(&self) -> P::NonNegativeInteger;
+    fn cohomology_rank(&self) -> u64;
 }
 
 /// A sheaf F over a simplicial complex: assigns data to each simplex with restriction maps.
-pub trait Sheaf<P: Primitives> {
+pub trait Sheaf<H: HostTypes> {
     /// Associated type for `SimplicialComplex`.
-    type SimplicialComplex: crate::bridge::homology::SimplicialComplex<P>;
+    type SimplicialComplex: crate::bridge::homology::SimplicialComplex<H>;
     /// The simplicial complex that this sheaf is defined over.
     fn sheaf_over(&self) -> &Self::SimplicialComplex;
     /// Associated type for `Ring`.
-    type Ring: crate::kernel::schema::Ring<P>;
+    type Ring: crate::kernel::schema::Ring<H>;
     /// The coefficient ring of this sheaf.
     fn coefficient_in(&self) -> &Self::Ring;
     /// Associated type for `Stalk`.
-    type Stalk: Stalk<P>;
+    type Stalk: Stalk<H>;
     /// A stalk belonging to this sheaf.
     fn has_stalks(&self) -> &[Self::Stalk];
     /// Associated type for `Section`.
-    type Section: Section<P>;
+    type Section: Section<H>;
     /// A global section of this sheaf.
     fn has_global_section(&self) -> &[Self::Section];
 }
 
 /// A stalk F_σ: the local data of a sheaf at a simplex σ.
-pub trait Stalk<P: Primitives> {
+pub trait Stalk<H: HostTypes> {
     /// Associated type for `Simplex`.
-    type Simplex: crate::bridge::homology::Simplex<P>;
+    type Simplex: crate::bridge::homology::Simplex<H>;
     /// The simplex at which this stalk is located.
     fn stalk_at(&self) -> &Self::Simplex;
 }
 
 /// A global section of a sheaf: a consistent choice of local data across all simplices.
-pub trait Section<P: Primitives> {}
+pub trait Section<H: HostTypes> {}
 
 /// A local section: a consistent choice of data over a subcomplex.
-pub trait LocalSection<P: Primitives>: Section<P> {}
+pub trait LocalSection<H: HostTypes>: Section<H> {}
 
 /// A restriction map ρ_{σ,τ}: maps data from a simplex to a face.
-pub trait RestrictionMap<P: Primitives> {
+pub trait RestrictionMap<H: HostTypes> {
     /// Associated type for `Simplex`.
-    type Simplex: crate::bridge::homology::Simplex<P>;
+    type Simplex: crate::bridge::homology::Simplex<H>;
     /// The source simplex of this restriction map.
     fn restricts_from(&self) -> &Self::Simplex;
     /// The target simplex (face) of this restriction map.
@@ -95,13 +95,13 @@ pub trait RestrictionMap<P: Primitives> {
 }
 
 /// A gluing obstruction: a cohomology class that detects when local sections fail to glue.
-pub trait GluingObstruction<P: Primitives> {
+pub trait GluingObstruction<H: HostTypes> {
     /// Associated type for `CohomologyGroup`.
-    type CohomologyGroup: CohomologyGroup<P>;
+    type CohomologyGroup: CohomologyGroup<H>;
     /// The cohomology class that this gluing obstruction represents.
     fn obstruction_class(&self) -> &Self::CohomologyGroup;
     /// Associated type for `RefinementSuggestion`.
-    type RefinementSuggestion: crate::bridge::resolver::RefinementSuggestion<P>;
+    type RefinementSuggestion: crate::bridge::resolver::RefinementSuggestion<H>;
     /// The refinement suggestion that, if applied, would resolve this gluing obstruction. Computed by the kernel when ψ₆ detects H^1 ≠ 0: the obstruction class indexes the site pair that is incompatible, and the suggestion targets that pair with a new bridging constraint.
     fn addresses_suggestion(&self) -> &[Self::RefinementSuggestion];
 }

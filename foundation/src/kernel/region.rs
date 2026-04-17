@@ -4,26 +4,26 @@
 //!
 //! Space: Kernel
 
-use crate::Primitives;
+use crate::HostTypes;
 
 /// A contiguous range of u:Element values accessible during a single reduction step. Defines the resolver’s working set.
-pub trait AddressRegion<P: Primitives> {
+pub trait AddressRegion<H: HostTypes> {
     /// Associated type for `RegionBound`.
-    type RegionBound: RegionBound<P>;
+    type RegionBound: RegionBound<H>;
     /// The boundary of this region.
     fn region_bound(&self) -> &Self::RegionBound;
     /// Associated type for `LocalityMetric`.
-    type LocalityMetric: LocalityMetric<P>;
+    type LocalityMetric: LocalityMetric<H>;
     /// The metric defining contiguity for this region.
     fn locality_metric(&self) -> &Self::LocalityMetric;
     /// Number of addresses in this region.
-    fn region_cardinality(&self) -> P::NonNegativeInteger;
+    fn region_cardinality(&self) -> u64;
 }
 
 /// The boundary of an AddressRegion: a pair (lowerAddress, upperAddress) in the content-address ordering.
-pub trait RegionBound<P: Primitives> {
+pub trait RegionBound<H: HostTypes> {
     /// Associated type for `Element`.
-    type Element: crate::kernel::address::Element<P>;
+    type Element: crate::kernel::address::Element<H>;
     /// The lower bound of the address range.
     fn region_lower(&self) -> &Self::Element;
     /// The upper bound of the address range.
@@ -31,34 +31,34 @@ pub trait RegionBound<P: Primitives> {
 }
 
 /// A metric on u:Element values determining which addresses are near each other for resolution purposes.
-pub trait LocalityMetric<P: Primitives>: crate::bridge::observable::MetricObservable<P> {}
+pub trait LocalityMetric<H: HostTypes>: crate::bridge::observable::MetricObservable<H> {}
 
 /// The set of AddressRegions needed by a resolver at a specific reduction step for a specific type. Computable from the type’s constraint nerve.
-pub trait WorkingSet<P: Primitives> {
+pub trait WorkingSet<H: HostTypes> {
     /// Associated type for `AddressRegion`.
-    type AddressRegion: AddressRegion<P>;
+    type AddressRegion: AddressRegion<H>;
     /// The address regions composing this working set.
     fn working_set_regions(&self) -> &[Self::AddressRegion];
     /// Associated type for `ReductionStep`.
-    type ReductionStep: crate::kernel::reduction::ReductionStep<P>;
+    type ReductionStep: crate::kernel::reduction::ReductionStep<H>;
     /// The reduction step this working set applies to.
     fn working_set_stage(&self) -> &Self::ReductionStep;
     /// Associated type for `TypeDefinition`.
-    type TypeDefinition: crate::user::type_::TypeDefinition<P>;
+    type TypeDefinition: crate::user::type_::TypeDefinition<H>;
     /// The type being resolved.
     fn working_set_type(&self) -> &Self::TypeDefinition;
     /// Total addresses across all regions in the working set.
-    fn working_set_size(&self) -> P::NonNegativeInteger;
+    fn working_set_size(&self) -> u64;
 }
 
 /// An assignment of AddressRegions to reduction steps for a given computation. Enables Prism to pre-compute memory layout.
-pub trait RegionAllocation<P: Primitives> {
+pub trait RegionAllocation<H: HostTypes> {
     /// Associated type for `ReductionStep`.
-    type ReductionStep: crate::kernel::reduction::ReductionStep<P>;
+    type ReductionStep: crate::kernel::reduction::ReductionStep<H>;
     /// Reduction steps in this allocation.
     fn allocation_stage(&self) -> &[Self::ReductionStep];
     /// Associated type for `WorkingSet`.
-    type WorkingSet: WorkingSet<P>;
+    type WorkingSet: WorkingSet<H>;
     /// The working sets assigned to each stage.
     fn allocation_working_set(&self) -> &[Self::WorkingSet];
 }

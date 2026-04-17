@@ -118,7 +118,7 @@ See `RELEASING.md`. Summary: bump version in root `Cargo.toml`, regenerate, comm
 
 ## Toolchain
 
-- Rust stable (edition 2021, MSRV 1.70)
+- Rust stable (edition 2021, MSRV 1.81 — bumped from 1.70 in v0.2.2 Tier 5 to unlock `core::error::Error` on `no_std`)
 - Components: `rustfmt`, `clippy`
 - `clippy.toml`: `too-many-lines-threshold = 100`, `avoid-breaking-exported-api = false`
 - License: Apache-2.0

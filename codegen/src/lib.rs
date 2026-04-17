@@ -229,29 +229,27 @@ fn generate_lib_rs(ontology: &Ontology) -> String {
          //! `pub(crate)` constructors, and the v0.2.2 conformance suite (W5 ψ-leakage gate,\n\
          //! W6 public-API snapshot) catch any deviation.\n\
          //!\n\
-         //! # HostTypes (v0.2.2 W10)\n\
+         //! # HostTypes (target §4.1 W10)\n\
          //!\n\
-         //! Downstream chooses representations only for the four slots that genuinely\n\
-         //! vary across host environments. Witt-level integers, booleans, IRIs, and\n\
-         //! canonical bytes are foundation-owned and derived from `WittLevel`.\n\
+         //! Downstream chooses representations only for the three slots that genuinely\n\
+         //! vary across host environments. Witt-level integers, booleans, IRIs, canonical\n\
+         //! bytes, and `UorTime` are foundation-owned and derived from `WittLevel`.\n\
          //!\n\
          //! ```rust,ignore\n\
          //! use uor_foundation::{{HostTypes, DefaultHostTypes}};\n\
          //!\n\
-         //! // Use the canonical defaults: f64 / i64 / str / [u8].\n\
+         //! // Use the canonical defaults: f64 / str / [u8].\n\
          //! type H = DefaultHostTypes;\n\
          //!\n\
          //! // Or override one slot:\n\
          //! struct EmbeddedHost;\n\
          //! impl HostTypes for EmbeddedHost {{\n\
          //!     type Decimal = f32;        // override: tighter precision budget\n\
-         //!     type DateTime = i64;       // default\n\
          //!     type HostString = str;     // default\n\
          //!     type WitnessBytes = [u8];  // default\n\
          //! }}\n\
          //! ```\n\
          //!\n\
-         //! `Primitives` is retained as a deprecated alias for v0.2.1 backwards compatibility.\n\
          //!\n\
          //! # Module structure\n\
          //!\n\
@@ -291,15 +289,14 @@ fn generate_lib_rs(ontology: &Ontology) -> String {
          //! - `enforcement::resolver::incremental_completeness::certify(input)` — incremental\n\
          //! - `enforcement::resolver::grounding_aware::certify(unit)` — grounding-aware\n\
          //!\n\
-         //! # Migration from v0.2.1\n\
+         //! # Scope note\n\
          //!\n\
-         //! - `uor_ground!` macro                  → deleted; use `pipeline::run::<T, P>`\n\
-         //! - `#[derive(ConstrainedType)]`         → deleted; declare `const _VALIDATED: Validated<…, CompileTime>`\n\
-         //! - `#[uor_grounded(level = …)]`         → deleted; use phantom-typed `Mul::<W32>::apply(…)` etc.\n\
-         //! - `Primitives` trait                   → use `HostTypes` + `DefaultHostTypes`\n\
-         //! - 4 cert shim types                    → use `Certified<C>` parametric carrier\n\
-         //! - `Resolver::new().certify(…)` structs → `enforcement::resolver::name::certify(…)` functions\n\
-         //! - `run_pipeline(&datum, level)`        → `pipeline::run::<T, P>(validated_compile_unit)`",
+         //! This crate is conformance-first: every surface the target architecture\n\
+         //! document (`external/uor-foundation-target-v2.md`) specifies is present,\n\
+         //! and every surface it rejects (e.g., the deleted v0.2.1 `Primitives` trait\n\
+         //! and unit-struct resolver façades) is absent. There is no migration layer,\n\
+         //! no deprecation aliases, and no compatibility shims — the crate is either\n\
+         //! in conformance with the target document or it isn't.",
         ontology.version,
     ));
 
@@ -314,97 +311,68 @@ fn generate_lib_rs(ontology: &Ontology) -> String {
     f.blank();
     f.line("pub use enums::*;");
     f.blank();
-
-    // Primitives trait (v0.2.1 surface — retained for backwards compatibility).
-    f.doc_comment("XSD primitive type family.");
-    f.doc_comment("");
-    f.doc_comment("Implementors choose concrete representations for each XSD type.");
-    f.doc_comment("PRISM might use `u64` for integers at Q0, `u128` at higher quantum");
-    f.doc_comment("levels, or a bignum library. The foundation does not constrain this choice.");
-    f.doc_comment("");
-    f.doc_comment("**v0.2.2 deprecation notice:** `Primitives` will be removed in a future");
-    f.doc_comment("version in favor of [`HostTypes`], which narrows the trait to the four");
-    f.doc_comment("slots that genuinely vary across host environments (`Decimal`, `DateTime`,");
-    f.doc_comment("`HostString`, `WitnessBytes`) and lets the foundation own the integer /");
-    f.doc_comment("boolean / IRI representation derived from `WittLevel`.");
-    f.line("pub trait Primitives {");
-    f.indented_doc_comment(
-        "String type (`xsd:string`). Use `str` for borrowed, `String` for owned.",
-    );
-    f.line("    type String: ?Sized;");
-    f.indented_doc_comment("Integer type (`xsd:integer`).");
-    f.line("    type Integer;");
-    f.indented_doc_comment("Non-negative integer type (`xsd:nonNegativeInteger`).");
-    f.line("    type NonNegativeInteger;");
-    f.indented_doc_comment("Positive integer type (`xsd:positiveInteger`).");
-    f.line("    type PositiveInteger;");
-    f.indented_doc_comment("Decimal type (`xsd:decimal`).");
-    f.line("    type Decimal;");
-    f.indented_doc_comment("Boolean type (`xsd:boolean`).");
-    f.line("    type Boolean;");
-    f.line("}");
+    // v0.2.2 T4.5.c + T5.11: convenience re-exports. The enforcement module
+    // remains the source of truth; these re-exports shorten common import
+    // paths for downstream consumers. T5.11 added the Hasher /
+    // ContentFingerprint family, error types, AST types, and constants so
+    // every public type a downstream consumer reaches for resolves under
+    // `uor_foundation::*`.
+    f.line("pub use enforcement::{");
+    f.line("    BindingEntry, BindingsTable, BindingsTableError, BoundConstraint, Calibration,");
+    f.line("    CalibrationError, Certificate, CertificateKind, Certified, CompileUnit, CompileUnitBuilder,");
+    f.line("    ContentAddress, ContentFingerprint, Derivation, Grounded, GroundingCertificate, Hasher,");
+    f.line("    LandauerBudget, MultiplicationCertificate, Nanos, PipelineFailure, ReplayError, ShapeViolation,");
+    f.line("    Term, TermArena, TermList, Trace, TraceEvent, UorTime, Validated,");
+    f.line("    FINGERPRINT_MAX_BYTES, FINGERPRINT_MIN_BYTES, TRACE_MAX_EVENTS, TRACE_REPLAY_FORMAT_VERSION,");
+    f.line("};");
     f.blank();
 
-    // v0.2.2 W10: HostTypes trait + DefaultHostTypes canonical impl.
-    f.doc_comment(
-        "v0.2.2 W10: narrow host-types trait that lets downstream choose representations",
-    );
-    f.doc_comment(
-        "only for the slots that genuinely vary across host environments. Foundation-owned",
-    );
-    f.doc_comment(
-        "types (Witt-level integers, booleans, IRIs, canonicalBytes) are derived from the",
-    );
-    f.doc_comment("`WittLevel` family and not exposed here.");
+    // Phase B: the v0.2.1 `Primitives` trait is deleted unconditionally.
+    // The narrower `HostTypes` trait (three slots: `Decimal`, `HostString`,
+    // `WitnessBytes`) is the only host-environment carrier. Target §4.1 W10
+    // closes the deprecation; target §4.1 also removes the `DateTime` slot
+    // because the foundation maintains no wall-clock source.
+    f.doc_comment("Phase B (target §4.1 W10): narrow host-types trait — the only carrier for");
+    f.doc_comment("the slots that genuinely vary across host environments. Foundation-owned");
+    f.doc_comment("types (Witt-level integers, booleans, IRIs, canonicalBytes, `UorTime`) are");
+    f.doc_comment("derived from the `WittLevel` family and not exposed here.");
     f.doc_comment("");
-    f.doc_comment(
-        "MSRV 1.70 forbids `associated_type_defaults`, so v0.2.2 ships [`DefaultHostTypes`]",
-    );
-    f.doc_comment("as the canonical default impl. Downstream can either use `DefaultHostTypes`");
-    f.doc_comment("directly or implement `HostTypes` on their own marker struct, optionally");
-    f.doc_comment("overriding individual associated types.");
+    f.doc_comment("Three slots: `Decimal` (real-number representation), `HostString` (opaque");
+    f.doc_comment("host string, NOT a foundation IRI), and `WitnessBytes` (opaque host byte");
+    f.doc_comment("sequence, NOT a foundation `canonicalBytes` constant). The v0.2.1 `DateTime`");
+    f.doc_comment("slot is removed; downstream associates timestamps out-of-band per target §1.6.");
     f.line("pub trait HostTypes {");
     f.indented_doc_comment(
         "Real-number representation for kernel observables (entropies, amplitudes, rates).\n\
-         `DefaultHostTypes` selects `f64`. Override with `f128`, arbitrary-precision\n\
-         rational, or interval arithmetic as needed.",
+         `DefaultHostTypes` selects `f64`. Override with higher-precision or interval\n\
+         arithmetic as needed.",
     );
     f.line("    type Decimal;");
     f.blank();
     f.indented_doc_comment(
-        "Host event timestamp.\n\
-         `DefaultHostTypes` selects `i64` interpreted as Unix nanoseconds.\n\
-         Override with `i128` for wider range, or a domain-specific timestamp type.",
-    );
-    f.line("    type DateTime;");
-    f.blank();
-    f.indented_doc_comment(
         "Host-supplied opaque string (NOT a foundation IRI).\n\
-         `DefaultHostTypes` selects `str`. Override with owned `String`, `Cow<'_, str>`, etc.",
+         `DefaultHostTypes` selects `str`. Override with owned `String`, `Cow<'_, str>`,",
     );
+    f.indented_doc_comment("etc. for embedded / host-heap environments.");
     f.line("    type HostString: ?Sized;");
     f.blank();
     f.indented_doc_comment(
         "Host-supplied opaque byte sequence (NOT a foundation `canonicalBytes` constant).\n\
-         `DefaultHostTypes` selects `[u8]`. Override with owned `Vec<u8>`, `Bytes`, etc.",
+         `DefaultHostTypes` selects `[u8]`. Override with owned `Vec<u8>`, `Bytes`,",
     );
+    f.indented_doc_comment("etc. for host-heap environments.");
     f.line("    type WitnessBytes: ?Sized;");
     f.line("}");
     f.blank();
 
-    f.doc_comment(
-        "v0.2.2 W10: canonical default impl of [`HostTypes`]. Selects `f64`/`i64`/`str`/`[u8]`.",
-    );
-    f.doc_comment(
-        "Use as `type H = uor_foundation::DefaultHostTypes;` to inherit the defaults; replace",
-    );
-    f.doc_comment("with a downstream marker struct if any slot needs an override.");
+    f.doc_comment("Phase B: canonical default impl of [`HostTypes`]. Selects `f64`/`str`/`[u8]`.");
+    f.doc_comment("Use as `type H = uor_foundation::DefaultHostTypes;` to inherit the defaults;");
+    f.doc_comment("replace with a downstream marker struct if any slot needs an override.");
     f.line("#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]");
     f.line("pub struct DefaultHostTypes;");
     f.blank();
     f.line("impl HostTypes for DefaultHostTypes {");
     f.line("    type Decimal = f64;");
-    f.line("    type DateTime = i64;");
     f.line("    type HostString = str;");
     f.line("    type WitnessBytes = [u8];");
     f.line("}");
@@ -499,6 +467,44 @@ impl FreeRank<MyImpl> for MyFreeRank {{
 This crate is `#![no_std]` with zero mandatory dependencies. The `uor!`
 proc macro (from `uor-foundation-macros`) parses term-language expressions
 at compile time.
+
+## Substrate-pluggable hashing
+
+`uor-foundation` never picks a hash function. Every public path that
+produces a `Grounded`, `Trace`, or `GroundingCertificate` takes a generic
+`H: Hasher` parameter and threads the caller's substrate through
+`fold_unit_digest` (or one of the sibling `fold_*_digest` helpers). The
+foundation defines only the byte-layout contract and the `ContentFingerprint`
+parametric carrier; downstream code supplies the cryptographic primitive.
+
+```rust,ignore
+use uor_foundation::enforcement::{{Hasher, ContentFingerprint}};
+use uor_foundation::pipeline::run;
+
+struct Blake3Hasher {{ /* ... */ }}
+impl Hasher for Blake3Hasher {{
+    const OUTPUT_BYTES: usize = 32;
+    fn initial() -> Self {{ /* ... */ }}
+    fn fold_byte(self, b: u8) -> Self {{ /* ... */ }}
+    fn fold_bytes(self, bytes: &[u8]) -> Self {{ /* ... */ }}
+    fn finalize(self) -> [u8; uor_foundation::FINGERPRINT_MAX_BYTES] {{ /* ... */ }}
+}}
+
+let grounded = run::<MyShape, _, Blake3Hasher>(validated_unit)?;
+```
+
+The recommended production substrate is BLAKE3: fast, cryptographically
+sound, and 32-byte output. See PRISM's `Hasher` impl for a worked reference.
+FNV-1a test substrates live in `uor-foundation-test-helpers` and are used
+only by the round-trip conformance tests; they are not fit for production.
+
+The typed pipeline entry points (`pipeline::run`, `run_const`, `run_parallel`,
+`run_stream`, `run_interactive`) and every resolver facade
+(`TowerCompletenessResolver`, `IncrementalCompletenessResolver`,
+`GroundingAwareResolver`, `InhabitanceResolver`, `MultiplicationResolver`)
+are generic over `H: Hasher`. There are no fallback paths, no
+zero-fingerprint sentinels, and no `Default` impls on cert shims — a
+substrate is mandatory at every grounding site.
 
 ## License
 

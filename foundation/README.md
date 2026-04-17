@@ -6,7 +6,7 @@ typed Rust traits. Import and implement.
 ## Contents
 
 - 33 namespaces
-- 466 OWL classes (one trait each)
+- 468 OWL classes (one trait each)
 - 942 OWL properties (one method each)
 - 3493 named individuals (constants and enums)
 - `enforcement` module with declarative builders and opaque witnesses
@@ -19,28 +19,81 @@ typed Rust traits. Import and implement.
 uor-foundation = "0.2.2"
 ```
 
-```rust
-use uor_foundation::Primitives;
+### HostTypes (target §4.1 W10)
 
-struct MyImpl;
-impl Primitives for MyImpl {
-    type String = str;
-    type Integer = i64;
-    type NonNegativeInteger = u64;
-    type PositiveInteger = u64;
-    type Decimal = f64;
-    type Boolean = bool;
-}
+Every foundation trait is parametric over `HostTypes` — a sealed bundle
+declaring the host-environment types the ontology references.
+`DefaultHostTypes` ships for the common case; downstream implementers
+supply their own `HostTypes` impl when they need non-default carriers.
+
+```rust
+use uor_foundation::{DefaultHostTypes, HostTypes};
+
+// Default bundle — satisfies every ring-adjacent surface. Ring
+// arithmetic is mono-sorted by construction of the term grammar: host
+// slots never participate.
+type H = DefaultHostTypes;
 ```
 
-Then implement any foundation trait with your chosen primitives:
+### Grounding maps (target §4.3)
+
+Downstream sources of external data bind to `GroundingMapKind` by
+implementing `Grounding` with a combinator `program()`. The foundation
+supplies `ground()` via the sealed `GroundingExt` extension trait — the
+program's marker tuple mechanically verifies that the declared `Map`
+matches the combinator decomposition.
+
+```rust
+use uor_foundation::enforcement::{
+    combinators, BinaryGroundingMap, GroundedCoord, Grounding, GroundingExt,
+    GroundingProgram,
+};
+
+struct ReadFirstByte;
+
+impl Grounding for ReadFirstByte {
+    type Output = GroundedCoord;
+    type Map = BinaryGroundingMap;
+
+    // Downstream provides ONLY program(). `ground()` is foundation-owned
+    // via the sealed `GroundingExt` blanket impl.
+    fn program(&self) -> GroundingProgram<GroundedCoord, BinaryGroundingMap> {
+        GroundingProgram::from_primitive(combinators::read_bytes::<GroundedCoord>())
+    }
+}
+
+// Callers reach ground() through the sealed extension trait.
+let g = ReadFirstByte;
+let coord: Option<GroundedCoord> = <ReadFirstByte as GroundingExt>::ground(&g, &[0x42]);
+```
+
+### Resolvers (target §4.2)
+
+Every resolver is a module with a `certify` free function that consumes
+a `&Validated<Input, P>` carrier and returns
+`Result<Certified<SuccessCert>, Certified<ImpossibilityWitness>>`.
 
 ```rust,ignore
-use uor_foundation::bridge::partition::FreeRank;
+use uor_foundation::enforcement::{resolver, ConstrainedTypeInput};
+use uor_foundation_test_helpers::{validated_runtime, Fnv1aHasher16};
 
-impl FreeRank<MyImpl> for MyFreeRank {
-    // ...
-}
+let input = validated_runtime(ConstrainedTypeInput::default());
+let cert = resolver::tower_completeness::certify::<_, _, Fnv1aHasher16>(&input)?;
+// cert: Certified<LiftChainCertificate>
+```
+
+The 22 resolver modules share this shape; the only exception is
+`multiplication::certify(&MulContext)` whose input is a self-validated
+shape (target §4.2 MulContext exemption).
+
+### Wall-clock (target §1.7)
+
+`UorTime` records three foundation-internal clocks; the wall-clock
+lower bound emerges from `min_wall_clock(&Calibration)`:
+
+```rust,ignore
+use uor_foundation::enforcement::calibrations::X86_SERVER;
+let min_nanos = grounded.uor_time().min_wall_clock(&X86_SERVER).as_u64();
 ```
 
 ## Module structure
@@ -85,9 +138,48 @@ impl FreeRank<MyImpl> for MyFreeRank {
 
 ## Features
 
-This crate is `#![no_std]` with zero mandatory dependencies. The `uor!`
-proc macro (from `uor-foundation-macros`) parses term-language expressions
+This crate is `#![no_std]` with a single mandatory dependency on `libm`
+(always-on transcendental math per target §1.6). The `uor!` proc macro
+is re-exported from `uor-foundation` and parses term-language expressions
 at compile time.
+
+## Substrate-pluggable hashing
+
+`uor-foundation` never picks a hash function. Every public path that
+produces a `Grounded`, `Trace`, or `GroundingCertificate` takes a generic
+`H: Hasher` parameter and threads the caller's substrate through
+`fold_unit_digest` (or one of the sibling `fold_*_digest` helpers). The
+foundation defines only the byte-layout contract and the `ContentFingerprint`
+parametric carrier; downstream code supplies the cryptographic primitive.
+
+```rust,ignore
+use uor_foundation::enforcement::{Hasher, ContentFingerprint};
+use uor_foundation::pipeline::run;
+
+struct Blake3Hasher { /* ... */ }
+impl Hasher for Blake3Hasher {
+    const OUTPUT_BYTES: usize = 32;
+    fn initial() -> Self { /* ... */ }
+    fn fold_byte(self, b: u8) -> Self { /* ... */ }
+    fn fold_bytes(self, bytes: &[u8]) -> Self { /* ... */ }
+    fn finalize(self) -> [u8; uor_foundation::FINGERPRINT_MAX_BYTES] { /* ... */ }
+}
+
+let grounded = run::<MyShape, _, Blake3Hasher>(validated_unit)?;
+```
+
+The recommended production substrate is BLAKE3: fast, cryptographically
+sound, and 32-byte output. See PRISM's `Hasher` impl for a worked reference.
+FNV-1a test substrates live in `uor-foundation-test-helpers` and are used
+only by the round-trip conformance tests; they are not fit for production.
+
+The typed pipeline entry points (`pipeline::run`, `run_const`, `run_parallel`,
+`run_stream`, `run_interactive`) and every resolver facade
+(`TowerCompletenessResolver`, `IncrementalCompletenessResolver`,
+`GroundingAwareResolver`, `InhabitanceResolver`, `MultiplicationResolver`)
+are generic over `H: Hasher`. There are no fallback paths, no
+zero-fingerprint sentinels, and no `Default` impls on cert shims — a
+substrate is mandatory at every grounding site.
 
 ## License
 

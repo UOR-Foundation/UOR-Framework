@@ -13,7 +13,7 @@ keywords = ["ontology", "uor", "verification", "trace-replay", "semantic-web"]
 categories = ["data-structures", "science"]
 
 [dependencies]
-uor-foundation = { path = "../foundation" }
+uor-foundation = { workspace = true }
 
 [dev-dependencies]
 uor-foundation-test-helpers = { path = "../uor-foundation-test-helpers" }

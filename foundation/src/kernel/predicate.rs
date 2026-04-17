@@ -4,93 +4,93 @@
 //!
 //! Space: Kernel
 
-use crate::Primitives;
+use crate::HostTypes;
 
 /// A total, pure, boolean-valued function on a kernel object. Evaluation terminates for all inputs and produces no side effects.
-pub trait Predicate<P: Primitives> {
+pub trait Predicate<H: HostTypes> {
     /// The OWL class of objects this predicate accepts as input.
-    fn evaluates_over(&self) -> &P::String;
+    fn evaluates_over(&self) -> &H::HostString;
     /// Associated type for `Term`.
-    type Term: crate::kernel::schema::Term<P>;
+    type Term: crate::kernel::schema::Term<H>;
     /// The evaluator term that must reduce to a boolean-shaped datum on every input of the declared input type.
     fn evaluator_term(&self) -> &Self::Term;
     /// An IRI or identifier of the proof:Proof / proof:ComputationCertificate attesting that the evaluator halts on all inputs.
-    fn termination_witness(&self) -> &P::String;
+    fn termination_witness(&self) -> &H::HostString;
     /// Associated type for `DescentMeasure`.
-    type DescentMeasure: crate::kernel::recursion::DescentMeasure<P>;
+    type DescentMeasure: crate::kernel::recursion::DescentMeasure<H>;
     /// A termination witness for user-declared predicates. Kernel predicates are total by construction; user-declared predicates must carry a descent measure certifying termination.
     fn bounded_evaluator(&self) -> &[Self::DescentMeasure];
 }
 
 /// A predicate over type:TypeDefinition. Used for resolver dispatch.
-pub trait TypePredicate<P: Primitives>: Predicate<P> {}
+pub trait TypePredicate<H: HostTypes>: Predicate<H> {}
 
 /// A predicate over state:Context or reduction:ReductionState. Used for reduction step guards.
-pub trait StatePredicate<P: Primitives>: Predicate<P> {}
+pub trait StatePredicate<H: HostTypes>: Predicate<H> {}
 
 /// A predicate over partition:SiteIndex. Used for site-level selection in geodesic resolution.
-pub trait SitePredicate<P: Primitives>: Predicate<P> {}
+pub trait SitePredicate<H: HostTypes>: Predicate<H> {}
 
 /// A pair (Predicate, Target) where Target is a resolver:Resolver class. The kernel evaluates the predicate; if true, the target resolver is selected.
-pub trait DispatchRule<P: Primitives> {
+pub trait DispatchRule<H: HostTypes> {
     /// Associated type for `Predicate`.
-    type Predicate: Predicate<P>;
+    type Predicate: Predicate<H>;
     /// The predicate that triggers this dispatch rule.
     fn dispatch_predicate(&self) -> &Self::Predicate;
     /// The resolver class selected when the predicate is satisfied. Range is the OWL class IRI of a resolver:Resolver subclass; v0.2.1 uses class IRIs so the codegen can construct façade structs.
-    fn dispatch_target(&self) -> &P::String;
+    fn dispatch_target(&self) -> &H::HostString;
     /// Non-negative integer priority. Lower priority values are evaluated first; ties within a DispatchTable are resolved by declaration order.
-    fn dispatch_priority(&self) -> P::NonNegativeInteger;
+    fn dispatch_priority(&self) -> u64;
     /// Position in the dispatch table (evaluation order).
-    fn dispatch_index(&self) -> P::NonNegativeInteger;
+    fn dispatch_index(&self) -> u64;
 }
 
 /// An ordered set of DispatchRules for a single dispatch point. Must satisfy exhaustiveness and mutual exclusion.
-pub trait DispatchTable<P: Primitives> {
+pub trait DispatchTable<H: HostTypes> {
     /// Associated type for `DispatchRule`.
-    type DispatchRule: DispatchRule<P>;
+    type DispatchRule: DispatchRule<H>;
     /// The ordered set of rules in this table.
     fn dispatch_rules(&self) -> &[Self::DispatchRule];
     /// True iff the disjunction of all dispatch predicates is a tautology over the input class.
-    fn is_exhaustive(&self) -> P::Boolean;
+    fn is_exhaustive(&self) -> bool;
     /// True iff no two dispatch predicates can be simultaneously true for any input.
-    fn is_mutually_exclusive(&self) -> P::Boolean;
+    fn is_mutually_exclusive(&self) -> bool;
 }
 
 /// A triple (StatePredicate, effect:Effect, reduction:ReductionStep). The guard is a StatePredicate; if true, the effect is applied and the reduction advances to the target step.
-pub trait GuardedTransition<P: Primitives> {
+pub trait GuardedTransition<H: HostTypes> {
     /// Associated type for `StatePredicate`.
-    type StatePredicate: StatePredicate<P>;
+    type StatePredicate: StatePredicate<H>;
     /// The guard predicate for this transition.
     fn guard_predicate(&self) -> &Self::StatePredicate;
     /// Associated type for `Effect`.
-    type Effect: crate::kernel::effect::Effect<P>;
+    type Effect: crate::kernel::effect::Effect<H>;
     /// The effect applied when the guard is satisfied.
     fn guard_effect(&self) -> &Self::Effect;
     /// Associated type for `ReductionStep`.
-    type ReductionStep: crate::kernel::reduction::ReductionStep<P>;
+    type ReductionStep: crate::kernel::reduction::ReductionStep<H>;
     /// The reduction step to advance to.
     fn guard_target(&self) -> &Self::ReductionStep;
 }
 
 /// A single case in a pattern match: a Predicate and a result Term. The match evaluates predicates in order and returns the result of the first matching arm.
-pub trait MatchArm<P: Primitives> {
+pub trait MatchArm<H: HostTypes> {
     /// Associated type for `Predicate`.
-    type Predicate: Predicate<P>;
+    type Predicate: Predicate<H>;
     /// The predicate guarding this arm.
     fn arm_predicate(&self) -> &Self::Predicate;
     /// Associated type for `Term`.
-    type Term: crate::kernel::schema::Term<P>;
+    type Term: crate::kernel::schema::Term<H>;
     /// The result term if this arm matches.
     fn arm_result(&self) -> &Self::Term;
     /// Position in the match expression (evaluation order).
-    fn arm_index(&self) -> P::NonNegativeInteger;
+    fn arm_index(&self) -> u64;
 }
 
 /// A term formed by evaluating a sequence of MatchArms. Extends the term language with deterministic conditional evaluation.
-pub trait MatchExpression<P: Primitives>: crate::kernel::schema::Term<P> {
+pub trait MatchExpression<H: HostTypes>: crate::kernel::schema::Term<H> {
     /// Associated type for `MatchArm`.
-    type MatchArm: MatchArm<P>;
+    type MatchArm: MatchArm<H>;
     /// The ordered arms of this match expression.
     fn match_arms(&self) -> &[Self::MatchArm];
 }

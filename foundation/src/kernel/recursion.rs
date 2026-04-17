@@ -4,54 +4,54 @@
 //!
 //! Space: Kernel
 
-use crate::Primitives;
+use crate::HostTypes;
 
 /// A self-referential computation parameterized by a descent measure. Each recursive step strictly decreases the measure; the computation terminates when the base case predicate is satisfied.
-pub trait BoundedRecursion<P: Primitives> {
+pub trait BoundedRecursion<H: HostTypes> {
     /// Associated type for `DescentMeasure`.
-    type DescentMeasure: DescentMeasure<P>;
+    type DescentMeasure: DescentMeasure<H>;
     /// The descent measure guaranteeing termination.
     fn measure(&self) -> &Self::DescentMeasure;
     /// Associated type for `BaseCase`.
-    type BaseCase: BaseCase<P>;
+    type BaseCase: BaseCase<H>;
     /// The base case match arm.
     fn base_case(&self) -> &Self::BaseCase;
     /// Associated type for `RecursiveCase`.
-    type RecursiveCase: RecursiveCase<P>;
+    type RecursiveCase: RecursiveCase<H>;
     /// The recursive case match arm.
     fn recursive_case(&self) -> &Self::RecursiveCase;
     /// Associated type for `Predicate`.
-    type Predicate: crate::kernel::predicate::Predicate<P>;
+    type Predicate: crate::kernel::predicate::Predicate<H>;
     /// The predicate that identifies the base case.
     fn base_predicate(&self) -> &Self::Predicate;
     /// Associated type for `ComputationDatum`.
-    type ComputationDatum: crate::user::morphism::ComputationDatum<P>;
+    type ComputationDatum: crate::user::morphism::ComputationDatum<H>;
     /// The computation applied at each recursive step (may reference itself via its content address).
     fn recursion_body(&self) -> &Self::ComputationDatum;
     /// The measure value at the start of recursion. Bounds the maximum recursion depth.
-    fn initial_measure(&self) -> P::NonNegativeInteger;
+    fn initial_measure(&self) -> u64;
 }
 
 /// A well-founded function from computation state to xsd:nonNegativeInteger. Strictly decreases on every recursive step.
-pub trait DescentMeasure<P: Primitives> {
+pub trait DescentMeasure<H: HostTypes> {
     /// The current value of the descent measure.
-    fn measure_value(&self) -> P::NonNegativeInteger;
+    fn measure_value(&self) -> u64;
 }
 
 /// The match arm selected when the descent measure reaches zero or the base predicate is satisfied. Produces a direct result without further recursion.
-pub trait BaseCase<P: Primitives>: crate::kernel::predicate::MatchArm<P> {}
+pub trait BaseCase<H: HostTypes>: crate::kernel::predicate::MatchArm<H> {}
 
 /// The match arm selected when the descent measure is positive. Applies a decomposition step, decreases the measure, and invokes the recursion.
-pub trait RecursiveCase<P: Primitives>: crate::kernel::predicate::MatchArm<P> {}
+pub trait RecursiveCase<H: HostTypes>: crate::kernel::predicate::MatchArm<H> {}
 
 /// A single step in a bounded recursion: the decomposition applied before the recursive invocation. Must strictly decrease the DescentMeasure.
-pub trait RecursiveStep<P: Primitives> {
+pub trait RecursiveStep<H: HostTypes> {
     /// Associated type for `Transform`.
-    type Transform: crate::user::morphism::Transform<P>;
+    type Transform: crate::user::morphism::Transform<H>;
     /// The transform applied to decompose the input before recursion.
     fn step_decomposition(&self) -> &Self::Transform;
     /// Associated type for `DescentMeasure`.
-    type DescentMeasure: DescentMeasure<P>;
+    type DescentMeasure: DescentMeasure<H>;
     /// The measure value before this step.
     fn step_measure_pre(&self) -> &Self::DescentMeasure;
     /// The measure value after this step.
@@ -59,7 +59,7 @@ pub trait RecursiveStep<P: Primitives> {
 }
 
 /// A computation trace recording the sequence of recursive steps, measure values, and the base case result. The trace length is bounded by the initial measure value.
-pub trait RecursionTrace<P: Primitives>: crate::bridge::trace::ComputationTrace<P> {}
+pub trait RecursionTrace<H: HostTypes>: crate::bridge::trace::ComputationTrace<H> {}
 
 /// A bounded recursion where the descent measure is the structural size of the input type (site count, constraint count, or operad nesting depth).
-pub trait StructuralRecursion<P: Primitives>: BoundedRecursion<P> {}
+pub trait StructuralRecursion<H: HostTypes>: BoundedRecursion<H> {}

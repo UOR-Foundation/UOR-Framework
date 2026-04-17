@@ -31,29 +31,27 @@
 //! `pub(crate)` constructors, and the v0.2.2 conformance suite (W5 ψ-leakage gate,
 //! W6 public-API snapshot) catch any deviation.
 //!
-//! # HostTypes (v0.2.2 W10)
+//! # HostTypes (target §4.1 W10)
 //!
-//! Downstream chooses representations only for the four slots that genuinely
-//! vary across host environments. Witt-level integers, booleans, IRIs, and
-//! canonical bytes are foundation-owned and derived from `WittLevel`.
+//! Downstream chooses representations only for the three slots that genuinely
+//! vary across host environments. Witt-level integers, booleans, IRIs, canonical
+//! bytes, and `UorTime` are foundation-owned and derived from `WittLevel`.
 //!
 //! ```rust,ignore
 //! use uor_foundation::{HostTypes, DefaultHostTypes};
 //!
-//! // Use the canonical defaults: f64 / i64 / str / [u8].
+//! // Use the canonical defaults: f64 / str / [u8].
 //! type H = DefaultHostTypes;
 //!
 //! // Or override one slot:
 //! struct EmbeddedHost;
 //! impl HostTypes for EmbeddedHost {
 //!     type Decimal = f32;        // override: tighter precision budget
-//!     type DateTime = i64;       // default
 //!     type HostString = str;     // default
 //!     type WitnessBytes = [u8];  // default
 //! }
 //! ```
 //!
-//! `Primitives` is retained as a deprecated alias for v0.2.1 backwards compatibility.
 //!
 //! # Module structure
 //!
@@ -93,15 +91,14 @@
 //! - `enforcement::resolver::incremental_completeness::certify(input)` — incremental
 //! - `enforcement::resolver::grounding_aware::certify(unit)` — grounding-aware
 //!
-//! # Migration from v0.2.1
+//! # Scope note
 //!
-//! - `uor_ground!` macro                  → deleted; use `pipeline::run::<T, P>`
-//! - `#[derive(ConstrainedType)]`         → deleted; declare `const _VALIDATED: Validated<…, CompileTime>`
-//! - `#[uor_grounded(level = …)]`         → deleted; use phantom-typed `Mul::<W32>::apply(…)` etc.
-//! - `Primitives` trait                   → use `HostTypes` + `DefaultHostTypes`
-//! - 4 cert shim types                    → use `Certified<C>` parametric carrier
-//! - `Resolver::new().certify(…)` structs → `enforcement::resolver::name::certify(…)` functions
-//! - `run_pipeline(&datum, level)`        → `pipeline::run::<T, P>(validated_compile_unit)`
+//! This crate is conformance-first: every surface the target architecture
+//! document (`external/uor-foundation-target-v2.md`) specifies is present,
+//! and every surface it rejects (e.g., the deleted v0.2.1 `Primitives` trait
+//! and unit-struct resolver façades) is absent. There is no migration layer,
+//! no deprecation aliases, and no compatibility shims — the crate is either
+//! in conformance with the target document or it isn't.
 
 #![no_std]
 
@@ -114,67 +111,48 @@ pub mod user;
 
 pub use enums::*;
 
-/// XSD primitive type family.
-/// Implementors choose concrete representations for each XSD type.
-/// PRISM might use `u64` for integers at Q0, `u128` at higher quantum
-/// levels, or a bignum library. The foundation does not constrain this choice.
-/// **v0.2.2 deprecation notice:** `Primitives` will be removed in a future
-/// version in favor of [`HostTypes`], which narrows the trait to the four
-/// slots that genuinely vary across host environments (`Decimal`, `DateTime`,
-/// `HostString`, `WitnessBytes`) and lets the foundation own the integer /
-/// boolean / IRI representation derived from `WittLevel`.
-pub trait Primitives {
-    /// String type (`xsd:string`). Use `str` for borrowed, `String` for owned.
-    type String: ?Sized;
-    /// Integer type (`xsd:integer`).
-    type Integer;
-    /// Non-negative integer type (`xsd:nonNegativeInteger`).
-    type NonNegativeInteger;
-    /// Positive integer type (`xsd:positiveInteger`).
-    type PositiveInteger;
-    /// Decimal type (`xsd:decimal`).
-    type Decimal;
-    /// Boolean type (`xsd:boolean`).
-    type Boolean;
-}
+pub use enforcement::{
+    BindingEntry, BindingsTable, BindingsTableError, BoundConstraint, Calibration,
+    CalibrationError, Certificate, CertificateKind, Certified, CompileUnit, CompileUnitBuilder,
+    ContentAddress, ContentFingerprint, Derivation, Grounded, GroundingCertificate, Hasher,
+    LandauerBudget, MultiplicationCertificate, Nanos, PipelineFailure, ReplayError, ShapeViolation,
+    Term, TermArena, TermList, Trace, TraceEvent, UorTime, Validated,
+    FINGERPRINT_MAX_BYTES, FINGERPRINT_MIN_BYTES, TRACE_MAX_EVENTS, TRACE_REPLAY_FORMAT_VERSION,
+};
 
-/// v0.2.2 W10: narrow host-types trait that lets downstream choose representations
-/// only for the slots that genuinely vary across host environments. Foundation-owned
-/// types (Witt-level integers, booleans, IRIs, canonicalBytes) are derived from the
-/// `WittLevel` family and not exposed here.
-/// MSRV 1.70 forbids `associated_type_defaults`, so v0.2.2 ships [`DefaultHostTypes`]
-/// as the canonical default impl. Downstream can either use `DefaultHostTypes`
-/// directly or implement `HostTypes` on their own marker struct, optionally
-/// overriding individual associated types.
+/// Phase B (target §4.1 W10): narrow host-types trait — the only carrier for
+/// the slots that genuinely vary across host environments. Foundation-owned
+/// types (Witt-level integers, booleans, IRIs, canonicalBytes, `UorTime`) are
+/// derived from the `WittLevel` family and not exposed here.
+/// Three slots: `Decimal` (real-number representation), `HostString` (opaque
+/// host string, NOT a foundation IRI), and `WitnessBytes` (opaque host byte
+/// sequence, NOT a foundation `canonicalBytes` constant). The v0.2.1 `DateTime`
+/// slot is removed; downstream associates timestamps out-of-band per target §1.6.
 pub trait HostTypes {
     /// Real-number representation for kernel observables (entropies, amplitudes, rates).
-    /// `DefaultHostTypes` selects `f64`. Override with `f128`, arbitrary-precision
-    /// rational, or interval arithmetic as needed.
+    /// `DefaultHostTypes` selects `f64`. Override with higher-precision or interval
+    /// arithmetic as needed.
     type Decimal;
 
-    /// Host event timestamp.
-    /// `DefaultHostTypes` selects `i64` interpreted as Unix nanoseconds.
-    /// Override with `i128` for wider range, or a domain-specific timestamp type.
-    type DateTime;
-
     /// Host-supplied opaque string (NOT a foundation IRI).
-    /// `DefaultHostTypes` selects `str`. Override with owned `String`, `Cow<'_, str>`, etc.
+    /// `DefaultHostTypes` selects `str`. Override with owned `String`, `Cow<'_, str>`,
+    /// etc. for embedded / host-heap environments.
     type HostString: ?Sized;
 
     /// Host-supplied opaque byte sequence (NOT a foundation `canonicalBytes` constant).
-    /// `DefaultHostTypes` selects `[u8]`. Override with owned `Vec<u8>`, `Bytes`, etc.
+    /// `DefaultHostTypes` selects `[u8]`. Override with owned `Vec<u8>`, `Bytes`,
+    /// etc. for host-heap environments.
     type WitnessBytes: ?Sized;
 }
 
-/// v0.2.2 W10: canonical default impl of [`HostTypes`]. Selects `f64`/`i64`/`str`/`[u8]`.
-/// Use as `type H = uor_foundation::DefaultHostTypes;` to inherit the defaults; replace
-/// with a downstream marker struct if any slot needs an override.
+/// Phase B: canonical default impl of [`HostTypes`]. Selects `f64`/`str`/`[u8]`.
+/// Use as `type H = uor_foundation::DefaultHostTypes;` to inherit the defaults;
+/// replace with a downstream marker struct if any slot needs an override.
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct DefaultHostTypes;
 
 impl HostTypes for DefaultHostTypes {
     type Decimal = f64;
-    type DateTime = i64;
     type HostString = str;
     type WitnessBytes = [u8];
 }

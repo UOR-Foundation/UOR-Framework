@@ -111,11 +111,61 @@ pub fn write_file(path: &Path, content: &str) -> Result<()> {
 }
 
 /// Wraps a comment string for doc comments: collapses internal whitespace runs
-/// and escapes brackets to avoid false rustdoc intra-doc link warnings.
+/// and escapes brackets / angle brackets to avoid false rustdoc warnings
+/// (intra-doc links for `[text]`; unclosed HTML tags for `Name<T>`).
 pub fn normalize_comment(s: &str) -> String {
     let collapsed = s.split_whitespace().collect::<Vec<_>>().join(" ");
-    // Escape [ and ] to prevent rustdoc from interpreting them as intra-doc links
-    collapsed.replace('[', r"\[").replace(']', r"\]")
+    let bracketed = collapsed.replace('[', r"\[").replace(']', r"\]");
+    // v0.2.2 T6.23: escape generic-like `<Ident>` runs with backslashes so
+    // rustdoc doesn't treat `Datum<L>`, `Grounded<T>`, etc. as unclosed HTML
+    // tags. Matches the shape `Ident<Ident(, Ident)*>` where Ident is alnum
+    // or `_` (and `::` for turbofish, `:`/space for `<const N: usize>`).
+    //
+    // Iterates over chars (not bytes) to stay UTF-8-safe — the ontology
+    // comments contain Greek letters and other multibyte code points.
+    let chars: Vec<char> = bracketed.chars().collect();
+    let mut out = String::with_capacity(bracketed.len());
+    let mut i = 0;
+    while i < chars.len() {
+        if chars[i] == '<' && i > 0 && is_ident_char(chars[i - 1]) {
+            let mut j = i + 1;
+            let mut ok = j < chars.len() && is_generic_start(chars[j]);
+            while ok && j < chars.len() && chars[j] != '>' {
+                if !is_generic_body(chars[j]) {
+                    ok = false;
+                    break;
+                }
+                j += 1;
+            }
+            if ok && j < chars.len() && chars[j] == '>' {
+                out.push_str(r"\<");
+                for &c in &chars[i + 1..j] {
+                    out.push(c);
+                }
+                out.push_str(r"\>");
+                i = j + 1;
+                continue;
+            }
+        }
+        out.push(chars[i]);
+        i += 1;
+    }
+    out
+}
+
+fn is_ident_char(c: char) -> bool {
+    // Allow `:` before `<` so the regex catches turbofish `fn::<T>` as well
+    // as plain `Generic<T>`.
+    c.is_ascii_alphanumeric() || c == '_' || c == ':'
+}
+
+fn is_generic_start(c: char) -> bool {
+    c.is_ascii_alphabetic() || c == '_'
+}
+
+fn is_generic_body(c: char) -> bool {
+    // Allow `:` and space to match `<const N: usize>` / `<T: Hasher>` shapes.
+    c.is_ascii_alphanumeric() || c == '_' || c == ',' || c == ' ' || c == ':'
 }
 
 #[cfg(test)]
