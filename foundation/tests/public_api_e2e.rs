@@ -43,7 +43,10 @@ static SENTINEL_DOMAINS: &[VerificationDomain] = &[VerificationDomain::Enumerati
 /// 5 required fields set (root_term, witt_level_ceiling, thermodynamic_budget,
 /// target_domains, result_type_iri). Used by tests that only care about
 /// witt_level / budget but need a complete builder.
-fn build_compile_unit(level: WittLevel, budget: u64) -> Validated<CompileUnit, CompileTime> {
+fn build_compile_unit(
+    level: WittLevel,
+    budget: u64,
+) -> Validated<CompileUnit<'static>, CompileTime> {
     let builder = CompileUnitBuilder::new()
         .root_term(SENTINEL_TERMS)
         .witt_level_ceiling(level)
@@ -150,10 +153,19 @@ fn phase_e_run_const_grounded_metrics_differ_by_witt_level() {
 
 #[test]
 fn phase_f_run_parallel_unit_address_depends_on_site_count() {
+    // v0.2.2 Phase H3: the only ParallelDeclaration constructor is
+    // `new_with_partition`; supply explicit partition slices + witness IRI.
+    static PARTITION_3: &[u32] = &[0, 1, 2];
+    static PARTITION_7: &[u32] = &[0, 1, 2, 3, 4, 5, 6];
+    const WITNESS: &str = "https://uor.foundation/parallel/ParallelDisjointnessWitness";
     let unit_3: Validated<ParallelDeclaration> =
-        validated_runtime(ParallelDeclaration::new::<ConstrainedTypeInput>(3));
+        validated_runtime(ParallelDeclaration::new_with_partition::<
+            ConstrainedTypeInput,
+        >(PARTITION_3, WITNESS));
     let unit_7: Validated<ParallelDeclaration> =
-        validated_runtime(ParallelDeclaration::new::<ConstrainedTypeInput>(7));
+        validated_runtime(ParallelDeclaration::new_with_partition::<
+            ConstrainedTypeInput,
+        >(PARTITION_7, WITNESS));
     let g_3: Grounded<ConstrainedTypeInput> =
         run_parallel::<ConstrainedTypeInput, _, Fnv1aHasher16>(unit_3)
             .expect("3-site parallel walks");
@@ -289,8 +301,8 @@ fn phase_j_grounding_program_compiles_for_digest_map() {
 #[test]
 fn t5_pipeline_run_threads_constraints_into_unit_address() {
     use uor_foundation::pipeline::run;
-    let unit_100: Validated<CompileUnit> = build_compile_unit(WittLevel::W8, 100).into();
-    let unit_200: Validated<CompileUnit> = build_compile_unit(WittLevel::W8, 200).into();
+    let unit_100: Validated<CompileUnit<'static>> = build_compile_unit(WittLevel::W8, 100).into();
+    let unit_200: Validated<CompileUnit<'static>> = build_compile_unit(WittLevel::W8, 200).into();
     let g_100: Grounded<ConstrainedTypeInput> =
         run::<ConstrainedTypeInput, _, Fnv1aHasher16>(unit_100).expect("100 grounds");
     let g_200: Grounded<ConstrainedTypeInput> =
@@ -312,7 +324,7 @@ fn t5_pipeline_run_threads_constraints_into_unit_address() {
 #[test]
 fn t5_grounded_derivation_replay_round_trips_via_verify_trace() {
     use uor_foundation::pipeline::run;
-    let unit: Validated<CompileUnit> = build_compile_unit(WittLevel::W8, 100).into();
+    let unit: Validated<CompileUnit<'static>> = build_compile_unit(WittLevel::W8, 100).into();
     let grounded: Grounded<ConstrainedTypeInput> =
         run::<ConstrainedTypeInput, _, Fnv1aHasher16>(unit).expect("grounds");
     let trace = grounded.derivation().replay();

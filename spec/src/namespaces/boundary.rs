@@ -134,28 +134,18 @@ fn properties() -> Vec<Property> {
             domain: Some("https://uor.foundation/boundary/Sink"),
             range: "https://uor.foundation/type/TypeDefinition",
         },
-        Property {
-            id: "https://uor.foundation/boundary/sourceGrounding",
-            label: "sourceGrounding",
-            comment: "The grounding map that transforms incoming surface \
-                      data to ring datums.",
-            kind: PropertyKind::Object,
-            functional: true,
-            required: false,
-            domain: Some("https://uor.foundation/boundary/Source"),
-            range: "https://uor.foundation/morphism/GroundingMap",
-        },
-        Property {
-            id: "https://uor.foundation/boundary/sinkProjection",
-            label: "sinkProjection",
-            comment: "The projection map that transforms ring datums to \
-                      outgoing surface data.",
-            kind: PropertyKind::Object,
-            functional: true,
-            required: false,
-            domain: Some("https://uor.foundation/boundary/Sink"),
-            range: "https://uor.foundation/morphism/ProjectionMap",
-        },
+        // Target §3: `boundary:sourceGrounding` removed. The Rust-side
+        // discipline lives in `Grounding::Map` (enforcement.rs), which
+        // carries the kind discriminator at the type level. The
+        // `source id : T via GroundingMap` grammar form declares the
+        // binding; the materialized `boundary:Source` individual inherits
+        // the binding through its Rust `Grounding` impl.
+        // Target §3: `boundary:sinkProjection` removed. The Rust-side
+        // discipline lives in `Sinking::ProjectionMap` (enforcement.rs),
+        // which carries the kind discriminator at the type level. The
+        // `sink id : T via ProjectionMap` grammar form declares the
+        // binding; the materialized `boundary:Sink` individual inherits
+        // the binding through its Rust `Sinking` impl.
         Property {
             id: "https://uor.foundation/boundary/effectBoundary",
             label: "effectBoundary",

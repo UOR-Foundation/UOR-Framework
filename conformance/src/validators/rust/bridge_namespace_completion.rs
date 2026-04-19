@@ -61,13 +61,44 @@ pub fn validate(workspace: &Path) -> Result<ConformanceReport> {
         ("Partition sealed type", "pub struct Partition"),
         ("TraceEvent sealed type", "pub struct TraceEvent"),
         ("Trace sealed type", "pub struct Trace"),
+        // Phase X.2: dimension-as-runtime-field carriers + cup-product algebra.
+        ("HomologyClass", "pub struct HomologyClass {"),
+        ("CohomologyClass", "pub struct CohomologyClass {"),
+        ("CohomologyError", "pub enum CohomologyError {"),
         (
-            "HomologyClass<N>",
-            "pub struct HomologyClass<const N: usize>",
+            "mint_cohomology_class",
+            "pub fn mint_cohomology_class<H: Hasher>",
         ),
         (
-            "CohomologyClass<N>",
-            "pub struct CohomologyClass<const N: usize>",
+            "mint_homology_class",
+            "pub fn mint_homology_class<H: Hasher>",
+        ),
+        ("fold_cup_product", "pub fn fold_cup_product<H: Hasher>"),
+        (
+            "MAX_COHOMOLOGY_DIMENSION",
+            "pub const MAX_COHOMOLOGY_DIMENSION: u32 = 32;",
+        ),
+        // Target §3 Sink/Sinking hardening.
+        ("Sinking trait", "pub trait Sinking {"),
+        ("MorphismKind trait", "pub trait MorphismKind:"),
+        ("ProjectionMapKind trait", "pub trait ProjectionMapKind:"),
+        (
+            "EmitThrough trait",
+            "pub trait EmitThrough<H: crate::HostTypes>:",
+        ),
+        (
+            "IntegerProjectionMap marker",
+            "pub struct IntegerProjectionMap;",
+        ),
+        ("Utf8ProjectionMap marker", "pub struct Utf8ProjectionMap;"),
+        ("JsonProjectionMap marker", "pub struct JsonProjectionMap;"),
+        (
+            "DigestProjectionMap marker",
+            "pub struct DigestProjectionMap;",
+        ),
+        (
+            "BinaryProjectionMap marker",
+            "pub struct BinaryProjectionMap;",
         ),
         (
             "InteractionDeclarationBuilder",

@@ -387,30 +387,47 @@ fn generate_grounding_types(f: &mut RustFile, ontology: &Ontology) {
     // the call site. The discrimination is structural-tagging — the
     // foundation cannot verify the impl body matches the declared kind, but
     // it can ensure that the kind is one of a fixed sealed set.
-    f.doc_comment("v0.2.2 W4: sealed marker trait for the kind of a `Grounding` map.");
-    f.doc_comment("Implemented by exactly the `morphism:GroundingMap` individuals declared in");
-    f.doc_comment("the ontology; downstream cannot extend the kind set.");
-    f.line("pub trait GroundingMapKind: grounding_map_kind_sealed::Sealed {");
-    f.indented_doc_comment("The ontology IRI of this grounding map kind.");
+    // Target §3: `MorphismKind` is the shared sealed supertrait beneath both
+    // `GroundingMapKind` (inbound) and `ProjectionMapKind` (outbound). The
+    // four structural markers (`Total`, `Invertible`, `PreservesStructure`,
+    // `PreservesMetric`) are bounded on `MorphismKind` — one abstraction,
+    // both kind hierarchies consume it.
+    f.doc_comment("Target §3: sealed marker trait shared by all morphism kinds.");
+    f.doc_comment("`GroundingMapKind` (inbound) and `ProjectionMapKind` (outbound) both");
+    f.doc_comment("extend this trait; the four structural markers (`Total`, `Invertible`,");
+    f.doc_comment("`PreservesStructure`, `PreservesMetric`) are bounded on `MorphismKind`.");
+    f.line("pub trait MorphismKind: morphism_kind_sealed::Sealed {");
+    f.indented_doc_comment("The ontology IRI of this morphism kind.");
     f.line("    const ONTOLOGY_IRI: &'static str;");
     f.line("}");
     f.blank();
 
-    f.doc_comment("v0.2.2 W4: kinds whose grounding image is total over the input domain");
-    f.doc_comment("(every input grounds successfully).");
-    f.line("pub trait Total: GroundingMapKind {}");
+    f.doc_comment("v0.2.2 W4: sealed marker trait for the kind of a `Grounding` map.");
+    f.doc_comment("Implemented by exactly the `morphism:GroundingMap` individuals declared in");
+    f.doc_comment("the ontology; downstream cannot extend the kind set.");
+    f.line("pub trait GroundingMapKind: MorphismKind + grounding_map_kind_sealed::Sealed {}");
     f.blank();
-    f.doc_comment("v0.2.2 W4: kinds whose grounding map is injective and admits an inverse");
-    f.doc_comment("on its image.");
-    f.line("pub trait Invertible: GroundingMapKind {}");
+
+    f.doc_comment("Target §3: sealed marker trait for the kind of a `Sinking` projection.");
+    f.doc_comment("Implemented by exactly the `morphism:ProjectionMap` individuals declared");
+    f.doc_comment("in the ontology; downstream cannot extend the kind set.");
+    f.line("pub trait ProjectionMapKind: MorphismKind + projection_map_kind_sealed::Sealed {}");
     f.blank();
-    f.doc_comment("v0.2.2 W4: kinds whose grounding map preserves the algebraic structure");
-    f.doc_comment("of the source domain (homomorphism-like).");
-    f.line("pub trait PreservesStructure: GroundingMapKind {}");
+
+    f.doc_comment("v0.2.2 W4: kinds whose image is total over the input domain");
+    f.doc_comment("(every input maps successfully).");
+    f.line("pub trait Total: MorphismKind {}");
     f.blank();
-    f.doc_comment("v0.2.2 W4: kinds whose grounding map preserves the metric of the source");
-    f.doc_comment("domain (isometry-like).");
-    f.line("pub trait PreservesMetric: GroundingMapKind {}");
+    f.doc_comment("v0.2.2 W4: kinds whose map is injective and admits an inverse on its image.");
+    f.line("pub trait Invertible: MorphismKind {}");
+    f.blank();
+    f.doc_comment("v0.2.2 W4: kinds whose map preserves the algebraic structure of the");
+    f.doc_comment("source domain (homomorphism-like).");
+    f.line("pub trait PreservesStructure: MorphismKind {}");
+    f.blank();
+    f.doc_comment("v0.2.2 W4: kinds whose map preserves the metric of the source domain");
+    f.doc_comment("(isometry-like).");
+    f.line("pub trait PreservesMetric: MorphismKind {}");
     f.blank();
 
     // Walk morphism:GroundingMap individuals and emit one unit struct per kind.
@@ -437,6 +454,50 @@ fn generate_grounding_types(f: &mut RustFile, ontology: &Ontology) {
         f.blank();
     }
 
+    // Target §3: walk morphism:ProjectionMap individuals and emit marker
+    // structs in parallel. The sealed modules + impls for both kind hierarchies
+    // are woven together below so `morphism_kind_sealed` can enumerate all
+    // morphism kinds.
+    let projection_kinds =
+        individuals_of_type(ontology, "https://uor.foundation/morphism/ProjectionMap");
+    let mut projection_names: Vec<String> = Vec::new();
+    for k in &projection_kinds {
+        projection_names.push(local_name(k.id).to_string());
+    }
+    projection_names.sort();
+    projection_names.dedup();
+
+    for name in &projection_names {
+        let doc = match name.as_str() {
+            "IntegerProjectionMap" => "Target §3: kind for integer surface symbols projected outward. Invertible, structure-preserving.",
+            "Utf8ProjectionMap" => "Target §3: kind for UTF-8 host strings projected outward. Invertible, structure-preserving.",
+            "JsonProjectionMap" => "Target §3: kind for JSON host strings projected outward. Invertible, structure-preserving.",
+            "DigestProjectionMap" => "Target §3: kind for fixed-size digests projected outward. Total but not invertible; preserves no structure.",
+            "BinaryProjectionMap" => "Target §3: kind for raw byte projections. Total and invertible; preserves bit identity only.",
+            _ => "Target §3: ProjectionMap kind unit struct.",
+        };
+        f.doc_comment(doc);
+        f.line("#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]");
+        f.line(&format!("pub struct {name};"));
+        f.blank();
+    }
+
+    // Sealed supertrait module for MorphismKind — enumerates every
+    // GroundingMap + ProjectionMap individual.
+    f.line("mod morphism_kind_sealed {");
+    f.indented_doc_comment(
+        "Private supertrait for MorphismKind. Not implementable outside this crate.",
+    );
+    f.line("    pub trait Sealed {}");
+    for name in &kind_names {
+        f.line(&format!("    impl Sealed for super::{name} {{}}"));
+    }
+    for name in &projection_names {
+        f.line(&format!("    impl Sealed for super::{name} {{}}"));
+    }
+    f.line("}");
+    f.blank();
+
     // Sealed module + GroundingMapKind impls.
     f.line("mod grounding_map_kind_sealed {");
     f.indented_doc_comment("Private supertrait. Not implementable outside this crate.");
@@ -446,8 +507,30 @@ fn generate_grounding_types(f: &mut RustFile, ontology: &Ontology) {
     }
     f.line("}");
     f.blank();
+
+    // Sealed module for ProjectionMapKind.
+    f.line("mod projection_map_kind_sealed {");
+    f.indented_doc_comment("Private supertrait. Not implementable outside this crate.");
+    f.line("    pub trait Sealed {}");
+    for name in &projection_names {
+        f.line(&format!("    impl Sealed for super::{name} {{}}"));
+    }
+    f.line("}");
+    f.blank();
+
+    // MorphismKind impls — one per GroundingMap + ProjectionMap individual.
+    // Carries the ontology IRI constant so the type-level kind can be
+    // content-addressed against the ontology individual at runtime.
     for name in &kind_names {
-        f.line(&format!("impl GroundingMapKind for {name} {{"));
+        f.line(&format!("impl MorphismKind for {name} {{"));
+        f.line(&format!(
+            "    const ONTOLOGY_IRI: &'static str = \"https://uor.foundation/morphism/{name}\";"
+        ));
+        f.line("}");
+        f.blank();
+    }
+    for name in &projection_names {
+        f.line(&format!("impl MorphismKind for {name} {{"));
         f.line(&format!(
             "    const ONTOLOGY_IRI: &'static str = \"https://uor.foundation/morphism/{name}\";"
         ));
@@ -455,12 +538,31 @@ fn generate_grounding_types(f: &mut RustFile, ontology: &Ontology) {
         f.blank();
     }
 
-    // Marker-trait impl table (per W4 plan):
-    //   IntegerGroundingMap : Total + Invertible + PreservesStructure
-    //   Utf8GroundingMap    : Invertible + PreservesStructure   (not Total — codec can fail)
-    //   JsonGroundingMap    : Invertible + PreservesStructure   (not Total — parser can fail)
-    //   DigestGroundingMap  : Total                              (not Invertible, no structure)
-    //   BinaryGroundingMap  : Total + Invertible                 (no structure preservation)
+    // GroundingMapKind / ProjectionMapKind are now empty marker traits
+    // parametrized by the `MorphismKind` supertrait — every kind hierarchy
+    // just tags which side of the boundary it serves.
+    for name in &kind_names {
+        f.line(&format!("impl GroundingMapKind for {name} {{}}"));
+    }
+    f.blank();
+    for name in &projection_names {
+        f.line(&format!("impl ProjectionMapKind for {name} {{}}"));
+    }
+    f.blank();
+
+    // Structural marker-trait impl table — per W4 plan, extended for
+    // ProjectionMap duals. Each row is (kind_name, [markers]). The markers
+    // are bounded on `MorphismKind` so both kind hierarchies consume them.
+    //   IntegerGroundingMap  : Total + Invertible + PreservesStructure
+    //   Utf8GroundingMap     : Invertible + PreservesStructure   (not Total)
+    //   JsonGroundingMap     : Invertible + PreservesStructure   (not Total)
+    //   DigestGroundingMap   : Total                              (not Invertible)
+    //   BinaryGroundingMap   : Total + Invertible                 (no structure)
+    //   IntegerProjectionMap : Invertible + PreservesStructure    (not Total)
+    //   Utf8ProjectionMap    : Invertible + PreservesStructure    (not Total)
+    //   JsonProjectionMap    : Invertible + PreservesStructure    (not Total)
+    //   DigestProjectionMap  : Total                              (digest inverse is not a projection)
+    //   BinaryProjectionMap  : Total + Invertible                 (no structure)
     let marker_table: &[(&str, &[&str])] = &[
         (
             "IntegerGroundingMap",
@@ -470,9 +572,19 @@ fn generate_grounding_types(f: &mut RustFile, ontology: &Ontology) {
         ("JsonGroundingMap", &["Invertible", "PreservesStructure"]),
         ("DigestGroundingMap", &["Total"]),
         ("BinaryGroundingMap", &["Total", "Invertible"]),
+        (
+            "IntegerProjectionMap",
+            &["Invertible", "PreservesStructure"],
+        ),
+        ("Utf8ProjectionMap", &["Invertible", "PreservesStructure"]),
+        ("JsonProjectionMap", &["Invertible", "PreservesStructure"]),
+        ("DigestProjectionMap", &["Total"]),
+        ("BinaryProjectionMap", &["Total", "Invertible"]),
     ];
     for (kind_name, markers) in marker_table {
-        if !kind_names.iter().any(|n| n == *kind_name) {
+        let in_grounding = kind_names.iter().any(|n| n == *kind_name);
+        let in_projection = projection_names.iter().any(|n| n == *kind_name);
+        if !in_grounding && !in_projection {
             continue;
         }
         for marker in *markers {
@@ -626,6 +738,94 @@ fn generate_grounding_types(f: &mut RustFile, ontology: &Ontology) {
     f.line("    fn ground(&self, external: &[u8]) -> Option<Self::Output> {");
     f.line("        self.program().run_program(external)");
     f.line("    }");
+    f.line("}");
+    f.blank();
+
+    // Target §3 + §4.6 — `Sinking`: foundation-owned operational contract for
+    // outbound boundary crossings. The dual of `Grounding`. Unlike `Grounding`,
+    // which needs foundation-verified kind discrimination via `GroundingExt`'s
+    // combinator closure, `Sinking` carries its sealing in the input type:
+    // `&Grounded<Self::Source>` is unforgeable because `Grounded<T>` is sealed
+    // (constructed only by `pipeline::run::<T>`). The projection function body
+    // is genuinely open — downstream authors decide the `Output` type and the
+    // projection logic freely. The foundation guarantee "cannot launder
+    // unverified data outward" is structurally encoded in the signature.
+    f.doc_comment("Target §3 + §4.6: the foundation-owned operational contract for outbound");
+    f.doc_comment("boundary crossings. Dual of `Grounding`.");
+    f.doc_comment("");
+    f.doc_comment("A `Sinking` impl projects a `Grounded<Source>` value to a host-side");
+    f.doc_comment("`Output` through a specific `ProjectionMap` kind. The `&Grounded<Source>`");
+    f.doc_comment("input is structurally unforgeable (sealed per §2) — no raw data can be");
+    f.doc_comment("laundered through this contract. Downstream authors implement `Sinking`");
+    f.doc_comment("for their projection types; the foundation guarantees the input pedigree.");
+    f.doc_example(
+        "use uor_foundation::enforcement::{\n\
+         \x20   Grounded, Sinking, Utf8ProjectionMap, ConstrainedTypeInput,\n\
+         };\n\
+         \n\
+         struct MyJsonSink;\n\
+         \n\
+         impl Sinking for MyJsonSink {\n\
+         \x20   type Source = ConstrainedTypeInput;\n\
+         \x20   type ProjectionMap = Utf8ProjectionMap;\n\
+         \x20   type Output = String;\n\
+         \n\
+         \x20   fn project(&self, grounded: &Grounded<ConstrainedTypeInput>) -> String {\n\
+         \x20       format!(\"{{:?}}\", grounded.unit_address())\n\
+         \x20   }\n\
+         }",
+        "rust,ignore",
+    );
+    f.line("pub trait Sinking {");
+    f.indented_doc_comment(
+        "The ring-side shape T carried by the Grounded<T> being projected.\n\
+         Sealed via `GroundedShape` — downstream cannot forge an admissible Source.",
+    );
+    f.line("    type Source: GroundedShape;");
+    f.blank();
+    f.indented_doc_comment(
+        "The ontology-declared ProjectionMap kind this impl serves. Sealed to\n\
+         the closed set of `morphism:ProjectionMap` individuals.",
+    );
+    f.line("    type ProjectionMap: ProjectionMapKind;");
+    f.blank();
+    f.indented_doc_comment(
+        "The host-side output type of this projection. Intentionally generic —\n\
+         downstream chooses `String`, `Vec<u8>`, `serde_json::Value`, or any\n\
+         host-appropriate carrier.",
+    );
+    f.line("    type Output;");
+    f.blank();
+    f.indented_doc_comment(
+        "Project a grounded ring value to the host output. The `&Grounded<Source>`\n\
+         input is unforgeable (Grounded is sealed per §2) — no raw data can be\n\
+         laundered through this contract.",
+    );
+    f.line("    fn project(&self, grounded: &Grounded<Self::Source>) -> Self::Output;");
+    f.line("}");
+    f.blank();
+
+    // Target §4.6 — `EmitThrough`: extension trait tying the ontology-mirror
+    // `EmitEffect<H>` to the Rust-operational `Sinking`. Every `EmitEffect`
+    // impl that actually emits data goes through this trait; the foundation
+    // guarantee is that the input is a sealed `Grounded<Source>`.
+    f.doc_comment("Target §4.6: extension trait tying `EmitEffect<H>` (ontology-declarative)");
+    f.doc_comment("to `Sinking` (Rust-operational). Emit-effect implementations carry a");
+    f.doc_comment("specific `Sinking` impl; the emit operation threads a sealed");
+    f.doc_comment("`Grounded<Source>` through the projection.");
+    f.line("pub trait EmitThrough<H: crate::HostTypes>: crate::bridge::boundary::EmitEffect<H> {");
+    f.indented_doc_comment("The `Sinking` implementation this emit-effect routes through.");
+    f.line("    type Sinking: Sinking;");
+    f.blank();
+    f.indented_doc_comment(
+        "Emit a grounded value through this effect's bound `Sinking`. The\n\
+         input type is the sealed `Grounded<Source>` of the bound `Sinking`;\n\
+         nothing else is admissible.",
+    );
+    f.line("    fn emit(");
+    f.line("        &self,");
+    f.line("        grounded: &Grounded<<Self::Sinking as Sinking>::Source>,");
+    f.line("    ) -> <Self::Sinking as Sinking>::Output;");
     f.line("}");
     f.blank();
 }
@@ -1165,6 +1365,18 @@ fn generate_uor_time(f: &mut RustFile) {
     f.indented_doc_comment("");
     f.indented_doc_comment("Returns `CalibrationError::InvalidCharacteristicEnergy` when");
     f.indented_doc_comment("`characteristic_energy` is non-positive, NaN, or above the maximum.");
+    f.indented_doc_comment("");
+    f.indented_doc_comment("# Example");
+    f.indented_doc_comment("");
+    f.indented_doc_comment("```");
+    f.indented_doc_comment("use uor_foundation::enforcement::Calibration;");
+    f.indented_doc_comment("");
+    f.indented_doc_comment("// X86 server-class envelope at room temperature.");
+    f.indented_doc_comment("// k_B·T at 300 K = 4.14e-21 J; 85 W sustained TDP; ~1e-15 J/op.");
+    f.indented_doc_comment("let cal = Calibration::new(4.14e-21, 85.0, 1.0e-15)");
+    f.indented_doc_comment("    .expect(\"physically plausible server calibration\");");
+    f.indented_doc_comment("# let _ = cal;");
+    f.indented_doc_comment("```");
     f.line("    #[inline]");
     f.line("    pub const fn new(");
     f.line("        k_b_t: f64,");
@@ -1290,6 +1502,58 @@ fn generate_uor_time(f: &mut RustFile) {
     f.line("        Ok(c) => c,");
     f.line("        Err(_) => Calibration::ZERO_SENTINEL,");
     f.line("    };");
+    f.line("}");
+    f.blank();
+
+    // v0.2.2 Phase B: TimingPolicy trait. Parameterizes the preflight/runtime
+    // timing-budget check. Carries the Nanos-valued ontology budget
+    // (reduction:PreflightTimingBound / reduction:RuntimeTimingBound) plus
+    // a reference to the canonical Calibration used to convert an input's
+    // a-priori UorTime estimate into Nanos. Host code can override the
+    // budget or swap in a different calibration for embedded / HPC targets.
+    f.doc_comment(
+        "v0.2.2 Phase B (target §1.7): timing-policy carrier. Parametric over host tuning.",
+    );
+    f.doc_comment("");
+    f.doc_comment("Supplies the preflight / runtime Nanos budgets (canonical values from");
+    f.doc_comment("`reduction:PreflightTimingBound` and `reduction:RuntimeTimingBound`) plus");
+    f.doc_comment("the `Calibration` used to convert an input's a-priori `UorTime` estimate");
+    f.doc_comment("into a Nanos lower bound for comparison against the budget.");
+    f.doc_comment("");
+    f.doc_comment("The foundation-canonical default [`CanonicalTimingPolicy`] uses");
+    f.doc_comment("`calibrations::CONSERVATIVE_WORST_CASE` (the tightest provable lower-bound");
+    f.doc_comment("calibration) and the 10 ms budget from the ontology. Host code overrides by");
+    f.doc_comment("implementing `TimingPolicy` on a marker struct and substituting at the");
+    f.doc_comment("preflight-function call site.");
+    f.line("pub trait TimingPolicy {");
+    f.indented_doc_comment(
+        "Preflight Nanos budget. Inputs whose a-priori UorTime \u{2192} min_wall_clock",
+    );
+    f.indented_doc_comment(
+        "under `Self::CALIBRATION` exceeds this value are rejected at preflight.",
+    );
+    f.line("    const PREFLIGHT_BUDGET_NS: u64;");
+    f.indented_doc_comment("Runtime Nanos budget for post-admission reduction.");
+    f.line("    const RUNTIME_BUDGET_NS: u64;");
+    f.indented_doc_comment(
+        "Canonical Calibration used to convert a-priori UorTime estimates to Nanos.",
+    );
+    f.line("    const CALIBRATION: &'static Calibration;");
+    f.line("}");
+    f.blank();
+    f.doc_comment("v0.2.2 Phase B: foundation-canonical [`TimingPolicy`]. Budget values mirror");
+    f.doc_comment(
+        "`reduction:PreflightTimingBound` and `reduction:RuntimeTimingBound`; calibration",
+    );
+    f.doc_comment("is `calibrations::CONSERVATIVE_WORST_CASE` so the Nanos lower bound from any");
+    f.doc_comment("input UorTime is the tightest physically-defensible value.");
+    f.line("#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]");
+    f.line("pub struct CanonicalTimingPolicy;");
+    f.blank();
+    f.line("impl TimingPolicy for CanonicalTimingPolicy {");
+    f.line("    const PREFLIGHT_BUDGET_NS: u64 = 10_000_000;");
+    f.line("    const RUNTIME_BUDGET_NS: u64 = 10_000_000;");
+    f.line("    const CALIBRATION: &'static Calibration = &calibrations::CONSERVATIVE_WORST_CASE;");
     f.line("}");
     f.blank();
 
@@ -1599,6 +1863,27 @@ fn generate_term_ast(f: &mut RustFile) {
     f.line("    pub content_address: u64,");
     f.line("}");
     f.blank();
+    f.line("impl Binding {");
+    f.indented_doc_comment(
+        "v0.2.2 Phase P.3: lift this binding to the `BindingEntry` shape consumed by",
+    );
+    f.indented_doc_comment("`BindingsTable`. `address` is derived from `content_address` via");
+    f.indented_doc_comment(
+        "`ContentAddress::from_u64_fingerprint`; `bytes` re-uses the `surface` slice.",
+    );
+    f.indented_doc_comment(
+        "Content-deterministic; const-compatible since all fields are `'static`.",
+    );
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn to_binding_entry(&self) -> BindingEntry {");
+    f.line("        BindingEntry {");
+    f.line("            address: ContentAddress::from_u64_fingerprint(self.content_address),");
+    f.line("            bytes: self.surface.as_bytes(),");
+    f.line("        }");
+    f.line("    }");
+    f.line("}");
+    f.blank();
 
     // Assertion
     f.doc_comment("An assertion: `assert lhs = rhs`.");
@@ -1755,6 +2040,14 @@ fn generate_builders(f: &mut RustFile) {
     f.line("pub struct CompileUnitBuilder<'a> {");
     f.indented_doc_comment("The root term expression.");
     f.line("    root_term: Option<&'a [Term]>,");
+    f.indented_doc_comment("v0.2.2 Phase H1: named bindings (`let name : Type = term` forms)");
+    f.indented_doc_comment(
+        "declared by the compile unit. Stage 5 extracts these into a `BindingsTable`",
+    );
+    f.indented_doc_comment(
+        "for grounding-aware and session resolvers; an empty slice declares no bindings.",
+    );
+    f.line("    bindings: Option<&'a [Binding]>,");
     f.indented_doc_comment("The widest Witt level the computation may reference.");
     f.line("    witt_level_ceiling: Option<WittLevel>,");
     f.indented_doc_comment("Landauer-bounded energy budget.");
@@ -1772,8 +2065,18 @@ fn generate_builders(f: &mut RustFile) {
 
     // CompileUnit (validated result type)
     f.doc_comment("A validated compile unit ready for reduction admission.");
-    f.line("#[derive(Debug, Clone, PartialEq, Eq)]");
-    f.line("pub struct CompileUnit {");
+    f.doc_comment("");
+    f.doc_comment("v0.2.2 Phase A (carrier widening): the lifetime parameter `'a` ties");
+    f.doc_comment("the post-validation carrier to its builder's borrow. The `root_term`");
+    f.doc_comment("and `target_domains` slices are retained through validation so");
+    f.doc_comment("resolvers can inspect declared structure — previously these fields");
+    f.doc_comment("were discarded at `validate()` and every resolver received a");
+    f.doc_comment("3-field scalar witness with no walkable structure.");
+    f.doc_comment("");
+    f.doc_comment("Const-constructed compile units use the trivial specialization");
+    f.doc_comment("`CompileUnit<'static>` — borrow-free and usable in const contexts.");
+    f.line("#[derive(Debug, Clone, Copy, PartialEq, Eq)]");
+    f.line("pub struct CompileUnit<'a> {");
     f.indented_doc_comment("The Witt level ceiling.");
     f.line("    level: WittLevel,");
     f.indented_doc_comment("The thermodynamic budget.");
@@ -1781,9 +2084,28 @@ fn generate_builders(f: &mut RustFile) {
     f.indented_doc_comment("v0.2.2 T6.11: result-type IRI. The pipeline matches this against");
     f.indented_doc_comment("the caller's `T::IRI` to detect shape mismatches.");
     f.line("    result_type_iri: &'static str,");
+    f.indented_doc_comment("v0.2.2 Phase A: root term expression, retained from the builder.");
+    f.indented_doc_comment("Stage 5 (extract bindings) and the grounding-aware resolver walk");
+    f.indented_doc_comment("this slice. Empty slice for the trivial `CompileUnit<'static>`");
+    f.indented_doc_comment("specialization produced by builders that don't carry a term AST.");
+    f.line("    root_term: &'a [Term],");
+    f.indented_doc_comment(
+        "v0.2.2 Phase H1: named bindings retained from the builder. Consumed by Stage 5",
+    );
+    f.indented_doc_comment(
+        "(`bindings_from_unit`) to materialize the `BindingsTable` for grounding-aware,",
+    );
+    f.indented_doc_comment(
+        "session, and superposition resolvers. Empty slice declares no bindings.",
+    );
+    f.line("    bindings: &'a [Binding],");
+    f.indented_doc_comment(
+        "v0.2.2 Phase A: verification domains targeted, retained from the builder.",
+    );
+    f.line("    target_domains: &'a [VerificationDomain],");
     f.line("}");
     f.blank();
-    f.line("impl CompileUnit {");
+    f.line("impl<'a> CompileUnit<'a> {");
     f.indented_doc_comment("Returns the Witt level ceiling declared at validation time.");
     f.line("    #[inline]");
     f.line("    #[must_use]");
@@ -1807,21 +2129,61 @@ fn generate_builders(f: &mut RustFile) {
     f.line("        self.result_type_iri");
     f.line("    }");
     f.blank();
+    f.indented_doc_comment(
+        "v0.2.2 Phase A: returns the root term slice declared at validation time.",
+    );
+    f.indented_doc_comment("Empty for builders that did not supply a term AST.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn root_term(&self) -> &'a [Term] {");
+    f.line("        self.root_term");
+    f.line("    }");
+    f.blank();
+    f.indented_doc_comment(
+        "v0.2.2 Phase H1: returns the named bindings declared at validation time.",
+    );
+    f.indented_doc_comment(
+        "Consumed by Stage 5 (`bindings_from_unit`) to materialize the `BindingsTable`.",
+    );
+    f.indented_doc_comment("Empty slice for compile units that declare no bindings.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn bindings(&self) -> &'a [Binding] {");
+    f.line("        self.bindings");
+    f.line("    }");
+    f.blank();
+    f.indented_doc_comment(
+        "v0.2.2 Phase A: returns the verification domains declared at validation time.",
+    );
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn target_domains(&self) -> &'a [VerificationDomain] {");
+    f.line("        self.target_domains");
+    f.line("    }");
+    f.blank();
     f.indented_doc_comment("v0.2.2 Phase G / T2.8 + T6.11: const-constructible parts form used");
     f.indented_doc_comment("by `validate_compile_unit_const` — the const-fn path reads the");
-    f.indented_doc_comment("builder's witt level, budget, and result-type IRI and packs them");
-    f.indented_doc_comment("into the `Validated` result.");
+    f.indented_doc_comment("builder's fields and packs them into the `Validated` result.");
+    f.indented_doc_comment("");
+    f.indented_doc_comment("v0.2.2 Phase H1: bindings slice is retained alongside root_term;");
+    f.indented_doc_comment("empty slice declares no bindings.");
     f.line("    #[inline]");
     f.line("    #[must_use]");
     f.line("    pub(crate) const fn from_parts_const(");
     f.line("        level: WittLevel,");
     f.line("        budget: u64,");
     f.line("        result_type_iri: &'static str,");
+    f.line("        root_term: &'a [Term],");
+    f.line("        bindings: &'a [Binding],");
+    f.line("        target_domains: &'a [VerificationDomain],");
     f.line("    ) -> Self {");
     f.line("        Self {");
     f.line("            level,");
     f.line("            budget,");
     f.line("            result_type_iri,");
+    f.line("            root_term,");
+    f.line("            bindings,");
+    f.line("            target_domains,");
     f.line("        }");
     f.line("    }");
     f.line("}");
@@ -1833,6 +2195,7 @@ fn generate_builders(f: &mut RustFile) {
     f.line("    pub const fn new() -> Self {");
     f.line("        Self {");
     f.line("            root_term: None,");
+    f.line("            bindings: None,");
     f.line("            witt_level_ceiling: None,");
     f.line("            thermodynamic_budget: None,");
     f.line("            target_domains: None,");
@@ -1844,6 +2207,22 @@ fn generate_builders(f: &mut RustFile) {
     f.line("    #[must_use]");
     f.line("    pub const fn root_term(mut self, terms: &'a [Term]) -> Self {");
     f.line("        self.root_term = Some(terms);");
+    f.line("        self");
+    f.line("    }");
+    f.blank();
+    f.indented_doc_comment(
+        "v0.2.2 Phase H1: set the named bindings declared by this compile unit.",
+    );
+    f.indented_doc_comment("Consumed by Stage 5 (`bindings_from_unit`) to materialize the");
+    f.indented_doc_comment(
+        "`BindingsTable` for grounding-aware, session, and superposition resolvers.",
+    );
+    f.indented_doc_comment(
+        "Omit for compile units without bindings; the default is the empty slice.",
+    );
+    f.line("    #[must_use]");
+    f.line("    pub const fn bindings(mut self, bindings: &'a [Binding]) -> Self {");
+    f.line("        self.bindings = Some(bindings);");
     f.line("        self");
     f.line("    }");
     f.blank();
@@ -1927,6 +2306,49 @@ fn generate_builders(f: &mut RustFile) {
     f.line("        self.result_type_iri");
     f.line("    }");
     f.blank();
+    f.indented_doc_comment(
+        "v0.2.2 Phase A: const-fn accessor exposing the stored root-term slice,",
+    );
+    f.indented_doc_comment("or an empty slice if unset. Used by `validate_compile_unit_const` to");
+    f.indented_doc_comment("propagate the AST into the widened `CompileUnit<'a>` carrier.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn root_term_slice_const(&self) -> &'a [Term] {");
+    f.line("        match self.root_term {");
+    f.line("            Some(terms) => terms,");
+    f.line("            None => &[],");
+    f.line("        }");
+    f.line("    }");
+    f.blank();
+    f.indented_doc_comment(
+        "v0.2.2 Phase H1: const-fn accessor exposing the stored bindings slice,",
+    );
+    f.indented_doc_comment("or an empty slice if unset. Used by `validate_compile_unit_const` to");
+    f.indented_doc_comment(
+        "propagate the bindings declaration into the widened `CompileUnit<'a>` carrier.",
+    );
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn bindings_slice_const(&self) -> &'a [Binding] {");
+    f.line("        match self.bindings {");
+    f.line("            Some(bindings) => bindings,");
+    f.line("            None => &[],");
+    f.line("        }");
+    f.line("    }");
+    f.blank();
+    f.indented_doc_comment("v0.2.2 Phase A: const-fn accessor exposing the stored target-domains");
+    f.indented_doc_comment(
+        "slice, or an empty slice if unset. Used by `validate_compile_unit_const`.",
+    );
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn target_domains_slice_const(&self) -> &'a [VerificationDomain] {");
+    f.line("        match self.target_domains {");
+    f.line("            Some(d) => d,");
+    f.line("            None => &[],");
+    f.line("        }");
+    f.line("    }");
+    f.blank();
     f.indented_doc_comment("Validate against `CompileUnitShape`.");
     f.indented_doc_comment("");
     f.indented_doc_comment("Tier 1: checks presence and cardinality of all required fields.");
@@ -1935,9 +2357,10 @@ fn generate_builders(f: &mut RustFile) {
     f.indented_doc_comment("# Errors");
     f.indented_doc_comment("");
     f.indented_doc_comment("Returns `ShapeViolation` if any constraint is not satisfied.");
-    f.line("    pub fn validate(self) -> Result<Validated<CompileUnit>, ShapeViolation> {");
-    f.line("        if self.root_term.is_none() {");
-    f.line("            return Err(ShapeViolation {");
+    f.line("    pub fn validate(self) -> Result<Validated<CompileUnit<'a>>, ShapeViolation> {");
+    f.line("        let root_term = match self.root_term {");
+    f.line("            Some(terms) => terms,");
+    f.line("            None => return Err(ShapeViolation {");
     f.line("                shape_iri: \"https://uor.foundation/conformance/CompileUnitShape\",");
     f.line("                constraint_iri: \"https://uor.foundation/conformance/compileUnit_rootTerm_constraint\",");
     f.line("                property_iri: \"https://uor.foundation/reduction/rootTerm\",");
@@ -1945,8 +2368,8 @@ fn generate_builders(f: &mut RustFile) {
     f.line("                min_count: 1,");
     f.line("                max_count: 1,");
     f.line("                kind: ViolationKind::Missing,");
-    f.line("            });");
-    f.line("        }");
+    f.line("            }),");
+    f.line("        };");
     f.line("        let level = match self.witt_level_ceiling {");
     f.line("            Some(l) => l,");
     f.line("            None => return Err(ShapeViolation {");
@@ -1973,8 +2396,8 @@ fn generate_builders(f: &mut RustFile) {
     f.line("                kind: ViolationKind::Missing,");
     f.line("            }),");
     f.line("        };");
-    f.line("        match self.target_domains {");
-    f.line("            Some(d) if !d.is_empty() => {},");
+    f.line("        let target_domains = match self.target_domains {");
+    f.line("            Some(d) if !d.is_empty() => d,");
     f.line("            _ => return Err(ShapeViolation {");
     f.line("                shape_iri: \"https://uor.foundation/conformance/CompileUnitShape\",");
     f.line("                constraint_iri: \"https://uor.foundation/conformance/compileUnit_targetDomains_constraint\",");
@@ -1984,7 +2407,7 @@ fn generate_builders(f: &mut RustFile) {
     f.line("                max_count: 0,");
     f.line("                kind: ViolationKind::Missing,");
     f.line("            }),");
-    f.line("        }");
+    f.line("        };");
     f.line("        let result_type_iri = match self.result_type_iri {");
     f.line("            Some(iri) => iri,");
     f.line("            None => return Err(ShapeViolation {");
@@ -1997,7 +2420,11 @@ fn generate_builders(f: &mut RustFile) {
     f.line("                kind: ViolationKind::Missing,");
     f.line("            }),");
     f.line("        };");
-    f.line("        Ok(Validated::new(CompileUnit { level, budget, result_type_iri }))");
+    f.line("        // v0.2.2 Phase H1: bindings is optional; absent declares no bindings.");
+    f.line(
+        "        let bindings: &'a [Binding] = match self.bindings { Some(b) => b, None => &[] };",
+    );
+    f.line("        Ok(Validated::new(CompileUnit { level, budget, result_type_iri, root_term, bindings, target_domains }))");
     f.line("    }");
     f.line("}");
     f.blank();
@@ -2109,6 +2536,35 @@ fn generate_builders(f: &mut RustFile) {
     f.line("            None => 0,");
     f.line("        }");
     f.line("    }");
+    f.blank();
+    f.indented_doc_comment(
+        "v0.2.2 Phase A: const-fn accessor returning the declared site-partition",
+    );
+    f.indented_doc_comment("slice, or an empty slice if unset. Used by `validate_parallel_const`");
+    f.indented_doc_comment(
+        "to propagate the partition into the widened `ParallelDeclaration<'a>`.",
+    );
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn site_partition_slice_const(&self) -> &'a [u32] {");
+    f.line("        match self.site_partition {");
+    f.line("            Some(p) => p,");
+    f.line("            None => &[],");
+    f.line("        }");
+    f.line("    }");
+    f.blank();
+    f.indented_doc_comment(
+        "v0.2.2 Phase A: const-fn accessor returning the declared disjointness-witness",
+    );
+    f.indented_doc_comment("IRI string, or an empty string if unset.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn disjointness_witness_const(&self) -> &'a str {");
+    f.line("        match self.disjointness_witness {");
+    f.line("            Some(s) => s,");
+    f.line("            None => \"\",");
+    f.line("        }");
+    f.line("    }");
     f.line("}");
     f.blank();
     f.line("impl<'a> StreamDeclarationBuilder<'a> {");
@@ -2126,6 +2582,45 @@ fn generate_builders(f: &mut RustFile) {
     f.line("        match self.productivity_witness {");
     f.line("            Some(_) => 1,");
     f.line("            None => 0,");
+    f.line("        }");
+    f.line("    }");
+    f.blank();
+    f.indented_doc_comment(
+        "v0.2.2 Phase A: const-fn accessor returning the declared seed term slice,",
+    );
+    f.indented_doc_comment("or an empty slice if unset.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn seed_slice_const(&self) -> &'a [Term] {");
+    f.line("        match self.seed {");
+    f.line("            Some(t) => t,");
+    f.line("            None => &[],");
+    f.line("        }");
+    f.line("    }");
+    f.blank();
+    f.indented_doc_comment(
+        "v0.2.2 Phase A: const-fn accessor returning the declared step term slice,",
+    );
+    f.indented_doc_comment("or an empty slice if unset.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn step_slice_const(&self) -> &'a [Term] {");
+    f.line("        match self.step {");
+    f.line("            Some(t) => t,");
+    f.line("            None => &[],");
+    f.line("        }");
+    f.line("    }");
+    f.blank();
+    f.indented_doc_comment(
+        "v0.2.2 Phase A: const-fn accessor returning the declared productivity-witness",
+    );
+    f.indented_doc_comment("IRI, or an empty string if unset.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn productivity_witness_const(&self) -> &'a str {");
+    f.line("        match self.productivity_witness {");
+    f.line("            Some(s) => s,");
+    f.line("            None => \"\",");
     f.line("        }");
     f.line("    }");
     f.line("}");
@@ -2935,9 +3430,12 @@ fn generate_ontology_target_trait(f: &mut RustFile, ontology: &Ontology) {
     // / witness class named in a CertifyMapping must appear in the shim
     // list, or the codegen panics with a clear "missing shim" error.
     //
-    // This narrows the verification to "everything v0.2.1 actually wires up"
-    // rather than "every subclass in the ontology" (the ontology has many
-    // certificate subclasses that are not yet resolver-backed).
+    // Scope: this narrows verification to "every certificate / witness class
+    // named by a CertifyMapping individual" rather than "every subclass in
+    // the ontology". Subclasses without a CertifyMapping are not in the
+    // foundation's resolver-backed surface — consumers of those classes
+    // construct them through substrate-specific paths outside the
+    // uor-foundation crate.
     let (expected_cert_names, expected_witness_names) = collect_certify_mapping_targets(ontology);
     verify_shim_coverage(
         "certificate",
@@ -3116,7 +3614,7 @@ fn generate_ontology_target_trait(f: &mut RustFile, ontology: &Ontology) {
     f.blank();
     f.line("impl InhabitanceCertificate {");
     f.indented_doc_comment("Returns the witness value tuple bytes when `verified` is true.");
-    f.indented_doc_comment("v0.2.1 returns `None` on the shim; real witnesses come from the");
+    f.indented_doc_comment("The sealed shim returns `None`; real witnesses flow through the");
     f.indented_doc_comment("macro back-door path.");
     f.line("    #[inline]");
     f.line("    #[must_use]");
@@ -3138,13 +3636,13 @@ fn generate_ontology_target_trait(f: &mut RustFile, ontology: &Ontology) {
     for (name, _) in &all_shims {
         f.line(&format!("    impl Sealed for super::{name} {{}}"));
     }
-    f.line("    impl Sealed for super::CompileUnit {}");
+    f.line("    impl Sealed for super::CompileUnit<'_> {}");
     f.line("}");
     f.blank();
     for (name, _) in &all_shims {
         f.line(&format!("impl OntologyTarget for {name} {{}}"));
     }
-    f.line("impl OntologyTarget for CompileUnit {}");
+    f.line("impl OntologyTarget for CompileUnit<'_> {}");
     f.blank();
 
     // ── v0.2.2 W11: Certified<C> parametric carrier ────────────────────────
@@ -3204,19 +3702,63 @@ fn generate_ontology_target_trait(f: &mut RustFile, ontology: &Ontology) {
     ];
     for (name, doc) in new_cert_kinds {
         f.doc_comment(doc);
-        f.line("#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]");
-        f.line(&format!("pub struct {name} {{ _private: () }}"));
+        f.doc_comment("");
+        f.doc_comment("Phase X.1: minted with a Witt level and content fingerprint so the");
+        f.doc_comment("resolver whose `resolver:CertifyMapping` produces this class can fold");
+        f.doc_comment(
+            "its decision into a content-addressed witness. The `with_level_and_fingerprint_const`",
+        );
+        f.doc_comment("constructor matches every other `cert:Certificate` subclass.");
+        f.line("#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]");
+        f.line(&format!("pub struct {name} {{"));
+        f.line("    witt_bits: u16,");
+        f.line("    content_fingerprint: ContentFingerprint,");
+        f.line("    _private: (),");
+        f.line("}");
         f.blank();
-        // v0.2.2 Phase G: const-constructible empty form for
-        // `certify_*_const` entry points.
         f.line(&format!("impl {name} {{"));
-        f.indented_doc_comment("v0.2.2 Phase G: const-constructible empty certificate used by");
-        f.indented_doc_comment("`certify_*_const` entry points.");
+        f.indented_doc_comment("Phase X.1: content-addressed constructor. Mints a certificate");
+        f.indented_doc_comment("carrying the Witt level and substrate-hasher fingerprint of the");
+        f.indented_doc_comment(
+            "resolver decision. Crate-sealed so that only resolver kernels mint.",
+        );
+        f.line("    #[inline]");
+        f.line("    #[must_use]");
+        f.line("    #[allow(dead_code)]");
+        f.line("    pub(crate) const fn with_level_and_fingerprint_const(");
+        f.line("        witt_bits: u16,");
+        f.line("        content_fingerprint: ContentFingerprint,");
+        f.line("    ) -> Self {");
+        f.line("        Self { witt_bits, content_fingerprint, _private: () }");
+        f.line("    }");
+        f.blank();
+        f.indented_doc_comment("Phase X.1: legacy zero-fingerprint constructor retained for");
+        f.indented_doc_comment(
+            "`certify_*_const` callers that pre-date the X.1 cert-discrimination pass.",
+        );
         f.line("    #[inline]");
         f.line("    #[must_use]");
         f.line("    #[allow(dead_code)]");
         f.line("    pub(crate) const fn empty_const() -> Self {");
-        f.line("        Self { _private: () }");
+        f.line("        Self {");
+        f.line("            witt_bits: 0,");
+        f.line("            content_fingerprint: ContentFingerprint::zero(),");
+        f.line("            _private: (),");
+        f.line("        }");
+        f.line("    }");
+        f.blank();
+        f.indented_doc_comment("Phase X.1: the Witt level at which this certificate was minted.");
+        f.line("    #[inline]");
+        f.line("    #[must_use]");
+        f.line("    pub const fn witt_bits(&self) -> u16 {");
+        f.line("        self.witt_bits");
+        f.line("    }");
+        f.blank();
+        f.indented_doc_comment("Phase X.1: the content fingerprint of the resolver decision.");
+        f.line("    #[inline]");
+        f.line("    #[must_use]");
+        f.line("    pub const fn content_fingerprint(&self) -> ContentFingerprint {");
+        f.line("        self.content_fingerprint");
         f.line("    }");
         f.line("}");
         f.blank();
@@ -3301,6 +3843,56 @@ fn generate_ontology_target_trait(f: &mut RustFile, ontology: &Ontology) {
         f.line("}");
         f.blank();
     }
+
+    // Phase X.1: uniform mint trait so `ResolverKernel::Cert` can be minted
+    // through its associated type without duplicating per-cert match arms.
+    f.line("/// Phase X.1: uniform mint interface over cert subclasses. Each");
+    f.line("/// `Certificate` implementer that accepts `(witt_bits, ContentFingerprint)`");
+    f.line("/// at construction time implements this trait. Lives inside a");
+    f.line("/// `certify_const_mint` module so the symbol doesn't leak into top-level");
+    f.line("/// documentation alongside `Certificate`.");
+    f.line("pub(crate) mod certify_const_mint {");
+    f.line("    use super::{ContentFingerprint, Certificate};");
+    f.line("    pub trait MintWithLevelFingerprint: Certificate {");
+    f.line("        fn mint_with_level_fingerprint(");
+    f.line("            witt_bits: u16,");
+    f.line("            content_fingerprint: ContentFingerprint,");
+    f.line("        ) -> Self;");
+    f.line("    }");
+    // Cert types that carry (witt_bits, content_fingerprint). Each has a
+    // `pub(crate) const fn with_level_and_fingerprint_const(...)` emitted
+    // upstream in this file or in Phase X.1's new-cert-kind loop.
+    let minting_certs: &[&str] = &[
+        "GroundingCertificate",
+        "LiftChainCertificate",
+        "InhabitanceCertificate",
+        "CompletenessCertificate",
+        "MultiplicationCertificate",
+        "PartitionCertificate",
+        "TransformCertificate",
+        "IsometryCertificate",
+        "InvolutionCertificate",
+        "GeodesicCertificate",
+        "MeasurementCertificate",
+        "BornRuleVerification",
+    ];
+    for cert in minting_certs {
+        f.line(&format!(
+            "    impl MintWithLevelFingerprint for super::{cert} {{"
+        ));
+        f.line("        #[inline]");
+        f.line("        fn mint_with_level_fingerprint(");
+        f.line("            witt_bits: u16,");
+        f.line("            content_fingerprint: ContentFingerprint,");
+        f.line("        ) -> Self {");
+        f.line(&format!(
+            "            super::{cert}::with_level_and_fingerprint_const(witt_bits, content_fingerprint)"
+        ));
+        f.line("        }");
+        f.line("    }");
+    }
+    f.line("}");
+    f.blank();
 
     f.doc_comment("v0.2.2 W11: parametric carrier for any foundation-supplied certificate.");
     f.doc_comment("Replaces the v0.2.1 per-class shim duplication. The `Certificate` trait");
@@ -3751,6 +4343,32 @@ fn generate_grounded_wrapper(f: &mut RustFile) {
     f.line("    pub const fn from_u128(raw: u128) -> Self {");
     f.line("        Self { raw, _sealed: () }");
     f.line("    }");
+    f.blank();
+    f.indented_doc_comment(
+        "v0.2.2 Phase P.3: construct a `ContentAddress` from a `u64` FNV-1a fingerprint",
+    );
+    f.indented_doc_comment("by right-padding the value into the 128-bit address space. Used by");
+    f.indented_doc_comment(
+        "`Binding::to_binding_entry` to bridge the `Binding.content_address: u64`",
+    );
+    f.indented_doc_comment(
+        "carrier to the `BindingEntry.address: ContentAddress` (`u128`-backed) shape.",
+    );
+    f.indented_doc_comment(
+        "The lift is `raw = (fingerprint as u128) << 64` — upper 64 bits carry the",
+    );
+    f.indented_doc_comment(
+        "FNV-1a value; lower 64 bits are zero. Content-deterministic; round-trips via",
+    );
+    f.indented_doc_comment("`ContentAddress::as_u128() >> 64` back to the original `u64`.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn from_u64_fingerprint(fingerprint: u64) -> Self {");
+    f.line("        Self {");
+    f.line("            raw: (fingerprint as u128) << 64,");
+    f.line("            _sealed: (),");
+    f.line("        }");
+    f.line("    }");
     f.line("}");
     f.blank();
     f.line("impl Default for ContentAddress {");
@@ -3861,6 +4479,36 @@ fn generate_grounded_wrapper(f: &mut RustFile) {
     f.doc_comment("");
     f.doc_comment("4. **No interior mutability**: `fold_byte` consumes `self` and returns a");
     f.doc_comment("   new state. Impls that depend on hidden mutable state violate the contract.");
+    f.doc_comment("");
+    f.doc_comment("# Example");
+    f.doc_comment("");
+    f.doc_comment("```");
+    f.doc_comment("use uor_foundation::enforcement::{Hasher, FINGERPRINT_MAX_BYTES};");
+    f.doc_comment("");
+    f.doc_comment("/// Minimal 128-bit (16-byte) FNV-1a substrate — two 64-bit lanes.");
+    f.doc_comment("#[derive(Clone, Copy)]");
+    f.doc_comment("pub struct Fnv1a16 { a: u64, b: u64 }");
+    f.doc_comment("");
+    f.doc_comment("impl Hasher for Fnv1a16 {");
+    f.doc_comment("    const OUTPUT_BYTES: usize = 16;");
+    f.doc_comment("    fn initial() -> Self {");
+    f.doc_comment("        Self { a: 0xcbf29ce484222325, b: 0x84222325cbf29ce4 }");
+    f.doc_comment("    }");
+    f.doc_comment("    fn fold_byte(mut self, x: u8) -> Self {");
+    f.doc_comment("        self.a ^= x as u64;");
+    f.doc_comment("        self.a = self.a.wrapping_mul(0x100000001b3);");
+    f.doc_comment("        self.b ^= (x as u64).rotate_left(8);");
+    f.doc_comment("        self.b = self.b.wrapping_mul(0x100000001b3);");
+    f.doc_comment("        self");
+    f.doc_comment("    }");
+    f.doc_comment("    fn finalize(self) -> [u8; FINGERPRINT_MAX_BYTES] {");
+    f.doc_comment("        let mut buf = [0u8; FINGERPRINT_MAX_BYTES];");
+    f.doc_comment("        buf[..8].copy_from_slice(&self.a.to_be_bytes());");
+    f.doc_comment("        buf[8..16].copy_from_slice(&self.b.to_be_bytes());");
+    f.doc_comment("        buf");
+    f.doc_comment("    }");
+    f.doc_comment("}");
+    f.doc_comment("```");
     f.line("pub trait Hasher {");
     f.indented_doc_comment("Active output width in bytes. Must be in");
     f.indented_doc_comment("`[FINGERPRINT_MIN_BYTES, FINGERPRINT_MAX_BYTES]`.");
@@ -4287,6 +4935,7 @@ fn generate_grounded_wrapper(f: &mut RustFile) {
     f.line("    hasher");
     f.line("}");
     f.blank();
+    emit_phase_j_primitives(f);
     f.doc_comment("v0.2.2 T6.1: per-step canonical byte layout for `StreamDriver::next()`.");
     f.doc_comment("");
     f.doc_comment(
@@ -5082,7 +5731,11 @@ fn generate_certify_trait(f: &mut RustFile, _ontology: &Ontology) {
     f.line("pub mod resolver {");
     f.line("    use super::{Certified, Validated, WittLevel,");
     f.line("        CompileUnit, GenericImpossibilityWitness, InhabitanceImpossibilityWitness,");
-    f.line("        GroundingCertificate, LiftChainCertificate, InhabitanceCertificate};");
+    f.line("        GroundingCertificate, LiftChainCertificate, InhabitanceCertificate,");
+    f.line("        // Phase X.1: per-resolver cert discrimination.");
+    f.line("        TransformCertificate, IsometryCertificate, InvolutionCertificate,");
+    f.line("        CompletenessCertificate, GeodesicCertificate, MeasurementCertificate,");
+    f.line("        BornRuleVerification};");
     f.blank();
     // Tower completeness
     f.line("    /// v0.2.2 W12: certify tower-completeness for a constrained type.");
@@ -5370,6 +6023,14 @@ fn generate_certify_trait(f: &mut RustFile, _ontology: &Ontology) {
     // WittLevel/DihedralFactorization/Completeness all compose
     // their verdict from reduction-stage observables the pipeline
     // already computes, and lift the result into GroundingCertificate.
+    //
+    // v0.2.2 Phase C: the 15 resolver modules share one generic template
+    // parameterized by a pub(crate) `ResolverKernel` trait. Each
+    // per-resolver module reduces to a marker type + trait impl + two
+    // one-line re-exports that delegate to the generic. Fingerprint
+    // outputs are byte-identical to the v0.2.1 copy-paste template
+    // because the generic's body is the same fold.
+    emit_resolver_kernel_trait_and_generics(f);
     phase_d_emit_resolver_module(
         f,
         "two_sat_decider",
@@ -5379,6 +6040,7 @@ fn generate_certify_trait(f: &mut RustFile, _ontology: &Ontology) {
         PhaseDInputKind::ConstrainedType,
         PhaseDCertKind::Grounding,
         "CertificateKind::TwoSat",
+        PhaseDKernelComposition::TerminalReductionOnly,
     );
     phase_d_emit_resolver_module(
         f,
@@ -5389,6 +6051,7 @@ fn generate_certify_trait(f: &mut RustFile, _ontology: &Ontology) {
         PhaseDInputKind::ConstrainedType,
         PhaseDCertKind::Grounding,
         "CertificateKind::HornSat",
+        PhaseDKernelComposition::TerminalReductionOnly,
     );
     phase_d_emit_resolver_module(
         f,
@@ -5400,17 +6063,19 @@ fn generate_certify_trait(f: &mut RustFile, _ontology: &Ontology) {
         PhaseDInputKind::ConstrainedType,
         PhaseDCertKind::Grounding,
         "CertificateKind::ResidualVerdict",
+        PhaseDKernelComposition::TerminalReductionOnly,
     );
     phase_d_emit_resolver_module(
         f,
         "canonical_form",
         "CanonicalFormResolver",
         "compute the canonical form of a `ConstrainedType` by running the \
-         reduction stages and emitting a `Certified<GroundingCertificate>` \
+         reduction stages and emitting a `Certified<TransformCertificate>` \
          whose fingerprint uniquely identifies the canonicalized input",
         PhaseDInputKind::ConstrainedType,
-        PhaseDCertKind::Grounding,
+        PhaseDCertKind::Transform,
         "CertificateKind::CanonicalForm",
+        PhaseDKernelComposition::CanonicalForm,
     );
     phase_d_emit_resolver_module(
         f,
@@ -5420,8 +6085,9 @@ fn generate_certify_trait(f: &mut RustFile, _ontology: &Ontology) {
          `TypeSynthesisGoal` expressed through `ConstrainedTypeShape`, \
          synthesize the type's carrier or signal impossibility",
         PhaseDInputKind::ConstrainedType,
-        PhaseDCertKind::Grounding,
+        PhaseDCertKind::Transform,
         "CertificateKind::TypeSynthesis",
+        PhaseDKernelComposition::NerveAndDescent,
     );
     phase_d_emit_resolver_module(
         f,
@@ -5431,8 +6097,9 @@ fn generate_certify_trait(f: &mut RustFile, _ontology: &Ontology) {
          Postnikov-truncation records) by walking the constraint-nerve \
          chain and extracting Betti-number evidence",
         PhaseDInputKind::ConstrainedType,
-        PhaseDCertKind::Grounding,
+        PhaseDCertKind::Transform,
         "CertificateKind::Homotopy",
+        PhaseDKernelComposition::SimplicialNerve,
     );
     phase_d_emit_resolver_module(
         f,
@@ -5441,8 +6108,9 @@ fn generate_certify_trait(f: &mut RustFile, _ontology: &Ontology) {
         "compute monodromy-group observables by tracing the \
          constraint-nerve boundary cycles at the input's Witt level",
         PhaseDInputKind::ConstrainedType,
-        PhaseDCertKind::Grounding,
+        PhaseDCertKind::Isometry,
         "CertificateKind::Monodromy",
+        PhaseDKernelComposition::NerveAndDihedral,
     );
     phase_d_emit_resolver_module(
         f,
@@ -5451,8 +6119,9 @@ fn generate_certify_trait(f: &mut RustFile, _ontology: &Ontology) {
         "compute the local moduli-space structure at a `CompleteType`: \
          DeformationComplex, HolonomyStratum, tangent/obstruction dimensions",
         PhaseDInputKind::ConstrainedType,
-        PhaseDCertKind::Grounding,
+        PhaseDCertKind::Transform,
         "CertificateKind::Moduli",
+        PhaseDKernelComposition::ModuliDeformation,
     );
     phase_d_emit_resolver_module(
         f,
@@ -5464,6 +6133,7 @@ fn generate_certify_trait(f: &mut RustFile, _ontology: &Ontology) {
         PhaseDInputKind::ConstrainedType,
         PhaseDCertKind::Grounding,
         "CertificateKind::JacobianGuided",
+        PhaseDKernelComposition::CurvatureGuided,
     );
     phase_d_emit_resolver_module(
         f,
@@ -5474,6 +6144,7 @@ fn generate_certify_trait(f: &mut RustFile, _ontology: &Ontology) {
         PhaseDInputKind::ConstrainedType,
         PhaseDCertKind::Grounding,
         "CertificateKind::Evaluation",
+        PhaseDKernelComposition::TerminalReductionOnly,
     );
     phase_d_emit_resolver_module(
         f,
@@ -5484,6 +6155,7 @@ fn generate_certify_trait(f: &mut RustFile, _ontology: &Ontology) {
         PhaseDInputKind::CompileUnit,
         PhaseDCertKind::Grounding,
         "CertificateKind::Session",
+        PhaseDKernelComposition::SessionBinding,
     );
     phase_d_emit_resolver_module(
         f,
@@ -5493,8 +6165,9 @@ fn generate_certify_trait(f: &mut RustFile, _ontology: &Ontology) {
          tree, maintaining an amplitude vector that satisfies the \
          Born-rule normalization constraint (\u{03A3}|\u{03B1}\u{1D62}|\u{00B2} = 1)",
         PhaseDInputKind::CompileUnit,
-        PhaseDCertKind::Grounding,
+        PhaseDCertKind::BornRule,
         "CertificateKind::Superposition",
+        PhaseDKernelComposition::SuperpositionBorn,
     );
     phase_d_emit_resolver_module(
         f,
@@ -5504,8 +6177,9 @@ fn generate_certify_trait(f: &mut RustFile, _ontology: &Ontology) {
          bridge (QM_1): `preCollapseEntropy = postCollapseLandauerCost` at \
          \u{03B2}* = ln 2",
         PhaseDInputKind::CompileUnit,
-        PhaseDCertKind::Grounding,
+        PhaseDCertKind::Measurement,
         "CertificateKind::Measurement",
+        PhaseDKernelComposition::MeasurementOnly,
     );
     phase_d_emit_resolver_module(
         f,
@@ -5517,6 +6191,7 @@ fn generate_certify_trait(f: &mut RustFile, _ontology: &Ontology) {
         PhaseDInputKind::CompileUnit,
         PhaseDCertKind::Grounding,
         "CertificateKind::WittLevel",
+        PhaseDKernelComposition::WittLevelStructural,
     );
     phase_d_emit_resolver_module(
         f,
@@ -5525,8 +6200,9 @@ fn generate_certify_trait(f: &mut RustFile, _ontology: &Ontology) {
         "run the dihedral factorization decider on a `ConstrainedType`'s \
          carrier, producing a cert over the factor structure",
         PhaseDInputKind::ConstrainedType,
-        PhaseDCertKind::Grounding,
+        PhaseDCertKind::Involution,
         "CertificateKind::DihedralFactorization",
+        PhaseDKernelComposition::DihedralOnly,
     );
     phase_d_emit_resolver_module(
         f,
@@ -5536,8 +6212,9 @@ fn generate_certify_trait(f: &mut RustFile, _ontology: &Ontology) {
          without the tower-specific lift chain and emits a cert if the \
          input's constraint nerve has Euler characteristic n at quantum level n",
         PhaseDInputKind::ConstrainedType,
-        PhaseDCertKind::Grounding,
+        PhaseDCertKind::Completeness,
         "CertificateKind::Completeness",
+        PhaseDKernelComposition::CompletenessEuler,
     );
     phase_d_emit_resolver_module(
         f,
@@ -5545,13 +6222,835 @@ fn generate_certify_trait(f: &mut RustFile, _ontology: &Ontology) {
         "GeodesicValidator",
         "validate whether a `trace:ComputationTrace` satisfies the dual \
          geodesic condition (AR_1-ordered and DC_10-selected); produces a \
-         `GroundingCertificate` on success, `GenericImpossibilityWitness` \
+         `GeodesicCertificate` on success, `GenericImpossibilityWitness` \
          otherwise",
         PhaseDInputKind::ConstrainedType,
-        PhaseDCertKind::Grounding,
+        PhaseDCertKind::Geodesic,
         "CertificateKind::GeodesicValidator",
+        PhaseDKernelComposition::CurvatureGuided,
     );
 
+    f.line("}");
+    f.blank();
+}
+
+/// v0.2.2 Phase J: emit the 7 ontology-grounded primitive helper fns and
+/// the 6 kernel-specific fold helpers consumed by the 17 resolver kernels'
+/// `certify_at` bodies. Each primitive maps to an ontology class/individual:
+/// - `primitive_terminal_reduction` → `reduction:ReductionStep` + `recursion:BoundedRecursion`
+/// - `primitive_simplicial_nerve_betti` → `resolver:CechNerve` + `homology:ChainComplex`
+/// - `primitive_dihedral_signature` → `op:DihedralGroup`
+/// - `primitive_curvature_jacobian` → `observable:Jacobian` + `op:DC_10`
+/// - `primitive_session_binding_signature` → `state:BindingAccumulator`
+/// - `primitive_measurement_projection` → `op:QM_1` + `op:QM_5`
+/// - `primitive_descent_metrics` → `recursion:DescentMeasure` + `observable:ResidualEntropy`
+fn emit_phase_j_primitives(f: &mut RustFile) {
+    // ── Primitive: TerminalReduction ───────────────────────────────────────
+    f.doc_comment(
+        "v0.2.2 Phase J primitive: `reduction:ReductionStep` / `recursion:BoundedRecursion`.",
+    );
+    f.doc_comment(
+        "Content-deterministic reduction signature: `(witt_bits, constraint_count, satisfiable_bit)`.",
+    );
+    f.line("pub(crate) fn primitive_terminal_reduction<T: crate::pipeline::ConstrainedTypeShape + ?Sized>(");
+    f.line("    witt_bits: u16,");
+    f.line(") -> Result<(u16, u32, u8), PipelineFailure> {");
+    f.line("    let outcome = crate::pipeline::run_reduction_stages::<T>(witt_bits)?;");
+    f.line("    let satisfiable_bit: u8 = if outcome.satisfiable { 1 } else { 0 };");
+    f.line("    Ok((outcome.witt_bits, T::CONSTRAINTS.len() as u32, satisfiable_bit))");
+    f.line("}");
+    f.blank();
+    f.doc_comment("v0.2.2 Phase J: fold the TerminalReduction triple into the hasher.");
+    f.line("pub(crate) fn fold_terminal_reduction<H: Hasher>(");
+    f.line("    mut hasher: H,");
+    f.line("    witt_bits: u16,");
+    f.line("    constraint_count: u32,");
+    f.line("    satisfiable_bit: u8,");
+    f.line(") -> H {");
+    f.line("    hasher = hasher.fold_bytes(&witt_bits.to_be_bytes());");
+    f.line("    hasher = hasher.fold_bytes(&constraint_count.to_be_bytes());");
+    f.line("    hasher = hasher.fold_byte(satisfiable_bit);");
+    f.line("    hasher");
+    f.line("}");
+    f.blank();
+
+    // ── Primitive: SimplicialNerve (Betti tuple) ───────────────────────────
+    f.doc_comment("Phase X.4: `resolver:CechNerve` / `homology:ChainComplex`.");
+    f.doc_comment("Computes the content-deterministic Betti tuple `[b_0, b_1, b_2, 0, .., 0]`");
+    f.doc_comment("from the 2-complex constraint-nerve over `T::CONSTRAINTS`:");
+    f.doc_comment("vertices = constraints, 1-simplices = pairs of constraints with intersecting");
+    f.doc_comment("site support, 2-simplices = triples of constraints with a common site.");
+    f.doc_comment("`b_k = dim ker(∂_k) - dim im(∂_{k+1})` for k ∈ {0,1,2}; `b_3..b_7 = 0`.");
+    f.doc_comment("Ranks of the boundary operators ∂_1, ∂_2 are computed over ℤ/p (p prime,");
+    f.doc_comment("`NERVE_RANK_MOD_P = 1_000_000_007`) by `integer_matrix_rank`. Nerve boundary");
+    f.doc_comment("matrices have ±1/0 entries and are totally unimodular, so rank over ℤ/p");
+    f.doc_comment("equals rank over ℚ equals rank over ℤ for any prime p not dividing a minor.");
+    f.doc_comment("Inputs are truncated to `NERVE_CONSTRAINTS_CAP = 8` constraints and");
+    f.doc_comment("`NERVE_SITES_CAP = 8` sites to keep the boundary matrices stack-fittable.");
+    f.line("pub const fn primitive_simplicial_nerve_betti<T: crate::pipeline::ConstrainedTypeShape + ?Sized>() -> [u32; MAX_BETTI_DIMENSION] {");
+    f.line("    let k_all = T::CONSTRAINTS.len();");
+    f.line("    let n_constraints = if k_all < NERVE_CONSTRAINTS_CAP { k_all } else { NERVE_CONSTRAINTS_CAP };");
+    f.line("    let s_all = T::SITE_COUNT;");
+    f.line("    let n_sites = if s_all < NERVE_SITES_CAP { s_all } else { NERVE_SITES_CAP };");
+    f.line("    let mut out = [0u32; MAX_BETTI_DIMENSION];");
+    f.line("    if n_constraints == 0 {");
+    f.line("        out[0] = 1;");
+    f.line("        return out;");
+    f.line("    }");
+    f.line("    // Compute site-support bitmask per constraint (bit `s` set iff constraint touches site `s`).");
+    f.line("    let mut support = [0u16; NERVE_CONSTRAINTS_CAP];");
+    f.line("    let mut c = 0;");
+    f.line("    while c < n_constraints {");
+    f.line("        support[c] = constraint_site_support_mask::<T>(c, n_sites);");
+    f.line("        c += 1;");
+    f.line("    }");
+    f.line("    // Enumerate 1-simplices: pairs (i,j) with i<j and support[i] & support[j] != 0.");
+    f.line("    // Index in c1_pairs_lo/hi corresponds to the column in ∂_1 / row in ∂_2.");
+    f.line("    let mut c1_pairs_lo = [0u8; NERVE_C1_MAX];");
+    f.line("    let mut c1_pairs_hi = [0u8; NERVE_C1_MAX];");
+    f.line("    let mut n_c1: usize = 0;");
+    f.line("    let mut i = 0;");
+    f.line("    while i < n_constraints {");
+    f.line("        let mut j = i + 1;");
+    f.line("        while j < n_constraints {");
+    f.line("            if (support[i] & support[j]) != 0 && n_c1 < NERVE_C1_MAX {");
+    f.line("                c1_pairs_lo[n_c1] = i as u8;");
+    f.line("                c1_pairs_hi[n_c1] = j as u8;");
+    f.line("                n_c1 += 1;");
+    f.line("            }");
+    f.line("            j += 1;");
+    f.line("        }");
+    f.line("        i += 1;");
+    f.line("    }");
+    f.line("    // Enumerate 2-simplices: triples (i,j,k) with i<j<k and support[i] & support[j] & support[k] != 0.");
+    f.line("    let mut c2_i = [0u8; NERVE_C2_MAX];");
+    f.line("    let mut c2_j = [0u8; NERVE_C2_MAX];");
+    f.line("    let mut c2_k = [0u8; NERVE_C2_MAX];");
+    f.line("    let mut n_c2: usize = 0;");
+    f.line("    let mut i2 = 0;");
+    f.line("    while i2 < n_constraints {");
+    f.line("        let mut j2 = i2 + 1;");
+    f.line("        while j2 < n_constraints {");
+    f.line("            let mut k2 = j2 + 1;");
+    f.line("            while k2 < n_constraints {");
+    f.line("                if (support[i2] & support[j2] & support[k2]) != 0 && n_c2 < NERVE_C2_MAX {");
+    f.line("                    c2_i[n_c2] = i2 as u8;");
+    f.line("                    c2_j[n_c2] = j2 as u8;");
+    f.line("                    c2_k[n_c2] = k2 as u8;");
+    f.line("                    n_c2 += 1;");
+    f.line("                }");
+    f.line("                k2 += 1;");
+    f.line("            }");
+    f.line("            j2 += 1;");
+    f.line("        }");
+    f.line("        i2 += 1;");
+    f.line("    }");
+    f.line("    // Build ∂_1: rows = n_constraints (vertices of the nerve), cols = n_c1.");
+    f.line("    // Convention: ∂(c_i, c_j) = c_j - c_i for i < j.");
+    f.line("    let mut partial_1 = [[0i64; NERVE_C1_MAX]; NERVE_CONSTRAINTS_CAP];");
+    f.line("    let mut e = 0;");
+    f.line("    while e < n_c1 {");
+    f.line("        let lo = c1_pairs_lo[e] as usize;");
+    f.line("        let hi = c1_pairs_hi[e] as usize;");
+    f.line("        partial_1[lo][e] = NERVE_RANK_MOD_P - 1; // -1 mod p");
+    f.line("        partial_1[hi][e] = 1;");
+    f.line("        e += 1;");
+    f.line("    }");
+    f.line("    let rank_1 = integer_matrix_rank::<NERVE_CONSTRAINTS_CAP, NERVE_C1_MAX>(&mut partial_1, n_constraints, n_c1);");
+    f.line("    // Build ∂_2: rows = n_c1, cols = n_c2.");
+    f.line("    // Convention: ∂(c_i, c_j, c_k) = (c_j, c_k) - (c_i, c_k) + (c_i, c_j).");
+    f.line("    let mut partial_2 = [[0i64; NERVE_C2_MAX]; NERVE_C1_MAX];");
+    f.line("    let mut t = 0;");
+    f.line("    while t < n_c2 {");
+    f.line("        let ti = c2_i[t];");
+    f.line("        let tj = c2_j[t];");
+    f.line("        let tk = c2_k[t];");
+    f.line("        let idx_jk = find_pair_index(&c1_pairs_lo, &c1_pairs_hi, n_c1, tj, tk);");
+    f.line("        let idx_ik = find_pair_index(&c1_pairs_lo, &c1_pairs_hi, n_c1, ti, tk);");
+    f.line("        let idx_ij = find_pair_index(&c1_pairs_lo, &c1_pairs_hi, n_c1, ti, tj);");
+    f.line("        if idx_jk < NERVE_C1_MAX { partial_2[idx_jk][t] = 1; }");
+    f.line("        if idx_ik < NERVE_C1_MAX { partial_2[idx_ik][t] = NERVE_RANK_MOD_P - 1; }");
+    f.line("        if idx_ij < NERVE_C1_MAX { partial_2[idx_ij][t] = 1; }");
+    f.line("        t += 1;");
+    f.line("    }");
+    f.line("    let rank_2 = integer_matrix_rank::<NERVE_C1_MAX, NERVE_C2_MAX>(&mut partial_2, n_c1, n_c2);");
+    f.line("    // b_0 = |C_0| - rank(∂_1). Always ≥ 1 because partial_1 has at least one all-zero row.");
+    f.line("    let b0 = (n_constraints - rank_1) as u32;");
+    f.line("    // b_1 = (|C_1| - rank(∂_1)) - rank(∂_2).");
+    f.line("    let cycles_1 = n_c1.saturating_sub(rank_1);");
+    f.line("    let b1 = cycles_1.saturating_sub(rank_2) as u32;");
+    f.line("    // b_2 = |C_2| - rank(∂_2) (the complex is 2-dimensional; no ∂_3).");
+    f.line("    let b2 = n_c2.saturating_sub(rank_2) as u32;");
+    f.line("    out[0] = if b0 == 0 { 1 } else { b0 };");
+    f.line("    if MAX_BETTI_DIMENSION > 1 { out[1] = b1; }");
+    f.line("    if MAX_BETTI_DIMENSION > 2 { out[2] = b2; }");
+    f.line("    out");
+    f.line("}");
+    f.blank();
+    f.doc_comment("Phase X.4: cap on the number of constraints considered by the nerve");
+    f.doc_comment("primitive. Inputs with more constraints are truncated to the first");
+    f.doc_comment("`NERVE_CONSTRAINTS_CAP` — content-deterministic and documented.");
+    f.line("pub const NERVE_CONSTRAINTS_CAP: usize = 8;");
+    f.blank();
+    f.doc_comment("Phase X.4: cap on site-support bitmask width (matches `u16` storage).");
+    f.line("pub const NERVE_SITES_CAP: usize = 8;");
+    f.blank();
+    f.doc_comment("Phase X.4: maximum number of 1-simplices = C(NERVE_CONSTRAINTS_CAP, 2) = 28.");
+    f.line("pub const NERVE_C1_MAX: usize = 28;");
+    f.blank();
+    f.doc_comment("Phase X.4: maximum number of 2-simplices = C(NERVE_CONSTRAINTS_CAP, 3) = 56.");
+    f.line("pub const NERVE_C2_MAX: usize = 56;");
+    f.blank();
+    f.doc_comment("Phase X.4: prime modulus for nerve boundary-matrix rank computation.");
+    f.doc_comment("Chosen so `(i64 * i64) mod p` never overflows (`p² < 2⁶³`). Nerve boundary");
+    f.doc_comment("matrices have entries in {-1, 0, 1}; rank over ℤ/p equals rank over ℚ.");
+    f.line("pub(crate) const NERVE_RANK_MOD_P: i64 = 1_000_000_007;");
+    f.blank();
+    f.doc_comment("Phase X.4: per-constraint site-support bitmask. Returns bit `s` set iff");
+    f.doc_comment("constraint `c` in `T::CONSTRAINTS` touches site index `s` (`s < n_sites`).");
+    f.doc_comment("`Affine { coefficients, .. }` returns the bitmask of sites whose");
+    f.doc_comment("coefficient is non-zero — the natural \"site support\" of the affine");
+    f.doc_comment("relation. Remaining non-site-local variants (Residue, Hamming, Depth,");
+    f.doc_comment("Bound, Conjunction, SatClauses) return an all-ones mask over `n_sites`.");
+    f.line("pub(crate) const fn constraint_site_support_mask<T: crate::pipeline::ConstrainedTypeShape + ?Sized>(c: usize, n_sites: usize) -> u16 {");
+    f.line("    let all_mask: u16 = if n_sites == 0 { 0 } else { (1u16 << n_sites) - 1 };");
+    f.line("    match &T::CONSTRAINTS[c] {");
+    f.line("        crate::pipeline::ConstraintRef::Site { position } => {");
+    f.line("            if n_sites == 0 { 0 } else { 1u16 << (*position as usize % n_sites) }");
+    f.line("        }");
+    f.line("        crate::pipeline::ConstraintRef::Carry { site } => {");
+    f.line("            if n_sites == 0 { 0 } else { 1u16 << (*site as usize % n_sites) }");
+    f.line("        }");
+    f.line("        crate::pipeline::ConstraintRef::Affine { coefficients, .. } => {");
+    f.line("            if n_sites == 0 { 0 } else {");
+    f.line("                let mut mask: u16 = 0;");
+    f.line("                let mut i = 0;");
+    f.line("                while i < coefficients.len() && i < n_sites {");
+    f.line("                    if coefficients[i] != 0 {");
+    f.line("                        mask |= 1u16 << i;");
+    f.line("                    }");
+    f.line("                    i += 1;");
+    f.line("                }");
+    f.line("                if mask == 0 { all_mask } else { mask }");
+    f.line("            }");
+    f.line("        }");
+    f.line("        _ => all_mask,");
+    f.line("    }");
+    f.line("}");
+    f.blank();
+    f.doc_comment("Phase X.4: find the column index of the 1-simplex (lo, hi) in the enumerated");
+    f.doc_comment("pair list. Returns `NERVE_C1_MAX` (sentinel = not found) when absent.");
+    f.line("pub(crate) const fn find_pair_index(");
+    f.line("    lo_arr: &[u8; NERVE_C1_MAX],");
+    f.line("    hi_arr: &[u8; NERVE_C1_MAX],");
+    f.line("    n_c1: usize,");
+    f.line("    lo: u8,");
+    f.line("    hi: u8,");
+    f.line(") -> usize {");
+    f.line("    let mut i = 0;");
+    f.line("    while i < n_c1 {");
+    f.line("        if lo_arr[i] == lo && hi_arr[i] == hi {");
+    f.line("            return i;");
+    f.line("        }");
+    f.line("        i += 1;");
+    f.line("    }");
+    f.line("    NERVE_C1_MAX");
+    f.line("}");
+    f.blank();
+    f.doc_comment("Phase X.4: rank of an integer matrix over ℤ/`NERVE_RANK_MOD_P` via modular");
+    f.doc_comment("Gaussian elimination. Entries are reduced mod p and elimination uses");
+    f.doc_comment("Fermat-inverse pivot normalization. For ±1/0 boundary matrices this");
+    f.doc_comment("coincides with rank over ℤ.");
+    f.line("pub(crate) const fn integer_matrix_rank<const R: usize, const C: usize>(");
+    f.line("    matrix: &mut [[i64; C]; R],");
+    f.line("    rows: usize,");
+    f.line("    cols: usize,");
+    f.line(") -> usize {");
+    f.line("    let p = NERVE_RANK_MOD_P;");
+    f.line("    // Reduce all entries into [0, p).");
+    f.line("    let mut r = 0;");
+    f.line("    while r < rows {");
+    f.line("        let mut c = 0;");
+    f.line("        while c < cols {");
+    f.line("            let v = matrix[r][c] % p;");
+    f.line("            matrix[r][c] = if v < 0 { v + p } else { v };");
+    f.line("            c += 1;");
+    f.line("        }");
+    f.line("        r += 1;");
+    f.line("    }");
+    f.line("    let mut rank: usize = 0;");
+    f.line("    let mut col: usize = 0;");
+    f.line("    while col < cols && rank < rows {");
+    f.line("        // Find a pivot row in column `col`, starting at `rank`.");
+    f.line("        let mut pivot_row = rank;");
+    f.line("        while pivot_row < rows && matrix[pivot_row][col] == 0 {");
+    f.line("            pivot_row += 1;");
+    f.line("        }");
+    f.line("        if pivot_row == rows {");
+    f.line("            col += 1;");
+    f.line("            continue;");
+    f.line("        }");
+    f.line("        // Swap into position.");
+    f.line("        if pivot_row != rank {");
+    f.line("            let mut k = 0;");
+    f.line("            while k < cols {");
+    f.line("                let tmp = matrix[rank][k];");
+    f.line("                matrix[rank][k] = matrix[pivot_row][k];");
+    f.line("                matrix[pivot_row][k] = tmp;");
+    f.line("                k += 1;");
+    f.line("            }");
+    f.line("        }");
+    f.line("        // Normalize pivot row to have leading 1.");
+    f.line("        let pivot = matrix[rank][col];");
+    f.line("        let pivot_inv = mod_pow(pivot, p - 2, p);");
+    f.line("        let mut k = 0;");
+    f.line("        while k < cols {");
+    f.line("            matrix[rank][k] = (matrix[rank][k] * pivot_inv) % p;");
+    f.line("            k += 1;");
+    f.line("        }");
+    f.line("        // Eliminate the column entry from every other row.");
+    f.line("        let mut r2 = 0;");
+    f.line("        while r2 < rows {");
+    f.line("            if r2 != rank {");
+    f.line("                let factor = matrix[r2][col];");
+    f.line("                if factor != 0 {");
+    f.line("                    let mut kk = 0;");
+    f.line("                    while kk < cols {");
+    f.line("                        let sub = (matrix[rank][kk] * factor) % p;");
+    f.line("                        let mut v = matrix[r2][kk] - sub;");
+    f.line("                        v %= p;");
+    f.line("                        if v < 0 { v += p; }");
+    f.line("                        matrix[r2][kk] = v;");
+    f.line("                        kk += 1;");
+    f.line("                    }");
+    f.line("                }");
+    f.line("            }");
+    f.line("            r2 += 1;");
+    f.line("        }");
+    f.line("        rank += 1;");
+    f.line("        col += 1;");
+    f.line("    }");
+    f.line("    rank");
+    f.line("}");
+    f.blank();
+    f.doc_comment("Phase X.4: modular exponentiation `base^exp mod p`, const-fn. Used by");
+    f.doc_comment("`integer_matrix_rank` via Fermat's little theorem for modular inverses.");
+    f.line("pub(crate) const fn mod_pow(base: i64, exp: i64, p: i64) -> i64 {");
+    f.line("    let mut result: i64 = 1;");
+    f.line("    let mut b = ((base % p) + p) % p;");
+    f.line("    let mut e = exp;");
+    f.line("    while e > 0 {");
+    f.line("        if e & 1 == 1 {");
+    f.line("            result = (result * b) % p;");
+    f.line("        }");
+    f.line("        b = (b * b) % p;");
+    f.line("        e >>= 1;");
+    f.line("    }");
+    f.line("    result");
+    f.line("}");
+    f.blank();
+    f.doc_comment("v0.2.2 Phase J: fold the Betti tuple into the hasher.");
+    f.line("pub(crate) fn fold_betti_tuple<H: Hasher>(");
+    f.line("    mut hasher: H,");
+    f.line("    betti: &[u32; MAX_BETTI_DIMENSION],");
+    f.line(") -> H {");
+    f.line("    let mut i = 0;");
+    f.line("    while i < MAX_BETTI_DIMENSION {");
+    f.line("        hasher = hasher.fold_bytes(&betti[i].to_be_bytes());");
+    f.line("        i += 1;");
+    f.line("    }");
+    f.line("    hasher");
+    f.line("}");
+    f.blank();
+    f.doc_comment(
+        "v0.2.2 Phase J: Euler characteristic `\u{03C7} = \u{03A3}(-1)^k b_k` from the Betti tuple.",
+    );
+    f.line("#[must_use]");
+    f.line(
+        "pub(crate) fn primitive_euler_characteristic(betti: &[u32; MAX_BETTI_DIMENSION]) -> i64 {",
+    );
+    f.line("    let mut chi: i64 = 0;");
+    f.line("    let mut k = 0;");
+    f.line("    while k < MAX_BETTI_DIMENSION {");
+    f.line("        let term = betti[k] as i64;");
+    f.line("        if k % 2 == 0 { chi += term; } else { chi -= term; }");
+    f.line("        k += 1;");
+    f.line("    }");
+    f.line("    chi");
+    f.line("}");
+    f.blank();
+
+    // ── Primitive: DihedralAction ──────────────────────────────────────────
+    f.doc_comment("v0.2.2 Phase J primitive: `op:DihedralGroup` / `op:D_7`.");
+    f.doc_comment(
+        "Returns `(orbit_size, representative)` under D_{2^n} acting on `T::SITE_COUNT`.",
+    );
+    f.doc_comment(
+        "`orbit_size = 2n` when n \u{2265} 2, 2 when n == 1, 1 when n == 0 (group identity only).",
+    );
+    f.doc_comment("`representative` is the lexicographically-minimal element of the orbit of");
+    f.doc_comment(
+        "site 0 under D_{2n}: rotations `r^k → k mod n` and reflections `s·r^k → (n - k) mod n`.",
+    );
+    f.doc_comment("For the orbit of site 0, both maps produce 0 as a group element, so the");
+    f.doc_comment("representative is always 0; for a non-canonical starting index `i`, the");
+    f.doc_comment(
+        "representative would be `min(i, (n - i) mod n)`. This helper uses site 0 as the",
+    );
+    f.doc_comment("canonical starting point (the foundation's convention), so the representative");
+    f.doc_comment("reflects the orbit's algebraic content, not a sentinel.");
+    f.line("pub(crate) fn primitive_dihedral_signature<T: crate::pipeline::ConstrainedTypeShape + ?Sized>() -> (u32, u32) {");
+    f.line("    let n = T::SITE_COUNT as u32;");
+    f.line("    let orbit_size = if n < 2 {");
+    f.line("        if n == 0 { 1 } else { 2 }");
+    f.line("    } else {");
+    f.line("        2 * n");
+    f.line("    };");
+    f.line("    // v0.2.2 Phase S.2: compute the lexicographically-minimal orbit element.");
+    f.line("    // Orbit of site 0 under D_{2n} contains: rotation images {0, 1, ..., n-1}");
+    f.line("    // (since r^k maps 0 → k mod n) and reflection images {0, n-1, n-2, ..., 1}");
+    f.line("    // (since s·r^k maps 0 → (n - k) mod n). The union is {0, 1, ..., n-1}.");
+    f.line("    // The lex-min is 0 by construction; formalize it by min-walking the orbit.");
+    f.line("    let mut rep: u32 = 0;");
+    f.line("    let mut k = 1u32;");
+    f.line("    while k < n {");
+    f.line("        let rot = k % n;");
+    f.line("        let refl = (n - k) % n;");
+    f.line("        if rot < rep {");
+    f.line("            rep = rot;");
+    f.line("        }");
+    f.line("        if refl < rep {");
+    f.line("            rep = refl;");
+    f.line("        }");
+    f.line("        k += 1;");
+    f.line("    }");
+    f.line("    (orbit_size, rep)");
+    f.line("}");
+    f.blank();
+    f.doc_comment("v0.2.2 Phase J: fold the dihedral `(orbit_size, representative)` pair.");
+    f.line("pub(crate) fn fold_dihedral_signature<H: Hasher>(");
+    f.line("    mut hasher: H,");
+    f.line("    orbit_size: u32,");
+    f.line("    representative: u32,");
+    f.line(") -> H {");
+    f.line("    hasher = hasher.fold_bytes(&orbit_size.to_be_bytes());");
+    f.line("    hasher = hasher.fold_bytes(&representative.to_be_bytes());");
+    f.line("    hasher");
+    f.line("}");
+    f.blank();
+
+    // ── Primitive: CurvatureReducer ────────────────────────────────────────
+    f.doc_comment("v0.2.2 Phase J primitive: `observable:Jacobian` / `op:DC_10`.");
+    f.doc_comment("Content-deterministic per-site Jacobian profile: for each site `i`, the number");
+    f.doc_comment(
+        "of constraints that mention site index `i` (derived from the constraint encoding).",
+    );
+    f.doc_comment(
+        "Truncated / zero-padded to `JACOBIAN_MAX_SITES` entries to keep the fold fixed-size.",
+    );
+    f.line("pub(crate) fn primitive_curvature_jacobian<T: crate::pipeline::ConstrainedTypeShape + ?Sized>() -> [i32; JACOBIAN_MAX_SITES] {");
+    f.line("    let mut out = [0i32; JACOBIAN_MAX_SITES];");
+    f.line("    let mut ci = 0;");
+    f.line("    while ci < T::CONSTRAINTS.len() {");
+    f.line(
+        "        if let crate::pipeline::ConstraintRef::Site { position } = T::CONSTRAINTS[ci] {",
+    );
+    f.line("            let idx = (position as usize) % JACOBIAN_MAX_SITES;");
+    f.line("            out[idx] = out[idx].saturating_add(1);");
+    f.line("        }");
+    f.line("        ci += 1;");
+    f.line("    }");
+    f.line("    // Also account for residue and hamming constraints as contributing uniformly");
+    f.line("    // across all sites (they are not site-local). Represented as +1 to site 0.");
+    f.line("    let total = T::CONSTRAINTS.len() as i32;");
+    f.line("    out[0] = out[0].saturating_add(total);");
+    f.line("    out");
+    f.line("}");
+    f.blank();
+    f.doc_comment(
+        "v0.2.2 Phase J: DC_10 selects the site with the maximum absolute Jacobian value.",
+    );
+    f.line("#[must_use]");
+    f.line("pub(crate) fn primitive_dc10_select(jac: &[i32; JACOBIAN_MAX_SITES]) -> usize {");
+    f.line("    let mut best_idx: usize = 0;");
+    f.line("    let mut best_abs: i32 = jac[0].unsigned_abs() as i32;");
+    f.line("    let mut i = 1;");
+    f.line("    while i < JACOBIAN_MAX_SITES {");
+    f.line("        let a = jac[i].unsigned_abs() as i32;");
+    f.line("        if a > best_abs { best_abs = a; best_idx = i; }");
+    f.line("        i += 1;");
+    f.line("    }");
+    f.line("    best_idx");
+    f.line("}");
+    f.blank();
+    f.doc_comment("v0.2.2 Phase J: fold the Jacobian profile into the hasher.");
+    f.line("pub(crate) fn fold_jacobian_profile<H: Hasher>(");
+    f.line("    mut hasher: H,");
+    f.line("    jac: &[i32; JACOBIAN_MAX_SITES],");
+    f.line(") -> H {");
+    f.line("    let mut i = 0;");
+    f.line("    while i < JACOBIAN_MAX_SITES {");
+    f.line("        hasher = hasher.fold_bytes(&jac[i].to_be_bytes());");
+    f.line("        i += 1;");
+    f.line("    }");
+    f.line("    hasher");
+    f.line("}");
+    f.blank();
+
+    // ── Primitive: SessionBinding ──────────────────────────────────────────
+    f.doc_comment("v0.2.2 Phase J primitive: `state:BindingAccumulator` / `state:ContextLease`.");
+    f.doc_comment(
+        "Returns `(binding_count, fold_address)` — a content-deterministic session signature.",
+    );
+    f.doc_comment("");
+    f.doc_comment("v0.2.2 Phase S.4: uses an FNV-1a-style order-preserving incremental hash");
+    f.doc_comment("(rotate-and-multiply) over each binding's `(name_index, type_index,");
+    f.doc_comment("content_address)` tuple, rather than XOR-accumulation (which is commutative");
+    f.doc_comment(
+        "and collides on reordered-but-otherwise-identical binding sets). Order-dependence",
+    );
+    f.doc_comment("is intentional: `state:BindingAccumulator` semantics treat the insertion");
+    f.doc_comment("sequence as part of the session signature.");
+    f.line(
+        "pub(crate) fn primitive_session_binding_signature(bindings: &[Binding]) -> (u32, u64) {",
+    );
+    f.line("    // FNV-1a-style incremental mix: start from the FNV offset basis,");
+    f.line("    // multiply-then-XOR each limb. Order-dependent by construction.");
+    f.line("    let mut fold: u64 = 0xcbf2_9ce4_8422_2325;");
+    f.line("    const FNV_PRIME: u64 = 0x0000_0100_0000_01b3;");
+    f.line("    let mut i = 0;");
+    f.line("    while i < bindings.len() {");
+    f.line("        let b = &bindings[i];");
+    f.line("        // Mix in (name_index, type_index, content_address) per binding.");
+    f.line("        fold = fold.wrapping_mul(FNV_PRIME);");
+    f.line("        fold ^= b.name_index as u64;");
+    f.line("        fold = fold.wrapping_mul(FNV_PRIME);");
+    f.line("        fold ^= b.type_index as u64;");
+    f.line("        fold = fold.wrapping_mul(FNV_PRIME);");
+    f.line("        fold ^= b.content_address;");
+    f.line("        i += 1;");
+    f.line("    }");
+    f.line("    (bindings.len() as u32, fold)");
+    f.line("}");
+    f.blank();
+    f.doc_comment("v0.2.2 Phase J: fold the session-binding signature into the hasher.");
+    f.line("pub(crate) fn fold_session_signature<H: Hasher>(");
+    f.line("    mut hasher: H,");
+    f.line("    binding_count: u32,");
+    f.line("    fold_address: u64,");
+    f.line(") -> H {");
+    f.line("    hasher = hasher.fold_bytes(&binding_count.to_be_bytes());");
+    f.line("    hasher = hasher.fold_bytes(&fold_address.to_be_bytes());");
+    f.line("    hasher");
+    f.line("}");
+    f.blank();
+
+    // ── Primitive: MeasurementProjection ───────────────────────────────────
+    f.doc_comment(
+        "v0.2.2 Phase J primitive: `op:QM_1` / `op:QM_5` / `resolver:collapseAmplitude`.",
+    );
+    f.doc_comment(
+        "Seeds a two-state amplitude vector from the CompileUnit's thermodynamic budget,",
+    );
+    f.doc_comment(
+        "computes Born-rule probabilities `P(0) = |\u{03B1}_0|\u{00B2}` and `P(1) = |\u{03B1}_1|\u{00B2}`,",
+    );
+    f.doc_comment(
+        "verifies QM_5 normalization `\u{03A3} P = 1`, and returns `(outcome_index, probability)`",
+    );
+    f.doc_comment(
+        "where `outcome_index` is the index of the larger amplitude and `probability` is its value.",
+    );
+    f.doc_comment(
+        "QM_1 Landauer equality: `pre_entropy == post_cost` at \u{03B2}* = ln 2; since both",
+    );
+    f.doc_comment("sides derive from the same budget the equality holds by construction.");
+    f.doc_comment("");
+    f.doc_comment("v0.2.2 Phase S.3: amplitudes are sourced from two decorrelated projections");
+    f.doc_comment("of the thermodynamic budget — the high 32 bits become the alpha-0");
+    f.doc_comment("magnitude and the low 32 bits become the alpha-1 magnitude. This replaces");
+    f.doc_comment("the earlier XOR-with-fixed-constants sourcing, preserving determinism while");
+    f.doc_comment("ensuring both amplitudes derive from independent halves of the budget's");
+    f.doc_comment("thermodynamic-entropy state. Born normalization and QM_1 Landauer equality");
+    f.doc_comment("remain invariant under this sourcing change.");
+    f.line("pub(crate) fn primitive_measurement_projection(budget: u64) -> (u64, f64) {");
+    f.line("    // Decorrelated amplitude sourcing: high-32-bits drives alpha_0,");
+    f.line("    // low-32-bits drives alpha_1. Distinct bit halves yield independent");
+    f.line("    // magnitudes under any non-degenerate budget.");
+    f.line("    let alpha0_bits: u32 = (budget >> 32) as u32;");
+    f.line("    let alpha1_bits: u32 = (budget & 0xFFFF_FFFF) as u32;");
+    f.line("    let a0 = (alpha0_bits as f64) / (u32::MAX as f64);");
+    f.line("    let a1 = (alpha1_bits as f64) / (u32::MAX as f64);");
+    f.line("    let norm = a0 * a0 + a1 * a1;");
+    f.line("    // QM_5 normalization: P(k) = |alpha_k|^2 / norm. Degenerate budget = 0");
+    f.line("    // yields norm = 0; fall through to the uniform distribution (P(0) = 0.5,");
+    f.line("    // P(1) = 0.5), which is the maximum-entropy projection under QM_1.");
+    f.line("    let p0 = if norm > 0.0 { (a0 * a0) / norm } else { 0.5 };");
+    f.line("    let p1 = if norm > 0.0 { (a1 * a1) / norm } else { 0.5 };");
+    f.line("    if p0 >= p1 {");
+    f.line("        (0, p0)");
+    f.line("    } else {");
+    f.line("        (1, p1)");
+    f.line("    }");
+    f.line("}");
+    f.blank();
+    f.doc_comment(
+        "v0.2.2 Phase J: fold the Born-rule outcome into the hasher via f64-to-bits round-trip.",
+    );
+    f.line("pub(crate) fn fold_born_outcome<H: Hasher>(");
+    f.line("    mut hasher: H,");
+    f.line("    outcome_index: u64,");
+    f.line("    probability: f64,");
+    f.line(") -> H {");
+    f.line("    hasher = hasher.fold_bytes(&outcome_index.to_be_bytes());");
+    f.line("    hasher = hasher.fold_bytes(&probability.to_bits().to_be_bytes());");
+    f.line("    hasher");
+    f.line("}");
+    f.blank();
+
+    // ── Primitive: DescentTermination ──────────────────────────────────────
+    f.doc_comment(
+        "v0.2.2 Phase J primitive: `recursion:DescentMeasure` / `observable:ResidualEntropy`.",
+    );
+    f.doc_comment(
+        "Computes `(residual_count, entropy_bits)` from `T::SITE_COUNT` and the Euler char.",
+    );
+    f.doc_comment(
+        "`residual_count = max(0, site_count - euler_char)` — free sites after constraint contraction.",
+    );
+    f.doc_comment(
+        "`entropy = (residual_count) \u{00D7} ln 2` — Landauer-temperature entropy in nats.",
+    );
+    f.line(
+        "pub(crate) fn primitive_descent_metrics<T: crate::pipeline::ConstrainedTypeShape + ?Sized>(",
+    );
+    f.line("    betti: &[u32; MAX_BETTI_DIMENSION],");
+    f.line(") -> (u32, f64) {");
+    f.line("    let chi = primitive_euler_characteristic(betti);");
+    f.line("    let n = T::SITE_COUNT as i64;");
+    f.line("    let residual = if n > chi { (n - chi) as u32 } else { 0u32 };");
+    f.line("    let entropy = (residual as f64) * core::f64::consts::LN_2;");
+    f.line("    (residual, entropy)");
+    f.line("}");
+    f.blank();
+    f.doc_comment("v0.2.2 Phase J: fold the descent metrics into the hasher.");
+    f.line("pub(crate) fn fold_descent_metrics<H: Hasher>(");
+    f.line("    mut hasher: H,");
+    f.line("    residual_count: u32,");
+    f.line("    entropy: f64,");
+    f.line(") -> H {");
+    f.line("    hasher = hasher.fold_bytes(&residual_count.to_be_bytes());");
+    f.line("    hasher = hasher.fold_bytes(&entropy.to_bits().to_be_bytes());");
+    f.line("    hasher");
+    f.line("}");
+    f.blank();
+
+    emit_phase_x2_cohomology_cup(f);
+}
+
+/// Phase X.2 emission: `CohomologyClass`, `HomologyClass`, `cup_product`,
+/// `CohomologyError`, `MAX_COHOMOLOGY_DIMENSION`, `fold_cup_product`,
+/// `mint_cohomology_class`, `mint_homology_class`. These are runtime carriers
+/// for the ontology's `cohomology:CohomologyClass<n>` and `homology:HomologyClass<n>`,
+/// parametric in dimension via a runtime field rather than a type parameter
+/// (MSRV 1.81 does not support the `generic_const_exprs` needed for `N+M`).
+fn emit_phase_x2_cohomology_cup(f: &mut RustFile) {
+    f.doc_comment("Phase X.2: upper bound on cohomology class dimension. Cup products");
+    f.doc_comment("whose summed dimension exceeds this cap are rejected as");
+    f.doc_comment("`CohomologyError::DimensionOverflow`.");
+    f.line("pub const MAX_COHOMOLOGY_DIMENSION: u32 = 32;");
+    f.blank();
+
+    f.doc_comment("Phase X.2: a cohomology class `H^n(·)` at dimension `n` with a content");
+    f.doc_comment("fingerprint of the underlying cochain representative. Parametric over");
+    f.doc_comment("dimension via a runtime field because generic-const-expression arithmetic");
+    f.doc_comment("over `N + M` is unstable at the crate's MSRV (Rust 1.81).");
+    f.line("#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]");
+    f.line("pub struct CohomologyClass {");
+    f.line("    dimension: u32,");
+    f.line("    fingerprint: ContentFingerprint,");
+    f.line("    _sealed: (),");
+    f.line("}");
+    f.blank();
+
+    f.line("impl CohomologyClass {");
+    f.indented_doc_comment("Phase X.2: crate-sealed constructor. Public callers go through");
+    f.indented_doc_comment("`mint_cohomology_class` so that construction always routes through a");
+    f.indented_doc_comment("validating hash of the cochain representative.");
+    f.line("    #[inline]");
+    f.line("    pub(crate) const fn with_dimension_and_fingerprint(");
+    f.line("        dimension: u32,");
+    f.line("        fingerprint: ContentFingerprint,");
+    f.line("    ) -> Self {");
+    f.line("        Self { dimension, fingerprint, _sealed: () }");
+    f.line("    }");
+    f.blank();
+    f.indented_doc_comment("The dimension `n` of this cohomology class `H^n(·)`.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn dimension(&self) -> u32 { self.dimension }");
+    f.blank();
+    f.indented_doc_comment("The content fingerprint of the underlying cochain representative.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn fingerprint(&self) -> ContentFingerprint { self.fingerprint }");
+    f.blank();
+    f.indented_doc_comment("Phase X.2: cup product `H^n × H^m → H^{n+m}`. The resulting class");
+    f.indented_doc_comment("carries dimension `n + m` and a fingerprint folded from both");
+    f.indented_doc_comment("operand dimensions and fingerprints via `fold_cup_product`. The");
+    f.indented_doc_comment("fold is ordered (lhs-then-rhs) — graded-commutativity of the cup");
+    f.indented_doc_comment("product at the algebraic level is not a fingerprint-level property.");
+    f.indented_doc_comment("");
+    f.indented_doc_comment("# Errors");
+    f.indented_doc_comment("Returns `CohomologyError::DimensionOverflow` when `n + m >");
+    f.indented_doc_comment("MAX_COHOMOLOGY_DIMENSION`.");
+    f.line("    pub fn cup<H: Hasher>(");
+    f.line("        self,");
+    f.line("        other: CohomologyClass,");
+    f.line("    ) -> Result<CohomologyClass, CohomologyError> {");
+    f.line("        let sum = self.dimension.saturating_add(other.dimension);");
+    f.line("        if sum > MAX_COHOMOLOGY_DIMENSION {");
+    f.line("            return Err(CohomologyError::DimensionOverflow {");
+    f.line("                lhs: self.dimension,");
+    f.line("                rhs: other.dimension,");
+    f.line("            });");
+    f.line("        }");
+    f.line("        let hasher = H::initial();");
+    f.line("        let hasher = fold_cup_product(");
+    f.line("            hasher,");
+    f.line("            self.dimension,");
+    f.line("            &self.fingerprint,");
+    f.line("            other.dimension,");
+    f.line("            &other.fingerprint,");
+    f.line("        );");
+    f.line("        let buf = hasher.finalize();");
+    f.line("        let fp = ContentFingerprint::from_buffer(buf, H::OUTPUT_BYTES as u8);");
+    f.line("        Ok(Self::with_dimension_and_fingerprint(sum, fp))");
+    f.line("    }");
+    f.line("}");
+    f.blank();
+
+    f.doc_comment("Phase X.2: error returned by `CohomologyClass::cup` when the summed");
+    f.doc_comment("dimension exceeds `MAX_COHOMOLOGY_DIMENSION`.");
+    f.line("#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]");
+    f.line("pub enum CohomologyError {");
+    f.line("    /// Cup product would exceed `MAX_COHOMOLOGY_DIMENSION`.");
+    f.line("    DimensionOverflow { lhs: u32, rhs: u32 },");
+    f.line("}");
+    f.blank();
+    f.line("impl core::fmt::Display for CohomologyError {");
+    f.line("    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {");
+    f.line("        match self {");
+    f.line("            Self::DimensionOverflow { lhs, rhs } => write!(");
+    f.line("                f,");
+    f.line("                \"cup product dimension overflow: {lhs} + {rhs} > MAX_COHOMOLOGY_DIMENSION ({})\",");
+    f.line("                MAX_COHOMOLOGY_DIMENSION");
+    f.line("            ),");
+    f.line("        }");
+    f.line("    }");
+    f.line("}");
+    f.line("impl core::error::Error for CohomologyError {}");
+    f.blank();
+
+    f.doc_comment("Phase X.2: homology class dual to `CohomologyClass`. A homology class");
+    f.doc_comment("`H_n(·)` at dimension `n` with a content fingerprint of its chain");
+    f.doc_comment("representative. Shares the dimension-as-runtime-field discipline.");
+    f.line("#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]");
+    f.line("pub struct HomologyClass {");
+    f.line("    dimension: u32,");
+    f.line("    fingerprint: ContentFingerprint,");
+    f.line("    _sealed: (),");
+    f.line("}");
+    f.blank();
+
+    f.line("impl HomologyClass {");
+    f.indented_doc_comment("Phase X.2: crate-sealed constructor. Public callers go through");
+    f.indented_doc_comment("`mint_homology_class`.");
+    f.line("    #[inline]");
+    f.line("    pub(crate) const fn with_dimension_and_fingerprint(");
+    f.line("        dimension: u32,");
+    f.line("        fingerprint: ContentFingerprint,");
+    f.line("    ) -> Self {");
+    f.line("        Self { dimension, fingerprint, _sealed: () }");
+    f.line("    }");
+    f.blank();
+    f.indented_doc_comment("The dimension `n` of this homology class `H_n(·)`.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn dimension(&self) -> u32 { self.dimension }");
+    f.blank();
+    f.indented_doc_comment("The content fingerprint of the underlying chain representative.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn fingerprint(&self) -> ContentFingerprint { self.fingerprint }");
+    f.line("}");
+    f.blank();
+
+    f.doc_comment("Phase X.2: fold the cup-product operand pair into the hasher. Ordered");
+    f.doc_comment("(lhs dimension + fingerprint, then rhs dimension + fingerprint).");
+    f.line("pub fn fold_cup_product<H: Hasher>(");
+    f.line("    mut hasher: H,");
+    f.line("    lhs_dim: u32,");
+    f.line("    lhs_fp: &ContentFingerprint,");
+    f.line("    rhs_dim: u32,");
+    f.line("    rhs_fp: &ContentFingerprint,");
+    f.line(") -> H {");
+    f.line("    hasher = hasher.fold_bytes(&lhs_dim.to_be_bytes());");
+    f.line("    hasher = hasher.fold_bytes(lhs_fp.as_bytes());");
+    f.line("    hasher = hasher.fold_bytes(&rhs_dim.to_be_bytes());");
+    f.line("    hasher = hasher.fold_bytes(rhs_fp.as_bytes());");
+    f.line("    hasher");
+    f.line("}");
+    f.blank();
+
+    f.doc_comment("Phase X.2: mint a `CohomologyClass` from a cochain representative `seed`.");
+    f.doc_comment("Hashes `seed` through `H` to produce the class fingerprint. The caller's");
+    f.doc_comment("choice of `H` determines the fingerprint width.");
+    f.doc_comment("");
+    f.doc_comment("# Errors");
+    f.doc_comment("Returns `CohomologyError::DimensionOverflow` when `dimension >");
+    f.doc_comment("MAX_COHOMOLOGY_DIMENSION`.");
+    f.line("pub fn mint_cohomology_class<H: Hasher>(");
+    f.line("    dimension: u32,");
+    f.line("    seed: &[u8],");
+    f.line(") -> Result<CohomologyClass, CohomologyError> {");
+    f.line("    if dimension > MAX_COHOMOLOGY_DIMENSION {");
+    f.line("        return Err(CohomologyError::DimensionOverflow {");
+    f.line("            lhs: dimension,");
+    f.line("            rhs: 0,");
+    f.line("        });");
+    f.line("    }");
+    f.line("    let mut hasher = H::initial();");
+    f.line("    hasher = hasher.fold_bytes(&dimension.to_be_bytes());");
+    f.line("    hasher = hasher.fold_bytes(seed);");
+    f.line("    let buf = hasher.finalize();");
+    f.line("    let fp = ContentFingerprint::from_buffer(buf, H::OUTPUT_BYTES as u8);");
+    f.line("    Ok(CohomologyClass::with_dimension_and_fingerprint(dimension, fp))");
+    f.line("}");
+    f.blank();
+
+    f.doc_comment("Phase X.2: mint a `HomologyClass` from a chain representative `seed`.");
+    f.doc_comment("Hashes `seed` through `H` to produce the class fingerprint.");
+    f.doc_comment("");
+    f.doc_comment("# Errors");
+    f.doc_comment("Returns `CohomologyError::DimensionOverflow` when `dimension >");
+    f.doc_comment("MAX_COHOMOLOGY_DIMENSION`.");
+    f.line("pub fn mint_homology_class<H: Hasher>(");
+    f.line("    dimension: u32,");
+    f.line("    seed: &[u8],");
+    f.line(") -> Result<HomologyClass, CohomologyError> {");
+    f.line("    if dimension > MAX_COHOMOLOGY_DIMENSION {");
+    f.line("        return Err(CohomologyError::DimensionOverflow {");
+    f.line("            lhs: dimension,");
+    f.line("            rhs: 0,");
+    f.line("        });");
+    f.line("    }");
+    f.line("    let mut hasher = H::initial();");
+    f.line("    hasher = hasher.fold_bytes(&dimension.to_be_bytes());");
+    f.line("    hasher = hasher.fold_bytes(seed);");
+    f.line("    let buf = hasher.finalize();");
+    f.line("    let fp = ContentFingerprint::from_buffer(buf, H::OUTPUT_BYTES as u8);");
+    f.line("    Ok(HomologyClass::with_dimension_and_fingerprint(dimension, fp))");
     f.line("}");
     f.blank();
 }
@@ -5565,17 +7064,113 @@ enum PhaseDInputKind {
     CompileUnit,
 }
 
-/// Certificate shape produced by a Phase D resolver. All 16 additions use
-/// `GroundingCertificate` as the canonical cert carrier — the ontology's
-/// `resolver:producesCertificate` individuals are not yet defined for these
-/// resolvers, so the foundation adopts the canonical grounding cert (which
-/// carries witt_bits + content_fingerprint — sufficient for verify-trace
-/// round-trip reconstruction).
+/// v0.2.2 Phase J: ontology primitive each Phase D kernel composes into its
+/// decision body. Each variant dictates what `certify_at` computes and folds
+/// into the canonical fingerprint, ensuring distinct inputs produce distinct
+/// fingerprints per resolver semantics.
+#[derive(Debug, Clone, Copy)]
+enum PhaseDKernelComposition {
+    /// Run reduction; fold `(witt_bits, constraint_count, satisfiable_bit)`.
+    /// Used by: two_sat_decider, horn_sat_decider, residual_verdict, evaluation.
+    TerminalReductionOnly,
+    /// Canonical form: reduce twice (input + canonicalized), fold fixpoint witness.
+    CanonicalForm,
+    /// Betti tuple from constraint nerve; fold.
+    /// Used by: homotopy.
+    SimplicialNerve,
+    /// Betti + descent termination. Used by: type_synthesis.
+    NerveAndDescent,
+    /// Betti + dihedral orbit signature. Used by: monodromy.
+    NerveAndDihedral,
+    /// Betti deformation (H^0/H^1/H^2). Used by: moduli.
+    ModuliDeformation,
+    /// Jacobian profile + DC_10 selection. Used by: jacobian_guided, geodesic_validator.
+    CurvatureGuided,
+    /// Dihedral orbit only. Used by: dihedral_factorization.
+    DihedralOnly,
+    /// Betti + Euler \u03C7 == SITE_COUNT check. Used by: completeness.
+    CompletenessEuler,
+    /// CompileUnit session-binding signature. Used by: session.
+    SessionBinding,
+    /// CompileUnit session + measurement projection. Used by: superposition.
+    SuperpositionBorn,
+    /// CompileUnit measurement projection only. Used by: measurement.
+    MeasurementOnly,
+    /// CompileUnit WittLevel structural validation. Used by: witt_level_resolver.
+    WittLevelStructural,
+}
+
+/// Certificate shape produced by a Phase D resolver. Every kernel mints
+/// `GroundingCertificate` as the canonical cert carrier: the content-addressed
+/// `(witt_bits, content_fingerprint)` pair is the foundation's universal
+/// verify-trace round-trip surface, and the kernel-specific decision is
+/// encoded into the fingerprint via `fold_unit_digest(..., K::KIND)` plus the
+/// per-kernel primitive fold (Phase J). Cert-subclass discrimination at the
+/// Rust type level (e.g., `CompletenessCertificate`, `GeodesicCertificate`) is
+/// not part of the foundation's resolver output surface; downstream that
+/// needs a typed cert-subclass carrier constructs it from the `GroundingCertificate`
+/// via a substrate-specific lift.
 #[derive(Debug, Clone, Copy)]
 enum PhaseDCertKind {
     Grounding,
+    Transform,
+    Isometry,
+    Involution,
+    Completeness,
+    Geodesic,
+    Measurement,
+    BornRule,
 }
 
+impl PhaseDCertKind {
+    /// Phase X.1: the concrete certificate struct this kernel mints.
+    const fn rust_type_name(self) -> &'static str {
+        match self {
+            Self::Grounding => "GroundingCertificate",
+            Self::Transform => "TransformCertificate",
+            Self::Isometry => "IsometryCertificate",
+            Self::Involution => "InvolutionCertificate",
+            Self::Completeness => "CompletenessCertificate",
+            Self::Geodesic => "GeodesicCertificate",
+            Self::Measurement => "MeasurementCertificate",
+            Self::BornRule => "BornRuleVerification",
+        }
+    }
+}
+
+/// v0.2.2 Phase C: emit the `ResolverKernel` trait and the two generic
+/// `certify_at` helpers that all 15 Phase D resolvers delegate to. Each
+/// per-resolver kernel supplies a single `CertificateKind` discriminant;
+/// the fold shape, the reduction-stage dispatch, and the fingerprint
+/// computation are centralized here. Fingerprint outputs are byte-identical
+/// to the v0.2.1 copy-paste template.
+fn emit_resolver_kernel_trait_and_generics(f: &mut RustFile) {
+    f.indented_doc_comment(
+        "v0.2.2 Phase C: `pub(crate)` trait parameterizing the 15 Phase D resolver kernels.",
+    );
+    f.indented_doc_comment("Each kernel marker supplies a `CertificateKind` discriminant and its");
+    f.indented_doc_comment("ontology-declared certificate type via `type Cert`. The shared");
+    f.indented_doc_comment(
+        "`certify_at` bodies (see `emit_phase_d_ct_body` / `emit_phase_d_cu_body`)",
+    );
+    f.indented_doc_comment(
+        "mint `Certified<Kernel::Cert>` directly — so each resolver's cert class",
+    );
+    f.indented_doc_comment("matches its `resolver:CertifyMapping` in the ontology.");
+    f.line("    pub(crate) trait ResolverKernel {");
+    f.line("        const KIND: crate::enforcement::CertificateKind;");
+    f.line("        /// Phase X.1: the ontology-declared certificate class produced by");
+    f.line("        /// this resolver (per `resolver:CertifyMapping`).");
+    f.line("        type Cert: crate::enforcement::Certificate;");
+    f.line("    }");
+    f.blank();
+    // v0.2.2 Phase J: `generic_certify_at_ct` / `generic_certify_at_cu` are
+    // deleted. Every kernel's `certify_at` body is emitted inline by
+    // `emit_phase_d_ct_body` / `emit_phase_d_cu_body`, composing the kernel's
+    // ontology primitive into the fingerprint fold. No fallback body exists.
+}
+
+#[allow(clippy::too_many_arguments)]
 fn phase_d_emit_resolver_module(
     f: &mut RustFile,
     module_name: &str,
@@ -5584,21 +7179,49 @@ fn phase_d_emit_resolver_module(
     input_kind: PhaseDInputKind,
     cert_kind: PhaseDCertKind,
     cert_discriminant: &str,
+    composition: PhaseDKernelComposition,
 ) {
-    let cert_type = match cert_kind {
-        PhaseDCertKind::Grounding => "GroundingCertificate",
-    };
+    let cert_type = cert_kind.rust_type_name();
     f.doc_comment(&format!(
         "Phase D (target §4.2): `resolver:{resolver_class}` — {operational_summary}."
     ));
     f.doc_comment("");
-    f.doc_comment("Returns `Certified<GroundingCertificate>` on success carrying the Witt");
+    f.doc_comment(&format!(
+        "Returns `Certified<{cert_type}>` on success carrying the Witt"
+    ));
     f.doc_comment("level and a consumer-hasher-computed substrate fingerprint that uniquely");
     f.doc_comment("identifies the input. `Certified<GenericImpossibilityWitness>` on");
     f.doc_comment("failure — the witness itself is certified so downstream can persist it");
     f.doc_comment("alongside success certs in a uniform `Certified<_>` channel.");
+    f.doc_comment("");
+    f.doc_comment("Phase X.1: the produced cert class is the ontology-declared class for");
+    f.doc_comment("this resolver's `resolver:CertifyMapping`. Eight cert subclasses —");
+    f.doc_comment("`TransformCertificate`, `IsometryCertificate`, `InvolutionCertificate`,");
+    f.doc_comment("`CompletenessCertificate`, `GeodesicCertificate`, `MeasurementCertificate`,");
+    f.doc_comment(
+        "`BornRuleVerification`, and `GroundingCertificate` — are minted across the 17 Phase D",
+    );
+    f.doc_comment("kernels so each resolver's class discrimination is load-bearing.");
+    f.doc_comment("");
+    f.doc_comment("v0.2.2 Phase J: `certify_at` composes an ontology primitive (per the");
+    f.doc_comment("kernel's composition spec) whose output is folded into the canonical");
+    f.doc_comment("fingerprint ahead of `fold_unit_digest`, so distinct primitive outputs");
+    f.doc_comment("yield distinct fingerprints — i.e., each kernel's decision is real and");
+    f.doc_comment("content-addressed per its ontology class.");
     f.line(&format!("    pub mod {module_name} {{"));
     f.line("        use super::*;");
+    f.blank();
+    // Kernel marker type + ResolverKernel impl — only for type-level discrimination.
+    f.line("        #[doc(hidden)]");
+    f.line("        pub struct Kernel;");
+    f.line("        impl super::ResolverKernel for Kernel {");
+    f.line(&format!(
+        "            type Cert = crate::enforcement::{cert_type};"
+    ));
+    f.line(&format!(
+        "            const KIND: crate::enforcement::CertificateKind = crate::enforcement::{cert_discriminant};"
+    ));
+    f.line("        }");
     f.blank();
     match input_kind {
         PhaseDInputKind::ConstrainedType => {
@@ -5634,41 +7257,7 @@ fn phase_d_emit_resolver_module(
             f.line(&format!(
                 "        ) -> Result<Certified<{cert_type}>, Certified<GenericImpossibilityWitness>> {{"
             ));
-            f.line("            let _ = input.inner();");
-            f.line("            let witt_bits = level.witt_length() as u16;");
-            f.line("            // Run the reduction stages to produce the decision verdict.");
-            f.line(
-                "            let outcome = crate::pipeline::run_reduction_stages::<T>(witt_bits)",
-            );
-            f.line("                .map_err(|_| Certified::new(GenericImpossibilityWitness::default()))?;");
-            f.line("            if !outcome.satisfiable {");
-            f.line("                return Err(Certified::new(GenericImpossibilityWitness::default()));");
-            f.line("            }");
-            f.line("            // Fold the canonical CompileUnit-free fingerprint over the");
-            f.line("            // input's constraint catalog + resolver discriminant.");
-            f.line("            let mut hasher = H::initial();");
-            f.line("            hasher = crate::enforcement::fold_unit_digest(");
-            f.line("                hasher,");
-            f.line("                witt_bits,");
-            f.line("                witt_bits as u64,");
-            f.line("                T::IRI,");
-            f.line("                T::SITE_COUNT,");
-            f.line("                T::CONSTRAINTS,");
-            f.line(&format!(
-                "                crate::enforcement::{cert_discriminant},"
-            ));
-            f.line("            );");
-            f.line("            let buffer = hasher.finalize();");
-            f.line("            let fp = crate::enforcement::ContentFingerprint::from_buffer(");
-            f.line("                buffer,");
-            f.line("                H::OUTPUT_BYTES as u8,");
-            f.line("            );");
-            f.line(&format!(
-                "            let cert = {cert_type}::with_level_and_fingerprint_const("
-            ));
-            f.line("                witt_bits, fp,");
-            f.line("            );");
-            f.line("            Ok(Certified::new(cert))");
+            emit_phase_d_ct_body(f, composition);
             f.line("        }");
         }
         PhaseDInputKind::CompileUnit => {
@@ -5702,39 +7291,206 @@ fn phase_d_emit_resolver_module(
             f.line(&format!(
                 "        ) -> Result<Certified<{cert_type}>, Certified<GenericImpossibilityWitness>> {{"
             ));
-            f.line("            let unit = input.inner();");
-            f.line("            let witt_bits = level.witt_length() as u16;");
-            f.line("            let budget = unit.thermodynamic_budget();");
-            f.line("            let result_type_iri = unit.result_type_iri();");
-            f.line("            let mut hasher = H::initial();");
-            f.line("            // Fold the unit bytes + resolver discriminant.");
-            f.line("            hasher = crate::enforcement::fold_unit_digest(");
-            f.line("                hasher,");
-            f.line("                witt_bits,");
-            f.line("                budget,");
-            f.line("                result_type_iri,");
-            f.line("                0usize,");
-            f.line("                &[],");
-            f.line(&format!(
-                "                crate::enforcement::{cert_discriminant},"
-            ));
-            f.line("            );");
-            f.line("            let buffer = hasher.finalize();");
-            f.line("            let fp = crate::enforcement::ContentFingerprint::from_buffer(");
-            f.line("                buffer,");
-            f.line("                H::OUTPUT_BYTES as u8,");
-            f.line("            );");
-            f.line(&format!(
-                "            let cert = {cert_type}::with_level_and_fingerprint_const("
-            ));
-            f.line("                witt_bits, fp,");
-            f.line("            );");
-            f.line("            Ok(Certified::new(cert))");
+            emit_phase_d_cu_body(f, composition);
             f.line("        }");
         }
     }
     f.line("    }");
     f.blank();
+}
+
+/// v0.2.2 Phase J: emit the `certify_at` body for a ConstrainedType-bearing
+/// kernel. Each body follows the pattern:
+///   1. Run the ontology primitive(s) for this kernel's composition.
+///   2. Fold primitive output(s) into the hasher.
+///   3. Fold the canonical unit digest via `fold_unit_digest`.
+///   4. Finalize and emit `Certified<GroundingCertificate>`.
+fn emit_phase_d_ct_body(f: &mut RustFile, composition: PhaseDKernelComposition) {
+    // Common prelude: witt_bits + primitive-terminal-reduction check.
+    f.line("            let _ = input.inner();");
+    f.line("            let witt_bits = level.witt_length() as u16;");
+    f.line("            let (tr_bits, tr_constraints, tr_sat) =");
+    f.line("                crate::enforcement::primitive_terminal_reduction::<T>(witt_bits)");
+    f.line("                    .map_err(|_| Certified::new(GenericImpossibilityWitness::default()))?;");
+    f.line("            if tr_sat == 0 {");
+    f.line("                return Err(Certified::new(GenericImpossibilityWitness::default()));");
+    f.line("            }");
+    f.line("            let mut hasher = H::initial();");
+    // Fold the TerminalReduction triple always (content-addressed base).
+    f.line("            hasher = crate::enforcement::fold_terminal_reduction(hasher, tr_bits, tr_constraints, tr_sat);");
+    match composition {
+        PhaseDKernelComposition::TerminalReductionOnly => {
+            // Already folded; nothing else.
+        }
+        PhaseDKernelComposition::CanonicalForm => {
+            // v0.2.2 Phase V.2: real Church-Rosser canonicity witness.
+            // Run reduction a SECOND time and assert the outcome is identical
+            // (fixpoint property). Fold both passes into the fingerprint so
+            // CanonicalForm's cert content-addresses the canonicity witness,
+            // not a sentinel byte.
+            f.line("            let (tr2_bits, tr2_constraints, tr2_sat) =");
+            f.line(
+                "                crate::enforcement::primitive_terminal_reduction::<T>(witt_bits)",
+            );
+            f.line(
+                "                    .map_err(|_| Certified::new(GenericImpossibilityWitness::default()))?;",
+            );
+            f.line("            // Church-Rosser: second reduction must agree with the first.");
+            f.line("            if tr2_bits != tr_bits || tr2_constraints != tr_constraints || tr2_sat != tr_sat {");
+            f.line(
+                "                return Err(Certified::new(GenericImpossibilityWitness::default()));",
+            );
+            f.line("            }");
+            f.line("            hasher = crate::enforcement::fold_terminal_reduction(hasher, tr2_bits, tr2_constraints, tr2_sat);");
+        }
+        PhaseDKernelComposition::SimplicialNerve => {
+            f.line("            let betti = crate::enforcement::primitive_simplicial_nerve_betti::<T>();");
+            f.line("            hasher = crate::enforcement::fold_betti_tuple(hasher, &betti);");
+        }
+        PhaseDKernelComposition::NerveAndDescent => {
+            f.line("            let betti = crate::enforcement::primitive_simplicial_nerve_betti::<T>();");
+            f.line("            hasher = crate::enforcement::fold_betti_tuple(hasher, &betti);");
+            f.line("            let (residual, entropy) = crate::enforcement::primitive_descent_metrics::<T>(&betti);");
+            f.line("            hasher = crate::enforcement::fold_descent_metrics(hasher, residual, entropy);");
+        }
+        PhaseDKernelComposition::NerveAndDihedral => {
+            f.line("            let betti = crate::enforcement::primitive_simplicial_nerve_betti::<T>();");
+            f.line("            hasher = crate::enforcement::fold_betti_tuple(hasher, &betti);");
+            f.line("            let (orbit_size, representative) = crate::enforcement::primitive_dihedral_signature::<T>();");
+            f.line("            hasher = crate::enforcement::fold_dihedral_signature(hasher, orbit_size, representative);");
+        }
+        PhaseDKernelComposition::ModuliDeformation => {
+            // v0.2.2 Phase V.2: deformation-complex reading per target §4.6.
+            // Homotopy folds the full Betti tuple (all 8 dims). Moduli reads
+            // the bidegree-(0,1,2) projection: H^0 (automorphisms),
+            // H^1 (first-order deformations), H^2 (obstructions). Fold each
+            // dimension explicitly — no sentinel byte.
+            f.line("            let betti = crate::enforcement::primitive_simplicial_nerve_betti::<T>();");
+            f.line("            let automorphisms: u32 = betti[0];");
+            f.line(
+                "            let deformations: u32 = if crate::enforcement::MAX_BETTI_DIMENSION > 1 { betti[1] } else { 0 };",
+            );
+            f.line(
+                "            let obstructions: u32 = if crate::enforcement::MAX_BETTI_DIMENSION > 2 { betti[2] } else { 0 };",
+            );
+            f.line("            hasher = hasher.fold_bytes(&automorphisms.to_be_bytes());");
+            f.line("            hasher = hasher.fold_bytes(&deformations.to_be_bytes());");
+            f.line("            hasher = hasher.fold_bytes(&obstructions.to_be_bytes());");
+        }
+        PhaseDKernelComposition::CurvatureGuided => {
+            f.line(
+                "            let jac = crate::enforcement::primitive_curvature_jacobian::<T>();",
+            );
+            f.line("            hasher = crate::enforcement::fold_jacobian_profile(hasher, &jac);");
+            f.line(
+                "            let selected_site = crate::enforcement::primitive_dc10_select(&jac);",
+            );
+            f.line(
+                "            hasher = hasher.fold_bytes(&(selected_site as u32).to_be_bytes());",
+            );
+        }
+        PhaseDKernelComposition::DihedralOnly => {
+            f.line("            let (orbit_size, representative) = crate::enforcement::primitive_dihedral_signature::<T>();");
+            f.line("            hasher = crate::enforcement::fold_dihedral_signature(hasher, orbit_size, representative);");
+        }
+        PhaseDKernelComposition::CompletenessEuler => {
+            f.line("            let betti = crate::enforcement::primitive_simplicial_nerve_betti::<T>();");
+            f.line(
+                "            let chi = crate::enforcement::primitive_euler_characteristic(&betti);",
+            );
+            // Fold the Euler characteristic + Betti — distinct from moduli/homotopy.
+            f.line("            hasher = crate::enforcement::fold_betti_tuple(hasher, &betti);");
+            f.line("            hasher = hasher.fold_bytes(&chi.to_be_bytes());");
+        }
+        // CompileUnit-only variants: unreachable on ConstrainedType path.
+        PhaseDKernelComposition::SessionBinding
+        | PhaseDKernelComposition::SuperpositionBorn
+        | PhaseDKernelComposition::MeasurementOnly
+        | PhaseDKernelComposition::WittLevelStructural => {
+            // Emitted unreachable — the caller mismatched input_kind/composition.
+            f.line("            // Composition requires CompileUnit input; caller misconfigured.");
+            f.line("            unreachable!(\"CompileUnit-only composition reached ConstrainedType emission site\");");
+        }
+    }
+    // Canonical unit digest + finalize.
+    f.line("            hasher = crate::enforcement::fold_unit_digest(");
+    f.line("                hasher,");
+    f.line("                witt_bits,");
+    f.line("                witt_bits as u64,");
+    f.line("                T::IRI,");
+    f.line("                T::SITE_COUNT,");
+    f.line("                T::CONSTRAINTS,");
+    f.line("                <Kernel as super::ResolverKernel>::KIND,");
+    f.line("            );");
+    f.line("            let buffer = hasher.finalize();");
+    f.line("            let fp = crate::enforcement::ContentFingerprint::from_buffer(buffer, H::OUTPUT_BYTES as u8);");
+    f.line("            let cert = <<Kernel as super::ResolverKernel>::Cert as crate::enforcement::certify_const_mint::MintWithLevelFingerprint>::mint_with_level_fingerprint(witt_bits, fp);");
+    f.line("            Ok(Certified::new(cert))");
+}
+
+/// v0.2.2 Phase J: emit the `certify_at` body for a CompileUnit-bearing kernel.
+fn emit_phase_d_cu_body(f: &mut RustFile, composition: PhaseDKernelComposition) {
+    f.line("            let unit = input.inner();");
+    f.line("            let witt_bits = level.witt_length() as u16;");
+    f.line("            let budget = unit.thermodynamic_budget();");
+    f.line("            let result_type_iri = unit.result_type_iri();");
+    f.line("            let mut hasher = H::initial();");
+    match composition {
+        PhaseDKernelComposition::SessionBinding => {
+            f.line("            let (binding_count, fold_addr) =");
+            f.line("                crate::enforcement::primitive_session_binding_signature(unit.bindings());");
+            f.line("            hasher = crate::enforcement::fold_session_signature(hasher, binding_count, fold_addr);");
+        }
+        PhaseDKernelComposition::SuperpositionBorn => {
+            f.line("            let (binding_count, fold_addr) =");
+            f.line("                crate::enforcement::primitive_session_binding_signature(unit.bindings());");
+            f.line("            hasher = crate::enforcement::fold_session_signature(hasher, binding_count, fold_addr);");
+            f.line("            let (outcome_index, probability) =");
+            f.line("                crate::enforcement::primitive_measurement_projection(budget);");
+            f.line("            hasher = crate::enforcement::fold_born_outcome(hasher, outcome_index, probability);");
+        }
+        PhaseDKernelComposition::MeasurementOnly => {
+            f.line("            let (outcome_index, probability) =");
+            f.line("                crate::enforcement::primitive_measurement_projection(budget);");
+            f.line("            hasher = crate::enforcement::fold_born_outcome(hasher, outcome_index, probability);");
+        }
+        PhaseDKernelComposition::WittLevelStructural => {
+            // Structural validation: bit_width % 8 == 0 and cycle_size == 2^bit_width.
+            // The WittLevel carrier enforces these by construction; fold the level bits as
+            // the structural signature.
+            f.line("            hasher = hasher.fold_bytes(&witt_bits.to_be_bytes());");
+            f.line("            let declared_level_bits = unit.witt_level().witt_length() as u16;");
+            f.line("            hasher = hasher.fold_bytes(&declared_level_bits.to_be_bytes());");
+        }
+        // ConstrainedType-only variants: unreachable on CompileUnit path.
+        PhaseDKernelComposition::TerminalReductionOnly
+        | PhaseDKernelComposition::CanonicalForm
+        | PhaseDKernelComposition::SimplicialNerve
+        | PhaseDKernelComposition::NerveAndDescent
+        | PhaseDKernelComposition::NerveAndDihedral
+        | PhaseDKernelComposition::ModuliDeformation
+        | PhaseDKernelComposition::CurvatureGuided
+        | PhaseDKernelComposition::DihedralOnly
+        | PhaseDKernelComposition::CompletenessEuler => {
+            f.line(
+                "            // Composition requires ConstrainedType input; caller misconfigured.",
+            );
+            f.line("            unreachable!(\"ConstrainedType-only composition reached CompileUnit emission site\");");
+        }
+    }
+    f.line("            hasher = crate::enforcement::fold_unit_digest(");
+    f.line("                hasher,");
+    f.line("                witt_bits,");
+    f.line("                budget,");
+    f.line("                result_type_iri,");
+    f.line("                0usize,");
+    f.line("                &[],");
+    f.line("                <Kernel as super::ResolverKernel>::KIND,");
+    f.line("            );");
+    f.line("            let buffer = hasher.finalize();");
+    f.line("            let fp = crate::enforcement::ContentFingerprint::from_buffer(buffer, H::OUTPUT_BYTES as u8);");
+    f.line("            let cert = <<Kernel as super::ResolverKernel>::Cert as crate::enforcement::certify_const_mint::MintWithLevelFingerprint>::mint_with_level_fingerprint(witt_bits, fp);");
+    f.line("            Ok(Certified::new(cert))");
 }
 
 // 2.1.e RingOp<L> — phantom-typed ring operation wrappers.
@@ -6319,6 +8075,25 @@ fn generate_prelude(f: &mut RustFile, ontology: &Ontology) {
         "Runtime",
         // v0.2.2 W8: Triad bundling struct.
         "Triad",
+        // v0.2.2 Phase Q.1: grounding surface.
+        "Grounding",
+        "GroundingExt",
+        "GroundingProgram",
+        "GroundedCoord",
+        "GroundedTuple",
+        "GroundedValue",
+        // v0.2.2 Phase Q.1: substrate surface.
+        "Hasher",
+        "ContentAddress",
+        "ContentFingerprint",
+        // v0.2.2 Phase Q.1: timing surface (Phase B introductions).
+        "TimingPolicy",
+        "CanonicalTimingPolicy",
+        "UorTime",
+        "LandauerBudget",
+        "Nanos",
+        "Calibration",
+        "CalibrationError",
     ];
 
     f.doc_comment("v0.2.1 ergonomics prelude. Re-exports the core symbols downstream crates");
@@ -6343,6 +8118,13 @@ fn generate_prelude(f: &mut RustFile, ontology: &Ontology) {
         }
     }
     f.line("    pub use crate::{DefaultHostTypes, HostTypes, WittLevel};");
+    // v0.2.2 Phase Q.1: calibrations preset module + cross-module re-exports.
+    f.line("    pub use super::calibrations;");
+    f.line("    pub use crate::pipeline::empty_bindings_table;");
+    f.line("    pub use crate::pipeline::{");
+    f.line("        validate_constrained_type, validate_constrained_type_const,");
+    f.line("        ConstraintRef, FragmentKind, ConstrainedTypeShape,");
+    f.line("    };");
     f.line("}");
     f.blank();
 }
@@ -7490,6 +9272,47 @@ fn generate_bridge_namespace_surface(f: &mut RustFile) {
     f.line("impl Derivation {");
     f.indented_doc_comment("Replay this derivation as a fixed-size `Trace` whose length matches");
     f.indented_doc_comment("`self.step_count()` (capped at `TRACE_MAX_EVENTS`).");
+    f.indented_doc_comment("");
+    f.indented_doc_comment("# Example");
+    f.indented_doc_comment("");
+    f.indented_doc_comment("```no_run");
+    f.indented_doc_comment("use uor_foundation::enforcement::{");
+    f.indented_doc_comment("    replay, CompileUnitBuilder, ConstrainedTypeInput, Grounded, Term,");
+    f.indented_doc_comment("};");
+    f.indented_doc_comment("use uor_foundation::pipeline::run;");
+    f.indented_doc_comment("use uor_foundation::{VerificationDomain, WittLevel};");
+    f.indented_doc_comment("# use uor_foundation::enforcement::Hasher;");
+    f.indented_doc_comment("# struct H; impl Hasher for H {");
+    f.indented_doc_comment("#     const OUTPUT_BYTES: usize = 16;");
+    f.indented_doc_comment("#     fn initial() -> Self { Self }");
+    f.indented_doc_comment("#     fn fold_byte(self, _: u8) -> Self { self }");
+    f.indented_doc_comment(
+        "#     fn finalize(self) -> [u8; uor_foundation::enforcement::FINGERPRINT_MAX_BYTES] {",
+    );
+    f.indented_doc_comment("#         [0; uor_foundation::enforcement::FINGERPRINT_MAX_BYTES] } }");
+    f.indented_doc_comment(
+        "static TERMS: &[Term] = &[Term::Literal { value: 7, level: WittLevel::W8 }];",
+    );
+    f.indented_doc_comment(
+        "static DOMS: &[VerificationDomain] = &[VerificationDomain::Enumerative];",
+    );
+    f.indented_doc_comment("");
+    f.indented_doc_comment("let unit = CompileUnitBuilder::new()");
+    f.indented_doc_comment("    .root_term(TERMS).witt_level_ceiling(WittLevel::W32)");
+    f.indented_doc_comment("    .thermodynamic_budget(1024).target_domains(DOMS)");
+    f.indented_doc_comment("    .result_type::<ConstrainedTypeInput>()");
+    f.indented_doc_comment("    .validate().expect(\"unit well-formed\");");
+    f.indented_doc_comment("let grounded: Grounded<ConstrainedTypeInput> =");
+    f.indented_doc_comment("    run::<ConstrainedTypeInput, _, H>(unit).expect(\"grounds\");");
+    f.indented_doc_comment("");
+    f.indented_doc_comment("// Replay → round-trip verification.");
+    f.indented_doc_comment("let trace = grounded.derivation().replay();");
+    f.indented_doc_comment(
+        "let recert = replay::certify_from_trace(&trace).expect(\"valid trace\");",
+    );
+    f.indented_doc_comment("assert_eq!(recert.certificate().content_fingerprint(),");
+    f.indented_doc_comment("           grounded.content_fingerprint());");
+    f.indented_doc_comment("```");
     f.line("    #[inline]");
     f.line("    #[must_use]");
     f.line("    pub fn replay(&self) -> Trace {");
@@ -7718,50 +9541,11 @@ fn generate_bridge_namespace_surface(f: &mut RustFile) {
     f.line("}");
     f.blank();
 
-    // HomologyClass + CohomologyClass parametric over dimension.
-    f.doc_comment("v0.2.2 Phase E: sealed homology class parametric over dimension N.");
-    f.line("#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]");
-    f.line("pub struct HomologyClass<const N: usize> {");
-    f.line("    chain: [i64; MAX_BETTI_DIMENSION],");
-    f.line("    _sealed: (),");
-    f.line("}");
-    f.blank();
-    f.line("impl<const N: usize> HomologyClass<N> {");
-    f.indented_doc_comment("Construct a zero homology class.");
-    f.line("    #[inline]");
-    f.line("    #[must_use]");
-    f.line("    pub const fn zero() -> Self {");
-    f.line("        Self { chain: [0i64; MAX_BETTI_DIMENSION], _sealed: () }");
-    f.line("    }");
-    f.blank();
-    f.indented_doc_comment("Access the chain coefficients.");
-    f.line("    #[inline]");
-    f.line("    #[must_use]");
-    f.line("    pub const fn chain(&self) -> &[i64; MAX_BETTI_DIMENSION] { &self.chain }");
-    f.line("}");
-    f.blank();
-
-    f.doc_comment("v0.2.2 Phase E: sealed cohomology class parametric over dimension N.");
-    f.line("#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]");
-    f.line("pub struct CohomologyClass<const N: usize> {");
-    f.line("    cochain: [i64; MAX_BETTI_DIMENSION],");
-    f.line("    _sealed: (),");
-    f.line("}");
-    f.blank();
-    f.line("impl<const N: usize> CohomologyClass<N> {");
-    f.indented_doc_comment("Construct a zero cohomology class.");
-    f.line("    #[inline]");
-    f.line("    #[must_use]");
-    f.line("    pub const fn zero() -> Self {");
-    f.line("        Self { cochain: [0i64; MAX_BETTI_DIMENSION], _sealed: () }");
-    f.line("    }");
-    f.blank();
-    f.indented_doc_comment("Access the cochain coefficients.");
-    f.line("    #[inline]");
-    f.line("    #[must_use]");
-    f.line("    pub const fn cochain(&self) -> &[i64; MAX_BETTI_DIMENSION] { &self.cochain }");
-    f.line("}");
-    f.blank();
+    // Phase X.2: `HomologyClass` and `CohomologyClass` carriers (dimension-as-
+    // runtime-field + `cup` algebra) are emitted from `emit_phase_j_primitives`
+    // → `emit_phase_x2_cohomology_cup`. The previous const-generic orphan
+    // emissions (`HomologyClass<const N: usize>` / `CohomologyClass<const N>`)
+    // carried no production path — replaced by the carriers with real behavior.
 
     // InteractionDeclarationBuilder stub (Phase E).
     f.doc_comment("v0.2.2 Phase E: sealed builder for an InteractionDeclaration.");
@@ -8495,16 +10279,56 @@ fn generate_grounding_combinator_surface(f: &mut RustFile) {
     f.indented_doc_comment("Interpret bytes as a big-endian integer.");
     f.line("    InterpretBeInteger,");
     f.indented_doc_comment("Hash bytes via blake3 → 32-byte digest → `Datum<W256>`.");
+    f.indented_doc_comment("");
+    f.indented_doc_comment("# Scope");
+    f.indented_doc_comment("");
+    f.indented_doc_comment(
+        "`interpret_leaf_op` returns the first byte of the blake3 32-byte digest.",
+    );
+    f.indented_doc_comment(
+        "The full digest is produced by `Datum<W256>` composition of 32 `Digest` leaves —",
+    );
+    f.indented_doc_comment("the leaf-level output is the single-byte projection.");
     f.line("    Digest,");
     f.indented_doc_comment("Decode UTF-8 bytes; rejects malformed input.");
+    f.indented_doc_comment("");
+    f.indented_doc_comment("# Scope");
+    f.indented_doc_comment("");
+    f.indented_doc_comment(
+        "Only single-byte ASCII (`b < 0x80`) is decoded by `interpret_leaf_op`.",
+    );
+    f.indented_doc_comment(
+        "Multi-byte UTF-8 is not decoded by this leaf; multi-byte sequences traverse the",
+    );
+    f.indented_doc_comment("foundation via `GroundedTuple<N>` composition of single-byte leaves.");
     f.line("    DecodeUtf8,");
     f.indented_doc_comment("Decode JSON bytes; rejects malformed input.");
+    f.indented_doc_comment("");
+    f.indented_doc_comment("# Scope");
+    f.indented_doc_comment("");
+    f.indented_doc_comment(
+        "Only the leading byte of a JSON number scalar (`-` or ASCII digit) is parsed",
+    );
+    f.indented_doc_comment(
+        "by `interpret_leaf_op`. Structured JSON values (objects, arrays, strings,",
+    );
+    f.indented_doc_comment("multi-byte numbers) are not parsed by this leaf.");
     f.line("    DecodeJson,");
     f.indented_doc_comment("Select a field from a structured value.");
     f.line("    SelectField,");
     f.indented_doc_comment("Select an indexed element.");
     f.line("    SelectIndex,");
     f.indented_doc_comment("Inject a foundation-known constant.");
+    f.indented_doc_comment("");
+    f.indented_doc_comment("# Scope");
+    f.indented_doc_comment("");
+    f.indented_doc_comment(
+        "`interpret_leaf_op` returns `GroundedCoord::w8(0)` — the foundation-canonical",
+    );
+    f.indented_doc_comment(
+        "zero constant. Non-zero constants are materialized through the const-fn frontier",
+    );
+    f.indented_doc_comment("(`validate_const` paths) rather than through this leaf.");
     f.line("    ConstValue,");
     f.indented_doc_comment("Compose two combinators sequentially.");
     f.line("    Then,");

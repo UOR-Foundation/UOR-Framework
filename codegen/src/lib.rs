@@ -289,6 +289,24 @@ fn generate_lib_rs(ontology: &Ontology) -> String {
          //! - `enforcement::resolver::incremental_completeness::certify(input)` — incremental\n\
          //! - `enforcement::resolver::grounding_aware::certify(unit)` — grounding-aware\n\
          //!\n\
+         //! # Features\n\
+         //!\n\
+         //! The crate ships this feature-flag layout. Every capability the `default`\n\
+         //! build omits is opt-in; the default is `#![no_std]`-pure and alloc-free.\n\
+         //!\n\
+         //! | Feature         | Default | Adds | When to enable |\n\
+         //! |-----------------|---------|------|----------------|\n\
+         //! | `alloc`         | off     | `extern crate alloc`; alloc-backed diagnostic helpers | Heap available but no OS |\n\
+         //! | `std`           | off     | `alloc` + std-specific paths | Hosted platforms |\n\
+         //! | `libm`          | **on** (unconditional dep) | `libm`-backed `ln`, `exp`, `sqrt` for transcendental observables | Always on — required by `xsd:decimal` observables (see target §1.6) |\n\
+         //! | `serde`         | off     | `serde::{{Serialize, Deserialize}}` on `Trace`, `TraceEvent`, and other carriers | Exporting traces to external verifiers |\n\
+         //! | `observability` | off     | `alloc` + a `subscribe(handler: FnMut(&TraceEvent))` surface | Runtime observation of the reduction pipeline |\n\
+         //!\n\
+         //! The `default = []` posture means bare-metal targets (`thumbv7em-none-eabihf`)\n\
+         //! build without any feature flag. CI validates three configurations: the\n\
+         //! bare-metal `no_std` cross-build, the `alloc`-additive hosted build, and\n\
+         //! the `--all-features` composite. See target §1.6 and §7.5.\n\
+         //!\n\
          //! # Scope note\n\
          //!\n\
          //! This crate is conformance-first: every surface the ontology specifies\n\
@@ -339,7 +357,26 @@ fn generate_lib_rs(ontology: &Ontology) -> String {
     f.doc_comment("Three slots: `Decimal` (real-number representation), `HostString` (opaque");
     f.doc_comment("host string, NOT a foundation IRI), and `WitnessBytes` (opaque host byte");
     f.doc_comment("sequence, NOT a foundation `canonicalBytes` constant). The v0.2.1 `DateTime`");
-    f.doc_comment("slot is removed; downstream associates timestamps out-of-band per target §1.6.");
+    f.doc_comment("slot is removed; downstream associates timestamps out-of-band.");
+    f.doc_comment("");
+    f.doc_comment("# Example");
+    f.doc_comment("");
+    f.doc_comment("```");
+    f.doc_comment("use uor_foundation::{HostTypes, DefaultHostTypes};");
+    f.doc_comment("");
+    f.doc_comment("// Canonical defaults: f64 / str / [u8].");
+    f.doc_comment("type DefaultH = DefaultHostTypes;");
+    f.doc_comment("");
+    f.doc_comment("// Override the Decimal slot for embedded targets with tighter precision:");
+    f.doc_comment("struct EmbeddedHost;");
+    f.doc_comment("impl HostTypes for EmbeddedHost {");
+    f.doc_comment("    type Decimal = f32;          // override");
+    f.doc_comment("    type HostString = str;       // default");
+    f.doc_comment("    type WitnessBytes = [u8];    // default");
+    f.doc_comment("}");
+    f.doc_comment("");
+    f.doc_comment("# let _ = (core::marker::PhantomData::<DefaultH>, core::marker::PhantomData::<EmbeddedHost>);");
+    f.doc_comment("```");
     f.line("pub trait HostTypes {");
     f.indented_doc_comment(
         "Real-number representation for kernel observables (entropies, amplitudes, rates).\n\

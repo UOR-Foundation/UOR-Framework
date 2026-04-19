@@ -44,6 +44,10 @@ const SEALED_TRAITS: &[&str] = &[
     "ImpossibilityWitnessKind",
     "RingOp",
     "ValidLevelEmbedding",
+    // Target §3 Sink/Sinking hardening — ProjectionMap kind discriminator +
+    // shared morphism-kind supertrait.
+    "ProjectionMapKind",
+    "MorphismKind",
 ];
 
 /// Sealed types whose construction must go through foundation-owned paths.

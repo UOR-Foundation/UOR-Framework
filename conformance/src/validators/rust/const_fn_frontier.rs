@@ -57,10 +57,10 @@ pub fn validate(workspace: &Path) -> Result<ConformanceReport> {
     let required: &[(&str, &str)] = &[
         // validate_*_const family (4). Each is `const fn` and shares the
         // runtime validate() field set (T6.13 dual-path consistency).
-        ("validate_lease_const", "pub const fn validate_lease_const("),
+        ("validate_lease_const", "pub const fn validate_lease_const<"),
         (
             "validate_compile_unit_const",
-            "pub const fn validate_compile_unit_const(",
+            "pub const fn validate_compile_unit_const",
         ),
         (
             "validate_parallel_const",

@@ -28,7 +28,7 @@ static SENTINEL_TERMS: &[Term] = &[Term::Literal {
 }];
 static SENTINEL_DOMAINS: &[VerificationDomain] = &[VerificationDomain::Enumerative];
 
-fn build(level: WittLevel, budget: u64) -> Validated<CompileUnit, CompileTime> {
+fn build(level: WittLevel, budget: u64) -> Validated<CompileUnit<'static>, CompileTime> {
     let builder = CompileUnitBuilder::new()
         .root_term(SENTINEL_TERMS)
         .witt_level_ceiling(level)
@@ -118,12 +118,24 @@ fn pipeline_run_and_run_const_agree_for_same_unit() {
 
 // ─── pipeline::run_parallel input-dependence ────────────────────────────
 
+// v0.2.2 Phase H3: `ParallelDeclaration::new::<T>(site_count)` was deleted; the
+// sole constructor is `new_with_partition`. These fixtures supply a partition
+// slice whose length equals the intended site count and a canonical
+// disjointness-witness IRI.
+const DISJOINTNESS_WITNESS: &str = "https://uor.foundation/parallel/ParallelDisjointnessWitness";
+
 #[test]
 fn pipeline_run_parallel_different_site_counts_produce_different_witnesses() {
+    static PARTITION_3: &[u32] = &[0, 1, 2];
+    static PARTITION_7: &[u32] = &[0, 1, 2, 3, 4, 5, 6];
     let unit_3: Validated<ParallelDeclaration> =
-        validated_runtime(ParallelDeclaration::new::<ConstrainedTypeInput>(3));
+        validated_runtime(ParallelDeclaration::new_with_partition::<
+            ConstrainedTypeInput,
+        >(PARTITION_3, DISJOINTNESS_WITNESS));
     let unit_7: Validated<ParallelDeclaration> =
-        validated_runtime(ParallelDeclaration::new::<ConstrainedTypeInput>(7));
+        validated_runtime(ParallelDeclaration::new_with_partition::<
+            ConstrainedTypeInput,
+        >(PARTITION_7, DISJOINTNESS_WITNESS));
     let g_3: Grounded<ConstrainedTypeInput> =
         run_parallel::<ConstrainedTypeInput, _, Fnv1aHasher16>(unit_3).expect("3");
     let g_7: Grounded<ConstrainedTypeInput> =
@@ -137,24 +149,31 @@ fn pipeline_run_parallel_different_site_counts_produce_different_witnesses() {
 
 #[test]
 fn pipeline_run_parallel_zero_site_count_is_rejected() {
-    // Workstream G closure (target §5): `run_parallel` returns `Err` when
-    // site_count == 0 (vacuous parallel composition) or when the declared
-    // result_type_iri mismatches T::IRI (shape mismatch).
+    // v0.2.2 Phase H3: with `new_with_partition` as the sole constructor, the
+    // zero-site case is an empty partition slice — rejected as inadmissible.
+    static EMPTY: &[u32] = &[];
     let zero_site: Validated<ParallelDeclaration> =
-        validated_runtime(ParallelDeclaration::new::<ConstrainedTypeInput>(0));
+        validated_runtime(ParallelDeclaration::new_with_partition::<
+            ConstrainedTypeInput,
+        >(EMPTY, DISJOINTNESS_WITNESS));
     let result = run_parallel::<ConstrainedTypeInput, _, Fnv1aHasher16>(zero_site);
     assert!(
         result.is_err(),
-        "run_parallel must reject site_count == 0 as inadmissible"
+        "run_parallel must reject empty partition as inadmissible"
     );
 }
 
 #[test]
 fn pipeline_run_parallel_equal_site_counts_produce_equal_witnesses() {
+    static PARTITION_5: &[u32] = &[0, 1, 2, 3, 4];
     let u_a: Validated<ParallelDeclaration> =
-        validated_runtime(ParallelDeclaration::new::<ConstrainedTypeInput>(5));
+        validated_runtime(ParallelDeclaration::new_with_partition::<
+            ConstrainedTypeInput,
+        >(PARTITION_5, DISJOINTNESS_WITNESS));
     let u_b: Validated<ParallelDeclaration> =
-        validated_runtime(ParallelDeclaration::new::<ConstrainedTypeInput>(5));
+        validated_runtime(ParallelDeclaration::new_with_partition::<
+            ConstrainedTypeInput,
+        >(PARTITION_5, DISJOINTNESS_WITNESS));
     let g_a = run_parallel::<ConstrainedTypeInput, _, Fnv1aHasher16>(u_a).expect("a");
     let g_b = run_parallel::<ConstrainedTypeInput, _, Fnv1aHasher16>(u_b).expect("b");
     assert_eq!(g_a.unit_address(), g_b.unit_address());

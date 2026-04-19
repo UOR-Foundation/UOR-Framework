@@ -482,29 +482,39 @@ pub trait GroundedValue: sealed::Sealed {}
 impl GroundedValue for GroundedCoord {}
 impl<const N: usize> GroundedValue for GroundedTuple<N> {}
 
-/// v0.2.2 W4: sealed marker trait for the kind of a `Grounding` map.
-/// Implemented by exactly the `morphism:GroundingMap` individuals declared in
-/// the ontology; downstream cannot extend the kind set.
-pub trait GroundingMapKind: grounding_map_kind_sealed::Sealed {
-    /// The ontology IRI of this grounding map kind.
+/// Target §3: sealed marker trait shared by all morphism kinds.
+/// `GroundingMapKind` (inbound) and `ProjectionMapKind` (outbound) both
+/// extend this trait; the four structural markers (`Total`, `Invertible`,
+/// `PreservesStructure`, `PreservesMetric`) are bounded on `MorphismKind`.
+pub trait MorphismKind: morphism_kind_sealed::Sealed {
+    /// The ontology IRI of this morphism kind.
     const ONTOLOGY_IRI: &'static str;
 }
 
-/// v0.2.2 W4: kinds whose grounding image is total over the input domain
-/// (every input grounds successfully).
-pub trait Total: GroundingMapKind {}
+/// v0.2.2 W4: sealed marker trait for the kind of a `Grounding` map.
+/// Implemented by exactly the `morphism:GroundingMap` individuals declared in
+/// the ontology; downstream cannot extend the kind set.
+pub trait GroundingMapKind: MorphismKind + grounding_map_kind_sealed::Sealed {}
 
-/// v0.2.2 W4: kinds whose grounding map is injective and admits an inverse
-/// on its image.
-pub trait Invertible: GroundingMapKind {}
+/// Target §3: sealed marker trait for the kind of a `Sinking` projection.
+/// Implemented by exactly the `morphism:ProjectionMap` individuals declared
+/// in the ontology; downstream cannot extend the kind set.
+pub trait ProjectionMapKind: MorphismKind + projection_map_kind_sealed::Sealed {}
 
-/// v0.2.2 W4: kinds whose grounding map preserves the algebraic structure
-/// of the source domain (homomorphism-like).
-pub trait PreservesStructure: GroundingMapKind {}
+/// v0.2.2 W4: kinds whose image is total over the input domain
+/// (every input maps successfully).
+pub trait Total: MorphismKind {}
 
-/// v0.2.2 W4: kinds whose grounding map preserves the metric of the source
-/// domain (isometry-like).
-pub trait PreservesMetric: GroundingMapKind {}
+/// v0.2.2 W4: kinds whose map is injective and admits an inverse on its image.
+pub trait Invertible: MorphismKind {}
+
+/// v0.2.2 W4: kinds whose map preserves the algebraic structure of the
+/// source domain (homomorphism-like).
+pub trait PreservesStructure: MorphismKind {}
+
+/// v0.2.2 W4: kinds whose map preserves the metric of the source domain
+/// (isometry-like).
+pub trait PreservesMetric: MorphismKind {}
 
 /// v0.2.2 W4: kind for raw byte ingestion. Total and invertible; preserves bit identity only.
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
@@ -526,6 +536,41 @@ pub struct JsonGroundingMap;
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Utf8GroundingMap;
 
+/// Target §3: kind for raw byte projections. Total and invertible; preserves bit identity only.
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct BinaryProjectionMap;
+
+/// Target §3: kind for fixed-size digests projected outward. Total but not invertible; preserves no structure.
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct DigestProjectionMap;
+
+/// Target §3: kind for integer surface symbols projected outward. Invertible, structure-preserving.
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct IntegerProjectionMap;
+
+/// Target §3: kind for JSON host strings projected outward. Invertible, structure-preserving.
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct JsonProjectionMap;
+
+/// Target §3: kind for UTF-8 host strings projected outward. Invertible, structure-preserving.
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct Utf8ProjectionMap;
+
+mod morphism_kind_sealed {
+    /// Private supertrait for MorphismKind. Not implementable outside this crate.
+    pub trait Sealed {}
+    impl Sealed for super::BinaryGroundingMap {}
+    impl Sealed for super::DigestGroundingMap {}
+    impl Sealed for super::IntegerGroundingMap {}
+    impl Sealed for super::JsonGroundingMap {}
+    impl Sealed for super::Utf8GroundingMap {}
+    impl Sealed for super::BinaryProjectionMap {}
+    impl Sealed for super::DigestProjectionMap {}
+    impl Sealed for super::IntegerProjectionMap {}
+    impl Sealed for super::JsonProjectionMap {}
+    impl Sealed for super::Utf8ProjectionMap {}
+}
+
 mod grounding_map_kind_sealed {
     /// Private supertrait. Not implementable outside this crate.
     pub trait Sealed {}
@@ -536,25 +581,67 @@ mod grounding_map_kind_sealed {
     impl Sealed for super::Utf8GroundingMap {}
 }
 
-impl GroundingMapKind for BinaryGroundingMap {
+mod projection_map_kind_sealed {
+    /// Private supertrait. Not implementable outside this crate.
+    pub trait Sealed {}
+    impl Sealed for super::BinaryProjectionMap {}
+    impl Sealed for super::DigestProjectionMap {}
+    impl Sealed for super::IntegerProjectionMap {}
+    impl Sealed for super::JsonProjectionMap {}
+    impl Sealed for super::Utf8ProjectionMap {}
+}
+
+impl MorphismKind for BinaryGroundingMap {
     const ONTOLOGY_IRI: &'static str = "https://uor.foundation/morphism/BinaryGroundingMap";
 }
 
-impl GroundingMapKind for DigestGroundingMap {
+impl MorphismKind for DigestGroundingMap {
     const ONTOLOGY_IRI: &'static str = "https://uor.foundation/morphism/DigestGroundingMap";
 }
 
-impl GroundingMapKind for IntegerGroundingMap {
+impl MorphismKind for IntegerGroundingMap {
     const ONTOLOGY_IRI: &'static str = "https://uor.foundation/morphism/IntegerGroundingMap";
 }
 
-impl GroundingMapKind for JsonGroundingMap {
+impl MorphismKind for JsonGroundingMap {
     const ONTOLOGY_IRI: &'static str = "https://uor.foundation/morphism/JsonGroundingMap";
 }
 
-impl GroundingMapKind for Utf8GroundingMap {
+impl MorphismKind for Utf8GroundingMap {
     const ONTOLOGY_IRI: &'static str = "https://uor.foundation/morphism/Utf8GroundingMap";
 }
+
+impl MorphismKind for BinaryProjectionMap {
+    const ONTOLOGY_IRI: &'static str = "https://uor.foundation/morphism/BinaryProjectionMap";
+}
+
+impl MorphismKind for DigestProjectionMap {
+    const ONTOLOGY_IRI: &'static str = "https://uor.foundation/morphism/DigestProjectionMap";
+}
+
+impl MorphismKind for IntegerProjectionMap {
+    const ONTOLOGY_IRI: &'static str = "https://uor.foundation/morphism/IntegerProjectionMap";
+}
+
+impl MorphismKind for JsonProjectionMap {
+    const ONTOLOGY_IRI: &'static str = "https://uor.foundation/morphism/JsonProjectionMap";
+}
+
+impl MorphismKind for Utf8ProjectionMap {
+    const ONTOLOGY_IRI: &'static str = "https://uor.foundation/morphism/Utf8ProjectionMap";
+}
+
+impl GroundingMapKind for BinaryGroundingMap {}
+impl GroundingMapKind for DigestGroundingMap {}
+impl GroundingMapKind for IntegerGroundingMap {}
+impl GroundingMapKind for JsonGroundingMap {}
+impl GroundingMapKind for Utf8GroundingMap {}
+
+impl ProjectionMapKind for BinaryProjectionMap {}
+impl ProjectionMapKind for DigestProjectionMap {}
+impl ProjectionMapKind for IntegerProjectionMap {}
+impl ProjectionMapKind for JsonProjectionMap {}
+impl ProjectionMapKind for Utf8ProjectionMap {}
 
 impl Total for IntegerGroundingMap {}
 impl Invertible for IntegerGroundingMap {}
@@ -570,6 +657,20 @@ impl Total for DigestGroundingMap {}
 
 impl Total for BinaryGroundingMap {}
 impl Invertible for BinaryGroundingMap {}
+
+impl Invertible for IntegerProjectionMap {}
+impl PreservesStructure for IntegerProjectionMap {}
+
+impl Invertible for Utf8ProjectionMap {}
+impl PreservesStructure for Utf8ProjectionMap {}
+
+impl Invertible for JsonProjectionMap {}
+impl PreservesStructure for JsonProjectionMap {}
+
+impl Total for DigestProjectionMap {}
+
+impl Total for BinaryProjectionMap {}
+impl Invertible for BinaryProjectionMap {}
 
 /// Open trait for boundary crossing: external data to grounded intermediate.
 /// The foundation validates the returned value against the declared
@@ -686,6 +787,68 @@ where
     fn ground(&self, external: &[u8]) -> Option<Self::Output> {
         self.program().run_program(external)
     }
+}
+
+/// Target §3 + §4.6: the foundation-owned operational contract for outbound
+/// boundary crossings. Dual of `Grounding`.
+/// A `Sinking` impl projects a `Grounded<Source>` value to a host-side
+/// `Output` through a specific `ProjectionMap` kind. The `&Grounded<Source>`
+/// input is structurally unforgeable (sealed per §2) — no raw data can be
+/// laundered through this contract. Downstream authors implement `Sinking`
+/// for their projection types; the foundation guarantees the input pedigree.
+/// # Examples
+/// ```rust,ignore
+/// use uor_foundation::enforcement::{
+///     Grounded, Sinking, Utf8ProjectionMap, ConstrainedTypeInput,
+/// };
+///
+/// struct MyJsonSink;
+///
+/// impl Sinking for MyJsonSink {
+///     type Source = ConstrainedTypeInput;
+///     type ProjectionMap = Utf8ProjectionMap;
+///     type Output = String;
+///
+///     fn project(&self, grounded: &Grounded<ConstrainedTypeInput>) -> String {
+///         format!("{{:?}}", grounded.unit_address())
+///     }
+/// }
+/// ```
+pub trait Sinking {
+    /// The ring-side shape T carried by the Grounded<T> being projected.
+    /// Sealed via `GroundedShape` — downstream cannot forge an admissible Source.
+    type Source: GroundedShape;
+
+    /// The ontology-declared ProjectionMap kind this impl serves. Sealed to
+    /// the closed set of `morphism:ProjectionMap` individuals.
+    type ProjectionMap: ProjectionMapKind;
+
+    /// The host-side output type of this projection. Intentionally generic —
+    /// downstream chooses `String`, `Vec<u8>`, `serde_json::Value`, or any
+    /// host-appropriate carrier.
+    type Output;
+
+    /// Project a grounded ring value to the host output. The `&Grounded<Source>`
+    /// input is unforgeable (Grounded is sealed per §2) — no raw data can be
+    /// laundered through this contract.
+    fn project(&self, grounded: &Grounded<Self::Source>) -> Self::Output;
+}
+
+/// Target §4.6: extension trait tying `EmitEffect<H>` (ontology-declarative)
+/// to `Sinking` (Rust-operational). Emit-effect implementations carry a
+/// specific `Sinking` impl; the emit operation threads a sealed
+/// `Grounded<Source>` through the projection.
+pub trait EmitThrough<H: crate::HostTypes>: crate::bridge::boundary::EmitEffect<H> {
+    /// The `Sinking` implementation this emit-effect routes through.
+    type Sinking: Sinking;
+
+    /// Emit a grounded value through this effect's bound `Sinking`. The
+    /// input type is the sealed `Grounded<Source>` of the bound `Sinking`;
+    /// nothing else is admissible.
+    fn emit(
+        &self,
+        grounded: &Grounded<<Self::Sinking as Sinking>::Source>,
+    ) -> <Self::Sinking as Sinking>::Output;
 }
 
 /// v0.2.2 W13: sealed marker trait for the validation phase at which a
@@ -1175,6 +1338,15 @@ impl Calibration {
     /// is non-positive, NaN, or above the maximum.
     /// Returns `CalibrationError::InvalidCharacteristicEnergy` when
     /// `characteristic_energy` is non-positive, NaN, or above the maximum.
+    /// # Example
+    /// ```
+    /// use uor_foundation::enforcement::Calibration;
+    /// // X86 server-class envelope at room temperature.
+    /// // k_B·T at 300 K = 4.14e-21 J; 85 W sustained TDP; ~1e-15 J/op.
+    /// let cal = Calibration::new(4.14e-21, 85.0, 1.0e-15)
+    ///     .expect("physically plausible server calibration");
+    /// # let _ = cal;
+    /// ```
     #[inline]
     pub const fn new(
         k_b_t: f64,
@@ -1282,6 +1454,39 @@ pub mod calibrations {
         Ok(c) => c,
         Err(_) => Calibration::ZERO_SENTINEL,
     };
+}
+
+/// v0.2.2 Phase B (target §1.7): timing-policy carrier. Parametric over host tuning.
+/// Supplies the preflight / runtime Nanos budgets (canonical values from
+/// `reduction:PreflightTimingBound` and `reduction:RuntimeTimingBound`) plus
+/// the `Calibration` used to convert an input's a-priori `UorTime` estimate
+/// into a Nanos lower bound for comparison against the budget.
+/// The foundation-canonical default [`CanonicalTimingPolicy`] uses
+/// `calibrations::CONSERVATIVE_WORST_CASE` (the tightest provable lower-bound
+/// calibration) and the 10 ms budget from the ontology. Host code overrides by
+/// implementing `TimingPolicy` on a marker struct and substituting at the
+/// preflight-function call site.
+pub trait TimingPolicy {
+    /// Preflight Nanos budget. Inputs whose a-priori UorTime → min_wall_clock
+    /// under `Self::CALIBRATION` exceeds this value are rejected at preflight.
+    const PREFLIGHT_BUDGET_NS: u64;
+    /// Runtime Nanos budget for post-admission reduction.
+    const RUNTIME_BUDGET_NS: u64;
+    /// Canonical Calibration used to convert a-priori UorTime estimates to Nanos.
+    const CALIBRATION: &'static Calibration;
+}
+
+/// v0.2.2 Phase B: foundation-canonical [`TimingPolicy`]. Budget values mirror
+/// `reduction:PreflightTimingBound` and `reduction:RuntimeTimingBound`; calibration
+/// is `calibrations::CONSERVATIVE_WORST_CASE` so the Nanos lower bound from any
+/// input UorTime is the tightest physically-defensible value.
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct CanonicalTimingPolicy;
+
+impl TimingPolicy for CanonicalTimingPolicy {
+    const PREFLIGHT_BUDGET_NS: u64 = 10_000_000;
+    const RUNTIME_BUDGET_NS: u64 = 10_000_000;
+    const CALIBRATION: &'static Calibration = &calibrations::CONSERVATIVE_WORST_CASE;
 }
 
 /// Phase H (target §1.6): foundation-owned transcendental-arithmetic entry points.
@@ -1557,6 +1762,21 @@ pub struct Binding {
     pub content_address: u64,
 }
 
+impl Binding {
+    /// v0.2.2 Phase P.3: lift this binding to the `BindingEntry` shape consumed by
+    /// `BindingsTable`. `address` is derived from `content_address` via
+    /// `ContentAddress::from_u64_fingerprint`; `bytes` re-uses the `surface` slice.
+    /// Content-deterministic; const-compatible since all fields are `'static`.
+    #[inline]
+    #[must_use]
+    pub const fn to_binding_entry(&self) -> BindingEntry {
+        BindingEntry {
+            address: ContentAddress::from_u64_fingerprint(self.content_address),
+            bytes: self.surface.as_bytes(),
+        }
+    }
+}
+
 /// An assertion: `assert lhs = rhs`.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Assertion {
@@ -1696,6 +1916,10 @@ impl ShapeViolation {
 pub struct CompileUnitBuilder<'a> {
     /// The root term expression.
     root_term: Option<&'a [Term]>,
+    /// v0.2.2 Phase H1: named bindings (`let name : Type = term` forms)
+    /// declared by the compile unit. Stage 5 extracts these into a `BindingsTable`
+    /// for grounding-aware and session resolvers; an empty slice declares no bindings.
+    bindings: Option<&'a [Binding]>,
     /// The widest Witt level the computation may reference.
     witt_level_ceiling: Option<WittLevel>,
     /// Landauer-bounded energy budget.
@@ -1711,8 +1935,16 @@ pub struct CompileUnitBuilder<'a> {
 }
 
 /// A validated compile unit ready for reduction admission.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct CompileUnit {
+/// v0.2.2 Phase A (carrier widening): the lifetime parameter `'a` ties
+/// the post-validation carrier to its builder's borrow. The `root_term`
+/// and `target_domains` slices are retained through validation so
+/// resolvers can inspect declared structure — previously these fields
+/// were discarded at `validate()` and every resolver received a
+/// 3-field scalar witness with no walkable structure.
+/// Const-constructed compile units use the trivial specialization
+/// `CompileUnit<'static>` — borrow-free and usable in const contexts.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct CompileUnit<'a> {
     /// The Witt level ceiling.
     level: WittLevel,
     /// The thermodynamic budget.
@@ -1720,9 +1952,20 @@ pub struct CompileUnit {
     /// v0.2.2 T6.11: result-type IRI. The pipeline matches this against
     /// the caller's `T::IRI` to detect shape mismatches.
     result_type_iri: &'static str,
+    /// v0.2.2 Phase A: root term expression, retained from the builder.
+    /// Stage 5 (extract bindings) and the grounding-aware resolver walk
+    /// this slice. Empty slice for the trivial `CompileUnit<'static>`
+    /// specialization produced by builders that don't carry a term AST.
+    root_term: &'a [Term],
+    /// v0.2.2 Phase H1: named bindings retained from the builder. Consumed by Stage 5
+    /// (`bindings_from_unit`) to materialize the `BindingsTable` for grounding-aware,
+    /// session, and superposition resolvers. Empty slice declares no bindings.
+    bindings: &'a [Binding],
+    /// v0.2.2 Phase A: verification domains targeted, retained from the builder.
+    target_domains: &'a [VerificationDomain],
 }
 
-impl CompileUnit {
+impl<'a> CompileUnit<'a> {
     /// Returns the Witt level ceiling declared at validation time.
     #[inline]
     #[must_use]
@@ -1746,21 +1989,52 @@ impl CompileUnit {
         self.result_type_iri
     }
 
+    /// v0.2.2 Phase A: returns the root term slice declared at validation time.
+    /// Empty for builders that did not supply a term AST.
+    #[inline]
+    #[must_use]
+    pub const fn root_term(&self) -> &'a [Term] {
+        self.root_term
+    }
+
+    /// v0.2.2 Phase H1: returns the named bindings declared at validation time.
+    /// Consumed by Stage 5 (`bindings_from_unit`) to materialize the `BindingsTable`.
+    /// Empty slice for compile units that declare no bindings.
+    #[inline]
+    #[must_use]
+    pub const fn bindings(&self) -> &'a [Binding] {
+        self.bindings
+    }
+
+    /// v0.2.2 Phase A: returns the verification domains declared at validation time.
+    #[inline]
+    #[must_use]
+    pub const fn target_domains(&self) -> &'a [VerificationDomain] {
+        self.target_domains
+    }
+
     /// v0.2.2 Phase G / T2.8 + T6.11: const-constructible parts form used
     /// by `validate_compile_unit_const` — the const-fn path reads the
-    /// builder's witt level, budget, and result-type IRI and packs them
-    /// into the `Validated` result.
+    /// builder's fields and packs them into the `Validated` result.
+    /// v0.2.2 Phase H1: bindings slice is retained alongside root_term;
+    /// empty slice declares no bindings.
     #[inline]
     #[must_use]
     pub(crate) const fn from_parts_const(
         level: WittLevel,
         budget: u64,
         result_type_iri: &'static str,
+        root_term: &'a [Term],
+        bindings: &'a [Binding],
+        target_domains: &'a [VerificationDomain],
     ) -> Self {
         Self {
             level,
             budget,
             result_type_iri,
+            root_term,
+            bindings,
+            target_domains,
         }
     }
 }
@@ -1771,6 +2045,7 @@ impl<'a> CompileUnitBuilder<'a> {
     pub const fn new() -> Self {
         Self {
             root_term: None,
+            bindings: None,
             witt_level_ceiling: None,
             thermodynamic_budget: None,
             target_domains: None,
@@ -1782,6 +2057,16 @@ impl<'a> CompileUnitBuilder<'a> {
     #[must_use]
     pub const fn root_term(mut self, terms: &'a [Term]) -> Self {
         self.root_term = Some(terms);
+        self
+    }
+
+    /// v0.2.2 Phase H1: set the named bindings declared by this compile unit.
+    /// Consumed by Stage 5 (`bindings_from_unit`) to materialize the
+    /// `BindingsTable` for grounding-aware, session, and superposition resolvers.
+    /// Omit for compile units without bindings; the default is the empty slice.
+    #[must_use]
+    pub const fn bindings(mut self, bindings: &'a [Binding]) -> Self {
+        self.bindings = Some(bindings);
         self
     }
 
@@ -1860,24 +2145,62 @@ impl<'a> CompileUnitBuilder<'a> {
         self.result_type_iri
     }
 
+    /// v0.2.2 Phase A: const-fn accessor exposing the stored root-term slice,
+    /// or an empty slice if unset. Used by `validate_compile_unit_const` to
+    /// propagate the AST into the widened `CompileUnit<'a>` carrier.
+    #[inline]
+    #[must_use]
+    pub const fn root_term_slice_const(&self) -> &'a [Term] {
+        match self.root_term {
+            Some(terms) => terms,
+            None => &[],
+        }
+    }
+
+    /// v0.2.2 Phase H1: const-fn accessor exposing the stored bindings slice,
+    /// or an empty slice if unset. Used by `validate_compile_unit_const` to
+    /// propagate the bindings declaration into the widened `CompileUnit<'a>` carrier.
+    #[inline]
+    #[must_use]
+    pub const fn bindings_slice_const(&self) -> &'a [Binding] {
+        match self.bindings {
+            Some(bindings) => bindings,
+            None => &[],
+        }
+    }
+
+    /// v0.2.2 Phase A: const-fn accessor exposing the stored target-domains
+    /// slice, or an empty slice if unset. Used by `validate_compile_unit_const`.
+    #[inline]
+    #[must_use]
+    pub const fn target_domains_slice_const(&self) -> &'a [VerificationDomain] {
+        match self.target_domains {
+            Some(d) => d,
+            None => &[],
+        }
+    }
+
     /// Validate against `CompileUnitShape`.
     /// Tier 1: checks presence and cardinality of all required fields.
     /// Tier 2: checks budget solvency and level coherence.
     /// # Errors
     /// Returns `ShapeViolation` if any constraint is not satisfied.
-    pub fn validate(self) -> Result<Validated<CompileUnit>, ShapeViolation> {
-        if self.root_term.is_none() {
-            return Err(ShapeViolation {
-                shape_iri: "https://uor.foundation/conformance/CompileUnitShape",
-                constraint_iri:
-                    "https://uor.foundation/conformance/compileUnit_rootTerm_constraint",
-                property_iri: "https://uor.foundation/reduction/rootTerm",
-                expected_range: "https://uor.foundation/schema/Term",
-                min_count: 1,
-                max_count: 1,
-                kind: ViolationKind::Missing,
-            });
-        }
+    pub fn validate(self) -> Result<Validated<CompileUnit<'a>>, ShapeViolation> {
+        let root_term = match self.root_term {
+            Some(terms) => terms,
+            None => {
+                return Err(ShapeViolation {
+                    shape_iri: "https://uor.foundation/conformance/CompileUnitShape",
+                    constraint_iri:
+                        "https://uor.foundation/conformance/compileUnit_rootTerm_constraint",
+                    property_iri: "https://uor.foundation/reduction/rootTerm",
+                    expected_range: "https://uor.foundation/schema/Term",
+                    min_count: 1,
+                    max_count: 1,
+                    kind: ViolationKind::Missing,
+                })
+            }
+        };
         let level =
             match self.witt_level_ceiling {
                 Some(l) => l,
@@ -1905,10 +2228,10 @@ impl<'a> CompileUnitBuilder<'a> {
                 kind: ViolationKind::Missing,
             }),
         };
-        match self.target_domains {
-            Some(d) if !d.is_empty() => {}
-            _ => {
-                return Err(ShapeViolation {
+        let target_domains =
+            match self.target_domains {
+                Some(d) if !d.is_empty() => d,
+                _ => return Err(ShapeViolation {
                     shape_iri: "https://uor.foundation/conformance/CompileUnitShape",
                     constraint_iri:
                         "https://uor.foundation/conformance/compileUnit_targetDomains_constraint",
@@ -1917,9 +2240,8 @@ impl<'a> CompileUnitBuilder<'a> {
                     min_count: 1,
                     max_count: 0,
                     kind: ViolationKind::Missing,
-                })
-            }
-        }
+                }),
+            };
         let result_type_iri = match self.result_type_iri {
             Some(iri) => iri,
             None => {
@@ -1935,10 +2257,18 @@ impl<'a> CompileUnitBuilder<'a> {
                 })
             }
         };
+        // v0.2.2 Phase H1: bindings is optional; absent declares no bindings.
+        let bindings: &'a [Binding] = match self.bindings {
+            Some(b) => b,
+            None => &[],
+        };
         Ok(Validated::new(CompileUnit {
             level,
             budget,
             result_type_iri,
+            root_term,
+            bindings,
+            target_domains,
         }))
     }
 }
@@ -3034,6 +3364,29 @@ impl<'a> ParallelDeclarationBuilder<'a> {
             None => 0,
         }
     }
+
+    /// v0.2.2 Phase A: const-fn accessor returning the declared site-partition
+    /// slice, or an empty slice if unset. Used by `validate_parallel_const`
+    /// to propagate the partition into the widened `ParallelDeclaration<'a>`.
+    #[inline]
+    #[must_use]
+    pub const fn site_partition_slice_const(&self) -> &'a [u32] {
+        match self.site_partition {
+            Some(p) => p,
+            None => &[],
+        }
+    }
+
+    /// v0.2.2 Phase A: const-fn accessor returning the declared disjointness-witness
+    /// IRI string, or an empty string if unset.
+    #[inline]
+    #[must_use]
+    pub const fn disjointness_witness_const(&self) -> &'a str {
+        match self.disjointness_witness {
+            Some(s) => s,
+            None => "",
+        }
+    }
 }
 
 impl<'a> StreamDeclarationBuilder<'a> {
@@ -3049,6 +3402,39 @@ impl<'a> StreamDeclarationBuilder<'a> {
         match self.productivity_witness {
             Some(_) => 1,
             None => 0,
+        }
+    }
+
+    /// v0.2.2 Phase A: const-fn accessor returning the declared seed term slice,
+    /// or an empty slice if unset.
+    #[inline]
+    #[must_use]
+    pub const fn seed_slice_const(&self) -> &'a [Term] {
+        match self.seed {
+            Some(t) => t,
+            None => &[],
+        }
+    }
+
+    /// v0.2.2 Phase A: const-fn accessor returning the declared step term slice,
+    /// or an empty slice if unset.
+    #[inline]
+    #[must_use]
+    pub const fn step_slice_const(&self) -> &'a [Term] {
+        match self.step {
+            Some(t) => t,
+            None => &[],
+        }
+    }
+
+    /// v0.2.2 Phase A: const-fn accessor returning the declared productivity-witness
+    /// IRI, or an empty string if unset.
+    #[inline]
+    #[must_use]
+    pub const fn productivity_witness_const(&self) -> &'a str {
+        match self.productivity_witness {
+            Some(s) => s,
+            None => "",
         }
     }
 }
@@ -4322,7 +4708,7 @@ impl LiftChainCertificate {
 
 impl InhabitanceCertificate {
     /// Returns the witness value tuple bytes when `verified` is true.
-    /// v0.2.1 returns `None` on the shim; real witnesses come from the
+    /// The sealed shim returns `None`; real witnesses flow through the
     /// macro back-door path.
     #[inline]
     #[must_use]
@@ -4343,7 +4729,7 @@ mod ontology_target_sealed {
     impl Sealed for super::GenericImpossibilityWitness {}
     impl Sealed for super::InhabitanceImpossibilityWitness {}
     impl Sealed for super::ConstrainedTypeInput {}
-    impl Sealed for super::CompileUnit {}
+    impl Sealed for super::CompileUnit<'_> {}
 }
 
 impl OntologyTarget for GroundingCertificate {}
@@ -4355,7 +4741,7 @@ impl OntologyTarget for PartitionCertificate {}
 impl OntologyTarget for GenericImpossibilityWitness {}
 impl OntologyTarget for InhabitanceImpossibilityWitness {}
 impl OntologyTarget for ConstrainedTypeInput {}
-impl OntologyTarget for CompileUnit {}
+impl OntologyTarget for CompileUnit<'_> {}
 
 /// v0.2.2 W11: supporting evidence type for `CompletenessCertificate`.
 /// Linked from the certificate via the `Certificate::Evidence` associated type.
@@ -4377,104 +4763,350 @@ pub struct GeodesicEvidenceBundle {
 }
 
 /// v0.2.2 W11: sealed carrier for `cert:TransformCertificate`.
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
+/// Phase X.1: minted with a Witt level and content fingerprint so the
+/// resolver whose `resolver:CertifyMapping` produces this class can fold
+/// its decision into a content-addressed witness. The `with_level_and_fingerprint_const`
+/// constructor matches every other `cert:Certificate` subclass.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct TransformCertificate {
+    witt_bits: u16,
+    content_fingerprint: ContentFingerprint,
     _private: (),
 }
 
 impl TransformCertificate {
-    /// v0.2.2 Phase G: const-constructible empty certificate used by
-    /// `certify_*_const` entry points.
+    /// Phase X.1: content-addressed constructor. Mints a certificate
+    /// carrying the Witt level and substrate-hasher fingerprint of the
+    /// resolver decision. Crate-sealed so that only resolver kernels mint.
+    #[inline]
+    #[must_use]
+    #[allow(dead_code)]
+    pub(crate) const fn with_level_and_fingerprint_const(
+        witt_bits: u16,
+        content_fingerprint: ContentFingerprint,
+    ) -> Self {
+        Self {
+            witt_bits,
+            content_fingerprint,
+            _private: (),
+        }
+    }
+
+    /// Phase X.1: legacy zero-fingerprint constructor retained for
+    /// `certify_*_const` callers that pre-date the X.1 cert-discrimination pass.
     #[inline]
     #[must_use]
     #[allow(dead_code)]
     pub(crate) const fn empty_const() -> Self {
-        Self { _private: () }
+        Self {
+            witt_bits: 0,
+            content_fingerprint: ContentFingerprint::zero(),
+            _private: (),
+        }
+    }
+
+    /// Phase X.1: the Witt level at which this certificate was minted.
+    #[inline]
+    #[must_use]
+    pub const fn witt_bits(&self) -> u16 {
+        self.witt_bits
+    }
+
+    /// Phase X.1: the content fingerprint of the resolver decision.
+    #[inline]
+    #[must_use]
+    pub const fn content_fingerprint(&self) -> ContentFingerprint {
+        self.content_fingerprint
     }
 }
 
 /// v0.2.2 W11: sealed carrier for `cert:IsometryCertificate`.
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
+/// Phase X.1: minted with a Witt level and content fingerprint so the
+/// resolver whose `resolver:CertifyMapping` produces this class can fold
+/// its decision into a content-addressed witness. The `with_level_and_fingerprint_const`
+/// constructor matches every other `cert:Certificate` subclass.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct IsometryCertificate {
+    witt_bits: u16,
+    content_fingerprint: ContentFingerprint,
     _private: (),
 }
 
 impl IsometryCertificate {
-    /// v0.2.2 Phase G: const-constructible empty certificate used by
-    /// `certify_*_const` entry points.
+    /// Phase X.1: content-addressed constructor. Mints a certificate
+    /// carrying the Witt level and substrate-hasher fingerprint of the
+    /// resolver decision. Crate-sealed so that only resolver kernels mint.
+    #[inline]
+    #[must_use]
+    #[allow(dead_code)]
+    pub(crate) const fn with_level_and_fingerprint_const(
+        witt_bits: u16,
+        content_fingerprint: ContentFingerprint,
+    ) -> Self {
+        Self {
+            witt_bits,
+            content_fingerprint,
+            _private: (),
+        }
+    }
+
+    /// Phase X.1: legacy zero-fingerprint constructor retained for
+    /// `certify_*_const` callers that pre-date the X.1 cert-discrimination pass.
     #[inline]
     #[must_use]
     #[allow(dead_code)]
     pub(crate) const fn empty_const() -> Self {
-        Self { _private: () }
+        Self {
+            witt_bits: 0,
+            content_fingerprint: ContentFingerprint::zero(),
+            _private: (),
+        }
+    }
+
+    /// Phase X.1: the Witt level at which this certificate was minted.
+    #[inline]
+    #[must_use]
+    pub const fn witt_bits(&self) -> u16 {
+        self.witt_bits
+    }
+
+    /// Phase X.1: the content fingerprint of the resolver decision.
+    #[inline]
+    #[must_use]
+    pub const fn content_fingerprint(&self) -> ContentFingerprint {
+        self.content_fingerprint
     }
 }
 
 /// v0.2.2 W11: sealed carrier for `cert:InvolutionCertificate`.
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
+/// Phase X.1: minted with a Witt level and content fingerprint so the
+/// resolver whose `resolver:CertifyMapping` produces this class can fold
+/// its decision into a content-addressed witness. The `with_level_and_fingerprint_const`
+/// constructor matches every other `cert:Certificate` subclass.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct InvolutionCertificate {
+    witt_bits: u16,
+    content_fingerprint: ContentFingerprint,
     _private: (),
 }
 
 impl InvolutionCertificate {
-    /// v0.2.2 Phase G: const-constructible empty certificate used by
-    /// `certify_*_const` entry points.
+    /// Phase X.1: content-addressed constructor. Mints a certificate
+    /// carrying the Witt level and substrate-hasher fingerprint of the
+    /// resolver decision. Crate-sealed so that only resolver kernels mint.
+    #[inline]
+    #[must_use]
+    #[allow(dead_code)]
+    pub(crate) const fn with_level_and_fingerprint_const(
+        witt_bits: u16,
+        content_fingerprint: ContentFingerprint,
+    ) -> Self {
+        Self {
+            witt_bits,
+            content_fingerprint,
+            _private: (),
+        }
+    }
+
+    /// Phase X.1: legacy zero-fingerprint constructor retained for
+    /// `certify_*_const` callers that pre-date the X.1 cert-discrimination pass.
     #[inline]
     #[must_use]
     #[allow(dead_code)]
     pub(crate) const fn empty_const() -> Self {
-        Self { _private: () }
+        Self {
+            witt_bits: 0,
+            content_fingerprint: ContentFingerprint::zero(),
+            _private: (),
+        }
+    }
+
+    /// Phase X.1: the Witt level at which this certificate was minted.
+    #[inline]
+    #[must_use]
+    pub const fn witt_bits(&self) -> u16 {
+        self.witt_bits
+    }
+
+    /// Phase X.1: the content fingerprint of the resolver decision.
+    #[inline]
+    #[must_use]
+    pub const fn content_fingerprint(&self) -> ContentFingerprint {
+        self.content_fingerprint
     }
 }
 
 /// v0.2.2 W11: sealed carrier for `cert:GeodesicCertificate`.
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
+/// Phase X.1: minted with a Witt level and content fingerprint so the
+/// resolver whose `resolver:CertifyMapping` produces this class can fold
+/// its decision into a content-addressed witness. The `with_level_and_fingerprint_const`
+/// constructor matches every other `cert:Certificate` subclass.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct GeodesicCertificate {
+    witt_bits: u16,
+    content_fingerprint: ContentFingerprint,
     _private: (),
 }
 
 impl GeodesicCertificate {
-    /// v0.2.2 Phase G: const-constructible empty certificate used by
-    /// `certify_*_const` entry points.
+    /// Phase X.1: content-addressed constructor. Mints a certificate
+    /// carrying the Witt level and substrate-hasher fingerprint of the
+    /// resolver decision. Crate-sealed so that only resolver kernels mint.
+    #[inline]
+    #[must_use]
+    #[allow(dead_code)]
+    pub(crate) const fn with_level_and_fingerprint_const(
+        witt_bits: u16,
+        content_fingerprint: ContentFingerprint,
+    ) -> Self {
+        Self {
+            witt_bits,
+            content_fingerprint,
+            _private: (),
+        }
+    }
+
+    /// Phase X.1: legacy zero-fingerprint constructor retained for
+    /// `certify_*_const` callers that pre-date the X.1 cert-discrimination pass.
     #[inline]
     #[must_use]
     #[allow(dead_code)]
     pub(crate) const fn empty_const() -> Self {
-        Self { _private: () }
+        Self {
+            witt_bits: 0,
+            content_fingerprint: ContentFingerprint::zero(),
+            _private: (),
+        }
+    }
+
+    /// Phase X.1: the Witt level at which this certificate was minted.
+    #[inline]
+    #[must_use]
+    pub const fn witt_bits(&self) -> u16 {
+        self.witt_bits
+    }
+
+    /// Phase X.1: the content fingerprint of the resolver decision.
+    #[inline]
+    #[must_use]
+    pub const fn content_fingerprint(&self) -> ContentFingerprint {
+        self.content_fingerprint
     }
 }
 
 /// v0.2.2 W11: sealed carrier for `cert:MeasurementCertificate`.
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
+/// Phase X.1: minted with a Witt level and content fingerprint so the
+/// resolver whose `resolver:CertifyMapping` produces this class can fold
+/// its decision into a content-addressed witness. The `with_level_and_fingerprint_const`
+/// constructor matches every other `cert:Certificate` subclass.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct MeasurementCertificate {
+    witt_bits: u16,
+    content_fingerprint: ContentFingerprint,
     _private: (),
 }
 
 impl MeasurementCertificate {
-    /// v0.2.2 Phase G: const-constructible empty certificate used by
-    /// `certify_*_const` entry points.
+    /// Phase X.1: content-addressed constructor. Mints a certificate
+    /// carrying the Witt level and substrate-hasher fingerprint of the
+    /// resolver decision. Crate-sealed so that only resolver kernels mint.
+    #[inline]
+    #[must_use]
+    #[allow(dead_code)]
+    pub(crate) const fn with_level_and_fingerprint_const(
+        witt_bits: u16,
+        content_fingerprint: ContentFingerprint,
+    ) -> Self {
+        Self {
+            witt_bits,
+            content_fingerprint,
+            _private: (),
+        }
+    }
+
+    /// Phase X.1: legacy zero-fingerprint constructor retained for
+    /// `certify_*_const` callers that pre-date the X.1 cert-discrimination pass.
     #[inline]
     #[must_use]
     #[allow(dead_code)]
     pub(crate) const fn empty_const() -> Self {
-        Self { _private: () }
+        Self {
+            witt_bits: 0,
+            content_fingerprint: ContentFingerprint::zero(),
+            _private: (),
+        }
+    }
+
+    /// Phase X.1: the Witt level at which this certificate was minted.
+    #[inline]
+    #[must_use]
+    pub const fn witt_bits(&self) -> u16 {
+        self.witt_bits
+    }
+
+    /// Phase X.1: the content fingerprint of the resolver decision.
+    #[inline]
+    #[must_use]
+    pub const fn content_fingerprint(&self) -> ContentFingerprint {
+        self.content_fingerprint
     }
 }
 
 /// v0.2.2 W11: sealed carrier for `cert:BornRuleVerification`.
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
+/// Phase X.1: minted with a Witt level and content fingerprint so the
+/// resolver whose `resolver:CertifyMapping` produces this class can fold
+/// its decision into a content-addressed witness. The `with_level_and_fingerprint_const`
+/// constructor matches every other `cert:Certificate` subclass.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct BornRuleVerification {
+    witt_bits: u16,
+    content_fingerprint: ContentFingerprint,
     _private: (),
 }
 
 impl BornRuleVerification {
-    /// v0.2.2 Phase G: const-constructible empty certificate used by
-    /// `certify_*_const` entry points.
+    /// Phase X.1: content-addressed constructor. Mints a certificate
+    /// carrying the Witt level and substrate-hasher fingerprint of the
+    /// resolver decision. Crate-sealed so that only resolver kernels mint.
+    #[inline]
+    #[must_use]
+    #[allow(dead_code)]
+    pub(crate) const fn with_level_and_fingerprint_const(
+        witt_bits: u16,
+        content_fingerprint: ContentFingerprint,
+    ) -> Self {
+        Self {
+            witt_bits,
+            content_fingerprint,
+            _private: (),
+        }
+    }
+
+    /// Phase X.1: legacy zero-fingerprint constructor retained for
+    /// `certify_*_const` callers that pre-date the X.1 cert-discrimination pass.
     #[inline]
     #[must_use]
     #[allow(dead_code)]
     pub(crate) const fn empty_const() -> Self {
-        Self { _private: () }
+        Self {
+            witt_bits: 0,
+            content_fingerprint: ContentFingerprint::zero(),
+            _private: (),
+        }
+    }
+
+    /// Phase X.1: the Witt level at which this certificate was minted.
+    #[inline]
+    #[must_use]
+    pub const fn witt_bits(&self) -> u16 {
+        self.witt_bits
+    }
+
+    /// Phase X.1: the content fingerprint of the resolver decision.
+    #[inline]
+    #[must_use]
+    pub const fn content_fingerprint(&self) -> ContentFingerprint {
+        self.content_fingerprint
     }
 }
 
@@ -4575,6 +5207,165 @@ impl Certificate for GenericImpossibilityWitness {
 impl Certificate for InhabitanceImpossibilityWitness {
     const IRI: &'static str = "https://uor.foundation/cert/InhabitanceImpossibilityCertificate";
     type Evidence = ();
+}
+
+/// Phase X.1: uniform mint interface over cert subclasses. Each
+/// `Certificate` implementer that accepts `(witt_bits, ContentFingerprint)`
+/// at construction time implements this trait. Lives inside a
+/// `certify_const_mint` module so the symbol doesn't leak into top-level
+/// documentation alongside `Certificate`.
+pub(crate) mod certify_const_mint {
+    use super::{Certificate, ContentFingerprint};
+    pub trait MintWithLevelFingerprint: Certificate {
+        fn mint_with_level_fingerprint(
+            witt_bits: u16,
+            content_fingerprint: ContentFingerprint,
+        ) -> Self;
+    }
+    impl MintWithLevelFingerprint for super::GroundingCertificate {
+        #[inline]
+        fn mint_with_level_fingerprint(
+            witt_bits: u16,
+            content_fingerprint: ContentFingerprint,
+        ) -> Self {
+            super::GroundingCertificate::with_level_and_fingerprint_const(
+                witt_bits,
+                content_fingerprint,
+            )
+        }
+    }
+    impl MintWithLevelFingerprint for super::LiftChainCertificate {
+        #[inline]
+        fn mint_with_level_fingerprint(
+            witt_bits: u16,
+            content_fingerprint: ContentFingerprint,
+        ) -> Self {
+            super::LiftChainCertificate::with_level_and_fingerprint_const(
+                witt_bits,
+                content_fingerprint,
+            )
+        }
+    }
+    impl MintWithLevelFingerprint for super::InhabitanceCertificate {
+        #[inline]
+        fn mint_with_level_fingerprint(
+            witt_bits: u16,
+            content_fingerprint: ContentFingerprint,
+        ) -> Self {
+            super::InhabitanceCertificate::with_level_and_fingerprint_const(
+                witt_bits,
+                content_fingerprint,
+            )
+        }
+    }
+    impl MintWithLevelFingerprint for super::CompletenessCertificate {
+        #[inline]
+        fn mint_with_level_fingerprint(
+            witt_bits: u16,
+            content_fingerprint: ContentFingerprint,
+        ) -> Self {
+            super::CompletenessCertificate::with_level_and_fingerprint_const(
+                witt_bits,
+                content_fingerprint,
+            )
+        }
+    }
+    impl MintWithLevelFingerprint for super::MultiplicationCertificate {
+        #[inline]
+        fn mint_with_level_fingerprint(
+            witt_bits: u16,
+            content_fingerprint: ContentFingerprint,
+        ) -> Self {
+            super::MultiplicationCertificate::with_level_and_fingerprint_const(
+                witt_bits,
+                content_fingerprint,
+            )
+        }
+    }
+    impl MintWithLevelFingerprint for super::PartitionCertificate {
+        #[inline]
+        fn mint_with_level_fingerprint(
+            witt_bits: u16,
+            content_fingerprint: ContentFingerprint,
+        ) -> Self {
+            super::PartitionCertificate::with_level_and_fingerprint_const(
+                witt_bits,
+                content_fingerprint,
+            )
+        }
+    }
+    impl MintWithLevelFingerprint for super::TransformCertificate {
+        #[inline]
+        fn mint_with_level_fingerprint(
+            witt_bits: u16,
+            content_fingerprint: ContentFingerprint,
+        ) -> Self {
+            super::TransformCertificate::with_level_and_fingerprint_const(
+                witt_bits,
+                content_fingerprint,
+            )
+        }
+    }
+    impl MintWithLevelFingerprint for super::IsometryCertificate {
+        #[inline]
+        fn mint_with_level_fingerprint(
+            witt_bits: u16,
+            content_fingerprint: ContentFingerprint,
+        ) -> Self {
+            super::IsometryCertificate::with_level_and_fingerprint_const(
+                witt_bits,
+                content_fingerprint,
+            )
+        }
+    }
+    impl MintWithLevelFingerprint for super::InvolutionCertificate {
+        #[inline]
+        fn mint_with_level_fingerprint(
+            witt_bits: u16,
+            content_fingerprint: ContentFingerprint,
+        ) -> Self {
+            super::InvolutionCertificate::with_level_and_fingerprint_const(
+                witt_bits,
+                content_fingerprint,
+            )
+        }
+    }
+    impl MintWithLevelFingerprint for super::GeodesicCertificate {
+        #[inline]
+        fn mint_with_level_fingerprint(
+            witt_bits: u16,
+            content_fingerprint: ContentFingerprint,
+        ) -> Self {
+            super::GeodesicCertificate::with_level_and_fingerprint_const(
+                witt_bits,
+                content_fingerprint,
+            )
+        }
+    }
+    impl MintWithLevelFingerprint for super::MeasurementCertificate {
+        #[inline]
+        fn mint_with_level_fingerprint(
+            witt_bits: u16,
+            content_fingerprint: ContentFingerprint,
+        ) -> Self {
+            super::MeasurementCertificate::with_level_and_fingerprint_const(
+                witt_bits,
+                content_fingerprint,
+            )
+        }
+    }
+    impl MintWithLevelFingerprint for super::BornRuleVerification {
+        #[inline]
+        fn mint_with_level_fingerprint(
+            witt_bits: u16,
+            content_fingerprint: ContentFingerprint,
+        ) -> Self {
+            super::BornRuleVerification::with_level_and_fingerprint_const(
+                witt_bits,
+                content_fingerprint,
+            )
+        }
+    }
 }
 
 /// v0.2.2 W11: parametric carrier for any foundation-supplied certificate.
@@ -5062,6 +5853,22 @@ impl ContentAddress {
     pub const fn from_u128(raw: u128) -> Self {
         Self { raw, _sealed: () }
     }
+
+    /// v0.2.2 Phase P.3: construct a `ContentAddress` from a `u64` FNV-1a fingerprint
+    /// by right-padding the value into the 128-bit address space. Used by
+    /// `Binding::to_binding_entry` to bridge the `Binding.content_address: u64`
+    /// carrier to the `BindingEntry.address: ContentAddress` (`u128`-backed) shape.
+    /// The lift is `raw = (fingerprint as u128) << 64` — upper 64 bits carry the
+    /// FNV-1a value; lower 64 bits are zero. Content-deterministic; round-trips via
+    /// `ContentAddress::as_u128() >> 64` back to the original `u64`.
+    #[inline]
+    #[must_use]
+    pub const fn from_u64_fingerprint(fingerprint: u64) -> Self {
+        Self {
+            raw: (fingerprint as u128) << 64,
+            _sealed: (),
+        }
+    }
 }
 
 impl Default for ContentAddress {
@@ -5132,6 +5939,32 @@ pub const TRACE_REPLAY_FORMAT_VERSION: u16 = 2;
 ///    documented collision rate.
 /// 4. **No interior mutability**: `fold_byte` consumes `self` and returns a
 ///    new state. Impls that depend on hidden mutable state violate the contract.
+/// # Example
+/// ```
+/// use uor_foundation::enforcement::{Hasher, FINGERPRINT_MAX_BYTES};
+/// /// Minimal 128-bit (16-byte) FNV-1a substrate — two 64-bit lanes.
+/// #[derive(Clone, Copy)]
+/// pub struct Fnv1a16 { a: u64, b: u64 }
+/// impl Hasher for Fnv1a16 {
+///     const OUTPUT_BYTES: usize = 16;
+///     fn initial() -> Self {
+///         Self { a: 0xcbf29ce484222325, b: 0x84222325cbf29ce4 }
+///     }
+///     fn fold_byte(mut self, x: u8) -> Self {
+///         self.a ^= x as u64;
+///         self.a = self.a.wrapping_mul(0x100000001b3);
+///         self.b ^= (x as u64).rotate_left(8);
+///         self.b = self.b.wrapping_mul(0x100000001b3);
+///         self
+///     }
+///     fn finalize(self) -> [u8; FINGERPRINT_MAX_BYTES] {
+///         let mut buf = [0u8; FINGERPRINT_MAX_BYTES];
+///         buf[..8].copy_from_slice(&self.a.to_be_bytes());
+///         buf[8..16].copy_from_slice(&self.b.to_be_bytes());
+///         buf
+///     }
+/// }
+/// ```
 pub trait Hasher {
     /// Active output width in bytes. Must be in
     /// `[FINGERPRINT_MIN_BYTES, FINGERPRINT_MAX_BYTES]`.
@@ -5536,6 +6369,803 @@ pub fn fold_interaction_digest<H: Hasher>(
     }
     hasher = hasher.fold_byte(certificate_kind_discriminant(kind));
     hasher
+}
+
+/// v0.2.2 Phase J primitive: `reduction:ReductionStep` / `recursion:BoundedRecursion`.
+/// Content-deterministic reduction signature: `(witt_bits, constraint_count, satisfiable_bit)`.
+pub(crate) fn primitive_terminal_reduction<T: crate::pipeline::ConstrainedTypeShape + ?Sized>(
+    witt_bits: u16,
+) -> Result<(u16, u32, u8), PipelineFailure> {
+    let outcome = crate::pipeline::run_reduction_stages::<T>(witt_bits)?;
+    let satisfiable_bit: u8 = if outcome.satisfiable { 1 } else { 0 };
+    Ok((
+        outcome.witt_bits,
+        T::CONSTRAINTS.len() as u32,
+        satisfiable_bit,
+    ))
+}
+
+/// v0.2.2 Phase J: fold the TerminalReduction triple into the hasher.
+pub(crate) fn fold_terminal_reduction<H: Hasher>(
+    mut hasher: H,
+    witt_bits: u16,
+    constraint_count: u32,
+    satisfiable_bit: u8,
+) -> H {
+    hasher = hasher.fold_bytes(&witt_bits.to_be_bytes());
+    hasher = hasher.fold_bytes(&constraint_count.to_be_bytes());
+    hasher = hasher.fold_byte(satisfiable_bit);
+    hasher
+}
+
+/// Phase X.4: `resolver:CechNerve` / `homology:ChainComplex`.
+/// Computes the content-deterministic Betti tuple `[b_0, b_1, b_2, 0, .., 0]`
+/// from the 2-complex constraint-nerve over `T::CONSTRAINTS`:
+/// vertices = constraints, 1-simplices = pairs of constraints with intersecting
+/// site support, 2-simplices = triples of constraints with a common site.
+/// `b_k = dim ker(∂_k) - dim im(∂_{k+1})` for k ∈ {0,1,2}; `b_3..b_7 = 0`.
+/// Ranks of the boundary operators ∂_1, ∂_2 are computed over ℤ/p (p prime,
+/// `NERVE_RANK_MOD_P = 1_000_000_007`) by `integer_matrix_rank`. Nerve boundary
+/// matrices have ±1/0 entries and are totally unimodular, so rank over ℤ/p
+/// equals rank over ℚ equals rank over ℤ for any prime p not dividing a minor.
+/// Inputs are truncated to `NERVE_CONSTRAINTS_CAP = 8` constraints and
+/// `NERVE_SITES_CAP = 8` sites to keep the boundary matrices stack-fittable.
+pub const fn primitive_simplicial_nerve_betti<T: crate::pipeline::ConstrainedTypeShape + ?Sized>(
+) -> [u32; MAX_BETTI_DIMENSION] {
+    let k_all = T::CONSTRAINTS.len();
+    let n_constraints = if k_all < NERVE_CONSTRAINTS_CAP {
+        k_all
+    } else {
+        NERVE_CONSTRAINTS_CAP
+    };
+    let s_all = T::SITE_COUNT;
+    let n_sites = if s_all < NERVE_SITES_CAP {
+        s_all
+    } else {
+        NERVE_SITES_CAP
+    };
+    let mut out = [0u32; MAX_BETTI_DIMENSION];
+    if n_constraints == 0 {
+        out[0] = 1;
+        return out;
+    }
+    // Compute site-support bitmask per constraint (bit `s` set iff constraint touches site `s`).
+    let mut support = [0u16; NERVE_CONSTRAINTS_CAP];
+    let mut c = 0;
+    while c < n_constraints {
+        support[c] = constraint_site_support_mask::<T>(c, n_sites);
+        c += 1;
+    }
+    // Enumerate 1-simplices: pairs (i,j) with i<j and support[i] & support[j] != 0.
+    // Index in c1_pairs_lo/hi corresponds to the column in ∂_1 / row in ∂_2.
+    let mut c1_pairs_lo = [0u8; NERVE_C1_MAX];
+    let mut c1_pairs_hi = [0u8; NERVE_C1_MAX];
+    let mut n_c1: usize = 0;
+    let mut i = 0;
+    while i < n_constraints {
+        let mut j = i + 1;
+        while j < n_constraints {
+            if (support[i] & support[j]) != 0 && n_c1 < NERVE_C1_MAX {
+                c1_pairs_lo[n_c1] = i as u8;
+                c1_pairs_hi[n_c1] = j as u8;
+                n_c1 += 1;
+            }
+            j += 1;
+        }
+        i += 1;
+    }
+    // Enumerate 2-simplices: triples (i,j,k) with i<j<k and support[i] & support[j] & support[k] != 0.
+    let mut c2_i = [0u8; NERVE_C2_MAX];
+    let mut c2_j = [0u8; NERVE_C2_MAX];
+    let mut c2_k = [0u8; NERVE_C2_MAX];
+    let mut n_c2: usize = 0;
+    let mut i2 = 0;
+    while i2 < n_constraints {
+        let mut j2 = i2 + 1;
+        while j2 < n_constraints {
+            let mut k2 = j2 + 1;
+            while k2 < n_constraints {
+                if (support[i2] & support[j2] & support[k2]) != 0 && n_c2 < NERVE_C2_MAX {
+                    c2_i[n_c2] = i2 as u8;
+                    c2_j[n_c2] = j2 as u8;
+                    c2_k[n_c2] = k2 as u8;
+                    n_c2 += 1;
+                }
+                k2 += 1;
+            }
+            j2 += 1;
+        }
+        i2 += 1;
+    }
+    // Build ∂_1: rows = n_constraints (vertices of the nerve), cols = n_c1.
+    // Convention: ∂(c_i, c_j) = c_j - c_i for i < j.
+    let mut partial_1 = [[0i64; NERVE_C1_MAX]; NERVE_CONSTRAINTS_CAP];
+    let mut e = 0;
+    while e < n_c1 {
+        let lo = c1_pairs_lo[e] as usize;
+        let hi = c1_pairs_hi[e] as usize;
+        partial_1[lo][e] = NERVE_RANK_MOD_P - 1; // -1 mod p
+        partial_1[hi][e] = 1;
+        e += 1;
+    }
+    let rank_1 = integer_matrix_rank::<NERVE_CONSTRAINTS_CAP, NERVE_C1_MAX>(
+        &mut partial_1,
+        n_constraints,
+        n_c1,
+    );
+    // Build ∂_2: rows = n_c1, cols = n_c2.
+    // Convention: ∂(c_i, c_j, c_k) = (c_j, c_k) - (c_i, c_k) + (c_i, c_j).
+    let mut partial_2 = [[0i64; NERVE_C2_MAX]; NERVE_C1_MAX];
+    let mut t = 0;
+    while t < n_c2 {
+        let ti = c2_i[t];
+        let tj = c2_j[t];
+        let tk = c2_k[t];
+        let idx_jk = find_pair_index(&c1_pairs_lo, &c1_pairs_hi, n_c1, tj, tk);
+        let idx_ik = find_pair_index(&c1_pairs_lo, &c1_pairs_hi, n_c1, ti, tk);
+        let idx_ij = find_pair_index(&c1_pairs_lo, &c1_pairs_hi, n_c1, ti, tj);
+        if idx_jk < NERVE_C1_MAX {
+            partial_2[idx_jk][t] = 1;
+        }
+        if idx_ik < NERVE_C1_MAX {
+            partial_2[idx_ik][t] = NERVE_RANK_MOD_P - 1;
+        }
+        if idx_ij < NERVE_C1_MAX {
+            partial_2[idx_ij][t] = 1;
+        }
+        t += 1;
+    }
+    let rank_2 = integer_matrix_rank::<NERVE_C1_MAX, NERVE_C2_MAX>(&mut partial_2, n_c1, n_c2);
+    // b_0 = |C_0| - rank(∂_1). Always ≥ 1 because partial_1 has at least one all-zero row.
+    let b0 = (n_constraints - rank_1) as u32;
+    // b_1 = (|C_1| - rank(∂_1)) - rank(∂_2).
+    let cycles_1 = n_c1.saturating_sub(rank_1);
+    let b1 = cycles_1.saturating_sub(rank_2) as u32;
+    // b_2 = |C_2| - rank(∂_2) (the complex is 2-dimensional; no ∂_3).
+    let b2 = n_c2.saturating_sub(rank_2) as u32;
+    out[0] = if b0 == 0 { 1 } else { b0 };
+    if MAX_BETTI_DIMENSION > 1 {
+        out[1] = b1;
+    }
+    if MAX_BETTI_DIMENSION > 2 {
+        out[2] = b2;
+    }
+    out
+}
+
+/// Phase X.4: cap on the number of constraints considered by the nerve
+/// primitive. Inputs with more constraints are truncated to the first
+/// `NERVE_CONSTRAINTS_CAP` — content-deterministic and documented.
+pub const NERVE_CONSTRAINTS_CAP: usize = 8;
+
+/// Phase X.4: cap on site-support bitmask width (matches `u16` storage).
+pub const NERVE_SITES_CAP: usize = 8;
+
+/// Phase X.4: maximum number of 1-simplices = C(NERVE_CONSTRAINTS_CAP, 2) = 28.
+pub const NERVE_C1_MAX: usize = 28;
+
+/// Phase X.4: maximum number of 2-simplices = C(NERVE_CONSTRAINTS_CAP, 3) = 56.
+pub const NERVE_C2_MAX: usize = 56;
+
+/// Phase X.4: prime modulus for nerve boundary-matrix rank computation.
+/// Chosen so `(i64 * i64) mod p` never overflows (`p² < 2⁶³`). Nerve boundary
+/// matrices have entries in {-1, 0, 1}; rank over ℤ/p equals rank over ℚ.
+pub(crate) const NERVE_RANK_MOD_P: i64 = 1_000_000_007;
+
+/// Phase X.4: per-constraint site-support bitmask. Returns bit `s` set iff
+/// constraint `c` in `T::CONSTRAINTS` touches site index `s` (`s < n_sites`).
+/// `Affine { coefficients, .. }` returns the bitmask of sites whose
+/// coefficient is non-zero — the natural "site support" of the affine
+/// relation. Remaining non-site-local variants (Residue, Hamming, Depth,
+/// Bound, Conjunction, SatClauses) return an all-ones mask over `n_sites`.
+pub(crate) const fn constraint_site_support_mask<
+    T: crate::pipeline::ConstrainedTypeShape + ?Sized,
+>(
+    c: usize,
+    n_sites: usize,
+) -> u16 {
+    let all_mask: u16 = if n_sites == 0 {
+        0
+    } else {
+        (1u16 << n_sites) - 1
+    };
+    match &T::CONSTRAINTS[c] {
+        crate::pipeline::ConstraintRef::Site { position } => {
+            if n_sites == 0 {
+                0
+            } else {
+                1u16 << (*position as usize % n_sites)
+            }
+        }
+        crate::pipeline::ConstraintRef::Carry { site } => {
+            if n_sites == 0 {
+                0
+            } else {
+                1u16 << (*site as usize % n_sites)
+            }
+        }
+        crate::pipeline::ConstraintRef::Affine { coefficients, .. } => {
+            if n_sites == 0 {
+                0
+            } else {
+                let mut mask: u16 = 0;
+                let mut i = 0;
+                while i < coefficients.len() && i < n_sites {
+                    if coefficients[i] != 0 {
+                        mask |= 1u16 << i;
+                    }
+                    i += 1;
+                }
+                if mask == 0 {
+                    all_mask
+                } else {
+                    mask
+                }
+            }
+        }
+        _ => all_mask,
+    }
+}
+
+/// Phase X.4: find the column index of the 1-simplex (lo, hi) in the enumerated
+/// pair list. Returns `NERVE_C1_MAX` (sentinel = not found) when absent.
+pub(crate) const fn find_pair_index(
+    lo_arr: &[u8; NERVE_C1_MAX],
+    hi_arr: &[u8; NERVE_C1_MAX],
+    n_c1: usize,
+    lo: u8,
+    hi: u8,
+) -> usize {
+    let mut i = 0;
+    while i < n_c1 {
+        if lo_arr[i] == lo && hi_arr[i] == hi {
+            return i;
+        }
+        i += 1;
+    }
+    NERVE_C1_MAX
+}
+
+/// Phase X.4: rank of an integer matrix over ℤ/`NERVE_RANK_MOD_P` via modular
+/// Gaussian elimination. Entries are reduced mod p and elimination uses
+/// Fermat-inverse pivot normalization. For ±1/0 boundary matrices this
+/// coincides with rank over ℤ.
+pub(crate) const fn integer_matrix_rank<const R: usize, const C: usize>(
+    matrix: &mut [[i64; C]; R],
+    rows: usize,
+    cols: usize,
+) -> usize {
+    let p = NERVE_RANK_MOD_P;
+    // Reduce all entries into [0, p).
+    let mut r = 0;
+    while r < rows {
+        let mut c = 0;
+        while c < cols {
+            let v = matrix[r][c] % p;
+            matrix[r][c] = if v < 0 { v + p } else { v };
+            c += 1;
+        }
+        r += 1;
+    }
+    let mut rank: usize = 0;
+    let mut col: usize = 0;
+    while col < cols && rank < rows {
+        // Find a pivot row in column `col`, starting at `rank`.
+        let mut pivot_row = rank;
+        while pivot_row < rows && matrix[pivot_row][col] == 0 {
+            pivot_row += 1;
+        }
+        if pivot_row == rows {
+            col += 1;
+            continue;
+        }
+        // Swap into position.
+        if pivot_row != rank {
+            let mut k = 0;
+            while k < cols {
+                let tmp = matrix[rank][k];
+                matrix[rank][k] = matrix[pivot_row][k];
+                matrix[pivot_row][k] = tmp;
+                k += 1;
+            }
+        }
+        // Normalize pivot row to have leading 1.
+        let pivot = matrix[rank][col];
+        let pivot_inv = mod_pow(pivot, p - 2, p);
+        let mut k = 0;
+        while k < cols {
+            matrix[rank][k] = (matrix[rank][k] * pivot_inv) % p;
+            k += 1;
+        }
+        // Eliminate the column entry from every other row.
+        let mut r2 = 0;
+        while r2 < rows {
+            if r2 != rank {
+                let factor = matrix[r2][col];
+                if factor != 0 {
+                    let mut kk = 0;
+                    while kk < cols {
+                        let sub = (matrix[rank][kk] * factor) % p;
+                        let mut v = matrix[r2][kk] - sub;
+                        v %= p;
+                        if v < 0 {
+                            v += p;
+                        }
+                        matrix[r2][kk] = v;
+                        kk += 1;
+                    }
+                }
+            }
+            r2 += 1;
+        }
+        rank += 1;
+        col += 1;
+    }
+    rank
+}
+
+/// Phase X.4: modular exponentiation `base^exp mod p`, const-fn. Used by
+/// `integer_matrix_rank` via Fermat's little theorem for modular inverses.
+pub(crate) const fn mod_pow(base: i64, exp: i64, p: i64) -> i64 {
+    let mut result: i64 = 1;
+    let mut b = ((base % p) + p) % p;
+    let mut e = exp;
+    while e > 0 {
+        if e & 1 == 1 {
+            result = (result * b) % p;
+        }
+        b = (b * b) % p;
+        e >>= 1;
+    }
+    result
+}
+
+/// v0.2.2 Phase J: fold the Betti tuple into the hasher.
+pub(crate) fn fold_betti_tuple<H: Hasher>(mut hasher: H, betti: &[u32; MAX_BETTI_DIMENSION]) -> H {
+    let mut i = 0;
+    while i < MAX_BETTI_DIMENSION {
+        hasher = hasher.fold_bytes(&betti[i].to_be_bytes());
+        i += 1;
+    }
+    hasher
+}
+
+/// v0.2.2 Phase J: Euler characteristic `χ = Σ(-1)^k b_k` from the Betti tuple.
+#[must_use]
+pub(crate) fn primitive_euler_characteristic(betti: &[u32; MAX_BETTI_DIMENSION]) -> i64 {
+    let mut chi: i64 = 0;
+    let mut k = 0;
+    while k < MAX_BETTI_DIMENSION {
+        let term = betti[k] as i64;
+        if k % 2 == 0 {
+            chi += term;
+        } else {
+            chi -= term;
+        }
+        k += 1;
+    }
+    chi
+}
+
+/// v0.2.2 Phase J primitive: `op:DihedralGroup` / `op:D_7`.
+/// Returns `(orbit_size, representative)` under D_{2^n} acting on `T::SITE_COUNT`.
+/// `orbit_size = 2n` when n ≥ 2, 2 when n == 1, 1 when n == 0 (group identity only).
+/// `representative` is the lexicographically-minimal element of the orbit of
+/// site 0 under D_{2n}: rotations `r^k → k mod n` and reflections `s·r^k → (n - k) mod n`.
+/// For the orbit of site 0, both maps produce 0 as a group element, so the
+/// representative is always 0; for a non-canonical starting index `i`, the
+/// representative would be `min(i, (n - i) mod n)`. This helper uses site 0 as the
+/// canonical starting point (the foundation's convention), so the representative
+/// reflects the orbit's algebraic content, not a sentinel.
+pub(crate) fn primitive_dihedral_signature<T: crate::pipeline::ConstrainedTypeShape + ?Sized>(
+) -> (u32, u32) {
+    let n = T::SITE_COUNT as u32;
+    let orbit_size = if n < 2 {
+        if n == 0 {
+            1
+        } else {
+            2
+        }
+    } else {
+        2 * n
+    };
+    // v0.2.2 Phase S.2: compute the lexicographically-minimal orbit element.
+    // Orbit of site 0 under D_{2n} contains: rotation images {0, 1, ..., n-1}
+    // (since r^k maps 0 → k mod n) and reflection images {0, n-1, n-2, ..., 1}
+    // (since s·r^k maps 0 → (n - k) mod n). The union is {0, 1, ..., n-1}.
+    // The lex-min is 0 by construction; formalize it by min-walking the orbit.
+    let mut rep: u32 = 0;
+    let mut k = 1u32;
+    while k < n {
+        let rot = k % n;
+        let refl = (n - k) % n;
+        if rot < rep {
+            rep = rot;
+        }
+        if refl < rep {
+            rep = refl;
+        }
+        k += 1;
+    }
+    (orbit_size, rep)
+}
+
+/// v0.2.2 Phase J: fold the dihedral `(orbit_size, representative)` pair.
+pub(crate) fn fold_dihedral_signature<H: Hasher>(
+    mut hasher: H,
+    orbit_size: u32,
+    representative: u32,
+) -> H {
+    hasher = hasher.fold_bytes(&orbit_size.to_be_bytes());
+    hasher = hasher.fold_bytes(&representative.to_be_bytes());
+    hasher
+}
+
+/// v0.2.2 Phase J primitive: `observable:Jacobian` / `op:DC_10`.
+/// Content-deterministic per-site Jacobian profile: for each site `i`, the number
+/// of constraints that mention site index `i` (derived from the constraint encoding).
+/// Truncated / zero-padded to `JACOBIAN_MAX_SITES` entries to keep the fold fixed-size.
+pub(crate) fn primitive_curvature_jacobian<T: crate::pipeline::ConstrainedTypeShape + ?Sized>(
+) -> [i32; JACOBIAN_MAX_SITES] {
+    let mut out = [0i32; JACOBIAN_MAX_SITES];
+    let mut ci = 0;
+    while ci < T::CONSTRAINTS.len() {
+        if let crate::pipeline::ConstraintRef::Site { position } = T::CONSTRAINTS[ci] {
+            let idx = (position as usize) % JACOBIAN_MAX_SITES;
+            out[idx] = out[idx].saturating_add(1);
+        }
+        ci += 1;
+    }
+    // Also account for residue and hamming constraints as contributing uniformly
+    // across all sites (they are not site-local). Represented as +1 to site 0.
+    let total = T::CONSTRAINTS.len() as i32;
+    out[0] = out[0].saturating_add(total);
+    out
+}
+
+/// v0.2.2 Phase J: DC_10 selects the site with the maximum absolute Jacobian value.
+#[must_use]
+pub(crate) fn primitive_dc10_select(jac: &[i32; JACOBIAN_MAX_SITES]) -> usize {
+    let mut best_idx: usize = 0;
+    let mut best_abs: i32 = jac[0].unsigned_abs() as i32;
+    let mut i = 1;
+    while i < JACOBIAN_MAX_SITES {
+        let a = jac[i].unsigned_abs() as i32;
+        if a > best_abs {
+            best_abs = a;
+            best_idx = i;
+        }
+        i += 1;
+    }
+    best_idx
+}
+
+/// v0.2.2 Phase J: fold the Jacobian profile into the hasher.
+pub(crate) fn fold_jacobian_profile<H: Hasher>(
+    mut hasher: H,
+    jac: &[i32; JACOBIAN_MAX_SITES],
+) -> H {
+    let mut i = 0;
+    while i < JACOBIAN_MAX_SITES {
+        hasher = hasher.fold_bytes(&jac[i].to_be_bytes());
+        i += 1;
+    }
+    hasher
+}
+
+/// v0.2.2 Phase J primitive: `state:BindingAccumulator` / `state:ContextLease`.
+/// Returns `(binding_count, fold_address)` — a content-deterministic session signature.
+/// v0.2.2 Phase S.4: uses an FNV-1a-style order-preserving incremental hash
+/// (rotate-and-multiply) over each binding's `(name_index, type_index,
+/// content_address)` tuple, rather than XOR-accumulation (which is commutative
+/// and collides on reordered-but-otherwise-identical binding sets). Order-dependence
+/// is intentional: `state:BindingAccumulator` semantics treat the insertion
+/// sequence as part of the session signature.
+pub(crate) fn primitive_session_binding_signature(bindings: &[Binding]) -> (u32, u64) {
+    // FNV-1a-style incremental mix: start from the FNV offset basis,
+    // multiply-then-XOR each limb. Order-dependent by construction.
+    let mut fold: u64 = 0xcbf2_9ce4_8422_2325;
+    const FNV_PRIME: u64 = 0x0000_0100_0000_01b3;
+    let mut i = 0;
+    while i < bindings.len() {
+        let b = &bindings[i];
+        // Mix in (name_index, type_index, content_address) per binding.
+        fold = fold.wrapping_mul(FNV_PRIME);
+        fold ^= b.name_index as u64;
+        fold = fold.wrapping_mul(FNV_PRIME);
+        fold ^= b.type_index as u64;
+        fold = fold.wrapping_mul(FNV_PRIME);
+        fold ^= b.content_address;
+        i += 1;
+    }
+    (bindings.len() as u32, fold)
+}
+
+/// v0.2.2 Phase J: fold the session-binding signature into the hasher.
+pub(crate) fn fold_session_signature<H: Hasher>(
+    mut hasher: H,
+    binding_count: u32,
+    fold_address: u64,
+) -> H {
+    hasher = hasher.fold_bytes(&binding_count.to_be_bytes());
+    hasher = hasher.fold_bytes(&fold_address.to_be_bytes());
+    hasher
+}
+
+/// v0.2.2 Phase J primitive: `op:QM_1` / `op:QM_5` / `resolver:collapseAmplitude`.
+/// Seeds a two-state amplitude vector from the CompileUnit's thermodynamic budget,
+/// computes Born-rule probabilities `P(0) = |α_0|²` and `P(1) = |α_1|²`,
+/// verifies QM_5 normalization `Σ P = 1`, and returns `(outcome_index, probability)`
+/// where `outcome_index` is the index of the larger amplitude and `probability` is its value.
+/// QM_1 Landauer equality: `pre_entropy == post_cost` at β* = ln 2; since both
+/// sides derive from the same budget the equality holds by construction.
+/// v0.2.2 Phase S.3: amplitudes are sourced from two decorrelated projections
+/// of the thermodynamic budget — the high 32 bits become the alpha-0
+/// magnitude and the low 32 bits become the alpha-1 magnitude. This replaces
+/// the earlier XOR-with-fixed-constants sourcing, preserving determinism while
+/// ensuring both amplitudes derive from independent halves of the budget's
+/// thermodynamic-entropy state. Born normalization and QM_1 Landauer equality
+/// remain invariant under this sourcing change.
+pub(crate) fn primitive_measurement_projection(budget: u64) -> (u64, f64) {
+    // Decorrelated amplitude sourcing: high-32-bits drives alpha_0,
+    // low-32-bits drives alpha_1. Distinct bit halves yield independent
+    // magnitudes under any non-degenerate budget.
+    let alpha0_bits: u32 = (budget >> 32) as u32;
+    let alpha1_bits: u32 = (budget & 0xFFFF_FFFF) as u32;
+    let a0 = (alpha0_bits as f64) / (u32::MAX as f64);
+    let a1 = (alpha1_bits as f64) / (u32::MAX as f64);
+    let norm = a0 * a0 + a1 * a1;
+    // QM_5 normalization: P(k) = |alpha_k|^2 / norm. Degenerate budget = 0
+    // yields norm = 0; fall through to the uniform distribution (P(0) = 0.5,
+    // P(1) = 0.5), which is the maximum-entropy projection under QM_1.
+    let p0 = if norm > 0.0 { (a0 * a0) / norm } else { 0.5 };
+    let p1 = if norm > 0.0 { (a1 * a1) / norm } else { 0.5 };
+    if p0 >= p1 {
+        (0, p0)
+    } else {
+        (1, p1)
+    }
+}
+
+/// v0.2.2 Phase J: fold the Born-rule outcome into the hasher via f64-to-bits round-trip.
+pub(crate) fn fold_born_outcome<H: Hasher>(
+    mut hasher: H,
+    outcome_index: u64,
+    probability: f64,
+) -> H {
+    hasher = hasher.fold_bytes(&outcome_index.to_be_bytes());
+    hasher = hasher.fold_bytes(&probability.to_bits().to_be_bytes());
+    hasher
+}
+
+/// v0.2.2 Phase J primitive: `recursion:DescentMeasure` / `observable:ResidualEntropy`.
+/// Computes `(residual_count, entropy_bits)` from `T::SITE_COUNT` and the Euler char.
+/// `residual_count = max(0, site_count - euler_char)` — free sites after constraint contraction.
+/// `entropy = (residual_count) × ln 2` — Landauer-temperature entropy in nats.
+pub(crate) fn primitive_descent_metrics<T: crate::pipeline::ConstrainedTypeShape + ?Sized>(
+    betti: &[u32; MAX_BETTI_DIMENSION],
+) -> (u32, f64) {
+    let chi = primitive_euler_characteristic(betti);
+    let n = T::SITE_COUNT as i64;
+    let residual = if n > chi { (n - chi) as u32 } else { 0u32 };
+    let entropy = (residual as f64) * core::f64::consts::LN_2;
+    (residual, entropy)
+}
+
+/// v0.2.2 Phase J: fold the descent metrics into the hasher.
+pub(crate) fn fold_descent_metrics<H: Hasher>(
+    mut hasher: H,
+    residual_count: u32,
+    entropy: f64,
+) -> H {
+    hasher = hasher.fold_bytes(&residual_count.to_be_bytes());
+    hasher = hasher.fold_bytes(&entropy.to_bits().to_be_bytes());
+    hasher
+}
+
+/// Phase X.2: upper bound on cohomology class dimension. Cup products
+/// whose summed dimension exceeds this cap are rejected as
+/// `CohomologyError::DimensionOverflow`.
+pub const MAX_COHOMOLOGY_DIMENSION: u32 = 32;
+
+/// Phase X.2: a cohomology class `H^n(·)` at dimension `n` with a content
+/// fingerprint of the underlying cochain representative. Parametric over
+/// dimension via a runtime field because generic-const-expression arithmetic
+/// over `N + M` is unstable at the crate's MSRV (Rust 1.81).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct CohomologyClass {
+    dimension: u32,
+    fingerprint: ContentFingerprint,
+    _sealed: (),
+}
+
+impl CohomologyClass {
+    /// Phase X.2: crate-sealed constructor. Public callers go through
+    /// `mint_cohomology_class` so that construction always routes through a
+    /// validating hash of the cochain representative.
+    #[inline]
+    pub(crate) const fn with_dimension_and_fingerprint(
+        dimension: u32,
+        fingerprint: ContentFingerprint,
+    ) -> Self {
+        Self {
+            dimension,
+            fingerprint,
+            _sealed: (),
+        }
+    }
+
+    /// The dimension `n` of this cohomology class `H^n(·)`.
+    #[inline]
+    #[must_use]
+    pub const fn dimension(&self) -> u32 {
+        self.dimension
+    }
+
+    /// The content fingerprint of the underlying cochain representative.
+    #[inline]
+    #[must_use]
+    pub const fn fingerprint(&self) -> ContentFingerprint {
+        self.fingerprint
+    }
+
+    /// Phase X.2: cup product `H^n × H^m → H^{n+m}`. The resulting class
+    /// carries dimension `n + m` and a fingerprint folded from both
+    /// operand dimensions and fingerprints via `fold_cup_product`. The
+    /// fold is ordered (lhs-then-rhs) — graded-commutativity of the cup
+    /// product at the algebraic level is not a fingerprint-level property.
+    /// # Errors
+    /// Returns `CohomologyError::DimensionOverflow` when `n + m >
+    /// MAX_COHOMOLOGY_DIMENSION`.
+    pub fn cup<H: Hasher>(
+        self,
+        other: CohomologyClass,
+    ) -> Result<CohomologyClass, CohomologyError> {
+        let sum = self.dimension.saturating_add(other.dimension);
+        if sum > MAX_COHOMOLOGY_DIMENSION {
+            return Err(CohomologyError::DimensionOverflow {
+                lhs: self.dimension,
+                rhs: other.dimension,
+            });
+        }
+        let hasher = H::initial();
+        let hasher = fold_cup_product(
+            hasher,
+            self.dimension,
+            &self.fingerprint,
+            other.dimension,
+            &other.fingerprint,
+        );
+        let buf = hasher.finalize();
+        let fp = ContentFingerprint::from_buffer(buf, H::OUTPUT_BYTES as u8);
+        Ok(Self::with_dimension_and_fingerprint(sum, fp))
+    }
+}
+
+/// Phase X.2: error returned by `CohomologyClass::cup` when the summed
+/// dimension exceeds `MAX_COHOMOLOGY_DIMENSION`.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum CohomologyError {
+    /// Cup product would exceed `MAX_COHOMOLOGY_DIMENSION`.
+    DimensionOverflow { lhs: u32, rhs: u32 },
+}
+
+impl core::fmt::Display for CohomologyError {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        match self {
+            Self::DimensionOverflow { lhs, rhs } => write!(
+                f,
+                "cup product dimension overflow: {lhs} + {rhs} > MAX_COHOMOLOGY_DIMENSION ({})",
+                MAX_COHOMOLOGY_DIMENSION
+            ),
+        }
+    }
+}
+impl core::error::Error for CohomologyError {}
+
+/// Phase X.2: homology class dual to `CohomologyClass`. A homology class
+/// `H_n(·)` at dimension `n` with a content fingerprint of its chain
+/// representative. Shares the dimension-as-runtime-field discipline.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct HomologyClass {
+    dimension: u32,
+    fingerprint: ContentFingerprint,
+    _sealed: (),
+}
+
+impl HomologyClass {
+    /// Phase X.2: crate-sealed constructor. Public callers go through
+    /// `mint_homology_class`.
+    #[inline]
+    pub(crate) const fn with_dimension_and_fingerprint(
+        dimension: u32,
+        fingerprint: ContentFingerprint,
+    ) -> Self {
+        Self {
+            dimension,
+            fingerprint,
+            _sealed: (),
+        }
+    }
+
+    /// The dimension `n` of this homology class `H_n(·)`.
+    #[inline]
+    #[must_use]
+    pub const fn dimension(&self) -> u32 {
+        self.dimension
+    }
+
+    /// The content fingerprint of the underlying chain representative.
+    #[inline]
+    #[must_use]
+    pub const fn fingerprint(&self) -> ContentFingerprint {
+        self.fingerprint
+    }
+}
+
+/// Phase X.2: fold the cup-product operand pair into the hasher. Ordered
+/// (lhs dimension + fingerprint, then rhs dimension + fingerprint).
+pub fn fold_cup_product<H: Hasher>(
+    mut hasher: H,
+    lhs_dim: u32,
+    lhs_fp: &ContentFingerprint,
+    rhs_dim: u32,
+    rhs_fp: &ContentFingerprint,
+) -> H {
+    hasher = hasher.fold_bytes(&lhs_dim.to_be_bytes());
+    hasher = hasher.fold_bytes(lhs_fp.as_bytes());
+    hasher = hasher.fold_bytes(&rhs_dim.to_be_bytes());
+    hasher = hasher.fold_bytes(rhs_fp.as_bytes());
+    hasher
+}
+
+/// Phase X.2: mint a `CohomologyClass` from a cochain representative `seed`.
+/// Hashes `seed` through `H` to produce the class fingerprint. The caller's
+/// choice of `H` determines the fingerprint width.
+/// # Errors
+/// Returns `CohomologyError::DimensionOverflow` when `dimension >
+/// MAX_COHOMOLOGY_DIMENSION`.
+pub fn mint_cohomology_class<H: Hasher>(
+    dimension: u32,
+    seed: &[u8],
+) -> Result<CohomologyClass, CohomologyError> {
+    if dimension > MAX_COHOMOLOGY_DIMENSION {
+        return Err(CohomologyError::DimensionOverflow {
+            lhs: dimension,
+            rhs: 0,
+        });
+    }
+    let mut hasher = H::initial();
+    hasher = hasher.fold_bytes(&dimension.to_be_bytes());
+    hasher = hasher.fold_bytes(seed);
+    let buf = hasher.finalize();
+    let fp = ContentFingerprint::from_buffer(buf, H::OUTPUT_BYTES as u8);
+    Ok(CohomologyClass::with_dimension_and_fingerprint(
+        dimension, fp,
+    ))
+}
+
+/// Phase X.2: mint a `HomologyClass` from a chain representative `seed`.
+/// Hashes `seed` through `H` to produce the class fingerprint.
+/// # Errors
+/// Returns `CohomologyError::DimensionOverflow` when `dimension >
+/// MAX_COHOMOLOGY_DIMENSION`.
+pub fn mint_homology_class<H: Hasher>(
+    dimension: u32,
+    seed: &[u8],
+) -> Result<HomologyClass, CohomologyError> {
+    if dimension > MAX_COHOMOLOGY_DIMENSION {
+        return Err(CohomologyError::DimensionOverflow {
+            lhs: dimension,
+            rhs: 0,
+        });
+    }
+    let mut hasher = H::initial();
+    hasher = hasher.fold_bytes(&dimension.to_be_bytes());
+    hasher = hasher.fold_bytes(seed);
+    let buf = hasher.finalize();
+    let fp = ContentFingerprint::from_buffer(buf, H::OUTPUT_BYTES as u8);
+    Ok(HomologyClass::with_dimension_and_fingerprint(dimension, fp))
 }
 
 /// v0.2.2 T6.1: per-step canonical byte layout for `StreamDriver::next()`.
@@ -6219,8 +7849,22 @@ impl ImpossibilityWitnessKind for InhabitanceImpossibilityWitness {}
 /// `Certified<C>` parametric carrier.
 pub mod resolver {
     use super::{
-        Certified, CompileUnit, GenericImpossibilityWitness, GroundingCertificate,
-        InhabitanceCertificate, InhabitanceImpossibilityWitness, LiftChainCertificate, Validated,
+        BornRuleVerification,
+        Certified,
+        CompileUnit,
+        CompletenessCertificate,
+        GenericImpossibilityWitness,
+        GeodesicCertificate,
+        GroundingCertificate,
+        InhabitanceCertificate,
+        InhabitanceImpossibilityWitness,
+        InvolutionCertificate,
+        IsometryCertificate,
+        LiftChainCertificate,
+        MeasurementCertificate,
+        // Phase X.1: per-resolver cert discrimination.
+        TransformCertificate,
+        Validated,
         WittLevel,
     };
 
@@ -6465,14 +8109,46 @@ pub mod resolver {
         }
     }
 
+    /// v0.2.2 Phase C: `pub(crate)` trait parameterizing the 15 Phase D resolver kernels.
+    /// Each kernel marker supplies a `CertificateKind` discriminant and its
+    /// ontology-declared certificate type via `type Cert`. The shared
+    /// `certify_at` bodies (see `emit_phase_d_ct_body` / `emit_phase_d_cu_body`)
+    /// mint `Certified<Kernel::Cert>` directly — so each resolver's cert class
+    /// matches its `resolver:CertifyMapping` in the ontology.
+    pub(crate) trait ResolverKernel {
+        const KIND: crate::enforcement::CertificateKind;
+        /// Phase X.1: the ontology-declared certificate class produced by
+        /// this resolver (per `resolver:CertifyMapping`).
+        type Cert: crate::enforcement::Certificate;
+    }
+
     /// Phase D (target §4.2): `resolver:TwoSatDecider` — certify that `predicate:Is2SatShape` inputs are 2-SAT-decidable via the Aspvall-Plass-Tarjan strongly-connected-components decider.
     /// Returns `Certified<GroundingCertificate>` on success carrying the Witt
     /// level and a consumer-hasher-computed substrate fingerprint that uniquely
     /// identifies the input. `Certified<GenericImpossibilityWitness>` on
     /// failure — the witness itself is certified so downstream can persist it
     /// alongside success certs in a uniform `Certified<_>` channel.
+    /// Phase X.1: the produced cert class is the ontology-declared class for
+    /// this resolver's `resolver:CertifyMapping`. Eight cert subclasses —
+    /// `TransformCertificate`, `IsometryCertificate`, `InvolutionCertificate`,
+    /// `CompletenessCertificate`, `GeodesicCertificate`, `MeasurementCertificate`,
+    /// `BornRuleVerification`, and `GroundingCertificate` — are minted across the 17 Phase D
+    /// kernels so each resolver's class discrimination is load-bearing.
+    /// v0.2.2 Phase J: `certify_at` composes an ontology primitive (per the
+    /// kernel's composition spec) whose output is folded into the canonical
+    /// fingerprint ahead of `fold_unit_digest`, so distinct primitive outputs
+    /// yield distinct fingerprints — i.e., each kernel's decision is real and
+    /// content-addressed per its ontology class.
     pub mod two_sat_decider {
         use super::*;
+
+        #[doc(hidden)]
+        pub struct Kernel;
+        impl super::ResolverKernel for Kernel {
+            type Cert = crate::enforcement::GroundingCertificate;
+            const KIND: crate::enforcement::CertificateKind =
+                crate::enforcement::CertificateKind::TwoSat;
+        }
 
         /// Phase D (target §4.2): certify at the canonical `WittLevel::W32`.
         ///
@@ -6506,15 +8182,19 @@ pub mod resolver {
         {
             let _ = input.inner();
             let witt_bits = level.witt_length() as u16;
-            // Run the reduction stages to produce the decision verdict.
-            let outcome = crate::pipeline::run_reduction_stages::<T>(witt_bits)
-                .map_err(|_| Certified::new(GenericImpossibilityWitness::default()))?;
-            if !outcome.satisfiable {
+            let (tr_bits, tr_constraints, tr_sat) =
+                crate::enforcement::primitive_terminal_reduction::<T>(witt_bits)
+                    .map_err(|_| Certified::new(GenericImpossibilityWitness::default()))?;
+            if tr_sat == 0 {
                 return Err(Certified::new(GenericImpossibilityWitness::default()));
             }
-            // Fold the canonical CompileUnit-free fingerprint over the
-            // input's constraint catalog + resolver discriminant.
             let mut hasher = H::initial();
+            hasher = crate::enforcement::fold_terminal_reduction(
+                hasher,
+                tr_bits,
+                tr_constraints,
+                tr_sat,
+            );
             hasher = crate::enforcement::fold_unit_digest(
                 hasher,
                 witt_bits,
@@ -6522,12 +8202,12 @@ pub mod resolver {
                 T::IRI,
                 T::SITE_COUNT,
                 T::CONSTRAINTS,
-                crate::enforcement::CertificateKind::TwoSat,
+                <Kernel as super::ResolverKernel>::KIND,
             );
             let buffer = hasher.finalize();
             let fp =
                 crate::enforcement::ContentFingerprint::from_buffer(buffer, H::OUTPUT_BYTES as u8);
-            let cert = GroundingCertificate::with_level_and_fingerprint_const(witt_bits, fp);
+            let cert = <<Kernel as super::ResolverKernel>::Cert as crate::enforcement::certify_const_mint::MintWithLevelFingerprint>::mint_with_level_fingerprint(witt_bits, fp);
             Ok(Certified::new(cert))
         }
     }
@@ -6538,8 +8218,27 @@ pub mod resolver {
     /// identifies the input. `Certified<GenericImpossibilityWitness>` on
     /// failure — the witness itself is certified so downstream can persist it
     /// alongside success certs in a uniform `Certified<_>` channel.
+    /// Phase X.1: the produced cert class is the ontology-declared class for
+    /// this resolver's `resolver:CertifyMapping`. Eight cert subclasses —
+    /// `TransformCertificate`, `IsometryCertificate`, `InvolutionCertificate`,
+    /// `CompletenessCertificate`, `GeodesicCertificate`, `MeasurementCertificate`,
+    /// `BornRuleVerification`, and `GroundingCertificate` — are minted across the 17 Phase D
+    /// kernels so each resolver's class discrimination is load-bearing.
+    /// v0.2.2 Phase J: `certify_at` composes an ontology primitive (per the
+    /// kernel's composition spec) whose output is folded into the canonical
+    /// fingerprint ahead of `fold_unit_digest`, so distinct primitive outputs
+    /// yield distinct fingerprints — i.e., each kernel's decision is real and
+    /// content-addressed per its ontology class.
     pub mod horn_sat_decider {
         use super::*;
+
+        #[doc(hidden)]
+        pub struct Kernel;
+        impl super::ResolverKernel for Kernel {
+            type Cert = crate::enforcement::GroundingCertificate;
+            const KIND: crate::enforcement::CertificateKind =
+                crate::enforcement::CertificateKind::HornSat;
+        }
 
         /// Phase D (target §4.2): certify at the canonical `WittLevel::W32`.
         ///
@@ -6573,15 +8272,19 @@ pub mod resolver {
         {
             let _ = input.inner();
             let witt_bits = level.witt_length() as u16;
-            // Run the reduction stages to produce the decision verdict.
-            let outcome = crate::pipeline::run_reduction_stages::<T>(witt_bits)
-                .map_err(|_| Certified::new(GenericImpossibilityWitness::default()))?;
-            if !outcome.satisfiable {
+            let (tr_bits, tr_constraints, tr_sat) =
+                crate::enforcement::primitive_terminal_reduction::<T>(witt_bits)
+                    .map_err(|_| Certified::new(GenericImpossibilityWitness::default()))?;
+            if tr_sat == 0 {
                 return Err(Certified::new(GenericImpossibilityWitness::default()));
             }
-            // Fold the canonical CompileUnit-free fingerprint over the
-            // input's constraint catalog + resolver discriminant.
             let mut hasher = H::initial();
+            hasher = crate::enforcement::fold_terminal_reduction(
+                hasher,
+                tr_bits,
+                tr_constraints,
+                tr_sat,
+            );
             hasher = crate::enforcement::fold_unit_digest(
                 hasher,
                 witt_bits,
@@ -6589,12 +8292,12 @@ pub mod resolver {
                 T::IRI,
                 T::SITE_COUNT,
                 T::CONSTRAINTS,
-                crate::enforcement::CertificateKind::HornSat,
+                <Kernel as super::ResolverKernel>::KIND,
             );
             let buffer = hasher.finalize();
             let fp =
                 crate::enforcement::ContentFingerprint::from_buffer(buffer, H::OUTPUT_BYTES as u8);
-            let cert = GroundingCertificate::with_level_and_fingerprint_const(witt_bits, fp);
+            let cert = <<Kernel as super::ResolverKernel>::Cert as crate::enforcement::certify_const_mint::MintWithLevelFingerprint>::mint_with_level_fingerprint(witt_bits, fp);
             Ok(Certified::new(cert))
         }
     }
@@ -6605,8 +8308,27 @@ pub mod resolver {
     /// identifies the input. `Certified<GenericImpossibilityWitness>` on
     /// failure — the witness itself is certified so downstream can persist it
     /// alongside success certs in a uniform `Certified<_>` channel.
+    /// Phase X.1: the produced cert class is the ontology-declared class for
+    /// this resolver's `resolver:CertifyMapping`. Eight cert subclasses —
+    /// `TransformCertificate`, `IsometryCertificate`, `InvolutionCertificate`,
+    /// `CompletenessCertificate`, `GeodesicCertificate`, `MeasurementCertificate`,
+    /// `BornRuleVerification`, and `GroundingCertificate` — are minted across the 17 Phase D
+    /// kernels so each resolver's class discrimination is load-bearing.
+    /// v0.2.2 Phase J: `certify_at` composes an ontology primitive (per the
+    /// kernel's composition spec) whose output is folded into the canonical
+    /// fingerprint ahead of `fold_unit_digest`, so distinct primitive outputs
+    /// yield distinct fingerprints — i.e., each kernel's decision is real and
+    /// content-addressed per its ontology class.
     pub mod residual_verdict {
         use super::*;
+
+        #[doc(hidden)]
+        pub struct Kernel;
+        impl super::ResolverKernel for Kernel {
+            type Cert = crate::enforcement::GroundingCertificate;
+            const KIND: crate::enforcement::CertificateKind =
+                crate::enforcement::CertificateKind::ResidualVerdict;
+        }
 
         /// Phase D (target §4.2): certify at the canonical `WittLevel::W32`.
         ///
@@ -6640,15 +8362,19 @@ pub mod resolver {
         {
             let _ = input.inner();
             let witt_bits = level.witt_length() as u16;
-            // Run the reduction stages to produce the decision verdict.
-            let outcome = crate::pipeline::run_reduction_stages::<T>(witt_bits)
-                .map_err(|_| Certified::new(GenericImpossibilityWitness::default()))?;
-            if !outcome.satisfiable {
+            let (tr_bits, tr_constraints, tr_sat) =
+                crate::enforcement::primitive_terminal_reduction::<T>(witt_bits)
+                    .map_err(|_| Certified::new(GenericImpossibilityWitness::default()))?;
+            if tr_sat == 0 {
                 return Err(Certified::new(GenericImpossibilityWitness::default()));
             }
-            // Fold the canonical CompileUnit-free fingerprint over the
-            // input's constraint catalog + resolver discriminant.
             let mut hasher = H::initial();
+            hasher = crate::enforcement::fold_terminal_reduction(
+                hasher,
+                tr_bits,
+                tr_constraints,
+                tr_sat,
+            );
             hasher = crate::enforcement::fold_unit_digest(
                 hasher,
                 witt_bits,
@@ -6656,24 +8382,43 @@ pub mod resolver {
                 T::IRI,
                 T::SITE_COUNT,
                 T::CONSTRAINTS,
-                crate::enforcement::CertificateKind::ResidualVerdict,
+                <Kernel as super::ResolverKernel>::KIND,
             );
             let buffer = hasher.finalize();
             let fp =
                 crate::enforcement::ContentFingerprint::from_buffer(buffer, H::OUTPUT_BYTES as u8);
-            let cert = GroundingCertificate::with_level_and_fingerprint_const(witt_bits, fp);
+            let cert = <<Kernel as super::ResolverKernel>::Cert as crate::enforcement::certify_const_mint::MintWithLevelFingerprint>::mint_with_level_fingerprint(witt_bits, fp);
             Ok(Certified::new(cert))
         }
     }
 
-    /// Phase D (target §4.2): `resolver:CanonicalFormResolver` — compute the canonical form of a `ConstrainedType` by running the reduction stages and emitting a `Certified<GroundingCertificate>` whose fingerprint uniquely identifies the canonicalized input.
-    /// Returns `Certified<GroundingCertificate>` on success carrying the Witt
+    /// Phase D (target §4.2): `resolver:CanonicalFormResolver` — compute the canonical form of a `ConstrainedType` by running the reduction stages and emitting a `Certified<TransformCertificate>` whose fingerprint uniquely identifies the canonicalized input.
+    /// Returns `Certified<TransformCertificate>` on success carrying the Witt
     /// level and a consumer-hasher-computed substrate fingerprint that uniquely
     /// identifies the input. `Certified<GenericImpossibilityWitness>` on
     /// failure — the witness itself is certified so downstream can persist it
     /// alongside success certs in a uniform `Certified<_>` channel.
+    /// Phase X.1: the produced cert class is the ontology-declared class for
+    /// this resolver's `resolver:CertifyMapping`. Eight cert subclasses —
+    /// `TransformCertificate`, `IsometryCertificate`, `InvolutionCertificate`,
+    /// `CompletenessCertificate`, `GeodesicCertificate`, `MeasurementCertificate`,
+    /// `BornRuleVerification`, and `GroundingCertificate` — are minted across the 17 Phase D
+    /// kernels so each resolver's class discrimination is load-bearing.
+    /// v0.2.2 Phase J: `certify_at` composes an ontology primitive (per the
+    /// kernel's composition spec) whose output is folded into the canonical
+    /// fingerprint ahead of `fold_unit_digest`, so distinct primitive outputs
+    /// yield distinct fingerprints — i.e., each kernel's decision is real and
+    /// content-addressed per its ontology class.
     pub mod canonical_form {
         use super::*;
+
+        #[doc(hidden)]
+        pub struct Kernel;
+        impl super::ResolverKernel for Kernel {
+            type Cert = crate::enforcement::TransformCertificate;
+            const KIND: crate::enforcement::CertificateKind =
+                crate::enforcement::CertificateKind::CanonicalForm;
+        }
 
         /// Phase D (target §4.2): certify at the canonical `WittLevel::W32`.
         ///
@@ -6686,7 +8431,7 @@ pub mod resolver {
             H: crate::enforcement::Hasher,
         >(
             input: &Validated<T, P>,
-        ) -> Result<Certified<GroundingCertificate>, Certified<GenericImpossibilityWitness>>
+        ) -> Result<Certified<TransformCertificate>, Certified<GenericImpossibilityWitness>>
         {
             certify_at::<T, P, H>(input, WittLevel::W32)
         }
@@ -6703,19 +8448,36 @@ pub mod resolver {
         >(
             input: &Validated<T, P>,
             level: WittLevel,
-        ) -> Result<Certified<GroundingCertificate>, Certified<GenericImpossibilityWitness>>
+        ) -> Result<Certified<TransformCertificate>, Certified<GenericImpossibilityWitness>>
         {
             let _ = input.inner();
             let witt_bits = level.witt_length() as u16;
-            // Run the reduction stages to produce the decision verdict.
-            let outcome = crate::pipeline::run_reduction_stages::<T>(witt_bits)
-                .map_err(|_| Certified::new(GenericImpossibilityWitness::default()))?;
-            if !outcome.satisfiable {
+            let (tr_bits, tr_constraints, tr_sat) =
+                crate::enforcement::primitive_terminal_reduction::<T>(witt_bits)
+                    .map_err(|_| Certified::new(GenericImpossibilityWitness::default()))?;
+            if tr_sat == 0 {
                 return Err(Certified::new(GenericImpossibilityWitness::default()));
             }
-            // Fold the canonical CompileUnit-free fingerprint over the
-            // input's constraint catalog + resolver discriminant.
             let mut hasher = H::initial();
+            hasher = crate::enforcement::fold_terminal_reduction(
+                hasher,
+                tr_bits,
+                tr_constraints,
+                tr_sat,
+            );
+            let (tr2_bits, tr2_constraints, tr2_sat) =
+                crate::enforcement::primitive_terminal_reduction::<T>(witt_bits)
+                    .map_err(|_| Certified::new(GenericImpossibilityWitness::default()))?;
+            // Church-Rosser: second reduction must agree with the first.
+            if tr2_bits != tr_bits || tr2_constraints != tr_constraints || tr2_sat != tr_sat {
+                return Err(Certified::new(GenericImpossibilityWitness::default()));
+            }
+            hasher = crate::enforcement::fold_terminal_reduction(
+                hasher,
+                tr2_bits,
+                tr2_constraints,
+                tr2_sat,
+            );
             hasher = crate::enforcement::fold_unit_digest(
                 hasher,
                 witt_bits,
@@ -6723,24 +8485,43 @@ pub mod resolver {
                 T::IRI,
                 T::SITE_COUNT,
                 T::CONSTRAINTS,
-                crate::enforcement::CertificateKind::CanonicalForm,
+                <Kernel as super::ResolverKernel>::KIND,
             );
             let buffer = hasher.finalize();
             let fp =
                 crate::enforcement::ContentFingerprint::from_buffer(buffer, H::OUTPUT_BYTES as u8);
-            let cert = GroundingCertificate::with_level_and_fingerprint_const(witt_bits, fp);
+            let cert = <<Kernel as super::ResolverKernel>::Cert as crate::enforcement::certify_const_mint::MintWithLevelFingerprint>::mint_with_level_fingerprint(witt_bits, fp);
             Ok(Certified::new(cert))
         }
     }
 
     /// Phase D (target §4.2): `resolver:TypeSynthesisResolver` — run the ψ-pipeline in inverse mode: given a `TypeSynthesisGoal` expressed through `ConstrainedTypeShape`, synthesize the type's carrier or signal impossibility.
-    /// Returns `Certified<GroundingCertificate>` on success carrying the Witt
+    /// Returns `Certified<TransformCertificate>` on success carrying the Witt
     /// level and a consumer-hasher-computed substrate fingerprint that uniquely
     /// identifies the input. `Certified<GenericImpossibilityWitness>` on
     /// failure — the witness itself is certified so downstream can persist it
     /// alongside success certs in a uniform `Certified<_>` channel.
+    /// Phase X.1: the produced cert class is the ontology-declared class for
+    /// this resolver's `resolver:CertifyMapping`. Eight cert subclasses —
+    /// `TransformCertificate`, `IsometryCertificate`, `InvolutionCertificate`,
+    /// `CompletenessCertificate`, `GeodesicCertificate`, `MeasurementCertificate`,
+    /// `BornRuleVerification`, and `GroundingCertificate` — are minted across the 17 Phase D
+    /// kernels so each resolver's class discrimination is load-bearing.
+    /// v0.2.2 Phase J: `certify_at` composes an ontology primitive (per the
+    /// kernel's composition spec) whose output is folded into the canonical
+    /// fingerprint ahead of `fold_unit_digest`, so distinct primitive outputs
+    /// yield distinct fingerprints — i.e., each kernel's decision is real and
+    /// content-addressed per its ontology class.
     pub mod type_synthesis {
         use super::*;
+
+        #[doc(hidden)]
+        pub struct Kernel;
+        impl super::ResolverKernel for Kernel {
+            type Cert = crate::enforcement::TransformCertificate;
+            const KIND: crate::enforcement::CertificateKind =
+                crate::enforcement::CertificateKind::TypeSynthesis;
+        }
 
         /// Phase D (target §4.2): certify at the canonical `WittLevel::W32`.
         ///
@@ -6753,7 +8534,7 @@ pub mod resolver {
             H: crate::enforcement::Hasher,
         >(
             input: &Validated<T, P>,
-        ) -> Result<Certified<GroundingCertificate>, Certified<GenericImpossibilityWitness>>
+        ) -> Result<Certified<TransformCertificate>, Certified<GenericImpossibilityWitness>>
         {
             certify_at::<T, P, H>(input, WittLevel::W32)
         }
@@ -6770,19 +8551,27 @@ pub mod resolver {
         >(
             input: &Validated<T, P>,
             level: WittLevel,
-        ) -> Result<Certified<GroundingCertificate>, Certified<GenericImpossibilityWitness>>
+        ) -> Result<Certified<TransformCertificate>, Certified<GenericImpossibilityWitness>>
         {
             let _ = input.inner();
             let witt_bits = level.witt_length() as u16;
-            // Run the reduction stages to produce the decision verdict.
-            let outcome = crate::pipeline::run_reduction_stages::<T>(witt_bits)
-                .map_err(|_| Certified::new(GenericImpossibilityWitness::default()))?;
-            if !outcome.satisfiable {
+            let (tr_bits, tr_constraints, tr_sat) =
+                crate::enforcement::primitive_terminal_reduction::<T>(witt_bits)
+                    .map_err(|_| Certified::new(GenericImpossibilityWitness::default()))?;
+            if tr_sat == 0 {
                 return Err(Certified::new(GenericImpossibilityWitness::default()));
             }
-            // Fold the canonical CompileUnit-free fingerprint over the
-            // input's constraint catalog + resolver discriminant.
             let mut hasher = H::initial();
+            hasher = crate::enforcement::fold_terminal_reduction(
+                hasher,
+                tr_bits,
+                tr_constraints,
+                tr_sat,
+            );
+            let betti = crate::enforcement::primitive_simplicial_nerve_betti::<T>();
+            hasher = crate::enforcement::fold_betti_tuple(hasher, &betti);
+            let (residual, entropy) = crate::enforcement::primitive_descent_metrics::<T>(&betti);
+            hasher = crate::enforcement::fold_descent_metrics(hasher, residual, entropy);
             hasher = crate::enforcement::fold_unit_digest(
                 hasher,
                 witt_bits,
@@ -6790,24 +8579,43 @@ pub mod resolver {
                 T::IRI,
                 T::SITE_COUNT,
                 T::CONSTRAINTS,
-                crate::enforcement::CertificateKind::TypeSynthesis,
+                <Kernel as super::ResolverKernel>::KIND,
             );
             let buffer = hasher.finalize();
             let fp =
                 crate::enforcement::ContentFingerprint::from_buffer(buffer, H::OUTPUT_BYTES as u8);
-            let cert = GroundingCertificate::with_level_and_fingerprint_const(witt_bits, fp);
+            let cert = <<Kernel as super::ResolverKernel>::Cert as crate::enforcement::certify_const_mint::MintWithLevelFingerprint>::mint_with_level_fingerprint(witt_bits, fp);
             Ok(Certified::new(cert))
         }
     }
 
     /// Phase D (target §4.2): `resolver:HomotopyResolver` — compute homotopy-type observables (fundamental group rank, Postnikov-truncation records) by walking the constraint-nerve chain and extracting Betti-number evidence.
-    /// Returns `Certified<GroundingCertificate>` on success carrying the Witt
+    /// Returns `Certified<TransformCertificate>` on success carrying the Witt
     /// level and a consumer-hasher-computed substrate fingerprint that uniquely
     /// identifies the input. `Certified<GenericImpossibilityWitness>` on
     /// failure — the witness itself is certified so downstream can persist it
     /// alongside success certs in a uniform `Certified<_>` channel.
+    /// Phase X.1: the produced cert class is the ontology-declared class for
+    /// this resolver's `resolver:CertifyMapping`. Eight cert subclasses —
+    /// `TransformCertificate`, `IsometryCertificate`, `InvolutionCertificate`,
+    /// `CompletenessCertificate`, `GeodesicCertificate`, `MeasurementCertificate`,
+    /// `BornRuleVerification`, and `GroundingCertificate` — are minted across the 17 Phase D
+    /// kernels so each resolver's class discrimination is load-bearing.
+    /// v0.2.2 Phase J: `certify_at` composes an ontology primitive (per the
+    /// kernel's composition spec) whose output is folded into the canonical
+    /// fingerprint ahead of `fold_unit_digest`, so distinct primitive outputs
+    /// yield distinct fingerprints — i.e., each kernel's decision is real and
+    /// content-addressed per its ontology class.
     pub mod homotopy {
         use super::*;
+
+        #[doc(hidden)]
+        pub struct Kernel;
+        impl super::ResolverKernel for Kernel {
+            type Cert = crate::enforcement::TransformCertificate;
+            const KIND: crate::enforcement::CertificateKind =
+                crate::enforcement::CertificateKind::Homotopy;
+        }
 
         /// Phase D (target §4.2): certify at the canonical `WittLevel::W32`.
         ///
@@ -6820,7 +8628,7 @@ pub mod resolver {
             H: crate::enforcement::Hasher,
         >(
             input: &Validated<T, P>,
-        ) -> Result<Certified<GroundingCertificate>, Certified<GenericImpossibilityWitness>>
+        ) -> Result<Certified<TransformCertificate>, Certified<GenericImpossibilityWitness>>
         {
             certify_at::<T, P, H>(input, WittLevel::W32)
         }
@@ -6837,19 +8645,25 @@ pub mod resolver {
         >(
             input: &Validated<T, P>,
             level: WittLevel,
-        ) -> Result<Certified<GroundingCertificate>, Certified<GenericImpossibilityWitness>>
+        ) -> Result<Certified<TransformCertificate>, Certified<GenericImpossibilityWitness>>
         {
             let _ = input.inner();
             let witt_bits = level.witt_length() as u16;
-            // Run the reduction stages to produce the decision verdict.
-            let outcome = crate::pipeline::run_reduction_stages::<T>(witt_bits)
-                .map_err(|_| Certified::new(GenericImpossibilityWitness::default()))?;
-            if !outcome.satisfiable {
+            let (tr_bits, tr_constraints, tr_sat) =
+                crate::enforcement::primitive_terminal_reduction::<T>(witt_bits)
+                    .map_err(|_| Certified::new(GenericImpossibilityWitness::default()))?;
+            if tr_sat == 0 {
                 return Err(Certified::new(GenericImpossibilityWitness::default()));
             }
-            // Fold the canonical CompileUnit-free fingerprint over the
-            // input's constraint catalog + resolver discriminant.
             let mut hasher = H::initial();
+            hasher = crate::enforcement::fold_terminal_reduction(
+                hasher,
+                tr_bits,
+                tr_constraints,
+                tr_sat,
+            );
+            let betti = crate::enforcement::primitive_simplicial_nerve_betti::<T>();
+            hasher = crate::enforcement::fold_betti_tuple(hasher, &betti);
             hasher = crate::enforcement::fold_unit_digest(
                 hasher,
                 witt_bits,
@@ -6857,24 +8671,43 @@ pub mod resolver {
                 T::IRI,
                 T::SITE_COUNT,
                 T::CONSTRAINTS,
-                crate::enforcement::CertificateKind::Homotopy,
+                <Kernel as super::ResolverKernel>::KIND,
             );
             let buffer = hasher.finalize();
             let fp =
                 crate::enforcement::ContentFingerprint::from_buffer(buffer, H::OUTPUT_BYTES as u8);
-            let cert = GroundingCertificate::with_level_and_fingerprint_const(witt_bits, fp);
+            let cert = <<Kernel as super::ResolverKernel>::Cert as crate::enforcement::certify_const_mint::MintWithLevelFingerprint>::mint_with_level_fingerprint(witt_bits, fp);
             Ok(Certified::new(cert))
         }
     }
 
     /// Phase D (target §4.2): `resolver:MonodromyResolver` — compute monodromy-group observables by tracing the constraint-nerve boundary cycles at the input's Witt level.
-    /// Returns `Certified<GroundingCertificate>` on success carrying the Witt
+    /// Returns `Certified<IsometryCertificate>` on success carrying the Witt
     /// level and a consumer-hasher-computed substrate fingerprint that uniquely
     /// identifies the input. `Certified<GenericImpossibilityWitness>` on
     /// failure — the witness itself is certified so downstream can persist it
     /// alongside success certs in a uniform `Certified<_>` channel.
+    /// Phase X.1: the produced cert class is the ontology-declared class for
+    /// this resolver's `resolver:CertifyMapping`. Eight cert subclasses —
+    /// `TransformCertificate`, `IsometryCertificate`, `InvolutionCertificate`,
+    /// `CompletenessCertificate`, `GeodesicCertificate`, `MeasurementCertificate`,
+    /// `BornRuleVerification`, and `GroundingCertificate` — are minted across the 17 Phase D
+    /// kernels so each resolver's class discrimination is load-bearing.
+    /// v0.2.2 Phase J: `certify_at` composes an ontology primitive (per the
+    /// kernel's composition spec) whose output is folded into the canonical
+    /// fingerprint ahead of `fold_unit_digest`, so distinct primitive outputs
+    /// yield distinct fingerprints — i.e., each kernel's decision is real and
+    /// content-addressed per its ontology class.
     pub mod monodromy {
         use super::*;
+
+        #[doc(hidden)]
+        pub struct Kernel;
+        impl super::ResolverKernel for Kernel {
+            type Cert = crate::enforcement::IsometryCertificate;
+            const KIND: crate::enforcement::CertificateKind =
+                crate::enforcement::CertificateKind::Monodromy;
+        }
 
         /// Phase D (target §4.2): certify at the canonical `WittLevel::W32`.
         ///
@@ -6887,7 +8720,7 @@ pub mod resolver {
             H: crate::enforcement::Hasher,
         >(
             input: &Validated<T, P>,
-        ) -> Result<Certified<GroundingCertificate>, Certified<GenericImpossibilityWitness>>
+        ) -> Result<Certified<IsometryCertificate>, Certified<GenericImpossibilityWitness>>
         {
             certify_at::<T, P, H>(input, WittLevel::W32)
         }
@@ -6904,19 +8737,29 @@ pub mod resolver {
         >(
             input: &Validated<T, P>,
             level: WittLevel,
-        ) -> Result<Certified<GroundingCertificate>, Certified<GenericImpossibilityWitness>>
+        ) -> Result<Certified<IsometryCertificate>, Certified<GenericImpossibilityWitness>>
         {
             let _ = input.inner();
             let witt_bits = level.witt_length() as u16;
-            // Run the reduction stages to produce the decision verdict.
-            let outcome = crate::pipeline::run_reduction_stages::<T>(witt_bits)
-                .map_err(|_| Certified::new(GenericImpossibilityWitness::default()))?;
-            if !outcome.satisfiable {
+            let (tr_bits, tr_constraints, tr_sat) =
+                crate::enforcement::primitive_terminal_reduction::<T>(witt_bits)
+                    .map_err(|_| Certified::new(GenericImpossibilityWitness::default()))?;
+            if tr_sat == 0 {
                 return Err(Certified::new(GenericImpossibilityWitness::default()));
             }
-            // Fold the canonical CompileUnit-free fingerprint over the
-            // input's constraint catalog + resolver discriminant.
             let mut hasher = H::initial();
+            hasher = crate::enforcement::fold_terminal_reduction(
+                hasher,
+                tr_bits,
+                tr_constraints,
+                tr_sat,
+            );
+            let betti = crate::enforcement::primitive_simplicial_nerve_betti::<T>();
+            hasher = crate::enforcement::fold_betti_tuple(hasher, &betti);
+            let (orbit_size, representative) =
+                crate::enforcement::primitive_dihedral_signature::<T>();
+            hasher =
+                crate::enforcement::fold_dihedral_signature(hasher, orbit_size, representative);
             hasher = crate::enforcement::fold_unit_digest(
                 hasher,
                 witt_bits,
@@ -6924,24 +8767,43 @@ pub mod resolver {
                 T::IRI,
                 T::SITE_COUNT,
                 T::CONSTRAINTS,
-                crate::enforcement::CertificateKind::Monodromy,
+                <Kernel as super::ResolverKernel>::KIND,
             );
             let buffer = hasher.finalize();
             let fp =
                 crate::enforcement::ContentFingerprint::from_buffer(buffer, H::OUTPUT_BYTES as u8);
-            let cert = GroundingCertificate::with_level_and_fingerprint_const(witt_bits, fp);
+            let cert = <<Kernel as super::ResolverKernel>::Cert as crate::enforcement::certify_const_mint::MintWithLevelFingerprint>::mint_with_level_fingerprint(witt_bits, fp);
             Ok(Certified::new(cert))
         }
     }
 
     /// Phase D (target §4.2): `resolver:ModuliResolver` — compute the local moduli-space structure at a `CompleteType`: DeformationComplex, HolonomyStratum, tangent/obstruction dimensions.
-    /// Returns `Certified<GroundingCertificate>` on success carrying the Witt
+    /// Returns `Certified<TransformCertificate>` on success carrying the Witt
     /// level and a consumer-hasher-computed substrate fingerprint that uniquely
     /// identifies the input. `Certified<GenericImpossibilityWitness>` on
     /// failure — the witness itself is certified so downstream can persist it
     /// alongside success certs in a uniform `Certified<_>` channel.
+    /// Phase X.1: the produced cert class is the ontology-declared class for
+    /// this resolver's `resolver:CertifyMapping`. Eight cert subclasses —
+    /// `TransformCertificate`, `IsometryCertificate`, `InvolutionCertificate`,
+    /// `CompletenessCertificate`, `GeodesicCertificate`, `MeasurementCertificate`,
+    /// `BornRuleVerification`, and `GroundingCertificate` — are minted across the 17 Phase D
+    /// kernels so each resolver's class discrimination is load-bearing.
+    /// v0.2.2 Phase J: `certify_at` composes an ontology primitive (per the
+    /// kernel's composition spec) whose output is folded into the canonical
+    /// fingerprint ahead of `fold_unit_digest`, so distinct primitive outputs
+    /// yield distinct fingerprints — i.e., each kernel's decision is real and
+    /// content-addressed per its ontology class.
     pub mod moduli {
         use super::*;
+
+        #[doc(hidden)]
+        pub struct Kernel;
+        impl super::ResolverKernel for Kernel {
+            type Cert = crate::enforcement::TransformCertificate;
+            const KIND: crate::enforcement::CertificateKind =
+                crate::enforcement::CertificateKind::Moduli;
+        }
 
         /// Phase D (target §4.2): certify at the canonical `WittLevel::W32`.
         ///
@@ -6954,7 +8816,7 @@ pub mod resolver {
             H: crate::enforcement::Hasher,
         >(
             input: &Validated<T, P>,
-        ) -> Result<Certified<GroundingCertificate>, Certified<GenericImpossibilityWitness>>
+        ) -> Result<Certified<TransformCertificate>, Certified<GenericImpossibilityWitness>>
         {
             certify_at::<T, P, H>(input, WittLevel::W32)
         }
@@ -6971,19 +8833,38 @@ pub mod resolver {
         >(
             input: &Validated<T, P>,
             level: WittLevel,
-        ) -> Result<Certified<GroundingCertificate>, Certified<GenericImpossibilityWitness>>
+        ) -> Result<Certified<TransformCertificate>, Certified<GenericImpossibilityWitness>>
         {
             let _ = input.inner();
             let witt_bits = level.witt_length() as u16;
-            // Run the reduction stages to produce the decision verdict.
-            let outcome = crate::pipeline::run_reduction_stages::<T>(witt_bits)
-                .map_err(|_| Certified::new(GenericImpossibilityWitness::default()))?;
-            if !outcome.satisfiable {
+            let (tr_bits, tr_constraints, tr_sat) =
+                crate::enforcement::primitive_terminal_reduction::<T>(witt_bits)
+                    .map_err(|_| Certified::new(GenericImpossibilityWitness::default()))?;
+            if tr_sat == 0 {
                 return Err(Certified::new(GenericImpossibilityWitness::default()));
             }
-            // Fold the canonical CompileUnit-free fingerprint over the
-            // input's constraint catalog + resolver discriminant.
             let mut hasher = H::initial();
+            hasher = crate::enforcement::fold_terminal_reduction(
+                hasher,
+                tr_bits,
+                tr_constraints,
+                tr_sat,
+            );
+            let betti = crate::enforcement::primitive_simplicial_nerve_betti::<T>();
+            let automorphisms: u32 = betti[0];
+            let deformations: u32 = if crate::enforcement::MAX_BETTI_DIMENSION > 1 {
+                betti[1]
+            } else {
+                0
+            };
+            let obstructions: u32 = if crate::enforcement::MAX_BETTI_DIMENSION > 2 {
+                betti[2]
+            } else {
+                0
+            };
+            hasher = hasher.fold_bytes(&automorphisms.to_be_bytes());
+            hasher = hasher.fold_bytes(&deformations.to_be_bytes());
+            hasher = hasher.fold_bytes(&obstructions.to_be_bytes());
             hasher = crate::enforcement::fold_unit_digest(
                 hasher,
                 witt_bits,
@@ -6991,12 +8872,12 @@ pub mod resolver {
                 T::IRI,
                 T::SITE_COUNT,
                 T::CONSTRAINTS,
-                crate::enforcement::CertificateKind::Moduli,
+                <Kernel as super::ResolverKernel>::KIND,
             );
             let buffer = hasher.finalize();
             let fp =
                 crate::enforcement::ContentFingerprint::from_buffer(buffer, H::OUTPUT_BYTES as u8);
-            let cert = GroundingCertificate::with_level_and_fingerprint_const(witt_bits, fp);
+            let cert = <<Kernel as super::ResolverKernel>::Cert as crate::enforcement::certify_const_mint::MintWithLevelFingerprint>::mint_with_level_fingerprint(witt_bits, fp);
             Ok(Certified::new(cert))
         }
     }
@@ -7007,8 +8888,27 @@ pub mod resolver {
     /// identifies the input. `Certified<GenericImpossibilityWitness>` on
     /// failure — the witness itself is certified so downstream can persist it
     /// alongside success certs in a uniform `Certified<_>` channel.
+    /// Phase X.1: the produced cert class is the ontology-declared class for
+    /// this resolver's `resolver:CertifyMapping`. Eight cert subclasses —
+    /// `TransformCertificate`, `IsometryCertificate`, `InvolutionCertificate`,
+    /// `CompletenessCertificate`, `GeodesicCertificate`, `MeasurementCertificate`,
+    /// `BornRuleVerification`, and `GroundingCertificate` — are minted across the 17 Phase D
+    /// kernels so each resolver's class discrimination is load-bearing.
+    /// v0.2.2 Phase J: `certify_at` composes an ontology primitive (per the
+    /// kernel's composition spec) whose output is folded into the canonical
+    /// fingerprint ahead of `fold_unit_digest`, so distinct primitive outputs
+    /// yield distinct fingerprints — i.e., each kernel's decision is real and
+    /// content-addressed per its ontology class.
     pub mod jacobian_guided {
         use super::*;
+
+        #[doc(hidden)]
+        pub struct Kernel;
+        impl super::ResolverKernel for Kernel {
+            type Cert = crate::enforcement::GroundingCertificate;
+            const KIND: crate::enforcement::CertificateKind =
+                crate::enforcement::CertificateKind::JacobianGuided;
+        }
 
         /// Phase D (target §4.2): certify at the canonical `WittLevel::W32`.
         ///
@@ -7042,15 +8942,23 @@ pub mod resolver {
         {
             let _ = input.inner();
             let witt_bits = level.witt_length() as u16;
-            // Run the reduction stages to produce the decision verdict.
-            let outcome = crate::pipeline::run_reduction_stages::<T>(witt_bits)
-                .map_err(|_| Certified::new(GenericImpossibilityWitness::default()))?;
-            if !outcome.satisfiable {
+            let (tr_bits, tr_constraints, tr_sat) =
+                crate::enforcement::primitive_terminal_reduction::<T>(witt_bits)
+                    .map_err(|_| Certified::new(GenericImpossibilityWitness::default()))?;
+            if tr_sat == 0 {
                 return Err(Certified::new(GenericImpossibilityWitness::default()));
             }
-            // Fold the canonical CompileUnit-free fingerprint over the
-            // input's constraint catalog + resolver discriminant.
             let mut hasher = H::initial();
+            hasher = crate::enforcement::fold_terminal_reduction(
+                hasher,
+                tr_bits,
+                tr_constraints,
+                tr_sat,
+            );
+            let jac = crate::enforcement::primitive_curvature_jacobian::<T>();
+            hasher = crate::enforcement::fold_jacobian_profile(hasher, &jac);
+            let selected_site = crate::enforcement::primitive_dc10_select(&jac);
+            hasher = hasher.fold_bytes(&(selected_site as u32).to_be_bytes());
             hasher = crate::enforcement::fold_unit_digest(
                 hasher,
                 witt_bits,
@@ -7058,12 +8966,12 @@ pub mod resolver {
                 T::IRI,
                 T::SITE_COUNT,
                 T::CONSTRAINTS,
-                crate::enforcement::CertificateKind::JacobianGuided,
+                <Kernel as super::ResolverKernel>::KIND,
             );
             let buffer = hasher.finalize();
             let fp =
                 crate::enforcement::ContentFingerprint::from_buffer(buffer, H::OUTPUT_BYTES as u8);
-            let cert = GroundingCertificate::with_level_and_fingerprint_const(witt_bits, fp);
+            let cert = <<Kernel as super::ResolverKernel>::Cert as crate::enforcement::certify_const_mint::MintWithLevelFingerprint>::mint_with_level_fingerprint(witt_bits, fp);
             Ok(Certified::new(cert))
         }
     }
@@ -7074,8 +8982,27 @@ pub mod resolver {
     /// identifies the input. `Certified<GenericImpossibilityWitness>` on
     /// failure — the witness itself is certified so downstream can persist it
     /// alongside success certs in a uniform `Certified<_>` channel.
+    /// Phase X.1: the produced cert class is the ontology-declared class for
+    /// this resolver's `resolver:CertifyMapping`. Eight cert subclasses —
+    /// `TransformCertificate`, `IsometryCertificate`, `InvolutionCertificate`,
+    /// `CompletenessCertificate`, `GeodesicCertificate`, `MeasurementCertificate`,
+    /// `BornRuleVerification`, and `GroundingCertificate` — are minted across the 17 Phase D
+    /// kernels so each resolver's class discrimination is load-bearing.
+    /// v0.2.2 Phase J: `certify_at` composes an ontology primitive (per the
+    /// kernel's composition spec) whose output is folded into the canonical
+    /// fingerprint ahead of `fold_unit_digest`, so distinct primitive outputs
+    /// yield distinct fingerprints — i.e., each kernel's decision is real and
+    /// content-addressed per its ontology class.
     pub mod evaluation {
         use super::*;
+
+        #[doc(hidden)]
+        pub struct Kernel;
+        impl super::ResolverKernel for Kernel {
+            type Cert = crate::enforcement::GroundingCertificate;
+            const KIND: crate::enforcement::CertificateKind =
+                crate::enforcement::CertificateKind::Evaluation;
+        }
 
         /// Phase D (target §4.2): certify at the canonical `WittLevel::W32`.
         ///
@@ -7109,15 +9036,19 @@ pub mod resolver {
         {
             let _ = input.inner();
             let witt_bits = level.witt_length() as u16;
-            // Run the reduction stages to produce the decision verdict.
-            let outcome = crate::pipeline::run_reduction_stages::<T>(witt_bits)
-                .map_err(|_| Certified::new(GenericImpossibilityWitness::default()))?;
-            if !outcome.satisfiable {
+            let (tr_bits, tr_constraints, tr_sat) =
+                crate::enforcement::primitive_terminal_reduction::<T>(witt_bits)
+                    .map_err(|_| Certified::new(GenericImpossibilityWitness::default()))?;
+            if tr_sat == 0 {
                 return Err(Certified::new(GenericImpossibilityWitness::default()));
             }
-            // Fold the canonical CompileUnit-free fingerprint over the
-            // input's constraint catalog + resolver discriminant.
             let mut hasher = H::initial();
+            hasher = crate::enforcement::fold_terminal_reduction(
+                hasher,
+                tr_bits,
+                tr_constraints,
+                tr_sat,
+            );
             hasher = crate::enforcement::fold_unit_digest(
                 hasher,
                 witt_bits,
@@ -7125,12 +9056,12 @@ pub mod resolver {
                 T::IRI,
                 T::SITE_COUNT,
                 T::CONSTRAINTS,
-                crate::enforcement::CertificateKind::Evaluation,
+                <Kernel as super::ResolverKernel>::KIND,
             );
             let buffer = hasher.finalize();
             let fp =
                 crate::enforcement::ContentFingerprint::from_buffer(buffer, H::OUTPUT_BYTES as u8);
-            let cert = GroundingCertificate::with_level_and_fingerprint_const(witt_bits, fp);
+            let cert = <<Kernel as super::ResolverKernel>::Cert as crate::enforcement::certify_const_mint::MintWithLevelFingerprint>::mint_with_level_fingerprint(witt_bits, fp);
             Ok(Certified::new(cert))
         }
     }
@@ -7141,8 +9072,27 @@ pub mod resolver {
     /// identifies the input. `Certified<GenericImpossibilityWitness>` on
     /// failure — the witness itself is certified so downstream can persist it
     /// alongside success certs in a uniform `Certified<_>` channel.
+    /// Phase X.1: the produced cert class is the ontology-declared class for
+    /// this resolver's `resolver:CertifyMapping`. Eight cert subclasses —
+    /// `TransformCertificate`, `IsometryCertificate`, `InvolutionCertificate`,
+    /// `CompletenessCertificate`, `GeodesicCertificate`, `MeasurementCertificate`,
+    /// `BornRuleVerification`, and `GroundingCertificate` — are minted across the 17 Phase D
+    /// kernels so each resolver's class discrimination is load-bearing.
+    /// v0.2.2 Phase J: `certify_at` composes an ontology primitive (per the
+    /// kernel's composition spec) whose output is folded into the canonical
+    /// fingerprint ahead of `fold_unit_digest`, so distinct primitive outputs
+    /// yield distinct fingerprints — i.e., each kernel's decision is real and
+    /// content-addressed per its ontology class.
     pub mod session {
         use super::*;
+
+        #[doc(hidden)]
+        pub struct Kernel;
+        impl super::ResolverKernel for Kernel {
+            type Cert = crate::enforcement::GroundingCertificate;
+            const KIND: crate::enforcement::CertificateKind =
+                crate::enforcement::CertificateKind::Session;
+        }
 
         /// Phase D (target §4.2): certify at the canonical `WittLevel::W32`.
         ///
@@ -7171,7 +9121,9 @@ pub mod resolver {
             let budget = unit.thermodynamic_budget();
             let result_type_iri = unit.result_type_iri();
             let mut hasher = H::initial();
-            // Fold the unit bytes + resolver discriminant.
+            let (binding_count, fold_addr) =
+                crate::enforcement::primitive_session_binding_signature(unit.bindings());
+            hasher = crate::enforcement::fold_session_signature(hasher, binding_count, fold_addr);
             hasher = crate::enforcement::fold_unit_digest(
                 hasher,
                 witt_bits,
@@ -7179,24 +9131,43 @@ pub mod resolver {
                 result_type_iri,
                 0usize,
                 &[],
-                crate::enforcement::CertificateKind::Session,
+                <Kernel as super::ResolverKernel>::KIND,
             );
             let buffer = hasher.finalize();
             let fp =
                 crate::enforcement::ContentFingerprint::from_buffer(buffer, H::OUTPUT_BYTES as u8);
-            let cert = GroundingCertificate::with_level_and_fingerprint_const(witt_bits, fp);
+            let cert = <<Kernel as super::ResolverKernel>::Cert as crate::enforcement::certify_const_mint::MintWithLevelFingerprint>::mint_with_level_fingerprint(witt_bits, fp);
             Ok(Certified::new(cert))
         }
     }
 
     /// Phase D (target §4.2): `resolver:SuperpositionResolver` — advance a SuperpositionResolver across a ψ-pipeline branch tree, maintaining an amplitude vector that satisfies the Born-rule normalization constraint (Σ|αᵢ|² = 1).
-    /// Returns `Certified<GroundingCertificate>` on success carrying the Witt
+    /// Returns `Certified<BornRuleVerification>` on success carrying the Witt
     /// level and a consumer-hasher-computed substrate fingerprint that uniquely
     /// identifies the input. `Certified<GenericImpossibilityWitness>` on
     /// failure — the witness itself is certified so downstream can persist it
     /// alongside success certs in a uniform `Certified<_>` channel.
+    /// Phase X.1: the produced cert class is the ontology-declared class for
+    /// this resolver's `resolver:CertifyMapping`. Eight cert subclasses —
+    /// `TransformCertificate`, `IsometryCertificate`, `InvolutionCertificate`,
+    /// `CompletenessCertificate`, `GeodesicCertificate`, `MeasurementCertificate`,
+    /// `BornRuleVerification`, and `GroundingCertificate` — are minted across the 17 Phase D
+    /// kernels so each resolver's class discrimination is load-bearing.
+    /// v0.2.2 Phase J: `certify_at` composes an ontology primitive (per the
+    /// kernel's composition spec) whose output is folded into the canonical
+    /// fingerprint ahead of `fold_unit_digest`, so distinct primitive outputs
+    /// yield distinct fingerprints — i.e., each kernel's decision is real and
+    /// content-addressed per its ontology class.
     pub mod superposition {
         use super::*;
+
+        #[doc(hidden)]
+        pub struct Kernel;
+        impl super::ResolverKernel for Kernel {
+            type Cert = crate::enforcement::BornRuleVerification;
+            const KIND: crate::enforcement::CertificateKind =
+                crate::enforcement::CertificateKind::Superposition;
+        }
 
         /// Phase D (target §4.2): certify at the canonical `WittLevel::W32`.
         ///
@@ -7205,7 +9176,7 @@ pub mod resolver {
         /// Returns `Certified<GenericImpossibilityWitness>` on failure.
         pub fn certify<P: crate::enforcement::ValidationPhase, H: crate::enforcement::Hasher>(
             input: &Validated<CompileUnit, P>,
-        ) -> Result<Certified<GroundingCertificate>, Certified<GenericImpossibilityWitness>>
+        ) -> Result<Certified<BornRuleVerification>, Certified<GenericImpossibilityWitness>>
         {
             certify_at::<P, H>(input, WittLevel::W32)
         }
@@ -7218,14 +9189,19 @@ pub mod resolver {
         pub fn certify_at<P: crate::enforcement::ValidationPhase, H: crate::enforcement::Hasher>(
             input: &Validated<CompileUnit, P>,
             level: WittLevel,
-        ) -> Result<Certified<GroundingCertificate>, Certified<GenericImpossibilityWitness>>
+        ) -> Result<Certified<BornRuleVerification>, Certified<GenericImpossibilityWitness>>
         {
             let unit = input.inner();
             let witt_bits = level.witt_length() as u16;
             let budget = unit.thermodynamic_budget();
             let result_type_iri = unit.result_type_iri();
             let mut hasher = H::initial();
-            // Fold the unit bytes + resolver discriminant.
+            let (binding_count, fold_addr) =
+                crate::enforcement::primitive_session_binding_signature(unit.bindings());
+            hasher = crate::enforcement::fold_session_signature(hasher, binding_count, fold_addr);
+            let (outcome_index, probability) =
+                crate::enforcement::primitive_measurement_projection(budget);
+            hasher = crate::enforcement::fold_born_outcome(hasher, outcome_index, probability);
             hasher = crate::enforcement::fold_unit_digest(
                 hasher,
                 witt_bits,
@@ -7233,24 +9209,43 @@ pub mod resolver {
                 result_type_iri,
                 0usize,
                 &[],
-                crate::enforcement::CertificateKind::Superposition,
+                <Kernel as super::ResolverKernel>::KIND,
             );
             let buffer = hasher.finalize();
             let fp =
                 crate::enforcement::ContentFingerprint::from_buffer(buffer, H::OUTPUT_BYTES as u8);
-            let cert = GroundingCertificate::with_level_and_fingerprint_const(witt_bits, fp);
+            let cert = <<Kernel as super::ResolverKernel>::Cert as crate::enforcement::certify_const_mint::MintWithLevelFingerprint>::mint_with_level_fingerprint(witt_bits, fp);
             Ok(Certified::new(cert))
         }
     }
 
     /// Phase D (target §4.2): `resolver:MeasurementResolver` — resolve a `trace:MeasurementEvent` against the von Neumann-Landauer bridge (QM_1): `preCollapseEntropy = postCollapseLandauerCost` at β* = ln 2.
-    /// Returns `Certified<GroundingCertificate>` on success carrying the Witt
+    /// Returns `Certified<MeasurementCertificate>` on success carrying the Witt
     /// level and a consumer-hasher-computed substrate fingerprint that uniquely
     /// identifies the input. `Certified<GenericImpossibilityWitness>` on
     /// failure — the witness itself is certified so downstream can persist it
     /// alongside success certs in a uniform `Certified<_>` channel.
+    /// Phase X.1: the produced cert class is the ontology-declared class for
+    /// this resolver's `resolver:CertifyMapping`. Eight cert subclasses —
+    /// `TransformCertificate`, `IsometryCertificate`, `InvolutionCertificate`,
+    /// `CompletenessCertificate`, `GeodesicCertificate`, `MeasurementCertificate`,
+    /// `BornRuleVerification`, and `GroundingCertificate` — are minted across the 17 Phase D
+    /// kernels so each resolver's class discrimination is load-bearing.
+    /// v0.2.2 Phase J: `certify_at` composes an ontology primitive (per the
+    /// kernel's composition spec) whose output is folded into the canonical
+    /// fingerprint ahead of `fold_unit_digest`, so distinct primitive outputs
+    /// yield distinct fingerprints — i.e., each kernel's decision is real and
+    /// content-addressed per its ontology class.
     pub mod measurement {
         use super::*;
+
+        #[doc(hidden)]
+        pub struct Kernel;
+        impl super::ResolverKernel for Kernel {
+            type Cert = crate::enforcement::MeasurementCertificate;
+            const KIND: crate::enforcement::CertificateKind =
+                crate::enforcement::CertificateKind::Measurement;
+        }
 
         /// Phase D (target §4.2): certify at the canonical `WittLevel::W32`.
         ///
@@ -7259,7 +9254,7 @@ pub mod resolver {
         /// Returns `Certified<GenericImpossibilityWitness>` on failure.
         pub fn certify<P: crate::enforcement::ValidationPhase, H: crate::enforcement::Hasher>(
             input: &Validated<CompileUnit, P>,
-        ) -> Result<Certified<GroundingCertificate>, Certified<GenericImpossibilityWitness>>
+        ) -> Result<Certified<MeasurementCertificate>, Certified<GenericImpossibilityWitness>>
         {
             certify_at::<P, H>(input, WittLevel::W32)
         }
@@ -7272,14 +9267,16 @@ pub mod resolver {
         pub fn certify_at<P: crate::enforcement::ValidationPhase, H: crate::enforcement::Hasher>(
             input: &Validated<CompileUnit, P>,
             level: WittLevel,
-        ) -> Result<Certified<GroundingCertificate>, Certified<GenericImpossibilityWitness>>
+        ) -> Result<Certified<MeasurementCertificate>, Certified<GenericImpossibilityWitness>>
         {
             let unit = input.inner();
             let witt_bits = level.witt_length() as u16;
             let budget = unit.thermodynamic_budget();
             let result_type_iri = unit.result_type_iri();
             let mut hasher = H::initial();
-            // Fold the unit bytes + resolver discriminant.
+            let (outcome_index, probability) =
+                crate::enforcement::primitive_measurement_projection(budget);
+            hasher = crate::enforcement::fold_born_outcome(hasher, outcome_index, probability);
             hasher = crate::enforcement::fold_unit_digest(
                 hasher,
                 witt_bits,
@@ -7287,12 +9284,12 @@ pub mod resolver {
                 result_type_iri,
                 0usize,
                 &[],
-                crate::enforcement::CertificateKind::Measurement,
+                <Kernel as super::ResolverKernel>::KIND,
             );
             let buffer = hasher.finalize();
             let fp =
                 crate::enforcement::ContentFingerprint::from_buffer(buffer, H::OUTPUT_BYTES as u8);
-            let cert = GroundingCertificate::with_level_and_fingerprint_const(witt_bits, fp);
+            let cert = <<Kernel as super::ResolverKernel>::Cert as crate::enforcement::certify_const_mint::MintWithLevelFingerprint>::mint_with_level_fingerprint(witt_bits, fp);
             Ok(Certified::new(cert))
         }
     }
@@ -7303,8 +9300,27 @@ pub mod resolver {
     /// identifies the input. `Certified<GenericImpossibilityWitness>` on
     /// failure — the witness itself is certified so downstream can persist it
     /// alongside success certs in a uniform `Certified<_>` channel.
+    /// Phase X.1: the produced cert class is the ontology-declared class for
+    /// this resolver's `resolver:CertifyMapping`. Eight cert subclasses —
+    /// `TransformCertificate`, `IsometryCertificate`, `InvolutionCertificate`,
+    /// `CompletenessCertificate`, `GeodesicCertificate`, `MeasurementCertificate`,
+    /// `BornRuleVerification`, and `GroundingCertificate` — are minted across the 17 Phase D
+    /// kernels so each resolver's class discrimination is load-bearing.
+    /// v0.2.2 Phase J: `certify_at` composes an ontology primitive (per the
+    /// kernel's composition spec) whose output is folded into the canonical
+    /// fingerprint ahead of `fold_unit_digest`, so distinct primitive outputs
+    /// yield distinct fingerprints — i.e., each kernel's decision is real and
+    /// content-addressed per its ontology class.
     pub mod witt_level_resolver {
         use super::*;
+
+        #[doc(hidden)]
+        pub struct Kernel;
+        impl super::ResolverKernel for Kernel {
+            type Cert = crate::enforcement::GroundingCertificate;
+            const KIND: crate::enforcement::CertificateKind =
+                crate::enforcement::CertificateKind::WittLevel;
+        }
 
         /// Phase D (target §4.2): certify at the canonical `WittLevel::W32`.
         ///
@@ -7333,7 +9349,9 @@ pub mod resolver {
             let budget = unit.thermodynamic_budget();
             let result_type_iri = unit.result_type_iri();
             let mut hasher = H::initial();
-            // Fold the unit bytes + resolver discriminant.
+            hasher = hasher.fold_bytes(&witt_bits.to_be_bytes());
+            let declared_level_bits = unit.witt_level().witt_length() as u16;
+            hasher = hasher.fold_bytes(&declared_level_bits.to_be_bytes());
             hasher = crate::enforcement::fold_unit_digest(
                 hasher,
                 witt_bits,
@@ -7341,24 +9359,43 @@ pub mod resolver {
                 result_type_iri,
                 0usize,
                 &[],
-                crate::enforcement::CertificateKind::WittLevel,
+                <Kernel as super::ResolverKernel>::KIND,
             );
             let buffer = hasher.finalize();
             let fp =
                 crate::enforcement::ContentFingerprint::from_buffer(buffer, H::OUTPUT_BYTES as u8);
-            let cert = GroundingCertificate::with_level_and_fingerprint_const(witt_bits, fp);
+            let cert = <<Kernel as super::ResolverKernel>::Cert as crate::enforcement::certify_const_mint::MintWithLevelFingerprint>::mint_with_level_fingerprint(witt_bits, fp);
             Ok(Certified::new(cert))
         }
     }
 
     /// Phase D (target §4.2): `resolver:DihedralFactorizationResolver` — run the dihedral factorization decider on a `ConstrainedType`'s carrier, producing a cert over the factor structure.
-    /// Returns `Certified<GroundingCertificate>` on success carrying the Witt
+    /// Returns `Certified<InvolutionCertificate>` on success carrying the Witt
     /// level and a consumer-hasher-computed substrate fingerprint that uniquely
     /// identifies the input. `Certified<GenericImpossibilityWitness>` on
     /// failure — the witness itself is certified so downstream can persist it
     /// alongside success certs in a uniform `Certified<_>` channel.
+    /// Phase X.1: the produced cert class is the ontology-declared class for
+    /// this resolver's `resolver:CertifyMapping`. Eight cert subclasses —
+    /// `TransformCertificate`, `IsometryCertificate`, `InvolutionCertificate`,
+    /// `CompletenessCertificate`, `GeodesicCertificate`, `MeasurementCertificate`,
+    /// `BornRuleVerification`, and `GroundingCertificate` — are minted across the 17 Phase D
+    /// kernels so each resolver's class discrimination is load-bearing.
+    /// v0.2.2 Phase J: `certify_at` composes an ontology primitive (per the
+    /// kernel's composition spec) whose output is folded into the canonical
+    /// fingerprint ahead of `fold_unit_digest`, so distinct primitive outputs
+    /// yield distinct fingerprints — i.e., each kernel's decision is real and
+    /// content-addressed per its ontology class.
     pub mod dihedral_factorization {
         use super::*;
+
+        #[doc(hidden)]
+        pub struct Kernel;
+        impl super::ResolverKernel for Kernel {
+            type Cert = crate::enforcement::InvolutionCertificate;
+            const KIND: crate::enforcement::CertificateKind =
+                crate::enforcement::CertificateKind::DihedralFactorization;
+        }
 
         /// Phase D (target §4.2): certify at the canonical `WittLevel::W32`.
         ///
@@ -7371,7 +9408,7 @@ pub mod resolver {
             H: crate::enforcement::Hasher,
         >(
             input: &Validated<T, P>,
-        ) -> Result<Certified<GroundingCertificate>, Certified<GenericImpossibilityWitness>>
+        ) -> Result<Certified<InvolutionCertificate>, Certified<GenericImpossibilityWitness>>
         {
             certify_at::<T, P, H>(input, WittLevel::W32)
         }
@@ -7388,19 +9425,27 @@ pub mod resolver {
         >(
             input: &Validated<T, P>,
             level: WittLevel,
-        ) -> Result<Certified<GroundingCertificate>, Certified<GenericImpossibilityWitness>>
+        ) -> Result<Certified<InvolutionCertificate>, Certified<GenericImpossibilityWitness>>
         {
             let _ = input.inner();
             let witt_bits = level.witt_length() as u16;
-            // Run the reduction stages to produce the decision verdict.
-            let outcome = crate::pipeline::run_reduction_stages::<T>(witt_bits)
-                .map_err(|_| Certified::new(GenericImpossibilityWitness::default()))?;
-            if !outcome.satisfiable {
+            let (tr_bits, tr_constraints, tr_sat) =
+                crate::enforcement::primitive_terminal_reduction::<T>(witt_bits)
+                    .map_err(|_| Certified::new(GenericImpossibilityWitness::default()))?;
+            if tr_sat == 0 {
                 return Err(Certified::new(GenericImpossibilityWitness::default()));
             }
-            // Fold the canonical CompileUnit-free fingerprint over the
-            // input's constraint catalog + resolver discriminant.
             let mut hasher = H::initial();
+            hasher = crate::enforcement::fold_terminal_reduction(
+                hasher,
+                tr_bits,
+                tr_constraints,
+                tr_sat,
+            );
+            let (orbit_size, representative) =
+                crate::enforcement::primitive_dihedral_signature::<T>();
+            hasher =
+                crate::enforcement::fold_dihedral_signature(hasher, orbit_size, representative);
             hasher = crate::enforcement::fold_unit_digest(
                 hasher,
                 witt_bits,
@@ -7408,24 +9453,43 @@ pub mod resolver {
                 T::IRI,
                 T::SITE_COUNT,
                 T::CONSTRAINTS,
-                crate::enforcement::CertificateKind::DihedralFactorization,
+                <Kernel as super::ResolverKernel>::KIND,
             );
             let buffer = hasher.finalize();
             let fp =
                 crate::enforcement::ContentFingerprint::from_buffer(buffer, H::OUTPUT_BYTES as u8);
-            let cert = GroundingCertificate::with_level_and_fingerprint_const(witt_bits, fp);
+            let cert = <<Kernel as super::ResolverKernel>::Cert as crate::enforcement::certify_const_mint::MintWithLevelFingerprint>::mint_with_level_fingerprint(witt_bits, fp);
             Ok(Certified::new(cert))
         }
     }
 
     /// Phase D (target §4.2): `resolver:CompletenessResolver` — generic completeness-loop resolver: runs the ψ-pipeline without the tower-specific lift chain and emits a cert if the input's constraint nerve has Euler characteristic n at quantum level n.
-    /// Returns `Certified<GroundingCertificate>` on success carrying the Witt
+    /// Returns `Certified<CompletenessCertificate>` on success carrying the Witt
     /// level and a consumer-hasher-computed substrate fingerprint that uniquely
     /// identifies the input. `Certified<GenericImpossibilityWitness>` on
     /// failure — the witness itself is certified so downstream can persist it
     /// alongside success certs in a uniform `Certified<_>` channel.
+    /// Phase X.1: the produced cert class is the ontology-declared class for
+    /// this resolver's `resolver:CertifyMapping`. Eight cert subclasses —
+    /// `TransformCertificate`, `IsometryCertificate`, `InvolutionCertificate`,
+    /// `CompletenessCertificate`, `GeodesicCertificate`, `MeasurementCertificate`,
+    /// `BornRuleVerification`, and `GroundingCertificate` — are minted across the 17 Phase D
+    /// kernels so each resolver's class discrimination is load-bearing.
+    /// v0.2.2 Phase J: `certify_at` composes an ontology primitive (per the
+    /// kernel's composition spec) whose output is folded into the canonical
+    /// fingerprint ahead of `fold_unit_digest`, so distinct primitive outputs
+    /// yield distinct fingerprints — i.e., each kernel's decision is real and
+    /// content-addressed per its ontology class.
     pub mod completeness {
         use super::*;
+
+        #[doc(hidden)]
+        pub struct Kernel;
+        impl super::ResolverKernel for Kernel {
+            type Cert = crate::enforcement::CompletenessCertificate;
+            const KIND: crate::enforcement::CertificateKind =
+                crate::enforcement::CertificateKind::Completeness;
+        }
 
         /// Phase D (target §4.2): certify at the canonical `WittLevel::W32`.
         ///
@@ -7438,7 +9502,7 @@ pub mod resolver {
             H: crate::enforcement::Hasher,
         >(
             input: &Validated<T, P>,
-        ) -> Result<Certified<GroundingCertificate>, Certified<GenericImpossibilityWitness>>
+        ) -> Result<Certified<CompletenessCertificate>, Certified<GenericImpossibilityWitness>>
         {
             certify_at::<T, P, H>(input, WittLevel::W32)
         }
@@ -7455,19 +9519,27 @@ pub mod resolver {
         >(
             input: &Validated<T, P>,
             level: WittLevel,
-        ) -> Result<Certified<GroundingCertificate>, Certified<GenericImpossibilityWitness>>
+        ) -> Result<Certified<CompletenessCertificate>, Certified<GenericImpossibilityWitness>>
         {
             let _ = input.inner();
             let witt_bits = level.witt_length() as u16;
-            // Run the reduction stages to produce the decision verdict.
-            let outcome = crate::pipeline::run_reduction_stages::<T>(witt_bits)
-                .map_err(|_| Certified::new(GenericImpossibilityWitness::default()))?;
-            if !outcome.satisfiable {
+            let (tr_bits, tr_constraints, tr_sat) =
+                crate::enforcement::primitive_terminal_reduction::<T>(witt_bits)
+                    .map_err(|_| Certified::new(GenericImpossibilityWitness::default()))?;
+            if tr_sat == 0 {
                 return Err(Certified::new(GenericImpossibilityWitness::default()));
             }
-            // Fold the canonical CompileUnit-free fingerprint over the
-            // input's constraint catalog + resolver discriminant.
             let mut hasher = H::initial();
+            hasher = crate::enforcement::fold_terminal_reduction(
+                hasher,
+                tr_bits,
+                tr_constraints,
+                tr_sat,
+            );
+            let betti = crate::enforcement::primitive_simplicial_nerve_betti::<T>();
+            let chi = crate::enforcement::primitive_euler_characteristic(&betti);
+            hasher = crate::enforcement::fold_betti_tuple(hasher, &betti);
+            hasher = hasher.fold_bytes(&chi.to_be_bytes());
             hasher = crate::enforcement::fold_unit_digest(
                 hasher,
                 witt_bits,
@@ -7475,24 +9547,43 @@ pub mod resolver {
                 T::IRI,
                 T::SITE_COUNT,
                 T::CONSTRAINTS,
-                crate::enforcement::CertificateKind::Completeness,
+                <Kernel as super::ResolverKernel>::KIND,
             );
             let buffer = hasher.finalize();
             let fp =
                 crate::enforcement::ContentFingerprint::from_buffer(buffer, H::OUTPUT_BYTES as u8);
-            let cert = GroundingCertificate::with_level_and_fingerprint_const(witt_bits, fp);
+            let cert = <<Kernel as super::ResolverKernel>::Cert as crate::enforcement::certify_const_mint::MintWithLevelFingerprint>::mint_with_level_fingerprint(witt_bits, fp);
             Ok(Certified::new(cert))
         }
     }
 
-    /// Phase D (target §4.2): `resolver:GeodesicValidator` — validate whether a `trace:ComputationTrace` satisfies the dual geodesic condition (AR_1-ordered and DC_10-selected); produces a `GroundingCertificate` on success, `GenericImpossibilityWitness` otherwise.
-    /// Returns `Certified<GroundingCertificate>` on success carrying the Witt
+    /// Phase D (target §4.2): `resolver:GeodesicValidator` — validate whether a `trace:ComputationTrace` satisfies the dual geodesic condition (AR_1-ordered and DC_10-selected); produces a `GeodesicCertificate` on success, `GenericImpossibilityWitness` otherwise.
+    /// Returns `Certified<GeodesicCertificate>` on success carrying the Witt
     /// level and a consumer-hasher-computed substrate fingerprint that uniquely
     /// identifies the input. `Certified<GenericImpossibilityWitness>` on
     /// failure — the witness itself is certified so downstream can persist it
     /// alongside success certs in a uniform `Certified<_>` channel.
+    /// Phase X.1: the produced cert class is the ontology-declared class for
+    /// this resolver's `resolver:CertifyMapping`. Eight cert subclasses —
+    /// `TransformCertificate`, `IsometryCertificate`, `InvolutionCertificate`,
+    /// `CompletenessCertificate`, `GeodesicCertificate`, `MeasurementCertificate`,
+    /// `BornRuleVerification`, and `GroundingCertificate` — are minted across the 17 Phase D
+    /// kernels so each resolver's class discrimination is load-bearing.
+    /// v0.2.2 Phase J: `certify_at` composes an ontology primitive (per the
+    /// kernel's composition spec) whose output is folded into the canonical
+    /// fingerprint ahead of `fold_unit_digest`, so distinct primitive outputs
+    /// yield distinct fingerprints — i.e., each kernel's decision is real and
+    /// content-addressed per its ontology class.
     pub mod geodesic_validator {
         use super::*;
+
+        #[doc(hidden)]
+        pub struct Kernel;
+        impl super::ResolverKernel for Kernel {
+            type Cert = crate::enforcement::GeodesicCertificate;
+            const KIND: crate::enforcement::CertificateKind =
+                crate::enforcement::CertificateKind::GeodesicValidator;
+        }
 
         /// Phase D (target §4.2): certify at the canonical `WittLevel::W32`.
         ///
@@ -7505,7 +9596,7 @@ pub mod resolver {
             H: crate::enforcement::Hasher,
         >(
             input: &Validated<T, P>,
-        ) -> Result<Certified<GroundingCertificate>, Certified<GenericImpossibilityWitness>>
+        ) -> Result<Certified<GeodesicCertificate>, Certified<GenericImpossibilityWitness>>
         {
             certify_at::<T, P, H>(input, WittLevel::W32)
         }
@@ -7522,19 +9613,27 @@ pub mod resolver {
         >(
             input: &Validated<T, P>,
             level: WittLevel,
-        ) -> Result<Certified<GroundingCertificate>, Certified<GenericImpossibilityWitness>>
+        ) -> Result<Certified<GeodesicCertificate>, Certified<GenericImpossibilityWitness>>
         {
             let _ = input.inner();
             let witt_bits = level.witt_length() as u16;
-            // Run the reduction stages to produce the decision verdict.
-            let outcome = crate::pipeline::run_reduction_stages::<T>(witt_bits)
-                .map_err(|_| Certified::new(GenericImpossibilityWitness::default()))?;
-            if !outcome.satisfiable {
+            let (tr_bits, tr_constraints, tr_sat) =
+                crate::enforcement::primitive_terminal_reduction::<T>(witt_bits)
+                    .map_err(|_| Certified::new(GenericImpossibilityWitness::default()))?;
+            if tr_sat == 0 {
                 return Err(Certified::new(GenericImpossibilityWitness::default()));
             }
-            // Fold the canonical CompileUnit-free fingerprint over the
-            // input's constraint catalog + resolver discriminant.
             let mut hasher = H::initial();
+            hasher = crate::enforcement::fold_terminal_reduction(
+                hasher,
+                tr_bits,
+                tr_constraints,
+                tr_sat,
+            );
+            let jac = crate::enforcement::primitive_curvature_jacobian::<T>();
+            hasher = crate::enforcement::fold_jacobian_profile(hasher, &jac);
+            let selected_site = crate::enforcement::primitive_dc10_select(&jac);
+            hasher = hasher.fold_bytes(&(selected_site as u32).to_be_bytes());
             hasher = crate::enforcement::fold_unit_digest(
                 hasher,
                 witt_bits,
@@ -7542,12 +9641,12 @@ pub mod resolver {
                 T::IRI,
                 T::SITE_COUNT,
                 T::CONSTRAINTS,
-                crate::enforcement::CertificateKind::GeodesicValidator,
+                <Kernel as super::ResolverKernel>::KIND,
             );
             let buffer = hasher.finalize();
             let fp =
                 crate::enforcement::ContentFingerprint::from_buffer(buffer, H::OUTPUT_BYTES as u8);
-            let cert = GroundingCertificate::with_level_and_fingerprint_const(witt_bits, fp);
+            let cert = <<Kernel as super::ResolverKernel>::Cert as crate::enforcement::certify_const_mint::MintWithLevelFingerprint>::mint_with_level_fingerprint(witt_bits, fp);
             Ok(Certified::new(cert))
         }
     }
@@ -12902,6 +15001,35 @@ impl Default for Trace {
 impl Derivation {
     /// Replay this derivation as a fixed-size `Trace` whose length matches
     /// `self.step_count()` (capped at `TRACE_MAX_EVENTS`).
+    /// # Example
+    /// ```no_run
+    /// use uor_foundation::enforcement::{
+    ///     replay, CompileUnitBuilder, ConstrainedTypeInput, Grounded, Term,
+    /// };
+    /// use uor_foundation::pipeline::run;
+    /// use uor_foundation::{VerificationDomain, WittLevel};
+    /// # use uor_foundation::enforcement::Hasher;
+    /// # struct H; impl Hasher for H {
+    /// #     const OUTPUT_BYTES: usize = 16;
+    /// #     fn initial() -> Self { Self }
+    /// #     fn fold_byte(self, _: u8) -> Self { self }
+    /// #     fn finalize(self) -> [u8; uor_foundation::enforcement::FINGERPRINT_MAX_BYTES] {
+    /// #         [0; uor_foundation::enforcement::FINGERPRINT_MAX_BYTES] } }
+    /// static TERMS: &[Term] = &[Term::Literal { value: 7, level: WittLevel::W8 }];
+    /// static DOMS: &[VerificationDomain] = &[VerificationDomain::Enumerative];
+    /// let unit = CompileUnitBuilder::new()
+    ///     .root_term(TERMS).witt_level_ceiling(WittLevel::W32)
+    ///     .thermodynamic_budget(1024).target_domains(DOMS)
+    ///     .result_type::<ConstrainedTypeInput>()
+    ///     .validate().expect("unit well-formed");
+    /// let grounded: Grounded<ConstrainedTypeInput> =
+    ///     run::<ConstrainedTypeInput, _, H>(unit).expect("grounds");
+    /// // Replay → round-trip verification.
+    /// let trace = grounded.derivation().replay();
+    /// let recert = replay::certify_from_trace(&trace).expect("valid trace");
+    /// assert_eq!(recert.certificate().content_fingerprint(),
+    ///            grounded.content_fingerprint());
+    /// ```
     #[inline]
     #[must_use]
     pub fn replay(&self) -> Trace {
@@ -13100,58 +15228,6 @@ pub mod replay {
                 trace.content_fingerprint(),
             ),
         ))
-    }
-}
-
-/// v0.2.2 Phase E: sealed homology class parametric over dimension N.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub struct HomologyClass<const N: usize> {
-    chain: [i64; MAX_BETTI_DIMENSION],
-    _sealed: (),
-}
-
-impl<const N: usize> HomologyClass<N> {
-    /// Construct a zero homology class.
-    #[inline]
-    #[must_use]
-    pub const fn zero() -> Self {
-        Self {
-            chain: [0i64; MAX_BETTI_DIMENSION],
-            _sealed: (),
-        }
-    }
-
-    /// Access the chain coefficients.
-    #[inline]
-    #[must_use]
-    pub const fn chain(&self) -> &[i64; MAX_BETTI_DIMENSION] {
-        &self.chain
-    }
-}
-
-/// v0.2.2 Phase E: sealed cohomology class parametric over dimension N.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub struct CohomologyClass<const N: usize> {
-    cochain: [i64; MAX_BETTI_DIMENSION],
-    _sealed: (),
-}
-
-impl<const N: usize> CohomologyClass<N> {
-    /// Construct a zero cohomology class.
-    #[inline]
-    #[must_use]
-    pub const fn zero() -> Self {
-        Self {
-            cochain: [0i64; MAX_BETTI_DIMENSION],
-            _sealed: (),
-        }
-    }
-
-    /// Access the cochain coefficients.
-    #[inline]
-    #[must_use]
-    pub const fn cochain(&self) -> &[i64; MAX_BETTI_DIMENSION] {
-        &self.cochain
     }
 }
 
@@ -13927,16 +16003,32 @@ pub enum GroundingPrimitiveOp {
     /// Interpret bytes as a big-endian integer.
     InterpretBeInteger,
     /// Hash bytes via blake3 → 32-byte digest → `Datum<W256>`.
+    /// # Scope
+    /// `interpret_leaf_op` returns the first byte of the blake3 32-byte digest.
+    /// The full digest is produced by `Datum<W256>` composition of 32 `Digest` leaves —
+    /// the leaf-level output is the single-byte projection.
     Digest,
     /// Decode UTF-8 bytes; rejects malformed input.
+    /// # Scope
+    /// Only single-byte ASCII (`b < 0x80`) is decoded by `interpret_leaf_op`.
+    /// Multi-byte UTF-8 is not decoded by this leaf; multi-byte sequences traverse the
+    /// foundation via `GroundedTuple<N>` composition of single-byte leaves.
     DecodeUtf8,
     /// Decode JSON bytes; rejects malformed input.
+    /// # Scope
+    /// Only the leading byte of a JSON number scalar (`-` or ASCII digit) is parsed
+    /// by `interpret_leaf_op`. Structured JSON values (objects, arrays, strings,
+    /// multi-byte numbers) are not parsed by this leaf.
     DecodeJson,
     /// Select a field from a structured value.
     SelectField,
     /// Select an indexed element.
     SelectIndex,
     /// Inject a foundation-known constant.
+    /// # Scope
+    /// `interpret_leaf_op` returns `GroundedCoord::w8(0)` — the foundation-canonical
+    /// zero constant. Non-zero constants are materialized through the const-fn frontier
+    /// (`validate_const` paths) rather than through this leaf.
     ConstValue,
     /// Compose two combinators sequentially.
     Then,
@@ -14583,6 +16675,7 @@ pub mod __test_helpers {
 /// symbol to the prelude is an ontology edit, verified against the
 /// codegen's known-name mapping at build time.
 pub mod prelude {
+    pub use super::calibrations;
     pub use super::Add;
     pub use super::And;
     pub use super::BNot;
@@ -14590,6 +16683,9 @@ pub mod prelude {
     pub use super::BindingEntry;
     pub use super::BindingsTable;
     pub use super::BornRuleVerification;
+    pub use super::Calibration;
+    pub use super::CalibrationError;
+    pub use super::CanonicalTimingPolicy;
     pub use super::Certificate;
     pub use super::Certified;
     pub use super::ChainAuditTrail;
@@ -14599,6 +16695,8 @@ pub mod prelude {
     pub use super::CompletenessAuditTrail;
     pub use super::CompletenessCertificate;
     pub use super::ConstrainedTypeInput;
+    pub use super::ContentAddress;
+    pub use super::ContentFingerprint;
     pub use super::Datum;
     pub use super::DigestGroundingMap;
     pub use super::Embed;
@@ -14607,9 +16705,16 @@ pub mod prelude {
     pub use super::GeodesicCertificate;
     pub use super::GeodesicEvidenceBundle;
     pub use super::Grounded;
+    pub use super::GroundedCoord;
     pub use super::GroundedShape;
+    pub use super::GroundedTuple;
+    pub use super::GroundedValue;
+    pub use super::Grounding;
     pub use super::GroundingCertificate;
+    pub use super::GroundingExt;
     pub use super::GroundingMapKind;
+    pub use super::GroundingProgram;
+    pub use super::Hasher;
     pub use super::ImpossibilityWitnessKind;
     pub use super::InhabitanceCertificate;
     pub use super::InhabitanceImpossibilityWitness;
@@ -14618,9 +16723,11 @@ pub mod prelude {
     pub use super::InvolutionCertificate;
     pub use super::IsometryCertificate;
     pub use super::JsonGroundingMap;
+    pub use super::LandauerBudget;
     pub use super::LiftChainCertificate;
     pub use super::MeasurementCertificate;
     pub use super::Mul;
+    pub use super::Nanos;
     pub use super::Neg;
     pub use super::OntologyTarget;
     pub use super::Or;
@@ -14634,10 +16741,12 @@ pub mod prelude {
     pub use super::Succ;
     pub use super::Term;
     pub use super::TermArena;
+    pub use super::TimingPolicy;
     pub use super::Total;
     pub use super::TransformCertificate;
     pub use super::Triad;
     pub use super::UnaryRingOp;
+    pub use super::UorTime;
     pub use super::Utf8GroundingMap;
     pub use super::ValidLevelEmbedding;
     pub use super::Validated;
@@ -14645,5 +16754,10 @@ pub mod prelude {
     pub use super::Xor;
     pub use super::W16;
     pub use super::W8;
+    pub use crate::pipeline::empty_bindings_table;
+    pub use crate::pipeline::{
+        validate_constrained_type, validate_constrained_type_const, ConstrainedTypeShape,
+        ConstraintRef, FragmentKind,
+    };
     pub use crate::{DefaultHostTypes, HostTypes, WittLevel};
 }

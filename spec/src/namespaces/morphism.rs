@@ -1040,5 +1040,47 @@ fn individuals() -> Vec<Individual> {
                 ),
             ],
         },
+        Individual {
+            id: "https://uor.foundation/morphism/DigestProjectionMap",
+            type_: "https://uor.foundation/morphism/ProjectionMap",
+            label: "DigestProjectionMap",
+            comment: "Projects partitions to fixed-size digest symbol \
+                      sequences. Dual of DigestGroundingMap.",
+            properties: &[
+                (
+                    "https://uor.foundation/morphism/inputClass",
+                    IndividualValue::IriRef("https://uor.foundation/partition/Partition"),
+                ),
+                (
+                    "https://uor.foundation/morphism/outputClass",
+                    IndividualValue::IriRef("https://uor.foundation/morphism/SymbolSequence"),
+                ),
+                (
+                    "https://uor.foundation/morphism/outputElementClass",
+                    IndividualValue::IriRef("https://uor.foundation/schema/Literal"),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/morphism/BinaryProjectionMap",
+            type_: "https://uor.foundation/morphism/ProjectionMap",
+            label: "BinaryProjectionMap",
+            comment: "Projects partitions to raw byte symbol sequences. \
+                      Dual of BinaryGroundingMap.",
+            properties: &[
+                (
+                    "https://uor.foundation/morphism/inputClass",
+                    IndividualValue::IriRef("https://uor.foundation/partition/Partition"),
+                ),
+                (
+                    "https://uor.foundation/morphism/outputClass",
+                    IndividualValue::IriRef("https://uor.foundation/morphism/SymbolSequence"),
+                ),
+                (
+                    "https://uor.foundation/morphism/outputElementClass",
+                    IndividualValue::IriRef("https://uor.foundation/schema/Literal"),
+                ),
+            ],
+        },
     ]
 }

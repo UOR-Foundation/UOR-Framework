@@ -8,7 +8,7 @@
 
 use uor_foundation::enforcement::{
     BinaryGroundingMap, DigestGroundingMap, GroundingMapKind, IntegerGroundingMap, Invertible,
-    JsonGroundingMap, PreservesStructure, Total, Utf8GroundingMap,
+    JsonGroundingMap, MorphismKind, PreservesStructure, Total, Utf8GroundingMap,
 };
 
 /// Compile-time witness that `T` implements `GroundingMapKind`.

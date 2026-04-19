@@ -15,10 +15,6 @@ pub trait Source<H: HostTypes>: IOBoundary<H> {
     type TypeDefinition: crate::user::type_::TypeDefinition<H>;
     /// The expected type of data arriving from this source.
     fn source_type(&self) -> &Self::TypeDefinition;
-    /// Associated type for `GroundingMap`.
-    type GroundingMap: crate::user::morphism::GroundingMap<H>;
-    /// The grounding map that transforms incoming surface data to ring datums.
-    fn source_grounding(&self) -> &Self::GroundingMap;
 }
 
 /// A typed destination for data leaving the ring. Carries an expected TypeDefinition describing the shape of outgoing data.
@@ -27,10 +23,6 @@ pub trait Sink<H: HostTypes>: IOBoundary<H> {
     type TypeDefinition: crate::user::type_::TypeDefinition<H>;
     /// The expected type of data departing through this sink.
     fn sink_type(&self) -> &Self::TypeDefinition;
-    /// Associated type for `ProjectionMap`.
-    type ProjectionMap: crate::user::morphism::ProjectionMap<H>;
-    /// The projection map that transforms ring datums to outgoing surface data.
-    fn sink_projection(&self) -> &Self::ProjectionMap;
 }
 
 /// An effect that crosses the kernel/external boundary. Specializes effect:ExternalEffect with explicit source or sink binding.

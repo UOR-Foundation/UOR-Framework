@@ -27,8 +27,15 @@ fn phase_m_run_stream_returns_named_sealed_stream_driver() {
 
 #[test]
 fn phase_m_run_parallel_returns_result_grounded() {
+    // v0.2.2 Phase H3: `new_with_partition` is the sole constructor.
+    static PARTITION: &[u32] = &[0, 1, 2];
     let unit: Validated<ParallelDeclaration> =
-        validated_runtime(ParallelDeclaration::new::<ConstrainedTypeInput>(3));
+        validated_runtime(ParallelDeclaration::new_with_partition::<
+            ConstrainedTypeInput,
+        >(
+            PARTITION,
+            "https://uor.foundation/parallel/ParallelDisjointnessWitness",
+        ));
     let result =
         run_parallel::<ConstrainedTypeInput, _, Fnv1aHasher16>(unit).expect("parallel walks");
     let _ = result;

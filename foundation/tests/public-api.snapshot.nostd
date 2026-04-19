@@ -3,7 +3,12 @@ foundation/src/enforcement.rs: const FINGERPRINT_MIN_BYTES
 foundation/src/enforcement.rs: const INHABITANCE_DISPATCH_TABLE
 foundation/src/enforcement.rs: const JACOBIAN_MAX_SITES
 foundation/src/enforcement.rs: const MAX_BETTI_DIMENSION
+foundation/src/enforcement.rs: const MAX_COHOMOLOGY_DIMENSION
 foundation/src/enforcement.rs: const MAX_OP_CHAIN_DEPTH
+foundation/src/enforcement.rs: const NERVE_C1_MAX
+foundation/src/enforcement.rs: const NERVE_C2_MAX
+foundation/src/enforcement.rs: const NERVE_CONSTRAINTS_CAP
+foundation/src/enforcement.rs: const NERVE_SITES_CAP
 foundation/src/enforcement.rs: const RECURSION_TRACE_MAX_DEPTH
 foundation/src/enforcement.rs: const TRACE_MAX_EVENTS
 foundation/src/enforcement.rs: const TRACE_REPLAY_FORMAT_VERSION
@@ -12,6 +17,7 @@ foundation/src/enforcement.rs: enum BindingsTableError
 foundation/src/enforcement.rs: enum BoundArgValue
 foundation/src/enforcement.rs: enum CalibrationError
 foundation/src/enforcement.rs: enum CertificateKind
+foundation/src/enforcement.rs: enum CohomologyError
 foundation/src/enforcement.rs: enum ConstraintKind
 foundation/src/enforcement.rs: enum DivisionAlgebraWitness
 foundation/src/enforcement.rs: enum GroundingPrimitiveOp
@@ -24,8 +30,11 @@ foundation/src/enforcement.rs: fn fold_interaction_digest
 foundation/src/enforcement.rs: fn fold_interaction_step_digest
 foundation/src/enforcement.rs: fn fold_parallel_digest
 foundation/src/enforcement.rs: fn fold_stream_digest
+foundation/src/enforcement.rs: fn fold_cup_product
 foundation/src/enforcement.rs: fn fold_stream_step_digest
 foundation/src/enforcement.rs: fn fold_unit_digest
+foundation/src/enforcement.rs: fn mint_cohomology_class
+foundation/src/enforcement.rs: fn mint_homology_class
 foundation/src/enforcement.rs: mod __test_helpers
 foundation/src/enforcement.rs: mod calibrations
 foundation/src/enforcement.rs: mod combinators
@@ -41,6 +50,7 @@ foundation/src/enforcement.rs: struct Assertion
 foundation/src/enforcement.rs: struct BNot
 foundation/src/enforcement.rs: struct BettiMetric
 foundation/src/enforcement.rs: struct BinaryGroundingMap
+foundation/src/enforcement.rs: struct BinaryProjectionMap
 foundation/src/enforcement.rs: struct Binding
 foundation/src/enforcement.rs: struct BindingEntry
 foundation/src/enforcement.rs: struct BindingQuery
@@ -51,6 +61,7 @@ foundation/src/enforcement.rs: struct BoundArguments
 foundation/src/enforcement.rs: struct BoundConstraint
 foundation/src/enforcement.rs: struct BoundarySession
 foundation/src/enforcement.rs: struct Calibration
+foundation/src/enforcement.rs: struct CanonicalTimingPolicy
 foundation/src/enforcement.rs: struct CarryDepthObservable
 foundation/src/enforcement.rs: struct CarryEvent
 foundation/src/enforcement.rs: struct CarryProfile
@@ -73,6 +84,7 @@ foundation/src/enforcement.rs: struct Datum
 foundation/src/enforcement.rs: struct Derivation
 foundation/src/enforcement.rs: struct DerivationDepthObservable
 foundation/src/enforcement.rs: struct DigestGroundingMap
+foundation/src/enforcement.rs: struct DigestProjectionMap
 foundation/src/enforcement.rs: struct DispatchDeclaration
 foundation/src/enforcement.rs: struct DispatchDeclarationBuilder
 foundation/src/enforcement.rs: struct DispatchRule
@@ -100,6 +112,7 @@ foundation/src/enforcement.rs: struct HomologyClass
 foundation/src/enforcement.rs: struct InhabitanceCertificate
 foundation/src/enforcement.rs: struct InhabitanceImpossibilityWitness
 foundation/src/enforcement.rs: struct IntegerGroundingMap
+foundation/src/enforcement.rs: struct IntegerProjectionMap
 foundation/src/enforcement.rs: struct InteractionDeclarationBuilder
 foundation/src/enforcement.rs: struct InteractionShape
 foundation/src/enforcement.rs: struct InvertibleMarker
@@ -110,6 +123,7 @@ foundation/src/enforcement.rs: struct IsResidualFragment
 foundation/src/enforcement.rs: struct IsometryCertificate
 foundation/src/enforcement.rs: struct JacobianMetric
 foundation/src/enforcement.rs: struct JsonGroundingMap
+foundation/src/enforcement.rs: struct JsonProjectionMap
 foundation/src/enforcement.rs: struct LandauerBudget
 foundation/src/enforcement.rs: struct LeaseAllocation
 foundation/src/enforcement.rs: struct LeaseDeclaration
@@ -162,6 +176,7 @@ foundation/src/enforcement.rs: struct Triad
 foundation/src/enforcement.rs: struct TypeDeclaration
 foundation/src/enforcement.rs: struct UorTime
 foundation/src/enforcement.rs: struct Utf8GroundingMap
+foundation/src/enforcement.rs: struct Utf8ProjectionMap
 foundation/src/enforcement.rs: struct Validated
 foundation/src/enforcement.rs: struct ValueModObservable
 foundation/src/enforcement.rs: struct W1024
@@ -201,6 +216,7 @@ foundation/src/enforcement.rs: struct WittLevelDeclarationBuilder
 foundation/src/enforcement.rs: struct Xor
 foundation/src/enforcement.rs: trait BoundShape
 foundation/src/enforcement.rs: trait Certificate
+foundation/src/enforcement.rs: trait EmitThrough
 foundation/src/enforcement.rs: trait FragmentMarker
 foundation/src/enforcement.rs: trait GroundedShape
 foundation/src/enforcement.rs: trait GroundedValue
@@ -214,11 +230,15 @@ foundation/src/enforcement.rs: trait Invertible
 foundation/src/enforcement.rs: trait MarkerIntersection
 foundation/src/enforcement.rs: trait MarkerTuple
 foundation/src/enforcement.rs: trait MarkersImpliedBy
+foundation/src/enforcement.rs: trait MorphismKind
 foundation/src/enforcement.rs: trait Observable
 foundation/src/enforcement.rs: trait OntologyTarget
 foundation/src/enforcement.rs: trait PreservesMetric
 foundation/src/enforcement.rs: trait PreservesStructure
+foundation/src/enforcement.rs: trait ProjectionMapKind
 foundation/src/enforcement.rs: trait RingOp
+foundation/src/enforcement.rs: trait Sinking
+foundation/src/enforcement.rs: trait TimingPolicy
 foundation/src/enforcement.rs: trait Total
 foundation/src/enforcement.rs: trait UnaryRingOp
 foundation/src/enforcement.rs: trait ValidLevelEmbedding
@@ -241,8 +261,10 @@ foundation/src/lib.rs: struct DefaultHostTypes
 foundation/src/lib.rs: trait HostTypes
 foundation/src/lib.rs: use enforcement
 foundation/src/lib.rs: use enums
+foundation/src/pipeline.rs: const INTERACTION_DIVERGENCE_BUDGET
 foundation/src/pipeline.rs: const PREFLIGHT_CHECK_IRIS
 foundation/src/pipeline.rs: const REDUCTION_STAGE_IRIS
+foundation/src/pipeline.rs: const WITT_MAX_BITS
 foundation/src/pipeline.rs: const fn
 foundation/src/pipeline.rs: enum ConstraintRef
 foundation/src/pipeline.rs: enum FragmentKind
@@ -254,6 +276,11 @@ foundation/src/pipeline.rs: fn certify_multiplication_const
 foundation/src/pipeline.rs: fn certify_tower_completeness_const
 foundation/src/pipeline.rs: fn decide_horn_sat
 foundation/src/pipeline.rs: fn decide_two_sat
+foundation/src/pipeline.rs: fn estimate_preflight_uor_time
+foundation/src/pipeline.rs: fn parse_f64_from_bits_str
+foundation/src/pipeline.rs: fn parse_u32
+foundation/src/pipeline.rs: fn parse_u64
+foundation/src/pipeline.rs: fn parse_u64_pair
 foundation/src/pipeline.rs: fn preflight_budget_solvency
 foundation/src/pipeline.rs: fn preflight_dispatch_coverage
 foundation/src/pipeline.rs: fn preflight_feasibility
@@ -270,7 +297,7 @@ foundation/src/pipeline.rs: fn run_reduction_stages
 foundation/src/pipeline.rs: fn run_stream
 foundation/src/pipeline.rs: fn run_tower_completeness
 foundation/src/pipeline.rs: fn runtime_timing
-foundation/src/pipeline.rs: mod constrained_type_shape_sealed
+foundation/src/pipeline.rs: fn validate_constrained_type
 foundation/src/pipeline.rs: struct CommutatorState
 foundation/src/pipeline.rs: struct InteractionDeclaration
 foundation/src/pipeline.rs: struct InteractionDriver

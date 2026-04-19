@@ -2,7 +2,7 @@
 
 //! UOR Foundation — typed Rust traits for the complete ontology.
 //!
-//! Version: 0.2.2
+//! Version: 0.3.0
 //!
 //! This crate exports every ontology class as a trait, every property as a
 //! method, and every named individual as a constant. Implementations import
@@ -91,6 +91,24 @@
 //! - `enforcement::resolver::incremental_completeness::certify(input)` — incremental
 //! - `enforcement::resolver::grounding_aware::certify(unit)` — grounding-aware
 //!
+//! # Features
+//!
+//! The crate ships this feature-flag layout. Every capability the `default`
+//! build omits is opt-in; the default is `#![no_std]`-pure and alloc-free.
+//!
+//! | Feature         | Default | Adds | When to enable |
+//! |-----------------|---------|------|----------------|
+//! | `alloc`         | off     | `extern crate alloc`; alloc-backed diagnostic helpers | Heap available but no OS |
+//! | `std`           | off     | `alloc` + std-specific paths | Hosted platforms |
+//! | `libm`          | **on** (unconditional dep) | `libm`-backed `ln`, `exp`, `sqrt` for transcendental observables | Always on — required by `xsd:decimal` observables (see target §1.6) |
+//! | `serde`         | off     | `serde::{Serialize, Deserialize}` on `Trace`, `TraceEvent`, and other carriers | Exporting traces to external verifiers |
+//! | `observability` | off     | `alloc` + a `subscribe(handler: FnMut(&TraceEvent))` surface | Runtime observation of the reduction pipeline |
+//!
+//! The `default = []` posture means bare-metal targets (`thumbv7em-none-eabihf`)
+//! build without any feature flag. CI validates three configurations: the
+//! bare-metal `no_std` cross-build, the `alloc`-additive hosted build, and
+//! the `--all-features` composite. See target §1.6 and §7.5.
+//!
 //! # Scope note
 //!
 //! This crate is conformance-first: every surface the ontology specifies
@@ -126,7 +144,21 @@ pub use enforcement::{
 /// Three slots: `Decimal` (real-number representation), `HostString` (opaque
 /// host string, NOT a foundation IRI), and `WitnessBytes` (opaque host byte
 /// sequence, NOT a foundation `canonicalBytes` constant). The v0.2.1 `DateTime`
-/// slot is removed; downstream associates timestamps out-of-band per target §1.6.
+/// slot is removed; downstream associates timestamps out-of-band.
+/// # Example
+/// ```
+/// use uor_foundation::{HostTypes, DefaultHostTypes};
+/// // Canonical defaults: f64 / str / [u8].
+/// type DefaultH = DefaultHostTypes;
+/// // Override the Decimal slot for embedded targets with tighter precision:
+/// struct EmbeddedHost;
+/// impl HostTypes for EmbeddedHost {
+///     type Decimal = f32;          // override
+///     type HostString = str;       // default
+///     type WitnessBytes = [u8];    // default
+/// }
+/// # let _ = (core::marker::PhantomData::<DefaultH>, core::marker::PhantomData::<EmbeddedHost>);
+/// ```
 pub trait HostTypes {
     /// Real-number representation for kernel observables (entropies, amplitudes, rates).
     /// `DefaultHostTypes` selects `f64`. Override with higher-precision or interval

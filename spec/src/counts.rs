@@ -51,10 +51,15 @@ pub const CLASSES: usize = 468;
 /// v0.2.2 Phase D (Q4): +4 (type:boundObservable, type:boundShape,
 /// type:boundArguments, type:conjuncts).
 /// v0.2.2 Phase E: +1 (derivation:traceEventCount).
-pub const PROPERTIES: usize = 942;
+/// Target §3 Sink/Sinking hardening: −1 (boundary:sinkProjection removed;
+/// replaced by the `Sinking::ProjectionMap` Rust-side discipline that
+/// carries the kind discriminator at the type level).
+/// Target §3 inbound symmetric cleanup: −1 (boundary:sourceGrounding
+/// removed; replaced by the `Grounding::Map` Rust-side discipline).
+pub const PROPERTIES: usize = 940;
 
 /// Namespace-level properties only (excludes global annotation).
-pub const NAMESPACE_PROPERTIES: usize = 941;
+pub const NAMESPACE_PROPERTIES: usize = 939;
 
 /// Total named individuals across all namespaces.
 /// Includes 1870 AST term individuals (LiteralExpression / ForAllDeclaration)
@@ -81,7 +86,9 @@ pub const NAMESPACE_PROPERTIES: usize = 941;
 /// ConstraintKind).
 /// v0.2.2 Phase E: +4 (partition:PartitionComponent individuals:
 /// Irreducible, Reducible, Units, Exterior).
-pub const INDIVIDUALS: usize = 3493;
+/// Target §3 Sink/Sinking hardening: +2 (morphism:DigestProjectionMap,
+/// morphism:BinaryProjectionMap — kind-parity with GroundingMap duals).
+pub const INDIVIDUALS: usize = 3495;
 
 /// Number of SHACL test instance graphs.
 ///
@@ -166,7 +173,9 @@ pub const USER_NAMESPACES: usize = 3;
 /// on the 7 deleted constraint subclasses are retained under new domains
 /// (BoundConstraint or Conjunction), so no net loss.
 /// v0.2.2 Phase E: +1 (derivation:traceEventCount on DerivationTrace).
-pub const METHODS: usize = 905;
+/// Target §3 Sink/Sinking hardening: −1 (boundary:sinkProjection removed).
+/// Target §3 inbound symmetric cleanup: −1 (boundary:sourceGrounding removed).
+pub const METHODS: usize = 903;
 
 /// Number of individual constant modules generated.
 pub const CONSTANT_MODULES: usize = 1501;
@@ -206,7 +215,10 @@ pub const LEAN_INDUCTIVES: usize = 23;
 /// `lean4/UOR/Enums.lean`, not as `namespace ... end` blocks. They contribute
 /// to the WittLevel def list (visible in `Enums.lean`) but not to the
 /// per-individual constant namespace count.
-pub const LEAN_CONSTANT_NAMESPACES: usize = 3361;
+///
+/// Target §3 Sink/Sinking hardening: +2
+/// (morphism:DigestProjectionMap, morphism:BinaryProjectionMap).
+pub const LEAN_CONSTANT_NAMESPACES: usize = 3363;
 
 /// Number of concept pages on the website (one per content/concepts/*.md file).
 /// Number of concept pages on the website (one per `website/content/concepts/*.md`,

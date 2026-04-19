@@ -4987,17 +4987,24 @@ instance : Inhabited (BoundaryProtocol UOR.Prims.Standard) where
     protocolOrdering := none
   }
 
+/-- A typed destination for data leaving the ring. Carries an expected TypeDefinition describing the shape of outgoing data. -/
+structure Sink (P : Primitives) extends IOBoundary P where
+  /-- The expected type of data departing through this sink. -/
+  sinkType : Option (UOR.User.Type_.TypeDefinition P)
+
+instance : Inhabited (Sink UOR.Prims.Standard) where
+  default := {
+    sinkType := none
+  }
+
 /-- A typed source of external data entering the ring. Carries an expected TypeDefinition describing the shape of incoming data. -/
 structure Source (P : Primitives) extends IOBoundary P where
   /-- The expected type of data arriving from this source. -/
   sourceType : Option (UOR.User.Type_.TypeDefinition P)
-  /-- The grounding map that transforms incoming surface data to ring datums. -/
-  sourceGrounding : Option (UOR.User.Morphism.GroundingMap P)
 
 instance : Inhabited (Source UOR.Prims.Standard) where
   default := {
     sourceType := none
-    sourceGrounding := none
   }
 
 end UOR.Bridge.Boundary
@@ -5962,6 +5969,25 @@ instance : Inhabited (BoundaryEffect UOR.Prims.Standard) where
     isCommutativeWith := none
   }
 
+/-- A BoundaryEffect that writes a ring datum to a Sink. -/
+structure EmitEffect (P : Primitives) extends BoundaryEffect P where
+  /-- The sink being written to. -/
+  emitSink : Option (Sink P)
+
+instance : Inhabited (EmitEffect UOR.Prims.Standard) where
+  default := {
+    emitSink := none
+    effectBoundary := none
+    isIdempotent := none
+    externalEffectShape := none
+    effectTarget := none
+    preContext := none
+    postContext := none
+    freeRankDelta := none
+    compositeIndex := none
+    isCommutativeWith := none
+  }
+
 /-- A BoundaryEffect that reads from a Source and produces a datum in the ring. -/
 structure IngestEffect (P : Primitives) extends BoundaryEffect P where
   /-- The source being read. -/
@@ -6429,42 +6455,6 @@ instance : Inhabited (ProjectionMap UOR.Prims.Standard) where
   }
 
 end UOR.User.Morphism
-
-namespace UOR.Bridge.Boundary
-
-/-- A typed destination for data leaving the ring. Carries an expected TypeDefinition describing the shape of outgoing data. -/
-structure Sink (P : Primitives) extends IOBoundary P where
-  /-- The expected type of data departing through this sink. -/
-  sinkType : Option (UOR.User.Type_.TypeDefinition P)
-  /-- The projection map that transforms ring datums to outgoing surface data. -/
-  sinkProjection : Option (UOR.User.Morphism.ProjectionMap P)
-
-instance : Inhabited (Sink UOR.Prims.Standard) where
-  default := {
-    sinkType := none
-    sinkProjection := none
-  }
-
-/-- A BoundaryEffect that writes a ring datum to a Sink. -/
-structure EmitEffect (P : Primitives) extends BoundaryEffect P where
-  /-- The sink being written to. -/
-  emitSink : Option (Sink P)
-
-instance : Inhabited (EmitEffect UOR.Prims.Standard) where
-  default := {
-    emitSink := none
-    effectBoundary := none
-    isIdempotent := none
-    externalEffectShape := none
-    effectTarget := none
-    preContext := none
-    postContext := none
-    freeRankDelta := none
-    compositeIndex := none
-    isCommutativeWith := none
-  }
-
-end UOR.Bridge.Boundary
 
 namespace UOR.Bridge.Query
 

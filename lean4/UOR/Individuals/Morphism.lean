@@ -24,6 +24,23 @@ def BinaryGroundingMap : UOR.User.Morphism.GroundingMap UOR.Prims.Standard := {
   hasWitness := #[]
 }
 
+-- Projects partitions to raw byte symbol sequences. Dual of BinaryGroundingMap.
+def BinaryProjectionMap : UOR.User.Morphism.ProjectionMap UOR.Prims.Standard := {
+  projectionFrame := none
+  projectionOrder := none
+  roundTripCoherence := none
+  outputElementClass := some (("https://uor.foundation/schema/Literal" : String))
+  source := none
+  target := none
+  preserves := #[]
+  trace := none
+  composesWith := #[]
+  preservedInvariant := none
+  inputClass := some (("https://uor.foundation/partition/Partition" : String))
+  outputClass := some (("https://uor.foundation/morphism/SymbolSequence" : String))
+  hasWitness := #[]
+}
+
 -- A GroundingMap that maps fixed-size external byte strings to ring datums via a one-way digest function (e.g., SHA-256). Total but not invertible: every input grounds, but distinct inputs may collide; the inverse is computationally unbounded. Preserves no algebraic structure.
 def DigestGroundingMap : UOR.User.Morphism.GroundingMap UOR.Prims.Standard := {
   groundingDerivation := none
@@ -36,6 +53,23 @@ def DigestGroundingMap : UOR.User.Morphism.GroundingMap UOR.Prims.Standard := {
   preservedInvariant := none
   inputClass := some (("https://uor.foundation/schema/HostStringLiteral" : String))
   outputClass := some (("https://uor.foundation/u/Element" : String))
+  hasWitness := #[]
+}
+
+-- Projects partitions to fixed-size digest symbol sequences. Dual of DigestGroundingMap.
+def DigestProjectionMap : UOR.User.Morphism.ProjectionMap UOR.Prims.Standard := {
+  projectionFrame := none
+  projectionOrder := none
+  roundTripCoherence := none
+  outputElementClass := some (("https://uor.foundation/schema/Literal" : String))
+  source := none
+  target := none
+  preserves := #[]
+  trace := none
+  composesWith := #[]
+  preservedInvariant := none
+  inputClass := some (("https://uor.foundation/partition/Partition" : String))
+  outputClass := some (("https://uor.foundation/morphism/SymbolSequence" : String))
   hasWitness := #[]
 }
 

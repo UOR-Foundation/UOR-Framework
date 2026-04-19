@@ -29,6 +29,16 @@ symbols = [
     "PREFLIGHT_CHECK_IRIS",
     "REDUCTION_STAGE_IRIS",
     "INHABITANCE_DISPATCH_TABLE",
+    # Phase X.4: constraint-nerve chain-complex caps.
+    "NERVE_CONSTRAINTS_CAP",
+    "NERVE_SITES_CAP",
+    "NERVE_C1_MAX",
+    "NERVE_C2_MAX",
+    # Phase X.2: cohomology dimension cap.
+    "MAX_COHOMOLOGY_DIMENSION",
+    # v0.2.2 Phase B: shared canonical budget.
+    "WITT_MAX_BITS",
+    "INTERACTION_DIVERGENCE_BUDGET",
 ]
 
 # ─── Exemption: sealed supertrait markers ────────────────────────────────
@@ -83,6 +93,49 @@ behavior = "behavior_witness_accessors"
 [coverage.uor_time]
 symbols = ["UorTime", "LandauerBudget", "Nanos"]
 behavior = "behavior_uor_time"
+
+# v0.2.2 Phase B: TimingPolicy trait parameterizes the preflight/runtime
+# timing check. Budget (Nanos) + canonical Calibration are carried as trait
+# constants; `estimate_preflight_uor_time` derives an a-priori UorTime from
+# input shape. Exercised via behavior_pipeline_determinism's timing-budget
+# rejection tests (indirect coverage through run_* callers).
+[coverage.timing_policy]
+symbols = ["TimingPolicy", "CanonicalTimingPolicy", "estimate_preflight_uor_time"]
+behavior = "behavior_pipeline_determinism"
+
+# v0.2.2 Phase F: preflight_feasibility Bound-arm dispatch.
+# `ConstraintRef::Bound { observable_iri, bound_shape_iri, args_repr }`
+# dispatches on `observable_iri` to per-observable feasibility checks
+# (`ValueModObservable`, `CarryDepthObservable`, `LandauerCost`). Args are
+# parsed via small ASCII-digit helpers (`parse_u32`, `parse_u64`,
+# `parse_u64_pair`, `parse_f64_from_bits_str`). `WITT_MAX_BITS` is the
+# carry-depth ceiling matching target §4.5's W16384 tower.
+# v0.2.2 Phase P.2: public admission for arbitrary ConstrainedTypeShape.
+# `validate_constrained_type` runs preflight_feasibility + package_coherence
+# against `T::CONSTRAINTS` and mints `Validated<T, Runtime>`. The
+# `validate_constrained_type_const` const companion handles compile-time
+# admission for Copy-bounded shapes. Exercised via the
+# `custom_constrained_type` example and downstream tests at large.
+[coverage.shape_admission]
+symbols = ["validate_constrained_type"]
+behavior = "phase_f_preflight_bound"
+
+# v0.2.2 Phase T.1: run_interactive convergence threshold and divergence budget.
+# The driver terminates on commutator-norm below threshold or diverges after
+# INTERACTION_DIVERGENCE_BUDGET consecutive non-decreasing-norm steps.
+[coverage.interaction_convergence]
+symbols = ["INTERACTION_DIVERGENCE_BUDGET"]
+behavior = "phase_m_driver_surface"
+
+[coverage.preflight_bound]
+symbols = [
+    "WITT_MAX_BITS",
+    "parse_u32",
+    "parse_u64",
+    "parse_u64_pair",
+    "parse_f64_from_bits_str",
+]
+behavior = "phase_f_preflight_bound"
 
 [coverage.calibration]
 symbols = ["Calibration", "CalibrationError"]
@@ -392,7 +445,6 @@ symbols = [
     "resolver",
     "__test_helpers",
     "transcendentals",
-    "constrained_type_shape_sealed",
 ]
 
 # Snapshot-scanner artifacts: `pub const fn foo(...)` when matched against
@@ -402,3 +454,30 @@ symbols = [
 [exempt.snapshot_scanner_artifacts]
 description = "Anomalous snapshot entries from the scanner's parse of `pub const fn`"
 symbols = ["fn"]
+
+# ─── Mapping: Phase X.2 cohomology / cup product ────────────────────────
+[coverage.cohomology_cup]
+symbols = [
+    "CohomologyClass",
+    "HomologyClass",
+    "CohomologyError",
+    "mint_cohomology_class",
+    "mint_homology_class",
+    "fold_cup_product",
+]
+behavior = "behavior_cohomology_cup"
+
+# ─── Mapping: Target §3 Sink/Sinking hardening ──────────────────────────
+[coverage.sinking]
+symbols = [
+    "Sinking",
+    "MorphismKind",
+    "ProjectionMapKind",
+    "EmitThrough",
+    "IntegerProjectionMap",
+    "Utf8ProjectionMap",
+    "JsonProjectionMap",
+    "DigestProjectionMap",
+    "BinaryProjectionMap",
+]
+behavior = "phase_x6_sinking"

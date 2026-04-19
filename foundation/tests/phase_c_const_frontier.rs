@@ -18,7 +18,7 @@ static SENTINEL_TERMS: &[Term] = &[Term::Literal {
 }];
 static SENTINEL_DOMAINS: &[VerificationDomain] = &[VerificationDomain::Enumerative];
 
-fn build_compile_unit() -> Validated<CompileUnit, CompileTime> {
+fn build_compile_unit() -> Validated<CompileUnit<'static>, CompileTime> {
     let builder = CompileUnitBuilder::new()
         .root_term(SENTINEL_TERMS)
         .witt_level_ceiling(WittLevel::W16)

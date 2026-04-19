@@ -86,7 +86,17 @@ pub fn validate(workspace: &Path) -> Result<ConformanceReport> {
     if enforcement.contains("root_address") {
         missing.push("forbidden: Derivation::root_address still present".to_string());
     }
-    if enforcement.contains("impl Hasher for ") {
+    // Scan only non-doc-comment lines for the forbidden `impl Hasher for `
+    // pattern. Rustdoc examples in `pub trait Hasher`'s doc-comment show the
+    // impl shape to downstream as instructional content; those lines start
+    // with `///` and must not trip the validator.
+    if enforcement.lines().any(|l| {
+        let trimmed = l.trim_start();
+        !trimmed.starts_with("///")
+            && !trimmed.starts_with("//!")
+            && !trimmed.starts_with("//")
+            && l.contains("impl Hasher for ")
+    }) {
         missing.push("forbidden: foundation/src contains `impl Hasher for` block".to_string());
     }
 

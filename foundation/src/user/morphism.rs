@@ -353,3 +353,23 @@ pub mod json_projection_map {
     /// `outputElementClass` -> `HostStringLiteral`
     pub const OUTPUT_ELEMENT_CLASS: &str = "https://uor.foundation/schema/HostStringLiteral";
 }
+
+/// Projects partitions to fixed-size digest symbol sequences. Dual of DigestGroundingMap.
+pub mod digest_projection_map {
+    /// `inputClass` -> `Partition`
+    pub const INPUT_CLASS: &str = "https://uor.foundation/partition/Partition";
+    /// `outputClass` -> `SymbolSequence`
+    pub const OUTPUT_CLASS: &str = "https://uor.foundation/morphism/SymbolSequence";
+    /// `outputElementClass` -> `Literal`
+    pub const OUTPUT_ELEMENT_CLASS: &str = "https://uor.foundation/schema/Literal";
+}
+
+/// Projects partitions to raw byte symbol sequences. Dual of BinaryGroundingMap.
+pub mod binary_projection_map {
+    /// `inputClass` -> `Partition`
+    pub const INPUT_CLASS: &str = "https://uor.foundation/partition/Partition";
+    /// `outputClass` -> `SymbolSequence`
+    pub const OUTPUT_CLASS: &str = "https://uor.foundation/morphism/SymbolSequence";
+    /// `outputElementClass` -> `Literal`
+    pub const OUTPUT_ELEMENT_CLASS: &str = "https://uor.foundation/schema/Literal";
+}

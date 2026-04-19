@@ -57,7 +57,20 @@ pub fn mul_context(stack_budget_bytes: u64, const_eval: bool, limb_count: usize)
     __test_helpers::mul_context(stack_budget_bytes, const_eval, limb_count)
 }
 
-/// Test-only ctor: wrap any `T` in a `Validated<T>` (Runtime phase).
+/// Test-only ctor: wrap any `T` in a `Validated<T>` (Runtime phase),
+/// bypassing admission validation.
+///
+/// # Scope
+///
+/// For `ConstrainedTypeShape`-bound types (`ConstrainedTypeInput` and
+/// downstream shape markers), prefer
+/// [`uor_foundation::pipeline::validate_constrained_type`] — it runs the full
+/// preflight chain before minting `Validated<T, Runtime>`. This back-door is
+/// reserved for test fixtures that wrap declaration carriers
+/// (`ParallelDeclaration<'a>`, `StreamDeclaration<'a>`,
+/// `InteractionDeclaration<'a>`) whose admission is normally driven by the
+/// corresponding `pipeline::run_*` driver but whose individual construction
+/// still needs a `Validated<_, Runtime>` wrapper for test assertions.
 #[must_use]
 pub fn validated_runtime<T>(inner: T) -> Validated<T> {
     __test_helpers::validated_runtime(inner)

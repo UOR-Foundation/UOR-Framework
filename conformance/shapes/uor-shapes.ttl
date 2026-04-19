@@ -7045,12 +7045,6 @@ uor-sh:SourceShape
         sh:minCount 1 ;
         sh:maxCount 1 ;
         sh:class type:TypeDefinition ;
-    ] ;
-    sh:property [
-        sh:path boundary:sourceGrounding ;
-        sh:minCount 1 ;
-        sh:maxCount 1 ;
-        sh:class morphism:GroundingMap ;
     ] .
 
 uor-sh:SinkShape
@@ -7062,12 +7056,6 @@ uor-sh:SinkShape
         sh:minCount 1 ;
         sh:maxCount 1 ;
         sh:class type:TypeDefinition ;
-    ] ;
-    sh:property [
-        sh:path boundary:sinkProjection ;
-        sh:minCount 1 ;
-        sh:maxCount 1 ;
-        sh:class morphism:ProjectionMap ;
     ] .
 
 uor-sh:BoundaryEffectShape

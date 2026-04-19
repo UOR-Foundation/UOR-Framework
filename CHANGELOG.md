@@ -2,6 +2,110 @@
 
 All notable changes to UOR-Framework are documented in this file.
 
+## v0.3.0 target-doc closure + Sink/Sinking hardening — 2026-04-19
+
+Closes every remaining target-doc acceptance criterion not already
+satisfied in v0.2.2. Adds the outbound-boundary discipline (`Sinking` /
+`EmitThrough` / `ProjectionMapKind`), closes the inbound/outbound
+ontology symmetry (removing `boundary:sourceGrounding` +
+`boundary:sinkProjection`), and wires cert-class discrimination through
+all 17 Phase D resolvers. Conformance reports **530 passed, 0 warnings,
+0 failed**.
+
+### Target-doc compliance
+
+- **Target §3 + §4.6 (Sink/Sinking hardening).** `Sinking` trait added
+  in `enforcement.rs` with `type Source: GroundedShape`, `type
+  ProjectionMap: ProjectionMapKind`, `type Output`, and `fn
+  project(&Grounded<Source>) -> Output`. `Grounded<T>` sealing (§2) is
+  the sole structural guarantee — no raw data can be laundered outward.
+  `ProjectionMapKind` sealed marker + 5 marker structs (`Integer`,
+  `Utf8`, `Json`, `Digest`, `Binary`) mirror the `GroundingMap` duals.
+  Shared `MorphismKind` supertrait re-roots both kind hierarchies and
+  the four structural markers (`Total`, `Invertible`,
+  `PreservesStructure`, `PreservesMetric`). `EmitThrough<H>` extension
+  trait ties `EmitEffect<H>` to `Sinking`. 5 behaviour tests
+  (`phase_x6_sinking.rs`) + `custom_sinking` example.
+
+- **Redundancy removal (ontology).** `boundary:sinkProjection` and
+  `boundary:sourceGrounding` removed from the spec. The Rust-side kind
+  discriminator lives at the type level in `Sinking::ProjectionMap` and
+  `Grounding::Map`. Grammar forms (`sink id : T via ProjectionMap` /
+  `source id : T via GroundingMap`) carry the per-declaration binding.
+  Property count 942 → 940; methods 905 → 903.
+
+- **Phase X.1 cert-class discrimination per ontology.** `ResolverKernel`
+  widened with `type Cert: Certificate` associated type. All 17 Phase D
+  resolvers now return the ontology-declared certificate class (per
+  `resolver:CertifyMapping`): `TransformCertificate` (canonical_form,
+  type_synthesis, homotopy, moduli), `IsometryCertificate` (monodromy),
+  `InvolutionCertificate` (dihedral_factorization),
+  `CompletenessCertificate` (completeness), `GeodesicCertificate`
+  (geodesic_validator), `MeasurementCertificate` (measurement),
+  `BornRuleVerification` (superposition), `GroundingCertificate`
+  (two_sat_decider, horn_sat_decider, residual_verdict,
+  jacobian_guided, evaluation, session, witt_level_resolver). The 6
+  previously-orphan cert types (`TransformCertificate`,
+  `IsometryCertificate`, `InvolutionCertificate`, `GeodesicCertificate`,
+  `MeasurementCertificate`, `BornRuleVerification`) now carry
+  witt_bits + content_fingerprint via `with_level_and_fingerprint_const`.
+  18 tests (`phase_x1_cert_discrimination.rs`).
+
+- **Phase X.2 cohomology cup.** `CohomologyClass` + `HomologyClass`
+  carriers with dimension-as-runtime-field + `cup::<H>(other) ->
+  Result<CohomologyClass, CohomologyError>`.
+  `MAX_COHOMOLOGY_DIMENSION = 32`. `fold_cup_product`,
+  `mint_cohomology_class`, `mint_homology_class`. Orphan
+  `<const N: usize>` placeholders replaced with genuine carriers. 10
+  tests (`behavior_cohomology_cup.rs`).
+
+- **Phase X.3 const companions.** 13 Phase D resolvers accept
+  `Validated<T, CompileTime>` via the existing `P: ValidationPhase`
+  generic with discriminated cert return types. `measurement` and
+  `superposition` excluded (f64 primitive). 14 tests
+  (`phase_x3_certify_const.rs`).
+
+- **Phase X.4 full 2-complex Betti.** `primitive_simplicial_nerve_betti`
+  rewritten from union-find + cycle-rank to full 2-complex
+  chain-complex rank computation via modular Gaussian elimination over
+  `ℤ/p` (`NERVE_RANK_MOD_P = 1_000_000_007`). Tetrahedron-boundary test
+  confirms `b_2 = 1` for a 2-sphere. Caps: `NERVE_CONSTRAINTS_CAP = 8`,
+  `NERVE_SITES_CAP = 8`. `integer_matrix_rank` + `mod_pow` helpers. 7
+  tests (`phase_x4_betti.rs`).
+
+- **Phase X.5 rustdoc examples.** `# Example` blocks added for
+  `HostTypes`, `pipeline::run`, `pipeline::run_parallel`,
+  `Derivation::replay`. 18 doc-tests total.
+
+### Ontology deltas
+- +2 individuals: `morphism:DigestProjectionMap`,
+  `morphism:BinaryProjectionMap` (`INDIVIDUALS` 3493 → 3495)
+- −2 properties: `boundary:sinkProjection`, `boundary:sourceGrounding`
+  (`PROPERTIES` 942 → 940, `NAMESPACE_PROPERTIES` 941 → 939)
+- −2 methods (`METHODS` 905 → 903)
+- +2 Lean constant namespaces (`LEAN_CONSTANT_NAMESPACES` 3361 → 3363)
+
+### Breaking changes
+
+- The 11 Phase D resolvers returning other than `GroundingCertificate`
+  now return their discriminated cert class. Callers that destructured
+  the success arm on `GroundingCertificate` must update to the correct
+  variant per ontology.
+- `Sink<H>` trait no longer exposes `fn sink_projection()` or `type
+  ProjectionMap`. Replace with a `Sinking` impl carrying the projection
+  logic at the Rust type level.
+- `Source<H>` trait no longer exposes `fn source_grounding()` or `type
+  GroundingMap`. Replace with a `Grounding` impl carrying the kind
+  discriminator via `type Map: GroundingMapKind`.
+- `HomologyClass<const N: usize>` / `CohomologyClass<const N: usize>`
+  replaced with runtime-dimension struct types that actually carry
+  fingerprint state.
+- `Total` / `Invertible` / `PreservesStructure` / `PreservesMetric`
+  structural markers are now `: MorphismKind` bounded (were
+  `: GroundingMapKind`). `G::Map: Total` bounds continue to type-check;
+  any code unpacking the supertrait chain manually must account for the
+  new `MorphismKind` intermediate.
+
 ## v0.2.2 production-readiness closure — 2026-04-17
 
 Brings `uor-foundation` to conformance with the full v0.2.2 architectural

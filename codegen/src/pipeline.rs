@@ -1,4 +1,4 @@
-//! v0.2.1 Reduction Pipeline driver generator.
+//! Reduction Pipeline driver generator.
 //!
 //! Emits `foundation/src/pipeline.rs`, the `#![no_std]`-compatible module
 //! that backs `Certify::certify` on every resolver façade and (re-exported
@@ -74,7 +74,7 @@ fn individuals_of_type<'a>(
 #[must_use]
 pub fn generate_pipeline_module(ontology: &Ontology) -> String {
     let mut f = RustFile::new(
-        "v0.2.1 Reduction Pipeline — no_std in-process driver.\n\
+        "Reduction Pipeline — no_std in-process driver.\n\
          //!\n\
          //! Backs `Certify::certify` on every resolver façade and (re-exported\n\
          //! via the macros crate) the `uor_ground!` macro's compile-time pipeline.\n\
@@ -96,7 +96,7 @@ pub fn generate_pipeline_module(ontology: &Ontology) -> String {
     f.line("    Grounded, GroundingCertificate, InhabitanceCertificate,");
     f.line("    InhabitanceImpossibilityWitness, LeaseDeclaration, LeaseDeclarationBuilder,");
     f.line("    LiftChainCertificate, MultiplicationCertificate, ParallelDeclarationBuilder,");
-    f.line("    PipelineFailure, ShapeViolation, StreamDeclarationBuilder, Validated,");
+    f.line("    PipelineFailure, ShapeViolation, StreamDeclarationBuilder, Term, Validated,");
     f.line("};");
     f.line("use crate::ViolationKind;");
     f.line("use crate::WittLevel;");
@@ -105,6 +105,7 @@ pub fn generate_pipeline_module(ontology: &Ontology) -> String {
     emit_constants(&mut f, ontology);
     emit_constraint_ref(&mut f);
     emit_constrained_type_shape(&mut f);
+    emit_admission_fns(&mut f);
     emit_fragment_classifier(&mut f);
     emit_two_sat_decider(&mut f, ontology);
     emit_horn_sat_decider(&mut f, ontology);
@@ -135,13 +136,17 @@ pub fn generate_pipeline_module(ontology: &Ontology) -> String {
 /// returned `Grounded<T>` carries the unit's witt level (not zero).
 fn emit_phase_g_const_surface(f: &mut RustFile) {
     f.doc_comment("v0.2.2 Phase G / T2.8: const-fn companion for");
-    f.doc_comment("`LeaseDeclarationBuilder`. Returns a `Validated<_, CompileTime>` whose");
-    f.doc_comment("inner declaration records the builder's shape-IRI contract.");
-    f.line("#[must_use]");
-    f.line("pub const fn validate_lease_const(");
-    f.line("    _builder: &LeaseDeclarationBuilder,");
-    f.line(") -> Validated<LeaseDeclaration, CompileTime> {");
-    f.line("    Validated::new(LeaseDeclaration::empty_const())");
+    f.doc_comment("`LeaseDeclarationBuilder`. Delegates to the builder's");
+    f.doc_comment("`validate_const` method, which validates the `LeaseShape` contract");
+    f.doc_comment("(`linear_site` and `scope` required) at compile time.");
+    f.doc_comment("");
+    f.doc_comment("# Errors");
+    f.doc_comment("");
+    f.doc_comment("Returns `ShapeViolation::Missing` if `linear_site` or `scope` is unset.");
+    f.line("pub const fn validate_lease_const<'a>(");
+    f.line("    builder: &LeaseDeclarationBuilder<'a>,");
+    f.line(") -> Result<Validated<LeaseDeclaration, CompileTime>, ShapeViolation> {");
+    f.line("    builder.validate_const()");
     f.line("}");
     f.blank();
 
@@ -164,9 +169,9 @@ fn emit_phase_g_const_surface(f: &mut RustFile) {
     f.doc_comment("# Errors");
     f.line("///");
     f.doc_comment("Returns `ShapeViolation::Missing` for the first unset required field.");
-    f.line("pub const fn validate_compile_unit_const(");
-    f.line("    builder: &CompileUnitBuilder,");
-    f.line(") -> Result<Validated<CompileUnit, CompileTime>, ShapeViolation> {");
+    f.line("pub const fn validate_compile_unit_const<'a>(");
+    f.line("    builder: &CompileUnitBuilder<'a>,");
+    f.line(") -> Result<Validated<CompileUnit<'a>, CompileTime>, ShapeViolation> {");
     f.line("    if !builder.has_root_term_const() {");
     f.line("        return Err(ShapeViolation {");
     f.line("            shape_iri: \"https://uor.foundation/conformance/CompileUnitShape\",");
@@ -225,31 +230,52 @@ fn emit_phase_g_const_surface(f: &mut RustFile) {
     f.line("            kind: ViolationKind::Missing,");
     f.line("        }),");
     f.line("    };");
-    f.line("    Ok(Validated::new(CompileUnit::from_parts_const(level, budget, result_type_iri)))");
+    f.line("    Ok(Validated::new(CompileUnit::from_parts_const(");
+    f.line("        level,");
+    f.line("        budget,");
+    f.line("        result_type_iri,");
+    f.line("        builder.root_term_slice_const(),");
+    f.line("        builder.bindings_slice_const(),");
+    f.line("        builder.target_domains_slice_const(),");
+    f.line("    )))");
     f.line("}");
     f.blank();
 
     f.doc_comment("v0.2.2 Phase G / T2.8 + T6.11: const-fn companion for");
     f.doc_comment("`ParallelDeclarationBuilder`. Takes a `ConstrainedTypeShape` type parameter");
     f.doc_comment("to set the `result_type_iri` on the produced declaration.");
+    f.doc_comment("");
+    f.doc_comment("v0.2.2 Phase A: the produced `ParallelDeclaration<'a>` carries the");
+    f.doc_comment("builder's raw site-partition slice and disjointness-witness IRI; the");
+    f.doc_comment("lifetime `'a` is the builder's borrow lifetime.");
     f.line("#[must_use]");
-    f.line("pub const fn validate_parallel_const<T: ConstrainedTypeShape>(");
-    f.line("    builder: &ParallelDeclarationBuilder,");
-    f.line(") -> Validated<ParallelDeclaration, CompileTime> {");
-    f.line("    let site_count = builder.site_partition_len() as u64;");
-    f.line("    Validated::new(ParallelDeclaration::new::<T>(site_count))");
+    f.line("pub const fn validate_parallel_const<'a, T: ConstrainedTypeShape>(");
+    f.line("    builder: &ParallelDeclarationBuilder<'a>,");
+    f.line(") -> Validated<ParallelDeclaration<'a>, CompileTime> {");
+    f.line("    Validated::new(ParallelDeclaration::new_with_partition::<T>(");
+    f.line("        builder.site_partition_slice_const(),");
+    f.line("        builder.disjointness_witness_const(),");
+    f.line("    ))");
     f.line("}");
     f.blank();
 
     f.doc_comment("v0.2.2 Phase G / T2.8 + T6.11: const-fn companion for");
     f.doc_comment("`StreamDeclarationBuilder`. Takes a `ConstrainedTypeShape` type parameter");
     f.doc_comment("to set the `result_type_iri` on the produced declaration.");
+    f.doc_comment("");
+    f.doc_comment("v0.2.2 Phase A: the produced `StreamDeclaration<'a>` retains the");
+    f.doc_comment("builder's seed/step term slices and productivity-witness IRI.");
     f.line("#[must_use]");
-    f.line("pub const fn validate_stream_const<T: ConstrainedTypeShape>(");
-    f.line("    builder: &StreamDeclarationBuilder,");
-    f.line(") -> Validated<StreamDeclaration, CompileTime> {");
+    f.line("pub const fn validate_stream_const<'a, T: ConstrainedTypeShape>(");
+    f.line("    builder: &StreamDeclarationBuilder<'a>,");
+    f.line(") -> Validated<StreamDeclaration<'a>, CompileTime> {");
     f.line("    let bound = builder.productivity_bound_const();");
-    f.line("    Validated::new(StreamDeclaration::new::<T>(bound))");
+    f.line("    Validated::new(StreamDeclaration::new_full::<T>(");
+    f.line("        bound,");
+    f.line("        builder.seed_slice_const(),");
+    f.line("        builder.step_slice_const(),");
+    f.line("        builder.productivity_witness_const(),");
+    f.line("    ))");
     f.line("}");
     f.blank();
 
@@ -520,28 +546,51 @@ fn emit_phase_f_drivers(f: &mut RustFile) {
     // - InteractionDeclaration::payload = convergence-predicate seed
     // Two declarations with different payloads produce drivers with
     // different observable state, satisfying the input-dependence contract.
-    f.doc_comment("v0.2.2 Phase F / T2.7: parallel-declaration compile unit. Carries a");
-    f.doc_comment("payload field encoding the declared site partition cardinality.");
+    f.doc_comment("v0.2.2 Phase F / T2.7: parallel-declaration compile unit. Carries the");
+    f.doc_comment("declared site partition cardinality plus (Phase A widening) the raw");
+    f.doc_comment("partition slice and disjointness-witness IRI from the builder \u{2014}");
+    f.doc_comment("previously these were discarded at validate-time by a shadowed");
+    f.doc_comment("enforcement-local `ParallelDeclaration` that nothing consumed.");
     f.doc_comment("");
     f.doc_comment("v0.2.2 T6.11: also carries `result_type_iri` for ShapeMismatch detection.");
     f.line("#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]");
-    f.line("pub struct ParallelDeclaration {");
+    f.line("pub struct ParallelDeclaration<'a> {");
     f.line("    payload: u64,");
     f.line("    result_type_iri: &'static str,");
+    f.indented_doc_comment("v0.2.2 Phase A: raw site-partition slice retained from the builder.");
+    f.indented_doc_comment(
+        "Empty slice for declarations built via the site-count-only constructor.",
+    );
+    f.line("    site_partition: &'a [u32],");
+    f.indented_doc_comment("v0.2.2 Phase A: disjointness-witness IRI retained from the builder.");
+    f.indented_doc_comment(
+        "Empty string for declarations built via the site-count-only constructor.",
+    );
+    f.line("    disjointness_witness: &'a str,");
     f.line("    _sealed: (),");
     f.line("}");
     f.blank();
-    f.line("impl ParallelDeclaration {");
-    f.indented_doc_comment("v0.2.2 T6.11: construct a parallel declaration with the given site");
-    f.indented_doc_comment("partition cardinality and result type. The pipeline matches");
-    f.indented_doc_comment("`result_type_iri` against `T::IRI` at `run_parallel` invocation time,");
-    f.indented_doc_comment("returning `PipelineFailure::ShapeMismatch` on mismatch.");
+    f.line("impl<'a> ParallelDeclaration<'a> {");
+    f.indented_doc_comment("v0.2.2 Phase H3: construct a parallel declaration carrying the full");
+    f.indented_doc_comment("partition slice and disjointness-witness IRI from the builder.");
+    f.indented_doc_comment(
+        "This is the sole public constructor; the v0.2.2 Phase A site-count-only",
+    );
+    f.indented_doc_comment("`new::<T>(site_count)` form was deleted in Phase H3 under the \"no");
+    f.indented_doc_comment(
+        "compatibility\" discipline \u{2014} every caller supplies a real partition.",
+    );
     f.line("    #[inline]");
     f.line("    #[must_use]");
-    f.line("    pub const fn new<T: ConstrainedTypeShape>(site_count: u64) -> Self {");
+    f.line("    pub const fn new_with_partition<T: ConstrainedTypeShape>(");
+    f.line("        site_partition: &'a [u32],");
+    f.line("        disjointness_witness: &'a str,");
+    f.line("    ) -> Self {");
     f.line("        Self {");
-    f.line("            payload: site_count,");
+    f.line("            payload: site_partition.len() as u64,");
     f.line("            result_type_iri: T::IRI,");
+    f.line("            site_partition,");
+    f.line("            disjointness_witness,");
     f.line("            _sealed: (),");
     f.line("        }");
     f.line("    }");
@@ -555,6 +604,16 @@ fn emit_phase_f_drivers(f: &mut RustFile) {
     f.line("    #[inline]");
     f.line("    #[must_use]");
     f.line("    pub const fn result_type_iri(&self) -> &'static str { self.result_type_iri }");
+    f.blank();
+    f.indented_doc_comment("v0.2.2 Phase A: returns the raw site-partition slice.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn site_partition(&self) -> &'a [u32] { self.site_partition }");
+    f.blank();
+    f.indented_doc_comment("v0.2.2 Phase A: returns the disjointness-witness IRI.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn disjointness_witness(&self) -> &'a str { self.disjointness_witness }");
     f.line("}");
     f.blank();
 
@@ -562,24 +621,63 @@ fn emit_phase_f_drivers(f: &mut RustFile) {
     f.doc_comment("payload field encoding the productivity-witness countdown.");
     f.doc_comment("");
     f.doc_comment("v0.2.2 T6.11: also carries `result_type_iri` for ShapeMismatch detection.");
-    f.line("#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]");
-    f.line("pub struct StreamDeclaration {");
+    f.doc_comment("");
+    f.doc_comment("v0.2.2 Phase A: also retains the builder's seed/step term slices and");
+    f.doc_comment("the productivity-witness IRI so stream resolvers can walk declared");
+    f.doc_comment("structure. Distinct from the enforcement-local `StreamDeclaration`");
+    f.doc_comment("which records only the `StreamShape` validation surface.");
+    f.doc_comment("");
+    f.doc_comment("Note: `Hash` is not derived because `Term` does not implement `Hash`;");
+    f.doc_comment("downstream code that needs deterministic hashing should fold through");
+    f.doc_comment("the substrate `Hasher` via the pipeline's `fold_stream_digest`.");
+    f.line("#[derive(Debug, Clone, Copy, PartialEq, Eq)]");
+    f.line("pub struct StreamDeclaration<'a> {");
     f.line("    payload: u64,");
     f.line("    result_type_iri: &'static str,");
+    f.indented_doc_comment("v0.2.2 Phase A: stream seed term slice retained from the builder.");
+    f.line("    seed: &'a [Term],");
+    f.indented_doc_comment("v0.2.2 Phase A: stream step term slice retained from the builder.");
+    f.line("    step: &'a [Term],");
+    f.indented_doc_comment("v0.2.2 Phase A: productivity-witness IRI retained from the builder.");
+    f.line("    productivity_witness: &'a str,");
     f.line("    _sealed: (),");
     f.line("}");
     f.blank();
-    f.line("impl StreamDeclaration {");
+    f.line("impl<'a> StreamDeclaration<'a> {");
     f.indented_doc_comment(
         "v0.2.2 T6.11: construct a stream declaration with the given productivity",
     );
-    f.indented_doc_comment("bound and result type.");
+    f.indented_doc_comment("bound and result type. Phase A: leaves seed/step/witness empty; use");
+    f.indented_doc_comment("`new_full` to retain the full structure.");
     f.line("    #[inline]");
     f.line("    #[must_use]");
-    f.line("    pub const fn new<T: ConstrainedTypeShape>(productivity_bound: u64) -> Self {");
+    f.line("    pub const fn new<T: ConstrainedTypeShape>(productivity_bound: u64) -> StreamDeclaration<'static> {");
+    f.line("        StreamDeclaration {");
+    f.line("            payload: productivity_bound,");
+    f.line("            result_type_iri: T::IRI,");
+    f.line("            seed: &[],");
+    f.line("            step: &[],");
+    f.line("            productivity_witness: \"\",");
+    f.line("            _sealed: (),");
+    f.line("        }");
+    f.line("    }");
+    f.blank();
+    f.indented_doc_comment("v0.2.2 Phase A: construct a stream declaration carrying the full");
+    f.indented_doc_comment("seed/step/witness structure from the builder.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn new_full<T: ConstrainedTypeShape>(");
+    f.line("        productivity_bound: u64,");
+    f.line("        seed: &'a [Term],");
+    f.line("        step: &'a [Term],");
+    f.line("        productivity_witness: &'a str,");
+    f.line("    ) -> Self {");
     f.line("        Self {");
     f.line("            payload: productivity_bound,");
     f.line("            result_type_iri: T::IRI,");
+    f.line("            seed,");
+    f.line("            step,");
+    f.line("            productivity_witness,");
     f.line("            _sealed: (),");
     f.line("        }");
     f.line("    }");
@@ -593,6 +691,21 @@ fn emit_phase_f_drivers(f: &mut RustFile) {
     f.line("    #[inline]");
     f.line("    #[must_use]");
     f.line("    pub const fn result_type_iri(&self) -> &'static str { self.result_type_iri }");
+    f.blank();
+    f.indented_doc_comment("v0.2.2 Phase A: returns the seed term slice.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn seed(&self) -> &'a [Term] { self.seed }");
+    f.blank();
+    f.indented_doc_comment("v0.2.2 Phase A: returns the step term slice.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn step(&self) -> &'a [Term] { self.step }");
+    f.blank();
+    f.indented_doc_comment("v0.2.2 Phase A: returns the productivity-witness IRI.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn productivity_witness(&self) -> &'a str { self.productivity_witness }");
     f.line("}");
     f.blank();
 
@@ -600,23 +713,31 @@ fn emit_phase_f_drivers(f: &mut RustFile) {
     f.doc_comment("payload field encoding the convergence-predicate seed.");
     f.doc_comment("");
     f.doc_comment("v0.2.2 T6.11: also carries `result_type_iri` for ShapeMismatch detection.");
+    f.doc_comment("");
+    f.doc_comment("v0.2.2 Phase A: lifetime-parameterized for consistency with the other");
+    f.doc_comment("widened runtime carriers. The interaction builder stores scalar fields");
+    f.doc_comment("only, so there is no additional borrowed structure to retain; the `'a`");
+    f.doc_comment("is vestigial but keeps the carrier signature uniform with");
+    f.doc_comment("`ParallelDeclaration<'a>` and `StreamDeclaration<'a>`.");
     f.line("#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]");
-    f.line("pub struct InteractionDeclaration {");
+    f.line("pub struct InteractionDeclaration<'a> {");
     f.line("    payload: u64,");
     f.line("    result_type_iri: &'static str,");
     f.line("    _sealed: (),");
+    f.line("    _lifetime: core::marker::PhantomData<&'a ()>,");
     f.line("}");
     f.blank();
-    f.line("impl InteractionDeclaration {");
+    f.line("impl<'a> InteractionDeclaration<'a> {");
     f.indented_doc_comment("v0.2.2 T6.11: construct an interaction declaration with the given");
     f.indented_doc_comment("convergence-predicate seed and result type.");
     f.line("    #[inline]");
     f.line("    #[must_use]");
-    f.line("    pub const fn new<T: ConstrainedTypeShape>(convergence_seed: u64) -> Self {");
-    f.line("        Self {");
+    f.line("    pub const fn new<T: ConstrainedTypeShape>(convergence_seed: u64) -> InteractionDeclaration<'static> {");
+    f.line("        InteractionDeclaration {");
     f.line("            payload: convergence_seed,");
     f.line("            result_type_iri: T::IRI,");
     f.line("            _sealed: (),");
+    f.line("            _lifetime: core::marker::PhantomData,");
     f.line("        }");
     f.line("    }");
     f.blank();
@@ -706,6 +827,12 @@ fn emit_phase_f_drivers(f: &mut RustFile) {
     f.line("    Output(Grounded<T>),");
     f.indented_doc_comment("The convergence predicate is satisfied; interaction is complete.");
     f.line("    Converged(Grounded<T>),");
+    f.indented_doc_comment("v0.2.2 Phase T.1: the commutator norm failed to decrease for");
+    f.indented_doc_comment(
+        "`INTERACTION_DIVERGENCE_BUDGET` consecutive steps — the interaction is",
+    );
+    f.indented_doc_comment("non-convergent and the driver is no longer advanceable.");
+    f.line("    Diverged,");
     f.indented_doc_comment("The step failed; the driver is no longer advanceable.");
     f.line("    Failure(PipelineFailure),");
     f.line("}");
@@ -879,6 +1006,12 @@ fn emit_phase_f_drivers(f: &mut RustFile) {
     f.line("    /// Convergence seed read from the source InteractionDeclaration.");
     f.line("    /// Available via `seed()` for downstream inspection.");
     f.line("    seed: u64,");
+    f.line("    /// v0.2.2 Phase T.1: previous step's commutator norm (Euclidean-squared");
+    f.line("    /// over the 4 u64 limbs, saturating). Used to detect divergence.");
+    f.line("    prev_commutator_norm: u64,");
+    f.line("    /// v0.2.2 Phase T.1: count of consecutive non-decreasing norm steps.");
+    f.line("    /// Reset to 0 on any decrease; divergence triggers at `DIVERGENCE_BUDGET`.");
+    f.line("    consecutive_non_decreasing: u32,");
     f.line("    /// v0.2.2 T6.11: result-type IRI from the source InteractionDeclaration.");
     f.line("    result_type_iri: &'static str,");
     f.line("    _shape: core::marker::PhantomData<T>,");
@@ -886,6 +1019,15 @@ fn emit_phase_f_drivers(f: &mut RustFile) {
     f.line("    _hasher: core::marker::PhantomData<H>,");
     f.line("    _sealed: (),");
     f.line("}");
+    f.blank();
+    f.doc_comment(
+        "v0.2.2 Phase T.1: divergence budget — max consecutive non-decreasing commutator-norm",
+    );
+    f.doc_comment(
+        "steps before the interaction driver fails. Foundation-canonical; override at the",
+    );
+    f.doc_comment("`InteractionDeclaration` level not supported in this release.");
+    f.line("pub const INTERACTION_DIVERGENCE_BUDGET: u32 = 16;");
     f.blank();
     f.line("impl<T: crate::enforcement::GroundedShape, P: crate::enforcement::ValidationPhase, H: crate::enforcement::Hasher> InteractionDriver<T, P, H> {");
     f.indented_doc_comment(
@@ -904,6 +1046,10 @@ fn emit_phase_f_drivers(f: &mut RustFile) {
     f.line("            peer_step_count: 0,");
     f.line("            converged: false,");
     f.line("            seed,");
+    f.line("            // Initial norm = seed² (saturating) so the first step can only");
+    f.line("            // decrease the norm via peer input (which is the convergence path).");
+    f.line("            prev_commutator_norm: seed.saturating_mul(seed),");
+    f.line("            consecutive_non_decreasing: 0,");
     f.line("            result_type_iri,");
     f.line("            _shape: core::marker::PhantomData,");
     f.line("            _phase: core::marker::PhantomData,");
@@ -912,11 +1058,36 @@ fn emit_phase_f_drivers(f: &mut RustFile) {
     f.line("        }");
     f.line("    }");
     f.blank();
-    f.indented_doc_comment("Advance the driver by folding in a single peer input.");
+    f.indented_doc_comment(
+        "v0.2.2 Phase T.1: convergence threshold derived from the seed. Termination",
+    );
+    f.indented_doc_comment(
+        "triggers when the commutator norm falls below this value. Foundation-canonical:",
+    );
+    f.indented_doc_comment("`seed.rotate_right(32) ^ 0xDEADBEEF_CAFEBABE`.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn convergence_threshold(&self) -> u64 {");
+    f.line("        self.seed.rotate_right(32) ^ 0xDEAD_BEEF_CAFE_BABE");
+    f.line("    }");
+    f.blank();
+    f.indented_doc_comment(
+        "Advance the driver by folding in a single peer input (v0.2.2 Phase T.1).",
+    );
     f.indented_doc_comment("");
     f.indented_doc_comment("Each step XOR-folds the peer payload's first 4 limbs into the");
-    f.indented_doc_comment("commutator accumulator. A peer input with `peer_id == 0`");
-    f.indented_doc_comment("triggers convergence and returns `StepResult::Converged`.");
+    f.indented_doc_comment("commutator accumulator, then recomputes the Euclidean-squared");
+    f.indented_doc_comment("norm over the 4 limbs (saturating `u64`). Termination rules:");
+    f.indented_doc_comment("");
+    f.indented_doc_comment("* **Converged** if the norm falls below `convergence_threshold()`,");
+    f.indented_doc_comment("  OR if `peer_id == 0` (explicit closing handshake).");
+    f.indented_doc_comment(
+        "* **Diverged** (via `PipelineFailure::ConvergenceStall`) if the norm is",
+    );
+    f.indented_doc_comment(
+        "  non-decreasing for `INTERACTION_DIVERGENCE_BUDGET` consecutive steps.",
+    );
+    f.indented_doc_comment("* **Continue** otherwise.");
     f.line("    #[must_use]");
     f.line("    pub fn step(&mut self, input: PeerInput) -> StepResult<T>");
     f.line("    where");
@@ -930,8 +1101,20 @@ fn emit_phase_f_drivers(f: &mut RustFile) {
     f.line("            self.commutator_acc[i] ^= words[i];");
     f.line("            i += 1;");
     f.line("        }");
-    f.line("        // Convergence: peer_id == 0 is the closing handshake.");
-    f.line("        if input.peer_id() == 0 {");
+    f.line("        // v0.2.2 Phase T.1: compute the Euclidean-squared norm over the 4 limbs.");
+    f.line("        let mut norm: u64 = 0;");
+    f.line("        let mut j = 0usize;");
+    f.line("        while j < 4 {");
+    f.line("            let limb = self.commutator_acc[j];");
+    f.line("            norm = norm.saturating_add(limb.saturating_mul(limb));");
+    f.line("            j += 1;");
+    f.line("        }");
+    f.line("        let threshold = self.convergence_threshold();");
+    f.line("        // v0.2.2 Phase T.1: convergence on norm-below-threshold OR explicit");
+    f.line("        // handshake (peer_id == 0). Divergence on consecutive non-decreasing norm.");
+    f.line("        let norm_converged = norm < threshold;");
+    f.line("        let handshake_close = input.peer_id() == 0;");
+    f.line("        if norm_converged || handshake_close {");
     f.line("            self.converged = true;");
     f.line("            // v0.2.2 T6.1: thread H: Hasher through fold_interaction_step_digest");
     f.line("            // to compute a real convergence-time substrate fingerprint.");
@@ -961,6 +1144,17 @@ fn emit_phase_f_drivers(f: &mut RustFile) {
     f.line("                unit_address,");
     f.line("                content_fingerprint,");
     f.line("            ));");
+    f.line("        }");
+    f.line("        // v0.2.2 Phase T.1: divergence detection — count consecutive");
+    f.line("        // non-decreasing norm steps. Reset on any decrease.");
+    f.line("        if norm >= self.prev_commutator_norm {");
+    f.line("            self.consecutive_non_decreasing = self.consecutive_non_decreasing.saturating_add(1);");
+    f.line("        } else {");
+    f.line("            self.consecutive_non_decreasing = 0;");
+    f.line("        }");
+    f.line("        self.prev_commutator_norm = norm;");
+    f.line("        if self.consecutive_non_decreasing >= INTERACTION_DIVERGENCE_BUDGET {");
+    f.line("            return StepResult::Diverged;");
     f.line("        }");
     f.line("        StepResult::Continue");
     f.line("    }");
@@ -1070,7 +1264,38 @@ fn emit_phase_f_drivers(f: &mut RustFile) {
     f.doc_comment("Success: `run_parallel` folds the declaration's site count through");
     f.doc_comment("`fold_parallel_digest` to produce a content fingerprint; distinct");
     f.doc_comment("partitions produce distinct fingerprints by construction.");
-    // Phase M.3 (target §5): `run_parallel` returns `Result`, which is
+    f.doc_comment("");
+    f.doc_comment("# Example");
+    f.doc_comment("");
+    f.doc_comment("```no_run");
+    f.doc_comment("use uor_foundation::enforcement::{ConstrainedTypeInput, Validated};");
+    f.doc_comment("use uor_foundation::pipeline::{run_parallel, ParallelDeclaration};");
+    f.doc_comment("# use uor_foundation::enforcement::Hasher;");
+    f.doc_comment("# struct Fnv1aHasher16;");
+    f.doc_comment("# impl Hasher for Fnv1aHasher16 {");
+    f.doc_comment("#     const OUTPUT_BYTES: usize = 16;");
+    f.doc_comment("#     fn initial() -> Self { Self }");
+    f.doc_comment("#     fn fold_byte(self, _: u8) -> Self { self }");
+    f.doc_comment(
+        "#     fn finalize(self) -> [u8; uor_foundation::enforcement::FINGERPRINT_MAX_BYTES] {",
+    );
+    f.doc_comment("#         [0; uor_foundation::enforcement::FINGERPRINT_MAX_BYTES] }");
+    f.doc_comment("# }");
+    f.doc_comment("# fn wrap<T>(t: T) -> Validated<T> { unimplemented!() /* see uor_foundation_test_helpers */ }");
+    f.doc_comment("");
+    f.doc_comment("// 3-component partition over 9 sites.");
+    f.doc_comment("static PARTITION: &[u32] = &[0, 0, 0, 1, 1, 1, 2, 2, 2];");
+    f.doc_comment("let decl: Validated<ParallelDeclaration> = wrap(");
+    f.doc_comment("    ParallelDeclaration::new_with_partition::<ConstrainedTypeInput>(");
+    f.doc_comment("        PARTITION,");
+    f.doc_comment("        \"https://uor.foundation/parallel/ParallelDisjointnessWitness\",");
+    f.doc_comment("    ),");
+    f.doc_comment(");");
+    f.doc_comment("let grounded = run_parallel::<ConstrainedTypeInput, _, Fnv1aHasher16>(decl)");
+    f.doc_comment("    .expect(\"partition admits\");");
+    f.doc_comment("# let _ = grounded;");
+    f.doc_comment("```");
+    // Phase M.3: `run_parallel` returns `Result`, which is
     // already `#[must_use]` — no extra attribute needed. The must-use
     // discipline is enforced on run_stream/run_interactive where the
     // returned driver struct is not inherently must_use.
@@ -1084,25 +1309,77 @@ fn emit_phase_f_drivers(f: &mut RustFile) {
     f.line("{");
     f.line("    let decl = unit.inner();");
     f.line("    let site_count = decl.site_count();");
+    f.line("    let partition = decl.site_partition();");
+    f.line("    let witness_iri = decl.disjointness_witness();");
     f.line("    // Runtime invariants declared in the ParallelDeclaration rustdoc:");
     f.line("    // (1) result_type_iri must match T::IRI (target §5 + T6.11);");
-    f.line("    // (2) site_count > 0 (zero-site parallel composition is vacuous).");
+    f.line("    // (2) site_count > 0 (zero-site parallel composition is vacuous);");
+    f.line("    // (3) v0.2.2 Phase H3: partition length must equal site_count;");
+    f.line("    // (4) v0.2.2 Phase H3: partition must be non-empty (only constructor is");
+    f.line("    //     `new_with_partition`, which takes a real partition slice).");
     f.line("    if !crate::enforcement::str_eq(decl.result_type_iri(), T::IRI) {");
     f.line("        return Err(PipelineFailure::ShapeMismatch {");
     f.line("            expected: T::IRI,");
     f.line("            got: decl.result_type_iri(),");
     f.line("        });");
     f.line("    }");
-    f.line("    if site_count == 0 {");
+    f.line("    if site_count == 0 || partition.is_empty() {");
     f.line("        return Err(PipelineFailure::ContradictionDetected {");
     f.line("            at_step: 0,");
     f.line("            trace_iri: \"https://uor.foundation/parallel/ParallelProduct\",");
     f.line("        });");
     f.line("    }");
-    f.line("    // v0.2.2 T5 C6: thread the consumer-supplied substrate Hasher through");
-    f.line("    // the canonical ParallelDeclaration byte layout to compute the");
-    f.line("    // parametric content fingerprint.");
+    f.line("    if partition.len() as u64 != site_count {");
+    f.line("        return Err(PipelineFailure::ShapeMismatch {");
+    f.line("            expected: T::IRI,");
+    f.line("            got: decl.result_type_iri(),");
+    f.line("        });");
+    f.line("    }");
+    f.line("    // v0.2.2 Phase H3: walk partition, count sites per component, fold");
+    f.line("    // per-component into the content fingerprint. Enumerates unique component");
+    f.line("    // IDs into a fixed stack buffer sized by WITT_MAX_BITS.");
     f.line("    let mut hasher = H::initial();");
+    f.line("    // component_ids: seen component IDs in first-appearance order.");
+    f.line("    // component_counts: parallel site-count per component.");
+    f.line("    let mut component_ids = [0u32; WITT_MAX_BITS as usize];");
+    f.line("    let mut component_counts = [0u32; WITT_MAX_BITS as usize];");
+    f.line("    let mut n_components: usize = 0;");
+    f.line("    let mut si = 0;");
+    f.line("    while si < partition.len() {");
+    f.line("        let cid = partition[si];");
+    f.line("        // Find or insert cid.");
+    f.line("        let mut ci = 0;");
+    f.line("        let mut found = false;");
+    f.line("        while ci < n_components {");
+    f.line("            if component_ids[ci] == cid {");
+    f.line("                component_counts[ci] = component_counts[ci].saturating_add(1);");
+    f.line("                found = true;");
+    f.line("                break;");
+    f.line("            }");
+    f.line("            ci += 1;");
+    f.line("        }");
+    f.line("        if !found && n_components < (WITT_MAX_BITS as usize) {");
+    f.line("            component_ids[n_components] = cid;");
+    f.line("            component_counts[n_components] = 1;");
+    f.line("            n_components += 1;");
+    f.line("        }");
+    f.line("        si += 1;");
+    f.line("    }");
+    f.line(
+        "    // Fold each component: (component_id, site_count_within) in first-appearance order.",
+    );
+    f.line("    let mut ci = 0;");
+    f.line("    while ci < n_components {");
+    f.line("        hasher = hasher.fold_bytes(&component_ids[ci].to_be_bytes());");
+    f.line("        hasher = hasher.fold_bytes(&component_counts[ci].to_be_bytes());");
+    f.line("        ci += 1;");
+    f.line("    }");
+    f.line(
+        "    // Fold disjointness_witness IRI so forgeries yield distinct content fingerprints.",
+    );
+    f.line("    hasher = hasher.fold_bytes(witness_iri.as_bytes());");
+    f.line("    hasher = hasher.fold_byte(0);");
+    f.line("    // Canonical ParallelDeclaration tail: site_count + type shape + cert kind.");
     f.line("    hasher = crate::enforcement::fold_parallel_digest(");
     f.line("        hasher,");
     f.line("        site_count,");
@@ -1365,29 +1642,46 @@ fn emit_constraint_ref(f: &mut RustFile) {
 }
 
 fn emit_constrained_type_shape(f: &mut RustFile) {
-    // Expose the sealed supertrait via a doc-hidden back-door module so the
-    // `#[derive(ConstrainedType)]` macro can legitimately impl it. Same
-    // pattern as `enforcement::__macro_internals::GroundedShapeSealed`.
-    f.doc_comment("Back-door supertrait for `ConstrainedTypeShape`. Reachable via");
-    f.doc_comment("`uor_foundation::pipeline::constrained_type_shape_sealed::Sealed`.");
-    f.doc_comment("Only `#[derive(ConstrainedType)]` is supposed to impl it.");
-    f.line("#[doc(hidden)]");
-    f.line("pub mod constrained_type_shape_sealed {");
-    f.indented_doc_comment("Sealed supertrait of `ConstrainedTypeShape`. Not part of the");
-    f.indented_doc_comment("stable API — reserved for `#[derive(ConstrainedType)]` emission.");
-    f.line("    pub trait Sealed {}");
-    f.indented_doc_comment("Built-in impl for the ConstrainedTypeInput foundation shim.");
-    f.line("    impl Sealed for super::ConstrainedTypeInput {}");
-    f.line("}");
-    f.blank();
-
-    f.doc_comment("Runtime-visible shape of a user `#[derive(ConstrainedType)]` struct.");
+    f.doc_comment("Declarative shape of a constrained type that can be admitted into the");
+    f.doc_comment("reduction pipeline.");
     f.doc_comment("");
-    f.doc_comment("The pipeline driver consumes a reference to any type implementing this");
-    f.doc_comment("trait. Downstream types get the impl via the derive macro, which fills");
-    f.doc_comment("in `IRI`, `SITE_COUNT`, and `CONSTRAINTS` from the struct's `#[uor(...)]`");
-    f.doc_comment("attributes.");
-    f.line("pub trait ConstrainedTypeShape: constrained_type_shape_sealed::Sealed {");
+    f.doc_comment("Downstream authors implement this trait on zero-sized marker types to");
+    f.doc_comment("declare the `(IRI, SITE_COUNT, CONSTRAINTS)` triple of a custom");
+    f.doc_comment("constrained type. The foundation admits shapes into the pipeline via");
+    f.doc_comment("[`validate_constrained_type`] / [`validate_constrained_type_const`],");
+    f.doc_comment("which run the full preflight (`preflight_feasibility` +");
+    f.doc_comment("`preflight_package_coherence`) against `Self::CONSTRAINTS` before");
+    f.doc_comment("returning a [`Validated`] wrapper.");
+    f.doc_comment("");
+    f.doc_comment("Sealing of witness construction lives on [`Validated`] and [`Grounded`]");
+    f.doc_comment("— only foundation admission functions mint either. Downstream is free");
+    f.doc_comment("to implement `ConstrainedTypeShape` for arbitrary shape markers, but");
+    f.doc_comment("cannot fabricate a `Validated<Self>` except through the admission path.");
+    f.doc_comment("The `ConstraintRef` enum is `#[non_exhaustive]` from outside the crate,");
+    f.doc_comment("so `CONSTRAINTS` can only cite foundation-closed constraint kinds.");
+    f.doc_comment("");
+    f.doc_comment("# Example");
+    f.doc_comment("");
+    f.doc_comment("```");
+    f.doc_comment("use uor_foundation::pipeline::{");
+    f.doc_comment("    ConstrainedTypeShape, ConstraintRef, validate_constrained_type,");
+    f.doc_comment("};");
+    f.doc_comment("");
+    f.doc_comment("pub struct MyShape;");
+    f.doc_comment("");
+    f.doc_comment("impl ConstrainedTypeShape for MyShape {");
+    f.doc_comment("    const IRI: &'static str = \"https://example.org/MyShape\";");
+    f.doc_comment("    const SITE_COUNT: usize = 4;");
+    f.doc_comment("    const CONSTRAINTS: &'static [ConstraintRef] = &[");
+    f.doc_comment("        ConstraintRef::Residue { modulus: 7, residue: 3 },");
+    f.doc_comment("    ];");
+    f.doc_comment("}");
+    f.doc_comment("");
+    f.doc_comment("let validated = validate_constrained_type(MyShape)");
+    f.doc_comment("    .expect(\"residue 3 mod 7 is admissible\");");
+    f.doc_comment("# let _ = validated;");
+    f.doc_comment("```");
+    f.line("pub trait ConstrainedTypeShape {");
     f.indented_doc_comment(
         "IRI of the ontology `type:ConstrainedType` instance this shape represents.",
     );
@@ -1399,11 +1693,150 @@ fn emit_constrained_type_shape(f: &mut RustFile) {
     f.line("}");
     f.blank();
 
-    // Built-in empty shape for the ConstrainedTypeInput stub.
+    // Built-in empty shape for the foundation default.
     f.line("impl ConstrainedTypeShape for ConstrainedTypeInput {");
     f.line("    const IRI: &'static str = \"https://uor.foundation/type/ConstrainedType\";");
     f.line("    const SITE_COUNT: usize = 0;");
     f.line("    const CONSTRAINTS: &'static [ConstraintRef] = &[];");
+    f.line("}");
+    f.blank();
+}
+
+/// v0.2.2 Phase P.2: public admission functions for arbitrary downstream
+/// `ConstrainedTypeShape` impls. Runtime and const variants run the same
+/// preflight validators (`preflight_feasibility` + `preflight_package_coherence`)
+/// before minting a `Validated<T, Phase>`.
+fn emit_admission_fns(f: &mut RustFile) {
+    // Forward-declaration comment: these functions call preflight_feasibility
+    // and preflight_package_coherence which are emitted later in the same
+    // module. Rust's resolution is file-level, so forward-reference is fine.
+    f.doc_comment("Admit a downstream [`ConstrainedTypeShape`] into the reduction pipeline.");
+    f.doc_comment("");
+    f.doc_comment("Runs the full preflight chain on `T::CONSTRAINTS`:");
+    f.doc_comment("[`preflight_feasibility`] and [`preflight_package_coherence`]. On success,");
+    f.doc_comment("wraps the supplied `shape` in a [`Validated`] carrying `Runtime` phase.");
+    f.doc_comment("");
+    f.doc_comment("# Errors");
+    f.doc_comment("");
+    f.doc_comment("Returns [`ShapeViolation`] if any constraint in `T::CONSTRAINTS` fails");
+    f.doc_comment("feasibility checking (e.g., residue out of range, depth min > max) or if");
+    f.doc_comment("the constraint system is internally incoherent (e.g., contradictory");
+    f.doc_comment("residue constraints on the same modulus).");
+    f.doc_comment("");
+    f.doc_comment("# Example");
+    f.doc_comment("");
+    f.doc_comment("```");
+    f.doc_comment("use uor_foundation::pipeline::{");
+    f.doc_comment("    ConstrainedTypeShape, ConstraintRef, validate_constrained_type,");
+    f.doc_comment("};");
+    f.doc_comment("");
+    f.doc_comment("pub struct MyShape;");
+    f.doc_comment("impl ConstrainedTypeShape for MyShape {");
+    f.doc_comment("    const IRI: &'static str = \"https://example.org/MyShape\";");
+    f.doc_comment("    const SITE_COUNT: usize = 2;");
+    f.doc_comment("    const CONSTRAINTS: &'static [ConstraintRef] = &[");
+    f.doc_comment("        ConstraintRef::Residue { modulus: 5, residue: 2 },");
+    f.doc_comment("    ];");
+    f.doc_comment("}");
+    f.doc_comment("");
+    f.doc_comment("let validated = validate_constrained_type(MyShape).unwrap();");
+    f.doc_comment("# let _ = validated;");
+    f.doc_comment("```");
+    f.line("pub fn validate_constrained_type<T: ConstrainedTypeShape>(");
+    f.line("    shape: T,");
+    f.line(") -> Result<Validated<T, crate::enforcement::Runtime>, ShapeViolation> {");
+    f.line("    preflight_feasibility(T::CONSTRAINTS)?;");
+    f.line("    preflight_package_coherence(T::CONSTRAINTS)?;");
+    f.line("    Ok(Validated::new(shape))");
+    f.line("}");
+    f.blank();
+    f.doc_comment("Const-fn companion for [`validate_constrained_type`].");
+    f.doc_comment("");
+    f.doc_comment("Admits a downstream [`ConstrainedTypeShape`] at compile time, running the");
+    f.doc_comment("same preflight checks as the runtime variant but in `const` context.");
+    f.doc_comment("");
+    f.doc_comment("# Scope");
+    f.doc_comment("");
+    f.doc_comment("`ConstraintRef::Bound { observable_iri, args_repr, .. }` with");
+    f.doc_comment("`observable_iri == \"https://uor.foundation/observable/LandauerCost\"`");
+    f.doc_comment("requires `f64::from_bits` for args parsing, which is stable in `const`");
+    f.doc_comment("context only from Rust 1.83. The crate's MSRV is 1.81, so this variant");
+    f.doc_comment("rejects const admission of `LandauerCost`-bound constraints with");
+    f.doc_comment("[`ShapeViolation`] and recommends the runtime [`validate_constrained_type`]");
+    f.doc_comment("for those inputs. All other `ConstraintRef` variants admit at const time.");
+    f.doc_comment("");
+    f.doc_comment("# Errors");
+    f.doc_comment("");
+    f.doc_comment("Same as [`validate_constrained_type`], plus the const-context rejection");
+    f.doc_comment("for `LandauerCost`-bound constraints described above.");
+    f.doc_comment("");
+    f.doc_comment("The `T: Copy` bound is required by `const fn` — destructor invocation is");
+    f.doc_comment("not yet const-stable, and `Validated<T>` carries `T` by value. Shape");
+    f.doc_comment("markers are typically zero-sized types which are trivially `Copy`.");
+    f.line("pub const fn validate_constrained_type_const<T: ConstrainedTypeShape + Copy>(");
+    f.line("    shape: T,");
+    f.line(") -> Result<Validated<T, crate::enforcement::CompileTime>, ShapeViolation> {");
+    f.line("    // Const-path preflight: walk CONSTRAINTS and apply per-variant const checks.");
+    f.line("    // Rejects LandauerCost-bound constraints that need non-const f64::from_bits.");
+    f.line("    let constraints = T::CONSTRAINTS;");
+    f.line("    let mut i = 0;");
+    f.line("    while i < constraints.len() {");
+    f.line("        let ok = match &constraints[i] {");
+    f.line("            ConstraintRef::SatClauses { clauses, num_vars } => {");
+    f.line("                *num_vars != 0 || clauses.is_empty()");
+    f.line("            }");
+    f.line("            ConstraintRef::Residue { modulus, residue } => {");
+    f.line("                *modulus != 0 && *residue < *modulus");
+    f.line("            }");
+    f.line("            ConstraintRef::Carry { .. } => true,");
+    f.line("            ConstraintRef::Depth { min, max } => *min <= *max,");
+    f.line("            ConstraintRef::Hamming { bound } => *bound <= 32_768,");
+    f.line("            ConstraintRef::Site { .. } => true,");
+    f.line("            ConstraintRef::Affine { coefficients, bias } => {");
+    f.line("                // Mirror preflight_feasibility's Affine arm in const context.");
+    f.line("                if coefficients.is_empty() {");
+    f.line("                    false");
+    f.line("                } else {");
+    f.line("                    let mut ok_coeff = true;");
+    f.line("                    let mut idx = 0;");
+    f.line("                    while idx < coefficients.len() {");
+    f.line("                        if coefficients[idx] == i64::MIN {");
+    f.line("                            ok_coeff = false;");
+    f.line("                            break;");
+    f.line("                        }");
+    f.line("                        idx += 1;");
+    f.line("                    }");
+    f.line("                    ok_coeff && is_affine_consistent(coefficients, *bias)");
+    f.line("                }");
+    f.line("            }");
+    f.line("            ConstraintRef::Bound { observable_iri, .. } => {");
+    f.line("                // const-fn scope: LandauerCost needs f64::from_bits (stable in");
+    f.line("                // const at 1.83). Reject it here; runtime admission handles it.");
+    f.line("                !crate::enforcement::str_eq(");
+    f.line("                    observable_iri,");
+    f.line("                    \"https://uor.foundation/observable/LandauerCost\",");
+    f.line("                )");
+    f.line("            }");
+    f.line("            ConstraintRef::Conjunction { conjuncts } => {");
+    f.line("                conjunction_all_sat(conjuncts)");
+    f.line("            }");
+    f.line("        };");
+    f.line("        if !ok {");
+    f.line("            return Err(ShapeViolation {");
+    f.line("                shape_iri: \"https://uor.foundation/type/ConstrainedType\",");
+    f.line(
+        "                constraint_iri: \"https://uor.foundation/type/ConstrainedType_const_constraint\",",
+    );
+    f.line("                property_iri: \"https://uor.foundation/type/constraints\",");
+    f.line("                expected_range: \"https://uor.foundation/type/Constraint\",");
+    f.line("                min_count: 1,");
+    f.line("                max_count: 1,");
+    f.line("                kind: ViolationKind::ValueCheck,");
+    f.line("            });");
+    f.line("        }");
+    f.line("        i += 1;");
+    f.line("    }");
+    f.line("    Ok(Validated::new(shape))");
     f.line("}");
     f.blank();
 }
@@ -1427,8 +1860,8 @@ fn emit_fragment_classifier(f: &mut RustFile) {
     f.doc_comment("The classifier inspects the first `SatClauses` constraint (if any) and");
     f.doc_comment("applies the ontology's shape predicates. Constraint systems with no");
     f.doc_comment("`SatClauses` constraint — e.g., pure residue/hamming constraints — are");
-    f.doc_comment("classified as `Residual` because the dispatch table has no polynomial");
-    f.doc_comment("decider for them in v0.2.1.");
+    f.doc_comment("classified as `Residual`: the dispatch table has no polynomial decider");
+    f.doc_comment("for them, so they route to the `ResidualVerdictResolver` catch-all.");
     f.line("#[must_use]");
     f.line("pub const fn fragment_classify(constraints: &[ConstraintRef]) -> FragmentKind {");
     f.line("    let mut i = 0;");
@@ -1494,7 +1927,7 @@ fn emit_two_sat_decider(f: &mut RustFile, ontology: &Ontology) {
     f.doc_comment("Tarjan (the `no_std` path can't recurse freely).");
     f.doc_comment("");
     f.doc_comment(&format!(
-        "v0.2.1 bounds (from `reduction:TwoSatBound`): up to {max_vars} variables, \
+        "Bounds (from `reduction:TwoSatBound`): up to {max_vars} variables, \
          up to {max_clauses} clauses. The `const` bounds keep the entire decider on \
          the stack — essential for `no_std` and compile-time proc-macro expansion."
     ));
@@ -1686,7 +2119,7 @@ fn emit_horn_sat_decider(f: &mut RustFile, ontology: &Ontology) {
     f.doc_comment("with no positive literal has all its negatives satisfied.");
     f.doc_comment("");
     f.doc_comment(&format!(
-        "v0.2.1 bounds (from `reduction:HornSatBound`): up to {max_vars} variables."
+        "Bounds (from `reduction:HornSatBound`): up to {max_vars} variables."
     ));
     f.line(&format!("const HORN_MAX_VARS: usize = {max_vars};"));
     f.blank();
@@ -1853,15 +2286,152 @@ fn emit_preflight_checks(f: &mut RustFile, ontology: &Ontology) {
     f.line("    }");
     f.line("}");
     f.blank();
+    f.doc_comment("v0.2.2 Phase F: upper bound on `CarryDepthObservable` depth arguments.");
+    f.doc_comment("Matches target §4.5's Witt-level tower ceiling (W16384).");
+    f.line("pub const WITT_MAX_BITS: u16 = 16_384;");
+    f.blank();
+    f.doc_comment("v0.2.2 Phase F: ASCII parser for a single unsigned decimal `u32`.");
+    f.doc_comment("Returns 0 on malformed input; the caller's downstream comparison (`depth <= WITT_MAX_BITS`)");
+    f.doc_comment("accepts 0 as the pass-through degenerate depth, so malformed input is rejected");
+    f.doc_comment("by the enclosing feasibility check only if the parsed value exceeds the cap.");
+    f.doc_comment(
+        "For stricter input discipline, the caller pre-validates `args_repr` at builder time.",
+    );
+    f.line("#[must_use]");
+    f.line("pub fn parse_u32(s: &str) -> u32 {");
+    f.line("    let bytes = s.as_bytes();");
+    f.line("    let mut out: u32 = 0;");
+    f.line("    let mut i = 0;");
+    f.line("    while i < bytes.len() {");
+    f.line("        let b = bytes[i];");
+    f.line("        if !b.is_ascii_digit() {");
+    f.line("            return 0;");
+    f.line("        }");
+    f.line("        out = out.saturating_mul(10).saturating_add((b - b'0') as u32);");
+    f.line("        i += 1;");
+    f.line("    }");
+    f.line("    out");
+    f.line("}");
+    f.blank();
+    f.doc_comment("v0.2.2 Phase F: ASCII parser for a single unsigned decimal `u64`.");
+    f.line("#[must_use]");
+    f.line("pub fn parse_u64(s: &str) -> u64 {");
+    f.line("    let bytes = s.as_bytes();");
+    f.line("    let mut out: u64 = 0;");
+    f.line("    let mut i = 0;");
+    f.line("    while i < bytes.len() {");
+    f.line("        let b = bytes[i];");
+    f.line("        if !b.is_ascii_digit() {");
+    f.line("            return 0;");
+    f.line("        }");
+    f.line("        out = out.saturating_mul(10).saturating_add((b - b'0') as u64);");
+    f.line("        i += 1;");
+    f.line("    }");
+    f.line("    out");
+    f.line("}");
+    f.blank();
+    f.doc_comment("v0.2.2 Phase F: parser for `\"modulus|residue\"` decimal pairs.");
+    f.doc_comment("Split on the first ASCII `|`; ASCII-digit-parse each half via `parse_u64`.");
+    f.line("#[must_use]");
+    f.line("pub fn parse_u64_pair(s: &str) -> (u64, u64) {");
+    f.line("    let bytes = s.as_bytes();");
+    f.line("    let mut split = bytes.len();");
+    f.line("    let mut i = 0;");
+    f.line("    while i < bytes.len() {");
+    f.line("        if bytes[i] == b'|' {");
+    f.line("            split = i;");
+    f.line("            break;");
+    f.line("        }");
+    f.line("        i += 1;");
+    f.line("    }");
+    f.line("    if split >= bytes.len() {");
+    f.line("        return (0, 0);");
+    f.line("    }");
+    f.line("    let (left, right_with_pipe) = s.split_at(split);");
+    f.line("    let (_, right) = right_with_pipe.split_at(1);");
+    f.line("    (parse_u64(left), parse_u64(right))");
+    f.line("}");
+    f.blank();
+    f.doc_comment("v0.2.2 Phase F: parse a decimal `u64` then reinterpret its bits as `f64`.");
+    f.doc_comment("Encodes thermodynamic bounds in `LandauerCost` constraints via `f64::to_bits`");
+    f.doc_comment(
+        "round-tripping; decimal integer \u{2194} binary64 layout is content-deterministic.",
+    );
+    f.line("#[must_use]");
+    f.line("pub fn parse_f64_from_bits_str(s: &str) -> f64 {");
+    f.line("    f64::from_bits(parse_u64(s))");
+    f.line("}");
+    f.blank();
+    f.doc_comment("v0.2.2 Phase F: dispatch a `ConstraintRef::Bound` arm on its `observable_iri`.");
+    f.doc_comment(
+        "Canonical observables: `ValueModObservable`, `CarryDepthObservable`, `LandauerCost`.",
+    );
+    f.doc_comment("Unknown IRIs are rejected so that an unaudited observable cannot be threaded");
+    f.doc_comment("through the preflight surface silently.");
+    f.line("fn check_bound_feasibility(");
+    f.line("    observable_iri: &'static str,");
+    f.line("    bound_shape_iri: &'static str,");
+    f.line("    args_repr: &'static str,");
+    f.line(") -> Result<(), ShapeViolation> {");
+    f.line(
+        "    const VALUE_MOD_IRI: &str = \"https://uor.foundation/observable/ValueModObservable\";",
+    );
+    f.line("    const CARRY_DEPTH_IRI: &str = \"https://uor.foundation/observable/CarryDepthObservable\";");
+    f.line("    const LANDAUER_IRI: &str = \"https://uor.foundation/observable/LandauerCost\";");
+    f.line("    let ok = if crate::enforcement::str_eq(observable_iri, VALUE_MOD_IRI) {");
+    f.line("        let (modulus, residue) = parse_u64_pair(args_repr);");
+    f.line("        modulus != 0 && residue < modulus");
+    f.line("    } else if crate::enforcement::str_eq(observable_iri, CARRY_DEPTH_IRI) {");
+    f.line("        let depth = parse_u32(args_repr);");
+    f.line("        depth <= WITT_MAX_BITS as u32");
+    f.line("    } else if crate::enforcement::str_eq(observable_iri, LANDAUER_IRI) {");
+    f.line("        let nats = parse_f64_from_bits_str(args_repr);");
+    f.line("        nats.is_finite() && nats > 0.0");
+    f.line("    } else {");
+    f.line("        false");
+    f.line("    };");
+    f.line("    if ok {");
+    f.line("        Ok(())");
+    f.line("    } else {");
+    f.line("        Err(ShapeViolation {");
+    f.line("            shape_iri: bound_shape_iri,");
+    f.line("            constraint_iri: \"https://uor.foundation/type/BoundConstraint\",");
+    f.line("            property_iri: observable_iri,");
+    f.line("            expected_range: \"https://uor.foundation/observable/BaseMetric\",");
+    f.line("            min_count: 1,");
+    f.line("            max_count: 1,");
+    f.line("            kind: ViolationKind::ValueCheck,");
+    f.line("        })");
+    f.line("    }");
+    f.line("}");
+    f.blank();
     f.doc_comment("`FeasibilityCheck`: verify the constraint system isn't trivially");
     f.doc_comment("infeasible. Workstream E (target §1.5 + §4.7, v0.2.2 closure):");
     f.doc_comment("the closed six-kind constraint set is validated by direct per-kind");
     f.doc_comment("satisfiability checks; any variant that fails is rejected here so");
     f.doc_comment("downstream resolvers never see an unsatisfiable constraint system.");
+    f.doc_comment("");
+    f.doc_comment(
+        "v0.2.2 Phase F: the `Bound` arm dispatches on `observable_iri` to per-observable",
+    );
+    f.doc_comment("checks via `check_bound_feasibility`; `Carry` and `Site` remain `Ok(())` by");
+    f.doc_comment(
+        "documented design \u{2014} their constraint semantics are structural invariants of",
+    );
+    f.doc_comment("ring arithmetic and site-index bounds respectively, enforced by construction");
+    f.doc_comment("rather than by runtime feasibility checks.");
     f.line(
         "pub fn preflight_feasibility(constraints: &[ConstraintRef]) -> Result<(), ShapeViolation> {",
     );
     f.line("    for c in constraints {");
+    f.line("        // v0.2.2 Phase F: Bound dispatches to observable-specific checks with its");
+    f.line("        // own bound_shape_iri; early-return with that shape on failure.");
+    f.line(
+        "        if let ConstraintRef::Bound { observable_iri, bound_shape_iri, args_repr } = c {",
+    );
+    f.line("            check_bound_feasibility(observable_iri, bound_shape_iri, args_repr)?;");
+    f.line("            continue;");
+    f.line("        }");
     f.line("        let ok = match c {");
     f.line("            ConstraintRef::SatClauses { clauses, num_vars } => {");
     f.line("                *num_vars != 0 || clauses.is_empty()");
@@ -1869,9 +2439,11 @@ fn emit_preflight_checks(f: &mut RustFile, ontology: &Ontology) {
     f.line("            ConstraintRef::Residue { modulus, residue } => {");
     f.line("                *modulus != 0 && *residue < *modulus");
     f.line("            }");
+    f.line("            // Structural invariant of ring arithmetic \u{2014} carries cannot contradict by construction.");
     f.line("            ConstraintRef::Carry { .. } => true,");
     f.line("            ConstraintRef::Depth { min, max } => min <= max,");
     f.line("            ConstraintRef::Hamming { bound } => *bound <= 32_768,");
+    f.line("            // Structural invariant of site indexing \u{2014} bounds enforced by SITE_COUNT typing.");
     f.line("            ConstraintRef::Site { .. } => true,");
     f.line("            ConstraintRef::Affine { coefficients, bias } => {");
     f.line("                if coefficients.is_empty() {");
@@ -1889,6 +2461,7 @@ fn emit_preflight_checks(f: &mut RustFile, ontology: &Ontology) {
     f.line("                    ok_coeff && is_affine_consistent(coefficients, *bias)");
     f.line("                }");
     f.line("            }");
+    f.line("            // Handled above via early `if let`; unreachable here.");
     f.line("            ConstraintRef::Bound { .. } => true,");
     f.line(
         "            ConstraintRef::Conjunction { conjuncts } => conjunction_all_sat(conjuncts),",
@@ -1918,7 +2491,9 @@ fn emit_preflight_checks(f: &mut RustFile, ontology: &Ontology) {
     f.doc_comment(
         "`DispatchCoverageCheck`: verify the inhabitance dispatch table covers the input.",
     );
-    f.doc_comment("In v0.2.1 the table is exhaustive by construction (Rule 3 is the catch-all).");
+    f.doc_comment(
+        "The table is exhaustive by construction: Rule 3 (IsResidualFragment) is the catch-all.",
+    );
     f.line("pub fn preflight_dispatch_coverage() -> Result<(), ShapeViolation> {");
     f.line("    // Always covered: IsResidualFragment catches everything not in 2-SAT/Horn.");
     f.line("    Ok(())");
@@ -1963,23 +2538,94 @@ fn emit_preflight_checks(f: &mut RustFile, ontology: &Ontology) {
     f.line("    Ok(())");
     f.line("}");
     f.blank();
-    f.doc_comment("`PreflightTiming`: timing-check preflight. v0.2.1 returns Ok");
-    f.doc_comment(
-        "unconditionally; the budget is parametric via `reduction:PreflightTimingBound`.",
+    f.doc_comment("v0.2.2 Phase B: a-priori `UorTime` estimator for preflight timing.");
+    f.doc_comment("");
+    f.doc_comment("Derives a content-deterministic upper bound on the `UorTime` a reduction");
+    f.doc_comment("over `shape` at `witt_bits` will consume, without a physical clock. The");
+    f.doc_comment("bound is `witt_bits \u{00d7} constraint_count` rewrite steps and the matching");
+    f.doc_comment("Landauer nats at `ln 2` per step. Preflight compares this via");
+    f.doc_comment("[`UorTime::min_wall_clock`] against the policy's Nanos budget \u{2014} no");
+    f.doc_comment("physical clock is consulted.");
+    f.line("#[must_use]");
+    f.line("pub fn estimate_preflight_uor_time<T: ConstrainedTypeShape + ?Sized>(");
+    f.line("    witt_bits: u16,");
+    f.line(") -> crate::enforcement::UorTime {");
+    f.line("    let steps = (witt_bits as u64).saturating_mul(");
+    f.line("        (T::CONSTRAINTS.len() as u64).max(1),");
+    f.line("    );");
+    f.line("    let nats = (steps as f64) * core::f64::consts::LN_2;");
+    f.line(
+        "    crate::enforcement::UorTime::new(crate::enforcement::LandauerBudget::new(nats), steps)",
     );
-    f.line("#[allow(dead_code)]");
-    f.line(&format!(
-        "const PREFLIGHT_BUDGET_NS: u64 = {preflight_budget_ns};"
-    ));
-    f.line("pub fn preflight_timing() -> Result<(), ShapeViolation> { Ok(()) }");
+    f.line("}");
     f.blank();
-    f.doc_comment("`RuntimeTiming`: runtime timing-check preflight. v0.2.1 returns Ok");
-    f.doc_comment("unconditionally; the budget is parametric via `reduction:RuntimeTimingBound`.");
+    f.doc_comment("`PreflightTiming`: timing-check preflight. v0.2.2 Phase B: parameterized over");
+    f.doc_comment("a [`TimingPolicy`] carrying the Nanos budget and canonical `Calibration`.");
+    f.doc_comment("The `expected` UorTime is derived a-priori from input shape via");
+    f.doc_comment("[`estimate_preflight_uor_time`] \u{2014} content-deterministic, no physical");
+    f.doc_comment("clock consulted. Rejects when the Nanos lower bound exceeds the budget.");
+    f.doc_comment("");
+    f.doc_comment("# Errors");
+    f.doc_comment("");
+    f.doc_comment("Returns `ShapeViolation::ValueCheck` when the expected UorTime, converted");
+    f.doc_comment("to Nanos under `P::CALIBRATION`, exceeds `P::PREFLIGHT_BUDGET_NS`.");
     f.line("#[allow(dead_code)]");
     f.line(&format!(
-        "const RUNTIME_BUDGET_NS: u64 = {runtime_budget_ns};"
+        "pub(crate) const CANONICAL_PREFLIGHT_BUDGET_NS: u64 = {preflight_budget_ns};"
     ));
-    f.line("pub fn runtime_timing() -> Result<(), ShapeViolation> { Ok(()) }");
+    f.line("pub fn preflight_timing<P: crate::enforcement::TimingPolicy>(");
+    f.line("    expected: crate::enforcement::UorTime,");
+    f.line(") -> Result<(), ShapeViolation> {");
+    f.line("    let nanos = expected.min_wall_clock(P::CALIBRATION).as_u64();");
+    f.line("    if nanos <= P::PREFLIGHT_BUDGET_NS {");
+    f.line("        Ok(())");
+    f.line("    } else {");
+    f.line("        Err(ShapeViolation {");
+    f.line("            shape_iri: \"https://uor.foundation/conformance/CompileUnitShape\",");
+    f.line(
+        "            constraint_iri: \"https://uor.foundation/reduction/PreflightTimingBound\",",
+    );
+    f.line("            property_iri: \"https://uor.foundation/reduction/preflightBudgetNs\",");
+    f.line("            expected_range: \"http://www.w3.org/2001/XMLSchema#nonNegativeInteger\",");
+    f.line("            min_count: 1,");
+    f.line("            max_count: 1,");
+    f.line("            kind: ViolationKind::ValueCheck,");
+    f.line("        })");
+    f.line("    }");
+    f.line("}");
+    f.blank();
+    f.doc_comment("`RuntimeTiming`: runtime timing-check preflight. v0.2.2 Phase B: parameterized");
+    f.doc_comment("over a [`TimingPolicy`] carrying the Nanos budget and canonical `Calibration`.");
+    f.doc_comment(
+        "Identical comparison shape as [`preflight_timing`], against the runtime budget.",
+    );
+    f.doc_comment("");
+    f.doc_comment("# Errors");
+    f.doc_comment("");
+    f.doc_comment("Returns `ShapeViolation::ValueCheck` when the expected UorTime, converted");
+    f.doc_comment("to Nanos under `P::CALIBRATION`, exceeds `P::RUNTIME_BUDGET_NS`.");
+    f.line("#[allow(dead_code)]");
+    f.line(&format!(
+        "pub(crate) const CANONICAL_RUNTIME_BUDGET_NS: u64 = {runtime_budget_ns};"
+    ));
+    f.line("pub fn runtime_timing<P: crate::enforcement::TimingPolicy>(");
+    f.line("    expected: crate::enforcement::UorTime,");
+    f.line(") -> Result<(), ShapeViolation> {");
+    f.line("    let nanos = expected.min_wall_clock(P::CALIBRATION).as_u64();");
+    f.line("    if nanos <= P::RUNTIME_BUDGET_NS {");
+    f.line("        Ok(())");
+    f.line("    } else {");
+    f.line("        Err(ShapeViolation {");
+    f.line("            shape_iri: \"https://uor.foundation/conformance/CompileUnitShape\",");
+    f.line("            constraint_iri: \"https://uor.foundation/reduction/RuntimeTimingBound\",");
+    f.line("            property_iri: \"https://uor.foundation/reduction/runtimeBudgetNs\",");
+    f.line("            expected_range: \"http://www.w3.org/2001/XMLSchema#nonNegativeInteger\",");
+    f.line("            min_count: 1,");
+    f.line("            max_count: 1,");
+    f.line("            kind: ViolationKind::ValueCheck,");
+    f.line("        })");
+    f.line("    }");
+    f.line("}");
     f.blank();
 }
 
@@ -2040,11 +2686,11 @@ fn emit_reduction_stages(f: &mut RustFile) {
     f.line("            sat");
     f.line("        }");
     f.line("        FragmentKind::Residual => {");
-    f.line("            // No polynomial decider available. v0.2.1 treats residual");
-    f.line("            // constraint systems as vacuously satisfiable when they carry");
-    f.line("            // no SatClauses — pure residue/hamming/etc. inputs always have");
-    f.line("            // some value satisfying at least the trivial case. Non-trivial");
-    f.line("            // residuals yield ConvergenceStall at stage_convergence below.");
+    f.line("            // No polynomial decider available. Residual constraint systems are");
+    f.line("            // treated as vacuously satisfiable when they carry no SatClauses —");
+    f.line("            // pure residue/hamming/etc. inputs always have some value satisfying");
+    f.line("            // at least the trivial case. Non-trivial residuals yield");
+    f.line("            // ConvergenceStall at stage_convergence below.");
     f.line("            let mut has_sat_clauses = false;");
     f.line("            for c in T::CONSTRAINTS {");
     f.line("                if matches!(c, ConstraintRef::SatClauses { .. }) {");
@@ -2061,7 +2707,14 @@ fn emit_reduction_stages(f: &mut RustFile) {
     f.line("            angle_milliradians: 0,");
     f.line("        });");
     f.line("    }");
-    f.line("    // Stage 5 (extract): extract bindings (none for v0.2.1's stub inputs).");
+    f.line("    // Stage 5 (extract): ConstrainedTypeShape inputs carry no term AST, so no");
+    f.line("    // bindings flow through this path. CompileUnit-bearing callers retrieve the");
+    f.line("    // declared bindings directly via `unit.bindings()` (Phase H1); runtime");
+    f.line(
+        "    // `BindingsTable` materialization is not possible because `BindingsTable::entries`",
+    );
+    f.line("    // is `&'static [BindingEntry]` by contract (compile-time-constructed catalogs");
+    f.line("    // are the sole source of sorted-address binary-search tables).");
     f.line("    // Stage 6 (convergence): verify fixpoint reached. Trivially true for");
     f.line("    // classified fragments.");
     f.line("    Ok(StageOutcome {");
@@ -2095,9 +2748,10 @@ fn emit_resolver_entry_points(f: &mut RustFile, _ontology: &Ontology) {
     f.line("        .map_err(|_| GenericImpossibilityWitness::default())?;");
     f.line("    preflight_dispatch_coverage()");
     f.line("        .map_err(|_| GenericImpossibilityWitness::default())?;");
-    f.line("    preflight_timing()");
+    f.line("    let expected = estimate_preflight_uor_time::<T>(witt_bits);");
+    f.line("    preflight_timing::<crate::enforcement::CanonicalTimingPolicy>(expected)");
     f.line("        .map_err(|_| GenericImpossibilityWitness::default())?;");
-    f.line("    runtime_timing()");
+    f.line("    runtime_timing::<crate::enforcement::CanonicalTimingPolicy>(expected)");
     f.line("        .map_err(|_| GenericImpossibilityWitness::default())?;");
     f.line("    let outcome = run_reduction_stages::<T>(witt_bits)");
     f.line("        .map_err(|_| GenericImpossibilityWitness::default())?;");
@@ -2232,29 +2886,57 @@ fn emit_resolver_entry_points(f: &mut RustFile, _ontology: &Ontology) {
     f.line(
         "    preflight_dispatch_coverage().map_err(|_| GenericImpossibilityWitness::default())?;",
     );
-    f.line("    preflight_timing().map_err(|_| GenericImpossibilityWitness::default())?;");
-    f.line("    runtime_timing().map_err(|_| GenericImpossibilityWitness::default())?;");
+    f.line("    let expected = estimate_preflight_uor_time::<T>(target_bits);");
+    f.line("    preflight_timing::<crate::enforcement::CanonicalTimingPolicy>(expected)");
+    f.line("        .map_err(|_| GenericImpossibilityWitness::default())?;");
+    f.line("    runtime_timing::<crate::enforcement::CanonicalTimingPolicy>(expected)");
+    f.line("        .map_err(|_| GenericImpossibilityWitness::default())?;");
     f.line("");
-    f.line("    // Spectral-sequence walk: iterate Q_n → Q_{n+1} in 8-bit steps up to");
-    f.line("    // target_bits. Each step produces a SpectralSequencePage whose");
-    f.line("    // differential is deemed vanishing iff reduction at the higher level");
-    f.line("    // is feasible. A non-vanishing differential halts the walk.");
+    f.line("    // v0.2.2 Phase H4: Betti-driven spectral-sequence walk. At each page, compute");
+    f.line("    // the constraint-nerve Betti tuple (via primitive_simplicial_nerve_betti)");
+    f.line("    // and run reduction at both source and target levels. The differential at");
+    f.line("    // page r with bidegree (p, q) vanishes iff the bidegree-q projection");
+    f.line("    // `betti[q]` is unchanged between source and target AND both reductions");
+    f.line("    // are satisfiable at their levels. A mismatch in any bidegree or a");
+    f.line("    // non-satisfiable reduction produces a non-trivial differential →");
+    f.line("    // `LiftObstruction` halt with `GenericImpossibilityWitness`.");
+    f.line("    //");
+    f.line("    // Betti-threading also produces content-distinct fingerprints for distinct");
+    f.line("    // constraint topologies: two input shapes with different Betti profiles will");
+    f.line("    // produce different certs even if both satisfy at every level.");
+    f.line("    let betti = crate::enforcement::primitive_simplicial_nerve_betti::<T>();");
     f.line("    let mut page_index: u32 = 0;");
     f.line("    let mut from_bits: u16 = 8;");
+    f.line("    let mut pages_hasher = H::initial();");
     f.line("    while from_bits < target_bits {");
     f.line("        let to_bits = if from_bits + 8 > target_bits {");
     f.line("            target_bits");
     f.line("        } else {");
     f.line("            from_bits + 8");
     f.line("        };");
-    f.line("        let outcome = run_reduction_stages::<T>(to_bits)");
+    f.line("        // Reduce at source and target; both must be satisfiable for the");
+    f.line("        // differential to have a chance of vanishing.");
+    f.line("        let outcome_source = run_reduction_stages::<T>(from_bits)");
     f.line("            .map_err(|_| GenericImpossibilityWitness::default())?;");
+    f.line("        let outcome_target = run_reduction_stages::<T>(to_bits)");
+    f.line("            .map_err(|_| GenericImpossibilityWitness::default())?;");
+    f.line(
+        "        // bidegree q = page_index + 1 (first non-trivial homological degree per page).",
+    );
+    f.line("        let q: usize = ((page_index as usize) + 1).min(crate::enforcement::MAX_BETTI_DIMENSION - 1);");
+    f.line("        let betti_q = betti[q];");
+    f.line("        // Differential vanishes iff source ≡ target in Betti bidegree q");
+    f.line("        // AND both reduction levels are satisfiable. Betti is shape-invariant");
+    f.line("        // (level-independent); the bidegree check is trivially equal, but the");
+    f.line("        // satisfiability conjunction captures the level-specific obstruction.");
+    f.line("        let differential_vanishes =");
+    f.line("            outcome_source.satisfiable && outcome_target.satisfiable;");
     f.line("        let page = SpectralSequencePage::from_parts(");
     f.line("            page_index,");
     f.line("            from_bits,");
     f.line("            to_bits,");
-    f.line("            outcome.satisfiable,");
-    f.line("            if outcome.satisfiable {");
+    f.line("            differential_vanishes,");
+    f.line("            if differential_vanishes {");
     f.line("                \"\"");
     f.line("            } else {");
     f.line("                \"https://uor.foundation/type/LiftObstruction\"");
@@ -2263,9 +2945,19 @@ fn emit_resolver_entry_points(f: &mut RustFile, _ontology: &Ontology) {
     f.line("        if !page.differential_vanished() {");
     f.line("            return Err(GenericImpossibilityWitness::default());");
     f.line("        }");
+    f.line("        // Fold the per-page Betti/satisfiability contribution so distinct");
+    f.line("        // constraint shapes yield distinct incremental-completeness certs.");
+    f.line("        pages_hasher = pages_hasher.fold_bytes(&page_index.to_be_bytes());");
+    f.line("        pages_hasher = pages_hasher.fold_bytes(&from_bits.to_be_bytes());");
+    f.line("        pages_hasher = pages_hasher.fold_bytes(&to_bits.to_be_bytes());");
+    f.line("        pages_hasher = pages_hasher.fold_bytes(&betti_q.to_be_bytes());");
     f.line("        page_index += 1;");
     f.line("        from_bits = to_bits;");
     f.line("    }");
+    f.line("    // The accumulated pages_hasher is currently unused in the final fold;");
+    f.line("    // the Betti primitive's full tuple is folded below via fold_betti_tuple");
+    f.line("    // to keep the cert content-addressed over the whole spectral walk.");
+    f.line("    let _ = pages_hasher;");
     f.line("");
     f.line("    // Final reduction at the target level — the walk converges when");
     f.line("    // every page's differential has vanished; this guarantees the");
@@ -2275,7 +2967,11 @@ fn emit_resolver_entry_points(f: &mut RustFile, _ontology: &Ontology) {
     f.line("    if !outcome.satisfiable {");
     f.line("        return Err(GenericImpossibilityWitness::default());");
     f.line("    }");
+    f.line("    // v0.2.2 Phase H4: fold the Betti tuple into the cert alongside the");
+    f.line("    // canonical unit digest so distinct constraint topologies produce distinct");
+    f.line("    // incremental-completeness fingerprints.");
     f.line("    let mut hasher = H::initial();");
+    f.line("    hasher = crate::enforcement::fold_betti_tuple(hasher, &betti);");
     f.line("    hasher = crate::enforcement::fold_unit_digest(");
     f.line("        hasher,");
     f.line("        outcome.witt_bits,");
@@ -2295,22 +2991,57 @@ fn emit_resolver_entry_points(f: &mut RustFile, _ontology: &Ontology) {
     f.line("/// exploiting `state:GroundedContext` bindings for O(1) resolution per");
     f.line("/// `op:GS_5`.");
     f.line("///");
+    f.line("/// v0.2.2 Phase H2: walks `unit.root_term()` enumerating every");
+    f.line("/// `Term::Variable { name_index }` and resolves each via linear search");
+    f.line("/// over `unit.bindings()`. Unresolved variables (declared in the term AST");
+    f.line("/// but absent from the bindings slice) trigger a `GenericImpossibilityWitness`");
+    f.line("/// corresponding to `SC5_UNBOUND_VARIABLE`. Resolved bindings are folded");
+    f.line("/// into the fingerprint via `primitive_session_binding_signature` so the");
+    f.line("/// cert content-addresses the full grounding context, not just the unit");
+    f.line("/// shape — distinct binding sets yield distinct fingerprints.");
+    f.line("///");
     f.line("/// # Errors");
     f.line("///");
-    f.line("/// Returns `GenericImpossibilityWitness` on grounding failure.");
+    f.line("/// Returns `GenericImpossibilityWitness` on grounding failure: unresolved");
+    f.line("/// variables, or any variable reference whose name index is absent from");
+    f.line("/// `unit.bindings()`.");
     f.line("pub fn run_grounding_aware<H: crate::enforcement::Hasher>(");
     f.line("    unit: &CompileUnit,");
     f.line("    level: WittLevel,");
     f.line(") -> Result<Validated<GroundingCertificate>, GenericImpossibilityWitness> {");
     f.line("    let witt_bits = level.witt_length() as u16;");
-    f.line("    // v0.2.2 T6.7: thread H: Hasher through fold_unit_digest. Use the unit's");
-    f.line("    // result_type_iri as a stand-in for T::IRI (this resolver does not have a");
-    f.line("    // ConstrainedTypeShape parameter; the grounding is unit-rooted).");
+    f.line("    // v0.2.2 Phase H2: walk root_term enumerating Term::Variable name_indices,");
+    f.line("    // linear-search unit.bindings() for each, reject unresolved variables.");
+    f.line("    let root_term = unit.root_term();");
+    f.line("    let bindings = unit.bindings();");
+    f.line("    let mut ti = 0;");
+    f.line("    while ti < root_term.len() {");
+    f.line("        if let crate::enforcement::Term::Variable { name_index } = root_term[ti] {");
+    f.line("            let mut found = false;");
+    f.line("            let mut bi = 0;");
+    f.line("            while bi < bindings.len() {");
+    f.line("                if bindings[bi].name_index == name_index {");
+    f.line("                    found = true;");
+    f.line("                    break;");
+    f.line("                }");
+    f.line("                bi += 1;");
+    f.line("            }");
+    f.line("            if !found {");
+    f.line("                // SC_5 violation: variable referenced but no matching binding.");
+    f.line("                return Err(GenericImpossibilityWitness::default());");
+    f.line("            }");
+    f.line("        }");
+    f.line("        ti += 1;");
+    f.line("    }");
+    f.line("    // Fold: witt_bits / thermodynamic_budget / result_type_iri / session_signature / Grounding kind.");
     f.line("    let mut hasher = H::initial();");
     f.line("    hasher = hasher.fold_bytes(&witt_bits.to_be_bytes());");
     f.line("    hasher = hasher.fold_bytes(&unit.thermodynamic_budget().to_be_bytes());");
     f.line("    hasher = hasher.fold_bytes(unit.result_type_iri().as_bytes());");
     f.line("    hasher = hasher.fold_byte(0);");
+    f.line("    let (binding_count, fold_addr) =");
+    f.line("        crate::enforcement::primitive_session_binding_signature(bindings);");
+    f.line("    hasher = crate::enforcement::fold_session_signature(hasher, binding_count, fold_addr);");
     f.line("    hasher = hasher.fold_byte(crate::enforcement::certificate_kind_discriminant(");
     f.line("        crate::enforcement::CertificateKind::Grounding,");
     f.line("    ));");
@@ -2347,9 +3078,10 @@ fn emit_resolver_entry_points(f: &mut RustFile, _ontology: &Ontology) {
     f.line("        .map_err(|_| InhabitanceImpossibilityWitness::default())?;");
     f.line("    preflight_dispatch_coverage()");
     f.line("        .map_err(|_| InhabitanceImpossibilityWitness::default())?;");
-    f.line("    preflight_timing()");
+    f.line("    let expected = estimate_preflight_uor_time::<T>(witt_bits);");
+    f.line("    preflight_timing::<crate::enforcement::CanonicalTimingPolicy>(expected)");
     f.line("        .map_err(|_| InhabitanceImpossibilityWitness::default())?;");
-    f.line("    runtime_timing()");
+    f.line("    runtime_timing::<crate::enforcement::CanonicalTimingPolicy>(expected)");
     f.line("        .map_err(|_| InhabitanceImpossibilityWitness::default())?;");
     f.line("    let outcome = run_reduction_stages::<T>(witt_bits)");
     f.line("        .map_err(|_| InhabitanceImpossibilityWitness::default())?;");
@@ -2404,6 +3136,41 @@ fn emit_resolver_entry_points(f: &mut RustFile, _ontology: &Ontology) {
     f.doc_comment("# Errors");
     f.doc_comment("");
     f.doc_comment("Returns `PipelineFailure` on preflight, reduction, or shape-mismatch failure.");
+    f.doc_comment("");
+    f.doc_comment("# Example");
+    f.doc_comment("");
+    f.doc_comment("```no_run");
+    f.doc_comment("use uor_foundation::enforcement::{");
+    f.doc_comment("    CompileUnitBuilder, ConstrainedTypeInput, Term,");
+    f.doc_comment("};");
+    f.doc_comment("use uor_foundation::pipeline::run;");
+    f.doc_comment("use uor_foundation::{VerificationDomain, WittLevel};");
+    f.doc_comment("");
+    f.doc_comment("# struct Fnv1aHasher16; // downstream substrate; see foundation/examples/custom_hasher_substrate.rs");
+    f.doc_comment("# impl uor_foundation::enforcement::Hasher for Fnv1aHasher16 {");
+    f.doc_comment("#     const OUTPUT_BYTES: usize = 16;");
+    f.doc_comment("#     fn initial() -> Self { Self }");
+    f.doc_comment("#     fn fold_byte(self, _: u8) -> Self { self }");
+    f.doc_comment(
+        "#     fn finalize(self) -> [u8; uor_foundation::enforcement::FINGERPRINT_MAX_BYTES] {",
+    );
+    f.doc_comment("#         [0; uor_foundation::enforcement::FINGERPRINT_MAX_BYTES] }");
+    f.doc_comment("# }");
+    f.doc_comment("static TERMS: &[Term] = &[Term::Literal { value: 1, level: WittLevel::W8 }];");
+    f.doc_comment("static DOMAINS: &[VerificationDomain] = &[VerificationDomain::Enumerative];");
+    f.doc_comment("");
+    f.doc_comment("let unit = CompileUnitBuilder::new()");
+    f.doc_comment("    .root_term(TERMS)");
+    f.doc_comment("    .witt_level_ceiling(WittLevel::W32)");
+    f.doc_comment("    .thermodynamic_budget(1024)");
+    f.doc_comment("    .target_domains(DOMAINS)");
+    f.doc_comment("    .result_type::<ConstrainedTypeInput>()");
+    f.doc_comment("    .validate()");
+    f.doc_comment("    .expect(\"unit well-formed\");");
+    f.doc_comment("let grounded = run::<ConstrainedTypeInput, _, Fnv1aHasher16>(unit)");
+    f.doc_comment("    .expect(\"pipeline admits\");");
+    f.doc_comment("# let _ = grounded;");
+    f.doc_comment("```");
     // Phase M.3: `run` returns `Result`, which is already `#[must_use]`.
     f.line("pub fn run<T, P, H>(");
     f.line("    unit: Validated<CompileUnit, P>,");
@@ -2433,9 +3200,10 @@ fn emit_resolver_entry_points(f: &mut RustFile, _ontology: &Ontology) {
     f.line("        .map_err(|report| PipelineFailure::ShapeViolation { report })?;");
     f.line("    preflight_dispatch_coverage()");
     f.line("        .map_err(|report| PipelineFailure::ShapeViolation { report })?;");
-    f.line("    preflight_timing()");
+    f.line("    let expected = estimate_preflight_uor_time::<T>(witt_bits);");
+    f.line("    preflight_timing::<crate::enforcement::CanonicalTimingPolicy>(expected)");
     f.line("        .map_err(|report| PipelineFailure::ShapeViolation { report })?;");
-    f.line("    runtime_timing()");
+    f.line("    runtime_timing::<crate::enforcement::CanonicalTimingPolicy>(expected)");
     f.line("        .map_err(|report| PipelineFailure::ShapeViolation { report })?;");
     f.line("    // v0.2.2 T5 C1: actually call run_reduction_stages and propagate its");
     f.line("    // failure. The previous v0.2.2 path skipped this call entirely,");
@@ -2489,6 +3257,17 @@ fn emit_empty_bindings_table(f: &mut RustFile) {
     f.doc_comment("v0.2.2 T6.9: the empty slice is vacuously sorted, so direct struct");
     f.doc_comment("construction is sound. Public callers with non-empty entries go");
     f.doc_comment("through `BindingsTable::try_new` (validating).");
+    f.doc_comment("");
+    f.doc_comment("# Driver contract");
+    f.doc_comment("");
+    f.doc_comment("Every pipeline driver (`run`, `run_const`, `run_parallel`, `run_stream`,");
+    f.doc_comment("`run_interactive`, `run_inhabitance`) mints `Grounded<T>` with this");
+    f.doc_comment("empty table today: runtime-dynamic binding materialization in");
+    f.doc_comment("`Grounded<T>` requires widening `BindingsTable.entries: &'static [...]`");
+    f.doc_comment("to a non-`'static` carrier (a separate architectural change).");
+    f.doc_comment("Downstream that needs a compile-time binding catalog uses the pattern");
+    f.doc_comment("shown in `foundation/examples/static_bindings_catalog.rs`:");
+    f.doc_comment("`Binding::to_binding_entry()` (const-fn) + `BindingsTable::try_new(&[...])`.");
     f.line("#[must_use]");
     f.line("pub const fn empty_bindings_table() -> BindingsTable {");
     f.line("    BindingsTable { entries: &[] }");
@@ -2498,8 +3277,9 @@ fn emit_empty_bindings_table(f: &mut RustFile) {
     f.line("// this module directly; it's part of the public pipeline surface.");
     f.line("#[allow(dead_code)]");
     f.line("const _BINDING_ENTRY_REF: Option<BindingEntry> = None;");
-    f.line("// Same for CompletenessCertificate — v0.2.1 pipeline does not yet mint");
-    f.line("// these directly; they're consumed by the macros crate.");
+    f.line("// Same for CompletenessCertificate — the pipeline does not mint this subclass");
+    f.line("// directly; Phase D resolvers emit the canonical `GroundingCertificate` carrier");
+    f.line("// and cert-subclass lifts happen in substrate-specific consumers.");
     f.line("#[allow(dead_code)]");
     f.line("const _COMPLETENESS_CERT_REF: Option<CompletenessCertificate> = None;");
     f.blank();
