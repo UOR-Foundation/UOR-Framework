@@ -915,7 +915,7 @@ pub fn preflight_package_coherence(constraints: &[ConstraintRef]) -> Result<(), 
 /// over `shape` at `witt_bits` will consume, without a physical clock. The
 /// bound is `witt_bits × constraint_count` rewrite steps and the matching
 /// Landauer nats at `ln 2` per step. Preflight compares this via
-/// [`UorTime::min_wall_clock`] against the policy's Nanos budget — no
+/// [`UorTime::min_wall_clock`](crate::enforcement::UorTime::min_wall_clock) against the policy's Nanos budget — no
 /// physical clock is consulted.
 #[must_use]
 pub fn estimate_preflight_uor_time<T: ConstrainedTypeShape + ?Sized>(

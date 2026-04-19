@@ -196,12 +196,12 @@ fn generate_datum_types(f: &mut RustFile, ontology: &Ontology) {
          // you never construct one directly.\n\
          fn inspect_datum(d: &uor_foundation::enforcement::Datum) {\n\
          \x20   // Query its Witt level (W8 = 8-bit, W32 = 32-bit, etc.)\n\
-         \x20   let level = d.level();\n\
+         \x20   let _level = d.level();\n\
          \x20   // Datum width is determined by its level:\n\
          \x20   //   W8 → 1 byte,  W16 → 2 bytes,  W24 → 3 bytes,  W32 → 4 bytes.\n\
-         \x20   let bytes = d.as_bytes();\n\
+         \x20   let _bytes = d.as_bytes();\n\
          }",
-        "rust,ignore",
+        "no_run",
     );
     f.line("#[derive(Debug, Clone, PartialEq, Eq)]");
     f.line("pub struct Datum {");
@@ -629,13 +629,10 @@ fn generate_grounding_types(f: &mut RustFile, ontology: &Ontology) {
          \x20   fn program(&self) -> GroundingProgram<GroundedCoord, BinaryGroundingMap> {\n\
          \x20       GroundingProgram::from_primitive(combinators::read_bytes::<GroundedCoord>())\n\
          \x20   }\n\
-         \n\
-         \x20   fn ground(&self, external: &[u8]) -> Option<GroundedCoord> {\n\
-         \x20       // Foundation-supplied interpreter for GroundedCoord outputs.\n\
-         \x20       self.program().run(external)\n\
-         \x20   }\n\
+         \x20   // Foundation supplies `ground()` via the sealed `GroundingExt`\n\
+         \x20   // extension trait — downstream implementers provide only `program()`.\n\
          }",
-        "rust,ignore",
+        "no_run",
     );
     f.line("pub trait Grounding {");
     f.indented_doc_comment(
@@ -771,14 +768,14 @@ fn generate_grounding_types(f: &mut RustFile, ontology: &Ontology) {
          \x20   type Output = String;\n\
          \n\
          \x20   fn project(&self, grounded: &Grounded<ConstrainedTypeInput>) -> String {\n\
-         \x20       format!(\"{{:?}}\", grounded.unit_address())\n\
+         \x20       format!(\"{:?}\", grounded.unit_address())\n\
          \x20   }\n\
          }",
-        "rust,ignore",
+        "no_run",
     );
     f.line("pub trait Sinking {");
     f.indented_doc_comment(
-        "The ring-side shape T carried by the Grounded<T> being projected.\n\
+        "The ring-side shape `T` carried by the `Grounded<T>` being projected.\n\
          Sealed via `GroundedShape` — downstream cannot forge an admissible Source.",
     );
     f.line("    type Source: GroundedShape;");
@@ -878,7 +875,7 @@ fn generate_witness_types(f: &mut RustFile) {
     f.doc_comment("witnessed by `validate()`. A `CompileTime` witness is convertible to");
     f.doc_comment("a `Runtime` witness via `From`.");
     f.doc_example(
-        "use uor_foundation::enforcement::{CompileUnitBuilder, Term};\n\
+        "use uor_foundation::enforcement::{CompileUnitBuilder, ConstrainedTypeInput, Term};\n\
          use uor_foundation::{WittLevel, VerificationDomain};\n\
          \n\
          // Validated<T> proves that a value passed conformance checking.\n\
@@ -892,12 +889,13 @@ fn generate_witness_types(f: &mut RustFile) {
          \x20   .witt_level_ceiling(WittLevel::W8)\n\
          \x20   .thermodynamic_budget(1024)\n\
          \x20   .target_domains(&domains)\n\
+         \x20   .result_type::<ConstrainedTypeInput>()\n\
          \x20   .validate()\n\
          \x20   .expect(\"all fields set\");\n\
          \n\
          // Access the inner value through the proof wrapper:\n\
-         let compile_unit = validated.inner();",
-        "rust,ignore",
+         let _compile_unit = validated.inner();",
+        "no_run",
     );
     f.line("#[derive(Debug, Clone, PartialEq, Eq)]");
     f.line("pub struct Validated<T, Phase: ValidationPhase = Runtime> {");
@@ -5284,7 +5282,7 @@ fn generate_grounded_wrapper(f: &mut RustFile) {
     f.indented_doc_comment("");
     f.indented_doc_comment("The round-trip property:");
     f.indented_doc_comment("");
-    f.indented_doc_comment("```ignore");
+    f.indented_doc_comment("```text");
     f.indented_doc_comment("verify_trace(&grounded.derivation().replay()).certificate()");
     f.indented_doc_comment("    == grounded.certificate()");
     f.indented_doc_comment("```");
@@ -9470,7 +9468,7 @@ fn generate_bridge_namespace_surface(f: &mut RustFile) {
     f.indented_doc_comment("For every `Grounded<T>` produced by `pipeline::run::<T, _, H>` with");
     f.indented_doc_comment("a conforming substrate `H: Hasher`:");
     f.indented_doc_comment("");
-    f.indented_doc_comment("```ignore");
+    f.indented_doc_comment("```text");
     f.indented_doc_comment("verify_trace(&grounded.derivation().replay()).certificate()");
     f.indented_doc_comment("    == grounded.certificate()");
     f.indented_doc_comment("```");

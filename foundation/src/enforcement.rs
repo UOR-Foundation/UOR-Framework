@@ -77,15 +77,15 @@ pub(crate) enum DatumInner {
 /// or the two-phase minting boundary (`validate_and_mint_coord` /
 /// `validate_and_mint_tuple`).
 /// # Examples
-/// ```rust,ignore
+/// ```no_run
 /// // A Datum is produced by reduction evaluation or the minting boundary —
 /// // you never construct one directly.
 /// fn inspect_datum(d: &uor_foundation::enforcement::Datum) {
 ///     // Query its Witt level (W8 = 8-bit, W32 = 32-bit, etc.)
-///     let level = d.level();
+///     let _level = d.level();
 ///     // Datum width is determined by its level:
 ///     //   W8 → 1 byte,  W16 → 2 bytes,  W24 → 3 bytes,  W32 → 4 bytes.
-///     let bytes = d.as_bytes();
+///     let _bytes = d.as_bytes();
 /// }
 /// ```
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -680,7 +680,7 @@ impl Invertible for BinaryProjectionMap {}
 /// that require structure preservation gate on `<G as Grounding>::Map: PreservesStructure`,
 /// and a digest-style impl is rejected at the call site.
 /// # Examples
-/// ```rust,ignore
+/// ```no_run
 /// use uor_foundation::enforcement::{
 ///     Grounding, GroundedCoord, GroundingProgram, BinaryGroundingMap, combinators,
 /// };
@@ -698,11 +698,8 @@ impl Invertible for BinaryProjectionMap {}
 ///     fn program(&self) -> GroundingProgram<GroundedCoord, BinaryGroundingMap> {
 ///         GroundingProgram::from_primitive(combinators::read_bytes::<GroundedCoord>())
 ///     }
-///
-///     fn ground(&self, external: &[u8]) -> Option<GroundedCoord> {
-///         // Foundation-supplied interpreter for GroundedCoord outputs.
-///         self.program().run(external)
-///     }
+///     // Foundation supplies `ground()` via the sealed `GroundingExt`
+///     // extension trait — downstream implementers provide only `program()`.
 /// }
 /// ```
 pub trait Grounding {
@@ -797,7 +794,7 @@ where
 /// laundered through this contract. Downstream authors implement `Sinking`
 /// for their projection types; the foundation guarantees the input pedigree.
 /// # Examples
-/// ```rust,ignore
+/// ```no_run
 /// use uor_foundation::enforcement::{
 ///     Grounded, Sinking, Utf8ProjectionMap, ConstrainedTypeInput,
 /// };
@@ -810,12 +807,12 @@ where
 ///     type Output = String;
 ///
 ///     fn project(&self, grounded: &Grounded<ConstrainedTypeInput>) -> String {
-///         format!("{{:?}}", grounded.unit_address())
+///         format!("{:?}", grounded.unit_address())
 ///     }
 /// }
 /// ```
 pub trait Sinking {
-    /// The ring-side shape T carried by the Grounded<T> being projected.
+    /// The ring-side shape `T` carried by the `Grounded<T>` being projected.
     /// Sealed via `GroundedShape` — downstream cannot forge an admissible Source.
     type Source: GroundedShape;
 
@@ -887,8 +884,8 @@ impl ValidationPhase for Runtime {}
 /// witnessed by `validate()`. A `CompileTime` witness is convertible to
 /// a `Runtime` witness via `From`.
 /// # Examples
-/// ```rust,ignore
-/// use uor_foundation::enforcement::{CompileUnitBuilder, Term};
+/// ```no_run
+/// use uor_foundation::enforcement::{CompileUnitBuilder, ConstrainedTypeInput, Term};
 /// use uor_foundation::{WittLevel, VerificationDomain};
 ///
 /// // Validated<T> proves that a value passed conformance checking.
@@ -902,11 +899,12 @@ impl ValidationPhase for Runtime {}
 ///     .witt_level_ceiling(WittLevel::W8)
 ///     .thermodynamic_budget(1024)
 ///     .target_domains(&domains)
+///     .result_type::<ConstrainedTypeInput>()
 ///     .validate()
 ///     .expect("all fields set");
 ///
 /// // Access the inner value through the proof wrapper:
-/// let compile_unit = validated.inner();
+/// let _compile_unit = validated.inner();
 /// ```
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Validated<T, Phase: ValidationPhase = Runtime> {
@@ -7472,7 +7470,7 @@ impl<T: GroundedShape, Tag> Grounded<T, Tag> {
     /// then `uor_foundation_verify::verify_trace` to re-derive the source
     /// certificate without re-running the deciders.
     /// The round-trip property:
-    /// ```ignore
+    /// ```text
     /// verify_trace(&grounded.derivation().replay()).certificate()
     ///     == grounded.certificate()
     /// ```
@@ -15164,7 +15162,7 @@ pub mod replay {
     /// # Round-trip property
     /// For every `Grounded<T>` produced by `pipeline::run::<T, _, H>` with
     /// a conforming substrate `H: Hasher`:
-    /// ```ignore
+    /// ```text
     /// verify_trace(&grounded.derivation().replay()).certificate()
     ///     == grounded.certificate()
     /// ```

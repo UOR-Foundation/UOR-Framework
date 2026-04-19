@@ -37,7 +37,7 @@
 //! vary across host environments. Witt-level integers, booleans, IRIs, canonical
 //! bytes, and `UorTime` are foundation-owned and derived from `WittLevel`.
 //!
-//! ```rust,ignore
+//! ```no_run
 //! use uor_foundation::{HostTypes, DefaultHostTypes};
 //!
 //! // Use the canonical defaults: f64 / str / [u8].

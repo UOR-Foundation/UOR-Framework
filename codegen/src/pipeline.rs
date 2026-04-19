@@ -2544,7 +2544,10 @@ fn emit_preflight_checks(f: &mut RustFile, ontology: &Ontology) {
     f.doc_comment("over `shape` at `witt_bits` will consume, without a physical clock. The");
     f.doc_comment("bound is `witt_bits \u{00d7} constraint_count` rewrite steps and the matching");
     f.doc_comment("Landauer nats at `ln 2` per step. Preflight compares this via");
-    f.doc_comment("[`UorTime::min_wall_clock`] against the policy's Nanos budget \u{2014} no");
+    f.doc_comment(
+        "[`UorTime::min_wall_clock`](crate::enforcement::UorTime::min_wall_clock) \
+         against the policy's Nanos budget \u{2014} no",
+    );
     f.doc_comment("physical clock is consulted.");
     f.line("#[must_use]");
     f.line("pub fn estimate_preflight_uor_time<T: ConstrainedTypeShape + ?Sized>(");

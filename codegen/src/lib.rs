@@ -235,7 +235,7 @@ fn generate_lib_rs(ontology: &Ontology) -> String {
          //! vary across host environments. Witt-level integers, booleans, IRIs, canonical\n\
          //! bytes, and `UorTime` are foundation-owned and derived from `WittLevel`.\n\
          //!\n\
-         //! ```rust,ignore\n\
+         //! ```no_run\n\
          //! use uor_foundation::{{HostTypes, DefaultHostTypes}};\n\
          //!\n\
          //! // Use the canonical defaults: f64 / str / [u8].\n\
