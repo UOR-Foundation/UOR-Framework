@@ -1,1 +1,5 @@
-{"version": "1.1.0", "packagesDir": ".lake/packages", "packages": [], "name": "uor", "lakeDir": ".lake"}
+{"version": "1.1.0",
+ "packagesDir": ".lake/packages",
+ "packages": [],
+ "name": "uor",
+ "lakeDir": ".lake"}
