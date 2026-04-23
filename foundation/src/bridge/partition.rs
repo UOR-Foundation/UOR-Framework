@@ -38,6 +38,12 @@ pub trait Partition<H: HostTypes> {
     fn site_budget(&self) -> &Self::FreeRank;
     /// Whether the four components of this partition are exhaustive over R_n: |Irr| + |Red| + |Unit| + |Ext| = 2^n (FPM_8). Set by the kernel after verification.
     fn is_exhaustive(&self) -> bool;
+    /// Associated type for `TagSite`.
+    type TagSite: TagSite<H>;
+    /// The tag site distinguishing the variants of a PartitionCoproduct. Logically distinct from every data site of either operand (ST_6) and carries the ln 2 entropy quantum of ST_2.
+    fn tag_site_of(&self) -> &Self::TagSite;
+    /// The categorical level at which this construction is a product / coproduct. Values: 'partition_classification' (PartitionProduct, PartitionCoproduct), or 'nerve_topology' (CartesianPartitionProduct). Prevents misreading the product vs coproduct distinction across levels.
+    fn product_category_level(&self) -> &H::HostString;
 }
 
 /// A single component of a partition: a set of datum values belonging to one of the four categories.
@@ -121,25 +127,42 @@ pub trait SiteBinding<H: HostTypes> {
 }
 
 /// The tensor product of two partitions: partition(A × B) = partition(A) ⊗ partition(B). The four-component structure combines component-wise under the product type construction (PT_2a). Carries leftFactor and rightFactor links to the operand partitions.
-/// Disjoint with: PartitionCoproduct.
+/// Disjoint with: PartitionCoproduct, CartesianPartitionProduct.
 pub trait PartitionProduct<H: HostTypes> {
     /// Associated type for `Partition`.
     type Partition: Partition<H>;
     /// The left operand partition of this tensor product.
-    fn left_factor(&self) -> &Self::Partition;
+    fn left_factor(&self) -> Self::Partition;
     /// The right operand partition of this tensor product.
-    fn right_factor(&self) -> &Self::Partition;
+    fn right_factor(&self) -> Self::Partition;
 }
 
 /// The coproduct (disjoint union) of two partitions: partition(A + B) = partition(A) ⊕ partition(B). The four-component structure combines via disjoint union under the sum type construction (PT_2b). Carries leftSummand and rightSummand links to the operand partitions.
-/// Disjoint with: PartitionProduct.
+/// Disjoint with: PartitionProduct, CartesianPartitionProduct.
 pub trait PartitionCoproduct<H: HostTypes> {
     /// Associated type for `Partition`.
     type Partition: Partition<H>;
     /// The left operand partition of this coproduct.
-    fn left_summand(&self) -> &Self::Partition;
+    fn left_summand(&self) -> Self::Partition;
     /// The right operand partition of this coproduct.
-    fn right_summand(&self) -> &Self::Partition;
+    fn right_summand(&self) -> Self::Partition;
+}
+
+/// The Cartesian product of partitions. Classifies the nerve topology of A ⊠ B as a simplicial product (χ multiplicative per CPT_3, Betti by Künneth per CPT_4) rather than a site-disjoint union (χ additive — PartitionProduct). Site budget is |S_A| + |S_B| per CPT_1 — the bit width of the product state space. Partition-ness is asserted via leftCartesianFactor / rightCartesianFactor (both ranged at Partition), matching the sibling pattern for PartitionProduct and PartitionCoproduct. Satisfies CPT_1–CPT_6 per this amendment.
+/// Disjoint with: PartitionProduct, PartitionCoproduct.
+pub trait CartesianPartitionProduct<H: HostTypes> {
+    /// Associated type for `Partition`.
+    type Partition: Partition<H>;
+    /// The left operand partition of this Cartesian partition product.
+    fn left_cartesian_factor(&self) -> Self::Partition;
+    /// The right operand partition of this Cartesian partition product.
+    fn right_cartesian_factor(&self) -> Self::Partition;
+}
+
+/// The distinguishing site in a PartitionCoproduct whose value (0 or 1) selects the variant. Logically, the tag is not a data site of either operand (ST_6) and carries exactly the ln 2 entropy quantum (ST_2). Its physical placement in a flat constraint layout follows the foundation layout convention: layoutTagSite = max(SITE_COUNT(A), SITE_COUNT(B)), so the tag does not collide with any inherited bookkeeping sites when operands are themselves coproducts.
+pub trait TagSite<H: HostTypes>: SiteIndex<H> {
+    /// The boolean value (false = 0, true = 1) assigned to a tag site. false selects the left variant of the PartitionCoproduct; true selects the right variant.
+    fn tag_value(&self) -> bool;
 }
 
 /// Observes the free-rank of the partition associated with a Datum's site context, recording the count of unbound sites at the moment of observation. Used as the bound observable for the siteConstraintKind BoundConstraint.

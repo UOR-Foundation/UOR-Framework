@@ -18,7 +18,7 @@
 //!   `Certify`, `PipelineFailure`, `RingOp<L>`, fragment markers,
 //!   `INHABITANCE_DISPATCH_TABLE`, and the `prelude` module.
 
-use crate::{PrimitiveOp, VerificationDomain, ViolationKind, WittLevel};
+use crate::{HostTypes, MetricAxis, PrimitiveOp, VerificationDomain, ViolationKind, WittLevel};
 use core::marker::PhantomData;
 
 /// Private sealed module preventing downstream implementations.
@@ -4664,9 +4664,41 @@ impl PartitionCertificate {
 }
 
 /// Sealed shim for `proof:ImpossibilityWitness`. Returned by completeness and grounding resolvers on failure.
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct GenericImpossibilityWitness {
-    _private: (),
+    /// Optional theorem / invariant IRI identifying the failed identity.
+    /// `None` for legacy call sites minting via `Default::default()`;
+    /// `Some(iri)` when the witness is constructed via `for_identity`
+    /// (Product/Coproduct Completion Amendment §2.3a).
+    identity: Option<&'static str>,
+}
+
+impl Default for GenericImpossibilityWitness {
+    #[inline]
+    fn default() -> Self {
+        Self { identity: None }
+    }
+}
+
+impl GenericImpossibilityWitness {
+    /// Construct a witness citing a specific theorem / invariant IRI.
+    /// Introduced by the Product/Coproduct Completion Amendment §2.3a
+    /// so mint primitives can emit typed failures against `op/*` theorems
+    /// and `foundation/*` layout invariants.
+    #[inline]
+    #[must_use]
+    pub const fn for_identity(identity: &'static str) -> Self {
+        Self {
+            identity: Some(identity),
+        }
+    }
+
+    /// Returns the theorem / invariant IRI this witness cites, if any.
+    #[inline]
+    #[must_use]
+    pub const fn identity(&self) -> Option<&'static str> {
+        self.identity
+    }
 }
 
 /// Sealed shim for `proof:InhabitanceImpossibilityWitness` (v0.2.1).
@@ -4683,7 +4715,10 @@ pub struct ConstrainedTypeInput {
 
 impl core::fmt::Display for GenericImpossibilityWitness {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        f.write_str("GenericImpossibilityWitness")
+        match self.identity {
+            Some(iri) => write!(f, "GenericImpossibilityWitness({iri})"),
+            None => f.write_str("GenericImpossibilityWitness"),
+        }
     }
 }
 impl core::error::Error for GenericImpossibilityWitness {}
@@ -4727,6 +4762,9 @@ mod ontology_target_sealed {
     impl Sealed for super::GenericImpossibilityWitness {}
     impl Sealed for super::InhabitanceImpossibilityWitness {}
     impl Sealed for super::ConstrainedTypeInput {}
+    impl Sealed for super::PartitionProductWitness {}
+    impl Sealed for super::PartitionCoproductWitness {}
+    impl Sealed for super::CartesianProductWitness {}
     impl Sealed for super::CompileUnit<'_> {}
 }
 
@@ -4739,6 +4777,9 @@ impl OntologyTarget for PartitionCertificate {}
 impl OntologyTarget for GenericImpossibilityWitness {}
 impl OntologyTarget for InhabitanceImpossibilityWitness {}
 impl OntologyTarget for ConstrainedTypeInput {}
+impl OntologyTarget for PartitionProductWitness {}
+impl OntologyTarget for PartitionCoproductWitness {}
+impl OntologyTarget for CartesianProductWitness {}
 impl OntologyTarget for CompileUnit<'_> {}
 
 /// v0.2.2 W11: supporting evidence type for `CompletenessCertificate`.
@@ -5135,6 +5176,9 @@ mod certificate_sealed {
     impl Sealed for super::PartitionCertificate {}
     impl Sealed for super::GenericImpossibilityWitness {}
     impl Sealed for super::InhabitanceImpossibilityWitness {}
+    impl Sealed for super::PartitionProductWitness {}
+    impl Sealed for super::PartitionCoproductWitness {}
+    impl Sealed for super::CartesianProductWitness {}
 }
 
 impl Certificate for GroundingCertificate {
@@ -16663,6 +16707,1545 @@ pub mod __test_helpers {
     #[must_use]
     pub fn validated_runtime<T>(inner: T) -> Validated<T> {
         Validated::new(inner)
+    }
+}
+
+/// Tolerance for `f64` entropy equality checks in the Product/Coproduct
+/// Completion Amendment mint primitives. Returns an absolute-error bound
+/// scaled to the magnitude of `expected`, so PT_4 / ST_2 / CPT_5
+/// verifications are robust to floating-point rounding accumulated through
+/// Künneth products and componentwise sums.
+#[inline]
+const fn pc_entropy_tolerance(expected: f64) -> f64 {
+    let magnitude = if expected < 0.0 { -expected } else { expected };
+    let scale = if magnitude > 1.0 { magnitude } else { 1.0 };
+    1024.0 * f64::EPSILON * scale
+}
+
+/// Validate an entropy value before participating in additivity checks.
+/// Rejects NaN, ±∞, and negative values — the foundation's
+/// `primitive_descent_metrics` produces `residual × LN_2` with
+/// `residual: u32`, so valid entropies are non-negative finite f64.
+#[inline]
+fn pc_entropy_input_is_valid(value: f64) -> bool {
+    value.is_finite() && value >= 0.0
+}
+
+/// Check that `actual` matches `expected` within tolerance and that both
+/// inputs are valid entropy values. Returns `false` if either input is
+/// non-finite, negative, or differs from `expected` by more than
+/// `pc_entropy_tolerance(expected)`.
+#[inline]
+fn pc_entropy_additivity_holds(actual: f64, expected: f64) -> bool {
+    if !pc_entropy_input_is_valid(actual) || !pc_entropy_input_is_valid(expected) {
+        return false;
+    }
+    let diff = actual - expected;
+    let diff_abs = if diff < 0.0 { -diff } else { diff };
+    diff_abs <= pc_entropy_tolerance(expected)
+}
+
+/// Evidence bundle for `PartitionProductWitness`. Carries the PT_1 / PT_3 /
+/// PT_4 input values used at mint time. Derives `PartialEq` only because
+/// `f64` entropy fields exclude `Eq` / `Hash`; this is the auditing surface,
+/// not a hash-map key.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct PartitionProductEvidence {
+    /// Left operand `siteBudget` (data sites only, PT_1 input).
+    pub left_site_budget: u16,
+    /// Right operand `siteBudget`.
+    pub right_site_budget: u16,
+    /// Left operand `SITE_COUNT` (layout width, layout-invariant input).
+    pub left_total_site_count: u16,
+    /// Right operand `SITE_COUNT`.
+    pub right_total_site_count: u16,
+    /// Left operand Euler characteristic (PT_3 input).
+    pub left_euler: i32,
+    /// Right operand Euler characteristic.
+    pub right_euler: i32,
+    /// Left operand entropy in nats (PT_4 input).
+    pub left_entropy_nats: f64,
+    /// Right operand entropy in nats.
+    pub right_entropy_nats: f64,
+    /// Fingerprint of the source witness the evidence belongs to.
+    pub source_witness_fingerprint: ContentFingerprint,
+}
+
+/// Evidence bundle for `PartitionCoproductWitness`. Carries the
+/// ST_1 / ST_2 / ST_9 / ST_10 input values used at mint time.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct PartitionCoproductEvidence {
+    pub left_site_budget: u16,
+    pub right_site_budget: u16,
+    pub left_total_site_count: u16,
+    pub right_total_site_count: u16,
+    pub left_euler: i32,
+    pub right_euler: i32,
+    pub left_entropy_nats: f64,
+    pub right_entropy_nats: f64,
+    pub left_betti: [u32; MAX_BETTI_DIMENSION],
+    pub right_betti: [u32; MAX_BETTI_DIMENSION],
+    pub source_witness_fingerprint: ContentFingerprint,
+}
+
+/// Evidence bundle for `CartesianProductWitness`. Carries the
+/// CPT_1 / CPT_3 / CPT_4 / CPT_5 input values used at mint time, plus
+/// `combined_entropy_nats` — the CartesianProductWitness itself does not
+/// store entropy (see §1a), so the evidence sidecar preserves the
+/// verification target value for re-audit.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct CartesianProductEvidence {
+    pub left_site_budget: u16,
+    pub right_site_budget: u16,
+    pub left_total_site_count: u16,
+    pub right_total_site_count: u16,
+    pub left_euler: i32,
+    pub right_euler: i32,
+    pub left_betti: [u32; MAX_BETTI_DIMENSION],
+    pub right_betti: [u32; MAX_BETTI_DIMENSION],
+    pub left_entropy_nats: f64,
+    pub right_entropy_nats: f64,
+    pub combined_entropy_nats: f64,
+    pub source_witness_fingerprint: ContentFingerprint,
+}
+
+/// Inputs to `PartitionProductWitness::mint_verified`. Mirrors the
+/// underlying primitive's parameter list; each field is supplied by the
+/// caller (typically a `product_shape!` macro expansion or a manual
+/// construction following the amendment's Gap 2 pattern). Derives
+/// `PartialEq` only because of the `f64` entropy fields.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct PartitionProductMintInputs {
+    pub witt_bits: u16,
+    pub left_fingerprint: ContentFingerprint,
+    pub right_fingerprint: ContentFingerprint,
+    pub left_site_budget: u16,
+    pub right_site_budget: u16,
+    pub left_total_site_count: u16,
+    pub right_total_site_count: u16,
+    pub left_euler: i32,
+    pub right_euler: i32,
+    pub left_entropy_nats: f64,
+    pub right_entropy_nats: f64,
+    pub combined_site_budget: u16,
+    pub combined_site_count: u16,
+    pub combined_euler: i32,
+    pub combined_entropy_nats: f64,
+    pub combined_fingerprint: ContentFingerprint,
+}
+
+/// Inputs to `PartitionCoproductWitness::mint_verified`. Adds three
+/// structural fields beyond the other two MintInputs: the combined
+/// constraint array, the boundary index between L and R regions, and the
+/// tag site layout index. These feed `validate_coproduct_structure` at
+/// mint time so ST_6 / ST_7 / ST_8 are verified numerically rather than
+/// trusted from the caller.
+/// Derives `Debug`, `Clone`, `Copy` only — no `PartialEq`. `ConstraintRef`
+/// does not implement `PartialEq`, so deriving equality on a struct with a
+/// `&[ConstraintRef]` field would not compile. MintInputs is not used as
+/// an equality target in practice; downstream consumers compare the minted
+/// witness (which derives `Eq` + `Hash`) instead.
+#[derive(Debug, Clone, Copy)]
+pub struct PartitionCoproductMintInputs {
+    pub witt_bits: u16,
+    pub left_fingerprint: ContentFingerprint,
+    pub right_fingerprint: ContentFingerprint,
+    pub left_site_budget: u16,
+    pub right_site_budget: u16,
+    pub left_total_site_count: u16,
+    pub right_total_site_count: u16,
+    pub left_euler: i32,
+    pub right_euler: i32,
+    pub left_entropy_nats: f64,
+    pub right_entropy_nats: f64,
+    pub left_betti: [u32; MAX_BETTI_DIMENSION],
+    pub right_betti: [u32; MAX_BETTI_DIMENSION],
+    pub combined_site_budget: u16,
+    pub combined_site_count: u16,
+    pub combined_euler: i32,
+    pub combined_entropy_nats: f64,
+    pub combined_betti: [u32; MAX_BETTI_DIMENSION],
+    pub combined_fingerprint: ContentFingerprint,
+    pub combined_constraints: &'static [crate::pipeline::ConstraintRef],
+    pub left_constraint_count: usize,
+    pub tag_site: u16,
+}
+
+/// Inputs to `CartesianProductWitness::mint_verified`. Matches the
+/// CartesianProduct mint primitive's parameter list.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct CartesianProductMintInputs {
+    pub witt_bits: u16,
+    pub left_fingerprint: ContentFingerprint,
+    pub right_fingerprint: ContentFingerprint,
+    pub left_site_budget: u16,
+    pub right_site_budget: u16,
+    pub left_total_site_count: u16,
+    pub right_total_site_count: u16,
+    pub left_euler: i32,
+    pub right_euler: i32,
+    pub left_betti: [u32; MAX_BETTI_DIMENSION],
+    pub right_betti: [u32; MAX_BETTI_DIMENSION],
+    pub left_entropy_nats: f64,
+    pub right_entropy_nats: f64,
+    pub combined_site_budget: u16,
+    pub combined_site_count: u16,
+    pub combined_euler: i32,
+    pub combined_betti: [u32; MAX_BETTI_DIMENSION],
+    pub combined_entropy_nats: f64,
+    pub combined_fingerprint: ContentFingerprint,
+}
+
+/// Sealed PartitionProduct witness — content-addressed assertion that a
+/// partition decomposes as `PartitionProduct(left, right)` per PT_2a.
+/// Minting is gated on PT_1, PT_3, PT_4, and the foundation
+/// `ProductLayoutWidth` invariant being verified against component
+/// shapes. Existence of an instance is the attestation — there is no
+/// partial or unverified form.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct PartitionProductWitness {
+    witt_bits: u16,
+    content_fingerprint: ContentFingerprint,
+    left_fingerprint: ContentFingerprint,
+    right_fingerprint: ContentFingerprint,
+    combined_site_budget: u16,
+    combined_site_count: u16,
+}
+
+impl PartitionProductWitness {
+    /// Witt level at which the witness was minted.
+    #[inline]
+    #[must_use]
+    pub const fn witt_bits(&self) -> u16 {
+        self.witt_bits
+    }
+    /// Content fingerprint of the combined (A × B) shape.
+    #[inline]
+    #[must_use]
+    pub const fn content_fingerprint(&self) -> ContentFingerprint {
+        self.content_fingerprint
+    }
+    /// Content fingerprint of the left factor A.
+    #[inline]
+    #[must_use]
+    pub const fn left_fingerprint(&self) -> ContentFingerprint {
+        self.left_fingerprint
+    }
+    /// Content fingerprint of the right factor B.
+    #[inline]
+    #[must_use]
+    pub const fn right_fingerprint(&self) -> ContentFingerprint {
+        self.right_fingerprint
+    }
+    /// `siteBudget(A × B)` per PT_1.
+    #[inline]
+    #[must_use]
+    pub const fn combined_site_budget(&self) -> u16 {
+        self.combined_site_budget
+    }
+    /// `SITE_COUNT(A × B)` — the foundation layout width.
+    #[inline]
+    #[must_use]
+    pub const fn combined_site_count(&self) -> u16 {
+        self.combined_site_count
+    }
+    /// Crate-internal mint entry. Only the verified mint primitive may call this.
+    #[inline]
+    #[must_use]
+    #[allow(clippy::too_many_arguments)]
+    pub(crate) const fn with_level_fingerprints_and_sites(
+        witt_bits: u16,
+        content_fingerprint: ContentFingerprint,
+        left_fingerprint: ContentFingerprint,
+        right_fingerprint: ContentFingerprint,
+        combined_site_budget: u16,
+        combined_site_count: u16,
+    ) -> Self {
+        Self {
+            witt_bits,
+            content_fingerprint,
+            left_fingerprint,
+            right_fingerprint,
+            combined_site_budget,
+            combined_site_count,
+        }
+    }
+}
+
+/// Sealed PartitionCoproduct witness — content-addressed assertion that a
+/// partition decomposes as `PartitionCoproduct(left, right)` per PT_2b.
+/// Minting verifies ST_1, ST_2, ST_6, ST_7, ST_8, ST_9, ST_10, the
+/// foundation `CoproductLayoutWidth` invariant, and — for ST_6/ST_7/ST_8 —
+/// walks the supplied constraint array through `validate_coproduct_structure`.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct PartitionCoproductWitness {
+    witt_bits: u16,
+    content_fingerprint: ContentFingerprint,
+    left_fingerprint: ContentFingerprint,
+    right_fingerprint: ContentFingerprint,
+    combined_site_budget: u16,
+    combined_site_count: u16,
+    tag_site_index: u16,
+}
+
+impl PartitionCoproductWitness {
+    #[inline]
+    #[must_use]
+    pub const fn witt_bits(&self) -> u16 {
+        self.witt_bits
+    }
+    #[inline]
+    #[must_use]
+    pub const fn content_fingerprint(&self) -> ContentFingerprint {
+        self.content_fingerprint
+    }
+    #[inline]
+    #[must_use]
+    pub const fn left_fingerprint(&self) -> ContentFingerprint {
+        self.left_fingerprint
+    }
+    #[inline]
+    #[must_use]
+    pub const fn right_fingerprint(&self) -> ContentFingerprint {
+        self.right_fingerprint
+    }
+    /// `siteBudget(A + B)` per ST_1 = max(siteBudget(A), siteBudget(B)).
+    #[inline]
+    #[must_use]
+    pub const fn combined_site_budget(&self) -> u16 {
+        self.combined_site_budget
+    }
+    /// `SITE_COUNT(A + B)` — the foundation layout width including the new tag site.
+    #[inline]
+    #[must_use]
+    pub const fn combined_site_count(&self) -> u16 {
+        self.combined_site_count
+    }
+    /// Index of the tag site in the layout convention of §4b'.
+    /// Equals `max(SITE_COUNT(A), SITE_COUNT(B))`.
+    #[inline]
+    #[must_use]
+    pub const fn tag_site_index(&self) -> u16 {
+        self.tag_site_index
+    }
+    #[inline]
+    #[must_use]
+    #[allow(clippy::too_many_arguments)]
+    pub(crate) const fn with_level_fingerprints_sites_and_tag(
+        witt_bits: u16,
+        content_fingerprint: ContentFingerprint,
+        left_fingerprint: ContentFingerprint,
+        right_fingerprint: ContentFingerprint,
+        combined_site_budget: u16,
+        combined_site_count: u16,
+        tag_site_index: u16,
+    ) -> Self {
+        Self {
+            witt_bits,
+            content_fingerprint,
+            left_fingerprint,
+            right_fingerprint,
+            combined_site_budget,
+            combined_site_count,
+            tag_site_index,
+        }
+    }
+}
+
+/// Sealed CartesianPartitionProduct witness — content-addressed
+/// assertion that a shape is `CartesianPartitionProduct(left, right)`
+/// per CPT_2a. Minting verifies CPT_1, CPT_3, CPT_4, CPT_5, and the
+/// foundation `CartesianLayoutWidth` invariant. The witness stores
+/// a snapshot of the combined topological invariants (χ, Betti profile)
+/// because the construction is axiomatic at the invariant level per §3c.
+/// Entropy is not stored here (f64 has no Eq/Hash); use the paired
+/// `CartesianProductEvidence` for entropy re-audit.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct CartesianProductWitness {
+    witt_bits: u16,
+    content_fingerprint: ContentFingerprint,
+    left_fingerprint: ContentFingerprint,
+    right_fingerprint: ContentFingerprint,
+    combined_site_budget: u16,
+    combined_site_count: u16,
+    combined_euler: i32,
+    combined_betti: [u32; MAX_BETTI_DIMENSION],
+}
+
+impl CartesianProductWitness {
+    #[inline]
+    #[must_use]
+    pub const fn witt_bits(&self) -> u16 {
+        self.witt_bits
+    }
+    #[inline]
+    #[must_use]
+    pub const fn content_fingerprint(&self) -> ContentFingerprint {
+        self.content_fingerprint
+    }
+    #[inline]
+    #[must_use]
+    pub const fn left_fingerprint(&self) -> ContentFingerprint {
+        self.left_fingerprint
+    }
+    #[inline]
+    #[must_use]
+    pub const fn right_fingerprint(&self) -> ContentFingerprint {
+        self.right_fingerprint
+    }
+    #[inline]
+    #[must_use]
+    pub const fn combined_site_budget(&self) -> u16 {
+        self.combined_site_budget
+    }
+    #[inline]
+    #[must_use]
+    pub const fn combined_site_count(&self) -> u16 {
+        self.combined_site_count
+    }
+    #[inline]
+    #[must_use]
+    pub const fn combined_euler(&self) -> i32 {
+        self.combined_euler
+    }
+    #[inline]
+    #[must_use]
+    pub const fn combined_betti(&self) -> [u32; MAX_BETTI_DIMENSION] {
+        self.combined_betti
+    }
+    #[inline]
+    #[must_use]
+    #[allow(clippy::too_many_arguments)]
+    pub(crate) const fn with_level_fingerprints_and_invariants(
+        witt_bits: u16,
+        content_fingerprint: ContentFingerprint,
+        left_fingerprint: ContentFingerprint,
+        right_fingerprint: ContentFingerprint,
+        combined_site_budget: u16,
+        combined_site_count: u16,
+        combined_euler: i32,
+        combined_betti: [u32; MAX_BETTI_DIMENSION],
+    ) -> Self {
+        Self {
+            witt_bits,
+            content_fingerprint,
+            left_fingerprint,
+            right_fingerprint,
+            combined_site_budget,
+            combined_site_count,
+            combined_euler,
+            combined_betti,
+        }
+    }
+}
+
+impl Certificate for PartitionProductWitness {
+    const IRI: &'static str = "https://uor.foundation/partition/PartitionProduct";
+    type Evidence = PartitionProductEvidence;
+}
+
+impl Certificate for PartitionCoproductWitness {
+    const IRI: &'static str = "https://uor.foundation/partition/PartitionCoproduct";
+    type Evidence = PartitionCoproductEvidence;
+}
+
+impl Certificate for CartesianProductWitness {
+    const IRI: &'static str = "https://uor.foundation/partition/CartesianPartitionProduct";
+    type Evidence = CartesianProductEvidence;
+}
+
+impl core::fmt::Display for PartitionProductWitness {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        f.write_str("PartitionProductWitness")
+    }
+}
+impl core::error::Error for PartitionProductWitness {}
+
+impl core::fmt::Display for PartitionCoproductWitness {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        f.write_str("PartitionCoproductWitness")
+    }
+}
+impl core::error::Error for PartitionCoproductWitness {}
+
+impl core::fmt::Display for CartesianProductWitness {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        f.write_str("CartesianProductWitness")
+    }
+}
+impl core::error::Error for CartesianProductWitness {}
+
+/// Sealed mint path for certificates that require multi-theorem verification
+/// before minting. Introduced by the Product/Coproduct Completion Amendment
+/// §1c; distinct from `MintWithLevelFingerprint` (which is the generic
+/// partial-mint path for sealed shims). `VerifiedMint` implementors are
+/// the three partition-algebra witnesses, each routing through a
+/// foundation-internal mint primitive that verifies the relevant theorems.
+/// The trait is public so external callers can invoke `mint_verified`
+/// directly, but the `Certificate` supertrait's `certificate_sealed::Sealed`
+/// bound keeps the implementor set closed to this crate.
+pub trait VerifiedMint: Certificate {
+    /// Caller-supplied input bundle — one `*MintInputs` struct per witness.
+    type Inputs;
+    /// Failure kind — always `GenericImpossibilityWitness` citing the
+    /// specific op-namespace theorem or foundation-namespace layout
+    /// invariant that was violated.
+    type Error;
+    /// Verify the theorems and invariants against `inputs`, then mint a
+    /// witness or return a typed impossibility witness.
+    /// # Errors
+    /// Returns a `GenericImpossibilityWitness::for_identity(iri)` when any
+    /// of the gated theorems or foundation invariants fails. The IRI
+    /// identifies exactly which identity failed — `op/PT_*`, `op/ST_*`,
+    /// `op/CPT_*`, or `foundation/*LayoutWidth` / `foundation/CoproductTagEncoding`.
+    fn mint_verified(inputs: Self::Inputs) -> Result<Self, Self::Error>
+    where
+        Self: Sized;
+}
+
+/// Recursive classifier used by `validate_coproduct_structure`. Inspects
+/// one `ConstraintRef`, tallies tag-pinner sightings via mutable references,
+/// and recurses into `Conjunction` conjuncts up to `max_depth` levels. See
+/// plan §A4 for the depth bound rationale.
+#[allow(clippy::too_many_arguments)]
+fn pc_classify_constraint(
+    c: &crate::pipeline::ConstraintRef,
+    in_left_region: bool,
+    tag_site: u16,
+    max_depth: u32,
+    left_pins: &mut u32,
+    right_pins: &mut u32,
+    left_bias_ok: &mut bool,
+    right_bias_ok: &mut bool,
+) -> Result<(), GenericImpossibilityWitness> {
+    match c {
+        crate::pipeline::ConstraintRef::Site { position } => {
+            if (*position as u16) >= tag_site {
+                return Err(GenericImpossibilityWitness::for_identity(
+                    "https://uor.foundation/op/ST_6",
+                ));
+            }
+        }
+        crate::pipeline::ConstraintRef::Carry { site } => {
+            if (*site as u16) >= tag_site {
+                return Err(GenericImpossibilityWitness::for_identity(
+                    "https://uor.foundation/op/ST_6",
+                ));
+            }
+        }
+        crate::pipeline::ConstraintRef::Affine { coefficients, bias } => {
+            let mut nonzero_count: u32 = 0;
+            let mut nonzero_index: usize = 0;
+            let mut max_nonzero_index: usize = 0;
+            let mut i: usize = 0;
+            while i < coefficients.len() {
+                if coefficients[i] != 0 {
+                    nonzero_count = nonzero_count.saturating_add(1);
+                    nonzero_index = i;
+                    if i > max_nonzero_index {
+                        max_nonzero_index = i;
+                    }
+                }
+                i += 1;
+            }
+            let touches_tag_site = nonzero_count > 0 && (max_nonzero_index as u16) >= tag_site;
+            let is_canonical_tag_pinner = nonzero_count == 1
+                && (nonzero_index as u16) == tag_site
+                && coefficients[nonzero_index] == 1;
+            if is_canonical_tag_pinner {
+                if *bias != 0 && *bias != -1 {
+                    return Err(GenericImpossibilityWitness::for_identity(
+                        "https://uor.foundation/foundation/CoproductTagEncoding",
+                    ));
+                }
+                if in_left_region {
+                    *left_pins = left_pins.saturating_add(1);
+                    if *bias != 0 {
+                        *left_bias_ok = false;
+                    }
+                } else {
+                    *right_pins = right_pins.saturating_add(1);
+                    if *bias != -1 {
+                        *right_bias_ok = false;
+                    }
+                }
+            } else if touches_tag_site {
+                let nonzero_only_at_tag_site =
+                    nonzero_count == 1 && (nonzero_index as u16) == tag_site;
+                if nonzero_only_at_tag_site {
+                    return Err(GenericImpossibilityWitness::for_identity(
+                        "https://uor.foundation/foundation/CoproductTagEncoding",
+                    ));
+                } else {
+                    return Err(GenericImpossibilityWitness::for_identity(
+                        "https://uor.foundation/op/ST_6",
+                    ));
+                }
+            }
+        }
+        crate::pipeline::ConstraintRef::Conjunction { conjuncts } => {
+            if max_depth == 0 {
+                return Err(GenericImpossibilityWitness::for_identity(
+                    "https://uor.foundation/op/ST_6",
+                ));
+            }
+            let mut idx: usize = 0;
+            while idx < conjuncts.len() {
+                pc_classify_constraint(
+                    &conjuncts[idx],
+                    in_left_region,
+                    tag_site,
+                    max_depth - 1,
+                    left_pins,
+                    right_pins,
+                    left_bias_ok,
+                    right_bias_ok,
+                )?;
+                idx += 1;
+            }
+        }
+        crate::pipeline::ConstraintRef::Residue { .. }
+        | crate::pipeline::ConstraintRef::Hamming { .. }
+        | crate::pipeline::ConstraintRef::Depth { .. }
+        | crate::pipeline::ConstraintRef::SatClauses { .. }
+        | crate::pipeline::ConstraintRef::Bound { .. } => {
+            // No site references at this level; nothing to check.
+        }
+    }
+    Ok(())
+}
+
+/// Validates ST_6 / ST_7 / ST_8 for a PartitionCoproduct construction by
+/// walking the emitted constraint array. Recurses into
+/// `ConstraintRef::Conjunction` conjuncts up to depth 8 (bounded by
+/// `NERVE_CONSTRAINTS_CAP`) so nested constructions are audited without
+/// unbounded recursion.
+/// # Errors
+/// Returns `GenericImpossibilityWitness::for_identity(...)` citing the
+/// specific failed identity: `op/ST_6`, `op/ST_7`, or
+/// `foundation/CoproductTagEncoding`. ST_8 is implied by ST_6 ∧ ST_7 and
+/// is not cited separately on failure.
+pub(crate) fn validate_coproduct_structure(
+    combined_constraints: &[crate::pipeline::ConstraintRef],
+    left_constraint_count: usize,
+    tag_site: u16,
+) -> Result<(), GenericImpossibilityWitness> {
+    let mut left_pins: u32 = 0;
+    let mut right_pins: u32 = 0;
+    let mut left_bias_ok: bool = true;
+    let mut right_bias_ok: bool = true;
+    let mut idx: usize = 0;
+    while idx < combined_constraints.len() {
+        let in_left_region = idx < left_constraint_count;
+        pc_classify_constraint(
+            &combined_constraints[idx],
+            in_left_region,
+            tag_site,
+            NERVE_CONSTRAINTS_CAP as u32,
+            &mut left_pins,
+            &mut right_pins,
+            &mut left_bias_ok,
+            &mut right_bias_ok,
+        )?;
+        idx += 1;
+    }
+    if left_pins != 1 || right_pins != 1 {
+        return Err(GenericImpossibilityWitness::for_identity(
+            "https://uor.foundation/op/ST_6",
+        ));
+    }
+    if !left_bias_ok || !right_bias_ok {
+        return Err(GenericImpossibilityWitness::for_identity(
+            "https://uor.foundation/op/ST_7",
+        ));
+    }
+    Ok(())
+}
+
+/// Mint a `PartitionProductWitness` after verifying PT_1, PT_3, PT_4, and
+/// the `ProductLayoutWidth` layout invariant. PT_2a is structural (the
+/// witness existing is the claim); no separate check is needed once the
+/// invariants match.
+#[allow(clippy::too_many_arguments)]
+pub(crate) fn pc_primitive_partition_product(
+    witt_bits: u16,
+    left_fingerprint: ContentFingerprint,
+    right_fingerprint: ContentFingerprint,
+    left_site_budget: u16,
+    right_site_budget: u16,
+    left_total_site_count: u16,
+    right_total_site_count: u16,
+    left_euler: i32,
+    right_euler: i32,
+    left_entropy_nats: f64,
+    right_entropy_nats: f64,
+    combined_site_budget: u16,
+    combined_site_count: u16,
+    combined_euler: i32,
+    combined_entropy_nats: f64,
+    combined_fingerprint: ContentFingerprint,
+) -> Result<PartitionProductWitness, GenericImpossibilityWitness> {
+    if combined_site_budget != left_site_budget.saturating_add(right_site_budget) {
+        return Err(GenericImpossibilityWitness::for_identity(
+            "https://uor.foundation/op/PT_1",
+        ));
+    }
+    if combined_site_count != left_total_site_count.saturating_add(right_total_site_count) {
+        return Err(GenericImpossibilityWitness::for_identity(
+            "https://uor.foundation/foundation/ProductLayoutWidth",
+        ));
+    }
+    if combined_euler != left_euler.saturating_add(right_euler) {
+        return Err(GenericImpossibilityWitness::for_identity(
+            "https://uor.foundation/op/PT_3",
+        ));
+    }
+    if !pc_entropy_input_is_valid(left_entropy_nats)
+        || !pc_entropy_input_is_valid(right_entropy_nats)
+        || !pc_entropy_input_is_valid(combined_entropy_nats)
+    {
+        return Err(GenericImpossibilityWitness::for_identity(
+            "https://uor.foundation/op/PT_4",
+        ));
+    }
+    let expected_entropy = left_entropy_nats + right_entropy_nats;
+    if !pc_entropy_additivity_holds(combined_entropy_nats, expected_entropy) {
+        return Err(GenericImpossibilityWitness::for_identity(
+            "https://uor.foundation/op/PT_4",
+        ));
+    }
+    Ok(PartitionProductWitness::with_level_fingerprints_and_sites(
+        witt_bits,
+        combined_fingerprint,
+        left_fingerprint,
+        right_fingerprint,
+        combined_site_budget,
+        combined_site_count,
+    ))
+}
+
+/// Mint a `PartitionCoproductWitness` after verifying ST_1, ST_2, ST_6,
+/// ST_7, ST_8, ST_9, ST_10, the `CoproductLayoutWidth` layout invariant,
+/// the tag-site alignment against §4b', and running
+/// `validate_coproduct_structure` over the supplied constraint array.
+#[allow(clippy::too_many_arguments)]
+pub(crate) fn pc_primitive_partition_coproduct(
+    witt_bits: u16,
+    left_fingerprint: ContentFingerprint,
+    right_fingerprint: ContentFingerprint,
+    left_site_budget: u16,
+    right_site_budget: u16,
+    left_total_site_count: u16,
+    right_total_site_count: u16,
+    left_euler: i32,
+    right_euler: i32,
+    left_entropy_nats: f64,
+    right_entropy_nats: f64,
+    left_betti: [u32; MAX_BETTI_DIMENSION],
+    right_betti: [u32; MAX_BETTI_DIMENSION],
+    combined_site_budget: u16,
+    combined_site_count: u16,
+    combined_euler: i32,
+    combined_entropy_nats: f64,
+    combined_betti: [u32; MAX_BETTI_DIMENSION],
+    combined_fingerprint: ContentFingerprint,
+    combined_constraints: &[crate::pipeline::ConstraintRef],
+    left_constraint_count: usize,
+    tag_site: u16,
+) -> Result<PartitionCoproductWitness, GenericImpossibilityWitness> {
+    let expected_budget = if left_site_budget > right_site_budget {
+        left_site_budget
+    } else {
+        right_site_budget
+    };
+    if combined_site_budget != expected_budget {
+        return Err(GenericImpossibilityWitness::for_identity(
+            "https://uor.foundation/op/ST_1",
+        ));
+    }
+    let max_total = if left_total_site_count > right_total_site_count {
+        left_total_site_count
+    } else {
+        right_total_site_count
+    };
+    let expected_total = max_total.saturating_add(1);
+    if combined_site_count != expected_total {
+        return Err(GenericImpossibilityWitness::for_identity(
+            "https://uor.foundation/foundation/CoproductLayoutWidth",
+        ));
+    }
+    if !pc_entropy_input_is_valid(left_entropy_nats)
+        || !pc_entropy_input_is_valid(right_entropy_nats)
+        || !pc_entropy_input_is_valid(combined_entropy_nats)
+    {
+        return Err(GenericImpossibilityWitness::for_identity(
+            "https://uor.foundation/op/ST_2",
+        ));
+    }
+    let max_operand_entropy = if left_entropy_nats > right_entropy_nats {
+        left_entropy_nats
+    } else {
+        right_entropy_nats
+    };
+    let expected_entropy = core::f64::consts::LN_2 + max_operand_entropy;
+    if !pc_entropy_additivity_holds(combined_entropy_nats, expected_entropy) {
+        return Err(GenericImpossibilityWitness::for_identity(
+            "https://uor.foundation/op/ST_2",
+        ));
+    }
+    if tag_site != max_total {
+        return Err(GenericImpossibilityWitness::for_identity(
+            "https://uor.foundation/foundation/CoproductLayoutWidth",
+        ));
+    }
+    validate_coproduct_structure(combined_constraints, left_constraint_count, tag_site)?;
+    if combined_euler != left_euler.saturating_add(right_euler) {
+        return Err(GenericImpossibilityWitness::for_identity(
+            "https://uor.foundation/op/ST_9",
+        ));
+    }
+    let mut k: usize = 0;
+    while k < MAX_BETTI_DIMENSION {
+        if combined_betti[k] != left_betti[k].saturating_add(right_betti[k]) {
+            return Err(GenericImpossibilityWitness::for_identity(
+                "https://uor.foundation/op/ST_10",
+            ));
+        }
+        k += 1;
+    }
+    Ok(
+        PartitionCoproductWitness::with_level_fingerprints_sites_and_tag(
+            witt_bits,
+            combined_fingerprint,
+            left_fingerprint,
+            right_fingerprint,
+            combined_site_budget,
+            combined_site_count,
+            max_total,
+        ),
+    )
+}
+
+/// Mint a `CartesianProductWitness` after verifying CPT_1, CPT_3, CPT_4,
+/// CPT_5, and the `CartesianLayoutWidth` layout invariant. Checks
+/// caller-supplied Künneth-composed invariants against the component
+/// values (the witness defines these axiomatically per §3c).
+#[allow(clippy::too_many_arguments)]
+pub(crate) fn pc_primitive_cartesian_product(
+    witt_bits: u16,
+    left_fingerprint: ContentFingerprint,
+    right_fingerprint: ContentFingerprint,
+    left_site_budget: u16,
+    right_site_budget: u16,
+    left_total_site_count: u16,
+    right_total_site_count: u16,
+    left_euler: i32,
+    right_euler: i32,
+    left_betti: [u32; MAX_BETTI_DIMENSION],
+    right_betti: [u32; MAX_BETTI_DIMENSION],
+    left_entropy_nats: f64,
+    right_entropy_nats: f64,
+    combined_site_budget: u16,
+    combined_site_count: u16,
+    combined_euler: i32,
+    combined_betti: [u32; MAX_BETTI_DIMENSION],
+    combined_entropy_nats: f64,
+    combined_fingerprint: ContentFingerprint,
+) -> Result<CartesianProductWitness, GenericImpossibilityWitness> {
+    if combined_site_budget != left_site_budget.saturating_add(right_site_budget) {
+        return Err(GenericImpossibilityWitness::for_identity(
+            "https://uor.foundation/op/CPT_1",
+        ));
+    }
+    if combined_site_count != left_total_site_count.saturating_add(right_total_site_count) {
+        return Err(GenericImpossibilityWitness::for_identity(
+            "https://uor.foundation/foundation/CartesianLayoutWidth",
+        ));
+    }
+    if combined_euler != left_euler.saturating_mul(right_euler) {
+        return Err(GenericImpossibilityWitness::for_identity(
+            "https://uor.foundation/op/CPT_3",
+        ));
+    }
+    let kunneth = crate::pipeline::kunneth_compose(&left_betti, &right_betti);
+    let mut k: usize = 0;
+    while k < MAX_BETTI_DIMENSION {
+        if combined_betti[k] != kunneth[k] {
+            return Err(GenericImpossibilityWitness::for_identity(
+                "https://uor.foundation/op/CPT_4",
+            ));
+        }
+        k += 1;
+    }
+    if !pc_entropy_input_is_valid(left_entropy_nats)
+        || !pc_entropy_input_is_valid(right_entropy_nats)
+        || !pc_entropy_input_is_valid(combined_entropy_nats)
+    {
+        return Err(GenericImpossibilityWitness::for_identity(
+            "https://uor.foundation/op/CPT_5",
+        ));
+    }
+    let expected_entropy = left_entropy_nats + right_entropy_nats;
+    if !pc_entropy_additivity_holds(combined_entropy_nats, expected_entropy) {
+        return Err(GenericImpossibilityWitness::for_identity(
+            "https://uor.foundation/op/CPT_5",
+        ));
+    }
+    Ok(
+        CartesianProductWitness::with_level_fingerprints_and_invariants(
+            witt_bits,
+            combined_fingerprint,
+            left_fingerprint,
+            right_fingerprint,
+            combined_site_budget,
+            combined_site_count,
+            combined_euler,
+            combined_betti,
+        ),
+    )
+}
+
+impl VerifiedMint for PartitionProductWitness {
+    type Inputs = PartitionProductMintInputs;
+    type Error = GenericImpossibilityWitness;
+    fn mint_verified(inputs: Self::Inputs) -> Result<Self, Self::Error> {
+        pc_primitive_partition_product(
+            inputs.witt_bits,
+            inputs.left_fingerprint,
+            inputs.right_fingerprint,
+            inputs.left_site_budget,
+            inputs.right_site_budget,
+            inputs.left_total_site_count,
+            inputs.right_total_site_count,
+            inputs.left_euler,
+            inputs.right_euler,
+            inputs.left_entropy_nats,
+            inputs.right_entropy_nats,
+            inputs.combined_site_budget,
+            inputs.combined_site_count,
+            inputs.combined_euler,
+            inputs.combined_entropy_nats,
+            inputs.combined_fingerprint,
+        )
+    }
+}
+
+impl VerifiedMint for PartitionCoproductWitness {
+    type Inputs = PartitionCoproductMintInputs;
+    type Error = GenericImpossibilityWitness;
+    fn mint_verified(inputs: Self::Inputs) -> Result<Self, Self::Error> {
+        pc_primitive_partition_coproduct(
+            inputs.witt_bits,
+            inputs.left_fingerprint,
+            inputs.right_fingerprint,
+            inputs.left_site_budget,
+            inputs.right_site_budget,
+            inputs.left_total_site_count,
+            inputs.right_total_site_count,
+            inputs.left_euler,
+            inputs.right_euler,
+            inputs.left_entropy_nats,
+            inputs.right_entropy_nats,
+            inputs.left_betti,
+            inputs.right_betti,
+            inputs.combined_site_budget,
+            inputs.combined_site_count,
+            inputs.combined_euler,
+            inputs.combined_entropy_nats,
+            inputs.combined_betti,
+            inputs.combined_fingerprint,
+            inputs.combined_constraints,
+            inputs.left_constraint_count,
+            inputs.tag_site,
+        )
+    }
+}
+
+impl VerifiedMint for CartesianProductWitness {
+    type Inputs = CartesianProductMintInputs;
+    type Error = GenericImpossibilityWitness;
+    fn mint_verified(inputs: Self::Inputs) -> Result<Self, Self::Error> {
+        pc_primitive_cartesian_product(
+            inputs.witt_bits,
+            inputs.left_fingerprint,
+            inputs.right_fingerprint,
+            inputs.left_site_budget,
+            inputs.right_site_budget,
+            inputs.left_total_site_count,
+            inputs.right_total_site_count,
+            inputs.left_euler,
+            inputs.right_euler,
+            inputs.left_betti,
+            inputs.right_betti,
+            inputs.left_entropy_nats,
+            inputs.right_entropy_nats,
+            inputs.combined_site_budget,
+            inputs.combined_site_count,
+            inputs.combined_euler,
+            inputs.combined_betti,
+            inputs.combined_entropy_nats,
+            inputs.combined_fingerprint,
+        )
+    }
+}
+
+/// Data record of a partition's runtime-queried properties. Produced at
+/// witness-mint time and consulted by consumer code that holds a
+/// `PartitionHandle` and a `PartitionResolver`. Derives `PartialEq`
+/// rather than `Eq` because the `entropy_nats` field is `f64`.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct PartitionRecord<H: crate::HostTypes> {
+    /// Data sites only — the partition's `siteBudget`, not its layout width.
+    pub site_budget: u16,
+    /// Euler characteristic of the partition's nerve.
+    pub euler: i32,
+    /// Betti profile of the partition's nerve, padded to `MAX_BETTI_DIMENSION`.
+    pub betti: [u32; MAX_BETTI_DIMENSION],
+    /// Shannon entropy in nats (matches `LandauerBudget::nats()` convention).
+    pub entropy_nats: f64,
+    _phantom: core::marker::PhantomData<H>,
+}
+
+impl<H: crate::HostTypes> PartitionRecord<H> {
+    /// Construct a new record. The phantom marker ensures records are
+    /// parameterized by the host types they originate from.
+    #[inline]
+    #[must_use]
+    pub const fn new(
+        site_budget: u16,
+        euler: i32,
+        betti: [u32; MAX_BETTI_DIMENSION],
+        entropy_nats: f64,
+    ) -> Self {
+        Self {
+            site_budget,
+            euler,
+            betti,
+            entropy_nats,
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+
+/// Resolver mapping content fingerprints to `PartitionRecord`s. Provided
+/// by the host application — typically a persistent store, an in-memory
+/// registry populated from witness mint-time data, or a chain-of-witnesses
+/// trail that can reconstruct properties.
+pub trait PartitionResolver<H: crate::HostTypes> {
+    /// Look up partition data by fingerprint. Returns `None` if the
+    /// resolver has no record for the handle. Handles remain valid as
+    /// identity tokens regardless of resolver presence.
+    fn resolve(&self, fp: ContentFingerprint) -> Option<PartitionRecord<H>>;
+}
+
+/// Content-addressed identity token for a partition. Carries only a
+/// fingerprint; partition data is recovered by pairing the handle with a
+/// `PartitionResolver` via `resolve_with`. Handles compare and hash by
+/// fingerprint, so they can serve as keys in content-addressed indices
+/// without resolver access.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct PartitionHandle<H: crate::HostTypes> {
+    fingerprint: ContentFingerprint,
+    _phantom: core::marker::PhantomData<H>,
+}
+
+impl<H: crate::HostTypes> PartitionHandle<H> {
+    /// Construct a handle from a content fingerprint.
+    #[inline]
+    #[must_use]
+    pub const fn from_fingerprint(fingerprint: ContentFingerprint) -> Self {
+        Self {
+            fingerprint,
+            _phantom: core::marker::PhantomData,
+        }
+    }
+    /// Return the content fingerprint this handle references.
+    #[inline]
+    #[must_use]
+    pub const fn fingerprint(&self) -> ContentFingerprint {
+        self.fingerprint
+    }
+    /// Resolve this handle against a consumer-supplied resolver.
+    /// Returns `None` if the resolver has no record for this fingerprint.
+    #[inline]
+    pub fn resolve_with<R: PartitionResolver<H>>(
+        &self,
+        resolver: &R,
+    ) -> Option<PartitionRecord<H>> {
+        resolver.resolve(self.fingerprint)
+    }
+}
+
+/// Resolver-absent default `Element<H>`. Returns empty defaults via the
+/// `HostTypes::EMPTY_*` constants — used by `NullDatum<H>` and
+/// `NullTypeDefinition<H>` to satisfy their `Element` associated types.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullElement<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullElement<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> crate::kernel::address::Element<H> for NullElement<H> {
+    fn length(&self) -> u64 {
+        0
+    }
+    fn addresses(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    fn digest(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    fn digest_algorithm(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    fn canonical_bytes(&self) -> &H::WitnessBytes {
+        H::EMPTY_WITNESS_BYTES
+    }
+    fn witt_length(&self) -> u64 {
+        0
+    }
+}
+
+/// Resolver-absent default `Datum<H>`. All numeric methods return 0.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullDatum<H: HostTypes> {
+    element: NullElement<H>,
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullDatum<H> {
+    fn default() -> Self {
+        Self {
+            element: NullElement::default(),
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> crate::kernel::schema::Datum<H> for NullDatum<H> {
+    fn value(&self) -> u64 {
+        0
+    }
+    fn witt_length(&self) -> u64 {
+        0
+    }
+    fn stratum(&self) -> u64 {
+        0
+    }
+    fn spectrum(&self) -> u64 {
+        0
+    }
+    type Element = NullElement<H>;
+    fn element(&self) -> &Self::Element {
+        &self.element
+    }
+}
+
+/// Resolver-absent default `TermExpression<H>`. Empty marker trait, no methods.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullTermExpression<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullTermExpression<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> crate::kernel::schema::TermExpression<H> for NullTermExpression<H> {}
+
+/// Resolver-absent default `SiteIndex<H>`. Self-recursive: `ancilla_site()`
+/// returns `&self` (no ancilla pairing in the default).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullSiteIndex<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullSiteIndex<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> crate::bridge::partition::SiteIndex<H> for NullSiteIndex<H> {
+    fn site_position(&self) -> u64 {
+        0
+    }
+    fn site_state(&self) -> u64 {
+        0
+    }
+    type SiteIndexTarget = NullSiteIndex<H>;
+    fn ancilla_site(&self) -> &Self::SiteIndexTarget {
+        self
+    }
+}
+
+/// Resolver-absent default `TagSite<H>`. Embeds an inline `NullSiteIndex`
+/// field so the inherited `ancilla_site()` accessor returns a valid
+/// reference; `tag_value()` returns false.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullTagSite<H: HostTypes> {
+    ancilla: NullSiteIndex<H>,
+}
+impl<H: HostTypes> Default for NullTagSite<H> {
+    fn default() -> Self {
+        Self {
+            ancilla: NullSiteIndex::default(),
+        }
+    }
+}
+impl<H: HostTypes> crate::bridge::partition::SiteIndex<H> for NullTagSite<H> {
+    fn site_position(&self) -> u64 {
+        0
+    }
+    fn site_state(&self) -> u64 {
+        0
+    }
+    type SiteIndexTarget = NullSiteIndex<H>;
+    fn ancilla_site(&self) -> &Self::SiteIndexTarget {
+        &self.ancilla
+    }
+}
+impl<H: HostTypes> crate::bridge::partition::TagSite<H> for NullTagSite<H> {
+    fn tag_value(&self) -> bool {
+        false
+    }
+}
+
+/// Resolver-absent default `SiteBinding<H>`. Embeds inline `NullConstraint`
+/// and `NullSiteIndex` so the trait's reference accessors work via &self.field.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullSiteBinding<H: HostTypes> {
+    constraint: NullConstraint<H>,
+    site_index: NullSiteIndex<H>,
+}
+impl<H: HostTypes> Default for NullSiteBinding<H> {
+    fn default() -> Self {
+        Self {
+            constraint: NullConstraint::default(),
+            site_index: NullSiteIndex::default(),
+        }
+    }
+}
+impl<H: HostTypes> crate::bridge::partition::SiteBinding<H> for NullSiteBinding<H> {
+    type Constraint = NullConstraint<H>;
+    fn pinned_by(&self) -> &Self::Constraint {
+        &self.constraint
+    }
+    type SiteIndex = NullSiteIndex<H>;
+    fn pins_coordinate(&self) -> &Self::SiteIndex {
+        &self.site_index
+    }
+}
+
+/// Resolver-absent default `Constraint<H>`. Returns Vertical metric axis,
+/// empty pinned-sites slice, and zero crossing cost.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullConstraint<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullConstraint<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> crate::user::type_::Constraint<H> for NullConstraint<H> {
+    fn metric_axis(&self) -> MetricAxis {
+        MetricAxis::Vertical
+    }
+    type SiteIndex = NullSiteIndex<H>;
+    fn pins_sites(&self) -> &[Self::SiteIndex] {
+        &[]
+    }
+    fn crossing_cost(&self) -> u64 {
+        0
+    }
+}
+
+/// Resolver-absent default `FreeRank<H>`. Empty budget — `is_closed()` true,
+/// zero counts. Empty `has_site` / `has_binding` slices.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullFreeRank<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullFreeRank<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> crate::bridge::partition::FreeRank<H> for NullFreeRank<H> {
+    fn total_sites(&self) -> u64 {
+        0
+    }
+    fn pinned_count(&self) -> u64 {
+        0
+    }
+    fn free_rank(&self) -> u64 {
+        0
+    }
+    fn is_closed(&self) -> bool {
+        true
+    }
+    type SiteIndex = NullSiteIndex<H>;
+    fn has_site(&self) -> &[Self::SiteIndex] {
+        &[]
+    }
+    type SiteBinding = NullSiteBinding<H>;
+    fn has_binding(&self) -> &[Self::SiteBinding] {
+        &[]
+    }
+    fn reversible_strategy(&self) -> bool {
+        false
+    }
+}
+
+/// Resolver-absent default `IrreducibleSet<H>`. Implements `Component<H>` with empty
+/// `member` slice and zero `cardinality`.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullIrreducibleSet<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullIrreducibleSet<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> crate::bridge::partition::Component<H> for NullIrreducibleSet<H> {
+    type Datum = NullDatum<H>;
+    fn member(&self) -> &[Self::Datum] {
+        &[]
+    }
+    fn cardinality(&self) -> u64 {
+        0
+    }
+}
+impl<H: HostTypes> crate::bridge::partition::IrreducibleSet<H> for NullIrreducibleSet<H> {}
+
+/// Resolver-absent default `ReducibleSet<H>`. Implements `Component<H>` with empty
+/// `member` slice and zero `cardinality`.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullReducibleSet<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullReducibleSet<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> crate::bridge::partition::Component<H> for NullReducibleSet<H> {
+    type Datum = NullDatum<H>;
+    fn member(&self) -> &[Self::Datum] {
+        &[]
+    }
+    fn cardinality(&self) -> u64 {
+        0
+    }
+}
+impl<H: HostTypes> crate::bridge::partition::ReducibleSet<H> for NullReducibleSet<H> {}
+
+/// Resolver-absent default `UnitGroup<H>`. Implements `Component<H>` with empty
+/// `member` slice and zero `cardinality`.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullUnitGroup<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullUnitGroup<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> crate::bridge::partition::Component<H> for NullUnitGroup<H> {
+    type Datum = NullDatum<H>;
+    fn member(&self) -> &[Self::Datum] {
+        &[]
+    }
+    fn cardinality(&self) -> u64 {
+        0
+    }
+}
+impl<H: HostTypes> crate::bridge::partition::UnitGroup<H> for NullUnitGroup<H> {}
+
+/// Resolver-absent default `Complement<H>`. Implements `Component<H>` plus
+/// the `exterior_criteria()` accessor returning a reference to an embedded
+/// `NullTermExpression`.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullComplement<H: HostTypes> {
+    term: NullTermExpression<H>,
+}
+impl<H: HostTypes> Default for NullComplement<H> {
+    fn default() -> Self {
+        Self {
+            term: NullTermExpression::default(),
+        }
+    }
+}
+impl<H: HostTypes> crate::bridge::partition::Component<H> for NullComplement<H> {
+    type Datum = NullDatum<H>;
+    fn member(&self) -> &[Self::Datum] {
+        &[]
+    }
+    fn cardinality(&self) -> u64 {
+        0
+    }
+}
+impl<H: HostTypes> crate::bridge::partition::Complement<H> for NullComplement<H> {
+    type TermExpression = NullTermExpression<H>;
+    fn exterior_criteria(&self) -> &Self::TermExpression {
+        &self.term
+    }
+}
+
+/// Resolver-absent default `TypeDefinition<H>`. Embeds inline `NullElement`
+/// for the content_address accessor.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullTypeDefinition<H: HostTypes> {
+    element: NullElement<H>,
+}
+impl<H: HostTypes> Default for NullTypeDefinition<H> {
+    fn default() -> Self {
+        Self {
+            element: NullElement::default(),
+        }
+    }
+}
+impl<H: HostTypes> crate::user::type_::TypeDefinition<H> for NullTypeDefinition<H> {
+    type Element = NullElement<H>;
+    fn content_address(&self) -> &Self::Element {
+        &self.element
+    }
+}
+
+/// Resolver-absent default `Partition<H>`. Embeds inline stubs for every
+/// sub-trait associated type so `Partition<H>` accessors return references
+/// to fields rather than to statics. The only meaningful state is the
+/// `fingerprint`; everything else uses `HostTypes::EMPTY_*` defaults.
+/// Returned by the three witness trait impls' `left_factor` / `right_factor`
+/// / `left_summand` / etc. accessors as the resolver-absent value pathway.
+/// Consumers needing real partition data pair the sibling `PartitionHandle`
+/// with a `PartitionResolver` instead.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullPartition<H: HostTypes> {
+    irreducibles: NullIrreducibleSet<H>,
+    reducibles: NullReducibleSet<H>,
+    units: NullUnitGroup<H>,
+    exterior: NullComplement<H>,
+    free_rank: NullFreeRank<H>,
+    tag_site: NullTagSite<H>,
+    source_type: NullTypeDefinition<H>,
+    fingerprint: ContentFingerprint,
+}
+
+impl<H: HostTypes> NullPartition<H> {
+    /// Construct a NullPartition with the given content fingerprint.
+    /// All other fields are resolver-absent defaults.
+    #[inline]
+    #[must_use]
+    pub fn from_fingerprint(fingerprint: ContentFingerprint) -> Self {
+        Self {
+            irreducibles: NullIrreducibleSet::default(),
+            reducibles: NullReducibleSet::default(),
+            units: NullUnitGroup::default(),
+            exterior: NullComplement::default(),
+            free_rank: NullFreeRank::default(),
+            tag_site: NullTagSite::default(),
+            source_type: NullTypeDefinition::default(),
+            fingerprint,
+        }
+    }
+    /// Returns the content fingerprint identifying which Partition this stub stands in for.
+    #[inline]
+    #[must_use]
+    pub const fn fingerprint(&self) -> ContentFingerprint {
+        self.fingerprint
+    }
+}
+
+impl<H: HostTypes> crate::bridge::partition::Partition<H> for NullPartition<H> {
+    type IrreducibleSet = NullIrreducibleSet<H>;
+    fn irreducibles(&self) -> &Self::IrreducibleSet {
+        &self.irreducibles
+    }
+    type ReducibleSet = NullReducibleSet<H>;
+    fn reducibles(&self) -> &Self::ReducibleSet {
+        &self.reducibles
+    }
+    type UnitGroup = NullUnitGroup<H>;
+    fn units(&self) -> &Self::UnitGroup {
+        &self.units
+    }
+    type Complement = NullComplement<H>;
+    fn exterior(&self) -> &Self::Complement {
+        &self.exterior
+    }
+    fn density(&self) -> H::Decimal {
+        H::EMPTY_DECIMAL
+    }
+    type TypeDefinition = NullTypeDefinition<H>;
+    fn source_type(&self) -> &Self::TypeDefinition {
+        &self.source_type
+    }
+    fn witt_length(&self) -> u64 {
+        0
+    }
+    type FreeRank = NullFreeRank<H>;
+    fn site_budget(&self) -> &Self::FreeRank {
+        &self.free_rank
+    }
+    fn is_exhaustive(&self) -> bool {
+        true
+    }
+    type TagSite = NullTagSite<H>;
+    fn tag_site_of(&self) -> &Self::TagSite {
+        &self.tag_site
+    }
+    fn product_category_level(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+}
+
+impl<H: HostTypes> crate::bridge::partition::PartitionProduct<H> for PartitionProductWitness {
+    type Partition = NullPartition<H>;
+    fn left_factor(&self) -> Self::Partition {
+        NullPartition::from_fingerprint(self.left_fingerprint)
+    }
+    fn right_factor(&self) -> Self::Partition {
+        NullPartition::from_fingerprint(self.right_fingerprint)
+    }
+}
+
+impl<H: HostTypes> crate::bridge::partition::PartitionCoproduct<H> for PartitionCoproductWitness {
+    type Partition = NullPartition<H>;
+    fn left_summand(&self) -> Self::Partition {
+        NullPartition::from_fingerprint(self.left_fingerprint)
+    }
+    fn right_summand(&self) -> Self::Partition {
+        NullPartition::from_fingerprint(self.right_fingerprint)
+    }
+}
+
+impl<H: HostTypes> crate::bridge::partition::CartesianPartitionProduct<H>
+    for CartesianProductWitness
+{
+    type Partition = NullPartition<H>;
+    fn left_cartesian_factor(&self) -> Self::Partition {
+        NullPartition::from_fingerprint(self.left_fingerprint)
+    }
+    fn right_cartesian_factor(&self) -> Self::Partition {
+        NullPartition::from_fingerprint(self.right_fingerprint)
     }
 }
 

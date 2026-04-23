@@ -468,6 +468,38 @@ fn properties() -> Vec<Property> {
             domain: Some("https://uor.foundation/type/ProductType"),
             range: "https://uor.foundation/type/TypeDefinition",
         },
+        // Product/Coproduct Completion Amendment — Gap 4 (SumType extension)
+        Property {
+            id: "https://uor.foundation/type/variant",
+            label: "variant",
+            comment: "A variant type in a sum type. Ordering contract: \
+                      variants are returned in canonical content-fingerprint \
+                      order (ascending), matching the canonicalization used \
+                      by coproduct_shape! and the content-address hashing \
+                      pipeline, so introspection via variant() and the \
+                      algebra_id derived from the same type agree on which \
+                      variant is 'left' and which is 'right'. Author-order \
+                      is not preserved.",
+            kind: PropertyKind::Object,
+            functional: false,
+            required: false,
+            domain: Some("https://uor.foundation/type/SumType"),
+            range: "https://uor.foundation/type/TypeDefinition",
+        },
+        Property {
+            id: "https://uor.foundation/type/tagSite",
+            label: "tagSite",
+            comment: "The tag site distinguishing variants of this sum type \
+                      at runtime (ST_6). Stored at the physical layout \
+                      position max(SITE_COUNT(A), SITE_COUNT(B)) so the \
+                      tag cannot collide with any inherited bookkeeping \
+                      site when either operand is itself a coproduct.",
+            kind: PropertyKind::Object,
+            functional: true,
+            required: false,
+            domain: Some("https://uor.foundation/type/SumType"),
+            range: "https://uor.foundation/partition/TagSite",
+        },
         Property {
             id: "https://uor.foundation/type/baseType",
             label: "baseType",

@@ -1296,6 +1296,84 @@ def COEFF_1 : UOR.Kernel.Op.Identity UOR.Prims.Standard := {
   validKMax := none
 }
 
+-- Cartesian partition product site additivity: siteBudget(A ⊠ B) = siteBudget(A) + siteBudget(B). UOR sites are bit widths; |A ⊠ B| = 2^{n_A} · 2^{n_B} = 2^{n_A + n_B}, so sites add even though cardinalities multiply.
+def CPT_1 : UOR.Kernel.Op.Identity UOR.Prims.Standard := {
+  lhs := some (UOR.Kernel.Schema.term_CPT_1_lhs.toTermExpression)
+  rhs := some (UOR.Kernel.Schema.term_CPT_1_rhs.toTermExpression)
+  forAll := some (UOR.Kernel.Schema.term_CPT_1_forAll)
+  verificationDomain := #[.algebraic]
+  verifiedAtLevel := #[]
+  universallyValid := none
+  validityKind := none
+  validKMin := none
+  validKMax := none
+}
+
+-- Cartesian partition product partition map: Π(A ⊠ B) = CartesianPartitionProduct(Π(A), Π(B)).
+def CPT_2a : UOR.Kernel.Op.Identity UOR.Prims.Standard := {
+  lhs := some (UOR.Kernel.Schema.term_CPT_2a_lhs.toTermExpression)
+  rhs := some (UOR.Kernel.Schema.term_CPT_2a_rhs.toTermExpression)
+  forAll := some (UOR.Kernel.Schema.term_CPT_2a_forAll)
+  verificationDomain := #[.algebraic]
+  verifiedAtLevel := #[]
+  universallyValid := none
+  validityKind := none
+  validKMin := none
+  validKMax := none
+}
+
+-- Cartesian partition product Euler multiplicativity: χ(N(C(A ⊠ B))) = χ(N(C(A))) · χ(N(C(B))). Distinguishes CartesianPartitionProduct (multiplicative χ, Künneth) from PartitionProduct (additive χ, site-disjoint union).
+def CPT_3 : UOR.Kernel.Op.Identity UOR.Prims.Standard := {
+  lhs := some (UOR.Kernel.Schema.term_CPT_3_lhs.toTermExpression)
+  rhs := some (UOR.Kernel.Schema.term_CPT_3_rhs.toTermExpression)
+  forAll := some (UOR.Kernel.Schema.term_CPT_3_forAll)
+  verificationDomain := #[.indexTheoretic]
+  verifiedAtLevel := #[]
+  universallyValid := none
+  validityKind := none
+  validKMin := none
+  validKMax := none
+}
+
+-- Cartesian partition product Künneth formula: Betti numbers compose via the Künneth convolution — β_k(A ⊠ B) = Σ_{i+j=k} β_i(A) · β_j(B). Routed through primitive_cartesian_nerve_betti when a CartesianProductShape marker is declared on the combined shape.
+def CPT_4 : UOR.Kernel.Op.Identity UOR.Prims.Standard := {
+  lhs := some (UOR.Kernel.Schema.term_CPT_4_lhs.toTermExpression)
+  rhs := some (UOR.Kernel.Schema.term_CPT_4_rhs.toTermExpression)
+  forAll := some (UOR.Kernel.Schema.term_CPT_4_forAll)
+  verificationDomain := #[.indexTheoretic]
+  verifiedAtLevel := #[]
+  universallyValid := none
+  validityKind := none
+  validKMin := none
+  validKMax := none
+}
+
+-- Cartesian partition product entropy additivity: S(A ⊠ B) = S(A) + S(B). Matches PT_4's additive Shannon convention for independent subsystems and is consistent pointwise with IT_7a/b on the combined system (no cross-factor bilinearity required).
+def CPT_5 : UOR.Kernel.Op.Identity UOR.Prims.Standard := {
+  lhs := some (UOR.Kernel.Schema.term_CPT_5_lhs.toTermExpression)
+  rhs := some (UOR.Kernel.Schema.term_CPT_5_rhs.toTermExpression)
+  forAll := some (UOR.Kernel.Schema.term_CPT_5_forAll)
+  verificationDomain := #[.thermodynamic]
+  verifiedAtLevel := #[]
+  universallyValid := none
+  validityKind := none
+  validKMin := none
+  validKMax := none
+}
+
+-- Cartesian partition product distributes over PartitionCoproduct: A ⊠ (B + C) ≡ (A ⊠ B) + (A ⊠ C) with equality at the siteBudget, SITE_COUNT, Euler, and entropy levels simultaneously. Does NOT extend to PartitionProduct — distributing ⊠ over × fails at the site-budget level because it duplicates the outer factor.
+def CPT_6 : UOR.Kernel.Op.Identity UOR.Prims.Standard := {
+  lhs := some (UOR.Kernel.Schema.term_CPT_6_lhs.toTermExpression)
+  rhs := some (UOR.Kernel.Schema.term_CPT_6_rhs.toTermExpression)
+  forAll := some (UOR.Kernel.Schema.term_CPT_6_forAll)
+  verificationDomain := #[.algebraic]
+  verifiedAtLevel := #[]
+  universallyValid := none
+  validityKind := none
+  validKMin := none
+  validKMax := none
+}
+
 -- Residue constraint cost is the step formula.
 def CR_1 : UOR.Kernel.Op.Identity UOR.Prims.Standard := {
   lhs := some (UOR.Kernel.Schema.term_CR_1_lhs.toTermExpression)
@@ -6704,6 +6782,19 @@ def ST_1 : UOR.Kernel.Op.Identity UOR.Prims.Standard := {
   validKMax := none
 }
 
+-- SumType Betti corollary for PartitionCoproduct constructions: combining ST_8's disjointness guarantee with the universal ST_4 yields Betti additivity at every dimension for any A + B assembled via the PartitionCoproduct construction.
+def ST_10 : UOR.Kernel.Op.Identity UOR.Prims.Standard := {
+  lhs := some (UOR.Kernel.Schema.term_ST_10_lhs.toTermExpression)
+  rhs := some (UOR.Kernel.Schema.term_ST_10_rhs.toTermExpression)
+  forAll := some (UOR.Kernel.Schema.term_ST_10_forAll)
+  verificationDomain := #[.indexTheoretic]
+  verifiedAtLevel := #[]
+  universallyValid := none
+  validityKind := none
+  validKMin := none
+  validKMax := none
+}
+
 -- Sum type entropy: S(A + B) = ln 2 + max(S(A), S(B)).
 def ST_2 : UOR.Kernel.Op.Identity UOR.Prims.Standard := {
   lhs := some (UOR.Kernel.Schema.term_ST_2_lhs.toTermExpression)
@@ -6752,6 +6843,58 @@ def ST_5 : UOR.Kernel.Op.Identity UOR.Prims.Standard := {
   verifiedAtLevel := #[]
   universallyValid := some (true)
   validityKind := some (.universal)
+  validKMin := none
+  validKMax := none
+}
+
+-- SumType tag site unique existence: every PartitionCoproduct A + B has exactly one tag site, logically distinct from every data site of A and B, carrying the ln 2 entropy quantum of ST_2.
+def ST_6 : UOR.Kernel.Op.Identity UOR.Prims.Standard := {
+  lhs := some (UOR.Kernel.Schema.term_ST_6_lhs.toTermExpression)
+  rhs := some (UOR.Kernel.Schema.term_ST_6_rhs.toTermExpression)
+  forAll := some (UOR.Kernel.Schema.term_ST_6_forAll)
+  verificationDomain := #[.algebraic]
+  verifiedAtLevel := #[]
+  universallyValid := none
+  validityKind := none
+  validKMin := none
+  validKMax := none
+}
+
+-- SumType variant tagging: the constraints of a PartitionCoproduct decompose into the operands' constraints plus one tag-pinning constraint per variant (tag = 0 for the left variant, tag = 1 for the right).
+def ST_7 : UOR.Kernel.Op.Identity UOR.Prims.Standard := {
+  lhs := some (UOR.Kernel.Schema.term_ST_7_lhs.toTermExpression)
+  rhs := some (UOR.Kernel.Schema.term_ST_7_rhs.toTermExpression)
+  forAll := some (UOR.Kernel.Schema.term_ST_7_forAll)
+  verificationDomain := #[.algebraic]
+  verifiedAtLevel := #[]
+  universallyValid := none
+  validityKind := none
+  validKMin := none
+  validKMax := none
+}
+
+-- SumType variant nerve disjointness bridge: a PartitionCoproduct constructed via ST_6 + ST_7 + the foundation layout convention produces topologically disjoint component nerves. Bridges the existing conditional ST_3 and ST_4 to PartitionCoproduct constructions concretely.
+def ST_8 : UOR.Kernel.Op.Identity UOR.Prims.Standard := {
+  lhs := some (UOR.Kernel.Schema.term_ST_8_lhs.toTermExpression)
+  rhs := some (UOR.Kernel.Schema.term_ST_8_rhs.toTermExpression)
+  forAll := some (UOR.Kernel.Schema.term_ST_8_forAll)
+  verificationDomain := #[.topological]
+  verifiedAtLevel := #[]
+  universallyValid := none
+  validityKind := none
+  validKMin := none
+  validKMax := none
+}
+
+-- SumType Euler corollary for PartitionCoproduct constructions: combining ST_8's disjointness guarantee with the universal ST_3 yields Euler additivity for any A + B assembled via the PartitionCoproduct construction.
+def ST_9 : UOR.Kernel.Op.Identity UOR.Prims.Standard := {
+  lhs := some (UOR.Kernel.Schema.term_ST_9_lhs.toTermExpression)
+  rhs := some (UOR.Kernel.Schema.term_ST_9_rhs.toTermExpression)
+  forAll := some (UOR.Kernel.Schema.term_ST_9_forAll)
+  verificationDomain := #[.indexTheoretic]
+  verifiedAtLevel := #[]
+  universallyValid := none
+  validityKind := none
   validKMin := none
   validKMax := none
 }

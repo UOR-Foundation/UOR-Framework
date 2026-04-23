@@ -46,9 +46,12 @@
 //! // Or override one slot:
 //! struct EmbeddedHost;
 //! impl HostTypes for EmbeddedHost {
-//!     type Decimal = f32;        // override: tighter precision budget
-//!     type HostString = str;     // default
-//!     type WitnessBytes = [u8];  // default
+//!     type Decimal = f32;          // override: tighter precision budget
+//!     type HostString = str;       // default
+//!     type WitnessBytes = [u8];    // default
+//!     const EMPTY_DECIMAL: f32 = 0.0;
+//!     const EMPTY_HOST_STRING: &'static str = "";
+//!     const EMPTY_WITNESS_BYTES: &'static [u8] = &[];
 //! }
 //! ```
 //!
@@ -137,6 +140,14 @@ pub use enforcement::{
     FINGERPRINT_MIN_BYTES, TRACE_MAX_EVENTS, TRACE_REPLAY_FORMAT_VERSION,
 };
 
+pub use enforcement::{
+    CartesianProductEvidence, CartesianProductMintInputs, CartesianProductWitness,
+    GenericImpossibilityWitness, NullPartition, PartitionCoproductEvidence,
+    PartitionCoproductMintInputs, PartitionCoproductWitness, PartitionHandle,
+    PartitionProductEvidence, PartitionProductMintInputs, PartitionProductWitness, PartitionRecord,
+    PartitionResolver, VerifiedMint,
+};
+
 /// Phase B (target §4.1 W10): narrow host-types trait — the only carrier for
 /// the slots that genuinely vary across host environments. Foundation-owned
 /// types (Witt-level integers, booleans, IRIs, canonicalBytes, `UorTime`) are
@@ -156,6 +167,9 @@ pub use enforcement::{
 ///     type Decimal = f32;          // override
 ///     type HostString = str;       // default
 ///     type WitnessBytes = [u8];    // default
+///     const EMPTY_DECIMAL: f32 = 0.0;
+///     const EMPTY_HOST_STRING: &'static str = "";
+///     const EMPTY_WITNESS_BYTES: &'static [u8] = &[];
 /// }
 /// # let _ = (core::marker::PhantomData::<DefaultH>, core::marker::PhantomData::<EmbeddedHost>);
 /// ```
@@ -168,12 +182,34 @@ pub trait HostTypes {
     /// Host-supplied opaque string (NOT a foundation IRI).
     /// `DefaultHostTypes` selects `str`. Override with owned `String`, `Cow<'_, str>`,
     /// etc. for embedded / host-heap environments.
-    type HostString: ?Sized;
+    /// The `'static` bound is required by the Product/Coproduct Completion
+    /// Amendment §B1 `EMPTY_HOST_STRING` constant — every conforming `H`
+    /// must be able to expose a `&'static HostString`. All in-tree impls
+    /// (`DefaultHostTypes::HostString = str`) already satisfy this.
+    type HostString: ?Sized + 'static;
 
     /// Host-supplied opaque byte sequence (NOT a foundation `canonicalBytes` constant).
     /// `DefaultHostTypes` selects `[u8]`. Override with owned `Vec<u8>`, `Bytes`,
     /// etc. for host-heap environments.
-    type WitnessBytes: ?Sized;
+    /// The `'static` bound mirrors `HostString` for the same reason — see
+    /// the `EMPTY_WITNESS_BYTES` constant below.
+    type WitnessBytes: ?Sized + 'static;
+
+    /// Empty / zero `Decimal` value for resolver-absent partition accessors.
+    /// `DefaultHostTypes` selects `0.0`. Used by `NullPartition::density()`
+    /// and analogous H-typed defaults.
+    const EMPTY_DECIMAL: Self::Decimal;
+
+    /// Empty `&'static HostString` reference for resolver-absent accessors.
+    /// `DefaultHostTypes` selects `&""` coerced to `&str`. Used by
+    /// `NullPartition::product_category_level()` and the address-typed
+    /// string accessors on `NullElement<H>`.
+    const EMPTY_HOST_STRING: &'static Self::HostString;
+
+    /// Empty `&'static WitnessBytes` reference for resolver-absent accessors.
+    /// `DefaultHostTypes` selects `&[]` coerced to `&[u8]`. Used by
+    /// `NullElement<H>::canonical_bytes()`.
+    const EMPTY_WITNESS_BYTES: &'static Self::WitnessBytes;
 }
 
 /// Phase B: canonical default impl of [`HostTypes`]. Selects `f64`/`str`/`[u8]`.
@@ -186,4 +222,7 @@ impl HostTypes for DefaultHostTypes {
     type Decimal = f64;
     type HostString = str;
     type WitnessBytes = [u8];
+    const EMPTY_DECIMAL: f64 = 0.0;
+    const EMPTY_HOST_STRING: &'static str = "";
+    const EMPTY_WITNESS_BYTES: &'static [u8] = &[];
 }

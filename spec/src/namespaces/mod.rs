@@ -14,6 +14,7 @@ pub mod derivation;
 pub mod division;
 pub mod effect;
 pub mod failure;
+pub mod foundation;
 pub mod homology;
 pub mod interaction;
 pub mod linear;

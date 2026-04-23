@@ -51,7 +51,7 @@ jobs:
         run: cargo run --bin uor-crate
 
       - name: Verify no drift in generated code
-        run: git diff --exit-code foundation/src/
+        run: git diff --exit-code foundation/src/ uor-foundation-sdk/src/
 
       # Phase J (target §7.5): three required no_std build configurations.
       - name: Build foundation — bare-metal no_std (config 1)
@@ -74,6 +74,9 @@ jobs:
 
       - name: Verify crate packaging (dry-run)
         run: cargo publish --dry-run --allow-dirty -p uor-foundation
+
+      - name: Verify SDK crate packaging (dry-run)
+        run: cargo publish --dry-run --allow-dirty -p uor-foundation-sdk
 
       - name: Generate Lean 4 formalization
         run: cargo run --bin uor-lean

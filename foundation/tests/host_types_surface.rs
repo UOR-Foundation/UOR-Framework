@@ -37,6 +37,9 @@ fn host_types_trait_is_publicly_implementable() {
         type Decimal = f32;
         type HostString = str;
         type WitnessBytes = [u8];
+        const EMPTY_DECIMAL: f32 = 0.0;
+        const EMPTY_HOST_STRING: &'static str = "";
+        const EMPTY_WITNESS_BYTES: &'static [u8] = &[];
     }
     require_host_types::<EmbeddedHost>();
 }

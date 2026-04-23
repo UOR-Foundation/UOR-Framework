@@ -5,10 +5,10 @@ typed Rust traits. Import and implement.
 
 ## Contents
 
-- 33 namespaces
-- 468 OWL classes (one trait each)
-- 940 OWL properties (one method each)
-- 3495 named individuals (constants and enums)
+- 34 namespaces
+- 471 OWL classes (one trait each)
+- 948 OWL properties (one method each)
+- 3554 named individuals (constants and enums)
 - `enforcement` module with declarative builders and opaque witnesses
 - `uor!` proc macro for compile-time term-language DSL
 
@@ -107,6 +107,7 @@ let min_nanos = grounded.uor_time().min_wall_clock(&X86_SERVER).as_u64();
 | `bridge::resolver` | Bridge | Type resolution strategies implementing the partition map Π : T_n → Part(R_n) |
 | `user::type_` | User | Runtime type declarations that parameterize the resolution pipeline |
 | `bridge::partition` | Bridge | Irreducibility partitions produced by type resolution |
+| `bridge::foundation` | Bridge | Foundation-level layout invariants complementing op-namespace theorems |
 | `bridge::observable` | Bridge | Observable quantities and metrics computed by the UOR kernel |
 | `kernel::carry` | Kernel | Carry chain algebra: generate/propagate/kill event classification, carry profiles, encoding configurations, and encoding quality metrics for d_Δ optimization |
 | `bridge::homology` | Bridge | Simplicial complexes, chain complexes, boundary operators, and homology groups for structural reasoning |
@@ -180,6 +181,46 @@ The typed pipeline entry points (`pipeline::run`, `run_const`, `run_parallel`,
 are generic over `H: Hasher`. There are no fallback paths, no
 zero-fingerprint sentinels, and no `Default` impls on cert shims — a
 substrate is mandatory at every grounding site.
+
+## Product / coproduct witnesses (Product/Coproduct Completion Amendment)
+
+Three sealed witness types attest that a shape decomposes as one of
+the partition-algebra operations:
+
+- `PartitionProductWitness` — gated on PT_1 / PT_3 / PT_4 and the
+  `foundation/ProductLayoutWidth` invariant (UOR `A × B`, χ additive).
+- `PartitionCoproductWitness` — gated on ST_1 / ST_2 / ST_6 / ST_7 /
+  ST_8 / ST_9 / ST_10, the `foundation/CoproductLayoutWidth` invariant,
+  and `foundation/CoproductTagEncoding` (UOR `A + B`, `ln 2` tag
+  entropy). `validate_coproduct_structure` walks the supplied
+  `ConstraintRef` array at mint time to verify the canonical
+  tag-pinner encoding structurally.
+- `CartesianProductWitness` — gated on CPT_1 / CPT_3 / CPT_4 / CPT_5
+  and the `foundation/CartesianLayoutWidth` invariant (UOR `A ⊠ B`,
+  χ multiplicative, Betti via Künneth).
+
+Every witness implements `Certificate` with a partition-namespace IRI
+and a paired `*Evidence` associated type. The sealed `VerifiedMint`
+trait routes each `*MintInputs` struct through the corresponding mint
+primitive; failures return `GenericImpossibilityWitness::for_identity`
+citing the specific `op:*` theorem or `foundation:*` layout invariant
+that was violated.
+
+```rust,ignore
+use uor_foundation::{
+    PartitionProductMintInputs, PartitionProductWitness, VerifiedMint,
+};
+
+let witness = PartitionProductWitness::mint_verified(inputs)?;
+assert_eq!(witness.combined_site_budget(), /* A.sb + B.sb */);
+```
+
+`PartitionHandle<H>` is the content-addressed identity token for a
+partition; pair it with a `PartitionResolver<H>` via `resolve_with`
+to recover full `PartitionRecord<H>` data (site budget, Euler, Betti,
+entropy). Ergonomic ergonomic macros (`product_shape!`,
+`coproduct_shape!`, `cartesian_product_shape!`) live in the opt-in
+companion `uor-foundation-sdk` crate.
 
 ## License
 

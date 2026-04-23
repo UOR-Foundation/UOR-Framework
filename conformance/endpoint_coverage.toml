@@ -481,3 +481,67 @@ symbols = [
     "BinaryProjectionMap",
 ]
 behavior = "phase_x6_sinking"
+
+# ─── Mapping: Product/Coproduct Completion Amendment — PartitionProduct ─
+[coverage.partition_product_witness]
+symbols = [
+    "PartitionProductWitness",
+    "PartitionProductEvidence",
+    "PartitionProductMintInputs",
+    "VerifiedMint",
+]
+behavior = "behavior_partition_product_witness"
+
+# ─── Mapping: Product/Coproduct Completion Amendment — PartitionCoproduct ─
+[coverage.partition_coproduct_witness]
+symbols = [
+    "PartitionCoproductWitness",
+    "PartitionCoproductEvidence",
+    "PartitionCoproductMintInputs",
+]
+behavior = "behavior_partition_coproduct_witness"
+
+# ─── Mapping: Product/Coproduct Completion Amendment — CartesianProduct ─
+[coverage.cartesian_product_witness]
+symbols = [
+    "CartesianProductWitness",
+    "CartesianProductEvidence",
+    "CartesianProductMintInputs",
+    "CartesianProductShape",
+]
+behavior = "behavior_cartesian_product_witness"
+
+# ─── Mapping: Product/Coproduct Completion Amendment — PartitionHandle ─
+[coverage.partition_handle_resolver]
+symbols = [
+    "PartitionHandle",
+    "PartitionResolver",
+    "PartitionRecord",
+]
+behavior = "behavior_partition_handle_resolver"
+
+# ─── Mapping: Product/Coproduct Completion Amendment — NullPartition stubs ─
+# The Null* stub family implements the seven Partition<H> sub-traits with
+# resolver-absent defaults so the witness trait impls can return a
+# NullPartition<H> that satisfies the full Partition<H> contract. Each
+# Null* type is a unit stub with PhantomData<H>; their public surface is
+# a consequence of NullPartition's public trait impl exposing them as
+# associated types. Collectively covered by the witness-trait test.
+[coverage.null_partition_stubs]
+symbols = [
+    "NullPartition",
+    "NullDatum",
+    "NullElement",
+    "NullTermExpression",
+    "NullSiteIndex",
+    "NullTagSite",
+    "NullSiteBinding",
+    "NullConstraint",
+    "NullFreeRank",
+    "NullIrreducibleSet",
+    "NullReducibleSet",
+    "NullUnitGroup",
+    "NullComplement",
+    "NullTypeDefinition",
+]
+behavior = "behavior_witness_partition_trait_impls"

@@ -1688,6 +1688,16 @@ fn emit_constrained_type_shape(f: &mut RustFile) {
     f.line("    const IRI: &'static str;");
     f.indented_doc_comment("Number of sites (fields) this constrained type carries.");
     f.line("    const SITE_COUNT: usize;");
+    f.indented_doc_comment("Ontology-level `siteBudget`: count of data sites only,");
+    f.indented_doc_comment("excluding bookkeeping introduced by composition (coproduct tag");
+    f.indented_doc_comment("sites, etc.). Equals `SITE_COUNT` for leaf shapes and for");
+    f.indented_doc_comment("shapes whose composition introduces no bookkeeping (products,");
+    f.indented_doc_comment("cartesian products). Strictly less than `SITE_COUNT` for coproduct");
+    f.indented_doc_comment("shapes and any shape whose `SITE_COUNT` includes inherited");
+    f.indented_doc_comment("bookkeeping. Introduced by the Product/Coproduct Completion");
+    f.indented_doc_comment("Amendment §4a; defaults to `SITE_COUNT` so pre-amendment");
+    f.indented_doc_comment("shape impls remain valid without edits.");
+    f.line("    const SITE_BUDGET: usize = Self::SITE_COUNT;");
     f.indented_doc_comment("Per-site constraint list. Empty means unconstrained.");
     f.line("    const CONSTRAINTS: &'static [ConstraintRef];");
     f.line("}");
@@ -1698,6 +1708,165 @@ fn emit_constrained_type_shape(f: &mut RustFile) {
     f.line("    const IRI: &'static str = \"https://uor.foundation/type/ConstrainedType\";");
     f.line("    const SITE_COUNT: usize = 0;");
     f.line("    const CONSTRAINTS: &'static [ConstraintRef] = &[];");
+    f.line("}");
+    f.blank();
+
+    emit_cartesian_product_shape(f);
+}
+
+/// Emits the `CartesianProductShape` marker trait, its companion
+/// `primitive_cartesian_nerve_betti` primitive, the `kunneth_compose` const
+/// helper, and the SDK support helpers `shift_constraint` and
+/// `sdk_concat_product_constraints`. Introduced by the Product/Coproduct
+/// Completion Amendment §3c and §Gap 2.
+fn emit_cartesian_product_shape(f: &mut RustFile) {
+    // Marker trait: opt-in to Künneth-based Betti computation.
+    f.doc_comment("Marker for a `ConstrainedTypeShape` that is the Cartesian product of");
+    f.doc_comment("two component shapes. Selecting this trait routes nerve-Betti computation");
+    f.doc_comment("through Künneth composition of component Betti profiles rather than");
+    f.doc_comment("flat enumeration of (constraint, constraint) pairs. Introduced by the");
+    f.doc_comment("Product/Coproduct Completion Amendment §3c for CartesianPartitionProduct");
+    f.doc_comment("(CPT_1–CPT_6).");
+    f.line("pub trait CartesianProductShape: ConstrainedTypeShape {");
+    f.indented_doc_comment("Left operand shape.");
+    f.line("    type Left: ConstrainedTypeShape;");
+    f.indented_doc_comment("Right operand shape.");
+    f.line("    type Right: ConstrainedTypeShape;");
+    f.line("}");
+    f.blank();
+
+    // kunneth_compose — constant-time Künneth composition on bounded Betti arrays.
+    f.doc_comment("Künneth composition of two Betti profiles.");
+    f.doc_comment("");
+    f.doc_comment("Computes `out[k] = Σ_{i + j = k} a[i] · b[j]` over");
+    f.doc_comment("`[0, MAX_BETTI_DIMENSION)`. All arithmetic uses saturating operations so the");
+    f.doc_comment("function is total on `[u32; MAX_BETTI_DIMENSION]` inputs without panicking.");
+    f.line("pub const fn kunneth_compose(");
+    f.line("    a: &[u32; crate::enforcement::MAX_BETTI_DIMENSION],");
+    f.line("    b: &[u32; crate::enforcement::MAX_BETTI_DIMENSION],");
+    f.line(") -> [u32; crate::enforcement::MAX_BETTI_DIMENSION] {");
+    f.line("    let mut out = [0u32; crate::enforcement::MAX_BETTI_DIMENSION];");
+    f.line("    let mut i: usize = 0;");
+    f.line("    while i < crate::enforcement::MAX_BETTI_DIMENSION {");
+    f.line("        let mut j: usize = 0;");
+    f.line("        while j < crate::enforcement::MAX_BETTI_DIMENSION - i {");
+    f.line("            let term = a[i].saturating_mul(b[j]);");
+    f.line("            out[i + j] = out[i + j].saturating_add(term);");
+    f.line("            j += 1;");
+    f.line("        }");
+    f.line("        i += 1;");
+    f.line("    }");
+    f.line("    out");
+    f.line("}");
+    f.blank();
+
+    // primitive_cartesian_nerve_betti
+    f.doc_comment("Cartesian-product nerve Betti via Künneth composition of the component");
+    f.doc_comment("shapes' Betti profiles. Used instead of");
+    f.doc_comment("`primitive_simplicial_nerve_betti` when a shape declares itself as a");
+    f.doc_comment("`CartesianProductShape`. Amendment §3c.");
+    f.line("pub const fn primitive_cartesian_nerve_betti<S: CartesianProductShape>()");
+    f.line("    -> [u32; crate::enforcement::MAX_BETTI_DIMENSION]");
+    f.line("{");
+    f.line("    let left = crate::enforcement::primitive_simplicial_nerve_betti::<S::Left>();");
+    f.line("    let right = crate::enforcement::primitive_simplicial_nerve_betti::<S::Right>();");
+    f.line("    kunneth_compose(&left, &right)");
+    f.line("}");
+    f.blank();
+
+    // shift_constraint — SDK site-index rewrite helper.
+    f.doc_comment("Shift every site-index reference in a `ConstraintRef` by `offset`.");
+    f.doc_comment("");
+    f.doc_comment("Used by the SDK's `product_shape!` / `coproduct_shape!` /");
+    f.doc_comment("`cartesian_product_shape!` macros to splice an operand's constraints into");
+    f.doc_comment("a combined shape at a post-operand offset.");
+    f.doc_comment("");
+    f.doc_comment("**Variant coverage.**");
+    f.doc_comment("- `Site { position }` → position += offset.");
+    f.doc_comment("- `Carry { site }` → site += offset.");
+    f.doc_comment("- `Residue`, `Hamming`, `Depth`, `SatClauses`, `Bound`: pass through (no");
+    f.doc_comment("  site references at this layer).");
+    f.doc_comment("- `Affine { coefficients, bias }`: returned with the sentinel form");
+    f.doc_comment("  `Site { position: u32::MAX }`. Stable Rust const-fns cannot allocate a");
+    f.doc_comment("  new `&'static [i64]` with prepended zeros, so the SDK cannot shift an");
+    f.doc_comment("  operand's multi-site `Affine` coefficient slice at const time. Consumers");
+    f.doc_comment("  needing `Affine`-bearing operands must use the Manual-construction");
+    f.doc_comment("  pattern documented in the amendment §Gap 2. The sentinel triggers a");
+    f.doc_comment("  `foundation/ProductLayoutWidth` failure at mint time so misuse produces a");
+    f.doc_comment("  typed error rather than silently wrong output.");
+    f.doc_comment("- `Conjunction { conjuncts }`: returned with the same sentinel for the");
+    f.doc_comment("  same reason (nested conjunct rebuild would require const allocation).");
+    f.line("pub const fn shift_constraint(c: ConstraintRef, offset: u32) -> ConstraintRef {");
+    f.line("    match c {");
+    f.line("        ConstraintRef::Site { position } => ConstraintRef::Site {");
+    f.line("            position: position.saturating_add(offset),");
+    f.line("        },");
+    f.line("        ConstraintRef::Carry { site } => ConstraintRef::Carry {");
+    f.line("            site: site.saturating_add(offset),");
+    f.line("        },");
+    f.line("        ConstraintRef::Residue { modulus, residue } => {");
+    f.line("            ConstraintRef::Residue { modulus, residue }");
+    f.line("        }");
+    f.line("        ConstraintRef::Hamming { bound } => ConstraintRef::Hamming { bound },");
+    f.line("        ConstraintRef::Depth { min, max } => ConstraintRef::Depth { min, max },");
+    f.line("        ConstraintRef::SatClauses { clauses, num_vars } => {");
+    f.line("            ConstraintRef::SatClauses { clauses, num_vars }");
+    f.line("        }");
+    f.line("        ConstraintRef::Bound { observable_iri, bound_shape_iri, args_repr } => {");
+    f.line("            ConstraintRef::Bound { observable_iri, bound_shape_iri, args_repr }");
+    f.line("        }");
+    f.line("        ConstraintRef::Affine { .. } | ConstraintRef::Conjunction { .. } => {");
+    f.line("            // Sentinel — see doc comment above.");
+    f.line("            ConstraintRef::Site { position: u32::MAX }");
+    f.line("        }");
+    f.line("    }");
+    f.line("}");
+    f.blank();
+
+    // sdk_concat_product_constraints — fixed-size array builder for the SDK macros.
+    f.doc_comment("SDK support: concatenate two operand constraint arrays into a padded");
+    f.doc_comment("fixed-size buffer of length `2 * crate::enforcement::NERVE_CONSTRAINTS_CAP`.");
+    f.doc_comment("A's constraints are copied verbatim at indices `[0, A::CONSTRAINTS.len())`;");
+    f.doc_comment("B's constraints are copied at `[A::CONSTRAINTS.len(), total)` with each");
+    f.doc_comment("entry passed through `shift_constraint(c, A::SITE_COUNT as u32)`.");
+    f.doc_comment("Trailing positions are filled with the `Site { position: u32::MAX }`");
+    f.doc_comment("sentinel.");
+    f.doc_comment("");
+    f.doc_comment("Consumers pair this with `sdk_product_constraints_len` to derive the");
+    f.doc_comment("slice length at const-eval time: `&BUF[..LEN]` yields a `&'static");
+    f.doc_comment("[ConstraintRef]` of the correct length without `unsafe`.");
+    f.line("pub const fn sdk_concat_product_constraints<A, B>()");
+    f.line("    -> [ConstraintRef; 2 * crate::enforcement::NERVE_CONSTRAINTS_CAP]");
+    f.line("where");
+    f.line("    A: ConstrainedTypeShape,");
+    f.line("    B: ConstrainedTypeShape,");
+    f.line("{");
+    f.line("    let mut out = [ConstraintRef::Site { position: u32::MAX };");
+    f.line("                   2 * crate::enforcement::NERVE_CONSTRAINTS_CAP];");
+    f.line("    let left = A::CONSTRAINTS;");
+    f.line("    let right = B::CONSTRAINTS;");
+    f.line("    let offset = A::SITE_COUNT as u32;");
+    f.line("    let mut i: usize = 0;");
+    f.line("    while i < left.len() {");
+    f.line("        out[i] = left[i];");
+    f.line("        i += 1;");
+    f.line("    }");
+    f.line("    let mut j: usize = 0;");
+    f.line("    while j < right.len() {");
+    f.line("        out[i + j] = shift_constraint(right[j], offset);");
+    f.line("        j += 1;");
+    f.line("    }");
+    f.line("    out");
+    f.line("}");
+    f.blank();
+
+    f.doc_comment("Companion length helper for `sdk_concat_product_constraints`.");
+    f.line("pub const fn sdk_product_constraints_len<A, B>() -> usize");
+    f.line("where");
+    f.line("    A: ConstrainedTypeShape,");
+    f.line("    B: ConstrainedTypeShape,");
+    f.line("{");
+    f.line("    A::CONSTRAINTS.len() + B::CONSTRAINTS.len()");
     f.line("}");
     f.blank();
 }

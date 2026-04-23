@@ -1423,6 +1423,22 @@ pub fn validate() -> ConformanceReport {
         tests::fixtures::TEST280_BRIDGE_COMPLETION,
         &mut report,
     );
+    // Product/Coproduct Completion Amendment SHACL fixtures.
+    run_test(
+        "test285_cartesian_partition_product",
+        tests::fixtures::TEST285_CARTESIAN_PARTITION_PRODUCT,
+        &mut report,
+    );
+    run_test(
+        "test286_tag_site",
+        tests::fixtures::TEST286_TAG_SITE,
+        &mut report,
+    );
+    run_test(
+        "test287_layout_invariant",
+        tests::fixtures::TEST287_LAYOUT_INVARIANT,
+        &mut report,
+    );
 
     // Verify test fixture count matches expected
     let test_count = report.results.len() - before_tests;

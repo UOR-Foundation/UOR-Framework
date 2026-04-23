@@ -4668,6 +4668,138 @@ pub mod prf_st_5 {
     pub const VERIFIED: bool = true;
 }
 
+/// Proof of ST_6: unique existence of the PartitionCoproduct tag site. Follows from ST_2's single `ln 2` entropy quantum — distinguishing two variants requires exactly one bit, which fixes exactly one tag site logically disjoint from every data site of either operand.
+pub mod prf_st_6 {
+    /// `provesIdentity` -> `ST_6`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/ST_6";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Proof of ST_7: PartitionCoproduct variant-tagging decomposition. constraints(A + B) = constraints(A) ∪ {tag=0} ∪ constraints(B) ∪ {tag=1}. Each tag-pinning constraint is emitted as an Affine with single-coefficient 1 at the tag site, distinguished by bias (0 for left, -1 for right).
+pub mod prf_st_7 {
+    /// `provesIdentity` -> `ST_7`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/ST_7";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Proof of ST_8: variant nerve disjointness. The two tag-pinning constraints carry incompatible biases (0 vs -1) at the same tag site, so no single assignment satisfies both simultaneously. The variant nerves therefore share no common assignment — the bridge premise ST_3/ST_4 rely on.
+pub mod prf_st_8 {
+    /// `provesIdentity` -> `ST_8`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/ST_8";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Proof of ST_9: χ additivity for PartitionCoproduct constructions. Combines ST_8's disjointness guarantee with the universal ST_3 (χ additive for any disjoint SumType).
+pub mod prf_st_9 {
+    /// `provesIdentity` -> `ST_9`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/ST_9";
+    /// `strategy` -> `Composition`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Composition";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Proof of ST_10: Betti additivity for PartitionCoproduct constructions. Combines ST_8's disjointness guarantee with the universal ST_4 (Betti additive at every dimension for any disjoint SumType).
+pub mod prf_st_10 {
+    /// `provesIdentity` -> `ST_10`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/ST_10";
+    /// `strategy` -> `Composition`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Composition";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Proof of CPT_1: site additivity for Cartesian partition products. UOR sites are bit widths; |A ⊠ B| = 2^{n_A} · 2^{n_B} = 2^{n_A + n_B}, so sites add. Sister identity to PT_1 (same arithmetic; the two differ at the nerve-topology level per CPT_3 vs PT_3).
+pub mod prf_cpt_1 {
+    /// `provesIdentity` -> `CPT_1`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/CPT_1";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Proof of CPT_2a: Π(A ⊠ B) = CartesianPartitionProduct(Π(A), Π(B)). Structural axiom defining the partition map on Cartesian-product types.
+pub mod prf_cpt_2a {
+    /// `provesIdentity` -> `CPT_2a`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/CPT_2a";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Proof of CPT_3: χ multiplicativity for Cartesian partition products. Classical topology result — the simplicial product nerve has vertex set V(N(A)) × V(N(B)) and Euler characteristic χ(N(A)) · χ(N(B)). Distinguishes CartesianPartitionProduct from the site-disjoint-union PartitionProduct (which is χ-additive per PT_3).
+pub mod prf_cpt_3 {
+    /// `provesIdentity` -> `CPT_3`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/CPT_3";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Proof of CPT_4: Künneth formula for Betti composition under Cartesian partition product. Follows from the classical Künneth theorem applied to the simplicial product nerve of the two component constraint systems.
+pub mod prf_cpt_4 {
+    /// `provesIdentity` -> `CPT_4`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/CPT_4";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Proof of CPT_5: entropy additivity for Cartesian partition products. S(A ⊠ B) = S(A) + S(B) — Shannon additivity for independent subsystems. Consistent pointwise with IT_7a/b on the combined system.
+pub mod prf_cpt_5 {
+    /// `provesIdentity` -> `CPT_5`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/CPT_5";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Proof of CPT_6: distributivity of Cartesian partition product over PartitionCoproduct. A ⊠ (B + C) ≡ (A ⊠ B) + (A ⊠ C) at the siteBudget, SITE_COUNT, χ, and entropy levels simultaneously. Does NOT extend to PartitionProduct (distribution over × duplicates the outer factor at the site-budget level).
+pub mod prf_cpt_6 {
+    /// `provesIdentity` -> `CPT_6`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/CPT_6";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
 /// Inductive proof of TS_8: minimum constraint count for beta_1 = k is 2k + 1. Base case at k=1 requires 3 mutually overlapping constraints.
 pub mod prf_ts_8 {
     /// `baseCase` -> `prf_HA_1`

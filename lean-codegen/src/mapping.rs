@@ -71,6 +71,8 @@ pub fn lean_namespace_mappings() -> HashMap<&'static str, LeanNamespaceMapping> 
         "Bridge",
         "Conformance_",
     );
+    // Product/Coproduct Completion Amendment — foundation namespace.
+    ins(&mut m, NS_FOUNDATION, Space::Bridge, "Bridge", "Foundation");
     // User space (3 namespaces)
     ins(&mut m, NS_TYPE, Space::User, "User", "Type_");
     ins(&mut m, NS_MORPHISM, Space::User, "User", "Morphism");

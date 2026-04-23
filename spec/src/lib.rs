@@ -11,7 +11,7 @@
 //!
 //! ```
 //! let ontology = uor_ontology::Ontology::full();
-//! assert_eq!(ontology.namespaces.len(), 33);
+//! assert_eq!(ontology.namespaces.len(), uor_ontology::counts::NAMESPACES);
 //! ```
 //!
 //! # Serialization
@@ -60,7 +60,7 @@ impl Ontology {
     ///
     /// Assembly order follows the dependency graph specified in the UOR Foundation
     /// completion plan:
-    /// `u → schema → op → query → resolver → type → partition →
+    /// `u → schema → op → query → resolver → type → partition → foundation →
     ///  observable → carry → homology → cohomology → proof → derivation → trace → cert → morphism → state → reduction → convergence → division → interaction → monoidal → operad → effect → predicate → parallel → stream → failure → linear → recursion → region → boundary → conformance`
     #[must_use]
     pub fn full() -> &'static Ontology {
@@ -76,6 +76,7 @@ impl Ontology {
                 namespaces::resolver::module(),
                 namespaces::type_::module(),
                 namespaces::partition::module(),
+                namespaces::foundation::module(),
                 namespaces::observable::module(),
                 namespaces::carry::module(),
                 namespaces::homology::module(),

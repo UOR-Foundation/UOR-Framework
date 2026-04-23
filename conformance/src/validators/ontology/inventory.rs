@@ -5215,6 +5215,18 @@ fn validate_legitimate_string_properties_only(report: &mut ConformanceReport) {
         // canonical serialization; typed accessors on the Rust side
         // unpack via per-type-alias constructors.
         "https://uor.foundation/type/boundArguments",
+        // Product/Coproduct Completion Amendment: productCategoryLevel is
+        // a closed-vocabulary discriminator ("partition_classification" or
+        // "nerve_topology") at the Partition class — using xsd:string is
+        // the canonical encoding since the value is a fixed identifier the
+        // reader interprets, not a parsed numeric or structured type.
+        "https://uor.foundation/partition/productCategoryLevel",
+        // Product/Coproduct Completion Amendment: layoutRule on
+        // foundation:LayoutInvariant carries the human-readable arithmetic
+        // identity ("SITE_COUNT(A × B) = SITE_COUNT(A) + SITE_COUNT(B)"
+        // etc.) for documentation and debugger inspection. Not parsed;
+        // xsd:string is the canonical range.
+        "https://uor.foundation/foundation/layoutRule",
     ]
     .into_iter()
     .collect();

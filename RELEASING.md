@@ -17,9 +17,11 @@
 2. Regenerate the foundation crate and Lean 4 formalization, then commit:
    ```sh
    cargo run --bin uor-crate
-   cargo fmt -- foundation/src/**/*.rs foundation/src/*.rs
+   cargo fmt --all
    cargo run --bin uor-lean
-   git add Cargo.toml Cargo.lock foundation/Cargo.toml foundation/src/ \
+   git add Cargo.toml Cargo.lock \
+          foundation/Cargo.toml foundation/src/ \
+          uor-foundation-sdk/Cargo.toml uor-foundation-sdk/src/ \
           lean4/
    git commit -m "Bump version to X.Y.Z"
    ```
@@ -43,12 +45,23 @@
 
 ## Published Crates
 
-One crate is published to crates.io:
+Two crates are published to crates.io in this release cycle:
 
 1. `uor-foundation` — typed Rust traits for the ontology
+2. `uor-foundation-sdk` — proc-macro ergonomics (`product_shape!`,
+   `coproduct_shape!`, `cartesian_product_shape!`) for composing
+   partition-algebra shapes from other `ConstrainedTypeShape` operands.
+
+The SDK crate publishes **after** the foundation crate with a
+wait-for-index step between them (see `release.yml`). This avoids the
+classic crates.io ordering failure where the SDK's packaged manifest
+depends on `uor-foundation = { version = "X.Y.Z" }` and the registry
+rejects the SDK publish because the new foundation version is not yet
+visible.
 
 The internal crates (`uor-ontology`, `uor-codegen`, `uor-lean-codegen`,
-`uor-conformance`, `uor-docs`, `uor-website`, `uor-clients`) are not published.
+`uor-conformance`, `uor-docs`, `uor-website`, `uor-clients`) are not
+published.
 
 ## Lean 4 Package
 
@@ -63,9 +76,9 @@ Release so downstream users can skip building from source.
 
 - **Tag/version mismatch**: The workflow fails early if the tag version
   does not match `Cargo.toml`. Fix the version and re-tag.
-- **Generated code drift**: If `git diff --exit-code foundation/src/` fails
+- **Generated code drift**: If `git diff --exit-code foundation/src/ uor-foundation-sdk/src/` fails
   in CI, the committed generated code doesn't match the generator output.
-  Run `cargo run --bin uor-crate && cargo fmt` locally and commit.
+  Run `cargo run --bin uor-crate && cargo fmt --all` locally and commit.
 - **Version already published**: crates.io does not allow re-publishing
   the same version. Bump the version and create a new tag.
 - **Lean 4 drift**: If `git diff --exit-code lean4/` fails in CI,

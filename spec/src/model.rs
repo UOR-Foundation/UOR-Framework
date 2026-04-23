@@ -558,6 +558,11 @@ pub mod iris {
 
     /// Effect algebra namespace.
     pub const NS_EFFECT: &str = "https://uor.foundation/effect/";
+    /// Foundation-level layout invariants namespace (Product/Coproduct
+    /// Completion Amendment). Complements op-namespace theorems by
+    /// quantifying over foundation-defined `SITE_COUNT` arithmetic and
+    /// `ConstraintRef` encoding disciplines.
+    pub const NS_FOUNDATION: &str = "https://uor.foundation/foundation/";
 
     // XSD datatypes
     /// `xsd:string`.

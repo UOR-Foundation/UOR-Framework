@@ -11,7 +11,7 @@ Rust workspace encoding the UOR Foundation ontology as typed data structures, a 
 | `uor-ontology` | `spec/` | no | Ontology source of truth (classes, properties, individuals, serializers) |
 | `uor-codegen` | `codegen/` | no | Ontology-to-Rust trait generator |
 | `uor-foundation` | `foundation/` | **crates.io** | Generated `#![no_std]` trait library — never edit manually |
-| `uor-foundation-macros` | `uor-foundation-macros/` | **crates.io** | Companion proc-macro crate for `uor-foundation` |
+| `uor-foundation-sdk` | `uor-foundation-sdk/` | **crates.io** (pending first release) | Procedural-macro ergonomics (`product_shape!`, `coproduct_shape!`, `cartesian_product_shape!`) for composing `ConstrainedTypeShape` operands — emitted by `uor-crate` from `codegen/src/sdk_macros.rs`. |
 | `uor-conformance` | `conformance/` | no | Conformance suite (OWL, SHACL, RDF, Rust API, docs, website) — check count in `spec/src/counts.rs` |
 | `uor-docs` | `docs/` | no | Documentation generator |
 | `uor-website` | `website/` | no | Static site generator |
@@ -48,18 +48,18 @@ Docs/website/conformance binaries accept `PUBLIC_BASE_PATH` env var for URL pref
 
 ## CI pipeline (in order)
 
-`cargo fmt --check` → `cargo clippy` → `cargo test` → `cargo run --bin uor-crate` → `git diff --exit-code foundation/src/` → `cargo check -p uor-foundation --no-default-features` → `cargo publish --dry-run` → `uor-lean` → `git diff --exit-code lean4/` → `uor-build` → `uor-docs` → `uor-website` → `uor-conformance` → deploy pages
+`cargo fmt --check` → `cargo clippy` → `cargo test` → `cargo run --bin uor-crate` → `git diff --exit-code foundation/src/ uor-foundation-sdk/src/` → `cargo check -p uor-foundation --no-default-features` → `cargo publish --dry-run` (uor-foundation + uor-foundation-sdk) → `uor-lean` → `git diff --exit-code lean4/` → `uor-build` → `uor-docs` → `uor-website` → `uor-conformance` → deploy pages
 
 ## Ontology architecture
 
 Counts below are mirrored from `spec/src/counts.rs`, which is the single source of truth.
 
-- **33 namespaces**, assembly order: `u → schema → op → query → resolver → type → partition → observable → carry → homology → cohomology → proof → derivation → trace → cert → morphism → state → reduction → convergence → division → interaction → monoidal → operad → effect → predicate → parallel → stream → failure → linear → recursion → region → boundary → conformance`
-- **Space classification:** Kernel (17: `u`, `schema`, `op`, `carry`, `reduction`, `convergence`, `division`, `monoidal`, `operad`, `effect`, `predicate`, `parallel`, `stream`, `failure`, `linear`, `recursion`, `region`), Bridge (13: `query`, `resolver`, `partition`, `observable`, `homology`, `cohomology`, `proof`, `derivation`, `trace`, `cert`, `interaction`, `boundary`, `conformance`), User (`type`, `morphism`, `state`)
-- **457 classes** → 439 traits + 18 enum classes (includes WittLevel newtype struct)
-- **928 properties** → 891 trait methods (generic over `P: Primitives`)
-- **3443 named individuals** → 1501 constant modules
-- **18 enum classes:** `AchievabilityStatus`, `ComplexityClass`, `ExecutionPolicyKind`, `GeometricCharacter`, `GroundingPhase`, `MeasurementUnit`, `MetricAxis`, `PhaseBoundaryType`, `ProofStrategy`, `QuantifierKind`, `RewriteRule`, `SessionBoundaryType`, `TriadProjection`, `ValidityScopeKind`, `VarianceAnnotation`, `VerificationDomain`, `ViolationKind`, `WittLevel`
+- **34 namespaces**, assembly order: `u → schema → op → query → resolver → type → partition → foundation → observable → carry → homology → cohomology → proof → derivation → trace → cert → morphism → state → reduction → convergence → division → interaction → monoidal → operad → effect → predicate → parallel → stream → failure → linear → recursion → region → boundary → conformance`
+- **Space classification:** Kernel (17: `u`, `schema`, `op`, `carry`, `reduction`, `convergence`, `division`, `monoidal`, `operad`, `effect`, `predicate`, `parallel`, `stream`, `failure`, `linear`, `recursion`, `region`), Bridge (14: `query`, `resolver`, `partition`, `foundation`, `observable`, `homology`, `cohomology`, `proof`, `derivation`, `trace`, `cert`, `interaction`, `boundary`, `conformance`), User (`type`, `morphism`, `state`)
+- **471 classes** → 452 traits + 19 enum classes (includes WittLevel newtype struct)
+- **948 properties** → 911 trait methods (generic over `P: Primitives`)
+- **3554 named individuals** → 3541 constant modules
+- **19 enum classes:** `AchievabilityStatus`, `ComplexityClass`, `ExecutionPolicyKind`, `GeometricCharacter`, `GroundingPhase`, `MeasurementUnit`, `MetricAxis`, `PartitionComponent`, `PhaseBoundaryType`, `ProofStrategy`, `QuantifierKind`, `RewriteRule`, `SessionBoundaryType`, `TriadProjection`, `ValidityScopeKind`, `VarianceAnnotation`, `VerificationDomain`, `ViolationKind`, `WittLevel`
 
 ## Code generation patterns
 

@@ -1467,6 +1467,90 @@ def prf_COEFF_1 : UOR.Bridge.Proof.AxiomaticDerivation UOR.Prims.Standard := {
   formalDerivation := none
 }
 
+-- Proof of CPT_1: site additivity for Cartesian partition products. UOR sites are bit widths; |A ⊠ B| = 2^{n_A} · 2^{n_B} = 2^{n_A + n_B}, so sites add. Sister identity to PT_1 (same arithmetic; the two differ at the nerve-topology level per CPT_3 vs PT_3).
+def prf_CPT_1 : UOR.Bridge.Proof.AxiomaticDerivation UOR.Prims.Standard := {
+  universalScope := some (true)
+  derivationWitness := #[]
+  verified := some (true)
+  timestamp := none
+  witness := #[]
+  provesIdentity := some (UOR.Kernel.Op.CPT_1)
+  verifiedAtLevel := #[]
+  strategy := some (.ringAxiom)
+  dependsOn := #[]
+  formalDerivation := none
+}
+
+-- Proof of CPT_2a: Π(A ⊠ B) = CartesianPartitionProduct(Π(A), Π(B)). Structural axiom defining the partition map on Cartesian-product types.
+def prf_CPT_2a : UOR.Bridge.Proof.AxiomaticDerivation UOR.Prims.Standard := {
+  universalScope := some (true)
+  derivationWitness := #[]
+  verified := some (true)
+  timestamp := none
+  witness := #[]
+  provesIdentity := some (UOR.Kernel.Op.CPT_2a)
+  verifiedAtLevel := #[]
+  strategy := some (.ringAxiom)
+  dependsOn := #[]
+  formalDerivation := none
+}
+
+-- Proof of CPT_3: χ multiplicativity for Cartesian partition products. Classical topology result — the simplicial product nerve has vertex set V(N(A)) × V(N(B)) and Euler characteristic χ(N(A)) · χ(N(B)). Distinguishes CartesianPartitionProduct from the site-disjoint-union PartitionProduct (which is χ-additive per PT_3).
+def prf_CPT_3 : UOR.Bridge.Proof.AxiomaticDerivation UOR.Prims.Standard := {
+  universalScope := some (true)
+  derivationWitness := #[]
+  verified := some (true)
+  timestamp := none
+  witness := #[]
+  provesIdentity := some (UOR.Kernel.Op.CPT_3)
+  verifiedAtLevel := #[]
+  strategy := some (.ringAxiom)
+  dependsOn := #[]
+  formalDerivation := none
+}
+
+-- Proof of CPT_4: Künneth formula for Betti composition under Cartesian partition product. Follows from the classical Künneth theorem applied to the simplicial product nerve of the two component constraint systems.
+def prf_CPT_4 : UOR.Bridge.Proof.AxiomaticDerivation UOR.Prims.Standard := {
+  universalScope := some (true)
+  derivationWitness := #[]
+  verified := some (true)
+  timestamp := none
+  witness := #[]
+  provesIdentity := some (UOR.Kernel.Op.CPT_4)
+  verifiedAtLevel := #[]
+  strategy := some (.ringAxiom)
+  dependsOn := #[]
+  formalDerivation := none
+}
+
+-- Proof of CPT_5: entropy additivity for Cartesian partition products. S(A ⊠ B) = S(A) + S(B) — Shannon additivity for independent subsystems. Consistent pointwise with IT_7a/b on the combined system.
+def prf_CPT_5 : UOR.Bridge.Proof.AxiomaticDerivation UOR.Prims.Standard := {
+  universalScope := some (true)
+  derivationWitness := #[]
+  verified := some (true)
+  timestamp := none
+  witness := #[]
+  provesIdentity := some (UOR.Kernel.Op.CPT_5)
+  verifiedAtLevel := #[]
+  strategy := some (.ringAxiom)
+  dependsOn := #[]
+  formalDerivation := none
+}
+
+-- Proof of CPT_6: distributivity of Cartesian partition product over PartitionCoproduct. A ⊠ (B + C) ≡ (A ⊠ B) + (A ⊠ C) at the siteBudget, SITE_COUNT, χ, and entropy levels simultaneously. Does NOT extend to PartitionProduct (distribution over × duplicates the outer factor at the site-budget level).
+def prf_CPT_6 : UOR.Bridge.Proof.AxiomaticDerivation UOR.Prims.Standard := {
+  universalScope := some (true)
+  derivationWitness := #[]
+  verified := some (true)
+  timestamp := none
+  witness := #[]
+  provesIdentity := some (UOR.Kernel.Op.CPT_6)
+  verifiedAtLevel := #[]
+  strategy := some (.ringAxiom)
+  dependsOn := #[]
+  formalDerivation := none
+}
+
 -- Axiomatic derivation of CR_1. Holds at all quantum levels by definition of Z/(2^n)Z.
 def prf_CR_1 : UOR.Bridge.Proof.AxiomaticDerivation UOR.Prims.Standard := {
   universalScope := some (true)
@@ -7319,6 +7403,20 @@ def prf_ST_1 : UOR.Bridge.Proof.AxiomaticDerivation UOR.Prims.Standard := {
   formalDerivation := none
 }
 
+-- Proof of ST_10: Betti additivity for PartitionCoproduct constructions. Combines ST_8's disjointness guarantee with the universal ST_4 (Betti additive at every dimension for any disjoint SumType).
+def prf_ST_10 : UOR.Bridge.Proof.AxiomaticDerivation UOR.Prims.Standard := {
+  universalScope := some (true)
+  derivationWitness := #[]
+  verified := some (true)
+  timestamp := none
+  witness := #[]
+  provesIdentity := some (UOR.Kernel.Op.ST_10)
+  verifiedAtLevel := #[]
+  strategy := some (.composition)
+  dependsOn := #[]
+  formalDerivation := none
+}
+
 -- Proof of ST_2: sum type entropy. S(A + B) = ln 2 + max(S(A), S(B)). The ln 2 term accounts for the variant discriminant bit; the max reflects that only one variant is active at a time.
 def prf_ST_2 : UOR.Bridge.Proof.AxiomaticDerivation UOR.Prims.Standard := {
   universalScope := some (true)
@@ -7369,6 +7467,62 @@ def prf_ST_5 : UOR.Bridge.Proof.AxiomaticDerivation UOR.Prims.Standard := {
   timestamp := none
   witness := #[]
   provesIdentity := some (UOR.Kernel.Op.ST_5)
+  verifiedAtLevel := #[]
+  strategy := some (.composition)
+  dependsOn := #[]
+  formalDerivation := none
+}
+
+-- Proof of ST_6: unique existence of the PartitionCoproduct tag site. Follows from ST_2's single `ln 2` entropy quantum — distinguishing two variants requires exactly one bit, which fixes exactly one tag site logically disjoint from every data site of either operand.
+def prf_ST_6 : UOR.Bridge.Proof.AxiomaticDerivation UOR.Prims.Standard := {
+  universalScope := some (true)
+  derivationWitness := #[]
+  verified := some (true)
+  timestamp := none
+  witness := #[]
+  provesIdentity := some (UOR.Kernel.Op.ST_6)
+  verifiedAtLevel := #[]
+  strategy := some (.ringAxiom)
+  dependsOn := #[]
+  formalDerivation := none
+}
+
+-- Proof of ST_7: PartitionCoproduct variant-tagging decomposition. constraints(A + B) = constraints(A) ∪ {tag=0} ∪ constraints(B) ∪ {tag=1}. Each tag-pinning constraint is emitted as an Affine with single-coefficient 1 at the tag site, distinguished by bias (0 for left, -1 for right).
+def prf_ST_7 : UOR.Bridge.Proof.AxiomaticDerivation UOR.Prims.Standard := {
+  universalScope := some (true)
+  derivationWitness := #[]
+  verified := some (true)
+  timestamp := none
+  witness := #[]
+  provesIdentity := some (UOR.Kernel.Op.ST_7)
+  verifiedAtLevel := #[]
+  strategy := some (.ringAxiom)
+  dependsOn := #[]
+  formalDerivation := none
+}
+
+-- Proof of ST_8: variant nerve disjointness. The two tag-pinning constraints carry incompatible biases (0 vs -1) at the same tag site, so no single assignment satisfies both simultaneously. The variant nerves therefore share no common assignment — the bridge premise ST_3/ST_4 rely on.
+def prf_ST_8 : UOR.Bridge.Proof.AxiomaticDerivation UOR.Prims.Standard := {
+  universalScope := some (true)
+  derivationWitness := #[]
+  verified := some (true)
+  timestamp := none
+  witness := #[]
+  provesIdentity := some (UOR.Kernel.Op.ST_8)
+  verifiedAtLevel := #[]
+  strategy := some (.ringAxiom)
+  dependsOn := #[]
+  formalDerivation := none
+}
+
+-- Proof of ST_9: χ additivity for PartitionCoproduct constructions. Combines ST_8's disjointness guarantee with the universal ST_3 (χ additive for any disjoint SumType).
+def prf_ST_9 : UOR.Bridge.Proof.AxiomaticDerivation UOR.Prims.Standard := {
+  universalScope := some (true)
+  derivationWitness := #[]
+  verified := some (true)
+  timestamp := none
+  witness := #[]
+  provesIdentity := some (UOR.Kernel.Op.ST_9)
   verifiedAtLevel := #[]
   strategy := some (.composition)
   dependsOn := #[]

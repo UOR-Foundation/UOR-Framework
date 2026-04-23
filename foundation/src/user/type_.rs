@@ -32,7 +32,16 @@ pub trait ProductType<H: HostTypes>: TypeDefinition<H> {
 }
 
 /// A sum (disjoint union) type formed from multiple variant types. The carrier is the disjoint union of the variant carriers.
-pub trait SumType<H: HostTypes>: TypeDefinition<H> {}
+pub trait SumType<H: HostTypes>: TypeDefinition<H> {
+    /// Associated type for `TypeDefinition`.
+    type TypeDefinition: TypeDefinition<H>;
+    /// A variant type in a sum type. Ordering contract: variants are returned in canonical content-fingerprint order (ascending), matching the canonicalization used by coproduct_shape! and the content-address hashing pipeline, so introspection via variant() and the algebra_id derived from the same type agree on which variant is 'left' and which is 'right'. Author-order is not preserved.
+    fn variant(&self) -> &[Self::TypeDefinition];
+    /// Associated type for `TagSite`.
+    type TagSite: crate::bridge::partition::TagSite<H>;
+    /// The tag site distinguishing variants of this sum type at runtime (ST_6). Stored at the physical layout position max(SITE_COUNT(A), SITE_COUNT(B)) so the tag cannot collide with any inherited bookkeeping site when either operand is itself a coproduct.
+    fn tag_site(&self) -> &Self::TagSite;
+}
 
 /// A type formed by constraining a base type with a predicate. The carrier is the subset of the base carrier satisfying the constraint.
 pub trait ConstrainedType<H: HostTypes>: TypeDefinition<H> {

@@ -1,6 +1,7 @@
 # UOR Foundation SHACL Shapes
-# Generated from ontology v0.2.2 — 468 NodeShapes (Phases A–J + T1 cleanup +
-# Workstream C: 2 impossibility cert subclasses).
+# Generated from ontology v0.3.0 — 471 NodeShapes (Phases A–J + T1 cleanup +
+# Workstream C: 2 impossibility cert subclasses + Product/Coproduct
+# Completion Amendment: 3 new partition/foundation classes).
 
 @prefix rdf:        <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix rdfs:       <http://www.w3.org/2000/01/rdf-schema#> .
@@ -40,6 +41,7 @@
 @prefix region:     <https://uor.foundation/region/> .
 @prefix boundary:   <https://uor.foundation/boundary/> .
 @prefix conformance:<https://uor.foundation/conformance/> .
+@prefix foundation: <https://uor.foundation/foundation/> .
 @prefix uor-sh:     <https://uor.foundation/shapes/> .
 
 # ── u/ namespace (1) ─────────────────────────────
@@ -7623,3 +7625,46 @@ uor-sh:InhabitanceImpossibilityCertificateShape
     a               sh:NodeShape ;
     sh:targetClass  cert:InhabitanceImpossibilityCertificate ;
     rdfs:label      "InhabitanceImpossibilityCertificateShape" .
+
+# Product/Coproduct Completion Amendment — new partition-algebra and
+# foundation-layout classes. Minimal NodeShapes matching the witness-shim
+# pattern above (sealed types with only the amendment-defined properties
+# to constrain).
+uor-sh:CartesianPartitionProductShape
+    a               sh:NodeShape ;
+    sh:targetClass  partition:CartesianPartitionProduct ;
+    rdfs:label      "CartesianPartitionProductShape" ;
+    sh:property [
+        sh:path partition:leftCartesianFactor ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:class partition:Partition ;
+    ] ;
+    sh:property [
+        sh:path partition:rightCartesianFactor ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:class partition:Partition ;
+    ] .
+
+uor-sh:TagSiteShape
+    a               sh:NodeShape ;
+    sh:targetClass  partition:TagSite ;
+    rdfs:label      "TagSiteShape" ;
+    sh:property [
+        sh:path partition:tagValue ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:datatype xsd:boolean ;
+    ] .
+
+uor-sh:LayoutInvariantShape
+    a               sh:NodeShape ;
+    sh:targetClass  foundation:LayoutInvariant ;
+    rdfs:label      "LayoutInvariantShape" ;
+    sh:property [
+        sh:path foundation:layoutRule ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:datatype xsd:string ;
+    ] .

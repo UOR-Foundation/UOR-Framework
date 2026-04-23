@@ -379,7 +379,20 @@ fn generate_property_method(
 
                 f.indented_doc_comment(&comment);
                 if prop.functional {
-                    let _ = writeln!(f.buf, "    fn {method_name}(&self) -> &Self::{assoc_name};");
+                    if is_by_value_partition_factor(prop.id) {
+                        // Product/Coproduct Completion Amendment §1d: the six
+                        // partition-algebra factor accessors return by value
+                        // so that witness types (PartitionProductWitness,
+                        // PartitionCoproductWitness, CartesianProductWitness)
+                        // can hand out a freshly constructed PartitionHandle
+                        // with no backing storage. PartitionHandle is Copy
+                        // and small, so by-value return is efficient.
+                        let _ =
+                            writeln!(f.buf, "    fn {method_name}(&self) -> Self::{assoc_name};");
+                    } else {
+                        let _ =
+                            writeln!(f.buf, "    fn {method_name}(&self) -> &Self::{assoc_name};");
+                    }
                 } else {
                     let _ = writeln!(
                         f.buf,
@@ -400,6 +413,29 @@ fn generate_property_method(
 /// (siteState in Amendment 90, geometricCharacter in Amendment 23).
 fn datatype_enum_override(_prop: &Property) -> Option<&'static str> {
     None
+}
+
+/// Product/Coproduct Completion Amendment §1d: returns true for the six
+/// partition-algebra factor accessor properties whose traits return the
+/// associated Partition type by value rather than by reference.
+///
+/// These six property IRIs identify the left/right accessors on
+/// PartitionProduct, PartitionCoproduct, and CartesianPartitionProduct.
+/// Witness impls (PartitionProductWitness, PartitionCoproductWitness,
+/// CartesianProductWitness) need the by-value return so they can
+/// construct a fresh PartitionHandle — a Copy, register-sized value
+/// type — without needing to hold a reference to persistent storage
+/// inside the witness.
+fn is_by_value_partition_factor(prop_id: &str) -> bool {
+    matches!(
+        prop_id,
+        "https://uor.foundation/partition/leftFactor"
+            | "https://uor.foundation/partition/rightFactor"
+            | "https://uor.foundation/partition/leftSummand"
+            | "https://uor.foundation/partition/rightSummand"
+            | "https://uor.foundation/partition/leftCartesianFactor"
+            | "https://uor.foundation/partition/rightCartesianFactor"
+    )
 }
 
 /// Builds supertrait bounds for a class.

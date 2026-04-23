@@ -217,6 +217,16 @@ pub trait ConstrainedTypeShape {
     const IRI: &'static str;
     /// Number of sites (fields) this constrained type carries.
     const SITE_COUNT: usize;
+    /// Ontology-level `siteBudget`: count of data sites only,
+    /// excluding bookkeeping introduced by composition (coproduct tag
+    /// sites, etc.). Equals `SITE_COUNT` for leaf shapes and for
+    /// shapes whose composition introduces no bookkeeping (products,
+    /// cartesian products). Strictly less than `SITE_COUNT` for coproduct
+    /// shapes and any shape whose `SITE_COUNT` includes inherited
+    /// bookkeeping. Introduced by the Product/Coproduct Completion
+    /// Amendment §4a; defaults to `SITE_COUNT` so pre-amendment
+    /// shape impls remain valid without edits.
+    const SITE_BUDGET: usize = Self::SITE_COUNT;
     /// Per-site constraint list. Empty means unconstrained.
     const CONSTRAINTS: &'static [ConstraintRef];
 }
@@ -225,6 +235,144 @@ impl ConstrainedTypeShape for ConstrainedTypeInput {
     const IRI: &'static str = "https://uor.foundation/type/ConstrainedType";
     const SITE_COUNT: usize = 0;
     const CONSTRAINTS: &'static [ConstraintRef] = &[];
+}
+
+/// Marker for a `ConstrainedTypeShape` that is the Cartesian product of
+/// two component shapes. Selecting this trait routes nerve-Betti computation
+/// through Künneth composition of component Betti profiles rather than
+/// flat enumeration of (constraint, constraint) pairs. Introduced by the
+/// Product/Coproduct Completion Amendment §3c for CartesianPartitionProduct
+/// (CPT_1–CPT_6).
+pub trait CartesianProductShape: ConstrainedTypeShape {
+    /// Left operand shape.
+    type Left: ConstrainedTypeShape;
+    /// Right operand shape.
+    type Right: ConstrainedTypeShape;
+}
+
+/// Künneth composition of two Betti profiles.
+/// Computes `out[k] = Σ_{i + j = k} a[i] · b[j]` over
+/// `[0, MAX_BETTI_DIMENSION)`. All arithmetic uses saturating operations so the
+/// function is total on `[u32; MAX_BETTI_DIMENSION]` inputs without panicking.
+pub const fn kunneth_compose(
+    a: &[u32; crate::enforcement::MAX_BETTI_DIMENSION],
+    b: &[u32; crate::enforcement::MAX_BETTI_DIMENSION],
+) -> [u32; crate::enforcement::MAX_BETTI_DIMENSION] {
+    let mut out = [0u32; crate::enforcement::MAX_BETTI_DIMENSION];
+    let mut i: usize = 0;
+    while i < crate::enforcement::MAX_BETTI_DIMENSION {
+        let mut j: usize = 0;
+        while j < crate::enforcement::MAX_BETTI_DIMENSION - i {
+            let term = a[i].saturating_mul(b[j]);
+            out[i + j] = out[i + j].saturating_add(term);
+            j += 1;
+        }
+        i += 1;
+    }
+    out
+}
+
+/// Cartesian-product nerve Betti via Künneth composition of the component
+/// shapes' Betti profiles. Used instead of
+/// `primitive_simplicial_nerve_betti` when a shape declares itself as a
+/// `CartesianProductShape`. Amendment §3c.
+pub const fn primitive_cartesian_nerve_betti<S: CartesianProductShape>(
+) -> [u32; crate::enforcement::MAX_BETTI_DIMENSION] {
+    let left = crate::enforcement::primitive_simplicial_nerve_betti::<S::Left>();
+    let right = crate::enforcement::primitive_simplicial_nerve_betti::<S::Right>();
+    kunneth_compose(&left, &right)
+}
+
+/// Shift every site-index reference in a `ConstraintRef` by `offset`.
+/// Used by the SDK's `product_shape!` / `coproduct_shape!` /
+/// `cartesian_product_shape!` macros to splice an operand's constraints into
+/// a combined shape at a post-operand offset.
+/// **Variant coverage.**
+/// - `Site { position }` → position += offset.
+/// - `Carry { site }` → site += offset.
+/// - `Residue`, `Hamming`, `Depth`, `SatClauses`, `Bound`: pass through (no
+///   site references at this layer).
+/// - `Affine { coefficients, bias }`: returned with the sentinel form
+///   `Site { position: u32::MAX }`. Stable Rust const-fns cannot allocate a
+///   new `&'static [i64]` with prepended zeros, so the SDK cannot shift an
+///   operand's multi-site `Affine` coefficient slice at const time. Consumers
+///   needing `Affine`-bearing operands must use the Manual-construction
+///   pattern documented in the amendment §Gap 2. The sentinel triggers a
+///   `foundation/ProductLayoutWidth` failure at mint time so misuse produces a
+///   typed error rather than silently wrong output.
+/// - `Conjunction { conjuncts }`: returned with the same sentinel for the
+///   same reason (nested conjunct rebuild would require const allocation).
+pub const fn shift_constraint(c: ConstraintRef, offset: u32) -> ConstraintRef {
+    match c {
+        ConstraintRef::Site { position } => ConstraintRef::Site {
+            position: position.saturating_add(offset),
+        },
+        ConstraintRef::Carry { site } => ConstraintRef::Carry {
+            site: site.saturating_add(offset),
+        },
+        ConstraintRef::Residue { modulus, residue } => ConstraintRef::Residue { modulus, residue },
+        ConstraintRef::Hamming { bound } => ConstraintRef::Hamming { bound },
+        ConstraintRef::Depth { min, max } => ConstraintRef::Depth { min, max },
+        ConstraintRef::SatClauses { clauses, num_vars } => {
+            ConstraintRef::SatClauses { clauses, num_vars }
+        }
+        ConstraintRef::Bound {
+            observable_iri,
+            bound_shape_iri,
+            args_repr,
+        } => ConstraintRef::Bound {
+            observable_iri,
+            bound_shape_iri,
+            args_repr,
+        },
+        ConstraintRef::Affine { .. } | ConstraintRef::Conjunction { .. } => {
+            // Sentinel — see doc comment above.
+            ConstraintRef::Site { position: u32::MAX }
+        }
+    }
+}
+
+/// SDK support: concatenate two operand constraint arrays into a padded
+/// fixed-size buffer of length `2 * crate::enforcement::NERVE_CONSTRAINTS_CAP`.
+/// A's constraints are copied verbatim at indices `[0, A::CONSTRAINTS.len())`;
+/// B's constraints are copied at `[A::CONSTRAINTS.len(), total)` with each
+/// entry passed through `shift_constraint(c, A::SITE_COUNT as u32)`.
+/// Trailing positions are filled with the `Site { position: u32::MAX }`
+/// sentinel.
+/// Consumers pair this with `sdk_product_constraints_len` to derive the
+/// slice length at const-eval time: `&BUF[..LEN]` yields a `&'static
+/// [ConstraintRef]` of the correct length without `unsafe`.
+pub const fn sdk_concat_product_constraints<A, B>(
+) -> [ConstraintRef; 2 * crate::enforcement::NERVE_CONSTRAINTS_CAP]
+where
+    A: ConstrainedTypeShape,
+    B: ConstrainedTypeShape,
+{
+    let mut out =
+        [ConstraintRef::Site { position: u32::MAX }; 2 * crate::enforcement::NERVE_CONSTRAINTS_CAP];
+    let left = A::CONSTRAINTS;
+    let right = B::CONSTRAINTS;
+    let offset = A::SITE_COUNT as u32;
+    let mut i: usize = 0;
+    while i < left.len() {
+        out[i] = left[i];
+        i += 1;
+    }
+    let mut j: usize = 0;
+    while j < right.len() {
+        out[i + j] = shift_constraint(right[j], offset);
+        j += 1;
+    }
+    out
+}
+
+/// Companion length helper for `sdk_concat_product_constraints`.
+pub const fn sdk_product_constraints_len<A, B>() -> usize
+where
+    A: ConstrainedTypeShape,
+    B: ConstrainedTypeShape,
+{
+    A::CONSTRAINTS.len() + B::CONSTRAINTS.len()
 }
 
 /// Admit a downstream [`ConstrainedTypeShape`] into the reduction pipeline.

@@ -694,6 +694,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "uor-foundation-sdk"
+version = "0.3.0"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
+ "uor-foundation",
+]
+
+[[package]]
 name = "uor-foundation-test-helpers"
 version = "0.3.0"
 dependencies = [

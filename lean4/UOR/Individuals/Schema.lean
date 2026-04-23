@@ -1602,6 +1602,102 @@ def term_COEFF_1_rhs : UOR.Kernel.Schema.LiteralExpression UOR.Prims.Standard :=
 }
 
 -- 
+def term_CPT_1_forAll : UOR.Kernel.Schema.ForAllDeclaration UOR.Prims.Standard := {
+  boundVariables := #[]
+  quantifierKind := none
+}
+
+-- 
+def term_CPT_1_lhs : UOR.Kernel.Schema.LiteralExpression UOR.Prims.Standard := {
+  literalValue := some (("siteBudget(A ⊠ B)" : String))
+}
+
+-- 
+def term_CPT_1_rhs : UOR.Kernel.Schema.LiteralExpression UOR.Prims.Standard := {
+  literalValue := some (("siteBudget(A) + siteBudget(B)" : String))
+}
+
+-- 
+def term_CPT_2a_forAll : UOR.Kernel.Schema.ForAllDeclaration UOR.Prims.Standard := {
+  boundVariables := #[]
+  quantifierKind := none
+}
+
+-- 
+def term_CPT_2a_lhs : UOR.Kernel.Schema.LiteralExpression UOR.Prims.Standard := {
+  literalValue := some (("Π(A ⊠ B)" : String))
+}
+
+-- 
+def term_CPT_2a_rhs : UOR.Kernel.Schema.LiteralExpression UOR.Prims.Standard := {
+  literalValue := some (("CartesianPartitionProduct(Π(A), Π(B))" : String))
+}
+
+-- 
+def term_CPT_3_forAll : UOR.Kernel.Schema.ForAllDeclaration UOR.Prims.Standard := {
+  boundVariables := #[]
+  quantifierKind := none
+}
+
+-- 
+def term_CPT_3_lhs : UOR.Kernel.Schema.LiteralExpression UOR.Prims.Standard := {
+  literalValue := some (("χ(N(C(A ⊠ B)))" : String))
+}
+
+-- 
+def term_CPT_3_rhs : UOR.Kernel.Schema.LiteralExpression UOR.Prims.Standard := {
+  literalValue := some (("χ(N(C(A))) · χ(N(C(B)))" : String))
+}
+
+-- 
+def term_CPT_4_forAll : UOR.Kernel.Schema.ForAllDeclaration UOR.Prims.Standard := {
+  boundVariables := #[]
+  quantifierKind := none
+}
+
+-- 
+def term_CPT_4_lhs : UOR.Kernel.Schema.LiteralExpression UOR.Prims.Standard := {
+  literalValue := some (("β_k(A ⊠ B)" : String))
+}
+
+-- 
+def term_CPT_4_rhs : UOR.Kernel.Schema.LiteralExpression UOR.Prims.Standard := {
+  literalValue := some (("Σ_{i+j=k} β_i(A) · β_j(B)" : String))
+}
+
+-- 
+def term_CPT_5_forAll : UOR.Kernel.Schema.ForAllDeclaration UOR.Prims.Standard := {
+  boundVariables := #[]
+  quantifierKind := none
+}
+
+-- 
+def term_CPT_5_lhs : UOR.Kernel.Schema.LiteralExpression UOR.Prims.Standard := {
+  literalValue := some (("S(A ⊠ B)" : String))
+}
+
+-- 
+def term_CPT_5_rhs : UOR.Kernel.Schema.LiteralExpression UOR.Prims.Standard := {
+  literalValue := some (("S(A) + S(B)" : String))
+}
+
+-- 
+def term_CPT_6_forAll : UOR.Kernel.Schema.ForAllDeclaration UOR.Prims.Standard := {
+  boundVariables := #[]
+  quantifierKind := none
+}
+
+-- 
+def term_CPT_6_lhs : UOR.Kernel.Schema.LiteralExpression UOR.Prims.Standard := {
+  literalValue := some (("A ⊠ (B + C)" : String))
+}
+
+-- 
+def term_CPT_6_rhs : UOR.Kernel.Schema.LiteralExpression UOR.Prims.Standard := {
+  literalValue := some (("(A ⊠ B) + (A ⊠ C)" : String))
+}
+
+-- 
 def term_CR_1_forAll : UOR.Kernel.Schema.ForAllDeclaration UOR.Prims.Standard := {
   boundVariables := #[]
   quantifierKind := none
@@ -8242,6 +8338,22 @@ def term_STR_6_rhs : UOR.Kernel.Schema.LiteralExpression UOR.Prims.Standard := {
 }
 
 -- 
+def term_ST_10_forAll : UOR.Kernel.Schema.ForAllDeclaration UOR.Prims.Standard := {
+  boundVariables := #[]
+  quantifierKind := none
+}
+
+-- 
+def term_ST_10_lhs : UOR.Kernel.Schema.LiteralExpression UOR.Prims.Standard := {
+  literalValue := some (("β_k(A + B)" : String))
+}
+
+-- 
+def term_ST_10_rhs : UOR.Kernel.Schema.LiteralExpression UOR.Prims.Standard := {
+  literalValue := some (("β_k(A) + β_k(B)" : String))
+}
+
+-- 
 def term_ST_1_forAll : UOR.Kernel.Schema.ForAllDeclaration UOR.Prims.Standard := {
   boundVariables := #[]
   quantifierKind := none
@@ -8319,6 +8431,70 @@ def term_ST_5_lhs : UOR.Kernel.Schema.LiteralExpression UOR.Prims.Standard := {
 -- 
 def term_ST_5_rhs : UOR.Kernel.Schema.LiteralExpression UOR.Prims.Standard := {
   literalValue := some (("CompleteType(A) and CompleteType(B) and Q(A)=Q(B)" : String))
+}
+
+-- 
+def term_ST_6_forAll : UOR.Kernel.Schema.ForAllDeclaration UOR.Prims.Standard := {
+  boundVariables := #[]
+  quantifierKind := none
+}
+
+-- 
+def term_ST_6_lhs : UOR.Kernel.Schema.LiteralExpression UOR.Prims.Standard := {
+  literalValue := some (("∃! tagSite(A + B)" : String))
+}
+
+-- 
+def term_ST_6_rhs : UOR.Kernel.Schema.LiteralExpression UOR.Prims.Standard := {
+  literalValue := some (("uniqueSite ∉ dataSites(A) ∪ dataSites(B) ∧ carries ln 2 entropy (ST_2)" : String))
+}
+
+-- 
+def term_ST_7_forAll : UOR.Kernel.Schema.ForAllDeclaration UOR.Prims.Standard := {
+  boundVariables := #[]
+  quantifierKind := none
+}
+
+-- 
+def term_ST_7_lhs : UOR.Kernel.Schema.LiteralExpression UOR.Prims.Standard := {
+  literalValue := some (("constraints(A + B)" : String))
+}
+
+-- 
+def term_ST_7_rhs : UOR.Kernel.Schema.LiteralExpression UOR.Prims.Standard := {
+  literalValue := some (("constraints(A) ∪ {tag=0} ∪ constraints(B) ∪ {tag=1}" : String))
+}
+
+-- 
+def term_ST_8_forAll : UOR.Kernel.Schema.ForAllDeclaration UOR.Prims.Standard := {
+  boundVariables := #[]
+  quantifierKind := none
+}
+
+-- 
+def term_ST_8_lhs : UOR.Kernel.Schema.LiteralExpression UOR.Prims.Standard := {
+  literalValue := some (("disjoint(N(C(A)), N(C(B)))" : String))
+}
+
+-- 
+def term_ST_8_rhs : UOR.Kernel.Schema.LiteralExpression UOR.Prims.Standard := {
+  literalValue := some (("true" : String))
+}
+
+-- 
+def term_ST_9_forAll : UOR.Kernel.Schema.ForAllDeclaration UOR.Prims.Standard := {
+  boundVariables := #[]
+  quantifierKind := none
+}
+
+-- 
+def term_ST_9_lhs : UOR.Kernel.Schema.LiteralExpression UOR.Prims.Standard := {
+  literalValue := some (("χ(N(C(A + B)))" : String))
+}
+
+-- 
+def term_ST_9_rhs : UOR.Kernel.Schema.LiteralExpression UOR.Prims.Standard := {
+  literalValue := some (("χ(N(C(A))) + χ(N(C(B)))" : String))
 }
 
 -- 

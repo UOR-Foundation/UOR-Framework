@@ -36,7 +36,9 @@ pub fn generate_enforcement_module(ontology: &Ontology) -> String {
          //!   `INHABITANCE_DISPATCH_TABLE`, and the `prelude` module.",
     );
 
-    f.line("use crate::{PrimitiveOp, WittLevel, VerificationDomain, ViolationKind};");
+    f.line(
+        "use crate::{HostTypes, MetricAxis, PrimitiveOp, VerificationDomain, ViolationKind, WittLevel};",
+    );
     f.line("use core::marker::PhantomData;");
     f.blank();
 
@@ -82,6 +84,15 @@ pub fn generate_enforcement_module(ontology: &Ontology) -> String {
     // v0.2.2 Phase J: combinator-only Grounding — closed 12-combinator
     // surface + GroundingProgram<O, M> + MarkersImpliedBy<Map>.
     generate_grounding_combinator_surface(&mut f);
+    // Product/Coproduct Completion Amendment §2.3b–§2.3h: sealed witness
+    // types for PartitionProduct / PartitionCoproduct / CartesianPartition-
+    // Product, paired Evidence / MintInputs structs, entropy helpers, the
+    // `validate_coproduct_structure` structural validator (with
+    // Conjunction recursion per plan §A4), three mint primitives citing
+    // op-namespace theorems and foundation-namespace layout invariants,
+    // and the `VerifiedMint` sealed mint trait with impls routing through
+    // those primitives.
+    generate_product_coproduct_amendment(&mut f);
     generate_prelude(&mut f, ontology);
 
     f.finish()
@@ -3578,14 +3589,74 @@ fn generate_ontology_target_trait(f: &mut RustFile, ontology: &Ontology) {
         f.blank();
     }
 
-    // Witness + input shims stay opaque.
+    // Witness + input shims. Most stay opaque (zero-sized with `_private: ()`
+    // and a derived `Default`). The Product/Coproduct Completion Amendment §2.3a
+    // extends `GenericImpossibilityWitness` with a single
+    // `identity: Option<&'static str>` field so that theorem-IRI citations
+    // can flow through the witness. `Default` is implemented manually to
+    // preserve every existing `::default()` call site (they produce
+    // `identity: None`, semantically equivalent to the prior zero-sized default).
     for (name, doc) in witness_shims.iter().chain(input_shims.iter()) {
         f.doc_comment(doc);
-        f.line("#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]");
-        f.line(&format!("pub struct {name} {{"));
-        f.line("    _private: (),");
-        f.line("}");
-        f.blank();
+        if *name == "GenericImpossibilityWitness" {
+            f.line("#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]");
+            f.line(&format!("pub struct {name} {{"));
+            f.indented_doc_comment(
+                "Optional theorem / invariant IRI identifying the failed identity.",
+            );
+            f.indented_doc_comment(
+                "`None` for legacy call sites minting via `Default::default()`;",
+            );
+            f.indented_doc_comment(
+                "`Some(iri)` when the witness is constructed via `for_identity`",
+            );
+            f.indented_doc_comment("(Product/Coproduct Completion Amendment §2.3a).");
+            f.line("    identity: Option<&'static str>,");
+            f.line("}");
+            f.blank();
+            // Manual Default — preserves behavior of legacy `::default()` call sites.
+            f.line(&format!("impl Default for {name} {{"));
+            f.line("    #[inline]");
+            f.line("    fn default() -> Self {");
+            f.line("        Self { identity: None }");
+            f.line("    }");
+            f.line("}");
+            f.blank();
+            // Constructors + accessor.
+            f.line(&format!("impl {name} {{"));
+            f.indented_doc_comment(
+                "Construct a witness citing a specific theorem / invariant IRI.",
+            );
+            f.indented_doc_comment(
+                "Introduced by the Product/Coproduct Completion Amendment §2.3a",
+            );
+            f.indented_doc_comment(
+                "so mint primitives can emit typed failures against `op/*` theorems",
+            );
+            f.indented_doc_comment("and `foundation/*` layout invariants.");
+            f.line("    #[inline]");
+            f.line("    #[must_use]");
+            f.line("    pub const fn for_identity(identity: &'static str) -> Self {");
+            f.line("        Self { identity: Some(identity) }");
+            f.line("    }");
+            f.blank();
+            f.indented_doc_comment(
+                "Returns the theorem / invariant IRI this witness cites, if any.",
+            );
+            f.line("    #[inline]");
+            f.line("    #[must_use]");
+            f.line("    pub const fn identity(&self) -> Option<&'static str> {");
+            f.line("        self.identity");
+            f.line("    }");
+            f.line("}");
+            f.blank();
+        } else {
+            f.line("#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]");
+            f.line(&format!("pub struct {name} {{"));
+            f.line("    _private: (),");
+            f.line("}");
+            f.blank();
+        }
     }
     // v0.2.2 T5.9: Display + core::error::Error impls for the witness shims
     // (they're returned as the failure case of `Certify::certify`, so they
@@ -3593,7 +3664,16 @@ fn generate_ontology_target_trait(f: &mut RustFile, ontology: &Ontology) {
     for (name, _doc) in witness_shims.iter() {
         f.line(&format!("impl core::fmt::Display for {name} {{"));
         f.line("    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {");
-        f.line(&format!("        f.write_str(\"{name}\")"));
+        if *name == "GenericImpossibilityWitness" {
+            // Include the identity IRI in the Display output when present so
+            // downstream error chains carry the failure citation.
+            f.line("        match self.identity {");
+            f.line("            Some(iri) => write!(f, \"GenericImpossibilityWitness({iri})\"),");
+            f.line(&format!("            None => f.write_str(\"{name}\"),"));
+            f.line("        }");
+        } else {
+            f.line(&format!("        f.write_str(\"{name}\")"));
+        }
         f.line("    }");
         f.line("}");
         f.line(&format!("impl core::error::Error for {name} {{}}"));
@@ -3634,12 +3714,20 @@ fn generate_ontology_target_trait(f: &mut RustFile, ontology: &Ontology) {
     for (name, _) in &all_shims {
         f.line(&format!("    impl Sealed for super::{name} {{}}"));
     }
+    // Product/Coproduct Completion Amendment §2.3e.
+    f.line("    impl Sealed for super::PartitionProductWitness {}");
+    f.line("    impl Sealed for super::PartitionCoproductWitness {}");
+    f.line("    impl Sealed for super::CartesianProductWitness {}");
     f.line("    impl Sealed for super::CompileUnit<'_> {}");
     f.line("}");
     f.blank();
     for (name, _) in &all_shims {
         f.line(&format!("impl OntologyTarget for {name} {{}}"));
     }
+    // Product/Coproduct Completion Amendment §2.3e.
+    f.line("impl OntologyTarget for PartitionProductWitness {}");
+    f.line("impl OntologyTarget for PartitionCoproductWitness {}");
+    f.line("impl OntologyTarget for CartesianProductWitness {}");
     f.line("impl OntologyTarget for CompileUnit<'_> {}");
     f.blank();
 
@@ -3830,6 +3918,15 @@ fn generate_ontology_target_trait(f: &mut RustFile, ontology: &Ontology) {
     for (rust_name, _, _) in all_certs {
         f.line(&format!("    impl Sealed for super::{rust_name} {{}}"));
     }
+    // Product/Coproduct Completion Amendment §2.3e: the three new sealed
+    // witness types are registered here so they can impl `Certificate` via
+    // its sealed supertrait. Their `impl Certificate` blocks are emitted
+    // separately in `emit_partition_witness_certificates` — distinct from
+    // the cert-namespace witnesses above because their IRIs live under
+    // partition/ and their Evidence associated types are custom structs.
+    f.line("    impl Sealed for super::PartitionProductWitness {}");
+    f.line("    impl Sealed for super::PartitionCoproductWitness {}");
+    f.line("    impl Sealed for super::CartesianProductWitness {}");
     f.line("}");
     f.blank();
     for (rust_name, ont_local, evidence) in all_certs {
@@ -10987,4 +11084,1571 @@ fn generate_grounding_combinator_surface(f: &mut RustFile) {
     f.line("    }");
     f.line("}");
     f.blank();
+}
+
+/// Product/Coproduct Completion Amendment — emits the full Part A foundation
+/// surface: witness structs, Evidence / MintInputs structs, entropy helpers,
+/// the coproduct structural validator, three mint primitives, and the
+/// `VerifiedMint` sealed trait + impls. See the plan's Phase 2.3 section for
+/// the rationale and sub-step layout.
+fn generate_product_coproduct_amendment(f: &mut RustFile) {
+    // -----------------------------------------------------------------------
+    // Phase 2.4 / Phase D1: amendment §1d witness trait impls.
+    //
+    // Emitted by D1.4:
+    //   impl<H: HostTypes> PartitionProduct<H> for PartitionProductWitness
+    //   impl<H: HostTypes> PartitionCoproduct<H> for PartitionCoproductWitness
+    //   impl<H: HostTypes> CartesianPartitionProduct<H> for CartesianProductWitness
+    //   impl<H: HostTypes> Partition<H> for NullPartition<H>
+    //
+    // Each of the three witness impls returns a `NullPartition<H>` —
+    // the resolver-absent default-value Partition introduced by D1.3
+    // and emitted by `emit_pc_null_partition_composite`. NullPartition
+    // embeds inline stubs for all 7 sub-trait associated types
+    // (IrreducibleSet, ReducibleSet, UnitGroup, Complement, FreeRank,
+    // TagSite, TypeDefinition) so `&self.field` accessors satisfy the
+    // Partition trait's reference-returning signatures.
+    //
+    // NOT emitted (B1a structural limit, NOT a host-type-narrowing
+    // compromise): `impl<H: HostTypes> Partition<H> for PartitionHandle<H>`.
+    // PartitionHandle<H> is a 16-byte content-addressed identity token
+    // (`ContentFingerprint + PhantomData<H>`); embedding a
+    // ~150-byte NullPartition inline would break the Copy-small-token
+    // invariant the witness types depend on for content-addressed
+    // indexing. Consumers reach Partition<H> from a handle via either
+    //   handle.resolve_with(&resolver) → Option<PartitionRecord<H>>
+    // or
+    //   <_ as PartitionProduct<H>>::left_factor(&witness) → NullPartition<H>
+    // — both are first-class API paths.
+    //
+    // Grep anchor: `phase-2.4-deferral` (now historical — D1 lands the
+    // deferred witness impls).
+    // -----------------------------------------------------------------------
+
+    emit_pc_entropy_helpers(f);
+    emit_pc_evidence_structs(f);
+    emit_pc_mint_inputs_structs(f);
+    emit_pc_witness_structs(f);
+    emit_pc_certificate_impls(f);
+    emit_pc_verified_mint_trait(f);
+    emit_pc_validate_coproduct_structure(f);
+    emit_pc_mint_primitives(f);
+    emit_pc_verified_mint_impls(f);
+    emit_pc_partition_handle_protocol(f);
+    // §D1: Null* sub-trait stubs + NullPartition<H> composite + 3 witness
+    // trait impls. Lands the deferred Phase 2.4 ergonomics — every
+    // PartitionProduct/Coproduct/CartesianPartitionProduct witness exposes
+    // its operand fingerprints through the codegen-generated trait
+    // accessors, returning a generic NullPartition<H> as the resolver-
+    // absent default.
+    emit_pc_null_partition_stubs(f);
+    emit_pc_null_partition_composite(f);
+    emit_pc_witness_trait_impls(f);
+}
+
+/// §2.3i — emits the resolver protocol: `PartitionResolver<H>` trait,
+/// `PartitionRecord<H>` data record, and `PartitionHandle<H>` identity
+/// token. The handle is intentionally a standalone value type and does
+/// NOT implement the codegen-generated `Partition<H>` trait — that trait
+/// has seven associated types each bounded on its own sub-trait, and
+/// providing a no-resolver default for each would require substantial
+/// stub infrastructure beyond this amendment's scope. Consumers who need
+/// a full `Partition<H>` implementation build their own resolver-backed
+/// handle type; this amendment supplies the identity + resolution
+/// protocol they compose against.
+fn emit_pc_partition_handle_protocol(f: &mut RustFile) {
+    f.doc_comment("Data record of a partition's runtime-queried properties. Produced at");
+    f.doc_comment("witness-mint time and consulted by consumer code that holds a");
+    f.doc_comment("`PartitionHandle` and a `PartitionResolver`. Derives `PartialEq`");
+    f.doc_comment("rather than `Eq` because the `entropy_nats` field is `f64`.");
+    f.line("#[derive(Debug, Clone, Copy, PartialEq)]");
+    f.line("pub struct PartitionRecord<H: crate::HostTypes> {");
+    f.indented_doc_comment("Data sites only — the partition's `siteBudget`, not its layout width.");
+    f.line("    pub site_budget: u16,");
+    f.indented_doc_comment("Euler characteristic of the partition's nerve.");
+    f.line("    pub euler: i32,");
+    f.indented_doc_comment(
+        "Betti profile of the partition's nerve, padded to `MAX_BETTI_DIMENSION`.",
+    );
+    f.line("    pub betti: [u32; MAX_BETTI_DIMENSION],");
+    f.indented_doc_comment(
+        "Shannon entropy in nats (matches `LandauerBudget::nats()` convention).",
+    );
+    f.line("    pub entropy_nats: f64,");
+    f.line("    _phantom: core::marker::PhantomData<H>,");
+    f.line("}");
+    f.blank();
+    f.line("impl<H: crate::HostTypes> PartitionRecord<H> {");
+    f.indented_doc_comment("Construct a new record. The phantom marker ensures records are");
+    f.indented_doc_comment("parameterized by the host types they originate from.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn new(");
+    f.line("        site_budget: u16,");
+    f.line("        euler: i32,");
+    f.line("        betti: [u32; MAX_BETTI_DIMENSION],");
+    f.line("        entropy_nats: f64,");
+    f.line("    ) -> Self {");
+    f.line("        Self {");
+    f.line("            site_budget,");
+    f.line("            euler,");
+    f.line("            betti,");
+    f.line("            entropy_nats,");
+    f.line("            _phantom: core::marker::PhantomData,");
+    f.line("        }");
+    f.line("    }");
+    f.line("}");
+    f.blank();
+
+    f.doc_comment("Resolver mapping content fingerprints to `PartitionRecord`s. Provided");
+    f.doc_comment("by the host application — typically a persistent store, an in-memory");
+    f.doc_comment("registry populated from witness mint-time data, or a chain-of-witnesses");
+    f.doc_comment("trail that can reconstruct properties.");
+    f.line("pub trait PartitionResolver<H: crate::HostTypes> {");
+    f.indented_doc_comment("Look up partition data by fingerprint. Returns `None` if the");
+    f.indented_doc_comment("resolver has no record for the handle. Handles remain valid as");
+    f.indented_doc_comment("identity tokens regardless of resolver presence.");
+    f.line("    fn resolve(&self, fp: ContentFingerprint) -> Option<PartitionRecord<H>>;");
+    f.line("}");
+    f.blank();
+
+    f.doc_comment("Content-addressed identity token for a partition. Carries only a");
+    f.doc_comment("fingerprint; partition data is recovered by pairing the handle with a");
+    f.doc_comment("`PartitionResolver` via `resolve_with`. Handles compare and hash by");
+    f.doc_comment("fingerprint, so they can serve as keys in content-addressed indices");
+    f.doc_comment("without resolver access.");
+    f.line("#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]");
+    f.line("pub struct PartitionHandle<H: crate::HostTypes> {");
+    f.line("    fingerprint: ContentFingerprint,");
+    f.line("    _phantom: core::marker::PhantomData<H>,");
+    f.line("}");
+    f.blank();
+    f.line("impl<H: crate::HostTypes> PartitionHandle<H> {");
+    f.indented_doc_comment("Construct a handle from a content fingerprint.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn from_fingerprint(fingerprint: ContentFingerprint) -> Self {");
+    f.line("        Self {");
+    f.line("            fingerprint,");
+    f.line("            _phantom: core::marker::PhantomData,");
+    f.line("        }");
+    f.line("    }");
+    f.indented_doc_comment("Return the content fingerprint this handle references.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn fingerprint(&self) -> ContentFingerprint {");
+    f.line("        self.fingerprint");
+    f.line("    }");
+    f.indented_doc_comment("Resolve this handle against a consumer-supplied resolver.");
+    f.indented_doc_comment("Returns `None` if the resolver has no record for this fingerprint.");
+    f.line("    #[inline]");
+    f.line("    pub fn resolve_with<R: PartitionResolver<H>>(");
+    f.line("        &self,");
+    f.line("        resolver: &R,");
+    f.line("    ) -> Option<PartitionRecord<H>> {");
+    f.line("        resolver.resolve(self.fingerprint)");
+    f.line("    }");
+    f.line("}");
+    f.blank();
+}
+
+/// §2.3f entropy helpers. Used by all three mint primitives to validate
+/// operand entropies and assert additivity identities within a
+/// magnitude-scaled tolerance.
+fn emit_pc_entropy_helpers(f: &mut RustFile) {
+    f.doc_comment("Tolerance for `f64` entropy equality checks in the Product/Coproduct");
+    f.doc_comment("Completion Amendment mint primitives. Returns an absolute-error bound");
+    f.doc_comment("scaled to the magnitude of `expected`, so PT_4 / ST_2 / CPT_5");
+    f.doc_comment("verifications are robust to floating-point rounding accumulated through");
+    f.doc_comment("Künneth products and componentwise sums.");
+    f.line("#[inline]");
+    f.line("const fn pc_entropy_tolerance(expected: f64) -> f64 {");
+    f.line("    let magnitude = if expected < 0.0 { -expected } else { expected };");
+    f.line("    let scale = if magnitude > 1.0 { magnitude } else { 1.0 };");
+    f.line("    1024.0 * f64::EPSILON * scale");
+    f.line("}");
+    f.blank();
+
+    f.doc_comment("Validate an entropy value before participating in additivity checks.");
+    f.doc_comment("Rejects NaN, ±∞, and negative values — the foundation's");
+    f.doc_comment("`primitive_descent_metrics` produces `residual × LN_2` with");
+    f.doc_comment("`residual: u32`, so valid entropies are non-negative finite f64.");
+    f.line("#[inline]");
+    f.line("fn pc_entropy_input_is_valid(value: f64) -> bool {");
+    f.line("    value.is_finite() && value >= 0.0");
+    f.line("}");
+    f.blank();
+
+    f.doc_comment("Check that `actual` matches `expected` within tolerance and that both");
+    f.doc_comment("inputs are valid entropy values. Returns `false` if either input is");
+    f.doc_comment("non-finite, negative, or differs from `expected` by more than");
+    f.doc_comment("`pc_entropy_tolerance(expected)`.");
+    f.line("#[inline]");
+    f.line("fn pc_entropy_additivity_holds(actual: f64, expected: f64) -> bool {");
+    f.line("    if !pc_entropy_input_is_valid(actual) || !pc_entropy_input_is_valid(expected) {");
+    f.line("        return false;");
+    f.line("    }");
+    f.line("    let diff = actual - expected;");
+    f.line("    let diff_abs = if diff < 0.0 { -diff } else { diff };");
+    f.line("    diff_abs <= pc_entropy_tolerance(expected)");
+    f.line("}");
+    f.blank();
+}
+
+/// §2.3c — three Evidence sidecar structs. Derive `PartialEq` only because
+/// they carry `f64` entropy fields; they are auditing sidecars, not hash-map
+/// keys, so the absence of `Eq` / `Hash` is intentional.
+fn emit_pc_evidence_structs(f: &mut RustFile) {
+    // PartitionProductEvidence
+    f.doc_comment("Evidence bundle for `PartitionProductWitness`. Carries the PT_1 / PT_3 /");
+    f.doc_comment("PT_4 input values used at mint time. Derives `PartialEq` only because");
+    f.doc_comment("`f64` entropy fields exclude `Eq` / `Hash`; this is the auditing surface,");
+    f.doc_comment("not a hash-map key.");
+    f.line("#[derive(Debug, Clone, Copy, PartialEq)]");
+    f.line("pub struct PartitionProductEvidence {");
+    f.indented_doc_comment("Left operand `siteBudget` (data sites only, PT_1 input).");
+    f.line("    pub left_site_budget: u16,");
+    f.indented_doc_comment("Right operand `siteBudget`.");
+    f.line("    pub right_site_budget: u16,");
+    f.indented_doc_comment("Left operand `SITE_COUNT` (layout width, layout-invariant input).");
+    f.line("    pub left_total_site_count: u16,");
+    f.indented_doc_comment("Right operand `SITE_COUNT`.");
+    f.line("    pub right_total_site_count: u16,");
+    f.indented_doc_comment("Left operand Euler characteristic (PT_3 input).");
+    f.line("    pub left_euler: i32,");
+    f.indented_doc_comment("Right operand Euler characteristic.");
+    f.line("    pub right_euler: i32,");
+    f.indented_doc_comment("Left operand entropy in nats (PT_4 input).");
+    f.line("    pub left_entropy_nats: f64,");
+    f.indented_doc_comment("Right operand entropy in nats.");
+    f.line("    pub right_entropy_nats: f64,");
+    f.indented_doc_comment("Fingerprint of the source witness the evidence belongs to.");
+    f.line("    pub source_witness_fingerprint: ContentFingerprint,");
+    f.line("}");
+    f.blank();
+
+    // PartitionCoproductEvidence
+    f.doc_comment("Evidence bundle for `PartitionCoproductWitness`. Carries the");
+    f.doc_comment("ST_1 / ST_2 / ST_9 / ST_10 input values used at mint time.");
+    f.line("#[derive(Debug, Clone, Copy, PartialEq)]");
+    f.line("pub struct PartitionCoproductEvidence {");
+    f.line("    pub left_site_budget: u16,");
+    f.line("    pub right_site_budget: u16,");
+    f.line("    pub left_total_site_count: u16,");
+    f.line("    pub right_total_site_count: u16,");
+    f.line("    pub left_euler: i32,");
+    f.line("    pub right_euler: i32,");
+    f.line("    pub left_entropy_nats: f64,");
+    f.line("    pub right_entropy_nats: f64,");
+    f.line("    pub left_betti: [u32; MAX_BETTI_DIMENSION],");
+    f.line("    pub right_betti: [u32; MAX_BETTI_DIMENSION],");
+    f.line("    pub source_witness_fingerprint: ContentFingerprint,");
+    f.line("}");
+    f.blank();
+
+    // CartesianProductEvidence
+    f.doc_comment("Evidence bundle for `CartesianProductWitness`. Carries the");
+    f.doc_comment("CPT_1 / CPT_3 / CPT_4 / CPT_5 input values used at mint time, plus");
+    f.doc_comment("`combined_entropy_nats` — the CartesianProductWitness itself does not");
+    f.doc_comment("store entropy (see §1a), so the evidence sidecar preserves the");
+    f.doc_comment("verification target value for re-audit.");
+    f.line("#[derive(Debug, Clone, Copy, PartialEq)]");
+    f.line("pub struct CartesianProductEvidence {");
+    f.line("    pub left_site_budget: u16,");
+    f.line("    pub right_site_budget: u16,");
+    f.line("    pub left_total_site_count: u16,");
+    f.line("    pub right_total_site_count: u16,");
+    f.line("    pub left_euler: i32,");
+    f.line("    pub right_euler: i32,");
+    f.line("    pub left_betti: [u32; MAX_BETTI_DIMENSION],");
+    f.line("    pub right_betti: [u32; MAX_BETTI_DIMENSION],");
+    f.line("    pub left_entropy_nats: f64,");
+    f.line("    pub right_entropy_nats: f64,");
+    f.line("    pub combined_entropy_nats: f64,");
+    f.line("    pub source_witness_fingerprint: ContentFingerprint,");
+    f.line("}");
+    f.blank();
+}
+
+/// §2.3d — three MintInputs structs. These are the typed single-argument
+/// shape for `VerifiedMint::mint_verified(inputs)`; each field feeds directly
+/// into the corresponding mint primitive.
+fn emit_pc_mint_inputs_structs(f: &mut RustFile) {
+    // PartitionProductMintInputs
+    f.doc_comment("Inputs to `PartitionProductWitness::mint_verified`. Mirrors the");
+    f.doc_comment("underlying primitive's parameter list; each field is supplied by the");
+    f.doc_comment("caller (typically a `product_shape!` macro expansion or a manual");
+    f.doc_comment("construction following the amendment's Gap 2 pattern). Derives");
+    f.doc_comment("`PartialEq` only because of the `f64` entropy fields.");
+    f.line("#[derive(Debug, Clone, Copy, PartialEq)]");
+    f.line("pub struct PartitionProductMintInputs {");
+    f.line("    pub witt_bits: u16,");
+    f.line("    pub left_fingerprint: ContentFingerprint,");
+    f.line("    pub right_fingerprint: ContentFingerprint,");
+    f.line("    pub left_site_budget: u16,");
+    f.line("    pub right_site_budget: u16,");
+    f.line("    pub left_total_site_count: u16,");
+    f.line("    pub right_total_site_count: u16,");
+    f.line("    pub left_euler: i32,");
+    f.line("    pub right_euler: i32,");
+    f.line("    pub left_entropy_nats: f64,");
+    f.line("    pub right_entropy_nats: f64,");
+    f.line("    pub combined_site_budget: u16,");
+    f.line("    pub combined_site_count: u16,");
+    f.line("    pub combined_euler: i32,");
+    f.line("    pub combined_entropy_nats: f64,");
+    f.line("    pub combined_fingerprint: ContentFingerprint,");
+    f.line("}");
+    f.blank();
+
+    // PartitionCoproductMintInputs
+    f.doc_comment("Inputs to `PartitionCoproductWitness::mint_verified`. Adds three");
+    f.doc_comment("structural fields beyond the other two MintInputs: the combined");
+    f.doc_comment("constraint array, the boundary index between L and R regions, and the");
+    f.doc_comment("tag site layout index. These feed `validate_coproduct_structure` at");
+    f.doc_comment("mint time so ST_6 / ST_7 / ST_8 are verified numerically rather than");
+    f.doc_comment("trusted from the caller.");
+    f.doc_comment("");
+    f.doc_comment("Derives `Debug`, `Clone`, `Copy` only — no `PartialEq`. `ConstraintRef`");
+    f.doc_comment("does not implement `PartialEq`, so deriving equality on a struct with a");
+    f.doc_comment("`&[ConstraintRef]` field would not compile. MintInputs is not used as");
+    f.doc_comment("an equality target in practice; downstream consumers compare the minted");
+    f.doc_comment("witness (which derives `Eq` + `Hash`) instead.");
+    f.line("#[derive(Debug, Clone, Copy)]");
+    f.line("pub struct PartitionCoproductMintInputs {");
+    f.line("    pub witt_bits: u16,");
+    f.line("    pub left_fingerprint: ContentFingerprint,");
+    f.line("    pub right_fingerprint: ContentFingerprint,");
+    f.line("    pub left_site_budget: u16,");
+    f.line("    pub right_site_budget: u16,");
+    f.line("    pub left_total_site_count: u16,");
+    f.line("    pub right_total_site_count: u16,");
+    f.line("    pub left_euler: i32,");
+    f.line("    pub right_euler: i32,");
+    f.line("    pub left_entropy_nats: f64,");
+    f.line("    pub right_entropy_nats: f64,");
+    f.line("    pub left_betti: [u32; MAX_BETTI_DIMENSION],");
+    f.line("    pub right_betti: [u32; MAX_BETTI_DIMENSION],");
+    f.line("    pub combined_site_budget: u16,");
+    f.line("    pub combined_site_count: u16,");
+    f.line("    pub combined_euler: i32,");
+    f.line("    pub combined_entropy_nats: f64,");
+    f.line("    pub combined_betti: [u32; MAX_BETTI_DIMENSION],");
+    f.line("    pub combined_fingerprint: ContentFingerprint,");
+    f.line("    pub combined_constraints: &'static [crate::pipeline::ConstraintRef],");
+    f.line("    pub left_constraint_count: usize,");
+    f.line("    pub tag_site: u16,");
+    f.line("}");
+    f.blank();
+
+    // CartesianProductMintInputs
+    f.doc_comment("Inputs to `CartesianProductWitness::mint_verified`. Matches the");
+    f.doc_comment("CartesianProduct mint primitive's parameter list.");
+    f.line("#[derive(Debug, Clone, Copy, PartialEq)]");
+    f.line("pub struct CartesianProductMintInputs {");
+    f.line("    pub witt_bits: u16,");
+    f.line("    pub left_fingerprint: ContentFingerprint,");
+    f.line("    pub right_fingerprint: ContentFingerprint,");
+    f.line("    pub left_site_budget: u16,");
+    f.line("    pub right_site_budget: u16,");
+    f.line("    pub left_total_site_count: u16,");
+    f.line("    pub right_total_site_count: u16,");
+    f.line("    pub left_euler: i32,");
+    f.line("    pub right_euler: i32,");
+    f.line("    pub left_betti: [u32; MAX_BETTI_DIMENSION],");
+    f.line("    pub right_betti: [u32; MAX_BETTI_DIMENSION],");
+    f.line("    pub left_entropy_nats: f64,");
+    f.line("    pub right_entropy_nats: f64,");
+    f.line("    pub combined_site_budget: u16,");
+    f.line("    pub combined_site_count: u16,");
+    f.line("    pub combined_euler: i32,");
+    f.line("    pub combined_betti: [u32; MAX_BETTI_DIMENSION],");
+    f.line("    pub combined_entropy_nats: f64,");
+    f.line("    pub combined_fingerprint: ContentFingerprint,");
+    f.line("}");
+    f.blank();
+}
+
+/// §2.3b — three sealed witness structs. Each derives `Copy + Eq + Hash` so
+/// witnesses are register-sized, content-addressable identity tokens.
+/// Constructors are `pub(crate) const fn` — reachable only from the mint
+/// primitives in this crate.
+fn emit_pc_witness_structs(f: &mut RustFile) {
+    // PartitionProductWitness
+    f.doc_comment("Sealed PartitionProduct witness — content-addressed assertion that a");
+    f.doc_comment("partition decomposes as `PartitionProduct(left, right)` per PT_2a.");
+    f.doc_comment("Minting is gated on PT_1, PT_3, PT_4, and the foundation");
+    f.doc_comment("`ProductLayoutWidth` invariant being verified against component");
+    f.doc_comment("shapes. Existence of an instance is the attestation — there is no");
+    f.doc_comment("partial or unverified form.");
+    f.line("#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]");
+    f.line("pub struct PartitionProductWitness {");
+    f.line("    witt_bits: u16,");
+    f.line("    content_fingerprint: ContentFingerprint,");
+    f.line("    left_fingerprint: ContentFingerprint,");
+    f.line("    right_fingerprint: ContentFingerprint,");
+    f.line("    combined_site_budget: u16,");
+    f.line("    combined_site_count: u16,");
+    f.line("}");
+    f.blank();
+
+    f.line("impl PartitionProductWitness {");
+    f.indented_doc_comment("Witt level at which the witness was minted.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn witt_bits(&self) -> u16 { self.witt_bits }");
+    f.indented_doc_comment("Content fingerprint of the combined (A × B) shape.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn content_fingerprint(&self) -> ContentFingerprint { self.content_fingerprint }");
+    f.indented_doc_comment("Content fingerprint of the left factor A.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line(
+        "    pub const fn left_fingerprint(&self) -> ContentFingerprint { self.left_fingerprint }",
+    );
+    f.indented_doc_comment("Content fingerprint of the right factor B.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn right_fingerprint(&self) -> ContentFingerprint { self.right_fingerprint }");
+    f.indented_doc_comment("`siteBudget(A × B)` per PT_1.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn combined_site_budget(&self) -> u16 { self.combined_site_budget }");
+    f.indented_doc_comment("`SITE_COUNT(A × B)` — the foundation layout width.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn combined_site_count(&self) -> u16 { self.combined_site_count }");
+    f.indented_doc_comment(
+        "Crate-internal mint entry. Only the verified mint primitive may call this.",
+    );
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    #[allow(clippy::too_many_arguments)]");
+    f.line("    pub(crate) const fn with_level_fingerprints_and_sites(");
+    f.line("        witt_bits: u16,");
+    f.line("        content_fingerprint: ContentFingerprint,");
+    f.line("        left_fingerprint: ContentFingerprint,");
+    f.line("        right_fingerprint: ContentFingerprint,");
+    f.line("        combined_site_budget: u16,");
+    f.line("        combined_site_count: u16,");
+    f.line("    ) -> Self {");
+    f.line("        Self {");
+    f.line("            witt_bits,");
+    f.line("            content_fingerprint,");
+    f.line("            left_fingerprint,");
+    f.line("            right_fingerprint,");
+    f.line("            combined_site_budget,");
+    f.line("            combined_site_count,");
+    f.line("        }");
+    f.line("    }");
+    f.line("}");
+    f.blank();
+
+    // PartitionCoproductWitness
+    f.doc_comment("Sealed PartitionCoproduct witness — content-addressed assertion that a");
+    f.doc_comment("partition decomposes as `PartitionCoproduct(left, right)` per PT_2b.");
+    f.doc_comment("Minting verifies ST_1, ST_2, ST_6, ST_7, ST_8, ST_9, ST_10, the");
+    f.doc_comment("foundation `CoproductLayoutWidth` invariant, and — for ST_6/ST_7/ST_8 —");
+    f.doc_comment("walks the supplied constraint array through `validate_coproduct_structure`.");
+    f.line("#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]");
+    f.line("pub struct PartitionCoproductWitness {");
+    f.line("    witt_bits: u16,");
+    f.line("    content_fingerprint: ContentFingerprint,");
+    f.line("    left_fingerprint: ContentFingerprint,");
+    f.line("    right_fingerprint: ContentFingerprint,");
+    f.line("    combined_site_budget: u16,");
+    f.line("    combined_site_count: u16,");
+    f.line("    tag_site_index: u16,");
+    f.line("}");
+    f.blank();
+
+    f.line("impl PartitionCoproductWitness {");
+    f.line("    #[inline] #[must_use] pub const fn witt_bits(&self) -> u16 { self.witt_bits }");
+    f.line("    #[inline] #[must_use]");
+    f.line("    pub const fn content_fingerprint(&self) -> ContentFingerprint { self.content_fingerprint }");
+    f.line("    #[inline] #[must_use]");
+    f.line(
+        "    pub const fn left_fingerprint(&self) -> ContentFingerprint { self.left_fingerprint }",
+    );
+    f.line("    #[inline] #[must_use]");
+    f.line("    pub const fn right_fingerprint(&self) -> ContentFingerprint { self.right_fingerprint }");
+    f.indented_doc_comment("`siteBudget(A + B)` per ST_1 = max(siteBudget(A), siteBudget(B)).");
+    f.line("    #[inline] #[must_use]");
+    f.line("    pub const fn combined_site_budget(&self) -> u16 { self.combined_site_budget }");
+    f.indented_doc_comment(
+        "`SITE_COUNT(A + B)` — the foundation layout width including the new tag site.",
+    );
+    f.line("    #[inline] #[must_use]");
+    f.line("    pub const fn combined_site_count(&self) -> u16 { self.combined_site_count }");
+    f.indented_doc_comment("Index of the tag site in the layout convention of §4b'.");
+    f.indented_doc_comment("Equals `max(SITE_COUNT(A), SITE_COUNT(B))`.");
+    f.line("    #[inline] #[must_use]");
+    f.line("    pub const fn tag_site_index(&self) -> u16 { self.tag_site_index }");
+    f.line("    #[inline] #[must_use]");
+    f.line("    #[allow(clippy::too_many_arguments)]");
+    f.line("    pub(crate) const fn with_level_fingerprints_sites_and_tag(");
+    f.line("        witt_bits: u16,");
+    f.line("        content_fingerprint: ContentFingerprint,");
+    f.line("        left_fingerprint: ContentFingerprint,");
+    f.line("        right_fingerprint: ContentFingerprint,");
+    f.line("        combined_site_budget: u16,");
+    f.line("        combined_site_count: u16,");
+    f.line("        tag_site_index: u16,");
+    f.line("    ) -> Self {");
+    f.line("        Self {");
+    f.line("            witt_bits,");
+    f.line("            content_fingerprint,");
+    f.line("            left_fingerprint,");
+    f.line("            right_fingerprint,");
+    f.line("            combined_site_budget,");
+    f.line("            combined_site_count,");
+    f.line("            tag_site_index,");
+    f.line("        }");
+    f.line("    }");
+    f.line("}");
+    f.blank();
+
+    // CartesianProductWitness
+    f.doc_comment("Sealed CartesianPartitionProduct witness — content-addressed");
+    f.doc_comment("assertion that a shape is `CartesianPartitionProduct(left, right)`");
+    f.doc_comment("per CPT_2a. Minting verifies CPT_1, CPT_3, CPT_4, CPT_5, and the");
+    f.doc_comment("foundation `CartesianLayoutWidth` invariant. The witness stores");
+    f.doc_comment("a snapshot of the combined topological invariants (χ, Betti profile)");
+    f.doc_comment("because the construction is axiomatic at the invariant level per §3c.");
+    f.doc_comment("Entropy is not stored here (f64 has no Eq/Hash); use the paired");
+    f.doc_comment("`CartesianProductEvidence` for entropy re-audit.");
+    f.line("#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]");
+    f.line("pub struct CartesianProductWitness {");
+    f.line("    witt_bits: u16,");
+    f.line("    content_fingerprint: ContentFingerprint,");
+    f.line("    left_fingerprint: ContentFingerprint,");
+    f.line("    right_fingerprint: ContentFingerprint,");
+    f.line("    combined_site_budget: u16,");
+    f.line("    combined_site_count: u16,");
+    f.line("    combined_euler: i32,");
+    f.line("    combined_betti: [u32; MAX_BETTI_DIMENSION],");
+    f.line("}");
+    f.blank();
+
+    f.line("impl CartesianProductWitness {");
+    f.line("    #[inline] #[must_use] pub const fn witt_bits(&self) -> u16 { self.witt_bits }");
+    f.line("    #[inline] #[must_use]");
+    f.line("    pub const fn content_fingerprint(&self) -> ContentFingerprint { self.content_fingerprint }");
+    f.line("    #[inline] #[must_use]");
+    f.line(
+        "    pub const fn left_fingerprint(&self) -> ContentFingerprint { self.left_fingerprint }",
+    );
+    f.line("    #[inline] #[must_use]");
+    f.line("    pub const fn right_fingerprint(&self) -> ContentFingerprint { self.right_fingerprint }");
+    f.line("    #[inline] #[must_use]");
+    f.line("    pub const fn combined_site_budget(&self) -> u16 { self.combined_site_budget }");
+    f.line("    #[inline] #[must_use]");
+    f.line("    pub const fn combined_site_count(&self) -> u16 { self.combined_site_count }");
+    f.line("    #[inline] #[must_use]");
+    f.line("    pub const fn combined_euler(&self) -> i32 { self.combined_euler }");
+    f.line("    #[inline] #[must_use]");
+    f.line("    pub const fn combined_betti(&self) -> [u32; MAX_BETTI_DIMENSION] { self.combined_betti }");
+    f.line("    #[inline] #[must_use]");
+    f.line("    #[allow(clippy::too_many_arguments)]");
+    f.line("    pub(crate) const fn with_level_fingerprints_and_invariants(");
+    f.line("        witt_bits: u16,");
+    f.line("        content_fingerprint: ContentFingerprint,");
+    f.line("        left_fingerprint: ContentFingerprint,");
+    f.line("        right_fingerprint: ContentFingerprint,");
+    f.line("        combined_site_budget: u16,");
+    f.line("        combined_site_count: u16,");
+    f.line("        combined_euler: i32,");
+    f.line("        combined_betti: [u32; MAX_BETTI_DIMENSION],");
+    f.line("    ) -> Self {");
+    f.line("        Self {");
+    f.line("            witt_bits,");
+    f.line("            content_fingerprint,");
+    f.line("            left_fingerprint,");
+    f.line("            right_fingerprint,");
+    f.line("            combined_site_budget,");
+    f.line("            combined_site_count,");
+    f.line("            combined_euler,");
+    f.line("            combined_betti,");
+    f.line("        }");
+    f.line("    }");
+    f.line("}");
+    f.blank();
+}
+
+/// `Certificate` impls binding each witness to its partition-namespace IRI
+/// and its paired Evidence associated type.
+fn emit_pc_certificate_impls(f: &mut RustFile) {
+    f.line("impl Certificate for PartitionProductWitness {");
+    f.line("    const IRI: &'static str = \"https://uor.foundation/partition/PartitionProduct\";");
+    f.line("    type Evidence = PartitionProductEvidence;");
+    f.line("}");
+    f.blank();
+    f.line("impl Certificate for PartitionCoproductWitness {");
+    f.line(
+        "    const IRI: &'static str = \"https://uor.foundation/partition/PartitionCoproduct\";",
+    );
+    f.line("    type Evidence = PartitionCoproductEvidence;");
+    f.line("}");
+    f.blank();
+    f.line("impl Certificate for CartesianProductWitness {");
+    f.line("    const IRI: &'static str =");
+    f.line("        \"https://uor.foundation/partition/CartesianPartitionProduct\";");
+    f.line("    type Evidence = CartesianProductEvidence;");
+    f.line("}");
+    f.blank();
+
+    // Display + Error impls — one pair per witness. Matches the
+    // witness-shim pattern emitted elsewhere in enforcement.rs; satisfies
+    // the rust/error_trait_completeness conformance validator.
+    for name in &[
+        "PartitionProductWitness",
+        "PartitionCoproductWitness",
+        "CartesianProductWitness",
+    ] {
+        f.line(&format!("impl core::fmt::Display for {name} {{"));
+        f.line("    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {");
+        f.line(&format!("        f.write_str(\"{name}\")"));
+        f.line("    }");
+        f.line("}");
+        f.line(&format!("impl core::error::Error for {name} {{}}"));
+        f.blank();
+    }
+}
+
+/// §2.3e — the `VerifiedMint` sealed mint trait. Supertrait on `Certificate`
+/// (which already carries `certificate_sealed::Sealed`), so downstream crates
+/// cannot implement `VerifiedMint` on their own types. Each witness's impl
+/// routes through the corresponding `pc_primitive_*` function.
+fn emit_pc_verified_mint_trait(f: &mut RustFile) {
+    f.doc_comment("Sealed mint path for certificates that require multi-theorem verification");
+    f.doc_comment("before minting. Introduced by the Product/Coproduct Completion Amendment");
+    f.doc_comment("§1c; distinct from `MintWithLevelFingerprint` (which is the generic");
+    f.doc_comment("partial-mint path for sealed shims). `VerifiedMint` implementors are");
+    f.doc_comment("the three partition-algebra witnesses, each routing through a");
+    f.doc_comment("foundation-internal mint primitive that verifies the relevant theorems.");
+    f.doc_comment("");
+    f.doc_comment("The trait is public so external callers can invoke `mint_verified`");
+    f.doc_comment("directly, but the `Certificate` supertrait's `certificate_sealed::Sealed`");
+    f.doc_comment("bound keeps the implementor set closed to this crate.");
+    f.line("pub trait VerifiedMint: Certificate {");
+    f.indented_doc_comment("Caller-supplied input bundle — one `*MintInputs` struct per witness.");
+    f.line("    type Inputs;");
+    f.indented_doc_comment("Failure kind — always `GenericImpossibilityWitness` citing the");
+    f.indented_doc_comment("specific op-namespace theorem or foundation-namespace layout");
+    f.indented_doc_comment("invariant that was violated.");
+    f.line("    type Error;");
+    f.indented_doc_comment("Verify the theorems and invariants against `inputs`, then mint a");
+    f.indented_doc_comment("witness or return a typed impossibility witness.");
+    f.indented_doc_comment("");
+    f.indented_doc_comment("# Errors");
+    f.indented_doc_comment("");
+    f.indented_doc_comment("Returns a `GenericImpossibilityWitness::for_identity(iri)` when any");
+    f.indented_doc_comment("of the gated theorems or foundation invariants fails. The IRI");
+    f.indented_doc_comment("identifies exactly which identity failed — `op/PT_*`, `op/ST_*`,");
+    f.indented_doc_comment(
+        "`op/CPT_*`, or `foundation/*LayoutWidth` / `foundation/CoproductTagEncoding`.",
+    );
+    f.line("    fn mint_verified(inputs: Self::Inputs) -> Result<Self, Self::Error>");
+    f.line("    where");
+    f.line("        Self: Sized;");
+    f.line("}");
+    f.blank();
+}
+
+/// §2.3g — structural validator for PartitionCoproduct constructions.
+/// Walks the constraint array, classifies each entry, and verifies ST_6,
+/// ST_7, ST_8 at the byte level. Recurses into `ConstraintRef::Conjunction`
+/// per plan §A4 with a bounded depth to prevent pathological inputs.
+fn emit_pc_validate_coproduct_structure(f: &mut RustFile) {
+    // Helper: classify_constraint — bounded-recursion worker over ConstraintRef.
+    f.doc_comment("Recursive classifier used by `validate_coproduct_structure`. Inspects");
+    f.doc_comment("one `ConstraintRef`, tallies tag-pinner sightings via mutable references,");
+    f.doc_comment("and recurses into `Conjunction` conjuncts up to `max_depth` levels. See");
+    f.doc_comment("plan §A4 for the depth bound rationale.");
+    f.line("#[allow(clippy::too_many_arguments)]");
+    f.line("fn pc_classify_constraint(");
+    f.line("    c: &crate::pipeline::ConstraintRef,");
+    f.line("    in_left_region: bool,");
+    f.line("    tag_site: u16,");
+    f.line("    max_depth: u32,");
+    f.line("    left_pins: &mut u32,");
+    f.line("    right_pins: &mut u32,");
+    f.line("    left_bias_ok: &mut bool,");
+    f.line("    right_bias_ok: &mut bool,");
+    f.line(") -> Result<(), GenericImpossibilityWitness> {");
+    f.line("    match c {");
+    // Site
+    f.line("        crate::pipeline::ConstraintRef::Site { position } => {");
+    f.line("            if (*position as u16) >= tag_site {");
+    f.line("                return Err(GenericImpossibilityWitness::for_identity(");
+    f.line("                    \"https://uor.foundation/op/ST_6\",");
+    f.line("                ));");
+    f.line("            }");
+    f.line("        }");
+    // Carry
+    f.line("        crate::pipeline::ConstraintRef::Carry { site } => {");
+    f.line("            if (*site as u16) >= tag_site {");
+    f.line("                return Err(GenericImpossibilityWitness::for_identity(");
+    f.line("                    \"https://uor.foundation/op/ST_6\",");
+    f.line("                ));");
+    f.line("            }");
+    f.line("        }");
+    // Affine — tag-pinner classification.
+    f.line("        crate::pipeline::ConstraintRef::Affine { coefficients, bias } => {");
+    f.line("            let mut nonzero_count: u32 = 0;");
+    f.line("            let mut nonzero_index: usize = 0;");
+    f.line("            let mut max_nonzero_index: usize = 0;");
+    f.line("            let mut i: usize = 0;");
+    f.line("            while i < coefficients.len() {");
+    f.line("                if coefficients[i] != 0 {");
+    f.line("                    nonzero_count = nonzero_count.saturating_add(1);");
+    f.line("                    nonzero_index = i;");
+    f.line("                    if i > max_nonzero_index { max_nonzero_index = i; }");
+    f.line("                }");
+    f.line("                i += 1;");
+    f.line("            }");
+    f.line("            let touches_tag_site = nonzero_count > 0");
+    f.line("                && (max_nonzero_index as u16) >= tag_site;");
+    f.line("            let is_canonical_tag_pinner = nonzero_count == 1");
+    f.line("                && (nonzero_index as u16) == tag_site");
+    f.line("                && coefficients[nonzero_index] == 1;");
+    f.line("            if is_canonical_tag_pinner {");
+    f.line("                if *bias != 0 && *bias != -1 {");
+    f.line("                    return Err(GenericImpossibilityWitness::for_identity(");
+    f.line("                        \"https://uor.foundation/foundation/CoproductTagEncoding\",");
+    f.line("                    ));");
+    f.line("                }");
+    f.line("                if in_left_region {");
+    f.line("                    *left_pins = left_pins.saturating_add(1);");
+    f.line("                    if *bias != 0 { *left_bias_ok = false; }");
+    f.line("                } else {");
+    f.line("                    *right_pins = right_pins.saturating_add(1);");
+    f.line("                    if *bias != -1 { *right_bias_ok = false; }");
+    f.line("                }");
+    f.line("            } else if touches_tag_site {");
+    f.line("                let nonzero_only_at_tag_site = nonzero_count == 1");
+    f.line("                    && (nonzero_index as u16) == tag_site;");
+    f.line("                if nonzero_only_at_tag_site {");
+    f.line("                    return Err(GenericImpossibilityWitness::for_identity(");
+    f.line("                        \"https://uor.foundation/foundation/CoproductTagEncoding\",");
+    f.line("                    ));");
+    f.line("                } else {");
+    f.line("                    return Err(GenericImpossibilityWitness::for_identity(");
+    f.line("                        \"https://uor.foundation/op/ST_6\",");
+    f.line("                    ));");
+    f.line("                }");
+    f.line("            }");
+    f.line("        }");
+    // Conjunction — recurse with decremented depth.
+    f.line("        crate::pipeline::ConstraintRef::Conjunction { conjuncts } => {");
+    f.line("            if max_depth == 0 {");
+    f.line("                return Err(GenericImpossibilityWitness::for_identity(");
+    f.line("                    \"https://uor.foundation/op/ST_6\",");
+    f.line("                ));");
+    f.line("            }");
+    f.line("            let mut idx: usize = 0;");
+    f.line("            while idx < conjuncts.len() {");
+    f.line("                pc_classify_constraint(");
+    f.line("                    &conjuncts[idx],");
+    f.line("                    in_left_region,");
+    f.line("                    tag_site,");
+    f.line("                    max_depth - 1,");
+    f.line("                    left_pins,");
+    f.line("                    right_pins,");
+    f.line("                    left_bias_ok,");
+    f.line("                    right_bias_ok,");
+    f.line("                )?;");
+    f.line("                idx += 1;");
+    f.line("            }");
+    f.line("        }");
+    // Variants without site references.
+    f.line("        crate::pipeline::ConstraintRef::Residue { .. }");
+    f.line("        | crate::pipeline::ConstraintRef::Hamming { .. }");
+    f.line("        | crate::pipeline::ConstraintRef::Depth { .. }");
+    f.line("        | crate::pipeline::ConstraintRef::SatClauses { .. }");
+    f.line("        | crate::pipeline::ConstraintRef::Bound { .. } => {");
+    f.line("            // No site references at this level; nothing to check.");
+    f.line("        }");
+    f.line("    }");
+    f.line("    Ok(())");
+    f.line("}");
+    f.blank();
+
+    f.doc_comment("Validates ST_6 / ST_7 / ST_8 for a PartitionCoproduct construction by");
+    f.doc_comment("walking the emitted constraint array. Recurses into");
+    f.doc_comment("`ConstraintRef::Conjunction` conjuncts up to depth 8 (bounded by");
+    f.doc_comment("`NERVE_CONSTRAINTS_CAP`) so nested constructions are audited without");
+    f.doc_comment("unbounded recursion.");
+    f.doc_comment("");
+    f.doc_comment("# Errors");
+    f.doc_comment("");
+    f.doc_comment("Returns `GenericImpossibilityWitness::for_identity(...)` citing the");
+    f.doc_comment("specific failed identity: `op/ST_6`, `op/ST_7`, or");
+    f.doc_comment("`foundation/CoproductTagEncoding`. ST_8 is implied by ST_6 ∧ ST_7 and");
+    f.doc_comment("is not cited separately on failure.");
+    f.line("pub(crate) fn validate_coproduct_structure(");
+    f.line("    combined_constraints: &[crate::pipeline::ConstraintRef],");
+    f.line("    left_constraint_count: usize,");
+    f.line("    tag_site: u16,");
+    f.line(") -> Result<(), GenericImpossibilityWitness> {");
+    f.line("    let mut left_pins: u32 = 0;");
+    f.line("    let mut right_pins: u32 = 0;");
+    f.line("    let mut left_bias_ok: bool = true;");
+    f.line("    let mut right_bias_ok: bool = true;");
+    f.line("    let mut idx: usize = 0;");
+    f.line("    while idx < combined_constraints.len() {");
+    f.line("        let in_left_region = idx < left_constraint_count;");
+    f.line("        pc_classify_constraint(");
+    f.line("            &combined_constraints[idx],");
+    f.line("            in_left_region,");
+    f.line("            tag_site,");
+    f.line("            NERVE_CONSTRAINTS_CAP as u32,");
+    f.line("            &mut left_pins,");
+    f.line("            &mut right_pins,");
+    f.line("            &mut left_bias_ok,");
+    f.line("            &mut right_bias_ok,");
+    f.line("        )?;");
+    f.line("        idx += 1;");
+    f.line("    }");
+    f.line("    if left_pins != 1 || right_pins != 1 {");
+    f.line("        return Err(GenericImpossibilityWitness::for_identity(");
+    f.line("            \"https://uor.foundation/op/ST_6\",");
+    f.line("        ));");
+    f.line("    }");
+    f.line("    if !left_bias_ok || !right_bias_ok {");
+    f.line("        return Err(GenericImpossibilityWitness::for_identity(");
+    f.line("            \"https://uor.foundation/op/ST_7\",");
+    f.line("        ));");
+    f.line("    }");
+    f.line("    Ok(())");
+    f.line("}");
+    f.blank();
+}
+
+/// §2.3h — three mint primitives. Each verifies its theorem set against
+/// caller-supplied invariants before minting.
+fn emit_pc_mint_primitives(f: &mut RustFile) {
+    // primitive_partition_product
+    f.doc_comment("Mint a `PartitionProductWitness` after verifying PT_1, PT_3, PT_4, and");
+    f.doc_comment("the `ProductLayoutWidth` layout invariant. PT_2a is structural (the");
+    f.doc_comment("witness existing is the claim); no separate check is needed once the");
+    f.doc_comment("invariants match.");
+    f.line("#[allow(clippy::too_many_arguments)]");
+    f.line("pub(crate) fn pc_primitive_partition_product(");
+    f.line("    witt_bits: u16,");
+    f.line("    left_fingerprint: ContentFingerprint,");
+    f.line("    right_fingerprint: ContentFingerprint,");
+    f.line("    left_site_budget: u16,");
+    f.line("    right_site_budget: u16,");
+    f.line("    left_total_site_count: u16,");
+    f.line("    right_total_site_count: u16,");
+    f.line("    left_euler: i32,");
+    f.line("    right_euler: i32,");
+    f.line("    left_entropy_nats: f64,");
+    f.line("    right_entropy_nats: f64,");
+    f.line("    combined_site_budget: u16,");
+    f.line("    combined_site_count: u16,");
+    f.line("    combined_euler: i32,");
+    f.line("    combined_entropy_nats: f64,");
+    f.line("    combined_fingerprint: ContentFingerprint,");
+    f.line(") -> Result<PartitionProductWitness, GenericImpossibilityWitness> {");
+    // PT_1
+    f.line("    if combined_site_budget != left_site_budget.saturating_add(right_site_budget) {");
+    f.line("        return Err(GenericImpossibilityWitness::for_identity(");
+    f.line("            \"https://uor.foundation/op/PT_1\",");
+    f.line("        ));");
+    f.line("    }");
+    // ProductLayoutWidth
+    f.line("    if combined_site_count != left_total_site_count.saturating_add(right_total_site_count) {");
+    f.line("        return Err(GenericImpossibilityWitness::for_identity(");
+    f.line("            \"https://uor.foundation/foundation/ProductLayoutWidth\",");
+    f.line("        ));");
+    f.line("    }");
+    // PT_3
+    f.line("    if combined_euler != left_euler.saturating_add(right_euler) {");
+    f.line("        return Err(GenericImpossibilityWitness::for_identity(");
+    f.line("            \"https://uor.foundation/op/PT_3\",");
+    f.line("        ));");
+    f.line("    }");
+    // PT_4 — entropy with tolerance.
+    f.line("    if !pc_entropy_input_is_valid(left_entropy_nats)");
+    f.line("        || !pc_entropy_input_is_valid(right_entropy_nats)");
+    f.line("        || !pc_entropy_input_is_valid(combined_entropy_nats)");
+    f.line("    {");
+    f.line("        return Err(GenericImpossibilityWitness::for_identity(");
+    f.line("            \"https://uor.foundation/op/PT_4\",");
+    f.line("        ));");
+    f.line("    }");
+    f.line("    let expected_entropy = left_entropy_nats + right_entropy_nats;");
+    f.line("    if !pc_entropy_additivity_holds(combined_entropy_nats, expected_entropy) {");
+    f.line("        return Err(GenericImpossibilityWitness::for_identity(");
+    f.line("            \"https://uor.foundation/op/PT_4\",");
+    f.line("        ));");
+    f.line("    }");
+    f.line("    Ok(PartitionProductWitness::with_level_fingerprints_and_sites(");
+    f.line("        witt_bits,");
+    f.line("        combined_fingerprint,");
+    f.line("        left_fingerprint,");
+    f.line("        right_fingerprint,");
+    f.line("        combined_site_budget,");
+    f.line("        combined_site_count,");
+    f.line("    ))");
+    f.line("}");
+    f.blank();
+
+    // primitive_partition_coproduct
+    f.doc_comment("Mint a `PartitionCoproductWitness` after verifying ST_1, ST_2, ST_6,");
+    f.doc_comment("ST_7, ST_8, ST_9, ST_10, the `CoproductLayoutWidth` layout invariant,");
+    f.doc_comment("the tag-site alignment against §4b', and running");
+    f.doc_comment("`validate_coproduct_structure` over the supplied constraint array.");
+    f.line("#[allow(clippy::too_many_arguments)]");
+    f.line("pub(crate) fn pc_primitive_partition_coproduct(");
+    f.line("    witt_bits: u16,");
+    f.line("    left_fingerprint: ContentFingerprint,");
+    f.line("    right_fingerprint: ContentFingerprint,");
+    f.line("    left_site_budget: u16,");
+    f.line("    right_site_budget: u16,");
+    f.line("    left_total_site_count: u16,");
+    f.line("    right_total_site_count: u16,");
+    f.line("    left_euler: i32,");
+    f.line("    right_euler: i32,");
+    f.line("    left_entropy_nats: f64,");
+    f.line("    right_entropy_nats: f64,");
+    f.line("    left_betti: [u32; MAX_BETTI_DIMENSION],");
+    f.line("    right_betti: [u32; MAX_BETTI_DIMENSION],");
+    f.line("    combined_site_budget: u16,");
+    f.line("    combined_site_count: u16,");
+    f.line("    combined_euler: i32,");
+    f.line("    combined_entropy_nats: f64,");
+    f.line("    combined_betti: [u32; MAX_BETTI_DIMENSION],");
+    f.line("    combined_fingerprint: ContentFingerprint,");
+    f.line("    combined_constraints: &[crate::pipeline::ConstraintRef],");
+    f.line("    left_constraint_count: usize,");
+    f.line("    tag_site: u16,");
+    f.line(") -> Result<PartitionCoproductWitness, GenericImpossibilityWitness> {");
+    // ST_1
+    f.line("    let expected_budget = if left_site_budget > right_site_budget {");
+    f.line("        left_site_budget");
+    f.line("    } else {");
+    f.line("        right_site_budget");
+    f.line("    };");
+    f.line("    if combined_site_budget != expected_budget {");
+    f.line("        return Err(GenericImpossibilityWitness::for_identity(");
+    f.line("            \"https://uor.foundation/op/ST_1\",");
+    f.line("        ));");
+    f.line("    }");
+    // CoproductLayoutWidth
+    f.line("    let max_total = if left_total_site_count > right_total_site_count {");
+    f.line("        left_total_site_count");
+    f.line("    } else {");
+    f.line("        right_total_site_count");
+    f.line("    };");
+    f.line("    let expected_total = max_total.saturating_add(1);");
+    f.line("    if combined_site_count != expected_total {");
+    f.line("        return Err(GenericImpossibilityWitness::for_identity(");
+    f.line("            \"https://uor.foundation/foundation/CoproductLayoutWidth\",");
+    f.line("        ));");
+    f.line("    }");
+    // ST_2 — entropy tolerance.
+    f.line("    if !pc_entropy_input_is_valid(left_entropy_nats)");
+    f.line("        || !pc_entropy_input_is_valid(right_entropy_nats)");
+    f.line("        || !pc_entropy_input_is_valid(combined_entropy_nats)");
+    f.line("    {");
+    f.line("        return Err(GenericImpossibilityWitness::for_identity(");
+    f.line("            \"https://uor.foundation/op/ST_2\",");
+    f.line("        ));");
+    f.line("    }");
+    f.line("    let max_operand_entropy = if left_entropy_nats > right_entropy_nats {");
+    f.line("        left_entropy_nats");
+    f.line("    } else {");
+    f.line("        right_entropy_nats");
+    f.line("    };");
+    f.line("    let expected_entropy = core::f64::consts::LN_2 + max_operand_entropy;");
+    f.line("    if !pc_entropy_additivity_holds(combined_entropy_nats, expected_entropy) {");
+    f.line("        return Err(GenericImpossibilityWitness::for_identity(");
+    f.line("            \"https://uor.foundation/op/ST_2\",");
+    f.line("        ));");
+    f.line("    }");
+    // Tag-site alignment check.
+    f.line("    if tag_site != max_total {");
+    f.line("        return Err(GenericImpossibilityWitness::for_identity(");
+    f.line("            \"https://uor.foundation/foundation/CoproductLayoutWidth\",");
+    f.line("        ));");
+    f.line("    }");
+    // Structural validator.
+    f.line(
+        "    validate_coproduct_structure(combined_constraints, left_constraint_count, tag_site)?;",
+    );
+    // ST_9
+    f.line("    if combined_euler != left_euler.saturating_add(right_euler) {");
+    f.line("        return Err(GenericImpossibilityWitness::for_identity(");
+    f.line("            \"https://uor.foundation/op/ST_9\",");
+    f.line("        ));");
+    f.line("    }");
+    // ST_10
+    f.line("    let mut k: usize = 0;");
+    f.line("    while k < MAX_BETTI_DIMENSION {");
+    f.line("        if combined_betti[k] != left_betti[k].saturating_add(right_betti[k]) {");
+    f.line("            return Err(GenericImpossibilityWitness::for_identity(");
+    f.line("                \"https://uor.foundation/op/ST_10\",");
+    f.line("            ));");
+    f.line("        }");
+    f.line("        k += 1;");
+    f.line("    }");
+    f.line("    Ok(PartitionCoproductWitness::with_level_fingerprints_sites_and_tag(");
+    f.line("        witt_bits,");
+    f.line("        combined_fingerprint,");
+    f.line("        left_fingerprint,");
+    f.line("        right_fingerprint,");
+    f.line("        combined_site_budget,");
+    f.line("        combined_site_count,");
+    f.line("        max_total,");
+    f.line("    ))");
+    f.line("}");
+    f.blank();
+
+    // primitive_cartesian_product
+    f.doc_comment("Mint a `CartesianProductWitness` after verifying CPT_1, CPT_3, CPT_4,");
+    f.doc_comment("CPT_5, and the `CartesianLayoutWidth` layout invariant. Checks");
+    f.doc_comment("caller-supplied Künneth-composed invariants against the component");
+    f.doc_comment("values (the witness defines these axiomatically per §3c).");
+    f.line("#[allow(clippy::too_many_arguments)]");
+    f.line("pub(crate) fn pc_primitive_cartesian_product(");
+    f.line("    witt_bits: u16,");
+    f.line("    left_fingerprint: ContentFingerprint,");
+    f.line("    right_fingerprint: ContentFingerprint,");
+    f.line("    left_site_budget: u16,");
+    f.line("    right_site_budget: u16,");
+    f.line("    left_total_site_count: u16,");
+    f.line("    right_total_site_count: u16,");
+    f.line("    left_euler: i32,");
+    f.line("    right_euler: i32,");
+    f.line("    left_betti: [u32; MAX_BETTI_DIMENSION],");
+    f.line("    right_betti: [u32; MAX_BETTI_DIMENSION],");
+    f.line("    left_entropy_nats: f64,");
+    f.line("    right_entropy_nats: f64,");
+    f.line("    combined_site_budget: u16,");
+    f.line("    combined_site_count: u16,");
+    f.line("    combined_euler: i32,");
+    f.line("    combined_betti: [u32; MAX_BETTI_DIMENSION],");
+    f.line("    combined_entropy_nats: f64,");
+    f.line("    combined_fingerprint: ContentFingerprint,");
+    f.line(") -> Result<CartesianProductWitness, GenericImpossibilityWitness> {");
+    // CPT_1
+    f.line("    if combined_site_budget != left_site_budget.saturating_add(right_site_budget) {");
+    f.line("        return Err(GenericImpossibilityWitness::for_identity(");
+    f.line("            \"https://uor.foundation/op/CPT_1\",");
+    f.line("        ));");
+    f.line("    }");
+    // CartesianLayoutWidth
+    f.line("    if combined_site_count != left_total_site_count.saturating_add(right_total_site_count) {");
+    f.line("        return Err(GenericImpossibilityWitness::for_identity(");
+    f.line("            \"https://uor.foundation/foundation/CartesianLayoutWidth\",");
+    f.line("        ));");
+    f.line("    }");
+    // CPT_3
+    f.line("    if combined_euler != left_euler.saturating_mul(right_euler) {");
+    f.line("        return Err(GenericImpossibilityWitness::for_identity(");
+    f.line("            \"https://uor.foundation/op/CPT_3\",");
+    f.line("        ));");
+    f.line("    }");
+    // CPT_4 — Künneth.
+    f.line("    let kunneth = crate::pipeline::kunneth_compose(&left_betti, &right_betti);");
+    f.line("    let mut k: usize = 0;");
+    f.line("    while k < MAX_BETTI_DIMENSION {");
+    f.line("        if combined_betti[k] != kunneth[k] {");
+    f.line("            return Err(GenericImpossibilityWitness::for_identity(");
+    f.line("                \"https://uor.foundation/op/CPT_4\",");
+    f.line("            ));");
+    f.line("        }");
+    f.line("        k += 1;");
+    f.line("    }");
+    // CPT_5 — entropy tolerance.
+    f.line("    if !pc_entropy_input_is_valid(left_entropy_nats)");
+    f.line("        || !pc_entropy_input_is_valid(right_entropy_nats)");
+    f.line("        || !pc_entropy_input_is_valid(combined_entropy_nats)");
+    f.line("    {");
+    f.line("        return Err(GenericImpossibilityWitness::for_identity(");
+    f.line("            \"https://uor.foundation/op/CPT_5\",");
+    f.line("        ));");
+    f.line("    }");
+    f.line("    let expected_entropy = left_entropy_nats + right_entropy_nats;");
+    f.line("    if !pc_entropy_additivity_holds(combined_entropy_nats, expected_entropy) {");
+    f.line("        return Err(GenericImpossibilityWitness::for_identity(");
+    f.line("            \"https://uor.foundation/op/CPT_5\",");
+    f.line("        ));");
+    f.line("    }");
+    f.line("    Ok(CartesianProductWitness::with_level_fingerprints_and_invariants(");
+    f.line("        witt_bits,");
+    f.line("        combined_fingerprint,");
+    f.line("        left_fingerprint,");
+    f.line("        right_fingerprint,");
+    f.line("        combined_site_budget,");
+    f.line("        combined_site_count,");
+    f.line("        combined_euler,");
+    f.line("        combined_betti,");
+    f.line("    ))");
+    f.line("}");
+    f.blank();
+}
+
+/// `VerifiedMint` impls — each witness routes through the corresponding
+/// `pc_primitive_*` mint function, passing the `*MintInputs` fields positionally.
+fn emit_pc_verified_mint_impls(f: &mut RustFile) {
+    // PartitionProductWitness
+    f.line("impl VerifiedMint for PartitionProductWitness {");
+    f.line("    type Inputs = PartitionProductMintInputs;");
+    f.line("    type Error = GenericImpossibilityWitness;");
+    f.line("    fn mint_verified(inputs: Self::Inputs) -> Result<Self, Self::Error> {");
+    f.line("        pc_primitive_partition_product(");
+    f.line("            inputs.witt_bits,");
+    f.line("            inputs.left_fingerprint,");
+    f.line("            inputs.right_fingerprint,");
+    f.line("            inputs.left_site_budget,");
+    f.line("            inputs.right_site_budget,");
+    f.line("            inputs.left_total_site_count,");
+    f.line("            inputs.right_total_site_count,");
+    f.line("            inputs.left_euler,");
+    f.line("            inputs.right_euler,");
+    f.line("            inputs.left_entropy_nats,");
+    f.line("            inputs.right_entropy_nats,");
+    f.line("            inputs.combined_site_budget,");
+    f.line("            inputs.combined_site_count,");
+    f.line("            inputs.combined_euler,");
+    f.line("            inputs.combined_entropy_nats,");
+    f.line("            inputs.combined_fingerprint,");
+    f.line("        )");
+    f.line("    }");
+    f.line("}");
+    f.blank();
+
+    // PartitionCoproductWitness
+    f.line("impl VerifiedMint for PartitionCoproductWitness {");
+    f.line("    type Inputs = PartitionCoproductMintInputs;");
+    f.line("    type Error = GenericImpossibilityWitness;");
+    f.line("    fn mint_verified(inputs: Self::Inputs) -> Result<Self, Self::Error> {");
+    f.line("        pc_primitive_partition_coproduct(");
+    f.line("            inputs.witt_bits,");
+    f.line("            inputs.left_fingerprint,");
+    f.line("            inputs.right_fingerprint,");
+    f.line("            inputs.left_site_budget,");
+    f.line("            inputs.right_site_budget,");
+    f.line("            inputs.left_total_site_count,");
+    f.line("            inputs.right_total_site_count,");
+    f.line("            inputs.left_euler,");
+    f.line("            inputs.right_euler,");
+    f.line("            inputs.left_entropy_nats,");
+    f.line("            inputs.right_entropy_nats,");
+    f.line("            inputs.left_betti,");
+    f.line("            inputs.right_betti,");
+    f.line("            inputs.combined_site_budget,");
+    f.line("            inputs.combined_site_count,");
+    f.line("            inputs.combined_euler,");
+    f.line("            inputs.combined_entropy_nats,");
+    f.line("            inputs.combined_betti,");
+    f.line("            inputs.combined_fingerprint,");
+    f.line("            inputs.combined_constraints,");
+    f.line("            inputs.left_constraint_count,");
+    f.line("            inputs.tag_site,");
+    f.line("        )");
+    f.line("    }");
+    f.line("}");
+    f.blank();
+
+    // CartesianProductWitness
+    f.line("impl VerifiedMint for CartesianProductWitness {");
+    f.line("    type Inputs = CartesianProductMintInputs;");
+    f.line("    type Error = GenericImpossibilityWitness;");
+    f.line("    fn mint_verified(inputs: Self::Inputs) -> Result<Self, Self::Error> {");
+    f.line("        pc_primitive_cartesian_product(");
+    f.line("            inputs.witt_bits,");
+    f.line("            inputs.left_fingerprint,");
+    f.line("            inputs.right_fingerprint,");
+    f.line("            inputs.left_site_budget,");
+    f.line("            inputs.right_site_budget,");
+    f.line("            inputs.left_total_site_count,");
+    f.line("            inputs.right_total_site_count,");
+    f.line("            inputs.left_euler,");
+    f.line("            inputs.right_euler,");
+    f.line("            inputs.left_betti,");
+    f.line("            inputs.right_betti,");
+    f.line("            inputs.left_entropy_nats,");
+    f.line("            inputs.right_entropy_nats,");
+    f.line("            inputs.combined_site_budget,");
+    f.line("            inputs.combined_site_count,");
+    f.line("            inputs.combined_euler,");
+    f.line("            inputs.combined_betti,");
+    f.line("            inputs.combined_entropy_nats,");
+    f.line("            inputs.combined_fingerprint,");
+    f.line("        )");
+    f.line("    }");
+    f.line("}");
+    f.blank();
+}
+
+/// §D1.2 — emits the Null* sub-trait stub family. Each stub is a unit
+/// struct parameterized over `H: HostTypes` via `PhantomData<H>` and
+/// implements its target sub-trait with the simplest sound defaults
+/// (zeros for u64 / i32, false for bool, empty slices, the `EMPTY_*`
+/// trait constants from `HostTypes` for `&H::HostString` /
+/// `&H::WitnessBytes` returns). Stubs cascade: `NullIrreducibleSet<H>`
+/// uses `NullDatum<H>` as its `Component::Datum` associated type, etc.
+fn emit_pc_null_partition_stubs(f: &mut RustFile) {
+    // ---- NullElement<H>: kernel::address::Element<H> -----------------------
+    f.doc_comment("Resolver-absent default `Element<H>`. Returns empty defaults via the");
+    f.doc_comment("`HostTypes::EMPTY_*` constants — used by `NullDatum<H>` and");
+    f.doc_comment("`NullTypeDefinition<H>` to satisfy their `Element` associated types.");
+    f.line("#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]");
+    f.line("pub struct NullElement<H: HostTypes> {");
+    f.line("    _phantom: core::marker::PhantomData<H>,");
+    f.line("}");
+    f.line("impl<H: HostTypes> Default for NullElement<H> {");
+    f.line("    fn default() -> Self { Self { _phantom: core::marker::PhantomData } }");
+    f.line("}");
+    f.line("impl<H: HostTypes> crate::kernel::address::Element<H> for NullElement<H> {");
+    f.line("    fn length(&self) -> u64 { 0 }");
+    f.line("    fn addresses(&self) -> &H::HostString { H::EMPTY_HOST_STRING }");
+    f.line("    fn digest(&self) -> &H::HostString { H::EMPTY_HOST_STRING }");
+    f.line("    fn digest_algorithm(&self) -> &H::HostString { H::EMPTY_HOST_STRING }");
+    f.line("    fn canonical_bytes(&self) -> &H::WitnessBytes { H::EMPTY_WITNESS_BYTES }");
+    f.line("    fn witt_length(&self) -> u64 { 0 }");
+    f.line("}");
+    f.blank();
+
+    // ---- NullDatum<H>: kernel::schema::Datum<H> ---------------------------
+    f.doc_comment("Resolver-absent default `Datum<H>`. All numeric methods return 0.");
+    f.line("#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]");
+    f.line("pub struct NullDatum<H: HostTypes> {");
+    f.line("    element: NullElement<H>,");
+    f.line("    _phantom: core::marker::PhantomData<H>,");
+    f.line("}");
+    f.line("impl<H: HostTypes> Default for NullDatum<H> {");
+    f.line("    fn default() -> Self {");
+    f.line("        Self {");
+    f.line("            element: NullElement::default(),");
+    f.line("            _phantom: core::marker::PhantomData,");
+    f.line("        }");
+    f.line("    }");
+    f.line("}");
+    f.line("impl<H: HostTypes> crate::kernel::schema::Datum<H> for NullDatum<H> {");
+    f.line("    fn value(&self) -> u64 { 0 }");
+    f.line("    fn witt_length(&self) -> u64 { 0 }");
+    f.line("    fn stratum(&self) -> u64 { 0 }");
+    f.line("    fn spectrum(&self) -> u64 { 0 }");
+    f.line("    type Element = NullElement<H>;");
+    f.line("    fn element(&self) -> &Self::Element { &self.element }");
+    f.line("}");
+    f.blank();
+
+    // ---- NullTermExpression<H>: kernel::schema::TermExpression<H> --------
+    f.doc_comment("Resolver-absent default `TermExpression<H>`. Empty marker trait, no methods.");
+    f.line("#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]");
+    f.line("pub struct NullTermExpression<H: HostTypes> {");
+    f.line("    _phantom: core::marker::PhantomData<H>,");
+    f.line("}");
+    f.line("impl<H: HostTypes> Default for NullTermExpression<H> {");
+    f.line("    fn default() -> Self { Self { _phantom: core::marker::PhantomData } }");
+    f.line("}");
+    f.line(
+        "impl<H: HostTypes> crate::kernel::schema::TermExpression<H> for NullTermExpression<H> {}",
+    );
+    f.blank();
+
+    // ---- NullSiteIndex<H>: bridge::partition::SiteIndex<H> ---------------
+    // Has a self-referential ancilla_site() — return &self.
+    f.doc_comment("Resolver-absent default `SiteIndex<H>`. Self-recursive: `ancilla_site()`");
+    f.doc_comment("returns `&self` (no ancilla pairing in the default).");
+    f.line("#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]");
+    f.line("pub struct NullSiteIndex<H: HostTypes> {");
+    f.line("    _phantom: core::marker::PhantomData<H>,");
+    f.line("}");
+    f.line("impl<H: HostTypes> Default for NullSiteIndex<H> {");
+    f.line("    fn default() -> Self { Self { _phantom: core::marker::PhantomData } }");
+    f.line("}");
+    f.line("impl<H: HostTypes> crate::bridge::partition::SiteIndex<H> for NullSiteIndex<H> {");
+    f.line("    fn site_position(&self) -> u64 { 0 }");
+    f.line("    fn site_state(&self) -> u64 { 0 }");
+    f.line("    type SiteIndexTarget = NullSiteIndex<H>;");
+    f.line("    fn ancilla_site(&self) -> &Self::SiteIndexTarget { self }");
+    f.line("}");
+    f.blank();
+
+    // ---- NullTagSite<H>: bridge::partition::TagSite<H>: SiteIndex<H> -----
+    f.doc_comment("Resolver-absent default `TagSite<H>`. Embeds an inline `NullSiteIndex`");
+    f.doc_comment("field so the inherited `ancilla_site()` accessor returns a valid");
+    f.doc_comment("reference; `tag_value()` returns false.");
+    f.line("#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]");
+    f.line("pub struct NullTagSite<H: HostTypes> {");
+    f.line("    ancilla: NullSiteIndex<H>,");
+    f.line("}");
+    f.line("impl<H: HostTypes> Default for NullTagSite<H> {");
+    f.line("    fn default() -> Self { Self { ancilla: NullSiteIndex::default() } }");
+    f.line("}");
+    f.line("impl<H: HostTypes> crate::bridge::partition::SiteIndex<H> for NullTagSite<H> {");
+    f.line("    fn site_position(&self) -> u64 { 0 }");
+    f.line("    fn site_state(&self) -> u64 { 0 }");
+    f.line("    type SiteIndexTarget = NullSiteIndex<H>;");
+    f.line("    fn ancilla_site(&self) -> &Self::SiteIndexTarget { &self.ancilla }");
+    f.line("}");
+    f.line("impl<H: HostTypes> crate::bridge::partition::TagSite<H> for NullTagSite<H> {");
+    f.line("    fn tag_value(&self) -> bool { false }");
+    f.line("}");
+    f.blank();
+
+    // ---- NullSiteBinding<H>: bridge::partition::SiteBinding<H> -----------
+    f.doc_comment("Resolver-absent default `SiteBinding<H>`. Embeds inline `NullConstraint`");
+    f.doc_comment("and `NullSiteIndex` so the trait's reference accessors work via &self.field.");
+    f.line("#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]");
+    f.line("pub struct NullSiteBinding<H: HostTypes> {");
+    f.line("    constraint: NullConstraint<H>,");
+    f.line("    site_index: NullSiteIndex<H>,");
+    f.line("}");
+    f.line("impl<H: HostTypes> Default for NullSiteBinding<H> {");
+    f.line("    fn default() -> Self {");
+    f.line("        Self {");
+    f.line("            constraint: NullConstraint::default(),");
+    f.line("            site_index: NullSiteIndex::default(),");
+    f.line("        }");
+    f.line("    }");
+    f.line("}");
+    f.line("impl<H: HostTypes> crate::bridge::partition::SiteBinding<H> for NullSiteBinding<H> {");
+    f.line("    type Constraint = NullConstraint<H>;");
+    f.line("    fn pinned_by(&self) -> &Self::Constraint { &self.constraint }");
+    f.line("    type SiteIndex = NullSiteIndex<H>;");
+    f.line("    fn pins_coordinate(&self) -> &Self::SiteIndex { &self.site_index }");
+    f.line("}");
+    f.blank();
+
+    // ---- NullConstraint<H>: type_::Constraint<H> -------------------------
+    f.doc_comment("Resolver-absent default `Constraint<H>`. Returns Vertical metric axis,");
+    f.doc_comment("empty pinned-sites slice, and zero crossing cost.");
+    f.line("#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]");
+    f.line("pub struct NullConstraint<H: HostTypes> {");
+    f.line("    _phantom: core::marker::PhantomData<H>,");
+    f.line("}");
+    f.line("impl<H: HostTypes> Default for NullConstraint<H> {");
+    f.line("    fn default() -> Self { Self { _phantom: core::marker::PhantomData } }");
+    f.line("}");
+    f.line("impl<H: HostTypes> crate::user::type_::Constraint<H> for NullConstraint<H> {");
+    f.line("    fn metric_axis(&self) -> MetricAxis { MetricAxis::Vertical }");
+    f.line("    type SiteIndex = NullSiteIndex<H>;");
+    f.line("    fn pins_sites(&self) -> &[Self::SiteIndex] { &[] }");
+    f.line("    fn crossing_cost(&self) -> u64 { 0 }");
+    f.line("}");
+    f.blank();
+
+    // ---- NullFreeRank<H>: bridge::partition::FreeRank<H> ----------------
+    f.doc_comment("Resolver-absent default `FreeRank<H>`. Empty budget — `is_closed()` true,");
+    f.doc_comment("zero counts. Empty `has_site` / `has_binding` slices.");
+    f.line("#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]");
+    f.line("pub struct NullFreeRank<H: HostTypes> {");
+    f.line("    _phantom: core::marker::PhantomData<H>,");
+    f.line("}");
+    f.line("impl<H: HostTypes> Default for NullFreeRank<H> {");
+    f.line("    fn default() -> Self { Self { _phantom: core::marker::PhantomData } }");
+    f.line("}");
+    f.line("impl<H: HostTypes> crate::bridge::partition::FreeRank<H> for NullFreeRank<H> {");
+    f.line("    fn total_sites(&self) -> u64 { 0 }");
+    f.line("    fn pinned_count(&self) -> u64 { 0 }");
+    f.line("    fn free_rank(&self) -> u64 { 0 }");
+    f.line("    fn is_closed(&self) -> bool { true }");
+    f.line("    type SiteIndex = NullSiteIndex<H>;");
+    f.line("    fn has_site(&self) -> &[Self::SiteIndex] { &[] }");
+    f.line("    type SiteBinding = NullSiteBinding<H>;");
+    f.line("    fn has_binding(&self) -> &[Self::SiteBinding] { &[] }");
+    f.line("    fn reversible_strategy(&self) -> bool { false }");
+    f.line("}");
+    f.blank();
+
+    // ---- NullIrreducibleSet<H>: bridge::partition::IrreducibleSet<H>: Component<H> ---
+    for (name, sub_trait) in &[
+        ("NullIrreducibleSet", "IrreducibleSet"),
+        ("NullReducibleSet", "ReducibleSet"),
+        ("NullUnitGroup", "UnitGroup"),
+    ] {
+        f.doc_comment(&format!(
+            "Resolver-absent default `{}<H>`. Implements `Component<H>` with empty",
+            sub_trait
+        ));
+        f.doc_comment("`member` slice and zero `cardinality`.");
+        f.line("#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]");
+        f.line(&format!("pub struct {name}<H: HostTypes> {{"));
+        f.line("    _phantom: core::marker::PhantomData<H>,");
+        f.line("}");
+        f.line(&format!("impl<H: HostTypes> Default for {name}<H> {{"));
+        f.line("    fn default() -> Self { Self { _phantom: core::marker::PhantomData } }");
+        f.line("}");
+        f.line(&format!(
+            "impl<H: HostTypes> crate::bridge::partition::Component<H> for {name}<H> {{"
+        ));
+        f.line("    type Datum = NullDatum<H>;");
+        f.line("    fn member(&self) -> &[Self::Datum] { &[] }");
+        f.line("    fn cardinality(&self) -> u64 { 0 }");
+        f.line("}");
+        f.line(&format!(
+            "impl<H: HostTypes> crate::bridge::partition::{sub_trait}<H> for {name}<H> {{}}"
+        ));
+        f.blank();
+    }
+
+    // ---- NullComplement<H>: bridge::partition::Complement<H>: Component<H> + has TermExpression ---
+    f.doc_comment("Resolver-absent default `Complement<H>`. Implements `Component<H>` plus");
+    f.doc_comment("the `exterior_criteria()` accessor returning a reference to an embedded");
+    f.doc_comment("`NullTermExpression`.");
+    f.line("#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]");
+    f.line("pub struct NullComplement<H: HostTypes> {");
+    f.line("    term: NullTermExpression<H>,");
+    f.line("}");
+    f.line("impl<H: HostTypes> Default for NullComplement<H> {");
+    f.line("    fn default() -> Self { Self { term: NullTermExpression::default() } }");
+    f.line("}");
+    f.line("impl<H: HostTypes> crate::bridge::partition::Component<H> for NullComplement<H> {");
+    f.line("    type Datum = NullDatum<H>;");
+    f.line("    fn member(&self) -> &[Self::Datum] { &[] }");
+    f.line("    fn cardinality(&self) -> u64 { 0 }");
+    f.line("}");
+    f.line("impl<H: HostTypes> crate::bridge::partition::Complement<H> for NullComplement<H> {");
+    f.line("    type TermExpression = NullTermExpression<H>;");
+    f.line("    fn exterior_criteria(&self) -> &Self::TermExpression { &self.term }");
+    f.line("}");
+    f.blank();
+
+    // ---- NullTypeDefinition<H>: user::type_::TypeDefinition<H> ----------
+    f.doc_comment("Resolver-absent default `TypeDefinition<H>`. Embeds inline `NullElement`");
+    f.doc_comment("for the content_address accessor.");
+    f.line("#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]");
+    f.line("pub struct NullTypeDefinition<H: HostTypes> {");
+    f.line("    element: NullElement<H>,");
+    f.line("}");
+    f.line("impl<H: HostTypes> Default for NullTypeDefinition<H> {");
+    f.line("    fn default() -> Self { Self { element: NullElement::default() } }");
+    f.line("}");
+    f.line("impl<H: HostTypes> crate::user::type_::TypeDefinition<H> for NullTypeDefinition<H> {");
+    f.line("    type Element = NullElement<H>;");
+    f.line("    fn content_address(&self) -> &Self::Element { &self.element }");
+    f.line("}");
+    f.blank();
+}
+
+/// §D1.3 — emits `NullPartition<H>`: a composite struct embedding inline
+/// instances of every Null* sub-stub so the `Partition<H>` trait's
+/// reference-returning accessors work via `&self.field`. Constructed
+/// from a fingerprint via `from_fingerprint`; the fingerprint is the
+/// only meaningful state (everything else is resolver-absent defaults).
+fn emit_pc_null_partition_composite(f: &mut RustFile) {
+    f.doc_comment("Resolver-absent default `Partition<H>`. Embeds inline stubs for every");
+    f.doc_comment("sub-trait associated type so `Partition<H>` accessors return references");
+    f.doc_comment("to fields rather than to statics. The only meaningful state is the");
+    f.doc_comment("`fingerprint`; everything else uses `HostTypes::EMPTY_*` defaults.");
+    f.doc_comment("");
+    f.doc_comment("Returned by the three witness trait impls' `left_factor` / `right_factor`");
+    f.doc_comment("/ `left_summand` / etc. accessors as the resolver-absent value pathway.");
+    f.doc_comment("Consumers needing real partition data pair the sibling `PartitionHandle`");
+    f.doc_comment("with a `PartitionResolver` instead.");
+    f.line("#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]");
+    f.line("pub struct NullPartition<H: HostTypes> {");
+    f.line("    irreducibles: NullIrreducibleSet<H>,");
+    f.line("    reducibles: NullReducibleSet<H>,");
+    f.line("    units: NullUnitGroup<H>,");
+    f.line("    exterior: NullComplement<H>,");
+    f.line("    free_rank: NullFreeRank<H>,");
+    f.line("    tag_site: NullTagSite<H>,");
+    f.line("    source_type: NullTypeDefinition<H>,");
+    f.line("    fingerprint: ContentFingerprint,");
+    f.line("}");
+    f.blank();
+    f.line("impl<H: HostTypes> NullPartition<H> {");
+    f.indented_doc_comment("Construct a NullPartition with the given content fingerprint.");
+    f.indented_doc_comment("All other fields are resolver-absent defaults.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub fn from_fingerprint(fingerprint: ContentFingerprint) -> Self {");
+    f.line("        Self {");
+    f.line("            irreducibles: NullIrreducibleSet::default(),");
+    f.line("            reducibles: NullReducibleSet::default(),");
+    f.line("            units: NullUnitGroup::default(),");
+    f.line("            exterior: NullComplement::default(),");
+    f.line("            free_rank: NullFreeRank::default(),");
+    f.line("            tag_site: NullTagSite::default(),");
+    f.line("            source_type: NullTypeDefinition::default(),");
+    f.line("            fingerprint,");
+    f.line("        }");
+    f.line("    }");
+    f.indented_doc_comment(
+        "Returns the content fingerprint identifying which Partition this stub stands in for.",
+    );
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn fingerprint(&self) -> ContentFingerprint { self.fingerprint }");
+    f.line("}");
+    f.blank();
+
+    // Partition<H> impl
+    f.line("impl<H: HostTypes> crate::bridge::partition::Partition<H> for NullPartition<H> {");
+    f.line("    type IrreducibleSet = NullIrreducibleSet<H>;");
+    f.line("    fn irreducibles(&self) -> &Self::IrreducibleSet { &self.irreducibles }");
+    f.line("    type ReducibleSet = NullReducibleSet<H>;");
+    f.line("    fn reducibles(&self) -> &Self::ReducibleSet { &self.reducibles }");
+    f.line("    type UnitGroup = NullUnitGroup<H>;");
+    f.line("    fn units(&self) -> &Self::UnitGroup { &self.units }");
+    f.line("    type Complement = NullComplement<H>;");
+    f.line("    fn exterior(&self) -> &Self::Complement { &self.exterior }");
+    f.line("    fn density(&self) -> H::Decimal { H::EMPTY_DECIMAL }");
+    f.line("    type TypeDefinition = NullTypeDefinition<H>;");
+    f.line("    fn source_type(&self) -> &Self::TypeDefinition { &self.source_type }");
+    f.line("    fn witt_length(&self) -> u64 { 0 }");
+    f.line("    type FreeRank = NullFreeRank<H>;");
+    f.line("    fn site_budget(&self) -> &Self::FreeRank { &self.free_rank }");
+    f.line("    fn is_exhaustive(&self) -> bool { true }");
+    f.line("    type TagSite = NullTagSite<H>;");
+    f.line("    fn tag_site_of(&self) -> &Self::TagSite { &self.tag_site }");
+    f.line("    fn product_category_level(&self) -> &H::HostString { H::EMPTY_HOST_STRING }");
+    f.line("}");
+    f.blank();
+}
+
+/// §D1.4 — emits the three witness trait impls. Each is fully generic
+/// over `H: HostTypes` (no host-type narrowing); the associated `type
+/// Partition = NullPartition<H>` returns a freshly-constructed
+/// `NullPartition` carrying the operand fingerprint.
+fn emit_pc_witness_trait_impls(f: &mut RustFile) {
+    let cases: &[(&str, &str, &str, &str)] = &[
+        (
+            "PartitionProduct",
+            "PartitionProductWitness",
+            "left_factor",
+            "right_factor",
+        ),
+        (
+            "PartitionCoproduct",
+            "PartitionCoproductWitness",
+            "left_summand",
+            "right_summand",
+        ),
+        (
+            "CartesianPartitionProduct",
+            "CartesianProductWitness",
+            "left_cartesian_factor",
+            "right_cartesian_factor",
+        ),
+    ];
+    for (trait_name, witness_name, left_method, right_method) in cases {
+        f.line(&format!(
+            "impl<H: HostTypes> crate::bridge::partition::{trait_name}<H> for {witness_name} {{"
+        ));
+        f.line("    type Partition = NullPartition<H>;");
+        f.line(&format!(
+            "    fn {left_method}(&self) -> Self::Partition {{"
+        ));
+        f.line("        NullPartition::from_fingerprint(self.left_fingerprint)");
+        f.line("    }");
+        f.line(&format!(
+            "    fn {right_method}(&self) -> Self::Partition {{"
+        ));
+        f.line("        NullPartition::from_fingerprint(self.right_fingerprint)");
+        f.line("    }");
+        f.line("}");
+        f.blank();
+    }
 }

@@ -19,6 +19,7 @@ pub mod enums;
 pub mod individuals;
 pub mod mapping;
 pub mod pipeline;
+pub mod sdk_macros;
 pub mod traits;
 
 use std::collections::HashMap;
@@ -47,12 +48,14 @@ pub struct GenerationReport {
     pub files: Vec<String>,
 }
 
-/// Generates the complete `uor-foundation` crate source into `out_dir`.
+/// Generates the complete `uor-foundation` crate source into `out_dir`,
+/// and the companion `uor-foundation-sdk` proc-macro crate source into
+/// `sdk_out`.
 ///
 /// # Errors
 ///
 /// Returns an error if any file cannot be written.
-pub fn generate(ontology: &Ontology, out_dir: &Path) -> Result<GenerationReport> {
+pub fn generate(ontology: &Ontology, out_dir: &Path, sdk_out: &Path) -> Result<GenerationReport> {
     let mut report = GenerationReport::default();
     let ns_map = namespace_mappings();
 
@@ -163,6 +166,21 @@ pub fn generate(ontology: &Ontology, out_dir: &Path) -> Result<GenerationReport>
         .status();
     report.files.push("pipeline.rs".to_string());
 
+    // 8. Generate uor-foundation-sdk/src/lib.rs (Product/Coproduct Completion
+    // Amendment Part B). The SDK is a proc-macro crate emitting
+    // `product_shape!` / `coproduct_shape!` / `cartesian_product_shape!`
+    // macros — its sources are derived from the same ontology snapshot
+    // that produces foundation/, guaranteeing the two crates cannot drift
+    // apart. Consumers who want pure-traits surface take only uor-foundation;
+    // consumers who want macro ergonomics also depend on uor-foundation-sdk.
+    let sdk_lib_content = sdk_macros::generate_sdk_lib();
+    let sdk_lib_path = sdk_out.join("lib.rs");
+    emit::write_file(&sdk_lib_path, &sdk_lib_content)?;
+    let _ = std::process::Command::new("rustfmt")
+        .arg(&sdk_lib_path)
+        .status();
+    report.files.push(format!("{}", sdk_lib_path.display()));
+
     // v0.2.2 W15: the `uor-foundation-macros` crate is deleted in v0.2.2.
     // No macro-crate ontology assets to generate. The proc macros it housed
     // (`uor!`, `uor_ground!`, `#[derive(ConstrainedType)]`, `#[derive(CompileUnit)]`,
@@ -244,9 +262,12 @@ fn generate_lib_rs(ontology: &Ontology) -> String {
          //! // Or override one slot:\n\
          //! struct EmbeddedHost;\n\
          //! impl HostTypes for EmbeddedHost {{\n\
-         //!     type Decimal = f32;        // override: tighter precision budget\n\
-         //!     type HostString = str;     // default\n\
-         //!     type WitnessBytes = [u8];  // default\n\
+         //!     type Decimal = f32;          // override: tighter precision budget\n\
+         //!     type HostString = str;       // default\n\
+         //!     type WitnessBytes = [u8];    // default\n\
+         //!     const EMPTY_DECIMAL: f32 = 0.0;\n\
+         //!     const EMPTY_HOST_STRING: &'static str = \"\";\n\
+         //!     const EMPTY_WITNESS_BYTES: &'static [u8] = &[];\n\
          //! }}\n\
          //! ```\n\
          //!\n\
@@ -343,6 +364,19 @@ fn generate_lib_rs(ontology: &Ontology) -> String {
     f.line("    FINGERPRINT_MIN_BYTES, TRACE_MAX_EVENTS, TRACE_REPLAY_FORMAT_VERSION,");
     f.line("};");
     f.blank();
+    // Product/Coproduct Completion Amendment §2.5: public re-exports of the");
+    // three sealed witness types, their paired Evidence / MintInputs structs,
+    // the VerifiedMint sealed mint trait, and the resolver protocol. Emitted
+    // as a separate `pub use` block so the Amendment-added surface is visually
+    // distinct from the core enforcement surface above.
+    f.line("pub use enforcement::{");
+    f.line("    CartesianProductEvidence, CartesianProductMintInputs, CartesianProductWitness,");
+    f.line("    GenericImpossibilityWitness, NullPartition, PartitionCoproductEvidence,");
+    f.line("    PartitionCoproductMintInputs, PartitionCoproductWitness, PartitionHandle,");
+    f.line("    PartitionProductEvidence, PartitionProductMintInputs, PartitionProductWitness, PartitionRecord,");
+    f.line("    PartitionResolver, VerifiedMint,");
+    f.line("};");
+    f.blank();
 
     // Phase B: the v0.2.1 `Primitives` trait is deleted unconditionally.
     // The narrower `HostTypes` trait (three slots: `Decimal`, `HostString`,
@@ -373,6 +407,9 @@ fn generate_lib_rs(ontology: &Ontology) -> String {
     f.doc_comment("    type Decimal = f32;          // override");
     f.doc_comment("    type HostString = str;       // default");
     f.doc_comment("    type WitnessBytes = [u8];    // default");
+    f.doc_comment("    const EMPTY_DECIMAL: f32 = 0.0;");
+    f.doc_comment("    const EMPTY_HOST_STRING: &'static str = \"\";");
+    f.doc_comment("    const EMPTY_WITNESS_BYTES: &'static [u8] = &[];");
     f.doc_comment("}");
     f.doc_comment("");
     f.doc_comment("# let _ = (core::marker::PhantomData::<DefaultH>, core::marker::PhantomData::<EmbeddedHost>);");
@@ -390,14 +427,47 @@ fn generate_lib_rs(ontology: &Ontology) -> String {
          `DefaultHostTypes` selects `str`. Override with owned `String`, `Cow<'_, str>`,",
     );
     f.indented_doc_comment("etc. for embedded / host-heap environments.");
-    f.line("    type HostString: ?Sized;");
+    f.indented_doc_comment("");
+    f.indented_doc_comment("The `'static` bound is required by the Product/Coproduct Completion");
+    f.indented_doc_comment("Amendment §B1 `EMPTY_HOST_STRING` constant — every conforming `H`");
+    f.indented_doc_comment("must be able to expose a `&'static HostString`. All in-tree impls");
+    f.indented_doc_comment("(`DefaultHostTypes::HostString = str`) already satisfy this.");
+    f.line("    type HostString: ?Sized + 'static;");
     f.blank();
     f.indented_doc_comment(
         "Host-supplied opaque byte sequence (NOT a foundation `canonicalBytes` constant).\n\
          `DefaultHostTypes` selects `[u8]`. Override with owned `Vec<u8>`, `Bytes`,",
     );
     f.indented_doc_comment("etc. for host-heap environments.");
-    f.line("    type WitnessBytes: ?Sized;");
+    f.indented_doc_comment("");
+    f.indented_doc_comment("The `'static` bound mirrors `HostString` for the same reason — see");
+    f.indented_doc_comment("the `EMPTY_WITNESS_BYTES` constant below.");
+    f.line("    type WitnessBytes: ?Sized + 'static;");
+    f.blank();
+    // Product/Coproduct Completion Amendment §B1: empty-value defaults
+    // for all three host-supplied slots. These are read by `NullPartition`
+    // and the partition-algebra stub sub-trait types (`NullElement<H>`,
+    // etc.) when satisfying `Partition<H>` accessors that return
+    // references to host-supplied data. Every conforming `H` must
+    // provide them; consumer impls choose what "empty" means in their
+    // host environment.
+    f.indented_doc_comment("Empty / zero `Decimal` value for resolver-absent partition accessors.");
+    f.indented_doc_comment("`DefaultHostTypes` selects `0.0`. Used by `NullPartition::density()`");
+    f.indented_doc_comment("and analogous H-typed defaults.");
+    f.line("    const EMPTY_DECIMAL: Self::Decimal;");
+    f.blank();
+    f.indented_doc_comment("Empty `&'static HostString` reference for resolver-absent accessors.");
+    f.indented_doc_comment("`DefaultHostTypes` selects `&\"\"` coerced to `&str`. Used by");
+    f.indented_doc_comment("`NullPartition::product_category_level()` and the address-typed");
+    f.indented_doc_comment("string accessors on `NullElement<H>`.");
+    f.line("    const EMPTY_HOST_STRING: &'static Self::HostString;");
+    f.blank();
+    f.indented_doc_comment(
+        "Empty `&'static WitnessBytes` reference for resolver-absent accessors.",
+    );
+    f.indented_doc_comment("`DefaultHostTypes` selects `&[]` coerced to `&[u8]`. Used by");
+    f.indented_doc_comment("`NullElement<H>::canonical_bytes()`.");
+    f.line("    const EMPTY_WITNESS_BYTES: &'static Self::WitnessBytes;");
     f.line("}");
     f.blank();
 
@@ -411,6 +481,9 @@ fn generate_lib_rs(ontology: &Ontology) -> String {
     f.line("    type Decimal = f64;");
     f.line("    type HostString = str;");
     f.line("    type WitnessBytes = [u8];");
+    f.line("    const EMPTY_DECIMAL: f64 = 0.0;");
+    f.line("    const EMPTY_HOST_STRING: &'static str = \"\";");
+    f.line("    const EMPTY_WITNESS_BYTES: &'static [u8] = &[];");
     f.line("}");
     f.blank();
 
@@ -596,6 +669,46 @@ are generic over `H: Hasher`. There are no fallback paths, no
 zero-fingerprint sentinels, and no `Default` impls on cert shims — a
 substrate is mandatory at every grounding site.
 
+## Product / coproduct witnesses (Product/Coproduct Completion Amendment)
+
+Three sealed witness types attest that a shape decomposes as one of
+the partition-algebra operations:
+
+- `PartitionProductWitness` — gated on PT_1 / PT_3 / PT_4 and the
+  `foundation/ProductLayoutWidth` invariant (UOR `A × B`, χ additive).
+- `PartitionCoproductWitness` — gated on ST_1 / ST_2 / ST_6 / ST_7 /
+  ST_8 / ST_9 / ST_10, the `foundation/CoproductLayoutWidth` invariant,
+  and `foundation/CoproductTagEncoding` (UOR `A + B`, `ln 2` tag
+  entropy). `validate_coproduct_structure` walks the supplied
+  `ConstraintRef` array at mint time to verify the canonical
+  tag-pinner encoding structurally.
+- `CartesianProductWitness` — gated on CPT_1 / CPT_3 / CPT_4 / CPT_5
+  and the `foundation/CartesianLayoutWidth` invariant (UOR `A ⊠ B`,
+  χ multiplicative, Betti via Künneth).
+
+Every witness implements `Certificate` with a partition-namespace IRI
+and a paired `*Evidence` associated type. The sealed `VerifiedMint`
+trait routes each `*MintInputs` struct through the corresponding mint
+primitive; failures return `GenericImpossibilityWitness::for_identity`
+citing the specific `op:*` theorem or `foundation:*` layout invariant
+that was violated.
+
+```rust,ignore
+use uor_foundation::{{
+    PartitionProductMintInputs, PartitionProductWitness, VerifiedMint,
+}};
+
+let witness = PartitionProductWitness::mint_verified(inputs)?;
+assert_eq!(witness.combined_site_budget(), /* A.sb + B.sb */);
+```
+
+`PartitionHandle<H>` is the content-addressed identity token for a
+partition; pair it with a `PartitionResolver<H>` via `resolve_with`
+to recover full `PartitionRecord<H>` data (site budget, Euler, Betti,
+entropy). Ergonomic ergonomic macros (`product_shape!`,
+`coproduct_shape!`, `cartesian_product_shape!`) live in the opt-in
+companion `uor-foundation-sdk` crate.
+
 ## License
 
 Apache-2.0 — see [LICENSE](https://github.com/UOR-Foundation/UOR-Framework/blob/main/LICENSE).
@@ -618,8 +731,10 @@ mod tests {
     fn generation_produces_correct_trait_count() {
         let ontology = uor_ontology::Ontology::full();
         let tmp = std::env::temp_dir().join("uor_codegen_test");
+        let sdk_tmp = std::env::temp_dir().join("uor_codegen_test_sdk");
         let _ = std::fs::create_dir_all(&tmp);
-        match generate(ontology, &tmp) {
+        let _ = std::fs::create_dir_all(&sdk_tmp);
+        match generate(ontology, &tmp, &sdk_tmp) {
             Ok(report) => {
                 assert_eq!(
                     report.trait_count,

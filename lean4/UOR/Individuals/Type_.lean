@@ -14,6 +14,8 @@ def AffineEqualBound : UOR.User.Type_.BoundShape UOR.Prims.Standard := {
 
 -- The canonical binary disjoint union type whose carrier is L + R.
 def EitherType : UOR.User.Type_.SumType UOR.Prims.Standard := {
+  variant := #[]
+  tagSite := none
   contentAddress := none
 }
 
@@ -41,6 +43,8 @@ def LessEqBound : UOR.User.Type_.BoundShape UOR.Prims.Standard := {
 
 -- The canonical A + Unit idiom for optional values.
 def OptionType : UOR.User.Type_.SumType UOR.Prims.Standard := {
+  variant := #[]
+  tagSite := none
   contentAddress := none
 }
 

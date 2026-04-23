@@ -285,6 +285,14 @@ pub fn namespace_mappings() -> HashMap<&'static str, NamespaceMapping> {
             file_module: "state",
         },
     );
+    m.insert(
+        NS_FOUNDATION,
+        NamespaceMapping {
+            space: Space::Bridge,
+            space_module: "bridge",
+            file_module: "foundation",
+        },
+    );
     m
 }
 

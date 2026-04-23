@@ -4,6 +4,7 @@ members = [
     "codegen",
     "lean-codegen",
     "foundation",
+    "uor-foundation-sdk",
     "uor-foundation-verify",
     "uor-foundation-test-helpers",
     "conformance",

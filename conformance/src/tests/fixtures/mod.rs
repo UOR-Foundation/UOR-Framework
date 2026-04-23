@@ -203,7 +203,14 @@ mod test278_v021_cleanup_bounds;
 mod test279_multiplication_certificate;
 mod test27_rewrite_rule;
 mod test280_bridge_completion;
+// Product/Coproduct Completion Amendment — fixtures for the three new
+// kernel/bridge classes added by the amendment. Numbers 281–284 were
+// already taken (test281_impossibility_certificates pre-existed); these
+// land at 285/286/287, the next free range.
 mod test281_impossibility_certificates;
+mod test285_cartesian_partition_product;
+mod test286_tag_site;
+mod test287_layout_invariant;
 mod test28_measurement_unit;
 mod test29_triad_projection;
 mod test2_primitives;
@@ -486,6 +493,10 @@ pub use test279_multiplication_certificate::TEST279_MULTIPLICATION_CERTIFICATE;
 pub use test27_rewrite_rule::TEST27_REWRITE_RULE;
 pub use test280_bridge_completion::TEST280_BRIDGE_COMPLETION;
 pub use test281_impossibility_certificates::TEST281_IMPOSSIBILITY_CERTIFICATES;
+// Product/Coproduct Completion Amendment fixtures.
+pub use test285_cartesian_partition_product::TEST285_CARTESIAN_PARTITION_PRODUCT;
+pub use test286_tag_site::TEST286_TAG_SITE;
+pub use test287_layout_invariant::TEST287_LAYOUT_INVARIANT;
 pub use test28_measurement_unit::TEST28_MEASUREMENT_UNIT;
 pub use test29_triad_projection::TEST29_TRIAD_PROJECTION;
 pub use test2_primitives::TEST2_PRIMITIVES;
@@ -852,5 +863,8 @@ pub fn all_fixture_sources() -> Vec<&'static str> {
         TEST279_MULTIPLICATION_CERTIFICATE,
         TEST280_BRIDGE_COMPLETION,
         TEST281_IMPOSSIBILITY_CERTIFICATES,
+        TEST285_CARTESIAN_PARTITION_PRODUCT,
+        TEST286_TAG_SITE,
+        TEST287_LAYOUT_INVARIANT,
     ]
 }

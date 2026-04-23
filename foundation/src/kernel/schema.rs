@@ -5647,6 +5647,172 @@ pub mod term_st_5_for_all {
     pub const VARIABLE_NAME: &str = "SumType A + B";
 }
 
+pub mod term_st_6_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "∃! tagSite(A + B)";
+}
+
+pub mod term_st_6_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str =
+        "uniqueSite ∉ dataSites(A) ∪ dataSites(B) ∧ carries ln 2 entropy (ST_2)";
+}
+
+pub mod term_st_6_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "A, B: TypeDefinition";
+}
+
+pub mod term_st_7_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "constraints(A + B)";
+}
+
+pub mod term_st_7_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "constraints(A) ∪ {tag=0} ∪ constraints(B) ∪ {tag=1}";
+}
+
+pub mod term_st_7_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "A, B: TypeDefinition";
+}
+
+pub mod term_st_8_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "disjoint(N(C(A)), N(C(B)))";
+}
+
+pub mod term_st_8_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "true";
+}
+
+pub mod term_st_8_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "A + B constructed via ST_6 ∧ ST_7 ∧ layoutTagSite";
+}
+
+pub mod term_st_9_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "χ(N(C(A + B)))";
+}
+
+pub mod term_st_9_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "χ(N(C(A))) + χ(N(C(B)))";
+}
+
+pub mod term_st_9_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "A + B constructed via PartitionCoproduct";
+}
+
+pub mod term_st_10_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "β_k(A + B)";
+}
+
+pub mod term_st_10_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "β_k(A) + β_k(B)";
+}
+
+pub mod term_st_10_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "A + B constructed via PartitionCoproduct, k ≥ 0";
+}
+
+pub mod term_cpt_1_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "siteBudget(A ⊠ B)";
+}
+
+pub mod term_cpt_1_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "siteBudget(A) + siteBudget(B)";
+}
+
+pub mod term_cpt_1_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "A, B: TypeDefinition";
+}
+
+pub mod term_cpt_2a_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "Π(A ⊠ B)";
+}
+
+pub mod term_cpt_2a_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "CartesianPartitionProduct(Π(A), Π(B))";
+}
+
+pub mod term_cpt_2a_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "A, B: TypeDefinition";
+}
+
+pub mod term_cpt_3_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "χ(N(C(A ⊠ B)))";
+}
+
+pub mod term_cpt_3_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "χ(N(C(A))) · χ(N(C(B)))";
+}
+
+pub mod term_cpt_3_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "A, B: TypeDefinition";
+}
+
+pub mod term_cpt_4_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "β_k(A ⊠ B)";
+}
+
+pub mod term_cpt_4_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "Σ_{i+j=k} β_i(A) · β_j(B)";
+}
+
+pub mod term_cpt_4_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "A, B: TypeDefinition, k ≥ 0";
+}
+
+pub mod term_cpt_5_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "S(A ⊠ B)";
+}
+
+pub mod term_cpt_5_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "S(A) + S(B)";
+}
+
+pub mod term_cpt_5_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "A, B: TypeDefinition";
+}
+
+pub mod term_cpt_6_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "A ⊠ (B + C)";
+}
+
+pub mod term_cpt_6_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "(A ⊠ B) + (A ⊠ C)";
+}
+
+pub mod term_cpt_6_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "A, B, C: TypeDefinition";
+}
+
 pub mod term_ts_8_lhs {
     /// `literalValue`
     pub const LITERAL_VALUE: &str = "min constraints for beta_1 = k";

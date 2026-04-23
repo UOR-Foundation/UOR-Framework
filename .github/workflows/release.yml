@@ -57,7 +57,7 @@ jobs:
         run: cargo run --bin uor-crate
 
       - name: Verify no drift in generated code
-        run: git diff --exit-code foundation/src/
+        run: git diff --exit-code foundation/src/ uor-foundation-sdk/src/
 
       - name: Check generated crate (no deps)
         run: cargo check -p uor-foundation --no-default-features
@@ -91,6 +91,9 @@ jobs:
 
       - name: Verify foundation crate packaging
         run: cargo publish --dry-run --allow-dirty -p uor-foundation
+
+      - name: Verify SDK crate packaging
+        run: cargo publish --dry-run --allow-dirty -p uor-foundation-sdk
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
@@ -126,5 +129,25 @@ jobs:
 
       - name: Publish foundation to crates.io
         run: cargo publish -p uor-foundation
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+
+      - name: Wait for uor-foundation to appear on crates.io index
+        # crates.io propagates with a few-second index delay; the SDK publish
+        # fails with "not found" if issued too quickly.
+        run: |
+          for i in {1..30}; do
+            if cargo search uor-foundation --limit 1 2>/dev/null | grep -q "^uor-foundation = \"${GITHUB_REF_NAME#v}"; then
+              echo "uor-foundation ${GITHUB_REF_NAME#v} visible on index"
+              exit 0
+            fi
+            echo "Waiting for uor-foundation ${GITHUB_REF_NAME#v} ($i/30)..."
+            sleep 10
+          done
+          echo "Timed out waiting for uor-foundation on index"
+          exit 1
+
+      - name: Publish uor-foundation-sdk to crates.io
+        run: cargo publish -p uor-foundation-sdk
         env:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}

@@ -5,7 +5,10 @@
 //! [`Ontology::full()`](crate::Ontology::full) produces exactly these counts.
 
 /// Number of namespace modules.
-pub const NAMESPACES: usize = 33;
+///
+/// Product/Coproduct Completion Amendment: +1 (foundation — layout
+/// invariants complementing op-namespace theorems).
+pub const NAMESPACES: usize = 34;
 
 /// Total OWL classes across all namespaces.
 ///
@@ -34,7 +37,9 @@ pub const NAMESPACES: usize = 33;
 /// Workstream C (v0.2.2 closure): +2 (cert:GenericImpossibilityCertificate
 /// and cert:InhabitanceImpossibilityCertificate — the cert carriers for
 /// resolver failure paths per target §4.2 `Certified<ImpossibilityWitness>`).
-pub const CLASSES: usize = 468;
+/// Product/Coproduct Completion Amendment: +3 (partition:CartesianPartitionProduct,
+/// partition:TagSite, foundation:LayoutInvariant).
+pub const CLASSES: usize = 471;
 
 /// Total properties including the global `uor:space` annotation.
 ///
@@ -56,10 +61,14 @@ pub const CLASSES: usize = 468;
 /// carries the kind discriminator at the type level).
 /// Target §3 inbound symmetric cleanup: −1 (boundary:sourceGrounding
 /// removed; replaced by the `Grounding::Map` Rust-side discipline).
-pub const PROPERTIES: usize = 940;
+/// Product/Coproduct Completion Amendment: +8
+/// (partition:leftCartesianFactor, partition:rightCartesianFactor,
+/// partition:tagSiteOf, partition:tagValue, partition:productCategoryLevel,
+/// foundation:layoutRule, type:variant, type:tagSite).
+pub const PROPERTIES: usize = 948;
 
 /// Namespace-level properties only (excludes global annotation).
-pub const NAMESPACE_PROPERTIES: usize = 939;
+pub const NAMESPACE_PROPERTIES: usize = 947;
 
 /// Total named individuals across all namespaces.
 /// Includes 1870 AST term individuals (LiteralExpression / ForAllDeclaration)
@@ -88,7 +97,18 @@ pub const NAMESPACE_PROPERTIES: usize = 939;
 /// Irreducible, Reducible, Units, Exterior).
 /// Target §3 Sink/Sinking hardening: +2 (morphism:DigestProjectionMap,
 /// morphism:BinaryProjectionMap — kind-parity with GroundingMap duals).
-pub const INDIVIDUALS: usize = 3495;
+/// Product/Coproduct Completion Amendment: +59. 11 new op:Identity
+/// individuals (ST_6..ST_10, CPT_1..CPT_6); 11 new proof:AxiomaticDerivation
+/// individuals (prf_ST_6..10, prf_CPT_1..6) — one per new op:Identity to
+/// satisfy the identity-proof bijection validator; 4 new
+/// foundation:LayoutInvariant individuals (ProductLayoutWidth,
+/// CartesianLayoutWidth, CoproductLayoutWidth, CoproductTagEncoding); 33
+/// derived AST-term individuals — each new op:Identity has exactly 3 Str
+/// properties (lhs, rhs, forAll) which `schema::generate_ast_individuals`
+/// expands into LiteralExpression / ForAllDeclaration individuals in the
+/// schema namespace. Proof individuals carry no lhs/rhs/forAll strings so
+/// they contribute no derived AST terms.
+pub const INDIVIDUALS: usize = 3554;
 
 /// Number of SHACL test instance graphs.
 ///
@@ -96,7 +116,10 @@ pub const INDIVIDUALS: usize = 3495;
 /// v0.2.2 Phase C.4: +1 (test279 MultiplicationCertificate +
 /// MultiplicationResolver + linear:stackBudgetBytes fixture).
 /// v0.2.2 Phase E: +1 (test280 Phase E bridge namespace completion fixture).
-pub const SHACL_TESTS: usize = 280;
+/// Product/Coproduct Completion Amendment: +3 (test285 CartesianPartitionProduct,
+/// test286 TagSite, test287 LayoutInvariant — instance fixtures for the three
+/// new kernel/bridge classes; close the meta/shacl_fixture_coverage gaps).
+pub const SHACL_TESTS: usize = 283;
 
 /// Total conformance checks in the full suite.
 ///
@@ -139,7 +162,7 @@ pub const SHACL_TESTS: usize = 280;
 /// Workstream A: +5 target-doc cross-reference validators (sealed_type_coverage,
 /// resolver_signature_shape, constraint_encoder_completeness, w4_grounding_closure,
 /// spectral_sequence_walk).
-pub const CONFORMANCE_CHECKS: usize = 532;
+pub const CONFORMANCE_CHECKS: usize = 535;
 
 /// Number of amendments applied to the base ontology.
 pub const AMENDMENTS: usize = 95;
@@ -148,13 +171,19 @@ pub const AMENDMENTS: usize = 95;
 pub const ENUM_CLASSES: usize = 19;
 
 /// Number of `op:Identity` individuals (and corresponding proofs).
-pub const IDENTITY_COUNT: usize = 624;
+///
+/// Product/Coproduct Completion Amendment: +11 (ST_6..ST_10, CPT_1..CPT_6).
+pub const IDENTITY_COUNT: usize = 635;
 
 /// Kernel-space namespace count.
 pub const KERNEL_NAMESPACES: usize = 17;
 
 /// Bridge-space namespace count.
-pub const BRIDGE_NAMESPACES: usize = 13;
+///
+/// Product/Coproduct Completion Amendment: +1 (foundation namespace,
+/// classified as Space::Bridge — produced by the foundation layer,
+/// consumed by downstream witness consumers).
+pub const BRIDGE_NAMESPACES: usize = 14;
 
 /// User-space namespace count.
 pub const USER_NAMESPACES: usize = 3;
@@ -175,10 +204,24 @@ pub const USER_NAMESPACES: usize = 3;
 /// v0.2.2 Phase E: +1 (derivation:traceEventCount on DerivationTrace).
 /// Target §3 Sink/Sinking hardening: −1 (boundary:sinkProjection removed).
 /// Target §3 inbound symmetric cleanup: −1 (boundary:sourceGrounding removed).
-pub const METHODS: usize = 903;
+/// Product/Coproduct Completion Amendment: +8 — all 8 new properties
+/// (leftCartesianFactor, rightCartesianFactor, tagSiteOf, tagValue,
+/// productCategoryLevel, layoutRule, variant, tagSite) have
+/// same-namespace domains and none target enum-class domains, so each
+/// expands into a trait method. Actual value 911 matches the
+/// `ontology/crate` conformance validator's count after cleanup.
+pub const METHODS: usize = 911;
 
 /// Number of individual constant modules generated.
-pub const CONSTANT_MODULES: usize = 1501;
+///
+/// Counts `pub mod foo { ... }` blocks emitted per non-enum-class
+/// individual by the Rust codegen (codegen/src/individuals.rs). The
+/// pre-amendment value 1501 had significant historical drift and was
+/// docs-only (no conformance validator). Product/Coproduct Completion
+/// Amendment corrects this to match actual codegen output: 3541 =
+/// baseline 3482 + 59 amendment additions (11 op:Identity + 11 proof
+/// + 4 foundation:LayoutInvariant + 33 derived AST-term individuals).
+pub const CONSTANT_MODULES: usize = 3541;
 
 /// Number of Lean 4 structures generated (classes minus enum classes).
 ///
@@ -187,7 +230,12 @@ pub const CONSTANT_MODULES: usize = 1501;
 /// v0.2.2 Phase E: +4 (PartitionCertificate, GroundingSigma, JacobianObservable,
 /// DerivationTrace; PartitionComponent is an enum class, not a structure).
 /// v0.2.2 T1.2 (cleanup): +1 (InteractionShape — regular structure).
-pub const LEAN_STRUCTURES: usize = 433;
+/// Product/Coproduct Completion Amendment: +3 new structures
+/// (CartesianPartitionProduct, TagSite, LayoutInvariant — none are enum
+/// classes). Actual value 452 reflects a 14-structure baseline drift
+/// present in the pre-amendment counts.rs (452 = 449 baseline + 3 new),
+/// corrected during amendment.
+pub const LEAN_STRUCTURES: usize = 452;
 
 /// Number of Lean 4 inductive + structure types generated for the enum layer.
 ///
@@ -218,7 +266,13 @@ pub const LEAN_INDUCTIVES: usize = 23;
 ///
 /// Target §3 Sink/Sinking hardening: +2
 /// (morphism:DigestProjectionMap, morphism:BinaryProjectionMap).
-pub const LEAN_CONSTANT_NAMESPACES: usize = 3363;
+/// Product/Coproduct Completion Amendment: +59 — 11 new op:Identity
+/// individuals + 11 new proof individuals + 4 new
+/// foundation:LayoutInvariant individuals + 33 derived AST-term
+/// individuals. Actual value 3422 matches the
+/// `lean4/structure — Individual def count drift` validator's typed-def
+/// count after regeneration.
+pub const LEAN_CONSTANT_NAMESPACES: usize = 3422;
 
 /// Number of concept pages on the website (one per content/concepts/*.md file).
 /// Number of concept pages on the website (one per `website/content/concepts/*.md`,

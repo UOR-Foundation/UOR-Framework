@@ -532,6 +532,20 @@ instance : Inhabited (TermMetrics UOR.Prims.Standard) where
 
 end UOR.Bridge.Derivation
 
+namespace UOR.Bridge.Foundation
+
+/-- A foundation-level layout invariant. Each instance describes an arithmetic or encoding identity that the foundation's mint primitives and validate_const() pass enforce at compile time, distinct from the ontology-level theorem individuals carried by the op namespace. Violations produce GenericImpossibilityWitness citations against the specific LayoutInvariant IRI, letting consumers distinguish a layout-level failure from a theorem-level failure. -/
+structure LayoutInvariant (P : Primitives) where
+  /-- The arithmetic or encoding identity this LayoutInvariant asserts, expressed as a human-readable string for inspection in documentation and debugging output. -/
+  layoutRule : P.String
+
+instance : Inhabited (LayoutInvariant UOR.Prims.Standard) where
+  default := {
+    layoutRule := ("" : String)
+  }
+
+end UOR.Bridge.Foundation
+
 namespace UOR.Bridge.Homology
 
 /-- The chain functor C: maps a simplicial complex to a chain complex. -/
@@ -1186,6 +1200,19 @@ structure SiteIndex (P : Primitives) where
 
 instance : Inhabited (SiteIndex UOR.Prims.Standard) where
   default := {
+    sitePosition := none
+    siteState := none
+    ancillaSite := none
+  }
+
+/-- The distinguishing site in a PartitionCoproduct whose value (0 or 1) selects the variant. Logically, the tag is not a data site of either operand (ST_6) and carries exactly the ln 2 entropy quantum (ST_2). Its physical placement in a flat constraint layout follows the foundation layout convention: layoutTagSite = max(SITE_COUNT(A), SITE_COUNT(B)), so the tag does not collide with any inherited bookkeeping sites when operands are themselves coproducts. -/
+structure TagSite (P : Primitives) extends SiteIndex P where
+  /-- The boolean value (false = 0, true = 1) assigned to a tag site. false selects the left variant of the PartitionCoproduct; true selects the right variant. -/
+  tagValue : Option P.Boolean
+
+instance : Inhabited (TagSite UOR.Prims.Standard) where
+  default := {
+    tagValue := none
     sitePosition := none
     siteState := none
     ancillaSite := none
@@ -5090,6 +5117,10 @@ structure Partition (P : Primitives) where
   siteBudget : Option (FreeRank P)
   /-- Whether the four components of this partition are exhaustive over R_n: |Irr| + |Red| + |Unit| + |Ext| = 2^n (FPM_8). Set by the kernel after verification. -/
   isExhaustive : Option P.Boolean
+  /-- The tag site distinguishing the variants of a PartitionCoproduct. Logically distinct from every data site of either operand (ST_6) and carries the ln 2 entropy quantum of ST_2. -/
+  tagSiteOf : Option (TagSite P)
+  /-- The categorical level at which this construction is a product / coproduct. Values: 'partition_classification' (PartitionProduct, PartitionCoproduct), or 'nerve_topology' (CartesianPartitionProduct). Prevents misreading the product vs coproduct distinction across levels. -/
+  productCategoryLevel : P.String
 
 instance : Inhabited (Partition UOR.Prims.Standard) where
   default := {
@@ -5102,6 +5133,8 @@ instance : Inhabited (Partition UOR.Prims.Standard) where
     wittLength := none
     siteBudget := none
     isExhaustive := none
+    tagSiteOf := none
+    productCategoryLevel := ("" : String)
   }
 
 end UOR.Bridge.Partition
@@ -5124,6 +5157,19 @@ instance : Inhabited (ParallelDeclaration UOR.Prims.Standard) where
 end UOR.Bridge.Conformance_
 
 namespace UOR.Bridge.Partition
+
+/-- The Cartesian product of partitions. Classifies the nerve topology of A ⊠ B as a simplicial product (χ multiplicative per CPT_3, Betti by Künneth per CPT_4) rather than a site-disjoint union (χ additive — PartitionProduct). Site budget is |S_A| + |S_B| per CPT_1 — the bit width of the product state space. Partition-ness is asserted via leftCartesianFactor / rightCartesianFactor (both ranged at Partition), matching the sibling pattern for PartitionProduct and PartitionCoproduct. Satisfies CPT_1–CPT_6 per this amendment. -/
+structure CartesianPartitionProduct (P : Primitives) where
+  /-- The left operand partition of this Cartesian partition product. -/
+  leftCartesianFactor : Option (Partition P)
+  /-- The right operand partition of this Cartesian partition product. -/
+  rightCartesianFactor : Option (Partition P)
+
+instance : Inhabited (CartesianPartitionProduct UOR.Prims.Standard) where
+  default := {
+    leftCartesianFactor := none
+    rightCartesianFactor := none
+  }
 
 /-- The coproduct (disjoint union) of two partitions: partition(A + B) = partition(A) ⊕ partition(B). The four-component structure combines via disjoint union under the sum type construction (PT_2b). Carries leftSummand and rightSummand links to the operand partitions. -/
 structure PartitionCoproduct (P : Primitives) where
@@ -7218,10 +7264,16 @@ instance : Inhabited (ProductType UOR.Prims.Standard) where
   }
 
 /-- A sum (disjoint union) type formed from multiple variant types. The carrier is the disjoint union of the variant carriers. -/
-structure SumType (P : Primitives) extends TypeDefinition P
+structure SumType (P : Primitives) extends TypeDefinition P where
+  /-- A variant type in a sum type. Ordering contract: variants are returned in canonical content-fingerprint order (ascending), matching the canonicalization used by coproduct_shape! and the content-address hashing pipeline, so introspection via variant() and the algebra_id derived from the same type agree on which variant is 'left' and which is 'right'. Author-order is not preserved. -/
+  variant : Array (TypeDefinition P)
+  /-- The tag site distinguishing variants of this sum type at runtime (ST_6). Stored at the physical layout position max(SITE_COUNT(A), SITE_COUNT(B)) so the tag cannot collide with any inherited bookkeeping site when either operand is itself a coproduct. -/
+  tagSite : Option (UOR.Bridge.Partition.TagSite P)
 
 instance : Inhabited (SumType UOR.Prims.Standard) where
   default := {
+    variant := #[]
+    tagSite := none
     contentAddress := none
   }
 

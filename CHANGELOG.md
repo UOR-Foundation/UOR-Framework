@@ -2,6 +2,210 @@
 
 All notable changes to UOR-Framework are documented in this file.
 
+## Product/Coproduct Completion Amendment — 2026-04-23
+
+Lands the UOR Amendment: Completing Product and Coproduct Semantics, which
+closes v0.3.0's four gaps in `PartitionProduct` / `PartitionCoproduct` and
+adds `CartesianPartitionProduct` (Künneth-routing topological product) as a
+first-class partition-algebra class. Introduces the new `foundation`
+ontology namespace, the sealed `VerifiedMint` trait as the sole construction
+path for the three new witness types, and a new `uor-foundation-sdk`
+proc-macro crate for composing partition-algebra shapes ergonomically.
+Conformance reports **535 passed, 0 warnings, 0 failed, 0 meta-audit gaps**.
+
+### Ontology additions
+
+- **New namespace** `foundation` (assembly position 8, between `partition`
+  and `observable`). Carries the four `LayoutInvariant` individuals
+  (`ProductLayoutWidth`, `CartesianLayoutWidth`, `CoproductLayoutWidth`,
+  `CoproductTagEncoding`) that quantify over SITE_COUNT arithmetic and
+  Affine-constraint byte patterns at the foundation layer.
+- **3 new classes**: `partition:CartesianPartitionProduct` (disjoint from
+  `PartitionProduct` / `PartitionCoproduct`), `partition:TagSite`
+  (subclass of `SiteIndex`), `foundation:LayoutInvariant`.
+- **8 new properties**: `partition:leftCartesianFactor` /
+  `rightCartesianFactor` / `tagSiteOf` / `tagValue` /
+  `productCategoryLevel`; `foundation:layoutRule`; `type:variant` /
+  `type:tagSite` (complete the `SumType` nerve per amendment §4d).
+- **11 new `op:Identity` theorems**: `ST_6` (tag-site uniqueness), `ST_7`
+  (coproduct constraint union), `ST_8` (variant-nerve disjointness), `ST_9`
+  (χ additivity), `ST_10` (β additivity), `CPT_1` (Cartesian site
+  additivity), `CPT_2a` (Cartesian partition), `CPT_3` (χ multiplicative),
+  `CPT_4` (Künneth), `CPT_5` (Shannon additive for independent subsystems),
+  `CPT_6` (distributivity `A ⊠ (B + C) ≡ (A ⊠ B) + (A ⊠ C)`).
+- **11 paired `proof:Proof` individuals**: `prf_ST_6..prf_ST_10`,
+  `prf_CPT_1..prf_CPT_6`, each with `AxiomaticDerivation` strategy and
+  `RingAxiom` proof tactic — closes the `identity_proof_bijection`
+  conformance gate.
+
+### Foundation surface
+
+- **Three new witness types** in `uor_foundation::enforcement`:
+  `PartitionProductWitness`, `PartitionCoproductWitness`,
+  `CartesianProductWitness`. All are `Copy + Eq + Hash`, content-addressed
+  via `ContentFingerprint`, with no public constructor — construction is
+  exclusively through `VerifiedMint::mint_verified`.
+- **`VerifiedMint` sealed trait**: `VerifiedMint: Certificate` with
+  associated `Inputs` / `Error` types. Sealed transitively through
+  `Certificate: certificate_sealed::Sealed`; external crates cannot
+  implement. Each witness implements `VerifiedMint` with `Error =
+  GenericImpossibilityWitness` so theorem-citation failure paths typed-
+  carry the violated identity's IRI.
+- **Three `*MintInputs` / `*Evidence` sidecar structs** carrying the inputs
+  and verified invariants per witness type (algebraic, topological, entropic).
+- **Resolver protocol**: `PartitionResolver<H>`, `PartitionRecord<H>`,
+  `PartitionHandle<H>`. `PartitionHandle<H>` is a 16-byte content-addressed
+  identity token; partition data is retrieved via
+  `handle.resolve_with(&resolver)` returning `Option<PartitionRecord<H>>`.
+- **`NullPartition<H>` + 13 `Null*` sub-trait stubs** (`NullDatum`,
+  `NullElement`, `NullIrreducibleSet`, `NullReducibleSet`, `NullUnitGroup`,
+  `NullComplement`, `NullSiteIndex`, `NullTagSite`, `NullFreeRank`,
+  `NullSiteBinding`, `NullConstraint`, `NullTypeDefinition`,
+  `NullTermExpression`). Fully generic over `H: HostTypes`, implementing
+  every `Partition<H>` sub-trait with resolver-absent defaults.
+- **`GenericImpossibilityWitness` gains an IRI field**: `for_identity(iri)`
+  constructor + `identity()` accessor + updated `Display` impl that
+  formats as `"GenericImpossibilityWitness({iri})"` when identified.
+  `Default` preserves `None`-identity semantics; every existing
+  `::default()` call site continues to compile.
+- **`HostTypes` trait extension**: three new `'static` associated
+  constants — `EMPTY_DECIMAL: Self::Decimal`,
+  `EMPTY_HOST_STRING: &'static Self::HostString`,
+  `EMPTY_WITNESS_BYTES: &'static Self::WitnessBytes`. Required for
+  fully-generic resolver-absent defaults on `NullPartition<H>` and the
+  host-typed sub-trait stubs. `DefaultHostTypes` selects `0.0f64` / `""` /
+  `&[]`; `HostString`/`WitnessBytes` gain `+ 'static` bounds.
+
+### SDK crate
+
+New `uor-foundation-sdk` workspace member — a proc-macro crate emitted by
+`uor-crate` from `codegen/src/sdk_macros.rs`. Three public macros:
+
+- `product_shape!(Name, A, B)` — emits a `ConstrainedTypeShape` impl
+  composing `A` and `B` under `PartitionProduct` algebra + a
+  `Name::mint_product_witness(...)` inherent helper.
+- `coproduct_shape!(Name, A, B)` — analogous for `PartitionCoproduct`
+  with the two generated tag-pinner `Affine` constraints per amendment
+  §4b'.
+- `cartesian_product_shape!(Name, A, B)` — emits both
+  `ConstrainedTypeShape` and `CartesianProductShape` impls so
+  `primitive_cartesian_nerve_betti` routes through Künneth.
+
+**Operand-support caveat**: the SDK macros support operands whose
+`CONSTRAINTS` contain only `Residue`, `Hamming`, `Depth`, `Carry`, `Site`,
+`SatClauses`, or `Bound` variants. Operands containing `Affine` or
+`Conjunction` are rejected at const-evaluation via a sentinel that causes
+the resulting shape's mint to fail at a typed impossibility witness.
+Consumers needing those operand shapes use the amendment's §Gap 2
+Manual-construction pattern, which has no such limitation.
+
+Two-track strategy reconciles the amendment's §Gap 2 proc-macro claim
+with Rust's actual const-evaluation limits: fixed-size buffer + stable
+`split_at_checked` for the combined `CONSTRAINTS` (no unstable
+`generic_const_exprs` required) paired with explicit non-support for
+variants that would require rebuilding coefficient slices at const-fn
+time.
+
+### Witness trait impls
+
+- **Fully generic over `H: HostTypes`**:
+  `impl<H> PartitionProduct<H> for PartitionProductWitness`,
+  `impl<H> PartitionCoproduct<H> for PartitionCoproductWitness`,
+  `impl<H> CartesianPartitionProduct<H> for CartesianProductWitness` —
+  each returning `NullPartition<H>` from its factor/summand accessors.
+- `impl<H: HostTypes> Partition<H> for NullPartition<H>` — full 7-sub-
+  trait coverage with resolver-absent defaults.
+- **`PartitionHandle<H>: Partition<H>` intentionally omitted** on
+  structural grounds: Rust's reference-return rules preclude
+  implementing `Partition<H>` on a 16-byte storage-free identity token
+  without either inflating the handle (breaking content-addressing
+  invariants the witness types rely on) or requiring unstable
+  `generic_const_exprs`. Consumers reach partition data via
+  `resolve_with(&resolver)` or the witness trait impls'
+  `type Partition = NullPartition<H>`.
+
+### Conformance
+
+- **3 new SHACL instance fixtures**: `test285_cartesian_partition_product`,
+  `test286_tag_site`, `test287_layout_invariant` (test281..284 were
+  already occupied; the plan reserved test281 before discovering the
+  conflict).
+- **4 new conformance-validator coverage additions** in
+  `endpoint_coverage.toml`: `partition_product_witness`,
+  `partition_coproduct_witness`, `cartesian_product_witness`,
+  `partition_handle_resolver`, `null_partition_stubs` (14 `Null*` symbols).
+- **Extended `legitimate_string_properties_only` whitelist** in
+  `conformance/src/validators/ontology/inventory.rs` with
+  `productCategoryLevel` and `layoutRule`.
+- **Hand-added NodeShapes** in `conformance/shapes/uor-shapes.ttl`:
+  `CartesianPartitionProductShape`, `TagSiteShape`, `LayoutInvariantShape`
+  (auto-generated shapes supplement these with per-property constraints).
+
+### Counts deltas (`spec/src/counts.rs`)
+
+- `NAMESPACES`: 33 → **34**
+- `BRIDGE_NAMESPACES`: 13 → **14**
+- `CLASSES`: 468 → **471**
+- `PROPERTIES`: 940 → **948**; `NAMESPACE_PROPERTIES`: 939 → **947**
+- `INDIVIDUALS`: 3495 → **3554** (+59: 11 op:Identity + 4
+  foundation:LayoutInvariant + 11 proof:AxiomaticDerivation + 33
+  derived AST-term individuals for lhs/rhs/forAll/layoutRule strings)
+- `IDENTITY_COUNT`: 624 → **635**
+- `METHODS`: 903 → **911**
+- `LEAN_STRUCTURES`: 433 → **452**; `LEAN_CONSTANT_NAMESPACES`: 3363 →
+  **3422**; `CONSTANT_MODULES`: 1501 → **3541**. The LEAN_STRUCTURES and
+  CONSTANT_MODULES values include corrections for pre-amendment baseline
+  drift that this release resolves alongside the additive deltas.
+- `SHACL_TESTS`: 280 → **283**
+- `CONFORMANCE_CHECKS`: 532 → **535**
+
+### Tests
+
+- 637 workspace tests passing (up from 587 pre-amendment). The 50
+  amendment-specific tests split across 10 `behavior_*` files
+  (`behavior_partition_product_witness`,
+  `behavior_partition_coproduct_witness`,
+  `behavior_cartesian_product_witness`,
+  `behavior_partition_handle_resolver`,
+  `behavior_witness_partition_trait_impls`,
+  `behavior_validate_coproduct_structure`,
+  `behavior_st8_disjointness`,
+  `behavior_st9_st10_nerve_additivity`,
+  `behavior_cpt6_distributivity`,
+  `behavior_verified_mint_seal`) plus 9 SDK smoke tests in
+  `uor-foundation-sdk/tests/smoke.rs`.
+- `behavior_verified_mint_seal` uses a rustdoc `compile_fail` doctest to
+  prove external crates cannot `impl VerifiedMint` on their own types.
+
+### Breaking changes
+
+- `HostTypes` trait: added three `'static`-bounded associated constants
+  (`EMPTY_DECIMAL`, `EMPTY_HOST_STRING`, `EMPTY_WITNESS_BYTES`) and a
+  `+ 'static` bound on `HostString` / `WitnessBytes`. Downstream `HostTypes`
+  impls must provide the three constants; `DefaultHostTypes` is updated
+  in lockstep. Consumer-provided impls that already satisfy `'static` on
+  their associated types (the common case) only need to add the three
+  constant declarations.
+- `GenericImpossibilityWitness` grew from zero-sized to 16 bytes (a
+  `Option<&'static str>`). Transitive embedders
+  (`Certified<GenericImpossibilityWitness>`) grow by the same amount. No
+  size-sensitive location affected.
+- `CartesianPartitionProduct`'s ontology `subclass_of` set to `OWL_THING`
+  (matching `PartitionProduct` / `PartitionCoproduct`) rather than
+  `Partition`, for consistency with the existing partition-algebra
+  classes. The partition-nature is asserted via `leftCartesianFactor` /
+  `rightCartesianFactor` range constraints.
+
+### Workspace
+
+- New workspace member: `uor-foundation-sdk` (proc-macro crate,
+  `proc-macro = true`, depends on `uor-foundation` for build-time type
+  checking; emitted macros reference foundation types via absolute
+  `::uor_foundation::*` paths that resolve in the consumer's scope).
+- Removed stale reference: `uor-foundation-macros` (deleted in v0.2.2
+  `W15`) was lingering in docs/workflow references; those are purged in
+  this release's docs sweep.
+
 ## v0.3.0 target-doc closure + Sink/Sinking hardening — 2026-04-19
 
 Closes every remaining target-doc acceptance criterion not already

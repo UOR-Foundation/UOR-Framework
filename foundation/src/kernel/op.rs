@@ -4698,6 +4698,138 @@ pub mod st_5 {
     pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/IndexTheoretic";
 }
 
+/// SumType tag site unique existence: every PartitionCoproduct A + B has exactly one tag site, logically distinct from every data site of A and B, carrying the ln 2 entropy quantum of ST_2.
+pub mod st_6 {
+    /// `forAll` -> `term_ST_6_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_ST_6_forAll";
+    /// `lhs` -> `term_ST_6_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_ST_6_lhs";
+    /// `rhs` -> `term_ST_6_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_ST_6_rhs";
+    /// `verificationDomain` -> `Algebraic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
+}
+
+/// SumType variant tagging: the constraints of a PartitionCoproduct decompose into the operands' constraints plus one tag-pinning constraint per variant (tag = 0 for the left variant, tag = 1 for the right).
+pub mod st_7 {
+    /// `forAll` -> `term_ST_7_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_ST_7_forAll";
+    /// `lhs` -> `term_ST_7_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_ST_7_lhs";
+    /// `rhs` -> `term_ST_7_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_ST_7_rhs";
+    /// `verificationDomain` -> `Algebraic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
+}
+
+/// SumType variant nerve disjointness bridge: a PartitionCoproduct constructed via ST_6 + ST_7 + the foundation layout convention produces topologically disjoint component nerves. Bridges the existing conditional ST_3 and ST_4 to PartitionCoproduct constructions concretely.
+pub mod st_8 {
+    /// `forAll` -> `term_ST_8_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_ST_8_forAll";
+    /// `lhs` -> `term_ST_8_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_ST_8_lhs";
+    /// `rhs` -> `term_ST_8_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_ST_8_rhs";
+    /// `verificationDomain` -> `Topological`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Topological";
+}
+
+/// SumType Euler corollary for PartitionCoproduct constructions: combining ST_8's disjointness guarantee with the universal ST_3 yields Euler additivity for any A + B assembled via the PartitionCoproduct construction.
+pub mod st_9 {
+    /// `forAll` -> `term_ST_9_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_ST_9_forAll";
+    /// `lhs` -> `term_ST_9_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_ST_9_lhs";
+    /// `rhs` -> `term_ST_9_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_ST_9_rhs";
+    /// `verificationDomain` -> `IndexTheoretic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/IndexTheoretic";
+}
+
+/// SumType Betti corollary for PartitionCoproduct constructions: combining ST_8's disjointness guarantee with the universal ST_4 yields Betti additivity at every dimension for any A + B assembled via the PartitionCoproduct construction.
+pub mod st_10 {
+    /// `forAll` -> `term_ST_10_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_ST_10_forAll";
+    /// `lhs` -> `term_ST_10_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_ST_10_lhs";
+    /// `rhs` -> `term_ST_10_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_ST_10_rhs";
+    /// `verificationDomain` -> `IndexTheoretic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/IndexTheoretic";
+}
+
+/// Cartesian partition product site additivity: siteBudget(A ⊠ B) = siteBudget(A) + siteBudget(B). UOR sites are bit widths; |A ⊠ B| = 2^{n_A} · 2^{n_B} = 2^{n_A + n_B}, so sites add even though cardinalities multiply.
+pub mod cpt_1 {
+    /// `forAll` -> `term_CPT_1_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_CPT_1_forAll";
+    /// `lhs` -> `term_CPT_1_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_CPT_1_lhs";
+    /// `rhs` -> `term_CPT_1_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_CPT_1_rhs";
+    /// `verificationDomain` -> `Algebraic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
+}
+
+/// Cartesian partition product partition map: Π(A ⊠ B) = CartesianPartitionProduct(Π(A), Π(B)).
+pub mod cpt_2a {
+    /// `forAll` -> `term_CPT_2a_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_CPT_2a_forAll";
+    /// `lhs` -> `term_CPT_2a_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_CPT_2a_lhs";
+    /// `rhs` -> `term_CPT_2a_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_CPT_2a_rhs";
+    /// `verificationDomain` -> `Algebraic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
+}
+
+/// Cartesian partition product Euler multiplicativity: χ(N(C(A ⊠ B))) = χ(N(C(A))) · χ(N(C(B))). Distinguishes CartesianPartitionProduct (multiplicative χ, Künneth) from PartitionProduct (additive χ, site-disjoint union).
+pub mod cpt_3 {
+    /// `forAll` -> `term_CPT_3_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_CPT_3_forAll";
+    /// `lhs` -> `term_CPT_3_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_CPT_3_lhs";
+    /// `rhs` -> `term_CPT_3_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_CPT_3_rhs";
+    /// `verificationDomain` -> `IndexTheoretic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/IndexTheoretic";
+}
+
+/// Cartesian partition product Künneth formula: Betti numbers compose via the Künneth convolution — β_k(A ⊠ B) = Σ_{i+j=k} β_i(A) · β_j(B). Routed through primitive_cartesian_nerve_betti when a CartesianProductShape marker is declared on the combined shape.
+pub mod cpt_4 {
+    /// `forAll` -> `term_CPT_4_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_CPT_4_forAll";
+    /// `lhs` -> `term_CPT_4_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_CPT_4_lhs";
+    /// `rhs` -> `term_CPT_4_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_CPT_4_rhs";
+    /// `verificationDomain` -> `IndexTheoretic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/IndexTheoretic";
+}
+
+/// Cartesian partition product entropy additivity: S(A ⊠ B) = S(A) + S(B). Matches PT_4's additive Shannon convention for independent subsystems and is consistent pointwise with IT_7a/b on the combined system (no cross-factor bilinearity required).
+pub mod cpt_5 {
+    /// `forAll` -> `term_CPT_5_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_CPT_5_forAll";
+    /// `lhs` -> `term_CPT_5_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_CPT_5_lhs";
+    /// `rhs` -> `term_CPT_5_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_CPT_5_rhs";
+    /// `verificationDomain` -> `Thermodynamic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Thermodynamic";
+}
+
+/// Cartesian partition product distributes over PartitionCoproduct: A ⊠ (B + C) ≡ (A ⊠ B) + (A ⊠ C) with equality at the siteBudget, SITE_COUNT, Euler, and entropy levels simultaneously. Does NOT extend to PartitionProduct — distributing ⊠ over × fails at the site-budget level because it duplicates the outer factor.
+pub mod cpt_6 {
+    /// `forAll` -> `term_CPT_6_forAll`
+    pub const FOR_ALL: &str = "https://uor.foundation/schema/term_CPT_6_forAll";
+    /// `lhs` -> `term_CPT_6_lhs`
+    pub const LHS: &str = "https://uor.foundation/schema/term_CPT_6_lhs";
+    /// `rhs` -> `term_CPT_6_rhs`
+    pub const RHS: &str = "https://uor.foundation/schema/term_CPT_6_rhs";
+    /// `verificationDomain` -> `Algebraic`
+    pub const VERIFICATION_DOMAIN: &str = "https://uor.foundation/op/Algebraic";
+}
+
 /// Betti-1 minimum constraint count: the minimum number of constraints needed to achieve first Betti number beta_1 = k in the constraint nerve is 2k + 1.
 pub mod ts_8 {
     /// `forAll` -> `term_TS_8_forAll`

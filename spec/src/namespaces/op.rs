@@ -6305,6 +6305,247 @@ fn raw_individuals_vec() -> Vec<Individual> {
                  IndividualValue::IriRef("https://uor.foundation/op/Universal")),
             ],
         },
+        // Product/Coproduct Completion Amendment — Gap 4 (ST_6..ST_10)
+        Individual {
+            id: "https://uor.foundation/op/ST_6",
+            type_: "https://uor.foundation/op/Identity",
+            label: "ST_6",
+            comment: "SumType tag site unique existence: every PartitionCoproduct \
+                      A + B has exactly one tag site, logically distinct from \
+                      every data site of A and B, carrying the ln 2 entropy \
+                      quantum of ST_2.",
+            properties: &[
+                ("https://uor.foundation/op/lhs",
+                 IndividualValue::Str("∃! tagSite(A + B)")),
+                ("https://uor.foundation/op/rhs",
+                 IndividualValue::Str("uniqueSite ∉ dataSites(A) ∪ dataSites(B) ∧ carries ln 2 entropy (ST_2)")),
+                ("https://uor.foundation/op/forAll",
+                 IndividualValue::Str("A, B: TypeDefinition")),
+                (
+                    "https://uor.foundation/op/verificationDomain",
+                    IndividualValue::IriRef("https://uor.foundation/op/Algebraic"),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/op/ST_7",
+            type_: "https://uor.foundation/op/Identity",
+            label: "ST_7",
+            comment: "SumType variant tagging: the constraints of a \
+                      PartitionCoproduct decompose into the operands' \
+                      constraints plus one tag-pinning constraint per variant \
+                      (tag = 0 for the left variant, tag = 1 for the right).",
+            properties: &[
+                ("https://uor.foundation/op/lhs",
+                 IndividualValue::Str("constraints(A + B)")),
+                ("https://uor.foundation/op/rhs",
+                 IndividualValue::Str("constraints(A) ∪ {tag=0} ∪ constraints(B) ∪ {tag=1}")),
+                ("https://uor.foundation/op/forAll",
+                 IndividualValue::Str("A, B: TypeDefinition")),
+                (
+                    "https://uor.foundation/op/verificationDomain",
+                    IndividualValue::IriRef("https://uor.foundation/op/Algebraic"),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/op/ST_8",
+            type_: "https://uor.foundation/op/Identity",
+            label: "ST_8",
+            comment: "SumType variant nerve disjointness bridge: a \
+                      PartitionCoproduct constructed via ST_6 + ST_7 + the \
+                      foundation layout convention produces topologically \
+                      disjoint component nerves. Bridges the existing \
+                      conditional ST_3 and ST_4 to PartitionCoproduct \
+                      constructions concretely.",
+            properties: &[
+                ("https://uor.foundation/op/lhs",
+                 IndividualValue::Str("disjoint(N(C(A)), N(C(B)))")),
+                ("https://uor.foundation/op/rhs",
+                 IndividualValue::Str("true")),
+                ("https://uor.foundation/op/forAll",
+                 IndividualValue::Str("A + B constructed via ST_6 ∧ ST_7 ∧ layoutTagSite")),
+                (
+                    "https://uor.foundation/op/verificationDomain",
+                    IndividualValue::IriRef("https://uor.foundation/op/Topological"),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/op/ST_9",
+            type_: "https://uor.foundation/op/Identity",
+            label: "ST_9",
+            comment: "SumType Euler corollary for PartitionCoproduct \
+                      constructions: combining ST_8's disjointness guarantee \
+                      with the universal ST_3 yields Euler additivity for any \
+                      A + B assembled via the PartitionCoproduct construction.",
+            properties: &[
+                ("https://uor.foundation/op/lhs",
+                 IndividualValue::Str("χ(N(C(A + B)))")),
+                ("https://uor.foundation/op/rhs",
+                 IndividualValue::Str("χ(N(C(A))) + χ(N(C(B)))")),
+                ("https://uor.foundation/op/forAll",
+                 IndividualValue::Str("A + B constructed via PartitionCoproduct")),
+                (
+                    "https://uor.foundation/op/verificationDomain",
+                    IndividualValue::IriRef("https://uor.foundation/op/IndexTheoretic"),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/op/ST_10",
+            type_: "https://uor.foundation/op/Identity",
+            label: "ST_10",
+            comment: "SumType Betti corollary for PartitionCoproduct \
+                      constructions: combining ST_8's disjointness guarantee \
+                      with the universal ST_4 yields Betti additivity at every \
+                      dimension for any A + B assembled via the \
+                      PartitionCoproduct construction.",
+            properties: &[
+                ("https://uor.foundation/op/lhs",
+                 IndividualValue::Str("β_k(A + B)")),
+                ("https://uor.foundation/op/rhs",
+                 IndividualValue::Str("β_k(A) + β_k(B)")),
+                ("https://uor.foundation/op/forAll",
+                 IndividualValue::Str("A + B constructed via PartitionCoproduct, k ≥ 0")),
+                (
+                    "https://uor.foundation/op/verificationDomain",
+                    IndividualValue::IriRef("https://uor.foundation/op/IndexTheoretic"),
+                ),
+            ],
+        },
+        // Product/Coproduct Completion Amendment — Gap 3 (CPT_1..CPT_6)
+        Individual {
+            id: "https://uor.foundation/op/CPT_1",
+            type_: "https://uor.foundation/op/Identity",
+            label: "CPT_1",
+            comment: "Cartesian partition product site additivity: \
+                      siteBudget(A ⊠ B) = siteBudget(A) + siteBudget(B). \
+                      UOR sites are bit widths; |A ⊠ B| = 2^{n_A} · 2^{n_B} = \
+                      2^{n_A + n_B}, so sites add even though cardinalities \
+                      multiply.",
+            properties: &[
+                ("https://uor.foundation/op/lhs",
+                 IndividualValue::Str("siteBudget(A ⊠ B)")),
+                ("https://uor.foundation/op/rhs",
+                 IndividualValue::Str("siteBudget(A) + siteBudget(B)")),
+                ("https://uor.foundation/op/forAll",
+                 IndividualValue::Str("A, B: TypeDefinition")),
+                (
+                    "https://uor.foundation/op/verificationDomain",
+                    IndividualValue::IriRef("https://uor.foundation/op/Algebraic"),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/op/CPT_2a",
+            type_: "https://uor.foundation/op/Identity",
+            label: "CPT_2a",
+            comment: "Cartesian partition product partition map: \
+                      Π(A ⊠ B) = CartesianPartitionProduct(Π(A), Π(B)).",
+            properties: &[
+                ("https://uor.foundation/op/lhs",
+                 IndividualValue::Str("Π(A ⊠ B)")),
+                ("https://uor.foundation/op/rhs",
+                 IndividualValue::Str("CartesianPartitionProduct(Π(A), Π(B))")),
+                ("https://uor.foundation/op/forAll",
+                 IndividualValue::Str("A, B: TypeDefinition")),
+                (
+                    "https://uor.foundation/op/verificationDomain",
+                    IndividualValue::IriRef("https://uor.foundation/op/Algebraic"),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/op/CPT_3",
+            type_: "https://uor.foundation/op/Identity",
+            label: "CPT_3",
+            comment: "Cartesian partition product Euler multiplicativity: \
+                      χ(N(C(A ⊠ B))) = χ(N(C(A))) · χ(N(C(B))). Distinguishes \
+                      CartesianPartitionProduct (multiplicative χ, Künneth) \
+                      from PartitionProduct (additive χ, site-disjoint union).",
+            properties: &[
+                ("https://uor.foundation/op/lhs",
+                 IndividualValue::Str("χ(N(C(A ⊠ B)))")),
+                ("https://uor.foundation/op/rhs",
+                 IndividualValue::Str("χ(N(C(A))) · χ(N(C(B)))")),
+                ("https://uor.foundation/op/forAll",
+                 IndividualValue::Str("A, B: TypeDefinition")),
+                (
+                    "https://uor.foundation/op/verificationDomain",
+                    IndividualValue::IriRef("https://uor.foundation/op/IndexTheoretic"),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/op/CPT_4",
+            type_: "https://uor.foundation/op/Identity",
+            label: "CPT_4",
+            comment: "Cartesian partition product Künneth formula: Betti \
+                      numbers compose via the Künneth convolution — \
+                      β_k(A ⊠ B) = Σ_{i+j=k} β_i(A) · β_j(B). Routed \
+                      through primitive_cartesian_nerve_betti when a \
+                      CartesianProductShape marker is declared on the \
+                      combined shape.",
+            properties: &[
+                ("https://uor.foundation/op/lhs",
+                 IndividualValue::Str("β_k(A ⊠ B)")),
+                ("https://uor.foundation/op/rhs",
+                 IndividualValue::Str("Σ_{i+j=k} β_i(A) · β_j(B)")),
+                ("https://uor.foundation/op/forAll",
+                 IndividualValue::Str("A, B: TypeDefinition, k ≥ 0")),
+                (
+                    "https://uor.foundation/op/verificationDomain",
+                    IndividualValue::IriRef("https://uor.foundation/op/IndexTheoretic"),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/op/CPT_5",
+            type_: "https://uor.foundation/op/Identity",
+            label: "CPT_5",
+            comment: "Cartesian partition product entropy additivity: \
+                      S(A ⊠ B) = S(A) + S(B). Matches PT_4's additive \
+                      Shannon convention for independent subsystems and \
+                      is consistent pointwise with IT_7a/b on the combined \
+                      system (no cross-factor bilinearity required).",
+            properties: &[
+                ("https://uor.foundation/op/lhs",
+                 IndividualValue::Str("S(A ⊠ B)")),
+                ("https://uor.foundation/op/rhs",
+                 IndividualValue::Str("S(A) + S(B)")),
+                ("https://uor.foundation/op/forAll",
+                 IndividualValue::Str("A, B: TypeDefinition")),
+                (
+                    "https://uor.foundation/op/verificationDomain",
+                    IndividualValue::IriRef("https://uor.foundation/op/Thermodynamic"),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/op/CPT_6",
+            type_: "https://uor.foundation/op/Identity",
+            label: "CPT_6",
+            comment: "Cartesian partition product distributes over \
+                      PartitionCoproduct: A ⊠ (B + C) ≡ (A ⊠ B) + (A ⊠ C) \
+                      with equality at the siteBudget, SITE_COUNT, Euler, \
+                      and entropy levels simultaneously. Does NOT extend \
+                      to PartitionProduct — distributing ⊠ over × fails \
+                      at the site-budget level because it duplicates the \
+                      outer factor.",
+            properties: &[
+                ("https://uor.foundation/op/lhs",
+                 IndividualValue::Str("A ⊠ (B + C)")),
+                ("https://uor.foundation/op/rhs",
+                 IndividualValue::Str("(A ⊠ B) + (A ⊠ C)")),
+                ("https://uor.foundation/op/forAll",
+                 IndividualValue::Str("A, B, C: TypeDefinition")),
+                (
+                    "https://uor.foundation/op/verificationDomain",
+                    IndividualValue::IriRef("https://uor.foundation/op/Algebraic"),
+                ),
+            ],
+        },
         // G3: TypeSynthesis reachability domain completeness
         Individual {
             id: "https://uor.foundation/op/TS_8",
