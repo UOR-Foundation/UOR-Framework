@@ -292,3 +292,39 @@ pub const PIPELINE_STAGES: usize = 3;
 
 /// Minimum number of classes in a namespace to generate a class hierarchy SVG.
 pub const MIN_HIERARCHY_CLASSES: usize = 3;
+
+// ─── Phase 0 orphan-closure classification counts ────────────────────────
+//
+// These counts reflect the output of
+// `uor_codegen::classification::classify_all(Ontology::full())` and are
+// asserted by `codegen/tests/classification_counts.rs`. Drift between the
+// ontology and the classification fails that test. See
+// `docs/orphan-closure/overview.md` for the 4-path taxonomy.
+
+/// Classes skipped during classification — enum classes that don't
+/// become traits. Matches `Ontology::enum_class_names().len()`.
+pub const CLASSIFICATION_SKIP: usize = 19;
+
+/// Classes whose ontology-derived trait already has a concrete `impl`
+/// in `foundation/src/`. Phase 0 baseline: the four partition-algebra
+/// traits (`Partition`, `PartitionProduct`, `PartitionCoproduct`,
+/// `CartesianPartitionProduct`) closed by the Product/Coproduct
+/// Amendment §845c0ff.
+pub const CLASSIFICATION_ALREADY_IMPLEMENTED: usize = 4;
+
+/// Path 1 — pure-accessor-bundle classes closed by the Phase 2
+/// `{Foo}Handle` + `{Foo}Resolver` + `Resolved{Foo}` codegen rule.
+pub const CLASSIFICATION_PATH1: usize = 418;
+
+/// Path 2 — theorem-witness classes closed by the Phase 3
+/// `{Foo}Witness` + `{Foo}MintInputs` + `impl VerifiedMint` codegen
+/// rule.
+pub const CLASSIFICATION_PATH2: usize = 10;
+
+/// Path 3 — primitive-backed classes closed by the Phase 4 hand-written
+/// blanket impls. Empty at Phase 0 close; populated as Phase 4 lands.
+pub const CLASSIFICATION_PATH3: usize = 0;
+
+/// Path 4 — theory-deferred classes (cohomology / operad / parallel /
+/// stream) annotated by Phase 6. Correctly orphan by design.
+pub const CLASSIFICATION_PATH4: usize = 20;

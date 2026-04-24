@@ -13,6 +13,7 @@
     clippy::missing_errors_doc
 )]
 
+pub mod classification;
 pub mod emit;
 pub mod enforcement;
 pub mod enums;
@@ -166,6 +167,29 @@ pub fn generate(ontology: &Ontology, out_dir: &Path, sdk_out: &Path) -> Result<G
         .status();
     report.files.push("pipeline.rs".to_string());
 
+    // 7b. Classification report. Phase 0 of the orphan-closure plan: every
+    // class in the ontology is classified into a `PathKind`, and the human-
+    // readable report is written alongside the design notes under
+    // docs/orphan-closure/. Regenerated on every `cargo run --bin uor-crate`;
+    // `git diff --exit-code docs/orphan-closure/classification_report.md`
+    // gates drift between the ontology and the classification.
+    //
+    // The report lives in the repo, not under `out_dir` (which points at
+    // `foundation/src/`). We walk up from `out_dir` to the workspace root and
+    // write the report relative to it. If the workspace root can't be found
+    // (out_dir has no parent chain leading to a `docs/` dir), the step is a
+    // no-op — the classification logic still runs and the test suite still
+    // exercises it, but no file is written.
+    if let Some(workspace_root) = find_workspace_root(out_dir) {
+        let entries = classification::classify_all(ontology);
+        let report_path = workspace_root
+            .join("docs")
+            .join("orphan-closure")
+            .join("classification_report.md");
+        classification::write_report(&entries, &report_path)?;
+        report.files.push(format!("{}", report_path.display()));
+    }
+
     // 8. Generate uor-foundation-sdk/src/lib.rs (Product/Coproduct Completion
     // Amendment Part B). The SDK is a proc-macro crate emitting
     // `product_shape!` / `coproduct_shape!` / `cartesian_product_shape!`
@@ -190,6 +214,21 @@ pub fn generate(ontology: &Ontology, out_dir: &Path, sdk_out: &Path) -> Result<G
     // surface is the public `Term::*` enum variants directly.
 
     Ok(report)
+}
+
+/// Walks up from `out_dir` (expected to be `.../foundation/src/`) looking
+/// for the workspace root — the first ancestor directory containing both a
+/// `Cargo.toml` and a `docs/` dir. Returns `None` if no such ancestor
+/// exists (e.g., during `cargo test` against a `std::env::temp_dir()`
+/// target). Used by the Phase 0 classification-report write step.
+fn find_workspace_root(out_dir: &Path) -> Option<std::path::PathBuf> {
+    let mut cur = out_dir;
+    loop {
+        if cur.join("Cargo.toml").exists() && cur.join("docs").is_dir() {
+            return Some(cur.to_path_buf());
+        }
+        cur = cur.parent()?;
+    }
 }
 
 /// Generates a `mod.rs` file for a space module.
