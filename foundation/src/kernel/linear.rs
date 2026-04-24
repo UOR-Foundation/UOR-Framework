@@ -52,3 +52,75 @@ pub trait LeaseAllocation<H: HostTypes> {
 
 /// A site that may be pinned at most once (but need not be pinned). Relaxation of LinearSite for incomplete resolution paths.
 pub trait AffineSite<H: HostTypes>: crate::bridge::partition::SiteIndex<H> {}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `LinearSite<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullLinearSite<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullLinearSite<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullLinearSite<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullLinearSite<H> = NullLinearSite {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> crate::bridge::partition::SiteIndex<H> for NullLinearSite<H> {
+    fn site_position(&self) -> u64 {
+        0
+    }
+    fn site_state(&self) -> u64 {
+        0
+    }
+    type SiteIndexTarget = crate::bridge::partition::NullSiteIndex<H>;
+    fn ancilla_site(&self) -> &Self::SiteIndexTarget {
+        &<crate::bridge::partition::NullSiteIndex<H>>::ABSENT
+    }
+}
+impl<H: HostTypes> LinearSite<H> for NullLinearSite<H> {}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `AffineSite<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullAffineSite<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullAffineSite<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullAffineSite<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullAffineSite<H> = NullAffineSite {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> crate::bridge::partition::SiteIndex<H> for NullAffineSite<H> {
+    fn site_position(&self) -> u64 {
+        0
+    }
+    fn site_state(&self) -> u64 {
+        0
+    }
+    type SiteIndexTarget = crate::bridge::partition::NullSiteIndex<H>;
+    fn ancilla_site(&self) -> &Self::SiteIndexTarget {
+        &<crate::bridge::partition::NullSiteIndex<H>>::ABSENT
+    }
+}
+impl<H: HostTypes> AffineSite<H> for NullAffineSite<H> {}

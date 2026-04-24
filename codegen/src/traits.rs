@@ -71,7 +71,10 @@ fn collect_inherited_assoc_types(
 
 /// Generates a single namespace module file.
 ///
-/// Returns the Rust source code for the module.
+/// Returns the Rust source code for the module. Also emits Phase-2 Null
+/// stubs (`Null{Class}<H>` + `impl Trait<H>` for every class classified
+/// `Path1HandleResolver`) after the trait section of each namespace. The
+/// classification is looked up via `uor_codegen::classification`.
 pub fn generate_namespace_module(
     module: &NamespaceModule,
     ns_map: &HashMap<&str, NamespaceMapping>,
@@ -164,10 +167,564 @@ pub fn generate_namespace_module(
         );
     }
 
+    // Phase 2 (orphan-closure): emit Null stubs for every Path-1 class in
+    // this namespace. Each stub impls its ontology trait (and every
+    // transitive non-Thing supertrait) with absent-sentinel defaults.
+    emit_null_stubs_for_namespace(&mut f, module, all_props_by_domain, ns_map);
+
     // Generate individual constants
     generate_individuals(&mut f, module);
 
     f.finish()
+}
+
+/// Phase 2 emission: walks `module.classes`, classifies each, and emits a
+/// `Null{Class}<H>` stub + `impl Trait<H>` for every class whose
+/// classification is `Path1HandleResolver` AND every supertrait impl
+/// required to satisfy the trait hierarchy.
+fn emit_null_stubs_for_namespace(
+    f: &mut RustFile,
+    module: &NamespaceModule,
+    all_props_by_domain: &HashMap<&str, Vec<&Property>>,
+    ns_map: &HashMap<&str, NamespaceMapping>,
+) {
+    let ontology = uor_ontology::Ontology::full();
+    let enum_names = enum_class_names();
+    let emitable = emitable_null_set(ontology, &enum_names);
+    for class in &module.classes {
+        if !emitable.contains(class.id) {
+            continue;
+        }
+        emit_null_stub(
+            f,
+            class,
+            ontology,
+            all_props_by_domain,
+            ns_map,
+            &enum_names,
+            &emitable,
+        );
+    }
+}
+
+/// Returns the set of class IRIs for which Phase-2 will emit `Null{Class}<H>`
+/// stubs. Computed as a fixed point: a class is in the set iff every class
+/// referenced as a property range (directly + via transitive parents) is
+/// either (a) in the set, (b) an enum class (skipped — traits return
+/// enums directly; filtered separately), (c) owl:Thing / owl:Class /
+/// rdf:List (trait returns `&H::HostString` — no Null needed), (d) an XSD
+/// primitive, or (e) a class with a known existing Null stub
+/// (`NullPartition<H>` from the Product/Coproduct Amendment).
+fn emitable_null_set<'a>(
+    ontology: &'a uor_ontology::Ontology,
+    enum_names: &HashSet<&'static str>,
+) -> HashSet<&'a str> {
+    // Seed: every candidate per `should_emit_null_stub`. Iterate; drop any
+    // candidate whose transitive references aren't satisfied.
+    let mut candidates: HashSet<&str> = HashSet::new();
+    for module in &ontology.namespaces {
+        for class in &module.classes {
+            if should_emit_null_stub(class, ontology, enum_names) {
+                candidates.insert(class.id);
+            }
+        }
+    }
+    let existing_nulls = existing_null_class_iris();
+    loop {
+        let snapshot = candidates.clone();
+        candidates.retain(|iri| {
+            let class = match ontology.find_class(iri) {
+                Some(c) => c,
+                None => return false,
+            };
+            transitive_references(class, ontology)
+                .into_iter()
+                .all(|ref_iri| {
+                    is_reference_satisfied(ref_iri, &snapshot, &existing_nulls, enum_names)
+                })
+        });
+        if candidates.len() == snapshot.len() {
+            break;
+        }
+    }
+    candidates
+}
+
+/// Every class IRI referenced (directly or via transitive supertraits) by
+/// some property of `class`. Used to verify that `emitable_null_set` can
+/// satisfy all references.
+fn transitive_references<'a>(
+    class: &'a Class,
+    ontology: &'a uor_ontology::Ontology,
+) -> Vec<&'a str> {
+    let all = all_properties_by_domain(ontology);
+    let mut refs: Vec<&str> = Vec::new();
+    let mut record = |iri: &'a str| {
+        if !refs.contains(&iri) {
+            refs.push(iri);
+        }
+    };
+    let mut visit = |domain_iri: &'a str| {
+        if let Some(props) = all.get(domain_iri) {
+            for p in props {
+                if p.kind != PropertyKind::Object {
+                    continue;
+                }
+                record(p.range);
+            }
+        }
+    };
+    visit(class.id);
+    for parent_iri in transitive_supertraits(class, ontology) {
+        visit(parent_iri);
+    }
+    refs
+}
+
+/// Resolves whether a range IRI is a "satisfied" reference at emission time.
+fn is_reference_satisfied(
+    range_iri: &str,
+    emitable: &HashSet<&str>,
+    existing_nulls: &HashMap<&'static str, &'static str>,
+    enum_names: &HashSet<&'static str>,
+) -> bool {
+    // Generic pointers → trait returns `&H::HostString`; no Null needed.
+    if range_iri == OWL_THING || range_iri == OWL_CLASS || range_iri == RDF_LIST {
+        return true;
+    }
+    // XSD primitives — handled as scalars.
+    if range_iri.starts_with("http://www.w3.org/2001/XMLSchema#") {
+        return true;
+    }
+    // Enum classes — trait returns the enum; no Null stub referenced.
+    // (Classes with enum accessors are already filtered in `should_emit_null_stub`.)
+    if enum_names.contains(local_name(range_iri)) {
+        return true;
+    }
+    // In the emitable set, or has a known existing Null stub
+    // (Product/Coproduct Amendment NullPartition family).
+    emitable.contains(range_iri) || existing_nulls.contains_key(range_iri)
+}
+
+/// Class IRIs whose Null stubs already exist in `foundation/src/enforcement.rs`
+/// (emitted by the Product/Coproduct Amendment §D1.2). Mapped to their
+/// stub-type name; Phase 2 references these by full `crate::*` path.
+fn existing_null_class_iris() -> HashMap<&'static str, &'static str> {
+    let mut m = HashMap::new();
+    m.insert(
+        "https://uor.foundation/partition/Partition",
+        "crate::enforcement::NullPartition",
+    );
+    m
+}
+
+/// Filters a class for Phase-2 Null emission.
+///
+/// Emit iff the class:
+///   - classifies `Path1HandleResolver` via `classification::classify`; AND
+///   - does not have any accessor whose range is an enum class (enum defaults
+///     require per-enum `Default` impls, deferred to a future phase); AND
+///   - is not itself an enum class.
+fn should_emit_null_stub(
+    class: &Class,
+    ontology: &uor_ontology::Ontology,
+    enum_names: &HashSet<&'static str>,
+) -> bool {
+    if enum_names.contains(local_name(class.id)) {
+        return false;
+    }
+    let path_kind = crate::classification::classify(class, ontology).path_kind;
+    if !matches!(
+        path_kind,
+        crate::classification::PathKind::Path1HandleResolver
+    ) {
+        return false;
+    }
+    // Exclude classes with any enum-typed accessor. Property range matching
+    // an enum local name means the generated trait method returns that enum
+    // directly; the Null stub would need to default to a specific variant.
+    for (_, props) in all_properties_by_domain(ontology) {
+        for prop in &props {
+            if prop.domain != Some(class.id) {
+                continue;
+            }
+            if prop.kind == PropertyKind::Annotation {
+                continue;
+            }
+            if enum_names.contains(local_name(prop.range)) {
+                return false;
+            }
+        }
+    }
+    // Exclude classes inheriting from a class with enum accessors — supertrait
+    // closure would force Null{Class} to impl that parent, running into the
+    // same issue.
+    let parents = transitive_supertraits(class, ontology);
+    for parent in &parents {
+        for (_, props) in all_properties_by_domain(ontology) {
+            for prop in &props {
+                if prop.domain != Some(*parent) {
+                    continue;
+                }
+                if prop.kind == PropertyKind::Annotation {
+                    continue;
+                }
+                if enum_names.contains(local_name(prop.range)) {
+                    return false;
+                }
+            }
+        }
+    }
+    true
+}
+
+/// Returns all non-owl:Thing transitive supertraits of `class`, deduplicated.
+/// Excludes enum-class parents (they don't generate traits).
+fn transitive_supertraits<'a>(
+    class: &'a Class,
+    ontology: &'a uor_ontology::Ontology,
+) -> Vec<&'a str> {
+    let enum_names = enum_class_names();
+    let mut result: Vec<&'a str> = Vec::new();
+    let mut frontier: Vec<&'a str> = class.subclass_of.to_vec();
+    while let Some(parent_iri) = frontier.pop() {
+        if parent_iri == OWL_THING {
+            continue;
+        }
+        if enum_names.contains(local_name(parent_iri)) {
+            continue;
+        }
+        if result.contains(&parent_iri) {
+            continue;
+        }
+        result.push(parent_iri);
+        if let Some(parent_class) = ontology.find_class(parent_iri) {
+            for pp in parent_class.subclass_of {
+                frontier.push(pp);
+            }
+        }
+    }
+    result
+}
+
+/// Cached `all_props_by_domain` lookup — rebuilt per call (cheap; the
+/// ontology is static). Keeps `emit_null_stub` pure without threading the
+/// caller's map through.
+fn all_properties_by_domain<'a>(
+    ontology: &'a uor_ontology::Ontology,
+) -> HashMap<&'a str, Vec<&'a Property>> {
+    let mut map: HashMap<&'a str, Vec<&'a Property>> = HashMap::new();
+    for module in &ontology.namespaces {
+        for prop in &module.properties {
+            if let Some(domain) = prop.domain {
+                map.entry(domain).or_default().push(prop);
+            }
+        }
+    }
+    map
+}
+
+/// Emits `Null{Class}<H>` struct, `Default` impl, `ABSENT` const, and every
+/// required `impl Trait<H> for Null{Class}<H>` (class itself + transitive
+/// supertraits).
+fn emit_null_stub(
+    f: &mut RustFile,
+    class: &Class,
+    ontology: &uor_ontology::Ontology,
+    all_props_by_domain: &HashMap<&str, Vec<&Property>>,
+    ns_map: &HashMap<&str, NamespaceMapping>,
+    enum_names: &HashSet<&'static str>,
+    emitable: &HashSet<&str>,
+) {
+    let class_local = local_name(class.id);
+    let null_type = format!("Null{class_local}");
+    let class_iri_ns = namespace_of(class.id, ns_map);
+
+    // ── Struct + Default + ABSENT const ───────────────────────────────
+    f.doc_comment(&format!(
+        "Phase 2 (orphan-closure) — resolver-absent default impl of `{class_local}<H>`."
+    ));
+    f.doc_comment("Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed");
+    f.doc_comment("returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`");
+    f.doc_comment("const (for trait-typed returns).  Downstream provides concrete impls;");
+    f.doc_comment("this stub closes the ontology-derived trait orphan.");
+    f.line("#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]");
+    let _ = writeln!(f.buf, "pub struct {null_type}<H: HostTypes> {{");
+    f.line("    _phantom: core::marker::PhantomData<H>,");
+    f.line("}");
+    let _ = writeln!(f.buf, "impl<H: HostTypes> Default for {null_type}<H> {{");
+    f.line("    fn default() -> Self { Self { _phantom: core::marker::PhantomData } }");
+    f.line("}");
+    let _ = writeln!(f.buf, "impl<H: HostTypes> {null_type}<H> {{");
+    f.indented_doc_comment(
+        "Absent-value sentinel. `&Self::ABSENT` gives every trait-typed \
+         accessor a `'static`-lifetime reference target.",
+    );
+    let _ = writeln!(
+        f.buf,
+        "    pub const ABSENT: {null_type}<H> = {null_type} {{ _phantom: core::marker::PhantomData }};"
+    );
+    f.line("}");
+
+    // ── Trait impls: transitive supertraits first, then class itself ──
+    let existing_nulls = existing_null_class_iris();
+    let parents = transitive_supertraits(class, ontology);
+    for parent_iri in parents.iter().rev() {
+        emit_null_impl_for_trait(
+            f,
+            &null_type,
+            parent_iri,
+            all_props_by_domain,
+            ns_map,
+            class_iri_ns,
+            enum_names,
+            emitable,
+            &existing_nulls,
+        );
+    }
+    emit_null_impl_for_trait(
+        f,
+        &null_type,
+        class.id,
+        all_props_by_domain,
+        ns_map,
+        class_iri_ns,
+        enum_names,
+        emitable,
+        &existing_nulls,
+    );
+    f.blank();
+}
+
+/// Emits a single `impl Trait<H> for Null{Class}<H>` block, with one method
+/// body per direct property of `trait_iri` and an associated type per
+/// object-property range.
+#[allow(clippy::too_many_arguments)]
+fn emit_null_impl_for_trait(
+    f: &mut RustFile,
+    null_type: &str,
+    trait_iri: &str,
+    all_props_by_domain: &HashMap<&str, Vec<&Property>>,
+    ns_map: &HashMap<&str, NamespaceMapping>,
+    current_ns_iri: &str,
+    enum_names: &HashSet<&'static str>,
+    emitable: &HashSet<&str>,
+    existing_nulls: &HashMap<&'static str, &'static str>,
+) {
+    let trait_local = local_name(trait_iri);
+    let trait_path = if trait_iri.starts_with(current_ns_iri) {
+        trait_local.to_string()
+    } else {
+        class_trait_path(trait_iri, ns_map).unwrap_or_else(|| trait_local.to_string())
+    };
+
+    let direct_props: Vec<&&Property> = all_props_by_domain
+        .get(trait_iri)
+        .map(|v| {
+            v.iter()
+                .filter(|p| p.kind != PropertyKind::Annotation)
+                .collect()
+        })
+        .unwrap_or_default();
+
+    let _ = writeln!(
+        f.buf,
+        "impl<H: HostTypes> {trait_path}<H> for {null_type}<H> {{"
+    );
+
+    // Inherited associated-type declarations come from parent traits, so only
+    // emit an associated type if this trait is the one that introduces it.
+    let mut emitted_assoc: HashSet<String> = HashSet::new();
+    for prop in &direct_props {
+        emit_null_method_body(
+            f,
+            prop,
+            ns_map,
+            current_ns_iri,
+            trait_local,
+            enum_names,
+            &mut emitted_assoc,
+            emitable,
+            existing_nulls,
+        );
+    }
+    f.line("}");
+}
+
+/// Emits one method (and, if needed, one associated type) inside the
+/// `impl Trait<H> for Null{Class}<H>` block currently being built. Returns
+/// without emitting if the property is annotation-only or uses an enum
+/// range (callers pre-filter but we guard defensively).
+#[allow(clippy::too_many_arguments)]
+fn emit_null_method_body(
+    f: &mut RustFile,
+    prop: &Property,
+    ns_map: &HashMap<&str, NamespaceMapping>,
+    current_ns_iri: &str,
+    owner_trait_name: &str,
+    enum_names: &HashSet<&'static str>,
+    emitted_assoc: &mut HashSet<String>,
+    emitable: &HashSet<&str>,
+    existing_nulls: &HashMap<&'static str, &'static str>,
+) {
+    let method_name = to_snake_case(local_name(prop.id));
+
+    match prop.kind {
+        PropertyKind::Datatype => {
+            if enum_names.contains(local_name(prop.range)) {
+                return; // pre-filtered; defensive skip
+            }
+            let prim = xsd_to_primitives_type(prop.range);
+            match prim {
+                Some(t) => {
+                    if prop.functional {
+                        let body = match t {
+                            "H::HostString" => "H::EMPTY_HOST_STRING".to_string(),
+                            "H::WitnessBytes" => "H::EMPTY_WITNESS_BYTES".to_string(),
+                            "H::Decimal" => "H::EMPTY_DECIMAL".to_string(),
+                            "bool" => "false".to_string(),
+                            _ => "0".to_string(), // u64 / i64 / u32 / i32
+                        };
+                        if xsd_is_unsized(prop.range) {
+                            let _ =
+                                writeln!(f.buf, "    fn {method_name}(&self) -> &{t} {{ {body} }}");
+                        } else {
+                            let _ =
+                                writeln!(f.buf, "    fn {method_name}(&self) -> {t} {{ {body} }}");
+                        }
+                    } else if xsd_is_unsized(prop.range) {
+                        let body = match t {
+                            "H::HostString" => "H::EMPTY_HOST_STRING",
+                            "H::WitnessBytes" => "H::EMPTY_WITNESS_BYTES",
+                            _ => "H::EMPTY_HOST_STRING",
+                        };
+                        let _ =
+                            writeln!(f.buf, "    fn {method_name}_count(&self) -> usize {{ 0 }}");
+                        let _ = writeln!(
+                            f.buf,
+                            "    fn {method_name}_at(&self, _index: usize) -> &{t} {{ {body} }}"
+                        );
+                    } else {
+                        let _ = writeln!(f.buf, "    fn {method_name}(&self) -> &[{t}] {{ &[] }}");
+                    }
+                }
+                None => {
+                    // Unknown XSD: the trait emits `&H::HostString`; mirror here.
+                    let _ = writeln!(
+                        f.buf,
+                        "    fn {method_name}(&self) -> &H::HostString {{ H::EMPTY_HOST_STRING }}"
+                    );
+                }
+            }
+        }
+        PropertyKind::Object => {
+            let range_local = local_name(prop.range);
+            let is_owl_thing = prop.range == OWL_THING;
+            let is_owl_class = prop.range == OWL_CLASS;
+            let is_rdf_list = prop.range == RDF_LIST;
+
+            if enum_names.contains(range_local) {
+                return; // pre-filtered; defensive skip
+            }
+
+            if is_owl_thing || is_owl_class || is_rdf_list {
+                // Trait emits `&H::HostString` (or count+at). Mirror.
+                if prop.functional {
+                    let _ = writeln!(
+                        f.buf,
+                        "    fn {method_name}(&self) -> &H::HostString {{ H::EMPTY_HOST_STRING }}"
+                    );
+                } else {
+                    let _ = writeln!(f.buf, "    fn {method_name}_count(&self) -> usize {{ 0 }}");
+                    let _ = writeln!(
+                        f.buf,
+                        "    fn {method_name}_at(&self, _index: usize) -> &H::HostString {{ H::EMPTY_HOST_STRING }}"
+                    );
+                }
+                return;
+            }
+
+            // Ontology class range — associated type + reference to the
+            // sibling Null stub's ABSENT const.
+            let assoc_name = if range_local == owner_trait_name {
+                format!("{range_local}Target")
+            } else {
+                range_local.to_string()
+            };
+            // If the range has an existing hand-written Null stub
+            // (Product/Coproduct Amendment NullPartition family), use that
+            // path. Otherwise, the range must be in the emitable set and
+            // we construct `Null{Range}` at the appropriate module path.
+            let null_path = if let Some(path) = existing_nulls.get(prop.range) {
+                (*path).to_string()
+            } else if emitable.contains(prop.range) {
+                let null_range = format!("Null{range_local}");
+                let is_cross_ns = !prop.range.starts_with(current_ns_iri);
+                if is_cross_ns {
+                    let module = class_trait_path(prop.range, ns_map).unwrap_or_default();
+                    // class_trait_path returns e.g. `crate::bridge::partition::Foo`
+                    // — replace the class suffix with our Null<class> path.
+                    if let Some(prefix_end) = module.rfind("::") {
+                        format!("{}::{null_range}", &module[..prefix_end])
+                    } else {
+                        null_range
+                    }
+                } else {
+                    null_range
+                }
+            } else {
+                // Caller's `emitable_null_set` should have filtered this out
+                // already. Defensive: emit a compile-error marker so drift
+                // doesn't produce silently-broken code.
+                let _ = writeln!(
+                    f.buf,
+                    "    // ORPHAN_CLOSURE_EMISSION_ERROR: range {} not in emitable set",
+                    prop.range
+                );
+                return;
+            };
+
+            if !emitted_assoc.contains(&assoc_name) {
+                let _ = writeln!(f.buf, "    type {assoc_name} = {null_path}<H>;");
+                emitted_assoc.insert(assoc_name.clone());
+            }
+
+            if prop.functional {
+                if is_by_value_partition_factor(prop.id) {
+                    let _ = writeln!(
+                        f.buf,
+                        "    fn {method_name}(&self) -> Self::{assoc_name} {{ <{null_path}<H>>::default() }}"
+                    );
+                } else {
+                    let _ = writeln!(
+                        f.buf,
+                        "    fn {method_name}(&self) -> &Self::{assoc_name} {{ &<{null_path}<H>>::ABSENT }}"
+                    );
+                }
+            } else {
+                let _ = writeln!(
+                    f.buf,
+                    "    fn {method_name}(&self) -> &[Self::{assoc_name}] {{ &[] }}"
+                );
+            }
+        }
+        PropertyKind::Annotation => {}
+    }
+}
+
+/// Returns the namespace IRI that contains `class_iri`.
+fn namespace_of<'a>(class_iri: &'a str, ns_map: &HashMap<&str, NamespaceMapping>) -> &'a str {
+    for ns in ns_map.keys() {
+        if class_iri.starts_with(*ns) {
+            // `starts_with` on &str returns bool; we need the slice of class_iri
+            // matching the namespace. But class_iri's static str slice IS what
+            // we want — namespace IRI itself, if we had the matching owned ref.
+            // Simpler: return a prefix of class_iri by finding the last "/" or
+            // matching against ns.
+            return &class_iri[..ns.len()];
+        }
+    }
+    class_iri
 }
 
 /// Builds a map from domain class IRI → list of properties.

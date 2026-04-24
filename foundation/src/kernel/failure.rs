@@ -86,3 +86,237 @@ pub trait FailurePropagation<H: HostTypes> {
     /// Which failure reasons propagate through this composition.
     fn propagation_rule(&self) -> &[Self::FailureReason];
 }
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `ComputationResult<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullComputationResult<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullComputationResult<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullComputationResult<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullComputationResult<H> = NullComputationResult {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> ComputationResult<H> for NullComputationResult<H> {}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `FailureReason<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullFailureReason<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullFailureReason<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullFailureReason<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullFailureReason<H> = NullFailureReason {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> FailureReason<H> for NullFailureReason<H> {}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `GuardFailure<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullGuardFailure<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullGuardFailure<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullGuardFailure<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullGuardFailure<H> = NullGuardFailure {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> FailureReason<H> for NullGuardFailure<H> {}
+impl<H: HostTypes> GuardFailure<H> for NullGuardFailure<H> {}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `ConstraintContradiction<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullConstraintContradiction<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullConstraintContradiction<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullConstraintContradiction<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullConstraintContradiction<H> = NullConstraintContradiction {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> FailureReason<H> for NullConstraintContradiction<H> {}
+impl<H: HostTypes> ConstraintContradiction<H> for NullConstraintContradiction<H> {}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `SiteExhaustion<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullSiteExhaustion<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullSiteExhaustion<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullSiteExhaustion<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullSiteExhaustion<H> = NullSiteExhaustion {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> FailureReason<H> for NullSiteExhaustion<H> {}
+impl<H: HostTypes> SiteExhaustion<H> for NullSiteExhaustion<H> {}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `LiftObstructionFailure<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullLiftObstructionFailure<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullLiftObstructionFailure<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullLiftObstructionFailure<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullLiftObstructionFailure<H> = NullLiftObstructionFailure {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> FailureReason<H> for NullLiftObstructionFailure<H> {}
+impl<H: HostTypes> LiftObstructionFailure<H> for NullLiftObstructionFailure<H> {}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `PartialComputation<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullPartialComputation<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullPartialComputation<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullPartialComputation<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullPartialComputation<H> = NullPartialComputation {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> PartialComputation<H> for NullPartialComputation<H> {
+    fn is_total(&self) -> bool {
+        false
+    }
+}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `TotalComputation<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullTotalComputation<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullTotalComputation<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullTotalComputation<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullTotalComputation<H> = NullTotalComputation {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> PartialComputation<H> for NullTotalComputation<H> {
+    fn is_total(&self) -> bool {
+        false
+    }
+}
+impl<H: HostTypes> TotalComputation<H> for NullTotalComputation<H> {}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `FailurePropagation<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullFailurePropagation<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullFailurePropagation<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullFailurePropagation<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullFailurePropagation<H> = NullFailurePropagation {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> FailurePropagation<H> for NullFailurePropagation<H> {
+    type FailureReason = NullFailureReason<H>;
+    fn propagation_rule(&self) -> &[Self::FailureReason] {
+        &[]
+    }
+}

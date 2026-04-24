@@ -279,6 +279,64 @@ pub trait ModuliResolver<H: HostTypes>: Resolver<H> {
     fn moduli_deformation(&self) -> &Self::DeformationComplex;
 }
 
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `CertifyMapping<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullCertifyMapping<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullCertifyMapping<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullCertifyMapping<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullCertifyMapping<H> = NullCertifyMapping {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> CertifyMapping<H> for NullCertifyMapping<H> {
+    fn for_resolver(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    fn produces_certificate(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    fn produces_witness(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `ExecutionPolicy<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullExecutionPolicy<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullExecutionPolicy<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullExecutionPolicy<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullExecutionPolicy<H> = NullExecutionPolicy {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> ExecutionPolicy<H> for NullExecutionPolicy<H> {}
+
 /// O(1) complexity — the resolver runs in constant time regardless of ring size.
 pub mod constant_time {}
 

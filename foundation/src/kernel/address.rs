@@ -21,3 +21,46 @@ pub trait Element<H: HostTypes> {
     /// The Witt level n of this element. The element encodes a datum in R_n = Z/(2^n)Z.
     fn witt_length(&self) -> u64;
 }
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `Element<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullElement<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullElement<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullElement<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullElement<H> = NullElement {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> Element<H> for NullElement<H> {
+    fn length(&self) -> u64 {
+        0
+    }
+    fn addresses(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    fn digest(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    fn digest_algorithm(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    fn canonical_bytes(&self) -> &H::WitnessBytes {
+        H::EMPTY_WITNESS_BYTES
+    }
+    fn witt_length(&self) -> u64 {
+        0
+    }
+}

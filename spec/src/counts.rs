@@ -328,3 +328,17 @@ pub const CLASSIFICATION_PATH3: usize = 0;
 /// Path 4 — theory-deferred classes (cohomology / operad / parallel /
 /// stream) annotated by Phase 6. Correctly orphan by design.
 pub const CLASSIFICATION_PATH4: usize = 20;
+
+/// Phase 2 Null-stub emission count (ratchet — grows, never shrinks).
+///
+/// The Phase-2 codegen (`traits::emit_null_stubs_for_namespace`) computes
+/// a fixed-point `emitable_null_set` — a class is only emitted if every
+/// class it references (transitively, through its own properties plus its
+/// supertraits' properties) also has a Null stub emitted, an existing
+/// hand-written stub (`NullPartition<H>` family), an XSD primitive type,
+/// or is a skipped enum class. The initial closure is 181 newly-emitted
+/// Null stubs across bridge/kernel/user namespaces; the remaining
+/// `CLASSIFICATION_PATH1 - CLASSIFICATION_PATH1_EMITTED = 237` Path-1
+/// classes cascade out of Phase 2 (reference chains touching enum
+/// accessors or Path-2/3/4 classes) and close in later phases.
+pub const CLASSIFICATION_PATH1_EMITTED: usize = 181;

@@ -106,6 +106,31 @@ pub trait GluingObstruction<H: HostTypes> {
     fn addresses_suggestion(&self) -> &[Self::RefinementSuggestion];
 }
 
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `LocalSection<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullLocalSection<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullLocalSection<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullLocalSection<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullLocalSection<H> = NullLocalSection {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> Section<H> for NullLocalSection<H> {}
+impl<H: HostTypes> LocalSection<H> for NullLocalSection<H> {}
+
 /// δ² = 0: the coboundary of a coboundary is zero.
 pub mod coboundary_squared_zero {
     /// `forAll` -> `term_coboundarySquaredZero_forAll`

@@ -167,6 +167,54 @@ pub trait SessionCompositionOperation<H: HostTypes>: ComposedOperation<H> {
 /// A structured group presentation: generators and relations as typed data rather than prose strings.
 pub trait GroupPresentation<H: HostTypes> {}
 
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `QuantumThermodynamicDomain<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullQuantumThermodynamicDomain<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullQuantumThermodynamicDomain<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullQuantumThermodynamicDomain<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullQuantumThermodynamicDomain<H> = NullQuantumThermodynamicDomain {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> QuantumThermodynamicDomain<H> for NullQuantumThermodynamicDomain<H> {}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `GroupPresentation<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullGroupPresentation<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullGroupPresentation<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullGroupPresentation<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullGroupPresentation<H> = NullGroupPresentation {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> GroupPresentation<H> for NullGroupPresentation<H> {}
+
 /// Established by exhaustive traversal of R_n. Valid for all identities where the ring is finite.
 pub mod enumerative {
     /// `enumVariant` -> `Enumerative`

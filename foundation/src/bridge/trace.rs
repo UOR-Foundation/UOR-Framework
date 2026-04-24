@@ -117,6 +117,99 @@ pub trait InhabitanceSearchTrace<H: HostTypes>: ComputationTrace<H> {
     fn checkpoint(&self) -> &[Self::InhabitanceCheckpoint];
 }
 
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `TraceMetrics<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullTraceMetrics<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullTraceMetrics<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullTraceMetrics<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullTraceMetrics<H> = NullTraceMetrics {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> TraceMetrics<H> for NullTraceMetrics<H> {
+    fn step_count(&self) -> u64 {
+        0
+    }
+    fn total_ring_distance(&self) -> u64 {
+        0
+    }
+    fn total_hamming_distance(&self) -> u64 {
+        0
+    }
+}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `GeodesicViolation<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullGeodesicViolation<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullGeodesicViolation<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullGeodesicViolation<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullGeodesicViolation<H> = NullGeodesicViolation {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> GeodesicViolation<H> for NullGeodesicViolation<H> {
+    fn violation_reason(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `MeasurementOutcome<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullMeasurementOutcome<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullMeasurementOutcome<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullMeasurementOutcome<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullMeasurementOutcome<H> = NullMeasurementOutcome {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> MeasurementOutcome<H> for NullMeasurementOutcome<H> {
+    fn outcome_value(&self) -> u64 {
+        0
+    }
+    fn outcome_probability(&self) -> H::Decimal {
+        H::EMPTY_DECIMAL
+    }
+}
+
 /// Canonical geodesic trace at quantum level Q0 (n=8). Demonstrates GD_1 through GD_3 at the base level.
 pub mod geodesic_q0 {
     /// `adiabaticallyOrdered`

@@ -62,3 +62,35 @@ pub trait RegionAllocation<H: HostTypes> {
     /// The working sets assigned to each stage.
     fn allocation_working_set(&self) -> &[Self::WorkingSet];
 }
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `RegionBound<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullRegionBound<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullRegionBound<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullRegionBound<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullRegionBound<H> = NullRegionBound {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> RegionBound<H> for NullRegionBound<H> {
+    type Element = crate::kernel::address::NullElement<H>;
+    fn region_lower(&self) -> &Self::Element {
+        &<crate::kernel::address::NullElement<H>>::ABSENT
+    }
+    fn region_upper(&self) -> &Self::Element {
+        &<crate::kernel::address::NullElement<H>>::ABSENT
+    }
+}

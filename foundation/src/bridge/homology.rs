@@ -148,6 +148,144 @@ pub trait DeformationComplex<H: HostTypes>: ChainComplex<H> {
     fn obstruction_dimension(&self) -> u64;
 }
 
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `HomologyGroup<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullHomologyGroup<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullHomologyGroup<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullHomologyGroup<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullHomologyGroup<H> = NullHomologyGroup {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> HomologyGroup<H> for NullHomologyGroup<H> {
+    fn homology_degree(&self) -> i64 {
+        0
+    }
+    fn betti_number(&self) -> u64 {
+        0
+    }
+}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `NerveFunctor<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullNerveFunctor<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullNerveFunctor<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullNerveFunctor<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullNerveFunctor<H> = NullNerveFunctor {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> NerveFunctor<H> for NullNerveFunctor<H> {}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `ChainFunctor<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullChainFunctor<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullChainFunctor<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullChainFunctor<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullChainFunctor<H> = NullChainFunctor {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> ChainFunctor<H> for NullChainFunctor<H> {}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `HornFiller<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullHornFiller<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullHornFiller<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullHornFiller<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullHornFiller<H> = NullHornFiller {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> HornFiller<H> for NullHornFiller<H> {
+    fn horn_dimension(&self) -> u64 {
+        0
+    }
+    fn horn_position(&self) -> u64 {
+        0
+    }
+}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `KInvariant<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullKInvariant<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullKInvariant<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullKInvariant<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullKInvariant<H> = NullKInvariant {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> KInvariant<H> for NullKInvariant<H> {
+    fn k_invariant_trivial(&self) -> bool {
+        false
+    }
+}
+
 /// ∂² = 0: the boundary of a boundary is zero.
 pub mod boundary_squared_zero {
     /// `forAll` -> `term_boundarySquaredZero_forAll`

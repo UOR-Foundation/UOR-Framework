@@ -269,6 +269,67 @@ pub trait SequenceElement<H: HostTypes> {
     fn element_index(&self) -> u64;
 }
 
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `SymbolSequence<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullSymbolSequence<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullSymbolSequence<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullSymbolSequence<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullSymbolSequence<H> = NullSymbolSequence {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> SymbolSequence<H> for NullSymbolSequence<H> {
+    type SequenceElement = NullSequenceElement<H>;
+    fn has_element(&self) -> &[Self::SequenceElement] {
+        &[]
+    }
+}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `SequenceElement<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullSequenceElement<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullSequenceElement<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullSequenceElement<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullSequenceElement<H> = NullSequenceElement {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> SequenceElement<H> for NullSequenceElement<H> {
+    type SurfaceSymbol = crate::kernel::schema::NullSurfaceSymbol<H>;
+    fn element_value(&self) -> &Self::SurfaceSymbol {
+        &<crate::kernel::schema::NullSurfaceSymbol<H>>::ABSENT
+    }
+    fn element_index(&self) -> u64 {
+        0
+    }
+}
+
 /// The critical composition law: neg ∘ bnot = succ. This is the operational form of the critical identity theorem. The composition of the two involutions (neg, bnot) yields the successor operation. Non-associative and non-commutative.
 pub mod critical_composition {
     /// `isAssociative`

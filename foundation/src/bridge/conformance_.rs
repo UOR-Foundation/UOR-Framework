@@ -248,6 +248,866 @@ pub trait PreludeExport<H: HostTypes> {
     fn export_rust_name(&self) -> &H::HostString;
 }
 
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `Shape<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullShape<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullShape<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullShape<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullShape<H> = NullShape {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> Shape<H> for NullShape<H> {
+    fn target_class(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    type PropertyConstraint = NullPropertyConstraint<H>;
+    fn required_property(&self) -> &[Self::PropertyConstraint] {
+        &[]
+    }
+    fn surface_form(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `PropertyConstraint<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullPropertyConstraint<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullPropertyConstraint<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullPropertyConstraint<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullPropertyConstraint<H> = NullPropertyConstraint {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> PropertyConstraint<H> for NullPropertyConstraint<H> {
+    fn constraint_property(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    fn constraint_range(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    fn min_count(&self) -> u64 {
+        0
+    }
+    fn max_count(&self) -> u64 {
+        0
+    }
+    fn surface_keyword(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    fn surface_production(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `WittLevelShape<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullWittLevelShape<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullWittLevelShape<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullWittLevelShape<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullWittLevelShape<H> = NullWittLevelShape {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> Shape<H> for NullWittLevelShape<H> {
+    fn target_class(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    type PropertyConstraint = NullPropertyConstraint<H>;
+    fn required_property(&self) -> &[Self::PropertyConstraint] {
+        &[]
+    }
+    fn surface_form(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+}
+impl<H: HostTypes> WittLevelShape<H> for NullWittLevelShape<H> {}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `EffectShape<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullEffectShape<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullEffectShape<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullEffectShape<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullEffectShape<H> = NullEffectShape {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> Shape<H> for NullEffectShape<H> {
+    fn target_class(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    type PropertyConstraint = NullPropertyConstraint<H>;
+    fn required_property(&self) -> &[Self::PropertyConstraint] {
+        &[]
+    }
+    fn surface_form(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+}
+impl<H: HostTypes> EffectShape<H> for NullEffectShape<H> {}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `ParallelShape<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullParallelShape<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullParallelShape<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullParallelShape<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullParallelShape<H> = NullParallelShape {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> Shape<H> for NullParallelShape<H> {
+    fn target_class(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    type PropertyConstraint = NullPropertyConstraint<H>;
+    fn required_property(&self) -> &[Self::PropertyConstraint] {
+        &[]
+    }
+    fn surface_form(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+}
+impl<H: HostTypes> ParallelShape<H> for NullParallelShape<H> {}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `StreamShape<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullStreamShape<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullStreamShape<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullStreamShape<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullStreamShape<H> = NullStreamShape {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> Shape<H> for NullStreamShape<H> {
+    fn target_class(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    type PropertyConstraint = NullPropertyConstraint<H>;
+    fn required_property(&self) -> &[Self::PropertyConstraint] {
+        &[]
+    }
+    fn surface_form(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+}
+impl<H: HostTypes> StreamShape<H> for NullStreamShape<H> {}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `DispatchShape<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullDispatchShape<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullDispatchShape<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullDispatchShape<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullDispatchShape<H> = NullDispatchShape {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> Shape<H> for NullDispatchShape<H> {
+    fn target_class(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    type PropertyConstraint = NullPropertyConstraint<H>;
+    fn required_property(&self) -> &[Self::PropertyConstraint] {
+        &[]
+    }
+    fn surface_form(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+}
+impl<H: HostTypes> DispatchShape<H> for NullDispatchShape<H> {}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `LeaseShape<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullLeaseShape<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullLeaseShape<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullLeaseShape<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullLeaseShape<H> = NullLeaseShape {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> Shape<H> for NullLeaseShape<H> {
+    fn target_class(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    type PropertyConstraint = NullPropertyConstraint<H>;
+    fn required_property(&self) -> &[Self::PropertyConstraint] {
+        &[]
+    }
+    fn surface_form(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+}
+impl<H: HostTypes> LeaseShape<H> for NullLeaseShape<H> {}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `GroundingShape<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullGroundingShape<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullGroundingShape<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullGroundingShape<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullGroundingShape<H> = NullGroundingShape {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> Shape<H> for NullGroundingShape<H> {
+    fn target_class(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    type PropertyConstraint = NullPropertyConstraint<H>;
+    fn required_property(&self) -> &[Self::PropertyConstraint] {
+        &[]
+    }
+    fn surface_form(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+}
+impl<H: HostTypes> GroundingShape<H> for NullGroundingShape<H> {}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `ValidationResult<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullValidationResult<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullValidationResult<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullValidationResult<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullValidationResult<H> = NullValidationResult {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> ValidationResult<H> for NullValidationResult<H> {
+    type Shape = NullShape<H>;
+    fn validation_shape(&self) -> &Self::Shape {
+        &<NullShape<H>>::ABSENT
+    }
+    fn validation_target(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    fn conforms(&self) -> bool {
+        false
+    }
+}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `PredicateShape<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullPredicateShape<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullPredicateShape<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullPredicateShape<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullPredicateShape<H> = NullPredicateShape {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> Shape<H> for NullPredicateShape<H> {
+    fn target_class(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    type PropertyConstraint = NullPropertyConstraint<H>;
+    fn required_property(&self) -> &[Self::PropertyConstraint] {
+        &[]
+    }
+    fn surface_form(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+}
+impl<H: HostTypes> PredicateShape<H> for NullPredicateShape<H> {}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `InteractionShape<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullInteractionShape<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullInteractionShape<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullInteractionShape<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullInteractionShape<H> = NullInteractionShape {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> Shape<H> for NullInteractionShape<H> {
+    fn target_class(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    type PropertyConstraint = NullPropertyConstraint<H>;
+    fn required_property(&self) -> &[Self::PropertyConstraint] {
+        &[]
+    }
+    fn surface_form(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+}
+impl<H: HostTypes> InteractionShape<H> for NullInteractionShape<H> {}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `WitnessDatum<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullWitnessDatum<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullWitnessDatum<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullWitnessDatum<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullWitnessDatum<H> = NullWitnessDatum {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> WitnessDatum<H> for NullWitnessDatum<H> {
+    fn witness_level(&self) -> u64 {
+        0
+    }
+    fn witness_bytes(&self) -> &H::WitnessBytes {
+        H::EMPTY_WITNESS_BYTES
+    }
+}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `GroundedTuple<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullGroundedTuple<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullGroundedTuple<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullGroundedTuple<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullGroundedTuple<H> = NullGroundedTuple {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> GroundedTuple<H> for NullGroundedTuple<H> {}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `GroundedValueMarker<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullGroundedValueMarker<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullGroundedValueMarker<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullGroundedValueMarker<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullGroundedValueMarker<H> = NullGroundedValueMarker {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> GroundedValueMarker<H> for NullGroundedValueMarker<H> {}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `ValidatedWrapper<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullValidatedWrapper<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullValidatedWrapper<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullValidatedWrapper<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullValidatedWrapper<H> = NullValidatedWrapper {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> ValidatedWrapper<H> for NullValidatedWrapper<H> {
+    fn validated_inner(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `WitnessDerivation<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullWitnessDerivation<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullWitnessDerivation<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullWitnessDerivation<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullWitnessDerivation<H> = NullWitnessDerivation {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> WitnessDerivation<H> for NullWitnessDerivation<H> {}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `WitnessSiteBudget<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullWitnessSiteBudget<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullWitnessSiteBudget<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullWitnessSiteBudget<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullWitnessSiteBudget<H> = NullWitnessSiteBudget {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> WitnessSiteBudget<H> for NullWitnessSiteBudget<H> {}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `EffectDeclaration<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullEffectDeclaration<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullEffectDeclaration<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullEffectDeclaration<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullEffectDeclaration<H> = NullEffectDeclaration {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> EffectDeclaration<H> for NullEffectDeclaration<H> {
+    fn effect_name(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    fn target_sites(&self) -> &[u64] {
+        &[]
+    }
+    fn budget_delta(&self) -> i64 {
+        0
+    }
+    fn commutation_flag(&self) -> bool {
+        false
+    }
+}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `GroundingDeclaration<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullGroundingDeclaration<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullGroundingDeclaration<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullGroundingDeclaration<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullGroundingDeclaration<H> = NullGroundingDeclaration {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> GroundingDeclaration<H> for NullGroundingDeclaration<H> {
+    type TypeDefinition = crate::user::type_::NullTypeDefinition<H>;
+    fn grounding_source_type(&self) -> &Self::TypeDefinition {
+        &<crate::user::type_::NullTypeDefinition<H>>::ABSENT
+    }
+    fn ring_mapping(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    fn invertibility_contract(&self) -> bool {
+        false
+    }
+}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `LeaseDeclaration<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullLeaseDeclaration<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullLeaseDeclaration<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullLeaseDeclaration<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullLeaseDeclaration<H> = NullLeaseDeclaration {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> LeaseDeclaration<H> for NullLeaseDeclaration<H> {
+    fn linear_site(&self) -> u64 {
+        0
+    }
+    fn lease_scope(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `StreamDeclaration<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullStreamDeclaration<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullStreamDeclaration<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullStreamDeclaration<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullStreamDeclaration<H> = NullStreamDeclaration {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> StreamDeclaration<H> for NullStreamDeclaration<H> {
+    type Term = crate::kernel::schema::NullTerm<H>;
+    fn unfold_seed(&self) -> &Self::Term {
+        &<crate::kernel::schema::NullTerm<H>>::ABSENT
+    }
+    fn step_term(&self) -> &Self::Term {
+        &<crate::kernel::schema::NullTerm<H>>::ABSENT
+    }
+    fn productivity_witness(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `PredicateDeclaration<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullPredicateDeclaration<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullPredicateDeclaration<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullPredicateDeclaration<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullPredicateDeclaration<H> = NullPredicateDeclaration {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> PredicateDeclaration<H> for NullPredicateDeclaration<H> {
+    type TypeDefinition = crate::user::type_::NullTypeDefinition<H>;
+    fn predicate_input_type(&self) -> &Self::TypeDefinition {
+        &<crate::user::type_::NullTypeDefinition<H>>::ABSENT
+    }
+    type Term = crate::kernel::schema::NullTerm<H>;
+    fn evaluator_term(&self) -> &Self::Term {
+        &<crate::kernel::schema::NullTerm<H>>::ABSENT
+    }
+    fn termination_witness(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `ParallelDeclaration<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullParallelDeclaration<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullParallelDeclaration<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullParallelDeclaration<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullParallelDeclaration<H> = NullParallelDeclaration {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> ParallelDeclaration<H> for NullParallelDeclaration<H> {
+    type Partition = crate::enforcement::NullPartition<H>;
+    fn site_partition(&self) -> &Self::Partition {
+        &<crate::enforcement::NullPartition<H>>::ABSENT
+    }
+    fn disjointness_witness(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `MintingSession<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullMintingSession<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullMintingSession<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullMintingSession<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullMintingSession<H> = NullMintingSession {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> MintingSession<H> for NullMintingSession<H> {
+    fn session_crossing_count(&self) -> u64 {
+        0
+    }
+    fn session_is_idempotent(&self) -> bool {
+        false
+    }
+}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `PreludeExport<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullPreludeExport<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullPreludeExport<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullPreludeExport<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullPreludeExport<H> = NullPreludeExport {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> PreludeExport<H> for NullPreludeExport<H> {
+    fn exports_class(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    fn export_rust_name(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+}
+
 /// Shape validating that a CompileUnit carries all required properties before reduction admission. The unitAddress property is NOT required — it is computed by stage_initialization after shape validation passes.
 pub mod compile_unit_shape {
     /// `requiredProperty`

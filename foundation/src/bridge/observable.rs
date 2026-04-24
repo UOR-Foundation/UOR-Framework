@@ -323,6 +323,86 @@ pub trait EulerCharacteristicObservable<H: HostTypes>: Observable<H> {
     fn alternating_sum(&self) -> &Self::TermExpression;
 }
 
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `MonodromyClass<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullMonodromyClass<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullMonodromyClass<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullMonodromyClass<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullMonodromyClass<H> = NullMonodromyClass {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> MonodromyClass<H> for NullMonodromyClass<H> {}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `HigherMonodromy<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullHigherMonodromy<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullHigherMonodromy<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullHigherMonodromy<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullHigherMonodromy<H> = NullHigherMonodromy {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> HigherMonodromy<H> for NullHigherMonodromy<H> {
+    fn higher_monodromy_dimension(&self) -> u64 {
+        0
+    }
+}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `WhiteheadProduct<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullWhiteheadProduct<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullWhiteheadProduct<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullWhiteheadProduct<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullWhiteheadProduct<H> = NullWhiteheadProduct {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> WhiteheadProduct<H> for NullWhiteheadProduct<H> {
+    fn whitehead_trivial(&self) -> bool {
+        false
+    }
+}
+
 /// Information-theoretic unit: the measurement is in bits (e.g., Hamming weight, entropy).
 pub mod bits {}
 

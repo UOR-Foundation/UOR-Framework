@@ -45,6 +45,157 @@ pub trait AlgebraCommutator<H: HostTypes> {}
 /// The associator \[a,b,c\] = (ab)c − a(bc). Zero for R, C, H; non-zero for O.
 pub trait AlgebraAssociator<H: HostTypes> {}
 
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `NormedDivisionAlgebra<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullNormedDivisionAlgebra<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullNormedDivisionAlgebra<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullNormedDivisionAlgebra<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullNormedDivisionAlgebra<H> = NullNormedDivisionAlgebra {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> NormedDivisionAlgebra<H> for NullNormedDivisionAlgebra<H> {
+    fn algebra_dimension(&self) -> u64 {
+        0
+    }
+    fn is_commutative(&self) -> bool {
+        false
+    }
+    fn is_associative(&self) -> bool {
+        false
+    }
+    fn basis_elements(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    type MultiplicationTable = NullMultiplicationTable<H>;
+    fn algebra_multiplication_table(&self) -> &Self::MultiplicationTable {
+        &<NullMultiplicationTable<H>>::ABSENT
+    }
+}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `CayleyDicksonConstruction<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullCayleyDicksonConstruction<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullCayleyDicksonConstruction<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullCayleyDicksonConstruction<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullCayleyDicksonConstruction<H> = NullCayleyDicksonConstruction {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> CayleyDicksonConstruction<H> for NullCayleyDicksonConstruction<H> {
+    type NormedDivisionAlgebra = NullNormedDivisionAlgebra<H>;
+    fn cayley_dickson_source(&self) -> &Self::NormedDivisionAlgebra {
+        &<NullNormedDivisionAlgebra<H>>::ABSENT
+    }
+    fn cayley_dickson_target(&self) -> &Self::NormedDivisionAlgebra {
+        &<NullNormedDivisionAlgebra<H>>::ABSENT
+    }
+    fn adjoined_element(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    fn conjugation_rule(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `MultiplicationTable<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullMultiplicationTable<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullMultiplicationTable<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullMultiplicationTable<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullMultiplicationTable<H> = NullMultiplicationTable {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> MultiplicationTable<H> for NullMultiplicationTable<H> {}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `AlgebraCommutator<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullAlgebraCommutator<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullAlgebraCommutator<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullAlgebraCommutator<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullAlgebraCommutator<H> = NullAlgebraCommutator {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> AlgebraCommutator<H> for NullAlgebraCommutator<H> {}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `AlgebraAssociator<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullAlgebraAssociator<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullAlgebraAssociator<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullAlgebraAssociator<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullAlgebraAssociator<H> = NullAlgebraAssociator {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> AlgebraAssociator<H> for NullAlgebraAssociator<H> {}
+
 /// The real numbers R: dimension 1, commutative, associative.
 pub mod real_algebra {
     /// `algebraDimension`

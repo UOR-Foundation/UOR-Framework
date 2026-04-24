@@ -12,6 +12,34 @@ pub trait LayoutInvariant<H: HostTypes> {
     fn layout_rule(&self) -> &H::HostString;
 }
 
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `LayoutInvariant<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullLayoutInvariant<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullLayoutInvariant<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullLayoutInvariant<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullLayoutInvariant<H> = NullLayoutInvariant {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> LayoutInvariant<H> for NullLayoutInvariant<H> {
+    fn layout_rule(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+}
+
 /// PartitionProduct layout-width invariant: products introduce no bookkeeping of their own, so layout widths add. Cited by primitive_partition_product when the caller-supplied combined SITE_COUNT differs from the sum of operand SITE_COUNTs.
 pub mod product_layout_width {
     /// `layoutRule`

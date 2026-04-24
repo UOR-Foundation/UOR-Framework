@@ -12602,6 +12602,19 @@ fn emit_pc_null_partition_composite(f: &mut RustFile) {
     f.line("    #[inline]");
     f.line("    #[must_use]");
     f.line("    pub const fn fingerprint(&self) -> ContentFingerprint { self.fingerprint }");
+    f.indented_doc_comment("");
+    f.indented_doc_comment("Phase 2 (orphan-closure): absent-value sentinel used by Null stubs");
+    f.indented_doc_comment("in other namespaces to satisfy `&Self::Partition` return borrows.");
+    f.line("    pub const ABSENT: NullPartition<H> = NullPartition {");
+    f.line("        irreducibles: NullIrreducibleSet { _phantom: core::marker::PhantomData },");
+    f.line("        reducibles: NullReducibleSet { _phantom: core::marker::PhantomData },");
+    f.line("        units: NullUnitGroup { _phantom: core::marker::PhantomData },");
+    f.line("        exterior: NullComplement { term: NullTermExpression { _phantom: core::marker::PhantomData } },");
+    f.line("        free_rank: NullFreeRank { _phantom: core::marker::PhantomData },");
+    f.line("        tag_site: NullTagSite { ancilla: NullSiteIndex { _phantom: core::marker::PhantomData } },");
+    f.line("        source_type: NullTypeDefinition { element: NullElement { _phantom: core::marker::PhantomData } },");
+    f.line("        fingerprint: ContentFingerprint::zero(),");
+    f.line("    };");
     f.line("}");
     f.blank();
 

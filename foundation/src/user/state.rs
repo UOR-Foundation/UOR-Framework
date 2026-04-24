@@ -203,6 +203,46 @@ pub trait SessionComposition<H: HostTypes> {
     fn tower_consistency_verified(&self) -> bool;
 }
 
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `Binding<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullBinding<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullBinding<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullBinding<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullBinding<H> = NullBinding {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> Binding<H> for NullBinding<H> {
+    type Element = crate::kernel::address::NullElement<H>;
+    fn address(&self) -> &Self::Element {
+        &<crate::kernel::address::NullElement<H>>::ABSENT
+    }
+    type Datum = crate::kernel::schema::NullDatum<H>;
+    fn content(&self) -> &Self::Datum {
+        &<crate::kernel::schema::NullDatum<H>>::ABSENT
+    }
+    type TypeDefinition = crate::user::type_::NullTypeDefinition<H>;
+    fn bound_type(&self) -> &[Self::TypeDefinition] {
+        &[]
+    }
+    fn timestamp(&self) -> &H::WitnessBytes {
+        H::EMPTY_WITNESS_BYTES
+    }
+}
+
 /// The caller explicitly requested a context reset. All accumulated bindings are discarded.
 pub mod explicit_reset {}
 

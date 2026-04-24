@@ -18187,6 +18187,38 @@ impl<H: HostTypes> NullPartition<H> {
     pub const fn fingerprint(&self) -> ContentFingerprint {
         self.fingerprint
     }
+    /// Phase 2 (orphan-closure): absent-value sentinel used by Null stubs
+    /// in other namespaces to satisfy `&Self::Partition` return borrows.
+    pub const ABSENT: NullPartition<H> = NullPartition {
+        irreducibles: NullIrreducibleSet {
+            _phantom: core::marker::PhantomData,
+        },
+        reducibles: NullReducibleSet {
+            _phantom: core::marker::PhantomData,
+        },
+        units: NullUnitGroup {
+            _phantom: core::marker::PhantomData,
+        },
+        exterior: NullComplement {
+            term: NullTermExpression {
+                _phantom: core::marker::PhantomData,
+            },
+        },
+        free_rank: NullFreeRank {
+            _phantom: core::marker::PhantomData,
+        },
+        tag_site: NullTagSite {
+            ancilla: NullSiteIndex {
+                _phantom: core::marker::PhantomData,
+            },
+        },
+        source_type: NullTypeDefinition {
+            element: NullElement {
+                _phantom: core::marker::PhantomData,
+            },
+        },
+        fingerprint: ContentFingerprint::zero(),
+    };
 }
 
 impl<H: HostTypes> crate::bridge::partition::Partition<H> for NullPartition<H> {
