@@ -159,6 +159,13 @@ pub fn run_all(paths: &WorkspacePaths) -> anyhow::Result<ConformanceReport> {
     report.extend(validators::rust::endpoint_coverage::validate(
         &paths.workspace,
     )?);
+    // Phase 6 (orphan-closure): Path-4 theory-deferred register parity
+    // — every class classified Path4TheoryDeferred has a row in
+    // docs/theory_deferred.md with a non-empty research question, and
+    // every row corresponds to a Path-4 class.
+    report.extend(validators::rust::theory_deferred_register::validate(
+        &paths.workspace,
+    )?);
     // v0.2.2 Phase H: lints + cross-cutting.
     report.extend(validators::rust::feature_flag_layout::validate(
         &paths.workspace,

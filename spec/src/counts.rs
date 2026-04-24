@@ -162,7 +162,10 @@ pub const SHACL_TESTS: usize = 283;
 /// Workstream A: +5 target-doc cross-reference validators (sealed_type_coverage,
 /// resolver_signature_shape, constraint_encoder_completeness, w4_grounding_closure,
 /// spectral_sequence_walk).
-pub const CONFORMANCE_CHECKS: usize = 535;
+/// Phase 6 (orphan-closure): +1 `rust/theory_deferred_register` —
+/// bijection between Path-4 classifications and `docs/theory_deferred.md`
+/// rows.
+pub const CONFORMANCE_CHECKS: usize = 536;
 
 /// Number of amendments applied to the base ontology.
 pub const AMENDMENTS: usize = 95;

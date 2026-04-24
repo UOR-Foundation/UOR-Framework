@@ -34,6 +34,7 @@ pub mod resolver_tower;
 pub mod style;
 pub mod target_doc;
 pub mod test_assertion_depth;
+pub mod theory_deferred_register;
 pub mod trace_byte_layout_pinned;
 pub mod uor_foundation_verify_build;
 pub mod uor_time_surface;
