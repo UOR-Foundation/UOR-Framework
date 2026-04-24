@@ -1765,12 +1765,20 @@ fn emit_cartesian_product_shape(f: &mut RustFile) {
     f.doc_comment("shapes' Betti profiles. Used instead of");
     f.doc_comment("`primitive_simplicial_nerve_betti` when a shape declares itself as a");
     f.doc_comment("`CartesianProductShape`. Amendment §3c.");
-    f.line("pub const fn primitive_cartesian_nerve_betti<S: CartesianProductShape>()");
-    f.line("    -> [u32; crate::enforcement::MAX_BETTI_DIMENSION]");
+    f.doc_comment("");
+    f.doc_comment("Phase 1a (orphan-closure): propagates either component's");
+    f.doc_comment("`NERVE_CAPACITY_EXCEEDED` via `?`. Dropped `const fn` because");
+    f.doc_comment("the `Result` return of the per-component primitive is not `const`-evaluable.");
+    f.doc_comment("");
+    f.doc_comment("# Errors");
+    f.doc_comment("");
+    f.doc_comment("Returns `NERVE_CAPACITY_EXCEEDED` if either component exceeds caps.");
+    f.line("pub fn primitive_cartesian_nerve_betti<S: CartesianProductShape>()");
+    f.line("    -> Result<[u32; crate::enforcement::MAX_BETTI_DIMENSION], crate::enforcement::GenericImpossibilityWitness>");
     f.line("{");
-    f.line("    let left = crate::enforcement::primitive_simplicial_nerve_betti::<S::Left>();");
-    f.line("    let right = crate::enforcement::primitive_simplicial_nerve_betti::<S::Right>();");
-    f.line("    kunneth_compose(&left, &right)");
+    f.line("    let left = crate::enforcement::primitive_simplicial_nerve_betti::<S::Left>()?;");
+    f.line("    let right = crate::enforcement::primitive_simplicial_nerve_betti::<S::Right>()?;");
+    f.line("    Ok(kunneth_compose(&left, &right))");
     f.line("}");
     f.blank();
 
@@ -3076,7 +3084,7 @@ fn emit_resolver_entry_points(f: &mut RustFile, _ontology: &Ontology) {
     f.line("    // Betti-threading also produces content-distinct fingerprints for distinct");
     f.line("    // constraint topologies: two input shapes with different Betti profiles will");
     f.line("    // produce different certs even if both satisfy at every level.");
-    f.line("    let betti = crate::enforcement::primitive_simplicial_nerve_betti::<T>();");
+    f.line("    let betti = crate::enforcement::primitive_simplicial_nerve_betti::<T>()?;");
     f.line("    let mut page_index: u32 = 0;");
     f.line("    let mut from_bits: u16 = 8;");
     f.line("    let mut pages_hasher = H::initial();");

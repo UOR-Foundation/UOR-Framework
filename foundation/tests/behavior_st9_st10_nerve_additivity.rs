@@ -20,6 +20,19 @@ use uor_foundation::{
     ContentFingerprint, PartitionCoproductMintInputs, PartitionCoproductWitness, VerifiedMint,
 };
 
+/// Phase 1a wrapper: `primitive_simplicial_nerve_betti` now returns
+/// `Result<[u32; MAX_BETTI_DIMENSION], GenericImpossibilityWitness>` and
+/// fails fast on oversized inputs. Every operand shape in this test is
+/// ≤ cap, so the result is always `Ok`; panic on `Err` indicates a
+/// test-setup bug.
+#[allow(clippy::panic)]
+fn unwrap_betti<T: ConstrainedTypeShape + ?Sized>() -> [u32; MAX_BETTI_DIMENSION] {
+    match primitive_simplicial_nerve_betti::<T>() {
+        Ok(b) => b,
+        Err(w) => panic!("test shape exceeded nerve caps: {:?}", w.identity()),
+    }
+}
+
 // CircleNerve — three Affine constraints with pairwise overlap forming a
 // triangle nerve. Expected: Betti [1, 1, 0, ...], χ = 0.
 struct CircleNerve;
@@ -107,8 +120,8 @@ fn operand_betti_match_published_phase_x4_expectations() {
     // Sanity: confirm the operands' Betti profiles match what
     // phase_x4_betti.rs documents — anchors the rest of the test against
     // a known-good reference.
-    let circle = primitive_simplicial_nerve_betti::<CircleNerve>();
-    let tetra = primitive_simplicial_nerve_betti::<TetrahedronBoundary>();
+    let circle = unwrap_betti::<CircleNerve>();
+    let tetra = unwrap_betti::<TetrahedronBoundary>();
 
     // CircleNerve: connected (β_0 = 1), one independent loop (β_1 = 1).
     assert_eq!(circle[0], 1);
@@ -134,8 +147,8 @@ fn operand_betti_match_published_phase_x4_expectations() {
 #[test]
 fn st_9_st_10_mint_accepts_additive_prediction_end_to_end() {
     // Compute operand invariants from real primitives (no hardcoded values).
-    let left_betti = primitive_simplicial_nerve_betti::<CircleNerve>();
-    let right_betti = primitive_simplicial_nerve_betti::<TetrahedronBoundary>();
+    let left_betti = unwrap_betti::<CircleNerve>();
+    let right_betti = unwrap_betti::<TetrahedronBoundary>();
     let left_euler = euler_from_betti(&left_betti);
     let right_euler = euler_from_betti(&right_betti);
 

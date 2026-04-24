@@ -511,6 +511,22 @@ symbols = [
 ]
 behavior = "behavior_cartesian_product_witness"
 
+# ─── Mapping: Phase 1a (orphan-closure) — fail-fast nerve primitives ─
+# The nerve-Betti primitives and their Cartesian Künneth companion are
+# exercised end-to-end by:
+#   - `phase_x4_betti.rs` — correctness of Betti numbers on in-bounds shapes
+#   - `orphan_closure_capacity_fail_fast.rs` — `NERVE_CAPACITY_EXCEEDED`
+#     emission on oversized shapes
+#   - `behavior_st9_st10_nerve_additivity.rs` — additive-composition via
+#     the mint pipeline
+# The phase_x4_betti file is the canonical behavior-test for both.
+[coverage.nerve_primitives]
+symbols = [
+    "primitive_simplicial_nerve_betti",
+    "primitive_cartesian_nerve_betti",
+]
+behavior = "phase_x4_betti"
+
 # ─── Mapping: Product/Coproduct Completion Amendment — PartitionHandle ─
 [coverage.partition_handle_resolver]
 symbols = [

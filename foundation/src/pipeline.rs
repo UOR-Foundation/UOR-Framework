@@ -276,11 +276,18 @@ pub const fn kunneth_compose(
 /// shapes' Betti profiles. Used instead of
 /// `primitive_simplicial_nerve_betti` when a shape declares itself as a
 /// `CartesianProductShape`. Amendment §3c.
-pub const fn primitive_cartesian_nerve_betti<S: CartesianProductShape>(
-) -> [u32; crate::enforcement::MAX_BETTI_DIMENSION] {
-    let left = crate::enforcement::primitive_simplicial_nerve_betti::<S::Left>();
-    let right = crate::enforcement::primitive_simplicial_nerve_betti::<S::Right>();
-    kunneth_compose(&left, &right)
+/// Phase 1a (orphan-closure): propagates either component's
+/// `NERVE_CAPACITY_EXCEEDED` via `?`. Dropped `const fn` because
+/// the `Result` return of the per-component primitive is not `const`-evaluable.
+/// # Errors
+/// Returns `NERVE_CAPACITY_EXCEEDED` if either component exceeds caps.
+pub fn primitive_cartesian_nerve_betti<S: CartesianProductShape>() -> Result<
+    [u32; crate::enforcement::MAX_BETTI_DIMENSION],
+    crate::enforcement::GenericImpossibilityWitness,
+> {
+    let left = crate::enforcement::primitive_simplicial_nerve_betti::<S::Left>()?;
+    let right = crate::enforcement::primitive_simplicial_nerve_betti::<S::Right>()?;
+    Ok(kunneth_compose(&left, &right))
 }
 
 /// Shift every site-index reference in a `ConstraintRef` by `offset`.
@@ -1393,7 +1400,7 @@ pub fn run_incremental_completeness<
     // Betti-threading also produces content-distinct fingerprints for distinct
     // constraint topologies: two input shapes with different Betti profiles will
     // produce different certs even if both satisfy at every level.
-    let betti = crate::enforcement::primitive_simplicial_nerve_betti::<T>();
+    let betti = crate::enforcement::primitive_simplicial_nerve_betti::<T>()?;
     let mut page_index: u32 = 0;
     let mut from_bits: u16 = 8;
     let mut pages_hasher = H::initial();

@@ -6380,17 +6380,31 @@ fn emit_phase_j_primitives(f: &mut RustFile) {
     f.doc_comment("`NERVE_RANK_MOD_P = 1_000_000_007`) by `integer_matrix_rank`. Nerve boundary");
     f.doc_comment("matrices have ±1/0 entries and are totally unimodular, so rank over ℤ/p");
     f.doc_comment("equals rank over ℚ equals rank over ℤ for any prime p not dividing a minor.");
-    f.doc_comment("Inputs are truncated to `NERVE_CONSTRAINTS_CAP = 8` constraints and");
-    f.doc_comment("`NERVE_SITES_CAP = 8` sites to keep the boundary matrices stack-fittable.");
-    f.line("pub const fn primitive_simplicial_nerve_betti<T: crate::pipeline::ConstrainedTypeShape + ?Sized>() -> [u32; MAX_BETTI_DIMENSION] {");
+    f.doc_comment("Phase 1a (orphan-closure): inputs larger than `NERVE_CONSTRAINTS_CAP = 8`");
+    f.doc_comment("constraints or `NERVE_SITES_CAP = 8` sites return");
+    f.doc_comment("`Err(GenericImpossibilityWitness::for_identity(\"NERVE_CAPACITY_EXCEEDED\"))`");
+    f.doc_comment("rather than silently truncating — truncation produced Betti numbers for a");
+    f.doc_comment("differently-shaped complex than the caller asked about. Callers propagate");
+    f.doc_comment("the witness via `?` (pattern mirrored on `primitive_terminal_reduction`).");
+    f.doc_comment("");
+    f.doc_comment("# Errors");
+    f.doc_comment("");
+    f.doc_comment("Returns `NERVE_CAPACITY_EXCEEDED` when either cap is exceeded.");
+    f.line("pub fn primitive_simplicial_nerve_betti<T: crate::pipeline::ConstrainedTypeShape + ?Sized>() -> Result<[u32; MAX_BETTI_DIMENSION], GenericImpossibilityWitness> {");
     f.line("    let k_all = T::CONSTRAINTS.len();");
-    f.line("    let n_constraints = if k_all < NERVE_CONSTRAINTS_CAP { k_all } else { NERVE_CONSTRAINTS_CAP };");
+    f.line("    if k_all > NERVE_CONSTRAINTS_CAP {");
+    f.line("        return Err(GenericImpossibilityWitness::for_identity(\"NERVE_CAPACITY_EXCEEDED\"));");
+    f.line("    }");
     f.line("    let s_all = T::SITE_COUNT;");
-    f.line("    let n_sites = if s_all < NERVE_SITES_CAP { s_all } else { NERVE_SITES_CAP };");
+    f.line("    if s_all > NERVE_SITES_CAP {");
+    f.line("        return Err(GenericImpossibilityWitness::for_identity(\"NERVE_CAPACITY_EXCEEDED\"));");
+    f.line("    }");
+    f.line("    let n_constraints = k_all;");
+    f.line("    let n_sites = s_all;");
     f.line("    let mut out = [0u32; MAX_BETTI_DIMENSION];");
     f.line("    if n_constraints == 0 {");
     f.line("        out[0] = 1;");
-    f.line("        return out;");
+    f.line("        return Ok(out);");
     f.line("    }");
     f.line("    // Compute site-support bitmask per constraint (bit `s` set iff constraint touches site `s`).");
     f.line("    let mut support = [0u16; NERVE_CONSTRAINTS_CAP];");
@@ -6479,15 +6493,17 @@ fn emit_phase_j_primitives(f: &mut RustFile) {
     f.line("    out[0] = if b0 == 0 { 1 } else { b0 };");
     f.line("    if MAX_BETTI_DIMENSION > 1 { out[1] = b1; }");
     f.line("    if MAX_BETTI_DIMENSION > 2 { out[2] = b2; }");
-    f.line("    out");
+    f.line("    Ok(out)");
     f.line("}");
     f.blank();
     f.doc_comment("Phase X.4: cap on the number of constraints considered by the nerve");
-    f.doc_comment("primitive. Inputs with more constraints are truncated to the first");
-    f.doc_comment("`NERVE_CONSTRAINTS_CAP` — content-deterministic and documented.");
+    f.doc_comment("primitive. Phase 1a (orphan-closure): inputs exceeding this cap are");
+    f.doc_comment("rejected via `NERVE_CAPACITY_EXCEEDED` (was previously silent truncation).");
     f.line("pub const NERVE_CONSTRAINTS_CAP: usize = 8;");
     f.blank();
     f.doc_comment("Phase X.4: cap on site-support bitmask width (matches `u16` storage).");
+    f.doc_comment("Phase 1a (orphan-closure): inputs exceeding this cap are rejected via");
+    f.doc_comment("`NERVE_CAPACITY_EXCEEDED` (was previously silent truncation).");
     f.line("pub const NERVE_SITES_CAP: usize = 8;");
     f.blank();
     f.doc_comment("Phase X.4: maximum number of 1-simplices = C(NERVE_CONSTRAINTS_CAP, 2) = 28.");
@@ -7439,17 +7455,20 @@ fn emit_phase_d_ct_body(f: &mut RustFile, composition: PhaseDKernelComposition) 
             f.line("            hasher = crate::enforcement::fold_terminal_reduction(hasher, tr2_bits, tr2_constraints, tr2_sat);");
         }
         PhaseDKernelComposition::SimplicialNerve => {
-            f.line("            let betti = crate::enforcement::primitive_simplicial_nerve_betti::<T>();");
+            f.line("            let betti = crate::enforcement::primitive_simplicial_nerve_betti::<T>()");
+            f.line("                .map_err(crate::enforcement::Certified::new)?;");
             f.line("            hasher = crate::enforcement::fold_betti_tuple(hasher, &betti);");
         }
         PhaseDKernelComposition::NerveAndDescent => {
-            f.line("            let betti = crate::enforcement::primitive_simplicial_nerve_betti::<T>();");
+            f.line("            let betti = crate::enforcement::primitive_simplicial_nerve_betti::<T>()");
+            f.line("                .map_err(crate::enforcement::Certified::new)?;");
             f.line("            hasher = crate::enforcement::fold_betti_tuple(hasher, &betti);");
             f.line("            let (residual, entropy) = crate::enforcement::primitive_descent_metrics::<T>(&betti);");
             f.line("            hasher = crate::enforcement::fold_descent_metrics(hasher, residual, entropy);");
         }
         PhaseDKernelComposition::NerveAndDihedral => {
-            f.line("            let betti = crate::enforcement::primitive_simplicial_nerve_betti::<T>();");
+            f.line("            let betti = crate::enforcement::primitive_simplicial_nerve_betti::<T>()");
+            f.line("                .map_err(crate::enforcement::Certified::new)?;");
             f.line("            hasher = crate::enforcement::fold_betti_tuple(hasher, &betti);");
             f.line("            let (orbit_size, representative) = crate::enforcement::primitive_dihedral_signature::<T>();");
             f.line("            hasher = crate::enforcement::fold_dihedral_signature(hasher, orbit_size, representative);");
@@ -7460,7 +7479,8 @@ fn emit_phase_d_ct_body(f: &mut RustFile, composition: PhaseDKernelComposition) 
             // the bidegree-(0,1,2) projection: H^0 (automorphisms),
             // H^1 (first-order deformations), H^2 (obstructions). Fold each
             // dimension explicitly — no sentinel byte.
-            f.line("            let betti = crate::enforcement::primitive_simplicial_nerve_betti::<T>();");
+            f.line("            let betti = crate::enforcement::primitive_simplicial_nerve_betti::<T>()");
+            f.line("                .map_err(crate::enforcement::Certified::new)?;");
             f.line("            let automorphisms: u32 = betti[0];");
             f.line(
                 "            let deformations: u32 = if crate::enforcement::MAX_BETTI_DIMENSION > 1 { betti[1] } else { 0 };",
@@ -7489,7 +7509,8 @@ fn emit_phase_d_ct_body(f: &mut RustFile, composition: PhaseDKernelComposition) 
             f.line("            hasher = crate::enforcement::fold_dihedral_signature(hasher, orbit_size, representative);");
         }
         PhaseDKernelComposition::CompletenessEuler => {
-            f.line("            let betti = crate::enforcement::primitive_simplicial_nerve_betti::<T>();");
+            f.line("            let betti = crate::enforcement::primitive_simplicial_nerve_betti::<T>()");
+            f.line("                .map_err(crate::enforcement::Certified::new)?;");
             f.line(
                 "            let chi = crate::enforcement::primitive_euler_characteristic(&betti);",
             );

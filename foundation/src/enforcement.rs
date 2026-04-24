@@ -6450,26 +6450,34 @@ pub(crate) fn fold_terminal_reduction<H: Hasher>(
 /// `NERVE_RANK_MOD_P = 1_000_000_007`) by `integer_matrix_rank`. Nerve boundary
 /// matrices have ±1/0 entries and are totally unimodular, so rank over ℤ/p
 /// equals rank over ℚ equals rank over ℤ for any prime p not dividing a minor.
-/// Inputs are truncated to `NERVE_CONSTRAINTS_CAP = 8` constraints and
-/// `NERVE_SITES_CAP = 8` sites to keep the boundary matrices stack-fittable.
-pub const fn primitive_simplicial_nerve_betti<T: crate::pipeline::ConstrainedTypeShape + ?Sized>(
-) -> [u32; MAX_BETTI_DIMENSION] {
+/// Phase 1a (orphan-closure): inputs larger than `NERVE_CONSTRAINTS_CAP = 8`
+/// constraints or `NERVE_SITES_CAP = 8` sites return
+/// `Err(GenericImpossibilityWitness::for_identity("NERVE_CAPACITY_EXCEEDED"))`
+/// rather than silently truncating — truncation produced Betti numbers for a
+/// differently-shaped complex than the caller asked about. Callers propagate
+/// the witness via `?` (pattern mirrored on `primitive_terminal_reduction`).
+/// # Errors
+/// Returns `NERVE_CAPACITY_EXCEEDED` when either cap is exceeded.
+pub fn primitive_simplicial_nerve_betti<T: crate::pipeline::ConstrainedTypeShape + ?Sized>(
+) -> Result<[u32; MAX_BETTI_DIMENSION], GenericImpossibilityWitness> {
     let k_all = T::CONSTRAINTS.len();
-    let n_constraints = if k_all < NERVE_CONSTRAINTS_CAP {
-        k_all
-    } else {
-        NERVE_CONSTRAINTS_CAP
-    };
+    if k_all > NERVE_CONSTRAINTS_CAP {
+        return Err(GenericImpossibilityWitness::for_identity(
+            "NERVE_CAPACITY_EXCEEDED",
+        ));
+    }
     let s_all = T::SITE_COUNT;
-    let n_sites = if s_all < NERVE_SITES_CAP {
-        s_all
-    } else {
-        NERVE_SITES_CAP
-    };
+    if s_all > NERVE_SITES_CAP {
+        return Err(GenericImpossibilityWitness::for_identity(
+            "NERVE_CAPACITY_EXCEEDED",
+        ));
+    }
+    let n_constraints = k_all;
+    let n_sites = s_all;
     let mut out = [0u32; MAX_BETTI_DIMENSION];
     if n_constraints == 0 {
         out[0] = 1;
-        return out;
+        return Ok(out);
     }
     // Compute site-support bitmask per constraint (bit `s` set iff constraint touches site `s`).
     let mut support = [0u16; NERVE_CONSTRAINTS_CAP];
@@ -6572,15 +6580,17 @@ pub const fn primitive_simplicial_nerve_betti<T: crate::pipeline::ConstrainedTyp
     if MAX_BETTI_DIMENSION > 2 {
         out[2] = b2;
     }
-    out
+    Ok(out)
 }
 
 /// Phase X.4: cap on the number of constraints considered by the nerve
-/// primitive. Inputs with more constraints are truncated to the first
-/// `NERVE_CONSTRAINTS_CAP` — content-deterministic and documented.
+/// primitive. Phase 1a (orphan-closure): inputs exceeding this cap are
+/// rejected via `NERVE_CAPACITY_EXCEEDED` (was previously silent truncation).
 pub const NERVE_CONSTRAINTS_CAP: usize = 8;
 
 /// Phase X.4: cap on site-support bitmask width (matches `u16` storage).
+/// Phase 1a (orphan-closure): inputs exceeding this cap are rejected via
+/// `NERVE_CAPACITY_EXCEEDED` (was previously silent truncation).
 pub const NERVE_SITES_CAP: usize = 8;
 
 /// Phase X.4: maximum number of 1-simplices = C(NERVE_CONSTRAINTS_CAP, 2) = 28.
@@ -8610,7 +8620,8 @@ pub mod resolver {
                 tr_constraints,
                 tr_sat,
             );
-            let betti = crate::enforcement::primitive_simplicial_nerve_betti::<T>();
+            let betti = crate::enforcement::primitive_simplicial_nerve_betti::<T>()
+                .map_err(crate::enforcement::Certified::new)?;
             hasher = crate::enforcement::fold_betti_tuple(hasher, &betti);
             let (residual, entropy) = crate::enforcement::primitive_descent_metrics::<T>(&betti);
             hasher = crate::enforcement::fold_descent_metrics(hasher, residual, entropy);
@@ -8704,7 +8715,8 @@ pub mod resolver {
                 tr_constraints,
                 tr_sat,
             );
-            let betti = crate::enforcement::primitive_simplicial_nerve_betti::<T>();
+            let betti = crate::enforcement::primitive_simplicial_nerve_betti::<T>()
+                .map_err(crate::enforcement::Certified::new)?;
             hasher = crate::enforcement::fold_betti_tuple(hasher, &betti);
             hasher = crate::enforcement::fold_unit_digest(
                 hasher,
@@ -8796,7 +8808,8 @@ pub mod resolver {
                 tr_constraints,
                 tr_sat,
             );
-            let betti = crate::enforcement::primitive_simplicial_nerve_betti::<T>();
+            let betti = crate::enforcement::primitive_simplicial_nerve_betti::<T>()
+                .map_err(crate::enforcement::Certified::new)?;
             hasher = crate::enforcement::fold_betti_tuple(hasher, &betti);
             let (orbit_size, representative) =
                 crate::enforcement::primitive_dihedral_signature::<T>();
@@ -8892,7 +8905,8 @@ pub mod resolver {
                 tr_constraints,
                 tr_sat,
             );
-            let betti = crate::enforcement::primitive_simplicial_nerve_betti::<T>();
+            let betti = crate::enforcement::primitive_simplicial_nerve_betti::<T>()
+                .map_err(crate::enforcement::Certified::new)?;
             let automorphisms: u32 = betti[0];
             let deformations: u32 = if crate::enforcement::MAX_BETTI_DIMENSION > 1 {
                 betti[1]
@@ -9578,7 +9592,8 @@ pub mod resolver {
                 tr_constraints,
                 tr_sat,
             );
-            let betti = crate::enforcement::primitive_simplicial_nerve_betti::<T>();
+            let betti = crate::enforcement::primitive_simplicial_nerve_betti::<T>()
+                .map_err(crate::enforcement::Certified::new)?;
             let chi = crate::enforcement::primitive_euler_characteristic(&betti);
             hasher = crate::enforcement::fold_betti_tuple(hasher, &betti);
             hasher = hasher.fold_bytes(&chi.to_be_bytes());

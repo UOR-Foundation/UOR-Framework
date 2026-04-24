@@ -35,6 +35,7 @@ foundation/src/enforcement.rs: fn fold_stream_step_digest
 foundation/src/enforcement.rs: fn fold_unit_digest
 foundation/src/enforcement.rs: fn mint_cohomology_class
 foundation/src/enforcement.rs: fn mint_homology_class
+foundation/src/enforcement.rs: fn primitive_simplicial_nerve_betti
 foundation/src/enforcement.rs: fn subscribe_trace_events
 foundation/src/enforcement.rs: mod __test_helpers
 foundation/src/enforcement.rs: mod calibrations
@@ -315,6 +316,7 @@ foundation/src/pipeline.rs: fn preflight_dispatch_coverage
 foundation/src/pipeline.rs: fn preflight_feasibility
 foundation/src/pipeline.rs: fn preflight_package_coherence
 foundation/src/pipeline.rs: fn preflight_timing
+foundation/src/pipeline.rs: fn primitive_cartesian_nerve_betti
 foundation/src/pipeline.rs: fn run
 foundation/src/pipeline.rs: fn run_const
 foundation/src/pipeline.rs: fn run_grounding_aware

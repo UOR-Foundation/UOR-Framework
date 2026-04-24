@@ -14,6 +14,19 @@
 use uor_foundation::enforcement::{primitive_simplicial_nerve_betti, MAX_BETTI_DIMENSION};
 use uor_foundation::pipeline::{ConstrainedTypeShape, ConstraintRef};
 
+/// Phase 1a wrapper: `primitive_simplicial_nerve_betti` now returns
+/// `Result<[u32; MAX_BETTI_DIMENSION], GenericImpossibilityWitness>` and
+/// fails fast on oversized inputs. Every shape in this file is sized at
+/// or below the nerve caps, so the call is always `Ok`; the helper
+/// panics on `Err` because that would indicate a test-setup bug.
+#[allow(clippy::panic)]
+fn unwrap_betti<T: ConstrainedTypeShape + ?Sized>() -> [u32; MAX_BETTI_DIMENSION] {
+    match primitive_simplicial_nerve_betti::<T>() {
+        Ok(b) => b,
+        Err(w) => panic!("test shape exceeded nerve caps: {:?}", w.identity()),
+    }
+}
+
 /// Two Site constraints at distinct sites → 2 disconnected vertices, no edges.
 struct DisconnectedPair;
 impl ConstrainedTypeShape for DisconnectedPair {
@@ -27,7 +40,7 @@ impl ConstrainedTypeShape for DisconnectedPair {
 
 #[test]
 fn disconnected_pair_has_b0_equals_two() {
-    let b = primitive_simplicial_nerve_betti::<DisconnectedPair>();
+    let b = unwrap_betti::<DisconnectedPair>();
     assert_eq!(b[0], 2, "two disconnected components");
     assert_eq!(b[1], 0, "no 1-cycles");
     assert_eq!(b[2], 0, "no 2-cycles");
@@ -61,7 +74,7 @@ impl ConstrainedTypeShape for FilledTriangle {
 
 #[test]
 fn filled_triangle_is_contractible() {
-    let b = primitive_simplicial_nerve_betti::<FilledTriangle>();
+    let b = unwrap_betti::<FilledTriangle>();
     assert_eq!(b[0], 1, "one connected component");
     assert_eq!(b[1], 0, "the 2-simplex fills the 1-cycle");
     assert_eq!(b[2], 0, "2-simplex is a boundary, not a cycle");
@@ -92,7 +105,7 @@ impl ConstrainedTypeShape for CircleNerve {
 
 #[test]
 fn circle_nerve_has_one_nontrivial_loop() {
-    let b = primitive_simplicial_nerve_betti::<CircleNerve>();
+    let b = unwrap_betti::<CircleNerve>();
     assert_eq!(b[0], 1, "connected");
     assert_eq!(b[1], 1, "one independent 1-cycle (the triangle cycle)");
     assert_eq!(b[2], 0, "no 2-simplex to fill the loop");
@@ -131,7 +144,7 @@ impl ConstrainedTypeShape for TetrahedronBoundary {
 
 #[test]
 fn tetrahedron_boundary_is_a_two_sphere() {
-    let b = primitive_simplicial_nerve_betti::<TetrahedronBoundary>();
+    let b = unwrap_betti::<TetrahedronBoundary>();
     assert_eq!(b[0], 1, "2-sphere is connected");
     assert_eq!(b[1], 0, "2-sphere has no 1-cycles");
     assert_eq!(b[2], 1, "2-sphere has one independent 2-cycle");
@@ -148,7 +161,7 @@ impl ConstrainedTypeShape for Empty {
 
 #[test]
 fn empty_nerve_has_unit_component() {
-    let b = primitive_simplicial_nerve_betti::<Empty>();
+    let b = unwrap_betti::<Empty>();
     assert_eq!(b[0], 1);
     for &bk in b.iter().take(MAX_BETTI_DIMENSION).skip(1) {
         assert_eq!(bk, 0);
@@ -159,8 +172,8 @@ fn empty_nerve_has_unit_component() {
 /// the same Betti tuple.
 #[test]
 fn betti_is_content_deterministic() {
-    let a = primitive_simplicial_nerve_betti::<CircleNerve>();
-    let b = primitive_simplicial_nerve_betti::<CircleNerve>();
+    let a = unwrap_betti::<CircleNerve>();
+    let b = unwrap_betti::<CircleNerve>();
     assert_eq!(a, b);
 }
 
@@ -168,10 +181,10 @@ fn betti_is_content_deterministic() {
 /// different Betti tuples.
 #[test]
 fn distinct_shapes_yield_distinct_betti_tuples() {
-    let triangle = primitive_simplicial_nerve_betti::<FilledTriangle>();
-    let circle = primitive_simplicial_nerve_betti::<CircleNerve>();
-    let sphere = primitive_simplicial_nerve_betti::<TetrahedronBoundary>();
-    let pair = primitive_simplicial_nerve_betti::<DisconnectedPair>();
+    let triangle = unwrap_betti::<FilledTriangle>();
+    let circle = unwrap_betti::<CircleNerve>();
+    let sphere = unwrap_betti::<TetrahedronBoundary>();
+    let pair = unwrap_betti::<DisconnectedPair>();
     assert_ne!(triangle, circle);
     assert_ne!(triangle, sphere);
     assert_ne!(triangle, pair);
