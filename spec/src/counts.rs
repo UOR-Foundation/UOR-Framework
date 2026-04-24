@@ -329,16 +329,17 @@ pub const CLASSIFICATION_PATH3: usize = 0;
 /// stream) annotated by Phase 6. Correctly orphan by design.
 pub const CLASSIFICATION_PATH4: usize = 20;
 
-/// Phase 2 Null-stub emission count (ratchet — grows, never shrinks).
+/// Total Null-stub count emitted to bridge/kernel/user namespaces
+/// (ratchet — grows, never shrinks) as of Phase 3. Excludes the 14
+/// hand-written `NullPartition<H>`-family stubs in `enforcement.rs`.
 ///
-/// The Phase-2 codegen (`traits::emit_null_stubs_for_namespace`) computes
-/// a fixed-point `emitable_null_set` — a class is only emitted if every
-/// class it references (transitively, through its own properties plus its
-/// supertraits' properties) also has a Null stub emitted, an existing
-/// hand-written stub (`NullPartition<H>` family), an XSD primitive type,
-/// or is a skipped enum class. The initial closure is 181 newly-emitted
-/// Null stubs across bridge/kernel/user namespaces; the remaining
-/// `CLASSIFICATION_PATH1 - CLASSIFICATION_PATH1_EMITTED = 237` Path-1
-/// classes cascade out of Phase 2 (reference chains touching enum
-/// accessors or Path-2/3/4 classes) and close in later phases.
-pub const CLASSIFICATION_PATH1_EMITTED: usize = 181;
+/// Breakdown at Phase 3 close:
+///
+///   - Phase 2: 181 Null stubs for `Path1HandleResolver` classes whose
+///     reference closure lands entirely in the emitable set.
+///   - Phase 3: +7 Null stubs for `Path2TheoremWitness` classes that
+///     satisfy the same reference-closure invariant.
+///
+/// Total: 188. The Phase-2 codegen filter (`should_emit_null_stub`) now
+/// accepts both `Path1HandleResolver` and `Path2TheoremWitness`.
+pub const CLASSIFICATION_PATH1_EMITTED: usize = 188;

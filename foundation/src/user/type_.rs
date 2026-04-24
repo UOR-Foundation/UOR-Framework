@@ -590,6 +590,38 @@ impl<H: HostTypes> NullTypeSynthesisResult<H> {
 }
 impl<H: HostTypes> TypeSynthesisResult<H> for NullTypeSynthesisResult<H> {}
 
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `LiftObstruction<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullLiftObstruction<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullLiftObstruction<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullLiftObstruction<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullLiftObstruction<H> = NullLiftObstruction {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> LiftObstruction<H> for NullLiftObstruction<H> {
+    fn obstruction_trivial(&self) -> bool {
+        false
+    }
+    type SiteIndex = crate::bridge::partition::NullSiteIndex<H>;
+    fn obstruction_site(&self) -> &Self::SiteIndex {
+        &<crate::bridge::partition::NullSiteIndex<H>>::ABSENT
+    }
+}
+
 /// Phase 2 (orphan-closure) — resolver-absent default impl of `SuperposedSiteState<H>`.
 /// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
 /// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
@@ -680,6 +712,41 @@ impl<H: HostTypes> CollapsedSiteState<H> for NullCollapsedSiteState<H> {
     }
     fn surviving_amplitude(&self) -> H::Decimal {
         H::EMPTY_DECIMAL
+    }
+}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `ObstructionChain<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullObstructionChain<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullObstructionChain<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullObstructionChain<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullObstructionChain<H> = NullObstructionChain {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> ObstructionChain<H> for NullObstructionChain<H> {
+    type LiftObstruction = NullLiftObstruction<H>;
+    fn obstruction_at(&self) -> &[Self::LiftObstruction] {
+        &[]
+    }
+    fn obstruction_count(&self) -> u64 {
+        0
+    }
+    fn is_flat(&self) -> bool {
+        false
     }
 }
 

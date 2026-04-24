@@ -22,12 +22,9 @@ use std::path::PathBuf;
 use uor_codegen::classification::{classify_all, PathKind};
 use uor_ontology::Ontology;
 
-/// Stub-count ratchet: Phase 2's initial close is 181 newly-emitted Null
-/// stubs across bridge/kernel/user (on top of the 14 hand-written
-/// NullPartition-family stubs in enforcement.rs from the Product/Coproduct
-/// Amendment). The number only grows as Phase 2 expands; drops indicate
-/// regression.
-const MIN_PHASE2_STUBS: usize = 180;
+/// Stub-count ratchet: Phase 2 + Phase 3 close. The number only grows
+/// as later phases expand the emitable set; drops indicate regression.
+const MIN_PHASE2_STUBS: usize = 188;
 
 fn find_workspace_root() -> PathBuf {
     let mut dir = std::env::current_dir().expect("cwd");

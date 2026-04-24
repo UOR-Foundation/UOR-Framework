@@ -318,10 +318,12 @@ fn existing_null_class_iris() -> HashMap<&'static str, &'static str> {
     m
 }
 
-/// Filters a class for Phase-2 Null emission.
+/// Filters a class for Phase-2/3 Null emission.
 ///
 /// Emit iff the class:
-///   - classifies `Path1HandleResolver` via `classification::classify`; AND
+///   - classifies `Path1HandleResolver` (Phase 2) OR `Path2TheoremWitness`
+///     (Phase 3: the witness trait is itself an orphan until a concrete
+///     type impls it); AND
 ///   - does not have any accessor whose range is an enum class (enum defaults
 ///     require per-enum `Default` impls, deferred to a future phase); AND
 ///   - is not itself an enum class.
@@ -337,6 +339,7 @@ fn should_emit_null_stub(
     if !matches!(
         path_kind,
         crate::classification::PathKind::Path1HandleResolver
+            | crate::classification::PathKind::Path2TheoremWitness { .. }
     ) {
         return false;
     }

@@ -110,3 +110,35 @@ impl<H: HostTypes> EffectTarget<H> for NullEffectTarget<H> {
         0
     }
 }
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `DisjointnessWitness<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullDisjointnessWitness<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullDisjointnessWitness<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullDisjointnessWitness<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullDisjointnessWitness<H> = NullDisjointnessWitness {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> DisjointnessWitness<H> for NullDisjointnessWitness<H> {
+    type EffectTarget = NullEffectTarget<H>;
+    fn disjointness_left(&self) -> &Self::EffectTarget {
+        &<NullEffectTarget<H>>::ABSENT
+    }
+    fn disjointness_right(&self) -> &Self::EffectTarget {
+        &<NullEffectTarget<H>>::ABSENT
+    }
+}
