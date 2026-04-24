@@ -279,19 +279,14 @@ pub struct NullWitness<H: HostTypes> {
     _phantom: core::marker::PhantomData<H>,
 }
 impl<H: HostTypes> Default for NullWitness<H> {
-    fn default() -> Self {
-        Self {
-            _phantom: core::marker::PhantomData,
-        }
-    }
+    fn default() -> Self { Self { _phantom: core::marker::PhantomData } }
 }
 impl<H: HostTypes> NullWitness<H> {
     /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
-    pub const ABSENT: NullWitness<H> = NullWitness {
-        _phantom: core::marker::PhantomData,
-    };
+    pub const ABSENT: NullWitness<H> = NullWitness { _phantom: core::marker::PhantomData };
 }
-impl<H: HostTypes> Witness<H> for NullWitness<H> {}
+impl<H: HostTypes> Witness<H> for NullWitness<H> {
+}
 
 /// Phase 2 (orphan-closure) — resolver-absent default impl of `GroundingWitness<H>`.
 /// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
@@ -303,28 +298,19 @@ pub struct NullGroundingWitness<H: HostTypes> {
     _phantom: core::marker::PhantomData<H>,
 }
 impl<H: HostTypes> Default for NullGroundingWitness<H> {
-    fn default() -> Self {
-        Self {
-            _phantom: core::marker::PhantomData,
-        }
-    }
+    fn default() -> Self { Self { _phantom: core::marker::PhantomData } }
 }
 impl<H: HostTypes> NullGroundingWitness<H> {
     /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
-    pub const ABSENT: NullGroundingWitness<H> = NullGroundingWitness {
-        _phantom: core::marker::PhantomData,
-    };
+    pub const ABSENT: NullGroundingWitness<H> = NullGroundingWitness { _phantom: core::marker::PhantomData };
 }
-impl<H: HostTypes> Witness<H> for NullGroundingWitness<H> {}
+impl<H: HostTypes> Witness<H> for NullGroundingWitness<H> {
+}
 impl<H: HostTypes> GroundingWitness<H> for NullGroundingWitness<H> {
     type SurfaceSymbol = crate::kernel::schema::NullSurfaceSymbol<H>;
-    fn surface_symbol(&self) -> &Self::SurfaceSymbol {
-        &<crate::kernel::schema::NullSurfaceSymbol<H>>::ABSENT
-    }
+    fn surface_symbol(&self) -> &Self::SurfaceSymbol { &<crate::kernel::schema::NullSurfaceSymbol<H>>::ABSENT }
     type Element = crate::kernel::address::NullElement<H>;
-    fn grounded_address(&self) -> &Self::Element {
-        &<crate::kernel::address::NullElement<H>>::ABSENT
-    }
+    fn grounded_address(&self) -> &Self::Element { &<crate::kernel::address::NullElement<H>>::ABSENT }
 }
 
 /// Phase 2 (orphan-closure) — resolver-absent default impl of `ProjectionWitness<H>`.
@@ -337,28 +323,19 @@ pub struct NullProjectionWitness<H: HostTypes> {
     _phantom: core::marker::PhantomData<H>,
 }
 impl<H: HostTypes> Default for NullProjectionWitness<H> {
-    fn default() -> Self {
-        Self {
-            _phantom: core::marker::PhantomData,
-        }
-    }
+    fn default() -> Self { Self { _phantom: core::marker::PhantomData } }
 }
 impl<H: HostTypes> NullProjectionWitness<H> {
     /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
-    pub const ABSENT: NullProjectionWitness<H> = NullProjectionWitness {
-        _phantom: core::marker::PhantomData,
-    };
+    pub const ABSENT: NullProjectionWitness<H> = NullProjectionWitness { _phantom: core::marker::PhantomData };
 }
-impl<H: HostTypes> Witness<H> for NullProjectionWitness<H> {}
+impl<H: HostTypes> Witness<H> for NullProjectionWitness<H> {
+}
 impl<H: HostTypes> ProjectionWitness<H> for NullProjectionWitness<H> {
     type Partition = crate::enforcement::NullPartition<H>;
-    fn projection_source(&self) -> &Self::Partition {
-        &<crate::enforcement::NullPartition<H>>::ABSENT
-    }
+    fn projection_source(&self) -> &Self::Partition { &<crate::enforcement::NullPartition<H>>::ABSENT }
     type SymbolSequence = NullSymbolSequence<H>;
-    fn projection_output(&self) -> &Self::SymbolSequence {
-        &<NullSymbolSequence<H>>::ABSENT
-    }
+    fn projection_output(&self) -> &Self::SymbolSequence { &<NullSymbolSequence<H>>::ABSENT }
 }
 
 /// Phase 2 (orphan-closure) — resolver-absent default impl of `SymbolSequence<H>`.
@@ -371,23 +348,15 @@ pub struct NullSymbolSequence<H: HostTypes> {
     _phantom: core::marker::PhantomData<H>,
 }
 impl<H: HostTypes> Default for NullSymbolSequence<H> {
-    fn default() -> Self {
-        Self {
-            _phantom: core::marker::PhantomData,
-        }
-    }
+    fn default() -> Self { Self { _phantom: core::marker::PhantomData } }
 }
 impl<H: HostTypes> NullSymbolSequence<H> {
     /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
-    pub const ABSENT: NullSymbolSequence<H> = NullSymbolSequence {
-        _phantom: core::marker::PhantomData,
-    };
+    pub const ABSENT: NullSymbolSequence<H> = NullSymbolSequence { _phantom: core::marker::PhantomData };
 }
 impl<H: HostTypes> SymbolSequence<H> for NullSymbolSequence<H> {
     type SequenceElement = NullSequenceElement<H>;
-    fn has_element(&self) -> &[Self::SequenceElement] {
-        &[]
-    }
+    fn has_element(&self) -> &[Self::SequenceElement] { &[] }
 }
 
 /// Phase 2 (orphan-closure) — resolver-absent default impl of `SequenceElement<H>`.
@@ -400,26 +369,16 @@ pub struct NullSequenceElement<H: HostTypes> {
     _phantom: core::marker::PhantomData<H>,
 }
 impl<H: HostTypes> Default for NullSequenceElement<H> {
-    fn default() -> Self {
-        Self {
-            _phantom: core::marker::PhantomData,
-        }
-    }
+    fn default() -> Self { Self { _phantom: core::marker::PhantomData } }
 }
 impl<H: HostTypes> NullSequenceElement<H> {
     /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
-    pub const ABSENT: NullSequenceElement<H> = NullSequenceElement {
-        _phantom: core::marker::PhantomData,
-    };
+    pub const ABSENT: NullSequenceElement<H> = NullSequenceElement { _phantom: core::marker::PhantomData };
 }
 impl<H: HostTypes> SequenceElement<H> for NullSequenceElement<H> {
     type SurfaceSymbol = crate::kernel::schema::NullSurfaceSymbol<H>;
-    fn element_value(&self) -> &Self::SurfaceSymbol {
-        &<crate::kernel::schema::NullSurfaceSymbol<H>>::ABSENT
-    }
-    fn element_index(&self) -> u64 {
-        0
-    }
+    fn element_value(&self) -> &Self::SurfaceSymbol { &<crate::kernel::schema::NullSurfaceSymbol<H>>::ABSENT }
+    fn element_index(&self) -> u64 { 0 }
 }
 
 /// The critical composition law: neg ∘ bnot = succ. This is the operational form of the critical identity theorem. The composition of the two involutions (neg, bnot) yields the successor operation. Non-associative and non-commutative.

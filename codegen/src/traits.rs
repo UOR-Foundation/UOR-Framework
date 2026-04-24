@@ -346,6 +346,9 @@ fn should_emit_null_stub(
     // Exclude classes with any enum-typed accessor. Property range matching
     // an enum local name means the generated trait method returns that enum
     // directly; the Null stub would need to default to a specific variant.
+    // Phase 4 attempted enum-support via `{Enum}::default()` — reverted due
+    // to (a) WittLevel being a struct not enum, (b) inherited associated
+    // types, (c) cross-namespace enum imports.
     for (_, props) in all_properties_by_domain(ontology) {
         for prop in &props {
             if prop.domain != Some(class.id) {
@@ -359,9 +362,6 @@ fn should_emit_null_stub(
             }
         }
     }
-    // Exclude classes inheriting from a class with enum accessors — supertrait
-    // closure would force Null{Class} to impl that parent, running into the
-    // same issue.
     let parents = transitive_supertraits(class, ontology);
     for parent in &parents {
         for (_, props) in all_properties_by_domain(ontology) {
@@ -521,14 +521,27 @@ fn emit_null_impl_for_trait(
         class_trait_path(trait_iri, ns_map).unwrap_or_else(|| trait_local.to_string())
     };
 
-    let direct_props: Vec<&&Property> = all_props_by_domain
-        .get(trait_iri)
-        .map(|v| {
-            v.iter()
-                .filter(|p| p.kind != PropertyKind::Annotation)
-                .collect()
-        })
-        .unwrap_or_default();
+    // Mirror the trait-generation filter (CLAUDE.md: "Cross-namespace domain
+    // properties are not generated"). A trait's method set is the properties
+    // declared IN THE SAME NAMESPACE as the trait, whose domain is the trait.
+    // Properties declared in another namespace with a cross-namespace domain
+    // pointing at this trait never become trait methods, so the Null stub
+    // must not try to impl them.
+    let ontology = uor_ontology::Ontology::full();
+    let trait_ns_iri = namespace_of(trait_iri, ns_map);
+    let declaring_module = ontology
+        .namespaces
+        .iter()
+        .find(|m| m.namespace.iri == trait_ns_iri);
+    let _ = all_props_by_domain;
+    let direct_props: Vec<&Property> = match declaring_module {
+        Some(m) => m
+            .properties
+            .iter()
+            .filter(|p| p.kind != PropertyKind::Annotation && p.domain == Some(trait_iri))
+            .collect(),
+        None => Vec::new(),
+    };
 
     let _ = writeln!(
         f.buf,
@@ -565,7 +578,7 @@ fn emit_null_method_body(
     ns_map: &HashMap<&str, NamespaceMapping>,
     current_ns_iri: &str,
     owner_trait_name: &str,
-    enum_names: &HashSet<&'static str>,
+    _enum_names: &HashSet<&'static str>,
     emitted_assoc: &mut HashSet<String>,
     emitable: &HashSet<&str>,
     existing_nulls: &HashMap<&'static str, &'static str>,
@@ -574,8 +587,10 @@ fn emit_null_method_body(
 
     match prop.kind {
         PropertyKind::Datatype => {
-            if enum_names.contains(local_name(prop.range)) {
-                return; // pre-filtered; defensive skip
+            // Enum-typed datatype (classes with enum accessors are pre-filtered
+            // by `should_emit_null_stub`; defensive skip here).
+            if datatype_enum_override(prop).is_some() {
+                return;
             }
             let prim = xsd_to_primitives_type(prop.range);
             match prim {
@@ -626,8 +641,9 @@ fn emit_null_method_body(
             let is_owl_class = prop.range == OWL_CLASS;
             let is_rdf_list = prop.range == RDF_LIST;
 
-            if enum_names.contains(range_local) {
-                return; // pre-filtered; defensive skip
+            // Enum-typed object range (pre-filtered; defensive skip).
+            if object_property_enum_override(range_local).is_some() {
+                return;
             }
 
             if is_owl_thing || is_owl_class || is_rdf_list {

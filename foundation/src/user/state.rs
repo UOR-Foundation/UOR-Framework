@@ -213,34 +213,20 @@ pub struct NullBinding<H: HostTypes> {
     _phantom: core::marker::PhantomData<H>,
 }
 impl<H: HostTypes> Default for NullBinding<H> {
-    fn default() -> Self {
-        Self {
-            _phantom: core::marker::PhantomData,
-        }
-    }
+    fn default() -> Self { Self { _phantom: core::marker::PhantomData } }
 }
 impl<H: HostTypes> NullBinding<H> {
     /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
-    pub const ABSENT: NullBinding<H> = NullBinding {
-        _phantom: core::marker::PhantomData,
-    };
+    pub const ABSENT: NullBinding<H> = NullBinding { _phantom: core::marker::PhantomData };
 }
 impl<H: HostTypes> Binding<H> for NullBinding<H> {
     type Element = crate::kernel::address::NullElement<H>;
-    fn address(&self) -> &Self::Element {
-        &<crate::kernel::address::NullElement<H>>::ABSENT
-    }
+    fn address(&self) -> &Self::Element { &<crate::kernel::address::NullElement<H>>::ABSENT }
     type Datum = crate::kernel::schema::NullDatum<H>;
-    fn content(&self) -> &Self::Datum {
-        &<crate::kernel::schema::NullDatum<H>>::ABSENT
-    }
+    fn content(&self) -> &Self::Datum { &<crate::kernel::schema::NullDatum<H>>::ABSENT }
     type TypeDefinition = crate::user::type_::NullTypeDefinition<H>;
-    fn bound_type(&self) -> &[Self::TypeDefinition] {
-        &[]
-    }
-    fn timestamp(&self) -> &H::WitnessBytes {
-        H::EMPTY_WITNESS_BYTES
-    }
+    fn bound_type(&self) -> &[Self::TypeDefinition] { &[] }
+    fn timestamp(&self) -> &H::WitnessBytes { H::EMPTY_WITNESS_BYTES }
 }
 
 /// Phase 2 (orphan-closure) — resolver-absent default impl of `GroundingWitness<H>`.
@@ -253,26 +239,16 @@ pub struct NullGroundingWitness<H: HostTypes> {
     _phantom: core::marker::PhantomData<H>,
 }
 impl<H: HostTypes> Default for NullGroundingWitness<H> {
-    fn default() -> Self {
-        Self {
-            _phantom: core::marker::PhantomData,
-        }
-    }
+    fn default() -> Self { Self { _phantom: core::marker::PhantomData } }
 }
 impl<H: HostTypes> NullGroundingWitness<H> {
     /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
-    pub const ABSENT: NullGroundingWitness<H> = NullGroundingWitness {
-        _phantom: core::marker::PhantomData,
-    };
+    pub const ABSENT: NullGroundingWitness<H> = NullGroundingWitness { _phantom: core::marker::PhantomData };
 }
 impl<H: HostTypes> GroundingWitness<H> for NullGroundingWitness<H> {
     type Binding = NullBinding<H>;
-    fn witness_binding(&self) -> &[Self::Binding] {
-        &[]
-    }
-    fn witness_step(&self) -> u64 {
-        0
-    }
+    fn witness_binding(&self) -> &[Self::Binding] { &[] }
+    fn witness_step(&self) -> u64 { 0 }
 }
 
 /// The caller explicitly requested a context reset. All accumulated bindings are discarded.

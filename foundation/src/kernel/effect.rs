@@ -89,26 +89,16 @@ pub struct NullEffectTarget<H: HostTypes> {
     _phantom: core::marker::PhantomData<H>,
 }
 impl<H: HostTypes> Default for NullEffectTarget<H> {
-    fn default() -> Self {
-        Self {
-            _phantom: core::marker::PhantomData,
-        }
-    }
+    fn default() -> Self { Self { _phantom: core::marker::PhantomData } }
 }
 impl<H: HostTypes> NullEffectTarget<H> {
     /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
-    pub const ABSENT: NullEffectTarget<H> = NullEffectTarget {
-        _phantom: core::marker::PhantomData,
-    };
+    pub const ABSENT: NullEffectTarget<H> = NullEffectTarget { _phantom: core::marker::PhantomData };
 }
 impl<H: HostTypes> EffectTarget<H> for NullEffectTarget<H> {
     type SiteIndex = crate::bridge::partition::NullSiteIndex<H>;
-    fn target_sites(&self) -> &[Self::SiteIndex] {
-        &[]
-    }
-    fn target_cardinality(&self) -> u64 {
-        0
-    }
+    fn target_sites(&self) -> &[Self::SiteIndex] { &[] }
+    fn target_cardinality(&self) -> u64 { 0 }
 }
 
 /// Phase 2 (orphan-closure) — resolver-absent default impl of `DisjointnessWitness<H>`.
@@ -121,24 +111,14 @@ pub struct NullDisjointnessWitness<H: HostTypes> {
     _phantom: core::marker::PhantomData<H>,
 }
 impl<H: HostTypes> Default for NullDisjointnessWitness<H> {
-    fn default() -> Self {
-        Self {
-            _phantom: core::marker::PhantomData,
-        }
-    }
+    fn default() -> Self { Self { _phantom: core::marker::PhantomData } }
 }
 impl<H: HostTypes> NullDisjointnessWitness<H> {
     /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
-    pub const ABSENT: NullDisjointnessWitness<H> = NullDisjointnessWitness {
-        _phantom: core::marker::PhantomData,
-    };
+    pub const ABSENT: NullDisjointnessWitness<H> = NullDisjointnessWitness { _phantom: core::marker::PhantomData };
 }
 impl<H: HostTypes> DisjointnessWitness<H> for NullDisjointnessWitness<H> {
     type EffectTarget = NullEffectTarget<H>;
-    fn disjointness_left(&self) -> &Self::EffectTarget {
-        &<NullEffectTarget<H>>::ABSENT
-    }
-    fn disjointness_right(&self) -> &Self::EffectTarget {
-        &<NullEffectTarget<H>>::ABSENT
-    }
+    fn disjointness_left(&self) -> &Self::EffectTarget { &<NullEffectTarget<H>>::ABSENT }
+    fn disjointness_right(&self) -> &Self::EffectTarget { &<NullEffectTarget<H>>::ABSENT }
 }

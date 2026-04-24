@@ -289,28 +289,16 @@ pub struct NullCertifyMapping<H: HostTypes> {
     _phantom: core::marker::PhantomData<H>,
 }
 impl<H: HostTypes> Default for NullCertifyMapping<H> {
-    fn default() -> Self {
-        Self {
-            _phantom: core::marker::PhantomData,
-        }
-    }
+    fn default() -> Self { Self { _phantom: core::marker::PhantomData } }
 }
 impl<H: HostTypes> NullCertifyMapping<H> {
     /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
-    pub const ABSENT: NullCertifyMapping<H> = NullCertifyMapping {
-        _phantom: core::marker::PhantomData,
-    };
+    pub const ABSENT: NullCertifyMapping<H> = NullCertifyMapping { _phantom: core::marker::PhantomData };
 }
 impl<H: HostTypes> CertifyMapping<H> for NullCertifyMapping<H> {
-    fn for_resolver(&self) -> &H::HostString {
-        H::EMPTY_HOST_STRING
-    }
-    fn produces_certificate(&self) -> &H::HostString {
-        H::EMPTY_HOST_STRING
-    }
-    fn produces_witness(&self) -> &H::HostString {
-        H::EMPTY_HOST_STRING
-    }
+    fn for_resolver(&self) -> &H::HostString { H::EMPTY_HOST_STRING }
+    fn produces_certificate(&self) -> &H::HostString { H::EMPTY_HOST_STRING }
+    fn produces_witness(&self) -> &H::HostString { H::EMPTY_HOST_STRING }
 }
 
 /// Phase 2 (orphan-closure) — resolver-absent default impl of `ExecutionPolicy<H>`.
@@ -323,19 +311,14 @@ pub struct NullExecutionPolicy<H: HostTypes> {
     _phantom: core::marker::PhantomData<H>,
 }
 impl<H: HostTypes> Default for NullExecutionPolicy<H> {
-    fn default() -> Self {
-        Self {
-            _phantom: core::marker::PhantomData,
-        }
-    }
+    fn default() -> Self { Self { _phantom: core::marker::PhantomData } }
 }
 impl<H: HostTypes> NullExecutionPolicy<H> {
     /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
-    pub const ABSENT: NullExecutionPolicy<H> = NullExecutionPolicy {
-        _phantom: core::marker::PhantomData,
-    };
+    pub const ABSENT: NullExecutionPolicy<H> = NullExecutionPolicy { _phantom: core::marker::PhantomData };
 }
-impl<H: HostTypes> ExecutionPolicy<H> for NullExecutionPolicy<H> {}
+impl<H: HostTypes> ExecutionPolicy<H> for NullExecutionPolicy<H> {
+}
 
 /// O(1) complexity — the resolver runs in constant time regardless of ring size.
 pub mod constant_time {}

@@ -147,34 +147,18 @@ pub struct NullWitnessData<H: HostTypes> {
     _phantom: core::marker::PhantomData<H>,
 }
 impl<H: HostTypes> Default for NullWitnessData<H> {
-    fn default() -> Self {
-        Self {
-            _phantom: core::marker::PhantomData,
-        }
-    }
+    fn default() -> Self { Self { _phantom: core::marker::PhantomData } }
 }
 impl<H: HostTypes> NullWitnessData<H> {
     /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
-    pub const ABSENT: NullWitnessData<H> = NullWitnessData {
-        _phantom: core::marker::PhantomData,
-    };
+    pub const ABSENT: NullWitnessData<H> = NullWitnessData { _phantom: core::marker::PhantomData };
 }
 impl<H: HostTypes> WitnessData<H> for NullWitnessData<H> {
-    fn x(&self) -> &[i64] {
-        &[]
-    }
-    fn bnot_x(&self) -> &[i64] {
-        &[]
-    }
-    fn neg_bnot_x(&self) -> &[i64] {
-        &[]
-    }
-    fn succ_x(&self) -> &[i64] {
-        &[]
-    }
-    fn holds(&self) -> &[bool] {
-        &[]
-    }
+    fn x(&self) -> &[i64] { &[] }
+    fn bnot_x(&self) -> &[i64] { &[] }
+    fn neg_bnot_x(&self) -> &[i64] { &[] }
+    fn succ_x(&self) -> &[i64] { &[] }
+    fn holds(&self) -> &[bool] { &[] }
 }
 
 /// Phase 2 (orphan-closure) — resolver-absent default impl of `DerivationTerm<H>`.
@@ -187,19 +171,14 @@ pub struct NullDerivationTerm<H: HostTypes> {
     _phantom: core::marker::PhantomData<H>,
 }
 impl<H: HostTypes> Default for NullDerivationTerm<H> {
-    fn default() -> Self {
-        Self {
-            _phantom: core::marker::PhantomData,
-        }
-    }
+    fn default() -> Self { Self { _phantom: core::marker::PhantomData } }
 }
 impl<H: HostTypes> NullDerivationTerm<H> {
     /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
-    pub const ABSENT: NullDerivationTerm<H> = NullDerivationTerm {
-        _phantom: core::marker::PhantomData,
-    };
+    pub const ABSENT: NullDerivationTerm<H> = NullDerivationTerm { _phantom: core::marker::PhantomData };
 }
-impl<H: HostTypes> DerivationTerm<H> for NullDerivationTerm<H> {}
+impl<H: HostTypes> DerivationTerm<H> for NullDerivationTerm<H> {
+}
 
 /// Phase 2 (orphan-closure) — resolver-absent default impl of `TacticApplication<H>`.
 /// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
@@ -211,20 +190,16 @@ pub struct NullTacticApplication<H: HostTypes> {
     _phantom: core::marker::PhantomData<H>,
 }
 impl<H: HostTypes> Default for NullTacticApplication<H> {
-    fn default() -> Self {
-        Self {
-            _phantom: core::marker::PhantomData,
-        }
-    }
+    fn default() -> Self { Self { _phantom: core::marker::PhantomData } }
 }
 impl<H: HostTypes> NullTacticApplication<H> {
     /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
-    pub const ABSENT: NullTacticApplication<H> = NullTacticApplication {
-        _phantom: core::marker::PhantomData,
-    };
+    pub const ABSENT: NullTacticApplication<H> = NullTacticApplication { _phantom: core::marker::PhantomData };
 }
-impl<H: HostTypes> DerivationTerm<H> for NullTacticApplication<H> {}
-impl<H: HostTypes> TacticApplication<H> for NullTacticApplication<H> {}
+impl<H: HostTypes> DerivationTerm<H> for NullTacticApplication<H> {
+}
+impl<H: HostTypes> TacticApplication<H> for NullTacticApplication<H> {
+}
 
 /// Phase 2 (orphan-closure) — resolver-absent default impl of `LemmaInvocation<H>`.
 /// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
@@ -236,20 +211,16 @@ pub struct NullLemmaInvocation<H: HostTypes> {
     _phantom: core::marker::PhantomData<H>,
 }
 impl<H: HostTypes> Default for NullLemmaInvocation<H> {
-    fn default() -> Self {
-        Self {
-            _phantom: core::marker::PhantomData,
-        }
-    }
+    fn default() -> Self { Self { _phantom: core::marker::PhantomData } }
 }
 impl<H: HostTypes> NullLemmaInvocation<H> {
     /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
-    pub const ABSENT: NullLemmaInvocation<H> = NullLemmaInvocation {
-        _phantom: core::marker::PhantomData,
-    };
+    pub const ABSENT: NullLemmaInvocation<H> = NullLemmaInvocation { _phantom: core::marker::PhantomData };
 }
-impl<H: HostTypes> DerivationTerm<H> for NullLemmaInvocation<H> {}
-impl<H: HostTypes> LemmaInvocation<H> for NullLemmaInvocation<H> {}
+impl<H: HostTypes> DerivationTerm<H> for NullLemmaInvocation<H> {
+}
+impl<H: HostTypes> LemmaInvocation<H> for NullLemmaInvocation<H> {
+}
 
 /// Phase 2 (orphan-closure) — resolver-absent default impl of `InductionStep<H>`.
 /// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
@@ -261,20 +232,16 @@ pub struct NullInductionStep<H: HostTypes> {
     _phantom: core::marker::PhantomData<H>,
 }
 impl<H: HostTypes> Default for NullInductionStep<H> {
-    fn default() -> Self {
-        Self {
-            _phantom: core::marker::PhantomData,
-        }
-    }
+    fn default() -> Self { Self { _phantom: core::marker::PhantomData } }
 }
 impl<H: HostTypes> NullInductionStep<H> {
     /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
-    pub const ABSENT: NullInductionStep<H> = NullInductionStep {
-        _phantom: core::marker::PhantomData,
-    };
+    pub const ABSENT: NullInductionStep<H> = NullInductionStep { _phantom: core::marker::PhantomData };
 }
-impl<H: HostTypes> DerivationTerm<H> for NullInductionStep<H> {}
-impl<H: HostTypes> InductionStep<H> for NullInductionStep<H> {}
+impl<H: HostTypes> DerivationTerm<H> for NullInductionStep<H> {
+}
+impl<H: HostTypes> InductionStep<H> for NullInductionStep<H> {
+}
 
 /// Phase 2 (orphan-closure) — resolver-absent default impl of `ComputationStep<H>`.
 /// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
@@ -286,20 +253,16 @@ pub struct NullComputationStep<H: HostTypes> {
     _phantom: core::marker::PhantomData<H>,
 }
 impl<H: HostTypes> Default for NullComputationStep<H> {
-    fn default() -> Self {
-        Self {
-            _phantom: core::marker::PhantomData,
-        }
-    }
+    fn default() -> Self { Self { _phantom: core::marker::PhantomData } }
 }
 impl<H: HostTypes> NullComputationStep<H> {
     /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
-    pub const ABSENT: NullComputationStep<H> = NullComputationStep {
-        _phantom: core::marker::PhantomData,
-    };
+    pub const ABSENT: NullComputationStep<H> = NullComputationStep { _phantom: core::marker::PhantomData };
 }
-impl<H: HostTypes> DerivationTerm<H> for NullComputationStep<H> {}
-impl<H: HostTypes> ComputationStep<H> for NullComputationStep<H> {}
+impl<H: HostTypes> DerivationTerm<H> for NullComputationStep<H> {
+}
+impl<H: HostTypes> ComputationStep<H> for NullComputationStep<H> {
+}
 
 /// Follows from ZMod ring axioms. Lean4 tactic: `by ring`.
 pub mod ring_axiom {}

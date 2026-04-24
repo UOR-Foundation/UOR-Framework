@@ -63,31 +63,20 @@ pub struct NullLinearSite<H: HostTypes> {
     _phantom: core::marker::PhantomData<H>,
 }
 impl<H: HostTypes> Default for NullLinearSite<H> {
-    fn default() -> Self {
-        Self {
-            _phantom: core::marker::PhantomData,
-        }
-    }
+    fn default() -> Self { Self { _phantom: core::marker::PhantomData } }
 }
 impl<H: HostTypes> NullLinearSite<H> {
     /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
-    pub const ABSENT: NullLinearSite<H> = NullLinearSite {
-        _phantom: core::marker::PhantomData,
-    };
+    pub const ABSENT: NullLinearSite<H> = NullLinearSite { _phantom: core::marker::PhantomData };
 }
 impl<H: HostTypes> crate::bridge::partition::SiteIndex<H> for NullLinearSite<H> {
-    fn site_position(&self) -> u64 {
-        0
-    }
-    fn site_state(&self) -> u64 {
-        0
-    }
+    fn site_position(&self) -> u64 { 0 }
+    fn site_state(&self) -> u64 { 0 }
     type SiteIndexTarget = crate::bridge::partition::NullSiteIndex<H>;
-    fn ancilla_site(&self) -> &Self::SiteIndexTarget {
-        &<crate::bridge::partition::NullSiteIndex<H>>::ABSENT
-    }
+    fn ancilla_site(&self) -> &Self::SiteIndexTarget { &<crate::bridge::partition::NullSiteIndex<H>>::ABSENT }
 }
-impl<H: HostTypes> LinearSite<H> for NullLinearSite<H> {}
+impl<H: HostTypes> LinearSite<H> for NullLinearSite<H> {
+}
 
 /// Phase 2 (orphan-closure) — resolver-absent default impl of `AffineSite<H>`.
 /// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
@@ -99,28 +88,17 @@ pub struct NullAffineSite<H: HostTypes> {
     _phantom: core::marker::PhantomData<H>,
 }
 impl<H: HostTypes> Default for NullAffineSite<H> {
-    fn default() -> Self {
-        Self {
-            _phantom: core::marker::PhantomData,
-        }
-    }
+    fn default() -> Self { Self { _phantom: core::marker::PhantomData } }
 }
 impl<H: HostTypes> NullAffineSite<H> {
     /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
-    pub const ABSENT: NullAffineSite<H> = NullAffineSite {
-        _phantom: core::marker::PhantomData,
-    };
+    pub const ABSENT: NullAffineSite<H> = NullAffineSite { _phantom: core::marker::PhantomData };
 }
 impl<H: HostTypes> crate::bridge::partition::SiteIndex<H> for NullAffineSite<H> {
-    fn site_position(&self) -> u64 {
-        0
-    }
-    fn site_state(&self) -> u64 {
-        0
-    }
+    fn site_position(&self) -> u64 { 0 }
+    fn site_state(&self) -> u64 { 0 }
     type SiteIndexTarget = crate::bridge::partition::NullSiteIndex<H>;
-    fn ancilla_site(&self) -> &Self::SiteIndexTarget {
-        &<crate::bridge::partition::NullSiteIndex<H>>::ABSENT
-    }
+    fn ancilla_site(&self) -> &Self::SiteIndexTarget { &<crate::bridge::partition::NullSiteIndex<H>>::ABSENT }
 }
-impl<H: HostTypes> AffineSite<H> for NullAffineSite<H> {}
+impl<H: HostTypes> AffineSite<H> for NullAffineSite<H> {
+}

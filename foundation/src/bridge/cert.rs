@@ -180,22 +180,14 @@ pub struct NullCompletenessAuditTrail<H: HostTypes> {
     _phantom: core::marker::PhantomData<H>,
 }
 impl<H: HostTypes> Default for NullCompletenessAuditTrail<H> {
-    fn default() -> Self {
-        Self {
-            _phantom: core::marker::PhantomData,
-        }
-    }
+    fn default() -> Self { Self { _phantom: core::marker::PhantomData } }
 }
 impl<H: HostTypes> NullCompletenessAuditTrail<H> {
     /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
-    pub const ABSENT: NullCompletenessAuditTrail<H> = NullCompletenessAuditTrail {
-        _phantom: core::marker::PhantomData,
-    };
+    pub const ABSENT: NullCompletenessAuditTrail<H> = NullCompletenessAuditTrail { _phantom: core::marker::PhantomData };
 }
 impl<H: HostTypes> CompletenessAuditTrail<H> for NullCompletenessAuditTrail<H> {
-    fn witness_count(&self) -> u64 {
-        0
-    }
+    fn witness_count(&self) -> u64 { 0 }
 }
 
 /// Phase 2 (orphan-closure) — resolver-absent default impl of `GeodesicEvidenceBundle<H>`.
@@ -208,25 +200,15 @@ pub struct NullGeodesicEvidenceBundle<H: HostTypes> {
     _phantom: core::marker::PhantomData<H>,
 }
 impl<H: HostTypes> Default for NullGeodesicEvidenceBundle<H> {
-    fn default() -> Self {
-        Self {
-            _phantom: core::marker::PhantomData,
-        }
-    }
+    fn default() -> Self { Self { _phantom: core::marker::PhantomData } }
 }
 impl<H: HostTypes> NullGeodesicEvidenceBundle<H> {
     /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
-    pub const ABSENT: NullGeodesicEvidenceBundle<H> = NullGeodesicEvidenceBundle {
-        _phantom: core::marker::PhantomData,
-    };
+    pub const ABSENT: NullGeodesicEvidenceBundle<H> = NullGeodesicEvidenceBundle { _phantom: core::marker::PhantomData };
 }
 impl<H: HostTypes> GeodesicEvidenceBundle<H> for NullGeodesicEvidenceBundle<H> {
-    fn is_ar1_ordered(&self) -> bool {
-        false
-    }
-    fn is_dc10_selected(&self) -> bool {
-        false
-    }
+    fn is_ar1_ordered(&self) -> bool { false }
+    fn is_dc10_selected(&self) -> bool { false }
 }
 
 /// Phase 2 (orphan-closure) — resolver-absent default impl of `ChainAuditTrail<H>`.
@@ -239,20 +221,12 @@ pub struct NullChainAuditTrail<H: HostTypes> {
     _phantom: core::marker::PhantomData<H>,
 }
 impl<H: HostTypes> Default for NullChainAuditTrail<H> {
-    fn default() -> Self {
-        Self {
-            _phantom: core::marker::PhantomData,
-        }
-    }
+    fn default() -> Self { Self { _phantom: core::marker::PhantomData } }
 }
 impl<H: HostTypes> NullChainAuditTrail<H> {
     /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
-    pub const ABSENT: NullChainAuditTrail<H> = NullChainAuditTrail {
-        _phantom: core::marker::PhantomData,
-    };
+    pub const ABSENT: NullChainAuditTrail<H> = NullChainAuditTrail { _phantom: core::marker::PhantomData };
 }
 impl<H: HostTypes> ChainAuditTrail<H> for NullChainAuditTrail<H> {
-    fn chain_step_count(&self) -> u64 {
-        0
-    }
+    fn chain_step_count(&self) -> u64 { 0 }
 }

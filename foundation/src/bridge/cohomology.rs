@@ -116,20 +116,16 @@ pub struct NullLocalSection<H: HostTypes> {
     _phantom: core::marker::PhantomData<H>,
 }
 impl<H: HostTypes> Default for NullLocalSection<H> {
-    fn default() -> Self {
-        Self {
-            _phantom: core::marker::PhantomData,
-        }
-    }
+    fn default() -> Self { Self { _phantom: core::marker::PhantomData } }
 }
 impl<H: HostTypes> NullLocalSection<H> {
     /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
-    pub const ABSENT: NullLocalSection<H> = NullLocalSection {
-        _phantom: core::marker::PhantomData,
-    };
+    pub const ABSENT: NullLocalSection<H> = NullLocalSection { _phantom: core::marker::PhantomData };
 }
-impl<H: HostTypes> Section<H> for NullLocalSection<H> {}
-impl<H: HostTypes> LocalSection<H> for NullLocalSection<H> {}
+impl<H: HostTypes> Section<H> for NullLocalSection<H> {
+}
+impl<H: HostTypes> LocalSection<H> for NullLocalSection<H> {
+}
 
 /// δ² = 0: the coboundary of a coboundary is zero.
 pub mod coboundary_squared_zero {

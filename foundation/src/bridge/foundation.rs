@@ -22,22 +22,14 @@ pub struct NullLayoutInvariant<H: HostTypes> {
     _phantom: core::marker::PhantomData<H>,
 }
 impl<H: HostTypes> Default for NullLayoutInvariant<H> {
-    fn default() -> Self {
-        Self {
-            _phantom: core::marker::PhantomData,
-        }
-    }
+    fn default() -> Self { Self { _phantom: core::marker::PhantomData } }
 }
 impl<H: HostTypes> NullLayoutInvariant<H> {
     /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
-    pub const ABSENT: NullLayoutInvariant<H> = NullLayoutInvariant {
-        _phantom: core::marker::PhantomData,
-    };
+    pub const ABSENT: NullLayoutInvariant<H> = NullLayoutInvariant { _phantom: core::marker::PhantomData };
 }
 impl<H: HostTypes> LayoutInvariant<H> for NullLayoutInvariant<H> {
-    fn layout_rule(&self) -> &H::HostString {
-        H::EMPTY_HOST_STRING
-    }
+    fn layout_rule(&self) -> &H::HostString { H::EMPTY_HOST_STRING }
 }
 
 /// PartitionProduct layout-width invariant: products introduce no bookkeeping of their own, so layout widths add. Cited by primitive_partition_product when the caller-supplied combined SITE_COUNT differs from the sum of operand SITE_COUNTs.

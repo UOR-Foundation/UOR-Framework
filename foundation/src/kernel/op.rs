@@ -177,19 +177,14 @@ pub struct NullQuantumThermodynamicDomain<H: HostTypes> {
     _phantom: core::marker::PhantomData<H>,
 }
 impl<H: HostTypes> Default for NullQuantumThermodynamicDomain<H> {
-    fn default() -> Self {
-        Self {
-            _phantom: core::marker::PhantomData,
-        }
-    }
+    fn default() -> Self { Self { _phantom: core::marker::PhantomData } }
 }
 impl<H: HostTypes> NullQuantumThermodynamicDomain<H> {
     /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
-    pub const ABSENT: NullQuantumThermodynamicDomain<H> = NullQuantumThermodynamicDomain {
-        _phantom: core::marker::PhantomData,
-    };
+    pub const ABSENT: NullQuantumThermodynamicDomain<H> = NullQuantumThermodynamicDomain { _phantom: core::marker::PhantomData };
 }
-impl<H: HostTypes> QuantumThermodynamicDomain<H> for NullQuantumThermodynamicDomain<H> {}
+impl<H: HostTypes> QuantumThermodynamicDomain<H> for NullQuantumThermodynamicDomain<H> {
+}
 
 /// Phase 2 (orphan-closure) — resolver-absent default impl of `GroupPresentation<H>`.
 /// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
@@ -201,19 +196,14 @@ pub struct NullGroupPresentation<H: HostTypes> {
     _phantom: core::marker::PhantomData<H>,
 }
 impl<H: HostTypes> Default for NullGroupPresentation<H> {
-    fn default() -> Self {
-        Self {
-            _phantom: core::marker::PhantomData,
-        }
-    }
+    fn default() -> Self { Self { _phantom: core::marker::PhantomData } }
 }
 impl<H: HostTypes> NullGroupPresentation<H> {
     /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
-    pub const ABSENT: NullGroupPresentation<H> = NullGroupPresentation {
-        _phantom: core::marker::PhantomData,
-    };
+    pub const ABSENT: NullGroupPresentation<H> = NullGroupPresentation { _phantom: core::marker::PhantomData };
 }
-impl<H: HostTypes> GroupPresentation<H> for NullGroupPresentation<H> {}
+impl<H: HostTypes> GroupPresentation<H> for NullGroupPresentation<H> {
+}
 
 /// Established by exhaustive traversal of R_n. Valid for all identities where the ring is finite.
 pub mod enumerative {

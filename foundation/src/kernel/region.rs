@@ -73,24 +73,14 @@ pub struct NullRegionBound<H: HostTypes> {
     _phantom: core::marker::PhantomData<H>,
 }
 impl<H: HostTypes> Default for NullRegionBound<H> {
-    fn default() -> Self {
-        Self {
-            _phantom: core::marker::PhantomData,
-        }
-    }
+    fn default() -> Self { Self { _phantom: core::marker::PhantomData } }
 }
 impl<H: HostTypes> NullRegionBound<H> {
     /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
-    pub const ABSENT: NullRegionBound<H> = NullRegionBound {
-        _phantom: core::marker::PhantomData,
-    };
+    pub const ABSENT: NullRegionBound<H> = NullRegionBound { _phantom: core::marker::PhantomData };
 }
 impl<H: HostTypes> RegionBound<H> for NullRegionBound<H> {
     type Element = crate::kernel::address::NullElement<H>;
-    fn region_lower(&self) -> &Self::Element {
-        &<crate::kernel::address::NullElement<H>>::ABSENT
-    }
-    fn region_upper(&self) -> &Self::Element {
-        &<crate::kernel::address::NullElement<H>>::ABSENT
-    }
+    fn region_lower(&self) -> &Self::Element { &<crate::kernel::address::NullElement<H>>::ABSENT }
+    fn region_upper(&self) -> &Self::Element { &<crate::kernel::address::NullElement<H>>::ABSENT }
 }

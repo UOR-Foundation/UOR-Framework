@@ -138,19 +138,14 @@ pub struct NullDerivationStep<H: HostTypes> {
     _phantom: core::marker::PhantomData<H>,
 }
 impl<H: HostTypes> Default for NullDerivationStep<H> {
-    fn default() -> Self {
-        Self {
-            _phantom: core::marker::PhantomData,
-        }
-    }
+    fn default() -> Self { Self { _phantom: core::marker::PhantomData } }
 }
 impl<H: HostTypes> NullDerivationStep<H> {
     /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
-    pub const ABSENT: NullDerivationStep<H> = NullDerivationStep {
-        _phantom: core::marker::PhantomData,
-    };
+    pub const ABSENT: NullDerivationStep<H> = NullDerivationStep { _phantom: core::marker::PhantomData };
 }
-impl<H: HostTypes> DerivationStep<H> for NullDerivationStep<H> {}
+impl<H: HostTypes> DerivationStep<H> for NullDerivationStep<H> {
+}
 
 /// Phase 2 (orphan-closure) — resolver-absent default impl of `TermMetrics<H>`.
 /// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
@@ -162,25 +157,15 @@ pub struct NullTermMetrics<H: HostTypes> {
     _phantom: core::marker::PhantomData<H>,
 }
 impl<H: HostTypes> Default for NullTermMetrics<H> {
-    fn default() -> Self {
-        Self {
-            _phantom: core::marker::PhantomData,
-        }
-    }
+    fn default() -> Self { Self { _phantom: core::marker::PhantomData } }
 }
 impl<H: HostTypes> NullTermMetrics<H> {
     /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
-    pub const ABSENT: NullTermMetrics<H> = NullTermMetrics {
-        _phantom: core::marker::PhantomData,
-    };
+    pub const ABSENT: NullTermMetrics<H> = NullTermMetrics { _phantom: core::marker::PhantomData };
 }
 impl<H: HostTypes> TermMetrics<H> for NullTermMetrics<H> {
-    fn step_count(&self) -> u64 {
-        0
-    }
-    fn term_size(&self) -> u64 {
-        0
-    }
+    fn step_count(&self) -> u64 { 0 }
+    fn term_size(&self) -> u64 { 0 }
 }
 
 /// Phase 2 (orphan-closure) — resolver-absent default impl of `DerivationTrace<H>`.
@@ -193,22 +178,14 @@ pub struct NullDerivationTrace<H: HostTypes> {
     _phantom: core::marker::PhantomData<H>,
 }
 impl<H: HostTypes> Default for NullDerivationTrace<H> {
-    fn default() -> Self {
-        Self {
-            _phantom: core::marker::PhantomData,
-        }
-    }
+    fn default() -> Self { Self { _phantom: core::marker::PhantomData } }
 }
 impl<H: HostTypes> NullDerivationTrace<H> {
     /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
-    pub const ABSENT: NullDerivationTrace<H> = NullDerivationTrace {
-        _phantom: core::marker::PhantomData,
-    };
+    pub const ABSENT: NullDerivationTrace<H> = NullDerivationTrace { _phantom: core::marker::PhantomData };
 }
 impl<H: HostTypes> DerivationTrace<H> for NullDerivationTrace<H> {
-    fn trace_event_count(&self) -> u64 {
-        0
-    }
+    fn trace_event_count(&self) -> u64 { 0 }
 }
 
 /// The rewrite rule applying the critical identity: neg(bnot(x)) → succ(x). Grounded in op:criticalIdentity.

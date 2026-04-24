@@ -73,25 +73,15 @@ pub struct NullQuery<H: HostTypes> {
     _phantom: core::marker::PhantomData<H>,
 }
 impl<H: HostTypes> Default for NullQuery<H> {
-    fn default() -> Self {
-        Self {
-            _phantom: core::marker::PhantomData,
-        }
-    }
+    fn default() -> Self { Self { _phantom: core::marker::PhantomData } }
 }
 impl<H: HostTypes> NullQuery<H> {
     /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
-    pub const ABSENT: NullQuery<H> = NullQuery {
-        _phantom: core::marker::PhantomData,
-    };
+    pub const ABSENT: NullQuery<H> = NullQuery { _phantom: core::marker::PhantomData };
 }
 impl<H: HostTypes> Query<H> for NullQuery<H> {
-    fn input_type(&self) -> &H::HostString {
-        H::EMPTY_HOST_STRING
-    }
-    fn output_type(&self) -> &H::HostString {
-        H::EMPTY_HOST_STRING
-    }
+    fn input_type(&self) -> &H::HostString { H::EMPTY_HOST_STRING }
+    fn output_type(&self) -> &H::HostString { H::EMPTY_HOST_STRING }
 }
 
 /// Phase 2 (orphan-closure) — resolver-absent default impl of `MetricQuery<H>`.
@@ -104,27 +94,18 @@ pub struct NullMetricQuery<H: HostTypes> {
     _phantom: core::marker::PhantomData<H>,
 }
 impl<H: HostTypes> Default for NullMetricQuery<H> {
-    fn default() -> Self {
-        Self {
-            _phantom: core::marker::PhantomData,
-        }
-    }
+    fn default() -> Self { Self { _phantom: core::marker::PhantomData } }
 }
 impl<H: HostTypes> NullMetricQuery<H> {
     /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
-    pub const ABSENT: NullMetricQuery<H> = NullMetricQuery {
-        _phantom: core::marker::PhantomData,
-    };
+    pub const ABSENT: NullMetricQuery<H> = NullMetricQuery { _phantom: core::marker::PhantomData };
 }
 impl<H: HostTypes> Query<H> for NullMetricQuery<H> {
-    fn input_type(&self) -> &H::HostString {
-        H::EMPTY_HOST_STRING
-    }
-    fn output_type(&self) -> &H::HostString {
-        H::EMPTY_HOST_STRING
-    }
+    fn input_type(&self) -> &H::HostString { H::EMPTY_HOST_STRING }
+    fn output_type(&self) -> &H::HostString { H::EMPTY_HOST_STRING }
 }
-impl<H: HostTypes> MetricQuery<H> for NullMetricQuery<H> {}
+impl<H: HostTypes> MetricQuery<H> for NullMetricQuery<H> {
+}
 
 /// Phase 2 (orphan-closure) — resolver-absent default impl of `RepresentationQuery<H>`.
 /// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
@@ -136,27 +117,18 @@ pub struct NullRepresentationQuery<H: HostTypes> {
     _phantom: core::marker::PhantomData<H>,
 }
 impl<H: HostTypes> Default for NullRepresentationQuery<H> {
-    fn default() -> Self {
-        Self {
-            _phantom: core::marker::PhantomData,
-        }
-    }
+    fn default() -> Self { Self { _phantom: core::marker::PhantomData } }
 }
 impl<H: HostTypes> NullRepresentationQuery<H> {
     /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
-    pub const ABSENT: NullRepresentationQuery<H> = NullRepresentationQuery {
-        _phantom: core::marker::PhantomData,
-    };
+    pub const ABSENT: NullRepresentationQuery<H> = NullRepresentationQuery { _phantom: core::marker::PhantomData };
 }
 impl<H: HostTypes> Query<H> for NullRepresentationQuery<H> {
-    fn input_type(&self) -> &H::HostString {
-        H::EMPTY_HOST_STRING
-    }
-    fn output_type(&self) -> &H::HostString {
-        H::EMPTY_HOST_STRING
-    }
+    fn input_type(&self) -> &H::HostString { H::EMPTY_HOST_STRING }
+    fn output_type(&self) -> &H::HostString { H::EMPTY_HOST_STRING }
 }
-impl<H: HostTypes> RepresentationQuery<H> for NullRepresentationQuery<H> {}
+impl<H: HostTypes> RepresentationQuery<H> for NullRepresentationQuery<H> {
+}
 
 /// The stratum coordinate: the layer position of a datum within the ring's stratification.
 pub mod two_adic_valuation {}

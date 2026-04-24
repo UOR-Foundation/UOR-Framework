@@ -76,35 +76,19 @@ pub struct NullConvergenceLevel<H: HostTypes> {
     _phantom: core::marker::PhantomData<H>,
 }
 impl<H: HostTypes> Default for NullConvergenceLevel<H> {
-    fn default() -> Self {
-        Self {
-            _phantom: core::marker::PhantomData,
-        }
-    }
+    fn default() -> Self { Self { _phantom: core::marker::PhantomData } }
 }
 impl<H: HostTypes> NullConvergenceLevel<H> {
     /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
-    pub const ABSENT: NullConvergenceLevel<H> = NullConvergenceLevel {
-        _phantom: core::marker::PhantomData,
-    };
+    pub const ABSENT: NullConvergenceLevel<H> = NullConvergenceLevel { _phantom: core::marker::PhantomData };
 }
 impl<H: HostTypes> ConvergenceLevel<H> for NullConvergenceLevel<H> {
-    fn algebra_dimension(&self) -> u64 {
-        0
-    }
-    fn betti_signature(&self) -> &H::HostString {
-        H::EMPTY_HOST_STRING
-    }
+    fn algebra_dimension(&self) -> u64 { 0 }
+    fn betti_signature(&self) -> &H::HostString { H::EMPTY_HOST_STRING }
     type HopfFiber = NullHopfFiber<H>;
-    fn fiber_type(&self) -> &Self::HopfFiber {
-        &<NullHopfFiber<H>>::ABSENT
-    }
-    fn characteristic_identity(&self) -> &H::HostString {
-        H::EMPTY_HOST_STRING
-    }
-    fn level_name(&self) -> &H::HostString {
-        H::EMPTY_HOST_STRING
-    }
+    fn fiber_type(&self) -> &Self::HopfFiber { &<NullHopfFiber<H>>::ABSENT }
+    fn characteristic_identity(&self) -> &H::HostString { H::EMPTY_HOST_STRING }
+    fn level_name(&self) -> &H::HostString { H::EMPTY_HOST_STRING }
 }
 
 /// Phase 2 (orphan-closure) — resolver-absent default impl of `HopfFiber<H>`.
@@ -117,31 +101,17 @@ pub struct NullHopfFiber<H: HostTypes> {
     _phantom: core::marker::PhantomData<H>,
 }
 impl<H: HostTypes> Default for NullHopfFiber<H> {
-    fn default() -> Self {
-        Self {
-            _phantom: core::marker::PhantomData,
-        }
-    }
+    fn default() -> Self { Self { _phantom: core::marker::PhantomData } }
 }
 impl<H: HostTypes> NullHopfFiber<H> {
     /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
-    pub const ABSENT: NullHopfFiber<H> = NullHopfFiber {
-        _phantom: core::marker::PhantomData,
-    };
+    pub const ABSENT: NullHopfFiber<H> = NullHopfFiber { _phantom: core::marker::PhantomData };
 }
 impl<H: HostTypes> HopfFiber<H> for NullHopfFiber<H> {
-    fn fiber_dimension(&self) -> u64 {
-        0
-    }
-    fn total_space(&self) -> &H::HostString {
-        H::EMPTY_HOST_STRING
-    }
-    fn base_space(&self) -> &H::HostString {
-        H::EMPTY_HOST_STRING
-    }
-    fn fiber_sphere(&self) -> &H::HostString {
-        H::EMPTY_HOST_STRING
-    }
+    fn fiber_dimension(&self) -> u64 { 0 }
+    fn total_space(&self) -> &H::HostString { H::EMPTY_HOST_STRING }
+    fn base_space(&self) -> &H::HostString { H::EMPTY_HOST_STRING }
+    fn fiber_sphere(&self) -> &H::HostString { H::EMPTY_HOST_STRING }
 }
 
 /// Phase 2 (orphan-closure) — resolver-absent default impl of `ConvergenceResidual<H>`.
@@ -154,25 +124,15 @@ pub struct NullConvergenceResidual<H: HostTypes> {
     _phantom: core::marker::PhantomData<H>,
 }
 impl<H: HostTypes> Default for NullConvergenceResidual<H> {
-    fn default() -> Self {
-        Self {
-            _phantom: core::marker::PhantomData,
-        }
-    }
+    fn default() -> Self { Self { _phantom: core::marker::PhantomData } }
 }
 impl<H: HostTypes> NullConvergenceResidual<H> {
     /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
-    pub const ABSENT: NullConvergenceResidual<H> = NullConvergenceResidual {
-        _phantom: core::marker::PhantomData,
-    };
+    pub const ABSENT: NullConvergenceResidual<H> = NullConvergenceResidual { _phantom: core::marker::PhantomData };
 }
 impl<H: HostTypes> ConvergenceResidual<H> for NullConvergenceResidual<H> {
-    fn residual_betti(&self) -> u64 {
-        0
-    }
-    fn residual_dimension(&self) -> u64 {
-        0
-    }
+    fn residual_betti(&self) -> u64 { 0 }
+    fn residual_dimension(&self) -> u64 { 0 }
 }
 
 /// Level 0: R (reals), dimension 1, existence.

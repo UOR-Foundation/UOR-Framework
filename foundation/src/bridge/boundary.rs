@@ -83,19 +83,14 @@ pub struct NullIOBoundary<H: HostTypes> {
     _phantom: core::marker::PhantomData<H>,
 }
 impl<H: HostTypes> Default for NullIOBoundary<H> {
-    fn default() -> Self {
-        Self {
-            _phantom: core::marker::PhantomData,
-        }
-    }
+    fn default() -> Self { Self { _phantom: core::marker::PhantomData } }
 }
 impl<H: HostTypes> NullIOBoundary<H> {
     /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
-    pub const ABSENT: NullIOBoundary<H> = NullIOBoundary {
-        _phantom: core::marker::PhantomData,
-    };
+    pub const ABSENT: NullIOBoundary<H> = NullIOBoundary { _phantom: core::marker::PhantomData };
 }
-impl<H: HostTypes> IOBoundary<H> for NullIOBoundary<H> {}
+impl<H: HostTypes> IOBoundary<H> for NullIOBoundary<H> {
+}
 
 /// Phase 2 (orphan-closure) — resolver-absent default impl of `Source<H>`.
 /// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
@@ -107,24 +102,17 @@ pub struct NullSource<H: HostTypes> {
     _phantom: core::marker::PhantomData<H>,
 }
 impl<H: HostTypes> Default for NullSource<H> {
-    fn default() -> Self {
-        Self {
-            _phantom: core::marker::PhantomData,
-        }
-    }
+    fn default() -> Self { Self { _phantom: core::marker::PhantomData } }
 }
 impl<H: HostTypes> NullSource<H> {
     /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
-    pub const ABSENT: NullSource<H> = NullSource {
-        _phantom: core::marker::PhantomData,
-    };
+    pub const ABSENT: NullSource<H> = NullSource { _phantom: core::marker::PhantomData };
 }
-impl<H: HostTypes> IOBoundary<H> for NullSource<H> {}
+impl<H: HostTypes> IOBoundary<H> for NullSource<H> {
+}
 impl<H: HostTypes> Source<H> for NullSource<H> {
     type TypeDefinition = crate::user::type_::NullTypeDefinition<H>;
-    fn source_type(&self) -> &Self::TypeDefinition {
-        &<crate::user::type_::NullTypeDefinition<H>>::ABSENT
-    }
+    fn source_type(&self) -> &Self::TypeDefinition { &<crate::user::type_::NullTypeDefinition<H>>::ABSENT }
 }
 
 /// Phase 2 (orphan-closure) — resolver-absent default impl of `Sink<H>`.
@@ -137,22 +125,15 @@ pub struct NullSink<H: HostTypes> {
     _phantom: core::marker::PhantomData<H>,
 }
 impl<H: HostTypes> Default for NullSink<H> {
-    fn default() -> Self {
-        Self {
-            _phantom: core::marker::PhantomData,
-        }
-    }
+    fn default() -> Self { Self { _phantom: core::marker::PhantomData } }
 }
 impl<H: HostTypes> NullSink<H> {
     /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
-    pub const ABSENT: NullSink<H> = NullSink {
-        _phantom: core::marker::PhantomData,
-    };
+    pub const ABSENT: NullSink<H> = NullSink { _phantom: core::marker::PhantomData };
 }
-impl<H: HostTypes> IOBoundary<H> for NullSink<H> {}
+impl<H: HostTypes> IOBoundary<H> for NullSink<H> {
+}
 impl<H: HostTypes> Sink<H> for NullSink<H> {
     type TypeDefinition = crate::user::type_::NullTypeDefinition<H>;
-    fn sink_type(&self) -> &Self::TypeDefinition {
-        &<crate::user::type_::NullTypeDefinition<H>>::ABSENT
-    }
+    fn sink_type(&self) -> &Self::TypeDefinition { &<crate::user::type_::NullTypeDefinition<H>>::ABSENT }
 }
