@@ -534,6 +534,1301 @@ impl<H: HostTypes> InhabitanceSearchTrace<H> for NullInhabitanceSearchTrace<H> {
     }
 }
 
+/// Phase 8 (orphan-closure) — content-addressed handle for `ComputationTrace<H>`.
+///
+/// Pairs a [`crate::enforcement::ContentFingerprint`] with a phantom
+/// `H` so type-state checks can't mix handles across `HostTypes` impls.
+#[derive(Debug)]
+pub struct ComputationTraceHandle<H: HostTypes> {
+    /// Content fingerprint identifying the resolved record.
+    pub fingerprint: crate::enforcement::ContentFingerprint,
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Copy for ComputationTraceHandle<H> {}
+impl<H: HostTypes> Clone for ComputationTraceHandle<H> {
+    #[inline]
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+impl<H: HostTypes> PartialEq for ComputationTraceHandle<H> {
+    #[inline]
+    fn eq(&self, other: &Self) -> bool {
+        self.fingerprint == other.fingerprint
+    }
+}
+impl<H: HostTypes> Eq for ComputationTraceHandle<H> {}
+impl<H: HostTypes> core::hash::Hash for ComputationTraceHandle<H> {
+    #[inline]
+    fn hash<S: core::hash::Hasher>(&self, state: &mut S) {
+        self.fingerprint.hash(state);
+    }
+}
+impl<H: HostTypes> ComputationTraceHandle<H> {
+    /// Construct a handle from its content fingerprint.
+    #[inline]
+    #[must_use]
+    pub const fn new(fingerprint: crate::enforcement::ContentFingerprint) -> Self {
+        Self {
+            fingerprint,
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+
+/// Phase 8 (orphan-closure) — resolver trait for `ComputationTrace<H>`.
+///
+/// Hosts implement this trait to map a handle into a typed record.
+/// The default Null stub does not implement this trait — it carries
+/// no record. Resolution is the responsibility of the host pipeline.
+pub trait ComputationTraceResolver<H: HostTypes> {
+    /// Resolve a handle into its record. Returns `None` when the
+    /// handle does not correspond to known content.
+    fn resolve(&self, handle: ComputationTraceHandle<H>) -> Option<ComputationTraceRecord<H>>;
+}
+
+/// Phase 8 (orphan-closure) — typed record for `ComputationTrace<H>`.
+///
+/// Carries a field per functional accessor of the trait. Object
+/// fields hold `{Range}Handle<H>`; iterate via the Resolved wrapper
+/// chain-resolver methods.
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub struct ComputationTraceRecord<H: HostTypes> {
+    pub input_handle: crate::kernel::schema::DatumHandle<H>,
+    pub output_handle: crate::kernel::schema::DatumHandle<H>,
+    pub monodromy_handle: crate::bridge::observable::DihedralElementHandle<H>,
+    pub certified_by_handle: crate::bridge::cert::CertificateHandle<H>,
+    pub residual_entropy_handle: crate::bridge::observable::ResidualEntropyHandle<H>,
+    pub is_geodesic: bool,
+    pub cumulative_entropy_cost: H::Decimal,
+    pub adiabatically_ordered: bool,
+    pub is_ar1_ordered: bool,
+    pub is_dc10_selected: bool,
+    #[doc(hidden)]
+    pub _phantom: core::marker::PhantomData<H>,
+}
+
+/// Phase 8 (orphan-closure) — content-addressed wrapper for `ComputationTrace<H>`.
+///
+/// Caches the resolver's lookup at construction. Accessors return
+/// the cached record's fields when present, falling back to the
+/// `Null{Class}<H>` absent sentinels when the resolver returned
+/// `None`. Object accessors always return absent sentinels — use
+/// the `resolve_{m}` chain methods to descend into sub-records.
+pub struct ResolvedComputationTrace<'r, R: ComputationTraceResolver<H>, H: HostTypes> {
+    handle: ComputationTraceHandle<H>,
+    resolver: &'r R,
+    record: Option<ComputationTraceRecord<H>>,
+}
+impl<'r, R: ComputationTraceResolver<H>, H: HostTypes> ResolvedComputationTrace<'r, R, H> {
+    /// Construct the wrapper, eagerly resolving the handle.
+    #[inline]
+    pub fn new(handle: ComputationTraceHandle<H>, resolver: &'r R) -> Self {
+        let record = resolver.resolve(handle);
+        Self {
+            handle,
+            resolver,
+            record,
+        }
+    }
+    /// The handle this wrapper resolves.
+    #[inline]
+    #[must_use]
+    pub const fn handle(&self) -> ComputationTraceHandle<H> {
+        self.handle
+    }
+    /// The resolver supplied at construction.
+    #[inline]
+    #[must_use]
+    pub const fn resolver(&self) -> &'r R {
+        self.resolver
+    }
+    /// The cached record, or `None` when the resolver returned `None`.
+    #[inline]
+    #[must_use]
+    pub const fn record(&self) -> Option<&ComputationTraceRecord<H>> {
+        self.record.as_ref()
+    }
+}
+impl<'r, R: ComputationTraceResolver<H>, H: HostTypes> ComputationTrace<H>
+    for ResolvedComputationTrace<'r, R, H>
+{
+    type Datum = crate::kernel::schema::NullDatum<H>;
+    fn input(&self) -> &Self::Datum {
+        &<crate::kernel::schema::NullDatum<H>>::ABSENT
+    }
+    fn output(&self) -> &Self::Datum {
+        &<crate::kernel::schema::NullDatum<H>>::ABSENT
+    }
+    type ComputationStep = NullComputationStep<H>;
+    fn step(&self) -> &[Self::ComputationStep] {
+        &[]
+    }
+    type DihedralElement = crate::bridge::observable::NullDihedralElement<H>;
+    fn monodromy(&self) -> &Self::DihedralElement {
+        &<crate::bridge::observable::NullDihedralElement<H>>::ABSENT
+    }
+    type Certificate = crate::bridge::cert::NullCertificate<H>;
+    fn certified_by(&self) -> &Self::Certificate {
+        &<crate::bridge::cert::NullCertificate<H>>::ABSENT
+    }
+    type ResidualEntropy = crate::bridge::observable::NullResidualEntropy<H>;
+    fn residual_entropy(&self) -> &Self::ResidualEntropy {
+        &<crate::bridge::observable::NullResidualEntropy<H>>::ABSENT
+    }
+    fn is_geodesic(&self) -> bool {
+        match &self.record {
+            Some(r) => r.is_geodesic,
+            None => false,
+        }
+    }
+    type GeodesicViolation = NullGeodesicViolation<H>;
+    fn geodesic_violation(&self) -> &[Self::GeodesicViolation] {
+        &[]
+    }
+    fn cumulative_entropy_cost(&self) -> H::Decimal {
+        H::EMPTY_DECIMAL
+    }
+    fn adiabatically_ordered(&self) -> bool {
+        match &self.record {
+            Some(r) => r.adiabatically_ordered,
+            None => false,
+        }
+    }
+    type MeasurementEvent = NullMeasurementEvent<H>;
+    fn measurement_event(&self) -> &[Self::MeasurementEvent] {
+        &[]
+    }
+    fn is_ar1_ordered(&self) -> bool {
+        match &self.record {
+            Some(r) => r.is_ar1_ordered,
+            None => false,
+        }
+    }
+    fn is_dc10_selected(&self) -> bool {
+        match &self.record {
+            Some(r) => r.is_dc10_selected,
+            None => false,
+        }
+    }
+}
+impl<'r, R: ComputationTraceResolver<H>, H: HostTypes> ResolvedComputationTrace<'r, R, H> {
+    /// Promote the `input` handle on the cached record into a
+    /// resolved wrapper, given a resolver for the range class.
+    /// Returns `None` if no record was resolved at construction.
+    #[inline]
+    pub fn resolve_input<'r2, R2: crate::kernel::schema::DatumResolver<H>>(
+        &self,
+        r: &'r2 R2,
+    ) -> Option<crate::kernel::schema::ResolvedDatum<'r2, R2, H>> {
+        let record = self.record.as_ref()?;
+        Some(crate::kernel::schema::ResolvedDatum::new(
+            record.input_handle,
+            r,
+        ))
+    }
+    /// Promote the `output` handle on the cached record into a
+    /// resolved wrapper, given a resolver for the range class.
+    /// Returns `None` if no record was resolved at construction.
+    #[inline]
+    pub fn resolve_output<'r2, R2: crate::kernel::schema::DatumResolver<H>>(
+        &self,
+        r: &'r2 R2,
+    ) -> Option<crate::kernel::schema::ResolvedDatum<'r2, R2, H>> {
+        let record = self.record.as_ref()?;
+        Some(crate::kernel::schema::ResolvedDatum::new(
+            record.output_handle,
+            r,
+        ))
+    }
+    /// Promote the `monodromy` handle on the cached record into a
+    /// resolved wrapper, given a resolver for the range class.
+    /// Returns `None` if no record was resolved at construction.
+    #[inline]
+    pub fn resolve_monodromy<'r2, R2: crate::bridge::observable::DihedralElementResolver<H>>(
+        &self,
+        r: &'r2 R2,
+    ) -> Option<crate::bridge::observable::ResolvedDihedralElement<'r2, R2, H>> {
+        let record = self.record.as_ref()?;
+        Some(crate::bridge::observable::ResolvedDihedralElement::new(
+            record.monodromy_handle,
+            r,
+        ))
+    }
+    /// Promote the `certified_by` handle on the cached record into a
+    /// resolved wrapper, given a resolver for the range class.
+    /// Returns `None` if no record was resolved at construction.
+    #[inline]
+    pub fn resolve_certified_by<'r2, R2: crate::bridge::cert::CertificateResolver<H>>(
+        &self,
+        r: &'r2 R2,
+    ) -> Option<crate::bridge::cert::ResolvedCertificate<'r2, R2, H>> {
+        let record = self.record.as_ref()?;
+        Some(crate::bridge::cert::ResolvedCertificate::new(
+            record.certified_by_handle,
+            r,
+        ))
+    }
+    /// Promote the `residual_entropy` handle on the cached record into a
+    /// resolved wrapper, given a resolver for the range class.
+    /// Returns `None` if no record was resolved at construction.
+    #[inline]
+    pub fn resolve_residual_entropy<
+        'r2,
+        R2: crate::bridge::observable::ResidualEntropyResolver<H>,
+    >(
+        &self,
+        r: &'r2 R2,
+    ) -> Option<crate::bridge::observable::ResolvedResidualEntropy<'r2, R2, H>> {
+        let record = self.record.as_ref()?;
+        Some(crate::bridge::observable::ResolvedResidualEntropy::new(
+            record.residual_entropy_handle,
+            r,
+        ))
+    }
+}
+
+/// Phase 8 (orphan-closure) — content-addressed handle for `ComputationStep<H>`.
+///
+/// Pairs a [`crate::enforcement::ContentFingerprint`] with a phantom
+/// `H` so type-state checks can't mix handles across `HostTypes` impls.
+#[derive(Debug)]
+pub struct ComputationStepHandle<H: HostTypes> {
+    /// Content fingerprint identifying the resolved record.
+    pub fingerprint: crate::enforcement::ContentFingerprint,
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Copy for ComputationStepHandle<H> {}
+impl<H: HostTypes> Clone for ComputationStepHandle<H> {
+    #[inline]
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+impl<H: HostTypes> PartialEq for ComputationStepHandle<H> {
+    #[inline]
+    fn eq(&self, other: &Self) -> bool {
+        self.fingerprint == other.fingerprint
+    }
+}
+impl<H: HostTypes> Eq for ComputationStepHandle<H> {}
+impl<H: HostTypes> core::hash::Hash for ComputationStepHandle<H> {
+    #[inline]
+    fn hash<S: core::hash::Hasher>(&self, state: &mut S) {
+        self.fingerprint.hash(state);
+    }
+}
+impl<H: HostTypes> ComputationStepHandle<H> {
+    /// Construct a handle from its content fingerprint.
+    #[inline]
+    #[must_use]
+    pub const fn new(fingerprint: crate::enforcement::ContentFingerprint) -> Self {
+        Self {
+            fingerprint,
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+
+/// Phase 8 (orphan-closure) — resolver trait for `ComputationStep<H>`.
+///
+/// Hosts implement this trait to map a handle into a typed record.
+/// The default Null stub does not implement this trait — it carries
+/// no record. Resolution is the responsibility of the host pipeline.
+pub trait ComputationStepResolver<H: HostTypes> {
+    /// Resolve a handle into its record. Returns `None` when the
+    /// handle does not correspond to known content.
+    fn resolve(&self, handle: ComputationStepHandle<H>) -> Option<ComputationStepRecord<H>>;
+}
+
+/// Phase 8 (orphan-closure) — typed record for `ComputationStep<H>`.
+///
+/// Carries a field per functional accessor of the trait. Object
+/// fields hold `{Range}Handle<H>`; iterate via the Resolved wrapper
+/// chain-resolver methods.
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub struct ComputationStepRecord<H: HostTypes> {
+    pub from_handle: crate::kernel::schema::DatumHandle<H>,
+    pub to_handle: crate::kernel::schema::DatumHandle<H>,
+    pub operation_handle: crate::kernel::op::OperationHandle<H>,
+    pub index: u64,
+    pub step_entropy_cost: H::Decimal,
+    pub jacobian_at_step: H::Decimal,
+    #[doc(hidden)]
+    pub _phantom: core::marker::PhantomData<H>,
+}
+
+/// Phase 8 (orphan-closure) — content-addressed wrapper for `ComputationStep<H>`.
+///
+/// Caches the resolver's lookup at construction. Accessors return
+/// the cached record's fields when present, falling back to the
+/// `Null{Class}<H>` absent sentinels when the resolver returned
+/// `None`. Object accessors always return absent sentinels — use
+/// the `resolve_{m}` chain methods to descend into sub-records.
+pub struct ResolvedComputationStep<'r, R: ComputationStepResolver<H>, H: HostTypes> {
+    handle: ComputationStepHandle<H>,
+    resolver: &'r R,
+    record: Option<ComputationStepRecord<H>>,
+}
+impl<'r, R: ComputationStepResolver<H>, H: HostTypes> ResolvedComputationStep<'r, R, H> {
+    /// Construct the wrapper, eagerly resolving the handle.
+    #[inline]
+    pub fn new(handle: ComputationStepHandle<H>, resolver: &'r R) -> Self {
+        let record = resolver.resolve(handle);
+        Self {
+            handle,
+            resolver,
+            record,
+        }
+    }
+    /// The handle this wrapper resolves.
+    #[inline]
+    #[must_use]
+    pub const fn handle(&self) -> ComputationStepHandle<H> {
+        self.handle
+    }
+    /// The resolver supplied at construction.
+    #[inline]
+    #[must_use]
+    pub const fn resolver(&self) -> &'r R {
+        self.resolver
+    }
+    /// The cached record, or `None` when the resolver returned `None`.
+    #[inline]
+    #[must_use]
+    pub const fn record(&self) -> Option<&ComputationStepRecord<H>> {
+        self.record.as_ref()
+    }
+}
+impl<'r, R: ComputationStepResolver<H>, H: HostTypes> ComputationStep<H>
+    for ResolvedComputationStep<'r, R, H>
+{
+    type Datum = crate::kernel::schema::NullDatum<H>;
+    fn from(&self) -> &Self::Datum {
+        &<crate::kernel::schema::NullDatum<H>>::ABSENT
+    }
+    fn to(&self) -> &Self::Datum {
+        &<crate::kernel::schema::NullDatum<H>>::ABSENT
+    }
+    type Operation = crate::kernel::op::NullOperation<H>;
+    fn operation(&self) -> &Self::Operation {
+        &<crate::kernel::op::NullOperation<H>>::ABSENT
+    }
+    fn index(&self) -> u64 {
+        match &self.record {
+            Some(r) => r.index,
+            None => 0,
+        }
+    }
+    fn step_entropy_cost(&self) -> H::Decimal {
+        H::EMPTY_DECIMAL
+    }
+    fn jacobian_at_step(&self) -> H::Decimal {
+        H::EMPTY_DECIMAL
+    }
+}
+impl<'r, R: ComputationStepResolver<H>, H: HostTypes> ResolvedComputationStep<'r, R, H> {
+    /// Promote the `from` handle on the cached record into a
+    /// resolved wrapper, given a resolver for the range class.
+    /// Returns `None` if no record was resolved at construction.
+    #[inline]
+    pub fn resolve_from<'r2, R2: crate::kernel::schema::DatumResolver<H>>(
+        &self,
+        r: &'r2 R2,
+    ) -> Option<crate::kernel::schema::ResolvedDatum<'r2, R2, H>> {
+        let record = self.record.as_ref()?;
+        Some(crate::kernel::schema::ResolvedDatum::new(
+            record.from_handle,
+            r,
+        ))
+    }
+    /// Promote the `to` handle on the cached record into a
+    /// resolved wrapper, given a resolver for the range class.
+    /// Returns `None` if no record was resolved at construction.
+    #[inline]
+    pub fn resolve_to<'r2, R2: crate::kernel::schema::DatumResolver<H>>(
+        &self,
+        r: &'r2 R2,
+    ) -> Option<crate::kernel::schema::ResolvedDatum<'r2, R2, H>> {
+        let record = self.record.as_ref()?;
+        Some(crate::kernel::schema::ResolvedDatum::new(
+            record.to_handle,
+            r,
+        ))
+    }
+    /// Promote the `operation` handle on the cached record into a
+    /// resolved wrapper, given a resolver for the range class.
+    /// Returns `None` if no record was resolved at construction.
+    #[inline]
+    pub fn resolve_operation<'r2, R2: crate::kernel::op::OperationResolver<H>>(
+        &self,
+        r: &'r2 R2,
+    ) -> Option<crate::kernel::op::ResolvedOperation<'r2, R2, H>> {
+        let record = self.record.as_ref()?;
+        Some(crate::kernel::op::ResolvedOperation::new(
+            record.operation_handle,
+            r,
+        ))
+    }
+}
+
+/// Phase 8 (orphan-closure) — content-addressed handle for `TraceMetrics<H>`.
+///
+/// Pairs a [`crate::enforcement::ContentFingerprint`] with a phantom
+/// `H` so type-state checks can't mix handles across `HostTypes` impls.
+#[derive(Debug)]
+pub struct TraceMetricsHandle<H: HostTypes> {
+    /// Content fingerprint identifying the resolved record.
+    pub fingerprint: crate::enforcement::ContentFingerprint,
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Copy for TraceMetricsHandle<H> {}
+impl<H: HostTypes> Clone for TraceMetricsHandle<H> {
+    #[inline]
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+impl<H: HostTypes> PartialEq for TraceMetricsHandle<H> {
+    #[inline]
+    fn eq(&self, other: &Self) -> bool {
+        self.fingerprint == other.fingerprint
+    }
+}
+impl<H: HostTypes> Eq for TraceMetricsHandle<H> {}
+impl<H: HostTypes> core::hash::Hash for TraceMetricsHandle<H> {
+    #[inline]
+    fn hash<S: core::hash::Hasher>(&self, state: &mut S) {
+        self.fingerprint.hash(state);
+    }
+}
+impl<H: HostTypes> TraceMetricsHandle<H> {
+    /// Construct a handle from its content fingerprint.
+    #[inline]
+    #[must_use]
+    pub const fn new(fingerprint: crate::enforcement::ContentFingerprint) -> Self {
+        Self {
+            fingerprint,
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+
+/// Phase 8 (orphan-closure) — resolver trait for `TraceMetrics<H>`.
+///
+/// Hosts implement this trait to map a handle into a typed record.
+/// The default Null stub does not implement this trait — it carries
+/// no record. Resolution is the responsibility of the host pipeline.
+pub trait TraceMetricsResolver<H: HostTypes> {
+    /// Resolve a handle into its record. Returns `None` when the
+    /// handle does not correspond to known content.
+    fn resolve(&self, handle: TraceMetricsHandle<H>) -> Option<TraceMetricsRecord<H>>;
+}
+
+/// Phase 8 (orphan-closure) — typed record for `TraceMetrics<H>`.
+///
+/// Carries a field per functional accessor of the trait. Object
+/// fields hold `{Range}Handle<H>`; iterate via the Resolved wrapper
+/// chain-resolver methods.
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub struct TraceMetricsRecord<H: HostTypes> {
+    pub step_count: u64,
+    pub total_ring_distance: u64,
+    pub total_hamming_distance: u64,
+    #[doc(hidden)]
+    pub _phantom: core::marker::PhantomData<H>,
+}
+
+/// Phase 8 (orphan-closure) — content-addressed wrapper for `TraceMetrics<H>`.
+///
+/// Caches the resolver's lookup at construction. Accessors return
+/// the cached record's fields when present, falling back to the
+/// `Null{Class}<H>` absent sentinels when the resolver returned
+/// `None`. Object accessors always return absent sentinels — use
+/// the `resolve_{m}` chain methods to descend into sub-records.
+pub struct ResolvedTraceMetrics<'r, R: TraceMetricsResolver<H>, H: HostTypes> {
+    handle: TraceMetricsHandle<H>,
+    resolver: &'r R,
+    record: Option<TraceMetricsRecord<H>>,
+}
+impl<'r, R: TraceMetricsResolver<H>, H: HostTypes> ResolvedTraceMetrics<'r, R, H> {
+    /// Construct the wrapper, eagerly resolving the handle.
+    #[inline]
+    pub fn new(handle: TraceMetricsHandle<H>, resolver: &'r R) -> Self {
+        let record = resolver.resolve(handle);
+        Self {
+            handle,
+            resolver,
+            record,
+        }
+    }
+    /// The handle this wrapper resolves.
+    #[inline]
+    #[must_use]
+    pub const fn handle(&self) -> TraceMetricsHandle<H> {
+        self.handle
+    }
+    /// The resolver supplied at construction.
+    #[inline]
+    #[must_use]
+    pub const fn resolver(&self) -> &'r R {
+        self.resolver
+    }
+    /// The cached record, or `None` when the resolver returned `None`.
+    #[inline]
+    #[must_use]
+    pub const fn record(&self) -> Option<&TraceMetricsRecord<H>> {
+        self.record.as_ref()
+    }
+}
+impl<'r, R: TraceMetricsResolver<H>, H: HostTypes> TraceMetrics<H>
+    for ResolvedTraceMetrics<'r, R, H>
+{
+    fn step_count(&self) -> u64 {
+        match &self.record {
+            Some(r) => r.step_count,
+            None => 0,
+        }
+    }
+    fn total_ring_distance(&self) -> u64 {
+        match &self.record {
+            Some(r) => r.total_ring_distance,
+            None => 0,
+        }
+    }
+    fn total_hamming_distance(&self) -> u64 {
+        match &self.record {
+            Some(r) => r.total_hamming_distance,
+            None => 0,
+        }
+    }
+}
+
+/// Phase 8 (orphan-closure) — content-addressed handle for `GeodesicTrace<H>`.
+///
+/// Pairs a [`crate::enforcement::ContentFingerprint`] with a phantom
+/// `H` so type-state checks can't mix handles across `HostTypes` impls.
+#[derive(Debug)]
+pub struct GeodesicTraceHandle<H: HostTypes> {
+    /// Content fingerprint identifying the resolved record.
+    pub fingerprint: crate::enforcement::ContentFingerprint,
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Copy for GeodesicTraceHandle<H> {}
+impl<H: HostTypes> Clone for GeodesicTraceHandle<H> {
+    #[inline]
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+impl<H: HostTypes> PartialEq for GeodesicTraceHandle<H> {
+    #[inline]
+    fn eq(&self, other: &Self) -> bool {
+        self.fingerprint == other.fingerprint
+    }
+}
+impl<H: HostTypes> Eq for GeodesicTraceHandle<H> {}
+impl<H: HostTypes> core::hash::Hash for GeodesicTraceHandle<H> {
+    #[inline]
+    fn hash<S: core::hash::Hasher>(&self, state: &mut S) {
+        self.fingerprint.hash(state);
+    }
+}
+impl<H: HostTypes> GeodesicTraceHandle<H> {
+    /// Construct a handle from its content fingerprint.
+    #[inline]
+    #[must_use]
+    pub const fn new(fingerprint: crate::enforcement::ContentFingerprint) -> Self {
+        Self {
+            fingerprint,
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+
+/// Phase 8 (orphan-closure) — resolver trait for `GeodesicTrace<H>`.
+///
+/// Hosts implement this trait to map a handle into a typed record.
+/// The default Null stub does not implement this trait — it carries
+/// no record. Resolution is the responsibility of the host pipeline.
+pub trait GeodesicTraceResolver<H: HostTypes> {
+    /// Resolve a handle into its record. Returns `None` when the
+    /// handle does not correspond to known content.
+    fn resolve(&self, handle: GeodesicTraceHandle<H>) -> Option<GeodesicTraceRecord<H>>;
+}
+
+/// Phase 8 (orphan-closure) — typed record for `GeodesicTrace<H>`.
+///
+/// Carries a field per functional accessor of the trait. Object
+/// fields hold `{Range}Handle<H>`; iterate via the Resolved wrapper
+/// chain-resolver methods.
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub struct GeodesicTraceRecord<H: HostTypes> {
+    #[doc(hidden)]
+    pub _phantom: core::marker::PhantomData<H>,
+}
+
+/// Phase 8 (orphan-closure) — content-addressed wrapper for `GeodesicTrace<H>`.
+///
+/// Caches the resolver's lookup at construction. Accessors return
+/// the cached record's fields when present, falling back to the
+/// `Null{Class}<H>` absent sentinels when the resolver returned
+/// `None`. Object accessors always return absent sentinels — use
+/// the `resolve_{m}` chain methods to descend into sub-records.
+pub struct ResolvedGeodesicTrace<'r, R: GeodesicTraceResolver<H>, H: HostTypes> {
+    handle: GeodesicTraceHandle<H>,
+    resolver: &'r R,
+    record: Option<GeodesicTraceRecord<H>>,
+}
+impl<'r, R: GeodesicTraceResolver<H>, H: HostTypes> ResolvedGeodesicTrace<'r, R, H> {
+    /// Construct the wrapper, eagerly resolving the handle.
+    #[inline]
+    pub fn new(handle: GeodesicTraceHandle<H>, resolver: &'r R) -> Self {
+        let record = resolver.resolve(handle);
+        Self {
+            handle,
+            resolver,
+            record,
+        }
+    }
+    /// The handle this wrapper resolves.
+    #[inline]
+    #[must_use]
+    pub const fn handle(&self) -> GeodesicTraceHandle<H> {
+        self.handle
+    }
+    /// The resolver supplied at construction.
+    #[inline]
+    #[must_use]
+    pub const fn resolver(&self) -> &'r R {
+        self.resolver
+    }
+    /// The cached record, or `None` when the resolver returned `None`.
+    #[inline]
+    #[must_use]
+    pub const fn record(&self) -> Option<&GeodesicTraceRecord<H>> {
+        self.record.as_ref()
+    }
+}
+impl<'r, R: GeodesicTraceResolver<H>, H: HostTypes> ComputationTrace<H>
+    for ResolvedGeodesicTrace<'r, R, H>
+{
+    type Datum = crate::kernel::schema::NullDatum<H>;
+    fn input(&self) -> &Self::Datum {
+        &<crate::kernel::schema::NullDatum<H>>::ABSENT
+    }
+    fn output(&self) -> &Self::Datum {
+        &<crate::kernel::schema::NullDatum<H>>::ABSENT
+    }
+    type ComputationStep = NullComputationStep<H>;
+    fn step(&self) -> &[Self::ComputationStep] {
+        &[]
+    }
+    type DihedralElement = crate::bridge::observable::NullDihedralElement<H>;
+    fn monodromy(&self) -> &Self::DihedralElement {
+        &<crate::bridge::observable::NullDihedralElement<H>>::ABSENT
+    }
+    type Certificate = crate::bridge::cert::NullCertificate<H>;
+    fn certified_by(&self) -> &Self::Certificate {
+        &<crate::bridge::cert::NullCertificate<H>>::ABSENT
+    }
+    type ResidualEntropy = crate::bridge::observable::NullResidualEntropy<H>;
+    fn residual_entropy(&self) -> &Self::ResidualEntropy {
+        &<crate::bridge::observable::NullResidualEntropy<H>>::ABSENT
+    }
+    fn is_geodesic(&self) -> bool {
+        false
+    }
+    type GeodesicViolation = NullGeodesicViolation<H>;
+    fn geodesic_violation(&self) -> &[Self::GeodesicViolation] {
+        &[]
+    }
+    fn cumulative_entropy_cost(&self) -> H::Decimal {
+        H::EMPTY_DECIMAL
+    }
+    fn adiabatically_ordered(&self) -> bool {
+        false
+    }
+    type MeasurementEvent = NullMeasurementEvent<H>;
+    fn measurement_event(&self) -> &[Self::MeasurementEvent] {
+        &[]
+    }
+    fn is_ar1_ordered(&self) -> bool {
+        false
+    }
+    fn is_dc10_selected(&self) -> bool {
+        false
+    }
+}
+impl<'r, R: GeodesicTraceResolver<H>, H: HostTypes> GeodesicTrace<H>
+    for ResolvedGeodesicTrace<'r, R, H>
+{
+}
+
+/// Phase 8 (orphan-closure) — content-addressed handle for `GeodesicViolation<H>`.
+///
+/// Pairs a [`crate::enforcement::ContentFingerprint`] with a phantom
+/// `H` so type-state checks can't mix handles across `HostTypes` impls.
+#[derive(Debug)]
+pub struct GeodesicViolationHandle<H: HostTypes> {
+    /// Content fingerprint identifying the resolved record.
+    pub fingerprint: crate::enforcement::ContentFingerprint,
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Copy for GeodesicViolationHandle<H> {}
+impl<H: HostTypes> Clone for GeodesicViolationHandle<H> {
+    #[inline]
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+impl<H: HostTypes> PartialEq for GeodesicViolationHandle<H> {
+    #[inline]
+    fn eq(&self, other: &Self) -> bool {
+        self.fingerprint == other.fingerprint
+    }
+}
+impl<H: HostTypes> Eq for GeodesicViolationHandle<H> {}
+impl<H: HostTypes> core::hash::Hash for GeodesicViolationHandle<H> {
+    #[inline]
+    fn hash<S: core::hash::Hasher>(&self, state: &mut S) {
+        self.fingerprint.hash(state);
+    }
+}
+impl<H: HostTypes> GeodesicViolationHandle<H> {
+    /// Construct a handle from its content fingerprint.
+    #[inline]
+    #[must_use]
+    pub const fn new(fingerprint: crate::enforcement::ContentFingerprint) -> Self {
+        Self {
+            fingerprint,
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+
+/// Phase 8 (orphan-closure) — resolver trait for `GeodesicViolation<H>`.
+///
+/// Hosts implement this trait to map a handle into a typed record.
+/// The default Null stub does not implement this trait — it carries
+/// no record. Resolution is the responsibility of the host pipeline.
+pub trait GeodesicViolationResolver<H: HostTypes> {
+    /// Resolve a handle into its record. Returns `None` when the
+    /// handle does not correspond to known content.
+    fn resolve(&self, handle: GeodesicViolationHandle<H>) -> Option<GeodesicViolationRecord<H>>;
+}
+
+/// Phase 8 (orphan-closure) — typed record for `GeodesicViolation<H>`.
+///
+/// Carries a field per functional accessor of the trait. Object
+/// fields hold `{Range}Handle<H>`; iterate via the Resolved wrapper
+/// chain-resolver methods.
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub struct GeodesicViolationRecord<H: HostTypes> {
+    pub violation_reason: &'static H::HostString,
+    #[doc(hidden)]
+    pub _phantom: core::marker::PhantomData<H>,
+}
+
+/// Phase 8 (orphan-closure) — content-addressed wrapper for `GeodesicViolation<H>`.
+///
+/// Caches the resolver's lookup at construction. Accessors return
+/// the cached record's fields when present, falling back to the
+/// `Null{Class}<H>` absent sentinels when the resolver returned
+/// `None`. Object accessors always return absent sentinels — use
+/// the `resolve_{m}` chain methods to descend into sub-records.
+pub struct ResolvedGeodesicViolation<'r, R: GeodesicViolationResolver<H>, H: HostTypes> {
+    handle: GeodesicViolationHandle<H>,
+    resolver: &'r R,
+    record: Option<GeodesicViolationRecord<H>>,
+}
+impl<'r, R: GeodesicViolationResolver<H>, H: HostTypes> ResolvedGeodesicViolation<'r, R, H> {
+    /// Construct the wrapper, eagerly resolving the handle.
+    #[inline]
+    pub fn new(handle: GeodesicViolationHandle<H>, resolver: &'r R) -> Self {
+        let record = resolver.resolve(handle);
+        Self {
+            handle,
+            resolver,
+            record,
+        }
+    }
+    /// The handle this wrapper resolves.
+    #[inline]
+    #[must_use]
+    pub const fn handle(&self) -> GeodesicViolationHandle<H> {
+        self.handle
+    }
+    /// The resolver supplied at construction.
+    #[inline]
+    #[must_use]
+    pub const fn resolver(&self) -> &'r R {
+        self.resolver
+    }
+    /// The cached record, or `None` when the resolver returned `None`.
+    #[inline]
+    #[must_use]
+    pub const fn record(&self) -> Option<&GeodesicViolationRecord<H>> {
+        self.record.as_ref()
+    }
+}
+impl<'r, R: GeodesicViolationResolver<H>, H: HostTypes> GeodesicViolation<H>
+    for ResolvedGeodesicViolation<'r, R, H>
+{
+    fn violation_reason(&self) -> &H::HostString {
+        match &self.record {
+            Some(r) => r.violation_reason,
+            None => H::EMPTY_HOST_STRING,
+        }
+    }
+}
+
+/// Phase 8 (orphan-closure) — content-addressed handle for `MeasurementEvent<H>`.
+///
+/// Pairs a [`crate::enforcement::ContentFingerprint`] with a phantom
+/// `H` so type-state checks can't mix handles across `HostTypes` impls.
+#[derive(Debug)]
+pub struct MeasurementEventHandle<H: HostTypes> {
+    /// Content fingerprint identifying the resolved record.
+    pub fingerprint: crate::enforcement::ContentFingerprint,
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Copy for MeasurementEventHandle<H> {}
+impl<H: HostTypes> Clone for MeasurementEventHandle<H> {
+    #[inline]
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+impl<H: HostTypes> PartialEq for MeasurementEventHandle<H> {
+    #[inline]
+    fn eq(&self, other: &Self) -> bool {
+        self.fingerprint == other.fingerprint
+    }
+}
+impl<H: HostTypes> Eq for MeasurementEventHandle<H> {}
+impl<H: HostTypes> core::hash::Hash for MeasurementEventHandle<H> {
+    #[inline]
+    fn hash<S: core::hash::Hasher>(&self, state: &mut S) {
+        self.fingerprint.hash(state);
+    }
+}
+impl<H: HostTypes> MeasurementEventHandle<H> {
+    /// Construct a handle from its content fingerprint.
+    #[inline]
+    #[must_use]
+    pub const fn new(fingerprint: crate::enforcement::ContentFingerprint) -> Self {
+        Self {
+            fingerprint,
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+
+/// Phase 8 (orphan-closure) — resolver trait for `MeasurementEvent<H>`.
+///
+/// Hosts implement this trait to map a handle into a typed record.
+/// The default Null stub does not implement this trait — it carries
+/// no record. Resolution is the responsibility of the host pipeline.
+pub trait MeasurementEventResolver<H: HostTypes> {
+    /// Resolve a handle into its record. Returns `None` when the
+    /// handle does not correspond to known content.
+    fn resolve(&self, handle: MeasurementEventHandle<H>) -> Option<MeasurementEventRecord<H>>;
+}
+
+/// Phase 8 (orphan-closure) — typed record for `MeasurementEvent<H>`.
+///
+/// Carries a field per functional accessor of the trait. Object
+/// fields hold `{Range}Handle<H>`; iterate via the Resolved wrapper
+/// chain-resolver methods.
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub struct MeasurementEventRecord<H: HostTypes> {
+    pub pre_collapse_entropy: H::Decimal,
+    pub post_collapse_landauer_cost: H::Decimal,
+    pub collapse_step: u64,
+    pub amplitude_vector: H::Decimal,
+    #[doc(hidden)]
+    pub _phantom: core::marker::PhantomData<H>,
+}
+
+/// Phase 8 (orphan-closure) — content-addressed wrapper for `MeasurementEvent<H>`.
+///
+/// Caches the resolver's lookup at construction. Accessors return
+/// the cached record's fields when present, falling back to the
+/// `Null{Class}<H>` absent sentinels when the resolver returned
+/// `None`. Object accessors always return absent sentinels — use
+/// the `resolve_{m}` chain methods to descend into sub-records.
+pub struct ResolvedMeasurementEvent<'r, R: MeasurementEventResolver<H>, H: HostTypes> {
+    handle: MeasurementEventHandle<H>,
+    resolver: &'r R,
+    record: Option<MeasurementEventRecord<H>>,
+}
+impl<'r, R: MeasurementEventResolver<H>, H: HostTypes> ResolvedMeasurementEvent<'r, R, H> {
+    /// Construct the wrapper, eagerly resolving the handle.
+    #[inline]
+    pub fn new(handle: MeasurementEventHandle<H>, resolver: &'r R) -> Self {
+        let record = resolver.resolve(handle);
+        Self {
+            handle,
+            resolver,
+            record,
+        }
+    }
+    /// The handle this wrapper resolves.
+    #[inline]
+    #[must_use]
+    pub const fn handle(&self) -> MeasurementEventHandle<H> {
+        self.handle
+    }
+    /// The resolver supplied at construction.
+    #[inline]
+    #[must_use]
+    pub const fn resolver(&self) -> &'r R {
+        self.resolver
+    }
+    /// The cached record, or `None` when the resolver returned `None`.
+    #[inline]
+    #[must_use]
+    pub const fn record(&self) -> Option<&MeasurementEventRecord<H>> {
+        self.record.as_ref()
+    }
+}
+impl<'r, R: MeasurementEventResolver<H>, H: HostTypes> ComputationStep<H>
+    for ResolvedMeasurementEvent<'r, R, H>
+{
+    type Datum = crate::kernel::schema::NullDatum<H>;
+    fn from(&self) -> &Self::Datum {
+        &<crate::kernel::schema::NullDatum<H>>::ABSENT
+    }
+    fn to(&self) -> &Self::Datum {
+        &<crate::kernel::schema::NullDatum<H>>::ABSENT
+    }
+    type Operation = crate::kernel::op::NullOperation<H>;
+    fn operation(&self) -> &Self::Operation {
+        &<crate::kernel::op::NullOperation<H>>::ABSENT
+    }
+    fn index(&self) -> u64 {
+        0
+    }
+    fn step_entropy_cost(&self) -> H::Decimal {
+        H::EMPTY_DECIMAL
+    }
+    fn jacobian_at_step(&self) -> H::Decimal {
+        H::EMPTY_DECIMAL
+    }
+}
+impl<'r, R: MeasurementEventResolver<H>, H: HostTypes> MeasurementEvent<H>
+    for ResolvedMeasurementEvent<'r, R, H>
+{
+    fn pre_collapse_entropy(&self) -> H::Decimal {
+        H::EMPTY_DECIMAL
+    }
+    fn post_collapse_landauer_cost(&self) -> H::Decimal {
+        H::EMPTY_DECIMAL
+    }
+    fn collapse_step(&self) -> u64 {
+        match &self.record {
+            Some(r) => r.collapse_step,
+            None => 0,
+        }
+    }
+    fn amplitude_vector(&self) -> H::Decimal {
+        H::EMPTY_DECIMAL
+    }
+}
+
+/// Phase 8 (orphan-closure) — content-addressed handle for `MeasurementOutcome<H>`.
+///
+/// Pairs a [`crate::enforcement::ContentFingerprint`] with a phantom
+/// `H` so type-state checks can't mix handles across `HostTypes` impls.
+#[derive(Debug)]
+pub struct MeasurementOutcomeHandle<H: HostTypes> {
+    /// Content fingerprint identifying the resolved record.
+    pub fingerprint: crate::enforcement::ContentFingerprint,
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Copy for MeasurementOutcomeHandle<H> {}
+impl<H: HostTypes> Clone for MeasurementOutcomeHandle<H> {
+    #[inline]
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+impl<H: HostTypes> PartialEq for MeasurementOutcomeHandle<H> {
+    #[inline]
+    fn eq(&self, other: &Self) -> bool {
+        self.fingerprint == other.fingerprint
+    }
+}
+impl<H: HostTypes> Eq for MeasurementOutcomeHandle<H> {}
+impl<H: HostTypes> core::hash::Hash for MeasurementOutcomeHandle<H> {
+    #[inline]
+    fn hash<S: core::hash::Hasher>(&self, state: &mut S) {
+        self.fingerprint.hash(state);
+    }
+}
+impl<H: HostTypes> MeasurementOutcomeHandle<H> {
+    /// Construct a handle from its content fingerprint.
+    #[inline]
+    #[must_use]
+    pub const fn new(fingerprint: crate::enforcement::ContentFingerprint) -> Self {
+        Self {
+            fingerprint,
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+
+/// Phase 8 (orphan-closure) — resolver trait for `MeasurementOutcome<H>`.
+///
+/// Hosts implement this trait to map a handle into a typed record.
+/// The default Null stub does not implement this trait — it carries
+/// no record. Resolution is the responsibility of the host pipeline.
+pub trait MeasurementOutcomeResolver<H: HostTypes> {
+    /// Resolve a handle into its record. Returns `None` when the
+    /// handle does not correspond to known content.
+    fn resolve(&self, handle: MeasurementOutcomeHandle<H>) -> Option<MeasurementOutcomeRecord<H>>;
+}
+
+/// Phase 8 (orphan-closure) — typed record for `MeasurementOutcome<H>`.
+///
+/// Carries a field per functional accessor of the trait. Object
+/// fields hold `{Range}Handle<H>`; iterate via the Resolved wrapper
+/// chain-resolver methods.
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub struct MeasurementOutcomeRecord<H: HostTypes> {
+    pub outcome_value: u64,
+    pub outcome_probability: H::Decimal,
+    #[doc(hidden)]
+    pub _phantom: core::marker::PhantomData<H>,
+}
+
+/// Phase 8 (orphan-closure) — content-addressed wrapper for `MeasurementOutcome<H>`.
+///
+/// Caches the resolver's lookup at construction. Accessors return
+/// the cached record's fields when present, falling back to the
+/// `Null{Class}<H>` absent sentinels when the resolver returned
+/// `None`. Object accessors always return absent sentinels — use
+/// the `resolve_{m}` chain methods to descend into sub-records.
+pub struct ResolvedMeasurementOutcome<'r, R: MeasurementOutcomeResolver<H>, H: HostTypes> {
+    handle: MeasurementOutcomeHandle<H>,
+    resolver: &'r R,
+    record: Option<MeasurementOutcomeRecord<H>>,
+}
+impl<'r, R: MeasurementOutcomeResolver<H>, H: HostTypes> ResolvedMeasurementOutcome<'r, R, H> {
+    /// Construct the wrapper, eagerly resolving the handle.
+    #[inline]
+    pub fn new(handle: MeasurementOutcomeHandle<H>, resolver: &'r R) -> Self {
+        let record = resolver.resolve(handle);
+        Self {
+            handle,
+            resolver,
+            record,
+        }
+    }
+    /// The handle this wrapper resolves.
+    #[inline]
+    #[must_use]
+    pub const fn handle(&self) -> MeasurementOutcomeHandle<H> {
+        self.handle
+    }
+    /// The resolver supplied at construction.
+    #[inline]
+    #[must_use]
+    pub const fn resolver(&self) -> &'r R {
+        self.resolver
+    }
+    /// The cached record, or `None` when the resolver returned `None`.
+    #[inline]
+    #[must_use]
+    pub const fn record(&self) -> Option<&MeasurementOutcomeRecord<H>> {
+        self.record.as_ref()
+    }
+}
+impl<'r, R: MeasurementOutcomeResolver<H>, H: HostTypes> MeasurementOutcome<H>
+    for ResolvedMeasurementOutcome<'r, R, H>
+{
+    fn outcome_value(&self) -> u64 {
+        match &self.record {
+            Some(r) => r.outcome_value,
+            None => 0,
+        }
+    }
+    fn outcome_probability(&self) -> H::Decimal {
+        H::EMPTY_DECIMAL
+    }
+}
+
+/// Phase 8 (orphan-closure) — content-addressed handle for `InhabitanceSearchTrace<H>`.
+///
+/// Pairs a [`crate::enforcement::ContentFingerprint`] with a phantom
+/// `H` so type-state checks can't mix handles across `HostTypes` impls.
+#[derive(Debug)]
+pub struct InhabitanceSearchTraceHandle<H: HostTypes> {
+    /// Content fingerprint identifying the resolved record.
+    pub fingerprint: crate::enforcement::ContentFingerprint,
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Copy for InhabitanceSearchTraceHandle<H> {}
+impl<H: HostTypes> Clone for InhabitanceSearchTraceHandle<H> {
+    #[inline]
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+impl<H: HostTypes> PartialEq for InhabitanceSearchTraceHandle<H> {
+    #[inline]
+    fn eq(&self, other: &Self) -> bool {
+        self.fingerprint == other.fingerprint
+    }
+}
+impl<H: HostTypes> Eq for InhabitanceSearchTraceHandle<H> {}
+impl<H: HostTypes> core::hash::Hash for InhabitanceSearchTraceHandle<H> {
+    #[inline]
+    fn hash<S: core::hash::Hasher>(&self, state: &mut S) {
+        self.fingerprint.hash(state);
+    }
+}
+impl<H: HostTypes> InhabitanceSearchTraceHandle<H> {
+    /// Construct a handle from its content fingerprint.
+    #[inline]
+    #[must_use]
+    pub const fn new(fingerprint: crate::enforcement::ContentFingerprint) -> Self {
+        Self {
+            fingerprint,
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+
+/// Phase 8 (orphan-closure) — resolver trait for `InhabitanceSearchTrace<H>`.
+///
+/// Hosts implement this trait to map a handle into a typed record.
+/// The default Null stub does not implement this trait — it carries
+/// no record. Resolution is the responsibility of the host pipeline.
+pub trait InhabitanceSearchTraceResolver<H: HostTypes> {
+    /// Resolve a handle into its record. Returns `None` when the
+    /// handle does not correspond to known content.
+    fn resolve(
+        &self,
+        handle: InhabitanceSearchTraceHandle<H>,
+    ) -> Option<InhabitanceSearchTraceRecord<H>>;
+}
+
+/// Phase 8 (orphan-closure) — typed record for `InhabitanceSearchTrace<H>`.
+///
+/// Carries a field per functional accessor of the trait. Object
+/// fields hold `{Range}Handle<H>`; iterate via the Resolved wrapper
+/// chain-resolver methods.
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub struct InhabitanceSearchTraceRecord<H: HostTypes> {
+    #[doc(hidden)]
+    pub _phantom: core::marker::PhantomData<H>,
+}
+
+/// Phase 8 (orphan-closure) — content-addressed wrapper for `InhabitanceSearchTrace<H>`.
+///
+/// Caches the resolver's lookup at construction. Accessors return
+/// the cached record's fields when present, falling back to the
+/// `Null{Class}<H>` absent sentinels when the resolver returned
+/// `None`. Object accessors always return absent sentinels — use
+/// the `resolve_{m}` chain methods to descend into sub-records.
+pub struct ResolvedInhabitanceSearchTrace<'r, R: InhabitanceSearchTraceResolver<H>, H: HostTypes> {
+    handle: InhabitanceSearchTraceHandle<H>,
+    resolver: &'r R,
+    record: Option<InhabitanceSearchTraceRecord<H>>,
+}
+impl<'r, R: InhabitanceSearchTraceResolver<H>, H: HostTypes>
+    ResolvedInhabitanceSearchTrace<'r, R, H>
+{
+    /// Construct the wrapper, eagerly resolving the handle.
+    #[inline]
+    pub fn new(handle: InhabitanceSearchTraceHandle<H>, resolver: &'r R) -> Self {
+        let record = resolver.resolve(handle);
+        Self {
+            handle,
+            resolver,
+            record,
+        }
+    }
+    /// The handle this wrapper resolves.
+    #[inline]
+    #[must_use]
+    pub const fn handle(&self) -> InhabitanceSearchTraceHandle<H> {
+        self.handle
+    }
+    /// The resolver supplied at construction.
+    #[inline]
+    #[must_use]
+    pub const fn resolver(&self) -> &'r R {
+        self.resolver
+    }
+    /// The cached record, or `None` when the resolver returned `None`.
+    #[inline]
+    #[must_use]
+    pub const fn record(&self) -> Option<&InhabitanceSearchTraceRecord<H>> {
+        self.record.as_ref()
+    }
+}
+impl<'r, R: InhabitanceSearchTraceResolver<H>, H: HostTypes> ComputationTrace<H>
+    for ResolvedInhabitanceSearchTrace<'r, R, H>
+{
+    type Datum = crate::kernel::schema::NullDatum<H>;
+    fn input(&self) -> &Self::Datum {
+        &<crate::kernel::schema::NullDatum<H>>::ABSENT
+    }
+    fn output(&self) -> &Self::Datum {
+        &<crate::kernel::schema::NullDatum<H>>::ABSENT
+    }
+    type ComputationStep = NullComputationStep<H>;
+    fn step(&self) -> &[Self::ComputationStep] {
+        &[]
+    }
+    type DihedralElement = crate::bridge::observable::NullDihedralElement<H>;
+    fn monodromy(&self) -> &Self::DihedralElement {
+        &<crate::bridge::observable::NullDihedralElement<H>>::ABSENT
+    }
+    type Certificate = crate::bridge::cert::NullCertificate<H>;
+    fn certified_by(&self) -> &Self::Certificate {
+        &<crate::bridge::cert::NullCertificate<H>>::ABSENT
+    }
+    type ResidualEntropy = crate::bridge::observable::NullResidualEntropy<H>;
+    fn residual_entropy(&self) -> &Self::ResidualEntropy {
+        &<crate::bridge::observable::NullResidualEntropy<H>>::ABSENT
+    }
+    fn is_geodesic(&self) -> bool {
+        false
+    }
+    type GeodesicViolation = NullGeodesicViolation<H>;
+    fn geodesic_violation(&self) -> &[Self::GeodesicViolation] {
+        &[]
+    }
+    fn cumulative_entropy_cost(&self) -> H::Decimal {
+        H::EMPTY_DECIMAL
+    }
+    fn adiabatically_ordered(&self) -> bool {
+        false
+    }
+    type MeasurementEvent = NullMeasurementEvent<H>;
+    fn measurement_event(&self) -> &[Self::MeasurementEvent] {
+        &[]
+    }
+    fn is_ar1_ordered(&self) -> bool {
+        false
+    }
+    fn is_dc10_selected(&self) -> bool {
+        false
+    }
+}
+impl<'r, R: InhabitanceSearchTraceResolver<H>, H: HostTypes> InhabitanceSearchTrace<H>
+    for ResolvedInhabitanceSearchTrace<'r, R, H>
+{
+    type InhabitanceCheckpoint = crate::bridge::derivation::NullInhabitanceCheckpoint<H>;
+    fn checkpoint(&self) -> &[Self::InhabitanceCheckpoint] {
+        &[]
+    }
+}
+
 /// Canonical geodesic trace at quantum level Q0 (n=8). Demonstrates GD_1 through GD_3 at the base level.
 pub mod geodesic_q0 {
     /// `adiabaticallyOrdered`

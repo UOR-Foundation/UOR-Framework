@@ -20,6 +20,7 @@ pub mod enums;
 pub mod individuals;
 pub mod mapping;
 pub mod pipeline;
+pub mod resolved_wrapper;
 pub mod sdk_macros;
 pub mod traits;
 

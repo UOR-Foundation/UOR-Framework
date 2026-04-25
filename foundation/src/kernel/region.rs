@@ -243,3 +243,719 @@ impl<H: HostTypes> RegionAllocation<H> for NullRegionAllocation<H> {
         &[]
     }
 }
+
+/// Phase 8 (orphan-closure) — content-addressed handle for `AddressRegion<H>`.
+///
+/// Pairs a [`crate::enforcement::ContentFingerprint`] with a phantom
+/// `H` so type-state checks can't mix handles across `HostTypes` impls.
+#[derive(Debug)]
+pub struct AddressRegionHandle<H: HostTypes> {
+    /// Content fingerprint identifying the resolved record.
+    pub fingerprint: crate::enforcement::ContentFingerprint,
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Copy for AddressRegionHandle<H> {}
+impl<H: HostTypes> Clone for AddressRegionHandle<H> {
+    #[inline]
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+impl<H: HostTypes> PartialEq for AddressRegionHandle<H> {
+    #[inline]
+    fn eq(&self, other: &Self) -> bool {
+        self.fingerprint == other.fingerprint
+    }
+}
+impl<H: HostTypes> Eq for AddressRegionHandle<H> {}
+impl<H: HostTypes> core::hash::Hash for AddressRegionHandle<H> {
+    #[inline]
+    fn hash<S: core::hash::Hasher>(&self, state: &mut S) {
+        self.fingerprint.hash(state);
+    }
+}
+impl<H: HostTypes> AddressRegionHandle<H> {
+    /// Construct a handle from its content fingerprint.
+    #[inline]
+    #[must_use]
+    pub const fn new(fingerprint: crate::enforcement::ContentFingerprint) -> Self {
+        Self {
+            fingerprint,
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+
+/// Phase 8 (orphan-closure) — resolver trait for `AddressRegion<H>`.
+///
+/// Hosts implement this trait to map a handle into a typed record.
+/// The default Null stub does not implement this trait — it carries
+/// no record. Resolution is the responsibility of the host pipeline.
+pub trait AddressRegionResolver<H: HostTypes> {
+    /// Resolve a handle into its record. Returns `None` when the
+    /// handle does not correspond to known content.
+    fn resolve(&self, handle: AddressRegionHandle<H>) -> Option<AddressRegionRecord<H>>;
+}
+
+/// Phase 8 (orphan-closure) — typed record for `AddressRegion<H>`.
+///
+/// Carries a field per functional accessor of the trait. Object
+/// fields hold `{Range}Handle<H>`; iterate via the Resolved wrapper
+/// chain-resolver methods.
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub struct AddressRegionRecord<H: HostTypes> {
+    pub region_bound_handle: RegionBoundHandle<H>,
+    pub locality_metric_handle: LocalityMetricHandle<H>,
+    pub region_cardinality: u64,
+    #[doc(hidden)]
+    pub _phantom: core::marker::PhantomData<H>,
+}
+
+/// Phase 8 (orphan-closure) — content-addressed wrapper for `AddressRegion<H>`.
+///
+/// Caches the resolver's lookup at construction. Accessors return
+/// the cached record's fields when present, falling back to the
+/// `Null{Class}<H>` absent sentinels when the resolver returned
+/// `None`. Object accessors always return absent sentinels — use
+/// the `resolve_{m}` chain methods to descend into sub-records.
+pub struct ResolvedAddressRegion<'r, R: AddressRegionResolver<H>, H: HostTypes> {
+    handle: AddressRegionHandle<H>,
+    resolver: &'r R,
+    record: Option<AddressRegionRecord<H>>,
+}
+impl<'r, R: AddressRegionResolver<H>, H: HostTypes> ResolvedAddressRegion<'r, R, H> {
+    /// Construct the wrapper, eagerly resolving the handle.
+    #[inline]
+    pub fn new(handle: AddressRegionHandle<H>, resolver: &'r R) -> Self {
+        let record = resolver.resolve(handle);
+        Self {
+            handle,
+            resolver,
+            record,
+        }
+    }
+    /// The handle this wrapper resolves.
+    #[inline]
+    #[must_use]
+    pub const fn handle(&self) -> AddressRegionHandle<H> {
+        self.handle
+    }
+    /// The resolver supplied at construction.
+    #[inline]
+    #[must_use]
+    pub const fn resolver(&self) -> &'r R {
+        self.resolver
+    }
+    /// The cached record, or `None` when the resolver returned `None`.
+    #[inline]
+    #[must_use]
+    pub const fn record(&self) -> Option<&AddressRegionRecord<H>> {
+        self.record.as_ref()
+    }
+}
+impl<'r, R: AddressRegionResolver<H>, H: HostTypes> AddressRegion<H>
+    for ResolvedAddressRegion<'r, R, H>
+{
+    type RegionBound = NullRegionBound<H>;
+    fn region_bound(&self) -> &Self::RegionBound {
+        &<NullRegionBound<H>>::ABSENT
+    }
+    type LocalityMetric = NullLocalityMetric<H>;
+    fn locality_metric(&self) -> &Self::LocalityMetric {
+        &<NullLocalityMetric<H>>::ABSENT
+    }
+    fn region_cardinality(&self) -> u64 {
+        match &self.record {
+            Some(r) => r.region_cardinality,
+            None => 0,
+        }
+    }
+}
+impl<'r, R: AddressRegionResolver<H>, H: HostTypes> ResolvedAddressRegion<'r, R, H> {
+    /// Promote the `region_bound` handle on the cached record into a
+    /// resolved wrapper, given a resolver for the range class.
+    /// Returns `None` if no record was resolved at construction.
+    #[inline]
+    pub fn resolve_region_bound<'r2, R2: RegionBoundResolver<H>>(
+        &self,
+        r: &'r2 R2,
+    ) -> Option<ResolvedRegionBound<'r2, R2, H>> {
+        let record = self.record.as_ref()?;
+        Some(ResolvedRegionBound::new(record.region_bound_handle, r))
+    }
+    /// Promote the `locality_metric` handle on the cached record into a
+    /// resolved wrapper, given a resolver for the range class.
+    /// Returns `None` if no record was resolved at construction.
+    #[inline]
+    pub fn resolve_locality_metric<'r2, R2: LocalityMetricResolver<H>>(
+        &self,
+        r: &'r2 R2,
+    ) -> Option<ResolvedLocalityMetric<'r2, R2, H>> {
+        let record = self.record.as_ref()?;
+        Some(ResolvedLocalityMetric::new(
+            record.locality_metric_handle,
+            r,
+        ))
+    }
+}
+
+/// Phase 8 (orphan-closure) — content-addressed handle for `RegionBound<H>`.
+///
+/// Pairs a [`crate::enforcement::ContentFingerprint`] with a phantom
+/// `H` so type-state checks can't mix handles across `HostTypes` impls.
+#[derive(Debug)]
+pub struct RegionBoundHandle<H: HostTypes> {
+    /// Content fingerprint identifying the resolved record.
+    pub fingerprint: crate::enforcement::ContentFingerprint,
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Copy for RegionBoundHandle<H> {}
+impl<H: HostTypes> Clone for RegionBoundHandle<H> {
+    #[inline]
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+impl<H: HostTypes> PartialEq for RegionBoundHandle<H> {
+    #[inline]
+    fn eq(&self, other: &Self) -> bool {
+        self.fingerprint == other.fingerprint
+    }
+}
+impl<H: HostTypes> Eq for RegionBoundHandle<H> {}
+impl<H: HostTypes> core::hash::Hash for RegionBoundHandle<H> {
+    #[inline]
+    fn hash<S: core::hash::Hasher>(&self, state: &mut S) {
+        self.fingerprint.hash(state);
+    }
+}
+impl<H: HostTypes> RegionBoundHandle<H> {
+    /// Construct a handle from its content fingerprint.
+    #[inline]
+    #[must_use]
+    pub const fn new(fingerprint: crate::enforcement::ContentFingerprint) -> Self {
+        Self {
+            fingerprint,
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+
+/// Phase 8 (orphan-closure) — resolver trait for `RegionBound<H>`.
+///
+/// Hosts implement this trait to map a handle into a typed record.
+/// The default Null stub does not implement this trait — it carries
+/// no record. Resolution is the responsibility of the host pipeline.
+pub trait RegionBoundResolver<H: HostTypes> {
+    /// Resolve a handle into its record. Returns `None` when the
+    /// handle does not correspond to known content.
+    fn resolve(&self, handle: RegionBoundHandle<H>) -> Option<RegionBoundRecord<H>>;
+}
+
+/// Phase 8 (orphan-closure) — typed record for `RegionBound<H>`.
+///
+/// Carries a field per functional accessor of the trait. Object
+/// fields hold `{Range}Handle<H>`; iterate via the Resolved wrapper
+/// chain-resolver methods.
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub struct RegionBoundRecord<H: HostTypes> {
+    pub region_lower_handle: crate::kernel::address::ElementHandle<H>,
+    pub region_upper_handle: crate::kernel::address::ElementHandle<H>,
+    #[doc(hidden)]
+    pub _phantom: core::marker::PhantomData<H>,
+}
+
+/// Phase 8 (orphan-closure) — content-addressed wrapper for `RegionBound<H>`.
+///
+/// Caches the resolver's lookup at construction. Accessors return
+/// the cached record's fields when present, falling back to the
+/// `Null{Class}<H>` absent sentinels when the resolver returned
+/// `None`. Object accessors always return absent sentinels — use
+/// the `resolve_{m}` chain methods to descend into sub-records.
+pub struct ResolvedRegionBound<'r, R: RegionBoundResolver<H>, H: HostTypes> {
+    handle: RegionBoundHandle<H>,
+    resolver: &'r R,
+    record: Option<RegionBoundRecord<H>>,
+}
+impl<'r, R: RegionBoundResolver<H>, H: HostTypes> ResolvedRegionBound<'r, R, H> {
+    /// Construct the wrapper, eagerly resolving the handle.
+    #[inline]
+    pub fn new(handle: RegionBoundHandle<H>, resolver: &'r R) -> Self {
+        let record = resolver.resolve(handle);
+        Self {
+            handle,
+            resolver,
+            record,
+        }
+    }
+    /// The handle this wrapper resolves.
+    #[inline]
+    #[must_use]
+    pub const fn handle(&self) -> RegionBoundHandle<H> {
+        self.handle
+    }
+    /// The resolver supplied at construction.
+    #[inline]
+    #[must_use]
+    pub const fn resolver(&self) -> &'r R {
+        self.resolver
+    }
+    /// The cached record, or `None` when the resolver returned `None`.
+    #[inline]
+    #[must_use]
+    pub const fn record(&self) -> Option<&RegionBoundRecord<H>> {
+        self.record.as_ref()
+    }
+}
+impl<'r, R: RegionBoundResolver<H>, H: HostTypes> RegionBound<H> for ResolvedRegionBound<'r, R, H> {
+    type Element = crate::kernel::address::NullElement<H>;
+    fn region_lower(&self) -> &Self::Element {
+        &<crate::kernel::address::NullElement<H>>::ABSENT
+    }
+    fn region_upper(&self) -> &Self::Element {
+        &<crate::kernel::address::NullElement<H>>::ABSENT
+    }
+}
+impl<'r, R: RegionBoundResolver<H>, H: HostTypes> ResolvedRegionBound<'r, R, H> {
+    /// Promote the `region_lower` handle on the cached record into a
+    /// resolved wrapper, given a resolver for the range class.
+    /// Returns `None` if no record was resolved at construction.
+    #[inline]
+    pub fn resolve_region_lower<'r2, R2: crate::kernel::address::ElementResolver<H>>(
+        &self,
+        r: &'r2 R2,
+    ) -> Option<crate::kernel::address::ResolvedElement<'r2, R2, H>> {
+        let record = self.record.as_ref()?;
+        Some(crate::kernel::address::ResolvedElement::new(
+            record.region_lower_handle,
+            r,
+        ))
+    }
+    /// Promote the `region_upper` handle on the cached record into a
+    /// resolved wrapper, given a resolver for the range class.
+    /// Returns `None` if no record was resolved at construction.
+    #[inline]
+    pub fn resolve_region_upper<'r2, R2: crate::kernel::address::ElementResolver<H>>(
+        &self,
+        r: &'r2 R2,
+    ) -> Option<crate::kernel::address::ResolvedElement<'r2, R2, H>> {
+        let record = self.record.as_ref()?;
+        Some(crate::kernel::address::ResolvedElement::new(
+            record.region_upper_handle,
+            r,
+        ))
+    }
+}
+
+/// Phase 8 (orphan-closure) — content-addressed handle for `LocalityMetric<H>`.
+///
+/// Pairs a [`crate::enforcement::ContentFingerprint`] with a phantom
+/// `H` so type-state checks can't mix handles across `HostTypes` impls.
+#[derive(Debug)]
+pub struct LocalityMetricHandle<H: HostTypes> {
+    /// Content fingerprint identifying the resolved record.
+    pub fingerprint: crate::enforcement::ContentFingerprint,
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Copy for LocalityMetricHandle<H> {}
+impl<H: HostTypes> Clone for LocalityMetricHandle<H> {
+    #[inline]
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+impl<H: HostTypes> PartialEq for LocalityMetricHandle<H> {
+    #[inline]
+    fn eq(&self, other: &Self) -> bool {
+        self.fingerprint == other.fingerprint
+    }
+}
+impl<H: HostTypes> Eq for LocalityMetricHandle<H> {}
+impl<H: HostTypes> core::hash::Hash for LocalityMetricHandle<H> {
+    #[inline]
+    fn hash<S: core::hash::Hasher>(&self, state: &mut S) {
+        self.fingerprint.hash(state);
+    }
+}
+impl<H: HostTypes> LocalityMetricHandle<H> {
+    /// Construct a handle from its content fingerprint.
+    #[inline]
+    #[must_use]
+    pub const fn new(fingerprint: crate::enforcement::ContentFingerprint) -> Self {
+        Self {
+            fingerprint,
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+
+/// Phase 8 (orphan-closure) — resolver trait for `LocalityMetric<H>`.
+///
+/// Hosts implement this trait to map a handle into a typed record.
+/// The default Null stub does not implement this trait — it carries
+/// no record. Resolution is the responsibility of the host pipeline.
+pub trait LocalityMetricResolver<H: HostTypes> {
+    /// Resolve a handle into its record. Returns `None` when the
+    /// handle does not correspond to known content.
+    fn resolve(&self, handle: LocalityMetricHandle<H>) -> Option<LocalityMetricRecord<H>>;
+}
+
+/// Phase 8 (orphan-closure) — typed record for `LocalityMetric<H>`.
+///
+/// Carries a field per functional accessor of the trait. Object
+/// fields hold `{Range}Handle<H>`; iterate via the Resolved wrapper
+/// chain-resolver methods.
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub struct LocalityMetricRecord<H: HostTypes> {
+    #[doc(hidden)]
+    pub _phantom: core::marker::PhantomData<H>,
+}
+
+/// Phase 8 (orphan-closure) — content-addressed wrapper for `LocalityMetric<H>`.
+///
+/// Caches the resolver's lookup at construction. Accessors return
+/// the cached record's fields when present, falling back to the
+/// `Null{Class}<H>` absent sentinels when the resolver returned
+/// `None`. Object accessors always return absent sentinels — use
+/// the `resolve_{m}` chain methods to descend into sub-records.
+pub struct ResolvedLocalityMetric<'r, R: LocalityMetricResolver<H>, H: HostTypes> {
+    handle: LocalityMetricHandle<H>,
+    resolver: &'r R,
+    record: Option<LocalityMetricRecord<H>>,
+}
+impl<'r, R: LocalityMetricResolver<H>, H: HostTypes> ResolvedLocalityMetric<'r, R, H> {
+    /// Construct the wrapper, eagerly resolving the handle.
+    #[inline]
+    pub fn new(handle: LocalityMetricHandle<H>, resolver: &'r R) -> Self {
+        let record = resolver.resolve(handle);
+        Self {
+            handle,
+            resolver,
+            record,
+        }
+    }
+    /// The handle this wrapper resolves.
+    #[inline]
+    #[must_use]
+    pub const fn handle(&self) -> LocalityMetricHandle<H> {
+        self.handle
+    }
+    /// The resolver supplied at construction.
+    #[inline]
+    #[must_use]
+    pub const fn resolver(&self) -> &'r R {
+        self.resolver
+    }
+    /// The cached record, or `None` when the resolver returned `None`.
+    #[inline]
+    #[must_use]
+    pub const fn record(&self) -> Option<&LocalityMetricRecord<H>> {
+        self.record.as_ref()
+    }
+}
+impl<'r, R: LocalityMetricResolver<H>, H: HostTypes> crate::bridge::observable::Observable<H>
+    for ResolvedLocalityMetric<'r, R, H>
+{
+    fn value(&self) -> H::Decimal {
+        H::EMPTY_DECIMAL
+    }
+    fn source(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    fn target(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    fn has_unit(&self) -> MeasurementUnit {
+        <MeasurementUnit>::default()
+    }
+}
+impl<'r, R: LocalityMetricResolver<H>, H: HostTypes> crate::bridge::observable::MetricObservable<H>
+    for ResolvedLocalityMetric<'r, R, H>
+{
+}
+impl<'r, R: LocalityMetricResolver<H>, H: HostTypes> LocalityMetric<H>
+    for ResolvedLocalityMetric<'r, R, H>
+{
+}
+
+/// Phase 8 (orphan-closure) — content-addressed handle for `WorkingSet<H>`.
+///
+/// Pairs a [`crate::enforcement::ContentFingerprint`] with a phantom
+/// `H` so type-state checks can't mix handles across `HostTypes` impls.
+#[derive(Debug)]
+pub struct WorkingSetHandle<H: HostTypes> {
+    /// Content fingerprint identifying the resolved record.
+    pub fingerprint: crate::enforcement::ContentFingerprint,
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Copy for WorkingSetHandle<H> {}
+impl<H: HostTypes> Clone for WorkingSetHandle<H> {
+    #[inline]
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+impl<H: HostTypes> PartialEq for WorkingSetHandle<H> {
+    #[inline]
+    fn eq(&self, other: &Self) -> bool {
+        self.fingerprint == other.fingerprint
+    }
+}
+impl<H: HostTypes> Eq for WorkingSetHandle<H> {}
+impl<H: HostTypes> core::hash::Hash for WorkingSetHandle<H> {
+    #[inline]
+    fn hash<S: core::hash::Hasher>(&self, state: &mut S) {
+        self.fingerprint.hash(state);
+    }
+}
+impl<H: HostTypes> WorkingSetHandle<H> {
+    /// Construct a handle from its content fingerprint.
+    #[inline]
+    #[must_use]
+    pub const fn new(fingerprint: crate::enforcement::ContentFingerprint) -> Self {
+        Self {
+            fingerprint,
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+
+/// Phase 8 (orphan-closure) — resolver trait for `WorkingSet<H>`.
+///
+/// Hosts implement this trait to map a handle into a typed record.
+/// The default Null stub does not implement this trait — it carries
+/// no record. Resolution is the responsibility of the host pipeline.
+pub trait WorkingSetResolver<H: HostTypes> {
+    /// Resolve a handle into its record. Returns `None` when the
+    /// handle does not correspond to known content.
+    fn resolve(&self, handle: WorkingSetHandle<H>) -> Option<WorkingSetRecord<H>>;
+}
+
+/// Phase 8 (orphan-closure) — typed record for `WorkingSet<H>`.
+///
+/// Carries a field per functional accessor of the trait. Object
+/// fields hold `{Range}Handle<H>`; iterate via the Resolved wrapper
+/// chain-resolver methods.
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub struct WorkingSetRecord<H: HostTypes> {
+    pub working_set_stage_handle: crate::kernel::reduction::ReductionStepHandle<H>,
+    pub working_set_type_handle: crate::user::type_::TypeDefinitionHandle<H>,
+    pub working_set_size: u64,
+    #[doc(hidden)]
+    pub _phantom: core::marker::PhantomData<H>,
+}
+
+/// Phase 8 (orphan-closure) — content-addressed wrapper for `WorkingSet<H>`.
+///
+/// Caches the resolver's lookup at construction. Accessors return
+/// the cached record's fields when present, falling back to the
+/// `Null{Class}<H>` absent sentinels when the resolver returned
+/// `None`. Object accessors always return absent sentinels — use
+/// the `resolve_{m}` chain methods to descend into sub-records.
+pub struct ResolvedWorkingSet<'r, R: WorkingSetResolver<H>, H: HostTypes> {
+    handle: WorkingSetHandle<H>,
+    resolver: &'r R,
+    record: Option<WorkingSetRecord<H>>,
+}
+impl<'r, R: WorkingSetResolver<H>, H: HostTypes> ResolvedWorkingSet<'r, R, H> {
+    /// Construct the wrapper, eagerly resolving the handle.
+    #[inline]
+    pub fn new(handle: WorkingSetHandle<H>, resolver: &'r R) -> Self {
+        let record = resolver.resolve(handle);
+        Self {
+            handle,
+            resolver,
+            record,
+        }
+    }
+    /// The handle this wrapper resolves.
+    #[inline]
+    #[must_use]
+    pub const fn handle(&self) -> WorkingSetHandle<H> {
+        self.handle
+    }
+    /// The resolver supplied at construction.
+    #[inline]
+    #[must_use]
+    pub const fn resolver(&self) -> &'r R {
+        self.resolver
+    }
+    /// The cached record, or `None` when the resolver returned `None`.
+    #[inline]
+    #[must_use]
+    pub const fn record(&self) -> Option<&WorkingSetRecord<H>> {
+        self.record.as_ref()
+    }
+}
+impl<'r, R: WorkingSetResolver<H>, H: HostTypes> WorkingSet<H> for ResolvedWorkingSet<'r, R, H> {
+    type AddressRegion = NullAddressRegion<H>;
+    fn working_set_regions(&self) -> &[Self::AddressRegion] {
+        &[]
+    }
+    type ReductionStep = crate::kernel::reduction::NullReductionStep<H>;
+    fn working_set_stage(&self) -> &Self::ReductionStep {
+        &<crate::kernel::reduction::NullReductionStep<H>>::ABSENT
+    }
+    type TypeDefinition = crate::user::type_::NullTypeDefinition<H>;
+    fn working_set_type(&self) -> &Self::TypeDefinition {
+        &<crate::user::type_::NullTypeDefinition<H>>::ABSENT
+    }
+    fn working_set_size(&self) -> u64 {
+        match &self.record {
+            Some(r) => r.working_set_size,
+            None => 0,
+        }
+    }
+}
+impl<'r, R: WorkingSetResolver<H>, H: HostTypes> ResolvedWorkingSet<'r, R, H> {
+    /// Promote the `working_set_stage` handle on the cached record into a
+    /// resolved wrapper, given a resolver for the range class.
+    /// Returns `None` if no record was resolved at construction.
+    #[inline]
+    pub fn resolve_working_set_stage<
+        'r2,
+        R2: crate::kernel::reduction::ReductionStepResolver<H>,
+    >(
+        &self,
+        r: &'r2 R2,
+    ) -> Option<crate::kernel::reduction::ResolvedReductionStep<'r2, R2, H>> {
+        let record = self.record.as_ref()?;
+        Some(crate::kernel::reduction::ResolvedReductionStep::new(
+            record.working_set_stage_handle,
+            r,
+        ))
+    }
+    /// Promote the `working_set_type` handle on the cached record into a
+    /// resolved wrapper, given a resolver for the range class.
+    /// Returns `None` if no record was resolved at construction.
+    #[inline]
+    pub fn resolve_working_set_type<'r2, R2: crate::user::type_::TypeDefinitionResolver<H>>(
+        &self,
+        r: &'r2 R2,
+    ) -> Option<crate::user::type_::ResolvedTypeDefinition<'r2, R2, H>> {
+        let record = self.record.as_ref()?;
+        Some(crate::user::type_::ResolvedTypeDefinition::new(
+            record.working_set_type_handle,
+            r,
+        ))
+    }
+}
+
+/// Phase 8 (orphan-closure) — content-addressed handle for `RegionAllocation<H>`.
+///
+/// Pairs a [`crate::enforcement::ContentFingerprint`] with a phantom
+/// `H` so type-state checks can't mix handles across `HostTypes` impls.
+#[derive(Debug)]
+pub struct RegionAllocationHandle<H: HostTypes> {
+    /// Content fingerprint identifying the resolved record.
+    pub fingerprint: crate::enforcement::ContentFingerprint,
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Copy for RegionAllocationHandle<H> {}
+impl<H: HostTypes> Clone for RegionAllocationHandle<H> {
+    #[inline]
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+impl<H: HostTypes> PartialEq for RegionAllocationHandle<H> {
+    #[inline]
+    fn eq(&self, other: &Self) -> bool {
+        self.fingerprint == other.fingerprint
+    }
+}
+impl<H: HostTypes> Eq for RegionAllocationHandle<H> {}
+impl<H: HostTypes> core::hash::Hash for RegionAllocationHandle<H> {
+    #[inline]
+    fn hash<S: core::hash::Hasher>(&self, state: &mut S) {
+        self.fingerprint.hash(state);
+    }
+}
+impl<H: HostTypes> RegionAllocationHandle<H> {
+    /// Construct a handle from its content fingerprint.
+    #[inline]
+    #[must_use]
+    pub const fn new(fingerprint: crate::enforcement::ContentFingerprint) -> Self {
+        Self {
+            fingerprint,
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+
+/// Phase 8 (orphan-closure) — resolver trait for `RegionAllocation<H>`.
+///
+/// Hosts implement this trait to map a handle into a typed record.
+/// The default Null stub does not implement this trait — it carries
+/// no record. Resolution is the responsibility of the host pipeline.
+pub trait RegionAllocationResolver<H: HostTypes> {
+    /// Resolve a handle into its record. Returns `None` when the
+    /// handle does not correspond to known content.
+    fn resolve(&self, handle: RegionAllocationHandle<H>) -> Option<RegionAllocationRecord<H>>;
+}
+
+/// Phase 8 (orphan-closure) — typed record for `RegionAllocation<H>`.
+///
+/// Carries a field per functional accessor of the trait. Object
+/// fields hold `{Range}Handle<H>`; iterate via the Resolved wrapper
+/// chain-resolver methods.
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub struct RegionAllocationRecord<H: HostTypes> {
+    #[doc(hidden)]
+    pub _phantom: core::marker::PhantomData<H>,
+}
+
+/// Phase 8 (orphan-closure) — content-addressed wrapper for `RegionAllocation<H>`.
+///
+/// Caches the resolver's lookup at construction. Accessors return
+/// the cached record's fields when present, falling back to the
+/// `Null{Class}<H>` absent sentinels when the resolver returned
+/// `None`. Object accessors always return absent sentinels — use
+/// the `resolve_{m}` chain methods to descend into sub-records.
+pub struct ResolvedRegionAllocation<'r, R: RegionAllocationResolver<H>, H: HostTypes> {
+    handle: RegionAllocationHandle<H>,
+    resolver: &'r R,
+    record: Option<RegionAllocationRecord<H>>,
+}
+impl<'r, R: RegionAllocationResolver<H>, H: HostTypes> ResolvedRegionAllocation<'r, R, H> {
+    /// Construct the wrapper, eagerly resolving the handle.
+    #[inline]
+    pub fn new(handle: RegionAllocationHandle<H>, resolver: &'r R) -> Self {
+        let record = resolver.resolve(handle);
+        Self {
+            handle,
+            resolver,
+            record,
+        }
+    }
+    /// The handle this wrapper resolves.
+    #[inline]
+    #[must_use]
+    pub const fn handle(&self) -> RegionAllocationHandle<H> {
+        self.handle
+    }
+    /// The resolver supplied at construction.
+    #[inline]
+    #[must_use]
+    pub const fn resolver(&self) -> &'r R {
+        self.resolver
+    }
+    /// The cached record, or `None` when the resolver returned `None`.
+    #[inline]
+    #[must_use]
+    pub const fn record(&self) -> Option<&RegionAllocationRecord<H>> {
+        self.record.as_ref()
+    }
+}
+impl<'r, R: RegionAllocationResolver<H>, H: HostTypes> RegionAllocation<H>
+    for ResolvedRegionAllocation<'r, R, H>
+{
+    type ReductionStep = crate::kernel::reduction::NullReductionStep<H>;
+    fn allocation_stage(&self) -> &[Self::ReductionStep] {
+        &[]
+    }
+    type WorkingSet = NullWorkingSet<H>;
+    fn allocation_working_set(&self) -> &[Self::WorkingSet] {
+        &[]
+    }
+}

@@ -403,6 +403,421 @@ impl<H: HostTypes> GluingObstruction<H> for NullGluingObstruction<H> {
     }
 }
 
+/// Phase 8 (orphan-closure) — content-addressed handle for `CochainGroup<H>`.
+///
+/// Pairs a [`crate::enforcement::ContentFingerprint`] with a phantom
+/// `H` so type-state checks can't mix handles across `HostTypes` impls.
+#[derive(Debug)]
+pub struct CochainGroupHandle<H: HostTypes> {
+    /// Content fingerprint identifying the resolved record.
+    pub fingerprint: crate::enforcement::ContentFingerprint,
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Copy for CochainGroupHandle<H> {}
+impl<H: HostTypes> Clone for CochainGroupHandle<H> {
+    #[inline]
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+impl<H: HostTypes> PartialEq for CochainGroupHandle<H> {
+    #[inline]
+    fn eq(&self, other: &Self) -> bool {
+        self.fingerprint == other.fingerprint
+    }
+}
+impl<H: HostTypes> Eq for CochainGroupHandle<H> {}
+impl<H: HostTypes> core::hash::Hash for CochainGroupHandle<H> {
+    #[inline]
+    fn hash<S: core::hash::Hasher>(&self, state: &mut S) {
+        self.fingerprint.hash(state);
+    }
+}
+impl<H: HostTypes> CochainGroupHandle<H> {
+    /// Construct a handle from its content fingerprint.
+    #[inline]
+    #[must_use]
+    pub const fn new(fingerprint: crate::enforcement::ContentFingerprint) -> Self {
+        Self {
+            fingerprint,
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+
+/// Phase 8 (orphan-closure) — resolver trait for `CochainGroup<H>`.
+///
+/// Hosts implement this trait to map a handle into a typed record.
+/// The default Null stub does not implement this trait — it carries
+/// no record. Resolution is the responsibility of the host pipeline.
+pub trait CochainGroupResolver<H: HostTypes> {
+    /// Resolve a handle into its record. Returns `None` when the
+    /// handle does not correspond to known content.
+    fn resolve(&self, handle: CochainGroupHandle<H>) -> Option<CochainGroupRecord<H>>;
+}
+
+/// Phase 8 (orphan-closure) — typed record for `CochainGroup<H>`.
+///
+/// Carries a field per functional accessor of the trait. Object
+/// fields hold `{Range}Handle<H>`; iterate via the Resolved wrapper
+/// chain-resolver methods.
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub struct CochainGroupRecord<H: HostTypes> {
+    pub cochain_degree: i64,
+    pub cochain_rank: u64,
+    pub dual_of_handle: crate::bridge::homology::ChainGroupHandle<H>,
+    #[doc(hidden)]
+    pub _phantom: core::marker::PhantomData<H>,
+}
+
+/// Phase 8 (orphan-closure) — content-addressed wrapper for `CochainGroup<H>`.
+///
+/// Caches the resolver's lookup at construction. Accessors return
+/// the cached record's fields when present, falling back to the
+/// `Null{Class}<H>` absent sentinels when the resolver returned
+/// `None`. Object accessors always return absent sentinels — use
+/// the `resolve_{m}` chain methods to descend into sub-records.
+pub struct ResolvedCochainGroup<'r, R: CochainGroupResolver<H>, H: HostTypes> {
+    handle: CochainGroupHandle<H>,
+    resolver: &'r R,
+    record: Option<CochainGroupRecord<H>>,
+}
+impl<'r, R: CochainGroupResolver<H>, H: HostTypes> ResolvedCochainGroup<'r, R, H> {
+    /// Construct the wrapper, eagerly resolving the handle.
+    #[inline]
+    pub fn new(handle: CochainGroupHandle<H>, resolver: &'r R) -> Self {
+        let record = resolver.resolve(handle);
+        Self {
+            handle,
+            resolver,
+            record,
+        }
+    }
+    /// The handle this wrapper resolves.
+    #[inline]
+    #[must_use]
+    pub const fn handle(&self) -> CochainGroupHandle<H> {
+        self.handle
+    }
+    /// The resolver supplied at construction.
+    #[inline]
+    #[must_use]
+    pub const fn resolver(&self) -> &'r R {
+        self.resolver
+    }
+    /// The cached record, or `None` when the resolver returned `None`.
+    #[inline]
+    #[must_use]
+    pub const fn record(&self) -> Option<&CochainGroupRecord<H>> {
+        self.record.as_ref()
+    }
+}
+impl<'r, R: CochainGroupResolver<H>, H: HostTypes> CochainGroup<H>
+    for ResolvedCochainGroup<'r, R, H>
+{
+    fn cochain_degree(&self) -> i64 {
+        match &self.record {
+            Some(r) => r.cochain_degree,
+            None => 0,
+        }
+    }
+    fn cochain_rank(&self) -> u64 {
+        match &self.record {
+            Some(r) => r.cochain_rank,
+            None => 0,
+        }
+    }
+    type ChainGroup = crate::bridge::homology::NullChainGroup<H>;
+    fn dual_of(&self) -> &Self::ChainGroup {
+        &<crate::bridge::homology::NullChainGroup<H>>::ABSENT
+    }
+}
+impl<'r, R: CochainGroupResolver<H>, H: HostTypes> ResolvedCochainGroup<'r, R, H> {
+    /// Promote the `dual_of` handle on the cached record into a
+    /// resolved wrapper, given a resolver for the range class.
+    /// Returns `None` if no record was resolved at construction.
+    #[inline]
+    pub fn resolve_dual_of<'r2, R2: crate::bridge::homology::ChainGroupResolver<H>>(
+        &self,
+        r: &'r2 R2,
+    ) -> Option<crate::bridge::homology::ResolvedChainGroup<'r2, R2, H>> {
+        let record = self.record.as_ref()?;
+        Some(crate::bridge::homology::ResolvedChainGroup::new(
+            record.dual_of_handle,
+            r,
+        ))
+    }
+}
+
+/// Phase 8 (orphan-closure) — content-addressed handle for `CoboundaryOperator<H>`.
+///
+/// Pairs a [`crate::enforcement::ContentFingerprint`] with a phantom
+/// `H` so type-state checks can't mix handles across `HostTypes` impls.
+#[derive(Debug)]
+pub struct CoboundaryOperatorHandle<H: HostTypes> {
+    /// Content fingerprint identifying the resolved record.
+    pub fingerprint: crate::enforcement::ContentFingerprint,
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Copy for CoboundaryOperatorHandle<H> {}
+impl<H: HostTypes> Clone for CoboundaryOperatorHandle<H> {
+    #[inline]
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+impl<H: HostTypes> PartialEq for CoboundaryOperatorHandle<H> {
+    #[inline]
+    fn eq(&self, other: &Self) -> bool {
+        self.fingerprint == other.fingerprint
+    }
+}
+impl<H: HostTypes> Eq for CoboundaryOperatorHandle<H> {}
+impl<H: HostTypes> core::hash::Hash for CoboundaryOperatorHandle<H> {
+    #[inline]
+    fn hash<S: core::hash::Hasher>(&self, state: &mut S) {
+        self.fingerprint.hash(state);
+    }
+}
+impl<H: HostTypes> CoboundaryOperatorHandle<H> {
+    /// Construct a handle from its content fingerprint.
+    #[inline]
+    #[must_use]
+    pub const fn new(fingerprint: crate::enforcement::ContentFingerprint) -> Self {
+        Self {
+            fingerprint,
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+
+/// Phase 8 (orphan-closure) — resolver trait for `CoboundaryOperator<H>`.
+///
+/// Hosts implement this trait to map a handle into a typed record.
+/// The default Null stub does not implement this trait — it carries
+/// no record. Resolution is the responsibility of the host pipeline.
+pub trait CoboundaryOperatorResolver<H: HostTypes> {
+    /// Resolve a handle into its record. Returns `None` when the
+    /// handle does not correspond to known content.
+    fn resolve(&self, handle: CoboundaryOperatorHandle<H>) -> Option<CoboundaryOperatorRecord<H>>;
+}
+
+/// Phase 8 (orphan-closure) — typed record for `CoboundaryOperator<H>`.
+///
+/// Carries a field per functional accessor of the trait. Object
+/// fields hold `{Range}Handle<H>`; iterate via the Resolved wrapper
+/// chain-resolver methods.
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub struct CoboundaryOperatorRecord<H: HostTypes> {
+    pub coboundary_source_handle: CochainGroupHandle<H>,
+    pub coboundary_target_handle: CochainGroupHandle<H>,
+    pub satisfies_coboundary_squared_zero: bool,
+    #[doc(hidden)]
+    pub _phantom: core::marker::PhantomData<H>,
+}
+
+/// Phase 8 (orphan-closure) — content-addressed wrapper for `CoboundaryOperator<H>`.
+///
+/// Caches the resolver's lookup at construction. Accessors return
+/// the cached record's fields when present, falling back to the
+/// `Null{Class}<H>` absent sentinels when the resolver returned
+/// `None`. Object accessors always return absent sentinels — use
+/// the `resolve_{m}` chain methods to descend into sub-records.
+pub struct ResolvedCoboundaryOperator<'r, R: CoboundaryOperatorResolver<H>, H: HostTypes> {
+    handle: CoboundaryOperatorHandle<H>,
+    resolver: &'r R,
+    record: Option<CoboundaryOperatorRecord<H>>,
+}
+impl<'r, R: CoboundaryOperatorResolver<H>, H: HostTypes> ResolvedCoboundaryOperator<'r, R, H> {
+    /// Construct the wrapper, eagerly resolving the handle.
+    #[inline]
+    pub fn new(handle: CoboundaryOperatorHandle<H>, resolver: &'r R) -> Self {
+        let record = resolver.resolve(handle);
+        Self {
+            handle,
+            resolver,
+            record,
+        }
+    }
+    /// The handle this wrapper resolves.
+    #[inline]
+    #[must_use]
+    pub const fn handle(&self) -> CoboundaryOperatorHandle<H> {
+        self.handle
+    }
+    /// The resolver supplied at construction.
+    #[inline]
+    #[must_use]
+    pub const fn resolver(&self) -> &'r R {
+        self.resolver
+    }
+    /// The cached record, or `None` when the resolver returned `None`.
+    #[inline]
+    #[must_use]
+    pub const fn record(&self) -> Option<&CoboundaryOperatorRecord<H>> {
+        self.record.as_ref()
+    }
+}
+impl<'r, R: CoboundaryOperatorResolver<H>, H: HostTypes> CoboundaryOperator<H>
+    for ResolvedCoboundaryOperator<'r, R, H>
+{
+    type CochainGroup = NullCochainGroup<H>;
+    fn coboundary_source(&self) -> &Self::CochainGroup {
+        &<NullCochainGroup<H>>::ABSENT
+    }
+    fn coboundary_target(&self) -> &Self::CochainGroup {
+        &<NullCochainGroup<H>>::ABSENT
+    }
+    fn satisfies_coboundary_squared_zero(&self) -> bool {
+        match &self.record {
+            Some(r) => r.satisfies_coboundary_squared_zero,
+            None => false,
+        }
+    }
+}
+impl<'r, R: CoboundaryOperatorResolver<H>, H: HostTypes> ResolvedCoboundaryOperator<'r, R, H> {
+    /// Promote the `coboundary_source` handle on the cached record into a
+    /// resolved wrapper, given a resolver for the range class.
+    /// Returns `None` if no record was resolved at construction.
+    #[inline]
+    pub fn resolve_coboundary_source<'r2, R2: CochainGroupResolver<H>>(
+        &self,
+        r: &'r2 R2,
+    ) -> Option<ResolvedCochainGroup<'r2, R2, H>> {
+        let record = self.record.as_ref()?;
+        Some(ResolvedCochainGroup::new(
+            record.coboundary_source_handle,
+            r,
+        ))
+    }
+    /// Promote the `coboundary_target` handle on the cached record into a
+    /// resolved wrapper, given a resolver for the range class.
+    /// Returns `None` if no record was resolved at construction.
+    #[inline]
+    pub fn resolve_coboundary_target<'r2, R2: CochainGroupResolver<H>>(
+        &self,
+        r: &'r2 R2,
+    ) -> Option<ResolvedCochainGroup<'r2, R2, H>> {
+        let record = self.record.as_ref()?;
+        Some(ResolvedCochainGroup::new(
+            record.coboundary_target_handle,
+            r,
+        ))
+    }
+}
+
+/// Phase 8 (orphan-closure) — content-addressed handle for `LocalSection<H>`.
+///
+/// Pairs a [`crate::enforcement::ContentFingerprint`] with a phantom
+/// `H` so type-state checks can't mix handles across `HostTypes` impls.
+#[derive(Debug)]
+pub struct LocalSectionHandle<H: HostTypes> {
+    /// Content fingerprint identifying the resolved record.
+    pub fingerprint: crate::enforcement::ContentFingerprint,
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Copy for LocalSectionHandle<H> {}
+impl<H: HostTypes> Clone for LocalSectionHandle<H> {
+    #[inline]
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+impl<H: HostTypes> PartialEq for LocalSectionHandle<H> {
+    #[inline]
+    fn eq(&self, other: &Self) -> bool {
+        self.fingerprint == other.fingerprint
+    }
+}
+impl<H: HostTypes> Eq for LocalSectionHandle<H> {}
+impl<H: HostTypes> core::hash::Hash for LocalSectionHandle<H> {
+    #[inline]
+    fn hash<S: core::hash::Hasher>(&self, state: &mut S) {
+        self.fingerprint.hash(state);
+    }
+}
+impl<H: HostTypes> LocalSectionHandle<H> {
+    /// Construct a handle from its content fingerprint.
+    #[inline]
+    #[must_use]
+    pub const fn new(fingerprint: crate::enforcement::ContentFingerprint) -> Self {
+        Self {
+            fingerprint,
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+
+/// Phase 8 (orphan-closure) — resolver trait for `LocalSection<H>`.
+///
+/// Hosts implement this trait to map a handle into a typed record.
+/// The default Null stub does not implement this trait — it carries
+/// no record. Resolution is the responsibility of the host pipeline.
+pub trait LocalSectionResolver<H: HostTypes> {
+    /// Resolve a handle into its record. Returns `None` when the
+    /// handle does not correspond to known content.
+    fn resolve(&self, handle: LocalSectionHandle<H>) -> Option<LocalSectionRecord<H>>;
+}
+
+/// Phase 8 (orphan-closure) — typed record for `LocalSection<H>`.
+///
+/// Carries a field per functional accessor of the trait. Object
+/// fields hold `{Range}Handle<H>`; iterate via the Resolved wrapper
+/// chain-resolver methods.
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub struct LocalSectionRecord<H: HostTypes> {
+    #[doc(hidden)]
+    pub _phantom: core::marker::PhantomData<H>,
+}
+
+/// Phase 8 (orphan-closure) — content-addressed wrapper for `LocalSection<H>`.
+///
+/// Caches the resolver's lookup at construction. Accessors return
+/// the cached record's fields when present, falling back to the
+/// `Null{Class}<H>` absent sentinels when the resolver returned
+/// `None`. Object accessors always return absent sentinels — use
+/// the `resolve_{m}` chain methods to descend into sub-records.
+pub struct ResolvedLocalSection<'r, R: LocalSectionResolver<H>, H: HostTypes> {
+    handle: LocalSectionHandle<H>,
+    resolver: &'r R,
+    record: Option<LocalSectionRecord<H>>,
+}
+impl<'r, R: LocalSectionResolver<H>, H: HostTypes> ResolvedLocalSection<'r, R, H> {
+    /// Construct the wrapper, eagerly resolving the handle.
+    #[inline]
+    pub fn new(handle: LocalSectionHandle<H>, resolver: &'r R) -> Self {
+        let record = resolver.resolve(handle);
+        Self {
+            handle,
+            resolver,
+            record,
+        }
+    }
+    /// The handle this wrapper resolves.
+    #[inline]
+    #[must_use]
+    pub const fn handle(&self) -> LocalSectionHandle<H> {
+        self.handle
+    }
+    /// The resolver supplied at construction.
+    #[inline]
+    #[must_use]
+    pub const fn resolver(&self) -> &'r R {
+        self.resolver
+    }
+    /// The cached record, or `None` when the resolver returned `None`.
+    #[inline]
+    #[must_use]
+    pub const fn record(&self) -> Option<&LocalSectionRecord<H>> {
+        self.record.as_ref()
+    }
+}
+impl<'r, R: LocalSectionResolver<H>, H: HostTypes> Section<H> for ResolvedLocalSection<'r, R, H> {}
+impl<'r, R: LocalSectionResolver<H>, H: HostTypes> LocalSection<H>
+    for ResolvedLocalSection<'r, R, H>
+{
+}
+
 /// δ² = 0: the coboundary of a coboundary is zero.
 pub mod coboundary_squared_zero {
     /// `forAll` -> `term_coboundarySquaredZero_forAll`

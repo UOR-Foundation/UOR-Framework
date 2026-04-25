@@ -144,3 +144,274 @@ impl<H: HostTypes> MonoidalAssociator<H> for NullMonoidalAssociator<H> {
         &<crate::bridge::cert::NullCertificate<H>>::ABSENT
     }
 }
+
+/// Phase 8 (orphan-closure) — content-addressed handle for `MonoidalUnit<H>`.
+///
+/// Pairs a [`crate::enforcement::ContentFingerprint`] with a phantom
+/// `H` so type-state checks can't mix handles across `HostTypes` impls.
+#[derive(Debug)]
+pub struct MonoidalUnitHandle<H: HostTypes> {
+    /// Content fingerprint identifying the resolved record.
+    pub fingerprint: crate::enforcement::ContentFingerprint,
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Copy for MonoidalUnitHandle<H> {}
+impl<H: HostTypes> Clone for MonoidalUnitHandle<H> {
+    #[inline]
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+impl<H: HostTypes> PartialEq for MonoidalUnitHandle<H> {
+    #[inline]
+    fn eq(&self, other: &Self) -> bool {
+        self.fingerprint == other.fingerprint
+    }
+}
+impl<H: HostTypes> Eq for MonoidalUnitHandle<H> {}
+impl<H: HostTypes> core::hash::Hash for MonoidalUnitHandle<H> {
+    #[inline]
+    fn hash<S: core::hash::Hasher>(&self, state: &mut S) {
+        self.fingerprint.hash(state);
+    }
+}
+impl<H: HostTypes> MonoidalUnitHandle<H> {
+    /// Construct a handle from its content fingerprint.
+    #[inline]
+    #[must_use]
+    pub const fn new(fingerprint: crate::enforcement::ContentFingerprint) -> Self {
+        Self {
+            fingerprint,
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+
+/// Phase 8 (orphan-closure) — resolver trait for `MonoidalUnit<H>`.
+///
+/// Hosts implement this trait to map a handle into a typed record.
+/// The default Null stub does not implement this trait — it carries
+/// no record. Resolution is the responsibility of the host pipeline.
+pub trait MonoidalUnitResolver<H: HostTypes> {
+    /// Resolve a handle into its record. Returns `None` when the
+    /// handle does not correspond to known content.
+    fn resolve(&self, handle: MonoidalUnitHandle<H>) -> Option<MonoidalUnitRecord<H>>;
+}
+
+/// Phase 8 (orphan-closure) — typed record for `MonoidalUnit<H>`.
+///
+/// Carries a field per functional accessor of the trait. Object
+/// fields hold `{Range}Handle<H>`; iterate via the Resolved wrapper
+/// chain-resolver methods.
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub struct MonoidalUnitRecord<H: HostTypes> {
+    pub unit_witness_ref_handle: crate::bridge::cert::CertificateHandle<H>,
+    #[doc(hidden)]
+    pub _phantom: core::marker::PhantomData<H>,
+}
+
+/// Phase 8 (orphan-closure) — content-addressed wrapper for `MonoidalUnit<H>`.
+///
+/// Caches the resolver's lookup at construction. Accessors return
+/// the cached record's fields when present, falling back to the
+/// `Null{Class}<H>` absent sentinels when the resolver returned
+/// `None`. Object accessors always return absent sentinels — use
+/// the `resolve_{m}` chain methods to descend into sub-records.
+pub struct ResolvedMonoidalUnit<'r, R: MonoidalUnitResolver<H>, H: HostTypes> {
+    handle: MonoidalUnitHandle<H>,
+    resolver: &'r R,
+    record: Option<MonoidalUnitRecord<H>>,
+}
+impl<'r, R: MonoidalUnitResolver<H>, H: HostTypes> ResolvedMonoidalUnit<'r, R, H> {
+    /// Construct the wrapper, eagerly resolving the handle.
+    #[inline]
+    pub fn new(handle: MonoidalUnitHandle<H>, resolver: &'r R) -> Self {
+        let record = resolver.resolve(handle);
+        Self {
+            handle,
+            resolver,
+            record,
+        }
+    }
+    /// The handle this wrapper resolves.
+    #[inline]
+    #[must_use]
+    pub const fn handle(&self) -> MonoidalUnitHandle<H> {
+        self.handle
+    }
+    /// The resolver supplied at construction.
+    #[inline]
+    #[must_use]
+    pub const fn resolver(&self) -> &'r R {
+        self.resolver
+    }
+    /// The cached record, or `None` when the resolver returned `None`.
+    #[inline]
+    #[must_use]
+    pub const fn record(&self) -> Option<&MonoidalUnitRecord<H>> {
+        self.record.as_ref()
+    }
+}
+impl<'r, R: MonoidalUnitResolver<H>, H: HostTypes> MonoidalUnit<H>
+    for ResolvedMonoidalUnit<'r, R, H>
+{
+    type Certificate = crate::bridge::cert::NullCertificate<H>;
+    fn unit_witness_ref(&self) -> &Self::Certificate {
+        &<crate::bridge::cert::NullCertificate<H>>::ABSENT
+    }
+}
+impl<'r, R: MonoidalUnitResolver<H>, H: HostTypes> ResolvedMonoidalUnit<'r, R, H> {
+    /// Promote the `unit_witness_ref` handle on the cached record into a
+    /// resolved wrapper, given a resolver for the range class.
+    /// Returns `None` if no record was resolved at construction.
+    #[inline]
+    pub fn resolve_unit_witness_ref<'r2, R2: crate::bridge::cert::CertificateResolver<H>>(
+        &self,
+        r: &'r2 R2,
+    ) -> Option<crate::bridge::cert::ResolvedCertificate<'r2, R2, H>> {
+        let record = self.record.as_ref()?;
+        Some(crate::bridge::cert::ResolvedCertificate::new(
+            record.unit_witness_ref_handle,
+            r,
+        ))
+    }
+}
+
+/// Phase 8 (orphan-closure) — content-addressed handle for `MonoidalAssociator<H>`.
+///
+/// Pairs a [`crate::enforcement::ContentFingerprint`] with a phantom
+/// `H` so type-state checks can't mix handles across `HostTypes` impls.
+#[derive(Debug)]
+pub struct MonoidalAssociatorHandle<H: HostTypes> {
+    /// Content fingerprint identifying the resolved record.
+    pub fingerprint: crate::enforcement::ContentFingerprint,
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Copy for MonoidalAssociatorHandle<H> {}
+impl<H: HostTypes> Clone for MonoidalAssociatorHandle<H> {
+    #[inline]
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+impl<H: HostTypes> PartialEq for MonoidalAssociatorHandle<H> {
+    #[inline]
+    fn eq(&self, other: &Self) -> bool {
+        self.fingerprint == other.fingerprint
+    }
+}
+impl<H: HostTypes> Eq for MonoidalAssociatorHandle<H> {}
+impl<H: HostTypes> core::hash::Hash for MonoidalAssociatorHandle<H> {
+    #[inline]
+    fn hash<S: core::hash::Hasher>(&self, state: &mut S) {
+        self.fingerprint.hash(state);
+    }
+}
+impl<H: HostTypes> MonoidalAssociatorHandle<H> {
+    /// Construct a handle from its content fingerprint.
+    #[inline]
+    #[must_use]
+    pub const fn new(fingerprint: crate::enforcement::ContentFingerprint) -> Self {
+        Self {
+            fingerprint,
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+
+/// Phase 8 (orphan-closure) — resolver trait for `MonoidalAssociator<H>`.
+///
+/// Hosts implement this trait to map a handle into a typed record.
+/// The default Null stub does not implement this trait — it carries
+/// no record. Resolution is the responsibility of the host pipeline.
+pub trait MonoidalAssociatorResolver<H: HostTypes> {
+    /// Resolve a handle into its record. Returns `None` when the
+    /// handle does not correspond to known content.
+    fn resolve(&self, handle: MonoidalAssociatorHandle<H>) -> Option<MonoidalAssociatorRecord<H>>;
+}
+
+/// Phase 8 (orphan-closure) — typed record for `MonoidalAssociator<H>`.
+///
+/// Carries a field per functional accessor of the trait. Object
+/// fields hold `{Range}Handle<H>`; iterate via the Resolved wrapper
+/// chain-resolver methods.
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub struct MonoidalAssociatorRecord<H: HostTypes> {
+    pub associator_witness_ref_handle: crate::bridge::cert::CertificateHandle<H>,
+    #[doc(hidden)]
+    pub _phantom: core::marker::PhantomData<H>,
+}
+
+/// Phase 8 (orphan-closure) — content-addressed wrapper for `MonoidalAssociator<H>`.
+///
+/// Caches the resolver's lookup at construction. Accessors return
+/// the cached record's fields when present, falling back to the
+/// `Null{Class}<H>` absent sentinels when the resolver returned
+/// `None`. Object accessors always return absent sentinels — use
+/// the `resolve_{m}` chain methods to descend into sub-records.
+pub struct ResolvedMonoidalAssociator<'r, R: MonoidalAssociatorResolver<H>, H: HostTypes> {
+    handle: MonoidalAssociatorHandle<H>,
+    resolver: &'r R,
+    record: Option<MonoidalAssociatorRecord<H>>,
+}
+impl<'r, R: MonoidalAssociatorResolver<H>, H: HostTypes> ResolvedMonoidalAssociator<'r, R, H> {
+    /// Construct the wrapper, eagerly resolving the handle.
+    #[inline]
+    pub fn new(handle: MonoidalAssociatorHandle<H>, resolver: &'r R) -> Self {
+        let record = resolver.resolve(handle);
+        Self {
+            handle,
+            resolver,
+            record,
+        }
+    }
+    /// The handle this wrapper resolves.
+    #[inline]
+    #[must_use]
+    pub const fn handle(&self) -> MonoidalAssociatorHandle<H> {
+        self.handle
+    }
+    /// The resolver supplied at construction.
+    #[inline]
+    #[must_use]
+    pub const fn resolver(&self) -> &'r R {
+        self.resolver
+    }
+    /// The cached record, or `None` when the resolver returned `None`.
+    #[inline]
+    #[must_use]
+    pub const fn record(&self) -> Option<&MonoidalAssociatorRecord<H>> {
+        self.record.as_ref()
+    }
+}
+impl<'r, R: MonoidalAssociatorResolver<H>, H: HostTypes> MonoidalAssociator<H>
+    for ResolvedMonoidalAssociator<'r, R, H>
+{
+    type MonoidalProduct = NullMonoidalProduct<H>;
+    fn associator_left(&self) -> &Self::MonoidalProduct {
+        &<NullMonoidalProduct<H>>::ABSENT
+    }
+    fn associator_right(&self) -> &Self::MonoidalProduct {
+        &<NullMonoidalProduct<H>>::ABSENT
+    }
+    type Certificate = crate::bridge::cert::NullCertificate<H>;
+    fn associator_witness_ref(&self) -> &Self::Certificate {
+        &<crate::bridge::cert::NullCertificate<H>>::ABSENT
+    }
+}
+impl<'r, R: MonoidalAssociatorResolver<H>, H: HostTypes> ResolvedMonoidalAssociator<'r, R, H> {
+    /// Promote the `associator_witness_ref` handle on the cached record into a
+    /// resolved wrapper, given a resolver for the range class.
+    /// Returns `None` if no record was resolved at construction.
+    #[inline]
+    pub fn resolve_associator_witness_ref<'r2, R2: crate::bridge::cert::CertificateResolver<H>>(
+        &self,
+        r: &'r2 R2,
+    ) -> Option<crate::bridge::cert::ResolvedCertificate<'r2, R2, H>> {
+        let record = self.record.as_ref()?;
+        Some(crate::bridge::cert::ResolvedCertificate::new(
+            record.associator_witness_ref_handle,
+            r,
+        ))
+    }
+}

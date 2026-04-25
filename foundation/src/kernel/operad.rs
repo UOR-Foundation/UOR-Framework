@@ -99,3 +99,135 @@ impl<H: HostTypes> OperadComposition<H> for NullOperadComposition<H> {
         &<crate::user::morphism::NullGroundingMap<H>>::ABSENT
     }
 }
+
+/// Phase 8 (orphan-closure) — content-addressed handle for `StructuralOperad<H>`.
+///
+/// Pairs a [`crate::enforcement::ContentFingerprint`] with a phantom
+/// `H` so type-state checks can't mix handles across `HostTypes` impls.
+#[derive(Debug)]
+pub struct StructuralOperadHandle<H: HostTypes> {
+    /// Content fingerprint identifying the resolved record.
+    pub fingerprint: crate::enforcement::ContentFingerprint,
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Copy for StructuralOperadHandle<H> {}
+impl<H: HostTypes> Clone for StructuralOperadHandle<H> {
+    #[inline]
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+impl<H: HostTypes> PartialEq for StructuralOperadHandle<H> {
+    #[inline]
+    fn eq(&self, other: &Self) -> bool {
+        self.fingerprint == other.fingerprint
+    }
+}
+impl<H: HostTypes> Eq for StructuralOperadHandle<H> {}
+impl<H: HostTypes> core::hash::Hash for StructuralOperadHandle<H> {
+    #[inline]
+    fn hash<S: core::hash::Hasher>(&self, state: &mut S) {
+        self.fingerprint.hash(state);
+    }
+}
+impl<H: HostTypes> StructuralOperadHandle<H> {
+    /// Construct a handle from its content fingerprint.
+    #[inline]
+    #[must_use]
+    pub const fn new(fingerprint: crate::enforcement::ContentFingerprint) -> Self {
+        Self {
+            fingerprint,
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+
+/// Phase 8 (orphan-closure) — resolver trait for `StructuralOperad<H>`.
+///
+/// Hosts implement this trait to map a handle into a typed record.
+/// The default Null stub does not implement this trait — it carries
+/// no record. Resolution is the responsibility of the host pipeline.
+pub trait StructuralOperadResolver<H: HostTypes> {
+    /// Resolve a handle into its record. Returns `None` when the
+    /// handle does not correspond to known content.
+    fn resolve(&self, handle: StructuralOperadHandle<H>) -> Option<StructuralOperadRecord<H>>;
+}
+
+/// Phase 8 (orphan-closure) — typed record for `StructuralOperad<H>`.
+///
+/// Carries a field per functional accessor of the trait. Object
+/// fields hold `{Range}Handle<H>`; iterate via the Resolved wrapper
+/// chain-resolver methods.
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub struct StructuralOperadRecord<H: HostTypes> {
+    pub operad_structure_handle: StructuralOperadHandle<H>,
+    #[doc(hidden)]
+    pub _phantom: core::marker::PhantomData<H>,
+}
+
+/// Phase 8 (orphan-closure) — content-addressed wrapper for `StructuralOperad<H>`.
+///
+/// Caches the resolver's lookup at construction. Accessors return
+/// the cached record's fields when present, falling back to the
+/// `Null{Class}<H>` absent sentinels when the resolver returned
+/// `None`. Object accessors always return absent sentinels — use
+/// the `resolve_{m}` chain methods to descend into sub-records.
+pub struct ResolvedStructuralOperad<'r, R: StructuralOperadResolver<H>, H: HostTypes> {
+    handle: StructuralOperadHandle<H>,
+    resolver: &'r R,
+    record: Option<StructuralOperadRecord<H>>,
+}
+impl<'r, R: StructuralOperadResolver<H>, H: HostTypes> ResolvedStructuralOperad<'r, R, H> {
+    /// Construct the wrapper, eagerly resolving the handle.
+    #[inline]
+    pub fn new(handle: StructuralOperadHandle<H>, resolver: &'r R) -> Self {
+        let record = resolver.resolve(handle);
+        Self {
+            handle,
+            resolver,
+            record,
+        }
+    }
+    /// The handle this wrapper resolves.
+    #[inline]
+    #[must_use]
+    pub const fn handle(&self) -> StructuralOperadHandle<H> {
+        self.handle
+    }
+    /// The resolver supplied at construction.
+    #[inline]
+    #[must_use]
+    pub const fn resolver(&self) -> &'r R {
+        self.resolver
+    }
+    /// The cached record, or `None` when the resolver returned `None`.
+    #[inline]
+    #[must_use]
+    pub const fn record(&self) -> Option<&StructuralOperadRecord<H>> {
+        self.record.as_ref()
+    }
+}
+impl<'r, R: StructuralOperadResolver<H>, H: HostTypes> StructuralOperad<H>
+    for ResolvedStructuralOperad<'r, R, H>
+{
+    type StructuralOperadTarget = NullStructuralOperad<H>;
+    fn operad_structure(&self) -> &Self::StructuralOperadTarget {
+        &<NullStructuralOperad<H>>::ABSENT
+    }
+}
+impl<'r, R: StructuralOperadResolver<H>, H: HostTypes> ResolvedStructuralOperad<'r, R, H> {
+    /// Promote the `operad_structure` handle on the cached record into a
+    /// resolved wrapper, given a resolver for the range class.
+    /// Returns `None` if no record was resolved at construction.
+    #[inline]
+    pub fn resolve_operad_structure<'r2, R2: StructuralOperadResolver<H>>(
+        &self,
+        r: &'r2 R2,
+    ) -> Option<ResolvedStructuralOperad<'r2, R2, H>> {
+        let record = self.record.as_ref()?;
+        Some(ResolvedStructuralOperad::new(
+            record.operad_structure_handle,
+            r,
+        ))
+    }
+}

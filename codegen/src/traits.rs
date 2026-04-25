@@ -218,6 +218,16 @@ pub fn generate_namespace_module(
     // transitive non-Thing supertrait) with absent-sentinel defaults.
     emit_null_stubs_for_namespace(&mut f, module, all_props_by_domain, ns_map);
 
+    // Phase 8 (orphan-closure): emit `{Foo}Handle` / `{Foo}Resolver` /
+    // `{Foo}Record` / `Resolved{Foo}` for every Path-1 class in this
+    // namespace.
+    crate::resolved_wrapper::emit_resolved_wrappers_for_namespace(
+        &mut f,
+        module,
+        all_props_by_domain,
+        ns_map,
+    );
+
     // Generate individual constants
     generate_individuals(&mut f, module);
 
@@ -1126,6 +1136,28 @@ fn generate_property_method(
 /// (siteState in Amendment 90, geometricCharacter in Amendment 23).
 fn datatype_enum_override(_prop: &Property) -> Option<&'static str> {
     None
+}
+
+/// Phase 8 escape hatch: re-export for `crate::resolved_wrapper`. Remove
+/// when the helper moves into a shared location.
+pub fn datatype_enum_override_pub(prop: &Property) -> Option<&'static str> {
+    datatype_enum_override(prop)
+}
+
+/// Phase 8 escape hatch: re-export for `crate::resolved_wrapper`. Remove
+/// when the helper moves into a shared location.
+pub fn object_property_enum_override_pub(range_local: &str) -> Option<&'static str> {
+    object_property_enum_override(range_local)
+}
+
+/// Phase 8 escape hatch: re-export for `crate::resolved_wrapper`. Returns
+/// the set of associated-type names already declared by a class's
+/// transitive supertraits.
+pub fn collect_inherited_assoc_types_pub(
+    class: &Class,
+    all_props_by_domain: &HashMap<&str, Vec<&Property>>,
+) -> HashSet<String> {
+    collect_inherited_assoc_types(class, all_props_by_domain)
 }
 
 /// Product/Coproduct Completion Amendment §1d: returns true for the six

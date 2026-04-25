@@ -52,6 +52,12 @@ pub fn validate(workspace: &Path) -> Result<ConformanceReport> {
     let foundation_src = workspace.join("foundation/src");
     let mut trait_names: Vec<String> = Vec::new();
     collect_traits(&foundation_src, &mut trait_names)?;
+    // Phase 8: `{Class}Resolver<H>` traits are emitted alongside the
+    // ontology-derived `{Class}<H>` traits but are intended to be
+    // implemented by hosts (not by foundation-internal types). Exclude
+    // them from the orphan count — the orphan-closure goal is about the
+    // ontology-derived traits only.
+    trait_names.retain(|n| !n.ends_with("Resolver"));
     trait_names.sort();
     trait_names.dedup();
 

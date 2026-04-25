@@ -64,3 +64,148 @@ impl<H: HostTypes> Element<H> for NullElement<H> {
         0
     }
 }
+
+/// Phase 8 (orphan-closure) — content-addressed handle for `Element<H>`.
+///
+/// Pairs a [`crate::enforcement::ContentFingerprint`] with a phantom
+/// `H` so type-state checks can't mix handles across `HostTypes` impls.
+#[derive(Debug)]
+pub struct ElementHandle<H: HostTypes> {
+    /// Content fingerprint identifying the resolved record.
+    pub fingerprint: crate::enforcement::ContentFingerprint,
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Copy for ElementHandle<H> {}
+impl<H: HostTypes> Clone for ElementHandle<H> {
+    #[inline]
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+impl<H: HostTypes> PartialEq for ElementHandle<H> {
+    #[inline]
+    fn eq(&self, other: &Self) -> bool {
+        self.fingerprint == other.fingerprint
+    }
+}
+impl<H: HostTypes> Eq for ElementHandle<H> {}
+impl<H: HostTypes> core::hash::Hash for ElementHandle<H> {
+    #[inline]
+    fn hash<S: core::hash::Hasher>(&self, state: &mut S) {
+        self.fingerprint.hash(state);
+    }
+}
+impl<H: HostTypes> ElementHandle<H> {
+    /// Construct a handle from its content fingerprint.
+    #[inline]
+    #[must_use]
+    pub const fn new(fingerprint: crate::enforcement::ContentFingerprint) -> Self {
+        Self {
+            fingerprint,
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+
+/// Phase 8 (orphan-closure) — resolver trait for `Element<H>`.
+///
+/// Hosts implement this trait to map a handle into a typed record.
+/// The default Null stub does not implement this trait — it carries
+/// no record. Resolution is the responsibility of the host pipeline.
+pub trait ElementResolver<H: HostTypes> {
+    /// Resolve a handle into its record. Returns `None` when the
+    /// handle does not correspond to known content.
+    fn resolve(&self, handle: ElementHandle<H>) -> Option<ElementRecord<H>>;
+}
+
+/// Phase 8 (orphan-closure) — typed record for `Element<H>`.
+///
+/// Carries a field per functional accessor of the trait. Object
+/// fields hold `{Range}Handle<H>`; iterate via the Resolved wrapper
+/// chain-resolver methods.
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub struct ElementRecord<H: HostTypes> {
+    pub length: u64,
+    pub addresses: &'static H::HostString,
+    pub digest: &'static H::HostString,
+    pub digest_algorithm: &'static H::HostString,
+    pub canonical_bytes: &'static H::WitnessBytes,
+    pub witt_length: u64,
+    #[doc(hidden)]
+    pub _phantom: core::marker::PhantomData<H>,
+}
+
+/// Phase 8 (orphan-closure) — content-addressed wrapper for `Element<H>`.
+///
+/// Caches the resolver's lookup at construction. Accessors return
+/// the cached record's fields when present, falling back to the
+/// `Null{Class}<H>` absent sentinels when the resolver returned
+/// `None`. Object accessors always return absent sentinels — use
+/// the `resolve_{m}` chain methods to descend into sub-records.
+pub struct ResolvedElement<'r, R: ElementResolver<H>, H: HostTypes> {
+    handle: ElementHandle<H>,
+    resolver: &'r R,
+    record: Option<ElementRecord<H>>,
+}
+impl<'r, R: ElementResolver<H>, H: HostTypes> ResolvedElement<'r, R, H> {
+    /// Construct the wrapper, eagerly resolving the handle.
+    #[inline]
+    pub fn new(handle: ElementHandle<H>, resolver: &'r R) -> Self {
+        let record = resolver.resolve(handle);
+        Self {
+            handle,
+            resolver,
+            record,
+        }
+    }
+    /// The handle this wrapper resolves.
+    #[inline]
+    #[must_use]
+    pub const fn handle(&self) -> ElementHandle<H> {
+        self.handle
+    }
+    /// The resolver supplied at construction.
+    #[inline]
+    #[must_use]
+    pub const fn resolver(&self) -> &'r R {
+        self.resolver
+    }
+    /// The cached record, or `None` when the resolver returned `None`.
+    #[inline]
+    #[must_use]
+    pub const fn record(&self) -> Option<&ElementRecord<H>> {
+        self.record.as_ref()
+    }
+}
+impl<'r, R: ElementResolver<H>, H: HostTypes> Element<H> for ResolvedElement<'r, R, H> {
+    fn length(&self) -> u64 {
+        match &self.record {
+            Some(r) => r.length,
+            None => 0,
+        }
+    }
+    fn addresses(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    fn digest(&self) -> &H::HostString {
+        match &self.record {
+            Some(r) => r.digest,
+            None => H::EMPTY_HOST_STRING,
+        }
+    }
+    fn digest_algorithm(&self) -> &H::HostString {
+        match &self.record {
+            Some(r) => r.digest_algorithm,
+            None => H::EMPTY_HOST_STRING,
+        }
+    }
+    fn canonical_bytes(&self) -> &H::WitnessBytes {
+        H::EMPTY_WITNESS_BYTES
+    }
+    fn witt_length(&self) -> u64 {
+        match &self.record {
+            Some(r) => r.witt_length,
+            None => 0,
+        }
+    }
+}

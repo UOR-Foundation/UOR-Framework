@@ -97,6 +97,12 @@ impl RustFile {
 
 /// Writes a Rust source file to disk, creating parent directories as needed.
 ///
+/// `.rs` files are post-processed through `rustfmt` so the codegen's
+/// output is a fixed point of `cargo fmt --check`. If `rustfmt` is
+/// missing or fails on a particular file, the unformatted content is
+/// written instead — the conformance suite's formatting validator will
+/// surface the regression.
+///
 /// # Errors
 ///
 /// Returns an error if the directory cannot be created or the file cannot be written.
@@ -105,9 +111,48 @@ pub fn write_file(path: &Path, content: &str) -> Result<()> {
         std::fs::create_dir_all(parent)
             .with_context(|| format!("Failed to create directory: {}", parent.display()))?;
     }
-    std::fs::write(path, content)
+    let final_content = if path.extension().is_some_and(|ext| ext == "rs") {
+        format_rust_source(content).unwrap_or_else(|_| content.to_string())
+    } else {
+        content.to_string()
+    };
+    std::fs::write(path, final_content)
         .with_context(|| format!("Failed to write: {}", path.display()))?;
     Ok(())
+}
+
+/// Pipes `source` through `rustfmt --emit stdout`. Returns the formatted
+/// string, or an error if `rustfmt` exits non-zero / produces no output.
+fn format_rust_source(source: &str) -> Result<String> {
+    use std::io::Write;
+    use std::process::{Command, Stdio};
+
+    let mut child = Command::new("rustfmt")
+        .args(["--edition", "2021", "--emit", "stdout"])
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+        .context("failed to spawn rustfmt")?;
+    {
+        let stdin = child.stdin.as_mut().context("rustfmt stdin not captured")?;
+        stdin
+            .write_all(source.as_bytes())
+            .context("write to rustfmt stdin")?;
+    }
+    let output = child.wait_with_output().context("wait rustfmt")?;
+    if !output.status.success() {
+        anyhow::bail!(
+            "rustfmt exit code {:?}: {}",
+            output.status.code(),
+            String::from_utf8_lossy(&output.stderr)
+        );
+    }
+    let formatted = String::from_utf8(output.stdout).context("rustfmt stdout utf-8")?;
+    if formatted.is_empty() {
+        anyhow::bail!("rustfmt produced empty output");
+    }
+    Ok(formatted)
 }
 
 /// Wraps a comment string for doc comments: collapses internal whitespace runs

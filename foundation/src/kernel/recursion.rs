@@ -370,3 +370,1045 @@ impl<H: HostTypes> BoundedRecursion<H> for NullStructuralRecursion<H> {
     }
 }
 impl<H: HostTypes> StructuralRecursion<H> for NullStructuralRecursion<H> {}
+
+/// Phase 8 (orphan-closure) — content-addressed handle for `BoundedRecursion<H>`.
+///
+/// Pairs a [`crate::enforcement::ContentFingerprint`] with a phantom
+/// `H` so type-state checks can't mix handles across `HostTypes` impls.
+#[derive(Debug)]
+pub struct BoundedRecursionHandle<H: HostTypes> {
+    /// Content fingerprint identifying the resolved record.
+    pub fingerprint: crate::enforcement::ContentFingerprint,
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Copy for BoundedRecursionHandle<H> {}
+impl<H: HostTypes> Clone for BoundedRecursionHandle<H> {
+    #[inline]
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+impl<H: HostTypes> PartialEq for BoundedRecursionHandle<H> {
+    #[inline]
+    fn eq(&self, other: &Self) -> bool {
+        self.fingerprint == other.fingerprint
+    }
+}
+impl<H: HostTypes> Eq for BoundedRecursionHandle<H> {}
+impl<H: HostTypes> core::hash::Hash for BoundedRecursionHandle<H> {
+    #[inline]
+    fn hash<S: core::hash::Hasher>(&self, state: &mut S) {
+        self.fingerprint.hash(state);
+    }
+}
+impl<H: HostTypes> BoundedRecursionHandle<H> {
+    /// Construct a handle from its content fingerprint.
+    #[inline]
+    #[must_use]
+    pub const fn new(fingerprint: crate::enforcement::ContentFingerprint) -> Self {
+        Self {
+            fingerprint,
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+
+/// Phase 8 (orphan-closure) — resolver trait for `BoundedRecursion<H>`.
+///
+/// Hosts implement this trait to map a handle into a typed record.
+/// The default Null stub does not implement this trait — it carries
+/// no record. Resolution is the responsibility of the host pipeline.
+pub trait BoundedRecursionResolver<H: HostTypes> {
+    /// Resolve a handle into its record. Returns `None` when the
+    /// handle does not correspond to known content.
+    fn resolve(&self, handle: BoundedRecursionHandle<H>) -> Option<BoundedRecursionRecord<H>>;
+}
+
+/// Phase 8 (orphan-closure) — typed record for `BoundedRecursion<H>`.
+///
+/// Carries a field per functional accessor of the trait. Object
+/// fields hold `{Range}Handle<H>`; iterate via the Resolved wrapper
+/// chain-resolver methods.
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub struct BoundedRecursionRecord<H: HostTypes> {
+    pub measure_handle: DescentMeasureHandle<H>,
+    pub base_case_handle: BaseCaseHandle<H>,
+    pub recursive_case_handle: RecursiveCaseHandle<H>,
+    pub base_predicate_handle: crate::kernel::predicate::PredicateHandle<H>,
+    pub recursion_body_handle: crate::user::morphism::ComputationDatumHandle<H>,
+    pub initial_measure: u64,
+    #[doc(hidden)]
+    pub _phantom: core::marker::PhantomData<H>,
+}
+
+/// Phase 8 (orphan-closure) — content-addressed wrapper for `BoundedRecursion<H>`.
+///
+/// Caches the resolver's lookup at construction. Accessors return
+/// the cached record's fields when present, falling back to the
+/// `Null{Class}<H>` absent sentinels when the resolver returned
+/// `None`. Object accessors always return absent sentinels — use
+/// the `resolve_{m}` chain methods to descend into sub-records.
+pub struct ResolvedBoundedRecursion<'r, R: BoundedRecursionResolver<H>, H: HostTypes> {
+    handle: BoundedRecursionHandle<H>,
+    resolver: &'r R,
+    record: Option<BoundedRecursionRecord<H>>,
+}
+impl<'r, R: BoundedRecursionResolver<H>, H: HostTypes> ResolvedBoundedRecursion<'r, R, H> {
+    /// Construct the wrapper, eagerly resolving the handle.
+    #[inline]
+    pub fn new(handle: BoundedRecursionHandle<H>, resolver: &'r R) -> Self {
+        let record = resolver.resolve(handle);
+        Self {
+            handle,
+            resolver,
+            record,
+        }
+    }
+    /// The handle this wrapper resolves.
+    #[inline]
+    #[must_use]
+    pub const fn handle(&self) -> BoundedRecursionHandle<H> {
+        self.handle
+    }
+    /// The resolver supplied at construction.
+    #[inline]
+    #[must_use]
+    pub const fn resolver(&self) -> &'r R {
+        self.resolver
+    }
+    /// The cached record, or `None` when the resolver returned `None`.
+    #[inline]
+    #[must_use]
+    pub const fn record(&self) -> Option<&BoundedRecursionRecord<H>> {
+        self.record.as_ref()
+    }
+}
+impl<'r, R: BoundedRecursionResolver<H>, H: HostTypes> BoundedRecursion<H>
+    for ResolvedBoundedRecursion<'r, R, H>
+{
+    type DescentMeasure = NullDescentMeasure<H>;
+    fn measure(&self) -> &Self::DescentMeasure {
+        &<NullDescentMeasure<H>>::ABSENT
+    }
+    type BaseCase = NullBaseCase<H>;
+    fn base_case(&self) -> &Self::BaseCase {
+        &<NullBaseCase<H>>::ABSENT
+    }
+    type RecursiveCase = NullRecursiveCase<H>;
+    fn recursive_case(&self) -> &Self::RecursiveCase {
+        &<NullRecursiveCase<H>>::ABSENT
+    }
+    type Predicate = crate::kernel::predicate::NullPredicate<H>;
+    fn base_predicate(&self) -> &Self::Predicate {
+        &<crate::kernel::predicate::NullPredicate<H>>::ABSENT
+    }
+    type ComputationDatum = crate::user::morphism::NullComputationDatum<H>;
+    fn recursion_body(&self) -> &Self::ComputationDatum {
+        &<crate::user::morphism::NullComputationDatum<H>>::ABSENT
+    }
+    fn initial_measure(&self) -> u64 {
+        match &self.record {
+            Some(r) => r.initial_measure,
+            None => 0,
+        }
+    }
+}
+impl<'r, R: BoundedRecursionResolver<H>, H: HostTypes> ResolvedBoundedRecursion<'r, R, H> {
+    /// Promote the `measure` handle on the cached record into a
+    /// resolved wrapper, given a resolver for the range class.
+    /// Returns `None` if no record was resolved at construction.
+    #[inline]
+    pub fn resolve_measure<'r2, R2: DescentMeasureResolver<H>>(
+        &self,
+        r: &'r2 R2,
+    ) -> Option<ResolvedDescentMeasure<'r2, R2, H>> {
+        let record = self.record.as_ref()?;
+        Some(ResolvedDescentMeasure::new(record.measure_handle, r))
+    }
+    /// Promote the `base_case` handle on the cached record into a
+    /// resolved wrapper, given a resolver for the range class.
+    /// Returns `None` if no record was resolved at construction.
+    #[inline]
+    pub fn resolve_base_case<'r2, R2: BaseCaseResolver<H>>(
+        &self,
+        r: &'r2 R2,
+    ) -> Option<ResolvedBaseCase<'r2, R2, H>> {
+        let record = self.record.as_ref()?;
+        Some(ResolvedBaseCase::new(record.base_case_handle, r))
+    }
+    /// Promote the `recursive_case` handle on the cached record into a
+    /// resolved wrapper, given a resolver for the range class.
+    /// Returns `None` if no record was resolved at construction.
+    #[inline]
+    pub fn resolve_recursive_case<'r2, R2: RecursiveCaseResolver<H>>(
+        &self,
+        r: &'r2 R2,
+    ) -> Option<ResolvedRecursiveCase<'r2, R2, H>> {
+        let record = self.record.as_ref()?;
+        Some(ResolvedRecursiveCase::new(record.recursive_case_handle, r))
+    }
+    /// Promote the `base_predicate` handle on the cached record into a
+    /// resolved wrapper, given a resolver for the range class.
+    /// Returns `None` if no record was resolved at construction.
+    #[inline]
+    pub fn resolve_base_predicate<'r2, R2: crate::kernel::predicate::PredicateResolver<H>>(
+        &self,
+        r: &'r2 R2,
+    ) -> Option<crate::kernel::predicate::ResolvedPredicate<'r2, R2, H>> {
+        let record = self.record.as_ref()?;
+        Some(crate::kernel::predicate::ResolvedPredicate::new(
+            record.base_predicate_handle,
+            r,
+        ))
+    }
+    /// Promote the `recursion_body` handle on the cached record into a
+    /// resolved wrapper, given a resolver for the range class.
+    /// Returns `None` if no record was resolved at construction.
+    #[inline]
+    pub fn resolve_recursion_body<'r2, R2: crate::user::morphism::ComputationDatumResolver<H>>(
+        &self,
+        r: &'r2 R2,
+    ) -> Option<crate::user::morphism::ResolvedComputationDatum<'r2, R2, H>> {
+        let record = self.record.as_ref()?;
+        Some(crate::user::morphism::ResolvedComputationDatum::new(
+            record.recursion_body_handle,
+            r,
+        ))
+    }
+}
+
+/// Phase 8 (orphan-closure) — content-addressed handle for `DescentMeasure<H>`.
+///
+/// Pairs a [`crate::enforcement::ContentFingerprint`] with a phantom
+/// `H` so type-state checks can't mix handles across `HostTypes` impls.
+#[derive(Debug)]
+pub struct DescentMeasureHandle<H: HostTypes> {
+    /// Content fingerprint identifying the resolved record.
+    pub fingerprint: crate::enforcement::ContentFingerprint,
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Copy for DescentMeasureHandle<H> {}
+impl<H: HostTypes> Clone for DescentMeasureHandle<H> {
+    #[inline]
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+impl<H: HostTypes> PartialEq for DescentMeasureHandle<H> {
+    #[inline]
+    fn eq(&self, other: &Self) -> bool {
+        self.fingerprint == other.fingerprint
+    }
+}
+impl<H: HostTypes> Eq for DescentMeasureHandle<H> {}
+impl<H: HostTypes> core::hash::Hash for DescentMeasureHandle<H> {
+    #[inline]
+    fn hash<S: core::hash::Hasher>(&self, state: &mut S) {
+        self.fingerprint.hash(state);
+    }
+}
+impl<H: HostTypes> DescentMeasureHandle<H> {
+    /// Construct a handle from its content fingerprint.
+    #[inline]
+    #[must_use]
+    pub const fn new(fingerprint: crate::enforcement::ContentFingerprint) -> Self {
+        Self {
+            fingerprint,
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+
+/// Phase 8 (orphan-closure) — resolver trait for `DescentMeasure<H>`.
+///
+/// Hosts implement this trait to map a handle into a typed record.
+/// The default Null stub does not implement this trait — it carries
+/// no record. Resolution is the responsibility of the host pipeline.
+pub trait DescentMeasureResolver<H: HostTypes> {
+    /// Resolve a handle into its record. Returns `None` when the
+    /// handle does not correspond to known content.
+    fn resolve(&self, handle: DescentMeasureHandle<H>) -> Option<DescentMeasureRecord<H>>;
+}
+
+/// Phase 8 (orphan-closure) — typed record for `DescentMeasure<H>`.
+///
+/// Carries a field per functional accessor of the trait. Object
+/// fields hold `{Range}Handle<H>`; iterate via the Resolved wrapper
+/// chain-resolver methods.
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub struct DescentMeasureRecord<H: HostTypes> {
+    pub measure_value: u64,
+    #[doc(hidden)]
+    pub _phantom: core::marker::PhantomData<H>,
+}
+
+/// Phase 8 (orphan-closure) — content-addressed wrapper for `DescentMeasure<H>`.
+///
+/// Caches the resolver's lookup at construction. Accessors return
+/// the cached record's fields when present, falling back to the
+/// `Null{Class}<H>` absent sentinels when the resolver returned
+/// `None`. Object accessors always return absent sentinels — use
+/// the `resolve_{m}` chain methods to descend into sub-records.
+pub struct ResolvedDescentMeasure<'r, R: DescentMeasureResolver<H>, H: HostTypes> {
+    handle: DescentMeasureHandle<H>,
+    resolver: &'r R,
+    record: Option<DescentMeasureRecord<H>>,
+}
+impl<'r, R: DescentMeasureResolver<H>, H: HostTypes> ResolvedDescentMeasure<'r, R, H> {
+    /// Construct the wrapper, eagerly resolving the handle.
+    #[inline]
+    pub fn new(handle: DescentMeasureHandle<H>, resolver: &'r R) -> Self {
+        let record = resolver.resolve(handle);
+        Self {
+            handle,
+            resolver,
+            record,
+        }
+    }
+    /// The handle this wrapper resolves.
+    #[inline]
+    #[must_use]
+    pub const fn handle(&self) -> DescentMeasureHandle<H> {
+        self.handle
+    }
+    /// The resolver supplied at construction.
+    #[inline]
+    #[must_use]
+    pub const fn resolver(&self) -> &'r R {
+        self.resolver
+    }
+    /// The cached record, or `None` when the resolver returned `None`.
+    #[inline]
+    #[must_use]
+    pub const fn record(&self) -> Option<&DescentMeasureRecord<H>> {
+        self.record.as_ref()
+    }
+}
+impl<'r, R: DescentMeasureResolver<H>, H: HostTypes> DescentMeasure<H>
+    for ResolvedDescentMeasure<'r, R, H>
+{
+    fn measure_value(&self) -> u64 {
+        match &self.record {
+            Some(r) => r.measure_value,
+            None => 0,
+        }
+    }
+}
+
+/// Phase 8 (orphan-closure) — content-addressed handle for `BaseCase<H>`.
+///
+/// Pairs a [`crate::enforcement::ContentFingerprint`] with a phantom
+/// `H` so type-state checks can't mix handles across `HostTypes` impls.
+#[derive(Debug)]
+pub struct BaseCaseHandle<H: HostTypes> {
+    /// Content fingerprint identifying the resolved record.
+    pub fingerprint: crate::enforcement::ContentFingerprint,
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Copy for BaseCaseHandle<H> {}
+impl<H: HostTypes> Clone for BaseCaseHandle<H> {
+    #[inline]
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+impl<H: HostTypes> PartialEq for BaseCaseHandle<H> {
+    #[inline]
+    fn eq(&self, other: &Self) -> bool {
+        self.fingerprint == other.fingerprint
+    }
+}
+impl<H: HostTypes> Eq for BaseCaseHandle<H> {}
+impl<H: HostTypes> core::hash::Hash for BaseCaseHandle<H> {
+    #[inline]
+    fn hash<S: core::hash::Hasher>(&self, state: &mut S) {
+        self.fingerprint.hash(state);
+    }
+}
+impl<H: HostTypes> BaseCaseHandle<H> {
+    /// Construct a handle from its content fingerprint.
+    #[inline]
+    #[must_use]
+    pub const fn new(fingerprint: crate::enforcement::ContentFingerprint) -> Self {
+        Self {
+            fingerprint,
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+
+/// Phase 8 (orphan-closure) — resolver trait for `BaseCase<H>`.
+///
+/// Hosts implement this trait to map a handle into a typed record.
+/// The default Null stub does not implement this trait — it carries
+/// no record. Resolution is the responsibility of the host pipeline.
+pub trait BaseCaseResolver<H: HostTypes> {
+    /// Resolve a handle into its record. Returns `None` when the
+    /// handle does not correspond to known content.
+    fn resolve(&self, handle: BaseCaseHandle<H>) -> Option<BaseCaseRecord<H>>;
+}
+
+/// Phase 8 (orphan-closure) — typed record for `BaseCase<H>`.
+///
+/// Carries a field per functional accessor of the trait. Object
+/// fields hold `{Range}Handle<H>`; iterate via the Resolved wrapper
+/// chain-resolver methods.
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub struct BaseCaseRecord<H: HostTypes> {
+    #[doc(hidden)]
+    pub _phantom: core::marker::PhantomData<H>,
+}
+
+/// Phase 8 (orphan-closure) — content-addressed wrapper for `BaseCase<H>`.
+///
+/// Caches the resolver's lookup at construction. Accessors return
+/// the cached record's fields when present, falling back to the
+/// `Null{Class}<H>` absent sentinels when the resolver returned
+/// `None`. Object accessors always return absent sentinels — use
+/// the `resolve_{m}` chain methods to descend into sub-records.
+pub struct ResolvedBaseCase<'r, R: BaseCaseResolver<H>, H: HostTypes> {
+    handle: BaseCaseHandle<H>,
+    resolver: &'r R,
+    record: Option<BaseCaseRecord<H>>,
+}
+impl<'r, R: BaseCaseResolver<H>, H: HostTypes> ResolvedBaseCase<'r, R, H> {
+    /// Construct the wrapper, eagerly resolving the handle.
+    #[inline]
+    pub fn new(handle: BaseCaseHandle<H>, resolver: &'r R) -> Self {
+        let record = resolver.resolve(handle);
+        Self {
+            handle,
+            resolver,
+            record,
+        }
+    }
+    /// The handle this wrapper resolves.
+    #[inline]
+    #[must_use]
+    pub const fn handle(&self) -> BaseCaseHandle<H> {
+        self.handle
+    }
+    /// The resolver supplied at construction.
+    #[inline]
+    #[must_use]
+    pub const fn resolver(&self) -> &'r R {
+        self.resolver
+    }
+    /// The cached record, or `None` when the resolver returned `None`.
+    #[inline]
+    #[must_use]
+    pub const fn record(&self) -> Option<&BaseCaseRecord<H>> {
+        self.record.as_ref()
+    }
+}
+impl<'r, R: BaseCaseResolver<H>, H: HostTypes> crate::kernel::predicate::MatchArm<H>
+    for ResolvedBaseCase<'r, R, H>
+{
+    type Predicate = crate::kernel::predicate::NullPredicate<H>;
+    fn arm_predicate(&self) -> &Self::Predicate {
+        &<crate::kernel::predicate::NullPredicate<H>>::ABSENT
+    }
+    type Term = crate::kernel::schema::NullTerm<H>;
+    fn arm_result(&self) -> &Self::Term {
+        &<crate::kernel::schema::NullTerm<H>>::ABSENT
+    }
+    fn arm_index(&self) -> u64 {
+        0
+    }
+}
+impl<'r, R: BaseCaseResolver<H>, H: HostTypes> BaseCase<H> for ResolvedBaseCase<'r, R, H> {}
+
+/// Phase 8 (orphan-closure) — content-addressed handle for `RecursiveCase<H>`.
+///
+/// Pairs a [`crate::enforcement::ContentFingerprint`] with a phantom
+/// `H` so type-state checks can't mix handles across `HostTypes` impls.
+#[derive(Debug)]
+pub struct RecursiveCaseHandle<H: HostTypes> {
+    /// Content fingerprint identifying the resolved record.
+    pub fingerprint: crate::enforcement::ContentFingerprint,
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Copy for RecursiveCaseHandle<H> {}
+impl<H: HostTypes> Clone for RecursiveCaseHandle<H> {
+    #[inline]
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+impl<H: HostTypes> PartialEq for RecursiveCaseHandle<H> {
+    #[inline]
+    fn eq(&self, other: &Self) -> bool {
+        self.fingerprint == other.fingerprint
+    }
+}
+impl<H: HostTypes> Eq for RecursiveCaseHandle<H> {}
+impl<H: HostTypes> core::hash::Hash for RecursiveCaseHandle<H> {
+    #[inline]
+    fn hash<S: core::hash::Hasher>(&self, state: &mut S) {
+        self.fingerprint.hash(state);
+    }
+}
+impl<H: HostTypes> RecursiveCaseHandle<H> {
+    /// Construct a handle from its content fingerprint.
+    #[inline]
+    #[must_use]
+    pub const fn new(fingerprint: crate::enforcement::ContentFingerprint) -> Self {
+        Self {
+            fingerprint,
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+
+/// Phase 8 (orphan-closure) — resolver trait for `RecursiveCase<H>`.
+///
+/// Hosts implement this trait to map a handle into a typed record.
+/// The default Null stub does not implement this trait — it carries
+/// no record. Resolution is the responsibility of the host pipeline.
+pub trait RecursiveCaseResolver<H: HostTypes> {
+    /// Resolve a handle into its record. Returns `None` when the
+    /// handle does not correspond to known content.
+    fn resolve(&self, handle: RecursiveCaseHandle<H>) -> Option<RecursiveCaseRecord<H>>;
+}
+
+/// Phase 8 (orphan-closure) — typed record for `RecursiveCase<H>`.
+///
+/// Carries a field per functional accessor of the trait. Object
+/// fields hold `{Range}Handle<H>`; iterate via the Resolved wrapper
+/// chain-resolver methods.
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub struct RecursiveCaseRecord<H: HostTypes> {
+    #[doc(hidden)]
+    pub _phantom: core::marker::PhantomData<H>,
+}
+
+/// Phase 8 (orphan-closure) — content-addressed wrapper for `RecursiveCase<H>`.
+///
+/// Caches the resolver's lookup at construction. Accessors return
+/// the cached record's fields when present, falling back to the
+/// `Null{Class}<H>` absent sentinels when the resolver returned
+/// `None`. Object accessors always return absent sentinels — use
+/// the `resolve_{m}` chain methods to descend into sub-records.
+pub struct ResolvedRecursiveCase<'r, R: RecursiveCaseResolver<H>, H: HostTypes> {
+    handle: RecursiveCaseHandle<H>,
+    resolver: &'r R,
+    record: Option<RecursiveCaseRecord<H>>,
+}
+impl<'r, R: RecursiveCaseResolver<H>, H: HostTypes> ResolvedRecursiveCase<'r, R, H> {
+    /// Construct the wrapper, eagerly resolving the handle.
+    #[inline]
+    pub fn new(handle: RecursiveCaseHandle<H>, resolver: &'r R) -> Self {
+        let record = resolver.resolve(handle);
+        Self {
+            handle,
+            resolver,
+            record,
+        }
+    }
+    /// The handle this wrapper resolves.
+    #[inline]
+    #[must_use]
+    pub const fn handle(&self) -> RecursiveCaseHandle<H> {
+        self.handle
+    }
+    /// The resolver supplied at construction.
+    #[inline]
+    #[must_use]
+    pub const fn resolver(&self) -> &'r R {
+        self.resolver
+    }
+    /// The cached record, or `None` when the resolver returned `None`.
+    #[inline]
+    #[must_use]
+    pub const fn record(&self) -> Option<&RecursiveCaseRecord<H>> {
+        self.record.as_ref()
+    }
+}
+impl<'r, R: RecursiveCaseResolver<H>, H: HostTypes> crate::kernel::predicate::MatchArm<H>
+    for ResolvedRecursiveCase<'r, R, H>
+{
+    type Predicate = crate::kernel::predicate::NullPredicate<H>;
+    fn arm_predicate(&self) -> &Self::Predicate {
+        &<crate::kernel::predicate::NullPredicate<H>>::ABSENT
+    }
+    type Term = crate::kernel::schema::NullTerm<H>;
+    fn arm_result(&self) -> &Self::Term {
+        &<crate::kernel::schema::NullTerm<H>>::ABSENT
+    }
+    fn arm_index(&self) -> u64 {
+        0
+    }
+}
+impl<'r, R: RecursiveCaseResolver<H>, H: HostTypes> RecursiveCase<H>
+    for ResolvedRecursiveCase<'r, R, H>
+{
+}
+
+/// Phase 8 (orphan-closure) — content-addressed handle for `RecursiveStep<H>`.
+///
+/// Pairs a [`crate::enforcement::ContentFingerprint`] with a phantom
+/// `H` so type-state checks can't mix handles across `HostTypes` impls.
+#[derive(Debug)]
+pub struct RecursiveStepHandle<H: HostTypes> {
+    /// Content fingerprint identifying the resolved record.
+    pub fingerprint: crate::enforcement::ContentFingerprint,
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Copy for RecursiveStepHandle<H> {}
+impl<H: HostTypes> Clone for RecursiveStepHandle<H> {
+    #[inline]
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+impl<H: HostTypes> PartialEq for RecursiveStepHandle<H> {
+    #[inline]
+    fn eq(&self, other: &Self) -> bool {
+        self.fingerprint == other.fingerprint
+    }
+}
+impl<H: HostTypes> Eq for RecursiveStepHandle<H> {}
+impl<H: HostTypes> core::hash::Hash for RecursiveStepHandle<H> {
+    #[inline]
+    fn hash<S: core::hash::Hasher>(&self, state: &mut S) {
+        self.fingerprint.hash(state);
+    }
+}
+impl<H: HostTypes> RecursiveStepHandle<H> {
+    /// Construct a handle from its content fingerprint.
+    #[inline]
+    #[must_use]
+    pub const fn new(fingerprint: crate::enforcement::ContentFingerprint) -> Self {
+        Self {
+            fingerprint,
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+
+/// Phase 8 (orphan-closure) — resolver trait for `RecursiveStep<H>`.
+///
+/// Hosts implement this trait to map a handle into a typed record.
+/// The default Null stub does not implement this trait — it carries
+/// no record. Resolution is the responsibility of the host pipeline.
+pub trait RecursiveStepResolver<H: HostTypes> {
+    /// Resolve a handle into its record. Returns `None` when the
+    /// handle does not correspond to known content.
+    fn resolve(&self, handle: RecursiveStepHandle<H>) -> Option<RecursiveStepRecord<H>>;
+}
+
+/// Phase 8 (orphan-closure) — typed record for `RecursiveStep<H>`.
+///
+/// Carries a field per functional accessor of the trait. Object
+/// fields hold `{Range}Handle<H>`; iterate via the Resolved wrapper
+/// chain-resolver methods.
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub struct RecursiveStepRecord<H: HostTypes> {
+    pub step_decomposition_handle: crate::user::morphism::TransformHandle<H>,
+    pub step_measure_pre_handle: DescentMeasureHandle<H>,
+    pub step_measure_post_handle: DescentMeasureHandle<H>,
+    #[doc(hidden)]
+    pub _phantom: core::marker::PhantomData<H>,
+}
+
+/// Phase 8 (orphan-closure) — content-addressed wrapper for `RecursiveStep<H>`.
+///
+/// Caches the resolver's lookup at construction. Accessors return
+/// the cached record's fields when present, falling back to the
+/// `Null{Class}<H>` absent sentinels when the resolver returned
+/// `None`. Object accessors always return absent sentinels — use
+/// the `resolve_{m}` chain methods to descend into sub-records.
+pub struct ResolvedRecursiveStep<'r, R: RecursiveStepResolver<H>, H: HostTypes> {
+    handle: RecursiveStepHandle<H>,
+    resolver: &'r R,
+    record: Option<RecursiveStepRecord<H>>,
+}
+impl<'r, R: RecursiveStepResolver<H>, H: HostTypes> ResolvedRecursiveStep<'r, R, H> {
+    /// Construct the wrapper, eagerly resolving the handle.
+    #[inline]
+    pub fn new(handle: RecursiveStepHandle<H>, resolver: &'r R) -> Self {
+        let record = resolver.resolve(handle);
+        Self {
+            handle,
+            resolver,
+            record,
+        }
+    }
+    /// The handle this wrapper resolves.
+    #[inline]
+    #[must_use]
+    pub const fn handle(&self) -> RecursiveStepHandle<H> {
+        self.handle
+    }
+    /// The resolver supplied at construction.
+    #[inline]
+    #[must_use]
+    pub const fn resolver(&self) -> &'r R {
+        self.resolver
+    }
+    /// The cached record, or `None` when the resolver returned `None`.
+    #[inline]
+    #[must_use]
+    pub const fn record(&self) -> Option<&RecursiveStepRecord<H>> {
+        self.record.as_ref()
+    }
+}
+impl<'r, R: RecursiveStepResolver<H>, H: HostTypes> RecursiveStep<H>
+    for ResolvedRecursiveStep<'r, R, H>
+{
+    type Transform = crate::user::morphism::NullTransform<H>;
+    fn step_decomposition(&self) -> &Self::Transform {
+        &<crate::user::morphism::NullTransform<H>>::ABSENT
+    }
+    type DescentMeasure = NullDescentMeasure<H>;
+    fn step_measure_pre(&self) -> &Self::DescentMeasure {
+        &<NullDescentMeasure<H>>::ABSENT
+    }
+    fn step_measure_post(&self) -> &Self::DescentMeasure {
+        &<NullDescentMeasure<H>>::ABSENT
+    }
+}
+impl<'r, R: RecursiveStepResolver<H>, H: HostTypes> ResolvedRecursiveStep<'r, R, H> {
+    /// Promote the `step_decomposition` handle on the cached record into a
+    /// resolved wrapper, given a resolver for the range class.
+    /// Returns `None` if no record was resolved at construction.
+    #[inline]
+    pub fn resolve_step_decomposition<'r2, R2: crate::user::morphism::TransformResolver<H>>(
+        &self,
+        r: &'r2 R2,
+    ) -> Option<crate::user::morphism::ResolvedTransform<'r2, R2, H>> {
+        let record = self.record.as_ref()?;
+        Some(crate::user::morphism::ResolvedTransform::new(
+            record.step_decomposition_handle,
+            r,
+        ))
+    }
+    /// Promote the `step_measure_pre` handle on the cached record into a
+    /// resolved wrapper, given a resolver for the range class.
+    /// Returns `None` if no record was resolved at construction.
+    #[inline]
+    pub fn resolve_step_measure_pre<'r2, R2: DescentMeasureResolver<H>>(
+        &self,
+        r: &'r2 R2,
+    ) -> Option<ResolvedDescentMeasure<'r2, R2, H>> {
+        let record = self.record.as_ref()?;
+        Some(ResolvedDescentMeasure::new(
+            record.step_measure_pre_handle,
+            r,
+        ))
+    }
+    /// Promote the `step_measure_post` handle on the cached record into a
+    /// resolved wrapper, given a resolver for the range class.
+    /// Returns `None` if no record was resolved at construction.
+    #[inline]
+    pub fn resolve_step_measure_post<'r2, R2: DescentMeasureResolver<H>>(
+        &self,
+        r: &'r2 R2,
+    ) -> Option<ResolvedDescentMeasure<'r2, R2, H>> {
+        let record = self.record.as_ref()?;
+        Some(ResolvedDescentMeasure::new(
+            record.step_measure_post_handle,
+            r,
+        ))
+    }
+}
+
+/// Phase 8 (orphan-closure) — content-addressed handle for `RecursionTrace<H>`.
+///
+/// Pairs a [`crate::enforcement::ContentFingerprint`] with a phantom
+/// `H` so type-state checks can't mix handles across `HostTypes` impls.
+#[derive(Debug)]
+pub struct RecursionTraceHandle<H: HostTypes> {
+    /// Content fingerprint identifying the resolved record.
+    pub fingerprint: crate::enforcement::ContentFingerprint,
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Copy for RecursionTraceHandle<H> {}
+impl<H: HostTypes> Clone for RecursionTraceHandle<H> {
+    #[inline]
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+impl<H: HostTypes> PartialEq for RecursionTraceHandle<H> {
+    #[inline]
+    fn eq(&self, other: &Self) -> bool {
+        self.fingerprint == other.fingerprint
+    }
+}
+impl<H: HostTypes> Eq for RecursionTraceHandle<H> {}
+impl<H: HostTypes> core::hash::Hash for RecursionTraceHandle<H> {
+    #[inline]
+    fn hash<S: core::hash::Hasher>(&self, state: &mut S) {
+        self.fingerprint.hash(state);
+    }
+}
+impl<H: HostTypes> RecursionTraceHandle<H> {
+    /// Construct a handle from its content fingerprint.
+    #[inline]
+    #[must_use]
+    pub const fn new(fingerprint: crate::enforcement::ContentFingerprint) -> Self {
+        Self {
+            fingerprint,
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+
+/// Phase 8 (orphan-closure) — resolver trait for `RecursionTrace<H>`.
+///
+/// Hosts implement this trait to map a handle into a typed record.
+/// The default Null stub does not implement this trait — it carries
+/// no record. Resolution is the responsibility of the host pipeline.
+pub trait RecursionTraceResolver<H: HostTypes> {
+    /// Resolve a handle into its record. Returns `None` when the
+    /// handle does not correspond to known content.
+    fn resolve(&self, handle: RecursionTraceHandle<H>) -> Option<RecursionTraceRecord<H>>;
+}
+
+/// Phase 8 (orphan-closure) — typed record for `RecursionTrace<H>`.
+///
+/// Carries a field per functional accessor of the trait. Object
+/// fields hold `{Range}Handle<H>`; iterate via the Resolved wrapper
+/// chain-resolver methods.
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub struct RecursionTraceRecord<H: HostTypes> {
+    #[doc(hidden)]
+    pub _phantom: core::marker::PhantomData<H>,
+}
+
+/// Phase 8 (orphan-closure) — content-addressed wrapper for `RecursionTrace<H>`.
+///
+/// Caches the resolver's lookup at construction. Accessors return
+/// the cached record's fields when present, falling back to the
+/// `Null{Class}<H>` absent sentinels when the resolver returned
+/// `None`. Object accessors always return absent sentinels — use
+/// the `resolve_{m}` chain methods to descend into sub-records.
+pub struct ResolvedRecursionTrace<'r, R: RecursionTraceResolver<H>, H: HostTypes> {
+    handle: RecursionTraceHandle<H>,
+    resolver: &'r R,
+    record: Option<RecursionTraceRecord<H>>,
+}
+impl<'r, R: RecursionTraceResolver<H>, H: HostTypes> ResolvedRecursionTrace<'r, R, H> {
+    /// Construct the wrapper, eagerly resolving the handle.
+    #[inline]
+    pub fn new(handle: RecursionTraceHandle<H>, resolver: &'r R) -> Self {
+        let record = resolver.resolve(handle);
+        Self {
+            handle,
+            resolver,
+            record,
+        }
+    }
+    /// The handle this wrapper resolves.
+    #[inline]
+    #[must_use]
+    pub const fn handle(&self) -> RecursionTraceHandle<H> {
+        self.handle
+    }
+    /// The resolver supplied at construction.
+    #[inline]
+    #[must_use]
+    pub const fn resolver(&self) -> &'r R {
+        self.resolver
+    }
+    /// The cached record, or `None` when the resolver returned `None`.
+    #[inline]
+    #[must_use]
+    pub const fn record(&self) -> Option<&RecursionTraceRecord<H>> {
+        self.record.as_ref()
+    }
+}
+impl<'r, R: RecursionTraceResolver<H>, H: HostTypes> crate::bridge::trace::ComputationTrace<H>
+    for ResolvedRecursionTrace<'r, R, H>
+{
+    type Datum = crate::kernel::schema::NullDatum<H>;
+    fn input(&self) -> &Self::Datum {
+        &<crate::kernel::schema::NullDatum<H>>::ABSENT
+    }
+    fn output(&self) -> &Self::Datum {
+        &<crate::kernel::schema::NullDatum<H>>::ABSENT
+    }
+    type ComputationStep = crate::bridge::trace::NullComputationStep<H>;
+    fn step(&self) -> &[Self::ComputationStep] {
+        &[]
+    }
+    type DihedralElement = crate::bridge::observable::NullDihedralElement<H>;
+    fn monodromy(&self) -> &Self::DihedralElement {
+        &<crate::bridge::observable::NullDihedralElement<H>>::ABSENT
+    }
+    type Certificate = crate::bridge::cert::NullCertificate<H>;
+    fn certified_by(&self) -> &Self::Certificate {
+        &<crate::bridge::cert::NullCertificate<H>>::ABSENT
+    }
+    type ResidualEntropy = crate::bridge::observable::NullResidualEntropy<H>;
+    fn residual_entropy(&self) -> &Self::ResidualEntropy {
+        &<crate::bridge::observable::NullResidualEntropy<H>>::ABSENT
+    }
+    fn is_geodesic(&self) -> bool {
+        false
+    }
+    type GeodesicViolation = crate::bridge::trace::NullGeodesicViolation<H>;
+    fn geodesic_violation(&self) -> &[Self::GeodesicViolation] {
+        &[]
+    }
+    fn cumulative_entropy_cost(&self) -> H::Decimal {
+        H::EMPTY_DECIMAL
+    }
+    fn adiabatically_ordered(&self) -> bool {
+        false
+    }
+    type MeasurementEvent = crate::bridge::trace::NullMeasurementEvent<H>;
+    fn measurement_event(&self) -> &[Self::MeasurementEvent] {
+        &[]
+    }
+    fn is_ar1_ordered(&self) -> bool {
+        false
+    }
+    fn is_dc10_selected(&self) -> bool {
+        false
+    }
+}
+impl<'r, R: RecursionTraceResolver<H>, H: HostTypes> RecursionTrace<H>
+    for ResolvedRecursionTrace<'r, R, H>
+{
+}
+
+/// Phase 8 (orphan-closure) — content-addressed handle for `StructuralRecursion<H>`.
+///
+/// Pairs a [`crate::enforcement::ContentFingerprint`] with a phantom
+/// `H` so type-state checks can't mix handles across `HostTypes` impls.
+#[derive(Debug)]
+pub struct StructuralRecursionHandle<H: HostTypes> {
+    /// Content fingerprint identifying the resolved record.
+    pub fingerprint: crate::enforcement::ContentFingerprint,
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Copy for StructuralRecursionHandle<H> {}
+impl<H: HostTypes> Clone for StructuralRecursionHandle<H> {
+    #[inline]
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+impl<H: HostTypes> PartialEq for StructuralRecursionHandle<H> {
+    #[inline]
+    fn eq(&self, other: &Self) -> bool {
+        self.fingerprint == other.fingerprint
+    }
+}
+impl<H: HostTypes> Eq for StructuralRecursionHandle<H> {}
+impl<H: HostTypes> core::hash::Hash for StructuralRecursionHandle<H> {
+    #[inline]
+    fn hash<S: core::hash::Hasher>(&self, state: &mut S) {
+        self.fingerprint.hash(state);
+    }
+}
+impl<H: HostTypes> StructuralRecursionHandle<H> {
+    /// Construct a handle from its content fingerprint.
+    #[inline]
+    #[must_use]
+    pub const fn new(fingerprint: crate::enforcement::ContentFingerprint) -> Self {
+        Self {
+            fingerprint,
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+
+/// Phase 8 (orphan-closure) — resolver trait for `StructuralRecursion<H>`.
+///
+/// Hosts implement this trait to map a handle into a typed record.
+/// The default Null stub does not implement this trait — it carries
+/// no record. Resolution is the responsibility of the host pipeline.
+pub trait StructuralRecursionResolver<H: HostTypes> {
+    /// Resolve a handle into its record. Returns `None` when the
+    /// handle does not correspond to known content.
+    fn resolve(&self, handle: StructuralRecursionHandle<H>)
+        -> Option<StructuralRecursionRecord<H>>;
+}
+
+/// Phase 8 (orphan-closure) — typed record for `StructuralRecursion<H>`.
+///
+/// Carries a field per functional accessor of the trait. Object
+/// fields hold `{Range}Handle<H>`; iterate via the Resolved wrapper
+/// chain-resolver methods.
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub struct StructuralRecursionRecord<H: HostTypes> {
+    #[doc(hidden)]
+    pub _phantom: core::marker::PhantomData<H>,
+}
+
+/// Phase 8 (orphan-closure) — content-addressed wrapper for `StructuralRecursion<H>`.
+///
+/// Caches the resolver's lookup at construction. Accessors return
+/// the cached record's fields when present, falling back to the
+/// `Null{Class}<H>` absent sentinels when the resolver returned
+/// `None`. Object accessors always return absent sentinels — use
+/// the `resolve_{m}` chain methods to descend into sub-records.
+pub struct ResolvedStructuralRecursion<'r, R: StructuralRecursionResolver<H>, H: HostTypes> {
+    handle: StructuralRecursionHandle<H>,
+    resolver: &'r R,
+    record: Option<StructuralRecursionRecord<H>>,
+}
+impl<'r, R: StructuralRecursionResolver<H>, H: HostTypes> ResolvedStructuralRecursion<'r, R, H> {
+    /// Construct the wrapper, eagerly resolving the handle.
+    #[inline]
+    pub fn new(handle: StructuralRecursionHandle<H>, resolver: &'r R) -> Self {
+        let record = resolver.resolve(handle);
+        Self {
+            handle,
+            resolver,
+            record,
+        }
+    }
+    /// The handle this wrapper resolves.
+    #[inline]
+    #[must_use]
+    pub const fn handle(&self) -> StructuralRecursionHandle<H> {
+        self.handle
+    }
+    /// The resolver supplied at construction.
+    #[inline]
+    #[must_use]
+    pub const fn resolver(&self) -> &'r R {
+        self.resolver
+    }
+    /// The cached record, or `None` when the resolver returned `None`.
+    #[inline]
+    #[must_use]
+    pub const fn record(&self) -> Option<&StructuralRecursionRecord<H>> {
+        self.record.as_ref()
+    }
+}
+impl<'r, R: StructuralRecursionResolver<H>, H: HostTypes> BoundedRecursion<H>
+    for ResolvedStructuralRecursion<'r, R, H>
+{
+    type DescentMeasure = NullDescentMeasure<H>;
+    fn measure(&self) -> &Self::DescentMeasure {
+        &<NullDescentMeasure<H>>::ABSENT
+    }
+    type BaseCase = NullBaseCase<H>;
+    fn base_case(&self) -> &Self::BaseCase {
+        &<NullBaseCase<H>>::ABSENT
+    }
+    type RecursiveCase = NullRecursiveCase<H>;
+    fn recursive_case(&self) -> &Self::RecursiveCase {
+        &<NullRecursiveCase<H>>::ABSENT
+    }
+    type Predicate = crate::kernel::predicate::NullPredicate<H>;
+    fn base_predicate(&self) -> &Self::Predicate {
+        &<crate::kernel::predicate::NullPredicate<H>>::ABSENT
+    }
+    type ComputationDatum = crate::user::morphism::NullComputationDatum<H>;
+    fn recursion_body(&self) -> &Self::ComputationDatum {
+        &<crate::user::morphism::NullComputationDatum<H>>::ABSENT
+    }
+    fn initial_measure(&self) -> u64 {
+        0
+    }
+}
+impl<'r, R: StructuralRecursionResolver<H>, H: HostTypes> StructuralRecursion<H>
+    for ResolvedStructuralRecursion<'r, R, H>
+{
+}

@@ -40,6 +40,124 @@ impl<H: HostTypes> LayoutInvariant<H> for NullLayoutInvariant<H> {
     }
 }
 
+/// Phase 8 (orphan-closure) — content-addressed handle for `LayoutInvariant<H>`.
+///
+/// Pairs a [`crate::enforcement::ContentFingerprint`] with a phantom
+/// `H` so type-state checks can't mix handles across `HostTypes` impls.
+#[derive(Debug)]
+pub struct LayoutInvariantHandle<H: HostTypes> {
+    /// Content fingerprint identifying the resolved record.
+    pub fingerprint: crate::enforcement::ContentFingerprint,
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Copy for LayoutInvariantHandle<H> {}
+impl<H: HostTypes> Clone for LayoutInvariantHandle<H> {
+    #[inline]
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+impl<H: HostTypes> PartialEq for LayoutInvariantHandle<H> {
+    #[inline]
+    fn eq(&self, other: &Self) -> bool {
+        self.fingerprint == other.fingerprint
+    }
+}
+impl<H: HostTypes> Eq for LayoutInvariantHandle<H> {}
+impl<H: HostTypes> core::hash::Hash for LayoutInvariantHandle<H> {
+    #[inline]
+    fn hash<S: core::hash::Hasher>(&self, state: &mut S) {
+        self.fingerprint.hash(state);
+    }
+}
+impl<H: HostTypes> LayoutInvariantHandle<H> {
+    /// Construct a handle from its content fingerprint.
+    #[inline]
+    #[must_use]
+    pub const fn new(fingerprint: crate::enforcement::ContentFingerprint) -> Self {
+        Self {
+            fingerprint,
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+
+/// Phase 8 (orphan-closure) — resolver trait for `LayoutInvariant<H>`.
+///
+/// Hosts implement this trait to map a handle into a typed record.
+/// The default Null stub does not implement this trait — it carries
+/// no record. Resolution is the responsibility of the host pipeline.
+pub trait LayoutInvariantResolver<H: HostTypes> {
+    /// Resolve a handle into its record. Returns `None` when the
+    /// handle does not correspond to known content.
+    fn resolve(&self, handle: LayoutInvariantHandle<H>) -> Option<LayoutInvariantRecord<H>>;
+}
+
+/// Phase 8 (orphan-closure) — typed record for `LayoutInvariant<H>`.
+///
+/// Carries a field per functional accessor of the trait. Object
+/// fields hold `{Range}Handle<H>`; iterate via the Resolved wrapper
+/// chain-resolver methods.
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub struct LayoutInvariantRecord<H: HostTypes> {
+    pub layout_rule: &'static H::HostString,
+    #[doc(hidden)]
+    pub _phantom: core::marker::PhantomData<H>,
+}
+
+/// Phase 8 (orphan-closure) — content-addressed wrapper for `LayoutInvariant<H>`.
+///
+/// Caches the resolver's lookup at construction. Accessors return
+/// the cached record's fields when present, falling back to the
+/// `Null{Class}<H>` absent sentinels when the resolver returned
+/// `None`. Object accessors always return absent sentinels — use
+/// the `resolve_{m}` chain methods to descend into sub-records.
+pub struct ResolvedLayoutInvariant<'r, R: LayoutInvariantResolver<H>, H: HostTypes> {
+    handle: LayoutInvariantHandle<H>,
+    resolver: &'r R,
+    record: Option<LayoutInvariantRecord<H>>,
+}
+impl<'r, R: LayoutInvariantResolver<H>, H: HostTypes> ResolvedLayoutInvariant<'r, R, H> {
+    /// Construct the wrapper, eagerly resolving the handle.
+    #[inline]
+    pub fn new(handle: LayoutInvariantHandle<H>, resolver: &'r R) -> Self {
+        let record = resolver.resolve(handle);
+        Self {
+            handle,
+            resolver,
+            record,
+        }
+    }
+    /// The handle this wrapper resolves.
+    #[inline]
+    #[must_use]
+    pub const fn handle(&self) -> LayoutInvariantHandle<H> {
+        self.handle
+    }
+    /// The resolver supplied at construction.
+    #[inline]
+    #[must_use]
+    pub const fn resolver(&self) -> &'r R {
+        self.resolver
+    }
+    /// The cached record, or `None` when the resolver returned `None`.
+    #[inline]
+    #[must_use]
+    pub const fn record(&self) -> Option<&LayoutInvariantRecord<H>> {
+        self.record.as_ref()
+    }
+}
+impl<'r, R: LayoutInvariantResolver<H>, H: HostTypes> LayoutInvariant<H>
+    for ResolvedLayoutInvariant<'r, R, H>
+{
+    fn layout_rule(&self) -> &H::HostString {
+        match &self.record {
+            Some(r) => r.layout_rule,
+            None => H::EMPTY_HOST_STRING,
+        }
+    }
+}
+
 /// PartitionProduct layout-width invariant: products introduce no bookkeeping of their own, so layout widths add. Cited by primitive_partition_product when the caller-supplied combined SITE_COUNT differs from the sum of operand SITE_COUNTs.
 pub mod product_layout_width {
     /// `layoutRule`
