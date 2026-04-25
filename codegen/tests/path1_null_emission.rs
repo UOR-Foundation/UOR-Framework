@@ -22,9 +22,13 @@ use std::path::PathBuf;
 use uor_codegen::classification::{classify_all, PathKind};
 use uor_ontology::Ontology;
 
-/// Stub-count ratchet: Phase 2 + Phase 3 close. The number only grows
-/// as later phases expand the emitable set; drops indicate regression.
-const MIN_PHASE2_STUBS: usize = 188;
+/// Stub-count ratchet: Phase 7 close. The number only grows as later
+/// phases expand the emitable set; drops indicate regression. After
+/// Phase 7d admitted Path-4 classes and Phase 7e removed the
+/// enum-accessor filter, the emitable set covers Path-1 + Path-2 +
+/// Path-4 — every class whose trait is supposed to be impl'd by a
+/// generated stub.
+const MIN_PHASE2_STUBS: usize = 440;
 
 fn find_workspace_root() -> PathBuf {
     let mut dir = std::env::current_dir().expect("cwd");
@@ -115,11 +119,10 @@ fn classification_path1_reports_nonzero_emitable_subset() {
     let sources = load_namespace_sources();
     let emitted = sources.matches("pub struct Null").count();
     assert!(emitted > 0);
-    // Sanity bound: emitted count < path1 count (some drop out via the
-    // emitable-set fixed point). The exact ratio is informational.
+    // Phase 7 summary: emitted covers Path-1 + Path-2 + Path-4. The
+    // Path-2/Path-4 contributions are additive on top of the Path-1 base.
     eprintln!(
-        "Phase 2 summary: {emitted} Null stubs emitted (out of {path1} Path-1 classes); \
-         cascade drops = {}",
-        path1 - emitted
+        "Phase 7 summary: {emitted} Null stubs emitted (Path-1 = {path1}, plus \
+         Path-2 theorem-witness + Path-4 theory-deferred)"
     );
 }

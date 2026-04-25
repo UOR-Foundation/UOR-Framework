@@ -64,6 +64,54 @@ pub trait RecursionTrace<H: HostTypes>: crate::bridge::trace::ComputationTrace<H
 /// A bounded recursion where the descent measure is the structural size of the input type (site count, constraint count, or operad nesting depth).
 pub trait StructuralRecursion<H: HostTypes>: BoundedRecursion<H> {}
 
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `BoundedRecursion<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullBoundedRecursion<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullBoundedRecursion<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullBoundedRecursion<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullBoundedRecursion<H> = NullBoundedRecursion {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> BoundedRecursion<H> for NullBoundedRecursion<H> {
+    type DescentMeasure = NullDescentMeasure<H>;
+    fn measure(&self) -> &Self::DescentMeasure {
+        &<NullDescentMeasure<H>>::ABSENT
+    }
+    type BaseCase = NullBaseCase<H>;
+    fn base_case(&self) -> &Self::BaseCase {
+        &<NullBaseCase<H>>::ABSENT
+    }
+    type RecursiveCase = NullRecursiveCase<H>;
+    fn recursive_case(&self) -> &Self::RecursiveCase {
+        &<NullRecursiveCase<H>>::ABSENT
+    }
+    type Predicate = crate::kernel::predicate::NullPredicate<H>;
+    fn base_predicate(&self) -> &Self::Predicate {
+        &<crate::kernel::predicate::NullPredicate<H>>::ABSENT
+    }
+    type ComputationDatum = crate::user::morphism::NullComputationDatum<H>;
+    fn recursion_body(&self) -> &Self::ComputationDatum {
+        &<crate::user::morphism::NullComputationDatum<H>>::ABSENT
+    }
+    fn initial_measure(&self) -> u64 {
+        0
+    }
+}
+
 /// Phase 2 (orphan-closure) — resolver-absent default impl of `DescentMeasure<H>`.
 /// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
 /// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
@@ -74,14 +122,22 @@ pub struct NullDescentMeasure<H: HostTypes> {
     _phantom: core::marker::PhantomData<H>,
 }
 impl<H: HostTypes> Default for NullDescentMeasure<H> {
-    fn default() -> Self { Self { _phantom: core::marker::PhantomData } }
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
 }
 impl<H: HostTypes> NullDescentMeasure<H> {
     /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
-    pub const ABSENT: NullDescentMeasure<H> = NullDescentMeasure { _phantom: core::marker::PhantomData };
+    pub const ABSENT: NullDescentMeasure<H> = NullDescentMeasure {
+        _phantom: core::marker::PhantomData,
+    };
 }
 impl<H: HostTypes> DescentMeasure<H> for NullDescentMeasure<H> {
-    fn measure_value(&self) -> u64 { 0 }
+    fn measure_value(&self) -> u64 {
+        0
+    }
 }
 
 /// Phase 2 (orphan-closure) — resolver-absent default impl of `BaseCase<H>`.
@@ -94,21 +150,32 @@ pub struct NullBaseCase<H: HostTypes> {
     _phantom: core::marker::PhantomData<H>,
 }
 impl<H: HostTypes> Default for NullBaseCase<H> {
-    fn default() -> Self { Self { _phantom: core::marker::PhantomData } }
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
 }
 impl<H: HostTypes> NullBaseCase<H> {
     /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
-    pub const ABSENT: NullBaseCase<H> = NullBaseCase { _phantom: core::marker::PhantomData };
+    pub const ABSENT: NullBaseCase<H> = NullBaseCase {
+        _phantom: core::marker::PhantomData,
+    };
 }
 impl<H: HostTypes> crate::kernel::predicate::MatchArm<H> for NullBaseCase<H> {
     type Predicate = crate::kernel::predicate::NullPredicate<H>;
-    fn arm_predicate(&self) -> &Self::Predicate { &<crate::kernel::predicate::NullPredicate<H>>::ABSENT }
+    fn arm_predicate(&self) -> &Self::Predicate {
+        &<crate::kernel::predicate::NullPredicate<H>>::ABSENT
+    }
     type Term = crate::kernel::schema::NullTerm<H>;
-    fn arm_result(&self) -> &Self::Term { &<crate::kernel::schema::NullTerm<H>>::ABSENT }
-    fn arm_index(&self) -> u64 { 0 }
+    fn arm_result(&self) -> &Self::Term {
+        &<crate::kernel::schema::NullTerm<H>>::ABSENT
+    }
+    fn arm_index(&self) -> u64 {
+        0
+    }
 }
-impl<H: HostTypes> BaseCase<H> for NullBaseCase<H> {
-}
+impl<H: HostTypes> BaseCase<H> for NullBaseCase<H> {}
 
 /// Phase 2 (orphan-closure) — resolver-absent default impl of `RecursiveCase<H>`.
 /// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
@@ -120,18 +187,186 @@ pub struct NullRecursiveCase<H: HostTypes> {
     _phantom: core::marker::PhantomData<H>,
 }
 impl<H: HostTypes> Default for NullRecursiveCase<H> {
-    fn default() -> Self { Self { _phantom: core::marker::PhantomData } }
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
 }
 impl<H: HostTypes> NullRecursiveCase<H> {
     /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
-    pub const ABSENT: NullRecursiveCase<H> = NullRecursiveCase { _phantom: core::marker::PhantomData };
+    pub const ABSENT: NullRecursiveCase<H> = NullRecursiveCase {
+        _phantom: core::marker::PhantomData,
+    };
 }
 impl<H: HostTypes> crate::kernel::predicate::MatchArm<H> for NullRecursiveCase<H> {
     type Predicate = crate::kernel::predicate::NullPredicate<H>;
-    fn arm_predicate(&self) -> &Self::Predicate { &<crate::kernel::predicate::NullPredicate<H>>::ABSENT }
+    fn arm_predicate(&self) -> &Self::Predicate {
+        &<crate::kernel::predicate::NullPredicate<H>>::ABSENT
+    }
     type Term = crate::kernel::schema::NullTerm<H>;
-    fn arm_result(&self) -> &Self::Term { &<crate::kernel::schema::NullTerm<H>>::ABSENT }
-    fn arm_index(&self) -> u64 { 0 }
+    fn arm_result(&self) -> &Self::Term {
+        &<crate::kernel::schema::NullTerm<H>>::ABSENT
+    }
+    fn arm_index(&self) -> u64 {
+        0
+    }
 }
-impl<H: HostTypes> RecursiveCase<H> for NullRecursiveCase<H> {
+impl<H: HostTypes> RecursiveCase<H> for NullRecursiveCase<H> {}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `RecursiveStep<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullRecursiveStep<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
 }
+impl<H: HostTypes> Default for NullRecursiveStep<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullRecursiveStep<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullRecursiveStep<H> = NullRecursiveStep {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> RecursiveStep<H> for NullRecursiveStep<H> {
+    type Transform = crate::user::morphism::NullTransform<H>;
+    fn step_decomposition(&self) -> &Self::Transform {
+        &<crate::user::morphism::NullTransform<H>>::ABSENT
+    }
+    type DescentMeasure = NullDescentMeasure<H>;
+    fn step_measure_pre(&self) -> &Self::DescentMeasure {
+        &<NullDescentMeasure<H>>::ABSENT
+    }
+    fn step_measure_post(&self) -> &Self::DescentMeasure {
+        &<NullDescentMeasure<H>>::ABSENT
+    }
+}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `RecursionTrace<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullRecursionTrace<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullRecursionTrace<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullRecursionTrace<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullRecursionTrace<H> = NullRecursionTrace {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> crate::bridge::trace::ComputationTrace<H> for NullRecursionTrace<H> {
+    type Datum = crate::kernel::schema::NullDatum<H>;
+    fn input(&self) -> &Self::Datum {
+        &<crate::kernel::schema::NullDatum<H>>::ABSENT
+    }
+    fn output(&self) -> &Self::Datum {
+        &<crate::kernel::schema::NullDatum<H>>::ABSENT
+    }
+    type ComputationStep = crate::bridge::trace::NullComputationStep<H>;
+    fn step(&self) -> &[Self::ComputationStep] {
+        &[]
+    }
+    type DihedralElement = crate::bridge::observable::NullDihedralElement<H>;
+    fn monodromy(&self) -> &Self::DihedralElement {
+        &<crate::bridge::observable::NullDihedralElement<H>>::ABSENT
+    }
+    type Certificate = crate::bridge::cert::NullCertificate<H>;
+    fn certified_by(&self) -> &Self::Certificate {
+        &<crate::bridge::cert::NullCertificate<H>>::ABSENT
+    }
+    type ResidualEntropy = crate::bridge::observable::NullResidualEntropy<H>;
+    fn residual_entropy(&self) -> &Self::ResidualEntropy {
+        &<crate::bridge::observable::NullResidualEntropy<H>>::ABSENT
+    }
+    fn is_geodesic(&self) -> bool {
+        false
+    }
+    type GeodesicViolation = crate::bridge::trace::NullGeodesicViolation<H>;
+    fn geodesic_violation(&self) -> &[Self::GeodesicViolation] {
+        &[]
+    }
+    fn cumulative_entropy_cost(&self) -> H::Decimal {
+        H::EMPTY_DECIMAL
+    }
+    fn adiabatically_ordered(&self) -> bool {
+        false
+    }
+    type MeasurementEvent = crate::bridge::trace::NullMeasurementEvent<H>;
+    fn measurement_event(&self) -> &[Self::MeasurementEvent] {
+        &[]
+    }
+    fn is_ar1_ordered(&self) -> bool {
+        false
+    }
+    fn is_dc10_selected(&self) -> bool {
+        false
+    }
+}
+impl<H: HostTypes> RecursionTrace<H> for NullRecursionTrace<H> {}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `StructuralRecursion<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullStructuralRecursion<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullStructuralRecursion<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullStructuralRecursion<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullStructuralRecursion<H> = NullStructuralRecursion {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> BoundedRecursion<H> for NullStructuralRecursion<H> {
+    type DescentMeasure = NullDescentMeasure<H>;
+    fn measure(&self) -> &Self::DescentMeasure {
+        &<NullDescentMeasure<H>>::ABSENT
+    }
+    type BaseCase = NullBaseCase<H>;
+    fn base_case(&self) -> &Self::BaseCase {
+        &<NullBaseCase<H>>::ABSENT
+    }
+    type RecursiveCase = NullRecursiveCase<H>;
+    fn recursive_case(&self) -> &Self::RecursiveCase {
+        &<NullRecursiveCase<H>>::ABSENT
+    }
+    type Predicate = crate::kernel::predicate::NullPredicate<H>;
+    fn base_predicate(&self) -> &Self::Predicate {
+        &<crate::kernel::predicate::NullPredicate<H>>::ABSENT
+    }
+    type ComputationDatum = crate::user::morphism::NullComputationDatum<H>;
+    fn recursion_body(&self) -> &Self::ComputationDatum {
+        &<crate::user::morphism::NullComputationDatum<H>>::ABSENT
+    }
+    fn initial_measure(&self) -> u64 {
+        0
+    }
+}
+impl<H: HostTypes> StructuralRecursion<H> for NullStructuralRecursion<H> {}

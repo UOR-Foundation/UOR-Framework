@@ -4,6 +4,7 @@
 //!
 //! Space: Kernel
 
+use crate::enums::MeasurementUnit;
 use crate::HostTypes;
 
 /// The Boolean function chain c_{k+1} = or(and(x_k, y_k), and(xor(x_k, y_k), c_k)). The carry chain is the algebraic mechanism behind the incompatibility metric d_Δ.
@@ -73,17 +74,31 @@ pub struct NullCarryChain<H: HostTypes> {
     _phantom: core::marker::PhantomData<H>,
 }
 impl<H: HostTypes> Default for NullCarryChain<H> {
-    fn default() -> Self { Self { _phantom: core::marker::PhantomData } }
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
 }
 impl<H: HostTypes> NullCarryChain<H> {
     /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
-    pub const ABSENT: NullCarryChain<H> = NullCarryChain { _phantom: core::marker::PhantomData };
+    pub const ABSENT: NullCarryChain<H> = NullCarryChain {
+        _phantom: core::marker::PhantomData,
+    };
 }
 impl<H: HostTypes> CarryChain<H> for NullCarryChain<H> {
-    fn chain_length(&self) -> u64 { 0 }
-    fn generate_mask(&self) -> u64 { 0 }
-    fn propagate_mask(&self) -> u64 { 0 }
-    fn kill_mask(&self) -> u64 { 0 }
+    fn chain_length(&self) -> u64 {
+        0
+    }
+    fn generate_mask(&self) -> u64 {
+        0
+    }
+    fn propagate_mask(&self) -> u64 {
+        0
+    }
+    fn kill_mask(&self) -> u64 {
+        0
+    }
 }
 
 /// Phase 2 (orphan-closure) — resolver-absent default impl of `CarryEvent<H>`.
@@ -96,15 +111,25 @@ pub struct NullCarryEvent<H: HostTypes> {
     _phantom: core::marker::PhantomData<H>,
 }
 impl<H: HostTypes> Default for NullCarryEvent<H> {
-    fn default() -> Self { Self { _phantom: core::marker::PhantomData } }
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
 }
 impl<H: HostTypes> NullCarryEvent<H> {
     /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
-    pub const ABSENT: NullCarryEvent<H> = NullCarryEvent { _phantom: core::marker::PhantomData };
+    pub const ABSENT: NullCarryEvent<H> = NullCarryEvent {
+        _phantom: core::marker::PhantomData,
+    };
 }
 impl<H: HostTypes> CarryEvent<H> for NullCarryEvent<H> {
-    fn event_kind(&self) -> u64 { 0 }
-    fn site_position(&self) -> u64 { 0 }
+    fn event_kind(&self) -> u64 {
+        0
+    }
+    fn site_position(&self) -> u64 {
+        0
+    }
 }
 
 /// Phase 2 (orphan-closure) — resolver-absent default impl of `CarryProfile<H>`.
@@ -117,17 +142,29 @@ pub struct NullCarryProfile<H: HostTypes> {
     _phantom: core::marker::PhantomData<H>,
 }
 impl<H: HostTypes> Default for NullCarryProfile<H> {
-    fn default() -> Self { Self { _phantom: core::marker::PhantomData } }
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
 }
 impl<H: HostTypes> NullCarryProfile<H> {
     /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
-    pub const ABSENT: NullCarryProfile<H> = NullCarryProfile { _phantom: core::marker::PhantomData };
+    pub const ABSENT: NullCarryProfile<H> = NullCarryProfile {
+        _phantom: core::marker::PhantomData,
+    };
 }
 impl<H: HostTypes> CarryProfile<H> for NullCarryProfile<H> {
-    fn carry_count(&self) -> u64 { 0 }
-    fn max_propagation_length(&self) -> u64 { 0 }
+    fn carry_count(&self) -> u64 {
+        0
+    }
+    fn max_propagation_length(&self) -> u64 {
+        0
+    }
     type CarryChain = NullCarryChain<H>;
-    fn profile_chain(&self) -> &Self::CarryChain { &<NullCarryChain<H>>::ABSENT }
+    fn profile_chain(&self) -> &Self::CarryChain {
+        &<NullCarryChain<H>>::ABSENT
+    }
 }
 
 /// Phase 2 (orphan-closure) — resolver-absent default impl of `EncodingConfiguration<H>`.
@@ -140,17 +177,29 @@ pub struct NullEncodingConfiguration<H: HostTypes> {
     _phantom: core::marker::PhantomData<H>,
 }
 impl<H: HostTypes> Default for NullEncodingConfiguration<H> {
-    fn default() -> Self { Self { _phantom: core::marker::PhantomData } }
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
 }
 impl<H: HostTypes> NullEncodingConfiguration<H> {
     /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
-    pub const ABSENT: NullEncodingConfiguration<H> = NullEncodingConfiguration { _phantom: core::marker::PhantomData };
+    pub const ABSENT: NullEncodingConfiguration<H> = NullEncodingConfiguration {
+        _phantom: core::marker::PhantomData,
+    };
 }
 impl<H: HostTypes> EncodingConfiguration<H> for NullEncodingConfiguration<H> {
-    fn symbol_set_size(&self) -> u64 { 0 }
-    fn quantization_bits(&self) -> u64 { 0 }
+    fn symbol_set_size(&self) -> u64 {
+        0
+    }
+    fn quantization_bits(&self) -> u64 {
+        0
+    }
     type TermExpression = crate::kernel::schema::NullTermExpression<H>;
-    fn encoding_map(&self) -> &Self::TermExpression { &<crate::kernel::schema::NullTermExpression<H>>::ABSENT }
+    fn encoding_map(&self) -> &Self::TermExpression {
+        &<crate::kernel::schema::NullTermExpression<H>>::ABSENT
+    }
 }
 
 /// Phase 2 (orphan-closure) — resolver-absent default impl of `EncodingQuality<H>`.
@@ -163,14 +212,64 @@ pub struct NullEncodingQuality<H: HostTypes> {
     _phantom: core::marker::PhantomData<H>,
 }
 impl<H: HostTypes> Default for NullEncodingQuality<H> {
-    fn default() -> Self { Self { _phantom: core::marker::PhantomData } }
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
 }
 impl<H: HostTypes> NullEncodingQuality<H> {
     /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
-    pub const ABSENT: NullEncodingQuality<H> = NullEncodingQuality { _phantom: core::marker::PhantomData };
+    pub const ABSENT: NullEncodingQuality<H> = NullEncodingQuality {
+        _phantom: core::marker::PhantomData,
+    };
 }
 impl<H: HostTypes> EncodingQuality<H> for NullEncodingQuality<H> {
-    fn mean_delta(&self) -> H::Decimal { H::EMPTY_DECIMAL }
-    fn discrimination_ratio(&self) -> H::Decimal { H::EMPTY_DECIMAL }
-    fn is_optimal_encoding(&self) -> bool { false }
+    fn mean_delta(&self) -> H::Decimal {
+        H::EMPTY_DECIMAL
+    }
+    fn discrimination_ratio(&self) -> H::Decimal {
+        H::EMPTY_DECIMAL
+    }
+    fn is_optimal_encoding(&self) -> bool {
+        false
+    }
 }
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `CarryDepthObservable<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullCarryDepthObservable<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullCarryDepthObservable<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullCarryDepthObservable<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullCarryDepthObservable<H> = NullCarryDepthObservable {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> crate::bridge::observable::Observable<H> for NullCarryDepthObservable<H> {
+    fn value(&self) -> H::Decimal {
+        H::EMPTY_DECIMAL
+    }
+    fn source(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    fn target(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    fn has_unit(&self) -> MeasurementUnit {
+        <MeasurementUnit>::default()
+    }
+}
+impl<H: HostTypes> CarryDepthObservable<H> for NullCarryDepthObservable<H> {}

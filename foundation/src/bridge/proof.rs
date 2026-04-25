@@ -137,6 +137,287 @@ pub trait InhabitanceImpossibilityWitness<H: HostTypes>: ImpossibilityWitness<H>
     fn search_trace(&self) -> &Self::InhabitanceSearchTrace;
 }
 
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `Proof<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullProof<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullProof<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullProof<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullProof<H> = NullProof {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> Proof<H> for NullProof<H> {
+    fn verified(&self) -> bool {
+        false
+    }
+    fn timestamp(&self) -> &H::WitnessBytes {
+        H::EMPTY_WITNESS_BYTES
+    }
+    type WitnessData = NullWitnessData<H>;
+    fn witness(&self) -> &[Self::WitnessData] {
+        &[]
+    }
+    type Identity = crate::kernel::op::NullIdentity<H>;
+    fn proves_identity(&self) -> &Self::Identity {
+        &<crate::kernel::op::NullIdentity<H>>::ABSENT
+    }
+    fn verified_at_level(&self) -> &[WittLevel] {
+        &[]
+    }
+    fn strategy(&self) -> ProofStrategy {
+        <ProofStrategy>::default()
+    }
+    fn depends_on(&self) -> &[Self::Identity] {
+        &[]
+    }
+    type DerivationTerm = NullDerivationTerm<H>;
+    fn formal_derivation(&self) -> &Self::DerivationTerm {
+        &<NullDerivationTerm<H>>::ABSENT
+    }
+}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `CoherenceProof<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullCoherenceProof<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullCoherenceProof<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullCoherenceProof<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullCoherenceProof<H> = NullCoherenceProof {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> Proof<H> for NullCoherenceProof<H> {
+    fn verified(&self) -> bool {
+        false
+    }
+    fn timestamp(&self) -> &H::WitnessBytes {
+        H::EMPTY_WITNESS_BYTES
+    }
+    type WitnessData = NullWitnessData<H>;
+    fn witness(&self) -> &[Self::WitnessData] {
+        &[]
+    }
+    type Identity = crate::kernel::op::NullIdentity<H>;
+    fn proves_identity(&self) -> &Self::Identity {
+        &<crate::kernel::op::NullIdentity<H>>::ABSENT
+    }
+    fn verified_at_level(&self) -> &[WittLevel] {
+        &[]
+    }
+    fn strategy(&self) -> ProofStrategy {
+        <ProofStrategy>::default()
+    }
+    fn depends_on(&self) -> &[Self::Identity] {
+        &[]
+    }
+    type DerivationTerm = NullDerivationTerm<H>;
+    fn formal_derivation(&self) -> &Self::DerivationTerm {
+        &<NullDerivationTerm<H>>::ABSENT
+    }
+}
+impl<H: HostTypes> CoherenceProof<H> for NullCoherenceProof<H> {}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `ComputationCertificate<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullComputationCertificate<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullComputationCertificate<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullComputationCertificate<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullComputationCertificate<H> = NullComputationCertificate {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> Proof<H> for NullComputationCertificate<H> {
+    fn verified(&self) -> bool {
+        false
+    }
+    fn timestamp(&self) -> &H::WitnessBytes {
+        H::EMPTY_WITNESS_BYTES
+    }
+    type WitnessData = NullWitnessData<H>;
+    fn witness(&self) -> &[Self::WitnessData] {
+        &[]
+    }
+    type Identity = crate::kernel::op::NullIdentity<H>;
+    fn proves_identity(&self) -> &Self::Identity {
+        &<crate::kernel::op::NullIdentity<H>>::ABSENT
+    }
+    fn verified_at_level(&self) -> &[WittLevel] {
+        &[]
+    }
+    fn strategy(&self) -> ProofStrategy {
+        <ProofStrategy>::default()
+    }
+    fn depends_on(&self) -> &[Self::Identity] {
+        &[]
+    }
+    type DerivationTerm = NullDerivationTerm<H>;
+    fn formal_derivation(&self) -> &Self::DerivationTerm {
+        &<NullDerivationTerm<H>>::ABSENT
+    }
+}
+impl<H: HostTypes> ComputationCertificate<H> for NullComputationCertificate<H> {
+    fn at_witt_level(&self) -> WittLevel {
+        <WittLevel>::default()
+    }
+}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `AxiomaticDerivation<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullAxiomaticDerivation<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullAxiomaticDerivation<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullAxiomaticDerivation<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullAxiomaticDerivation<H> = NullAxiomaticDerivation {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> Proof<H> for NullAxiomaticDerivation<H> {
+    fn verified(&self) -> bool {
+        false
+    }
+    fn timestamp(&self) -> &H::WitnessBytes {
+        H::EMPTY_WITNESS_BYTES
+    }
+    type WitnessData = NullWitnessData<H>;
+    fn witness(&self) -> &[Self::WitnessData] {
+        &[]
+    }
+    type Identity = crate::kernel::op::NullIdentity<H>;
+    fn proves_identity(&self) -> &Self::Identity {
+        &<crate::kernel::op::NullIdentity<H>>::ABSENT
+    }
+    fn verified_at_level(&self) -> &[WittLevel] {
+        &[]
+    }
+    fn strategy(&self) -> ProofStrategy {
+        <ProofStrategy>::default()
+    }
+    fn depends_on(&self) -> &[Self::Identity] {
+        &[]
+    }
+    type DerivationTerm = NullDerivationTerm<H>;
+    fn formal_derivation(&self) -> &Self::DerivationTerm {
+        &<NullDerivationTerm<H>>::ABSENT
+    }
+}
+impl<H: HostTypes> AxiomaticDerivation<H> for NullAxiomaticDerivation<H> {
+    fn universal_scope(&self) -> bool {
+        false
+    }
+    type Derivation = crate::bridge::derivation::NullDerivation<H>;
+    fn derivation_witness(&self) -> &[Self::Derivation] {
+        &[]
+    }
+}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `CriticalIdentityProof<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullCriticalIdentityProof<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullCriticalIdentityProof<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullCriticalIdentityProof<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullCriticalIdentityProof<H> = NullCriticalIdentityProof {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> Proof<H> for NullCriticalIdentityProof<H> {
+    fn verified(&self) -> bool {
+        false
+    }
+    fn timestamp(&self) -> &H::WitnessBytes {
+        H::EMPTY_WITNESS_BYTES
+    }
+    type WitnessData = NullWitnessData<H>;
+    fn witness(&self) -> &[Self::WitnessData] {
+        &[]
+    }
+    type Identity = crate::kernel::op::NullIdentity<H>;
+    fn proves_identity(&self) -> &Self::Identity {
+        &<crate::kernel::op::NullIdentity<H>>::ABSENT
+    }
+    fn verified_at_level(&self) -> &[WittLevel] {
+        &[]
+    }
+    fn strategy(&self) -> ProofStrategy {
+        <ProofStrategy>::default()
+    }
+    fn depends_on(&self) -> &[Self::Identity] {
+        &[]
+    }
+    type DerivationTerm = NullDerivationTerm<H>;
+    fn formal_derivation(&self) -> &Self::DerivationTerm {
+        &<NullDerivationTerm<H>>::ABSENT
+    }
+}
+impl<H: HostTypes> ComputationCertificate<H> for NullCriticalIdentityProof<H> {
+    fn at_witt_level(&self) -> WittLevel {
+        <WittLevel>::default()
+    }
+}
+impl<H: HostTypes> CriticalIdentityProof<H> for NullCriticalIdentityProof<H> {}
+
 /// Phase 2 (orphan-closure) — resolver-absent default impl of `WitnessData<H>`.
 /// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
 /// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
@@ -147,18 +428,218 @@ pub struct NullWitnessData<H: HostTypes> {
     _phantom: core::marker::PhantomData<H>,
 }
 impl<H: HostTypes> Default for NullWitnessData<H> {
-    fn default() -> Self { Self { _phantom: core::marker::PhantomData } }
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
 }
 impl<H: HostTypes> NullWitnessData<H> {
     /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
-    pub const ABSENT: NullWitnessData<H> = NullWitnessData { _phantom: core::marker::PhantomData };
+    pub const ABSENT: NullWitnessData<H> = NullWitnessData {
+        _phantom: core::marker::PhantomData,
+    };
 }
 impl<H: HostTypes> WitnessData<H> for NullWitnessData<H> {
-    fn x(&self) -> &[i64] { &[] }
-    fn bnot_x(&self) -> &[i64] { &[] }
-    fn neg_bnot_x(&self) -> &[i64] { &[] }
-    fn succ_x(&self) -> &[i64] { &[] }
-    fn holds(&self) -> &[bool] { &[] }
+    fn x(&self) -> &[i64] {
+        &[]
+    }
+    fn bnot_x(&self) -> &[i64] {
+        &[]
+    }
+    fn neg_bnot_x(&self) -> &[i64] {
+        &[]
+    }
+    fn succ_x(&self) -> &[i64] {
+        &[]
+    }
+    fn holds(&self) -> &[bool] {
+        &[]
+    }
+}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `ImpossibilityWitness<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullImpossibilityWitness<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullImpossibilityWitness<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullImpossibilityWitness<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullImpossibilityWitness<H> = NullImpossibilityWitness {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> Proof<H> for NullImpossibilityWitness<H> {
+    fn verified(&self) -> bool {
+        false
+    }
+    fn timestamp(&self) -> &H::WitnessBytes {
+        H::EMPTY_WITNESS_BYTES
+    }
+    type WitnessData = NullWitnessData<H>;
+    fn witness(&self) -> &[Self::WitnessData] {
+        &[]
+    }
+    type Identity = crate::kernel::op::NullIdentity<H>;
+    fn proves_identity(&self) -> &Self::Identity {
+        &<crate::kernel::op::NullIdentity<H>>::ABSENT
+    }
+    fn verified_at_level(&self) -> &[WittLevel] {
+        &[]
+    }
+    fn strategy(&self) -> ProofStrategy {
+        <ProofStrategy>::default()
+    }
+    fn depends_on(&self) -> &[Self::Identity] {
+        &[]
+    }
+    type DerivationTerm = NullDerivationTerm<H>;
+    fn formal_derivation(&self) -> &Self::DerivationTerm {
+        &<NullDerivationTerm<H>>::ABSENT
+    }
+}
+impl<H: HostTypes> ImpossibilityWitness<H> for NullImpossibilityWitness<H> {
+    fn impossibility_reason(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    fn impossibility_domain(&self) -> VerificationDomain {
+        <VerificationDomain>::default()
+    }
+    fn achievability_status(&self) -> AchievabilityStatus {
+        <AchievabilityStatus>::default()
+    }
+}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `MorphospaceRecord<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullMorphospaceRecord<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullMorphospaceRecord<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullMorphospaceRecord<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullMorphospaceRecord<H> = NullMorphospaceRecord {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> MorphospaceRecord<H> for NullMorphospaceRecord<H> {
+    fn boundary_type(&self) -> AchievabilityStatus {
+        <AchievabilityStatus>::default()
+    }
+}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `MorphospaceBoundary<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullMorphospaceBoundary<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullMorphospaceBoundary<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullMorphospaceBoundary<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullMorphospaceBoundary<H> = NullMorphospaceBoundary {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> MorphospaceBoundary<H> for NullMorphospaceBoundary<H> {
+    type MorphospaceRecord = NullMorphospaceRecord<H>;
+    fn morphospace_record(&self) -> &[Self::MorphospaceRecord] {
+        &[]
+    }
+}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `InductiveProof<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullInductiveProof<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullInductiveProof<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullInductiveProof<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullInductiveProof<H> = NullInductiveProof {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> Proof<H> for NullInductiveProof<H> {
+    fn verified(&self) -> bool {
+        false
+    }
+    fn timestamp(&self) -> &H::WitnessBytes {
+        H::EMPTY_WITNESS_BYTES
+    }
+    type WitnessData = NullWitnessData<H>;
+    fn witness(&self) -> &[Self::WitnessData] {
+        &[]
+    }
+    type Identity = crate::kernel::op::NullIdentity<H>;
+    fn proves_identity(&self) -> &Self::Identity {
+        &<crate::kernel::op::NullIdentity<H>>::ABSENT
+    }
+    fn verified_at_level(&self) -> &[WittLevel] {
+        &[]
+    }
+    fn strategy(&self) -> ProofStrategy {
+        <ProofStrategy>::default()
+    }
+    fn depends_on(&self) -> &[Self::Identity] {
+        &[]
+    }
+    type DerivationTerm = NullDerivationTerm<H>;
+    fn formal_derivation(&self) -> &Self::DerivationTerm {
+        &<NullDerivationTerm<H>>::ABSENT
+    }
+}
+impl<H: HostTypes> InductiveProof<H> for NullInductiveProof<H> {
+    type Proof = NullProof<H>;
+    fn base_case(&self) -> &Self::Proof {
+        &<NullProof<H>>::ABSENT
+    }
+    fn inductive_step(&self) -> &Self::Proof {
+        &<NullProof<H>>::ABSENT
+    }
+    fn valid_for_kat_least(&self) -> u64 {
+        0
+    }
 }
 
 /// Phase 2 (orphan-closure) — resolver-absent default impl of `DerivationTerm<H>`.
@@ -171,14 +652,19 @@ pub struct NullDerivationTerm<H: HostTypes> {
     _phantom: core::marker::PhantomData<H>,
 }
 impl<H: HostTypes> Default for NullDerivationTerm<H> {
-    fn default() -> Self { Self { _phantom: core::marker::PhantomData } }
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
 }
 impl<H: HostTypes> NullDerivationTerm<H> {
     /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
-    pub const ABSENT: NullDerivationTerm<H> = NullDerivationTerm { _phantom: core::marker::PhantomData };
+    pub const ABSENT: NullDerivationTerm<H> = NullDerivationTerm {
+        _phantom: core::marker::PhantomData,
+    };
 }
-impl<H: HostTypes> DerivationTerm<H> for NullDerivationTerm<H> {
-}
+impl<H: HostTypes> DerivationTerm<H> for NullDerivationTerm<H> {}
 
 /// Phase 2 (orphan-closure) — resolver-absent default impl of `TacticApplication<H>`.
 /// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
@@ -190,16 +676,20 @@ pub struct NullTacticApplication<H: HostTypes> {
     _phantom: core::marker::PhantomData<H>,
 }
 impl<H: HostTypes> Default for NullTacticApplication<H> {
-    fn default() -> Self { Self { _phantom: core::marker::PhantomData } }
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
 }
 impl<H: HostTypes> NullTacticApplication<H> {
     /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
-    pub const ABSENT: NullTacticApplication<H> = NullTacticApplication { _phantom: core::marker::PhantomData };
+    pub const ABSENT: NullTacticApplication<H> = NullTacticApplication {
+        _phantom: core::marker::PhantomData,
+    };
 }
-impl<H: HostTypes> DerivationTerm<H> for NullTacticApplication<H> {
-}
-impl<H: HostTypes> TacticApplication<H> for NullTacticApplication<H> {
-}
+impl<H: HostTypes> DerivationTerm<H> for NullTacticApplication<H> {}
+impl<H: HostTypes> TacticApplication<H> for NullTacticApplication<H> {}
 
 /// Phase 2 (orphan-closure) — resolver-absent default impl of `LemmaInvocation<H>`.
 /// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
@@ -211,16 +701,20 @@ pub struct NullLemmaInvocation<H: HostTypes> {
     _phantom: core::marker::PhantomData<H>,
 }
 impl<H: HostTypes> Default for NullLemmaInvocation<H> {
-    fn default() -> Self { Self { _phantom: core::marker::PhantomData } }
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
 }
 impl<H: HostTypes> NullLemmaInvocation<H> {
     /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
-    pub const ABSENT: NullLemmaInvocation<H> = NullLemmaInvocation { _phantom: core::marker::PhantomData };
+    pub const ABSENT: NullLemmaInvocation<H> = NullLemmaInvocation {
+        _phantom: core::marker::PhantomData,
+    };
 }
-impl<H: HostTypes> DerivationTerm<H> for NullLemmaInvocation<H> {
-}
-impl<H: HostTypes> LemmaInvocation<H> for NullLemmaInvocation<H> {
-}
+impl<H: HostTypes> DerivationTerm<H> for NullLemmaInvocation<H> {}
+impl<H: HostTypes> LemmaInvocation<H> for NullLemmaInvocation<H> {}
 
 /// Phase 2 (orphan-closure) — resolver-absent default impl of `InductionStep<H>`.
 /// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
@@ -232,16 +726,20 @@ pub struct NullInductionStep<H: HostTypes> {
     _phantom: core::marker::PhantomData<H>,
 }
 impl<H: HostTypes> Default for NullInductionStep<H> {
-    fn default() -> Self { Self { _phantom: core::marker::PhantomData } }
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
 }
 impl<H: HostTypes> NullInductionStep<H> {
     /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
-    pub const ABSENT: NullInductionStep<H> = NullInductionStep { _phantom: core::marker::PhantomData };
+    pub const ABSENT: NullInductionStep<H> = NullInductionStep {
+        _phantom: core::marker::PhantomData,
+    };
 }
-impl<H: HostTypes> DerivationTerm<H> for NullInductionStep<H> {
-}
-impl<H: HostTypes> InductionStep<H> for NullInductionStep<H> {
-}
+impl<H: HostTypes> DerivationTerm<H> for NullInductionStep<H> {}
+impl<H: HostTypes> InductionStep<H> for NullInductionStep<H> {}
 
 /// Phase 2 (orphan-closure) — resolver-absent default impl of `ComputationStep<H>`.
 /// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
@@ -253,15 +751,96 @@ pub struct NullComputationStep<H: HostTypes> {
     _phantom: core::marker::PhantomData<H>,
 }
 impl<H: HostTypes> Default for NullComputationStep<H> {
-    fn default() -> Self { Self { _phantom: core::marker::PhantomData } }
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
 }
 impl<H: HostTypes> NullComputationStep<H> {
     /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
-    pub const ABSENT: NullComputationStep<H> = NullComputationStep { _phantom: core::marker::PhantomData };
+    pub const ABSENT: NullComputationStep<H> = NullComputationStep {
+        _phantom: core::marker::PhantomData,
+    };
 }
-impl<H: HostTypes> DerivationTerm<H> for NullComputationStep<H> {
+impl<H: HostTypes> DerivationTerm<H> for NullComputationStep<H> {}
+impl<H: HostTypes> ComputationStep<H> for NullComputationStep<H> {}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `InhabitanceImpossibilityWitness<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullInhabitanceImpossibilityWitness<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
 }
-impl<H: HostTypes> ComputationStep<H> for NullComputationStep<H> {
+impl<H: HostTypes> Default for NullInhabitanceImpossibilityWitness<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullInhabitanceImpossibilityWitness<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullInhabitanceImpossibilityWitness<H> =
+        NullInhabitanceImpossibilityWitness {
+            _phantom: core::marker::PhantomData,
+        };
+}
+impl<H: HostTypes> Proof<H> for NullInhabitanceImpossibilityWitness<H> {
+    fn verified(&self) -> bool {
+        false
+    }
+    fn timestamp(&self) -> &H::WitnessBytes {
+        H::EMPTY_WITNESS_BYTES
+    }
+    type WitnessData = NullWitnessData<H>;
+    fn witness(&self) -> &[Self::WitnessData] {
+        &[]
+    }
+    type Identity = crate::kernel::op::NullIdentity<H>;
+    fn proves_identity(&self) -> &Self::Identity {
+        &<crate::kernel::op::NullIdentity<H>>::ABSENT
+    }
+    fn verified_at_level(&self) -> &[WittLevel] {
+        &[]
+    }
+    fn strategy(&self) -> ProofStrategy {
+        <ProofStrategy>::default()
+    }
+    fn depends_on(&self) -> &[Self::Identity] {
+        &[]
+    }
+    type DerivationTerm = NullDerivationTerm<H>;
+    fn formal_derivation(&self) -> &Self::DerivationTerm {
+        &<NullDerivationTerm<H>>::ABSENT
+    }
+}
+impl<H: HostTypes> ImpossibilityWitness<H> for NullInhabitanceImpossibilityWitness<H> {
+    fn impossibility_reason(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    fn impossibility_domain(&self) -> VerificationDomain {
+        <VerificationDomain>::default()
+    }
+    fn achievability_status(&self) -> AchievabilityStatus {
+        <AchievabilityStatus>::default()
+    }
+}
+impl<H: HostTypes> InhabitanceImpossibilityWitness<H> for NullInhabitanceImpossibilityWitness<H> {
+    fn contradiction_proof(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    type ConstrainedType = crate::user::type_::NullConstrainedType<H>;
+    fn grounded(&self) -> &Self::ConstrainedType {
+        &<crate::user::type_::NullConstrainedType<H>>::ABSENT
+    }
+    type InhabitanceSearchTrace = crate::bridge::trace::NullInhabitanceSearchTrace<H>;
+    fn search_trace(&self) -> &Self::InhabitanceSearchTrace {
+        &<crate::bridge::trace::NullInhabitanceSearchTrace<H>>::ABSENT
+    }
 }
 
 /// Follows from ZMod ring axioms. Lean4 tactic: `by ring`.

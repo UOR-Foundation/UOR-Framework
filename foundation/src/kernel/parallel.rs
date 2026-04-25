@@ -4,6 +4,7 @@
 //!
 //! Space: Kernel
 
+use crate::enums::ProofStrategy;
 use crate::HostTypes;
 
 /// A ∥ B: two computations with provably disjoint site targets. Execution order does not affect the result.
@@ -59,4 +60,220 @@ pub trait SitePartitioning<H: HostTypes> {
     fn partition_components(&self) -> &[Self::EffectTarget];
     /// Number of parallel components.
     fn component_count(&self) -> u64;
+}
+
+#[doc(hidden)]
+#[doc = "THEORY-DEFERRED \u{2014} not a valid implementation; see [docs/theory_deferred.md]. Exists only to satisfy downstream trait-bound references."]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullParallelProduct<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullParallelProduct<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullParallelProduct<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullParallelProduct<H> = NullParallelProduct {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> ParallelProduct<H> for NullParallelProduct<H> {
+    type MonoidalProduct = crate::kernel::monoidal::NullMonoidalProduct<H>;
+    fn left_computation(&self) -> &Self::MonoidalProduct {
+        &<crate::kernel::monoidal::NullMonoidalProduct<H>>::ABSENT
+    }
+    fn right_computation(&self) -> &Self::MonoidalProduct {
+        &<crate::kernel::monoidal::NullMonoidalProduct<H>>::ABSENT
+    }
+    type DisjointnessCertificate = NullDisjointnessCertificate<H>;
+    fn disjointness_cert(&self) -> &Self::DisjointnessCertificate {
+        &<NullDisjointnessCertificate<H>>::ABSENT
+    }
+    fn is_fully_disjoint(&self) -> bool {
+        false
+    }
+    fn disjointness_commutation(&self) -> bool {
+        false
+    }
+    type Partition = crate::enforcement::NullPartition<H>;
+    fn site_partition(&self) -> &Self::Partition {
+        &<crate::enforcement::NullPartition<H>>::ABSENT
+    }
+    fn disjointness_witness(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+}
+
+#[doc(hidden)]
+#[doc = "THEORY-DEFERRED \u{2014} not a valid implementation; see [docs/theory_deferred.md]. Exists only to satisfy downstream trait-bound references."]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullDisjointnessCertificate<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullDisjointnessCertificate<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullDisjointnessCertificate<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullDisjointnessCertificate<H> = NullDisjointnessCertificate {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> crate::bridge::cert::Certificate<H> for NullDisjointnessCertificate<H> {
+    fn method(&self) -> ProofStrategy {
+        <ProofStrategy>::default()
+    }
+    fn verified(&self) -> bool {
+        false
+    }
+    fn witt_length(&self) -> u64 {
+        0
+    }
+    fn timestamp(&self) -> &H::WitnessBytes {
+        H::EMPTY_WITNESS_BYTES
+    }
+    fn certifies(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+}
+impl<H: HostTypes> DisjointnessCertificate<H> for NullDisjointnessCertificate<H> {
+    type EffectTarget = crate::kernel::effect::NullEffectTarget<H>;
+    fn cert_left_target(&self) -> &Self::EffectTarget {
+        &<crate::kernel::effect::NullEffectTarget<H>>::ABSENT
+    }
+    fn cert_right_target(&self) -> &Self::EffectTarget {
+        &<crate::kernel::effect::NullEffectTarget<H>>::ABSENT
+    }
+}
+
+#[doc(hidden)]
+#[doc = "THEORY-DEFERRED \u{2014} not a valid implementation; see [docs/theory_deferred.md]. Exists only to satisfy downstream trait-bound references."]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullSynchronizationPoint<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullSynchronizationPoint<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullSynchronizationPoint<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullSynchronizationPoint<H> = NullSynchronizationPoint {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> SynchronizationPoint<H> for NullSynchronizationPoint<H> {
+    type SiteIndex = crate::bridge::partition::NullSiteIndex<H>;
+    fn sync_sites(&self) -> &[Self::SiteIndex] {
+        &[]
+    }
+}
+
+#[doc(hidden)]
+#[doc = "THEORY-DEFERRED \u{2014} not a valid implementation; see [docs/theory_deferred.md]. Exists only to satisfy downstream trait-bound references."]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullParallelTrace<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullParallelTrace<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullParallelTrace<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullParallelTrace<H> = NullParallelTrace {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> crate::bridge::trace::ComputationTrace<H> for NullParallelTrace<H> {
+    type Datum = crate::kernel::schema::NullDatum<H>;
+    fn input(&self) -> &Self::Datum {
+        &<crate::kernel::schema::NullDatum<H>>::ABSENT
+    }
+    fn output(&self) -> &Self::Datum {
+        &<crate::kernel::schema::NullDatum<H>>::ABSENT
+    }
+    type ComputationStep = crate::bridge::trace::NullComputationStep<H>;
+    fn step(&self) -> &[Self::ComputationStep] {
+        &[]
+    }
+    type DihedralElement = crate::bridge::observable::NullDihedralElement<H>;
+    fn monodromy(&self) -> &Self::DihedralElement {
+        &<crate::bridge::observable::NullDihedralElement<H>>::ABSENT
+    }
+    type Certificate = crate::bridge::cert::NullCertificate<H>;
+    fn certified_by(&self) -> &Self::Certificate {
+        &<crate::bridge::cert::NullCertificate<H>>::ABSENT
+    }
+    type ResidualEntropy = crate::bridge::observable::NullResidualEntropy<H>;
+    fn residual_entropy(&self) -> &Self::ResidualEntropy {
+        &<crate::bridge::observable::NullResidualEntropy<H>>::ABSENT
+    }
+    fn is_geodesic(&self) -> bool {
+        false
+    }
+    type GeodesicViolation = crate::bridge::trace::NullGeodesicViolation<H>;
+    fn geodesic_violation(&self) -> &[Self::GeodesicViolation] {
+        &[]
+    }
+    fn cumulative_entropy_cost(&self) -> H::Decimal {
+        H::EMPTY_DECIMAL
+    }
+    fn adiabatically_ordered(&self) -> bool {
+        false
+    }
+    type MeasurementEvent = crate::bridge::trace::NullMeasurementEvent<H>;
+    fn measurement_event(&self) -> &[Self::MeasurementEvent] {
+        &[]
+    }
+    fn is_ar1_ordered(&self) -> bool {
+        false
+    }
+    fn is_dc10_selected(&self) -> bool {
+        false
+    }
+}
+impl<H: HostTypes> ParallelTrace<H> for NullParallelTrace<H> {}
+
+#[doc(hidden)]
+#[doc = "THEORY-DEFERRED \u{2014} not a valid implementation; see [docs/theory_deferred.md]. Exists only to satisfy downstream trait-bound references."]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullSitePartitioning<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullSitePartitioning<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullSitePartitioning<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullSitePartitioning<H> = NullSitePartitioning {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> SitePartitioning<H> for NullSitePartitioning<H> {
+    type EffectTarget = crate::kernel::effect::NullEffectTarget<H>;
+    fn partition_components(&self) -> &[Self::EffectTarget] {
+        &[]
+    }
+    fn component_count(&self) -> u64 {
+        0
+    }
 }

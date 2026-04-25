@@ -4,6 +4,7 @@
 //!
 //! Space: Bridge
 
+use crate::enums::MeasurementUnit;
 use crate::HostTypes;
 
 /// A four-component partition of R_n produced by resolving a type declaration. The four components — Irreducible, Reducible, Units, Exterior — are mutually disjoint and exhaustive over the carrier.
@@ -178,16 +179,26 @@ pub struct NullComponent<H: HostTypes> {
     _phantom: core::marker::PhantomData<H>,
 }
 impl<H: HostTypes> Default for NullComponent<H> {
-    fn default() -> Self { Self { _phantom: core::marker::PhantomData } }
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
 }
 impl<H: HostTypes> NullComponent<H> {
     /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
-    pub const ABSENT: NullComponent<H> = NullComponent { _phantom: core::marker::PhantomData };
+    pub const ABSENT: NullComponent<H> = NullComponent {
+        _phantom: core::marker::PhantomData,
+    };
 }
 impl<H: HostTypes> Component<H> for NullComponent<H> {
     type Datum = crate::kernel::schema::NullDatum<H>;
-    fn member(&self) -> &[Self::Datum] { &[] }
-    fn cardinality(&self) -> u64 { 0 }
+    fn member(&self) -> &[Self::Datum] {
+        &[]
+    }
+    fn cardinality(&self) -> u64 {
+        0
+    }
 }
 
 /// Phase 2 (orphan-closure) — resolver-absent default impl of `IrreducibleSet<H>`.
@@ -200,19 +211,28 @@ pub struct NullIrreducibleSet<H: HostTypes> {
     _phantom: core::marker::PhantomData<H>,
 }
 impl<H: HostTypes> Default for NullIrreducibleSet<H> {
-    fn default() -> Self { Self { _phantom: core::marker::PhantomData } }
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
 }
 impl<H: HostTypes> NullIrreducibleSet<H> {
     /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
-    pub const ABSENT: NullIrreducibleSet<H> = NullIrreducibleSet { _phantom: core::marker::PhantomData };
+    pub const ABSENT: NullIrreducibleSet<H> = NullIrreducibleSet {
+        _phantom: core::marker::PhantomData,
+    };
 }
 impl<H: HostTypes> Component<H> for NullIrreducibleSet<H> {
     type Datum = crate::kernel::schema::NullDatum<H>;
-    fn member(&self) -> &[Self::Datum] { &[] }
-    fn cardinality(&self) -> u64 { 0 }
+    fn member(&self) -> &[Self::Datum] {
+        &[]
+    }
+    fn cardinality(&self) -> u64 {
+        0
+    }
 }
-impl<H: HostTypes> IrreducibleSet<H> for NullIrreducibleSet<H> {
-}
+impl<H: HostTypes> IrreducibleSet<H> for NullIrreducibleSet<H> {}
 
 /// Phase 2 (orphan-closure) — resolver-absent default impl of `ReducibleSet<H>`.
 /// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
@@ -224,19 +244,28 @@ pub struct NullReducibleSet<H: HostTypes> {
     _phantom: core::marker::PhantomData<H>,
 }
 impl<H: HostTypes> Default for NullReducibleSet<H> {
-    fn default() -> Self { Self { _phantom: core::marker::PhantomData } }
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
 }
 impl<H: HostTypes> NullReducibleSet<H> {
     /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
-    pub const ABSENT: NullReducibleSet<H> = NullReducibleSet { _phantom: core::marker::PhantomData };
+    pub const ABSENT: NullReducibleSet<H> = NullReducibleSet {
+        _phantom: core::marker::PhantomData,
+    };
 }
 impl<H: HostTypes> Component<H> for NullReducibleSet<H> {
     type Datum = crate::kernel::schema::NullDatum<H>;
-    fn member(&self) -> &[Self::Datum] { &[] }
-    fn cardinality(&self) -> u64 { 0 }
+    fn member(&self) -> &[Self::Datum] {
+        &[]
+    }
+    fn cardinality(&self) -> u64 {
+        0
+    }
 }
-impl<H: HostTypes> ReducibleSet<H> for NullReducibleSet<H> {
-}
+impl<H: HostTypes> ReducibleSet<H> for NullReducibleSet<H> {}
 
 /// Phase 2 (orphan-closure) — resolver-absent default impl of `UnitGroup<H>`.
 /// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
@@ -248,19 +277,28 @@ pub struct NullUnitGroup<H: HostTypes> {
     _phantom: core::marker::PhantomData<H>,
 }
 impl<H: HostTypes> Default for NullUnitGroup<H> {
-    fn default() -> Self { Self { _phantom: core::marker::PhantomData } }
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
 }
 impl<H: HostTypes> NullUnitGroup<H> {
     /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
-    pub const ABSENT: NullUnitGroup<H> = NullUnitGroup { _phantom: core::marker::PhantomData };
+    pub const ABSENT: NullUnitGroup<H> = NullUnitGroup {
+        _phantom: core::marker::PhantomData,
+    };
 }
 impl<H: HostTypes> Component<H> for NullUnitGroup<H> {
     type Datum = crate::kernel::schema::NullDatum<H>;
-    fn member(&self) -> &[Self::Datum] { &[] }
-    fn cardinality(&self) -> u64 { 0 }
+    fn member(&self) -> &[Self::Datum] {
+        &[]
+    }
+    fn cardinality(&self) -> u64 {
+        0
+    }
 }
-impl<H: HostTypes> UnitGroup<H> for NullUnitGroup<H> {
-}
+impl<H: HostTypes> UnitGroup<H> for NullUnitGroup<H> {}
 
 /// Phase 2 (orphan-closure) — resolver-absent default impl of `Complement<H>`.
 /// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
@@ -272,20 +310,32 @@ pub struct NullComplement<H: HostTypes> {
     _phantom: core::marker::PhantomData<H>,
 }
 impl<H: HostTypes> Default for NullComplement<H> {
-    fn default() -> Self { Self { _phantom: core::marker::PhantomData } }
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
 }
 impl<H: HostTypes> NullComplement<H> {
     /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
-    pub const ABSENT: NullComplement<H> = NullComplement { _phantom: core::marker::PhantomData };
+    pub const ABSENT: NullComplement<H> = NullComplement {
+        _phantom: core::marker::PhantomData,
+    };
 }
 impl<H: HostTypes> Component<H> for NullComplement<H> {
     type Datum = crate::kernel::schema::NullDatum<H>;
-    fn member(&self) -> &[Self::Datum] { &[] }
-    fn cardinality(&self) -> u64 { 0 }
+    fn member(&self) -> &[Self::Datum] {
+        &[]
+    }
+    fn cardinality(&self) -> u64 {
+        0
+    }
 }
 impl<H: HostTypes> Complement<H> for NullComplement<H> {
     type TermExpression = crate::kernel::schema::NullTermExpression<H>;
-    fn exterior_criteria(&self) -> &Self::TermExpression { &<crate::kernel::schema::NullTermExpression<H>>::ABSENT }
+    fn exterior_criteria(&self) -> &Self::TermExpression {
+        &<crate::kernel::schema::NullTermExpression<H>>::ABSENT
+    }
 }
 
 /// Phase 2 (orphan-closure) — resolver-absent default impl of `SiteIndex<H>`.
@@ -298,17 +348,110 @@ pub struct NullSiteIndex<H: HostTypes> {
     _phantom: core::marker::PhantomData<H>,
 }
 impl<H: HostTypes> Default for NullSiteIndex<H> {
-    fn default() -> Self { Self { _phantom: core::marker::PhantomData } }
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
 }
 impl<H: HostTypes> NullSiteIndex<H> {
     /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
-    pub const ABSENT: NullSiteIndex<H> = NullSiteIndex { _phantom: core::marker::PhantomData };
+    pub const ABSENT: NullSiteIndex<H> = NullSiteIndex {
+        _phantom: core::marker::PhantomData,
+    };
 }
 impl<H: HostTypes> SiteIndex<H> for NullSiteIndex<H> {
-    fn site_position(&self) -> u64 { 0 }
-    fn site_state(&self) -> u64 { 0 }
+    fn site_position(&self) -> u64 {
+        0
+    }
+    fn site_state(&self) -> u64 {
+        0
+    }
     type SiteIndexTarget = NullSiteIndex<H>;
-    fn ancilla_site(&self) -> &Self::SiteIndexTarget { &<NullSiteIndex<H>>::ABSENT }
+    fn ancilla_site(&self) -> &Self::SiteIndexTarget {
+        &<NullSiteIndex<H>>::ABSENT
+    }
+}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `FreeRank<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullFreeRank<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullFreeRank<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullFreeRank<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullFreeRank<H> = NullFreeRank {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> FreeRank<H> for NullFreeRank<H> {
+    fn total_sites(&self) -> u64 {
+        0
+    }
+    fn pinned_count(&self) -> u64 {
+        0
+    }
+    fn free_rank(&self) -> u64 {
+        0
+    }
+    fn is_closed(&self) -> bool {
+        false
+    }
+    type SiteIndex = NullSiteIndex<H>;
+    fn has_site(&self) -> &[Self::SiteIndex] {
+        &[]
+    }
+    type SiteBinding = NullSiteBinding<H>;
+    fn has_binding(&self) -> &[Self::SiteBinding] {
+        &[]
+    }
+    fn reversible_strategy(&self) -> bool {
+        false
+    }
+}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `SiteBinding<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullSiteBinding<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullSiteBinding<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullSiteBinding<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullSiteBinding<H> = NullSiteBinding {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> SiteBinding<H> for NullSiteBinding<H> {
+    type Constraint = crate::user::type_::NullConstraint<H>;
+    fn pinned_by(&self) -> &Self::Constraint {
+        &<crate::user::type_::NullConstraint<H>>::ABSENT
+    }
+    type SiteIndex = NullSiteIndex<H>;
+    fn pins_coordinate(&self) -> &Self::SiteIndex {
+        &<NullSiteIndex<H>>::ABSENT
+    }
 }
 
 /// Phase 2 (orphan-closure) — resolver-absent default impl of `TagSite<H>`.
@@ -321,21 +464,73 @@ pub struct NullTagSite<H: HostTypes> {
     _phantom: core::marker::PhantomData<H>,
 }
 impl<H: HostTypes> Default for NullTagSite<H> {
-    fn default() -> Self { Self { _phantom: core::marker::PhantomData } }
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
 }
 impl<H: HostTypes> NullTagSite<H> {
     /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
-    pub const ABSENT: NullTagSite<H> = NullTagSite { _phantom: core::marker::PhantomData };
+    pub const ABSENT: NullTagSite<H> = NullTagSite {
+        _phantom: core::marker::PhantomData,
+    };
 }
 impl<H: HostTypes> SiteIndex<H> for NullTagSite<H> {
-    fn site_position(&self) -> u64 { 0 }
-    fn site_state(&self) -> u64 { 0 }
+    fn site_position(&self) -> u64 {
+        0
+    }
+    fn site_state(&self) -> u64 {
+        0
+    }
     type SiteIndexTarget = NullSiteIndex<H>;
-    fn ancilla_site(&self) -> &Self::SiteIndexTarget { &<NullSiteIndex<H>>::ABSENT }
+    fn ancilla_site(&self) -> &Self::SiteIndexTarget {
+        &<NullSiteIndex<H>>::ABSENT
+    }
 }
 impl<H: HostTypes> TagSite<H> for NullTagSite<H> {
-    fn tag_value(&self) -> bool { false }
+    fn tag_value(&self) -> bool {
+        false
+    }
 }
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `FreeRankObservable<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullFreeRankObservable<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullFreeRankObservable<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullFreeRankObservable<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullFreeRankObservable<H> = NullFreeRankObservable {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> crate::bridge::observable::Observable<H> for NullFreeRankObservable<H> {
+    fn value(&self) -> H::Decimal {
+        H::EMPTY_DECIMAL
+    }
+    fn source(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    fn target(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    fn has_unit(&self) -> MeasurementUnit {
+        <MeasurementUnit>::default()
+    }
+}
+impl<H: HostTypes> FreeRankObservable<H> for NullFreeRankObservable<H> {}
 
 /// The irreducible component: elements that admit no non-trivial factorization within the ring.
 pub mod irreducible {}

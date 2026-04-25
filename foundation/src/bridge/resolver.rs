@@ -279,6 +279,1412 @@ pub trait ModuliResolver<H: HostTypes>: Resolver<H> {
     fn moduli_deformation(&self) -> &Self::DeformationComplex;
 }
 
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `Resolver<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullResolver<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullResolver<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullResolver<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullResolver<H> = NullResolver {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> Resolver<H> for NullResolver<H> {
+    type TypeDefinition = crate::user::type_::NullTypeDefinition<H>;
+    fn input_type(&self) -> &Self::TypeDefinition {
+        &<crate::user::type_::NullTypeDefinition<H>>::ABSENT
+    }
+    type Partition = crate::enforcement::NullPartition<H>;
+    fn output_type(&self) -> &Self::Partition {
+        &<crate::enforcement::NullPartition<H>>::ABSENT
+    }
+    type TermExpression = crate::kernel::schema::NullTermExpression<H>;
+    fn strategy(&self) -> &Self::TermExpression {
+        &<crate::kernel::schema::NullTermExpression<H>>::ABSENT
+    }
+    type ResolutionState = NullResolutionState<H>;
+    fn resolution_state(&self) -> &Self::ResolutionState {
+        &<NullResolutionState<H>>::ABSENT
+    }
+    fn has_complexity_class(&self) -> ComplexityClass {
+        <ComplexityClass>::default()
+    }
+    type DispatchTable = crate::kernel::predicate::NullDispatchTable<H>;
+    fn dispatch_table(&self) -> &Self::DispatchTable {
+        &<crate::kernel::predicate::NullDispatchTable<H>>::ABSENT
+    }
+    type TypePredicate = crate::kernel::predicate::NullTypePredicate<H>;
+    fn resolver_predicate(&self) -> &Self::TypePredicate {
+        &<crate::kernel::predicate::NullTypePredicate<H>>::ABSENT
+    }
+}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `DihedralFactorizationResolver<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullDihedralFactorizationResolver<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullDihedralFactorizationResolver<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullDihedralFactorizationResolver<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullDihedralFactorizationResolver<H> = NullDihedralFactorizationResolver {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> Resolver<H> for NullDihedralFactorizationResolver<H> {
+    type TypeDefinition = crate::user::type_::NullTypeDefinition<H>;
+    fn input_type(&self) -> &Self::TypeDefinition {
+        &<crate::user::type_::NullTypeDefinition<H>>::ABSENT
+    }
+    type Partition = crate::enforcement::NullPartition<H>;
+    fn output_type(&self) -> &Self::Partition {
+        &<crate::enforcement::NullPartition<H>>::ABSENT
+    }
+    type TermExpression = crate::kernel::schema::NullTermExpression<H>;
+    fn strategy(&self) -> &Self::TermExpression {
+        &<crate::kernel::schema::NullTermExpression<H>>::ABSENT
+    }
+    type ResolutionState = NullResolutionState<H>;
+    fn resolution_state(&self) -> &Self::ResolutionState {
+        &<NullResolutionState<H>>::ABSENT
+    }
+    fn has_complexity_class(&self) -> ComplexityClass {
+        <ComplexityClass>::default()
+    }
+    type DispatchTable = crate::kernel::predicate::NullDispatchTable<H>;
+    fn dispatch_table(&self) -> &Self::DispatchTable {
+        &<crate::kernel::predicate::NullDispatchTable<H>>::ABSENT
+    }
+    type TypePredicate = crate::kernel::predicate::NullTypePredicate<H>;
+    fn resolver_predicate(&self) -> &Self::TypePredicate {
+        &<crate::kernel::predicate::NullTypePredicate<H>>::ABSENT
+    }
+}
+impl<H: HostTypes> DihedralFactorizationResolver<H> for NullDihedralFactorizationResolver<H> {}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `CanonicalFormResolver<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullCanonicalFormResolver<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullCanonicalFormResolver<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullCanonicalFormResolver<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullCanonicalFormResolver<H> = NullCanonicalFormResolver {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> Resolver<H> for NullCanonicalFormResolver<H> {
+    type TypeDefinition = crate::user::type_::NullTypeDefinition<H>;
+    fn input_type(&self) -> &Self::TypeDefinition {
+        &<crate::user::type_::NullTypeDefinition<H>>::ABSENT
+    }
+    type Partition = crate::enforcement::NullPartition<H>;
+    fn output_type(&self) -> &Self::Partition {
+        &<crate::enforcement::NullPartition<H>>::ABSENT
+    }
+    type TermExpression = crate::kernel::schema::NullTermExpression<H>;
+    fn strategy(&self) -> &Self::TermExpression {
+        &<crate::kernel::schema::NullTermExpression<H>>::ABSENT
+    }
+    type ResolutionState = NullResolutionState<H>;
+    fn resolution_state(&self) -> &Self::ResolutionState {
+        &<NullResolutionState<H>>::ABSENT
+    }
+    fn has_complexity_class(&self) -> ComplexityClass {
+        <ComplexityClass>::default()
+    }
+    type DispatchTable = crate::kernel::predicate::NullDispatchTable<H>;
+    fn dispatch_table(&self) -> &Self::DispatchTable {
+        &<crate::kernel::predicate::NullDispatchTable<H>>::ABSENT
+    }
+    type TypePredicate = crate::kernel::predicate::NullTypePredicate<H>;
+    fn resolver_predicate(&self) -> &Self::TypePredicate {
+        &<crate::kernel::predicate::NullTypePredicate<H>>::ABSENT
+    }
+}
+impl<H: HostTypes> CanonicalFormResolver<H> for NullCanonicalFormResolver<H> {}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `EvaluationResolver<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullEvaluationResolver<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullEvaluationResolver<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullEvaluationResolver<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullEvaluationResolver<H> = NullEvaluationResolver {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> Resolver<H> for NullEvaluationResolver<H> {
+    type TypeDefinition = crate::user::type_::NullTypeDefinition<H>;
+    fn input_type(&self) -> &Self::TypeDefinition {
+        &<crate::user::type_::NullTypeDefinition<H>>::ABSENT
+    }
+    type Partition = crate::enforcement::NullPartition<H>;
+    fn output_type(&self) -> &Self::Partition {
+        &<crate::enforcement::NullPartition<H>>::ABSENT
+    }
+    type TermExpression = crate::kernel::schema::NullTermExpression<H>;
+    fn strategy(&self) -> &Self::TermExpression {
+        &<crate::kernel::schema::NullTermExpression<H>>::ABSENT
+    }
+    type ResolutionState = NullResolutionState<H>;
+    fn resolution_state(&self) -> &Self::ResolutionState {
+        &<NullResolutionState<H>>::ABSENT
+    }
+    fn has_complexity_class(&self) -> ComplexityClass {
+        <ComplexityClass>::default()
+    }
+    type DispatchTable = crate::kernel::predicate::NullDispatchTable<H>;
+    fn dispatch_table(&self) -> &Self::DispatchTable {
+        &<crate::kernel::predicate::NullDispatchTable<H>>::ABSENT
+    }
+    type TypePredicate = crate::kernel::predicate::NullTypePredicate<H>;
+    fn resolver_predicate(&self) -> &Self::TypePredicate {
+        &<crate::kernel::predicate::NullTypePredicate<H>>::ABSENT
+    }
+}
+impl<H: HostTypes> EvaluationResolver<H> for NullEvaluationResolver<H> {}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `ResolutionState<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullResolutionState<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullResolutionState<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullResolutionState<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullResolutionState<H> = NullResolutionState {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> ResolutionState<H> for NullResolutionState<H> {
+    fn is_complete(&self) -> bool {
+        false
+    }
+    fn iteration_count(&self) -> u64 {
+        0
+    }
+    type FreeRank = crate::bridge::partition::NullFreeRank<H>;
+    fn site_deficit(&self) -> &Self::FreeRank {
+        &<crate::bridge::partition::NullFreeRank<H>>::ABSENT
+    }
+    type RefinementSuggestion = NullRefinementSuggestion<H>;
+    fn suggestion(&self) -> &[Self::RefinementSuggestion] {
+        &[]
+    }
+    fn convergence_rate(&self) -> H::Decimal {
+        H::EMPTY_DECIMAL
+    }
+    type CechNerve = NullCechNerve<H>;
+    fn cech_nerve(&self) -> &Self::CechNerve {
+        &<NullCechNerve<H>>::ABSENT
+    }
+    fn residual_entropy(&self) -> H::Decimal {
+        H::EMPTY_DECIMAL
+    }
+    fn topologically_complete(&self) -> bool {
+        false
+    }
+    fn nerve_euler_characteristic(&self) -> i64 {
+        0
+    }
+    type Jacobian = crate::bridge::observable::NullJacobian<H>;
+    fn guiding_jacobian(&self) -> &Self::Jacobian {
+        &<crate::bridge::observable::NullJacobian<H>>::ABSENT
+    }
+}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `RefinementSuggestion<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullRefinementSuggestion<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullRefinementSuggestion<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullRefinementSuggestion<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullRefinementSuggestion<H> = NullRefinementSuggestion {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> RefinementSuggestion<H> for NullRefinementSuggestion<H> {
+    fn suggested_axis(&self) -> MetricAxis {
+        <MetricAxis>::default()
+    }
+    fn suggested_class(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    type SiteIndex = crate::bridge::partition::NullSiteIndex<H>;
+    fn target_sites(&self) -> &[Self::SiteIndex] {
+        &[]
+    }
+}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `CechNerve<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullCechNerve<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullCechNerve<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullCechNerve<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullCechNerve<H> = NullCechNerve {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> crate::bridge::homology::SimplicialComplex<H> for NullCechNerve<H> {
+    type Simplex = crate::bridge::homology::NullSimplex<H>;
+    fn has_simplex(&self) -> &[Self::Simplex] {
+        &[]
+    }
+    fn max_dimension(&self) -> i64 {
+        0
+    }
+    fn euler_characteristic(&self) -> i64 {
+        0
+    }
+    fn simplicial_vertex_count(&self) -> u64 {
+        0
+    }
+}
+impl<H: HostTypes> crate::bridge::homology::KanComplex<H> for NullCechNerve<H> {
+    type HornFiller = crate::bridge::homology::NullHornFiller<H>;
+    fn kan_witness(&self) -> &[Self::HornFiller] {
+        &[]
+    }
+}
+impl<H: HostTypes> CechNerve<H> for NullCechNerve<H> {}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `CompletenessResolver<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullCompletenessResolver<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullCompletenessResolver<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullCompletenessResolver<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullCompletenessResolver<H> = NullCompletenessResolver {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> Resolver<H> for NullCompletenessResolver<H> {
+    type TypeDefinition = crate::user::type_::NullTypeDefinition<H>;
+    fn input_type(&self) -> &Self::TypeDefinition {
+        &<crate::user::type_::NullTypeDefinition<H>>::ABSENT
+    }
+    type Partition = crate::enforcement::NullPartition<H>;
+    fn output_type(&self) -> &Self::Partition {
+        &<crate::enforcement::NullPartition<H>>::ABSENT
+    }
+    type TermExpression = crate::kernel::schema::NullTermExpression<H>;
+    fn strategy(&self) -> &Self::TermExpression {
+        &<crate::kernel::schema::NullTermExpression<H>>::ABSENT
+    }
+    type ResolutionState = NullResolutionState<H>;
+    fn resolution_state(&self) -> &Self::ResolutionState {
+        &<NullResolutionState<H>>::ABSENT
+    }
+    fn has_complexity_class(&self) -> ComplexityClass {
+        <ComplexityClass>::default()
+    }
+    type DispatchTable = crate::kernel::predicate::NullDispatchTable<H>;
+    fn dispatch_table(&self) -> &Self::DispatchTable {
+        &<crate::kernel::predicate::NullDispatchTable<H>>::ABSENT
+    }
+    type TypePredicate = crate::kernel::predicate::NullTypePredicate<H>;
+    fn resolver_predicate(&self) -> &Self::TypePredicate {
+        &<crate::kernel::predicate::NullTypePredicate<H>>::ABSENT
+    }
+}
+impl<H: HostTypes> CompletenessResolver<H> for NullCompletenessResolver<H> {
+    type CompletenessCandidate = crate::user::type_::NullCompletenessCandidate<H>;
+    fn completeness_target(&self) -> &Self::CompletenessCandidate {
+        &<crate::user::type_::NullCompletenessCandidate<H>>::ABSENT
+    }
+}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `WittLevelResolver<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullWittLevelResolver<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullWittLevelResolver<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullWittLevelResolver<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullWittLevelResolver<H> = NullWittLevelResolver {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> Resolver<H> for NullWittLevelResolver<H> {
+    type TypeDefinition = crate::user::type_::NullTypeDefinition<H>;
+    fn input_type(&self) -> &Self::TypeDefinition {
+        &<crate::user::type_::NullTypeDefinition<H>>::ABSENT
+    }
+    type Partition = crate::enforcement::NullPartition<H>;
+    fn output_type(&self) -> &Self::Partition {
+        &<crate::enforcement::NullPartition<H>>::ABSENT
+    }
+    type TermExpression = crate::kernel::schema::NullTermExpression<H>;
+    fn strategy(&self) -> &Self::TermExpression {
+        &<crate::kernel::schema::NullTermExpression<H>>::ABSENT
+    }
+    type ResolutionState = NullResolutionState<H>;
+    fn resolution_state(&self) -> &Self::ResolutionState {
+        &<NullResolutionState<H>>::ABSENT
+    }
+    fn has_complexity_class(&self) -> ComplexityClass {
+        <ComplexityClass>::default()
+    }
+    type DispatchTable = crate::kernel::predicate::NullDispatchTable<H>;
+    fn dispatch_table(&self) -> &Self::DispatchTable {
+        &<crate::kernel::predicate::NullDispatchTable<H>>::ABSENT
+    }
+    type TypePredicate = crate::kernel::predicate::NullTypePredicate<H>;
+    fn resolver_predicate(&self) -> &Self::TypePredicate {
+        &<crate::kernel::predicate::NullTypePredicate<H>>::ABSENT
+    }
+}
+impl<H: HostTypes> WittLevelResolver<H> for NullWittLevelResolver<H> {
+    fn quantum_level(&self) -> WittLevel {
+        <WittLevel>::default()
+    }
+}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `SessionResolver<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullSessionResolver<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullSessionResolver<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullSessionResolver<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullSessionResolver<H> = NullSessionResolver {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> Resolver<H> for NullSessionResolver<H> {
+    type TypeDefinition = crate::user::type_::NullTypeDefinition<H>;
+    fn input_type(&self) -> &Self::TypeDefinition {
+        &<crate::user::type_::NullTypeDefinition<H>>::ABSENT
+    }
+    type Partition = crate::enforcement::NullPartition<H>;
+    fn output_type(&self) -> &Self::Partition {
+        &<crate::enforcement::NullPartition<H>>::ABSENT
+    }
+    type TermExpression = crate::kernel::schema::NullTermExpression<H>;
+    fn strategy(&self) -> &Self::TermExpression {
+        &<crate::kernel::schema::NullTermExpression<H>>::ABSENT
+    }
+    type ResolutionState = NullResolutionState<H>;
+    fn resolution_state(&self) -> &Self::ResolutionState {
+        &<NullResolutionState<H>>::ABSENT
+    }
+    fn has_complexity_class(&self) -> ComplexityClass {
+        <ComplexityClass>::default()
+    }
+    type DispatchTable = crate::kernel::predicate::NullDispatchTable<H>;
+    fn dispatch_table(&self) -> &Self::DispatchTable {
+        &<crate::kernel::predicate::NullDispatchTable<H>>::ABSENT
+    }
+    type TypePredicate = crate::kernel::predicate::NullTypePredicate<H>;
+    fn resolver_predicate(&self) -> &Self::TypePredicate {
+        &<crate::kernel::predicate::NullTypePredicate<H>>::ABSENT
+    }
+}
+impl<H: HostTypes> SessionResolver<H> for NullSessionResolver<H> {
+    type BindingAccumulator = crate::user::state::NullBindingAccumulator<H>;
+    fn session_accumulator(&self) -> &Self::BindingAccumulator {
+        &<crate::user::state::NullBindingAccumulator<H>>::ABSENT
+    }
+    type ExecutionPolicy = NullExecutionPolicy<H>;
+    fn execution_policy(&self) -> &Self::ExecutionPolicy {
+        &<NullExecutionPolicy<H>>::ABSENT
+    }
+}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `TypeSynthesisResolver<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullTypeSynthesisResolver<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullTypeSynthesisResolver<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullTypeSynthesisResolver<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullTypeSynthesisResolver<H> = NullTypeSynthesisResolver {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> Resolver<H> for NullTypeSynthesisResolver<H> {
+    type TypeDefinition = crate::user::type_::NullTypeDefinition<H>;
+    fn input_type(&self) -> &Self::TypeDefinition {
+        &<crate::user::type_::NullTypeDefinition<H>>::ABSENT
+    }
+    type Partition = crate::enforcement::NullPartition<H>;
+    fn output_type(&self) -> &Self::Partition {
+        &<crate::enforcement::NullPartition<H>>::ABSENT
+    }
+    type TermExpression = crate::kernel::schema::NullTermExpression<H>;
+    fn strategy(&self) -> &Self::TermExpression {
+        &<crate::kernel::schema::NullTermExpression<H>>::ABSENT
+    }
+    type ResolutionState = NullResolutionState<H>;
+    fn resolution_state(&self) -> &Self::ResolutionState {
+        &<NullResolutionState<H>>::ABSENT
+    }
+    fn has_complexity_class(&self) -> ComplexityClass {
+        <ComplexityClass>::default()
+    }
+    type DispatchTable = crate::kernel::predicate::NullDispatchTable<H>;
+    fn dispatch_table(&self) -> &Self::DispatchTable {
+        &<crate::kernel::predicate::NullDispatchTable<H>>::ABSENT
+    }
+    type TypePredicate = crate::kernel::predicate::NullTypePredicate<H>;
+    fn resolver_predicate(&self) -> &Self::TypePredicate {
+        &<crate::kernel::predicate::NullTypePredicate<H>>::ABSENT
+    }
+}
+impl<H: HostTypes> TypeSynthesisResolver<H> for NullTypeSynthesisResolver<H> {
+    type TypeSynthesisGoal = crate::user::type_::NullTypeSynthesisGoal<H>;
+    fn synthesis_goal(&self) -> &Self::TypeSynthesisGoal {
+        &<crate::user::type_::NullTypeSynthesisGoal<H>>::ABSENT
+    }
+}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `ConstraintSearchState<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullConstraintSearchState<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullConstraintSearchState<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullConstraintSearchState<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullConstraintSearchState<H> = NullConstraintSearchState {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> ConstraintSearchState<H> for NullConstraintSearchState<H> {
+    fn explored_count(&self) -> u64 {
+        0
+    }
+    type ConstrainedType = crate::user::type_::NullConstrainedType<H>;
+    fn current_candidate(&self) -> &Self::ConstrainedType {
+        &<crate::user::type_::NullConstrainedType<H>>::ABSENT
+    }
+}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `IncrementalCompletenessResolver<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullIncrementalCompletenessResolver<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullIncrementalCompletenessResolver<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullIncrementalCompletenessResolver<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullIncrementalCompletenessResolver<H> =
+        NullIncrementalCompletenessResolver {
+            _phantom: core::marker::PhantomData,
+        };
+}
+impl<H: HostTypes> Resolver<H> for NullIncrementalCompletenessResolver<H> {
+    type TypeDefinition = crate::user::type_::NullTypeDefinition<H>;
+    fn input_type(&self) -> &Self::TypeDefinition {
+        &<crate::user::type_::NullTypeDefinition<H>>::ABSENT
+    }
+    type Partition = crate::enforcement::NullPartition<H>;
+    fn output_type(&self) -> &Self::Partition {
+        &<crate::enforcement::NullPartition<H>>::ABSENT
+    }
+    type TermExpression = crate::kernel::schema::NullTermExpression<H>;
+    fn strategy(&self) -> &Self::TermExpression {
+        &<crate::kernel::schema::NullTermExpression<H>>::ABSENT
+    }
+    type ResolutionState = NullResolutionState<H>;
+    fn resolution_state(&self) -> &Self::ResolutionState {
+        &<NullResolutionState<H>>::ABSENT
+    }
+    fn has_complexity_class(&self) -> ComplexityClass {
+        <ComplexityClass>::default()
+    }
+    type DispatchTable = crate::kernel::predicate::NullDispatchTable<H>;
+    fn dispatch_table(&self) -> &Self::DispatchTable {
+        &<crate::kernel::predicate::NullDispatchTable<H>>::ABSENT
+    }
+    type TypePredicate = crate::kernel::predicate::NullTypePredicate<H>;
+    fn resolver_predicate(&self) -> &Self::TypePredicate {
+        &<crate::kernel::predicate::NullTypePredicate<H>>::ABSENT
+    }
+}
+impl<H: HostTypes> IncrementalCompletenessResolver<H> for NullIncrementalCompletenessResolver<H> {
+    type WittLift = crate::user::type_::NullWittLift<H>;
+    fn lift_target(&self) -> &Self::WittLift {
+        &<crate::user::type_::NullWittLift<H>>::ABSENT
+    }
+}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `LiftRefinementSuggestion<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullLiftRefinementSuggestion<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullLiftRefinementSuggestion<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullLiftRefinementSuggestion<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullLiftRefinementSuggestion<H> = NullLiftRefinementSuggestion {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> RefinementSuggestion<H> for NullLiftRefinementSuggestion<H> {
+    fn suggested_axis(&self) -> MetricAxis {
+        <MetricAxis>::default()
+    }
+    fn suggested_class(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    type SiteIndex = crate::bridge::partition::NullSiteIndex<H>;
+    fn target_sites(&self) -> &[Self::SiteIndex] {
+        &[]
+    }
+}
+impl<H: HostTypes> LiftRefinementSuggestion<H> for NullLiftRefinementSuggestion<H> {
+    fn lift_site_position(&self) -> &Self::SiteIndex {
+        &<crate::bridge::partition::NullSiteIndex<H>>::ABSENT
+    }
+    type LiftObstructionClass = crate::bridge::observable::NullLiftObstructionClass<H>;
+    fn obstruction_class(&self) -> &Self::LiftObstructionClass {
+        &<crate::bridge::observable::NullLiftObstructionClass<H>>::ABSENT
+    }
+}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `MonodromyResolver<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullMonodromyResolver<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullMonodromyResolver<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullMonodromyResolver<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullMonodromyResolver<H> = NullMonodromyResolver {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> Resolver<H> for NullMonodromyResolver<H> {
+    type TypeDefinition = crate::user::type_::NullTypeDefinition<H>;
+    fn input_type(&self) -> &Self::TypeDefinition {
+        &<crate::user::type_::NullTypeDefinition<H>>::ABSENT
+    }
+    type Partition = crate::enforcement::NullPartition<H>;
+    fn output_type(&self) -> &Self::Partition {
+        &<crate::enforcement::NullPartition<H>>::ABSENT
+    }
+    type TermExpression = crate::kernel::schema::NullTermExpression<H>;
+    fn strategy(&self) -> &Self::TermExpression {
+        &<crate::kernel::schema::NullTermExpression<H>>::ABSENT
+    }
+    type ResolutionState = NullResolutionState<H>;
+    fn resolution_state(&self) -> &Self::ResolutionState {
+        &<NullResolutionState<H>>::ABSENT
+    }
+    fn has_complexity_class(&self) -> ComplexityClass {
+        <ComplexityClass>::default()
+    }
+    type DispatchTable = crate::kernel::predicate::NullDispatchTable<H>;
+    fn dispatch_table(&self) -> &Self::DispatchTable {
+        &<crate::kernel::predicate::NullDispatchTable<H>>::ABSENT
+    }
+    type TypePredicate = crate::kernel::predicate::NullTypePredicate<H>;
+    fn resolver_predicate(&self) -> &Self::TypePredicate {
+        &<crate::kernel::predicate::NullTypePredicate<H>>::ABSENT
+    }
+}
+impl<H: HostTypes> MonodromyResolver<H> for NullMonodromyResolver<H> {
+    type ConstrainedType = crate::user::type_::NullConstrainedType<H>;
+    fn monodromy_target(&self) -> &Self::ConstrainedType {
+        &<crate::user::type_::NullConstrainedType<H>>::ABSENT
+    }
+    type HolonomyGroup = crate::bridge::observable::NullHolonomyGroup<H>;
+    fn holonomy_result(&self) -> &Self::HolonomyGroup {
+        &<crate::bridge::observable::NullHolonomyGroup<H>>::ABSENT
+    }
+}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `JacobianGuidedResolver<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullJacobianGuidedResolver<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullJacobianGuidedResolver<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullJacobianGuidedResolver<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullJacobianGuidedResolver<H> = NullJacobianGuidedResolver {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> Resolver<H> for NullJacobianGuidedResolver<H> {
+    type TypeDefinition = crate::user::type_::NullTypeDefinition<H>;
+    fn input_type(&self) -> &Self::TypeDefinition {
+        &<crate::user::type_::NullTypeDefinition<H>>::ABSENT
+    }
+    type Partition = crate::enforcement::NullPartition<H>;
+    fn output_type(&self) -> &Self::Partition {
+        &<crate::enforcement::NullPartition<H>>::ABSENT
+    }
+    type TermExpression = crate::kernel::schema::NullTermExpression<H>;
+    fn strategy(&self) -> &Self::TermExpression {
+        &<crate::kernel::schema::NullTermExpression<H>>::ABSENT
+    }
+    type ResolutionState = NullResolutionState<H>;
+    fn resolution_state(&self) -> &Self::ResolutionState {
+        &<NullResolutionState<H>>::ABSENT
+    }
+    fn has_complexity_class(&self) -> ComplexityClass {
+        <ComplexityClass>::default()
+    }
+    type DispatchTable = crate::kernel::predicate::NullDispatchTable<H>;
+    fn dispatch_table(&self) -> &Self::DispatchTable {
+        &<crate::kernel::predicate::NullDispatchTable<H>>::ABSENT
+    }
+    type TypePredicate = crate::kernel::predicate::NullTypePredicate<H>;
+    fn resolver_predicate(&self) -> &Self::TypePredicate {
+        &<crate::kernel::predicate::NullTypePredicate<H>>::ABSENT
+    }
+}
+impl<H: HostTypes> JacobianGuidedResolver<H> for NullJacobianGuidedResolver<H> {}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `SuperpositionResolver<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullSuperpositionResolver<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullSuperpositionResolver<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullSuperpositionResolver<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullSuperpositionResolver<H> = NullSuperpositionResolver {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> Resolver<H> for NullSuperpositionResolver<H> {
+    type TypeDefinition = crate::user::type_::NullTypeDefinition<H>;
+    fn input_type(&self) -> &Self::TypeDefinition {
+        &<crate::user::type_::NullTypeDefinition<H>>::ABSENT
+    }
+    type Partition = crate::enforcement::NullPartition<H>;
+    fn output_type(&self) -> &Self::Partition {
+        &<crate::enforcement::NullPartition<H>>::ABSENT
+    }
+    type TermExpression = crate::kernel::schema::NullTermExpression<H>;
+    fn strategy(&self) -> &Self::TermExpression {
+        &<crate::kernel::schema::NullTermExpression<H>>::ABSENT
+    }
+    type ResolutionState = NullResolutionState<H>;
+    fn resolution_state(&self) -> &Self::ResolutionState {
+        &<NullResolutionState<H>>::ABSENT
+    }
+    fn has_complexity_class(&self) -> ComplexityClass {
+        <ComplexityClass>::default()
+    }
+    type DispatchTable = crate::kernel::predicate::NullDispatchTable<H>;
+    fn dispatch_table(&self) -> &Self::DispatchTable {
+        &<crate::kernel::predicate::NullDispatchTable<H>>::ABSENT
+    }
+    type TypePredicate = crate::kernel::predicate::NullTypePredicate<H>;
+    fn resolver_predicate(&self) -> &Self::TypePredicate {
+        &<crate::kernel::predicate::NullTypePredicate<H>>::ABSENT
+    }
+}
+impl<H: HostTypes> SuperpositionResolver<H> for NullSuperpositionResolver<H> {
+    fn amplitude_vector(&self) -> H::Decimal {
+        H::EMPTY_DECIMAL
+    }
+}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `GroundingAwareResolver<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullGroundingAwareResolver<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullGroundingAwareResolver<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullGroundingAwareResolver<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullGroundingAwareResolver<H> = NullGroundingAwareResolver {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> Resolver<H> for NullGroundingAwareResolver<H> {
+    type TypeDefinition = crate::user::type_::NullTypeDefinition<H>;
+    fn input_type(&self) -> &Self::TypeDefinition {
+        &<crate::user::type_::NullTypeDefinition<H>>::ABSENT
+    }
+    type Partition = crate::enforcement::NullPartition<H>;
+    fn output_type(&self) -> &Self::Partition {
+        &<crate::enforcement::NullPartition<H>>::ABSENT
+    }
+    type TermExpression = crate::kernel::schema::NullTermExpression<H>;
+    fn strategy(&self) -> &Self::TermExpression {
+        &<crate::kernel::schema::NullTermExpression<H>>::ABSENT
+    }
+    type ResolutionState = NullResolutionState<H>;
+    fn resolution_state(&self) -> &Self::ResolutionState {
+        &<NullResolutionState<H>>::ABSENT
+    }
+    fn has_complexity_class(&self) -> ComplexityClass {
+        <ComplexityClass>::default()
+    }
+    type DispatchTable = crate::kernel::predicate::NullDispatchTable<H>;
+    fn dispatch_table(&self) -> &Self::DispatchTable {
+        &<crate::kernel::predicate::NullDispatchTable<H>>::ABSENT
+    }
+    type TypePredicate = crate::kernel::predicate::NullTypePredicate<H>;
+    fn resolver_predicate(&self) -> &Self::TypePredicate {
+        &<crate::kernel::predicate::NullTypePredicate<H>>::ABSENT
+    }
+}
+impl<H: HostTypes> GroundingAwareResolver<H> for NullGroundingAwareResolver<H> {
+    fn used_grounding(&self) -> bool {
+        false
+    }
+}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `GeodesicValidator<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullGeodesicValidator<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullGeodesicValidator<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullGeodesicValidator<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullGeodesicValidator<H> = NullGeodesicValidator {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> Resolver<H> for NullGeodesicValidator<H> {
+    type TypeDefinition = crate::user::type_::NullTypeDefinition<H>;
+    fn input_type(&self) -> &Self::TypeDefinition {
+        &<crate::user::type_::NullTypeDefinition<H>>::ABSENT
+    }
+    type Partition = crate::enforcement::NullPartition<H>;
+    fn output_type(&self) -> &Self::Partition {
+        &<crate::enforcement::NullPartition<H>>::ABSENT
+    }
+    type TermExpression = crate::kernel::schema::NullTermExpression<H>;
+    fn strategy(&self) -> &Self::TermExpression {
+        &<crate::kernel::schema::NullTermExpression<H>>::ABSENT
+    }
+    type ResolutionState = NullResolutionState<H>;
+    fn resolution_state(&self) -> &Self::ResolutionState {
+        &<NullResolutionState<H>>::ABSENT
+    }
+    fn has_complexity_class(&self) -> ComplexityClass {
+        <ComplexityClass>::default()
+    }
+    type DispatchTable = crate::kernel::predicate::NullDispatchTable<H>;
+    fn dispatch_table(&self) -> &Self::DispatchTable {
+        &<crate::kernel::predicate::NullDispatchTable<H>>::ABSENT
+    }
+    type TypePredicate = crate::kernel::predicate::NullTypePredicate<H>;
+    fn resolver_predicate(&self) -> &Self::TypePredicate {
+        &<crate::kernel::predicate::NullTypePredicate<H>>::ABSENT
+    }
+}
+impl<H: HostTypes> GeodesicValidator<H> for NullGeodesicValidator<H> {
+    type GeodesicTrace = crate::bridge::trace::NullGeodesicTrace<H>;
+    fn validate_geodesic(&self) -> &Self::GeodesicTrace {
+        &<crate::bridge::trace::NullGeodesicTrace<H>>::ABSENT
+    }
+}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `MeasurementResolver<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullMeasurementResolver<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullMeasurementResolver<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullMeasurementResolver<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullMeasurementResolver<H> = NullMeasurementResolver {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> Resolver<H> for NullMeasurementResolver<H> {
+    type TypeDefinition = crate::user::type_::NullTypeDefinition<H>;
+    fn input_type(&self) -> &Self::TypeDefinition {
+        &<crate::user::type_::NullTypeDefinition<H>>::ABSENT
+    }
+    type Partition = crate::enforcement::NullPartition<H>;
+    fn output_type(&self) -> &Self::Partition {
+        &<crate::enforcement::NullPartition<H>>::ABSENT
+    }
+    type TermExpression = crate::kernel::schema::NullTermExpression<H>;
+    fn strategy(&self) -> &Self::TermExpression {
+        &<crate::kernel::schema::NullTermExpression<H>>::ABSENT
+    }
+    type ResolutionState = NullResolutionState<H>;
+    fn resolution_state(&self) -> &Self::ResolutionState {
+        &<NullResolutionState<H>>::ABSENT
+    }
+    fn has_complexity_class(&self) -> ComplexityClass {
+        <ComplexityClass>::default()
+    }
+    type DispatchTable = crate::kernel::predicate::NullDispatchTable<H>;
+    fn dispatch_table(&self) -> &Self::DispatchTable {
+        &<crate::kernel::predicate::NullDispatchTable<H>>::ABSENT
+    }
+    type TypePredicate = crate::kernel::predicate::NullTypePredicate<H>;
+    fn resolver_predicate(&self) -> &Self::TypePredicate {
+        &<crate::kernel::predicate::NullTypePredicate<H>>::ABSENT
+    }
+}
+impl<H: HostTypes> MeasurementResolver<H> for NullMeasurementResolver<H> {
+    fn collapse_amplitude(&self) -> H::Decimal {
+        H::EMPTY_DECIMAL
+    }
+    fn collapsed_site(&self) -> u64 {
+        0
+    }
+    fn measurement_outcome(&self) -> u64 {
+        0
+    }
+    fn prior_amplitude_vector(&self) -> H::Decimal {
+        H::EMPTY_DECIMAL
+    }
+}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `TowerCompletenessResolver<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullTowerCompletenessResolver<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullTowerCompletenessResolver<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullTowerCompletenessResolver<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullTowerCompletenessResolver<H> = NullTowerCompletenessResolver {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> Resolver<H> for NullTowerCompletenessResolver<H> {
+    type TypeDefinition = crate::user::type_::NullTypeDefinition<H>;
+    fn input_type(&self) -> &Self::TypeDefinition {
+        &<crate::user::type_::NullTypeDefinition<H>>::ABSENT
+    }
+    type Partition = crate::enforcement::NullPartition<H>;
+    fn output_type(&self) -> &Self::Partition {
+        &<crate::enforcement::NullPartition<H>>::ABSENT
+    }
+    type TermExpression = crate::kernel::schema::NullTermExpression<H>;
+    fn strategy(&self) -> &Self::TermExpression {
+        &<crate::kernel::schema::NullTermExpression<H>>::ABSENT
+    }
+    type ResolutionState = NullResolutionState<H>;
+    fn resolution_state(&self) -> &Self::ResolutionState {
+        &<NullResolutionState<H>>::ABSENT
+    }
+    fn has_complexity_class(&self) -> ComplexityClass {
+        <ComplexityClass>::default()
+    }
+    type DispatchTable = crate::kernel::predicate::NullDispatchTable<H>;
+    fn dispatch_table(&self) -> &Self::DispatchTable {
+        &<crate::kernel::predicate::NullDispatchTable<H>>::ABSENT
+    }
+    type TypePredicate = crate::kernel::predicate::NullTypePredicate<H>;
+    fn resolver_predicate(&self) -> &Self::TypePredicate {
+        &<crate::kernel::predicate::NullTypePredicate<H>>::ABSENT
+    }
+}
+impl<H: HostTypes> TowerCompletenessResolver<H> for NullTowerCompletenessResolver<H> {
+    fn tower_source_level(&self) -> WittLevel {
+        <WittLevel>::default()
+    }
+    fn tower_target_level(&self) -> WittLevel {
+        <WittLevel>::default()
+    }
+    type LiftChain = crate::user::type_::NullLiftChain<H>;
+    fn current_chain(&self) -> &Self::LiftChain {
+        &<crate::user::type_::NullLiftChain<H>>::ABSENT
+    }
+    type IncrementalCompletenessResolver = NullIncrementalCompletenessResolver<H>;
+    fn tower_step_resolver(&self) -> &Self::IncrementalCompletenessResolver {
+        &<NullIncrementalCompletenessResolver<H>>::ABSENT
+    }
+}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `InhabitanceResolver<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullInhabitanceResolver<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullInhabitanceResolver<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullInhabitanceResolver<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullInhabitanceResolver<H> = NullInhabitanceResolver {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> Resolver<H> for NullInhabitanceResolver<H> {
+    type TypeDefinition = crate::user::type_::NullTypeDefinition<H>;
+    fn input_type(&self) -> &Self::TypeDefinition {
+        &<crate::user::type_::NullTypeDefinition<H>>::ABSENT
+    }
+    type Partition = crate::enforcement::NullPartition<H>;
+    fn output_type(&self) -> &Self::Partition {
+        &<crate::enforcement::NullPartition<H>>::ABSENT
+    }
+    type TermExpression = crate::kernel::schema::NullTermExpression<H>;
+    fn strategy(&self) -> &Self::TermExpression {
+        &<crate::kernel::schema::NullTermExpression<H>>::ABSENT
+    }
+    type ResolutionState = NullResolutionState<H>;
+    fn resolution_state(&self) -> &Self::ResolutionState {
+        &<NullResolutionState<H>>::ABSENT
+    }
+    fn has_complexity_class(&self) -> ComplexityClass {
+        <ComplexityClass>::default()
+    }
+    type DispatchTable = crate::kernel::predicate::NullDispatchTable<H>;
+    fn dispatch_table(&self) -> &Self::DispatchTable {
+        &<crate::kernel::predicate::NullDispatchTable<H>>::ABSENT
+    }
+    type TypePredicate = crate::kernel::predicate::NullTypePredicate<H>;
+    fn resolver_predicate(&self) -> &Self::TypePredicate {
+        &<crate::kernel::predicate::NullTypePredicate<H>>::ABSENT
+    }
+}
+impl<H: HostTypes> InhabitanceResolver<H> for NullInhabitanceResolver<H> {}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `TwoSatDecider<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullTwoSatDecider<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullTwoSatDecider<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullTwoSatDecider<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullTwoSatDecider<H> = NullTwoSatDecider {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> Resolver<H> for NullTwoSatDecider<H> {
+    type TypeDefinition = crate::user::type_::NullTypeDefinition<H>;
+    fn input_type(&self) -> &Self::TypeDefinition {
+        &<crate::user::type_::NullTypeDefinition<H>>::ABSENT
+    }
+    type Partition = crate::enforcement::NullPartition<H>;
+    fn output_type(&self) -> &Self::Partition {
+        &<crate::enforcement::NullPartition<H>>::ABSENT
+    }
+    type TermExpression = crate::kernel::schema::NullTermExpression<H>;
+    fn strategy(&self) -> &Self::TermExpression {
+        &<crate::kernel::schema::NullTermExpression<H>>::ABSENT
+    }
+    type ResolutionState = NullResolutionState<H>;
+    fn resolution_state(&self) -> &Self::ResolutionState {
+        &<NullResolutionState<H>>::ABSENT
+    }
+    fn has_complexity_class(&self) -> ComplexityClass {
+        <ComplexityClass>::default()
+    }
+    type DispatchTable = crate::kernel::predicate::NullDispatchTable<H>;
+    fn dispatch_table(&self) -> &Self::DispatchTable {
+        &<crate::kernel::predicate::NullDispatchTable<H>>::ABSENT
+    }
+    type TypePredicate = crate::kernel::predicate::NullTypePredicate<H>;
+    fn resolver_predicate(&self) -> &Self::TypePredicate {
+        &<crate::kernel::predicate::NullTypePredicate<H>>::ABSENT
+    }
+}
+impl<H: HostTypes> TwoSatDecider<H> for NullTwoSatDecider<H> {}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `HornSatDecider<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullHornSatDecider<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullHornSatDecider<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullHornSatDecider<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullHornSatDecider<H> = NullHornSatDecider {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> Resolver<H> for NullHornSatDecider<H> {
+    type TypeDefinition = crate::user::type_::NullTypeDefinition<H>;
+    fn input_type(&self) -> &Self::TypeDefinition {
+        &<crate::user::type_::NullTypeDefinition<H>>::ABSENT
+    }
+    type Partition = crate::enforcement::NullPartition<H>;
+    fn output_type(&self) -> &Self::Partition {
+        &<crate::enforcement::NullPartition<H>>::ABSENT
+    }
+    type TermExpression = crate::kernel::schema::NullTermExpression<H>;
+    fn strategy(&self) -> &Self::TermExpression {
+        &<crate::kernel::schema::NullTermExpression<H>>::ABSENT
+    }
+    type ResolutionState = NullResolutionState<H>;
+    fn resolution_state(&self) -> &Self::ResolutionState {
+        &<NullResolutionState<H>>::ABSENT
+    }
+    fn has_complexity_class(&self) -> ComplexityClass {
+        <ComplexityClass>::default()
+    }
+    type DispatchTable = crate::kernel::predicate::NullDispatchTable<H>;
+    fn dispatch_table(&self) -> &Self::DispatchTable {
+        &<crate::kernel::predicate::NullDispatchTable<H>>::ABSENT
+    }
+    type TypePredicate = crate::kernel::predicate::NullTypePredicate<H>;
+    fn resolver_predicate(&self) -> &Self::TypePredicate {
+        &<crate::kernel::predicate::NullTypePredicate<H>>::ABSENT
+    }
+}
+impl<H: HostTypes> HornSatDecider<H> for NullHornSatDecider<H> {}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `ResidualVerdictResolver<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullResidualVerdictResolver<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullResidualVerdictResolver<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullResidualVerdictResolver<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullResidualVerdictResolver<H> = NullResidualVerdictResolver {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> Resolver<H> for NullResidualVerdictResolver<H> {
+    type TypeDefinition = crate::user::type_::NullTypeDefinition<H>;
+    fn input_type(&self) -> &Self::TypeDefinition {
+        &<crate::user::type_::NullTypeDefinition<H>>::ABSENT
+    }
+    type Partition = crate::enforcement::NullPartition<H>;
+    fn output_type(&self) -> &Self::Partition {
+        &<crate::enforcement::NullPartition<H>>::ABSENT
+    }
+    type TermExpression = crate::kernel::schema::NullTermExpression<H>;
+    fn strategy(&self) -> &Self::TermExpression {
+        &<crate::kernel::schema::NullTermExpression<H>>::ABSENT
+    }
+    type ResolutionState = NullResolutionState<H>;
+    fn resolution_state(&self) -> &Self::ResolutionState {
+        &<NullResolutionState<H>>::ABSENT
+    }
+    fn has_complexity_class(&self) -> ComplexityClass {
+        <ComplexityClass>::default()
+    }
+    type DispatchTable = crate::kernel::predicate::NullDispatchTable<H>;
+    fn dispatch_table(&self) -> &Self::DispatchTable {
+        &<crate::kernel::predicate::NullDispatchTable<H>>::ABSENT
+    }
+    type TypePredicate = crate::kernel::predicate::NullTypePredicate<H>;
+    fn resolver_predicate(&self) -> &Self::TypePredicate {
+        &<crate::kernel::predicate::NullTypePredicate<H>>::ABSENT
+    }
+}
+impl<H: HostTypes> ResidualVerdictResolver<H> for NullResidualVerdictResolver<H> {}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `MultiplicationResolver<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullMultiplicationResolver<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullMultiplicationResolver<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullMultiplicationResolver<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullMultiplicationResolver<H> = NullMultiplicationResolver {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> Resolver<H> for NullMultiplicationResolver<H> {
+    type TypeDefinition = crate::user::type_::NullTypeDefinition<H>;
+    fn input_type(&self) -> &Self::TypeDefinition {
+        &<crate::user::type_::NullTypeDefinition<H>>::ABSENT
+    }
+    type Partition = crate::enforcement::NullPartition<H>;
+    fn output_type(&self) -> &Self::Partition {
+        &<crate::enforcement::NullPartition<H>>::ABSENT
+    }
+    type TermExpression = crate::kernel::schema::NullTermExpression<H>;
+    fn strategy(&self) -> &Self::TermExpression {
+        &<crate::kernel::schema::NullTermExpression<H>>::ABSENT
+    }
+    type ResolutionState = NullResolutionState<H>;
+    fn resolution_state(&self) -> &Self::ResolutionState {
+        &<NullResolutionState<H>>::ABSENT
+    }
+    fn has_complexity_class(&self) -> ComplexityClass {
+        <ComplexityClass>::default()
+    }
+    type DispatchTable = crate::kernel::predicate::NullDispatchTable<H>;
+    fn dispatch_table(&self) -> &Self::DispatchTable {
+        &<crate::kernel::predicate::NullDispatchTable<H>>::ABSENT
+    }
+    type TypePredicate = crate::kernel::predicate::NullTypePredicate<H>;
+    fn resolver_predicate(&self) -> &Self::TypePredicate {
+        &<crate::kernel::predicate::NullTypePredicate<H>>::ABSENT
+    }
+}
+impl<H: HostTypes> MultiplicationResolver<H> for NullMultiplicationResolver<H> {}
+
 /// Phase 2 (orphan-closure) — resolver-absent default impl of `CertifyMapping<H>`.
 /// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
 /// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
@@ -289,16 +1695,28 @@ pub struct NullCertifyMapping<H: HostTypes> {
     _phantom: core::marker::PhantomData<H>,
 }
 impl<H: HostTypes> Default for NullCertifyMapping<H> {
-    fn default() -> Self { Self { _phantom: core::marker::PhantomData } }
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
 }
 impl<H: HostTypes> NullCertifyMapping<H> {
     /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
-    pub const ABSENT: NullCertifyMapping<H> = NullCertifyMapping { _phantom: core::marker::PhantomData };
+    pub const ABSENT: NullCertifyMapping<H> = NullCertifyMapping {
+        _phantom: core::marker::PhantomData,
+    };
 }
 impl<H: HostTypes> CertifyMapping<H> for NullCertifyMapping<H> {
-    fn for_resolver(&self) -> &H::HostString { H::EMPTY_HOST_STRING }
-    fn produces_certificate(&self) -> &H::HostString { H::EMPTY_HOST_STRING }
-    fn produces_witness(&self) -> &H::HostString { H::EMPTY_HOST_STRING }
+    fn for_resolver(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    fn produces_certificate(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    fn produces_witness(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
 }
 
 /// Phase 2 (orphan-closure) — resolver-absent default impl of `ExecutionPolicy<H>`.
@@ -311,13 +1729,142 @@ pub struct NullExecutionPolicy<H: HostTypes> {
     _phantom: core::marker::PhantomData<H>,
 }
 impl<H: HostTypes> Default for NullExecutionPolicy<H> {
-    fn default() -> Self { Self { _phantom: core::marker::PhantomData } }
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
 }
 impl<H: HostTypes> NullExecutionPolicy<H> {
     /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
-    pub const ABSENT: NullExecutionPolicy<H> = NullExecutionPolicy { _phantom: core::marker::PhantomData };
+    pub const ABSENT: NullExecutionPolicy<H> = NullExecutionPolicy {
+        _phantom: core::marker::PhantomData,
+    };
 }
-impl<H: HostTypes> ExecutionPolicy<H> for NullExecutionPolicy<H> {
+impl<H: HostTypes> ExecutionPolicy<H> for NullExecutionPolicy<H> {}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `HomotopyResolver<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullHomotopyResolver<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullHomotopyResolver<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullHomotopyResolver<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullHomotopyResolver<H> = NullHomotopyResolver {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> Resolver<H> for NullHomotopyResolver<H> {
+    type TypeDefinition = crate::user::type_::NullTypeDefinition<H>;
+    fn input_type(&self) -> &Self::TypeDefinition {
+        &<crate::user::type_::NullTypeDefinition<H>>::ABSENT
+    }
+    type Partition = crate::enforcement::NullPartition<H>;
+    fn output_type(&self) -> &Self::Partition {
+        &<crate::enforcement::NullPartition<H>>::ABSENT
+    }
+    type TermExpression = crate::kernel::schema::NullTermExpression<H>;
+    fn strategy(&self) -> &Self::TermExpression {
+        &<crate::kernel::schema::NullTermExpression<H>>::ABSENT
+    }
+    type ResolutionState = NullResolutionState<H>;
+    fn resolution_state(&self) -> &Self::ResolutionState {
+        &<NullResolutionState<H>>::ABSENT
+    }
+    fn has_complexity_class(&self) -> ComplexityClass {
+        <ComplexityClass>::default()
+    }
+    type DispatchTable = crate::kernel::predicate::NullDispatchTable<H>;
+    fn dispatch_table(&self) -> &Self::DispatchTable {
+        &<crate::kernel::predicate::NullDispatchTable<H>>::ABSENT
+    }
+    type TypePredicate = crate::kernel::predicate::NullTypePredicate<H>;
+    fn resolver_predicate(&self) -> &Self::TypePredicate {
+        &<crate::kernel::predicate::NullTypePredicate<H>>::ABSENT
+    }
+}
+impl<H: HostTypes> HomotopyResolver<H> for NullHomotopyResolver<H> {
+    type CechNerve = NullCechNerve<H>;
+    fn homotopy_target(&self) -> &Self::CechNerve {
+        &<NullCechNerve<H>>::ABSENT
+    }
+    type HomotopyGroup = crate::bridge::observable::NullHomotopyGroup<H>;
+    fn homotopy_result(&self) -> &[Self::HomotopyGroup] {
+        &[]
+    }
+}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `ModuliResolver<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullModuliResolver<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullModuliResolver<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullModuliResolver<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullModuliResolver<H> = NullModuliResolver {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> Resolver<H> for NullModuliResolver<H> {
+    type TypeDefinition = crate::user::type_::NullTypeDefinition<H>;
+    fn input_type(&self) -> &Self::TypeDefinition {
+        &<crate::user::type_::NullTypeDefinition<H>>::ABSENT
+    }
+    type Partition = crate::enforcement::NullPartition<H>;
+    fn output_type(&self) -> &Self::Partition {
+        &<crate::enforcement::NullPartition<H>>::ABSENT
+    }
+    type TermExpression = crate::kernel::schema::NullTermExpression<H>;
+    fn strategy(&self) -> &Self::TermExpression {
+        &<crate::kernel::schema::NullTermExpression<H>>::ABSENT
+    }
+    type ResolutionState = NullResolutionState<H>;
+    fn resolution_state(&self) -> &Self::ResolutionState {
+        &<NullResolutionState<H>>::ABSENT
+    }
+    fn has_complexity_class(&self) -> ComplexityClass {
+        <ComplexityClass>::default()
+    }
+    type DispatchTable = crate::kernel::predicate::NullDispatchTable<H>;
+    fn dispatch_table(&self) -> &Self::DispatchTable {
+        &<crate::kernel::predicate::NullDispatchTable<H>>::ABSENT
+    }
+    type TypePredicate = crate::kernel::predicate::NullTypePredicate<H>;
+    fn resolver_predicate(&self) -> &Self::TypePredicate {
+        &<crate::kernel::predicate::NullTypePredicate<H>>::ABSENT
+    }
+}
+impl<H: HostTypes> ModuliResolver<H> for NullModuliResolver<H> {
+    type CompleteType = crate::user::type_::NullCompleteType<H>;
+    fn moduli_target(&self) -> &Self::CompleteType {
+        &<crate::user::type_::NullCompleteType<H>>::ABSENT
+    }
+    type DeformationComplex = crate::bridge::homology::NullDeformationComplex<H>;
+    fn moduli_deformation(&self) -> &Self::DeformationComplex {
+        &<crate::bridge::homology::NullDeformationComplex<H>>::ABSENT
+    }
 }
 
 /// O(1) complexity — the resolver runs in constant time regardless of ring size.

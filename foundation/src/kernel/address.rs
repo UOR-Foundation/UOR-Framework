@@ -32,17 +32,35 @@ pub struct NullElement<H: HostTypes> {
     _phantom: core::marker::PhantomData<H>,
 }
 impl<H: HostTypes> Default for NullElement<H> {
-    fn default() -> Self { Self { _phantom: core::marker::PhantomData } }
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
 }
 impl<H: HostTypes> NullElement<H> {
     /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
-    pub const ABSENT: NullElement<H> = NullElement { _phantom: core::marker::PhantomData };
+    pub const ABSENT: NullElement<H> = NullElement {
+        _phantom: core::marker::PhantomData,
+    };
 }
 impl<H: HostTypes> Element<H> for NullElement<H> {
-    fn length(&self) -> u64 { 0 }
-    fn addresses(&self) -> &H::HostString { H::EMPTY_HOST_STRING }
-    fn digest(&self) -> &H::HostString { H::EMPTY_HOST_STRING }
-    fn digest_algorithm(&self) -> &H::HostString { H::EMPTY_HOST_STRING }
-    fn canonical_bytes(&self) -> &H::WitnessBytes { H::EMPTY_WITNESS_BYTES }
-    fn witt_length(&self) -> u64 { 0 }
+    fn length(&self) -> u64 {
+        0
+    }
+    fn addresses(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    fn digest(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    fn digest_algorithm(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    fn canonical_bytes(&self) -> &H::WitnessBytes {
+        H::EMPTY_WITNESS_BYTES
+    }
+    fn witt_length(&self) -> u64 {
+        0
+    }
 }

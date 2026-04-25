@@ -25,6 +25,7 @@ pub mod kernel_enforcement;
 pub mod libm_dependency;
 pub mod multiplication_resolver;
 pub mod no_std_build_check;
+pub mod orphan_counts;
 pub mod parametric_constraints;
 pub mod phantom_tag;
 pub mod pipeline_run_threads_input;

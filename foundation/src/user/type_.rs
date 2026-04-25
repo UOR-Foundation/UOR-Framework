@@ -375,15 +375,23 @@ pub struct NullTypeDefinition<H: HostTypes> {
     _phantom: core::marker::PhantomData<H>,
 }
 impl<H: HostTypes> Default for NullTypeDefinition<H> {
-    fn default() -> Self { Self { _phantom: core::marker::PhantomData } }
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
 }
 impl<H: HostTypes> NullTypeDefinition<H> {
     /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
-    pub const ABSENT: NullTypeDefinition<H> = NullTypeDefinition { _phantom: core::marker::PhantomData };
+    pub const ABSENT: NullTypeDefinition<H> = NullTypeDefinition {
+        _phantom: core::marker::PhantomData,
+    };
 }
 impl<H: HostTypes> TypeDefinition<H> for NullTypeDefinition<H> {
     type Element = crate::kernel::address::NullElement<H>;
-    fn content_address(&self) -> &Self::Element { &<crate::kernel::address::NullElement<H>>::ABSENT }
+    fn content_address(&self) -> &Self::Element {
+        &<crate::kernel::address::NullElement<H>>::ABSENT
+    }
 }
 
 /// Phase 2 (orphan-closure) — resolver-absent default impl of `PrimitiveType<H>`.
@@ -396,18 +404,28 @@ pub struct NullPrimitiveType<H: HostTypes> {
     _phantom: core::marker::PhantomData<H>,
 }
 impl<H: HostTypes> Default for NullPrimitiveType<H> {
-    fn default() -> Self { Self { _phantom: core::marker::PhantomData } }
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
 }
 impl<H: HostTypes> NullPrimitiveType<H> {
     /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
-    pub const ABSENT: NullPrimitiveType<H> = NullPrimitiveType { _phantom: core::marker::PhantomData };
+    pub const ABSENT: NullPrimitiveType<H> = NullPrimitiveType {
+        _phantom: core::marker::PhantomData,
+    };
 }
 impl<H: HostTypes> TypeDefinition<H> for NullPrimitiveType<H> {
     type Element = crate::kernel::address::NullElement<H>;
-    fn content_address(&self) -> &Self::Element { &<crate::kernel::address::NullElement<H>>::ABSENT }
+    fn content_address(&self) -> &Self::Element {
+        &<crate::kernel::address::NullElement<H>>::ABSENT
+    }
 }
 impl<H: HostTypes> PrimitiveType<H> for NullPrimitiveType<H> {
-    fn bit_width(&self) -> u64 { 0 }
+    fn bit_width(&self) -> u64 {
+        0
+    }
 }
 
 /// Phase 2 (orphan-closure) — resolver-absent default impl of `ProductType<H>`.
@@ -420,19 +438,29 @@ pub struct NullProductType<H: HostTypes> {
     _phantom: core::marker::PhantomData<H>,
 }
 impl<H: HostTypes> Default for NullProductType<H> {
-    fn default() -> Self { Self { _phantom: core::marker::PhantomData } }
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
 }
 impl<H: HostTypes> NullProductType<H> {
     /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
-    pub const ABSENT: NullProductType<H> = NullProductType { _phantom: core::marker::PhantomData };
+    pub const ABSENT: NullProductType<H> = NullProductType {
+        _phantom: core::marker::PhantomData,
+    };
 }
 impl<H: HostTypes> TypeDefinition<H> for NullProductType<H> {
     type Element = crate::kernel::address::NullElement<H>;
-    fn content_address(&self) -> &Self::Element { &<crate::kernel::address::NullElement<H>>::ABSENT }
+    fn content_address(&self) -> &Self::Element {
+        &<crate::kernel::address::NullElement<H>>::ABSENT
+    }
 }
 impl<H: HostTypes> ProductType<H> for NullProductType<H> {
     type TypeDefinition = NullTypeDefinition<H>;
-    fn component(&self) -> &[Self::TypeDefinition] { &[] }
+    fn component(&self) -> &[Self::TypeDefinition] {
+        &[]
+    }
 }
 
 /// Phase 2 (orphan-closure) — resolver-absent default impl of `SumType<H>`.
@@ -445,21 +473,118 @@ pub struct NullSumType<H: HostTypes> {
     _phantom: core::marker::PhantomData<H>,
 }
 impl<H: HostTypes> Default for NullSumType<H> {
-    fn default() -> Self { Self { _phantom: core::marker::PhantomData } }
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
 }
 impl<H: HostTypes> NullSumType<H> {
     /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
-    pub const ABSENT: NullSumType<H> = NullSumType { _phantom: core::marker::PhantomData };
+    pub const ABSENT: NullSumType<H> = NullSumType {
+        _phantom: core::marker::PhantomData,
+    };
 }
 impl<H: HostTypes> TypeDefinition<H> for NullSumType<H> {
     type Element = crate::kernel::address::NullElement<H>;
-    fn content_address(&self) -> &Self::Element { &<crate::kernel::address::NullElement<H>>::ABSENT }
+    fn content_address(&self) -> &Self::Element {
+        &<crate::kernel::address::NullElement<H>>::ABSENT
+    }
 }
 impl<H: HostTypes> SumType<H> for NullSumType<H> {
     type TypeDefinition = NullTypeDefinition<H>;
-    fn variant(&self) -> &[Self::TypeDefinition] { &[] }
+    fn variant(&self) -> &[Self::TypeDefinition] {
+        &[]
+    }
     type TagSite = crate::bridge::partition::NullTagSite<H>;
-    fn tag_site(&self) -> &Self::TagSite { &<crate::bridge::partition::NullTagSite<H>>::ABSENT }
+    fn tag_site(&self) -> &Self::TagSite {
+        &<crate::bridge::partition::NullTagSite<H>>::ABSENT
+    }
+}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `ConstrainedType<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullConstrainedType<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullConstrainedType<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullConstrainedType<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullConstrainedType<H> = NullConstrainedType {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> TypeDefinition<H> for NullConstrainedType<H> {
+    type Element = crate::kernel::address::NullElement<H>;
+    fn content_address(&self) -> &Self::Element {
+        &<crate::kernel::address::NullElement<H>>::ABSENT
+    }
+}
+impl<H: HostTypes> ConstrainedType<H> for NullConstrainedType<H> {
+    type TypeDefinition = NullTypeDefinition<H>;
+    fn base_type(&self) -> &Self::TypeDefinition {
+        &<NullTypeDefinition<H>>::ABSENT
+    }
+    type Constraint = NullConstraint<H>;
+    fn has_constraint(&self) -> &[Self::Constraint] {
+        &[]
+    }
+    type HolonomyGroup = crate::bridge::observable::NullHolonomyGroup<H>;
+    fn holonomy_group(&self) -> &Self::HolonomyGroup {
+        &<crate::bridge::observable::NullHolonomyGroup<H>>::ABSENT
+    }
+    type MonodromyClass = crate::bridge::observable::NullMonodromyClass<H>;
+    fn monodromy_class(&self) -> &Self::MonodromyClass {
+        &<crate::bridge::observable::NullMonodromyClass<H>>::ABSENT
+    }
+    fn holonomy_classified(&self) -> bool {
+        false
+    }
+}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `Constraint<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullConstraint<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullConstraint<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullConstraint<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullConstraint<H> = NullConstraint {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> Constraint<H> for NullConstraint<H> {
+    fn metric_axis(&self) -> MetricAxis {
+        <MetricAxis>::default()
+    }
+    type SiteIndex = crate::bridge::partition::NullSiteIndex<H>;
+    fn pins_sites(&self) -> &[Self::SiteIndex] {
+        &[]
+    }
+    fn crossing_cost(&self) -> u64 {
+        0
+    }
 }
 
 /// Phase 2 (orphan-closure) — resolver-absent default impl of `CompleteType<H>`.
@@ -472,17 +597,116 @@ pub struct NullCompleteType<H: HostTypes> {
     _phantom: core::marker::PhantomData<H>,
 }
 impl<H: HostTypes> Default for NullCompleteType<H> {
-    fn default() -> Self { Self { _phantom: core::marker::PhantomData } }
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
 }
 impl<H: HostTypes> NullCompleteType<H> {
     /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
-    pub const ABSENT: NullCompleteType<H> = NullCompleteType { _phantom: core::marker::PhantomData };
+    pub const ABSENT: NullCompleteType<H> = NullCompleteType {
+        _phantom: core::marker::PhantomData,
+    };
 }
 impl<H: HostTypes> TypeDefinition<H> for NullCompleteType<H> {
     type Element = crate::kernel::address::NullElement<H>;
-    fn content_address(&self) -> &Self::Element { &<crate::kernel::address::NullElement<H>>::ABSENT }
+    fn content_address(&self) -> &Self::Element {
+        &<crate::kernel::address::NullElement<H>>::ABSENT
+    }
 }
-impl<H: HostTypes> CompleteType<H> for NullCompleteType<H> {
+impl<H: HostTypes> CompleteType<H> for NullCompleteType<H> {}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `CompletenessCandidate<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullCompletenessCandidate<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullCompletenessCandidate<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullCompletenessCandidate<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullCompletenessCandidate<H> = NullCompletenessCandidate {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> TypeDefinition<H> for NullCompletenessCandidate<H> {
+    type Element = crate::kernel::address::NullElement<H>;
+    fn content_address(&self) -> &Self::Element {
+        &<crate::kernel::address::NullElement<H>>::ABSENT
+    }
+}
+impl<H: HostTypes> ConstrainedType<H> for NullCompletenessCandidate<H> {
+    type TypeDefinition = NullTypeDefinition<H>;
+    fn base_type(&self) -> &Self::TypeDefinition {
+        &<NullTypeDefinition<H>>::ABSENT
+    }
+    type Constraint = NullConstraint<H>;
+    fn has_constraint(&self) -> &[Self::Constraint] {
+        &[]
+    }
+    type HolonomyGroup = crate::bridge::observable::NullHolonomyGroup<H>;
+    fn holonomy_group(&self) -> &Self::HolonomyGroup {
+        &<crate::bridge::observable::NullHolonomyGroup<H>>::ABSENT
+    }
+    type MonodromyClass = crate::bridge::observable::NullMonodromyClass<H>;
+    fn monodromy_class(&self) -> &Self::MonodromyClass {
+        &<crate::bridge::observable::NullMonodromyClass<H>>::ABSENT
+    }
+    fn holonomy_classified(&self) -> bool {
+        false
+    }
+}
+impl<H: HostTypes> CompletenessCandidate<H> for NullCompletenessCandidate<H> {
+    type ConstrainedType = NullConstrainedType<H>;
+    fn completeness_candidate(&self) -> &[Self::ConstrainedType] {
+        &[]
+    }
+    type CechNerve = crate::bridge::resolver::NullCechNerve<H>;
+    fn candidate_nerve(&self) -> &Self::CechNerve {
+        &<crate::bridge::resolver::NullCechNerve<H>>::ABSENT
+    }
+}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `CompletenessWitness<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullCompletenessWitness<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullCompletenessWitness<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullCompletenessWitness<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullCompletenessWitness<H> = NullCompletenessWitness {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> CompletenessWitness<H> for NullCompletenessWitness<H> {
+    type Constraint = NullConstraint<H>;
+    fn witness_constraint(&self) -> &Self::Constraint {
+        &<NullConstraint<H>>::ABSENT
+    }
+    fn sites_closed(&self) -> u64 {
+        0
+    }
 }
 
 /// Phase 2 (orphan-closure) — resolver-absent default impl of `TypeSynthesisGoal<H>`.
@@ -495,16 +719,28 @@ pub struct NullTypeSynthesisGoal<H: HostTypes> {
     _phantom: core::marker::PhantomData<H>,
 }
 impl<H: HostTypes> Default for NullTypeSynthesisGoal<H> {
-    fn default() -> Self { Self { _phantom: core::marker::PhantomData } }
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
 }
 impl<H: HostTypes> NullTypeSynthesisGoal<H> {
     /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
-    pub const ABSENT: NullTypeSynthesisGoal<H> = NullTypeSynthesisGoal { _phantom: core::marker::PhantomData };
+    pub const ABSENT: NullTypeSynthesisGoal<H> = NullTypeSynthesisGoal {
+        _phantom: core::marker::PhantomData,
+    };
 }
 impl<H: HostTypes> TypeSynthesisGoal<H> for NullTypeSynthesisGoal<H> {
-    fn target_euler_characteristic(&self) -> i64 { 0 }
-    fn target_betti_number(&self) -> &[u64] { &[] }
-    fn target_forbidden(&self) -> bool { false }
+    fn target_euler_characteristic(&self) -> i64 {
+        0
+    }
+    fn target_betti_number(&self) -> &[u64] {
+        &[]
+    }
+    fn target_forbidden(&self) -> bool {
+        false
+    }
 }
 
 /// Phase 2 (orphan-closure) — resolver-absent default impl of `TypeSynthesisResult<H>`.
@@ -517,13 +753,142 @@ pub struct NullTypeSynthesisResult<H: HostTypes> {
     _phantom: core::marker::PhantomData<H>,
 }
 impl<H: HostTypes> Default for NullTypeSynthesisResult<H> {
-    fn default() -> Self { Self { _phantom: core::marker::PhantomData } }
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
 }
 impl<H: HostTypes> NullTypeSynthesisResult<H> {
     /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
-    pub const ABSENT: NullTypeSynthesisResult<H> = NullTypeSynthesisResult { _phantom: core::marker::PhantomData };
+    pub const ABSENT: NullTypeSynthesisResult<H> = NullTypeSynthesisResult {
+        _phantom: core::marker::PhantomData,
+    };
 }
-impl<H: HostTypes> TypeSynthesisResult<H> for NullTypeSynthesisResult<H> {
+impl<H: HostTypes> TypeSynthesisResult<H> for NullTypeSynthesisResult<H> {}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `SynthesizedType<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullSynthesizedType<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullSynthesizedType<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullSynthesizedType<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullSynthesizedType<H> = NullSynthesizedType {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> TypeDefinition<H> for NullSynthesizedType<H> {
+    type Element = crate::kernel::address::NullElement<H>;
+    fn content_address(&self) -> &Self::Element {
+        &<crate::kernel::address::NullElement<H>>::ABSENT
+    }
+}
+impl<H: HostTypes> ConstrainedType<H> for NullSynthesizedType<H> {
+    type TypeDefinition = NullTypeDefinition<H>;
+    fn base_type(&self) -> &Self::TypeDefinition {
+        &<NullTypeDefinition<H>>::ABSENT
+    }
+    type Constraint = NullConstraint<H>;
+    fn has_constraint(&self) -> &[Self::Constraint] {
+        &[]
+    }
+    type HolonomyGroup = crate::bridge::observable::NullHolonomyGroup<H>;
+    fn holonomy_group(&self) -> &Self::HolonomyGroup {
+        &<crate::bridge::observable::NullHolonomyGroup<H>>::ABSENT
+    }
+    type MonodromyClass = crate::bridge::observable::NullMonodromyClass<H>;
+    fn monodromy_class(&self) -> &Self::MonodromyClass {
+        &<crate::bridge::observable::NullMonodromyClass<H>>::ABSENT
+    }
+    fn holonomy_classified(&self) -> bool {
+        false
+    }
+}
+impl<H: HostTypes> SynthesizedType<H> for NullSynthesizedType<H> {
+    type TypeSynthesisResult = NullTypeSynthesisResult<H>;
+    fn synthesis_result(&self) -> &Self::TypeSynthesisResult {
+        &<NullTypeSynthesisResult<H>>::ABSENT
+    }
+}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `MinimalConstraintBasis<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullMinimalConstraintBasis<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullMinimalConstraintBasis<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullMinimalConstraintBasis<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullMinimalConstraintBasis<H> = NullMinimalConstraintBasis {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> MinimalConstraintBasis<H> for NullMinimalConstraintBasis<H> {
+    type Constraint = NullConstraint<H>;
+    fn basis_constraint(&self) -> &[Self::Constraint] {
+        &[]
+    }
+    fn basis_size(&self) -> u64 {
+        0
+    }
+}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `WittLift<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullWittLift<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullWittLift<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullWittLift<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullWittLift<H> = NullWittLift {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> WittLift<H> for NullWittLift<H> {
+    type ConstrainedType = NullConstrainedType<H>;
+    fn lift_base(&self) -> &Self::ConstrainedType {
+        &<NullConstrainedType<H>>::ABSENT
+    }
+    fn lift_target_level(&self) -> WittLevel {
+        <WittLevel>::default()
+    }
+    type LiftObstruction = NullLiftObstruction<H>;
+    fn lift_obstruction(&self) -> &Self::LiftObstruction {
+        &<NullLiftObstruction<H>>::ABSENT
+    }
 }
 
 /// Phase 2 (orphan-closure) — resolver-absent default impl of `LiftObstruction<H>`.
@@ -536,17 +901,129 @@ pub struct NullLiftObstruction<H: HostTypes> {
     _phantom: core::marker::PhantomData<H>,
 }
 impl<H: HostTypes> Default for NullLiftObstruction<H> {
-    fn default() -> Self { Self { _phantom: core::marker::PhantomData } }
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
 }
 impl<H: HostTypes> NullLiftObstruction<H> {
     /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
-    pub const ABSENT: NullLiftObstruction<H> = NullLiftObstruction { _phantom: core::marker::PhantomData };
+    pub const ABSENT: NullLiftObstruction<H> = NullLiftObstruction {
+        _phantom: core::marker::PhantomData,
+    };
 }
 impl<H: HostTypes> LiftObstruction<H> for NullLiftObstruction<H> {
-    fn obstruction_trivial(&self) -> bool { false }
+    fn obstruction_trivial(&self) -> bool {
+        false
+    }
     type SiteIndex = crate::bridge::partition::NullSiteIndex<H>;
-    fn obstruction_site(&self) -> &Self::SiteIndex { &<crate::bridge::partition::NullSiteIndex<H>>::ABSENT }
+    fn obstruction_site(&self) -> &Self::SiteIndex {
+        &<crate::bridge::partition::NullSiteIndex<H>>::ABSENT
+    }
 }
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `TwistedType<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullTwistedType<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullTwistedType<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullTwistedType<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullTwistedType<H> = NullTwistedType {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> TypeDefinition<H> for NullTwistedType<H> {
+    type Element = crate::kernel::address::NullElement<H>;
+    fn content_address(&self) -> &Self::Element {
+        &<crate::kernel::address::NullElement<H>>::ABSENT
+    }
+}
+impl<H: HostTypes> ConstrainedType<H> for NullTwistedType<H> {
+    type TypeDefinition = NullTypeDefinition<H>;
+    fn base_type(&self) -> &Self::TypeDefinition {
+        &<NullTypeDefinition<H>>::ABSENT
+    }
+    type Constraint = NullConstraint<H>;
+    fn has_constraint(&self) -> &[Self::Constraint] {
+        &[]
+    }
+    type HolonomyGroup = crate::bridge::observable::NullHolonomyGroup<H>;
+    fn holonomy_group(&self) -> &Self::HolonomyGroup {
+        &<crate::bridge::observable::NullHolonomyGroup<H>>::ABSENT
+    }
+    type MonodromyClass = crate::bridge::observable::NullMonodromyClass<H>;
+    fn monodromy_class(&self) -> &Self::MonodromyClass {
+        &<crate::bridge::observable::NullMonodromyClass<H>>::ABSENT
+    }
+    fn holonomy_classified(&self) -> bool {
+        false
+    }
+}
+impl<H: HostTypes> TwistedType<H> for NullTwistedType<H> {}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `FlatType<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullFlatType<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullFlatType<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullFlatType<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullFlatType<H> = NullFlatType {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> TypeDefinition<H> for NullFlatType<H> {
+    type Element = crate::kernel::address::NullElement<H>;
+    fn content_address(&self) -> &Self::Element {
+        &<crate::kernel::address::NullElement<H>>::ABSENT
+    }
+}
+impl<H: HostTypes> ConstrainedType<H> for NullFlatType<H> {
+    type TypeDefinition = NullTypeDefinition<H>;
+    fn base_type(&self) -> &Self::TypeDefinition {
+        &<NullTypeDefinition<H>>::ABSENT
+    }
+    type Constraint = NullConstraint<H>;
+    fn has_constraint(&self) -> &[Self::Constraint] {
+        &[]
+    }
+    type HolonomyGroup = crate::bridge::observable::NullHolonomyGroup<H>;
+    fn holonomy_group(&self) -> &Self::HolonomyGroup {
+        &<crate::bridge::observable::NullHolonomyGroup<H>>::ABSENT
+    }
+    type MonodromyClass = crate::bridge::observable::NullMonodromyClass<H>;
+    fn monodromy_class(&self) -> &Self::MonodromyClass {
+        &<crate::bridge::observable::NullMonodromyClass<H>>::ABSENT
+    }
+    fn holonomy_classified(&self) -> bool {
+        false
+    }
+}
+impl<H: HostTypes> FlatType<H> for NullFlatType<H> {}
 
 /// Phase 2 (orphan-closure) — resolver-absent default impl of `SuperposedSiteState<H>`.
 /// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
@@ -558,19 +1035,31 @@ pub struct NullSuperposedSiteState<H: HostTypes> {
     _phantom: core::marker::PhantomData<H>,
 }
 impl<H: HostTypes> Default for NullSuperposedSiteState<H> {
-    fn default() -> Self { Self { _phantom: core::marker::PhantomData } }
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
 }
 impl<H: HostTypes> NullSuperposedSiteState<H> {
     /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
-    pub const ABSENT: NullSuperposedSiteState<H> = NullSuperposedSiteState { _phantom: core::marker::PhantomData };
+    pub const ABSENT: NullSuperposedSiteState<H> = NullSuperposedSiteState {
+        _phantom: core::marker::PhantomData,
+    };
 }
 impl<H: HostTypes> TypeDefinition<H> for NullSuperposedSiteState<H> {
     type Element = crate::kernel::address::NullElement<H>;
-    fn content_address(&self) -> &Self::Element { &<crate::kernel::address::NullElement<H>>::ABSENT }
+    fn content_address(&self) -> &Self::Element {
+        &<crate::kernel::address::NullElement<H>>::ABSENT
+    }
 }
 impl<H: HostTypes> SuperposedSiteState<H> for NullSuperposedSiteState<H> {
-    fn amplitude(&self) -> H::Decimal { H::EMPTY_DECIMAL }
-    fn normalization_verified(&self) -> bool { false }
+    fn amplitude(&self) -> H::Decimal {
+        H::EMPTY_DECIMAL
+    }
+    fn normalization_verified(&self) -> bool {
+        false
+    }
 }
 
 /// Phase 2 (orphan-closure) — resolver-absent default impl of `ForbiddenSignature<H>`.
@@ -583,14 +1072,19 @@ pub struct NullForbiddenSignature<H: HostTypes> {
     _phantom: core::marker::PhantomData<H>,
 }
 impl<H: HostTypes> Default for NullForbiddenSignature<H> {
-    fn default() -> Self { Self { _phantom: core::marker::PhantomData } }
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
 }
 impl<H: HostTypes> NullForbiddenSignature<H> {
     /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
-    pub const ABSENT: NullForbiddenSignature<H> = NullForbiddenSignature { _phantom: core::marker::PhantomData };
+    pub const ABSENT: NullForbiddenSignature<H> = NullForbiddenSignature {
+        _phantom: core::marker::PhantomData,
+    };
 }
-impl<H: HostTypes> ForbiddenSignature<H> for NullForbiddenSignature<H> {
-}
+impl<H: HostTypes> ForbiddenSignature<H> for NullForbiddenSignature<H> {}
 
 /// Phase 2 (orphan-closure) — resolver-absent default impl of `CollapsedSiteState<H>`.
 /// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
@@ -602,16 +1096,68 @@ pub struct NullCollapsedSiteState<H: HostTypes> {
     _phantom: core::marker::PhantomData<H>,
 }
 impl<H: HostTypes> Default for NullCollapsedSiteState<H> {
-    fn default() -> Self { Self { _phantom: core::marker::PhantomData } }
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
 }
 impl<H: HostTypes> NullCollapsedSiteState<H> {
     /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
-    pub const ABSENT: NullCollapsedSiteState<H> = NullCollapsedSiteState { _phantom: core::marker::PhantomData };
+    pub const ABSENT: NullCollapsedSiteState<H> = NullCollapsedSiteState {
+        _phantom: core::marker::PhantomData,
+    };
 }
 impl<H: HostTypes> CollapsedSiteState<H> for NullCollapsedSiteState<H> {
     type SuperposedSiteState = NullSuperposedSiteState<H>;
-    fn collapsed_from(&self) -> &Self::SuperposedSiteState { &<NullSuperposedSiteState<H>>::ABSENT }
-    fn surviving_amplitude(&self) -> H::Decimal { H::EMPTY_DECIMAL }
+    fn collapsed_from(&self) -> &Self::SuperposedSiteState {
+        &<NullSuperposedSiteState<H>>::ABSENT
+    }
+    fn surviving_amplitude(&self) -> H::Decimal {
+        H::EMPTY_DECIMAL
+    }
+}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `LiftChain<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullLiftChain<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullLiftChain<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullLiftChain<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullLiftChain<H> = NullLiftChain {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> LiftChain<H> for NullLiftChain<H> {
+    fn lift_source_level(&self) -> WittLevel {
+        <WittLevel>::default()
+    }
+    fn chain_length(&self) -> u64 {
+        0
+    }
+    type WittLift = NullWittLift<H>;
+    fn chain_step(&self) -> &[Self::WittLift] {
+        &[]
+    }
+    type ObstructionChain = NullObstructionChain<H>;
+    fn chain_obstruction_profile(&self) -> &Self::ObstructionChain {
+        &<NullObstructionChain<H>>::ABSENT
+    }
+    fn resolved_basis_size(&self) -> u64 {
+        0
+    }
 }
 
 /// Phase 2 (orphan-closure) — resolver-absent default impl of `ObstructionChain<H>`.
@@ -624,17 +1170,100 @@ pub struct NullObstructionChain<H: HostTypes> {
     _phantom: core::marker::PhantomData<H>,
 }
 impl<H: HostTypes> Default for NullObstructionChain<H> {
-    fn default() -> Self { Self { _phantom: core::marker::PhantomData } }
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
 }
 impl<H: HostTypes> NullObstructionChain<H> {
     /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
-    pub const ABSENT: NullObstructionChain<H> = NullObstructionChain { _phantom: core::marker::PhantomData };
+    pub const ABSENT: NullObstructionChain<H> = NullObstructionChain {
+        _phantom: core::marker::PhantomData,
+    };
 }
 impl<H: HostTypes> ObstructionChain<H> for NullObstructionChain<H> {
     type LiftObstruction = NullLiftObstruction<H>;
-    fn obstruction_at(&self) -> &[Self::LiftObstruction] { &[] }
-    fn obstruction_count(&self) -> u64 { 0 }
-    fn is_flat(&self) -> bool { false }
+    fn obstruction_at(&self) -> &[Self::LiftObstruction] {
+        &[]
+    }
+    fn obstruction_count(&self) -> u64 {
+        0
+    }
+    fn is_flat(&self) -> bool {
+        false
+    }
+}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `ModuliSpace<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullModuliSpace<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullModuliSpace<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullModuliSpace<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullModuliSpace<H> = NullModuliSpace {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> ModuliSpace<H> for NullModuliSpace<H> {
+    fn moduli_witt_level(&self) -> WittLevel {
+        <WittLevel>::default()
+    }
+    type CompleteType = NullCompleteType<H>;
+    fn moduli_point(&self) -> &[Self::CompleteType] {
+        &[]
+    }
+    fn moduli_dimension(&self) -> u64 {
+        0
+    }
+}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `HolonomyStratum<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullHolonomyStratum<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullHolonomyStratum<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullHolonomyStratum<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullHolonomyStratum<H> = NullHolonomyStratum {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> HolonomyStratum<H> for NullHolonomyStratum<H> {
+    type MonodromyClass = crate::bridge::observable::NullMonodromyClass<H>;
+    fn stratum_holonomy_class(&self) -> &Self::MonodromyClass {
+        &<crate::bridge::observable::NullMonodromyClass<H>>::ABSENT
+    }
+    fn stratum_codimension(&self) -> u64 {
+        0
+    }
+    type ModuliSpace = NullModuliSpace<H>;
+    fn stratum_moduli(&self) -> &Self::ModuliSpace {
+        &<NullModuliSpace<H>>::ABSENT
+    }
 }
 
 /// Phase 2 (orphan-closure) — resolver-absent default impl of `DeformationFamily<H>`.
@@ -647,16 +1276,26 @@ pub struct NullDeformationFamily<H: HostTypes> {
     _phantom: core::marker::PhantomData<H>,
 }
 impl<H: HostTypes> Default for NullDeformationFamily<H> {
-    fn default() -> Self { Self { _phantom: core::marker::PhantomData } }
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
 }
 impl<H: HostTypes> NullDeformationFamily<H> {
     /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
-    pub const ABSENT: NullDeformationFamily<H> = NullDeformationFamily { _phantom: core::marker::PhantomData };
+    pub const ABSENT: NullDeformationFamily<H> = NullDeformationFamily {
+        _phantom: core::marker::PhantomData,
+    };
 }
 impl<H: HostTypes> DeformationFamily<H> for NullDeformationFamily<H> {
     type CompleteType = NullCompleteType<H>;
-    fn family_parameter(&self) -> &[Self::CompleteType] { &[] }
-    fn family_preserves_completeness(&self) -> bool { false }
+    fn family_parameter(&self) -> &[Self::CompleteType] {
+        &[]
+    }
+    fn family_preserves_completeness(&self) -> bool {
+        false
+    }
 }
 
 /// Phase 2 (orphan-closure) — resolver-absent default impl of `VersalDeformation<H>`.
@@ -669,16 +1308,55 @@ pub struct NullVersalDeformation<H: HostTypes> {
     _phantom: core::marker::PhantomData<H>,
 }
 impl<H: HostTypes> Default for NullVersalDeformation<H> {
-    fn default() -> Self { Self { _phantom: core::marker::PhantomData } }
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
 }
 impl<H: HostTypes> NullVersalDeformation<H> {
     /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
-    pub const ABSENT: NullVersalDeformation<H> = NullVersalDeformation { _phantom: core::marker::PhantomData };
+    pub const ABSENT: NullVersalDeformation<H> = NullVersalDeformation {
+        _phantom: core::marker::PhantomData,
+    };
 }
 impl<H: HostTypes> VersalDeformation<H> for NullVersalDeformation<H> {
     type CompleteType = NullCompleteType<H>;
-    fn versal_base(&self) -> &Self::CompleteType { &<NullCompleteType<H>>::ABSENT }
-    fn versal_dimension(&self) -> u64 { 0 }
+    fn versal_base(&self) -> &Self::CompleteType {
+        &<NullCompleteType<H>>::ABSENT
+    }
+    fn versal_dimension(&self) -> u64 {
+        0
+    }
+}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `ModuliTowerMap<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullModuliTowerMap<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullModuliTowerMap<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullModuliTowerMap<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullModuliTowerMap<H> = NullModuliTowerMap {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> ModuliTowerMap<H> for NullModuliTowerMap<H> {
+    type ModuliSpace = NullModuliSpace<H>;
+    fn tower_map_source(&self) -> &Self::ModuliSpace {
+        &<NullModuliSpace<H>>::ABSENT
+    }
 }
 
 /// Phase 2 (orphan-closure) — resolver-absent default impl of `GaloisConnection<H>`.
@@ -691,20 +1369,109 @@ pub struct NullGaloisConnection<H: HostTypes> {
     _phantom: core::marker::PhantomData<H>,
 }
 impl<H: HostTypes> Default for NullGaloisConnection<H> {
-    fn default() -> Self { Self { _phantom: core::marker::PhantomData } }
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
 }
 impl<H: HostTypes> NullGaloisConnection<H> {
     /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
-    pub const ABSENT: NullGaloisConnection<H> = NullGaloisConnection { _phantom: core::marker::PhantomData };
+    pub const ABSENT: NullGaloisConnection<H> = NullGaloisConnection {
+        _phantom: core::marker::PhantomData,
+    };
 }
 impl<H: HostTypes> GaloisConnection<H> for NullGaloisConnection<H> {
     type TermExpression = crate::kernel::schema::NullTermExpression<H>;
-    fn upper_adjoint(&self) -> &Self::TermExpression { &<crate::kernel::schema::NullTermExpression<H>>::ABSENT }
-    fn lower_adjoint(&self) -> &Self::TermExpression { &<crate::kernel::schema::NullTermExpression<H>>::ABSENT }
-    fn fixpoint_condition(&self) -> &Self::TermExpression { &<crate::kernel::schema::NullTermExpression<H>>::ABSENT }
-    fn refinement_direction(&self) -> u64 { 0 }
-    fn galois_closure_property(&self) -> &Self::TermExpression { &<crate::kernel::schema::NullTermExpression<H>>::ABSENT }
-    fn galois_interior_property(&self) -> &Self::TermExpression { &<crate::kernel::schema::NullTermExpression<H>>::ABSENT }
+    fn upper_adjoint(&self) -> &Self::TermExpression {
+        &<crate::kernel::schema::NullTermExpression<H>>::ABSENT
+    }
+    fn lower_adjoint(&self) -> &Self::TermExpression {
+        &<crate::kernel::schema::NullTermExpression<H>>::ABSENT
+    }
+    fn fixpoint_condition(&self) -> &Self::TermExpression {
+        &<crate::kernel::schema::NullTermExpression<H>>::ABSENT
+    }
+    fn refinement_direction(&self) -> u64 {
+        0
+    }
+    fn galois_closure_property(&self) -> &Self::TermExpression {
+        &<crate::kernel::schema::NullTermExpression<H>>::ABSENT
+    }
+    fn galois_interior_property(&self) -> &Self::TermExpression {
+        &<crate::kernel::schema::NullTermExpression<H>>::ABSENT
+    }
+}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `TypeInclusion<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullTypeInclusion<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullTypeInclusion<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullTypeInclusion<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullTypeInclusion<H> = NullTypeInclusion {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> crate::user::morphism::Transform<H> for NullTypeInclusion<H> {
+    fn source(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    fn target(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    fn preserves_count(&self) -> usize {
+        0
+    }
+    fn preserves_at(&self, _index: usize) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    type ComputationTrace = crate::bridge::trace::NullComputationTrace<H>;
+    fn trace(&self) -> &Self::ComputationTrace {
+        &<crate::bridge::trace::NullComputationTrace<H>>::ABSENT
+    }
+    type TransformTarget = crate::user::morphism::NullTransform<H>;
+    fn composes_with(&self) -> &[Self::TransformTarget] {
+        &[]
+    }
+    type Identity = crate::kernel::op::NullIdentity<H>;
+    fn preserved_invariant(&self) -> &Self::Identity {
+        &<crate::kernel::op::NullIdentity<H>>::ABSENT
+    }
+    fn input_class(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    fn output_class(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    type Witness = crate::user::morphism::NullWitness<H>;
+    fn has_witness(&self) -> &[Self::Witness] {
+        &[]
+    }
+}
+impl<H: HostTypes> TypeInclusion<H> for NullTypeInclusion<H> {
+    type ConstrainedType = NullConstrainedType<H>;
+    fn inclusion_source(&self) -> &Self::ConstrainedType {
+        &<NullConstrainedType<H>>::ABSENT
+    }
+    fn inclusion_target(&self) -> &Self::ConstrainedType {
+        &<NullConstrainedType<H>>::ABSENT
+    }
+    fn inclusion_witness(&self) -> bool {
+        false
+    }
 }
 
 /// Phase 2 (orphan-closure) — resolver-absent default impl of `SubtypingLattice<H>`.
@@ -717,14 +1484,22 @@ pub struct NullSubtypingLattice<H: HostTypes> {
     _phantom: core::marker::PhantomData<H>,
 }
 impl<H: HostTypes> Default for NullSubtypingLattice<H> {
-    fn default() -> Self { Self { _phantom: core::marker::PhantomData } }
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
 }
 impl<H: HostTypes> NullSubtypingLattice<H> {
     /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
-    pub const ABSENT: NullSubtypingLattice<H> = NullSubtypingLattice { _phantom: core::marker::PhantomData };
+    pub const ABSENT: NullSubtypingLattice<H> = NullSubtypingLattice {
+        _phantom: core::marker::PhantomData,
+    };
 }
 impl<H: HostTypes> SubtypingLattice<H> for NullSubtypingLattice<H> {
-    fn lattice_depth(&self) -> u64 { 0 }
+    fn lattice_depth(&self) -> u64 {
+        0
+    }
 }
 
 /// Phase 2 (orphan-closure) — resolver-absent default impl of `ConstraintDefaults<H>`.
@@ -737,14 +1512,101 @@ pub struct NullConstraintDefaults<H: HostTypes> {
     _phantom: core::marker::PhantomData<H>,
 }
 impl<H: HostTypes> Default for NullConstraintDefaults<H> {
-    fn default() -> Self { Self { _phantom: core::marker::PhantomData } }
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
 }
 impl<H: HostTypes> NullConstraintDefaults<H> {
     /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
-    pub const ABSENT: NullConstraintDefaults<H> = NullConstraintDefaults { _phantom: core::marker::PhantomData };
+    pub const ABSENT: NullConstraintDefaults<H> = NullConstraintDefaults {
+        _phantom: core::marker::PhantomData,
+    };
 }
 impl<H: HostTypes> ConstraintDefaults<H> for NullConstraintDefaults<H> {
-    fn default_value(&self) -> i64 { 0 }
+    fn default_value(&self) -> i64 {
+        0
+    }
+}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `BoundConstraint<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullBoundConstraint<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullBoundConstraint<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullBoundConstraint<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullBoundConstraint<H> = NullBoundConstraint {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> Constraint<H> for NullBoundConstraint<H> {
+    fn metric_axis(&self) -> MetricAxis {
+        <MetricAxis>::default()
+    }
+    type SiteIndex = crate::bridge::partition::NullSiteIndex<H>;
+    fn pins_sites(&self) -> &[Self::SiteIndex] {
+        &[]
+    }
+    fn crossing_cost(&self) -> u64 {
+        0
+    }
+}
+impl<H: HostTypes> BoundConstraint<H> for NullBoundConstraint<H> {
+    fn modulus(&self) -> u64 {
+        0
+    }
+    fn residue(&self) -> u64 {
+        0
+    }
+    type Datum = crate::kernel::schema::NullDatum<H>;
+    fn carry_pattern(&self) -> &Self::Datum {
+        &<crate::kernel::schema::NullDatum<H>>::ABSENT
+    }
+    fn min_depth(&self) -> u64 {
+        0
+    }
+    fn max_depth(&self) -> u64 {
+        0
+    }
+    fn hamming_bound(&self) -> u64 {
+        0
+    }
+    fn site_index(&self) -> u64 {
+        0
+    }
+    fn site_value(&self) -> &Self::Datum {
+        &<crate::kernel::schema::NullDatum<H>>::ABSENT
+    }
+    fn affine_offset(&self) -> &Self::Datum {
+        &<crate::kernel::schema::NullDatum<H>>::ABSENT
+    }
+    fn affine_generator(&self) -> &[Self::Datum] {
+        &[]
+    }
+    type Observable = crate::bridge::observable::NullObservable<H>;
+    fn bound_observable(&self) -> &Self::Observable {
+        &<crate::bridge::observable::NullObservable<H>>::ABSENT
+    }
+    type BoundShape = NullBoundShape<H>;
+    fn bound_shape(&self) -> &Self::BoundShape {
+        &<NullBoundShape<H>>::ABSENT
+    }
+    fn bound_arguments(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
 }
 
 /// Phase 2 (orphan-closure) — resolver-absent default impl of `BoundShape<H>`.
@@ -757,13 +1619,63 @@ pub struct NullBoundShape<H: HostTypes> {
     _phantom: core::marker::PhantomData<H>,
 }
 impl<H: HostTypes> Default for NullBoundShape<H> {
-    fn default() -> Self { Self { _phantom: core::marker::PhantomData } }
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
 }
 impl<H: HostTypes> NullBoundShape<H> {
     /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
-    pub const ABSENT: NullBoundShape<H> = NullBoundShape { _phantom: core::marker::PhantomData };
+    pub const ABSENT: NullBoundShape<H> = NullBoundShape {
+        _phantom: core::marker::PhantomData,
+    };
 }
-impl<H: HostTypes> BoundShape<H> for NullBoundShape<H> {
+impl<H: HostTypes> BoundShape<H> for NullBoundShape<H> {}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `Conjunction<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullConjunction<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullConjunction<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullConjunction<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullConjunction<H> = NullConjunction {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> Constraint<H> for NullConjunction<H> {
+    fn metric_axis(&self) -> MetricAxis {
+        <MetricAxis>::default()
+    }
+    type SiteIndex = crate::bridge::partition::NullSiteIndex<H>;
+    fn pins_sites(&self) -> &[Self::SiteIndex] {
+        &[]
+    }
+    fn crossing_cost(&self) -> u64 {
+        0
+    }
+}
+impl<H: HostTypes> Conjunction<H> for NullConjunction<H> {
+    type Constraint = NullConstraint<H>;
+    fn composed_from(&self) -> &[Self::Constraint] {
+        &[]
+    }
+    type BoundConstraint = NullBoundConstraint<H>;
+    fn conjuncts(&self) -> &[Self::BoundConstraint] {
+        &[]
+    }
 }
 
 /// A single value from an ordered domain. siteCount = n (quantization bits).

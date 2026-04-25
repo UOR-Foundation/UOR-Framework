@@ -31,3 +31,71 @@ pub trait OperadComposition<H: HostTypes> {
     /// Grounding of the composed type F(G).
     fn composed_grounding(&self) -> &Self::GroundingMap;
 }
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `StructuralOperad<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullStructuralOperad<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullStructuralOperad<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullStructuralOperad<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullStructuralOperad<H> = NullStructuralOperad {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> StructuralOperad<H> for NullStructuralOperad<H> {
+    type StructuralOperadTarget = NullStructuralOperad<H>;
+    fn operad_structure(&self) -> &Self::StructuralOperadTarget {
+        &<NullStructuralOperad<H>>::ABSENT
+    }
+}
+
+#[doc(hidden)]
+#[doc = "THEORY-DEFERRED \u{2014} not a valid implementation; see [docs/theory_deferred.md]. Exists only to satisfy downstream trait-bound references."]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullOperadComposition<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullOperadComposition<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullOperadComposition<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullOperadComposition<H> = NullOperadComposition {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> OperadComposition<H> for NullOperadComposition<H> {
+    type TypeDefinition = crate::user::type_::NullTypeDefinition<H>;
+    fn outer_type(&self) -> &Self::TypeDefinition {
+        &<crate::user::type_::NullTypeDefinition<H>>::ABSENT
+    }
+    fn inner_type(&self) -> &Self::TypeDefinition {
+        &<crate::user::type_::NullTypeDefinition<H>>::ABSENT
+    }
+    fn composed_type(&self) -> &Self::TypeDefinition {
+        &<crate::user::type_::NullTypeDefinition<H>>::ABSENT
+    }
+    fn composed_site_count(&self) -> u64 {
+        0
+    }
+    type GroundingMap = crate::user::morphism::NullGroundingMap<H>;
+    fn composed_grounding(&self) -> &Self::GroundingMap {
+        &<crate::user::morphism::NullGroundingMap<H>>::ABSENT
+    }
+}

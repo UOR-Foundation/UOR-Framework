@@ -4,6 +4,7 @@
 //!
 //! Space: Kernel
 
+use crate::enums::MeasurementUnit;
 use crate::HostTypes;
 
 /// A contiguous range of u:Element values accessible during a single reduction step. Defines the resolver’s working set.
@@ -63,6 +64,42 @@ pub trait RegionAllocation<H: HostTypes> {
     fn allocation_working_set(&self) -> &[Self::WorkingSet];
 }
 
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `AddressRegion<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullAddressRegion<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullAddressRegion<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullAddressRegion<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullAddressRegion<H> = NullAddressRegion {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> AddressRegion<H> for NullAddressRegion<H> {
+    type RegionBound = NullRegionBound<H>;
+    fn region_bound(&self) -> &Self::RegionBound {
+        &<NullRegionBound<H>>::ABSENT
+    }
+    type LocalityMetric = NullLocalityMetric<H>;
+    fn locality_metric(&self) -> &Self::LocalityMetric {
+        &<NullLocalityMetric<H>>::ABSENT
+    }
+    fn region_cardinality(&self) -> u64 {
+        0
+    }
+}
+
 /// Phase 2 (orphan-closure) — resolver-absent default impl of `RegionBound<H>`.
 /// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
 /// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
@@ -73,14 +110,136 @@ pub struct NullRegionBound<H: HostTypes> {
     _phantom: core::marker::PhantomData<H>,
 }
 impl<H: HostTypes> Default for NullRegionBound<H> {
-    fn default() -> Self { Self { _phantom: core::marker::PhantomData } }
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
 }
 impl<H: HostTypes> NullRegionBound<H> {
     /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
-    pub const ABSENT: NullRegionBound<H> = NullRegionBound { _phantom: core::marker::PhantomData };
+    pub const ABSENT: NullRegionBound<H> = NullRegionBound {
+        _phantom: core::marker::PhantomData,
+    };
 }
 impl<H: HostTypes> RegionBound<H> for NullRegionBound<H> {
     type Element = crate::kernel::address::NullElement<H>;
-    fn region_lower(&self) -> &Self::Element { &<crate::kernel::address::NullElement<H>>::ABSENT }
-    fn region_upper(&self) -> &Self::Element { &<crate::kernel::address::NullElement<H>>::ABSENT }
+    fn region_lower(&self) -> &Self::Element {
+        &<crate::kernel::address::NullElement<H>>::ABSENT
+    }
+    fn region_upper(&self) -> &Self::Element {
+        &<crate::kernel::address::NullElement<H>>::ABSENT
+    }
+}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `LocalityMetric<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullLocalityMetric<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullLocalityMetric<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullLocalityMetric<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullLocalityMetric<H> = NullLocalityMetric {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> crate::bridge::observable::Observable<H> for NullLocalityMetric<H> {
+    fn value(&self) -> H::Decimal {
+        H::EMPTY_DECIMAL
+    }
+    fn source(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    fn target(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    fn has_unit(&self) -> MeasurementUnit {
+        <MeasurementUnit>::default()
+    }
+}
+impl<H: HostTypes> crate::bridge::observable::MetricObservable<H> for NullLocalityMetric<H> {}
+impl<H: HostTypes> LocalityMetric<H> for NullLocalityMetric<H> {}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `WorkingSet<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullWorkingSet<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullWorkingSet<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullWorkingSet<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullWorkingSet<H> = NullWorkingSet {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> WorkingSet<H> for NullWorkingSet<H> {
+    type AddressRegion = NullAddressRegion<H>;
+    fn working_set_regions(&self) -> &[Self::AddressRegion] {
+        &[]
+    }
+    type ReductionStep = crate::kernel::reduction::NullReductionStep<H>;
+    fn working_set_stage(&self) -> &Self::ReductionStep {
+        &<crate::kernel::reduction::NullReductionStep<H>>::ABSENT
+    }
+    type TypeDefinition = crate::user::type_::NullTypeDefinition<H>;
+    fn working_set_type(&self) -> &Self::TypeDefinition {
+        &<crate::user::type_::NullTypeDefinition<H>>::ABSENT
+    }
+    fn working_set_size(&self) -> u64 {
+        0
+    }
+}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `RegionAllocation<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullRegionAllocation<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullRegionAllocation<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullRegionAllocation<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullRegionAllocation<H> = NullRegionAllocation {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> RegionAllocation<H> for NullRegionAllocation<H> {
+    type ReductionStep = crate::kernel::reduction::NullReductionStep<H>;
+    fn allocation_stage(&self) -> &[Self::ReductionStep] {
+        &[]
+    }
+    type WorkingSet = NullWorkingSet<H>;
+    fn allocation_working_set(&self) -> &[Self::WorkingSet] {
+        &[]
+    }
 }

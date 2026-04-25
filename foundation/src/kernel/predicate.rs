@@ -105,19 +105,33 @@ pub struct NullPredicate<H: HostTypes> {
     _phantom: core::marker::PhantomData<H>,
 }
 impl<H: HostTypes> Default for NullPredicate<H> {
-    fn default() -> Self { Self { _phantom: core::marker::PhantomData } }
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
 }
 impl<H: HostTypes> NullPredicate<H> {
     /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
-    pub const ABSENT: NullPredicate<H> = NullPredicate { _phantom: core::marker::PhantomData };
+    pub const ABSENT: NullPredicate<H> = NullPredicate {
+        _phantom: core::marker::PhantomData,
+    };
 }
 impl<H: HostTypes> Predicate<H> for NullPredicate<H> {
-    fn evaluates_over(&self) -> &H::HostString { H::EMPTY_HOST_STRING }
+    fn evaluates_over(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
     type Term = crate::kernel::schema::NullTerm<H>;
-    fn evaluator_term(&self) -> &Self::Term { &<crate::kernel::schema::NullTerm<H>>::ABSENT }
-    fn termination_witness(&self) -> &H::HostString { H::EMPTY_HOST_STRING }
+    fn evaluator_term(&self) -> &Self::Term {
+        &<crate::kernel::schema::NullTerm<H>>::ABSENT
+    }
+    fn termination_witness(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
     type DescentMeasure = crate::kernel::recursion::NullDescentMeasure<H>;
-    fn bounded_evaluator(&self) -> &[Self::DescentMeasure] { &[] }
+    fn bounded_evaluator(&self) -> &[Self::DescentMeasure] {
+        &[]
+    }
 }
 
 /// Phase 2 (orphan-closure) — resolver-absent default impl of `TypePredicate<H>`.
@@ -130,22 +144,35 @@ pub struct NullTypePredicate<H: HostTypes> {
     _phantom: core::marker::PhantomData<H>,
 }
 impl<H: HostTypes> Default for NullTypePredicate<H> {
-    fn default() -> Self { Self { _phantom: core::marker::PhantomData } }
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
 }
 impl<H: HostTypes> NullTypePredicate<H> {
     /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
-    pub const ABSENT: NullTypePredicate<H> = NullTypePredicate { _phantom: core::marker::PhantomData };
+    pub const ABSENT: NullTypePredicate<H> = NullTypePredicate {
+        _phantom: core::marker::PhantomData,
+    };
 }
 impl<H: HostTypes> Predicate<H> for NullTypePredicate<H> {
-    fn evaluates_over(&self) -> &H::HostString { H::EMPTY_HOST_STRING }
+    fn evaluates_over(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
     type Term = crate::kernel::schema::NullTerm<H>;
-    fn evaluator_term(&self) -> &Self::Term { &<crate::kernel::schema::NullTerm<H>>::ABSENT }
-    fn termination_witness(&self) -> &H::HostString { H::EMPTY_HOST_STRING }
+    fn evaluator_term(&self) -> &Self::Term {
+        &<crate::kernel::schema::NullTerm<H>>::ABSENT
+    }
+    fn termination_witness(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
     type DescentMeasure = crate::kernel::recursion::NullDescentMeasure<H>;
-    fn bounded_evaluator(&self) -> &[Self::DescentMeasure] { &[] }
+    fn bounded_evaluator(&self) -> &[Self::DescentMeasure] {
+        &[]
+    }
 }
-impl<H: HostTypes> TypePredicate<H> for NullTypePredicate<H> {
-}
+impl<H: HostTypes> TypePredicate<H> for NullTypePredicate<H> {}
 
 /// Phase 2 (orphan-closure) — resolver-absent default impl of `StatePredicate<H>`.
 /// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
@@ -157,22 +184,35 @@ pub struct NullStatePredicate<H: HostTypes> {
     _phantom: core::marker::PhantomData<H>,
 }
 impl<H: HostTypes> Default for NullStatePredicate<H> {
-    fn default() -> Self { Self { _phantom: core::marker::PhantomData } }
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
 }
 impl<H: HostTypes> NullStatePredicate<H> {
     /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
-    pub const ABSENT: NullStatePredicate<H> = NullStatePredicate { _phantom: core::marker::PhantomData };
+    pub const ABSENT: NullStatePredicate<H> = NullStatePredicate {
+        _phantom: core::marker::PhantomData,
+    };
 }
 impl<H: HostTypes> Predicate<H> for NullStatePredicate<H> {
-    fn evaluates_over(&self) -> &H::HostString { H::EMPTY_HOST_STRING }
+    fn evaluates_over(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
     type Term = crate::kernel::schema::NullTerm<H>;
-    fn evaluator_term(&self) -> &Self::Term { &<crate::kernel::schema::NullTerm<H>>::ABSENT }
-    fn termination_witness(&self) -> &H::HostString { H::EMPTY_HOST_STRING }
+    fn evaluator_term(&self) -> &Self::Term {
+        &<crate::kernel::schema::NullTerm<H>>::ABSENT
+    }
+    fn termination_witness(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
     type DescentMeasure = crate::kernel::recursion::NullDescentMeasure<H>;
-    fn bounded_evaluator(&self) -> &[Self::DescentMeasure] { &[] }
+    fn bounded_evaluator(&self) -> &[Self::DescentMeasure] {
+        &[]
+    }
 }
-impl<H: HostTypes> StatePredicate<H> for NullStatePredicate<H> {
-}
+impl<H: HostTypes> StatePredicate<H> for NullStatePredicate<H> {}
 
 /// Phase 2 (orphan-closure) — resolver-absent default impl of `SitePredicate<H>`.
 /// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
@@ -184,22 +224,35 @@ pub struct NullSitePredicate<H: HostTypes> {
     _phantom: core::marker::PhantomData<H>,
 }
 impl<H: HostTypes> Default for NullSitePredicate<H> {
-    fn default() -> Self { Self { _phantom: core::marker::PhantomData } }
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
 }
 impl<H: HostTypes> NullSitePredicate<H> {
     /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
-    pub const ABSENT: NullSitePredicate<H> = NullSitePredicate { _phantom: core::marker::PhantomData };
+    pub const ABSENT: NullSitePredicate<H> = NullSitePredicate {
+        _phantom: core::marker::PhantomData,
+    };
 }
 impl<H: HostTypes> Predicate<H> for NullSitePredicate<H> {
-    fn evaluates_over(&self) -> &H::HostString { H::EMPTY_HOST_STRING }
+    fn evaluates_over(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
     type Term = crate::kernel::schema::NullTerm<H>;
-    fn evaluator_term(&self) -> &Self::Term { &<crate::kernel::schema::NullTerm<H>>::ABSENT }
-    fn termination_witness(&self) -> &H::HostString { H::EMPTY_HOST_STRING }
+    fn evaluator_term(&self) -> &Self::Term {
+        &<crate::kernel::schema::NullTerm<H>>::ABSENT
+    }
+    fn termination_witness(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
     type DescentMeasure = crate::kernel::recursion::NullDescentMeasure<H>;
-    fn bounded_evaluator(&self) -> &[Self::DescentMeasure] { &[] }
+    fn bounded_evaluator(&self) -> &[Self::DescentMeasure] {
+        &[]
+    }
 }
-impl<H: HostTypes> SitePredicate<H> for NullSitePredicate<H> {
-}
+impl<H: HostTypes> SitePredicate<H> for NullSitePredicate<H> {}
 
 /// Phase 2 (orphan-closure) — resolver-absent default impl of `DispatchRule<H>`.
 /// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
@@ -211,18 +264,32 @@ pub struct NullDispatchRule<H: HostTypes> {
     _phantom: core::marker::PhantomData<H>,
 }
 impl<H: HostTypes> Default for NullDispatchRule<H> {
-    fn default() -> Self { Self { _phantom: core::marker::PhantomData } }
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
 }
 impl<H: HostTypes> NullDispatchRule<H> {
     /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
-    pub const ABSENT: NullDispatchRule<H> = NullDispatchRule { _phantom: core::marker::PhantomData };
+    pub const ABSENT: NullDispatchRule<H> = NullDispatchRule {
+        _phantom: core::marker::PhantomData,
+    };
 }
 impl<H: HostTypes> DispatchRule<H> for NullDispatchRule<H> {
     type Predicate = NullPredicate<H>;
-    fn dispatch_predicate(&self) -> &Self::Predicate { &<NullPredicate<H>>::ABSENT }
-    fn dispatch_target(&self) -> &H::HostString { H::EMPTY_HOST_STRING }
-    fn dispatch_priority(&self) -> u64 { 0 }
-    fn dispatch_index(&self) -> u64 { 0 }
+    fn dispatch_predicate(&self) -> &Self::Predicate {
+        &<NullPredicate<H>>::ABSENT
+    }
+    fn dispatch_target(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    fn dispatch_priority(&self) -> u64 {
+        0
+    }
+    fn dispatch_index(&self) -> u64 {
+        0
+    }
 }
 
 /// Phase 2 (orphan-closure) — resolver-absent default impl of `DispatchTable<H>`.
@@ -235,17 +302,66 @@ pub struct NullDispatchTable<H: HostTypes> {
     _phantom: core::marker::PhantomData<H>,
 }
 impl<H: HostTypes> Default for NullDispatchTable<H> {
-    fn default() -> Self { Self { _phantom: core::marker::PhantomData } }
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
 }
 impl<H: HostTypes> NullDispatchTable<H> {
     /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
-    pub const ABSENT: NullDispatchTable<H> = NullDispatchTable { _phantom: core::marker::PhantomData };
+    pub const ABSENT: NullDispatchTable<H> = NullDispatchTable {
+        _phantom: core::marker::PhantomData,
+    };
 }
 impl<H: HostTypes> DispatchTable<H> for NullDispatchTable<H> {
     type DispatchRule = NullDispatchRule<H>;
-    fn dispatch_rules(&self) -> &[Self::DispatchRule] { &[] }
-    fn is_exhaustive(&self) -> bool { false }
-    fn is_mutually_exclusive(&self) -> bool { false }
+    fn dispatch_rules(&self) -> &[Self::DispatchRule] {
+        &[]
+    }
+    fn is_exhaustive(&self) -> bool {
+        false
+    }
+    fn is_mutually_exclusive(&self) -> bool {
+        false
+    }
+}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `GuardedTransition<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullGuardedTransition<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullGuardedTransition<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullGuardedTransition<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullGuardedTransition<H> = NullGuardedTransition {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> GuardedTransition<H> for NullGuardedTransition<H> {
+    type StatePredicate = NullStatePredicate<H>;
+    fn guard_predicate(&self) -> &Self::StatePredicate {
+        &<NullStatePredicate<H>>::ABSENT
+    }
+    type Effect = crate::kernel::effect::NullEffect<H>;
+    fn guard_effect(&self) -> &Self::Effect {
+        &<crate::kernel::effect::NullEffect<H>>::ABSENT
+    }
+    type ReductionStep = crate::kernel::reduction::NullReductionStep<H>;
+    fn guard_target(&self) -> &Self::ReductionStep {
+        &<crate::kernel::reduction::NullReductionStep<H>>::ABSENT
+    }
 }
 
 /// Phase 2 (orphan-closure) — resolver-absent default impl of `MatchArm<H>`.
@@ -258,18 +374,30 @@ pub struct NullMatchArm<H: HostTypes> {
     _phantom: core::marker::PhantomData<H>,
 }
 impl<H: HostTypes> Default for NullMatchArm<H> {
-    fn default() -> Self { Self { _phantom: core::marker::PhantomData } }
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
 }
 impl<H: HostTypes> NullMatchArm<H> {
     /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
-    pub const ABSENT: NullMatchArm<H> = NullMatchArm { _phantom: core::marker::PhantomData };
+    pub const ABSENT: NullMatchArm<H> = NullMatchArm {
+        _phantom: core::marker::PhantomData,
+    };
 }
 impl<H: HostTypes> MatchArm<H> for NullMatchArm<H> {
     type Predicate = NullPredicate<H>;
-    fn arm_predicate(&self) -> &Self::Predicate { &<NullPredicate<H>>::ABSENT }
+    fn arm_predicate(&self) -> &Self::Predicate {
+        &<NullPredicate<H>>::ABSENT
+    }
     type Term = crate::kernel::schema::NullTerm<H>;
-    fn arm_result(&self) -> &Self::Term { &<crate::kernel::schema::NullTerm<H>>::ABSENT }
-    fn arm_index(&self) -> u64 { 0 }
+    fn arm_result(&self) -> &Self::Term {
+        &<crate::kernel::schema::NullTerm<H>>::ABSENT
+    }
+    fn arm_index(&self) -> u64 {
+        0
+    }
 }
 
 /// Phase 2 (orphan-closure) — resolver-absent default impl of `MatchExpression<H>`.
@@ -282,17 +410,24 @@ pub struct NullMatchExpression<H: HostTypes> {
     _phantom: core::marker::PhantomData<H>,
 }
 impl<H: HostTypes> Default for NullMatchExpression<H> {
-    fn default() -> Self { Self { _phantom: core::marker::PhantomData } }
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
 }
 impl<H: HostTypes> NullMatchExpression<H> {
     /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
-    pub const ABSENT: NullMatchExpression<H> = NullMatchExpression { _phantom: core::marker::PhantomData };
+    pub const ABSENT: NullMatchExpression<H> = NullMatchExpression {
+        _phantom: core::marker::PhantomData,
+    };
 }
-impl<H: HostTypes> crate::kernel::schema::Term<H> for NullMatchExpression<H> {
-}
+impl<H: HostTypes> crate::kernel::schema::Term<H> for NullMatchExpression<H> {}
 impl<H: HostTypes> MatchExpression<H> for NullMatchExpression<H> {
     type MatchArm = NullMatchArm<H>;
-    fn match_arms(&self) -> &[Self::MatchArm] { &[] }
+    fn match_arms(&self) -> &[Self::MatchArm] {
+        &[]
+    }
 }
 
 /// True on every Datum. Match-arm default catch-all.

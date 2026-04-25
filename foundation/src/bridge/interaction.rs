@@ -112,18 +112,32 @@ pub struct NullInteractionContext<H: HostTypes> {
     _phantom: core::marker::PhantomData<H>,
 }
 impl<H: HostTypes> Default for NullInteractionContext<H> {
-    fn default() -> Self { Self { _phantom: core::marker::PhantomData } }
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
 }
 impl<H: HostTypes> NullInteractionContext<H> {
     /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
-    pub const ABSENT: NullInteractionContext<H> = NullInteractionContext { _phantom: core::marker::PhantomData };
+    pub const ABSENT: NullInteractionContext<H> = NullInteractionContext {
+        _phantom: core::marker::PhantomData,
+    };
 }
 impl<H: HostTypes> InteractionContext<H> for NullInteractionContext<H> {
     type TermExpression = crate::kernel::schema::NullTermExpression<H>;
-    fn entity_a(&self) -> &Self::TermExpression { &<crate::kernel::schema::NullTermExpression<H>>::ABSENT }
-    fn entity_b(&self) -> &Self::TermExpression { &<crate::kernel::schema::NullTermExpression<H>>::ABSENT }
-    fn shared_site_mask(&self) -> u64 { 0 }
-    fn commutator_norm(&self) -> H::Decimal { H::EMPTY_DECIMAL }
+    fn entity_a(&self) -> &Self::TermExpression {
+        &<crate::kernel::schema::NullTermExpression<H>>::ABSENT
+    }
+    fn entity_b(&self) -> &Self::TermExpression {
+        &<crate::kernel::schema::NullTermExpression<H>>::ABSENT
+    }
+    fn shared_site_mask(&self) -> u64 {
+        0
+    }
+    fn commutator_norm(&self) -> H::Decimal {
+        H::EMPTY_DECIMAL
+    }
 }
 
 /// Phase 2 (orphan-closure) — resolver-absent default impl of `CommutatorState<H>`.
@@ -136,14 +150,22 @@ pub struct NullCommutatorState<H: HostTypes> {
     _phantom: core::marker::PhantomData<H>,
 }
 impl<H: HostTypes> Default for NullCommutatorState<H> {
-    fn default() -> Self { Self { _phantom: core::marker::PhantomData } }
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
 }
 impl<H: HostTypes> NullCommutatorState<H> {
     /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
-    pub const ABSENT: NullCommutatorState<H> = NullCommutatorState { _phantom: core::marker::PhantomData };
+    pub const ABSENT: NullCommutatorState<H> = NullCommutatorState {
+        _phantom: core::marker::PhantomData,
+    };
 }
 impl<H: HostTypes> CommutatorState<H> for NullCommutatorState<H> {
-    fn commutator_value(&self) -> H::Decimal { H::EMPTY_DECIMAL }
+    fn commutator_value(&self) -> H::Decimal {
+        H::EMPTY_DECIMAL
+    }
 }
 
 /// Phase 2 (orphan-closure) — resolver-absent default impl of `AssociatorState<H>`.
@@ -156,14 +178,64 @@ pub struct NullAssociatorState<H: HostTypes> {
     _phantom: core::marker::PhantomData<H>,
 }
 impl<H: HostTypes> Default for NullAssociatorState<H> {
-    fn default() -> Self { Self { _phantom: core::marker::PhantomData } }
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
 }
 impl<H: HostTypes> NullAssociatorState<H> {
     /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
-    pub const ABSENT: NullAssociatorState<H> = NullAssociatorState { _phantom: core::marker::PhantomData };
+    pub const ABSENT: NullAssociatorState<H> = NullAssociatorState {
+        _phantom: core::marker::PhantomData,
+    };
 }
 impl<H: HostTypes> AssociatorState<H> for NullAssociatorState<H> {
-    fn associator_norm(&self) -> H::Decimal { H::EMPTY_DECIMAL }
+    fn associator_norm(&self) -> H::Decimal {
+        H::EMPTY_DECIMAL
+    }
+}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `AssociatorTriple<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullAssociatorTriple<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullAssociatorTriple<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullAssociatorTriple<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullAssociatorTriple<H> = NullAssociatorTriple {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> AssociatorTriple<H> for NullAssociatorTriple<H> {
+    type Datum = crate::kernel::schema::NullDatum<H>;
+    fn triple_component_a(&self) -> &Self::Datum {
+        &<crate::kernel::schema::NullDatum<H>>::ABSENT
+    }
+    fn triple_component_b(&self) -> &Self::Datum {
+        &<crate::kernel::schema::NullDatum<H>>::ABSENT
+    }
+    fn triple_component_c(&self) -> &Self::Datum {
+        &<crate::kernel::schema::NullDatum<H>>::ABSENT
+    }
+    type Observable = crate::bridge::observable::NullObservable<H>;
+    fn associator_profile_ref(&self) -> &Self::Observable {
+        &<crate::bridge::observable::NullObservable<H>>::ABSENT
+    }
+    fn associator_norm_value(&self) -> H::Decimal {
+        H::EMPTY_DECIMAL
+    }
 }
 
 /// Phase 2 (orphan-closure) — resolver-absent default impl of `ThreeWaySite<H>`.
@@ -176,19 +248,35 @@ pub struct NullThreeWaySite<H: HostTypes> {
     _phantom: core::marker::PhantomData<H>,
 }
 impl<H: HostTypes> Default for NullThreeWaySite<H> {
-    fn default() -> Self { Self { _phantom: core::marker::PhantomData } }
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
 }
 impl<H: HostTypes> NullThreeWaySite<H> {
     /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
-    pub const ABSENT: NullThreeWaySite<H> = NullThreeWaySite { _phantom: core::marker::PhantomData };
+    pub const ABSENT: NullThreeWaySite<H> = NullThreeWaySite {
+        _phantom: core::marker::PhantomData,
+    };
 }
 impl<H: HostTypes> ThreeWaySite<H> for NullThreeWaySite<H> {
-    fn site_position(&self) -> u64 { 0 }
-    fn left_grouping_value(&self) -> H::Decimal { H::EMPTY_DECIMAL }
-    fn right_grouping_value(&self) -> H::Decimal { H::EMPTY_DECIMAL }
-    fn is_pinned(&self) -> bool { false }
+    fn site_position(&self) -> u64 {
+        0
+    }
+    fn left_grouping_value(&self) -> H::Decimal {
+        H::EMPTY_DECIMAL
+    }
+    fn right_grouping_value(&self) -> H::Decimal {
+        H::EMPTY_DECIMAL
+    }
+    fn is_pinned(&self) -> bool {
+        false
+    }
     type TermExpression = crate::kernel::schema::NullTermExpression<H>;
-    fn pinning_pair(&self) -> &Self::TermExpression { &<crate::kernel::schema::NullTermExpression<H>>::ABSENT }
+    fn pinning_pair(&self) -> &Self::TermExpression {
+        &<crate::kernel::schema::NullTermExpression<H>>::ABSENT
+    }
 }
 
 /// Phase 2 (orphan-closure) — resolver-absent default impl of `NegotiationTrace<H>`.
@@ -201,19 +289,35 @@ pub struct NullNegotiationTrace<H: HostTypes> {
     _phantom: core::marker::PhantomData<H>,
 }
 impl<H: HostTypes> Default for NullNegotiationTrace<H> {
-    fn default() -> Self { Self { _phantom: core::marker::PhantomData } }
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
 }
 impl<H: HostTypes> NullNegotiationTrace<H> {
     /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
-    pub const ABSENT: NullNegotiationTrace<H> = NullNegotiationTrace { _phantom: core::marker::PhantomData };
+    pub const ABSENT: NullNegotiationTrace<H> = NullNegotiationTrace {
+        _phantom: core::marker::PhantomData,
+    };
 }
 impl<H: HostTypes> NegotiationTrace<H> for NullNegotiationTrace<H> {
-    fn negotiation_steps(&self) -> u64 { 0 }
-    fn is_convergent(&self) -> bool { false }
-    fn trace_length(&self) -> u64 { 0 }
-    fn convergence_rate(&self) -> H::Decimal { H::EMPTY_DECIMAL }
+    fn negotiation_steps(&self) -> u64 {
+        0
+    }
+    fn is_convergent(&self) -> bool {
+        false
+    }
+    fn trace_length(&self) -> u64 {
+        0
+    }
+    fn convergence_rate(&self) -> H::Decimal {
+        H::EMPTY_DECIMAL
+    }
     type TermExpression = crate::kernel::schema::NullTermExpression<H>;
-    fn terminal_value(&self) -> &Self::TermExpression { &<crate::kernel::schema::NullTermExpression<H>>::ABSENT }
+    fn terminal_value(&self) -> &Self::TermExpression {
+        &<crate::kernel::schema::NullTermExpression<H>>::ABSENT
+    }
 }
 
 /// Phase 2 (orphan-closure) — resolver-absent default impl of `MutualModelTrace<H>`.
@@ -226,14 +330,22 @@ pub struct NullMutualModelTrace<H: HostTypes> {
     _phantom: core::marker::PhantomData<H>,
 }
 impl<H: HostTypes> Default for NullMutualModelTrace<H> {
-    fn default() -> Self { Self { _phantom: core::marker::PhantomData } }
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
 }
 impl<H: HostTypes> NullMutualModelTrace<H> {
     /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
-    pub const ABSENT: NullMutualModelTrace<H> = NullMutualModelTrace { _phantom: core::marker::PhantomData };
+    pub const ABSENT: NullMutualModelTrace<H> = NullMutualModelTrace {
+        _phantom: core::marker::PhantomData,
+    };
 }
 impl<H: HostTypes> MutualModelTrace<H> for NullMutualModelTrace<H> {
-    fn model_convergent(&self) -> bool { false }
+    fn model_convergent(&self) -> bool {
+        false
+    }
 }
 
 /// Phase 2 (orphan-closure) — resolver-absent default impl of `InteractionNerve<H>`.
@@ -246,15 +358,25 @@ pub struct NullInteractionNerve<H: HostTypes> {
     _phantom: core::marker::PhantomData<H>,
 }
 impl<H: HostTypes> Default for NullInteractionNerve<H> {
-    fn default() -> Self { Self { _phantom: core::marker::PhantomData } }
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
 }
 impl<H: HostTypes> NullInteractionNerve<H> {
     /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
-    pub const ABSENT: NullInteractionNerve<H> = NullInteractionNerve { _phantom: core::marker::PhantomData };
+    pub const ABSENT: NullInteractionNerve<H> = NullInteractionNerve {
+        _phantom: core::marker::PhantomData,
+    };
 }
 impl<H: HostTypes> InteractionNerve<H> for NullInteractionNerve<H> {
-    fn nerve_dimension(&self) -> u64 { 0 }
-    fn nerve_betti_numbers(&self) -> u64 { 0 }
+    fn nerve_dimension(&self) -> u64 {
+        0
+    }
+    fn nerve_betti_numbers(&self) -> u64 {
+        0
+    }
 }
 
 /// Phase 2 (orphan-closure) — resolver-absent default impl of `InteractionComposition<H>`.
@@ -267,12 +389,20 @@ pub struct NullInteractionComposition<H: HostTypes> {
     _phantom: core::marker::PhantomData<H>,
 }
 impl<H: HostTypes> Default for NullInteractionComposition<H> {
-    fn default() -> Self { Self { _phantom: core::marker::PhantomData } }
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
 }
 impl<H: HostTypes> NullInteractionComposition<H> {
     /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
-    pub const ABSENT: NullInteractionComposition<H> = NullInteractionComposition { _phantom: core::marker::PhantomData };
+    pub const ABSENT: NullInteractionComposition<H> = NullInteractionComposition {
+        _phantom: core::marker::PhantomData,
+    };
 }
 impl<H: HostTypes> InteractionComposition<H> for NullInteractionComposition<H> {
-    fn reification_depth(&self) -> u64 { 0 }
+    fn reification_depth(&self) -> u64 {
+        0
+    }
 }

@@ -4,6 +4,7 @@
 //!
 //! Space: User
 
+use crate::enums::ProofStrategy;
 use crate::HostTypes;
 
 /// A map between UOR objects. The root abstraction: source, target, and optionally what structure (if any) is preserved. This is what cert:TransformCertificate certifies.
@@ -269,6 +270,894 @@ pub trait SequenceElement<H: HostTypes> {
     fn element_index(&self) -> u64;
 }
 
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `Transform<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullTransform<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullTransform<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullTransform<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullTransform<H> = NullTransform {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> Transform<H> for NullTransform<H> {
+    fn source(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    fn target(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    fn preserves_count(&self) -> usize {
+        0
+    }
+    fn preserves_at(&self, _index: usize) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    type ComputationTrace = crate::bridge::trace::NullComputationTrace<H>;
+    fn trace(&self) -> &Self::ComputationTrace {
+        &<crate::bridge::trace::NullComputationTrace<H>>::ABSENT
+    }
+    type TransformTarget = NullTransform<H>;
+    fn composes_with(&self) -> &[Self::TransformTarget] {
+        &[]
+    }
+    type Identity = crate::kernel::op::NullIdentity<H>;
+    fn preserved_invariant(&self) -> &Self::Identity {
+        &<crate::kernel::op::NullIdentity<H>>::ABSENT
+    }
+    fn input_class(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    fn output_class(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    type Witness = NullWitness<H>;
+    fn has_witness(&self) -> &[Self::Witness] {
+        &[]
+    }
+}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `Isometry<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullIsometry<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullIsometry<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullIsometry<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullIsometry<H> = NullIsometry {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> Transform<H> for NullIsometry<H> {
+    fn source(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    fn target(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    fn preserves_count(&self) -> usize {
+        0
+    }
+    fn preserves_at(&self, _index: usize) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    type ComputationTrace = crate::bridge::trace::NullComputationTrace<H>;
+    fn trace(&self) -> &Self::ComputationTrace {
+        &<crate::bridge::trace::NullComputationTrace<H>>::ABSENT
+    }
+    type TransformTarget = NullTransform<H>;
+    fn composes_with(&self) -> &[Self::TransformTarget] {
+        &[]
+    }
+    type Identity = crate::kernel::op::NullIdentity<H>;
+    fn preserved_invariant(&self) -> &Self::Identity {
+        &<crate::kernel::op::NullIdentity<H>>::ABSENT
+    }
+    fn input_class(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    fn output_class(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    type Witness = NullWitness<H>;
+    fn has_witness(&self) -> &[Self::Witness] {
+        &[]
+    }
+}
+impl<H: HostTypes> Isometry<H> for NullIsometry<H> {
+    type MetricObservable = crate::bridge::observable::NullMetricObservable<H>;
+    fn preserves_metric(&self) -> &[Self::MetricObservable] {
+        &[]
+    }
+}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `Embedding<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullEmbedding<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullEmbedding<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullEmbedding<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullEmbedding<H> = NullEmbedding {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> Transform<H> for NullEmbedding<H> {
+    fn source(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    fn target(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    fn preserves_count(&self) -> usize {
+        0
+    }
+    fn preserves_at(&self, _index: usize) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    type ComputationTrace = crate::bridge::trace::NullComputationTrace<H>;
+    fn trace(&self) -> &Self::ComputationTrace {
+        &<crate::bridge::trace::NullComputationTrace<H>>::ABSENT
+    }
+    type TransformTarget = NullTransform<H>;
+    fn composes_with(&self) -> &[Self::TransformTarget] {
+        &[]
+    }
+    type Identity = crate::kernel::op::NullIdentity<H>;
+    fn preserved_invariant(&self) -> &Self::Identity {
+        &<crate::kernel::op::NullIdentity<H>>::ABSENT
+    }
+    fn input_class(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    fn output_class(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    type Witness = NullWitness<H>;
+    fn has_witness(&self) -> &[Self::Witness] {
+        &[]
+    }
+}
+impl<H: HostTypes> Embedding<H> for NullEmbedding<H> {
+    fn source_quantum(&self) -> u64 {
+        0
+    }
+    fn target_quantum(&self) -> u64 {
+        0
+    }
+    fn address_coherence(&self) -> &Self::Identity {
+        &<crate::kernel::op::NullIdentity<H>>::ABSENT
+    }
+}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `Action<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullAction<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullAction<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullAction<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullAction<H> = NullAction {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> Action<H> for NullAction<H> {
+    type Group = crate::kernel::op::NullGroup<H>;
+    fn group(&self) -> &Self::Group {
+        &<crate::kernel::op::NullGroup<H>>::ABSENT
+    }
+    fn acting_on(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    fn action_isometry(&self) -> bool {
+        false
+    }
+}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `Composition<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullComposition<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullComposition<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullComposition<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullComposition<H> = NullComposition {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> Transform<H> for NullComposition<H> {
+    fn source(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    fn target(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    fn preserves_count(&self) -> usize {
+        0
+    }
+    fn preserves_at(&self, _index: usize) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    type ComputationTrace = crate::bridge::trace::NullComputationTrace<H>;
+    fn trace(&self) -> &Self::ComputationTrace {
+        &<crate::bridge::trace::NullComputationTrace<H>>::ABSENT
+    }
+    type TransformTarget = NullTransform<H>;
+    fn composes_with(&self) -> &[Self::TransformTarget] {
+        &[]
+    }
+    type Identity = crate::kernel::op::NullIdentity<H>;
+    fn preserved_invariant(&self) -> &Self::Identity {
+        &<crate::kernel::op::NullIdentity<H>>::ABSENT
+    }
+    fn input_class(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    fn output_class(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    type Witness = NullWitness<H>;
+    fn has_witness(&self) -> &[Self::Witness] {
+        &[]
+    }
+}
+impl<H: HostTypes> Composition<H> for NullComposition<H> {
+    type Transform = NullTransform<H>;
+    fn composition_result(&self) -> &Self::Transform {
+        &<NullTransform<H>>::ABSENT
+    }
+    fn composition_components(&self) -> &[Self::Transform] {
+        &[]
+    }
+}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `Identity<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullIdentity<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullIdentity<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullIdentity<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullIdentity<H> = NullIdentity {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> Transform<H> for NullIdentity<H> {
+    fn source(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    fn target(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    fn preserves_count(&self) -> usize {
+        0
+    }
+    fn preserves_at(&self, _index: usize) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    type ComputationTrace = crate::bridge::trace::NullComputationTrace<H>;
+    fn trace(&self) -> &Self::ComputationTrace {
+        &<crate::bridge::trace::NullComputationTrace<H>>::ABSENT
+    }
+    type TransformTarget = NullTransform<H>;
+    fn composes_with(&self) -> &[Self::TransformTarget] {
+        &[]
+    }
+    type Identity = crate::kernel::op::NullIdentity<H>;
+    fn preserved_invariant(&self) -> &Self::Identity {
+        &<crate::kernel::op::NullIdentity<H>>::ABSENT
+    }
+    fn input_class(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    fn output_class(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    type Witness = NullWitness<H>;
+    fn has_witness(&self) -> &[Self::Witness] {
+        &[]
+    }
+}
+impl<H: HostTypes> Identity<H> for NullIdentity<H> {
+    type TypeDefinition = crate::user::type_::NullTypeDefinition<H>;
+    fn identity_on(&self) -> &Self::TypeDefinition {
+        &<crate::user::type_::NullTypeDefinition<H>>::ABSENT
+    }
+}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `CompositionLaw<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullCompositionLaw<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullCompositionLaw<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullCompositionLaw<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullCompositionLaw<H> = NullCompositionLaw {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> CompositionLaw<H> for NullCompositionLaw<H> {
+    fn is_associative(&self) -> bool {
+        false
+    }
+    fn is_commutative(&self) -> bool {
+        false
+    }
+    type Operation = crate::kernel::op::NullOperation<H>;
+    fn law_components(&self) -> &[Self::Operation] {
+        &[]
+    }
+    fn law_result(&self) -> &Self::Operation {
+        &<crate::kernel::op::NullOperation<H>>::ABSENT
+    }
+}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `GroundingMap<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullGroundingMap<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullGroundingMap<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullGroundingMap<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullGroundingMap<H> = NullGroundingMap {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> Transform<H> for NullGroundingMap<H> {
+    fn source(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    fn target(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    fn preserves_count(&self) -> usize {
+        0
+    }
+    fn preserves_at(&self, _index: usize) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    type ComputationTrace = crate::bridge::trace::NullComputationTrace<H>;
+    fn trace(&self) -> &Self::ComputationTrace {
+        &<crate::bridge::trace::NullComputationTrace<H>>::ABSENT
+    }
+    type TransformTarget = NullTransform<H>;
+    fn composes_with(&self) -> &[Self::TransformTarget] {
+        &[]
+    }
+    type Identity = crate::kernel::op::NullIdentity<H>;
+    fn preserved_invariant(&self) -> &Self::Identity {
+        &<crate::kernel::op::NullIdentity<H>>::ABSENT
+    }
+    fn input_class(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    fn output_class(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    type Witness = NullWitness<H>;
+    fn has_witness(&self) -> &[Self::Witness] {
+        &[]
+    }
+}
+impl<H: HostTypes> GroundingMap<H> for NullGroundingMap<H> {
+    type Derivation = crate::bridge::derivation::NullDerivation<H>;
+    fn grounding_derivation(&self) -> &Self::Derivation {
+        &<crate::bridge::derivation::NullDerivation<H>>::ABSENT
+    }
+    type Constraint = crate::user::type_::NullConstraint<H>;
+    fn symbol_constraints(&self) -> &[Self::Constraint] {
+        &[]
+    }
+}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `ProjectionMap<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullProjectionMap<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullProjectionMap<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullProjectionMap<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullProjectionMap<H> = NullProjectionMap {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> Transform<H> for NullProjectionMap<H> {
+    fn source(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    fn target(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    fn preserves_count(&self) -> usize {
+        0
+    }
+    fn preserves_at(&self, _index: usize) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    type ComputationTrace = crate::bridge::trace::NullComputationTrace<H>;
+    fn trace(&self) -> &Self::ComputationTrace {
+        &<crate::bridge::trace::NullComputationTrace<H>>::ABSENT
+    }
+    type TransformTarget = NullTransform<H>;
+    fn composes_with(&self) -> &[Self::TransformTarget] {
+        &[]
+    }
+    type Identity = crate::kernel::op::NullIdentity<H>;
+    fn preserved_invariant(&self) -> &Self::Identity {
+        &<crate::kernel::op::NullIdentity<H>>::ABSENT
+    }
+    fn input_class(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    fn output_class(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    type Witness = NullWitness<H>;
+    fn has_witness(&self) -> &[Self::Witness] {
+        &[]
+    }
+}
+impl<H: HostTypes> ProjectionMap<H> for NullProjectionMap<H> {
+    type Frame = crate::user::state::NullFrame<H>;
+    fn projection_frame(&self) -> &Self::Frame {
+        &<crate::user::state::NullFrame<H>>::ABSENT
+    }
+    type Conjunction = crate::user::type_::NullConjunction<H>;
+    fn projection_order(&self) -> &Self::Conjunction {
+        &<crate::user::type_::NullConjunction<H>>::ABSENT
+    }
+    fn round_trip_coherence(&self) -> bool {
+        false
+    }
+    fn output_element_class(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `GroundingCertificate<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullGroundingCertificate<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullGroundingCertificate<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullGroundingCertificate<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullGroundingCertificate<H> = NullGroundingCertificate {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> crate::bridge::cert::Certificate<H> for NullGroundingCertificate<H> {
+    fn method(&self) -> ProofStrategy {
+        <ProofStrategy>::default()
+    }
+    fn verified(&self) -> bool {
+        false
+    }
+    fn witt_length(&self) -> u64 {
+        0
+    }
+    fn timestamp(&self) -> &H::WitnessBytes {
+        H::EMPTY_WITNESS_BYTES
+    }
+    fn certifies(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+}
+impl<H: HostTypes> GroundingCertificate<H> for NullGroundingCertificate<H> {
+    type GroundingMap = NullGroundingMap<H>;
+    fn grounding_cert_map(&self) -> &Self::GroundingMap {
+        &<NullGroundingMap<H>>::ABSENT
+    }
+    type ProjectionMap = NullProjectionMap<H>;
+    fn grounding_cert_projection(&self) -> &Self::ProjectionMap {
+        &<NullProjectionMap<H>>::ABSENT
+    }
+    type Literal = crate::kernel::schema::NullLiteral<H>;
+    fn grounding_cert_source_symbol(&self) -> &Self::Literal {
+        &<crate::kernel::schema::NullLiteral<H>>::ABSENT
+    }
+    type Element = crate::kernel::address::NullElement<H>;
+    fn grounding_cert_address(&self) -> &Self::Element {
+        &<crate::kernel::address::NullElement<H>>::ABSENT
+    }
+}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `TopologicalDelta<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullTopologicalDelta<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullTopologicalDelta<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullTopologicalDelta<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullTopologicalDelta<H> = NullTopologicalDelta {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> TopologicalDelta<H> for NullTopologicalDelta<H> {
+    type BettiNumber = crate::bridge::observable::NullBettiNumber<H>;
+    fn bettis_before(&self) -> &Self::BettiNumber {
+        &<crate::bridge::observable::NullBettiNumber<H>>::ABSENT
+    }
+    fn bettis_after(&self) -> &Self::BettiNumber {
+        &<crate::bridge::observable::NullBettiNumber<H>>::ABSENT
+    }
+    fn euler_before(&self) -> i64 {
+        0
+    }
+    fn euler_after(&self) -> i64 {
+        0
+    }
+    type SimplicialComplex = crate::bridge::homology::NullSimplicialComplex<H>;
+    fn nerve_before(&self) -> &Self::SimplicialComplex {
+        &<crate::bridge::homology::NullSimplicialComplex<H>>::ABSENT
+    }
+    fn nerve_after(&self) -> &Self::SimplicialComplex {
+        &<crate::bridge::homology::NullSimplicialComplex<H>>::ABSENT
+    }
+}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `ComputationDatum<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullComputationDatum<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullComputationDatum<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullComputationDatum<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullComputationDatum<H> = NullComputationDatum {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> crate::kernel::schema::Datum<H> for NullComputationDatum<H> {
+    fn value(&self) -> u64 {
+        0
+    }
+    fn witt_length(&self) -> u64 {
+        0
+    }
+    fn stratum(&self) -> u64 {
+        0
+    }
+    fn spectrum(&self) -> u64 {
+        0
+    }
+    type Element = crate::kernel::address::NullElement<H>;
+    fn element(&self) -> &Self::Element {
+        &<crate::kernel::address::NullElement<H>>::ABSENT
+    }
+}
+impl<H: HostTypes> ComputationDatum<H> for NullComputationDatum<H> {
+    type TransformCertificate = crate::bridge::cert::NullTransformCertificate<H>;
+    fn referenced_certificate(&self) -> &Self::TransformCertificate {
+        &<crate::bridge::cert::NullTransformCertificate<H>>::ABSENT
+    }
+    fn computation_address(&self) -> &Self::Element {
+        &<crate::kernel::address::NullElement<H>>::ABSENT
+    }
+}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `ApplicationMorphism<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullApplicationMorphism<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullApplicationMorphism<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullApplicationMorphism<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullApplicationMorphism<H> = NullApplicationMorphism {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> Transform<H> for NullApplicationMorphism<H> {
+    fn source(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    fn target(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    fn preserves_count(&self) -> usize {
+        0
+    }
+    fn preserves_at(&self, _index: usize) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    type ComputationTrace = crate::bridge::trace::NullComputationTrace<H>;
+    fn trace(&self) -> &Self::ComputationTrace {
+        &<crate::bridge::trace::NullComputationTrace<H>>::ABSENT
+    }
+    type TransformTarget = NullTransform<H>;
+    fn composes_with(&self) -> &[Self::TransformTarget] {
+        &[]
+    }
+    type Identity = crate::kernel::op::NullIdentity<H>;
+    fn preserved_invariant(&self) -> &Self::Identity {
+        &<crate::kernel::op::NullIdentity<H>>::ABSENT
+    }
+    fn input_class(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    fn output_class(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    type Witness = NullWitness<H>;
+    fn has_witness(&self) -> &[Self::Witness] {
+        &[]
+    }
+}
+impl<H: HostTypes> ApplicationMorphism<H> for NullApplicationMorphism<H> {
+    type ComputationDatum = NullComputationDatum<H>;
+    fn application_target(&self) -> &Self::ComputationDatum {
+        &<NullComputationDatum<H>>::ABSENT
+    }
+    type Datum = crate::kernel::schema::NullDatum<H>;
+    fn application_input(&self) -> &Self::Datum {
+        &<crate::kernel::schema::NullDatum<H>>::ABSENT
+    }
+}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `PartialApplication<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullPartialApplication<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullPartialApplication<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullPartialApplication<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullPartialApplication<H> = NullPartialApplication {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> crate::kernel::schema::Datum<H> for NullPartialApplication<H> {
+    fn value(&self) -> u64 {
+        0
+    }
+    fn witt_length(&self) -> u64 {
+        0
+    }
+    fn stratum(&self) -> u64 {
+        0
+    }
+    fn spectrum(&self) -> u64 {
+        0
+    }
+    type Element = crate::kernel::address::NullElement<H>;
+    fn element(&self) -> &Self::Element {
+        &<crate::kernel::address::NullElement<H>>::ABSENT
+    }
+}
+impl<H: HostTypes> ComputationDatum<H> for NullPartialApplication<H> {
+    type TransformCertificate = crate::bridge::cert::NullTransformCertificate<H>;
+    fn referenced_certificate(&self) -> &Self::TransformCertificate {
+        &<crate::bridge::cert::NullTransformCertificate<H>>::ABSENT
+    }
+    fn computation_address(&self) -> &Self::Element {
+        &<crate::kernel::address::NullElement<H>>::ABSENT
+    }
+}
+impl<H: HostTypes> PartialApplication<H> for NullPartialApplication<H> {
+    type ComputationDatum = NullComputationDatum<H>;
+    fn partial_base(&self) -> &Self::ComputationDatum {
+        &<NullComputationDatum<H>>::ABSENT
+    }
+    type Datum = crate::kernel::schema::NullDatum<H>;
+    fn bound_arguments(&self) -> &[Self::Datum] {
+        &[]
+    }
+    fn remaining_arity(&self) -> u64 {
+        0
+    }
+}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `TransformComposition<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullTransformComposition<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullTransformComposition<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullTransformComposition<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullTransformComposition<H> = NullTransformComposition {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> crate::kernel::schema::Datum<H> for NullTransformComposition<H> {
+    fn value(&self) -> u64 {
+        0
+    }
+    fn witt_length(&self) -> u64 {
+        0
+    }
+    fn stratum(&self) -> u64 {
+        0
+    }
+    fn spectrum(&self) -> u64 {
+        0
+    }
+    type Element = crate::kernel::address::NullElement<H>;
+    fn element(&self) -> &Self::Element {
+        &<crate::kernel::address::NullElement<H>>::ABSENT
+    }
+}
+impl<H: HostTypes> ComputationDatum<H> for NullTransformComposition<H> {
+    type TransformCertificate = crate::bridge::cert::NullTransformCertificate<H>;
+    fn referenced_certificate(&self) -> &Self::TransformCertificate {
+        &<crate::bridge::cert::NullTransformCertificate<H>>::ABSENT
+    }
+    fn computation_address(&self) -> &Self::Element {
+        &<crate::kernel::address::NullElement<H>>::ABSENT
+    }
+}
+impl<H: HostTypes> TransformComposition<H> for NullTransformComposition<H> {
+    type ComputationDatum = NullComputationDatum<H>;
+    fn composition_left(&self) -> &Self::ComputationDatum {
+        &<NullComputationDatum<H>>::ABSENT
+    }
+    fn composition_right(&self) -> &Self::ComputationDatum {
+        &<NullComputationDatum<H>>::ABSENT
+    }
+}
+
 /// Phase 2 (orphan-closure) — resolver-absent default impl of `Witness<H>`.
 /// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
 /// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
@@ -279,14 +1168,19 @@ pub struct NullWitness<H: HostTypes> {
     _phantom: core::marker::PhantomData<H>,
 }
 impl<H: HostTypes> Default for NullWitness<H> {
-    fn default() -> Self { Self { _phantom: core::marker::PhantomData } }
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
 }
 impl<H: HostTypes> NullWitness<H> {
     /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
-    pub const ABSENT: NullWitness<H> = NullWitness { _phantom: core::marker::PhantomData };
+    pub const ABSENT: NullWitness<H> = NullWitness {
+        _phantom: core::marker::PhantomData,
+    };
 }
-impl<H: HostTypes> Witness<H> for NullWitness<H> {
-}
+impl<H: HostTypes> Witness<H> for NullWitness<H> {}
 
 /// Phase 2 (orphan-closure) — resolver-absent default impl of `GroundingWitness<H>`.
 /// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
@@ -298,19 +1192,28 @@ pub struct NullGroundingWitness<H: HostTypes> {
     _phantom: core::marker::PhantomData<H>,
 }
 impl<H: HostTypes> Default for NullGroundingWitness<H> {
-    fn default() -> Self { Self { _phantom: core::marker::PhantomData } }
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
 }
 impl<H: HostTypes> NullGroundingWitness<H> {
     /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
-    pub const ABSENT: NullGroundingWitness<H> = NullGroundingWitness { _phantom: core::marker::PhantomData };
+    pub const ABSENT: NullGroundingWitness<H> = NullGroundingWitness {
+        _phantom: core::marker::PhantomData,
+    };
 }
-impl<H: HostTypes> Witness<H> for NullGroundingWitness<H> {
-}
+impl<H: HostTypes> Witness<H> for NullGroundingWitness<H> {}
 impl<H: HostTypes> GroundingWitness<H> for NullGroundingWitness<H> {
     type SurfaceSymbol = crate::kernel::schema::NullSurfaceSymbol<H>;
-    fn surface_symbol(&self) -> &Self::SurfaceSymbol { &<crate::kernel::schema::NullSurfaceSymbol<H>>::ABSENT }
+    fn surface_symbol(&self) -> &Self::SurfaceSymbol {
+        &<crate::kernel::schema::NullSurfaceSymbol<H>>::ABSENT
+    }
     type Element = crate::kernel::address::NullElement<H>;
-    fn grounded_address(&self) -> &Self::Element { &<crate::kernel::address::NullElement<H>>::ABSENT }
+    fn grounded_address(&self) -> &Self::Element {
+        &<crate::kernel::address::NullElement<H>>::ABSENT
+    }
 }
 
 /// Phase 2 (orphan-closure) — resolver-absent default impl of `ProjectionWitness<H>`.
@@ -323,19 +1226,28 @@ pub struct NullProjectionWitness<H: HostTypes> {
     _phantom: core::marker::PhantomData<H>,
 }
 impl<H: HostTypes> Default for NullProjectionWitness<H> {
-    fn default() -> Self { Self { _phantom: core::marker::PhantomData } }
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
 }
 impl<H: HostTypes> NullProjectionWitness<H> {
     /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
-    pub const ABSENT: NullProjectionWitness<H> = NullProjectionWitness { _phantom: core::marker::PhantomData };
+    pub const ABSENT: NullProjectionWitness<H> = NullProjectionWitness {
+        _phantom: core::marker::PhantomData,
+    };
 }
-impl<H: HostTypes> Witness<H> for NullProjectionWitness<H> {
-}
+impl<H: HostTypes> Witness<H> for NullProjectionWitness<H> {}
 impl<H: HostTypes> ProjectionWitness<H> for NullProjectionWitness<H> {
     type Partition = crate::enforcement::NullPartition<H>;
-    fn projection_source(&self) -> &Self::Partition { &<crate::enforcement::NullPartition<H>>::ABSENT }
+    fn projection_source(&self) -> &Self::Partition {
+        &<crate::enforcement::NullPartition<H>>::ABSENT
+    }
     type SymbolSequence = NullSymbolSequence<H>;
-    fn projection_output(&self) -> &Self::SymbolSequence { &<NullSymbolSequence<H>>::ABSENT }
+    fn projection_output(&self) -> &Self::SymbolSequence {
+        &<NullSymbolSequence<H>>::ABSENT
+    }
 }
 
 /// Phase 2 (orphan-closure) — resolver-absent default impl of `SymbolSequence<H>`.
@@ -348,15 +1260,23 @@ pub struct NullSymbolSequence<H: HostTypes> {
     _phantom: core::marker::PhantomData<H>,
 }
 impl<H: HostTypes> Default for NullSymbolSequence<H> {
-    fn default() -> Self { Self { _phantom: core::marker::PhantomData } }
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
 }
 impl<H: HostTypes> NullSymbolSequence<H> {
     /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
-    pub const ABSENT: NullSymbolSequence<H> = NullSymbolSequence { _phantom: core::marker::PhantomData };
+    pub const ABSENT: NullSymbolSequence<H> = NullSymbolSequence {
+        _phantom: core::marker::PhantomData,
+    };
 }
 impl<H: HostTypes> SymbolSequence<H> for NullSymbolSequence<H> {
     type SequenceElement = NullSequenceElement<H>;
-    fn has_element(&self) -> &[Self::SequenceElement] { &[] }
+    fn has_element(&self) -> &[Self::SequenceElement] {
+        &[]
+    }
 }
 
 /// Phase 2 (orphan-closure) — resolver-absent default impl of `SequenceElement<H>`.
@@ -369,16 +1289,26 @@ pub struct NullSequenceElement<H: HostTypes> {
     _phantom: core::marker::PhantomData<H>,
 }
 impl<H: HostTypes> Default for NullSequenceElement<H> {
-    fn default() -> Self { Self { _phantom: core::marker::PhantomData } }
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
 }
 impl<H: HostTypes> NullSequenceElement<H> {
     /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
-    pub const ABSENT: NullSequenceElement<H> = NullSequenceElement { _phantom: core::marker::PhantomData };
+    pub const ABSENT: NullSequenceElement<H> = NullSequenceElement {
+        _phantom: core::marker::PhantomData,
+    };
 }
 impl<H: HostTypes> SequenceElement<H> for NullSequenceElement<H> {
     type SurfaceSymbol = crate::kernel::schema::NullSurfaceSymbol<H>;
-    fn element_value(&self) -> &Self::SurfaceSymbol { &<crate::kernel::schema::NullSurfaceSymbol<H>>::ABSENT }
-    fn element_index(&self) -> u64 { 0 }
+    fn element_value(&self) -> &Self::SurfaceSymbol {
+        &<crate::kernel::schema::NullSurfaceSymbol<H>>::ABSENT
+    }
+    fn element_index(&self) -> u64 {
+        0
+    }
 }
 
 /// The critical composition law: neg ∘ bnot = succ. This is the operational form of the critical identity theorem. The composition of the two involutions (neg, bnot) yields the successor operation. Non-associative and non-commutative.

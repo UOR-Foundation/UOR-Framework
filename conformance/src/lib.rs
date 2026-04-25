@@ -166,6 +166,10 @@ pub fn run_all(paths: &WorkspacePaths) -> anyhow::Result<ConformanceReport> {
     report.extend(validators::rust::theory_deferred_register::validate(
         &paths.workspace,
     )?);
+    // Phase 7e (orphan-closure): minimum-viable orphan-count validator.
+    // Counts `pub trait {Name}<H: HostTypes>` declarations without any
+    // `impl {Name}<H> for ...` site in the workspace.
+    report.extend(validators::rust::orphan_counts::validate(&paths.workspace)?);
     // v0.2.2 Phase H: lints + cross-cutting.
     report.extend(validators::rust::feature_flag_layout::validate(
         &paths.workspace,

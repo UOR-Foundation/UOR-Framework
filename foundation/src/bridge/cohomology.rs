@@ -106,6 +106,219 @@ pub trait GluingObstruction<H: HostTypes> {
     fn addresses_suggestion(&self) -> &[Self::RefinementSuggestion];
 }
 
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `CochainGroup<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullCochainGroup<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullCochainGroup<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullCochainGroup<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullCochainGroup<H> = NullCochainGroup {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> CochainGroup<H> for NullCochainGroup<H> {
+    fn cochain_degree(&self) -> i64 {
+        0
+    }
+    fn cochain_rank(&self) -> u64 {
+        0
+    }
+    type ChainGroup = crate::bridge::homology::NullChainGroup<H>;
+    fn dual_of(&self) -> &Self::ChainGroup {
+        &<crate::bridge::homology::NullChainGroup<H>>::ABSENT
+    }
+}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `CoboundaryOperator<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullCoboundaryOperator<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullCoboundaryOperator<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullCoboundaryOperator<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullCoboundaryOperator<H> = NullCoboundaryOperator {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> CoboundaryOperator<H> for NullCoboundaryOperator<H> {
+    type CochainGroup = NullCochainGroup<H>;
+    fn coboundary_source(&self) -> &Self::CochainGroup {
+        &<NullCochainGroup<H>>::ABSENT
+    }
+    fn coboundary_target(&self) -> &Self::CochainGroup {
+        &<NullCochainGroup<H>>::ABSENT
+    }
+    fn satisfies_coboundary_squared_zero(&self) -> bool {
+        false
+    }
+}
+
+#[doc(hidden)]
+#[doc = "THEORY-DEFERRED \u{2014} not a valid implementation; see [docs/theory_deferred.md]. Exists only to satisfy downstream trait-bound references."]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullCochainComplex<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullCochainComplex<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullCochainComplex<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullCochainComplex<H> = NullCochainComplex {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> CochainComplex<H> for NullCochainComplex<H> {
+    type CochainGroup = NullCochainGroup<H>;
+    fn has_cochain_group(&self) -> &[Self::CochainGroup] {
+        &[]
+    }
+    type CoboundaryOperator = NullCoboundaryOperator<H>;
+    fn has_coboundary(&self) -> &[Self::CoboundaryOperator] {
+        &[]
+    }
+}
+
+#[doc(hidden)]
+#[doc = "THEORY-DEFERRED \u{2014} not a valid implementation; see [docs/theory_deferred.md]. Exists only to satisfy downstream trait-bound references."]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullCohomologyGroup<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullCohomologyGroup<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullCohomologyGroup<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullCohomologyGroup<H> = NullCohomologyGroup {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> CohomologyGroup<H> for NullCohomologyGroup<H> {
+    fn cohomology_degree(&self) -> i64 {
+        0
+    }
+    fn cohomology_rank(&self) -> u64 {
+        0
+    }
+}
+
+#[doc(hidden)]
+#[doc = "THEORY-DEFERRED \u{2014} not a valid implementation; see [docs/theory_deferred.md]. Exists only to satisfy downstream trait-bound references."]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullSheaf<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullSheaf<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullSheaf<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullSheaf<H> = NullSheaf {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> Sheaf<H> for NullSheaf<H> {
+    type SimplicialComplex = crate::bridge::homology::NullSimplicialComplex<H>;
+    fn sheaf_over(&self) -> &Self::SimplicialComplex {
+        &<crate::bridge::homology::NullSimplicialComplex<H>>::ABSENT
+    }
+    type Ring = crate::kernel::schema::NullRing<H>;
+    fn coefficient_in(&self) -> &Self::Ring {
+        &<crate::kernel::schema::NullRing<H>>::ABSENT
+    }
+    type Stalk = NullStalk<H>;
+    fn has_stalks(&self) -> &[Self::Stalk] {
+        &[]
+    }
+    type Section = NullSection<H>;
+    fn has_global_section(&self) -> &[Self::Section] {
+        &[]
+    }
+}
+
+#[doc(hidden)]
+#[doc = "THEORY-DEFERRED \u{2014} not a valid implementation; see [docs/theory_deferred.md]. Exists only to satisfy downstream trait-bound references."]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullStalk<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullStalk<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullStalk<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullStalk<H> = NullStalk {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> Stalk<H> for NullStalk<H> {
+    type Simplex = crate::bridge::homology::NullSimplex<H>;
+    fn stalk_at(&self) -> &Self::Simplex {
+        &<crate::bridge::homology::NullSimplex<H>>::ABSENT
+    }
+}
+
+#[doc(hidden)]
+#[doc = "THEORY-DEFERRED \u{2014} not a valid implementation; see [docs/theory_deferred.md]. Exists only to satisfy downstream trait-bound references."]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullSection<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullSection<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullSection<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullSection<H> = NullSection {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> Section<H> for NullSection<H> {}
+
 /// Phase 2 (orphan-closure) — resolver-absent default impl of `LocalSection<H>`.
 /// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
 /// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
@@ -116,15 +329,78 @@ pub struct NullLocalSection<H: HostTypes> {
     _phantom: core::marker::PhantomData<H>,
 }
 impl<H: HostTypes> Default for NullLocalSection<H> {
-    fn default() -> Self { Self { _phantom: core::marker::PhantomData } }
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
 }
 impl<H: HostTypes> NullLocalSection<H> {
     /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
-    pub const ABSENT: NullLocalSection<H> = NullLocalSection { _phantom: core::marker::PhantomData };
+    pub const ABSENT: NullLocalSection<H> = NullLocalSection {
+        _phantom: core::marker::PhantomData,
+    };
 }
-impl<H: HostTypes> Section<H> for NullLocalSection<H> {
+impl<H: HostTypes> Section<H> for NullLocalSection<H> {}
+impl<H: HostTypes> LocalSection<H> for NullLocalSection<H> {}
+
+#[doc(hidden)]
+#[doc = "THEORY-DEFERRED \u{2014} not a valid implementation; see [docs/theory_deferred.md]. Exists only to satisfy downstream trait-bound references."]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullRestrictionMap<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
 }
-impl<H: HostTypes> LocalSection<H> for NullLocalSection<H> {
+impl<H: HostTypes> Default for NullRestrictionMap<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullRestrictionMap<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullRestrictionMap<H> = NullRestrictionMap {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> RestrictionMap<H> for NullRestrictionMap<H> {
+    type Simplex = crate::bridge::homology::NullSimplex<H>;
+    fn restricts_from(&self) -> &Self::Simplex {
+        &<crate::bridge::homology::NullSimplex<H>>::ABSENT
+    }
+    fn restricts_to(&self) -> &Self::Simplex {
+        &<crate::bridge::homology::NullSimplex<H>>::ABSENT
+    }
+}
+
+#[doc(hidden)]
+#[doc = "THEORY-DEFERRED \u{2014} not a valid implementation; see [docs/theory_deferred.md]. Exists only to satisfy downstream trait-bound references."]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullGluingObstruction<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullGluingObstruction<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullGluingObstruction<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullGluingObstruction<H> = NullGluingObstruction {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> GluingObstruction<H> for NullGluingObstruction<H> {
+    type CohomologyGroup = NullCohomologyGroup<H>;
+    fn obstruction_class(&self) -> &Self::CohomologyGroup {
+        &<NullCohomologyGroup<H>>::ABSENT
+    }
+    type RefinementSuggestion = crate::bridge::resolver::NullRefinementSuggestion<H>;
+    fn addresses_suggestion(&self) -> &[Self::RefinementSuggestion] {
+        &[]
+    }
 }
 
 /// δ² = 0: the coboundary of a coboundary is zero.

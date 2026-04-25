@@ -79,6 +79,346 @@ pub trait DisjointnessWitness<H: HostTypes> {
     fn disjointness_right(&self) -> &Self::EffectTarget;
 }
 
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `Effect<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullEffect<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullEffect<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullEffect<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullEffect<H> = NullEffect {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> Effect<H> for NullEffect<H> {
+    type EffectTarget = NullEffectTarget<H>;
+    fn effect_target(&self) -> &Self::EffectTarget {
+        &<NullEffectTarget<H>>::ABSENT
+    }
+    type Context = crate::user::state::NullContext<H>;
+    fn pre_context(&self) -> &Self::Context {
+        &<crate::user::state::NullContext<H>>::ABSENT
+    }
+    fn post_context(&self) -> &Self::Context {
+        &<crate::user::state::NullContext<H>>::ABSENT
+    }
+    fn free_rank_delta(&self) -> i64 {
+        0
+    }
+    fn composite_index(&self) -> u64 {
+        0
+    }
+    fn is_commutative_with(&self) -> bool {
+        false
+    }
+}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `ReversibleEffect<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullReversibleEffect<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullReversibleEffect<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullReversibleEffect<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullReversibleEffect<H> = NullReversibleEffect {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> Effect<H> for NullReversibleEffect<H> {
+    type EffectTarget = NullEffectTarget<H>;
+    fn effect_target(&self) -> &Self::EffectTarget {
+        &<NullEffectTarget<H>>::ABSENT
+    }
+    type Context = crate::user::state::NullContext<H>;
+    fn pre_context(&self) -> &Self::Context {
+        &<crate::user::state::NullContext<H>>::ABSENT
+    }
+    fn post_context(&self) -> &Self::Context {
+        &<crate::user::state::NullContext<H>>::ABSENT
+    }
+    fn free_rank_delta(&self) -> i64 {
+        0
+    }
+    fn composite_index(&self) -> u64 {
+        0
+    }
+    fn is_commutative_with(&self) -> bool {
+        false
+    }
+}
+impl<H: HostTypes> ReversibleEffect<H> for NullReversibleEffect<H> {}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `PinningEffect<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullPinningEffect<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullPinningEffect<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullPinningEffect<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullPinningEffect<H> = NullPinningEffect {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> Effect<H> for NullPinningEffect<H> {
+    type EffectTarget = NullEffectTarget<H>;
+    fn effect_target(&self) -> &Self::EffectTarget {
+        &<NullEffectTarget<H>>::ABSENT
+    }
+    type Context = crate::user::state::NullContext<H>;
+    fn pre_context(&self) -> &Self::Context {
+        &<crate::user::state::NullContext<H>>::ABSENT
+    }
+    fn post_context(&self) -> &Self::Context {
+        &<crate::user::state::NullContext<H>>::ABSENT
+    }
+    fn free_rank_delta(&self) -> i64 {
+        0
+    }
+    fn composite_index(&self) -> u64 {
+        0
+    }
+    fn is_commutative_with(&self) -> bool {
+        false
+    }
+}
+impl<H: HostTypes> ReversibleEffect<H> for NullPinningEffect<H> {}
+impl<H: HostTypes> PinningEffect<H> for NullPinningEffect<H> {}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `UnbindingEffect<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullUnbindingEffect<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullUnbindingEffect<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullUnbindingEffect<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullUnbindingEffect<H> = NullUnbindingEffect {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> Effect<H> for NullUnbindingEffect<H> {
+    type EffectTarget = NullEffectTarget<H>;
+    fn effect_target(&self) -> &Self::EffectTarget {
+        &<NullEffectTarget<H>>::ABSENT
+    }
+    type Context = crate::user::state::NullContext<H>;
+    fn pre_context(&self) -> &Self::Context {
+        &<crate::user::state::NullContext<H>>::ABSENT
+    }
+    fn post_context(&self) -> &Self::Context {
+        &<crate::user::state::NullContext<H>>::ABSENT
+    }
+    fn free_rank_delta(&self) -> i64 {
+        0
+    }
+    fn composite_index(&self) -> u64 {
+        0
+    }
+    fn is_commutative_with(&self) -> bool {
+        false
+    }
+}
+impl<H: HostTypes> UnbindingEffect<H> for NullUnbindingEffect<H> {}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `PhaseEffect<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullPhaseEffect<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullPhaseEffect<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullPhaseEffect<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullPhaseEffect<H> = NullPhaseEffect {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> Effect<H> for NullPhaseEffect<H> {
+    type EffectTarget = NullEffectTarget<H>;
+    fn effect_target(&self) -> &Self::EffectTarget {
+        &<NullEffectTarget<H>>::ABSENT
+    }
+    type Context = crate::user::state::NullContext<H>;
+    fn pre_context(&self) -> &Self::Context {
+        &<crate::user::state::NullContext<H>>::ABSENT
+    }
+    fn post_context(&self) -> &Self::Context {
+        &<crate::user::state::NullContext<H>>::ABSENT
+    }
+    fn free_rank_delta(&self) -> i64 {
+        0
+    }
+    fn composite_index(&self) -> u64 {
+        0
+    }
+    fn is_commutative_with(&self) -> bool {
+        false
+    }
+}
+impl<H: HostTypes> ReversibleEffect<H> for NullPhaseEffect<H> {}
+impl<H: HostTypes> PhaseEffect<H> for NullPhaseEffect<H> {
+    fn phase_angle_delta(&self) -> H::Decimal {
+        H::EMPTY_DECIMAL
+    }
+}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `CompositeEffect<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullCompositeEffect<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullCompositeEffect<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullCompositeEffect<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullCompositeEffect<H> = NullCompositeEffect {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> Effect<H> for NullCompositeEffect<H> {
+    type EffectTarget = NullEffectTarget<H>;
+    fn effect_target(&self) -> &Self::EffectTarget {
+        &<NullEffectTarget<H>>::ABSENT
+    }
+    type Context = crate::user::state::NullContext<H>;
+    fn pre_context(&self) -> &Self::Context {
+        &<crate::user::state::NullContext<H>>::ABSENT
+    }
+    fn post_context(&self) -> &Self::Context {
+        &<crate::user::state::NullContext<H>>::ABSENT
+    }
+    fn free_rank_delta(&self) -> i64 {
+        0
+    }
+    fn composite_index(&self) -> u64 {
+        0
+    }
+    fn is_commutative_with(&self) -> bool {
+        false
+    }
+}
+impl<H: HostTypes> CompositeEffect<H> for NullCompositeEffect<H> {
+    type Effect = NullEffect<H>;
+    fn composite_head(&self) -> &Self::Effect {
+        &<NullEffect<H>>::ABSENT
+    }
+    fn composite_tail(&self) -> &[Self::Effect] {
+        &[]
+    }
+}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `ExternalEffect<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullExternalEffect<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullExternalEffect<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullExternalEffect<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullExternalEffect<H> = NullExternalEffect {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> Effect<H> for NullExternalEffect<H> {
+    type EffectTarget = NullEffectTarget<H>;
+    fn effect_target(&self) -> &Self::EffectTarget {
+        &<NullEffectTarget<H>>::ABSENT
+    }
+    type Context = crate::user::state::NullContext<H>;
+    fn pre_context(&self) -> &Self::Context {
+        &<crate::user::state::NullContext<H>>::ABSENT
+    }
+    fn post_context(&self) -> &Self::Context {
+        &<crate::user::state::NullContext<H>>::ABSENT
+    }
+    fn free_rank_delta(&self) -> i64 {
+        0
+    }
+    fn composite_index(&self) -> u64 {
+        0
+    }
+    fn is_commutative_with(&self) -> bool {
+        false
+    }
+}
+impl<H: HostTypes> ExternalEffect<H> for NullExternalEffect<H> {
+    type EffectShape = crate::bridge::conformance_::NullEffectShape<H>;
+    fn external_effect_shape(&self) -> &Self::EffectShape {
+        &<crate::bridge::conformance_::NullEffectShape<H>>::ABSENT
+    }
+}
+
 /// Phase 2 (orphan-closure) — resolver-absent default impl of `EffectTarget<H>`.
 /// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
 /// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
@@ -89,16 +429,26 @@ pub struct NullEffectTarget<H: HostTypes> {
     _phantom: core::marker::PhantomData<H>,
 }
 impl<H: HostTypes> Default for NullEffectTarget<H> {
-    fn default() -> Self { Self { _phantom: core::marker::PhantomData } }
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
 }
 impl<H: HostTypes> NullEffectTarget<H> {
     /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
-    pub const ABSENT: NullEffectTarget<H> = NullEffectTarget { _phantom: core::marker::PhantomData };
+    pub const ABSENT: NullEffectTarget<H> = NullEffectTarget {
+        _phantom: core::marker::PhantomData,
+    };
 }
 impl<H: HostTypes> EffectTarget<H> for NullEffectTarget<H> {
     type SiteIndex = crate::bridge::partition::NullSiteIndex<H>;
-    fn target_sites(&self) -> &[Self::SiteIndex] { &[] }
-    fn target_cardinality(&self) -> u64 { 0 }
+    fn target_sites(&self) -> &[Self::SiteIndex] {
+        &[]
+    }
+    fn target_cardinality(&self) -> u64 {
+        0
+    }
 }
 
 /// Phase 2 (orphan-closure) — resolver-absent default impl of `DisjointnessWitness<H>`.
@@ -111,14 +461,24 @@ pub struct NullDisjointnessWitness<H: HostTypes> {
     _phantom: core::marker::PhantomData<H>,
 }
 impl<H: HostTypes> Default for NullDisjointnessWitness<H> {
-    fn default() -> Self { Self { _phantom: core::marker::PhantomData } }
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
 }
 impl<H: HostTypes> NullDisjointnessWitness<H> {
     /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
-    pub const ABSENT: NullDisjointnessWitness<H> = NullDisjointnessWitness { _phantom: core::marker::PhantomData };
+    pub const ABSENT: NullDisjointnessWitness<H> = NullDisjointnessWitness {
+        _phantom: core::marker::PhantomData,
+    };
 }
 impl<H: HostTypes> DisjointnessWitness<H> for NullDisjointnessWitness<H> {
     type EffectTarget = NullEffectTarget<H>;
-    fn disjointness_left(&self) -> &Self::EffectTarget { &<NullEffectTarget<H>>::ABSENT }
-    fn disjointness_right(&self) -> &Self::EffectTarget { &<NullEffectTarget<H>>::ABSENT }
+    fn disjointness_left(&self) -> &Self::EffectTarget {
+        &<NullEffectTarget<H>>::ABSENT
+    }
+    fn disjointness_right(&self) -> &Self::EffectTarget {
+        &<NullEffectTarget<H>>::ABSENT
+    }
 }

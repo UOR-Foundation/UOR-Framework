@@ -167,6 +167,332 @@ pub trait SessionCompositionOperation<H: HostTypes>: ComposedOperation<H> {
 /// A structured group presentation: generators and relations as typed data rather than prose strings.
 pub trait GroupPresentation<H: HostTypes> {}
 
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `Operation<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullOperation<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullOperation<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullOperation<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullOperation<H> = NullOperation {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> Operation<H> for NullOperation<H> {
+    fn arity(&self) -> u64 {
+        0
+    }
+    fn has_geometric_character(&self) -> GeometricCharacter {
+        <GeometricCharacter>::default()
+    }
+    type OperationTarget = NullOperation<H>;
+    fn inverse(&self) -> &Self::OperationTarget {
+        &<NullOperation<H>>::ABSENT
+    }
+    fn composed_of(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    fn is_ring_op(&self) -> bool {
+        false
+    }
+}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `UnaryOp<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullUnaryOp<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullUnaryOp<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullUnaryOp<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullUnaryOp<H> = NullUnaryOp {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> Operation<H> for NullUnaryOp<H> {
+    fn arity(&self) -> u64 {
+        0
+    }
+    fn has_geometric_character(&self) -> GeometricCharacter {
+        <GeometricCharacter>::default()
+    }
+    type OperationTarget = NullOperation<H>;
+    fn inverse(&self) -> &Self::OperationTarget {
+        &<NullOperation<H>>::ABSENT
+    }
+    fn composed_of(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    fn is_ring_op(&self) -> bool {
+        false
+    }
+}
+impl<H: HostTypes> UnaryOp<H> for NullUnaryOp<H> {}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `BinaryOp<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullBinaryOp<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullBinaryOp<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullBinaryOp<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullBinaryOp<H> = NullBinaryOp {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> Operation<H> for NullBinaryOp<H> {
+    fn arity(&self) -> u64 {
+        0
+    }
+    fn has_geometric_character(&self) -> GeometricCharacter {
+        <GeometricCharacter>::default()
+    }
+    type OperationTarget = NullOperation<H>;
+    fn inverse(&self) -> &Self::OperationTarget {
+        &<NullOperation<H>>::ABSENT
+    }
+    fn composed_of(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    fn is_ring_op(&self) -> bool {
+        false
+    }
+}
+impl<H: HostTypes> BinaryOp<H> for NullBinaryOp<H> {
+    fn commutative(&self) -> bool {
+        false
+    }
+    fn associative(&self) -> bool {
+        false
+    }
+    fn identity(&self) -> i64 {
+        0
+    }
+}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `Involution<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullInvolution<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullInvolution<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullInvolution<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullInvolution<H> = NullInvolution {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> Operation<H> for NullInvolution<H> {
+    fn arity(&self) -> u64 {
+        0
+    }
+    fn has_geometric_character(&self) -> GeometricCharacter {
+        <GeometricCharacter>::default()
+    }
+    type OperationTarget = NullOperation<H>;
+    fn inverse(&self) -> &Self::OperationTarget {
+        &<NullOperation<H>>::ABSENT
+    }
+    fn composed_of(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    fn is_ring_op(&self) -> bool {
+        false
+    }
+}
+impl<H: HostTypes> UnaryOp<H> for NullInvolution<H> {}
+impl<H: HostTypes> Involution<H> for NullInvolution<H> {}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `Identity<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullIdentity<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullIdentity<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullIdentity<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullIdentity<H> = NullIdentity {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> Identity<H> for NullIdentity<H> {
+    type TermExpression = crate::kernel::schema::NullTermExpression<H>;
+    fn lhs(&self) -> &Self::TermExpression {
+        &<crate::kernel::schema::NullTermExpression<H>>::ABSENT
+    }
+    fn rhs(&self) -> &Self::TermExpression {
+        &<crate::kernel::schema::NullTermExpression<H>>::ABSENT
+    }
+    type ForAllDeclaration = crate::kernel::schema::NullForAllDeclaration<H>;
+    fn for_all(&self) -> &Self::ForAllDeclaration {
+        &<crate::kernel::schema::NullForAllDeclaration<H>>::ABSENT
+    }
+    fn verification_domain(&self) -> &[VerificationDomain] {
+        &[]
+    }
+    type WittLevelBinding = NullWittLevelBinding<H>;
+    fn verified_at_level(&self) -> &[Self::WittLevelBinding] {
+        &[]
+    }
+    fn universally_valid(&self) -> bool {
+        false
+    }
+    fn validity_kind(&self) -> ValidityScopeKind {
+        <ValidityScopeKind>::default()
+    }
+    fn valid_kmin(&self) -> u64 {
+        0
+    }
+    fn valid_kmax(&self) -> u64 {
+        0
+    }
+}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `Group<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullGroup<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullGroup<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullGroup<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullGroup<H> = NullGroup {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> Group<H> for NullGroup<H> {
+    type Operation = NullOperation<H>;
+    fn generated_by(&self) -> &[Self::Operation] {
+        &[]
+    }
+    fn order(&self) -> u64 {
+        0
+    }
+}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `DihedralGroup<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullDihedralGroup<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullDihedralGroup<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullDihedralGroup<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullDihedralGroup<H> = NullDihedralGroup {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> Group<H> for NullDihedralGroup<H> {
+    type Operation = NullOperation<H>;
+    fn generated_by(&self) -> &[Self::Operation] {
+        &[]
+    }
+    fn order(&self) -> u64 {
+        0
+    }
+}
+impl<H: HostTypes> DihedralGroup<H> for NullDihedralGroup<H> {}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `WittLevelBinding<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullWittLevelBinding<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullWittLevelBinding<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullWittLevelBinding<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullWittLevelBinding<H> = NullWittLevelBinding {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> WittLevelBinding<H> for NullWittLevelBinding<H> {
+    fn binding_level(&self) -> WittLevel {
+        <WittLevel>::default()
+    }
+}
+
 /// Phase 2 (orphan-closure) — resolver-absent default impl of `QuantumThermodynamicDomain<H>`.
 /// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
 /// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
@@ -177,13 +503,754 @@ pub struct NullQuantumThermodynamicDomain<H: HostTypes> {
     _phantom: core::marker::PhantomData<H>,
 }
 impl<H: HostTypes> Default for NullQuantumThermodynamicDomain<H> {
-    fn default() -> Self { Self { _phantom: core::marker::PhantomData } }
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
 }
 impl<H: HostTypes> NullQuantumThermodynamicDomain<H> {
     /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
-    pub const ABSENT: NullQuantumThermodynamicDomain<H> = NullQuantumThermodynamicDomain { _phantom: core::marker::PhantomData };
+    pub const ABSENT: NullQuantumThermodynamicDomain<H> = NullQuantumThermodynamicDomain {
+        _phantom: core::marker::PhantomData,
+    };
 }
-impl<H: HostTypes> QuantumThermodynamicDomain<H> for NullQuantumThermodynamicDomain<H> {
+impl<H: HostTypes> QuantumThermodynamicDomain<H> for NullQuantumThermodynamicDomain<H> {}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `ComposedOperation<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullComposedOperation<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullComposedOperation<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullComposedOperation<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullComposedOperation<H> = NullComposedOperation {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> Operation<H> for NullComposedOperation<H> {
+    fn arity(&self) -> u64 {
+        0
+    }
+    fn has_geometric_character(&self) -> GeometricCharacter {
+        <GeometricCharacter>::default()
+    }
+    type OperationTarget = NullOperation<H>;
+    fn inverse(&self) -> &Self::OperationTarget {
+        &<NullOperation<H>>::ABSENT
+    }
+    fn composed_of(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    fn is_ring_op(&self) -> bool {
+        false
+    }
+}
+impl<H: HostTypes> crate::user::morphism::Transform<H> for NullComposedOperation<H> {
+    fn source(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    fn target(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    fn preserves_count(&self) -> usize {
+        0
+    }
+    fn preserves_at(&self, _index: usize) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    type ComputationTrace = crate::bridge::trace::NullComputationTrace<H>;
+    fn trace(&self) -> &Self::ComputationTrace {
+        &<crate::bridge::trace::NullComputationTrace<H>>::ABSENT
+    }
+    type TransformTarget = crate::user::morphism::NullTransform<H>;
+    fn composes_with(&self) -> &[Self::TransformTarget] {
+        &[]
+    }
+    type Identity = NullIdentity<H>;
+    fn preserved_invariant(&self) -> &Self::Identity {
+        &<NullIdentity<H>>::ABSENT
+    }
+    fn input_class(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    fn output_class(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    type Witness = crate::user::morphism::NullWitness<H>;
+    fn has_witness(&self) -> &[Self::Witness] {
+        &[]
+    }
+}
+impl<H: HostTypes> crate::user::morphism::Composition<H> for NullComposedOperation<H> {
+    type Transform = crate::user::morphism::NullTransform<H>;
+    fn composition_result(&self) -> &Self::Transform {
+        &<crate::user::morphism::NullTransform<H>>::ABSENT
+    }
+    fn composition_components(&self) -> &[Self::Transform] {
+        &[]
+    }
+}
+impl<H: HostTypes> ComposedOperation<H> for NullComposedOperation<H> {
+    type Operation = NullOperation<H>;
+    fn composed_of_ops(&self) -> &[Self::Operation] {
+        &[]
+    }
+    type TypeDefinition = crate::user::type_::NullTypeDefinition<H>;
+    fn operator_domain_type(&self) -> &Self::TypeDefinition {
+        &<crate::user::type_::NullTypeDefinition<H>>::ABSENT
+    }
+    fn operator_range_type(&self) -> &Self::TypeDefinition {
+        &<crate::user::type_::NullTypeDefinition<H>>::ABSENT
+    }
+    fn operator_complexity(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    fn operator_idempotent(&self) -> bool {
+        false
+    }
+    fn composed_operator_count(&self) -> u64 {
+        0
+    }
+    fn is_involutory(&self) -> bool {
+        false
+    }
+    type TermExpression = crate::kernel::schema::NullTermExpression<H>;
+    fn convergence_guarantee(&self) -> &Self::TermExpression {
+        &<crate::kernel::schema::NullTermExpression<H>>::ABSENT
+    }
+}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `DispatchOperation<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullDispatchOperation<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullDispatchOperation<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullDispatchOperation<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullDispatchOperation<H> = NullDispatchOperation {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> Operation<H> for NullDispatchOperation<H> {
+    fn arity(&self) -> u64 {
+        0
+    }
+    fn has_geometric_character(&self) -> GeometricCharacter {
+        <GeometricCharacter>::default()
+    }
+    type OperationTarget = NullOperation<H>;
+    fn inverse(&self) -> &Self::OperationTarget {
+        &<NullOperation<H>>::ABSENT
+    }
+    fn composed_of(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    fn is_ring_op(&self) -> bool {
+        false
+    }
+}
+impl<H: HostTypes> crate::user::morphism::Transform<H> for NullDispatchOperation<H> {
+    fn source(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    fn target(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    fn preserves_count(&self) -> usize {
+        0
+    }
+    fn preserves_at(&self, _index: usize) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    type ComputationTrace = crate::bridge::trace::NullComputationTrace<H>;
+    fn trace(&self) -> &Self::ComputationTrace {
+        &<crate::bridge::trace::NullComputationTrace<H>>::ABSENT
+    }
+    type TransformTarget = crate::user::morphism::NullTransform<H>;
+    fn composes_with(&self) -> &[Self::TransformTarget] {
+        &[]
+    }
+    type Identity = NullIdentity<H>;
+    fn preserved_invariant(&self) -> &Self::Identity {
+        &<NullIdentity<H>>::ABSENT
+    }
+    fn input_class(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    fn output_class(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    type Witness = crate::user::morphism::NullWitness<H>;
+    fn has_witness(&self) -> &[Self::Witness] {
+        &[]
+    }
+}
+impl<H: HostTypes> crate::user::morphism::Composition<H> for NullDispatchOperation<H> {
+    type Transform = crate::user::morphism::NullTransform<H>;
+    fn composition_result(&self) -> &Self::Transform {
+        &<crate::user::morphism::NullTransform<H>>::ABSENT
+    }
+    fn composition_components(&self) -> &[Self::Transform] {
+        &[]
+    }
+}
+impl<H: HostTypes> ComposedOperation<H> for NullDispatchOperation<H> {
+    type Operation = NullOperation<H>;
+    fn composed_of_ops(&self) -> &[Self::Operation] {
+        &[]
+    }
+    type TypeDefinition = crate::user::type_::NullTypeDefinition<H>;
+    fn operator_domain_type(&self) -> &Self::TypeDefinition {
+        &<crate::user::type_::NullTypeDefinition<H>>::ABSENT
+    }
+    fn operator_range_type(&self) -> &Self::TypeDefinition {
+        &<crate::user::type_::NullTypeDefinition<H>>::ABSENT
+    }
+    fn operator_complexity(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    fn operator_idempotent(&self) -> bool {
+        false
+    }
+    fn composed_operator_count(&self) -> u64 {
+        0
+    }
+    fn is_involutory(&self) -> bool {
+        false
+    }
+    type TermExpression = crate::kernel::schema::NullTermExpression<H>;
+    fn convergence_guarantee(&self) -> &Self::TermExpression {
+        &<crate::kernel::schema::NullTermExpression<H>>::ABSENT
+    }
+}
+impl<H: HostTypes> DispatchOperation<H> for NullDispatchOperation<H> {
+    fn dispatch_source(&self) -> &Self::Operation {
+        &<NullOperation<H>>::ABSENT
+    }
+    fn dispatch_target(&self) -> &Self::Operation {
+        &<NullOperation<H>>::ABSENT
+    }
+}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `InferenceOperation<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullInferenceOperation<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullInferenceOperation<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullInferenceOperation<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullInferenceOperation<H> = NullInferenceOperation {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> Operation<H> for NullInferenceOperation<H> {
+    fn arity(&self) -> u64 {
+        0
+    }
+    fn has_geometric_character(&self) -> GeometricCharacter {
+        <GeometricCharacter>::default()
+    }
+    type OperationTarget = NullOperation<H>;
+    fn inverse(&self) -> &Self::OperationTarget {
+        &<NullOperation<H>>::ABSENT
+    }
+    fn composed_of(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    fn is_ring_op(&self) -> bool {
+        false
+    }
+}
+impl<H: HostTypes> crate::user::morphism::Transform<H> for NullInferenceOperation<H> {
+    fn source(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    fn target(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    fn preserves_count(&self) -> usize {
+        0
+    }
+    fn preserves_at(&self, _index: usize) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    type ComputationTrace = crate::bridge::trace::NullComputationTrace<H>;
+    fn trace(&self) -> &Self::ComputationTrace {
+        &<crate::bridge::trace::NullComputationTrace<H>>::ABSENT
+    }
+    type TransformTarget = crate::user::morphism::NullTransform<H>;
+    fn composes_with(&self) -> &[Self::TransformTarget] {
+        &[]
+    }
+    type Identity = NullIdentity<H>;
+    fn preserved_invariant(&self) -> &Self::Identity {
+        &<NullIdentity<H>>::ABSENT
+    }
+    fn input_class(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    fn output_class(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    type Witness = crate::user::morphism::NullWitness<H>;
+    fn has_witness(&self) -> &[Self::Witness] {
+        &[]
+    }
+}
+impl<H: HostTypes> crate::user::morphism::Composition<H> for NullInferenceOperation<H> {
+    type Transform = crate::user::morphism::NullTransform<H>;
+    fn composition_result(&self) -> &Self::Transform {
+        &<crate::user::morphism::NullTransform<H>>::ABSENT
+    }
+    fn composition_components(&self) -> &[Self::Transform] {
+        &[]
+    }
+}
+impl<H: HostTypes> ComposedOperation<H> for NullInferenceOperation<H> {
+    type Operation = NullOperation<H>;
+    fn composed_of_ops(&self) -> &[Self::Operation] {
+        &[]
+    }
+    type TypeDefinition = crate::user::type_::NullTypeDefinition<H>;
+    fn operator_domain_type(&self) -> &Self::TypeDefinition {
+        &<crate::user::type_::NullTypeDefinition<H>>::ABSENT
+    }
+    fn operator_range_type(&self) -> &Self::TypeDefinition {
+        &<crate::user::type_::NullTypeDefinition<H>>::ABSENT
+    }
+    fn operator_complexity(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    fn operator_idempotent(&self) -> bool {
+        false
+    }
+    fn composed_operator_count(&self) -> u64 {
+        0
+    }
+    fn is_involutory(&self) -> bool {
+        false
+    }
+    type TermExpression = crate::kernel::schema::NullTermExpression<H>;
+    fn convergence_guarantee(&self) -> &Self::TermExpression {
+        &<crate::kernel::schema::NullTermExpression<H>>::ABSENT
+    }
+}
+impl<H: HostTypes> InferenceOperation<H> for NullInferenceOperation<H> {
+    fn inference_source(&self) -> &Self::Operation {
+        &<NullOperation<H>>::ABSENT
+    }
+    fn inference_target(&self) -> &Self::Operation {
+        &<NullOperation<H>>::ABSENT
+    }
+    fn inference_pipeline(&self) -> &Self::Operation {
+        &<NullOperation<H>>::ABSENT
+    }
+}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `AccumulationOperation<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullAccumulationOperation<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullAccumulationOperation<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullAccumulationOperation<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullAccumulationOperation<H> = NullAccumulationOperation {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> Operation<H> for NullAccumulationOperation<H> {
+    fn arity(&self) -> u64 {
+        0
+    }
+    fn has_geometric_character(&self) -> GeometricCharacter {
+        <GeometricCharacter>::default()
+    }
+    type OperationTarget = NullOperation<H>;
+    fn inverse(&self) -> &Self::OperationTarget {
+        &<NullOperation<H>>::ABSENT
+    }
+    fn composed_of(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    fn is_ring_op(&self) -> bool {
+        false
+    }
+}
+impl<H: HostTypes> crate::user::morphism::Transform<H> for NullAccumulationOperation<H> {
+    fn source(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    fn target(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    fn preserves_count(&self) -> usize {
+        0
+    }
+    fn preserves_at(&self, _index: usize) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    type ComputationTrace = crate::bridge::trace::NullComputationTrace<H>;
+    fn trace(&self) -> &Self::ComputationTrace {
+        &<crate::bridge::trace::NullComputationTrace<H>>::ABSENT
+    }
+    type TransformTarget = crate::user::morphism::NullTransform<H>;
+    fn composes_with(&self) -> &[Self::TransformTarget] {
+        &[]
+    }
+    type Identity = NullIdentity<H>;
+    fn preserved_invariant(&self) -> &Self::Identity {
+        &<NullIdentity<H>>::ABSENT
+    }
+    fn input_class(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    fn output_class(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    type Witness = crate::user::morphism::NullWitness<H>;
+    fn has_witness(&self) -> &[Self::Witness] {
+        &[]
+    }
+}
+impl<H: HostTypes> crate::user::morphism::Composition<H> for NullAccumulationOperation<H> {
+    type Transform = crate::user::morphism::NullTransform<H>;
+    fn composition_result(&self) -> &Self::Transform {
+        &<crate::user::morphism::NullTransform<H>>::ABSENT
+    }
+    fn composition_components(&self) -> &[Self::Transform] {
+        &[]
+    }
+}
+impl<H: HostTypes> ComposedOperation<H> for NullAccumulationOperation<H> {
+    type Operation = NullOperation<H>;
+    fn composed_of_ops(&self) -> &[Self::Operation] {
+        &[]
+    }
+    type TypeDefinition = crate::user::type_::NullTypeDefinition<H>;
+    fn operator_domain_type(&self) -> &Self::TypeDefinition {
+        &<crate::user::type_::NullTypeDefinition<H>>::ABSENT
+    }
+    fn operator_range_type(&self) -> &Self::TypeDefinition {
+        &<crate::user::type_::NullTypeDefinition<H>>::ABSENT
+    }
+    fn operator_complexity(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    fn operator_idempotent(&self) -> bool {
+        false
+    }
+    fn composed_operator_count(&self) -> u64 {
+        0
+    }
+    fn is_involutory(&self) -> bool {
+        false
+    }
+    type TermExpression = crate::kernel::schema::NullTermExpression<H>;
+    fn convergence_guarantee(&self) -> &Self::TermExpression {
+        &<crate::kernel::schema::NullTermExpression<H>>::ABSENT
+    }
+}
+impl<H: HostTypes> AccumulationOperation<H> for NullAccumulationOperation<H> {
+    fn accumulation_base(&self) -> &Self::TermExpression {
+        &<crate::kernel::schema::NullTermExpression<H>>::ABSENT
+    }
+    fn accumulation_binding(&self) -> &Self::TermExpression {
+        &<crate::kernel::schema::NullTermExpression<H>>::ABSENT
+    }
+}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `LeasePartitionOperation<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullLeasePartitionOperation<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullLeasePartitionOperation<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullLeasePartitionOperation<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullLeasePartitionOperation<H> = NullLeasePartitionOperation {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> Operation<H> for NullLeasePartitionOperation<H> {
+    fn arity(&self) -> u64 {
+        0
+    }
+    fn has_geometric_character(&self) -> GeometricCharacter {
+        <GeometricCharacter>::default()
+    }
+    type OperationTarget = NullOperation<H>;
+    fn inverse(&self) -> &Self::OperationTarget {
+        &<NullOperation<H>>::ABSENT
+    }
+    fn composed_of(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    fn is_ring_op(&self) -> bool {
+        false
+    }
+}
+impl<H: HostTypes> crate::user::morphism::Transform<H> for NullLeasePartitionOperation<H> {
+    fn source(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    fn target(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    fn preserves_count(&self) -> usize {
+        0
+    }
+    fn preserves_at(&self, _index: usize) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    type ComputationTrace = crate::bridge::trace::NullComputationTrace<H>;
+    fn trace(&self) -> &Self::ComputationTrace {
+        &<crate::bridge::trace::NullComputationTrace<H>>::ABSENT
+    }
+    type TransformTarget = crate::user::morphism::NullTransform<H>;
+    fn composes_with(&self) -> &[Self::TransformTarget] {
+        &[]
+    }
+    type Identity = NullIdentity<H>;
+    fn preserved_invariant(&self) -> &Self::Identity {
+        &<NullIdentity<H>>::ABSENT
+    }
+    fn input_class(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    fn output_class(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    type Witness = crate::user::morphism::NullWitness<H>;
+    fn has_witness(&self) -> &[Self::Witness] {
+        &[]
+    }
+}
+impl<H: HostTypes> crate::user::morphism::Composition<H> for NullLeasePartitionOperation<H> {
+    type Transform = crate::user::morphism::NullTransform<H>;
+    fn composition_result(&self) -> &Self::Transform {
+        &<crate::user::morphism::NullTransform<H>>::ABSENT
+    }
+    fn composition_components(&self) -> &[Self::Transform] {
+        &[]
+    }
+}
+impl<H: HostTypes> ComposedOperation<H> for NullLeasePartitionOperation<H> {
+    type Operation = NullOperation<H>;
+    fn composed_of_ops(&self) -> &[Self::Operation] {
+        &[]
+    }
+    type TypeDefinition = crate::user::type_::NullTypeDefinition<H>;
+    fn operator_domain_type(&self) -> &Self::TypeDefinition {
+        &<crate::user::type_::NullTypeDefinition<H>>::ABSENT
+    }
+    fn operator_range_type(&self) -> &Self::TypeDefinition {
+        &<crate::user::type_::NullTypeDefinition<H>>::ABSENT
+    }
+    fn operator_complexity(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    fn operator_idempotent(&self) -> bool {
+        false
+    }
+    fn composed_operator_count(&self) -> u64 {
+        0
+    }
+    fn is_involutory(&self) -> bool {
+        false
+    }
+    type TermExpression = crate::kernel::schema::NullTermExpression<H>;
+    fn convergence_guarantee(&self) -> &Self::TermExpression {
+        &<crate::kernel::schema::NullTermExpression<H>>::ABSENT
+    }
+}
+impl<H: HostTypes> LeasePartitionOperation<H> for NullLeasePartitionOperation<H> {
+    fn lease_source(&self) -> &Self::Operation {
+        &<NullOperation<H>>::ABSENT
+    }
+    fn lease_factor(&self) -> &Self::Operation {
+        &<NullOperation<H>>::ABSENT
+    }
+    fn lease_partition_count(&self) -> u64 {
+        0
+    }
+}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `SessionCompositionOperation<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullSessionCompositionOperation<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullSessionCompositionOperation<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullSessionCompositionOperation<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullSessionCompositionOperation<H> = NullSessionCompositionOperation {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> Operation<H> for NullSessionCompositionOperation<H> {
+    fn arity(&self) -> u64 {
+        0
+    }
+    fn has_geometric_character(&self) -> GeometricCharacter {
+        <GeometricCharacter>::default()
+    }
+    type OperationTarget = NullOperation<H>;
+    fn inverse(&self) -> &Self::OperationTarget {
+        &<NullOperation<H>>::ABSENT
+    }
+    fn composed_of(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    fn is_ring_op(&self) -> bool {
+        false
+    }
+}
+impl<H: HostTypes> crate::user::morphism::Transform<H> for NullSessionCompositionOperation<H> {
+    fn source(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    fn target(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    fn preserves_count(&self) -> usize {
+        0
+    }
+    fn preserves_at(&self, _index: usize) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    type ComputationTrace = crate::bridge::trace::NullComputationTrace<H>;
+    fn trace(&self) -> &Self::ComputationTrace {
+        &<crate::bridge::trace::NullComputationTrace<H>>::ABSENT
+    }
+    type TransformTarget = crate::user::morphism::NullTransform<H>;
+    fn composes_with(&self) -> &[Self::TransformTarget] {
+        &[]
+    }
+    type Identity = NullIdentity<H>;
+    fn preserved_invariant(&self) -> &Self::Identity {
+        &<NullIdentity<H>>::ABSENT
+    }
+    fn input_class(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    fn output_class(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    type Witness = crate::user::morphism::NullWitness<H>;
+    fn has_witness(&self) -> &[Self::Witness] {
+        &[]
+    }
+}
+impl<H: HostTypes> crate::user::morphism::Composition<H> for NullSessionCompositionOperation<H> {
+    type Transform = crate::user::morphism::NullTransform<H>;
+    fn composition_result(&self) -> &Self::Transform {
+        &<crate::user::morphism::NullTransform<H>>::ABSENT
+    }
+    fn composition_components(&self) -> &[Self::Transform] {
+        &[]
+    }
+}
+impl<H: HostTypes> ComposedOperation<H> for NullSessionCompositionOperation<H> {
+    type Operation = NullOperation<H>;
+    fn composed_of_ops(&self) -> &[Self::Operation] {
+        &[]
+    }
+    type TypeDefinition = crate::user::type_::NullTypeDefinition<H>;
+    fn operator_domain_type(&self) -> &Self::TypeDefinition {
+        &<crate::user::type_::NullTypeDefinition<H>>::ABSENT
+    }
+    fn operator_range_type(&self) -> &Self::TypeDefinition {
+        &<crate::user::type_::NullTypeDefinition<H>>::ABSENT
+    }
+    fn operator_complexity(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    fn operator_idempotent(&self) -> bool {
+        false
+    }
+    fn composed_operator_count(&self) -> u64 {
+        0
+    }
+    fn is_involutory(&self) -> bool {
+        false
+    }
+    type TermExpression = crate::kernel::schema::NullTermExpression<H>;
+    fn convergence_guarantee(&self) -> &Self::TermExpression {
+        &<crate::kernel::schema::NullTermExpression<H>>::ABSENT
+    }
+}
+impl<H: HostTypes> SessionCompositionOperation<H> for NullSessionCompositionOperation<H> {
+    fn composition_left_session(&self) -> &Self::Operation {
+        &<NullOperation<H>>::ABSENT
+    }
+    fn composition_right_session(&self) -> &Self::Operation {
+        &<NullOperation<H>>::ABSENT
+    }
 }
 
 /// Phase 2 (orphan-closure) — resolver-absent default impl of `GroupPresentation<H>`.
@@ -196,14 +1263,19 @@ pub struct NullGroupPresentation<H: HostTypes> {
     _phantom: core::marker::PhantomData<H>,
 }
 impl<H: HostTypes> Default for NullGroupPresentation<H> {
-    fn default() -> Self { Self { _phantom: core::marker::PhantomData } }
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
 }
 impl<H: HostTypes> NullGroupPresentation<H> {
     /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
-    pub const ABSENT: NullGroupPresentation<H> = NullGroupPresentation { _phantom: core::marker::PhantomData };
+    pub const ABSENT: NullGroupPresentation<H> = NullGroupPresentation {
+        _phantom: core::marker::PhantomData,
+    };
 }
-impl<H: HostTypes> GroupPresentation<H> for NullGroupPresentation<H> {
-}
+impl<H: HostTypes> GroupPresentation<H> for NullGroupPresentation<H> {}
 
 /// Established by exhaustive traversal of R_n. Valid for all identities where the ring is finite.
 pub mod enumerative {

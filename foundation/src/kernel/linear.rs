@@ -63,19 +63,230 @@ pub struct NullLinearSite<H: HostTypes> {
     _phantom: core::marker::PhantomData<H>,
 }
 impl<H: HostTypes> Default for NullLinearSite<H> {
-    fn default() -> Self { Self { _phantom: core::marker::PhantomData } }
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
 }
 impl<H: HostTypes> NullLinearSite<H> {
     /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
-    pub const ABSENT: NullLinearSite<H> = NullLinearSite { _phantom: core::marker::PhantomData };
+    pub const ABSENT: NullLinearSite<H> = NullLinearSite {
+        _phantom: core::marker::PhantomData,
+    };
 }
 impl<H: HostTypes> crate::bridge::partition::SiteIndex<H> for NullLinearSite<H> {
-    fn site_position(&self) -> u64 { 0 }
-    fn site_state(&self) -> u64 { 0 }
+    fn site_position(&self) -> u64 {
+        0
+    }
+    fn site_state(&self) -> u64 {
+        0
+    }
     type SiteIndexTarget = crate::bridge::partition::NullSiteIndex<H>;
-    fn ancilla_site(&self) -> &Self::SiteIndexTarget { &<crate::bridge::partition::NullSiteIndex<H>>::ABSENT }
+    fn ancilla_site(&self) -> &Self::SiteIndexTarget {
+        &<crate::bridge::partition::NullSiteIndex<H>>::ABSENT
+    }
 }
-impl<H: HostTypes> LinearSite<H> for NullLinearSite<H> {
+impl<H: HostTypes> LinearSite<H> for NullLinearSite<H> {}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `LinearEffect<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullLinearEffect<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullLinearEffect<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullLinearEffect<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullLinearEffect<H> = NullLinearEffect {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> crate::kernel::effect::Effect<H> for NullLinearEffect<H> {
+    type EffectTarget = crate::kernel::effect::NullEffectTarget<H>;
+    fn effect_target(&self) -> &Self::EffectTarget {
+        &<crate::kernel::effect::NullEffectTarget<H>>::ABSENT
+    }
+    type Context = crate::user::state::NullContext<H>;
+    fn pre_context(&self) -> &Self::Context {
+        &<crate::user::state::NullContext<H>>::ABSENT
+    }
+    fn post_context(&self) -> &Self::Context {
+        &<crate::user::state::NullContext<H>>::ABSENT
+    }
+    fn free_rank_delta(&self) -> i64 {
+        0
+    }
+    fn composite_index(&self) -> u64 {
+        0
+    }
+    fn is_commutative_with(&self) -> bool {
+        false
+    }
+}
+impl<H: HostTypes> crate::kernel::effect::ReversibleEffect<H> for NullLinearEffect<H> {}
+impl<H: HostTypes> crate::kernel::effect::PinningEffect<H> for NullLinearEffect<H> {}
+impl<H: HostTypes> LinearEffect<H> for NullLinearEffect<H> {
+    type LinearSite = NullLinearSite<H>;
+    fn linear_target(&self) -> &Self::LinearSite {
+        &<NullLinearSite<H>>::ABSENT
+    }
+}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `LinearTrace<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullLinearTrace<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullLinearTrace<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullLinearTrace<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullLinearTrace<H> = NullLinearTrace {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> crate::bridge::trace::ComputationTrace<H> for NullLinearTrace<H> {
+    type Datum = crate::kernel::schema::NullDatum<H>;
+    fn input(&self) -> &Self::Datum {
+        &<crate::kernel::schema::NullDatum<H>>::ABSENT
+    }
+    fn output(&self) -> &Self::Datum {
+        &<crate::kernel::schema::NullDatum<H>>::ABSENT
+    }
+    type ComputationStep = crate::bridge::trace::NullComputationStep<H>;
+    fn step(&self) -> &[Self::ComputationStep] {
+        &[]
+    }
+    type DihedralElement = crate::bridge::observable::NullDihedralElement<H>;
+    fn monodromy(&self) -> &Self::DihedralElement {
+        &<crate::bridge::observable::NullDihedralElement<H>>::ABSENT
+    }
+    type Certificate = crate::bridge::cert::NullCertificate<H>;
+    fn certified_by(&self) -> &Self::Certificate {
+        &<crate::bridge::cert::NullCertificate<H>>::ABSENT
+    }
+    type ResidualEntropy = crate::bridge::observable::NullResidualEntropy<H>;
+    fn residual_entropy(&self) -> &Self::ResidualEntropy {
+        &<crate::bridge::observable::NullResidualEntropy<H>>::ABSENT
+    }
+    fn is_geodesic(&self) -> bool {
+        false
+    }
+    type GeodesicViolation = crate::bridge::trace::NullGeodesicViolation<H>;
+    fn geodesic_violation(&self) -> &[Self::GeodesicViolation] {
+        &[]
+    }
+    fn cumulative_entropy_cost(&self) -> H::Decimal {
+        H::EMPTY_DECIMAL
+    }
+    fn adiabatically_ordered(&self) -> bool {
+        false
+    }
+    type MeasurementEvent = crate::bridge::trace::NullMeasurementEvent<H>;
+    fn measurement_event(&self) -> &[Self::MeasurementEvent] {
+        &[]
+    }
+    fn is_ar1_ordered(&self) -> bool {
+        false
+    }
+    fn is_dc10_selected(&self) -> bool {
+        false
+    }
+}
+impl<H: HostTypes> LinearTrace<H> for NullLinearTrace<H> {}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `LinearBudget<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullLinearBudget<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullLinearBudget<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullLinearBudget<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullLinearBudget<H> = NullLinearBudget {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> LinearBudget<H> for NullLinearBudget<H> {
+    type LinearSite = NullLinearSite<H>;
+    fn budget_sites(&self) -> &[Self::LinearSite] {
+        &[]
+    }
+    type Context = crate::user::state::NullContext<H>;
+    fn budget_context(&self) -> &Self::Context {
+        &<crate::user::state::NullContext<H>>::ABSENT
+    }
+    fn remaining_count(&self) -> u64 {
+        0
+    }
+    fn stack_budget_bytes(&self) -> u64 {
+        0
+    }
+}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `LeaseAllocation<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullLeaseAllocation<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullLeaseAllocation<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullLeaseAllocation<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullLeaseAllocation<H> = NullLeaseAllocation {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> LeaseAllocation<H> for NullLeaseAllocation<H> {
+    type LinearSite = NullLinearSite<H>;
+    fn lease_target(&self) -> &[Self::LinearSite] {
+        &[]
+    }
+    type ContextLease = crate::user::state::NullContextLease<H>;
+    fn lease_source(&self) -> &Self::ContextLease {
+        &<crate::user::state::NullContextLease<H>>::ABSENT
+    }
+    fn lease_cardinality(&self) -> u64 {
+        0
+    }
 }
 
 /// Phase 2 (orphan-closure) — resolver-absent default impl of `AffineSite<H>`.
@@ -88,17 +299,28 @@ pub struct NullAffineSite<H: HostTypes> {
     _phantom: core::marker::PhantomData<H>,
 }
 impl<H: HostTypes> Default for NullAffineSite<H> {
-    fn default() -> Self { Self { _phantom: core::marker::PhantomData } }
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
 }
 impl<H: HostTypes> NullAffineSite<H> {
     /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
-    pub const ABSENT: NullAffineSite<H> = NullAffineSite { _phantom: core::marker::PhantomData };
+    pub const ABSENT: NullAffineSite<H> = NullAffineSite {
+        _phantom: core::marker::PhantomData,
+    };
 }
 impl<H: HostTypes> crate::bridge::partition::SiteIndex<H> for NullAffineSite<H> {
-    fn site_position(&self) -> u64 { 0 }
-    fn site_state(&self) -> u64 { 0 }
+    fn site_position(&self) -> u64 {
+        0
+    }
+    fn site_state(&self) -> u64 {
+        0
+    }
     type SiteIndexTarget = crate::bridge::partition::NullSiteIndex<H>;
-    fn ancilla_site(&self) -> &Self::SiteIndexTarget { &<crate::bridge::partition::NullSiteIndex<H>>::ABSENT }
+    fn ancilla_site(&self) -> &Self::SiteIndexTarget {
+        &<crate::bridge::partition::NullSiteIndex<H>>::ABSENT
+    }
 }
-impl<H: HostTypes> AffineSite<H> for NullAffineSite<H> {
-}
+impl<H: HostTypes> AffineSite<H> for NullAffineSite<H> {}

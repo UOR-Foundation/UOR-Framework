@@ -260,10 +260,13 @@ pub fn generate_enums_file(ontology: &Ontology) -> String {
             f.line("#[non_exhaustive]");
         }
         f.line("#[repr(u8)]");
-        f.line("#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]");
+        f.line("#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]");
         let _ = writeln!(f.buf, "pub enum {} {{", e.name);
-        for (variant, comment) in &e.variants {
+        for (i, (variant, comment)) in e.variants.iter().enumerate() {
             f.indented_doc_comment(comment);
+            if i == 0 {
+                f.line("    #[default]");
+            }
             let _ = writeln!(f.buf, "    {variant},");
         }
         f.line("}");
@@ -386,6 +389,17 @@ pub fn generate_enums_file(ontology: &Ontology) -> String {
     f.line("        Self {");
     f.line("            witt_length: self.witt_length + 8,");
     f.line("        }");
+    f.line("    }");
+    f.line("}");
+    f.blank();
+    f.line("impl Default for WittLevel {");
+    f.indented_doc_comment(
+        "`W8` is the spec-defined minimum Witt level and the canonical base \
+         referenced by `schema:WittLevel` individuals.",
+    );
+    f.line("    #[inline]");
+    f.line("    fn default() -> Self {");
+    f.line("        Self::W8");
     f.line("    }");
     f.line("}");
     f.blank();

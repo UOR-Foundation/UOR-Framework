@@ -43,3 +43,104 @@ pub trait MonoidalAssociator<H: HostTypes> {
     /// Certificate witnessing the associativity isomorphism (A⊗B)⊗C ≅ A⊗(B⊗C).
     fn associator_witness_ref(&self) -> &Self::Certificate;
 }
+
+#[doc(hidden)]
+#[doc = "THEORY-DEFERRED \u{2014} not a valid implementation; see [docs/theory_deferred.md]. Exists only to satisfy downstream trait-bound references."]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullMonoidalProduct<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullMonoidalProduct<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullMonoidalProduct<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullMonoidalProduct<H> = NullMonoidalProduct {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> MonoidalProduct<H> for NullMonoidalProduct<H> {
+    type ComputationDatum = crate::user::morphism::NullComputationDatum<H>;
+    fn left_operand(&self) -> &Self::ComputationDatum {
+        &<crate::user::morphism::NullComputationDatum<H>>::ABSENT
+    }
+    fn right_operand(&self) -> &Self::ComputationDatum {
+        &<crate::user::morphism::NullComputationDatum<H>>::ABSENT
+    }
+    type Datum = crate::kernel::schema::NullDatum<H>;
+    fn composed_result(&self) -> &Self::Datum {
+        &<crate::kernel::schema::NullDatum<H>>::ABSENT
+    }
+    fn saturation_value(&self) -> H::Decimal {
+        H::EMPTY_DECIMAL
+    }
+}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `MonoidalUnit<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullMonoidalUnit<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullMonoidalUnit<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullMonoidalUnit<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullMonoidalUnit<H> = NullMonoidalUnit {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> MonoidalUnit<H> for NullMonoidalUnit<H> {
+    type Certificate = crate::bridge::cert::NullCertificate<H>;
+    fn unit_witness_ref(&self) -> &Self::Certificate {
+        &<crate::bridge::cert::NullCertificate<H>>::ABSENT
+    }
+}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `MonoidalAssociator<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullMonoidalAssociator<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullMonoidalAssociator<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullMonoidalAssociator<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullMonoidalAssociator<H> = NullMonoidalAssociator {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> MonoidalAssociator<H> for NullMonoidalAssociator<H> {
+    type MonoidalProduct = NullMonoidalProduct<H>;
+    fn associator_left(&self) -> &Self::MonoidalProduct {
+        &<NullMonoidalProduct<H>>::ABSENT
+    }
+    fn associator_right(&self) -> &Self::MonoidalProduct {
+        &<NullMonoidalProduct<H>>::ABSENT
+    }
+    type Certificate = crate::bridge::cert::NullCertificate<H>;
+    fn associator_witness_ref(&self) -> &Self::Certificate {
+        &<crate::bridge::cert::NullCertificate<H>>::ABSENT
+    }
+}

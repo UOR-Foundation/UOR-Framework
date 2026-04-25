@@ -9,8 +9,10 @@ use std::path::PathBuf;
 use uor_codegen::classification::{classify_all, PathKind};
 use uor_ontology::Ontology;
 
-/// Phase 3 closure ratchet: at least 6 Path-2 classes emit Null stubs.
-const MIN_PHASE3_PATH2_STUBS: usize = 6;
+/// Phase 3 + Phase 7 closure ratchet. Phase 7 unblocked the remaining
+/// cascade drops by admitting Path-4 references; every Path-2 class now
+/// has a Null stub.
+const MIN_PHASE3_PATH2_STUBS: usize = 10;
 
 fn find_workspace_root() -> PathBuf {
     let mut dir = std::env::current_dir().expect("cwd");

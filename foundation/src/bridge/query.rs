@@ -73,15 +73,61 @@ pub struct NullQuery<H: HostTypes> {
     _phantom: core::marker::PhantomData<H>,
 }
 impl<H: HostTypes> Default for NullQuery<H> {
-    fn default() -> Self { Self { _phantom: core::marker::PhantomData } }
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
 }
 impl<H: HostTypes> NullQuery<H> {
     /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
-    pub const ABSENT: NullQuery<H> = NullQuery { _phantom: core::marker::PhantomData };
+    pub const ABSENT: NullQuery<H> = NullQuery {
+        _phantom: core::marker::PhantomData,
+    };
 }
 impl<H: HostTypes> Query<H> for NullQuery<H> {
-    fn input_type(&self) -> &H::HostString { H::EMPTY_HOST_STRING }
-    fn output_type(&self) -> &H::HostString { H::EMPTY_HOST_STRING }
+    fn input_type(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    fn output_type(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `CoordinateQuery<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullCoordinateQuery<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullCoordinateQuery<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullCoordinateQuery<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullCoordinateQuery<H> = NullCoordinateQuery {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> Query<H> for NullCoordinateQuery<H> {
+    fn input_type(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    fn output_type(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+}
+impl<H: HostTypes> CoordinateQuery<H> for NullCoordinateQuery<H> {
+    fn has_triad_projection(&self) -> TriadProjection {
+        <TriadProjection>::default()
+    }
 }
 
 /// Phase 2 (orphan-closure) — resolver-absent default impl of `MetricQuery<H>`.
@@ -94,18 +140,27 @@ pub struct NullMetricQuery<H: HostTypes> {
     _phantom: core::marker::PhantomData<H>,
 }
 impl<H: HostTypes> Default for NullMetricQuery<H> {
-    fn default() -> Self { Self { _phantom: core::marker::PhantomData } }
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
 }
 impl<H: HostTypes> NullMetricQuery<H> {
     /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
-    pub const ABSENT: NullMetricQuery<H> = NullMetricQuery { _phantom: core::marker::PhantomData };
+    pub const ABSENT: NullMetricQuery<H> = NullMetricQuery {
+        _phantom: core::marker::PhantomData,
+    };
 }
 impl<H: HostTypes> Query<H> for NullMetricQuery<H> {
-    fn input_type(&self) -> &H::HostString { H::EMPTY_HOST_STRING }
-    fn output_type(&self) -> &H::HostString { H::EMPTY_HOST_STRING }
+    fn input_type(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    fn output_type(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
 }
-impl<H: HostTypes> MetricQuery<H> for NullMetricQuery<H> {
-}
+impl<H: HostTypes> MetricQuery<H> for NullMetricQuery<H> {}
 
 /// Phase 2 (orphan-closure) — resolver-absent default impl of `RepresentationQuery<H>`.
 /// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
@@ -117,17 +172,146 @@ pub struct NullRepresentationQuery<H: HostTypes> {
     _phantom: core::marker::PhantomData<H>,
 }
 impl<H: HostTypes> Default for NullRepresentationQuery<H> {
-    fn default() -> Self { Self { _phantom: core::marker::PhantomData } }
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
 }
 impl<H: HostTypes> NullRepresentationQuery<H> {
     /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
-    pub const ABSENT: NullRepresentationQuery<H> = NullRepresentationQuery { _phantom: core::marker::PhantomData };
+    pub const ABSENT: NullRepresentationQuery<H> = NullRepresentationQuery {
+        _phantom: core::marker::PhantomData,
+    };
 }
 impl<H: HostTypes> Query<H> for NullRepresentationQuery<H> {
-    fn input_type(&self) -> &H::HostString { H::EMPTY_HOST_STRING }
-    fn output_type(&self) -> &H::HostString { H::EMPTY_HOST_STRING }
+    fn input_type(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    fn output_type(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
 }
-impl<H: HostTypes> RepresentationQuery<H> for NullRepresentationQuery<H> {
+impl<H: HostTypes> RepresentationQuery<H> for NullRepresentationQuery<H> {}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `RelationQuery<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullRelationQuery<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullRelationQuery<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullRelationQuery<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullRelationQuery<H> = NullRelationQuery {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> Query<H> for NullRelationQuery<H> {
+    fn input_type(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    fn output_type(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+}
+impl<H: HostTypes> RelationQuery<H> for NullRelationQuery<H> {
+    type Element = crate::kernel::address::NullElement<H>;
+    fn source_address(&self) -> &Self::Element {
+        &<crate::kernel::address::NullElement<H>>::ABSENT
+    }
+    type Constraint = crate::user::type_::NullConstraint<H>;
+    fn relation_type(&self) -> &Self::Constraint {
+        &<crate::user::type_::NullConstraint<H>>::ABSENT
+    }
+    type FreeRank = crate::bridge::partition::NullFreeRank<H>;
+    fn target_site(&self) -> &Self::FreeRank {
+        &<crate::bridge::partition::NullFreeRank<H>>::ABSENT
+    }
+    type GroundingMap = crate::user::morphism::NullGroundingMap<H>;
+    fn grounding_map(&self) -> &Self::GroundingMap {
+        &<crate::user::morphism::NullGroundingMap<H>>::ABSENT
+    }
+    type ProjectionMap = crate::user::morphism::NullProjectionMap<H>;
+    fn projection_map(&self) -> &Self::ProjectionMap {
+        &<crate::user::morphism::NullProjectionMap<H>>::ABSENT
+    }
+    type Context = crate::user::state::NullContext<H>;
+    fn session_context(&self) -> &Self::Context {
+        &<crate::user::state::NullContext<H>>::ABSENT
+    }
+}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `SessionQuery<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullSessionQuery<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullSessionQuery<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullSessionQuery<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullSessionQuery<H> = NullSessionQuery {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> Query<H> for NullSessionQuery<H> {
+    fn input_type(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    fn output_type(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+}
+impl<H: HostTypes> RelationQuery<H> for NullSessionQuery<H> {
+    type Element = crate::kernel::address::NullElement<H>;
+    fn source_address(&self) -> &Self::Element {
+        &<crate::kernel::address::NullElement<H>>::ABSENT
+    }
+    type Constraint = crate::user::type_::NullConstraint<H>;
+    fn relation_type(&self) -> &Self::Constraint {
+        &<crate::user::type_::NullConstraint<H>>::ABSENT
+    }
+    type FreeRank = crate::bridge::partition::NullFreeRank<H>;
+    fn target_site(&self) -> &Self::FreeRank {
+        &<crate::bridge::partition::NullFreeRank<H>>::ABSENT
+    }
+    type GroundingMap = crate::user::morphism::NullGroundingMap<H>;
+    fn grounding_map(&self) -> &Self::GroundingMap {
+        &<crate::user::morphism::NullGroundingMap<H>>::ABSENT
+    }
+    type ProjectionMap = crate::user::morphism::NullProjectionMap<H>;
+    fn projection_map(&self) -> &Self::ProjectionMap {
+        &<crate::user::morphism::NullProjectionMap<H>>::ABSENT
+    }
+    type Context = crate::user::state::NullContext<H>;
+    fn session_context(&self) -> &Self::Context {
+        &<crate::user::state::NullContext<H>>::ABSENT
+    }
+}
+impl<H: HostTypes> SessionQuery<H> for NullSessionQuery<H> {
+    type Session = crate::user::state::NullSession<H>;
+    fn session_membership(&self) -> &Self::Session {
+        &<crate::user::state::NullSession<H>>::ABSENT
+    }
 }
 
 /// The stratum coordinate: the layer position of a datum within the ring's stratification.

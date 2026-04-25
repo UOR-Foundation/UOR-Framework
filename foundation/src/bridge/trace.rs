@@ -117,6 +117,122 @@ pub trait InhabitanceSearchTrace<H: HostTypes>: ComputationTrace<H> {
     fn checkpoint(&self) -> &[Self::InhabitanceCheckpoint];
 }
 
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `ComputationTrace<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullComputationTrace<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullComputationTrace<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullComputationTrace<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullComputationTrace<H> = NullComputationTrace {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> ComputationTrace<H> for NullComputationTrace<H> {
+    type Datum = crate::kernel::schema::NullDatum<H>;
+    fn input(&self) -> &Self::Datum {
+        &<crate::kernel::schema::NullDatum<H>>::ABSENT
+    }
+    fn output(&self) -> &Self::Datum {
+        &<crate::kernel::schema::NullDatum<H>>::ABSENT
+    }
+    type ComputationStep = NullComputationStep<H>;
+    fn step(&self) -> &[Self::ComputationStep] {
+        &[]
+    }
+    type DihedralElement = crate::bridge::observable::NullDihedralElement<H>;
+    fn monodromy(&self) -> &Self::DihedralElement {
+        &<crate::bridge::observable::NullDihedralElement<H>>::ABSENT
+    }
+    type Certificate = crate::bridge::cert::NullCertificate<H>;
+    fn certified_by(&self) -> &Self::Certificate {
+        &<crate::bridge::cert::NullCertificate<H>>::ABSENT
+    }
+    type ResidualEntropy = crate::bridge::observable::NullResidualEntropy<H>;
+    fn residual_entropy(&self) -> &Self::ResidualEntropy {
+        &<crate::bridge::observable::NullResidualEntropy<H>>::ABSENT
+    }
+    fn is_geodesic(&self) -> bool {
+        false
+    }
+    type GeodesicViolation = NullGeodesicViolation<H>;
+    fn geodesic_violation(&self) -> &[Self::GeodesicViolation] {
+        &[]
+    }
+    fn cumulative_entropy_cost(&self) -> H::Decimal {
+        H::EMPTY_DECIMAL
+    }
+    fn adiabatically_ordered(&self) -> bool {
+        false
+    }
+    type MeasurementEvent = NullMeasurementEvent<H>;
+    fn measurement_event(&self) -> &[Self::MeasurementEvent] {
+        &[]
+    }
+    fn is_ar1_ordered(&self) -> bool {
+        false
+    }
+    fn is_dc10_selected(&self) -> bool {
+        false
+    }
+}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `ComputationStep<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullComputationStep<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullComputationStep<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullComputationStep<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullComputationStep<H> = NullComputationStep {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> ComputationStep<H> for NullComputationStep<H> {
+    type Datum = crate::kernel::schema::NullDatum<H>;
+    fn from(&self) -> &Self::Datum {
+        &<crate::kernel::schema::NullDatum<H>>::ABSENT
+    }
+    fn to(&self) -> &Self::Datum {
+        &<crate::kernel::schema::NullDatum<H>>::ABSENT
+    }
+    type Operation = crate::kernel::op::NullOperation<H>;
+    fn operation(&self) -> &Self::Operation {
+        &<crate::kernel::op::NullOperation<H>>::ABSENT
+    }
+    fn index(&self) -> u64 {
+        0
+    }
+    fn step_entropy_cost(&self) -> H::Decimal {
+        H::EMPTY_DECIMAL
+    }
+    fn jacobian_at_step(&self) -> H::Decimal {
+        H::EMPTY_DECIMAL
+    }
+}
+
 /// Phase 2 (orphan-closure) — resolver-absent default impl of `TraceMetrics<H>`.
 /// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
 /// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
@@ -127,17 +243,101 @@ pub struct NullTraceMetrics<H: HostTypes> {
     _phantom: core::marker::PhantomData<H>,
 }
 impl<H: HostTypes> Default for NullTraceMetrics<H> {
-    fn default() -> Self { Self { _phantom: core::marker::PhantomData } }
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
 }
 impl<H: HostTypes> NullTraceMetrics<H> {
     /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
-    pub const ABSENT: NullTraceMetrics<H> = NullTraceMetrics { _phantom: core::marker::PhantomData };
+    pub const ABSENT: NullTraceMetrics<H> = NullTraceMetrics {
+        _phantom: core::marker::PhantomData,
+    };
 }
 impl<H: HostTypes> TraceMetrics<H> for NullTraceMetrics<H> {
-    fn step_count(&self) -> u64 { 0 }
-    fn total_ring_distance(&self) -> u64 { 0 }
-    fn total_hamming_distance(&self) -> u64 { 0 }
+    fn step_count(&self) -> u64 {
+        0
+    }
+    fn total_ring_distance(&self) -> u64 {
+        0
+    }
+    fn total_hamming_distance(&self) -> u64 {
+        0
+    }
 }
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `GeodesicTrace<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullGeodesicTrace<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullGeodesicTrace<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullGeodesicTrace<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullGeodesicTrace<H> = NullGeodesicTrace {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> ComputationTrace<H> for NullGeodesicTrace<H> {
+    type Datum = crate::kernel::schema::NullDatum<H>;
+    fn input(&self) -> &Self::Datum {
+        &<crate::kernel::schema::NullDatum<H>>::ABSENT
+    }
+    fn output(&self) -> &Self::Datum {
+        &<crate::kernel::schema::NullDatum<H>>::ABSENT
+    }
+    type ComputationStep = NullComputationStep<H>;
+    fn step(&self) -> &[Self::ComputationStep] {
+        &[]
+    }
+    type DihedralElement = crate::bridge::observable::NullDihedralElement<H>;
+    fn monodromy(&self) -> &Self::DihedralElement {
+        &<crate::bridge::observable::NullDihedralElement<H>>::ABSENT
+    }
+    type Certificate = crate::bridge::cert::NullCertificate<H>;
+    fn certified_by(&self) -> &Self::Certificate {
+        &<crate::bridge::cert::NullCertificate<H>>::ABSENT
+    }
+    type ResidualEntropy = crate::bridge::observable::NullResidualEntropy<H>;
+    fn residual_entropy(&self) -> &Self::ResidualEntropy {
+        &<crate::bridge::observable::NullResidualEntropy<H>>::ABSENT
+    }
+    fn is_geodesic(&self) -> bool {
+        false
+    }
+    type GeodesicViolation = NullGeodesicViolation<H>;
+    fn geodesic_violation(&self) -> &[Self::GeodesicViolation] {
+        &[]
+    }
+    fn cumulative_entropy_cost(&self) -> H::Decimal {
+        H::EMPTY_DECIMAL
+    }
+    fn adiabatically_ordered(&self) -> bool {
+        false
+    }
+    type MeasurementEvent = NullMeasurementEvent<H>;
+    fn measurement_event(&self) -> &[Self::MeasurementEvent] {
+        &[]
+    }
+    fn is_ar1_ordered(&self) -> bool {
+        false
+    }
+    fn is_dc10_selected(&self) -> bool {
+        false
+    }
+}
+impl<H: HostTypes> GeodesicTrace<H> for NullGeodesicTrace<H> {}
 
 /// Phase 2 (orphan-closure) — resolver-absent default impl of `GeodesicViolation<H>`.
 /// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
@@ -149,14 +349,81 @@ pub struct NullGeodesicViolation<H: HostTypes> {
     _phantom: core::marker::PhantomData<H>,
 }
 impl<H: HostTypes> Default for NullGeodesicViolation<H> {
-    fn default() -> Self { Self { _phantom: core::marker::PhantomData } }
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
 }
 impl<H: HostTypes> NullGeodesicViolation<H> {
     /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
-    pub const ABSENT: NullGeodesicViolation<H> = NullGeodesicViolation { _phantom: core::marker::PhantomData };
+    pub const ABSENT: NullGeodesicViolation<H> = NullGeodesicViolation {
+        _phantom: core::marker::PhantomData,
+    };
 }
 impl<H: HostTypes> GeodesicViolation<H> for NullGeodesicViolation<H> {
-    fn violation_reason(&self) -> &H::HostString { H::EMPTY_HOST_STRING }
+    fn violation_reason(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `MeasurementEvent<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullMeasurementEvent<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullMeasurementEvent<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullMeasurementEvent<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullMeasurementEvent<H> = NullMeasurementEvent {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> ComputationStep<H> for NullMeasurementEvent<H> {
+    type Datum = crate::kernel::schema::NullDatum<H>;
+    fn from(&self) -> &Self::Datum {
+        &<crate::kernel::schema::NullDatum<H>>::ABSENT
+    }
+    fn to(&self) -> &Self::Datum {
+        &<crate::kernel::schema::NullDatum<H>>::ABSENT
+    }
+    type Operation = crate::kernel::op::NullOperation<H>;
+    fn operation(&self) -> &Self::Operation {
+        &<crate::kernel::op::NullOperation<H>>::ABSENT
+    }
+    fn index(&self) -> u64 {
+        0
+    }
+    fn step_entropy_cost(&self) -> H::Decimal {
+        H::EMPTY_DECIMAL
+    }
+    fn jacobian_at_step(&self) -> H::Decimal {
+        H::EMPTY_DECIMAL
+    }
+}
+impl<H: HostTypes> MeasurementEvent<H> for NullMeasurementEvent<H> {
+    fn pre_collapse_entropy(&self) -> H::Decimal {
+        H::EMPTY_DECIMAL
+    }
+    fn post_collapse_landauer_cost(&self) -> H::Decimal {
+        H::EMPTY_DECIMAL
+    }
+    fn collapse_step(&self) -> u64 {
+        0
+    }
+    fn amplitude_vector(&self) -> H::Decimal {
+        H::EMPTY_DECIMAL
+    }
 }
 
 /// Phase 2 (orphan-closure) — resolver-absent default impl of `MeasurementOutcome<H>`.
@@ -169,15 +436,102 @@ pub struct NullMeasurementOutcome<H: HostTypes> {
     _phantom: core::marker::PhantomData<H>,
 }
 impl<H: HostTypes> Default for NullMeasurementOutcome<H> {
-    fn default() -> Self { Self { _phantom: core::marker::PhantomData } }
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
 }
 impl<H: HostTypes> NullMeasurementOutcome<H> {
     /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
-    pub const ABSENT: NullMeasurementOutcome<H> = NullMeasurementOutcome { _phantom: core::marker::PhantomData };
+    pub const ABSENT: NullMeasurementOutcome<H> = NullMeasurementOutcome {
+        _phantom: core::marker::PhantomData,
+    };
 }
 impl<H: HostTypes> MeasurementOutcome<H> for NullMeasurementOutcome<H> {
-    fn outcome_value(&self) -> u64 { 0 }
-    fn outcome_probability(&self) -> H::Decimal { H::EMPTY_DECIMAL }
+    fn outcome_value(&self) -> u64 {
+        0
+    }
+    fn outcome_probability(&self) -> H::Decimal {
+        H::EMPTY_DECIMAL
+    }
+}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `InhabitanceSearchTrace<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullInhabitanceSearchTrace<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullInhabitanceSearchTrace<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullInhabitanceSearchTrace<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullInhabitanceSearchTrace<H> = NullInhabitanceSearchTrace {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> ComputationTrace<H> for NullInhabitanceSearchTrace<H> {
+    type Datum = crate::kernel::schema::NullDatum<H>;
+    fn input(&self) -> &Self::Datum {
+        &<crate::kernel::schema::NullDatum<H>>::ABSENT
+    }
+    fn output(&self) -> &Self::Datum {
+        &<crate::kernel::schema::NullDatum<H>>::ABSENT
+    }
+    type ComputationStep = NullComputationStep<H>;
+    fn step(&self) -> &[Self::ComputationStep] {
+        &[]
+    }
+    type DihedralElement = crate::bridge::observable::NullDihedralElement<H>;
+    fn monodromy(&self) -> &Self::DihedralElement {
+        &<crate::bridge::observable::NullDihedralElement<H>>::ABSENT
+    }
+    type Certificate = crate::bridge::cert::NullCertificate<H>;
+    fn certified_by(&self) -> &Self::Certificate {
+        &<crate::bridge::cert::NullCertificate<H>>::ABSENT
+    }
+    type ResidualEntropy = crate::bridge::observable::NullResidualEntropy<H>;
+    fn residual_entropy(&self) -> &Self::ResidualEntropy {
+        &<crate::bridge::observable::NullResidualEntropy<H>>::ABSENT
+    }
+    fn is_geodesic(&self) -> bool {
+        false
+    }
+    type GeodesicViolation = NullGeodesicViolation<H>;
+    fn geodesic_violation(&self) -> &[Self::GeodesicViolation] {
+        &[]
+    }
+    fn cumulative_entropy_cost(&self) -> H::Decimal {
+        H::EMPTY_DECIMAL
+    }
+    fn adiabatically_ordered(&self) -> bool {
+        false
+    }
+    type MeasurementEvent = NullMeasurementEvent<H>;
+    fn measurement_event(&self) -> &[Self::MeasurementEvent] {
+        &[]
+    }
+    fn is_ar1_ordered(&self) -> bool {
+        false
+    }
+    fn is_dc10_selected(&self) -> bool {
+        false
+    }
+}
+impl<H: HostTypes> InhabitanceSearchTrace<H> for NullInhabitanceSearchTrace<H> {
+    type InhabitanceCheckpoint = crate::bridge::derivation::NullInhabitanceCheckpoint<H>;
+    fn checkpoint(&self) -> &[Self::InhabitanceCheckpoint] {
+        &[]
+    }
 }
 
 /// Canonical geodesic trace at quantum level Q0 (n=8). Demonstrates GD_1 through GD_3 at the base level.

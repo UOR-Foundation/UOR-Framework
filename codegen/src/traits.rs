@@ -139,6 +139,52 @@ pub fn generate_namespace_module(
         }
     }
 
+    // Phase 7c (cross-namespace enum imports). Null stubs impl every
+    // transitive supertrait of each class, and those supertraits may live
+    // in other namespaces and return enums. Walk each class's parents and
+    // collect enum ranges from their properties — without this pass the
+    // Null impl's method body references `MyEnum` without a matching `use`.
+    //
+    // Apply the same "cross-namespace domain" filter that `generate_trait`
+    // uses: only consider properties declared in the parent trait's own
+    // namespace. Properties declared in a different namespace that name a
+    // parent as their domain are not emitted as trait methods, so their
+    // enum ranges don't need imports.
+    let ontology_for_enums = uor_ontology::Ontology::full();
+    for class in &module.classes {
+        if skip_classes.contains(local_name(class.id)) {
+            continue;
+        }
+        for parent_iri in transitive_supertraits(class, ontology_for_enums) {
+            let parent_ns = namespace_of(parent_iri, ns_map);
+            if let Some(props) = all_props_by_domain.get(parent_iri) {
+                for prop in props {
+                    if prop.kind == PropertyKind::Annotation {
+                        continue;
+                    }
+                    // Same filter as trait generation: skip properties whose
+                    // declaring namespace differs from the parent's.
+                    if !prop.id.starts_with(parent_ns) {
+                        continue;
+                    }
+                    if let Some(override_name) = datatype_enum_override(prop) {
+                        if !enum_imports.contains(&override_name) {
+                            enum_imports.push(override_name);
+                        }
+                    }
+                    if prop.kind == PropertyKind::Object {
+                        let range_local = local_name(prop.range);
+                        if let Some(enum_name) = object_property_enum_override(range_local) {
+                            if !enum_imports.contains(&enum_name) {
+                                enum_imports.push(enum_name);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     // Emit imports in alphabetical order (enum imports before HostTypes).
     enum_imports.sort_unstable();
     for imp in &enum_imports {
@@ -318,15 +364,20 @@ fn existing_null_class_iris() -> HashMap<&'static str, &'static str> {
     m
 }
 
-/// Filters a class for Phase-2/3 Null emission.
+/// Filters a class for Null-stub emission.
 ///
 /// Emit iff the class:
-///   - classifies `Path1HandleResolver` (Phase 2) OR `Path2TheoremWitness`
-///     (Phase 3: the witness trait is itself an orphan until a concrete
-///     type impls it); AND
-///   - does not have any accessor whose range is an enum class (enum defaults
-///     require per-enum `Default` impls, deferred to a future phase); AND
-///   - is not itself an enum class.
+///   - classifies `Path1HandleResolver` (Phase 2: resolver-absent default),
+///     `Path2TheoremWitness` (Phase 3: witness trait orphan until a concrete
+///     type impls it), or `Path4TheoryDeferred` (Phase 7d: reference-
+///     satisfaction stub with `#[doc(hidden)]` + THEORY-DEFERRED banner);
+///     AND
+///   - is not itself an enum class (enums don't have traits).
+///
+/// Phase 7 removed the earlier "no enum-typed accessors" filter — enum
+/// variants now derive `Default` (Phase 7a) and cross-namespace enum imports
+/// are pre-collected (Phase 7c), so a Null stub returning an enum defaults
+/// to the spec-canonical first variant via `<Enum>::default()`.
 fn should_emit_null_stub(
     class: &Class,
     ontology: &uor_ontology::Ontology,
@@ -336,49 +387,12 @@ fn should_emit_null_stub(
         return false;
     }
     let path_kind = crate::classification::classify(class, ontology).path_kind;
-    if !matches!(
+    matches!(
         path_kind,
         crate::classification::PathKind::Path1HandleResolver
             | crate::classification::PathKind::Path2TheoremWitness { .. }
-    ) {
-        return false;
-    }
-    // Exclude classes with any enum-typed accessor. Property range matching
-    // an enum local name means the generated trait method returns that enum
-    // directly; the Null stub would need to default to a specific variant.
-    // Phase 4 attempted enum-support via `{Enum}::default()` — reverted due
-    // to (a) WittLevel being a struct not enum, (b) inherited associated
-    // types, (c) cross-namespace enum imports.
-    for (_, props) in all_properties_by_domain(ontology) {
-        for prop in &props {
-            if prop.domain != Some(class.id) {
-                continue;
-            }
-            if prop.kind == PropertyKind::Annotation {
-                continue;
-            }
-            if enum_names.contains(local_name(prop.range)) {
-                return false;
-            }
-        }
-    }
-    let parents = transitive_supertraits(class, ontology);
-    for parent in &parents {
-        for (_, props) in all_properties_by_domain(ontology) {
-            for prop in &props {
-                if prop.domain != Some(*parent) {
-                    continue;
-                }
-                if prop.kind == PropertyKind::Annotation {
-                    continue;
-                }
-                if enum_names.contains(local_name(prop.range)) {
-                    return false;
-                }
-            }
-        }
-    }
-    true
+            | crate::classification::PathKind::Path4TheoryDeferred
+    )
 }
 
 /// Returns all non-owl:Thing transitive supertraits of `class`, deduplicated.
@@ -443,36 +457,84 @@ fn emit_null_stub(
     let null_type = format!("Null{class_local}");
     let class_iri_ns = namespace_of(class.id, ns_map);
 
+    // Phase 7d: Path-4 classes are emitted with the `#[doc(hidden)]`
+    // THEORY-DEFERRED banner. The struct shape is identical to Path-1/2
+    // stubs; only the banner differs.
+    let path_kind = crate::classification::classify(class, ontology).path_kind;
+    let is_theory_deferred = matches!(
+        path_kind,
+        crate::classification::PathKind::Path4TheoryDeferred
+    );
+
     // ── Struct + Default + ABSENT const ───────────────────────────────
-    f.doc_comment(&format!(
-        "Phase 2 (orphan-closure) — resolver-absent default impl of `{class_local}<H>`."
-    ));
-    f.doc_comment("Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed");
-    f.doc_comment("returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`");
-    f.doc_comment("const (for trait-typed returns).  Downstream provides concrete impls;");
-    f.doc_comment("this stub closes the ontology-derived trait orphan.");
+    if is_theory_deferred {
+        // Banner is deliberately the exact string the conformance validator
+        // greps for. Any drift breaks `rust/theory_deferred_register`.
+        f.line("#[doc(hidden)]");
+        f.line(
+            "#[doc = \"THEORY-DEFERRED \\u{2014} not a valid implementation; \
+             see [docs/theory_deferred.md]. Exists only to satisfy downstream \
+             trait-bound references.\"]",
+        );
+    } else {
+        f.doc_comment(&format!(
+            "Phase 2 (orphan-closure) — resolver-absent default impl of `{class_local}<H>`."
+        ));
+        f.doc_comment("Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed");
+        f.doc_comment("returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`");
+        f.doc_comment("const (for trait-typed returns).  Downstream provides concrete impls;");
+        f.doc_comment("this stub closes the ontology-derived trait orphan.");
+    }
     f.line("#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]");
     let _ = writeln!(f.buf, "pub struct {null_type}<H: HostTypes> {{");
     f.line("    _phantom: core::marker::PhantomData<H>,");
     f.line("}");
     let _ = writeln!(f.buf, "impl<H: HostTypes> Default for {null_type}<H> {{");
-    f.line("    fn default() -> Self { Self { _phantom: core::marker::PhantomData } }");
+    f.line("    fn default() -> Self {");
+    f.line("        Self {");
+    f.line("            _phantom: core::marker::PhantomData,");
+    f.line("        }");
+    f.line("    }");
     f.line("}");
     let _ = writeln!(f.buf, "impl<H: HostTypes> {null_type}<H> {{");
     f.indented_doc_comment(
         "Absent-value sentinel. `&Self::ABSENT` gives every trait-typed \
          accessor a `'static`-lifetime reference target.",
     );
-    let _ = writeln!(
-        f.buf,
-        "    pub const ABSENT: {null_type}<H> = {null_type} {{ _phantom: core::marker::PhantomData }};"
-    );
+    // rustfmt wraps `pub const ABSENT: Foo<H> = Foo {` when the prefix
+    // exceeds the 100-char line budget. Mirror that here so regen output
+    // is fmt-clean without a follow-up `cargo fmt` pass.
+    let prefix_len = format!("    pub const ABSENT: {null_type}<H> = {null_type} {{").len();
+    if prefix_len > 96 {
+        let _ = writeln!(f.buf, "    pub const ABSENT: {null_type}<H> =");
+        let _ = writeln!(f.buf, "        {null_type} {{");
+        f.line("            _phantom: core::marker::PhantomData,");
+        f.line("        };");
+    } else {
+        let _ = writeln!(
+            f.buf,
+            "    pub const ABSENT: {null_type}<H> = {null_type} {{"
+        );
+        f.line("        _phantom: core::marker::PhantomData,");
+        f.line("    };");
+    }
     f.line("}");
 
     // ── Trait impls: transitive supertraits first, then class itself ──
     let existing_nulls = existing_null_class_iris();
     let parents = transitive_supertraits(class, ontology);
+    // Phase 7b: assoc-type names that parent traits introduce. When emitting
+    // `impl Child<H> for Null{X}<H>`, child must not re-declare `type Foo = ..`
+    // if a supertrait already declares it (E0202 / semantic drift). Each
+    // parent-trait impl has its own `emitted_assoc` counter; the inherited
+    // set guards the child-trait impl.
+    let inherited_for_class = collect_inherited_assoc_types(class, all_props_by_domain);
     for parent_iri in parents.iter().rev() {
+        let parent_class_opt = ontology.find_class(parent_iri);
+        let inherited_for_parent = match parent_class_opt {
+            Some(pc) => collect_inherited_assoc_types(pc, all_props_by_domain),
+            None => HashSet::new(),
+        };
         emit_null_impl_for_trait(
             f,
             &null_type,
@@ -483,6 +545,7 @@ fn emit_null_stub(
             enum_names,
             emitable,
             &existing_nulls,
+            &inherited_for_parent,
         );
     }
     emit_null_impl_for_trait(
@@ -495,6 +558,7 @@ fn emit_null_stub(
         enum_names,
         emitable,
         &existing_nulls,
+        &inherited_for_class,
     );
     f.blank();
 }
@@ -513,6 +577,7 @@ fn emit_null_impl_for_trait(
     enum_names: &HashSet<&'static str>,
     emitable: &HashSet<&str>,
     existing_nulls: &HashMap<&'static str, &'static str>,
+    inherited_assocs: &HashSet<String>,
 ) {
     let trait_local = local_name(trait_iri);
     let trait_path = if trait_iri.starts_with(current_ns_iri) {
@@ -543,10 +608,37 @@ fn emit_null_impl_for_trait(
         None => Vec::new(),
     };
 
-    let _ = writeln!(
-        f.buf,
-        "impl<H: HostTypes> {trait_path}<H> for {null_type}<H> {{"
-    );
+    // rustfmt wraps a too-long `impl<...> {trait_path}<H> for {null_type}<H>`
+    // header onto two lines and forces empty bodies to `{\n}\n`. Mirror that
+    // so regen is fmt-clean.
+    let header_len = format!("impl<H: HostTypes> {trait_path}<H> for {null_type}<H> {{}}").len();
+    let header_wraps = header_len > 100;
+
+    if direct_props.is_empty() {
+        if header_wraps {
+            let _ = writeln!(f.buf, "impl<H: HostTypes> {trait_path}<H>");
+            let _ = writeln!(f.buf, "    for {null_type}<H>");
+            f.line("{");
+            f.line("}");
+        } else {
+            let _ = writeln!(
+                f.buf,
+                "impl<H: HostTypes> {trait_path}<H> for {null_type}<H> {{}}"
+            );
+        }
+        return;
+    }
+
+    if header_wraps {
+        let _ = writeln!(f.buf, "impl<H: HostTypes> {trait_path}<H>");
+        let _ = writeln!(f.buf, "    for {null_type}<H>");
+        f.line("{");
+    } else {
+        let _ = writeln!(
+            f.buf,
+            "impl<H: HostTypes> {trait_path}<H> for {null_type}<H> {{"
+        );
+    }
 
     // Inherited associated-type declarations come from parent traits, so only
     // emit an associated type if this trait is the one that introduces it.
@@ -562,6 +654,7 @@ fn emit_null_impl_for_trait(
             &mut emitted_assoc,
             emitable,
             existing_nulls,
+            inherited_assocs,
         );
     }
     f.line("}");
@@ -582,14 +675,33 @@ fn emit_null_method_body(
     emitted_assoc: &mut HashSet<String>,
     emitable: &HashSet<&str>,
     existing_nulls: &HashMap<&'static str, &'static str>,
+    inherited_assocs: &HashSet<String>,
 ) {
     let method_name = to_snake_case(local_name(prop.id));
 
+    // Helper: emit a method body of the form `fn name(&self) -> RetTy { expr }`
+    // as the multi-line block rustfmt prefers. Keeps every Null-stub method
+    // emission fmt-clean without a follow-up `cargo fmt` pass.
+    let emit_fn = |f: &mut RustFile, sig: &str, body: &str| {
+        let _ = writeln!(f.buf, "    {sig} {{");
+        let _ = writeln!(f.buf, "        {body}");
+        f.line("    }");
+    };
+
     match prop.kind {
         PropertyKind::Datatype => {
-            // Enum-typed datatype (classes with enum accessors are pre-filtered
-            // by `should_emit_null_stub`; defensive skip here).
-            if datatype_enum_override(prop).is_some() {
+            // Enum-typed datatype: trait returns the enum by value; Null stub
+            // defaults to the spec-canonical first variant via `Enum::default()`.
+            if let Some(enum_t) = datatype_enum_override(prop) {
+                if prop.functional {
+                    emit_fn(
+                        f,
+                        &format!("fn {method_name}(&self) -> {enum_t}"),
+                        &format!("<{enum_t}>::default()"),
+                    );
+                } else {
+                    emit_fn(f, &format!("fn {method_name}(&self) -> &[{enum_t}]"), "&[]");
+                }
                 return;
             }
             let prim = xsd_to_primitives_type(prop.range);
@@ -604,11 +716,9 @@ fn emit_null_method_body(
                             _ => "0".to_string(), // u64 / i64 / u32 / i32
                         };
                         if xsd_is_unsized(prop.range) {
-                            let _ =
-                                writeln!(f.buf, "    fn {method_name}(&self) -> &{t} {{ {body} }}");
+                            emit_fn(f, &format!("fn {method_name}(&self) -> &{t}"), &body);
                         } else {
-                            let _ =
-                                writeln!(f.buf, "    fn {method_name}(&self) -> {t} {{ {body} }}");
+                            emit_fn(f, &format!("fn {method_name}(&self) -> {t}"), &body);
                         }
                     } else if xsd_is_unsized(prop.range) {
                         let body = match t {
@@ -616,21 +726,22 @@ fn emit_null_method_body(
                             "H::WitnessBytes" => "H::EMPTY_WITNESS_BYTES",
                             _ => "H::EMPTY_HOST_STRING",
                         };
-                        let _ =
-                            writeln!(f.buf, "    fn {method_name}_count(&self) -> usize {{ 0 }}");
-                        let _ = writeln!(
-                            f.buf,
-                            "    fn {method_name}_at(&self, _index: usize) -> &{t} {{ {body} }}"
+                        emit_fn(f, &format!("fn {method_name}_count(&self) -> usize"), "0");
+                        emit_fn(
+                            f,
+                            &format!("fn {method_name}_at(&self, _index: usize) -> &{t}"),
+                            body,
                         );
                     } else {
-                        let _ = writeln!(f.buf, "    fn {method_name}(&self) -> &[{t}] {{ &[] }}");
+                        emit_fn(f, &format!("fn {method_name}(&self) -> &[{t}]"), "&[]");
                     }
                 }
                 None => {
                     // Unknown XSD: the trait emits `&H::HostString`; mirror here.
-                    let _ = writeln!(
-                        f.buf,
-                        "    fn {method_name}(&self) -> &H::HostString {{ H::EMPTY_HOST_STRING }}"
+                    emit_fn(
+                        f,
+                        &format!("fn {method_name}(&self) -> &H::HostString"),
+                        "H::EMPTY_HOST_STRING",
                     );
                 }
             }
@@ -641,23 +752,39 @@ fn emit_null_method_body(
             let is_owl_class = prop.range == OWL_CLASS;
             let is_rdf_list = prop.range == RDF_LIST;
 
-            // Enum-typed object range (pre-filtered; defensive skip).
-            if object_property_enum_override(range_local).is_some() {
+            // Enum-typed object range: trait returns the enum directly; Null
+            // stub defaults to the spec-canonical first variant.
+            if let Some(enum_name) = object_property_enum_override(range_local) {
+                if prop.functional {
+                    emit_fn(
+                        f,
+                        &format!("fn {method_name}(&self) -> {enum_name}"),
+                        &format!("<{enum_name}>::default()"),
+                    );
+                } else {
+                    emit_fn(
+                        f,
+                        &format!("fn {method_name}(&self) -> &[{enum_name}]"),
+                        "&[]",
+                    );
+                }
                 return;
             }
 
             if is_owl_thing || is_owl_class || is_rdf_list {
                 // Trait emits `&H::HostString` (or count+at). Mirror.
                 if prop.functional {
-                    let _ = writeln!(
-                        f.buf,
-                        "    fn {method_name}(&self) -> &H::HostString {{ H::EMPTY_HOST_STRING }}"
+                    emit_fn(
+                        f,
+                        &format!("fn {method_name}(&self) -> &H::HostString"),
+                        "H::EMPTY_HOST_STRING",
                     );
                 } else {
-                    let _ = writeln!(f.buf, "    fn {method_name}_count(&self) -> usize {{ 0 }}");
-                    let _ = writeln!(
-                        f.buf,
-                        "    fn {method_name}_at(&self, _index: usize) -> &H::HostString {{ H::EMPTY_HOST_STRING }}"
+                    emit_fn(f, &format!("fn {method_name}_count(&self) -> usize"), "0");
+                    emit_fn(
+                        f,
+                        &format!("fn {method_name}_at(&self, _index: usize) -> &H::HostString"),
+                        "H::EMPTY_HOST_STRING",
                     );
                 }
                 return;
@@ -703,27 +830,37 @@ fn emit_null_method_body(
                 return;
             };
 
-            if !emitted_assoc.contains(&assoc_name) {
+            // Phase 7b: skip the `type {assoc_name} = ..;` declaration if
+            // (a) a parent trait already declared it (`inherited_assocs`) —
+            //     the assoc type lives on the parent's impl block — OR
+            // (b) this impl block already emitted it (`emitted_assoc`).
+            // The method body (`fn m(&self) -> &Self::{assoc_name}`) is
+            // still emitted unconditionally; only the `type =` line is
+            // deduplicated.
+            if !inherited_assocs.contains(&assoc_name) && !emitted_assoc.contains(&assoc_name) {
                 let _ = writeln!(f.buf, "    type {assoc_name} = {null_path}<H>;");
                 emitted_assoc.insert(assoc_name.clone());
             }
 
             if prop.functional {
                 if is_by_value_partition_factor(prop.id) {
-                    let _ = writeln!(
-                        f.buf,
-                        "    fn {method_name}(&self) -> Self::{assoc_name} {{ <{null_path}<H>>::default() }}"
+                    emit_fn(
+                        f,
+                        &format!("fn {method_name}(&self) -> Self::{assoc_name}"),
+                        &format!("<{null_path}<H>>::default()"),
                     );
                 } else {
-                    let _ = writeln!(
-                        f.buf,
-                        "    fn {method_name}(&self) -> &Self::{assoc_name} {{ &<{null_path}<H>>::ABSENT }}"
+                    emit_fn(
+                        f,
+                        &format!("fn {method_name}(&self) -> &Self::{assoc_name}"),
+                        &format!("&<{null_path}<H>>::ABSENT"),
                     );
                 }
             } else {
-                let _ = writeln!(
-                    f.buf,
-                    "    fn {method_name}(&self) -> &[Self::{assoc_name}] {{ &[] }}"
+                emit_fn(
+                    f,
+                    &format!("fn {method_name}(&self) -> &[Self::{assoc_name}]"),
+                    "&[]",
                 );
             }
         }

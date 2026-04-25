@@ -165,7 +165,9 @@ pub const SHACL_TESTS: usize = 283;
 /// Phase 6 (orphan-closure): +1 `rust/theory_deferred_register` —
 /// bijection between Path-4 classifications and `docs/theory_deferred.md`
 /// rows.
-pub const CONFORMANCE_CHECKS: usize = 536;
+/// Phase 7e (orphan-closure): +1 `rust/orphan_counts` — minimum-viable
+/// orphan-count validator; greps `impl {Name}<H> for ...` sites.
+pub const CONFORMANCE_CHECKS: usize = 537;
 
 /// Number of amendments applied to the base ontology.
 pub const AMENDMENTS: usize = 95;
@@ -333,16 +335,17 @@ pub const CLASSIFICATION_PATH3: usize = 0;
 pub const CLASSIFICATION_PATH4: usize = 20;
 
 /// Total Null-stub count emitted to bridge/kernel/user namespaces
-/// (ratchet — grows, never shrinks) as of Phase 3. Excludes the 14
+/// (ratchet — grows, never shrinks) as of Phase 7. Excludes the 14
 /// hand-written `NullPartition<H>`-family stubs in `enforcement.rs`.
 ///
-/// Breakdown at Phase 3 close:
+/// Breakdown at Phase 7 close:
 ///
 ///   - Phase 2: 181 Null stubs for `Path1HandleResolver` classes whose
 ///     reference closure lands entirely in the emitable set.
 ///   - Phase 3: +7 Null stubs for `Path2TheoremWitness` classes that
 ///     satisfy the same reference-closure invariant.
-///
-/// Total: 188. The Phase-2 codegen filter (`should_emit_null_stub`) now
-/// accepts both `Path1HandleResolver` and `Path2TheoremWitness`.
-pub const CLASSIFICATION_PATH1_EMITTED: usize = 188;
+///   - Phase 7a–e: enum accessors, inherited assocs, cross-namespace
+///     enum imports, Path-4 banner stubs, and the enum-accessor filter
+///     drop — unblocking every remaining Path-1 / Path-2 cascade and
+///     the 20 Path-4 theory-deferred classes. Total reaches 440+.
+pub const CLASSIFICATION_PATH1_EMITTED: usize = 440;
