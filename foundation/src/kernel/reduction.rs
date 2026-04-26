@@ -5454,7 +5454,10 @@ impl<'r, R: BackPressureSignalResolver<H>, H: HostTypes> BackPressureSignal<H>
         }
     }
     fn pressure_threshold(&self) -> H::Decimal {
-        H::EMPTY_DECIMAL
+        match &self.record {
+            Some(r) => r.pressure_threshold,
+            None => H::EMPTY_DECIMAL,
+        }
     }
     type TermExpression = crate::kernel::schema::NullTermExpression<H>;
     fn source_stage(&self) -> &Self::TermExpression {

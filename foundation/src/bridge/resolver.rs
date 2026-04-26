@@ -2666,14 +2666,20 @@ impl<'r, R: ResolutionStateResolver<H>, H: HostTypes> ResolutionState<H>
         &[]
     }
     fn convergence_rate(&self) -> H::Decimal {
-        H::EMPTY_DECIMAL
+        match &self.record {
+            Some(r) => r.convergence_rate,
+            None => H::EMPTY_DECIMAL,
+        }
     }
     type CechNerve = NullCechNerve<H>;
     fn cech_nerve(&self) -> &Self::CechNerve {
         &<NullCechNerve<H>>::ABSENT
     }
     fn residual_entropy(&self) -> H::Decimal {
-        H::EMPTY_DECIMAL
+        match &self.record {
+            Some(r) => r.residual_entropy,
+            None => H::EMPTY_DECIMAL,
+        }
     }
     fn topologically_complete(&self) -> bool {
         match &self.record {
@@ -4645,7 +4651,10 @@ impl<'r, R: SuperpositionResolverResolver<H>, H: HostTypes> SuperpositionResolve
     for ResolvedSuperpositionResolver<'r, R, H>
 {
     fn amplitude_vector(&self) -> H::Decimal {
-        H::EMPTY_DECIMAL
+        match &self.record {
+            Some(r) => r.amplitude_vector,
+            None => H::EMPTY_DECIMAL,
+        }
     }
 }
 
@@ -5112,7 +5121,10 @@ impl<'r, R: MeasurementResolverResolver<H>, H: HostTypes> MeasurementResolver<H>
     for ResolvedMeasurementResolver<'r, R, H>
 {
     fn collapse_amplitude(&self) -> H::Decimal {
-        H::EMPTY_DECIMAL
+        match &self.record {
+            Some(r) => r.collapse_amplitude,
+            None => H::EMPTY_DECIMAL,
+        }
     }
     fn collapsed_site(&self) -> u64 {
         match &self.record {
@@ -5127,7 +5139,10 @@ impl<'r, R: MeasurementResolverResolver<H>, H: HostTypes> MeasurementResolver<H>
         }
     }
     fn prior_amplitude_vector(&self) -> H::Decimal {
-        H::EMPTY_DECIMAL
+        match &self.record {
+            Some(r) => r.prior_amplitude_vector,
+            None => H::EMPTY_DECIMAL,
+        }
     }
 }
 

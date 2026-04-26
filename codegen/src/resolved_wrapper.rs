@@ -734,12 +734,13 @@ fn emit_resolved_method_body(
                             _ => "0".to_string(),
                         };
                         // Reading from `&self.record` requires the field type
-                        // to be Copy. `H::Decimal` and `H::WitnessBytes` lack
-                        // a Copy bound until Phase 9 — for those, always
-                        // return the sentinel and rely on `resolved.record()`
-                        // for the raw value. References (`&'static T`) are
-                        // always Copy; primitive integers/bools are Copy.
-                        let owner_copy = !matches!(t, "H::Decimal" | "H::WitnessBytes");
+                        // to be Copy. Phase 9's `DecimalTranscendental`
+                        // supertrait bound now forces `H::Decimal: Copy`, so
+                        // it joins integers/bools/references as a record-
+                        // readable type. `H::WitnessBytes` is `?Sized` and
+                        // accessed by reference — also OK to read from
+                        // record (the field is `&'static H::WitnessBytes`).
+                        let owner_copy = true;
                         let read = is_own_trait && owner_copy;
                         if xsd_is_unsized(prop.range) {
                             if read {

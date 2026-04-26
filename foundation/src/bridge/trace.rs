@@ -687,7 +687,10 @@ impl<'r, R: ComputationTraceResolver<H>, H: HostTypes> ComputationTrace<H>
         &[]
     }
     fn cumulative_entropy_cost(&self) -> H::Decimal {
-        H::EMPTY_DECIMAL
+        match &self.record {
+            Some(r) => r.cumulative_entropy_cost,
+            None => H::EMPTY_DECIMAL,
+        }
     }
     fn adiabatically_ordered(&self) -> bool {
         match &self.record {
@@ -921,10 +924,16 @@ impl<'r, R: ComputationStepResolver<H>, H: HostTypes> ComputationStep<H>
         }
     }
     fn step_entropy_cost(&self) -> H::Decimal {
-        H::EMPTY_DECIMAL
+        match &self.record {
+            Some(r) => r.step_entropy_cost,
+            None => H::EMPTY_DECIMAL,
+        }
     }
     fn jacobian_at_step(&self) -> H::Decimal {
-        H::EMPTY_DECIMAL
+        match &self.record {
+            Some(r) => r.jacobian_at_step,
+            None => H::EMPTY_DECIMAL,
+        }
     }
 }
 impl<'r, R: ComputationStepResolver<H>, H: HostTypes> ResolvedComputationStep<'r, R, H> {
@@ -1521,10 +1530,16 @@ impl<'r, R: MeasurementEventResolver<H>, H: HostTypes> MeasurementEvent<H>
     for ResolvedMeasurementEvent<'r, R, H>
 {
     fn pre_collapse_entropy(&self) -> H::Decimal {
-        H::EMPTY_DECIMAL
+        match &self.record {
+            Some(r) => r.pre_collapse_entropy,
+            None => H::EMPTY_DECIMAL,
+        }
     }
     fn post_collapse_landauer_cost(&self) -> H::Decimal {
-        H::EMPTY_DECIMAL
+        match &self.record {
+            Some(r) => r.post_collapse_landauer_cost,
+            None => H::EMPTY_DECIMAL,
+        }
     }
     fn collapse_step(&self) -> u64 {
         match &self.record {
@@ -1533,7 +1548,10 @@ impl<'r, R: MeasurementEventResolver<H>, H: HostTypes> MeasurementEvent<H>
         }
     }
     fn amplitude_vector(&self) -> H::Decimal {
-        H::EMPTY_DECIMAL
+        match &self.record {
+            Some(r) => r.amplitude_vector,
+            None => H::EMPTY_DECIMAL,
+        }
     }
 }
 
@@ -1655,7 +1673,10 @@ impl<'r, R: MeasurementOutcomeResolver<H>, H: HostTypes> MeasurementOutcome<H>
         }
     }
     fn outcome_probability(&self) -> H::Decimal {
-        H::EMPTY_DECIMAL
+        match &self.record {
+            Some(r) => r.outcome_probability,
+            None => H::EMPTY_DECIMAL,
+        }
     }
 }
 

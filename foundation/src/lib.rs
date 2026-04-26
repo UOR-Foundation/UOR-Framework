@@ -148,6 +148,99 @@ pub use enforcement::{
     PartitionResolver, VerifiedMint,
 };
 
+/// Closed arithmetic and transcendental math for the `HostTypes::Decimal`
+/// slot. `f64` and `f32` implement this via `libm`. Downstream `HostTypes`
+/// impls are free to bring their own implementation (interval arithmetic,
+/// arbitrary precision, fixed-point, etc.).
+pub trait DecimalTranscendental:
+    Copy
+    + Default
+    + PartialEq
+    + PartialOrd
+    + core::ops::Add<Output = Self>
+    + core::ops::Sub<Output = Self>
+    + core::ops::Mul<Output = Self>
+    + core::ops::Div<Output = Self>
+{
+    /// Construct from an unsigned 32-bit integer. f32 / f64 use `as` widening; downstream impls bring their own promotion.
+    fn from_u32(value: u32) -> Self;
+    /// Natural logarithm.
+    fn ln(self) -> Self;
+    /// Exponential `e^x`.
+    fn exp(self) -> Self;
+    /// Square root.
+    fn sqrt(self) -> Self;
+    /// Construct from an IEEE-754 bit pattern (default-host f64 round-trip).
+    fn from_bits(bits: u64) -> Self;
+    /// Project to an IEEE-754 bit pattern (default-host f64 round-trip).
+    fn to_bits(self) -> u64;
+    /// Entropy contribution `x * ln(x)`, with the convention `0 * ln(0) = 0`.
+    #[inline]
+    fn entropy_term_nats(self) -> Self {
+        if self == Self::default() {
+            return Self::default();
+        }
+        self * self.ln()
+    }
+}
+
+impl DecimalTranscendental for f64 {
+    #[inline]
+    fn from_u32(value: u32) -> Self {
+        f64::from(value)
+    }
+    #[inline]
+    fn ln(self) -> Self {
+        libm::log(self)
+    }
+    #[inline]
+    fn exp(self) -> Self {
+        libm::exp(self)
+    }
+    #[inline]
+    fn sqrt(self) -> Self {
+        libm::sqrt(self)
+    }
+    #[inline]
+    fn from_bits(bits: u64) -> Self {
+        f64::from_bits(bits)
+    }
+    #[inline]
+    fn to_bits(self) -> u64 {
+        f64::to_bits(self)
+    }
+}
+
+impl DecimalTranscendental for f32 {
+    #[inline]
+    fn from_u32(value: u32) -> Self {
+        // u32 -> f32 is lossy at high values; this is the documented
+        // host-default behavior for arithmetic constants.
+        value as f32
+    }
+    #[inline]
+    fn ln(self) -> Self {
+        libm::logf(self)
+    }
+    #[inline]
+    fn exp(self) -> Self {
+        libm::expf(self)
+    }
+    #[inline]
+    fn sqrt(self) -> Self {
+        libm::sqrtf(self)
+    }
+    #[inline]
+    fn from_bits(bits: u64) -> Self {
+        // f32 has no native u64-bit constructor; widen via f64 then narrow.
+        f64::from_bits(bits) as f32
+    }
+    #[inline]
+    fn to_bits(self) -> u64 {
+        (self as f64).to_bits()
+    }
+}
+
 /// Phase B (target §4.1 W10): narrow host-types trait — the only carrier for
 /// the slots that genuinely vary across host environments. Foundation-owned
 /// types (Witt-level integers, booleans, IRIs, canonicalBytes, `UorTime`) are
@@ -177,7 +270,11 @@ pub trait HostTypes {
     /// Real-number representation for kernel observables (entropies, amplitudes, rates).
     /// `DefaultHostTypes` selects `f64`. Override with higher-precision or interval
     /// arithmetic as needed.
-    type Decimal;
+    ///
+    /// Phase 9 bound: every `Decimal` must implement [`DecimalTranscendental`] —
+    /// closed arithmetic + ln/exp/sqrt + IEEE-754 bit-pattern round-trip. The
+    /// in-tree `f64` and `f32` impls satisfy this via `libm`.
+    type Decimal: DecimalTranscendental;
 
     /// Host-supplied opaque string (NOT a foundation IRI).
     /// `DefaultHostTypes` selects `str`. Override with owned `String`, `Cow<'_, str>`,

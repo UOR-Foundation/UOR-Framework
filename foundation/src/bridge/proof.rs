@@ -962,7 +962,10 @@ impl<'r, R: ProofResolver<H>, H: HostTypes> Proof<H> for ResolvedProof<'r, R, H>
         }
     }
     fn timestamp(&self) -> &H::WitnessBytes {
-        H::EMPTY_WITNESS_BYTES
+        match &self.record {
+            Some(r) => r.timestamp,
+            None => H::EMPTY_WITNESS_BYTES,
+        }
     }
     type WitnessData = NullWitnessData<H>;
     fn witness(&self) -> &[Self::WitnessData] {

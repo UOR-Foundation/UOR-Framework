@@ -200,7 +200,10 @@ impl<'r, R: ElementResolver<H>, H: HostTypes> Element<H> for ResolvedElement<'r,
         }
     }
     fn canonical_bytes(&self) -> &H::WitnessBytes {
-        H::EMPTY_WITNESS_BYTES
+        match &self.record {
+            Some(r) => r.canonical_bytes,
+            None => H::EMPTY_WITNESS_BYTES,
+        }
     }
     fn witt_length(&self) -> u64 {
         match &self.record {

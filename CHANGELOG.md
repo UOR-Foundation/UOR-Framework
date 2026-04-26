@@ -2,6 +2,39 @@
 
 All notable changes to UOR-Framework are documented in this file.
 
+## Phase 9 — `DecimalTranscendental` supertrait — 2026-04-26
+
+Bounds `HostTypes::Decimal` on a new `DecimalTranscendental` supertrait
+that supplies closed arithmetic, transcendentals, and IEEE-754
+bit-pattern round-trip. The default-host `f64` and `f32` impls delegate
+to `libm`. Downstream `HostTypes` impls whose `Decimal` slot does NOT
+satisfy `Copy + Default + PartialEq + PartialOrd + Add/Sub/Mul/Div +
+ln/exp/sqrt/from_bits/to_bits` will fail to compile.
+
+### Breaking
+
+- New supertrait bound `HostTypes::Decimal: DecimalTranscendental`. The
+  in-tree `DefaultHostTypes` (`Decimal = f64`) is unaffected. Hosts
+  using interval arithmetic, fixed-point, or other non-IEEE types must
+  implement `DecimalTranscendental` for their slot.
+
+### Additive
+
+- `pub trait DecimalTranscendental` exported from `uor_foundation`.
+- `impl DecimalTranscendental for f64` and `for f32` (libm-backed).
+- `Resolved{Class}<'r, R, H>` scalar accessors (Phase 8) now read
+  `H::Decimal` fields from the cached record. The `Copy` bound from
+  `DecimalTranscendental` makes this sound; in Phase 8's standalone
+  shape the scalar bodies returned the empty sentinel.
+
+### Pending follow-up (Phase 9b/9c)
+
+Thread `H::Decimal` through every foundation type currently carrying a
+hardcoded `f64` field or accessor. 72 sites remain in
+`enforcement.rs`, `pipeline.rs`, `bridge/trace.rs`,
+`kernel/reduction.rs`, and `user/state.rs`. The `rust/no_hardcoded_f64`
+conformance gate (Phase 9d) lights up when this lands.
+
 ## Product/Coproduct Completion Amendment — 2026-04-23
 
 Lands the UOR Amendment: Completing Product and Coproduct Semantics, which

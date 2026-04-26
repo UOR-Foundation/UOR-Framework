@@ -2919,7 +2919,10 @@ impl<'r, R: WitnessDatumResolver<H>, H: HostTypes> WitnessDatum<H>
         }
     }
     fn witness_bytes(&self) -> &H::WitnessBytes {
-        H::EMPTY_WITNESS_BYTES
+        match &self.record {
+            Some(r) => r.witness_bytes,
+            None => H::EMPTY_WITNESS_BYTES,
+        }
     }
 }
 
@@ -3887,7 +3890,10 @@ impl<'r, R: CompileUnitBuilderResolver<H>, H: HostTypes> CompileUnitBuilder<H>
         }
     }
     fn builder_thermodynamic_budget(&self) -> H::Decimal {
-        H::EMPTY_DECIMAL
+        match &self.record {
+            Some(r) => r.builder_thermodynamic_budget,
+            None => H::EMPTY_DECIMAL,
+        }
     }
     fn builder_target_domains(&self) -> &[VerificationDomain] {
         &[]

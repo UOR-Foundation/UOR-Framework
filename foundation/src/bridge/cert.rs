@@ -1136,7 +1136,10 @@ impl<'r, R: CertificateResolver<H>, H: HostTypes> Certificate<H> for ResolvedCer
         }
     }
     fn timestamp(&self) -> &H::WitnessBytes {
-        H::EMPTY_WITNESS_BYTES
+        match &self.record {
+            Some(r) => r.timestamp,
+            None => H::EMPTY_WITNESS_BYTES,
+        }
     }
     fn certifies(&self) -> &H::HostString {
         H::EMPTY_HOST_STRING
@@ -2375,10 +2378,16 @@ impl<'r, R: MeasurementCertificateResolver<H>, H: HostTypes> MeasurementCertific
         &<crate::bridge::trace::NullMeasurementEvent<H>>::ABSENT
     }
     fn von_neumann_entropy(&self) -> H::Decimal {
-        H::EMPTY_DECIMAL
+        match &self.record {
+            Some(r) => r.von_neumann_entropy,
+            None => H::EMPTY_DECIMAL,
+        }
     }
     fn landauer_cost(&self) -> H::Decimal {
-        H::EMPTY_DECIMAL
+        match &self.record {
+            Some(r) => r.landauer_cost,
+            None => H::EMPTY_DECIMAL,
+        }
     }
 }
 impl<'r, R: MeasurementCertificateResolver<H>, H: HostTypes>
@@ -3213,7 +3222,10 @@ impl<'r, R: MultiplicationCertificateResolver<H>, H: HostTypes> MultiplicationCe
         }
     }
     fn landauer_cost_nats(&self) -> H::Decimal {
-        H::EMPTY_DECIMAL
+        match &self.record {
+            Some(r) => r.landauer_cost_nats,
+            None => H::EMPTY_DECIMAL,
+        }
     }
 }
 

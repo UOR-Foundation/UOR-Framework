@@ -3869,7 +3869,10 @@ impl<'r, R: SuperposedSiteStateResolver<H>, H: HostTypes> SuperposedSiteState<H>
     for ResolvedSuperposedSiteState<'r, R, H>
 {
     fn amplitude(&self) -> H::Decimal {
-        H::EMPTY_DECIMAL
+        match &self.record {
+            Some(r) => r.amplitude,
+            None => H::EMPTY_DECIMAL,
+        }
     }
     fn normalization_verified(&self) -> bool {
         match &self.record {
@@ -4106,7 +4109,10 @@ impl<'r, R: CollapsedSiteStateResolver<H>, H: HostTypes> CollapsedSiteState<H>
         &<NullSuperposedSiteState<H>>::ABSENT
     }
     fn surviving_amplitude(&self) -> H::Decimal {
-        H::EMPTY_DECIMAL
+        match &self.record {
+            Some(r) => r.surviving_amplitude,
+            None => H::EMPTY_DECIMAL,
+        }
     }
 }
 impl<'r, R: CollapsedSiteStateResolver<H>, H: HostTypes> ResolvedCollapsedSiteState<'r, R, H> {

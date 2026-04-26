@@ -1210,7 +1210,10 @@ impl<'r, R: PhaseEffectResolver<H>, H: HostTypes> ReversibleEffect<H>
 }
 impl<'r, R: PhaseEffectResolver<H>, H: HostTypes> PhaseEffect<H> for ResolvedPhaseEffect<'r, R, H> {
     fn phase_angle_delta(&self) -> H::Decimal {
-        H::EMPTY_DECIMAL
+        match &self.record {
+            Some(r) => r.phase_angle_delta,
+            None => H::EMPTY_DECIMAL,
+        }
     }
 }
 

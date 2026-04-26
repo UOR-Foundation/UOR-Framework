@@ -418,6 +418,112 @@ fn generate_lib_rs(ontology: &Ontology) -> String {
     f.line("};");
     f.blank();
 
+    // Phase 9 (orphan-closure): `DecimalTranscendental` supertrait. Defined
+    // BEFORE the `HostTypes` doc block so the doc comments stay adjacent to
+    // their respective `pub trait` lines (the `rust/api` validator looks
+    // back at most 3 lines for a `///` comment). Defines the closed
+    // arithmetic + transcendentals every `HostTypes::Decimal` must support;
+    // f64 / f32 delegate to `libm`. Custom host types (interval arithmetic,
+    // fixed-point, arbitrary precision) bring their own.
+    f.doc_comment("Closed arithmetic and transcendental math for the `HostTypes::Decimal`");
+    f.doc_comment("slot. `f64` and `f32` implement this via `libm`. Downstream `HostTypes`");
+    f.doc_comment("impls are free to bring their own implementation (interval arithmetic,");
+    f.doc_comment("arbitrary precision, fixed-point, etc.).");
+    f.line("pub trait DecimalTranscendental:");
+    f.line("    Copy");
+    f.line("    + Default");
+    f.line("    + PartialEq");
+    f.line("    + PartialOrd");
+    f.line("    + core::ops::Add<Output = Self>");
+    f.line("    + core::ops::Sub<Output = Self>");
+    f.line("    + core::ops::Mul<Output = Self>");
+    f.line("    + core::ops::Div<Output = Self>");
+    f.line("{");
+    f.indented_doc_comment(
+        "Construct from an unsigned 32-bit integer. \
+         f32 / f64 use `as` widening; downstream impls bring their own promotion.",
+    );
+    f.line("    fn from_u32(value: u32) -> Self;");
+    f.indented_doc_comment("Natural logarithm.");
+    f.line("    fn ln(self) -> Self;");
+    f.indented_doc_comment("Exponential `e^x`.");
+    f.line("    fn exp(self) -> Self;");
+    f.indented_doc_comment("Square root.");
+    f.line("    fn sqrt(self) -> Self;");
+    f.indented_doc_comment("Construct from an IEEE-754 bit pattern (default-host f64 round-trip).");
+    f.line("    fn from_bits(bits: u64) -> Self;");
+    f.indented_doc_comment("Project to an IEEE-754 bit pattern (default-host f64 round-trip).");
+    f.line("    fn to_bits(self) -> u64;");
+    f.indented_doc_comment(
+        "Entropy contribution `x * ln(x)`, with the convention `0 * ln(0) = 0`.",
+    );
+    f.line("    #[inline]");
+    f.line("    fn entropy_term_nats(self) -> Self {");
+    f.line("        if self == Self::default() {");
+    f.line("            return Self::default();");
+    f.line("        }");
+    f.line("        self * self.ln()");
+    f.line("    }");
+    f.line("}");
+    f.blank();
+    f.line("impl DecimalTranscendental for f64 {");
+    f.line("    #[inline]");
+    f.line("    fn from_u32(value: u32) -> Self {");
+    f.line("        f64::from(value)");
+    f.line("    }");
+    f.line("    #[inline]");
+    f.line("    fn ln(self) -> Self {");
+    f.line("        libm::log(self)");
+    f.line("    }");
+    f.line("    #[inline]");
+    f.line("    fn exp(self) -> Self {");
+    f.line("        libm::exp(self)");
+    f.line("    }");
+    f.line("    #[inline]");
+    f.line("    fn sqrt(self) -> Self {");
+    f.line("        libm::sqrt(self)");
+    f.line("    }");
+    f.line("    #[inline]");
+    f.line("    fn from_bits(bits: u64) -> Self {");
+    f.line("        f64::from_bits(bits)");
+    f.line("    }");
+    f.line("    #[inline]");
+    f.line("    fn to_bits(self) -> u64 {");
+    f.line("        f64::to_bits(self)");
+    f.line("    }");
+    f.line("}");
+    f.blank();
+    f.line("impl DecimalTranscendental for f32 {");
+    f.line("    #[inline]");
+    f.line("    fn from_u32(value: u32) -> Self {");
+    f.line("        // u32 -> f32 is lossy at high values; this is the documented");
+    f.line("        // host-default behavior for arithmetic constants.");
+    f.line("        value as f32");
+    f.line("    }");
+    f.line("    #[inline]");
+    f.line("    fn ln(self) -> Self {");
+    f.line("        libm::logf(self)");
+    f.line("    }");
+    f.line("    #[inline]");
+    f.line("    fn exp(self) -> Self {");
+    f.line("        libm::expf(self)");
+    f.line("    }");
+    f.line("    #[inline]");
+    f.line("    fn sqrt(self) -> Self {");
+    f.line("        libm::sqrtf(self)");
+    f.line("    }");
+    f.line("    #[inline]");
+    f.line("    fn from_bits(bits: u64) -> Self {");
+    f.line("        // f32 has no native u64-bit constructor; widen via f64 then narrow.");
+    f.line("        f64::from_bits(bits) as f32");
+    f.line("    }");
+    f.line("    #[inline]");
+    f.line("    fn to_bits(self) -> u64 {");
+    f.line("        (self as f64).to_bits()");
+    f.line("    }");
+    f.line("}");
+    f.blank();
+
     // Phase B: the v0.2.1 `Primitives` trait is deleted unconditionally.
     // The narrower `HostTypes` trait (three slots: `Decimal`, `HostString`,
     // `WitnessBytes`) is the only host-environment carrier. Target §4.1 W10
@@ -458,9 +564,13 @@ fn generate_lib_rs(ontology: &Ontology) -> String {
     f.indented_doc_comment(
         "Real-number representation for kernel observables (entropies, amplitudes, rates).\n\
          `DefaultHostTypes` selects `f64`. Override with higher-precision or interval\n\
-         arithmetic as needed.",
+         arithmetic as needed.\n\
+         \n\
+         Phase 9 bound: every `Decimal` must implement [`DecimalTranscendental`] —\n\
+         closed arithmetic + ln/exp/sqrt + IEEE-754 bit-pattern round-trip. The\n\
+         in-tree `f64` and `f32` impls satisfy this via `libm`.",
     );
-    f.line("    type Decimal;");
+    f.line("    type Decimal: DecimalTranscendental;");
     f.blank();
     f.indented_doc_comment(
         "Host-supplied opaque string (NOT a foundation IRI).\n\

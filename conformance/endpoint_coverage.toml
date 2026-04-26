@@ -425,6 +425,13 @@ behavior = "behavior_pipeline_determinism"
 symbols = ["DefaultHostTypes"]
 behavior = "behavior_grammar_surface_roundtrip"
 
+# ─── Mapping: DecimalTranscendental (Phase 9) ──────────────────────────
+# Closed-arithmetic + transcendental supertrait bounded onto
+# `HostTypes::Decimal`. Default-host f64/f32 impls delegate to libm.
+[coverage.decimal_transcendental]
+symbols = ["DecimalTranscendental"]
+behavior = "phase9_decimal_transcendental"
+
 # ─── Mapping: module re-exports ────────────────────────────────────────
 # Module declarations (pub mod foo) are structural and do not need
 # behavior tests — their contract is the set of items they export, each

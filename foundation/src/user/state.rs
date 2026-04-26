@@ -885,10 +885,16 @@ impl<'r, R: ContextResolver<H>, H: HostTypes> Context<H> for ResolvedContext<'r,
         }
     }
     fn grounding_degree(&self) -> H::Decimal {
-        H::EMPTY_DECIMAL
+        match &self.record {
+            Some(r) => r.grounding_degree,
+            None => H::EMPTY_DECIMAL,
+        }
     }
     fn context_temperature(&self) -> H::Decimal {
-        H::EMPTY_DECIMAL
+        match &self.record {
+            Some(r) => r.context_temperature,
+            None => H::EMPTY_DECIMAL,
+        }
     }
     fn is_grounded(&self) -> bool {
         match &self.record {
@@ -1033,7 +1039,10 @@ impl<'r, R: BindingResolver<H>, H: HostTypes> Binding<H> for ResolvedBinding<'r,
         &[]
     }
     fn timestamp(&self) -> &H::WitnessBytes {
-        H::EMPTY_WITNESS_BYTES
+        match &self.record {
+            Some(r) => r.timestamp,
+            None => H::EMPTY_WITNESS_BYTES,
+        }
     }
 }
 impl<'r, R: BindingResolver<H>, H: HostTypes> ResolvedBinding<'r, R, H> {

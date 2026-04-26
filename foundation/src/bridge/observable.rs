@@ -2499,7 +2499,10 @@ impl<'r, R: ObservableResolver<H>, H: HostTypes> ResolvedObservable<'r, R, H> {
 }
 impl<'r, R: ObservableResolver<H>, H: HostTypes> Observable<H> for ResolvedObservable<'r, R, H> {
     fn value(&self) -> H::Decimal {
-        H::EMPTY_DECIMAL
+        match &self.record {
+            Some(r) => r.value,
+            None => H::EMPTY_DECIMAL,
+        }
     }
     fn source(&self) -> &H::HostString {
         H::EMPTY_HOST_STRING
@@ -6408,7 +6411,10 @@ impl<'r, R: JacobianResolver<H>, H: HostTypes> Jacobian<H> for ResolvedJacobian<
         }
     }
     fn derivative_value(&self) -> H::Decimal {
-        H::EMPTY_DECIMAL
+        match &self.record {
+            Some(r) => r.derivative_value,
+            None => H::EMPTY_DECIMAL,
+        }
     }
 }
 
@@ -6936,7 +6942,10 @@ impl<'r, R: ThermoObservableResolver<H>, H: HostTypes> ThermoObservable<H>
     for ResolvedThermoObservable<'r, R, H>
 {
     fn hardness_estimate(&self) -> H::Decimal {
-        H::EMPTY_DECIMAL
+        match &self.record {
+            Some(r) => r.hardness_estimate,
+            None => H::EMPTY_DECIMAL,
+        }
     }
 }
 
@@ -7342,7 +7351,10 @@ impl<'r, R: LandauerBudgetResolver<H>, H: HostTypes> LandauerBudget<H>
     for ResolvedLandauerBudget<'r, R, H>
 {
     fn landauer_nats(&self) -> H::Decimal {
-        H::EMPTY_DECIMAL
+        match &self.record {
+            Some(r) => r.landauer_nats,
+            None => H::EMPTY_DECIMAL,
+        }
     }
 }
 

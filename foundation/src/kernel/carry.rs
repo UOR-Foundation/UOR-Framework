@@ -943,10 +943,16 @@ impl<'r, R: EncodingQualityResolver<H>, H: HostTypes> EncodingQuality<H>
     for ResolvedEncodingQuality<'r, R, H>
 {
     fn mean_delta(&self) -> H::Decimal {
-        H::EMPTY_DECIMAL
+        match &self.record {
+            Some(r) => r.mean_delta,
+            None => H::EMPTY_DECIMAL,
+        }
     }
     fn discrimination_ratio(&self) -> H::Decimal {
-        H::EMPTY_DECIMAL
+        match &self.record {
+            Some(r) => r.discrimination_ratio,
+            None => H::EMPTY_DECIMAL,
+        }
     }
     fn is_optimal_encoding(&self) -> bool {
         match &self.record {

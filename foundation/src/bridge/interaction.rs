@@ -534,7 +534,10 @@ impl<'r, R: InteractionContextResolver<H>, H: HostTypes> InteractionContext<H>
         }
     }
     fn commutator_norm(&self) -> H::Decimal {
-        H::EMPTY_DECIMAL
+        match &self.record {
+            Some(r) => r.commutator_norm,
+            None => H::EMPTY_DECIMAL,
+        }
     }
 }
 impl<'r, R: InteractionContextResolver<H>, H: HostTypes> ResolvedInteractionContext<'r, R, H> {
@@ -679,7 +682,10 @@ impl<'r, R: CommutatorStateResolver<H>, H: HostTypes> CommutatorState<H>
     for ResolvedCommutatorState<'r, R, H>
 {
     fn commutator_value(&self) -> H::Decimal {
-        H::EMPTY_DECIMAL
+        match &self.record {
+            Some(r) => r.commutator_value,
+            None => H::EMPTY_DECIMAL,
+        }
     }
 }
 
@@ -794,7 +800,10 @@ impl<'r, R: AssociatorStateResolver<H>, H: HostTypes> AssociatorState<H>
     for ResolvedAssociatorState<'r, R, H>
 {
     fn associator_norm(&self) -> H::Decimal {
-        H::EMPTY_DECIMAL
+        match &self.record {
+            Some(r) => r.associator_norm,
+            None => H::EMPTY_DECIMAL,
+        }
     }
 }
 
@@ -927,7 +936,10 @@ impl<'r, R: AssociatorTripleResolver<H>, H: HostTypes> AssociatorTriple<H>
         &<crate::bridge::observable::NullObservable<H>>::ABSENT
     }
     fn associator_norm_value(&self) -> H::Decimal {
-        H::EMPTY_DECIMAL
+        match &self.record {
+            Some(r) => r.associator_norm_value,
+            None => H::EMPTY_DECIMAL,
+        }
     }
 }
 impl<'r, R: AssociatorTripleResolver<H>, H: HostTypes> ResolvedAssociatorTriple<'r, R, H> {
@@ -1113,10 +1125,16 @@ impl<'r, R: ThreeWaySiteResolver<H>, H: HostTypes> ThreeWaySite<H>
         }
     }
     fn left_grouping_value(&self) -> H::Decimal {
-        H::EMPTY_DECIMAL
+        match &self.record {
+            Some(r) => r.left_grouping_value,
+            None => H::EMPTY_DECIMAL,
+        }
     }
     fn right_grouping_value(&self) -> H::Decimal {
-        H::EMPTY_DECIMAL
+        match &self.record {
+            Some(r) => r.right_grouping_value,
+            None => H::EMPTY_DECIMAL,
+        }
     }
     fn is_pinned(&self) -> bool {
         match &self.record {
@@ -1279,7 +1297,10 @@ impl<'r, R: NegotiationTraceResolver<H>, H: HostTypes> NegotiationTrace<H>
         }
     }
     fn convergence_rate(&self) -> H::Decimal {
-        H::EMPTY_DECIMAL
+        match &self.record {
+            Some(r) => r.convergence_rate,
+            None => H::EMPTY_DECIMAL,
+        }
     }
     type TermExpression = crate::kernel::schema::NullTermExpression<H>;
     fn terminal_value(&self) -> &Self::TermExpression {
