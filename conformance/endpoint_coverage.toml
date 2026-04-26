@@ -133,7 +133,7 @@ symbols = [
     "parse_u32",
     "parse_u64",
     "parse_u64_pair",
-    "parse_f64_from_bits_str",
+    "parse_u64_bits_str",
 ]
 behavior = "phase_f_preflight_bound"
 
@@ -430,6 +430,23 @@ behavior = "behavior_grammar_surface_roundtrip"
 # `HostTypes::Decimal`. Default-host f64/f32 impls delegate to libm.
 [coverage.decimal_transcendental]
 symbols = ["DecimalTranscendental"]
+behavior = "phase9_decimal_transcendental"
+
+# ─── Mapping: Phase-9 bit-pattern constants ────────────────────────────
+# Public IEEE-754 bit-pattern constants for thermodynamic / numerical
+# values that previously appeared as `: f64` hardcodes. Consumers project
+# to `H::Decimal` via `DecimalTranscendental::from_bits` at use sites.
+# Exercised end-to-end by the calibration / uor_time / phase9 tests.
+[coverage.phase9_bit_constants]
+symbols = [
+    "PI_TIMES_H_BAR_BITS",
+    "NANOS_PER_SECOND_BITS",
+    "LN_2_BITS",
+    "CALIBRATION_KBT_LO_BITS",
+    "CALIBRATION_KBT_HI_BITS",
+    "CALIBRATION_THERMAL_POWER_HI_BITS",
+    "CALIBRATION_CHAR_ENERGY_HI_BITS",
+]
 behavior = "phase9_decimal_transcendental"
 
 # ─── Mapping: module re-exports ────────────────────────────────────────

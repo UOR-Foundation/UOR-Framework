@@ -1328,14 +1328,17 @@ fn generate_individuals(f: &mut RustFile, module: &NamespaceModule) {
                     let _ = writeln!(f.buf, "    pub const {base_const}: bool = {b};");
                 }
                 IndividualValue::Float(x) => {
-                    let _ = writeln!(f.buf, "    /// `{prop_local}`");
-                    // Debug formatting guarantees a decimal point so the
-                    // emitted literal type-checks as `f64` (e.g. `0.0`
-                    // instead of `0`, which Rust would infer as `i32`).
-                    // `approx_constant` is silenced because the ontology
-                    // stores numeric values, not symbolic constants.
-                    let _ = writeln!(f.buf, "    #[allow(clippy::approx_constant)]");
-                    let _ = writeln!(f.buf, "    pub const {base_const}: f64 = {x:?};");
+                    // Phase 9: emit individual decimal values as IEEE-754
+                    // bit patterns so the constant carries no f64 type
+                    // signature in source. Consumers convert via
+                    // `H::Decimal::from_bits` at use time. The bit pattern
+                    // is identical to `f64::to_bits(x)`.
+                    let bits = x.to_bits();
+                    let _ = writeln!(
+                        f.buf,
+                        "    /// `{prop_local}` (IEEE-754 f64 bit pattern of `{x:?}`)."
+                    );
+                    let _ = writeln!(f.buf, "    pub const {base_const}_BITS: u64 = {bits}_u64;");
                 }
                 IndividualValue::IriRef(iri) => {
                     let ref_local = local_name(iri);

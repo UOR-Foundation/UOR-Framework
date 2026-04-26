@@ -18,7 +18,14 @@
 //! If these assertions fail, the foundation's calibration endpoint is
 //! incorrect and must be fixed before release.
 
-use uor_foundation::enforcement::{calibrations, Calibration, CalibrationError};
+use uor_foundation::enforcement::{calibrations, CalibrationError};
+use uor_foundation::DefaultHostTypes;
+
+// Pin the test surface to the default-host (f64) backing. Phase 9 made
+// `Calibration<H>` generic; the hand-written behavioral tests in this file
+// exercise the f64 path because the in-tree presets are all
+// `Calibration<DefaultHostTypes>`.
+type Calibration = uor_foundation::enforcement::Calibration<DefaultHostTypes>;
 
 // ─── ThermalEnergy rejections ────────────────────────────────────────────
 

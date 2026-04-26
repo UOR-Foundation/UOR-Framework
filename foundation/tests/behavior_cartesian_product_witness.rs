@@ -43,8 +43,8 @@ fn valid_inputs() -> CartesianProductMintInputs {
         right_euler: 0,
         left_betti: LEFT_BETTI,
         right_betti: RIGHT_BETTI,
-        left_entropy_nats: 0.0,
-        right_entropy_nats: core::f64::consts::LN_2,
+        left_entropy_nats_bits: 0_u64,
+        right_entropy_nats_bits: f64::to_bits(core::f64::consts::LN_2),
         combined_site_budget: 5,
         combined_site_count: 5,
         // CPT_3: combined_euler = left_euler · right_euler = 2 · 0 = 0.
@@ -52,7 +52,7 @@ fn valid_inputs() -> CartesianProductMintInputs {
         // CPT_4: Künneth composition.
         combined_betti,
         // CPT_5: additive entropy = 0 + ln 2.
-        combined_entropy_nats: core::f64::consts::LN_2,
+        combined_entropy_nats_bits: f64::to_bits(core::f64::consts::LN_2),
         combined_fingerprint: fp(0xC0),
     }
 }
@@ -126,7 +126,7 @@ fn cpt_4_kunneth_violation_cites_op_cpt_4() {
 fn cpt_5_additive_entropy_violation_cites_op_cpt_5() {
     let mut inputs = valid_inputs();
     // CPT_5 additive: ln 2. Inject 2 · ln 2.
-    inputs.combined_entropy_nats = 2.0 * core::f64::consts::LN_2;
+    inputs.combined_entropy_nats_bits = f64::to_bits(2.0 * core::f64::consts::LN_2);
     let err =
         CartesianProductWitness::mint_verified(inputs).expect_err("CPT_5 violation should reject");
     assert_eq!(err.identity(), Some("https://uor.foundation/op/CPT_5"));
@@ -135,7 +135,7 @@ fn cpt_5_additive_entropy_violation_cites_op_cpt_5() {
 #[test]
 fn cpt_5_non_finite_entropy_cites_op_cpt_5() {
     let mut inputs = valid_inputs();
-    inputs.left_entropy_nats = f64::INFINITY;
+    inputs.left_entropy_nats_bits = f64::to_bits(f64::INFINITY);
     let err =
         CartesianProductWitness::mint_verified(inputs).expect_err("infinite entropy should reject");
     assert_eq!(err.identity(), Some("https://uor.foundation/op/CPT_5"));

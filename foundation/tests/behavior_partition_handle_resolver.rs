@@ -26,7 +26,7 @@ fn fp(byte: u8) -> ContentFingerprint {
 }
 
 fn sample_record(site_budget: u16, euler: i32) -> PartitionRecord<DefaultHostTypes> {
-    PartitionRecord::new(site_budget, euler, [1, 0, 0, 0, 0, 0, 0, 0], 0.0)
+    PartitionRecord::new(site_budget, euler, [1, 0, 0, 0, 0, 0, 0, 0], 0_u64)
 }
 
 // --- Identity-level: no resolver required -----------------------------------
@@ -111,7 +111,7 @@ fn resolve_with_returns_registered_record() {
     assert_eq!(record.site_budget, 5);
     assert_eq!(record.euler, 2);
     assert_eq!(record.betti, [1, 0, 0, 0, 0, 0, 0, 0]);
-    assert_eq!(record.entropy_nats, 0.0);
+    assert_eq!(record.entropy_nats_bits, 0_u64);
 }
 
 #[test]

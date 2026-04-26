@@ -2,14 +2,15 @@
 
 All notable changes to UOR-Framework are documented in this file.
 
-## Phase 9 — `DecimalTranscendental` supertrait — 2026-04-26
+## Phase 9 — `DecimalTranscendental` supertrait + f64 closure — 2026-04-26
 
 Bounds `HostTypes::Decimal` on a new `DecimalTranscendental` supertrait
 that supplies closed arithmetic, transcendentals, and IEEE-754
-bit-pattern round-trip. The default-host `f64` and `f32` impls delegate
-to `libm`. Downstream `HostTypes` impls whose `Decimal` slot does NOT
-satisfy `Copy + Default + PartialEq + PartialOrd + Add/Sub/Mul/Div +
-ln/exp/sqrt/from_bits/to_bits` will fail to compile.
+bit-pattern round-trip; threads `H::Decimal` through every foundation
+type that previously carried a hardcoded `f64`; closes the
+`rust/no_hardcoded_f64` and `rust/host_types_discipline` conformance
+gates at zero violations. Conformance reports **539 passed, 0
+warnings, 0 failed**.
 
 ### Breaking
 
@@ -17,23 +18,49 @@ ln/exp/sqrt/from_bits/to_bits` will fail to compile.
   in-tree `DefaultHostTypes` (`Decimal = f64`) is unaffected. Hosts
   using interval arithmetic, fixed-point, or other non-IEEE types must
   implement `DecimalTranscendental` for their slot.
+- `LandauerBudget`, `UorTime`, `Calibration`, `SigmaValue` are now
+  parameterized over `H: HostTypes` (`<H = DefaultHostTypes>` default
+  keeps most call sites working). Internal fields move from `f64` to
+  `H::Decimal`.
+- Public Evidence/Inputs structs (`PartitionProductEvidence`,
+  `PartitionProductMintInputs`, …) replace `f64` entropy fields with
+  `u64` IEEE-754 bit patterns (`*_entropy_nats_bits`,
+  `landauer_cost_nats_bits`). Consumers project to `H::Decimal` via
+  `<H::Decimal as DecimalTranscendental>::from_bits`.
+- `pipeline::parse_f64_from_bits_str` is replaced by
+  `pipeline::parse_u64_bits_str`. Call sites convert via
+  `DecimalTranscendental::from_bits`.
+- `Calibration::new` is no longer `const fn` (`H::Decimal` arithmetic
+  is not const-stable). The `from_f64_unchecked` const constructor is
+  added on `Calibration<DefaultHostTypes>` for the four shipped
+  preset literals.
+- `primitive_descent_metrics<T>(...) -> (u32, u64)` (was `(u32, f64)`).
+- `primitive_measurement_projection(budget) -> (u64, u64)` (was
+  `(u64, f64)`).
+- `MultiplicationEvidence::landauer_cost_nats() -> f64` is renamed
+  `landauer_cost_nats_bits() -> u64`.
+- `SigmaValue::as_f64` is replaced by `SigmaValue::value() -> H::Decimal`.
+- MSRV bumped to **1.83** for `f64::to_bits` const stability.
 
 ### Additive
 
-- `pub trait DecimalTranscendental` exported from `uor_foundation`.
-- `impl DecimalTranscendental for f64` and `for f32` (libm-backed).
-- `Resolved{Class}<'r, R, H>` scalar accessors (Phase 8) now read
-  `H::Decimal` fields from the cached record. The `Copy` bound from
-  `DecimalTranscendental` makes this sound; in Phase 8's standalone
-  shape the scalar bodies returned the empty sentinel.
-
-### Pending follow-up (Phase 9b/9c)
-
-Thread `H::Decimal` through every foundation type currently carrying a
-hardcoded `f64` field or accessor. 72 sites remain in
-`enforcement.rs`, `pipeline.rs`, `bridge/trace.rs`,
-`kernel/reduction.rs`, and `user/state.rs`. The `rust/no_hardcoded_f64`
-conformance gate (Phase 9d) lights up when this lands.
+- `pub trait DecimalTranscendental` with `Copy + Default + Debug +
+  PartialEq + PartialOrd + Add/Sub/Mul/Div`, plus methods `ln`, `exp`,
+  `sqrt`, `from_bits`, `to_bits`, `from_u32`, `from_u64`,
+  `as_u64_saturating`, `entropy_term_nats`.
+- `impl DecimalTranscendental for f64` and `for f32` — both libm-backed.
+- Public `_BITS: u64` constants: `PI_TIMES_H_BAR_BITS`,
+  `NANOS_PER_SECOND_BITS`, `LN_2_BITS`, `CALIBRATION_KBT_LO_BITS`,
+  `CALIBRATION_KBT_HI_BITS`, `CALIBRATION_THERMAL_POWER_HI_BITS`,
+  `CALIBRATION_CHAR_ENERGY_HI_BITS`. Consumers read via `from_bits`.
+- `enforcement::transcendentals::{ln,exp,sqrt,entropy_term_nats}` are
+  now generic over `D: DecimalTranscendental` rather than pinned to
+  `f64`.
+- Phase 8's `Resolved{Class}<'r, R, H>` scalar accessors now read
+  `H::Decimal` fields from the cached record (the supertrait's `Copy`
+  bound makes the dereference sound).
+- New conformance validators: `rust/no_hardcoded_f64` (Phase 9d) and
+  `rust/host_types_discipline` (Phase 9e).
 
 ## Product/Coproduct Completion Amendment — 2026-04-23
 

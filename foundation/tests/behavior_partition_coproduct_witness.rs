@@ -64,8 +64,8 @@ fn valid_inputs() -> PartitionCoproductMintInputs {
         right_total_site_count: 3,
         left_euler: 1,
         right_euler: 2,
-        left_entropy_nats: 0.0,
-        right_entropy_nats: 0.0,
+        left_entropy_nats_bits: 0_u64,
+        right_entropy_nats_bits: 0_u64,
         left_betti: [1, 0, 0, 0, 0, 0, 0, 0],
         right_betti: [1, 1, 0, 0, 0, 0, 0, 0],
         // ST_1: budget = max(2, 3) = 3.
@@ -75,7 +75,7 @@ fn valid_inputs() -> PartitionCoproductMintInputs {
         // ST_9: euler = 1 + 2 = 3.
         combined_euler: 3,
         // ST_2: ln 2 + max(0, 0) = ln 2.
-        combined_entropy_nats: core::f64::consts::LN_2,
+        combined_entropy_nats_bits: f64::to_bits(core::f64::consts::LN_2),
         // ST_10: betti_k = left_k + right_k per k.
         combined_betti: [2, 1, 0, 0, 0, 0, 0, 0],
         combined_fingerprint: fp(0xC0),
@@ -141,7 +141,7 @@ fn tag_site_misalignment_cites_foundation_invariant() {
 fn st_2_violation_cites_op_st_2() {
     let mut inputs = valid_inputs();
     // ST_2 says combined_entropy = ln 2 + max(0, 0) = ln 2. Inject 2 × ln 2.
-    inputs.combined_entropy_nats = 2.0 * core::f64::consts::LN_2;
+    inputs.combined_entropy_nats_bits = f64::to_bits(2.0 * core::f64::consts::LN_2);
     let err =
         PartitionCoproductWitness::mint_verified(inputs).expect_err("ST_2 violation should reject");
     assert_eq!(err.identity(), Some("https://uor.foundation/op/ST_2"));

@@ -170,6 +170,19 @@ pub fn run_all(paths: &WorkspacePaths) -> anyhow::Result<ConformanceReport> {
     // Counts `pub trait {Name}<H: HostTypes>` declarations without any
     // `impl {Name}<H> for ...` site in the workspace.
     report.extend(validators::rust::orphan_counts::validate(&paths.workspace)?);
+    // Phase 9d (orphan-closure): no_hardcoded_f64 gate. Ensures
+    // `foundation/src/**/*.rs` contains zero `: f64` / `-> f64` outside
+    // `#[cfg(test)]` blocks; every decimal value flows through
+    // `H::Decimal: DecimalTranscendental`.
+    report.extend(validators::rust::no_hardcoded_f64::validate(
+        &paths.workspace,
+    )?);
+    // Phase 9e (orphan-closure): HostTypesDiscipline category. Asserts the
+    // bounds and impl shape introduced by Phase 9 — DecimalTranscendental
+    // supertrait, libm impls for f64 / f32, generic transcendentals dispatch.
+    report.extend(validators::rust::host_types_discipline::validate(
+        &paths.workspace,
+    )?);
     // v0.2.2 Phase H: lints + cross-cutting.
     report.extend(validators::rust::feature_flag_layout::validate(
         &paths.workspace,

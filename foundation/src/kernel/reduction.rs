@@ -8169,9 +8169,8 @@ pub mod budget_solvency_check {
 pub mod back_pressure_default {
     /// `pressureLevel`
     pub const PRESSURE_LEVEL: &str = "Medium";
-    /// `pressureThreshold`
-    #[allow(clippy::approx_constant)]
-    pub const PRESSURE_THRESHOLD: f64 = 0.75;
+    /// `pressureThreshold` (IEEE-754 f64 bit pattern of `0.75`).
+    pub const PRESSURE_THRESHOLD_BITS: u64 = 4604930618986332160_u64;
 }
 
 /// DispatchMiss field carrying the query IRI that failed to dispatch.

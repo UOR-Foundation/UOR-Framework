@@ -19,11 +19,15 @@ use crate::report::{ConformanceReport, TestResult};
 
 const VALIDATOR: &str = "rust/calibration_presets_valid";
 
+// Phase 9 changed the preset declarations to construct via the const helper
+// `Calibration::<DefaultHostTypes>::from_f64_unchecked` (Calibration::new is
+// no longer const since it operates over generic H::Decimal). The four
+// preset names and their default-host pinning are still required.
 const REQUIRED_PRESETS: &[&str] = &[
-    "pub const X86_SERVER: Calibration = match Calibration::new(",
-    "pub const ARM_MOBILE: Calibration = match Calibration::new(",
-    "pub const CORTEX_M_EMBEDDED: Calibration = match Calibration::new(",
-    "pub const CONSERVATIVE_WORST_CASE: Calibration = match Calibration::new(",
+    "pub const X86_SERVER: Calibration<DefaultHostTypes> =",
+    "pub const ARM_MOBILE: Calibration<DefaultHostTypes> =",
+    "pub const CORTEX_M_EMBEDDED: Calibration<DefaultHostTypes> =",
+    "pub const CONSERVATIVE_WORST_CASE: Calibration<DefaultHostTypes> =",
 ];
 
 /// Runs the calibration presets validator.

@@ -905,12 +905,12 @@ pub fn parse_u64_pair(s: &str) -> (u64, u64) {
     (parse_u64(left), parse_u64(right))
 }
 
-/// v0.2.2 Phase F: parse a decimal `u64` then reinterpret its bits as `f64`.
-/// Encodes thermodynamic bounds in `LandauerCost` constraints via `f64::to_bits`
-/// round-tripping; decimal integer ↔ binary64 layout is content-deterministic.
+/// v0.2.2 Phase F / Phase 9: parse a decimal `u64` representing an
+/// IEEE-754 bit pattern. The bit pattern is content-deterministic; call sites
+/// project to `H::Decimal` via `DecimalTranscendental::from_bits`.
 #[must_use]
-pub fn parse_f64_from_bits_str(s: &str) -> f64 {
-    f64::from_bits(parse_u64(s))
+pub fn parse_u64_bits_str(s: &str) -> u64 {
+    parse_u64(s)
 }
 
 /// v0.2.2 Phase F: dispatch a `ConstraintRef::Bound` arm on its `observable_iri`.
@@ -932,7 +932,11 @@ fn check_bound_feasibility(
         let depth = parse_u32(args_repr);
         depth <= WITT_MAX_BITS as u32
     } else if crate::enforcement::str_eq(observable_iri, LANDAUER_IRI) {
-        let nats = parse_f64_from_bits_str(args_repr);
+        // Project the bit pattern to f64 (default-host) for the
+        // finite/positive-nats sanity check. Polymorphic consumers
+        // construct their own H::Decimal via DecimalTranscendental.
+        let bits = parse_u64_bits_str(args_repr);
+        let nats = <f64 as crate::DecimalTranscendental>::from_bits(bits);
         nats.is_finite() && nats > 0.0
     } else {
         false

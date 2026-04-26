@@ -167,7 +167,11 @@ pub const SHACL_TESTS: usize = 283;
 /// rows.
 /// Phase 7e (orphan-closure): +1 `rust/orphan_counts` — minimum-viable
 /// orphan-count validator; greps `impl {Name}<H> for ...` sites.
-pub const CONFORMANCE_CHECKS: usize = 537;
+/// Phase 9d (orphan-closure): +1 `rust/no_hardcoded_f64` — gate that
+/// ensures foundation/src/ has zero hardcoded `f64` outside test code.
+/// Phase 9e (orphan-closure): +1 `rust/host_types_discipline` — asserts
+/// `HostTypes::Decimal: DecimalTranscendental` + libm impls.
+pub const CONFORMANCE_CHECKS: usize = 539;
 
 /// Number of amendments applied to the base ontology.
 pub const AMENDMENTS: usize = 95;

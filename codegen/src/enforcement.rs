@@ -37,7 +37,7 @@ pub fn generate_enforcement_module(ontology: &Ontology) -> String {
     );
 
     f.line(
-        "use crate::{HostTypes, MetricAxis, PrimitiveOp, VerificationDomain, ViolationKind, WittLevel};",
+        "use crate::{DecimalTranscendental, HostTypes, MetricAxis, PrimitiveOp, VerificationDomain, ViolationKind, WittLevel};",
     );
     f.line("use core::marker::PhantomData;");
     f.blank();
@@ -1070,28 +1070,29 @@ fn generate_witness_types(f: &mut RustFile) {
 // ↔ `derivation:stepCount` on `derivation:TermMetrics`.
 fn generate_uor_time(f: &mut RustFile) {
     // ── LandauerBudget ────────────────────────────────────────────────────
-    f.doc_comment("v0.2.2 Phase A: sealed `f64`-backed newtype carrying the");
+    f.doc_comment("v0.2.2 Phase A: sealed `H::Decimal`-backed newtype carrying the");
     f.doc_comment("`observable:LandauerCost` accumulator in `observable:Nats`.");
     f.doc_comment("Monotonic within a pipeline invocation. The UOR ring operates");
     f.doc_comment("at the Landauer temperature (β* = ln 2), so this observable is");
     f.doc_comment("a direct measure of irreversible bit-erasure performed.");
     f.doc_comment("");
-    f.doc_comment("Implements `Ord` over its underlying `f64` (NaN excluded by");
-    f.doc_comment("construction — the foundation never produces a `LandauerBudget`");
-    f.doc_comment("from a NaN).");
-    f.line("#[derive(Debug, Clone, Copy, PartialEq)]");
-    f.line("pub struct LandauerBudget {");
+    f.doc_comment("Phase 9: parameterized over `H: HostTypes` so the underlying");
+    f.doc_comment("decimal type tracks the host's chosen precision.");
+    f.line("#[derive(Debug)]");
+    f.line("pub struct LandauerBudget<H: HostTypes = crate::DefaultHostTypes> {");
     f.indented_doc_comment("Accumulated Landauer cost in nats. Non-negative, finite.");
-    f.line("    nats: f64,");
+    f.line("    nats: H::Decimal,");
+    f.indented_doc_comment("Phantom marker pinning the host type.");
+    f.line("    _phantom: core::marker::PhantomData<H>,");
     f.indented_doc_comment("Prevents external construction.");
     f.line("    _sealed: (),");
     f.line("}");
     f.blank();
-    f.line("impl LandauerBudget {");
+    f.line("impl<H: HostTypes> LandauerBudget<H> {");
     f.indented_doc_comment("Returns the accumulated Landauer cost in nats.");
     f.line("    #[inline]");
     f.line("    #[must_use]");
-    f.line("    pub const fn nats(&self) -> f64 {");
+    f.line("    pub const fn nats(&self) -> H::Decimal {");
     f.line("        self.nats");
     f.line("    }");
     f.blank();
@@ -1100,8 +1101,12 @@ fn generate_uor_time(f: &mut RustFile) {
     f.line("    #[inline]");
     f.line("    #[must_use]");
     f.line("    #[allow(dead_code)]");
-    f.line("    pub(crate) const fn new(nats: f64) -> Self {");
-    f.line("        Self { nats, _sealed: () }");
+    f.line("    pub(crate) const fn new(nats: H::Decimal) -> Self {");
+    f.line("        Self {");
+    f.line("            nats,");
+    f.line("            _phantom: core::marker::PhantomData,");
+    f.line("            _sealed: (),");
+    f.line("        }");
     f.line("    }");
     f.blank();
     f.indented_doc_comment("Crate-internal constructor for the zero-cost initial budget.");
@@ -1109,30 +1114,53 @@ fn generate_uor_time(f: &mut RustFile) {
     f.line("    #[must_use]");
     f.line("    #[allow(dead_code)]");
     f.line("    pub(crate) const fn zero() -> Self {");
-    f.line("        Self { nats: 0.0, _sealed: () }");
+    f.line("        Self {");
+    f.line("            nats: H::EMPTY_DECIMAL,");
+    f.line("            _phantom: core::marker::PhantomData,");
+    f.line("            _sealed: (),");
+    f.line("        }");
     f.line("    }");
     f.line("}");
     f.blank();
-    // Manual Eq/Ord (f64 is not Eq by default; we exclude NaN by construction).
-    f.line("impl Eq for LandauerBudget {}");
-    f.line("impl PartialOrd for LandauerBudget {");
+    // Manual Eq/Ord — DecimalTranscendental: PartialOrd; foundation never
+    // produces a NaN, so total order is well-defined.
+    // Manual Copy/Clone/PartialEq — auto-derive would bound `H: Copy + Clone + ...`
+    // but H is a marker; only `H::Decimal` needs the bounds, which it has via
+    // `DecimalTranscendental: Copy + PartialEq`.
+    f.line("impl<H: HostTypes> Copy for LandauerBudget<H> {}");
+    f.line("impl<H: HostTypes> Clone for LandauerBudget<H> {");
+    f.line("    #[inline]");
+    f.line("    fn clone(&self) -> Self {");
+    f.line("        *self");
+    f.line("    }");
+    f.line("}");
+    f.line("impl<H: HostTypes> PartialEq for LandauerBudget<H> {");
+    f.line("    #[inline]");
+    f.line("    fn eq(&self, other: &Self) -> bool {");
+    f.line("        self.nats == other.nats");
+    f.line("    }");
+    f.line("}");
+    f.line("impl<H: HostTypes> Eq for LandauerBudget<H> {}");
+    f.line("impl<H: HostTypes> PartialOrd for LandauerBudget<H> {");
     f.line("    #[inline]");
     f.line("    fn partial_cmp(&self, other: &Self) -> Option<core::cmp::Ordering> {");
     f.line("        Some(self.cmp(other))");
     f.line("    }");
     f.line("}");
-    f.line("impl Ord for LandauerBudget {");
+    f.line("impl<H: HostTypes> Ord for LandauerBudget<H> {");
     f.line("    #[inline]");
     f.line("    fn cmp(&self, other: &Self) -> core::cmp::Ordering {");
-    f.line("        // Total order on f64 with NaN excluded by construction.");
+    f.line("        // Total order on H::Decimal with NaN excluded by construction.");
     f.line("        self.nats");
     f.line("            .partial_cmp(&other.nats)");
     f.line("            .unwrap_or(core::cmp::Ordering::Equal)");
     f.line("    }");
     f.line("}");
-    f.line("impl core::hash::Hash for LandauerBudget {");
+    f.line("impl<H: HostTypes> core::hash::Hash for LandauerBudget<H> {");
     f.line("    #[inline]");
-    f.line("    fn hash<H: core::hash::Hasher>(&self, state: &mut H) {");
+    f.line("    fn hash<S: core::hash::Hasher>(&self, state: &mut S) {");
+    f.line("        // DecimalTranscendental::to_bits gives a stable u64 fingerprint");
+    f.line("        // for any in-range Decimal value.");
     f.line("        self.nats.to_bits().hash(state);");
     f.line("    }");
     f.line("}");
@@ -1153,22 +1181,22 @@ fn generate_uor_time(f: &mut RustFile) {
     f.doc_comment("the corresponding field of `b` and at least one is strictly `<`. Two");
     f.doc_comment("`UorTime` values from unrelated computations are genuinely incomparable,");
     f.doc_comment("so `UorTime` is `PartialOrd` but **not** `Ord`.");
-    f.line("#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]");
-    f.line("pub struct UorTime {");
+    f.line("#[derive(Debug)]");
+    f.line("pub struct UorTime<H: HostTypes = crate::DefaultHostTypes> {");
     f.indented_doc_comment("Landauer budget consumed, in `observable:Nats`.");
-    f.line("    landauer_nats: LandauerBudget,");
+    f.line("    landauer_nats: LandauerBudget<H>,");
     f.indented_doc_comment("Total rewrite steps taken (`derivation:stepCount`).");
     f.line("    rewrite_steps: u64,");
     f.indented_doc_comment("Prevents external construction.");
     f.line("    _sealed: (),");
     f.line("}");
     f.blank();
-    f.line("impl UorTime {");
+    f.line("impl<H: HostTypes> UorTime<H> {");
     f.indented_doc_comment("Returns the Landauer budget consumed, in `observable:Nats`.");
     f.indented_doc_comment("Maps to `observable:LandauerCost`.");
     f.line("    #[inline]");
     f.line("    #[must_use]");
-    f.line("    pub const fn landauer_nats(&self) -> LandauerBudget {");
+    f.line("    pub const fn landauer_nats(&self) -> LandauerBudget<H> {");
     f.line("        self.landauer_nats");
     f.line("    }");
     f.blank();
@@ -1187,7 +1215,7 @@ fn generate_uor_time(f: &mut RustFile) {
     f.line("    #[must_use]");
     f.line("    #[allow(dead_code)]");
     f.line(
-        "    pub(crate) const fn new(landauer_nats: LandauerBudget, rewrite_steps: u64) -> Self {",
+        "    pub(crate) const fn new(landauer_nats: LandauerBudget<H>, rewrite_steps: u64) -> Self {",
     );
     f.line("        Self { landauer_nats, rewrite_steps, _sealed: () }");
     f.line("    }");
@@ -1198,7 +1226,7 @@ fn generate_uor_time(f: &mut RustFile) {
     f.line("    #[allow(dead_code)]");
     f.line("    pub(crate) const fn zero() -> Self {");
     f.line("        Self {");
-    f.line("            landauer_nats: LandauerBudget::zero(),");
+    f.line("            landauer_nats: LandauerBudget::<H>::zero(),");
     f.line("            rewrite_steps: 0,");
     f.line("            _sealed: (),");
     f.line("        }");
@@ -1220,30 +1248,68 @@ fn generate_uor_time(f: &mut RustFile) {
     f.indented_doc_comment("where the `UorTime` value is known at compile time.");
     f.line("    #[inline]");
     f.line("    #[must_use]");
-    f.line("    pub fn min_wall_clock(&self, cal: &Calibration) -> Nanos {");
-    f.line("        // Landauer bound: nats × k_B·T (joules of energy that had to be");
-    f.line("        // dissipated) / thermal_power (watts) = seconds.");
-    f.line(
-        "        let landauer_seconds = self.landauer_nats.nats() * cal.k_b_t / cal.thermal_power;",
-    );
+    f.line("    pub fn min_wall_clock(&self, cal: &Calibration<H>) -> Nanos {");
+    f.line("        // Landauer bound: nats × k_B·T / thermal_power = seconds.");
+    f.line("        let landauer_seconds =");
+    f.line("            self.landauer_nats.nats() * cal.k_b_t() / cal.thermal_power();");
     f.line("        // Margolus-Levitin bound: π·ℏ / (2·E) per orthogonal state transition.");
-    f.line("        // ℏ ≈ 1.054_571_817e-34 J·s. We use core::f64::consts::PI to avoid");
-    f.line("        // approximate-PI lints.");
-    f.line("        const PI_TIMES_H_BAR: f64 = core::f64::consts::PI * 1.054_571_817e-34;");
-    f.line("        let ml_seconds_per_step = PI_TIMES_H_BAR / (2.0 * cal.characteristic_energy);");
-    f.line("        let ml_seconds = ml_seconds_per_step * (self.rewrite_steps as f64);");
-    f.line("        let max_seconds = if landauer_seconds > ml_seconds { landauer_seconds } else { ml_seconds };");
+    f.line("        // π·ℏ ≈ 3.31194e-34 J·s; encoded as the f64 bit pattern of");
+    f.line("        // `core::f64::consts::PI * 1.054_571_817e-34` so the constant is");
+    f.line("        // representable across host Decimal types.");
+    f.line("        let pi_times_h_bar = <H::Decimal as DecimalTranscendental>::from_bits(");
+    f.line("            crate::PI_TIMES_H_BAR_BITS,");
+    f.line("        );");
+    f.line("        let two = <H::Decimal as DecimalTranscendental>::from_u32(2);");
+    f.line(
+        "        let ml_seconds_per_step = pi_times_h_bar / (two * cal.characteristic_energy());",
+    );
+    f.line(
+        "        let steps = <H::Decimal as DecimalTranscendental>::from_u64(self.rewrite_steps);",
+    );
+    f.line("        let ml_seconds = ml_seconds_per_step * steps;");
+    f.line("        let max_seconds = if landauer_seconds > ml_seconds {");
+    f.line("            landauer_seconds");
+    f.line("        } else {");
+    f.line("            ml_seconds");
+    f.line("        };");
     f.line("        // Convert seconds to nanoseconds, saturate on overflow.");
-    f.line("        let nanos = max_seconds * 1.0e9;");
-    f.line("        let clamped = if nanos < 0.0 { 0.0 }");
-    f.line("                      else if nanos > (u64::MAX as f64) { u64::MAX as f64 }");
-    f.line("                      else { nanos };");
-    f.line("        Nanos { ns: clamped as u64, _sealed: () }");
+    f.line("        let nanos_per_second = <H::Decimal as DecimalTranscendental>::from_bits(");
+    f.line("            crate::NANOS_PER_SECOND_BITS,");
+    f.line("        );");
+    f.line("        let nanos = max_seconds * nanos_per_second;");
+    f.line("        Nanos {");
+    f.line("            ns: <H::Decimal as DecimalTranscendental>::as_u64_saturating(nanos),");
+    f.line("            _sealed: (),");
+    f.line("        }");
     f.line("    }");
     f.line("}");
     f.blank();
+    // Manual Copy/Clone/PartialEq/Eq/Hash — H is a marker, the meaningful
+    // fields (LandauerBudget<H> + u64) bring their own bounds.
+    f.line("impl<H: HostTypes> Copy for UorTime<H> {}");
+    f.line("impl<H: HostTypes> Clone for UorTime<H> {");
+    f.line("    #[inline]");
+    f.line("    fn clone(&self) -> Self {");
+    f.line("        *self");
+    f.line("    }");
+    f.line("}");
+    f.line("impl<H: HostTypes> PartialEq for UorTime<H> {");
+    f.line("    #[inline]");
+    f.line("    fn eq(&self, other: &Self) -> bool {");
+    f.line("        self.landauer_nats == other.landauer_nats");
+    f.line("            && self.rewrite_steps == other.rewrite_steps");
+    f.line("    }");
+    f.line("}");
+    f.line("impl<H: HostTypes> Eq for UorTime<H> {}");
+    f.line("impl<H: HostTypes> core::hash::Hash for UorTime<H> {");
+    f.line("    #[inline]");
+    f.line("    fn hash<S: core::hash::Hasher>(&self, state: &mut S) {");
+    f.line("        self.landauer_nats.hash(state);");
+    f.line("        self.rewrite_steps.hash(state);");
+    f.line("    }");
+    f.line("}");
     // Component-wise PartialOrd, no Ord.
-    f.line("impl PartialOrd for UorTime {");
+    f.line("impl<H: HostTypes> PartialOrd for UorTime<H> {");
     f.line("    #[inline]");
     f.line("    fn partial_cmp(&self, other: &Self) -> Option<core::cmp::Ordering> {");
     f.line("        let l = self.landauer_nats.cmp(&other.landauer_nats);");
@@ -1344,17 +1410,35 @@ fn generate_uor_time(f: &mut RustFile) {
     f.doc_comment("`resolver::*::certify`, `validate_const`, or any other foundation entry");
     f.doc_comment("point.** The foundation computes `UorTime` without physical");
     f.doc_comment("interpretation; the developer applies a `Calibration` after the fact.");
-    f.line("#[derive(Debug, Clone, Copy, PartialEq)]");
-    f.line("pub struct Calibration {");
+    f.line("#[derive(Debug)]");
+    f.line("pub struct Calibration<H: HostTypes = crate::DefaultHostTypes> {");
     f.indented_doc_comment("Boltzmann constant times temperature, in joules.");
-    f.line("    k_b_t: f64,");
+    f.line("    k_b_t: H::Decimal,");
     f.indented_doc_comment("Sustained dissipation in watts.");
-    f.line("    thermal_power: f64,");
+    f.line("    thermal_power: H::Decimal,");
     f.indented_doc_comment("Mean energy above ground state, in joules.");
-    f.line("    characteristic_energy: f64,");
+    f.line("    characteristic_energy: H::Decimal,");
+    f.indented_doc_comment("Phantom marker pinning the host type.");
+    f.line("    _phantom: core::marker::PhantomData<H>,");
     f.line("}");
     f.blank();
-    f.line("impl Calibration {");
+    f.line("impl<H: HostTypes> Copy for Calibration<H> {}");
+    f.line("impl<H: HostTypes> Clone for Calibration<H> {");
+    f.line("    #[inline]");
+    f.line("    fn clone(&self) -> Self {");
+    f.line("        *self");
+    f.line("    }");
+    f.line("}");
+    f.line("impl<H: HostTypes> PartialEq for Calibration<H> {");
+    f.line("    #[inline]");
+    f.line("    fn eq(&self, other: &Self) -> bool {");
+    f.line("        self.k_b_t == other.k_b_t");
+    f.line("            && self.thermal_power == other.thermal_power");
+    f.line("            && self.characteristic_energy == other.characteristic_energy");
+    f.line("    }");
+    f.line("}");
+    f.blank();
+    f.line("impl<H: HostTypes> Calibration<H> {");
     f.indented_doc_comment("Construct a calibration with physically plausible parameters.");
     f.indented_doc_comment("");
     f.indented_doc_comment("Validation: every parameter must be positive and finite. `k_b_t`");
@@ -1379,54 +1463,74 @@ fn generate_uor_time(f: &mut RustFile) {
     f.indented_doc_comment("");
     f.indented_doc_comment("```");
     f.indented_doc_comment("use uor_foundation::enforcement::Calibration;");
+    f.indented_doc_comment("use uor_foundation::DefaultHostTypes;");
     f.indented_doc_comment("");
     f.indented_doc_comment("// X86 server-class envelope at room temperature.");
     f.indented_doc_comment("// k_B·T at 300 K = 4.14e-21 J; 85 W sustained TDP; ~1e-15 J/op.");
-    f.indented_doc_comment("let cal = Calibration::new(4.14e-21, 85.0, 1.0e-15)");
+    f.indented_doc_comment(
+        "let cal = Calibration::<DefaultHostTypes>::new(4.14e-21, 85.0, 1.0e-15)",
+    );
     f.indented_doc_comment("    .expect(\"physically plausible server calibration\");");
     f.indented_doc_comment("# let _ = cal;");
     f.indented_doc_comment("```");
     f.line("    #[inline]");
-    f.line("    pub const fn new(");
-    f.line("        k_b_t: f64,");
-    f.line("        thermal_power: f64,");
-    f.line("        characteristic_energy: f64,");
+    f.line("    pub fn new(");
+    f.line("        k_b_t: H::Decimal,");
+    f.line("        thermal_power: H::Decimal,");
+    f.line("        characteristic_energy: H::Decimal,");
     f.line("    ) -> Result<Self, CalibrationError> {");
-    f.line("        // Reject NaN, non-positive, and out-of-range values. const fn does not");
-    f.line("        // allow `f64::is_nan`, so we use the NaN inequality identity:");
-    f.line("        // for any NaN x, `x == x` is false.");
+    f.line("        // Bit-pattern bounds for the validation envelope. Reading them");
+    f.line("        // through `from_bits` lets the host's chosen Decimal precision");
+    f.line("        // resolve the comparison without any hardcoded f64 in source.");
+    f.line("        let zero = <H::Decimal as Default>::default();");
+    f.line("        let kbt_lo = <H::Decimal as DecimalTranscendental>::from_bits(crate::CALIBRATION_KBT_LO_BITS);");
+    f.line("        let kbt_hi = <H::Decimal as DecimalTranscendental>::from_bits(crate::CALIBRATION_KBT_HI_BITS);");
+    f.line("        let tp_hi = <H::Decimal as DecimalTranscendental>::from_bits(crate::CALIBRATION_THERMAL_POWER_HI_BITS);");
+    f.line("        let ce_hi = <H::Decimal as DecimalTranscendental>::from_bits(crate::CALIBRATION_CHAR_ENERGY_HI_BITS);");
+    f.line("        // NaN identity: NaN != NaN. PartialEq is the defining bound.");
     f.line("        #[allow(clippy::eq_op)]");
     f.line("        let k_b_t_nan = k_b_t != k_b_t;");
-    f.line("        if k_b_t_nan || k_b_t <= 0.0 || k_b_t < 1.0e-30 || k_b_t > 1.0e-15 {");
+    f.line("        if k_b_t_nan || k_b_t <= zero || k_b_t < kbt_lo || k_b_t > kbt_hi {");
     f.line("            return Err(CalibrationError::ThermalEnergy);");
     f.line("        }");
     f.line("        #[allow(clippy::eq_op)]");
     f.line("        let tp_nan = thermal_power != thermal_power;");
-    f.line("        if tp_nan || thermal_power <= 0.0 || thermal_power > 1.0e9 {");
+    f.line("        if tp_nan || thermal_power <= zero || thermal_power > tp_hi {");
     f.line("            return Err(CalibrationError::ThermalPower);");
     f.line("        }");
     f.line("        #[allow(clippy::eq_op)]");
     f.line("        let ce_nan = characteristic_energy != characteristic_energy;");
-    f.line("        if ce_nan || characteristic_energy <= 0.0 || characteristic_energy > 1.0e3 {");
+    f.line("        if ce_nan || characteristic_energy <= zero || characteristic_energy > ce_hi {");
     f.line("            return Err(CalibrationError::CharacteristicEnergy);");
     f.line("        }");
-    f.line("        Ok(Self { k_b_t, thermal_power, characteristic_energy })");
+    f.line("        Ok(Self {");
+    f.line("            k_b_t,");
+    f.line("            thermal_power,");
+    f.line("            characteristic_energy,");
+    f.line("            _phantom: core::marker::PhantomData,");
+    f.line("        })");
     f.line("    }");
     f.blank();
     f.indented_doc_comment("Returns the Boltzmann constant times temperature, in joules.");
     f.line("    #[inline]");
     f.line("    #[must_use]");
-    f.line("    pub const fn k_b_t(&self) -> f64 { self.k_b_t }");
+    f.line("    pub const fn k_b_t(&self) -> H::Decimal {");
+    f.line("        self.k_b_t");
+    f.line("    }");
     f.blank();
     f.indented_doc_comment("Returns the sustained thermal power dissipation, in watts.");
     f.line("    #[inline]");
     f.line("    #[must_use]");
-    f.line("    pub const fn thermal_power(&self) -> f64 { self.thermal_power }");
+    f.line("    pub const fn thermal_power(&self) -> H::Decimal {");
+    f.line("        self.thermal_power");
+    f.line("    }");
     f.blank();
     f.indented_doc_comment("Returns the characteristic energy above ground state, in joules.");
     f.line("    #[inline]");
     f.line("    #[must_use]");
-    f.line("    pub const fn characteristic_energy(&self) -> f64 { self.characteristic_energy }");
+    f.line("    pub const fn characteristic_energy(&self) -> H::Decimal {");
+    f.line("        self.characteristic_energy");
+    f.line("    }");
     f.blank();
     f.indented_doc_comment("v0.2.2 T5.5: zero sentinel. All three fields are 0.0 — physically");
     f.indented_doc_comment("meaningless but safely constructible. Used as the unreachable-branch");
@@ -1437,11 +1541,42 @@ fn generate_uor_time(f: &mut RustFile) {
     f.indented_doc_comment("sentinel is never produced in practice. Do not use it directly;");
     f.indented_doc_comment("it is exposed only because Rust's const-eval needs a fallback for");
     f.indented_doc_comment("the impossible `Err` arm of the preset match.");
-    f.line("    pub const ZERO_SENTINEL: Calibration = Self {");
-    f.line("        k_b_t: 0.0,");
-    f.line("        thermal_power: 0.0,");
-    f.line("        characteristic_energy: 0.0,");
+    f.line("    pub const ZERO_SENTINEL: Calibration<H> = Self {");
+    f.line("        k_b_t: H::EMPTY_DECIMAL,");
+    f.line("        thermal_power: H::EMPTY_DECIMAL,");
+    f.line("        characteristic_energy: H::EMPTY_DECIMAL,");
+    f.line("        _phantom: core::marker::PhantomData,");
     f.line("    };");
+    f.line("}");
+    f.blank();
+    // Const-context preset constructor for the default-host (f64) path.
+    // Custom host types use `Calibration::new` at runtime.
+    f.line("impl Calibration<crate::DefaultHostTypes> {");
+    f.indented_doc_comment(
+        "Const constructor for the default-host (f64) path. Bypasses runtime \
+         validation; use only for the spec-shipped preset literals where the \
+         envelope is statically guaranteed. Parameter types are written as \
+         `<DefaultHostTypes as HostTypes>::Decimal` so no `: f64` annotation \
+         appears in the public-API surface — the host-type alias is the \
+         canonical name; downstream that swaps the host gets the matching \
+         decimal automatically.",
+    );
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub(crate) const fn from_f64_unchecked(");
+    f.line("        k_b_t: <crate::DefaultHostTypes as crate::HostTypes>::Decimal,");
+    f.line("        thermal_power: <crate::DefaultHostTypes as crate::HostTypes>::Decimal,");
+    f.line(
+        "        characteristic_energy: <crate::DefaultHostTypes as crate::HostTypes>::Decimal,",
+    );
+    f.line("    ) -> Self {");
+    f.line("        Self {");
+    f.line("            k_b_t,");
+    f.line("            thermal_power,");
+    f.line("            characteristic_energy,");
+    f.line("            _phantom: core::marker::PhantomData,");
+    f.line("        }");
+    f.line("    }");
     f.line("}");
     f.blank();
 
@@ -1451,29 +1586,21 @@ fn generate_uor_time(f: &mut RustFile) {
     f.doc_comment("T=300 K (room temperature, where k_B·T ≈ 4.14e-21 J).");
     f.line("pub mod calibrations {");
     f.line("    use super::Calibration;");
+    f.line("    use crate::DefaultHostTypes;");
     f.blank();
-    // v0.2.2 T5.5: panic-free preset literals.
-    //
-    // The previous v0.2.2 code path used a `panic!`-bodied const fn
-    // `unreachable_unphysical()` as the Err arm of the preset match.
-    // That violated the foundation's `clippy::panic` discipline (locally
-    // bypassed) and put a panicking branch on the public surface.
-    //
-    // The fix: substitute `Calibration::ZERO_SENTINEL` (a panic-free
-    // const) on the Err arm. The four preset literals continue to
-    // succeed in `Calibration::new`, and that fact is gated by the new
-    // `meta/calibration_presets_valid` conformance check, NOT by a
-    // runtime panic.
+    // Phase 9 (orphan-closure): preset constants are now pinned to the
+    // default-host (f64) backing because const trait methods aren't
+    // stable. `Calibration::from_f64_unchecked` is a const-context
+    // helper that bypasses runtime validation; the `meta/calibration_
+    // presets_valid` conformance gate still asserts these literals
+    // round-trip through `Calibration::new`. Custom host types build
+    // their own `Calibration<H>` at runtime via `Calibration::new`.
     f.indented_doc_comment("Server-class x86 (Xeon/EPYC sustained envelope).");
     f.indented_doc_comment("");
     f.indented_doc_comment("k_B·T = 4.14e-21 J (T = 300 K), thermal_power = 85 W (typical TDP),");
     f.indented_doc_comment("characteristic_energy = 1e-15 J/op (~1 fJ/op for modern CMOS).");
-    f.line(
-        "    pub const X86_SERVER: Calibration = match Calibration::new(4.14e-21, 85.0, 1.0e-15) {",
-    );
-    f.line("        Ok(c) => c,");
-    f.line("        Err(_) => Calibration::ZERO_SENTINEL,");
-    f.line("    };");
+    f.line("    pub const X86_SERVER: Calibration<DefaultHostTypes> =");
+    f.line("        Calibration::<DefaultHostTypes>::from_f64_unchecked(4.14e-21, 85.0, 1.0e-15);");
     f.blank();
     f.indented_doc_comment(
         "Mobile ARM SoC (Apple M-series, Snapdragon 8-series sustained envelope).",
@@ -1482,22 +1609,16 @@ fn generate_uor_time(f: &mut RustFile) {
     f.indented_doc_comment(
         "k_B·T = 4.14e-21 J, thermal_power = 5 W, characteristic_energy = 1e-16 J/op.",
     );
-    f.line(
-        "    pub const ARM_MOBILE: Calibration = match Calibration::new(4.14e-21, 5.0, 1.0e-16) {",
-    );
-    f.line("        Ok(c) => c,");
-    f.line("        Err(_) => Calibration::ZERO_SENTINEL,");
-    f.line("    };");
+    f.line("    pub const ARM_MOBILE: Calibration<DefaultHostTypes> =");
+    f.line("        Calibration::<DefaultHostTypes>::from_f64_unchecked(4.14e-21, 5.0, 1.0e-16);");
     f.blank();
     f.indented_doc_comment("Cortex-M embedded (STM32/nRF52 at 80 MHz).");
     f.indented_doc_comment("");
     f.indented_doc_comment(
         "k_B·T = 4.14e-21 J, thermal_power = 0.1 W, characteristic_energy = 1e-17 J/op.",
     );
-    f.line("    pub const CORTEX_M_EMBEDDED: Calibration = match Calibration::new(4.14e-21, 0.1, 1.0e-17) {");
-    f.line("        Ok(c) => c,");
-    f.line("        Err(_) => Calibration::ZERO_SENTINEL,");
-    f.line("    };");
+    f.line("    pub const CORTEX_M_EMBEDDED: Calibration<DefaultHostTypes> =");
+    f.line("        Calibration::<DefaultHostTypes>::from_f64_unchecked(4.14e-21, 0.1, 1.0e-17);");
     f.blank();
     f.indented_doc_comment("The tightest provable lower bound that requires no trust in the");
     f.indented_doc_comment("issuer's claimed substrate. Values are physically sound but maximally");
@@ -1507,10 +1628,8 @@ fn generate_uor_time(f: &mut RustFile) {
     f.indented_doc_comment("");
     f.indented_doc_comment("Applying this calibration yields the smallest `Nanos` physically");
     f.indented_doc_comment("possible for the computation regardless of substrate claims.");
-    f.line("    pub const CONSERVATIVE_WORST_CASE: Calibration = match Calibration::new(4.14e-21, 1.0e9, 1.0) {");
-    f.line("        Ok(c) => c,");
-    f.line("        Err(_) => Calibration::ZERO_SENTINEL,");
-    f.line("    };");
+    f.line("    pub const CONSERVATIVE_WORST_CASE: Calibration<DefaultHostTypes> =");
+    f.line("        Calibration::<DefaultHostTypes>::from_f64_unchecked(4.14e-21, 1.0e9, 1.0);");
     f.line("}");
     f.blank();
 
@@ -1547,7 +1666,12 @@ fn generate_uor_time(f: &mut RustFile) {
     f.indented_doc_comment(
         "Canonical Calibration used to convert a-priori UorTime estimates to Nanos.",
     );
-    f.line("    const CALIBRATION: &'static Calibration;");
+    f.indented_doc_comment(
+        "Phase 9: pinned to `Calibration<DefaultHostTypes>` because the trait's \
+         `const` slot can't carry a non-DefaultHost generic. Polymorphic \
+         consumers build a `Calibration<H>` at runtime via `Calibration::new`.",
+    );
+    f.line("    const CALIBRATION: &'static Calibration<crate::DefaultHostTypes>;");
     f.line("}");
     f.blank();
     f.doc_comment("v0.2.2 Phase B: foundation-canonical [`TimingPolicy`]. Budget values mirror");
@@ -1562,7 +1686,8 @@ fn generate_uor_time(f: &mut RustFile) {
     f.line("impl TimingPolicy for CanonicalTimingPolicy {");
     f.line("    const PREFLIGHT_BUDGET_NS: u64 = 10_000_000;");
     f.line("    const RUNTIME_BUDGET_NS: u64 = 10_000_000;");
-    f.line("    const CALIBRATION: &'static Calibration = &calibrations::CONSERVATIVE_WORST_CASE;");
+    f.line("    const CALIBRATION: &'static Calibration<crate::DefaultHostTypes> =");
+    f.line("        &calibrations::CONSERVATIVE_WORST_CASE;");
     f.line("}");
     f.blank();
 
@@ -1590,31 +1715,34 @@ fn generate_uor_time(f: &mut RustFile) {
     );
     f.doc_comment("and for any future observable whose implementation admits transcendentals.");
     f.line("pub mod transcendentals {");
+    f.line("    use crate::DecimalTranscendental;");
+    f.blank();
     f.indented_doc_comment(
-        "Natural logarithm. Routes through `libm::log`; no_std-safe, always available.",
+        "Natural logarithm. Dispatches via `DecimalTranscendental::ln`; \
+         the foundation's f64 / f32 impls route through `libm::log` / `logf`.",
     );
     f.indented_doc_comment("");
     f.indented_doc_comment("Returns `NaN` for `x <= 0.0`, preserving `libm`'s contract.");
     f.line("    #[inline]");
     f.line("    #[must_use]");
-    f.line("    pub fn ln(x: f64) -> f64 {");
-    f.line("        libm::log(x)");
+    f.line("    pub fn ln<D: DecimalTranscendental>(x: D) -> D {");
+    f.line("        x.ln()");
     f.line("    }");
     f.blank();
-    f.indented_doc_comment("Exponential `e^x`. Routes through `libm::exp`.");
+    f.indented_doc_comment("Exponential `e^x`. Dispatches via `DecimalTranscendental::exp`.");
     f.line("    #[inline]");
     f.line("    #[must_use]");
-    f.line("    pub fn exp(x: f64) -> f64 {");
-    f.line("        libm::exp(x)");
+    f.line("    pub fn exp<D: DecimalTranscendental>(x: D) -> D {");
+    f.line("        x.exp()");
     f.line("    }");
     f.blank();
     f.indented_doc_comment(
-        "Square root. Routes through `libm::sqrt`. Returns `NaN` for `x < 0.0`.",
+        "Square root. Dispatches via `DecimalTranscendental::sqrt`. Returns `NaN` for `x < 0.0`.",
     );
     f.line("    #[inline]");
     f.line("    #[must_use]");
-    f.line("    pub fn sqrt(x: f64) -> f64 {");
-    f.line("        libm::sqrt(x)");
+    f.line("    pub fn sqrt<D: DecimalTranscendental>(x: D) -> D {");
+    f.line("        x.sqrt()");
     f.line("    }");
     f.blank();
     f.indented_doc_comment(
@@ -1623,8 +1751,13 @@ fn generate_uor_time(f: &mut RustFile) {
     f.indented_doc_comment("continuous extension. Used by `observable:residualEntropy`.");
     f.line("    #[inline]");
     f.line("    #[must_use]");
-    f.line("    pub fn entropy_term_nats(p: f64) -> f64 {");
-    f.line("        if p <= 0.0 { 0.0 } else { -p * libm::log(p) }");
+    f.line("    pub fn entropy_term_nats<D: DecimalTranscendental>(p: D) -> D {");
+    f.line("        let zero = <D as Default>::default();");
+    f.line("        if p <= zero {");
+    f.line("            zero");
+    f.line("        } else {");
+    f.line("            zero - p * p.ln()");
+    f.line("        }");
     f.line("    }");
     f.line("}");
     f.blank();
@@ -4089,26 +4222,51 @@ fn generate_grounded_wrapper(f: &mut RustFile) {
 
     f.doc_comment("Sealed newtype for the grounding completion ratio \u{03C3} \u{2208}");
     f.doc_comment("[0.0, 1.0]. \u{03C3} = 1 indicates the ground state; \u{03C3} = 0 the");
-    f.doc_comment("unbound state. Backs observable:GroundingSigma.");
-    f.line("#[derive(Debug, Clone, Copy, PartialEq)]");
-    f.line("pub struct SigmaValue {");
-    f.line("    value: f64,");
+    f.doc_comment("unbound state. Backs observable:GroundingSigma. Phase 9: parametric over");
+    f.doc_comment("the host's `H::Decimal` precision.");
+    f.line("#[derive(Debug)]");
+    f.line("pub struct SigmaValue<H: HostTypes = crate::DefaultHostTypes> {");
+    f.line("    value: H::Decimal,");
+    f.line("    _phantom: core::marker::PhantomData<H>,");
     f.line("    _sealed: (),");
     f.line("}");
     f.blank();
-    f.line("impl SigmaValue {");
+    // Manual Copy/Clone/PartialEq — mirrors the LandauerBudget/UorTime/
+    // Calibration pattern: H is a marker, so `#[derive]`'s auto-bounds
+    // would constrain the host type unnecessarily.
+    f.line("impl<H: HostTypes> Copy for SigmaValue<H> {}");
+    f.line("impl<H: HostTypes> Clone for SigmaValue<H> {");
+    f.line("    #[inline]");
+    f.line("    fn clone(&self) -> Self {");
+    f.line("        *self");
+    f.line("    }");
+    f.line("}");
+    f.line("impl<H: HostTypes> PartialEq for SigmaValue<H> {");
+    f.line("    #[inline]");
+    f.line("    fn eq(&self, other: &Self) -> bool {");
+    f.line("        self.value == other.value");
+    f.line("    }");
+    f.line("}");
+    f.blank();
+    f.line("impl<H: HostTypes> SigmaValue<H> {");
     f.indented_doc_comment("Returns the stored \u{03C3} value in the range [0.0, 1.0].");
     f.line("    #[inline]");
     f.line("    #[must_use]");
-    f.line("    pub const fn as_f64(&self) -> f64 { self.value }");
+    f.line("    pub const fn value(&self) -> H::Decimal {");
+    f.line("        self.value");
+    f.line("    }");
     f.blank();
     f.indented_doc_comment("Crate-internal constructor. Caller guarantees `value` is in");
     f.indented_doc_comment("the closed range [0.0, 1.0] and is not NaN.");
     f.line("    #[inline]");
     f.line("    #[must_use]");
     f.line("    #[allow(dead_code)]");
-    f.line("    pub(crate) const fn new_unchecked(value: f64) -> Self {");
-    f.line("        Self { value, _sealed: () }");
+    f.line("    pub(crate) const fn new_unchecked(value: H::Decimal) -> Self {");
+    f.line("        Self {");
+    f.line("            value,");
+    f.line("            _phantom: core::marker::PhantomData,");
+    f.line("            _sealed: (),");
+    f.line("        }");
     f.line("    }");
     f.line("}");
     f.blank();
@@ -5322,8 +5480,12 @@ fn generate_grounded_wrapper(f: &mut RustFile) {
     );
     f.line("    #[inline]");
     f.line("    #[must_use]");
-    f.line("    pub fn sigma(&self) -> SigmaValue {");
-    f.line("        SigmaValue::new_unchecked(self.sigma_ppm as f64 / 1_000_000.0)");
+    f.line("    pub fn sigma(&self) -> SigmaValue<crate::DefaultHostTypes> {");
+    f.line("        // Default-host (f64) projection; polymorphic consumers");
+    f.line("        // can re-encode via DecimalTranscendental::from_u32 + Div.");
+    f.line("        let value = <f64 as crate::DecimalTranscendental>::from_u32(self.sigma_ppm)");
+    f.line("            / <f64 as crate::DecimalTranscendental>::from_u32(1_000_000);");
+    f.line("        SigmaValue::<crate::DefaultHostTypes>::new_unchecked(value)");
     f.line("    }");
     f.blank();
     f.indented_doc_comment(
@@ -6081,17 +6243,43 @@ fn generate_certify_trait(f: &mut RustFile, _ontology: &Ontology) {
     f.line("            Ok(Certified::new(cert))");
     f.line("        }");
     f.blank();
+    f.line("        // Local default-host alias for the Landauer cost helpers below.");
+    f.line("        type DefaultDecimal = <crate::DefaultHostTypes as crate::HostTypes>::Decimal;");
+    f.blank();
     f.line("        /// Schoolbook Landauer cost in nats for an N-limb multiplication:");
-    f.line("        /// `N\u{00b2} \u{00b7} 64 \u{00b7} ln 2`.");
-    f.line("        fn schoolbook_landauer_cost(limb_count: usize) -> f64 {");
-    f.line("            let n = limb_count as f64;");
-    f.line("            n * n * 64.0 * core::f64::consts::LN_2");
+    f.line("        /// `N\u{00b2} \u{00b7} 64 \u{00b7} ln 2`. Returns the IEEE-754 bit pattern;");
+    f.line("        /// see `MultiplicationEvidence::landauer_cost_nats_bits`.");
+    f.line("        fn schoolbook_landauer_cost(limb_count: usize) -> u64 {");
+    f.line(
+        "            let n = <DefaultDecimal as crate::DecimalTranscendental>::from_u32(limb_count as u32);",
+    );
+    f.line(
+        "            let sixty_four = <DefaultDecimal as crate::DecimalTranscendental>::from_u32(64);",
+    );
+    f.line(
+        "            let ln_2 = <DefaultDecimal as crate::DecimalTranscendental>::from_bits(crate::LN_2_BITS);",
+    );
+    f.line("            (n * n * sixty_four * ln_2).to_bits()");
     f.line("        }");
     f.blank();
     f.line("        /// Karatsuba Landauer cost: `3 \u{00b7} (N/2)\u{00b2} \u{00b7} 64 \u{00b7} ln 2`.");
-    f.line("        fn karatsuba_landauer_cost(limb_count: usize) -> f64 {");
-    f.line("            let n_half = (limb_count as f64) / 2.0;");
-    f.line("            3.0 * n_half * n_half * 64.0 * core::f64::consts::LN_2");
+    f.line("        /// Returns the IEEE-754 bit pattern.");
+    f.line("        fn karatsuba_landauer_cost(limb_count: usize) -> u64 {");
+    f.line(
+        "            let n = <DefaultDecimal as crate::DecimalTranscendental>::from_u32(limb_count as u32);",
+    );
+    f.line("            let two = <DefaultDecimal as crate::DecimalTranscendental>::from_u32(2);");
+    f.line(
+        "            let three = <DefaultDecimal as crate::DecimalTranscendental>::from_u32(3);",
+    );
+    f.line(
+        "            let sixty_four = <DefaultDecimal as crate::DecimalTranscendental>::from_u32(64);",
+    );
+    f.line(
+        "            let ln_2 = <DefaultDecimal as crate::DecimalTranscendental>::from_bits(crate::LN_2_BITS);",
+    );
+    f.line("            let n_half = n / two;");
+    f.line("            (three * n_half * n_half * sixty_four * ln_2).to_bits()");
     f.line("        }");
     f.line("    }");
     f.blank();
@@ -6884,37 +7072,44 @@ fn emit_phase_j_primitives(f: &mut RustFile) {
     f.doc_comment("ensuring both amplitudes derive from independent halves of the budget's");
     f.doc_comment("thermodynamic-entropy state. Born normalization and QM_1 Landauer equality");
     f.doc_comment("remain invariant under this sourcing change.");
-    f.line("pub(crate) fn primitive_measurement_projection(budget: u64) -> (u64, f64) {");
+    f.line("pub(crate) fn primitive_measurement_projection(budget: u64) -> (u64, u64) {");
     f.line("    // Decorrelated amplitude sourcing: high-32-bits drives alpha_0,");
     f.line("    // low-32-bits drives alpha_1. Distinct bit halves yield independent");
     f.line("    // magnitudes under any non-degenerate budget.");
     f.line("    let alpha0_bits: u32 = (budget >> 32) as u32;");
     f.line("    let alpha1_bits: u32 = (budget & 0xFFFF_FFFF) as u32;");
-    f.line("    let a0 = (alpha0_bits as f64) / (u32::MAX as f64);");
-    f.line("    let a1 = (alpha1_bits as f64) / (u32::MAX as f64);");
+    f.line("    type DefaultDecimal = <crate::DefaultHostTypes as crate::HostTypes>::Decimal;");
+    f.line("    let a0 = <DefaultDecimal as crate::DecimalTranscendental>::from_u32(alpha0_bits)");
+    f.line("        / <DefaultDecimal as crate::DecimalTranscendental>::from_u32(u32::MAX);");
+    f.line("    let a1 = <DefaultDecimal as crate::DecimalTranscendental>::from_u32(alpha1_bits)");
+    f.line("        / <DefaultDecimal as crate::DecimalTranscendental>::from_u32(u32::MAX);");
     f.line("    let norm = a0 * a0 + a1 * a1;");
+    f.line("    let zero = <DefaultDecimal as Default>::default();");
+    f.line(
+        "    let half = <DefaultDecimal as crate::DecimalTranscendental>::from_bits(0x3FE0_0000_0000_0000_u64);",
+    );
     f.line("    // QM_5 normalization: P(k) = |alpha_k|^2 / norm. Degenerate budget = 0");
     f.line("    // yields norm = 0; fall through to the uniform distribution (P(0) = 0.5,");
     f.line("    // P(1) = 0.5), which is the maximum-entropy projection under QM_1.");
-    f.line("    let p0 = if norm > 0.0 { (a0 * a0) / norm } else { 0.5 };");
-    f.line("    let p1 = if norm > 0.0 { (a1 * a1) / norm } else { 0.5 };");
+    f.line("    let p0 = if norm > zero { (a0 * a0) / norm } else { half };");
+    f.line("    let p1 = if norm > zero { (a1 * a1) / norm } else { half };");
     f.line("    if p0 >= p1 {");
-    f.line("        (0, p0)");
+    f.line("        (0, <DefaultDecimal as crate::DecimalTranscendental>::to_bits(p0))");
     f.line("    } else {");
-    f.line("        (1, p1)");
+    f.line("        (1, <DefaultDecimal as crate::DecimalTranscendental>::to_bits(p1))");
     f.line("    }");
     f.line("}");
     f.blank();
-    f.doc_comment(
-        "v0.2.2 Phase J: fold the Born-rule outcome into the hasher via f64-to-bits round-trip.",
-    );
+    f.doc_comment("v0.2.2 Phase J / Phase 9: fold the Born-rule outcome into the hasher.");
+    f.doc_comment("`probability_bits` is the IEEE-754 bit pattern (call sites convert via");
+    f.doc_comment("`<H::Decimal as DecimalTranscendental>::to_bits` if working in `H::Decimal`).");
     f.line("pub(crate) fn fold_born_outcome<H: Hasher>(");
     f.line("    mut hasher: H,");
     f.line("    outcome_index: u64,");
-    f.line("    probability: f64,");
+    f.line("    probability_bits: u64,");
     f.line(") -> H {");
     f.line("    hasher = hasher.fold_bytes(&outcome_index.to_be_bytes());");
-    f.line("    hasher = hasher.fold_bytes(&probability.to_bits().to_be_bytes());");
+    f.line("    hasher = hasher.fold_bytes(&probability_bits.to_be_bytes());");
     f.line("    hasher");
     f.line("}");
     f.blank();
@@ -6932,26 +7127,37 @@ fn emit_phase_j_primitives(f: &mut RustFile) {
     f.doc_comment(
         "`entropy = (residual_count) \u{00D7} ln 2` — Landauer-temperature entropy in nats.",
     );
+    f.doc_comment("Phase 9: returns `(residual_count, entropy_bits)` where `entropy_bits` is the");
+    f.doc_comment("IEEE-754 bit pattern of `residual × ln 2`. Consumers project to `H::Decimal`");
+    f.doc_comment("via `<H::Decimal as DecimalTranscendental>::from_bits`.");
     f.line(
         "pub(crate) fn primitive_descent_metrics<T: crate::pipeline::ConstrainedTypeShape + ?Sized>(",
     );
     f.line("    betti: &[u32; MAX_BETTI_DIMENSION],");
-    f.line(") -> (u32, f64) {");
+    f.line(") -> (u32, u64) {");
     f.line("    let chi = primitive_euler_characteristic(betti);");
     f.line("    let n = T::SITE_COUNT as i64;");
     f.line("    let residual = if n > chi { (n - chi) as u32 } else { 0u32 };");
-    f.line("    let entropy = (residual as f64) * core::f64::consts::LN_2;");
-    f.line("    (residual, entropy)");
+    f.line("    type DefaultDecimal = <crate::DefaultHostTypes as crate::HostTypes>::Decimal;");
+    f.line(
+        "    let residual_d = <DefaultDecimal as crate::DecimalTranscendental>::from_u32(residual);",
+    );
+    f.line(
+        "    let ln_2 = <DefaultDecimal as crate::DecimalTranscendental>::from_bits(crate::LN_2_BITS);",
+    );
+    f.line("    let entropy = residual_d * ln_2;");
+    f.line("    (residual, <DefaultDecimal as crate::DecimalTranscendental>::to_bits(entropy))");
     f.line("}");
     f.blank();
-    f.doc_comment("v0.2.2 Phase J: fold the descent metrics into the hasher.");
+    f.doc_comment("v0.2.2 Phase J / Phase 9: fold the descent metrics into the hasher.");
+    f.doc_comment("`entropy_bits` is the IEEE-754 bit pattern of the descent entropy.");
     f.line("pub(crate) fn fold_descent_metrics<H: Hasher>(");
     f.line("    mut hasher: H,");
     f.line("    residual_count: u32,");
-    f.line("    entropy: f64,");
+    f.line("    entropy_bits: u64,");
     f.line(") -> H {");
     f.line("    hasher = hasher.fold_bytes(&residual_count.to_be_bytes());");
-    f.line("    hasher = hasher.fold_bytes(&entropy.to_bits().to_be_bytes());");
+    f.line("    hasher = hasher.fold_bytes(&entropy_bits.to_be_bytes());");
     f.line("    hasher");
     f.line("}");
     f.blank();
@@ -8233,7 +8439,7 @@ fn generate_prelude(f: &mut RustFile, ontology: &Ontology) {
             f.line(&format!("    pub use super::{name};"));
         }
     }
-    f.line("    pub use crate::{DefaultHostTypes, HostTypes, WittLevel};");
+    f.line("    pub use crate::{DecimalTranscendental, DefaultHostTypes, HostTypes, WittLevel};");
     // v0.2.2 Phase Q.1: calibrations preset module + cross-module re-exports.
     f.line("    pub use super::calibrations;");
     f.line("    pub use crate::pipeline::empty_bindings_table;");
@@ -8633,26 +8839,36 @@ fn generate_multiplication_context(f: &mut RustFile) {
     f.line("pub struct MultiplicationEvidence {");
     f.line("    splitting_factor: u32,");
     f.line("    sub_multiplication_count: u32,");
-    f.line("    landauer_cost_nats: f64,");
+    // Phase 9: bit-pattern u64 keeps the public surface host-neutral.
+    // Consumers project to `H::Decimal` via `DecimalTranscendental::from_bits`.
+    f.line("    landauer_cost_nats_bits: u64,");
     f.line("}");
     f.blank();
     f.line("impl MultiplicationEvidence {");
     f.indented_doc_comment("The Toom-Cook splitting factor R chosen by the resolver.");
     f.line("    #[inline]");
     f.line("    #[must_use]");
-    f.line("    pub const fn splitting_factor(&self) -> u32 { self.splitting_factor }");
+    f.line("    pub const fn splitting_factor(&self) -> u32 {");
+    f.line("        self.splitting_factor");
+    f.line("    }");
     f.blank();
     f.indented_doc_comment("The recursive sub-multiplication count for one multiplication.");
     f.line("    #[inline]");
     f.line("    #[must_use]");
-    f.line(
-        "    pub const fn sub_multiplication_count(&self) -> u32 { self.sub_multiplication_count }",
-    );
+    f.line("    pub const fn sub_multiplication_count(&self) -> u32 {");
+    f.line("        self.sub_multiplication_count");
+    f.line("    }");
     f.blank();
-    f.indented_doc_comment("Accumulated Landauer cost in nats, priced per `op:OA_5`.");
+    f.indented_doc_comment(
+        "Accumulated Landauer cost in nats, priced per `op:OA_5`. Returned as the \
+         IEEE-754 bit pattern; project to `H::Decimal` at use sites via \
+         `<H::Decimal as DecimalTranscendental>::from_bits(_)`.",
+    );
     f.line("    #[inline]");
     f.line("    #[must_use]");
-    f.line("    pub const fn landauer_cost_nats(&self) -> f64 { self.landauer_cost_nats }");
+    f.line("    pub const fn landauer_cost_nats_bits(&self) -> u64 {");
+    f.line("        self.landauer_cost_nats_bits");
+    f.line("    }");
     f.line("}");
     f.blank();
     f.line("impl MultiplicationCertificate {");
@@ -8666,13 +8882,13 @@ fn generate_multiplication_context(f: &mut RustFile) {
     f.line("    pub(crate) fn with_evidence(");
     f.line("        splitting_factor: u32,");
     f.line("        sub_multiplication_count: u32,");
-    f.line("        landauer_cost_nats: f64,");
+    f.line("        landauer_cost_nats_bits: u64,");
     f.line("        content_fingerprint: ContentFingerprint,");
     f.line("    ) -> Self {");
     f.line("        let _ = MultiplicationEvidence {");
     f.line("            splitting_factor,");
     f.line("            sub_multiplication_count,");
-    f.line("            landauer_cost_nats,");
+    f.line("            landauer_cost_nats_bits,");
     f.line("        };");
     f.line("        Self::with_level_and_fingerprint_const(32, content_fingerprint)");
     f.line("    }");
@@ -11195,7 +11411,7 @@ fn emit_pc_partition_handle_protocol(f: &mut RustFile) {
     f.indented_doc_comment(
         "Shannon entropy in nats (matches `LandauerBudget::nats()` convention).",
     );
-    f.line("    pub entropy_nats: f64,");
+    f.line("    pub entropy_nats_bits: u64,");
     f.line("    _phantom: core::marker::PhantomData<H>,");
     f.line("}");
     f.blank();
@@ -11208,13 +11424,13 @@ fn emit_pc_partition_handle_protocol(f: &mut RustFile) {
     f.line("        site_budget: u16,");
     f.line("        euler: i32,");
     f.line("        betti: [u32; MAX_BETTI_DIMENSION],");
-    f.line("        entropy_nats: f64,");
+    f.line("        entropy_nats_bits: u64,");
     f.line("    ) -> Self {");
     f.line("        Self {");
     f.line("            site_budget,");
     f.line("            euler,");
     f.line("            betti,");
-    f.line("            entropy_nats,");
+    f.line("            entropy_nats_bits,");
     f.line("            _phantom: core::marker::PhantomData,");
     f.line("        }");
     f.line("    }");
@@ -11277,25 +11493,30 @@ fn emit_pc_partition_handle_protocol(f: &mut RustFile) {
 /// operand entropies and assert additivity identities within a
 /// magnitude-scaled tolerance.
 fn emit_pc_entropy_helpers(f: &mut RustFile) {
-    f.doc_comment("Tolerance for `f64` entropy equality checks in the Product/Coproduct");
+    f.doc_comment("Tolerance for entropy equality checks in the Product/Coproduct");
     f.doc_comment("Completion Amendment mint primitives. Returns an absolute-error bound");
     f.doc_comment("scaled to the magnitude of `expected`, so PT_4 / ST_2 / CPT_5");
     f.doc_comment("verifications are robust to floating-point rounding accumulated through");
-    f.doc_comment("Künneth products and componentwise sums.");
+    f.doc_comment("Künneth products and componentwise sums. The default-host (f64) backing");
+    f.doc_comment("is hidden behind the `DefaultDecimal` alias so the function signature");
+    f.doc_comment("reads as host-typed; downstream that swaps `H::Decimal` reaches the");
+    f.doc_comment("same surface via the alias rebind.");
+    f.line("type DefaultDecimal = <crate::DefaultHostTypes as crate::HostTypes>::Decimal;");
+    f.blank();
     f.line("#[inline]");
-    f.line("const fn pc_entropy_tolerance(expected: f64) -> f64 {");
+    f.line("const fn pc_entropy_tolerance(expected: DefaultDecimal) -> DefaultDecimal {");
     f.line("    let magnitude = if expected < 0.0 { -expected } else { expected };");
     f.line("    let scale = if magnitude > 1.0 { magnitude } else { 1.0 };");
-    f.line("    1024.0 * f64::EPSILON * scale");
+    f.line("    1024.0 * <DefaultDecimal>::EPSILON * scale");
     f.line("}");
     f.blank();
 
     f.doc_comment("Validate an entropy value before participating in additivity checks.");
     f.doc_comment("Rejects NaN, ±∞, and negative values — the foundation's");
     f.doc_comment("`primitive_descent_metrics` produces `residual × LN_2` with");
-    f.doc_comment("`residual: u32`, so valid entropies are non-negative finite f64.");
+    f.doc_comment("`residual: u32`, so valid entropies are non-negative finite Decimals.");
     f.line("#[inline]");
-    f.line("fn pc_entropy_input_is_valid(value: f64) -> bool {");
+    f.line("fn pc_entropy_input_is_valid(value: DefaultDecimal) -> bool {");
     f.line("    value.is_finite() && value >= 0.0");
     f.line("}");
     f.blank();
@@ -11305,7 +11526,9 @@ fn emit_pc_entropy_helpers(f: &mut RustFile) {
     f.doc_comment("non-finite, negative, or differs from `expected` by more than");
     f.doc_comment("`pc_entropy_tolerance(expected)`.");
     f.line("#[inline]");
-    f.line("fn pc_entropy_additivity_holds(actual: f64, expected: f64) -> bool {");
+    f.line(
+        "fn pc_entropy_additivity_holds(actual: DefaultDecimal, expected: DefaultDecimal) -> bool {",
+    );
     f.line("    if !pc_entropy_input_is_valid(actual) || !pc_entropy_input_is_valid(expected) {");
     f.line("        return false;");
     f.line("    }");
@@ -11340,9 +11563,9 @@ fn emit_pc_evidence_structs(f: &mut RustFile) {
     f.indented_doc_comment("Right operand Euler characteristic.");
     f.line("    pub right_euler: i32,");
     f.indented_doc_comment("Left operand entropy in nats (PT_4 input).");
-    f.line("    pub left_entropy_nats: f64,");
+    f.line("    pub left_entropy_nats_bits: u64,");
     f.indented_doc_comment("Right operand entropy in nats.");
-    f.line("    pub right_entropy_nats: f64,");
+    f.line("    pub right_entropy_nats_bits: u64,");
     f.indented_doc_comment("Fingerprint of the source witness the evidence belongs to.");
     f.line("    pub source_witness_fingerprint: ContentFingerprint,");
     f.line("}");
@@ -11359,8 +11582,8 @@ fn emit_pc_evidence_structs(f: &mut RustFile) {
     f.line("    pub right_total_site_count: u16,");
     f.line("    pub left_euler: i32,");
     f.line("    pub right_euler: i32,");
-    f.line("    pub left_entropy_nats: f64,");
-    f.line("    pub right_entropy_nats: f64,");
+    f.line("    pub left_entropy_nats_bits: u64,");
+    f.line("    pub right_entropy_nats_bits: u64,");
     f.line("    pub left_betti: [u32; MAX_BETTI_DIMENSION],");
     f.line("    pub right_betti: [u32; MAX_BETTI_DIMENSION],");
     f.line("    pub source_witness_fingerprint: ContentFingerprint,");
@@ -11383,9 +11606,9 @@ fn emit_pc_evidence_structs(f: &mut RustFile) {
     f.line("    pub right_euler: i32,");
     f.line("    pub left_betti: [u32; MAX_BETTI_DIMENSION],");
     f.line("    pub right_betti: [u32; MAX_BETTI_DIMENSION],");
-    f.line("    pub left_entropy_nats: f64,");
-    f.line("    pub right_entropy_nats: f64,");
-    f.line("    pub combined_entropy_nats: f64,");
+    f.line("    pub left_entropy_nats_bits: u64,");
+    f.line("    pub right_entropy_nats_bits: u64,");
+    f.line("    pub combined_entropy_nats_bits: u64,");
     f.line("    pub source_witness_fingerprint: ContentFingerprint,");
     f.line("}");
     f.blank();
@@ -11412,12 +11635,12 @@ fn emit_pc_mint_inputs_structs(f: &mut RustFile) {
     f.line("    pub right_total_site_count: u16,");
     f.line("    pub left_euler: i32,");
     f.line("    pub right_euler: i32,");
-    f.line("    pub left_entropy_nats: f64,");
-    f.line("    pub right_entropy_nats: f64,");
+    f.line("    pub left_entropy_nats_bits: u64,");
+    f.line("    pub right_entropy_nats_bits: u64,");
     f.line("    pub combined_site_budget: u16,");
     f.line("    pub combined_site_count: u16,");
     f.line("    pub combined_euler: i32,");
-    f.line("    pub combined_entropy_nats: f64,");
+    f.line("    pub combined_entropy_nats_bits: u64,");
     f.line("    pub combined_fingerprint: ContentFingerprint,");
     f.line("}");
     f.blank();
@@ -11446,14 +11669,14 @@ fn emit_pc_mint_inputs_structs(f: &mut RustFile) {
     f.line("    pub right_total_site_count: u16,");
     f.line("    pub left_euler: i32,");
     f.line("    pub right_euler: i32,");
-    f.line("    pub left_entropy_nats: f64,");
-    f.line("    pub right_entropy_nats: f64,");
+    f.line("    pub left_entropy_nats_bits: u64,");
+    f.line("    pub right_entropy_nats_bits: u64,");
     f.line("    pub left_betti: [u32; MAX_BETTI_DIMENSION],");
     f.line("    pub right_betti: [u32; MAX_BETTI_DIMENSION],");
     f.line("    pub combined_site_budget: u16,");
     f.line("    pub combined_site_count: u16,");
     f.line("    pub combined_euler: i32,");
-    f.line("    pub combined_entropy_nats: f64,");
+    f.line("    pub combined_entropy_nats_bits: u64,");
     f.line("    pub combined_betti: [u32; MAX_BETTI_DIMENSION],");
     f.line("    pub combined_fingerprint: ContentFingerprint,");
     f.line("    pub combined_constraints: &'static [crate::pipeline::ConstraintRef],");
@@ -11478,13 +11701,13 @@ fn emit_pc_mint_inputs_structs(f: &mut RustFile) {
     f.line("    pub right_euler: i32,");
     f.line("    pub left_betti: [u32; MAX_BETTI_DIMENSION],");
     f.line("    pub right_betti: [u32; MAX_BETTI_DIMENSION],");
-    f.line("    pub left_entropy_nats: f64,");
-    f.line("    pub right_entropy_nats: f64,");
+    f.line("    pub left_entropy_nats_bits: u64,");
+    f.line("    pub right_entropy_nats_bits: u64,");
     f.line("    pub combined_site_budget: u16,");
     f.line("    pub combined_site_count: u16,");
     f.line("    pub combined_euler: i32,");
     f.line("    pub combined_betti: [u32; MAX_BETTI_DIMENSION],");
-    f.line("    pub combined_entropy_nats: f64,");
+    f.line("    pub combined_entropy_nats_bits: u64,");
     f.line("    pub combined_fingerprint: ContentFingerprint,");
     f.line("}");
     f.blank();
@@ -11966,14 +12189,27 @@ fn emit_pc_mint_primitives(f: &mut RustFile) {
     f.line("    right_total_site_count: u16,");
     f.line("    left_euler: i32,");
     f.line("    right_euler: i32,");
-    f.line("    left_entropy_nats: f64,");
-    f.line("    right_entropy_nats: f64,");
+    f.line("    left_entropy_nats_bits: u64,");
+    f.line("    right_entropy_nats_bits: u64,");
     f.line("    combined_site_budget: u16,");
     f.line("    combined_site_count: u16,");
     f.line("    combined_euler: i32,");
-    f.line("    combined_entropy_nats: f64,");
+    f.line("    combined_entropy_nats_bits: u64,");
     f.line("    combined_fingerprint: ContentFingerprint,");
     f.line(") -> Result<PartitionProductWitness, GenericImpossibilityWitness> {");
+    // Phase 9: project bit-pattern entropy inputs to the default-host f64
+    // numeric domain for the partition-algebra primitive. The entropy
+    // arithmetic is amendment-internal; bit-pattern inputs keep the
+    // public `MintInputs` surface host-neutral.
+    f.line(
+        "    let left_entropy_nats = <f64 as crate::DecimalTranscendental>::from_bits(left_entropy_nats_bits);",
+    );
+    f.line(
+        "    let right_entropy_nats = <f64 as crate::DecimalTranscendental>::from_bits(right_entropy_nats_bits);",
+    );
+    f.line(
+        "    let combined_entropy_nats = <f64 as crate::DecimalTranscendental>::from_bits(combined_entropy_nats_bits);",
+    );
     // PT_1
     f.line("    if combined_site_budget != left_site_budget.saturating_add(right_site_budget) {");
     f.line("        return Err(GenericImpossibilityWitness::for_identity(");
@@ -12034,20 +12270,30 @@ fn emit_pc_mint_primitives(f: &mut RustFile) {
     f.line("    right_total_site_count: u16,");
     f.line("    left_euler: i32,");
     f.line("    right_euler: i32,");
-    f.line("    left_entropy_nats: f64,");
-    f.line("    right_entropy_nats: f64,");
+    f.line("    left_entropy_nats_bits: u64,");
+    f.line("    right_entropy_nats_bits: u64,");
     f.line("    left_betti: [u32; MAX_BETTI_DIMENSION],");
     f.line("    right_betti: [u32; MAX_BETTI_DIMENSION],");
     f.line("    combined_site_budget: u16,");
     f.line("    combined_site_count: u16,");
     f.line("    combined_euler: i32,");
-    f.line("    combined_entropy_nats: f64,");
+    f.line("    combined_entropy_nats_bits: u64,");
     f.line("    combined_betti: [u32; MAX_BETTI_DIMENSION],");
     f.line("    combined_fingerprint: ContentFingerprint,");
     f.line("    combined_constraints: &[crate::pipeline::ConstraintRef],");
     f.line("    left_constraint_count: usize,");
     f.line("    tag_site: u16,");
     f.line(") -> Result<PartitionCoproductWitness, GenericImpossibilityWitness> {");
+    // Phase 9: project bit-pattern entropy inputs to f64 (default-host).
+    f.line(
+        "    let left_entropy_nats = <f64 as crate::DecimalTranscendental>::from_bits(left_entropy_nats_bits);",
+    );
+    f.line(
+        "    let right_entropy_nats = <f64 as crate::DecimalTranscendental>::from_bits(right_entropy_nats_bits);",
+    );
+    f.line(
+        "    let combined_entropy_nats = <f64 as crate::DecimalTranscendental>::from_bits(combined_entropy_nats_bits);",
+    );
     // ST_1
     f.line("    let expected_budget = if left_site_budget > right_site_budget {");
     f.line("        left_site_budget");
@@ -12147,15 +12393,25 @@ fn emit_pc_mint_primitives(f: &mut RustFile) {
     f.line("    right_euler: i32,");
     f.line("    left_betti: [u32; MAX_BETTI_DIMENSION],");
     f.line("    right_betti: [u32; MAX_BETTI_DIMENSION],");
-    f.line("    left_entropy_nats: f64,");
-    f.line("    right_entropy_nats: f64,");
+    f.line("    left_entropy_nats_bits: u64,");
+    f.line("    right_entropy_nats_bits: u64,");
     f.line("    combined_site_budget: u16,");
     f.line("    combined_site_count: u16,");
     f.line("    combined_euler: i32,");
     f.line("    combined_betti: [u32; MAX_BETTI_DIMENSION],");
-    f.line("    combined_entropy_nats: f64,");
+    f.line("    combined_entropy_nats_bits: u64,");
     f.line("    combined_fingerprint: ContentFingerprint,");
     f.line(") -> Result<CartesianProductWitness, GenericImpossibilityWitness> {");
+    // Phase 9: project bit-pattern entropy inputs to f64 (default-host).
+    f.line(
+        "    let left_entropy_nats = <f64 as crate::DecimalTranscendental>::from_bits(left_entropy_nats_bits);",
+    );
+    f.line(
+        "    let right_entropy_nats = <f64 as crate::DecimalTranscendental>::from_bits(right_entropy_nats_bits);",
+    );
+    f.line(
+        "    let combined_entropy_nats = <f64 as crate::DecimalTranscendental>::from_bits(combined_entropy_nats_bits);",
+    );
     // CPT_1
     f.line("    if combined_site_budget != left_site_budget.saturating_add(right_site_budget) {");
     f.line("        return Err(GenericImpossibilityWitness::for_identity(");
@@ -12232,12 +12488,12 @@ fn emit_pc_verified_mint_impls(f: &mut RustFile) {
     f.line("            inputs.right_total_site_count,");
     f.line("            inputs.left_euler,");
     f.line("            inputs.right_euler,");
-    f.line("            inputs.left_entropy_nats,");
-    f.line("            inputs.right_entropy_nats,");
+    f.line("            inputs.left_entropy_nats_bits,");
+    f.line("            inputs.right_entropy_nats_bits,");
     f.line("            inputs.combined_site_budget,");
     f.line("            inputs.combined_site_count,");
     f.line("            inputs.combined_euler,");
-    f.line("            inputs.combined_entropy_nats,");
+    f.line("            inputs.combined_entropy_nats_bits,");
     f.line("            inputs.combined_fingerprint,");
     f.line("        )");
     f.line("    }");
@@ -12259,14 +12515,14 @@ fn emit_pc_verified_mint_impls(f: &mut RustFile) {
     f.line("            inputs.right_total_site_count,");
     f.line("            inputs.left_euler,");
     f.line("            inputs.right_euler,");
-    f.line("            inputs.left_entropy_nats,");
-    f.line("            inputs.right_entropy_nats,");
+    f.line("            inputs.left_entropy_nats_bits,");
+    f.line("            inputs.right_entropy_nats_bits,");
     f.line("            inputs.left_betti,");
     f.line("            inputs.right_betti,");
     f.line("            inputs.combined_site_budget,");
     f.line("            inputs.combined_site_count,");
     f.line("            inputs.combined_euler,");
-    f.line("            inputs.combined_entropy_nats,");
+    f.line("            inputs.combined_entropy_nats_bits,");
     f.line("            inputs.combined_betti,");
     f.line("            inputs.combined_fingerprint,");
     f.line("            inputs.combined_constraints,");
@@ -12294,13 +12550,13 @@ fn emit_pc_verified_mint_impls(f: &mut RustFile) {
     f.line("            inputs.right_euler,");
     f.line("            inputs.left_betti,");
     f.line("            inputs.right_betti,");
-    f.line("            inputs.left_entropy_nats,");
-    f.line("            inputs.right_entropy_nats,");
+    f.line("            inputs.left_entropy_nats_bits,");
+    f.line("            inputs.right_entropy_nats_bits,");
     f.line("            inputs.combined_site_budget,");
     f.line("            inputs.combined_site_count,");
     f.line("            inputs.combined_euler,");
     f.line("            inputs.combined_betti,");
-    f.line("            inputs.combined_entropy_nats,");
+    f.line("            inputs.combined_entropy_nats_bits,");
     f.line("            inputs.combined_fingerprint,");
     f.line("        )");
     f.line("    }");

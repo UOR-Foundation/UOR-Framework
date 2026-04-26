@@ -87,11 +87,15 @@ pub fn validate(workspace: &Path) -> Result<ConformanceReport> {
         }
     }
 
-    // PartialOrd is required on UorTime; Ord is forbidden.
-    if !content.contains("impl PartialOrd for UorTime") {
-        missing.push("UorTime must implement PartialOrd (component-wise)".to_string());
+    // PartialOrd is required on UorTime; Ord is forbidden. Phase 9
+    // parameterized over `<H>`, so the impls now read
+    // `impl<H: HostTypes> PartialOrd for UorTime<H>`.
+    if !content.contains("impl<H: HostTypes> PartialOrd for UorTime<H>") {
+        missing.push("UorTime<H> must implement PartialOrd (component-wise)".to_string());
     }
-    if content.contains("impl Ord for UorTime") {
+    if content.contains("impl<H: HostTypes> Ord for UorTime<H>")
+        || content.contains("impl Ord for UorTime ")
+    {
         missing.push(
             "UorTime must NOT implement Ord — two UorTime values from unrelated \
              computations are genuinely incomparable (Q1 commitment)"
@@ -99,11 +103,12 @@ pub fn validate(workspace: &Path) -> Result<ConformanceReport> {
         );
     }
 
-    // LandauerBudget must implement Ord (its f64 backing has NaN excluded
-    // by construction, so the foundation provides a total order).
-    if !content.contains("impl Ord for LandauerBudget") {
-        missing
-            .push("LandauerBudget must implement Ord (NaN excluded by construction)".to_string());
+    // LandauerBudget<H> must implement Ord (its Decimal backing has NaN
+    // excluded by construction, so the foundation provides a total order).
+    if !content.contains("impl<H: HostTypes> Ord for LandauerBudget<H>") {
+        missing.push(
+            "LandauerBudget<H> must implement Ord (NaN excluded by construction)".to_string(),
+        );
     }
 
     if missing.is_empty() {

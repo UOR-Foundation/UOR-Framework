@@ -38,7 +38,7 @@ impl Sinking for WitnessReport {
             "witt_bits={} unit_address={:?} sigma={:.6}",
             grounded.witt_level_bits(),
             grounded.unit_address(),
-            grounded.sigma().as_f64()
+            grounded.sigma().value()
         )
     }
 }

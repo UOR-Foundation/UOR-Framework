@@ -45,7 +45,7 @@ fn main() {
         "Content fingerprint width: {} bytes",
         grounded.content_fingerprint().width_bytes()
     );
-    println!("Sigma (σ): {}", grounded.sigma().as_f64());
+    println!("Sigma (σ): {}", grounded.sigma().value());
     println!("Triad: present at witt_bits={}", grounded.witt_level_bits());
     println!(
         "UorTime: landauer={:?}, steps={}",

@@ -10,9 +10,13 @@
 //! - `min_wall_clock` produces a `Nanos` that is `>= 0` and increases
 //!   monotonically with both clocks.
 
-use uor_foundation::enforcement::{
-    calibrations, Calibration, CalibrationError, LandauerBudget, Nanos, UorTime,
-};
+use uor_foundation::enforcement::{calibrations, CalibrationError, Nanos};
+use uor_foundation::DefaultHostTypes;
+
+// Phase 9 pinned: behavioral tests exercise the default-host (f64) path.
+type Calibration = uor_foundation::enforcement::Calibration<DefaultHostTypes>;
+type LandauerBudget = uor_foundation::enforcement::LandauerBudget<DefaultHostTypes>;
+type UorTime = uor_foundation::enforcement::UorTime<DefaultHostTypes>;
 
 // ─────────────────────────────────────────────────────────────────────────
 // LandauerBudget

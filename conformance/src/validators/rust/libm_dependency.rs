@@ -65,21 +65,59 @@ pub fn validate(workspace: &Path) -> Result<ConformanceReport> {
             return Ok(report);
         }
     };
-    let anchors: &[(&str, &str)] = &[
-        ("transcendentals module", "pub mod transcendentals {"),
-        ("transcendentals::ln", "pub fn ln(x: f64) -> f64"),
-        ("transcendentals::exp", "pub fn exp(x: f64) -> f64"),
-        ("transcendentals::sqrt", "pub fn sqrt(x: f64) -> f64"),
+    // Phase 9: transcendentals dispatch generically via DecimalTranscendental;
+    // the libm calls live in the f64 / f32 trait impls (foundation/src/lib.rs)
+    // rather than in the transcendentals module itself.
+    let lib_path = workspace.join("foundation/src/lib.rs");
+    let lib_content = match std::fs::read_to_string(&lib_path) {
+        Ok(s) => s,
+        Err(e) => {
+            report.push(TestResult::fail(
+                VALIDATOR,
+                format!("failed to read {}: {e}", lib_path.display()),
+            ));
+            return Ok(report);
+        }
+    };
+
+    let anchors: &[(&str, &str, &str)] = &[
+        // (label, content_haystack, anchor_string).
+        // "enf" = foundation/src/enforcement.rs, "lib" = foundation/src/lib.rs
+        ("transcendentals module", "enf", "pub mod transcendentals {"),
         (
-            "transcendentals::entropy_term_nats",
-            "pub fn entropy_term_nats(p: f64) -> f64",
+            "transcendentals::ln (generic)",
+            "enf",
+            "pub fn ln<D: DecimalTranscendental>(x: D) -> D",
         ),
-        ("libm::log call", "libm::log"),
-        ("libm::exp call", "libm::exp"),
-        ("libm::sqrt call", "libm::sqrt"),
+        (
+            "transcendentals::exp (generic)",
+            "enf",
+            "pub fn exp<D: DecimalTranscendental>(x: D) -> D",
+        ),
+        (
+            "transcendentals::sqrt (generic)",
+            "enf",
+            "pub fn sqrt<D: DecimalTranscendental>(x: D) -> D",
+        ),
+        (
+            "transcendentals::entropy_term_nats (generic)",
+            "enf",
+            "pub fn entropy_term_nats<D: DecimalTranscendental>(p: D) -> D",
+        ),
+        ("libm::log call (f64 impl)", "lib", "libm::log("),
+        ("libm::exp call (f64 impl)", "lib", "libm::exp("),
+        ("libm::sqrt call (f64 impl)", "lib", "libm::sqrt("),
+        ("libm::logf call (f32 impl)", "lib", "libm::logf("),
+        ("libm::expf call (f32 impl)", "lib", "libm::expf("),
+        ("libm::sqrtf call (f32 impl)", "lib", "libm::sqrtf("),
     ];
-    for (label, anchor) in anchors {
-        if !content.contains(*anchor) {
+    for (label, source, anchor) in anchors {
+        let haystack = match *source {
+            "enf" => &content,
+            "lib" => &lib_content,
+            _ => continue,
+        };
+        if !haystack.contains(*anchor) {
             missing.push((*label).to_string());
         }
     }

@@ -221,8 +221,8 @@ fn st_9_st_10_mint_accepts_additive_prediction_end_to_end() {
         right_euler,
         // Operand entropies: 0 for both leaf shapes (no residual sites
         // by hypothesis — the test fixtures don't model entropy).
-        left_entropy_nats: 0.0,
-        right_entropy_nats: 0.0,
+        left_entropy_nats_bits: 0_u64,
+        right_entropy_nats_bits: 0_u64,
         left_betti,
         right_betti,
         // ST_1: budget = max(4, 7) = 7.
@@ -232,7 +232,7 @@ fn st_9_st_10_mint_accepts_additive_prediction_end_to_end() {
         // ST_9: combined_euler = left + right (the amendment's prediction).
         combined_euler,
         // ST_2: combined_entropy = ln 2 + max(0, 0) = ln 2.
-        combined_entropy_nats: core::f64::consts::LN_2,
+        combined_entropy_nats_bits: f64::to_bits(core::f64::consts::LN_2),
         // ST_10: combined_betti = additive sum (the amendment's prediction).
         combined_betti,
         combined_fingerprint: fp(0xC0),

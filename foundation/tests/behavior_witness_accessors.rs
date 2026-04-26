@@ -108,7 +108,7 @@ fn grounded_base_metric_accessors_return_sealed_newtypes() {
     // to compile. The runtime asserts below pin the value ranges that the
     // newtypes are supposed to guarantee.
     let _d: i64 = g.d_delta().as_i64();
-    let s: f64 = g.sigma().as_f64();
+    let s: f64 = g.sigma().value();
     let _e: i64 = g.euler().as_i64();
     let _r: u32 = g.residual().as_u32();
     let betti = g.betti();
@@ -150,6 +150,6 @@ fn grounded_full_accessor_equality_across_equal_inputs() {
     assert_eq!(g_a.euler().as_i64(), g_b.euler().as_i64());
     assert_eq!(g_a.residual().as_u32(), g_b.residual().as_u32());
     assert_eq!(g_a.betti().as_array(), g_b.betti().as_array());
-    assert_eq!(g_a.sigma().as_f64(), g_b.sigma().as_f64());
+    assert_eq!(g_a.sigma().value(), g_b.sigma().value());
     assert_eq!(g_a.uor_time(), g_b.uor_time());
 }

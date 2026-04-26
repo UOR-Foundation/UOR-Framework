@@ -279,6 +279,13 @@ foundation/src/enforcement.rs: type DispatchTable
 foundation/src/enforcement.rs: type HammingConstraint
 foundation/src/enforcement.rs: type ResidueConstraint
 foundation/src/enforcement.rs: type SiteConstraint
+foundation/src/lib.rs: const CALIBRATION_CHAR_ENERGY_HI_BITS
+foundation/src/lib.rs: const CALIBRATION_KBT_HI_BITS
+foundation/src/lib.rs: const CALIBRATION_KBT_LO_BITS
+foundation/src/lib.rs: const CALIBRATION_THERMAL_POWER_HI_BITS
+foundation/src/lib.rs: const LN_2_BITS
+foundation/src/lib.rs: const NANOS_PER_SECOND_BITS
+foundation/src/lib.rs: const PI_TIMES_H_BAR_BITS
 foundation/src/lib.rs: mod bridge
 foundation/src/lib.rs: mod enforcement
 foundation/src/lib.rs: mod enums
@@ -306,9 +313,9 @@ foundation/src/pipeline.rs: fn certify_tower_completeness_const
 foundation/src/pipeline.rs: fn decide_horn_sat
 foundation/src/pipeline.rs: fn decide_two_sat
 foundation/src/pipeline.rs: fn estimate_preflight_uor_time
-foundation/src/pipeline.rs: fn parse_f64_from_bits_str
 foundation/src/pipeline.rs: fn parse_u32
 foundation/src/pipeline.rs: fn parse_u64
+foundation/src/pipeline.rs: fn parse_u64_bits_str
 foundation/src/pipeline.rs: fn parse_u64_pair
 foundation/src/pipeline.rs: fn preflight_budget_solvency
 foundation/src/pipeline.rs: fn preflight_dispatch_coverage

@@ -56,8 +56,8 @@ pub fn validate(workspace: &Path) -> Result<ConformanceReport> {
             "pub const fn sub_multiplication_count(&self) -> u32",
         ),
         (
-            "MultiplicationEvidence landauer_cost_nats accessor",
-            "pub const fn landauer_cost_nats(&self) -> f64",
+            "MultiplicationEvidence landauer_cost_nats_bits accessor (Phase 9 bit pattern)",
+            "pub const fn landauer_cost_nats_bits(&self) -> u64",
         ),
         (
             "MultiplicationCertificate shim",

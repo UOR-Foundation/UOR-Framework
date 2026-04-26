@@ -155,6 +155,7 @@ pub use enforcement::{
 pub trait DecimalTranscendental:
     Copy
     + Default
+    + core::fmt::Debug
     + PartialEq
     + PartialOrd
     + core::ops::Add<Output = Self>
@@ -164,6 +165,10 @@ pub trait DecimalTranscendental:
 {
     /// Construct from an unsigned 32-bit integer. f32 / f64 use `as` widening; downstream impls bring their own promotion.
     fn from_u32(value: u32) -> Self;
+    /// Construct from an unsigned 64-bit integer (rewrite-step counts, etc.).
+    fn from_u64(value: u64) -> Self;
+    /// Saturating projection to `u64`. Used by `UorTime::min_wall_clock` to convert a wall-clock seconds-Decimal into integer nanoseconds.
+    fn as_u64_saturating(self) -> u64;
     /// Natural logarithm.
     fn ln(self) -> Self;
     /// Exponential `e^x`.
@@ -188,6 +193,21 @@ impl DecimalTranscendental for f64 {
     #[inline]
     fn from_u32(value: u32) -> Self {
         f64::from(value)
+    }
+    #[inline]
+    fn from_u64(value: u64) -> Self {
+        // u64 -> f64 is lossy above 2^53; documented at use sites.
+        value as f64
+    }
+    #[inline]
+    fn as_u64_saturating(self) -> u64 {
+        if self.partial_cmp(&0.0).is_none_or(|o| o.is_lt()) {
+            return 0;
+        }
+        if self >= u64::MAX as f64 {
+            return u64::MAX;
+        }
+        self as u64
     }
     #[inline]
     fn ln(self) -> Self {
@@ -217,6 +237,21 @@ impl DecimalTranscendental for f32 {
         // u32 -> f32 is lossy at high values; this is the documented
         // host-default behavior for arithmetic constants.
         value as f32
+    }
+    #[inline]
+    fn from_u64(value: u64) -> Self {
+        // u64 -> f32 is lossy above 2^24; documented at use sites.
+        value as f32
+    }
+    #[inline]
+    fn as_u64_saturating(self) -> u64 {
+        if self.partial_cmp(&0.0).is_none_or(|o| o.is_lt()) {
+            return 0;
+        }
+        if self >= u64::MAX as f32 {
+            return u64::MAX;
+        }
+        self as u64
     }
     #[inline]
     fn ln(self) -> Self {
@@ -315,11 +350,33 @@ pub trait HostTypes {
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct DefaultHostTypes;
 
+/// π · ℏ = `core::f64::consts::PI * 1.054_571_817e-34` J·s, in IEEE-754 bits.
+/// Half of one orthogonal-state-transition Margolus-Levitin bound.
+pub const PI_TIMES_H_BAR_BITS: u64 = f64::to_bits(core::f64::consts::PI * 1.054_571_817e-34_f64);
+
+/// Nanoseconds per second (`1.0e9`) in IEEE-754 bits. Used by `UorTime::min_wall_clock`.
+pub const NANOS_PER_SECOND_BITS: u64 = f64::to_bits(1.0e9_f64);
+
+/// Natural logarithm of 2, in IEEE-754 bits. Drives the Landauer bit-erasure unit.
+pub const LN_2_BITS: u64 = f64::to_bits(core::f64::consts::LN_2);
+
+/// Lower bound for `Calibration::k_b_t` (1e-30 J), in IEEE-754 bits.
+pub const CALIBRATION_KBT_LO_BITS: u64 = f64::to_bits(1.0e-30_f64);
+
+/// Upper bound for `Calibration::k_b_t` (1e-15 J), in IEEE-754 bits.
+pub const CALIBRATION_KBT_HI_BITS: u64 = f64::to_bits(1.0e-15_f64);
+
+/// Upper bound for `Calibration::thermal_power` (1e9 W), in IEEE-754 bits.
+pub const CALIBRATION_THERMAL_POWER_HI_BITS: u64 = f64::to_bits(1.0e9_f64);
+
+/// Upper bound for `Calibration::characteristic_energy` (1e3 J), in IEEE-754 bits.
+pub const CALIBRATION_CHAR_ENERGY_HI_BITS: u64 = f64::to_bits(1.0e3_f64);
+
 impl HostTypes for DefaultHostTypes {
     type Decimal = f64;
     type HostString = str;
     type WitnessBytes = [u8];
-    const EMPTY_DECIMAL: f64 = 0.0;
+    const EMPTY_DECIMAL: Self::Decimal = 0.0;
     const EMPTY_HOST_STRING: &'static str = "";
     const EMPTY_WITNESS_BYTES: &'static [u8] = &[];
 }

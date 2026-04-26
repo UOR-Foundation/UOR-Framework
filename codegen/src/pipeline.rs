@@ -2529,14 +2529,12 @@ fn emit_preflight_checks(f: &mut RustFile, ontology: &Ontology) {
     f.line("    (parse_u64(left), parse_u64(right))");
     f.line("}");
     f.blank();
-    f.doc_comment("v0.2.2 Phase F: parse a decimal `u64` then reinterpret its bits as `f64`.");
-    f.doc_comment("Encodes thermodynamic bounds in `LandauerCost` constraints via `f64::to_bits`");
-    f.doc_comment(
-        "round-tripping; decimal integer \u{2194} binary64 layout is content-deterministic.",
-    );
+    f.doc_comment("v0.2.2 Phase F / Phase 9: parse a decimal `u64` representing an");
+    f.doc_comment("IEEE-754 bit pattern. The bit pattern is content-deterministic; call sites");
+    f.doc_comment("project to `H::Decimal` via `DecimalTranscendental::from_bits`.");
     f.line("#[must_use]");
-    f.line("pub fn parse_f64_from_bits_str(s: &str) -> f64 {");
-    f.line("    f64::from_bits(parse_u64(s))");
+    f.line("pub fn parse_u64_bits_str(s: &str) -> u64 {");
+    f.line("    parse_u64(s)");
     f.line("}");
     f.blank();
     f.doc_comment("v0.2.2 Phase F: dispatch a `ConstraintRef::Bound` arm on its `observable_iri`.");
@@ -2562,7 +2560,11 @@ fn emit_preflight_checks(f: &mut RustFile, ontology: &Ontology) {
     f.line("        let depth = parse_u32(args_repr);");
     f.line("        depth <= WITT_MAX_BITS as u32");
     f.line("    } else if crate::enforcement::str_eq(observable_iri, LANDAUER_IRI) {");
-    f.line("        let nats = parse_f64_from_bits_str(args_repr);");
+    f.line("        // Project the bit pattern to f64 (default-host) for the");
+    f.line("        // finite/positive-nats sanity check. Polymorphic consumers");
+    f.line("        // construct their own H::Decimal via DecimalTranscendental.");
+    f.line("        let bits = parse_u64_bits_str(args_repr);");
+    f.line("        let nats = <f64 as crate::DecimalTranscendental>::from_bits(bits);");
     f.line("        nats.is_finite() && nats > 0.0");
     f.line("    } else {");
     f.line("        false");

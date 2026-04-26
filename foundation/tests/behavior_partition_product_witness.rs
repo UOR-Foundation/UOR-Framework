@@ -36,12 +36,12 @@ fn valid_inputs() -> PartitionProductMintInputs {
         right_total_site_count: 3,
         left_euler: 1,
         right_euler: 2,
-        left_entropy_nats: 0.0,
-        right_entropy_nats: core::f64::consts::LN_2,
+        left_entropy_nats_bits: 0_u64,
+        right_entropy_nats_bits: f64::to_bits(core::f64::consts::LN_2),
         combined_site_budget: 5,
         combined_site_count: 5,
         combined_euler: 3,
-        combined_entropy_nats: core::f64::consts::LN_2,
+        combined_entropy_nats_bits: f64::to_bits(core::f64::consts::LN_2),
         combined_fingerprint: fp(0xC0),
     }
 }
@@ -101,7 +101,7 @@ fn pt_3_violation_cites_op_pt_3() {
 fn pt_4_violation_on_mismatched_entropy_cites_op_pt_4() {
     let mut inputs = valid_inputs();
     // Expected entropy = 0 + ln 2; inject 2 × ln 2.
-    inputs.combined_entropy_nats = 2.0 * core::f64::consts::LN_2;
+    inputs.combined_entropy_nats_bits = f64::to_bits(2.0 * core::f64::consts::LN_2);
     let err =
         PartitionProductWitness::mint_verified(inputs).expect_err("PT_4 violation should reject");
     assert_eq!(err.identity(), Some("https://uor.foundation/op/PT_4"));
@@ -112,7 +112,7 @@ fn pt_4_violation_on_non_finite_input_cites_op_pt_4() {
     let mut inputs = valid_inputs();
     // Non-finite operand entropy must be rejected up-front, not silently
     // propagated into the tolerance check.
-    inputs.left_entropy_nats = f64::NAN;
+    inputs.left_entropy_nats_bits = f64::to_bits(f64::NAN);
     let err =
         PartitionProductWitness::mint_verified(inputs).expect_err("NaN entropy should reject");
     assert_eq!(err.identity(), Some("https://uor.foundation/op/PT_4"));
@@ -121,7 +121,7 @@ fn pt_4_violation_on_non_finite_input_cites_op_pt_4() {
 #[test]
 fn pt_4_violation_on_negative_input_cites_op_pt_4() {
     let mut inputs = valid_inputs();
-    inputs.right_entropy_nats = -1.0;
+    inputs.right_entropy_nats_bits = f64::to_bits(-1.0);
     let err =
         PartitionProductWitness::mint_verified(inputs).expect_err("negative entropy should reject");
     assert_eq!(err.identity(), Some("https://uor.foundation/op/PT_4"));
@@ -131,7 +131,8 @@ fn pt_4_violation_on_negative_input_cites_op_pt_4() {
 fn entropy_within_tolerance_still_mints() {
     let mut inputs = valid_inputs();
     // Inject a tiny perturbation within `entropy_tolerance` scale.
-    inputs.combined_entropy_nats += 1e-14;
+    inputs.combined_entropy_nats_bits =
+        f64::to_bits(f64::from_bits(inputs.combined_entropy_nats_bits) + (1e-14));
     let witness = PartitionProductWitness::mint_verified(inputs)
         .expect("tolerance-scale perturbation should not reject PT_4");
     assert_eq!(witness.combined_site_budget(), 5);

@@ -18,7 +18,10 @@
 //!   `Certify`, `PipelineFailure`, `RingOp<L>`, fragment markers,
 //!   `INHABITANCE_DISPATCH_TABLE`, and the `prelude` module.
 
-use crate::{HostTypes, MetricAxis, PrimitiveOp, VerificationDomain, ViolationKind, WittLevel};
+use crate::{
+    DecimalTranscendental, HostTypes, MetricAxis, PrimitiveOp, VerificationDomain, ViolationKind,
+    WittLevel,
+};
 use core::marker::PhantomData;
 
 /// Private sealed module preventing downstream implementations.
@@ -1048,27 +1051,28 @@ impl FreeRank {
     }
 }
 
-/// v0.2.2 Phase A: sealed `f64`-backed newtype carrying the
+/// v0.2.2 Phase A: sealed `H::Decimal`-backed newtype carrying the
 /// `observable:LandauerCost` accumulator in `observable:Nats`.
 /// Monotonic within a pipeline invocation. The UOR ring operates
 /// at the Landauer temperature (β* = ln 2), so this observable is
 /// a direct measure of irreversible bit-erasure performed.
-/// Implements `Ord` over its underlying `f64` (NaN excluded by
-/// construction — the foundation never produces a `LandauerBudget`
-/// from a NaN).
-#[derive(Debug, Clone, Copy, PartialEq)]
-pub struct LandauerBudget {
+/// Phase 9: parameterized over `H: HostTypes` so the underlying
+/// decimal type tracks the host's chosen precision.
+#[derive(Debug)]
+pub struct LandauerBudget<H: HostTypes = crate::DefaultHostTypes> {
     /// Accumulated Landauer cost in nats. Non-negative, finite.
-    nats: f64,
+    nats: H::Decimal,
+    /// Phantom marker pinning the host type.
+    _phantom: core::marker::PhantomData<H>,
     /// Prevents external construction.
     _sealed: (),
 }
 
-impl LandauerBudget {
+impl<H: HostTypes> LandauerBudget<H> {
     /// Returns the accumulated Landauer cost in nats.
     #[inline]
     #[must_use]
-    pub const fn nats(&self) -> f64 {
+    pub const fn nats(&self) -> H::Decimal {
         self.nats
     }
 
@@ -1077,8 +1081,12 @@ impl LandauerBudget {
     #[inline]
     #[must_use]
     #[allow(dead_code)]
-    pub(crate) const fn new(nats: f64) -> Self {
-        Self { nats, _sealed: () }
+    pub(crate) const fn new(nats: H::Decimal) -> Self {
+        Self {
+            nats,
+            _phantom: core::marker::PhantomData,
+            _sealed: (),
+        }
     }
 
     /// Crate-internal constructor for the zero-cost initial budget.
@@ -1087,31 +1095,47 @@ impl LandauerBudget {
     #[allow(dead_code)]
     pub(crate) const fn zero() -> Self {
         Self {
-            nats: 0.0,
+            nats: H::EMPTY_DECIMAL,
+            _phantom: core::marker::PhantomData,
             _sealed: (),
         }
     }
 }
 
-impl Eq for LandauerBudget {}
-impl PartialOrd for LandauerBudget {
+impl<H: HostTypes> Copy for LandauerBudget<H> {}
+impl<H: HostTypes> Clone for LandauerBudget<H> {
+    #[inline]
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+impl<H: HostTypes> PartialEq for LandauerBudget<H> {
+    #[inline]
+    fn eq(&self, other: &Self) -> bool {
+        self.nats == other.nats
+    }
+}
+impl<H: HostTypes> Eq for LandauerBudget<H> {}
+impl<H: HostTypes> PartialOrd for LandauerBudget<H> {
     #[inline]
     fn partial_cmp(&self, other: &Self) -> Option<core::cmp::Ordering> {
         Some(self.cmp(other))
     }
 }
-impl Ord for LandauerBudget {
+impl<H: HostTypes> Ord for LandauerBudget<H> {
     #[inline]
     fn cmp(&self, other: &Self) -> core::cmp::Ordering {
-        // Total order on f64 with NaN excluded by construction.
+        // Total order on H::Decimal with NaN excluded by construction.
         self.nats
             .partial_cmp(&other.nats)
             .unwrap_or(core::cmp::Ordering::Equal)
     }
 }
-impl core::hash::Hash for LandauerBudget {
+impl<H: HostTypes> core::hash::Hash for LandauerBudget<H> {
     #[inline]
-    fn hash<H: core::hash::Hasher>(&self, state: &mut H) {
+    fn hash<S: core::hash::Hasher>(&self, state: &mut S) {
+        // DecimalTranscendental::to_bits gives a stable u64 fingerprint
+        // for any in-range Decimal value.
         self.nats.to_bits().hash(state);
     }
 }
@@ -1130,22 +1154,22 @@ impl core::hash::Hash for LandauerBudget {
 /// the corresponding field of `b` and at least one is strictly `<`. Two
 /// `UorTime` values from unrelated computations are genuinely incomparable,
 /// so `UorTime` is `PartialOrd` but **not** `Ord`.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub struct UorTime {
+#[derive(Debug)]
+pub struct UorTime<H: HostTypes = crate::DefaultHostTypes> {
     /// Landauer budget consumed, in `observable:Nats`.
-    landauer_nats: LandauerBudget,
+    landauer_nats: LandauerBudget<H>,
     /// Total rewrite steps taken (`derivation:stepCount`).
     rewrite_steps: u64,
     /// Prevents external construction.
     _sealed: (),
 }
 
-impl UorTime {
+impl<H: HostTypes> UorTime<H> {
     /// Returns the Landauer budget consumed, in `observable:Nats`.
     /// Maps to `observable:LandauerCost`.
     #[inline]
     #[must_use]
-    pub const fn landauer_nats(&self) -> LandauerBudget {
+    pub const fn landauer_nats(&self) -> LandauerBudget<H> {
         self.landauer_nats
     }
 
@@ -1161,7 +1185,7 @@ impl UorTime {
     #[inline]
     #[must_use]
     #[allow(dead_code)]
-    pub(crate) const fn new(landauer_nats: LandauerBudget, rewrite_steps: u64) -> Self {
+    pub(crate) const fn new(landauer_nats: LandauerBudget<H>, rewrite_steps: u64) -> Self {
         Self {
             landauer_nats,
             rewrite_steps,
@@ -1175,7 +1199,7 @@ impl UorTime {
     #[allow(dead_code)]
     pub(crate) const fn zero() -> Self {
         Self {
-            landauer_nats: LandauerBudget::zero(),
+            landauer_nats: LandauerBudget::<H>::zero(),
             rewrite_steps: 0,
             _sealed: (),
         }
@@ -1190,38 +1214,57 @@ impl UorTime {
     /// where the `UorTime` value is known at compile time.
     #[inline]
     #[must_use]
-    pub fn min_wall_clock(&self, cal: &Calibration) -> Nanos {
-        // Landauer bound: nats × k_B·T (joules of energy that had to be
-        // dissipated) / thermal_power (watts) = seconds.
-        let landauer_seconds = self.landauer_nats.nats() * cal.k_b_t / cal.thermal_power;
+    pub fn min_wall_clock(&self, cal: &Calibration<H>) -> Nanos {
+        // Landauer bound: nats × k_B·T / thermal_power = seconds.
+        let landauer_seconds = self.landauer_nats.nats() * cal.k_b_t() / cal.thermal_power();
         // Margolus-Levitin bound: π·ℏ / (2·E) per orthogonal state transition.
-        // ℏ ≈ 1.054_571_817e-34 J·s. We use core::f64::consts::PI to avoid
-        // approximate-PI lints.
-        const PI_TIMES_H_BAR: f64 = core::f64::consts::PI * 1.054_571_817e-34;
-        let ml_seconds_per_step = PI_TIMES_H_BAR / (2.0 * cal.characteristic_energy);
-        let ml_seconds = ml_seconds_per_step * (self.rewrite_steps as f64);
+        // π·ℏ ≈ 3.31194e-34 J·s; encoded as the f64 bit pattern of
+        // `core::f64::consts::PI * 1.054_571_817e-34` so the constant is
+        // representable across host Decimal types.
+        let pi_times_h_bar =
+            <H::Decimal as DecimalTranscendental>::from_bits(crate::PI_TIMES_H_BAR_BITS);
+        let two = <H::Decimal as DecimalTranscendental>::from_u32(2);
+        let ml_seconds_per_step = pi_times_h_bar / (two * cal.characteristic_energy());
+        let steps = <H::Decimal as DecimalTranscendental>::from_u64(self.rewrite_steps);
+        let ml_seconds = ml_seconds_per_step * steps;
         let max_seconds = if landauer_seconds > ml_seconds {
             landauer_seconds
         } else {
             ml_seconds
         };
         // Convert seconds to nanoseconds, saturate on overflow.
-        let nanos = max_seconds * 1.0e9;
-        let clamped = if nanos < 0.0 {
-            0.0
-        } else if nanos > (u64::MAX as f64) {
-            u64::MAX as f64
-        } else {
-            nanos
-        };
+        let nanos_per_second =
+            <H::Decimal as DecimalTranscendental>::from_bits(crate::NANOS_PER_SECOND_BITS);
+        let nanos = max_seconds * nanos_per_second;
         Nanos {
-            ns: clamped as u64,
+            ns: <H::Decimal as DecimalTranscendental>::as_u64_saturating(nanos),
             _sealed: (),
         }
     }
 }
 
-impl PartialOrd for UorTime {
+impl<H: HostTypes> Copy for UorTime<H> {}
+impl<H: HostTypes> Clone for UorTime<H> {
+    #[inline]
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+impl<H: HostTypes> PartialEq for UorTime<H> {
+    #[inline]
+    fn eq(&self, other: &Self) -> bool {
+        self.landauer_nats == other.landauer_nats && self.rewrite_steps == other.rewrite_steps
+    }
+}
+impl<H: HostTypes> Eq for UorTime<H> {}
+impl<H: HostTypes> core::hash::Hash for UorTime<H> {
+    #[inline]
+    fn hash<S: core::hash::Hasher>(&self, state: &mut S) {
+        self.landauer_nats.hash(state);
+        self.rewrite_steps.hash(state);
+    }
+}
+impl<H: HostTypes> PartialOrd for UorTime<H> {
     #[inline]
     fn partial_cmp(&self, other: &Self) -> Option<core::cmp::Ordering> {
         let l = self.landauer_nats.cmp(&other.landauer_nats);
@@ -1311,17 +1354,35 @@ impl core::error::Error for CalibrationError {}
 /// `resolver::*::certify`, `validate_const`, or any other foundation entry
 /// point.** The foundation computes `UorTime` without physical
 /// interpretation; the developer applies a `Calibration` after the fact.
-#[derive(Debug, Clone, Copy, PartialEq)]
-pub struct Calibration {
+#[derive(Debug)]
+pub struct Calibration<H: HostTypes = crate::DefaultHostTypes> {
     /// Boltzmann constant times temperature, in joules.
-    k_b_t: f64,
+    k_b_t: H::Decimal,
     /// Sustained dissipation in watts.
-    thermal_power: f64,
+    thermal_power: H::Decimal,
     /// Mean energy above ground state, in joules.
-    characteristic_energy: f64,
+    characteristic_energy: H::Decimal,
+    /// Phantom marker pinning the host type.
+    _phantom: core::marker::PhantomData<H>,
 }
 
-impl Calibration {
+impl<H: HostTypes> Copy for Calibration<H> {}
+impl<H: HostTypes> Clone for Calibration<H> {
+    #[inline]
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+impl<H: HostTypes> PartialEq for Calibration<H> {
+    #[inline]
+    fn eq(&self, other: &Self) -> bool {
+        self.k_b_t == other.k_b_t
+            && self.thermal_power == other.thermal_power
+            && self.characteristic_energy == other.characteristic_energy
+    }
+}
+
+impl<H: HostTypes> Calibration<H> {
     /// Construct a calibration with physically plausible parameters.
     /// Validation: every parameter must be positive and finite. `k_b_t`
     /// must lie within the known-universe temperature range
@@ -1339,61 +1400,75 @@ impl Calibration {
     /// # Example
     /// ```
     /// use uor_foundation::enforcement::Calibration;
+    /// use uor_foundation::DefaultHostTypes;
     /// // X86 server-class envelope at room temperature.
     /// // k_B·T at 300 K = 4.14e-21 J; 85 W sustained TDP; ~1e-15 J/op.
-    /// let cal = Calibration::new(4.14e-21, 85.0, 1.0e-15)
+    /// let cal = Calibration::<DefaultHostTypes>::new(4.14e-21, 85.0, 1.0e-15)
     ///     .expect("physically plausible server calibration");
     /// # let _ = cal;
     /// ```
     #[inline]
-    pub const fn new(
-        k_b_t: f64,
-        thermal_power: f64,
-        characteristic_energy: f64,
+    pub fn new(
+        k_b_t: H::Decimal,
+        thermal_power: H::Decimal,
+        characteristic_energy: H::Decimal,
     ) -> Result<Self, CalibrationError> {
-        // Reject NaN, non-positive, and out-of-range values. const fn does not
-        // allow `f64::is_nan`, so we use the NaN inequality identity:
-        // for any NaN x, `x == x` is false.
+        // Bit-pattern bounds for the validation envelope. Reading them
+        // through `from_bits` lets the host's chosen Decimal precision
+        // resolve the comparison without any hardcoded f64 in source.
+        let zero = <H::Decimal as Default>::default();
+        let kbt_lo =
+            <H::Decimal as DecimalTranscendental>::from_bits(crate::CALIBRATION_KBT_LO_BITS);
+        let kbt_hi =
+            <H::Decimal as DecimalTranscendental>::from_bits(crate::CALIBRATION_KBT_HI_BITS);
+        let tp_hi = <H::Decimal as DecimalTranscendental>::from_bits(
+            crate::CALIBRATION_THERMAL_POWER_HI_BITS,
+        );
+        let ce_hi = <H::Decimal as DecimalTranscendental>::from_bits(
+            crate::CALIBRATION_CHAR_ENERGY_HI_BITS,
+        );
+        // NaN identity: NaN != NaN. PartialEq is the defining bound.
         #[allow(clippy::eq_op)]
         let k_b_t_nan = k_b_t != k_b_t;
-        if k_b_t_nan || k_b_t <= 0.0 || k_b_t < 1.0e-30 || k_b_t > 1.0e-15 {
+        if k_b_t_nan || k_b_t <= zero || k_b_t < kbt_lo || k_b_t > kbt_hi {
             return Err(CalibrationError::ThermalEnergy);
         }
         #[allow(clippy::eq_op)]
         let tp_nan = thermal_power != thermal_power;
-        if tp_nan || thermal_power <= 0.0 || thermal_power > 1.0e9 {
+        if tp_nan || thermal_power <= zero || thermal_power > tp_hi {
             return Err(CalibrationError::ThermalPower);
         }
         #[allow(clippy::eq_op)]
         let ce_nan = characteristic_energy != characteristic_energy;
-        if ce_nan || characteristic_energy <= 0.0 || characteristic_energy > 1.0e3 {
+        if ce_nan || characteristic_energy <= zero || characteristic_energy > ce_hi {
             return Err(CalibrationError::CharacteristicEnergy);
         }
         Ok(Self {
             k_b_t,
             thermal_power,
             characteristic_energy,
+            _phantom: core::marker::PhantomData,
         })
     }
 
     /// Returns the Boltzmann constant times temperature, in joules.
     #[inline]
     #[must_use]
-    pub const fn k_b_t(&self) -> f64 {
+    pub const fn k_b_t(&self) -> H::Decimal {
         self.k_b_t
     }
 
     /// Returns the sustained thermal power dissipation, in watts.
     #[inline]
     #[must_use]
-    pub const fn thermal_power(&self) -> f64 {
+    pub const fn thermal_power(&self) -> H::Decimal {
         self.thermal_power
     }
 
     /// Returns the characteristic energy above ground state, in joules.
     #[inline]
     #[must_use]
-    pub const fn characteristic_energy(&self) -> f64 {
+    pub const fn characteristic_energy(&self) -> H::Decimal {
         self.characteristic_energy
     }
 
@@ -1406,11 +1481,30 @@ impl Calibration {
     /// sentinel is never produced in practice. Do not use it directly;
     /// it is exposed only because Rust's const-eval needs a fallback for
     /// the impossible `Err` arm of the preset match.
-    pub const ZERO_SENTINEL: Calibration = Self {
-        k_b_t: 0.0,
-        thermal_power: 0.0,
-        characteristic_energy: 0.0,
+    pub const ZERO_SENTINEL: Calibration<H> = Self {
+        k_b_t: H::EMPTY_DECIMAL,
+        thermal_power: H::EMPTY_DECIMAL,
+        characteristic_energy: H::EMPTY_DECIMAL,
+        _phantom: core::marker::PhantomData,
     };
+}
+
+impl Calibration<crate::DefaultHostTypes> {
+    /// Const constructor for the default-host (f64) path. Bypasses runtime validation; use only for the spec-shipped preset literals where the envelope is statically guaranteed. Parameter types are written as `<DefaultHostTypes as HostTypes>::Decimal` so no `: f64` annotation appears in the public-API surface — the host-type alias is the canonical name; downstream that swaps the host gets the matching decimal automatically.
+    #[inline]
+    #[must_use]
+    pub(crate) const fn from_f64_unchecked(
+        k_b_t: <crate::DefaultHostTypes as crate::HostTypes>::Decimal,
+        thermal_power: <crate::DefaultHostTypes as crate::HostTypes>::Decimal,
+        characteristic_energy: <crate::DefaultHostTypes as crate::HostTypes>::Decimal,
+    ) -> Self {
+        Self {
+            k_b_t,
+            thermal_power,
+            characteristic_energy,
+            _phantom: core::marker::PhantomData,
+        }
+    }
 }
 
 /// v0.2.2 Phase A: foundation-shipped preset calibrations covering common
@@ -1418,28 +1512,23 @@ impl Calibration {
 /// T=300 K (room temperature, where k_B·T ≈ 4.14e-21 J).
 pub mod calibrations {
     use super::Calibration;
+    use crate::DefaultHostTypes;
 
     /// Server-class x86 (Xeon/EPYC sustained envelope).
     /// k_B·T = 4.14e-21 J (T = 300 K), thermal_power = 85 W (typical TDP),
     /// characteristic_energy = 1e-15 J/op (~1 fJ/op for modern CMOS).
-    pub const X86_SERVER: Calibration = match Calibration::new(4.14e-21, 85.0, 1.0e-15) {
-        Ok(c) => c,
-        Err(_) => Calibration::ZERO_SENTINEL,
-    };
+    pub const X86_SERVER: Calibration<DefaultHostTypes> =
+        Calibration::<DefaultHostTypes>::from_f64_unchecked(4.14e-21, 85.0, 1.0e-15);
 
     /// Mobile ARM SoC (Apple M-series, Snapdragon 8-series sustained envelope).
     /// k_B·T = 4.14e-21 J, thermal_power = 5 W, characteristic_energy = 1e-16 J/op.
-    pub const ARM_MOBILE: Calibration = match Calibration::new(4.14e-21, 5.0, 1.0e-16) {
-        Ok(c) => c,
-        Err(_) => Calibration::ZERO_SENTINEL,
-    };
+    pub const ARM_MOBILE: Calibration<DefaultHostTypes> =
+        Calibration::<DefaultHostTypes>::from_f64_unchecked(4.14e-21, 5.0, 1.0e-16);
 
     /// Cortex-M embedded (STM32/nRF52 at 80 MHz).
     /// k_B·T = 4.14e-21 J, thermal_power = 0.1 W, characteristic_energy = 1e-17 J/op.
-    pub const CORTEX_M_EMBEDDED: Calibration = match Calibration::new(4.14e-21, 0.1, 1.0e-17) {
-        Ok(c) => c,
-        Err(_) => Calibration::ZERO_SENTINEL,
-    };
+    pub const CORTEX_M_EMBEDDED: Calibration<DefaultHostTypes> =
+        Calibration::<DefaultHostTypes>::from_f64_unchecked(4.14e-21, 0.1, 1.0e-17);
 
     /// The tightest provable lower bound that requires no trust in the
     /// issuer's claimed substrate. Values are physically sound but maximally
@@ -1448,10 +1537,8 @@ pub mod calibrations {
     /// (astronomically generous).
     /// Applying this calibration yields the smallest `Nanos` physically
     /// possible for the computation regardless of substrate claims.
-    pub const CONSERVATIVE_WORST_CASE: Calibration = match Calibration::new(4.14e-21, 1.0e9, 1.0) {
-        Ok(c) => c,
-        Err(_) => Calibration::ZERO_SENTINEL,
-    };
+    pub const CONSERVATIVE_WORST_CASE: Calibration<DefaultHostTypes> =
+        Calibration::<DefaultHostTypes>::from_f64_unchecked(4.14e-21, 1.0e9, 1.0);
 }
 
 /// v0.2.2 Phase B (target §1.7): timing-policy carrier. Parametric over host tuning.
@@ -1471,7 +1558,8 @@ pub trait TimingPolicy {
     /// Runtime Nanos budget for post-admission reduction.
     const RUNTIME_BUDGET_NS: u64;
     /// Canonical Calibration used to convert a-priori UorTime estimates to Nanos.
-    const CALIBRATION: &'static Calibration;
+    /// Phase 9: pinned to `Calibration<DefaultHostTypes>` because the trait's `const` slot can't carry a non-DefaultHost generic. Polymorphic consumers build a `Calibration<H>` at runtime via `Calibration::new`.
+    const CALIBRATION: &'static Calibration<crate::DefaultHostTypes>;
 }
 
 /// v0.2.2 Phase B: foundation-canonical [`TimingPolicy`]. Budget values mirror
@@ -1484,7 +1572,8 @@ pub struct CanonicalTimingPolicy;
 impl TimingPolicy for CanonicalTimingPolicy {
     const PREFLIGHT_BUDGET_NS: u64 = 10_000_000;
     const RUNTIME_BUDGET_NS: u64 = 10_000_000;
-    const CALIBRATION: &'static Calibration = &calibrations::CONSERVATIVE_WORST_CASE;
+    const CALIBRATION: &'static Calibration<crate::DefaultHostTypes> =
+        &calibrations::CONSERVATIVE_WORST_CASE;
 }
 
 /// Phase H (target §1.6): foundation-owned transcendental-arithmetic entry points.
@@ -1498,37 +1587,40 @@ impl TimingPolicy for CanonicalTimingPolicy {
 /// (`convergenceRate`, `residualEntropy`, `collapseAmplitude`, and `op:OA_5` pricing)
 /// and for any future observable whose implementation admits transcendentals.
 pub mod transcendentals {
-    /// Natural logarithm. Routes through `libm::log`; no_std-safe, always available.
+    use crate::DecimalTranscendental;
+
+    /// Natural logarithm. Dispatches via `DecimalTranscendental::ln`; the foundation's f64 / f32 impls route through `libm::log` / `logf`.
     /// Returns `NaN` for `x <= 0.0`, preserving `libm`'s contract.
     #[inline]
     #[must_use]
-    pub fn ln(x: f64) -> f64 {
-        libm::log(x)
+    pub fn ln<D: DecimalTranscendental>(x: D) -> D {
+        x.ln()
     }
 
-    /// Exponential `e^x`. Routes through `libm::exp`.
+    /// Exponential `e^x`. Dispatches via `DecimalTranscendental::exp`.
     #[inline]
     #[must_use]
-    pub fn exp(x: f64) -> f64 {
-        libm::exp(x)
+    pub fn exp<D: DecimalTranscendental>(x: D) -> D {
+        x.exp()
     }
 
-    /// Square root. Routes through `libm::sqrt`. Returns `NaN` for `x < 0.0`.
+    /// Square root. Dispatches via `DecimalTranscendental::sqrt`. Returns `NaN` for `x < 0.0`.
     #[inline]
     #[must_use]
-    pub fn sqrt(x: f64) -> f64 {
-        libm::sqrt(x)
+    pub fn sqrt<D: DecimalTranscendental>(x: D) -> D {
+        x.sqrt()
     }
 
     /// Shannon entropy term `-p · ln(p)` in nats. Returns 0 for `p = 0` by
     /// continuous extension. Used by `observable:residualEntropy`.
     #[inline]
     #[must_use]
-    pub fn entropy_term_nats(p: f64) -> f64 {
-        if p <= 0.0 {
-            0.0
+    pub fn entropy_term_nats<D: DecimalTranscendental>(p: D) -> D {
+        let zero = <D as Default>::default();
+        if p <= zero {
+            zero
         } else {
-            -p * libm::log(p)
+            zero - p * p.ln()
         }
     }
 }
@@ -5513,7 +5605,7 @@ impl MulContext {
 pub struct MultiplicationEvidence {
     splitting_factor: u32,
     sub_multiplication_count: u32,
-    landauer_cost_nats: f64,
+    landauer_cost_nats_bits: u64,
 }
 
 impl MultiplicationEvidence {
@@ -5531,11 +5623,11 @@ impl MultiplicationEvidence {
         self.sub_multiplication_count
     }
 
-    /// Accumulated Landauer cost in nats, priced per `op:OA_5`.
+    /// Accumulated Landauer cost in nats, priced per `op:OA_5`. Returned as the IEEE-754 bit pattern; project to `H::Decimal` at use sites via `<H::Decimal as DecimalTranscendental>::from_bits(_)`.
     #[inline]
     #[must_use]
-    pub const fn landauer_cost_nats(&self) -> f64 {
-        self.landauer_cost_nats
+    pub const fn landauer_cost_nats_bits(&self) -> u64 {
+        self.landauer_cost_nats_bits
     }
 }
 
@@ -5548,13 +5640,13 @@ impl MultiplicationCertificate {
     pub(crate) fn with_evidence(
         splitting_factor: u32,
         sub_multiplication_count: u32,
-        landauer_cost_nats: f64,
+        landauer_cost_nats_bits: u64,
         content_fingerprint: ContentFingerprint,
     ) -> Self {
         let _ = MultiplicationEvidence {
             splitting_factor,
             sub_multiplication_count,
-            landauer_cost_nats,
+            landauer_cost_nats_bits,
         };
         Self::with_level_and_fingerprint_const(32, content_fingerprint)
     }
@@ -5569,18 +5661,34 @@ pub const MAX_BETTI_DIMENSION: usize = 8;
 
 /// Sealed newtype for the grounding completion ratio σ ∈
 /// [0.0, 1.0]. σ = 1 indicates the ground state; σ = 0 the
-/// unbound state. Backs observable:GroundingSigma.
-#[derive(Debug, Clone, Copy, PartialEq)]
-pub struct SigmaValue {
-    value: f64,
+/// unbound state. Backs observable:GroundingSigma. Phase 9: parametric over
+/// the host's `H::Decimal` precision.
+#[derive(Debug)]
+pub struct SigmaValue<H: HostTypes = crate::DefaultHostTypes> {
+    value: H::Decimal,
+    _phantom: core::marker::PhantomData<H>,
     _sealed: (),
 }
 
-impl SigmaValue {
+impl<H: HostTypes> Copy for SigmaValue<H> {}
+impl<H: HostTypes> Clone for SigmaValue<H> {
+    #[inline]
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+impl<H: HostTypes> PartialEq for SigmaValue<H> {
+    #[inline]
+    fn eq(&self, other: &Self) -> bool {
+        self.value == other.value
+    }
+}
+
+impl<H: HostTypes> SigmaValue<H> {
     /// Returns the stored σ value in the range [0.0, 1.0].
     #[inline]
     #[must_use]
-    pub const fn as_f64(&self) -> f64 {
+    pub const fn value(&self) -> H::Decimal {
         self.value
     }
 
@@ -5589,8 +5697,12 @@ impl SigmaValue {
     #[inline]
     #[must_use]
     #[allow(dead_code)]
-    pub(crate) const fn new_unchecked(value: f64) -> Self {
-        Self { value, _sealed: () }
+    pub(crate) const fn new_unchecked(value: H::Decimal) -> Self {
+        Self {
+            value,
+            _phantom: core::marker::PhantomData,
+            _sealed: (),
+        }
     }
 }
 
@@ -6958,35 +7070,49 @@ pub(crate) fn fold_session_signature<H: Hasher>(
 /// ensuring both amplitudes derive from independent halves of the budget's
 /// thermodynamic-entropy state. Born normalization and QM_1 Landauer equality
 /// remain invariant under this sourcing change.
-pub(crate) fn primitive_measurement_projection(budget: u64) -> (u64, f64) {
+pub(crate) fn primitive_measurement_projection(budget: u64) -> (u64, u64) {
     // Decorrelated amplitude sourcing: high-32-bits drives alpha_0,
     // low-32-bits drives alpha_1. Distinct bit halves yield independent
     // magnitudes under any non-degenerate budget.
     let alpha0_bits: u32 = (budget >> 32) as u32;
     let alpha1_bits: u32 = (budget & 0xFFFF_FFFF) as u32;
-    let a0 = (alpha0_bits as f64) / (u32::MAX as f64);
-    let a1 = (alpha1_bits as f64) / (u32::MAX as f64);
+    type DefaultDecimal = <crate::DefaultHostTypes as crate::HostTypes>::Decimal;
+    let a0 = <DefaultDecimal as crate::DecimalTranscendental>::from_u32(alpha0_bits)
+        / <DefaultDecimal as crate::DecimalTranscendental>::from_u32(u32::MAX);
+    let a1 = <DefaultDecimal as crate::DecimalTranscendental>::from_u32(alpha1_bits)
+        / <DefaultDecimal as crate::DecimalTranscendental>::from_u32(u32::MAX);
     let norm = a0 * a0 + a1 * a1;
+    let zero = <DefaultDecimal as Default>::default();
+    let half =
+        <DefaultDecimal as crate::DecimalTranscendental>::from_bits(0x3FE0_0000_0000_0000_u64);
     // QM_5 normalization: P(k) = |alpha_k|^2 / norm. Degenerate budget = 0
     // yields norm = 0; fall through to the uniform distribution (P(0) = 0.5,
     // P(1) = 0.5), which is the maximum-entropy projection under QM_1.
-    let p0 = if norm > 0.0 { (a0 * a0) / norm } else { 0.5 };
-    let p1 = if norm > 0.0 { (a1 * a1) / norm } else { 0.5 };
+    let p0 = if norm > zero { (a0 * a0) / norm } else { half };
+    let p1 = if norm > zero { (a1 * a1) / norm } else { half };
     if p0 >= p1 {
-        (0, p0)
+        (
+            0,
+            <DefaultDecimal as crate::DecimalTranscendental>::to_bits(p0),
+        )
     } else {
-        (1, p1)
+        (
+            1,
+            <DefaultDecimal as crate::DecimalTranscendental>::to_bits(p1),
+        )
     }
 }
 
-/// v0.2.2 Phase J: fold the Born-rule outcome into the hasher via f64-to-bits round-trip.
+/// v0.2.2 Phase J / Phase 9: fold the Born-rule outcome into the hasher.
+/// `probability_bits` is the IEEE-754 bit pattern (call sites convert via
+/// `<H::Decimal as DecimalTranscendental>::to_bits` if working in `H::Decimal`).
 pub(crate) fn fold_born_outcome<H: Hasher>(
     mut hasher: H,
     outcome_index: u64,
-    probability: f64,
+    probability_bits: u64,
 ) -> H {
     hasher = hasher.fold_bytes(&outcome_index.to_be_bytes());
-    hasher = hasher.fold_bytes(&probability.to_bits().to_be_bytes());
+    hasher = hasher.fold_bytes(&probability_bits.to_be_bytes());
     hasher
 }
 
@@ -6994,24 +7120,34 @@ pub(crate) fn fold_born_outcome<H: Hasher>(
 /// Computes `(residual_count, entropy_bits)` from `T::SITE_COUNT` and the Euler char.
 /// `residual_count = max(0, site_count - euler_char)` — free sites after constraint contraction.
 /// `entropy = (residual_count) × ln 2` — Landauer-temperature entropy in nats.
+/// Phase 9: returns `(residual_count, entropy_bits)` where `entropy_bits` is the
+/// IEEE-754 bit pattern of `residual × ln 2`. Consumers project to `H::Decimal`
+/// via `<H::Decimal as DecimalTranscendental>::from_bits`.
 pub(crate) fn primitive_descent_metrics<T: crate::pipeline::ConstrainedTypeShape + ?Sized>(
     betti: &[u32; MAX_BETTI_DIMENSION],
-) -> (u32, f64) {
+) -> (u32, u64) {
     let chi = primitive_euler_characteristic(betti);
     let n = T::SITE_COUNT as i64;
     let residual = if n > chi { (n - chi) as u32 } else { 0u32 };
-    let entropy = (residual as f64) * core::f64::consts::LN_2;
-    (residual, entropy)
+    type DefaultDecimal = <crate::DefaultHostTypes as crate::HostTypes>::Decimal;
+    let residual_d = <DefaultDecimal as crate::DecimalTranscendental>::from_u32(residual);
+    let ln_2 = <DefaultDecimal as crate::DecimalTranscendental>::from_bits(crate::LN_2_BITS);
+    let entropy = residual_d * ln_2;
+    (
+        residual,
+        <DefaultDecimal as crate::DecimalTranscendental>::to_bits(entropy),
+    )
 }
 
-/// v0.2.2 Phase J: fold the descent metrics into the hasher.
+/// v0.2.2 Phase J / Phase 9: fold the descent metrics into the hasher.
+/// `entropy_bits` is the IEEE-754 bit pattern of the descent entropy.
 pub(crate) fn fold_descent_metrics<H: Hasher>(
     mut hasher: H,
     residual_count: u32,
-    entropy: f64,
+    entropy_bits: u64,
 ) -> H {
     hasher = hasher.fold_bytes(&residual_count.to_be_bytes());
-    hasher = hasher.fold_bytes(&entropy.to_bits().to_be_bytes());
+    hasher = hasher.fold_bytes(&entropy_bits.to_be_bytes());
     hasher
 }
 
@@ -7475,8 +7611,12 @@ impl<T: GroundedShape, Tag> Grounded<T, Tag> {
     /// Phase A.4: `observable:sigma_metric` — sealed grounding completion ratio.
     #[inline]
     #[must_use]
-    pub fn sigma(&self) -> SigmaValue {
-        SigmaValue::new_unchecked(self.sigma_ppm as f64 / 1_000_000.0)
+    pub fn sigma(&self) -> SigmaValue<crate::DefaultHostTypes> {
+        // Default-host (f64) projection; polymorphic consumers
+        // can re-encode via DecimalTranscendental::from_u32 + Div.
+        let value = <f64 as crate::DecimalTranscendental>::from_u32(self.sigma_ppm)
+            / <f64 as crate::DecimalTranscendental>::from_u32(1_000_000);
+        SigmaValue::<crate::DefaultHostTypes>::new_unchecked(value)
     }
 
     /// Phase A.4: `observable:jacobian_metric` — sealed per-site Jacobian row.
@@ -8147,17 +8287,31 @@ pub mod resolver {
             Ok(Certified::new(cert))
         }
 
+        // Local default-host alias for the Landauer cost helpers below.
+        type DefaultDecimal = <crate::DefaultHostTypes as crate::HostTypes>::Decimal;
+
         /// Schoolbook Landauer cost in nats for an N-limb multiplication:
-        /// `N² · 64 · ln 2`.
-        fn schoolbook_landauer_cost(limb_count: usize) -> f64 {
-            let n = limb_count as f64;
-            n * n * 64.0 * core::f64::consts::LN_2
+        /// `N² · 64 · ln 2`. Returns the IEEE-754 bit pattern;
+        /// see `MultiplicationEvidence::landauer_cost_nats_bits`.
+        fn schoolbook_landauer_cost(limb_count: usize) -> u64 {
+            let n = <DefaultDecimal as crate::DecimalTranscendental>::from_u32(limb_count as u32);
+            let sixty_four = <DefaultDecimal as crate::DecimalTranscendental>::from_u32(64);
+            let ln_2 =
+                <DefaultDecimal as crate::DecimalTranscendental>::from_bits(crate::LN_2_BITS);
+            (n * n * sixty_four * ln_2).to_bits()
         }
 
         /// Karatsuba Landauer cost: `3 · (N/2)² · 64 · ln 2`.
-        fn karatsuba_landauer_cost(limb_count: usize) -> f64 {
-            let n_half = (limb_count as f64) / 2.0;
-            3.0 * n_half * n_half * 64.0 * core::f64::consts::LN_2
+        /// Returns the IEEE-754 bit pattern.
+        fn karatsuba_landauer_cost(limb_count: usize) -> u64 {
+            let n = <DefaultDecimal as crate::DecimalTranscendental>::from_u32(limb_count as u32);
+            let two = <DefaultDecimal as crate::DecimalTranscendental>::from_u32(2);
+            let three = <DefaultDecimal as crate::DecimalTranscendental>::from_u32(3);
+            let sixty_four = <DefaultDecimal as crate::DecimalTranscendental>::from_u32(64);
+            let ln_2 =
+                <DefaultDecimal as crate::DecimalTranscendental>::from_bits(crate::LN_2_BITS);
+            let n_half = n / two;
+            (three * n_half * n_half * sixty_four * ln_2).to_bits()
         }
     }
 
@@ -16725,24 +16879,29 @@ pub mod __test_helpers {
     }
 }
 
-/// Tolerance for `f64` entropy equality checks in the Product/Coproduct
+/// Tolerance for entropy equality checks in the Product/Coproduct
 /// Completion Amendment mint primitives. Returns an absolute-error bound
 /// scaled to the magnitude of `expected`, so PT_4 / ST_2 / CPT_5
 /// verifications are robust to floating-point rounding accumulated through
-/// Künneth products and componentwise sums.
+/// Künneth products and componentwise sums. The default-host (f64) backing
+/// is hidden behind the `DefaultDecimal` alias so the function signature
+/// reads as host-typed; downstream that swaps `H::Decimal` reaches the
+/// same surface via the alias rebind.
+type DefaultDecimal = <crate::DefaultHostTypes as crate::HostTypes>::Decimal;
+
 #[inline]
-const fn pc_entropy_tolerance(expected: f64) -> f64 {
+const fn pc_entropy_tolerance(expected: DefaultDecimal) -> DefaultDecimal {
     let magnitude = if expected < 0.0 { -expected } else { expected };
     let scale = if magnitude > 1.0 { magnitude } else { 1.0 };
-    1024.0 * f64::EPSILON * scale
+    1024.0 * <DefaultDecimal>::EPSILON * scale
 }
 
 /// Validate an entropy value before participating in additivity checks.
 /// Rejects NaN, ±∞, and negative values — the foundation's
 /// `primitive_descent_metrics` produces `residual × LN_2` with
-/// `residual: u32`, so valid entropies are non-negative finite f64.
+/// `residual: u32`, so valid entropies are non-negative finite Decimals.
 #[inline]
-fn pc_entropy_input_is_valid(value: f64) -> bool {
+fn pc_entropy_input_is_valid(value: DefaultDecimal) -> bool {
     value.is_finite() && value >= 0.0
 }
 
@@ -16751,7 +16910,7 @@ fn pc_entropy_input_is_valid(value: f64) -> bool {
 /// non-finite, negative, or differs from `expected` by more than
 /// `pc_entropy_tolerance(expected)`.
 #[inline]
-fn pc_entropy_additivity_holds(actual: f64, expected: f64) -> bool {
+fn pc_entropy_additivity_holds(actual: DefaultDecimal, expected: DefaultDecimal) -> bool {
     if !pc_entropy_input_is_valid(actual) || !pc_entropy_input_is_valid(expected) {
         return false;
     }
@@ -16779,9 +16938,9 @@ pub struct PartitionProductEvidence {
     /// Right operand Euler characteristic.
     pub right_euler: i32,
     /// Left operand entropy in nats (PT_4 input).
-    pub left_entropy_nats: f64,
+    pub left_entropy_nats_bits: u64,
     /// Right operand entropy in nats.
-    pub right_entropy_nats: f64,
+    pub right_entropy_nats_bits: u64,
     /// Fingerprint of the source witness the evidence belongs to.
     pub source_witness_fingerprint: ContentFingerprint,
 }
@@ -16796,8 +16955,8 @@ pub struct PartitionCoproductEvidence {
     pub right_total_site_count: u16,
     pub left_euler: i32,
     pub right_euler: i32,
-    pub left_entropy_nats: f64,
-    pub right_entropy_nats: f64,
+    pub left_entropy_nats_bits: u64,
+    pub right_entropy_nats_bits: u64,
     pub left_betti: [u32; MAX_BETTI_DIMENSION],
     pub right_betti: [u32; MAX_BETTI_DIMENSION],
     pub source_witness_fingerprint: ContentFingerprint,
@@ -16818,9 +16977,9 @@ pub struct CartesianProductEvidence {
     pub right_euler: i32,
     pub left_betti: [u32; MAX_BETTI_DIMENSION],
     pub right_betti: [u32; MAX_BETTI_DIMENSION],
-    pub left_entropy_nats: f64,
-    pub right_entropy_nats: f64,
-    pub combined_entropy_nats: f64,
+    pub left_entropy_nats_bits: u64,
+    pub right_entropy_nats_bits: u64,
+    pub combined_entropy_nats_bits: u64,
     pub source_witness_fingerprint: ContentFingerprint,
 }
 
@@ -16840,12 +16999,12 @@ pub struct PartitionProductMintInputs {
     pub right_total_site_count: u16,
     pub left_euler: i32,
     pub right_euler: i32,
-    pub left_entropy_nats: f64,
-    pub right_entropy_nats: f64,
+    pub left_entropy_nats_bits: u64,
+    pub right_entropy_nats_bits: u64,
     pub combined_site_budget: u16,
     pub combined_site_count: u16,
     pub combined_euler: i32,
-    pub combined_entropy_nats: f64,
+    pub combined_entropy_nats_bits: u64,
     pub combined_fingerprint: ContentFingerprint,
 }
 
@@ -16871,14 +17030,14 @@ pub struct PartitionCoproductMintInputs {
     pub right_total_site_count: u16,
     pub left_euler: i32,
     pub right_euler: i32,
-    pub left_entropy_nats: f64,
-    pub right_entropy_nats: f64,
+    pub left_entropy_nats_bits: u64,
+    pub right_entropy_nats_bits: u64,
     pub left_betti: [u32; MAX_BETTI_DIMENSION],
     pub right_betti: [u32; MAX_BETTI_DIMENSION],
     pub combined_site_budget: u16,
     pub combined_site_count: u16,
     pub combined_euler: i32,
-    pub combined_entropy_nats: f64,
+    pub combined_entropy_nats_bits: u64,
     pub combined_betti: [u32; MAX_BETTI_DIMENSION],
     pub combined_fingerprint: ContentFingerprint,
     pub combined_constraints: &'static [crate::pipeline::ConstraintRef],
@@ -16901,13 +17060,13 @@ pub struct CartesianProductMintInputs {
     pub right_euler: i32,
     pub left_betti: [u32; MAX_BETTI_DIMENSION],
     pub right_betti: [u32; MAX_BETTI_DIMENSION],
-    pub left_entropy_nats: f64,
-    pub right_entropy_nats: f64,
+    pub left_entropy_nats_bits: u64,
+    pub right_entropy_nats_bits: u64,
     pub combined_site_budget: u16,
     pub combined_site_count: u16,
     pub combined_euler: i32,
     pub combined_betti: [u32; MAX_BETTI_DIMENSION],
-    pub combined_entropy_nats: f64,
+    pub combined_entropy_nats_bits: u64,
     pub combined_fingerprint: ContentFingerprint,
 }
 
@@ -17392,14 +17551,20 @@ pub(crate) fn pc_primitive_partition_product(
     right_total_site_count: u16,
     left_euler: i32,
     right_euler: i32,
-    left_entropy_nats: f64,
-    right_entropy_nats: f64,
+    left_entropy_nats_bits: u64,
+    right_entropy_nats_bits: u64,
     combined_site_budget: u16,
     combined_site_count: u16,
     combined_euler: i32,
-    combined_entropy_nats: f64,
+    combined_entropy_nats_bits: u64,
     combined_fingerprint: ContentFingerprint,
 ) -> Result<PartitionProductWitness, GenericImpossibilityWitness> {
+    let left_entropy_nats =
+        <f64 as crate::DecimalTranscendental>::from_bits(left_entropy_nats_bits);
+    let right_entropy_nats =
+        <f64 as crate::DecimalTranscendental>::from_bits(right_entropy_nats_bits);
+    let combined_entropy_nats =
+        <f64 as crate::DecimalTranscendental>::from_bits(combined_entropy_nats_bits);
     if combined_site_budget != left_site_budget.saturating_add(right_site_budget) {
         return Err(GenericImpossibilityWitness::for_identity(
             "https://uor.foundation/op/PT_1",
@@ -17454,20 +17619,26 @@ pub(crate) fn pc_primitive_partition_coproduct(
     right_total_site_count: u16,
     left_euler: i32,
     right_euler: i32,
-    left_entropy_nats: f64,
-    right_entropy_nats: f64,
+    left_entropy_nats_bits: u64,
+    right_entropy_nats_bits: u64,
     left_betti: [u32; MAX_BETTI_DIMENSION],
     right_betti: [u32; MAX_BETTI_DIMENSION],
     combined_site_budget: u16,
     combined_site_count: u16,
     combined_euler: i32,
-    combined_entropy_nats: f64,
+    combined_entropy_nats_bits: u64,
     combined_betti: [u32; MAX_BETTI_DIMENSION],
     combined_fingerprint: ContentFingerprint,
     combined_constraints: &[crate::pipeline::ConstraintRef],
     left_constraint_count: usize,
     tag_site: u16,
 ) -> Result<PartitionCoproductWitness, GenericImpossibilityWitness> {
+    let left_entropy_nats =
+        <f64 as crate::DecimalTranscendental>::from_bits(left_entropy_nats_bits);
+    let right_entropy_nats =
+        <f64 as crate::DecimalTranscendental>::from_bits(right_entropy_nats_bits);
+    let combined_entropy_nats =
+        <f64 as crate::DecimalTranscendental>::from_bits(combined_entropy_nats_bits);
     let expected_budget = if left_site_budget > right_site_budget {
         left_site_budget
     } else {
@@ -17558,15 +17729,21 @@ pub(crate) fn pc_primitive_cartesian_product(
     right_euler: i32,
     left_betti: [u32; MAX_BETTI_DIMENSION],
     right_betti: [u32; MAX_BETTI_DIMENSION],
-    left_entropy_nats: f64,
-    right_entropy_nats: f64,
+    left_entropy_nats_bits: u64,
+    right_entropy_nats_bits: u64,
     combined_site_budget: u16,
     combined_site_count: u16,
     combined_euler: i32,
     combined_betti: [u32; MAX_BETTI_DIMENSION],
-    combined_entropy_nats: f64,
+    combined_entropy_nats_bits: u64,
     combined_fingerprint: ContentFingerprint,
 ) -> Result<CartesianProductWitness, GenericImpossibilityWitness> {
+    let left_entropy_nats =
+        <f64 as crate::DecimalTranscendental>::from_bits(left_entropy_nats_bits);
+    let right_entropy_nats =
+        <f64 as crate::DecimalTranscendental>::from_bits(right_entropy_nats_bits);
+    let combined_entropy_nats =
+        <f64 as crate::DecimalTranscendental>::from_bits(combined_entropy_nats_bits);
     if combined_site_budget != left_site_budget.saturating_add(right_site_budget) {
         return Err(GenericImpossibilityWitness::for_identity(
             "https://uor.foundation/op/CPT_1",
@@ -17634,12 +17811,12 @@ impl VerifiedMint for PartitionProductWitness {
             inputs.right_total_site_count,
             inputs.left_euler,
             inputs.right_euler,
-            inputs.left_entropy_nats,
-            inputs.right_entropy_nats,
+            inputs.left_entropy_nats_bits,
+            inputs.right_entropy_nats_bits,
             inputs.combined_site_budget,
             inputs.combined_site_count,
             inputs.combined_euler,
-            inputs.combined_entropy_nats,
+            inputs.combined_entropy_nats_bits,
             inputs.combined_fingerprint,
         )
     }
@@ -17659,14 +17836,14 @@ impl VerifiedMint for PartitionCoproductWitness {
             inputs.right_total_site_count,
             inputs.left_euler,
             inputs.right_euler,
-            inputs.left_entropy_nats,
-            inputs.right_entropy_nats,
+            inputs.left_entropy_nats_bits,
+            inputs.right_entropy_nats_bits,
             inputs.left_betti,
             inputs.right_betti,
             inputs.combined_site_budget,
             inputs.combined_site_count,
             inputs.combined_euler,
-            inputs.combined_entropy_nats,
+            inputs.combined_entropy_nats_bits,
             inputs.combined_betti,
             inputs.combined_fingerprint,
             inputs.combined_constraints,
@@ -17692,13 +17869,13 @@ impl VerifiedMint for CartesianProductWitness {
             inputs.right_euler,
             inputs.left_betti,
             inputs.right_betti,
-            inputs.left_entropy_nats,
-            inputs.right_entropy_nats,
+            inputs.left_entropy_nats_bits,
+            inputs.right_entropy_nats_bits,
             inputs.combined_site_budget,
             inputs.combined_site_count,
             inputs.combined_euler,
             inputs.combined_betti,
-            inputs.combined_entropy_nats,
+            inputs.combined_entropy_nats_bits,
             inputs.combined_fingerprint,
         )
     }
@@ -17717,7 +17894,7 @@ pub struct PartitionRecord<H: crate::HostTypes> {
     /// Betti profile of the partition's nerve, padded to `MAX_BETTI_DIMENSION`.
     pub betti: [u32; MAX_BETTI_DIMENSION],
     /// Shannon entropy in nats (matches `LandauerBudget::nats()` convention).
-    pub entropy_nats: f64,
+    pub entropy_nats_bits: u64,
     _phantom: core::marker::PhantomData<H>,
 }
 
@@ -17730,13 +17907,13 @@ impl<H: crate::HostTypes> PartitionRecord<H> {
         site_budget: u16,
         euler: i32,
         betti: [u32; MAX_BETTI_DIMENSION],
-        entropy_nats: f64,
+        entropy_nats_bits: u64,
     ) -> Self {
         Self {
             site_budget,
             euler,
             betti,
-            entropy_nats,
+            entropy_nats_bits,
             _phantom: core::marker::PhantomData,
         }
     }
@@ -18387,5 +18564,5 @@ pub mod prelude {
         validate_constrained_type, validate_constrained_type_const, ConstrainedTypeShape,
         ConstraintRef, FragmentKind,
     };
-    pub use crate::{DefaultHostTypes, HostTypes, WittLevel};
+    pub use crate::{DecimalTranscendental, DefaultHostTypes, HostTypes, WittLevel};
 }

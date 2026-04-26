@@ -20,12 +20,18 @@
 //! accessors don't reflect the minted values.
 
 use uor_foundation::enforcement::{
-    calibrations, Calibration, CompileTime, CompileUnit, CompileUnitBuilder, ConstrainedTypeInput,
-    Grounded, IntegerGroundingMap, LandauerBudget, Nanos, Term, UorTime, Validated,
+    calibrations, CompileTime, CompileUnit, CompileUnitBuilder, ConstrainedTypeInput, Grounded,
+    IntegerGroundingMap, Nanos, Term, Validated,
 };
 use uor_foundation::pipeline::{run_const, validate_compile_unit_const};
-use uor_foundation::{VerificationDomain, WittLevel};
+use uor_foundation::{DefaultHostTypes, VerificationDomain, WittLevel};
 use uor_foundation_test_helpers::Fnv1aHasher16;
+
+// Phase 9 pinned the carrier types to `<DefaultHostTypes>` for hand-written
+// behavioral tests that exercise the f64 default-host path.
+type Calibration = uor_foundation::enforcement::Calibration<DefaultHostTypes>;
+type LandauerBudget = uor_foundation::enforcement::LandauerBudget<DefaultHostTypes>;
+type UorTime = uor_foundation::enforcement::UorTime<DefaultHostTypes>;
 
 static SENTINEL_TERMS: &[Term] = &[Term::Literal {
     value: 1,

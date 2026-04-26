@@ -432,6 +432,7 @@ fn generate_lib_rs(ontology: &Ontology) -> String {
     f.line("pub trait DecimalTranscendental:");
     f.line("    Copy");
     f.line("    + Default");
+    f.line("    + core::fmt::Debug");
     f.line("    + PartialEq");
     f.line("    + PartialOrd");
     f.line("    + core::ops::Add<Output = Self>");
@@ -444,6 +445,15 @@ fn generate_lib_rs(ontology: &Ontology) -> String {
          f32 / f64 use `as` widening; downstream impls bring their own promotion.",
     );
     f.line("    fn from_u32(value: u32) -> Self;");
+    f.indented_doc_comment(
+        "Construct from an unsigned 64-bit integer (rewrite-step counts, etc.).",
+    );
+    f.line("    fn from_u64(value: u64) -> Self;");
+    f.indented_doc_comment(
+        "Saturating projection to `u64`. Used by `UorTime::min_wall_clock` to \
+         convert a wall-clock seconds-Decimal into integer nanoseconds.",
+    );
+    f.line("    fn as_u64_saturating(self) -> u64;");
     f.indented_doc_comment("Natural logarithm.");
     f.line("    fn ln(self) -> Self;");
     f.indented_doc_comment("Exponential `e^x`.");
@@ -470,6 +480,21 @@ fn generate_lib_rs(ontology: &Ontology) -> String {
     f.line("    #[inline]");
     f.line("    fn from_u32(value: u32) -> Self {");
     f.line("        f64::from(value)");
+    f.line("    }");
+    f.line("    #[inline]");
+    f.line("    fn from_u64(value: u64) -> Self {");
+    f.line("        // u64 -> f64 is lossy above 2^53; documented at use sites.");
+    f.line("        value as f64");
+    f.line("    }");
+    f.line("    #[inline]");
+    f.line("    fn as_u64_saturating(self) -> u64 {");
+    f.line("        if self.partial_cmp(&0.0).is_none_or(|o| o.is_lt()) {");
+    f.line("            return 0;");
+    f.line("        }");
+    f.line("        if self >= u64::MAX as f64 {");
+    f.line("            return u64::MAX;");
+    f.line("        }");
+    f.line("        self as u64");
     f.line("    }");
     f.line("    #[inline]");
     f.line("    fn ln(self) -> Self {");
@@ -499,6 +524,21 @@ fn generate_lib_rs(ontology: &Ontology) -> String {
     f.line("        // u32 -> f32 is lossy at high values; this is the documented");
     f.line("        // host-default behavior for arithmetic constants.");
     f.line("        value as f32");
+    f.line("    }");
+    f.line("    #[inline]");
+    f.line("    fn from_u64(value: u64) -> Self {");
+    f.line("        // u64 -> f32 is lossy above 2^24; documented at use sites.");
+    f.line("        value as f32");
+    f.line("    }");
+    f.line("    #[inline]");
+    f.line("    fn as_u64_saturating(self) -> u64 {");
+    f.line("        if self.partial_cmp(&0.0).is_none_or(|o| o.is_lt()) {");
+    f.line("            return 0;");
+    f.line("        }");
+    f.line("        if self >= u64::MAX as f32 {");
+    f.line("            return u64::MAX;");
+    f.line("        }");
+    f.line("        self as u64");
     f.line("    }");
     f.line("    #[inline]");
     f.line("    fn ln(self) -> Self {");
@@ -627,11 +667,51 @@ fn generate_lib_rs(ontology: &Ontology) -> String {
     f.line("#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]");
     f.line("pub struct DefaultHostTypes;");
     f.blank();
+    // Phase 9 (orphan-closure): IEEE-754 bit-pattern constants for the
+    // physical / numerical literals that previously appeared as `: f64`
+    // hardcodes throughout the foundation. Use sites convert to
+    // `H::Decimal` via `DecimalTranscendental::from_bits`.
+    f.doc_comment("π · ℏ = `core::f64::consts::PI * 1.054_571_817e-34` J·s, in IEEE-754 bits.");
+    f.doc_comment("Half of one orthogonal-state-transition Margolus-Levitin bound.");
+    f.line("pub const PI_TIMES_H_BAR_BITS: u64 =");
+    f.line("    f64::to_bits(core::f64::consts::PI * 1.054_571_817e-34_f64);");
+    f.blank();
+    f.doc_comment(
+        "Nanoseconds per second (`1.0e9`) in IEEE-754 bits. Used by `UorTime::min_wall_clock`.",
+    );
+    f.line("pub const NANOS_PER_SECOND_BITS: u64 = f64::to_bits(1.0e9_f64);");
+    f.blank();
+    f.doc_comment(
+        "Natural logarithm of 2, in IEEE-754 bits. Drives the Landauer bit-erasure unit.",
+    );
+    f.line("pub const LN_2_BITS: u64 = f64::to_bits(core::f64::consts::LN_2);");
+    f.blank();
+
+    // Calibration plausibility envelope, encoded as bit patterns. The
+    // physical interpretation is documented at the consumer site
+    // (`Calibration::new`).
+    f.doc_comment("Lower bound for `Calibration::k_b_t` (1e-30 J), in IEEE-754 bits.");
+    f.line("pub const CALIBRATION_KBT_LO_BITS: u64 = f64::to_bits(1.0e-30_f64);");
+    f.blank();
+    f.doc_comment("Upper bound for `Calibration::k_b_t` (1e-15 J), in IEEE-754 bits.");
+    f.line("pub const CALIBRATION_KBT_HI_BITS: u64 = f64::to_bits(1.0e-15_f64);");
+    f.blank();
+    f.doc_comment("Upper bound for `Calibration::thermal_power` (1e9 W), in IEEE-754 bits.");
+    f.line("pub const CALIBRATION_THERMAL_POWER_HI_BITS: u64 = f64::to_bits(1.0e9_f64);");
+    f.blank();
+    f.doc_comment(
+        "Upper bound for `Calibration::characteristic_energy` (1e3 J), in IEEE-754 bits.",
+    );
+    f.line("pub const CALIBRATION_CHAR_ENERGY_HI_BITS: u64 = f64::to_bits(1.0e3_f64);");
+    f.blank();
+
     f.line("impl HostTypes for DefaultHostTypes {");
     f.line("    type Decimal = f64;");
     f.line("    type HostString = str;");
     f.line("    type WitnessBytes = [u8];");
-    f.line("    const EMPTY_DECIMAL: f64 = 0.0;");
+    // `Self::Decimal` resolves to f64 inside this impl; the literal `0.0`");
+    // type-infers against it. No `: f64` syntax appears in source.");
+    f.line("    const EMPTY_DECIMAL: Self::Decimal = 0.0;");
     f.line("    const EMPTY_HOST_STRING: &'static str = \"\";");
     f.line("    const EMPTY_WITNESS_BYTES: &'static [u8] = &[];");
     f.line("}");

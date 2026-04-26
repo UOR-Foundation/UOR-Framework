@@ -17,9 +17,9 @@
 #![allow(clippy::unwrap_used, clippy::expect_used, clippy::panic)]
 
 use uor_foundation::enforcement::{
-    calibrations, combinators, Calibration, CompileTime, CompileUnit, CompileUnitBuilder,
-    ConstrainedTypeInput, ContentAddress, DigestGroundingMap, Grounded, GroundingCertificate,
-    GroundingProgram, IntegerGroundingMap, MulContext, MultiplicationCertificate, Term, Validated,
+    calibrations, combinators, CompileTime, CompileUnit, CompileUnitBuilder, ConstrainedTypeInput,
+    ContentAddress, DigestGroundingMap, Grounded, GroundingCertificate, GroundingProgram,
+    IntegerGroundingMap, MulContext, MultiplicationCertificate, Term, Validated,
     MAX_BETTI_DIMENSION,
 };
 use uor_foundation::pipeline::{
@@ -28,8 +28,11 @@ use uor_foundation::pipeline::{
     InteractionDeclaration, InteractionDriver, ParallelDeclaration, PeerInput, PeerPayload,
     StepResult, StreamDeclaration, StreamDriver,
 };
-use uor_foundation::{VerificationDomain, WittLevel};
+use uor_foundation::{DefaultHostTypes, VerificationDomain, WittLevel};
 use uor_foundation_test_helpers::{validated_runtime, Fnv1aHasher16};
+
+// Phase 9 pinned: hand-written tests exercise the default-host (f64) path.
+type Calibration = uor_foundation::enforcement::Calibration<DefaultHostTypes>;
 
 /// v0.2.2 T6: shared sentinel terms + domains for tests that build
 /// fully-specified CompileUnits via the runtime `validate()` path.
@@ -138,7 +141,7 @@ fn phase_e_run_const_grounded_metrics_differ_by_witt_level() {
     assert_ne!(g_w8.betti().as_array(), g_w32.betti().as_array());
 
     // sigma is computed as bound_sites / declared_sites.
-    let _: f64 = g_w8.sigma().as_f64();
+    let _: f64 = g_w8.sigma().value();
 
     // residual() = declared - bound; W8 vs W32 differ.
     assert_ne!(g_w8.residual().as_u32(), g_w32.residual().as_u32());
