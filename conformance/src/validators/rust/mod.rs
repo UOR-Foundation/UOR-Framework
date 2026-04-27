@@ -6,6 +6,7 @@
 pub mod all_features_build_check;
 pub mod alloc_build_check;
 pub mod api;
+pub mod blanket_impls_exempt;
 pub mod bridge_enforcement;
 pub mod bridge_namespace_completion;
 pub mod calibration_presets_valid;

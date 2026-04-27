@@ -103,6 +103,12 @@ impl RustFile {
 /// written instead — the conformance suite's formatting validator will
 /// surface the regression.
 ///
+/// Phase 11c: if the file already exists and its first non-blank line
+/// is `// @codegen-exempt`, the file is preserved verbatim — codegen
+/// does not overwrite hand-written sources marked with this banner.
+/// Used for `foundation/src/blanket_impls.rs` (Phase 11e) and any other
+/// hand-maintained source that lives alongside generated code.
+///
 /// # Errors
 ///
 /// Returns an error if the directory cannot be created or the file cannot be written.
@@ -111,6 +117,15 @@ pub fn write_file(path: &Path, content: &str) -> Result<()> {
         std::fs::create_dir_all(parent)
             .with_context(|| format!("Failed to create directory: {}", parent.display()))?;
     }
+
+    // Phase 11c — preserve `@codegen-exempt` files. Reading the existing
+    // file and checking for the banner is cheaper than a syscall race;
+    // only the first non-blank line is consulted so mid-file comments
+    // can't trigger preservation accidentally.
+    if path.exists() && is_codegen_exempt(path) {
+        return Ok(());
+    }
+
     let final_content = if path.extension().is_some_and(|ext| ext == "rs") {
         format_rust_source(content).unwrap_or_else(|_| content.to_string())
     } else {
@@ -119,6 +134,24 @@ pub fn write_file(path: &Path, content: &str) -> Result<()> {
     std::fs::write(path, final_content)
         .with_context(|| format!("Failed to write: {}", path.display()))?;
     Ok(())
+}
+
+/// Phase 11c — true iff `path` starts with the `// @codegen-exempt`
+/// banner. Reads only the first ~256 bytes; missing-file / read-error
+/// returns `false` so non-existent paths pass through to the writer.
+fn is_codegen_exempt(path: &Path) -> bool {
+    let body = match std::fs::read_to_string(path) {
+        Ok(b) => b,
+        Err(_) => return false,
+    };
+    for line in body.lines() {
+        let trimmed = line.trim();
+        if trimmed.is_empty() {
+            continue;
+        }
+        return trimmed.starts_with("// @codegen-exempt");
+    }
+    false
 }
 
 /// Pipes `source` through `rustfmt --emit stdout`. Returns the formatted

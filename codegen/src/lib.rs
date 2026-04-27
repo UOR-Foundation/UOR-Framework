@@ -401,6 +401,12 @@ fn generate_lib_rs(ontology: &Ontology) -> String {
 
     f.line("#![no_std]");
     f.blank();
+    // Phase 11d — `pub mod blanket_impls;` lands in the generated lib.rs
+    // so the hand-written `@codegen-exempt`-banner-protected file at
+    // `foundation/src/blanket_impls.rs` is exposed to crate consumers.
+    // Phase 11c's emit::write_file banner check preserves the file
+    // across `uor-crate` regeneration runs.
+    f.line("pub mod blanket_impls;");
     f.line("pub mod bridge;");
     f.line("pub mod enforcement;");
     f.line("pub mod enums;");

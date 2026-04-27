@@ -598,3 +598,15 @@ symbols = [
     "witness_scaffolds",
 ]
 behavior = "phase10_witness_scaffolds"
+
+# ─── Mapping: Phase 11 — Path-3 blanket impls. The `blanket_impls`
+# module hosts hand-written `Validated<T, Phase>` blanket impls for
+# the Path-3-allow-listed observable classes (LandauerBudget,
+# JacobianObservable, CarryDepthObservable, DerivationDepthObservable,
+# FreeRankObservable). The file is `@codegen-exempt` per Phase 11c;
+# the blanket_impls_exempt validator gates the banner.
+[coverage.phase11_blanket_impls]
+symbols = [
+    "blanket_impls",
+]
+behavior = "phase11_blanket_impls"

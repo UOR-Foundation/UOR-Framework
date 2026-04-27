@@ -2,6 +2,50 @@
 
 All notable changes to UOR-Framework are documented in this file.
 
+## Phase 11 — Path-3 blanket impls + `@codegen-exempt` banner — 2026-04-27
+
+Closes the Path-3 leg of the orphan-closure plan. Five observable
+traits (`LandauerBudget`, `JacobianObservable`, `CarryDepthObservable`,
+`DerivationDepthObservable`, `FreeRankObservable`) gain hand-written
+blanket impls on `Validated<T, Phase>` in
+`foundation/src/blanket_impls.rs`. The two supertraits (`Observable`,
+`ThermoObservable`) get matching closure impls. Phase 11c adds
+`@codegen-exempt` banner preservation in `emit::write_file` so the
+hand-written file survives `uor-crate` regeneration. Conformance
+reports **541 passed, 0 warnings, 0 failed**.
+
+### Breaking
+
+- None. Phase 7 Null stubs and Phase 8 Resolved wrappers remain in
+  place for every Path-3-promoted class; the new blanket impl on
+  `Validated<T, Phase>` is additive and lives in a separate file.
+
+### Additive
+
+- `pub mod blanket_impls` in the generated `foundation/src/lib.rs`.
+  The module's source is hand-written at
+  `foundation/src/blanket_impls.rs`; the file's first non-blank line
+  is `// @codegen-exempt`, which `emit::write_file` (Phase 11c) now
+  honours by skipping overwrites.
+- `PATH3_ALLOW_LIST` in `uor_codegen::classification` populated with 5
+  IRI/primitive pairs, each grep-verified against the foundation
+  source. R13 loud-failure: missing primitive = red
+  `path3_primitive_backing` test.
+- `CLASSIFICATION_PATH3 = 5` (was `0`); `CLASSIFICATION_PATH1 = 413`
+  (was `418`). Phase 11 reclassifies the 5 observables; their Phase-7
+  Null stubs and Phase-8 Resolved wrappers continue emitting because
+  Phase 11 broadens the gates in `traits::should_emit_null_stub` and
+  `resolved_wrapper::generate_resolved_module` to admit
+  `PathKind::Path3PrimitiveBacked` alongside `Path1HandleResolver`.
+- New conformance gate `rust/blanket_impls_exempt` — verifies the
+  banner and the 7 required impls (Observable, ThermoObservable, and
+  5 Path-3 leaf traits) on `Validated<T, Phase>`. Adds 1 to
+  `CONFORMANCE_CHECKS` (540 → 541).
+- Codegen tests `path3_primitive_backing` (R13) and
+  `blanket_impls_exempt` (banner preservation behavior).
+- CLAUDE.md gains an exception note carving `blanket_impls.rs` out of
+  the "never hand-edit `foundation/src/`" rule.
+
 ## Phase 10 — Path-2 VerifiedMint witness scaffolds — 2026-04-27
 
 Closes the Path-2 leg of the orphan-closure plan. For every

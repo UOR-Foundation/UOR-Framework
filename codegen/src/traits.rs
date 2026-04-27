@@ -397,10 +397,16 @@ fn should_emit_null_stub(
         return false;
     }
     let path_kind = crate::classification::classify(class, ontology).path_kind;
+    // Phase 11: Path-3 (primitive-backed) classes ALSO get a Null stub.
+    // The Null stub closes the orphan for resolver-absent contexts;
+    // the Phase-11 hand-written blanket impl on `Validated<T, Phase>`
+    // closes it for primitive-backed contexts. Both coexist via
+    // mutually-disjoint concrete carriers.
     matches!(
         path_kind,
         crate::classification::PathKind::Path1HandleResolver
             | crate::classification::PathKind::Path2TheoremWitness { .. }
+            | crate::classification::PathKind::Path3PrimitiveBacked { .. }
             | crate::classification::PathKind::Path4TheoryDeferred
     )
 }

@@ -335,11 +335,49 @@ fn static_local_name_str(iri: &str) -> &str {
     iri
 }
 
-/// Explicit Path-3 allow-list, keyed by class local name. Each entry names
-/// the `primitive_*` function the Phase-4 blanket impl will delegate to.
-/// R13: this list is empty at Phase 0 close — Phase 4 populates it as
-/// blanket impls land.
-const PATH3_ALLOW_LIST: &[(&str, &str)] = &[];
+/// Phase 11a: explicit Path-3 allow-list, keyed by **full class IRI** so
+/// that namespace-collision doesn't break R13 verification. Each entry
+/// names the `primitive_*` function in `foundation/src/enforcement.rs` or
+/// `foundation/src/pipeline.rs` that the hand-written blanket impl in
+/// `foundation/src/blanket_impls.rs` delegates to.
+///
+/// R13 loud-failure: every entry's primitive must exist; verified by
+/// `codegen/tests/path3_primitive_backing.rs` against grep of the
+/// foundation source. Adding an entry without its primitive is a red
+/// test.
+pub const PATH3_ALLOW_LIST: &[(&str, &str)] = &[
+    // observable:LandauerBudget — landauer_nats accessor backed by
+    // primitive_descent_metrics's u64 entropy bits + Phase 9c
+    // `<H::Decimal as DecimalTranscendental>::from_bits`.
+    (
+        "https://uor.foundation/observable/LandauerBudget",
+        "primitive_descent_metrics",
+    ),
+    // observable:JacobianObservable — Observable marker; the per-site
+    // Jacobian is computed by primitive_curvature_jacobian.
+    (
+        "https://uor.foundation/observable/JacobianObservable",
+        "primitive_curvature_jacobian",
+    ),
+    // carry:CarryDepthObservable — Observable marker; depth via
+    // primitive_dihedral_signature's orbit-size return.
+    (
+        "https://uor.foundation/carry/CarryDepthObservable",
+        "primitive_dihedral_signature",
+    ),
+    // derivation:DerivationDepthObservable — Observable marker; depth
+    // via primitive_terminal_reduction's reduction-step count.
+    (
+        "https://uor.foundation/derivation/DerivationDepthObservable",
+        "primitive_terminal_reduction",
+    ),
+    // partition:FreeRankObservable — Observable marker; free-rank
+    // residual is primitive_descent_metrics's u32 first return.
+    (
+        "https://uor.foundation/partition/FreeRankObservable",
+        "primitive_descent_metrics",
+    ),
+];
 
 // ─── Classification ──────────────────────────────────────────────────────
 
@@ -416,10 +454,9 @@ pub fn classify(class: &Class, ontology: &Ontology) -> ClassificationEntry {
     // 5. Path3PrimitiveBacked — explicit allow-list only (R13 loud failure
     //    for mismatches is enforced by the Phase-0 tests: any allow-list
     //    entry whose primitive is absent fails classification_counts).
-    if let Some((_, prim)) = PATH3_ALLOW_LIST
-        .iter()
-        .find(|(name, _)| *name == class_local)
-    {
+    //    Phase 11a: keyed by full class IRI so cross-namespace local-name
+    //    collisions don't accidentally pick the wrong class.
+    if let Some((_, prim)) = PATH3_ALLOW_LIST.iter().find(|(iri, _)| *iri == class_iri) {
         return ClassificationEntry {
             class_iri,
             class_local,

@@ -129,9 +129,15 @@ pub fn emit_resolved_wrappers_for_namespace(
             continue;
         }
         let path_kind = crate::classification::classify(class, ontology).path_kind;
+        // Phase 11: Path-3 (primitive-backed) classes ALSO get the
+        // Phase-8 Handle / Resolver / Record / Resolved scaffold —
+        // the primitive backing is an additional impl on top, not a
+        // substitute. Drop only Skip / AlreadyImplemented / Path-2 /
+        // Path-4 from the Phase-8 emission.
         if !matches!(
             path_kind,
             crate::classification::PathKind::Path1HandleResolver
+                | crate::classification::PathKind::Path3PrimitiveBacked { .. }
         ) {
             continue;
         }

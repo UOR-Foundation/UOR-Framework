@@ -122,6 +122,7 @@
 
 #![no_std]
 
+pub mod blanket_impls;
 pub mod bridge;
 pub mod enforcement;
 pub mod enums;

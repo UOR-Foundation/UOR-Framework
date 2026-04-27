@@ -176,7 +176,12 @@ pub const SHACL_TESTS: usize = 283;
 /// `Certificate` + `OntologyVerifiedMint` scaffold in
 /// `foundation/src/witness_scaffolds.rs` and a per-family primitive
 /// stub module under `foundation/src/primitives/`.
-pub const CONFORMANCE_CHECKS: usize = 540;
+/// Phase 11c (orphan-closure): +1 `rust/blanket_impls_exempt` — asserts
+/// `foundation/src/blanket_impls.rs` exists, carries the
+/// `// @codegen-exempt` banner, and contains every Path-3-allow-listed
+/// blanket impl (Observable/ThermoObservable supertraits + 5 leaf
+/// traits) on `Validated<T, Phase>`.
+pub const CONFORMANCE_CHECKS: usize = 541;
 
 /// Number of amendments applied to the base ontology.
 pub const AMENDMENTS: usize = 95;
@@ -328,16 +333,24 @@ pub const CLASSIFICATION_ALREADY_IMPLEMENTED: usize = 4;
 
 /// Path 1 — pure-accessor-bundle classes closed by the Phase 2
 /// `{Foo}Handle` + `{Foo}Resolver` + `Resolved{Foo}` codegen rule.
-pub const CLASSIFICATION_PATH1: usize = 418;
+///
+/// Phase 11a (orphan-closure): five observables move from Path 1 to
+/// Path 3 (LandauerBudget, JacobianObservable, CarryDepthObservable,
+/// DerivationDepthObservable, FreeRankObservable). Their Phase-7 Null
+/// stubs and Phase-8 Resolved wrappers stay in place; Phase 11 adds
+/// the `Validated<T, Phase>` blanket impl on top.
+pub const CLASSIFICATION_PATH1: usize = 413;
 
 /// Path 2 — theorem-witness classes closed by the Phase 3
 /// `{Foo}Witness` + `{Foo}MintInputs` + `impl VerifiedMint` codegen
 /// rule.
 pub const CLASSIFICATION_PATH2: usize = 10;
 
-/// Path 3 — primitive-backed classes closed by the Phase 4 hand-written
-/// blanket impls. Empty at Phase 0 close; populated as Phase 4 lands.
-pub const CLASSIFICATION_PATH3: usize = 0;
+/// Path 3 — primitive-backed classes closed by Phase 11 hand-written
+/// blanket impls in `foundation/src/blanket_impls.rs`. Phase 11a
+/// populates the allow-list with five observables backed by existing
+/// `primitive_*` functions in `foundation/src/enforcement.rs`.
+pub const CLASSIFICATION_PATH3: usize = 5;
 
 /// Path 4 — theory-deferred classes (cohomology / operad / parallel /
 /// stream) annotated by Phase 6. Correctly orphan by design.

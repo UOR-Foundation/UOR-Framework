@@ -22,6 +22,7 @@ Rust workspace encoding the UOR Foundation ontology as typed data structures, a 
 ## Critical rules
 
 - **Never hand-edit `foundation/src/` or `lean4/`** — they are regenerated from `spec/` by `uor-crate` and `uor-lean`. CI enforces `git diff --exit-code` on both.
+  - **Exception (Phase 11):** `foundation/src/blanket_impls.rs` is hand-written and starts with `// @codegen-exempt`. The codegen `emit::write_file` preserves files carrying that banner; the `rust/blanket_impls_exempt` conformance gate enforces both the banner and the required Path-3 blanket impls.
 - **On release**, Lean 4 cloud release builds are uploaded via `lake upload`. Lean Reservoir indexes this repo directly (root `lakefile.lean` + `lake-manifest.json`).
 - **All clippy warnings are errors.** CI runs `cargo clippy --all-targets -- -D warnings`.
 - **Every crate denies:** `clippy::unwrap_used`, `clippy::expect_used`, `clippy::panic`, `missing_docs`, `clippy::missing_errors_doc`.

@@ -190,6 +190,13 @@ pub fn run_all(paths: &WorkspacePaths) -> anyhow::Result<ConformanceReport> {
     report.extend(validators::rust::witness_scaffold_surface::validate(
         &paths.workspace,
     )?);
+    // Phase 11c (orphan-closure): blanket_impls.rs presence + banner
+    // discipline. Hand-written file lives at
+    // `foundation/src/blanket_impls.rs`; `// @codegen-exempt` banner
+    // gates emit::write_file's preservation logic.
+    report.extend(validators::rust::blanket_impls_exempt::validate(
+        &paths.workspace,
+    )?);
     // v0.2.2 Phase H: lints + cross-cutting.
     report.extend(validators::rust::feature_flag_layout::validate(
         &paths.workspace,

@@ -286,6 +286,7 @@ foundation/src/lib.rs: const CALIBRATION_THERMAL_POWER_HI_BITS
 foundation/src/lib.rs: const LN_2_BITS
 foundation/src/lib.rs: const NANOS_PER_SECOND_BITS
 foundation/src/lib.rs: const PI_TIMES_H_BAR_BITS
+foundation/src/lib.rs: mod blanket_impls
 foundation/src/lib.rs: mod bridge
 foundation/src/lib.rs: mod enforcement
 foundation/src/lib.rs: mod enums
