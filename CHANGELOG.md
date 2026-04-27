@@ -2,6 +2,49 @@
 
 All notable changes to UOR-Framework are documented in this file.
 
+## Phase 13 — Cross-cutting orphan-closure infrastructure — 2026-04-27
+
+Closes the orphan-closure plan's cross-cutting infrastructure leg. The
+existing `rust/orphan_counts` validator upgrades from minimum-viable
+to classifier-integrated, surfacing per-category closure counts and
+cross-checking Phase-0 classification predictions against the live
+impl surface. New `rust/taxonomy_coverage` validator gates the Phase-0
+report's parity with the live classifier. New
+`emit::load_doc_fragment` helper backs Phase 13b's incremental
+migration from inline `f.doc_comment("…")` calls to phase-doc
+fragments. Conformance reports **543 passed, 0 warnings, 0 failed**.
+
+### Breaking
+
+- None. The orphan_counts validator's pass/fail logic is strictly more
+  informative; existing closures continue to pass.
+
+### Additive
+
+- `rust/orphan_counts` now reports per-category breakdown
+  (`null_stub`, `resolved_wrapper`, `validated_blanket`,
+  `verified_mint`, `hand_written`) and runs a classifier cross-check:
+  every Path-1 class has both a Null stub and a Resolved wrapper,
+  every Path-2 class has a Null stub, every Path-3 class adds a
+  `Validated<T, Phase>` blanket impl, every Path-4 class has the
+  Phase-7d `#[doc(hidden)]` Null stub. Cross-namespace `*Resolver`
+  classes are exempt (host-implemented per Phase 8 design).
+- `rust/taxonomy_coverage` validator — asserts the Phase-0 report at
+  `docs/orphan-closure/classification_report.md` agrees with the live
+  `classify_all` output (Totals row counts, per-class table presence)
+  and that `spec::counts::CLASSIFICATION_*` constants are in sync.
+- `emit::load_doc_fragment(workspace_root, source_path, key)` —
+  Phase-13b doc-fragment helper. Resolves
+  `<!-- doc-key: {kind}:{name} -->` markers in Markdown phase docs;
+  panics loudly on missing-file / missing-key. Used incrementally as
+  emission sites adopt the helper.
+- New phase doc `docs/orphan-closure/phase-13b-doc-fragments.md`
+  hosting the doc-fragment library + migration registry.
+- New codegen test `phase13b_doc_fragments` exercising the helper's
+  load / heading-terminator / explicit-terminator / panic paths.
+- `CONFORMANCE_CHECKS` 542 → 543 (added `rust/taxonomy_coverage`;
+  `rust/orphan_counts` upgraded in place).
+
 ## Phase 12 — Per-family verify primitives mint successful witnesses — 2026-04-27
 
 Replaces every `WITNESS_UNIMPLEMENTED_STUB:*` Phase-10 stub body with a

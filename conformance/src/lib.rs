@@ -203,6 +203,13 @@ pub fn run_all(paths: &WorkspacePaths) -> anyhow::Result<ConformanceReport> {
     report.extend(validators::rust::phase12_no_stubs::validate(
         &paths.workspace,
     )?);
+    // Phase 13c (orphan-closure): TaxonomyCoverage. Asserts the
+    // Phase-0 classification report matches the live classify_all
+    // output, and that spec::counts::CLASSIFICATION_* constants are
+    // in sync.
+    report.extend(validators::rust::taxonomy_coverage::validate(
+        &paths.workspace,
+    )?);
     // v0.2.2 Phase H: lints + cross-cutting.
     report.extend(validators::rust::feature_flag_layout::validate(
         &paths.workspace,

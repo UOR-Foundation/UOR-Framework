@@ -154,6 +154,74 @@ fn is_codegen_exempt(path: &Path) -> bool {
     false
 }
 
+/// Phase 13b — load a named rustdoc fragment from a Markdown phase doc.
+///
+/// Resolution rules (per `docs/orphan-closure/completion-plan.md` §13b):
+///
+///   * `source_path` is relative to `workspace_root` and must exist.
+///     Missing file ⇒ panic with `load_doc_fragment: file not found`.
+///   * The marker line `<!-- doc-key: {key} -->` (case-sensitive) opens
+///     a fragment. The fragment ends at the next of:
+///       - the next `<!-- doc-key: ... -->` marker
+///       - a Markdown heading (`## ` or `### `)
+///       - the literal `<!-- /doc-key -->` terminator
+///       - end of file
+///   * Returned content has leading/trailing whitespace trimmed but
+///     internal Markdown is preserved verbatim.
+///   * Missing key in present file ⇒ panic with
+///     `load_doc_fragment: missing key '{key}' in {source_path}`.
+///
+/// Phase 13b's full migration of every `f.doc_comment("...")` call to
+/// `load_doc_fragment` lands incrementally — each emission site moves
+/// independently as the corresponding phase-doc fragment is authored.
+/// Until then, this helper is available for new emissions.
+///
+/// # Panics
+///
+/// Per the resolution rules above. Panics surface at codegen time
+/// (running `uor-crate`), so missing fragments are caught before
+/// foundation source is regenerated.
+#[allow(clippy::panic, clippy::missing_panics_doc)]
+#[must_use]
+pub fn load_doc_fragment(workspace_root: &Path, source_path: &str, key: &str) -> String {
+    let full_path = workspace_root.join(source_path);
+    let body = match std::fs::read_to_string(&full_path) {
+        Ok(b) => b,
+        Err(e) => panic!(
+            "load_doc_fragment: file not found: {source_path} ({e}; resolved to {})",
+            full_path.display(),
+        ),
+    };
+    let marker = format!("<!-- doc-key: {key} -->");
+    let start = match body.find(&marker) {
+        Some(idx) => idx + marker.len(),
+        None => panic!("load_doc_fragment: missing key '{key}' in {source_path}"),
+    };
+    let tail = &body[start..];
+    let mut end = tail.len();
+    if let Some(off) = tail.find("<!-- doc-key:") {
+        end = off;
+    }
+    if let Some(off) = tail.find("<!-- /doc-key -->") {
+        if off < end {
+            end = off;
+        }
+    }
+    // Heading terminators — search line-by-line, recording cumulative
+    // byte offset into `tail` to compare with `end` from the marker
+    // searches above.
+    let mut byte_pos = 0usize;
+    for line in tail.lines() {
+        let trimmed = line.trim_start();
+        if (trimmed.starts_with("## ") || trimmed.starts_with("### ")) && byte_pos < end {
+            end = byte_pos;
+            break;
+        }
+        byte_pos += line.len() + 1; // +1 for '\n'
+    }
+    tail[..end].trim().to_string()
+}
+
 /// Pipes `source` through `rustfmt --emit stdout`. Returns the formatted
 /// string, or an error if `rustfmt` exits non-zero / produces no output.
 fn format_rust_source(source: &str) -> Result<String> {

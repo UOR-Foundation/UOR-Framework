@@ -38,6 +38,7 @@ pub mod public_api_snapshot;
 pub mod resolver_tower;
 pub mod style;
 pub mod target_doc;
+pub mod taxonomy_coverage;
 pub mod test_assertion_depth;
 pub mod theory_deferred_register;
 pub mod trace_byte_layout_pinned;

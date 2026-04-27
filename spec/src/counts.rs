@@ -185,7 +185,18 @@ pub const SHACL_TESTS: usize = 283;
 /// `WITNESS_UNIMPLEMENTED_STUB:*` markers remain in
 /// `foundation/src/primitives/*.rs`; every verify_* returns
 /// `Ok(witness)` or a typed `GenericImpossibilityWitness`.
-pub const CONFORMANCE_CHECKS: usize = 542;
+/// Phase 13a (orphan-closure): existing `rust/orphan_counts` validator
+/// upgrades from minimum-viable to classifier-integrated; reports
+/// per-category breakdown (null_stub / resolved_wrapper /
+/// validated_blanket / verified_mint / hand_written) and asserts every
+/// `Path{N}` classification matches its expected impl shape. No new
+/// check added — the existing validator is upgraded in place.
+/// Phase 13c (orphan-closure): +1 `rust/taxonomy_coverage` — asserts
+/// the Phase 0 classification report at
+/// `docs/orphan-closure/classification_report.md` agrees with
+/// `classify_all` and that the `CLASSIFICATION_*` constants in this
+/// file match the live counts.
+pub const CONFORMANCE_CHECKS: usize = 543;
 
 /// Number of amendments applied to the base ontology.
 pub const AMENDMENTS: usize = 95;
