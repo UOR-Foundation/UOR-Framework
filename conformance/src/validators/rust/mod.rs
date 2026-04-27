@@ -31,6 +31,7 @@ pub mod no_std_build_check;
 pub mod orphan_counts;
 pub mod parametric_constraints;
 pub mod phantom_tag;
+pub mod phase12_no_stubs;
 pub mod pipeline_run_threads_input;
 pub mod public_api_functional;
 pub mod public_api_snapshot;

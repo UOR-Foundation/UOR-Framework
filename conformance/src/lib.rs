@@ -197,6 +197,12 @@ pub fn run_all(paths: &WorkspacePaths) -> anyhow::Result<ConformanceReport> {
     report.extend(validators::rust::blanket_impls_exempt::validate(
         &paths.workspace,
     )?);
+    // Phase 12 (orphan-closure): no `WITNESS_UNIMPLEMENTED_STUB:*`
+    // markers remain in foundation/src/primitives/*.rs. Every verify_*
+    // returns Ok(witness) or a typed GenericImpossibilityWitness.
+    report.extend(validators::rust::phase12_no_stubs::validate(
+        &paths.workspace,
+    )?);
     // v0.2.2 Phase H: lints + cross-cutting.
     report.extend(validators::rust::feature_flag_layout::validate(
         &paths.workspace,

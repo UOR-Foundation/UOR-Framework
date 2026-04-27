@@ -181,7 +181,11 @@ pub const SHACL_TESTS: usize = 283;
 /// `// @codegen-exempt` banner, and contains every Path-3-allow-listed
 /// blanket impl (Observable/ThermoObservable supertraits + 5 leaf
 /// traits) on `Validated<T, Phase>`.
-pub const CONFORMANCE_CHECKS: usize = 541;
+/// Phase 12 (orphan-closure): +1 `rust/phase12_no_stubs` — asserts no
+/// `WITNESS_UNIMPLEMENTED_STUB:*` markers remain in
+/// `foundation/src/primitives/*.rs`; every verify_* returns
+/// `Ok(witness)` or a typed `GenericImpossibilityWitness`.
+pub const CONFORMANCE_CHECKS: usize = 542;
 
 /// Number of amendments applied to the base ontology.
 pub const AMENDMENTS: usize = 95;

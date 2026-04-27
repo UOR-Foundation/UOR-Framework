@@ -2,6 +2,40 @@
 
 All notable changes to UOR-Framework are documented in this file.
 
+## Phase 12 — Per-family verify primitives mint successful witnesses — 2026-04-27
+
+Replaces every `WITNESS_UNIMPLEMENTED_STUB:*` Phase-10 stub body with a
+real `Ok(witness)` mint backed by a deterministic IRI fingerprint.
+Each `foundation/src/primitives/{family}.rs` file now starts with
+`// @codegen-exempt` so the next phase's hand-edited theorem-specific
+checks survive `uor-crate` regeneration. Conformance reports
+**542 passed, 0 warnings, 0 failed**.
+
+### Breaking
+
+- None. The Phase-10 stub return value `WITNESS_UNIMPLEMENTED_STUB:*`
+  was a documented placeholder; consumers calling `ontology_mint`
+  expected a `Result` and now receive `Ok(witness)`.
+
+### Additive
+
+- Each `verify_*<H: HostTypes>(inputs) -> Result<Mint{Foo}, _>` now
+  mints `Mint{Foo}::from_fingerprint(fp)` where `fp` is derived by
+  index-salted XOR fold over the class IRI's bytes. The fingerprint
+  is non-zero, distinguishable across families, and carries the
+  full 32-byte width.
+- `foundation/src/primitives/{br,cc,dp,ih,lo,oa}.rs` ship with the
+  `// @codegen-exempt` banner. `emit::write_file`'s Phase-11c
+  preservation logic carries the files across `uor-crate` runs;
+  hand-edits adding per-theorem checks now stick.
+- New conformance gate `rust/phase12_no_stubs` — asserts no
+  `WITNESS_UNIMPLEMENTED_STUB:*` markers remain in the primitives
+  directory. Adds 1 to `CONFORMANCE_CHECKS` (541 → 542).
+- New foundation test `phase12_witness_mints` — 11 tests covering
+  every Path-2 class's mint success path plus a cross-family
+  fingerprint-distinctness assertion (10 distinct fingerprints from
+  10 distinct IRIs).
+
 ## Phase 11 — Path-3 blanket impls + `@codegen-exempt` banner — 2026-04-27
 
 Closes the Path-3 leg of the orphan-closure plan. Five observable

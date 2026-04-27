@@ -105,10 +105,6 @@ impl OntologyVerifiedMint for MintBornRuleVerification {
     }
 }
 
-/// `WITNESS_UNIMPLEMENTED_STUB:https://uor.foundation/cert/BornRuleVerification` marker recorded by the Phase-10 stub.
-pub const MINTBORNRULEVERIFICATION_STUB_MARKER: &str =
-    "WITNESS_UNIMPLEMENTED_STUB:https://uor.foundation/cert/BornRuleVerification";
-
 /// Phase 10 sealed witness for `https://uor.foundation/effect/DisjointnessWitness`. Attests `https://uor.foundation/op/FX_4`.
 /// Carries a single `ContentFingerprint` and a private constructor; mint via `OntologyVerifiedMint::ontology_mint`. Phase 12 fills the primitive body in `crate::primitives::dp::verify_effect_disjointness_witness`.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -174,10 +170,6 @@ impl OntologyVerifiedMint for MintDisjointnessWitness {
         crate::primitives::dp::verify_effect_disjointness_witness::<H>(inputs)
     }
 }
-
-/// `WITNESS_UNIMPLEMENTED_STUB:https://uor.foundation/effect/DisjointnessWitness` marker recorded by the Phase-10 stub.
-pub const MINTDISJOINTNESSWITNESS_STUB_MARKER: &str =
-    "WITNESS_UNIMPLEMENTED_STUB:https://uor.foundation/effect/DisjointnessWitness";
 
 /// Phase 10 sealed witness for `https://uor.foundation/morphism/GroundingWitness`. Attests `https://uor.foundation/op/surfaceSymmetry`.
 /// Carries a single `ContentFingerprint` and a private constructor; mint via `OntologyVerifiedMint::ontology_mint`. Phase 12 fills the primitive body in `crate::primitives::oa::verify_morphism_grounding_witness`.
@@ -245,10 +237,6 @@ impl OntologyVerifiedMint for MintMorphismGroundingWitness {
     }
 }
 
-/// `WITNESS_UNIMPLEMENTED_STUB:https://uor.foundation/morphism/GroundingWitness` marker recorded by the Phase-10 stub.
-pub const MINTMORPHISMGROUNDINGWITNESS_STUB_MARKER: &str =
-    "WITNESS_UNIMPLEMENTED_STUB:https://uor.foundation/morphism/GroundingWitness";
-
 /// Phase 10 sealed witness for `https://uor.foundation/morphism/ProjectionWitness`. Attests `https://uor.foundation/op/surfaceSymmetry`.
 /// Carries a single `ContentFingerprint` and a private constructor; mint via `OntologyVerifiedMint::ontology_mint`. Phase 12 fills the primitive body in `crate::primitives::oa::verify_morphism_projection_witness`.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -314,10 +302,6 @@ impl OntologyVerifiedMint for MintProjectionWitness {
         crate::primitives::oa::verify_morphism_projection_witness::<H>(inputs)
     }
 }
-
-/// `WITNESS_UNIMPLEMENTED_STUB:https://uor.foundation/morphism/ProjectionWitness` marker recorded by the Phase-10 stub.
-pub const MINTPROJECTIONWITNESS_STUB_MARKER: &str =
-    "WITNESS_UNIMPLEMENTED_STUB:https://uor.foundation/morphism/ProjectionWitness";
 
 /// Phase 10 sealed witness for `https://uor.foundation/morphism/Witness`. Attests `https://uor.foundation/op/surfaceSymmetry`.
 /// Carries a single `ContentFingerprint` and a private constructor; mint via `OntologyVerifiedMint::ontology_mint`. Phase 12 fills the primitive body in `crate::primitives::oa::verify_morphism_witness`.
@@ -385,10 +369,6 @@ impl OntologyVerifiedMint for MintWitness {
     }
 }
 
-/// `WITNESS_UNIMPLEMENTED_STUB:https://uor.foundation/morphism/Witness` marker recorded by the Phase-10 stub.
-pub const MINTWITNESS_STUB_MARKER: &str =
-    "WITNESS_UNIMPLEMENTED_STUB:https://uor.foundation/morphism/Witness";
-
 /// Phase 10 sealed witness for `https://uor.foundation/proof/ImpossibilityWitness`. Attests `https://uor.foundation/op/IH_1`.
 /// Carries a single `ContentFingerprint` and a private constructor; mint via `OntologyVerifiedMint::ontology_mint`. Phase 12 fills the primitive body in `crate::primitives::ih::verify_proof_impossibility_witness`.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -454,10 +434,6 @@ impl OntologyVerifiedMint for MintImpossibilityWitness {
         crate::primitives::ih::verify_proof_impossibility_witness::<H>(inputs)
     }
 }
-
-/// `WITNESS_UNIMPLEMENTED_STUB:https://uor.foundation/proof/ImpossibilityWitness` marker recorded by the Phase-10 stub.
-pub const MINTIMPOSSIBILITYWITNESS_STUB_MARKER: &str =
-    "WITNESS_UNIMPLEMENTED_STUB:https://uor.foundation/proof/ImpossibilityWitness";
 
 /// Phase 10 sealed witness for `https://uor.foundation/proof/InhabitanceImpossibilityWitness`. Attests `https://uor.foundation/op/IH_1`.
 /// Carries a single `ContentFingerprint` and a private constructor; mint via `OntologyVerifiedMint::ontology_mint`. Phase 12 fills the primitive body in `crate::primitives::ih::verify_proof_inhabitance_impossibility_witness`.
@@ -525,10 +501,6 @@ impl OntologyVerifiedMint for MintInhabitanceImpossibilityWitness {
     }
 }
 
-/// `WITNESS_UNIMPLEMENTED_STUB:https://uor.foundation/proof/InhabitanceImpossibilityWitness` marker recorded by the Phase-10 stub.
-pub const MINTINHABITANCEIMPOSSIBILITYWITNESS_STUB_MARKER: &str =
-    "WITNESS_UNIMPLEMENTED_STUB:https://uor.foundation/proof/InhabitanceImpossibilityWitness";
-
 /// Phase 10 sealed witness for `https://uor.foundation/state/GroundingWitness`. Attests `https://uor.foundation/op/surfaceSymmetry`.
 /// Carries a single `ContentFingerprint` and a private constructor; mint via `OntologyVerifiedMint::ontology_mint`. Phase 12 fills the primitive body in `crate::primitives::oa::verify_state_grounding_witness`.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -594,10 +566,6 @@ impl OntologyVerifiedMint for MintStateGroundingWitness {
         crate::primitives::oa::verify_state_grounding_witness::<H>(inputs)
     }
 }
-
-/// `WITNESS_UNIMPLEMENTED_STUB:https://uor.foundation/state/GroundingWitness` marker recorded by the Phase-10 stub.
-pub const MINTSTATEGROUNDINGWITNESS_STUB_MARKER: &str =
-    "WITNESS_UNIMPLEMENTED_STUB:https://uor.foundation/state/GroundingWitness";
 
 /// Phase 10 sealed witness for `https://uor.foundation/type/CompletenessWitness`. Attests `https://uor.foundation/op/CC_1`.
 /// Carries a single `ContentFingerprint` and a private constructor; mint via `OntologyVerifiedMint::ontology_mint`. Phase 12 fills the primitive body in `crate::primitives::cc::verify_type_completeness_witness`.
@@ -665,10 +633,6 @@ impl OntologyVerifiedMint for MintCompletenessWitness {
     }
 }
 
-/// `WITNESS_UNIMPLEMENTED_STUB:https://uor.foundation/type/CompletenessWitness` marker recorded by the Phase-10 stub.
-pub const MINTCOMPLETENESSWITNESS_STUB_MARKER: &str =
-    "WITNESS_UNIMPLEMENTED_STUB:https://uor.foundation/type/CompletenessWitness";
-
 /// Phase 10 sealed witness for `https://uor.foundation/type/LiftObstruction`. Attests `https://uor.foundation/op/WLS_2`.
 /// Carries a single `ContentFingerprint` and a private constructor; mint via `OntologyVerifiedMint::ontology_mint`. Phase 12 fills the primitive body in `crate::primitives::lo::verify_type_lift_obstruction`.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -734,7 +698,3 @@ impl OntologyVerifiedMint for MintLiftObstruction {
         crate::primitives::lo::verify_type_lift_obstruction::<H>(inputs)
     }
 }
-
-/// `WITNESS_UNIMPLEMENTED_STUB:https://uor.foundation/type/LiftObstruction` marker recorded by the Phase-10 stub.
-pub const MINTLIFTOBSTRUCTION_STUB_MARKER: &str =
-    "WITNESS_UNIMPLEMENTED_STUB:https://uor.foundation/type/LiftObstruction";

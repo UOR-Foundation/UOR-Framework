@@ -81,22 +81,36 @@ fn primitive_stub_modules_emitted_per_family() {
 }
 
 #[test]
-fn primitive_stubs_return_unimplemented_marker() {
+fn primitive_files_emit_codegen_exempt_banner() {
+    // Phase 12 — primitive bodies are hand-editable and emit a baseline
+    // `Ok(witness)` from a deterministic IRI fingerprint. Each family
+    // file starts with `// @codegen-exempt` so subsequent hand-edits
+    // survive `uor-crate` regeneration runs.
     let ontology = Ontology::full();
     let modules = generate_primitives_modules(ontology);
 
-    // Every emitted family file must return WITNESS_UNIMPLEMENTED_STUB.
     for (path, content) in &modules {
         if path == "primitives/mod.rs" {
             continue;
         }
+        let first_nonblank = content
+            .lines()
+            .find(|l| !l.trim().is_empty())
+            .unwrap_or("");
         assert!(
-            content.contains("WITNESS_UNIMPLEMENTED_STUB:"),
-            "{path} missing WITNESS_UNIMPLEMENTED_STUB marker"
+            first_nonblank.trim().starts_with("// @codegen-exempt"),
+            "{path}: first non-blank line must be `// @codegen-exempt`; got `{first_nonblank}`"
         );
+        // Every primitive must call into `from_fingerprint` after
+        // computing one — Phase 12's baseline mints rather than stubs.
         assert!(
-            content.contains("GenericImpossibilityWitness::for_identity"),
-            "{path} missing GenericImpossibilityWitness::for_identity error"
+            content.contains("from_fingerprint"),
+            "{path} missing `from_fingerprint` mint call"
+        );
+        // No Phase-10 stub residue.
+        assert!(
+            !content.contains("WITNESS_UNIMPLEMENTED_STUB:"),
+            "{path}: Phase-10 WITNESS_UNIMPLEMENTED_STUB marker must be gone after Phase 12"
         );
     }
 }
