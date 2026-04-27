@@ -585,3 +585,16 @@ symbols = [
     "NullTypeDefinition",
 ]
 behavior = "behavior_witness_partition_trait_impls"
+
+# ─── Mapping: Phase 10 — VerifiedMint witness scaffolds + per-family
+# primitive stubs. The `witness_scaffolds` module hosts `Mint{Foo}` /
+# `Mint{Foo}Inputs<H>` / `Certificate` / `OntologyVerifiedMint` for every
+# Path-2 class. The `primitives` module hosts the per-family
+# `verify_*` stubs Phase 12 will fill. Together these close the
+# Path-2 leg of the orphan-closure plan.
+[coverage.phase10_witness_scaffolds]
+symbols = [
+    "primitives",
+    "witness_scaffolds",
+]
+behavior = "phase10_witness_scaffolds"

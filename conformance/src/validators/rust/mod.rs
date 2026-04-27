@@ -43,4 +43,5 @@ pub mod uor_foundation_verify_build;
 pub mod uor_time_surface;
 pub mod verify_trace_round_trip;
 pub mod w4_closure;
+pub mod witness_scaffold_surface;
 pub mod witt_tower_completeness;

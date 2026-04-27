@@ -3841,7 +3841,10 @@ fn generate_ontology_target_trait(f: &mut RustFile, ontology: &Ontology) {
         .chain(witness_shims.iter())
         .chain(input_shims.iter())
         .collect();
-    f.line("mod ontology_target_sealed {");
+    // pub(crate) so Phase 10's witness_scaffolds module can register
+    // its `Mint{Foo}` types as sealed targets without re-defining the
+    // sealed trait. Visibility stays crate-private overall.
+    f.line("pub(crate) mod ontology_target_sealed {");
     f.indented_doc_comment("Private supertrait. Not implementable outside this crate.");
     f.line("    pub trait Sealed {}");
     for (name, _) in &all_shims {
@@ -4045,7 +4048,9 @@ fn generate_ontology_target_trait(f: &mut RustFile, ontology: &Ontology) {
             "()",
         ),
     ];
-    f.line("mod certificate_sealed {");
+    // pub(crate) so Phase 10's witness_scaffolds module can register
+    // its `Mint{Foo}` types as sealed `Certificate` carriers.
+    f.line("pub(crate) mod certificate_sealed {");
     f.indented_doc_comment("Private supertrait. Not implementable outside this crate.");
     f.line("    pub trait Sealed {}");
     for (rust_name, _, _) in all_certs {

@@ -183,6 +183,13 @@ pub fn run_all(paths: &WorkspacePaths) -> anyhow::Result<ConformanceReport> {
     report.extend(validators::rust::host_types_discipline::validate(
         &paths.workspace,
     )?);
+    // Phase 10 (orphan-closure): VerifiedMint witness scaffold surface.
+    // Asserts every Path-2 class has a Mint{Foo} + Mint{Foo}Inputs<H> +
+    // Certificate + OntologyVerifiedMint scaffold and a per-family
+    // primitive stub module emitted to foundation/src/.
+    report.extend(validators::rust::witness_scaffold_surface::validate(
+        &paths.workspace,
+    )?);
     // v0.2.2 Phase H: lints + cross-cutting.
     report.extend(validators::rust::feature_flag_layout::validate(
         &paths.workspace,

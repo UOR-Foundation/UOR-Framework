@@ -2,6 +2,52 @@
 
 All notable changes to UOR-Framework are documented in this file.
 
+## Phase 10 — Path-2 VerifiedMint witness scaffolds — 2026-04-27
+
+Closes the Path-2 leg of the orphan-closure plan. For every
+`Path2TheoremWitness` classification, codegen emits a `Mint{Foo}`
+sealed witness, a `Mint{Foo}Inputs<H>` GAT-keyed input bundle, the
+canonical `Certificate` impl, and an `OntologyVerifiedMint` impl that
+routes to a per-family primitive stub under
+`foundation/src/primitives/{family}.rs`. Phase 12 will replace each
+stub body with a real verification primitive. Conformance reports
+**540 passed, 0 warnings, 0 failed**.
+
+### Breaking
+
+- None. Every Phase-10 emission lands as new public surface; the
+  pre-existing partition-algebra `VerifiedMint` trait, its three
+  amendment witnesses, and the Phase-7 Null stubs are untouched.
+
+### Additive
+
+- `pub trait OntologyVerifiedMint: Certificate` with
+  `type Inputs<H: HostTypes>` GAT, `const THEOREM_IDENTITY: &'static
+  str`, and `fn ontology_mint<H: HostTypes>(inputs) -> Result<Self,
+  GenericImpossibilityWitness>`. Sealed via the `Certificate`
+  supertrait — distinct from `VerifiedMint` which keeps its non-GAT
+  shape for the partition-algebra amendment.
+- `pub mod witness_scaffolds` emits the 10 `Mint{Foo}` scaffolds
+  (cross-namespace name collisions disambiguated by namespace prefix —
+  `MintMorphismGroundingWitness`, `MintStateGroundingWitness`).
+- `pub mod primitives` with `pub mod {br, cc, dp, ih, lo, oa}`. Each
+  hosts one `verify_*<H: HostTypes>(inputs) -> Result<Mint{Foo},
+  GenericImpossibilityWitness>` per Path-2 class, returning
+  `Err(GenericImpossibilityWitness::for_identity("WITNESS_UNIMPLEMENTED_STUB:{IRI}"))`
+  until Phase 12.
+- `enforcement::certificate_sealed` and `enforcement::ontology_target_sealed`
+  raised from `mod` to `pub(crate) mod` so `witness_scaffolds` can
+  register `Mint{Foo}` types as sealed certificate carriers without
+  cracking the seal.
+- Phase 10a resolution algorithm in `uor_codegen::classification`:
+  `THEOREM_FAMILY_PREFIX_MAP` (12 entries), `PATH2_THEOREM_OVERRIDES`
+  (10 entries), `FAMILY_PRIMITIVE_MODULE` (14 entries). Loud panic
+  on missing override per the plan's "Missing override = Phase-0
+  classification fails loud" rule.
+- Phase 10 conformance gate `rust/witness_scaffold_surface` — asserts
+  every Path-2 class has a complete scaffold and per-family stub
+  module. Adds 1 to `CONFORMANCE_CHECKS` (539 → 540).
+
 ## Phase 9 — `DecimalTranscendental` supertrait + f64 closure — 2026-04-26
 
 Bounds `HostTypes::Decimal` on a new `DecimalTranscendental` supertrait

@@ -156,6 +156,185 @@ const ENTROPY_PROPERTY_LABELS: &[&str] = &[
 /// candidate (R7 heuristic #1).
 const THEOREM_WITNESS_SUFFIXES: &[&str] = &["Witness", "Obstruction", "Verification"];
 
+/// Phase 10a: theorem-family prefix map. Each entry pairs a *class local-name
+/// suffix* with the *theorem-family prefix* whose `op:Identity` individuals
+/// constitute the candidate set.
+///
+/// Resolution algorithm (`resolve_theorem_identity`):
+///
+///   1. Walk this table in order; the first matching suffix wins.
+///   2. Enumerate `op:Identity` individuals whose IRI contains the prefix.
+///   3. If exactly one candidate exists, use it.
+///   4. Otherwise (zero, or two-or-more), fall back to
+///      `PATH2_THEOREM_OVERRIDES`. Missing override = loud panic.
+///
+/// Suffixes are checked **longest-first** so that, e.g.,
+/// `InhabitanceImpossibilityWitness` matches `IH_` (via the
+/// `InhabitanceImpossibilityWitness` row) rather than the bare-`Witness`
+/// catch-all in the override table.
+const THEOREM_FAMILY_PREFIX_MAP: &[(&str, &str)] = &[
+    ("CartesianPartitionProduct", "CPT_"),
+    ("PartitionCoproduct", "ST_"),
+    ("PartitionProduct", "PT_"),
+    ("InhabitanceImpossibilityWitness", "IH_"),
+    ("InhabitanceWitness", "IH_"),
+    ("LiftObstruction", "LO_"),
+    ("Obstruction", "OB_"),
+    ("GroundingWitness", "OA_"),
+    ("ProjectionWitness", "OA_"),
+    ("BornRuleVerification", "BR_"),
+    ("CompletenessWitness", "CC_"),
+    ("DisjointnessWitness", "DP_"),
+];
+
+/// Phase 10a: hand-override table, keyed by **full class IRI** (local names
+/// collide across namespaces — `morphism::GroundingWitness` and
+/// `state::GroundingWitness` are distinct).
+///
+/// Each entry maps a Path-2 class to a representative `op:Identity` IRI
+/// when the family-prefix lookup is ambiguous (≥2 candidates) or the family
+/// has no individuals in `op.rs`.
+///
+/// Every IRI here is grep-verified at plan time against
+/// `spec/src/namespaces/op.rs`. The Phase-0 test
+/// `codegen/tests/path2_theorem_linkage.rs` re-verifies at compile time.
+const PATH2_THEOREM_OVERRIDES: &[(&str, &str)] = &[
+    // BR_1..BR_5 exist; pick the canonical Born-rule normalization identity.
+    (
+        "https://uor.foundation/cert/BornRuleVerification",
+        "https://uor.foundation/op/QM_5",
+    ),
+    // CC_1..CC_5 exist; CC_1 is the canonical "completeness implies O(1)"
+    // identity that completeness witnesses attest.
+    (
+        "https://uor.foundation/type/CompletenessWitness",
+        "https://uor.foundation/op/CC_1",
+    ),
+    // DP_ family does not yet exist. Reuse op:FX_4 ("Disjoint effects
+    // commute") whose `forAll` literally references DisjointnessWitness.
+    (
+        "https://uor.foundation/effect/DisjointnessWitness",
+        "https://uor.foundation/op/FX_4",
+    ),
+    // OA_1..OA_5 + op:surfaceSymmetry exist. surfaceSymmetry is the
+    // grounding/projection co-discharge theorem; assign it to all three
+    // grounding/projection witness classes.
+    (
+        "https://uor.foundation/morphism/GroundingWitness",
+        "https://uor.foundation/op/surfaceSymmetry",
+    ),
+    (
+        "https://uor.foundation/morphism/ProjectionWitness",
+        "https://uor.foundation/op/surfaceSymmetry",
+    ),
+    (
+        "https://uor.foundation/state/GroundingWitness",
+        "https://uor.foundation/op/surfaceSymmetry",
+    ),
+    // morphism::Witness is the abstract supertype; map it to the same
+    // surfaceSymmetry root since every concrete Witness is a witnessing
+    // pair under that theorem.
+    (
+        "https://uor.foundation/morphism/Witness",
+        "https://uor.foundation/op/surfaceSymmetry",
+    ),
+    // IH_1 is the canonical inhabitance soundness identity.
+    (
+        "https://uor.foundation/proof/ImpossibilityWitness",
+        "https://uor.foundation/op/IH_1",
+    ),
+    (
+        "https://uor.foundation/proof/InhabitanceImpossibilityWitness",
+        "https://uor.foundation/op/IH_1",
+    ),
+    // LO_ family does not yet exist. WLS_2 ("Obstruction localisation") is
+    // the canonical LiftObstruction theorem.
+    (
+        "https://uor.foundation/type/LiftObstruction",
+        "https://uor.foundation/op/WLS_2",
+    ),
+];
+
+/// Phase 10d: theorem-family → primitive-module routing. Each prefix is
+/// the leading IRI fragment after `op/`; the value is the foundation
+/// primitive module that hosts `verify_*` bodies.
+///
+/// `OB_C/H/M/P` all collapse to the single `ob` module.
+pub const FAMILY_PRIMITIVE_MODULE: &[(&str, &str)] = &[
+    ("PT_", "pt"),
+    ("ST_", "st"),
+    ("CPT_", "cpt"),
+    ("OB_", "ob"),
+    ("IH_", "ih"),
+    ("LO_", "lo"),
+    ("OA_", "oa"),
+    ("BR_", "br"),
+    ("CC_", "cc"),
+    ("DP_", "dp"),
+    ("WLS_", "lo"),
+    ("QM_", "br"),
+    ("FX_", "dp"),
+    // `surfaceSymmetry` lacks a `_`-style prefix; it routes to `oa`.
+    ("surfaceSymmetry", "oa"),
+];
+
+/// Resolve the primitive-module name for a `THEOREM_IDENTITY` IRI per the
+/// Phase 10d routing table. Returns the matching module name or panics if
+/// no rule matches — the rules cover every supported family.
+#[must_use]
+pub fn primitive_module_for_identity(identity_iri: &str) -> &'static str {
+    let local = static_local_name_str(identity_iri);
+    // Special-case: surfaceSymmetry has no underscore-prefix.
+    if local == "surfaceSymmetry" {
+        return "oa";
+    }
+    for (prefix, module) in FAMILY_PRIMITIVE_MODULE {
+        if local.starts_with(prefix) {
+            return module;
+        }
+    }
+    // Unreachable in well-formed classification — Phase-0 test rejects
+    // any identity that does not route to a primitive module.
+    "unrouted"
+}
+
+/// Convert an `op:Identity` IRI to the `verify_<snake_case>` function name
+/// used by Phase 12 primitives. Drops the family prefix when it carries
+/// underscore-segregated structure (`PT_2a` → `pt_2a` → `verify_pt_2a`).
+#[must_use]
+pub fn identity_to_snake(identity_iri: &str) -> String {
+    let local = static_local_name_str(identity_iri);
+    let mut out = String::with_capacity(local.len() + 4);
+    let mut prev_upper = false;
+    for (i, ch) in local.chars().enumerate() {
+        if ch.is_ascii_uppercase() {
+            // Insert a separator only when the previous char is a lowercase
+            // letter or digit (camelCase boundary). After an underscore or
+            // at string start, do not double the separator.
+            let last = out.chars().last();
+            if i > 0 && !prev_upper && last != Some('_') {
+                out.push('_');
+            }
+            out.push(ch.to_ascii_lowercase());
+            prev_upper = true;
+        } else {
+            out.push(ch);
+            prev_upper = false;
+        }
+    }
+    out
+}
+
+fn static_local_name_str(iri: &str) -> &str {
+    if let Some(pos) = iri.rfind('/') {
+        return &iri[pos + 1..];
+    }
+    if let Some(pos) = iri.rfind('#') {
+        return &iri[pos + 1..];
+    }
+    iri
+}
+
 /// Explicit Path-3 allow-list, keyed by class local name. Each entry names
 /// the `primitive_*` function the Phase-4 blanket impl will delegate to.
 /// R13: this list is empty at Phase 0 close — Phase 4 populates it as
@@ -221,7 +400,7 @@ pub fn classify(class: &Class, ontology: &Ontology) -> ClassificationEntry {
     // 4. Path2TheoremWitness — name ends in Witness/Obstruction/Verification
     if let Some(suffix) = matching_theorem_suffix(class_local) {
         let entropy_bearing = has_entropy_property(class_iri, ontology);
-        let theorem_identity = resolve_theorem_identity(class_iri, ontology).unwrap_or_default();
+        let theorem_identity = resolve_theorem_identity_loud(class_iri, ontology);
         return ClassificationEntry {
             class_iri,
             class_local,
@@ -430,21 +609,90 @@ fn has_entropy_property(class_iri: &str, ontology: &Ontology) -> bool {
     })
 }
 
+/// Phase 10a: resolves a Path-2 class to the `op:Identity` IRI that
+/// names the theorem its witness attests.
+///
+/// Algorithm:
+///   1. Apply `THEOREM_FAMILY_PREFIX_MAP` to derive a candidate family
+///      prefix from the class local name. Suffixes are checked
+///      longest-first.
+///   2. Enumerate all `op:Identity` individuals whose IRI's local name
+///      starts with the prefix; collect candidates.
+///   3. If exactly one candidate exists, that is the resolved identity.
+///   4. Otherwise (zero or ≥ 2), look up the **full class IRI** in
+///      `PATH2_THEOREM_OVERRIDES`.
+///   5. If neither path resolves, panic — Phase-0 classification fails
+///      loud per Phase 10a's "Missing override = Phase-0 classification
+///      fails loud" rule.
+///
+/// Verifies the resolved IRI exists as a real `op:Identity` individual
+/// in `ontology` before returning.
 fn resolve_theorem_identity(class_iri: &str, ontology: &Ontology) -> Option<String> {
-    // Phase 0: a class's `op:Identity` linkage is not yet asserted in the
-    // ontology as a direct back-reference. The mapping is populated via
-    // R6's lookup in Phase 3 when the witness scaffolds need it. For
-    // Phase 0 we leave it blank and let Phase 3 resolve. Return a hint
-    // when the class name matches an `op:Identity` individual directly.
     let class_local = local_name(class_iri);
-    ontology
-        .namespaces
+
+    // Step 1+2: family-prefix lookup.
+    if let Some(prefix) = theorem_family_prefix(class_local) {
+        let candidates: Vec<&str> = ontology
+            .namespaces
+            .iter()
+            .flat_map(|m| m.individuals.iter())
+            .filter(|ind| {
+                ind.type_ == "https://uor.foundation/op/Identity"
+                    && static_local_name_str(ind.id).starts_with(prefix)
+            })
+            .map(|ind| ind.id)
+            .collect();
+        if candidates.len() == 1 {
+            return Some(candidates[0].to_string());
+        }
+        // 0 or ≥ 2: fall through to override.
+    }
+
+    // Step 3: hand-override by full class IRI.
+    if let Some((_, identity)) = PATH2_THEOREM_OVERRIDES
         .iter()
-        .flat_map(|m| m.individuals.iter())
-        .find(|ind| {
-            ind.type_ == "https://uor.foundation/op/Identity" && local_name(ind.id) == class_local
-        })
-        .map(|ind| ind.id.to_string())
+        .find(|(iri, _)| *iri == class_iri)
+    {
+        // R6 verification: the override target must exist as a real
+        // op:Identity individual.
+        let exists = ontology
+            .namespaces
+            .iter()
+            .flat_map(|m| m.individuals.iter())
+            .any(|ind| ind.type_ == "https://uor.foundation/op/Identity" && ind.id == *identity);
+        if exists {
+            return Some((*identity).to_string());
+        }
+        // Override pointing to a nonexistent identity is a hard error.
+        return None;
+    }
+
+    None
+}
+
+/// Phase 10a loud-failure wrapper. Panics if the family-prefix lookup
+/// AND the override table both miss — that is the explicit
+/// "Missing override = Phase-0 classification fails loud" rule.
+#[allow(clippy::panic)]
+fn resolve_theorem_identity_loud(class_iri: &str, ontology: &Ontology) -> String {
+    match resolve_theorem_identity(class_iri, ontology) {
+        Some(t) => t,
+        None => panic!(
+            "Phase 10a: Path-2 class `{class_iri}` has no resolved op:Identity. \
+             Add a PATH2_THEOREM_OVERRIDES entry (or a matching family \
+             prefix in THEOREM_FAMILY_PREFIX_MAP). The override IRI must \
+             reference a real op:Identity individual in \
+             spec/src/namespaces/op.rs."
+        ),
+    }
+}
+
+fn theorem_family_prefix(class_local: &str) -> Option<&'static str> {
+    // Longest suffix wins — entries are written longest-first.
+    THEOREM_FAMILY_PREFIX_MAP
+        .iter()
+        .find(|(suffix, _)| class_local.ends_with(suffix))
+        .map(|(_, prefix)| *prefix)
 }
 
 fn property_without_absent_sentinel(class_iri: &str, ontology: &Ontology) -> Option<String> {

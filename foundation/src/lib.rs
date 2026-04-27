@@ -127,9 +127,13 @@ pub mod enforcement;
 pub mod enums;
 pub mod kernel;
 pub mod pipeline;
+pub mod primitives;
 pub mod user;
+pub mod witness_scaffolds;
 
 pub use enums::*;
+
+pub use witness_scaffolds::OntologyVerifiedMint;
 
 pub use enforcement::{
     BindingEntry, BindingsTable, BindingsTableError, BoundConstraint, Calibration,

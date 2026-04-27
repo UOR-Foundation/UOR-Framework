@@ -4842,7 +4842,7 @@ impl InhabitanceCertificate {
     }
 }
 
-mod ontology_target_sealed {
+pub(crate) mod ontology_target_sealed {
     /// Private supertrait. Not implementable outside this crate.
     pub trait Sealed {}
     impl Sealed for super::GroundingCertificate {}
@@ -5251,7 +5251,7 @@ pub trait Certificate: certificate_sealed::Sealed {
     type Evidence;
 }
 
-mod certificate_sealed {
+pub(crate) mod certificate_sealed {
     /// Private supertrait. Not implementable outside this crate.
     pub trait Sealed {}
     impl Sealed for super::GroundingCertificate {}

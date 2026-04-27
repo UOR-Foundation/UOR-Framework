@@ -23,6 +23,7 @@ pub mod pipeline;
 pub mod resolved_wrapper;
 pub mod sdk_macros;
 pub mod traits;
+pub mod witness_scaffolds;
 
 use std::collections::HashMap;
 use std::fmt::Write as FmtWrite;
@@ -167,6 +168,26 @@ pub fn generate(ontology: &Ontology, out_dir: &Path, sdk_out: &Path) -> Result<G
         .arg(&pipeline_path)
         .status();
     report.files.push("pipeline.rs".to_string());
+
+    // 7a-1. Phase 10 — VerifiedMint witness scaffolds for Path-2 classes.
+    // Generated alongside enforcement.rs / pipeline.rs; emits the
+    // `OntologyVerifiedMint` trait, one `Mint{Foo}` + `Mint{Foo}Inputs<H>` +
+    // `Certificate` + `OntologyVerifiedMint` per Path-2 class, plus per-
+    // family primitive stub modules under `foundation/src/primitives/`.
+    let scaffolds_content = witness_scaffolds::generate_witness_scaffolds_module(ontology);
+    let scaffolds_path = out_dir.join("witness_scaffolds.rs");
+    emit::write_file(&scaffolds_path, &scaffolds_content)?;
+    let _ = std::process::Command::new("rustfmt")
+        .arg(&scaffolds_path)
+        .status();
+    report.files.push("witness_scaffolds.rs".to_string());
+
+    for (relative_path, content) in witness_scaffolds::generate_primitives_modules(ontology) {
+        let path = out_dir.join(&relative_path);
+        emit::write_file(&path, &content)?;
+        let _ = std::process::Command::new("rustfmt").arg(&path).status();
+        report.files.push(relative_path);
+    }
 
     // 7b. Classification report. Phase 0 of the orphan-closure plan: every
     // class in the ontology is classified into a `PathKind`, and the human-
@@ -385,9 +406,18 @@ fn generate_lib_rs(ontology: &Ontology) -> String {
     f.line("pub mod enums;");
     f.line("pub mod kernel;");
     f.line("pub mod pipeline;");
+    // Phase 10 — Path-2 VerifiedMint scaffolds + per-family primitive
+    // stubs. Generated alongside enforcement.rs / pipeline.rs.
+    f.line("pub mod primitives;");
     f.line("pub mod user;");
+    f.line("pub mod witness_scaffolds;");
     f.blank();
     f.line("pub use enums::*;");
+    f.blank();
+    // Phase 10 — re-export the new mint trait + every Mint{Foo} witness so
+    // downstream consumers can `use uor_foundation::{OntologyVerifiedMint,
+    // MintBornRuleVerification, ...}` without crawling submodules.
+    f.line("pub use witness_scaffolds::OntologyVerifiedMint;");
     f.blank();
     // v0.2.2 T4.5.c + T5.11: convenience re-exports. The enforcement module
     // remains the source of truth; these re-exports shorten common import

@@ -171,7 +171,12 @@ pub const SHACL_TESTS: usize = 283;
 /// ensures foundation/src/ has zero hardcoded `f64` outside test code.
 /// Phase 9e (orphan-closure): +1 `rust/host_types_discipline` — asserts
 /// `HostTypes::Decimal: DecimalTranscendental` + libm impls.
-pub const CONFORMANCE_CHECKS: usize = 539;
+/// Phase 10 (orphan-closure): +1 `rust/witness_scaffold_surface` — asserts
+/// every Path-2 class has a `Mint{Foo}` + `Mint{Foo}Inputs<H>` +
+/// `Certificate` + `OntologyVerifiedMint` scaffold in
+/// `foundation/src/witness_scaffolds.rs` and a per-family primitive
+/// stub module under `foundation/src/primitives/`.
+pub const CONFORMANCE_CHECKS: usize = 540;
 
 /// Number of amendments applied to the base ontology.
 pub const AMENDMENTS: usize = 95;

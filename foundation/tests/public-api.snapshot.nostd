@@ -291,12 +291,15 @@ foundation/src/lib.rs: mod enforcement
 foundation/src/lib.rs: mod enums
 foundation/src/lib.rs: mod kernel
 foundation/src/lib.rs: mod pipeline
+foundation/src/lib.rs: mod primitives
 foundation/src/lib.rs: mod user
+foundation/src/lib.rs: mod witness_scaffolds
 foundation/src/lib.rs: struct DefaultHostTypes
 foundation/src/lib.rs: trait DecimalTranscendental
 foundation/src/lib.rs: trait HostTypes
 foundation/src/lib.rs: use enforcement
 foundation/src/lib.rs: use enums
+foundation/src/lib.rs: use witness_scaffolds
 foundation/src/pipeline.rs: const INTERACTION_DIVERGENCE_BUDGET
 foundation/src/pipeline.rs: const PREFLIGHT_CHECK_IRIS
 foundation/src/pipeline.rs: const REDUCTION_STAGE_IRIS
