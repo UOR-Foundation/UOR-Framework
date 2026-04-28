@@ -11459,10 +11459,30 @@ fn emit_pc_partition_handle_protocol(f: &mut RustFile) {
     f.doc_comment("`PartitionResolver` via `resolve_with`. Handles compare and hash by");
     f.doc_comment("fingerprint, so they can serve as keys in content-addressed indices");
     f.doc_comment("without resolver access.");
-    f.line("#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]");
+    // Phase 14: hand-written Copy/Clone/PartialEq/Eq/Hash so the impls
+    // do NOT require `H: Copy`. The auto-derive synthesises a where
+    // clause that bounds H by every trait it derives, which propagates
+    // up to MintInputs<H> structs that contain PartitionHandle<H>.
+    f.line("#[derive(Debug)]");
     f.line("pub struct PartitionHandle<H: crate::HostTypes> {");
     f.line("    fingerprint: ContentFingerprint,");
     f.line("    _phantom: core::marker::PhantomData<H>,");
+    f.line("}");
+    f.line("impl<H: crate::HostTypes> Copy for PartitionHandle<H> {}");
+    f.line("impl<H: crate::HostTypes> Clone for PartitionHandle<H> {");
+    f.line("    #[inline]");
+    f.line("    fn clone(&self) -> Self { *self }");
+    f.line("}");
+    f.line("impl<H: crate::HostTypes> PartialEq for PartitionHandle<H> {");
+    f.line("    #[inline]");
+    f.line("    fn eq(&self, other: &Self) -> bool { self.fingerprint == other.fingerprint }");
+    f.line("}");
+    f.line("impl<H: crate::HostTypes> Eq for PartitionHandle<H> {}");
+    f.line("impl<H: crate::HostTypes> core::hash::Hash for PartitionHandle<H> {");
+    f.line("    #[inline]");
+    f.line("    fn hash<S: core::hash::Hasher>(&self, state: &mut S) {");
+    f.line("        self.fingerprint.hash(state);");
+    f.line("    }");
     f.line("}");
     f.blank();
     f.line("impl<H: crate::HostTypes> PartitionHandle<H> {");

@@ -2,6 +2,61 @@
 
 All notable changes to UOR-Framework are documented in this file.
 
+## Phase 14 — `Mint{Foo}Inputs<H>` field mapping (R5 closure) — 2026-04-28
+
+Replaces every `Mint{Foo}Inputs<H>` placeholder
+(`pub _phantom: PhantomData<H>`) with one field per direct or inherited
+property of its Path-2 ontology class. Consumers of
+`OntologyVerifiedMint::ontology_mint(inputs)` can now pass theorem-
+relevant data through typed input bundles. Conformance reports
+**543 passed, 0 warnings, 0 failed**.
+
+### Breaking
+
+- `Mint{Foo}Inputs<H>` structs gain per-property `pub` fields
+  (35 unique fields across the 10 Path-2 classes; ranges from 0 fields
+  on the abstract `morphism::Witness` to 15 inherited fields on
+  `proof::InhabitanceImpossibilityWitness`).
+  Consumers using `Default::default()` continue to compile but now
+  receive sentinel-filled inputs which Phase 15's verify_* will
+  reject; populate fields explicitly to mint successfully.
+- `OntologyVerifiedMint::Inputs<H: HostTypes + 'static>` GAT now
+  requires `H: 'static` so that `&'static [{Range}Handle<H>]`
+  non-functional fields satisfy `Handle<H>: 'static`. All in-tree
+  `HostTypes` impls (DefaultHostTypes, host marker structs) satisfy
+  this trivially.
+- `crate::enforcement::PartitionHandle<H>` ships hand-written
+  `Copy/Clone/PartialEq/Eq/Hash` impls (was `derive`-generated). The
+  derive added a spurious `H: Copy + Clone + ...` bound that
+  propagated to `MintInputs<H>` callers; the manual impls drop the
+  bound. Public surface unchanged for consumers — `PartitionHandle::<H>`
+  remains `Copy + Clone + Eq + Hash`.
+- `Mint{Foo}Inputs<H>` structs gain hand-written `Copy + Clone`
+  impls (was `derive`). The auto-derive on generic structs with
+  `&'static H::HostString` / `&'static H::WitnessBytes` fields adds
+  spurious `Sized` bounds on the `?Sized` host slots. Manual impls
+  honour the actual semantics (references are `Copy` regardless of
+  Sized).
+
+### Additive
+
+- Field-shape per Path-2 class (XSD primitive → mapped scalar; enum
+  range → enum value; class range → `{Range}Handle<H>` in the
+  fully-qualified namespace path; non-functional → `&'static [{T}]`;
+  `OWL_THING`/`OWL_CLASS`/`RDF_LIST` → `&'static H::HostString`).
+- AlreadyImplemented partition classes (PartitionHandle and friends)
+  route through `crate::enforcement::*Handle::<H>::from_fingerprint`;
+  Path-1 `{Range}Handle<H>` route through the Phase-8 `::new` ctor.
+  Cross-namespace local-name collisions (`IdentityHandle` exists in
+  both `op` and `morphism`) resolved via full-path emission.
+- New behavioural test
+  [foundation/tests/mint_inputs_field_surface.rs](foundation/tests/mint_inputs_field_surface.rs)
+  — for each Mint{Foo}Inputs, exercises field reachability,
+  Default sentinels, and the Copy/Clone/Debug/Default trait surface.
+- `witness_scaffold_surface` validator extended to assert the
+  `+ 'static` GAT bound and the new `type Inputs<H: HostTypes + 'static>`
+  associated-type shape on every OntologyVerifiedMint impl.
+
 ## Phase 13 — Cross-cutting orphan-closure infrastructure — 2026-04-27
 
 Closes the orphan-closure plan's cross-cutting infrastructure leg. The

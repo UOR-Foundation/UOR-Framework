@@ -57,7 +57,7 @@ fn fingerprint_for_identity(iri: &str) -> ContentFingerprint {
 /// citing the specific failing op-namespace identity
 /// when a future hand-edited body rejects the inputs.
 #[allow(unused_variables)]
-pub fn verify_effect_disjointness_witness<H: HostTypes>(
+pub fn verify_effect_disjointness_witness<H: HostTypes + 'static>(
     inputs: MintDisjointnessWitnessInputs<H>,
 ) -> Result<MintDisjointnessWitness, GenericImpossibilityWitness> {
     let _ = inputs;

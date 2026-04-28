@@ -57,7 +57,7 @@ fn fingerprint_for_identity(iri: &str) -> ContentFingerprint {
 /// citing the specific failing op-namespace identity
 /// when a future hand-edited body rejects the inputs.
 #[allow(unused_variables)]
-pub fn verify_type_lift_obstruction<H: HostTypes>(
+pub fn verify_type_lift_obstruction<H: HostTypes + 'static>(
     inputs: MintLiftObstructionInputs<H>,
 ) -> Result<MintLiftObstruction, GenericImpossibilityWitness> {
     let _ = inputs;

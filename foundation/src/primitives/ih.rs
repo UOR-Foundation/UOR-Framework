@@ -60,7 +60,7 @@ fn fingerprint_for_identity(iri: &str) -> ContentFingerprint {
 /// citing the specific failing op-namespace identity
 /// when a future hand-edited body rejects the inputs.
 #[allow(unused_variables)]
-pub fn verify_proof_impossibility_witness<H: HostTypes>(
+pub fn verify_proof_impossibility_witness<H: HostTypes + 'static>(
     inputs: MintImpossibilityWitnessInputs<H>,
 ) -> Result<MintImpossibilityWitness, GenericImpossibilityWitness> {
     let _ = inputs;
@@ -83,7 +83,7 @@ pub fn verify_proof_impossibility_witness<H: HostTypes>(
 /// citing the specific failing op-namespace identity
 /// when a future hand-edited body rejects the inputs.
 #[allow(unused_variables)]
-pub fn verify_proof_inhabitance_impossibility_witness<H: HostTypes>(
+pub fn verify_proof_inhabitance_impossibility_witness<H: HostTypes + 'static>(
     inputs: MintInhabitanceImpossibilityWitnessInputs<H>,
 ) -> Result<MintInhabitanceImpossibilityWitness, GenericImpossibilityWitness> {
     let _ = inputs;

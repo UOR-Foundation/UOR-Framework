@@ -23,13 +23,19 @@
 //! pre-existing `VerifiedMint` trait (used by the partition-algebra
 //! amendment witnesses) is left untouched per the carve-out clause.
 
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, HashMap, HashSet};
 
-use uor_ontology::Ontology;
+use uor_ontology::model::iris::{
+    OWL_CLASS, OWL_THING, RDF_LIST, XSD_BOOLEAN, XSD_DATETIME, XSD_DECIMAL, XSD_HEX_BINARY,
+    XSD_INTEGER, XSD_NON_NEGATIVE_INTEGER, XSD_POSITIVE_INTEGER, XSD_STRING,
+};
+use uor_ontology::{Class, Ontology, Property, PropertyKind};
 
 use crate::classification::{classify_all, primitive_module_for_identity, PathKind};
 use crate::emit::RustFile;
-use crate::mapping::to_snake_case;
+use crate::mapping::{
+    class_module_path, local_name, namespace_mappings, to_snake_case, NamespaceMapping,
+};
 
 /// One Path-2 emission descriptor.
 struct Path2Emission {
@@ -108,6 +114,200 @@ fn needs_namespace_qualifier(class_local: &str) -> bool {
     COLLIDING_CLASS_LOCALS.contains(&class_local)
 }
 
+/// AlreadyImplemented partition-algebra classes: their `*Handle<H>` types
+/// live in `enforcement.rs` (Amendment-emitted), not in
+/// `bridge::partition`. The classifier routes them to
+/// `crate::enforcement::*Handle<H>` explicitly.
+fn is_already_implemented_partition(range_iri: &str) -> bool {
+    matches!(
+        range_iri,
+        "https://uor.foundation/partition/Partition"
+            | "https://uor.foundation/partition/PartitionProduct"
+            | "https://uor.foundation/partition/PartitionCoproduct"
+            | "https://uor.foundation/partition/CartesianPartitionProduct"
+    )
+}
+
+/// Phase 14 — gather every property whose domain is the class itself OR
+/// a transitive ancestor (subclass_of chain), excluding annotation
+/// properties and OWL_THING. Returns properties in deterministic order
+/// (sorted by label).
+fn gather_inherited_properties<'a>(
+    class: &'a Class,
+    ontology: &'a Ontology,
+) -> Vec<&'a Property> {
+    let class_iris = gather_class_and_ancestors(class, ontology);
+    let mut seen: HashSet<&'a str> = HashSet::new();
+    let mut out: Vec<&'a Property> = Vec::new();
+    for ns in &ontology.namespaces {
+        for prop in &ns.properties {
+            if prop.kind == PropertyKind::Annotation {
+                continue;
+            }
+            let domain = match prop.domain {
+                Some(d) => d,
+                None => continue,
+            };
+            if !class_iris.contains(&domain) {
+                continue;
+            }
+            if !seen.insert(prop.id) {
+                continue;
+            }
+            out.push(prop);
+        }
+    }
+    out.sort_by_key(|p| p.label);
+    out
+}
+
+/// Returns the class IRI plus every non-OWL_THING, non-enum-class
+/// ancestor reachable via `subclass_of`, deduplicated.
+fn gather_class_and_ancestors<'a>(class: &'a Class, ontology: &'a Ontology) -> Vec<&'a str> {
+    let enum_names: HashSet<&'static str> =
+        Ontology::enum_class_names().iter().copied().collect();
+    let mut result: Vec<&'a str> = vec![class.id];
+    let mut frontier: Vec<&'a str> = class.subclass_of.to_vec();
+    while let Some(parent_iri) = frontier.pop() {
+        if parent_iri == OWL_THING {
+            continue;
+        }
+        if enum_names.contains(local_name(parent_iri)) {
+            continue;
+        }
+        if result.contains(&parent_iri) {
+            continue;
+        }
+        result.push(parent_iri);
+        if let Some(parent_class) = ontology.find_class(parent_iri) {
+            for pp in parent_class.subclass_of {
+                frontier.push(pp);
+            }
+        }
+    }
+    result
+}
+
+/// Phase 14 — compute the (Rust field declaration, Default initializer)
+/// pair for one property of a `Mint{Foo}Inputs<H>` struct. Applies the
+/// range-classification rules documented in the plan:
+/// enum class → enum value; XSD primitive → mapped scalar; ontology class
+/// → `{Range}Handle<H>`; OWL_THING/CLASS/RDF_LIST → `&'static H::HostString`;
+/// non-functional → `&'static [{T}]`.
+fn range_field_emission(
+    prop: &Property,
+    _ontology: &Ontology,
+    ns_map: &HashMap<&'static str, NamespaceMapping>,
+) -> (String, String) {
+    let snake = to_snake_case(prop.label);
+    let range = prop.range;
+    let range_local = local_name(range);
+    let enum_names: HashSet<&'static str> =
+        Ontology::enum_class_names().iter().copied().collect();
+
+    // 1. Enum class (or WittLevel-as-struct) — emitted in `crate::enums`,
+    //    re-exported at crate root. Use the `crate::enums::{Name}` path
+    //    explicitly to avoid colliding with name re-exports.
+    if enum_names.contains(range_local) {
+        let type_str = format!("crate::enums::{range_local}");
+        let (final_type, final_default) = if !prop.functional {
+            (
+                format!("&'static [{type_str}]"),
+                "&[]".to_string(),
+            )
+        } else {
+            (type_str.clone(), format!("{type_str}::default()"))
+        };
+        return (
+            format!("    pub {snake}: {final_type},"),
+            format!("            {snake}: {final_default},"),
+        );
+    }
+
+    // 2. XSD primitive types.
+    let xsd_emission = match range {
+        XSD_STRING => Some(("&'static H::HostString", "H::EMPTY_HOST_STRING")),
+        XSD_INTEGER => Some(("i64", "0")),
+        XSD_NON_NEGATIVE_INTEGER => Some(("u64", "0")),
+        XSD_POSITIVE_INTEGER => Some(("u64", "0")),
+        XSD_BOOLEAN => Some(("bool", "false")),
+        XSD_DECIMAL => Some(("H::Decimal", "H::EMPTY_DECIMAL")),
+        XSD_DATETIME => Some(("&'static H::WitnessBytes", "H::EMPTY_WITNESS_BYTES")),
+        XSD_HEX_BINARY => Some(("&'static H::WitnessBytes", "H::EMPTY_WITNESS_BYTES")),
+        _ => None,
+    };
+    if let Some((rust_type, default_init)) = xsd_emission {
+        let (final_type, final_default) = if !prop.functional {
+            (format!("&'static [{rust_type}]"), "&[]".to_string())
+        } else {
+            (rust_type.to_string(), default_init.to_string())
+        };
+        return (
+            format!("    pub {snake}: {final_type},"),
+            format!("            {snake}: {final_default},"),
+        );
+    }
+
+    // 3. owl:Thing / owl:Class / rdf:List — opaque host-string handle.
+    if range == OWL_THING || range == OWL_CLASS || range == RDF_LIST {
+        let (final_type, final_default) = if !prop.functional {
+            (
+                "&'static [&'static H::HostString]".to_string(),
+                "&[]".to_string(),
+            )
+        } else {
+            (
+                "&'static H::HostString".to_string(),
+                "H::EMPTY_HOST_STRING".to_string(),
+            )
+        };
+        return (
+            format!("    pub {snake}: {final_type},"),
+            format!("            {snake}: {final_default},"),
+        );
+    }
+
+    // 4. Ontology class — emit a Phase-8 `{Range}Handle<H>`. Use the
+    //    fully-qualified module path to avoid cross-namespace local-name
+    //    collisions (e.g. `op::IdentityHandle` vs `morphism::IdentityHandle`).
+    //    Special-case: the four AlreadyImplemented partition-algebra
+    //    classes have hand-written `PartitionHandle<H>` etc. in
+    //    enforcement.rs, not in `bridge::partition`. Route those to
+    //    `crate::enforcement` explicitly.
+    let already_impl = is_already_implemented_partition(range);
+    let module_path_opt = if already_impl {
+        Some("crate::enforcement".to_string())
+    } else {
+        class_module_path(range, ns_map)
+    };
+    if let Some(module_path) = module_path_opt {
+        let handle_type = format!("{module_path}::{range_local}Handle<H>");
+        // The Amendment-emitted `PartitionHandle::<H>::from_fingerprint`
+        // is the public ctor for AlreadyImplemented partition classes;
+        // Phase-8 `*Handle::new` is the public ctor for Path-1 classes.
+        let ctor = if already_impl { "from_fingerprint" } else { "new" };
+        let handle_default = format!(
+            "{module_path}::{range_local}Handle::<H>::{ctor}(crate::enforcement::ContentFingerprint::zero())"
+        );
+        let (final_type, final_default) = if !prop.functional {
+            (format!("&'static [{handle_type}]"), "&[]".to_string())
+        } else {
+            (handle_type, handle_default)
+        };
+        return (
+            format!("    pub {snake}: {final_type},"),
+            format!("            {snake}: {final_default},"),
+        );
+    }
+
+    // Fallback — unreachable for well-formed ontology. Emit a typed gap
+    // so codegen failures show up at compile time, not silently.
+    (
+        format!("    pub {snake}: (), // unmapped range: {range}"),
+        format!("            {snake}: (),"),
+    )
+}
+
 /// Returns the unique-by-(module,verify_ident) primitive stub set,
 /// indexed by module name.
 fn primitive_stub_groups(emissions: &[Path2Emission]) -> BTreeMap<String, Vec<&Path2Emission>> {
@@ -158,19 +358,26 @@ pub fn generate_witness_scaffolds_module(ontology: &Ontology) -> String {
     f.line("    /// Caller-supplied input bundle, parameterized over the host's");
     f.line("    /// chosen `HostTypes` so witness inputs can carry `H::Decimal`,");
     f.line("    /// `{Range}Handle<H>`, etc.");
-    f.line("    type Inputs<H: HostTypes>;");
+    f.line("    ///");
+    f.line("    /// The `'static` bound is required because some MintInputs carry");
+    f.line("    /// `&'static [{Range}Handle<H>]` non-functional fields, which");
+    f.line("    /// require `H: 'static` for `Handle<H>: 'static`. All in-tree");
+    f.line("    /// `HostTypes` impls (DefaultHostTypes, host marker structs) are");
+    f.line("    /// `'static`, so this is satisfied trivially.");
+    f.line("    type Inputs<H: HostTypes + 'static>;");
     f.blank();
     f.line("    /// Op-namespace identity that this witness attests. Phase 10a");
     f.line("    /// resolves this via `proof:provesIdentity` inverse lookup.");
     f.line("    const THEOREM_IDENTITY: &'static str;");
     f.blank();
-    f.line("    /// Verify the inputs and mint a witness. The default Phase-10");
-    f.line("    /// stub returns the `WITNESS_UNIMPLEMENTED_STUB:{IRI}` marker;");
-    f.line("    /// Phase 12 replaces each per-family stub with the real body.");
+    f.line("    /// Verify the inputs and mint a witness. Phase-15 each verify_*");
+    f.line("    /// performs structural-invariant validation; on rejection it");
+    f.line("    /// returns a typed `GenericImpossibilityWitness` whose IRI cites");
+    f.line("    /// the specific failing op-namespace identity.");
     f.line("    /// # Errors");
     f.line("    /// Returns `GenericImpossibilityWitness::for_identity(iri)` whenever");
     f.line("    /// the underlying primitive rejects the inputs.");
-    f.line("    fn ontology_mint<H: HostTypes>(");
+    f.line("    fn ontology_mint<H: HostTypes + 'static>(");
     f.line("        inputs: Self::Inputs<H>,");
     f.line("    ) -> Result<Self, GenericImpossibilityWitness>");
     f.line("    where");
@@ -179,16 +386,22 @@ pub fn generate_witness_scaffolds_module(ontology: &Ontology) -> String {
     f.blank();
 
     let emissions = path2_emissions(ontology);
+    let ns_map = namespace_mappings();
 
     for e in &emissions {
-        emit_one_witness_scaffold(&mut f, e);
+        emit_one_witness_scaffold(&mut f, e, ontology, &ns_map);
     }
 
     f.finish()
 }
 
 /// Emit one Path-2 emission's full scaffolding in-place.
-fn emit_one_witness_scaffold(f: &mut RustFile, e: &Path2Emission) {
+fn emit_one_witness_scaffold(
+    f: &mut RustFile,
+    e: &Path2Emission,
+    ontology: &Ontology,
+    ns_map: &HashMap<&'static str, NamespaceMapping>,
+) {
     let name = mint_struct_name(e);
     let inputs = format!("{name}Inputs");
     let stub_marker = format!("WITNESS_UNIMPLEMENTED_STUB:{}", e.class_iri);
@@ -256,40 +469,108 @@ fn emit_one_witness_scaffold(f: &mut RustFile, e: &Path2Emission) {
     f.line("}");
     f.blank();
 
-    // Mint{Foo}Inputs<H> — Phase 10 placeholder. Phase 12 will replace
-    // PhantomData with the real per-class field mapping per R5.
+    // Mint{Foo}Inputs<H> — Phase 14 R5 field mapping. Walk the
+    // class's own + inherited properties (skipping annotations) and
+    // emit one `pub` field per property with the appropriate type.
+    let class = ontology.find_class(&e.class_iri);
+    let props: Vec<&Property> = match class {
+        Some(c) => gather_inherited_properties(c, ontology),
+        None => Vec::new(),
+    };
+
     f.doc_comment(&format!(
-        "Inputs to `{name}::ontology_mint`. Phase 10 placeholder — Phase \
-         12 will populate per-property fields per R5 when the verify body \
-         is filled in."
+        "Inputs to `{name}::ontology_mint`. One field per property of \
+         `{}` (own + inherited from `subclass_of` chain, excluding \
+         annotation properties). Object-property fields carry \
+         `{{Range}}Handle<H>` Phase-8 handles; datatype fields are \
+         XSD-mapped scalars (`bool` / `u64` / `i64` / `H::Decimal` / \
+         `&'static H::HostString`); enum-class ranges (per \
+         `Ontology::enum_class_names()`) carry the enum value directly. \
+         Non-functional properties are wrapped in `&'static [{{T}}]`. \
+         `Default` fills every field with the host's `EMPTY_*` sentinel \
+         (Phase 14); Phase 15's `verify_*` rejects all-sentinel inputs.",
+        e.class_iri,
     ));
-    f.line("#[derive(Debug, Clone, Copy)]");
-    f.line(&format!("pub struct {inputs}<H: HostTypes> {{"));
-    f.line("    /// Phase-10 placeholder. Phase 12 replaces with the real");
-    f.line("    /// per-property fields (object props → `{Range}Handle<H>`,");
-    f.line("    /// datatype props → `H::Decimal` / `u64` / `bool` / `&'static str`).");
-    f.line("    pub _phantom: PhantomData<H>,");
+    // Detect whether any field carries `&'static [...]`-typed data;
+    // if so, the struct needs `H: HostTypes + 'static` so that
+    // `Handle<H>: 'static`.
+    let needs_static_bound = props.iter().any(|p| {
+        let (decl, _) = range_field_emission(p, ontology, ns_map);
+        decl.contains("&'static [")
+    });
+    let h_bound = if needs_static_bound {
+        "H: HostTypes + 'static"
+    } else {
+        "H: HostTypes"
+    };
+
+    // Auto-derive Copy fails on generic structs whose fields contain
+    // `&'static H::HostString` / `&'static H::WitnessBytes` because the
+    // derive's where-clause synthesis adds spurious `Sized` bounds on
+    // the `?Sized` host slots. Emit `Debug` via derive (works through
+    // `?Sized`) and hand-write Copy + Clone instead.
+    f.line("#[derive(Debug)]");
+    f.line(&format!("pub struct {inputs}<{h_bound}> {{"));
+    if props.is_empty() {
+        // Abstract supertypes (e.g. morphism::Witness) have no own or
+        // inherited properties beyond annotations; keep PhantomData<H>
+        // so the struct is still parameterized over H.
+        f.line("    /// Abstract supertype with no per-property fields.");
+        f.line("    pub _phantom: PhantomData<H>,");
+    } else {
+        for prop in &props {
+            let (field_decl, _default_init) = range_field_emission(prop, ontology, ns_map);
+            f.line(&format!("    /// {}", prop.label));
+            f.line(&field_decl);
+        }
+    }
     f.line("}");
     f.blank();
 
-    f.line(&format!("impl<H: HostTypes> Default for {inputs}<H> {{"));
+    // Manual Copy + Clone impls — see derive caveat above. Both impls
+    // work for any `H: HostTypes` (`+ 'static` if needed for slice
+    // fields) because every actual field type is Copy: references,
+    // primitives, enums, fixed-size arrays, and Phase-8 handles
+    // (which carry their own manual Copy impls).
+    f.line(&format!("impl<{h_bound}> Copy for {inputs}<H> {{}}"));
+    f.line(&format!("impl<{h_bound}> Clone for {inputs}<H> {{"));
+    f.line("    #[inline]");
+    f.line("    fn clone(&self) -> Self {");
+    f.line("        *self");
+    f.line("    }");
+    f.line("}");
+    f.blank();
+
+    // Default impl — fills each field with the matching sentinel.
+    f.line(&format!("impl<{h_bound}> Default for {inputs}<H> {{"));
     f.line("    #[inline]");
     f.line("    fn default() -> Self {");
-    f.line("        Self { _phantom: PhantomData }");
+    f.line("        Self {");
+    if props.is_empty() {
+        f.line("            _phantom: PhantomData,");
+    } else {
+        for prop in &props {
+            let (_field_decl, default_init) = range_field_emission(prop, ontology, ns_map);
+            f.line(&default_init);
+        }
+    }
+    f.line("        }");
     f.line("    }");
     f.line("}");
     f.blank();
 
     // OntologyVerifiedMint impl.
     f.line(&format!("impl OntologyVerifiedMint for {name} {{"));
-    f.line(&format!("    type Inputs<H: HostTypes> = {inputs}<H>;"));
+    f.line(&format!(
+        "    type Inputs<H: HostTypes + 'static> = {inputs}<H>;"
+    ));
     f.line(&format!(
         "    const THEOREM_IDENTITY: &'static str = \"{}\";",
         e.theorem_identity
     ));
     f.blank();
     f.line("    #[inline]");
-    f.line("    fn ontology_mint<H: HostTypes>(");
+    f.line("    fn ontology_mint<H: HostTypes + 'static>(");
     f.line("        inputs: Self::Inputs<H>,");
     f.line("    ) -> Result<Self, GenericImpossibilityWitness> {");
     f.line(&format!(
@@ -436,7 +717,7 @@ pub fn generate_primitives_modules(ontology: &Ontology) -> Vec<(String, String)>
                      /// citing the specific failing op-namespace identity\n\
                      /// when a future hand-edited body rejects the inputs.\n\
                      #[allow(unused_variables)]\n\
-                     pub fn verify_{verify}<H: HostTypes>(\n\
+                     pub fn verify_{verify}<H: HostTypes + 'static>(\n\
                      \x20   inputs: {inputs}<H>,\n\
                      ) -> Result<{mint}, GenericImpossibilityWitness> {{\n\
                      \x20   let _ = inputs;\n\

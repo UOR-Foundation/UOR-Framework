@@ -20,19 +20,26 @@ pub trait OntologyVerifiedMint: Certificate {
     /// Caller-supplied input bundle, parameterized over the host's
     /// chosen `HostTypes` so witness inputs can carry `H::Decimal`,
     /// `{Range}Handle<H>`, etc.
-    type Inputs<H: HostTypes>;
+    ///
+    /// The `'static` bound is required because some MintInputs carry
+    /// `&'static [{Range}Handle<H>]` non-functional fields, which
+    /// require `H: 'static` for `Handle<H>: 'static`. All in-tree
+    /// `HostTypes` impls (DefaultHostTypes, host marker structs) are
+    /// `'static`, so this is satisfied trivially.
+    type Inputs<H: HostTypes + 'static>;
 
     /// Op-namespace identity that this witness attests. Phase 10a
     /// resolves this via `proof:provesIdentity` inverse lookup.
     const THEOREM_IDENTITY: &'static str;
 
-    /// Verify the inputs and mint a witness. The default Phase-10
-    /// stub returns the `WITNESS_UNIMPLEMENTED_STUB:{IRI}` marker;
-    /// Phase 12 replaces each per-family stub with the real body.
+    /// Verify the inputs and mint a witness. Phase-15 each verify_*
+    /// performs structural-invariant validation; on rejection it
+    /// returns a typed `GenericImpossibilityWitness` whose IRI cites
+    /// the specific failing op-namespace identity.
     /// # Errors
     /// Returns `GenericImpossibilityWitness::for_identity(iri)` whenever
     /// the underlying primitive rejects the inputs.
-    fn ontology_mint<H: HostTypes>(
+    fn ontology_mint<H: HostTypes + 'static>(
         inputs: Self::Inputs<H>,
     ) -> Result<Self, GenericImpossibilityWitness>
     where
@@ -75,30 +82,51 @@ impl Certificate for MintBornRuleVerification {
     type Evidence = ();
 }
 
-/// Inputs to `MintBornRuleVerification::ontology_mint`. Phase 10 placeholder — Phase 12 will populate per-property fields per R5 when the verify body is filled in.
-#[derive(Debug, Clone, Copy)]
+/// Inputs to `MintBornRuleVerification::ontology_mint`. One field per property of `https://uor.foundation/cert/BornRuleVerification` (own + inherited from `subclass_of` chain, excluding annotation properties). Object-property fields carry `{Range}Handle<H>` Phase-8 handles; datatype fields are XSD-mapped scalars (`bool` / `u64` / `i64` / `H::Decimal` / `&'static H::HostString`); enum-class ranges (per `Ontology::enum_class_names()`) carry the enum value directly. Non-functional properties are wrapped in `&'static [{T}]`. `Default` fills every field with the host's `EMPTY_*` sentinel (Phase 14); Phase 15's `verify_*` rejects all-sentinel inputs.
+#[derive(Debug)]
 pub struct MintBornRuleVerificationInputs<H: HostTypes> {
-    /// Phase-10 placeholder. Phase 12 replaces with the real
-    /// per-property fields (object props → `{Range}Handle<H>`,
-    /// datatype props → `H::Decimal` / `u64` / `bool` / `&'static str`).
-    pub _phantom: PhantomData<H>,
+    /// bornRuleVerified
+    pub born_rule_verified: bool,
+    /// certifies
+    pub certifies: &'static H::HostString,
+    /// method
+    pub method: crate::enums::ProofStrategy,
+    /// timestamp
+    pub timestamp: &'static H::WitnessBytes,
+    /// verified
+    pub verified: bool,
+    /// wittLength
+    pub witt_length: u64,
+}
+
+impl<H: HostTypes> Copy for MintBornRuleVerificationInputs<H> {}
+impl<H: HostTypes> Clone for MintBornRuleVerificationInputs<H> {
+    #[inline]
+    fn clone(&self) -> Self {
+        *self
+    }
 }
 
 impl<H: HostTypes> Default for MintBornRuleVerificationInputs<H> {
     #[inline]
     fn default() -> Self {
         Self {
-            _phantom: PhantomData,
+            born_rule_verified: false,
+            certifies: H::EMPTY_HOST_STRING,
+            method: crate::enums::ProofStrategy::default(),
+            timestamp: H::EMPTY_WITNESS_BYTES,
+            verified: false,
+            witt_length: 0,
         }
     }
 }
 
 impl OntologyVerifiedMint for MintBornRuleVerification {
-    type Inputs<H: HostTypes> = MintBornRuleVerificationInputs<H>;
+    type Inputs<H: HostTypes + 'static> = MintBornRuleVerificationInputs<H>;
     const THEOREM_IDENTITY: &'static str = "https://uor.foundation/op/QM_5";
 
     #[inline]
-    fn ontology_mint<H: HostTypes>(
+    fn ontology_mint<H: HostTypes + 'static>(
         inputs: Self::Inputs<H>,
     ) -> Result<Self, GenericImpossibilityWitness> {
         crate::primitives::br::verify_cert_born_rule_verification::<H>(inputs)
@@ -141,30 +169,43 @@ impl Certificate for MintDisjointnessWitness {
     type Evidence = ();
 }
 
-/// Inputs to `MintDisjointnessWitness::ontology_mint`. Phase 10 placeholder — Phase 12 will populate per-property fields per R5 when the verify body is filled in.
-#[derive(Debug, Clone, Copy)]
+/// Inputs to `MintDisjointnessWitness::ontology_mint`. One field per property of `https://uor.foundation/effect/DisjointnessWitness` (own + inherited from `subclass_of` chain, excluding annotation properties). Object-property fields carry `{Range}Handle<H>` Phase-8 handles; datatype fields are XSD-mapped scalars (`bool` / `u64` / `i64` / `H::Decimal` / `&'static H::HostString`); enum-class ranges (per `Ontology::enum_class_names()`) carry the enum value directly. Non-functional properties are wrapped in `&'static [{T}]`. `Default` fills every field with the host's `EMPTY_*` sentinel (Phase 14); Phase 15's `verify_*` rejects all-sentinel inputs.
+#[derive(Debug)]
 pub struct MintDisjointnessWitnessInputs<H: HostTypes> {
-    /// Phase-10 placeholder. Phase 12 replaces with the real
-    /// per-property fields (object props → `{Range}Handle<H>`,
-    /// datatype props → `H::Decimal` / `u64` / `bool` / `&'static str`).
-    pub _phantom: PhantomData<H>,
+    /// disjointnessLeft
+    pub disjointness_left: crate::kernel::effect::EffectTargetHandle<H>,
+    /// disjointnessRight
+    pub disjointness_right: crate::kernel::effect::EffectTargetHandle<H>,
+}
+
+impl<H: HostTypes> Copy for MintDisjointnessWitnessInputs<H> {}
+impl<H: HostTypes> Clone for MintDisjointnessWitnessInputs<H> {
+    #[inline]
+    fn clone(&self) -> Self {
+        *self
+    }
 }
 
 impl<H: HostTypes> Default for MintDisjointnessWitnessInputs<H> {
     #[inline]
     fn default() -> Self {
         Self {
-            _phantom: PhantomData,
+            disjointness_left: crate::kernel::effect::EffectTargetHandle::<H>::new(
+                crate::enforcement::ContentFingerprint::zero(),
+            ),
+            disjointness_right: crate::kernel::effect::EffectTargetHandle::<H>::new(
+                crate::enforcement::ContentFingerprint::zero(),
+            ),
         }
     }
 }
 
 impl OntologyVerifiedMint for MintDisjointnessWitness {
-    type Inputs<H: HostTypes> = MintDisjointnessWitnessInputs<H>;
+    type Inputs<H: HostTypes + 'static> = MintDisjointnessWitnessInputs<H>;
     const THEOREM_IDENTITY: &'static str = "https://uor.foundation/op/FX_4";
 
     #[inline]
-    fn ontology_mint<H: HostTypes>(
+    fn ontology_mint<H: HostTypes + 'static>(
         inputs: Self::Inputs<H>,
     ) -> Result<Self, GenericImpossibilityWitness> {
         crate::primitives::dp::verify_effect_disjointness_witness::<H>(inputs)
@@ -207,30 +248,43 @@ impl Certificate for MintMorphismGroundingWitness {
     type Evidence = ();
 }
 
-/// Inputs to `MintMorphismGroundingWitness::ontology_mint`. Phase 10 placeholder — Phase 12 will populate per-property fields per R5 when the verify body is filled in.
-#[derive(Debug, Clone, Copy)]
+/// Inputs to `MintMorphismGroundingWitness::ontology_mint`. One field per property of `https://uor.foundation/morphism/GroundingWitness` (own + inherited from `subclass_of` chain, excluding annotation properties). Object-property fields carry `{Range}Handle<H>` Phase-8 handles; datatype fields are XSD-mapped scalars (`bool` / `u64` / `i64` / `H::Decimal` / `&'static H::HostString`); enum-class ranges (per `Ontology::enum_class_names()`) carry the enum value directly. Non-functional properties are wrapped in `&'static [{T}]`. `Default` fills every field with the host's `EMPTY_*` sentinel (Phase 14); Phase 15's `verify_*` rejects all-sentinel inputs.
+#[derive(Debug)]
 pub struct MintMorphismGroundingWitnessInputs<H: HostTypes> {
-    /// Phase-10 placeholder. Phase 12 replaces with the real
-    /// per-property fields (object props → `{Range}Handle<H>`,
-    /// datatype props → `H::Decimal` / `u64` / `bool` / `&'static str`).
-    pub _phantom: PhantomData<H>,
+    /// groundedAddress
+    pub grounded_address: crate::kernel::address::ElementHandle<H>,
+    /// surfaceSymbol
+    pub surface_symbol: crate::kernel::schema::SurfaceSymbolHandle<H>,
+}
+
+impl<H: HostTypes> Copy for MintMorphismGroundingWitnessInputs<H> {}
+impl<H: HostTypes> Clone for MintMorphismGroundingWitnessInputs<H> {
+    #[inline]
+    fn clone(&self) -> Self {
+        *self
+    }
 }
 
 impl<H: HostTypes> Default for MintMorphismGroundingWitnessInputs<H> {
     #[inline]
     fn default() -> Self {
         Self {
-            _phantom: PhantomData,
+            grounded_address: crate::kernel::address::ElementHandle::<H>::new(
+                crate::enforcement::ContentFingerprint::zero(),
+            ),
+            surface_symbol: crate::kernel::schema::SurfaceSymbolHandle::<H>::new(
+                crate::enforcement::ContentFingerprint::zero(),
+            ),
         }
     }
 }
 
 impl OntologyVerifiedMint for MintMorphismGroundingWitness {
-    type Inputs<H: HostTypes> = MintMorphismGroundingWitnessInputs<H>;
+    type Inputs<H: HostTypes + 'static> = MintMorphismGroundingWitnessInputs<H>;
     const THEOREM_IDENTITY: &'static str = "https://uor.foundation/op/surfaceSymmetry";
 
     #[inline]
-    fn ontology_mint<H: HostTypes>(
+    fn ontology_mint<H: HostTypes + 'static>(
         inputs: Self::Inputs<H>,
     ) -> Result<Self, GenericImpossibilityWitness> {
         crate::primitives::oa::verify_morphism_grounding_witness::<H>(inputs)
@@ -273,30 +327,43 @@ impl Certificate for MintProjectionWitness {
     type Evidence = ();
 }
 
-/// Inputs to `MintProjectionWitness::ontology_mint`. Phase 10 placeholder — Phase 12 will populate per-property fields per R5 when the verify body is filled in.
-#[derive(Debug, Clone, Copy)]
+/// Inputs to `MintProjectionWitness::ontology_mint`. One field per property of `https://uor.foundation/morphism/ProjectionWitness` (own + inherited from `subclass_of` chain, excluding annotation properties). Object-property fields carry `{Range}Handle<H>` Phase-8 handles; datatype fields are XSD-mapped scalars (`bool` / `u64` / `i64` / `H::Decimal` / `&'static H::HostString`); enum-class ranges (per `Ontology::enum_class_names()`) carry the enum value directly. Non-functional properties are wrapped in `&'static [{T}]`. `Default` fills every field with the host's `EMPTY_*` sentinel (Phase 14); Phase 15's `verify_*` rejects all-sentinel inputs.
+#[derive(Debug)]
 pub struct MintProjectionWitnessInputs<H: HostTypes> {
-    /// Phase-10 placeholder. Phase 12 replaces with the real
-    /// per-property fields (object props → `{Range}Handle<H>`,
-    /// datatype props → `H::Decimal` / `u64` / `bool` / `&'static str`).
-    pub _phantom: PhantomData<H>,
+    /// projectionOutput
+    pub projection_output: crate::user::morphism::SymbolSequenceHandle<H>,
+    /// projectionSource
+    pub projection_source: crate::enforcement::PartitionHandle<H>,
+}
+
+impl<H: HostTypes> Copy for MintProjectionWitnessInputs<H> {}
+impl<H: HostTypes> Clone for MintProjectionWitnessInputs<H> {
+    #[inline]
+    fn clone(&self) -> Self {
+        *self
+    }
 }
 
 impl<H: HostTypes> Default for MintProjectionWitnessInputs<H> {
     #[inline]
     fn default() -> Self {
         Self {
-            _phantom: PhantomData,
+            projection_output: crate::user::morphism::SymbolSequenceHandle::<H>::new(
+                crate::enforcement::ContentFingerprint::zero(),
+            ),
+            projection_source: crate::enforcement::PartitionHandle::<H>::from_fingerprint(
+                crate::enforcement::ContentFingerprint::zero(),
+            ),
         }
     }
 }
 
 impl OntologyVerifiedMint for MintProjectionWitness {
-    type Inputs<H: HostTypes> = MintProjectionWitnessInputs<H>;
+    type Inputs<H: HostTypes + 'static> = MintProjectionWitnessInputs<H>;
     const THEOREM_IDENTITY: &'static str = "https://uor.foundation/op/surfaceSymmetry";
 
     #[inline]
-    fn ontology_mint<H: HostTypes>(
+    fn ontology_mint<H: HostTypes + 'static>(
         inputs: Self::Inputs<H>,
     ) -> Result<Self, GenericImpossibilityWitness> {
         crate::primitives::oa::verify_morphism_projection_witness::<H>(inputs)
@@ -339,13 +406,19 @@ impl Certificate for MintWitness {
     type Evidence = ();
 }
 
-/// Inputs to `MintWitness::ontology_mint`. Phase 10 placeholder — Phase 12 will populate per-property fields per R5 when the verify body is filled in.
-#[derive(Debug, Clone, Copy)]
+/// Inputs to `MintWitness::ontology_mint`. One field per property of `https://uor.foundation/morphism/Witness` (own + inherited from `subclass_of` chain, excluding annotation properties). Object-property fields carry `{Range}Handle<H>` Phase-8 handles; datatype fields are XSD-mapped scalars (`bool` / `u64` / `i64` / `H::Decimal` / `&'static H::HostString`); enum-class ranges (per `Ontology::enum_class_names()`) carry the enum value directly. Non-functional properties are wrapped in `&'static [{T}]`. `Default` fills every field with the host's `EMPTY_*` sentinel (Phase 14); Phase 15's `verify_*` rejects all-sentinel inputs.
+#[derive(Debug)]
 pub struct MintWitnessInputs<H: HostTypes> {
-    /// Phase-10 placeholder. Phase 12 replaces with the real
-    /// per-property fields (object props → `{Range}Handle<H>`,
-    /// datatype props → `H::Decimal` / `u64` / `bool` / `&'static str`).
+    /// Abstract supertype with no per-property fields.
     pub _phantom: PhantomData<H>,
+}
+
+impl<H: HostTypes> Copy for MintWitnessInputs<H> {}
+impl<H: HostTypes> Clone for MintWitnessInputs<H> {
+    #[inline]
+    fn clone(&self) -> Self {
+        *self
+    }
 }
 
 impl<H: HostTypes> Default for MintWitnessInputs<H> {
@@ -358,11 +431,11 @@ impl<H: HostTypes> Default for MintWitnessInputs<H> {
 }
 
 impl OntologyVerifiedMint for MintWitness {
-    type Inputs<H: HostTypes> = MintWitnessInputs<H>;
+    type Inputs<H: HostTypes + 'static> = MintWitnessInputs<H>;
     const THEOREM_IDENTITY: &'static str = "https://uor.foundation/op/surfaceSymmetry";
 
     #[inline]
-    fn ontology_mint<H: HostTypes>(
+    fn ontology_mint<H: HostTypes + 'static>(
         inputs: Self::Inputs<H>,
     ) -> Result<Self, GenericImpossibilityWitness> {
         crate::primitives::oa::verify_morphism_witness::<H>(inputs)
@@ -405,30 +478,70 @@ impl Certificate for MintImpossibilityWitness {
     type Evidence = ();
 }
 
-/// Inputs to `MintImpossibilityWitness::ontology_mint`. Phase 10 placeholder — Phase 12 will populate per-property fields per R5 when the verify body is filled in.
-#[derive(Debug, Clone, Copy)]
-pub struct MintImpossibilityWitnessInputs<H: HostTypes> {
-    /// Phase-10 placeholder. Phase 12 replaces with the real
-    /// per-property fields (object props → `{Range}Handle<H>`,
-    /// datatype props → `H::Decimal` / `u64` / `bool` / `&'static str`).
-    pub _phantom: PhantomData<H>,
+/// Inputs to `MintImpossibilityWitness::ontology_mint`. One field per property of `https://uor.foundation/proof/ImpossibilityWitness` (own + inherited from `subclass_of` chain, excluding annotation properties). Object-property fields carry `{Range}Handle<H>` Phase-8 handles; datatype fields are XSD-mapped scalars (`bool` / `u64` / `i64` / `H::Decimal` / `&'static H::HostString`); enum-class ranges (per `Ontology::enum_class_names()`) carry the enum value directly. Non-functional properties are wrapped in `&'static [{T}]`. `Default` fills every field with the host's `EMPTY_*` sentinel (Phase 14); Phase 15's `verify_*` rejects all-sentinel inputs.
+#[derive(Debug)]
+pub struct MintImpossibilityWitnessInputs<H: HostTypes + 'static> {
+    /// achievabilityStatus
+    pub achievability_status: crate::enums::AchievabilityStatus,
+    /// dependsOn
+    pub depends_on: &'static [crate::kernel::op::IdentityHandle<H>],
+    /// formalDerivation
+    pub formal_derivation: crate::bridge::proof::DerivationTermHandle<H>,
+    /// impossibilityDomain
+    pub impossibility_domain: crate::enums::VerificationDomain,
+    /// impossibilityReason
+    pub impossibility_reason: &'static H::HostString,
+    /// provesIdentity
+    pub proves_identity: crate::kernel::op::IdentityHandle<H>,
+    /// strategy
+    pub strategy: crate::enums::ProofStrategy,
+    /// timestamp
+    pub timestamp: &'static H::WitnessBytes,
+    /// verified
+    pub verified: bool,
+    /// verifiedAtLevel
+    pub verified_at_level: &'static [crate::enums::WittLevel],
+    /// witness
+    pub witness: &'static [crate::bridge::proof::WitnessDataHandle<H>],
 }
 
-impl<H: HostTypes> Default for MintImpossibilityWitnessInputs<H> {
+impl<H: HostTypes + 'static> Copy for MintImpossibilityWitnessInputs<H> {}
+impl<H: HostTypes + 'static> Clone for MintImpossibilityWitnessInputs<H> {
+    #[inline]
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+
+impl<H: HostTypes + 'static> Default for MintImpossibilityWitnessInputs<H> {
     #[inline]
     fn default() -> Self {
         Self {
-            _phantom: PhantomData,
+            achievability_status: crate::enums::AchievabilityStatus::default(),
+            depends_on: &[],
+            formal_derivation: crate::bridge::proof::DerivationTermHandle::<H>::new(
+                crate::enforcement::ContentFingerprint::zero(),
+            ),
+            impossibility_domain: crate::enums::VerificationDomain::default(),
+            impossibility_reason: H::EMPTY_HOST_STRING,
+            proves_identity: crate::kernel::op::IdentityHandle::<H>::new(
+                crate::enforcement::ContentFingerprint::zero(),
+            ),
+            strategy: crate::enums::ProofStrategy::default(),
+            timestamp: H::EMPTY_WITNESS_BYTES,
+            verified: false,
+            verified_at_level: &[],
+            witness: &[],
         }
     }
 }
 
 impl OntologyVerifiedMint for MintImpossibilityWitness {
-    type Inputs<H: HostTypes> = MintImpossibilityWitnessInputs<H>;
+    type Inputs<H: HostTypes + 'static> = MintImpossibilityWitnessInputs<H>;
     const THEOREM_IDENTITY: &'static str = "https://uor.foundation/op/IH_1";
 
     #[inline]
-    fn ontology_mint<H: HostTypes>(
+    fn ontology_mint<H: HostTypes + 'static>(
         inputs: Self::Inputs<H>,
     ) -> Result<Self, GenericImpossibilityWitness> {
         crate::primitives::ih::verify_proof_impossibility_witness::<H>(inputs)
@@ -471,30 +584,83 @@ impl Certificate for MintInhabitanceImpossibilityWitness {
     type Evidence = ();
 }
 
-/// Inputs to `MintInhabitanceImpossibilityWitness::ontology_mint`. Phase 10 placeholder — Phase 12 will populate per-property fields per R5 when the verify body is filled in.
-#[derive(Debug, Clone, Copy)]
-pub struct MintInhabitanceImpossibilityWitnessInputs<H: HostTypes> {
-    /// Phase-10 placeholder. Phase 12 replaces with the real
-    /// per-property fields (object props → `{Range}Handle<H>`,
-    /// datatype props → `H::Decimal` / `u64` / `bool` / `&'static str`).
-    pub _phantom: PhantomData<H>,
+/// Inputs to `MintInhabitanceImpossibilityWitness::ontology_mint`. One field per property of `https://uor.foundation/proof/InhabitanceImpossibilityWitness` (own + inherited from `subclass_of` chain, excluding annotation properties). Object-property fields carry `{Range}Handle<H>` Phase-8 handles; datatype fields are XSD-mapped scalars (`bool` / `u64` / `i64` / `H::Decimal` / `&'static H::HostString`); enum-class ranges (per `Ontology::enum_class_names()`) carry the enum value directly. Non-functional properties are wrapped in `&'static [{T}]`. `Default` fills every field with the host's `EMPTY_*` sentinel (Phase 14); Phase 15's `verify_*` rejects all-sentinel inputs.
+#[derive(Debug)]
+pub struct MintInhabitanceImpossibilityWitnessInputs<H: HostTypes + 'static> {
+    /// achievabilityStatus
+    pub achievability_status: crate::enums::AchievabilityStatus,
+    /// contradictionProof
+    pub contradiction_proof: &'static H::HostString,
+    /// dependsOn
+    pub depends_on: &'static [crate::kernel::op::IdentityHandle<H>],
+    /// formalDerivation
+    pub formal_derivation: crate::bridge::proof::DerivationTermHandle<H>,
+    /// grounded
+    pub grounded: crate::user::type_::ConstrainedTypeHandle<H>,
+    /// impossibilityDomain
+    pub impossibility_domain: crate::enums::VerificationDomain,
+    /// impossibilityReason
+    pub impossibility_reason: &'static H::HostString,
+    /// provesIdentity
+    pub proves_identity: crate::kernel::op::IdentityHandle<H>,
+    /// searchTrace
+    pub search_trace: crate::bridge::trace::InhabitanceSearchTraceHandle<H>,
+    /// strategy
+    pub strategy: crate::enums::ProofStrategy,
+    /// timestamp
+    pub timestamp: &'static H::WitnessBytes,
+    /// verified
+    pub verified: bool,
+    /// verifiedAtLevel
+    pub verified_at_level: &'static [crate::enums::WittLevel],
+    /// witness
+    pub witness: &'static [crate::bridge::proof::WitnessDataHandle<H>],
 }
 
-impl<H: HostTypes> Default for MintInhabitanceImpossibilityWitnessInputs<H> {
+impl<H: HostTypes + 'static> Copy for MintInhabitanceImpossibilityWitnessInputs<H> {}
+impl<H: HostTypes + 'static> Clone for MintInhabitanceImpossibilityWitnessInputs<H> {
+    #[inline]
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+
+impl<H: HostTypes + 'static> Default for MintInhabitanceImpossibilityWitnessInputs<H> {
     #[inline]
     fn default() -> Self {
         Self {
-            _phantom: PhantomData,
+            achievability_status: crate::enums::AchievabilityStatus::default(),
+            contradiction_proof: H::EMPTY_HOST_STRING,
+            depends_on: &[],
+            formal_derivation: crate::bridge::proof::DerivationTermHandle::<H>::new(
+                crate::enforcement::ContentFingerprint::zero(),
+            ),
+            grounded: crate::user::type_::ConstrainedTypeHandle::<H>::new(
+                crate::enforcement::ContentFingerprint::zero(),
+            ),
+            impossibility_domain: crate::enums::VerificationDomain::default(),
+            impossibility_reason: H::EMPTY_HOST_STRING,
+            proves_identity: crate::kernel::op::IdentityHandle::<H>::new(
+                crate::enforcement::ContentFingerprint::zero(),
+            ),
+            search_trace: crate::bridge::trace::InhabitanceSearchTraceHandle::<H>::new(
+                crate::enforcement::ContentFingerprint::zero(),
+            ),
+            strategy: crate::enums::ProofStrategy::default(),
+            timestamp: H::EMPTY_WITNESS_BYTES,
+            verified: false,
+            verified_at_level: &[],
+            witness: &[],
         }
     }
 }
 
 impl OntologyVerifiedMint for MintInhabitanceImpossibilityWitness {
-    type Inputs<H: HostTypes> = MintInhabitanceImpossibilityWitnessInputs<H>;
+    type Inputs<H: HostTypes + 'static> = MintInhabitanceImpossibilityWitnessInputs<H>;
     const THEOREM_IDENTITY: &'static str = "https://uor.foundation/op/IH_1";
 
     #[inline]
-    fn ontology_mint<H: HostTypes>(
+    fn ontology_mint<H: HostTypes + 'static>(
         inputs: Self::Inputs<H>,
     ) -> Result<Self, GenericImpossibilityWitness> {
         crate::primitives::ih::verify_proof_inhabitance_impossibility_witness::<H>(inputs)
@@ -537,30 +703,39 @@ impl Certificate for MintStateGroundingWitness {
     type Evidence = ();
 }
 
-/// Inputs to `MintStateGroundingWitness::ontology_mint`. Phase 10 placeholder — Phase 12 will populate per-property fields per R5 when the verify body is filled in.
-#[derive(Debug, Clone, Copy)]
-pub struct MintStateGroundingWitnessInputs<H: HostTypes> {
-    /// Phase-10 placeholder. Phase 12 replaces with the real
-    /// per-property fields (object props → `{Range}Handle<H>`,
-    /// datatype props → `H::Decimal` / `u64` / `bool` / `&'static str`).
-    pub _phantom: PhantomData<H>,
+/// Inputs to `MintStateGroundingWitness::ontology_mint`. One field per property of `https://uor.foundation/state/GroundingWitness` (own + inherited from `subclass_of` chain, excluding annotation properties). Object-property fields carry `{Range}Handle<H>` Phase-8 handles; datatype fields are XSD-mapped scalars (`bool` / `u64` / `i64` / `H::Decimal` / `&'static H::HostString`); enum-class ranges (per `Ontology::enum_class_names()`) carry the enum value directly. Non-functional properties are wrapped in `&'static [{T}]`. `Default` fills every field with the host's `EMPTY_*` sentinel (Phase 14); Phase 15's `verify_*` rejects all-sentinel inputs.
+#[derive(Debug)]
+pub struct MintStateGroundingWitnessInputs<H: HostTypes + 'static> {
+    /// witnessBinding
+    pub witness_binding: &'static [crate::user::state::BindingHandle<H>],
+    /// witnessStep
+    pub witness_step: u64,
 }
 
-impl<H: HostTypes> Default for MintStateGroundingWitnessInputs<H> {
+impl<H: HostTypes + 'static> Copy for MintStateGroundingWitnessInputs<H> {}
+impl<H: HostTypes + 'static> Clone for MintStateGroundingWitnessInputs<H> {
+    #[inline]
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+
+impl<H: HostTypes + 'static> Default for MintStateGroundingWitnessInputs<H> {
     #[inline]
     fn default() -> Self {
         Self {
-            _phantom: PhantomData,
+            witness_binding: &[],
+            witness_step: 0,
         }
     }
 }
 
 impl OntologyVerifiedMint for MintStateGroundingWitness {
-    type Inputs<H: HostTypes> = MintStateGroundingWitnessInputs<H>;
+    type Inputs<H: HostTypes + 'static> = MintStateGroundingWitnessInputs<H>;
     const THEOREM_IDENTITY: &'static str = "https://uor.foundation/op/surfaceSymmetry";
 
     #[inline]
-    fn ontology_mint<H: HostTypes>(
+    fn ontology_mint<H: HostTypes + 'static>(
         inputs: Self::Inputs<H>,
     ) -> Result<Self, GenericImpossibilityWitness> {
         crate::primitives::oa::verify_state_grounding_witness::<H>(inputs)
@@ -603,30 +778,41 @@ impl Certificate for MintCompletenessWitness {
     type Evidence = ();
 }
 
-/// Inputs to `MintCompletenessWitness::ontology_mint`. Phase 10 placeholder — Phase 12 will populate per-property fields per R5 when the verify body is filled in.
-#[derive(Debug, Clone, Copy)]
+/// Inputs to `MintCompletenessWitness::ontology_mint`. One field per property of `https://uor.foundation/type/CompletenessWitness` (own + inherited from `subclass_of` chain, excluding annotation properties). Object-property fields carry `{Range}Handle<H>` Phase-8 handles; datatype fields are XSD-mapped scalars (`bool` / `u64` / `i64` / `H::Decimal` / `&'static H::HostString`); enum-class ranges (per `Ontology::enum_class_names()`) carry the enum value directly. Non-functional properties are wrapped in `&'static [{T}]`. `Default` fills every field with the host's `EMPTY_*` sentinel (Phase 14); Phase 15's `verify_*` rejects all-sentinel inputs.
+#[derive(Debug)]
 pub struct MintCompletenessWitnessInputs<H: HostTypes> {
-    /// Phase-10 placeholder. Phase 12 replaces with the real
-    /// per-property fields (object props → `{Range}Handle<H>`,
-    /// datatype props → `H::Decimal` / `u64` / `bool` / `&'static str`).
-    pub _phantom: PhantomData<H>,
+    /// sitesClosed
+    pub sites_closed: u64,
+    /// witnessConstraint
+    pub witness_constraint: crate::user::type_::ConstraintHandle<H>,
+}
+
+impl<H: HostTypes> Copy for MintCompletenessWitnessInputs<H> {}
+impl<H: HostTypes> Clone for MintCompletenessWitnessInputs<H> {
+    #[inline]
+    fn clone(&self) -> Self {
+        *self
+    }
 }
 
 impl<H: HostTypes> Default for MintCompletenessWitnessInputs<H> {
     #[inline]
     fn default() -> Self {
         Self {
-            _phantom: PhantomData,
+            sites_closed: 0,
+            witness_constraint: crate::user::type_::ConstraintHandle::<H>::new(
+                crate::enforcement::ContentFingerprint::zero(),
+            ),
         }
     }
 }
 
 impl OntologyVerifiedMint for MintCompletenessWitness {
-    type Inputs<H: HostTypes> = MintCompletenessWitnessInputs<H>;
+    type Inputs<H: HostTypes + 'static> = MintCompletenessWitnessInputs<H>;
     const THEOREM_IDENTITY: &'static str = "https://uor.foundation/op/CC_1";
 
     #[inline]
-    fn ontology_mint<H: HostTypes>(
+    fn ontology_mint<H: HostTypes + 'static>(
         inputs: Self::Inputs<H>,
     ) -> Result<Self, GenericImpossibilityWitness> {
         crate::primitives::cc::verify_type_completeness_witness::<H>(inputs)
@@ -669,30 +855,41 @@ impl Certificate for MintLiftObstruction {
     type Evidence = ();
 }
 
-/// Inputs to `MintLiftObstruction::ontology_mint`. Phase 10 placeholder — Phase 12 will populate per-property fields per R5 when the verify body is filled in.
-#[derive(Debug, Clone, Copy)]
+/// Inputs to `MintLiftObstruction::ontology_mint`. One field per property of `https://uor.foundation/type/LiftObstruction` (own + inherited from `subclass_of` chain, excluding annotation properties). Object-property fields carry `{Range}Handle<H>` Phase-8 handles; datatype fields are XSD-mapped scalars (`bool` / `u64` / `i64` / `H::Decimal` / `&'static H::HostString`); enum-class ranges (per `Ontology::enum_class_names()`) carry the enum value directly. Non-functional properties are wrapped in `&'static [{T}]`. `Default` fills every field with the host's `EMPTY_*` sentinel (Phase 14); Phase 15's `verify_*` rejects all-sentinel inputs.
+#[derive(Debug)]
 pub struct MintLiftObstructionInputs<H: HostTypes> {
-    /// Phase-10 placeholder. Phase 12 replaces with the real
-    /// per-property fields (object props → `{Range}Handle<H>`,
-    /// datatype props → `H::Decimal` / `u64` / `bool` / `&'static str`).
-    pub _phantom: PhantomData<H>,
+    /// obstructionSite
+    pub obstruction_site: crate::bridge::partition::SiteIndexHandle<H>,
+    /// obstructionTrivial
+    pub obstruction_trivial: bool,
+}
+
+impl<H: HostTypes> Copy for MintLiftObstructionInputs<H> {}
+impl<H: HostTypes> Clone for MintLiftObstructionInputs<H> {
+    #[inline]
+    fn clone(&self) -> Self {
+        *self
+    }
 }
 
 impl<H: HostTypes> Default for MintLiftObstructionInputs<H> {
     #[inline]
     fn default() -> Self {
         Self {
-            _phantom: PhantomData,
+            obstruction_site: crate::bridge::partition::SiteIndexHandle::<H>::new(
+                crate::enforcement::ContentFingerprint::zero(),
+            ),
+            obstruction_trivial: false,
         }
     }
 }
 
 impl OntologyVerifiedMint for MintLiftObstruction {
-    type Inputs<H: HostTypes> = MintLiftObstructionInputs<H>;
+    type Inputs<H: HostTypes + 'static> = MintLiftObstructionInputs<H>;
     const THEOREM_IDENTITY: &'static str = "https://uor.foundation/op/WLS_2";
 
     #[inline]
-    fn ontology_mint<H: HostTypes>(
+    fn ontology_mint<H: HostTypes + 'static>(
         inputs: Self::Inputs<H>,
     ) -> Result<Self, GenericImpossibilityWitness> {
         crate::primitives::lo::verify_type_lift_obstruction::<H>(inputs)

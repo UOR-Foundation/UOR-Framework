@@ -17935,10 +17935,30 @@ pub trait PartitionResolver<H: crate::HostTypes> {
 /// `PartitionResolver` via `resolve_with`. Handles compare and hash by
 /// fingerprint, so they can serve as keys in content-addressed indices
 /// without resolver access.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug)]
 pub struct PartitionHandle<H: crate::HostTypes> {
     fingerprint: ContentFingerprint,
     _phantom: core::marker::PhantomData<H>,
+}
+impl<H: crate::HostTypes> Copy for PartitionHandle<H> {}
+impl<H: crate::HostTypes> Clone for PartitionHandle<H> {
+    #[inline]
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+impl<H: crate::HostTypes> PartialEq for PartitionHandle<H> {
+    #[inline]
+    fn eq(&self, other: &Self) -> bool {
+        self.fingerprint == other.fingerprint
+    }
+}
+impl<H: crate::HostTypes> Eq for PartitionHandle<H> {}
+impl<H: crate::HostTypes> core::hash::Hash for PartitionHandle<H> {
+    #[inline]
+    fn hash<S: core::hash::Hasher>(&self, state: &mut S) {
+        self.fingerprint.hash(state);
+    }
 }
 
 impl<H: crate::HostTypes> PartitionHandle<H> {

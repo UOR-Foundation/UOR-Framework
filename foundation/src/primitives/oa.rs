@@ -61,7 +61,7 @@ fn fingerprint_for_identity(iri: &str) -> ContentFingerprint {
 /// citing the specific failing op-namespace identity
 /// when a future hand-edited body rejects the inputs.
 #[allow(unused_variables)]
-pub fn verify_morphism_grounding_witness<H: HostTypes>(
+pub fn verify_morphism_grounding_witness<H: HostTypes + 'static>(
     inputs: MintMorphismGroundingWitnessInputs<H>,
 ) -> Result<MintMorphismGroundingWitness, GenericImpossibilityWitness> {
     let _ = inputs;
@@ -84,7 +84,7 @@ pub fn verify_morphism_grounding_witness<H: HostTypes>(
 /// citing the specific failing op-namespace identity
 /// when a future hand-edited body rejects the inputs.
 #[allow(unused_variables)]
-pub fn verify_morphism_projection_witness<H: HostTypes>(
+pub fn verify_morphism_projection_witness<H: HostTypes + 'static>(
     inputs: MintProjectionWitnessInputs<H>,
 ) -> Result<MintProjectionWitness, GenericImpossibilityWitness> {
     let _ = inputs;
@@ -107,7 +107,7 @@ pub fn verify_morphism_projection_witness<H: HostTypes>(
 /// citing the specific failing op-namespace identity
 /// when a future hand-edited body rejects the inputs.
 #[allow(unused_variables)]
-pub fn verify_morphism_witness<H: HostTypes>(
+pub fn verify_morphism_witness<H: HostTypes + 'static>(
     inputs: MintWitnessInputs<H>,
 ) -> Result<MintWitness, GenericImpossibilityWitness> {
     let _ = inputs;
@@ -130,7 +130,7 @@ pub fn verify_morphism_witness<H: HostTypes>(
 /// citing the specific failing op-namespace identity
 /// when a future hand-edited body rejects the inputs.
 #[allow(unused_variables)]
-pub fn verify_state_grounding_witness<H: HostTypes>(
+pub fn verify_state_grounding_witness<H: HostTypes + 'static>(
     inputs: MintStateGroundingWitnessInputs<H>,
 ) -> Result<MintStateGroundingWitness, GenericImpossibilityWitness> {
     let _ = inputs;

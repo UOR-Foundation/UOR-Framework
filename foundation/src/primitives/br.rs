@@ -57,7 +57,7 @@ fn fingerprint_for_identity(iri: &str) -> ContentFingerprint {
 /// citing the specific failing op-namespace identity
 /// when a future hand-edited body rejects the inputs.
 #[allow(unused_variables)]
-pub fn verify_cert_born_rule_verification<H: HostTypes>(
+pub fn verify_cert_born_rule_verification<H: HostTypes + 'static>(
     inputs: MintBornRuleVerificationInputs<H>,
 ) -> Result<MintBornRuleVerification, GenericImpossibilityWitness> {
     let _ = inputs;

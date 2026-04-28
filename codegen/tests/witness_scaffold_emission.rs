@@ -47,9 +47,11 @@ fn ontology_verified_mint_trait_present() {
         scaffolds.contains("pub trait OntologyVerifiedMint:"),
         "OntologyVerifiedMint trait not declared"
     );
+    // Phase 14 — the GAT carries `+ 'static` so MintInputs containing
+    // `&'static [Handle<H>]` non-functional fields satisfy `Handle<H>: 'static`.
     assert!(
-        scaffolds.contains("type Inputs<H: HostTypes>"),
-        "OntologyVerifiedMint::Inputs<H> GAT missing"
+        scaffolds.contains("type Inputs<H: HostTypes + 'static>"),
+        "OntologyVerifiedMint::Inputs<H: HostTypes + 'static> GAT missing"
     );
     assert!(
         scaffolds.contains("const THEOREM_IDENTITY:"),
