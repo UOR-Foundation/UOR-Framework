@@ -11405,9 +11405,11 @@ fn generate_product_coproduct_amendment(f: &mut RustFile) {
 fn emit_pc_partition_handle_protocol(f: &mut RustFile) {
     f.doc_comment("Data record of a partition's runtime-queried properties. Produced at");
     f.doc_comment("witness-mint time and consulted by consumer code that holds a");
-    f.doc_comment("`PartitionHandle` and a `PartitionResolver`. Derives `PartialEq`");
-    f.doc_comment("rather than `Eq` because the `entropy_nats` field is `f64`.");
-    f.line("#[derive(Debug, Clone, Copy, PartialEq)]");
+    f.doc_comment("`PartitionHandle` and a `PartitionResolver`. Phase 9 stores entropy");
+    f.doc_comment("as the IEEE-754 `u64` bit-pattern (`entropy_nats_bits`) so the record");
+    f.doc_comment("derives `Eq + Hash` cleanly; consumers project to `H::Decimal` via");
+    f.doc_comment("`<H::Decimal as DecimalTranscendental>::from_bits`.");
+    f.line("#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]");
     f.line("pub struct PartitionRecord<H: crate::HostTypes> {");
     f.indented_doc_comment("Data sites only — the partition's `siteBudget`, not its layout width.");
     f.line("    pub site_budget: u16,");

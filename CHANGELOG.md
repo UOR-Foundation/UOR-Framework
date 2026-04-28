@@ -2,6 +2,53 @@
 
 All notable changes to UOR-Framework are documented in this file.
 
+## Phase 18 — Documentation, contract tests, publish-readiness — 2026-04-28
+
+Closes the published-crate-completion plan. Public API documentation
+covers every module added in Phases 10–17; behavioural tests assert
+the cross-cutting `OntologyVerifiedMint` contract; SDK metadata is
+crates.io-ready. Conformance reports **543 passed, 0 warnings, 0
+failed**.
+
+### Documentation
+
+- `lib.rs` top-level docstring extended with two new sections:
+  - **Witness minting** — explains the `OntologyVerifiedMint` trait,
+    the per-class `Mint{Foo}` types, the structural-invariant failure
+    routes (BR_*, CC_*, IH_*, FX_4, WLS_*, surfaceSymmetry), and the
+    `ontology_mint::<H>(inputs)` entry shape.
+  - **Per-class observable views** — points consumers at the inherent
+    `Validated::as_landauer()` / `as_jacobian()` /
+    `as_carry_depth()` / `as_derivation_depth()` / `as_free_rank()`
+    accessors that produce primitive-backed `Observable<H>` values.
+- Stale doc comment fixed: `PartitionRecord<H>` no longer claims
+  `entropy_nats` is `f64` — the field is `entropy_nats_bits: u64`
+  per Phase 9, and the struct now derives `Eq + Hash` cleanly.
+
+### Behavioural tests
+
+- New `foundation/tests/ontology_verified_mint_contract.rs` (6 tests):
+  - All ten `Mint{Foo}` witnesses are `Send + Sync + Copy + Clone +
+    Debug + Eq + PartialEq` (compile-time assertions).
+  - Every `THEOREM_IDENTITY` constant points to a well-formed
+    op-namespace IRI (prefix discipline check).
+  - Determinism: two mints with identical inputs produce identical
+    fingerprints.
+  - Distinctness: mints with differing inputs produce distinct
+    fingerprints (Phase 15's content folding actually folds content).
+  - Lift-obstruction dispatch: trivial=true with non-zero site
+    routes to WLS_1; trivial=false with zero site routes to WLS_2.
+  - Born-rule progressive failure routing: BR_1 → BR_2 → BR_3 →
+    BR_4 in order as each invariant fails.
+
+### Publish-readiness
+
+- `uor-foundation-sdk/Cargo.toml` gains `keywords` and `categories`
+  fields so the published crate has crates.io discovery metadata.
+- `cargo publish --dry-run` succeeds for both crates (modulo the
+  pre-existing `0.3.0 already on index` warning, which is normal
+  when republishing the same version pre-bump).
+
 ## Phase 17 — `ConstraintRef` Affine/Conjunction const-buildable — 2026-04-28
 
 Replaces the variable-length `&'static` slice fields on

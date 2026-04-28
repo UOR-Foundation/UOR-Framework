@@ -84,6 +84,37 @@
 //! trees. The `Term` enum's struct-variant constructors are the canonical
 //! builder API — there is no DSL macro in v0.2.2.
 //!
+//! # Witness minting (Phases 10 + 12 + 14 + 15)
+//!
+//! Path-2 ontology classes (theorem-attesting witnesses such as
+//! [`witness_scaffolds::MintBornRuleVerification`],
+//! [`witness_scaffolds::MintCompletenessWitness`], etc.) implement the
+//! sealed [`OntologyVerifiedMint`] trait. Mint a witness by populating
+//! its `Mint{Foo}Inputs<H>` bundle with non-zero handles + true
+//! attestation flags + non-empty strings, then calling
+//! `Mint{Foo}::ontology_mint::<H>(inputs)`. On structural-invariant
+//! failure each `verify_*` primitive in `crate::primitives::{family}`
+//! returns a typed [`enforcement::GenericImpossibilityWitness`] whose
+//! IRI cites the specific failing op-namespace identity (BR_*,
+//! CC_*, IH_*, FX_4, WLS_*, surfaceSymmetry).
+//!
+//! # Per-class observable views (Phase 16)
+//!
+//! [`enforcement::Validated<T, Phase>`] does not directly implement
+//! the kind-specific `Observable<H>` trait — Rust forbids multiple
+//! `Observable<H>` impls per type, and the bare blanket would return
+//! a sentinel for every kind. Consumers select an explicit kind via
+//! the inherent accessors
+//! [`Validated::as_landauer`](enforcement::Validated::as_landauer),
+//! [`Validated::as_jacobian`](enforcement::Validated::as_jacobian),
+//! [`Validated::as_carry_depth`](enforcement::Validated::as_carry_depth),
+//! [`Validated::as_derivation_depth`](enforcement::Validated::as_derivation_depth),
+//! and [`Validated::as_free_rank`](enforcement::Validated::as_free_rank).
+//! Each returns a zero-cost newtype view in [`blanket_impls`] whose
+//! `Observable<H>::value()` body delegates to the relevant primitive
+//! (`primitive_descent_metrics`, `primitive_curvature_jacobian`,
+//! `primitive_dihedral_signature`, etc.).
+//!
 //! # Resolvers (v0.2.2 W12)
 //!
 //! Verdict-producing resolvers are free functions in module-per-resolver

@@ -361,6 +361,37 @@ fn generate_lib_rs(ontology: &Ontology) -> String {
          //! trees. The `Term` enum's struct-variant constructors are the canonical\n\
          //! builder API — there is no DSL macro in v0.2.2.\n\
          //!\n\
+         //! # Witness minting (Phases 10 + 12 + 14 + 15)\n\
+         //!\n\
+         //! Path-2 ontology classes (theorem-attesting witnesses such as\n\
+         //! [`witness_scaffolds::MintBornRuleVerification`],\n\
+         //! [`witness_scaffolds::MintCompletenessWitness`], etc.) implement the\n\
+         //! sealed [`OntologyVerifiedMint`] trait. Mint a witness by populating\n\
+         //! its `Mint{{Foo}}Inputs<H>` bundle with non-zero handles + true\n\
+         //! attestation flags + non-empty strings, then calling\n\
+         //! `Mint{{Foo}}::ontology_mint::<H>(inputs)`. On structural-invariant\n\
+         //! failure each `verify_*` primitive in `crate::primitives::{{family}}`\n\
+         //! returns a typed [`enforcement::GenericImpossibilityWitness`] whose\n\
+         //! IRI cites the specific failing op-namespace identity (BR_*,\n\
+         //! CC_*, IH_*, FX_4, WLS_*, surfaceSymmetry).\n\
+         //!\n\
+         //! # Per-class observable views (Phase 16)\n\
+         //!\n\
+         //! [`enforcement::Validated<T, Phase>`] does not directly implement\n\
+         //! the kind-specific `Observable<H>` trait — Rust forbids multiple\n\
+         //! `Observable<H>` impls per type, and the bare blanket would return\n\
+         //! a sentinel for every kind. Consumers select an explicit kind via\n\
+         //! the inherent accessors\n\
+         //! [`Validated::as_landauer`](enforcement::Validated::as_landauer),\n\
+         //! [`Validated::as_jacobian`](enforcement::Validated::as_jacobian),\n\
+         //! [`Validated::as_carry_depth`](enforcement::Validated::as_carry_depth),\n\
+         //! [`Validated::as_derivation_depth`](enforcement::Validated::as_derivation_depth),\n\
+         //! and [`Validated::as_free_rank`](enforcement::Validated::as_free_rank).\n\
+         //! Each returns a zero-cost newtype view in [`blanket_impls`] whose\n\
+         //! `Observable<H>::value()` body delegates to the relevant primitive\n\
+         //! (`primitive_descent_metrics`, `primitive_curvature_jacobian`,\n\
+         //! `primitive_dihedral_signature`, etc.).\n\
+         //!\n\
          //! # Resolvers (v0.2.2 W12)\n\
          //!\n\
          //! Verdict-producing resolvers are free functions in module-per-resolver\n\

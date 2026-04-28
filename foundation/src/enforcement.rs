@@ -17908,9 +17908,11 @@ impl VerifiedMint for CartesianProductWitness {
 
 /// Data record of a partition's runtime-queried properties. Produced at
 /// witness-mint time and consulted by consumer code that holds a
-/// `PartitionHandle` and a `PartitionResolver`. Derives `PartialEq`
-/// rather than `Eq` because the `entropy_nats` field is `f64`.
-#[derive(Debug, Clone, Copy, PartialEq)]
+/// `PartitionHandle` and a `PartitionResolver`. Phase 9 stores entropy
+/// as the IEEE-754 `u64` bit-pattern (`entropy_nats_bits`) so the record
+/// derives `Eq + Hash` cleanly; consumers project to `H::Decimal` via
+/// `<H::Decimal as DecimalTranscendental>::from_bits`.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct PartitionRecord<H: crate::HostTypes> {
     /// Data sites only — the partition's `siteBudget`, not its layout width.
     pub site_budget: u16,
