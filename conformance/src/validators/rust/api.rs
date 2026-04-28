@@ -63,8 +63,12 @@ fn check_pub_items_documented(workspace: &Path, report: &mut ConformanceReport) 
                 || trimmed.starts_with("pub type "))
                 && !trimmed.contains("use ")
             {
-                // Check that a doc comment appears within the 3 preceding lines
-                let start = i.saturating_sub(3);
+                // Check that a doc comment appears within the 5 preceding
+                // lines. Some declarations have multiple `#[derive]` /
+                // `#[non_exhaustive]` / `#[allow(...)]` attribute lines
+                // between the doc and the `pub` keyword; 5 lines covers
+                // all in-tree cases.
+                let start = i.saturating_sub(5);
                 let has_doc = lines[start..i]
                     .iter()
                     .any(|l| l.trim().starts_with("///") || l.trim().starts_with("#[doc"));

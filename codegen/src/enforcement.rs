@@ -5040,11 +5040,12 @@ fn generate_grounded_wrapper(f: &mut RustFile) {
     f.line("            hasher = hasher.fold_byte(5);");
     f.line("            hasher = hasher.fold_bytes(&position.to_be_bytes());");
     f.line("        }");
-    f.line("        C::Affine { coefficients, bias } => {");
+    f.line("        C::Affine { coefficients, coefficient_count, bias } => {");
     f.line("            hasher = hasher.fold_byte(6);");
-    f.line("            hasher = hasher.fold_bytes(&(coefficients.len() as u32).to_be_bytes());");
+    f.line("            hasher = hasher.fold_bytes(&coefficient_count.to_be_bytes());");
+    f.line("            let count = *coefficient_count as usize;");
     f.line("            let mut i = 0;");
-    f.line("            while i < coefficients.len() {");
+    f.line("            while i < count && i < crate::pipeline::AFFINE_MAX_COEFFS {");
     f.line("                hasher = hasher.fold_bytes(&coefficients[i].to_be_bytes());");
     f.line("                i += 1;");
     f.line("            }");
@@ -5081,12 +5082,14 @@ fn generate_grounded_wrapper(f: &mut RustFile) {
     f.line("            hasher = hasher.fold_bytes(args_repr.as_bytes());");
     f.line("            hasher = hasher.fold_byte(0);");
     f.line("        }");
-    f.line("        C::Conjunction { conjuncts } => {");
+    f.line("        C::Conjunction { conjuncts, conjunct_count } => {");
     f.line("            hasher = hasher.fold_byte(9);");
-    f.line("            hasher = hasher.fold_bytes(&(conjuncts.len() as u32).to_be_bytes());");
+    f.line("            hasher = hasher.fold_bytes(&conjunct_count.to_be_bytes());");
+    f.line("            let count = *conjunct_count as usize;");
     f.line("            let mut i = 0;");
-    f.line("            while i < conjuncts.len() {");
-    f.line("                hasher = fold_constraint_ref(hasher, &conjuncts[i]);");
+    f.line("            while i < count && i < crate::pipeline::CONJUNCTION_MAX_TERMS {");
+    f.line("                let lifted = conjuncts[i].into_constraint();");
+    f.line("                hasher = fold_constraint_ref(hasher, &lifted);");
     f.line("                i += 1;");
     f.line("            }");
     f.line("        }");
@@ -6725,11 +6728,12 @@ fn emit_phase_j_primitives(f: &mut RustFile) {
     f.line("        crate::pipeline::ConstraintRef::Carry { site } => {");
     f.line("            if n_sites == 0 { 0 } else { 1u16 << (*site as usize % n_sites) }");
     f.line("        }");
-    f.line("        crate::pipeline::ConstraintRef::Affine { coefficients, .. } => {");
+    f.line("        crate::pipeline::ConstraintRef::Affine { coefficients, coefficient_count, .. } => {");
     f.line("            if n_sites == 0 { 0 } else {");
     f.line("                let mut mask: u16 = 0;");
+    f.line("                let count = *coefficient_count as usize;");
     f.line("                let mut i = 0;");
-    f.line("                while i < coefficients.len() && i < n_sites {");
+    f.line("                while i < count && i < crate::pipeline::AFFINE_MAX_COEFFS && i < n_sites {");
     f.line("                    if coefficients[i] != 0 {");
     f.line("                        mask |= 1u16 << i;");
     f.line("                    }");
@@ -12064,12 +12068,13 @@ fn emit_pc_validate_coproduct_structure(f: &mut RustFile) {
     f.line("            }");
     f.line("        }");
     // Affine — tag-pinner classification.
-    f.line("        crate::pipeline::ConstraintRef::Affine { coefficients, bias } => {");
+    f.line("        crate::pipeline::ConstraintRef::Affine { coefficients, coefficient_count, bias } => {");
+    f.line("            let count = *coefficient_count as usize;");
     f.line("            let mut nonzero_count: u32 = 0;");
     f.line("            let mut nonzero_index: usize = 0;");
     f.line("            let mut max_nonzero_index: usize = 0;");
     f.line("            let mut i: usize = 0;");
-    f.line("            while i < coefficients.len() {");
+    f.line("            while i < count && i < crate::pipeline::AFFINE_MAX_COEFFS {");
     f.line("                if coefficients[i] != 0 {");
     f.line("                    nonzero_count = nonzero_count.saturating_add(1);");
     f.line("                    nonzero_index = i;");
@@ -12109,17 +12114,25 @@ fn emit_pc_validate_coproduct_structure(f: &mut RustFile) {
     f.line("                }");
     f.line("            }");
     f.line("        }");
-    // Conjunction — recurse with decremented depth.
-    f.line("        crate::pipeline::ConstraintRef::Conjunction { conjuncts } => {");
+    // Conjunction — Phase 17 caps depth at one (`LeafConstraintRef` cannot
+    // be itself Conjunction). Lift each leaf back to a `ConstraintRef` for
+    // the recursive walk; the recursion still handles `max_depth == 0`
+    // as a defensive guard even though Phase 17 makes nested-Conjunction
+    // unreachable.
+    f.line(
+        "        crate::pipeline::ConstraintRef::Conjunction { conjuncts, conjunct_count } => {",
+    );
     f.line("            if max_depth == 0 {");
     f.line("                return Err(GenericImpossibilityWitness::for_identity(");
     f.line("                    \"https://uor.foundation/op/ST_6\",");
     f.line("                ));");
     f.line("            }");
+    f.line("            let count = *conjunct_count as usize;");
     f.line("            let mut idx: usize = 0;");
-    f.line("            while idx < conjuncts.len() {");
+    f.line("            while idx < count && idx < crate::pipeline::CONJUNCTION_MAX_TERMS {");
+    f.line("                let lifted = conjuncts[idx].into_constraint();");
     f.line("                pc_classify_constraint(");
-    f.line("                    &conjuncts[idx],");
+    f.line("                    &lifted,");
     f.line("                    in_left_region,");
     f.line("                    tag_site,");
     f.line("                    max_depth - 1,");

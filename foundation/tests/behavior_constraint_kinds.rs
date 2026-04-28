@@ -78,8 +78,12 @@ fn site_position_always_passes() {
 #[test]
 fn affine_consistent_single_row_passes() {
     // Single-row affine constraint 2·x = 0 mod 2^n — consistent (x = 0).
+    use uor_foundation::pipeline::AFFINE_MAX_COEFFS;
+    let mut coeffs = [0i64; AFFINE_MAX_COEFFS];
+    coeffs[0] = 2;
     let cs = &[ConstraintRef::Affine {
-        coefficients: &[2i64],
+        coefficients: coeffs,
+        coefficient_count: 1,
         bias: 0,
     }];
     assert!(preflight_feasibility(cs).is_ok());
@@ -89,8 +93,13 @@ fn affine_consistent_single_row_passes() {
 fn affine_zero_sum_nonzero_bias_rejected() {
     // sum(coefficients) = 0 but bias != 0 → inconsistent. Workstream E's
     // canonical single-row encoding rejects.
+    use uor_foundation::pipeline::AFFINE_MAX_COEFFS;
+    let mut coeffs = [0i64; AFFINE_MAX_COEFFS];
+    coeffs[0] = 1;
+    coeffs[1] = -1;
     let cs = &[ConstraintRef::Affine {
-        coefficients: &[1i64, -1i64],
+        coefficients: coeffs,
+        coefficient_count: 2,
         bias: 5,
     }];
     assert!(preflight_feasibility(cs).is_err());
@@ -98,8 +107,10 @@ fn affine_zero_sum_nonzero_bias_rejected() {
 
 #[test]
 fn affine_empty_coefficients_rejected() {
+    use uor_foundation::pipeline::AFFINE_MAX_COEFFS;
     let cs = &[ConstraintRef::Affine {
-        coefficients: &[],
+        coefficients: [0i64; AFFINE_MAX_COEFFS],
+        coefficient_count: 0,
         bias: 0,
     }];
     assert!(preflight_feasibility(cs).is_err());

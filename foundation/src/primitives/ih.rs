@@ -10,8 +10,8 @@
 
 use crate::enforcement::{ContentFingerprint, GenericImpossibilityWitness};
 use crate::witness_scaffolds::{
-    MintImpossibilityWitness, MintImpossibilityWitnessInputs,
-    MintInhabitanceImpossibilityWitness, MintInhabitanceImpossibilityWitnessInputs,
+    MintImpossibilityWitness, MintImpossibilityWitnessInputs, MintInhabitanceImpossibilityWitness,
+    MintInhabitanceImpossibilityWitnessInputs,
 };
 use crate::HostTypes;
 

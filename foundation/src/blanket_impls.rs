@@ -24,9 +24,7 @@
 #![allow(clippy::module_name_repetitions)]
 
 use crate::bridge::derivation::DerivationDepthObservable;
-use crate::bridge::observable::{
-    JacobianObservable, LandauerBudget, Observable, ThermoObservable,
-};
+use crate::bridge::observable::{JacobianObservable, LandauerBudget, Observable, ThermoObservable};
 use crate::bridge::partition::FreeRankObservable;
 use crate::enforcement::{Validated, ValidationPhase};
 use crate::enums::MeasurementUnit;
@@ -281,8 +279,7 @@ where
             Ok(b) => b,
             Err(_) => return H::EMPTY_DECIMAL,
         };
-        let (_residual, entropy_bits) =
-            crate::enforcement::primitive_descent_metrics::<T>(&nerve);
+        let (_residual, entropy_bits) = crate::enforcement::primitive_descent_metrics::<T>(&nerve);
         <H::Decimal as DecimalTranscendental>::from_bits(entropy_bits)
     }
 }
@@ -372,9 +369,7 @@ where
     fn value(&self) -> H::Decimal {
         // W8 (8-bit Witt level) — the standard baseline.
         match crate::enforcement::primitive_terminal_reduction::<T>(8u16) {
-            Ok((_witt, length, _sat)) => {
-                <H::Decimal as DecimalTranscendental>::from_u32(length)
-            }
+            Ok((_witt, length, _sat)) => <H::Decimal as DecimalTranscendental>::from_u32(length),
             Err(_) => H::EMPTY_DECIMAL,
         }
     }
@@ -413,8 +408,7 @@ where
             Ok(b) => b,
             Err(_) => return H::EMPTY_DECIMAL,
         };
-        let (residual, _entropy_bits) =
-            crate::enforcement::primitive_descent_metrics::<T>(&nerve);
+        let (residual, _entropy_bits) = crate::enforcement::primitive_descent_metrics::<T>(&nerve);
         <H::Decimal as DecimalTranscendental>::from_u32(residual)
     }
     #[inline]

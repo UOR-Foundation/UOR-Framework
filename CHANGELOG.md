@@ -2,6 +2,63 @@
 
 All notable changes to UOR-Framework are documented in this file.
 
+## Phase 17 — `ConstraintRef` Affine/Conjunction const-buildable — 2026-04-28
+
+Replaces the variable-length `&'static` slice fields on
+`ConstraintRef::Affine` and `ConstraintRef::Conjunction` with
+fixed-size arrays so stable-Rust const evaluation can build them
+inline. Enables the SDK macros (`product_shape!`,
+`coproduct_shape!`, `cartesian_product_shape!`) to support the full
+operand-catalogue — `Affine`-bearing operands no longer fall back to
+the `Site { position: u32::MAX }` sentinel. Conformance reports
+**543 passed, 0 warnings, 0 failed**.
+
+### Breaking
+
+- `ConstraintRef::Affine { coefficients: &'static [i64], bias }`
+  becomes
+  `ConstraintRef::Affine { coefficients: [i64; AFFINE_MAX_COEFFS], coefficient_count: u32, bias }`.
+  Active prefix is `coefficients[..coefficient_count as usize]`.
+- `ConstraintRef::Conjunction { conjuncts: &'static [ConstraintRef] }`
+  becomes
+  `ConstraintRef::Conjunction { conjuncts: [LeafConstraintRef; CONJUNCTION_MAX_TERMS], conjunct_count: u32 }`.
+  Conjunction is depth-limited to one level via the new
+  `LeafConstraintRef` element type (every `ConstraintRef` variant
+  except `Conjunction` itself).
+
+### Additive
+
+- `pub const AFFINE_MAX_COEFFS: usize = 8` and
+  `pub const CONJUNCTION_MAX_TERMS: usize = 8` capacity caps in
+  `foundation::pipeline`.
+- `pub enum LeafConstraintRef` — Conjunction-conjunct element type.
+- `ConstraintRef::as_leaf()` and `LeafConstraintRef::into_constraint()`
+  conversions.
+- `pub const fn shift_leaf_constraint(leaf, offset)` for
+  Conjunction-shifting paths.
+- `shift_constraint` performs real shifts for `Affine` and
+  `Conjunction` (no more `Site { u32::MAX }` sentinel). Both
+  variants compose correctly through the SDK macros.
+- `uor-foundation-sdk` operand-support catalogue extended to every
+  `ConstraintRef` variant; new SDK smoke tests
+  (`product_shape_supports_affine_operand`,
+  `coproduct_shape_supports_affine_operand`) verify the
+  Affine-bearing path.
+- All 89 in-tree Affine/Conjunction call sites updated to the new
+  fixed-array shape: `foundation/tests/behavior_*.rs` (5 files) +
+  `uor-foundation-sdk/tests/smoke.rs` + the coproduct macro emission
+  in `codegen/src/sdk_macros.rs` + every Affine match arm in
+  `codegen/src/pipeline.rs` and `codegen/src/enforcement.rs`.
+
+### Conformance
+
+- `rust/api` validator now looks back 5 lines for doc comments
+  (some `pub` items have ≥ 4 stacked attribute lines).
+- `rust/parametric_constraints` updated to expect the new
+  Conjunction shape anchor.
+- `rust/endpoint_coverage` registers `AFFINE_MAX_COEFFS`,
+  `CONJUNCTION_MAX_TERMS`, `LeafConstraintRef`.
+
 ## Phase 16 — Per-class observable view newtypes — 2026-04-28
 
 Replaces the bare `Validated<T, Phase>: Observable<H>` blanket impls

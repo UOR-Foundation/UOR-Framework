@@ -6377,11 +6377,16 @@ pub fn fold_constraint_ref<H: Hasher>(mut hasher: H, c: &crate::pipeline::Constr
             hasher = hasher.fold_byte(5);
             hasher = hasher.fold_bytes(&position.to_be_bytes());
         }
-        C::Affine { coefficients, bias } => {
+        C::Affine {
+            coefficients,
+            coefficient_count,
+            bias,
+        } => {
             hasher = hasher.fold_byte(6);
-            hasher = hasher.fold_bytes(&(coefficients.len() as u32).to_be_bytes());
+            hasher = hasher.fold_bytes(&coefficient_count.to_be_bytes());
+            let count = *coefficient_count as usize;
             let mut i = 0;
-            while i < coefficients.len() {
+            while i < count && i < crate::pipeline::AFFINE_MAX_COEFFS {
                 hasher = hasher.fold_bytes(&coefficients[i].to_be_bytes());
                 i += 1;
             }
@@ -6418,12 +6423,17 @@ pub fn fold_constraint_ref<H: Hasher>(mut hasher: H, c: &crate::pipeline::Constr
             hasher = hasher.fold_bytes(args_repr.as_bytes());
             hasher = hasher.fold_byte(0);
         }
-        C::Conjunction { conjuncts } => {
+        C::Conjunction {
+            conjuncts,
+            conjunct_count,
+        } => {
             hasher = hasher.fold_byte(9);
-            hasher = hasher.fold_bytes(&(conjuncts.len() as u32).to_be_bytes());
+            hasher = hasher.fold_bytes(&conjunct_count.to_be_bytes());
+            let count = *conjunct_count as usize;
             let mut i = 0;
-            while i < conjuncts.len() {
-                hasher = fold_constraint_ref(hasher, &conjuncts[i]);
+            while i < count && i < crate::pipeline::CONJUNCTION_MAX_TERMS {
+                let lifted = conjuncts[i].into_constraint();
+                hasher = fold_constraint_ref(hasher, &lifted);
                 i += 1;
             }
         }
@@ -6748,13 +6758,18 @@ pub(crate) const fn constraint_site_support_mask<
                 1u16 << (*site as usize % n_sites)
             }
         }
-        crate::pipeline::ConstraintRef::Affine { coefficients, .. } => {
+        crate::pipeline::ConstraintRef::Affine {
+            coefficients,
+            coefficient_count,
+            ..
+        } => {
             if n_sites == 0 {
                 0
             } else {
                 let mut mask: u16 = 0;
+                let count = *coefficient_count as usize;
                 let mut i = 0;
-                while i < coefficients.len() && i < n_sites {
+                while i < count && i < crate::pipeline::AFFINE_MAX_COEFFS && i < n_sites {
                     if coefficients[i] != 0 {
                         mask |= 1u16 << i;
                     }
@@ -17407,12 +17422,17 @@ fn pc_classify_constraint(
                 ));
             }
         }
-        crate::pipeline::ConstraintRef::Affine { coefficients, bias } => {
+        crate::pipeline::ConstraintRef::Affine {
+            coefficients,
+            coefficient_count,
+            bias,
+        } => {
+            let count = *coefficient_count as usize;
             let mut nonzero_count: u32 = 0;
             let mut nonzero_index: usize = 0;
             let mut max_nonzero_index: usize = 0;
             let mut i: usize = 0;
-            while i < coefficients.len() {
+            while i < count && i < crate::pipeline::AFFINE_MAX_COEFFS {
                 if coefficients[i] != 0 {
                     nonzero_count = nonzero_count.saturating_add(1);
                     nonzero_index = i;
@@ -17457,16 +17477,21 @@ fn pc_classify_constraint(
                 }
             }
         }
-        crate::pipeline::ConstraintRef::Conjunction { conjuncts } => {
+        crate::pipeline::ConstraintRef::Conjunction {
+            conjuncts,
+            conjunct_count,
+        } => {
             if max_depth == 0 {
                 return Err(GenericImpossibilityWitness::for_identity(
                     "https://uor.foundation/op/ST_6",
                 ));
             }
+            let count = *conjunct_count as usize;
             let mut idx: usize = 0;
-            while idx < conjuncts.len() {
+            while idx < count && idx < crate::pipeline::CONJUNCTION_MAX_TERMS {
+                let lifted = conjuncts[idx].into_constraint();
                 pc_classify_constraint(
-                    &conjuncts[idx],
+                    &lifted,
                     in_left_region,
                     tag_site,
                     max_depth - 1,

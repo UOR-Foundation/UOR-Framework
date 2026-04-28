@@ -127,9 +127,8 @@ pub fn validate(workspace: &Path) -> Result<ConformanceReport> {
     // structs containing `&'static [{Range}Handle<H>]` non-functional
     // fields satisfy `Handle<H>: 'static`.
     if !scaffolds.contains("type Inputs<H: HostTypes + 'static>") {
-        failures.push(
-            "OntologyVerifiedMint::Inputs<H: HostTypes + 'static> GAT missing".to_string(),
-        );
+        failures
+            .push("OntologyVerifiedMint::Inputs<H: HostTypes + 'static> GAT missing".to_string());
     }
     if !scaffolds.contains("const THEOREM_IDENTITY:") {
         failures.push("OntologyVerifiedMint::THEOREM_IDENTITY const missing".to_string());
@@ -162,7 +161,9 @@ pub fn validate(workspace: &Path) -> Result<ConformanceReport> {
         let inputs_decl_a = format!("pub struct {inputs}<H: HostTypes>");
         let inputs_decl_b = format!("pub struct {inputs}<H: HostTypes + 'static>");
         if !scaffolds.contains(&inputs_decl_a) && !scaffolds.contains(&inputs_decl_b) {
-            failures.push(format!("missing `pub struct {inputs}<H: HostTypes[+'static]>`"));
+            failures.push(format!(
+                "missing `pub struct {inputs}<H: HostTypes[+'static]>`"
+            ));
         }
         if !scaffolds.contains(&format!("impl Certificate for {mint}")) {
             failures.push(format!("missing `impl Certificate for {mint}`"));
@@ -171,8 +172,7 @@ pub fn validate(workspace: &Path) -> Result<ConformanceReport> {
             failures.push(format!("missing `impl OntologyVerifiedMint for {mint}`"));
         }
         // Phase 14 — verify the impl uses the `+ 'static` GAT shape.
-        let inputs_assoc =
-            format!("type Inputs<H: HostTypes + 'static> = {inputs}<H>;");
+        let inputs_assoc = format!("type Inputs<H: HostTypes + 'static> = {inputs}<H>;");
         if !scaffolds.contains(&inputs_assoc) {
             failures.push(format!(
                 "{mint}'s OntologyVerifiedMint impl missing `type Inputs<H: HostTypes + 'static> = {inputs}<H>;`"

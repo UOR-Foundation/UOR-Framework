@@ -26,7 +26,10 @@ fn nonzero_fp(seed: u8) -> ContentFingerprint {
     let mut buf = [0u8; uor_foundation::enforcement::FINGERPRINT_MAX_BYTES];
     buf[0] = seed;
     buf[1] = seed.wrapping_add(1);
-    ContentFingerprint::from_buffer(buf, uor_foundation::enforcement::FINGERPRINT_MAX_BYTES as u8)
+    ContentFingerprint::from_buffer(
+        buf,
+        uor_foundation::enforcement::FINGERPRINT_MAX_BYTES as u8,
+    )
 }
 
 fn assert_ok_with_fingerprint(witness_label: &str, fp: ContentFingerprint) {
@@ -76,7 +79,11 @@ fn br_populated_mint_succeeds() {
 
 #[test]
 fn br_default_rejects_at_br_1() {
-    assert_default_rejects_with_iri::<MintBornRuleVerification, MintBornRuleVerificationInputs<DefaultHostTypes>, _>(
+    assert_default_rejects_with_iri::<
+        MintBornRuleVerification,
+        MintBornRuleVerificationInputs<DefaultHostTypes>,
+        _,
+    >(
         "MintBornRuleVerification",
         "https://uor.foundation/op/BR_",
         MintBornRuleVerification::ontology_mint::<DefaultHostTypes>,
@@ -98,7 +105,11 @@ fn cc_populated_mint_succeeds() {
 
 #[test]
 fn cc_default_rejects_at_cc_1() {
-    assert_default_rejects_with_iri::<MintCompletenessWitness, MintCompletenessWitnessInputs<DefaultHostTypes>, _>(
+    assert_default_rejects_with_iri::<
+        MintCompletenessWitness,
+        MintCompletenessWitnessInputs<DefaultHostTypes>,
+        _,
+    >(
         "MintCompletenessWitness",
         "https://uor.foundation/op/CC_",
         MintCompletenessWitness::ontology_mint::<DefaultHostTypes>,
@@ -108,12 +119,14 @@ fn cc_default_rejects_at_cc_1() {
 #[test]
 fn dp_populated_mint_succeeds() {
     let inputs = MintDisjointnessWitnessInputs::<DefaultHostTypes> {
-        disjointness_left: uor_foundation::kernel::effect::EffectTargetHandle::<
-            DefaultHostTypes,
-        >::new(nonzero_fp(0x10)),
-        disjointness_right: uor_foundation::kernel::effect::EffectTargetHandle::<
-            DefaultHostTypes,
-        >::new(nonzero_fp(0x20)),
+        disjointness_left:
+            uor_foundation::kernel::effect::EffectTargetHandle::<DefaultHostTypes>::new(nonzero_fp(
+                0x10,
+            )),
+        disjointness_right:
+            uor_foundation::kernel::effect::EffectTargetHandle::<DefaultHostTypes>::new(nonzero_fp(
+                0x20,
+            )),
     };
     let w = MintDisjointnessWitness::ontology_mint::<DefaultHostTypes>(inputs)
         .expect("DP family verify must succeed for populated, distinct inputs");
@@ -122,7 +135,11 @@ fn dp_populated_mint_succeeds() {
 
 #[test]
 fn dp_default_rejects_at_fx_4() {
-    assert_default_rejects_with_iri::<MintDisjointnessWitness, MintDisjointnessWitnessInputs<DefaultHostTypes>, _>(
+    assert_default_rejects_with_iri::<
+        MintDisjointnessWitness,
+        MintDisjointnessWitnessInputs<DefaultHostTypes>,
+        _,
+    >(
         "MintDisjointnessWitness",
         "https://uor.foundation/op/FX_4",
         MintDisjointnessWitness::ontology_mint::<DefaultHostTypes>,
@@ -134,9 +151,10 @@ fn ih_impossibility_populated_mint_succeeds() {
     let inputs = MintImpossibilityWitnessInputs::<DefaultHostTypes> {
         achievability_status: uor_foundation::AchievabilityStatus::default(),
         depends_on: &[],
-        formal_derivation: uor_foundation::bridge::proof::DerivationTermHandle::<
-            DefaultHostTypes,
-        >::new(nonzero_fp(0x33)),
+        formal_derivation:
+            uor_foundation::bridge::proof::DerivationTermHandle::<DefaultHostTypes>::new(
+                nonzero_fp(0x33),
+            ),
         impossibility_domain: uor_foundation::VerificationDomain::default(),
         impossibility_reason: "missing-witness",
         proves_identity: uor_foundation::kernel::op::IdentityHandle::<DefaultHostTypes>::new(
@@ -155,7 +173,11 @@ fn ih_impossibility_populated_mint_succeeds() {
 
 #[test]
 fn ih_impossibility_default_rejects_at_ih_1() {
-    assert_default_rejects_with_iri::<MintImpossibilityWitness, MintImpossibilityWitnessInputs<DefaultHostTypes>, _>(
+    assert_default_rejects_with_iri::<
+        MintImpossibilityWitness,
+        MintImpossibilityWitnessInputs<DefaultHostTypes>,
+        _,
+    >(
         "MintImpossibilityWitness",
         "https://uor.foundation/op/IH_",
         MintImpossibilityWitness::ontology_mint::<DefaultHostTypes>,
@@ -164,30 +186,31 @@ fn ih_impossibility_default_rejects_at_ih_1() {
 
 #[test]
 fn ih_inhabitance_populated_mint_succeeds() {
-    let inputs = MintInhabitanceImpossibilityWitnessInputs::<DefaultHostTypes> {
-        achievability_status: uor_foundation::AchievabilityStatus::default(),
-        contradiction_proof: "carrier(T) = empty",
-        depends_on: &[],
-        formal_derivation: uor_foundation::bridge::proof::DerivationTermHandle::<
-            DefaultHostTypes,
-        >::new(nonzero_fp(0x55)),
-        grounded: uor_foundation::user::type_::ConstrainedTypeHandle::<DefaultHostTypes>::new(
-            nonzero_fp(0x66),
-        ),
-        impossibility_domain: uor_foundation::VerificationDomain::default(),
-        impossibility_reason: "carrier-empty",
-        proves_identity: uor_foundation::kernel::op::IdentityHandle::<DefaultHostTypes>::new(
-            nonzero_fp(0x77),
-        ),
-        search_trace: uor_foundation::bridge::trace::InhabitanceSearchTraceHandle::<
-            DefaultHostTypes,
-        >::new(nonzero_fp(0x88)),
-        strategy: uor_foundation::ProofStrategy::default(),
-        timestamp: &[0u8],
-        verified: true,
-        verified_at_level: &[],
-        witness: &[],
-    };
+    let inputs =
+        MintInhabitanceImpossibilityWitnessInputs::<DefaultHostTypes> {
+            achievability_status: uor_foundation::AchievabilityStatus::default(),
+            contradiction_proof: "carrier(T) = empty",
+            depends_on: &[],
+            formal_derivation: uor_foundation::bridge::proof::DerivationTermHandle::<
+                DefaultHostTypes,
+            >::new(nonzero_fp(0x55)),
+            grounded: uor_foundation::user::type_::ConstrainedTypeHandle::<DefaultHostTypes>::new(
+                nonzero_fp(0x66),
+            ),
+            impossibility_domain: uor_foundation::VerificationDomain::default(),
+            impossibility_reason: "carrier-empty",
+            proves_identity: uor_foundation::kernel::op::IdentityHandle::<DefaultHostTypes>::new(
+                nonzero_fp(0x77),
+            ),
+            search_trace: uor_foundation::bridge::trace::InhabitanceSearchTraceHandle::<
+                DefaultHostTypes,
+            >::new(nonzero_fp(0x88)),
+            strategy: uor_foundation::ProofStrategy::default(),
+            timestamp: &[0u8],
+            verified: true,
+            verified_at_level: &[],
+            witness: &[],
+        };
     let w = MintInhabitanceImpossibilityWitness::ontology_mint::<DefaultHostTypes>(inputs)
         .expect("IH/InhabitanceImpossibilityWitness verify must succeed for populated inputs");
     assert_ok_with_fingerprint(
@@ -213,9 +236,10 @@ fn ih_inhabitance_default_rejects_at_ih_1() {
 fn lo_populated_mint_succeeds_non_trivial() {
     let inputs = MintLiftObstructionInputs::<DefaultHostTypes> {
         obstruction_trivial: false,
-        obstruction_site: uor_foundation::bridge::partition::SiteIndexHandle::<DefaultHostTypes>::new(
-            nonzero_fp(0xAA),
-        ),
+        obstruction_site:
+            uor_foundation::bridge::partition::SiteIndexHandle::<DefaultHostTypes>::new(nonzero_fp(
+                0xAA,
+            )),
     };
     let w = MintLiftObstruction::ontology_mint::<DefaultHostTypes>(inputs)
         .expect("LO family verify must succeed for non-trivial obstruction with site");
@@ -238,7 +262,11 @@ fn lo_populated_mint_succeeds_trivial() {
 
 #[test]
 fn lo_default_rejects_at_wls() {
-    assert_default_rejects_with_iri::<MintLiftObstruction, MintLiftObstructionInputs<DefaultHostTypes>, _>(
+    assert_default_rejects_with_iri::<
+        MintLiftObstruction,
+        MintLiftObstructionInputs<DefaultHostTypes>,
+        _,
+    >(
         "MintLiftObstruction",
         "https://uor.foundation/op/WLS_",
         MintLiftObstruction::ontology_mint::<DefaultHostTypes>,
@@ -251,9 +279,10 @@ fn oa_morphism_grounding_populated_mint_succeeds() {
         grounded_address: uor_foundation::kernel::address::ElementHandle::<DefaultHostTypes>::new(
             nonzero_fp(0x11),
         ),
-        surface_symbol: uor_foundation::kernel::schema::SurfaceSymbolHandle::<DefaultHostTypes>::new(
-            nonzero_fp(0x12),
-        ),
+        surface_symbol:
+            uor_foundation::kernel::schema::SurfaceSymbolHandle::<DefaultHostTypes>::new(
+                nonzero_fp(0x12),
+            ),
     };
     let w = MintMorphismGroundingWitness::ontology_mint::<DefaultHostTypes>(inputs)
         .expect("OA/morphism::GroundingWitness verify must succeed for populated inputs");
@@ -276,9 +305,10 @@ fn oa_morphism_grounding_default_rejects_at_surface_symmetry() {
 #[test]
 fn oa_projection_populated_mint_succeeds() {
     let inputs = MintProjectionWitnessInputs::<DefaultHostTypes> {
-        projection_output: uor_foundation::user::morphism::SymbolSequenceHandle::<DefaultHostTypes>::new(
-            nonzero_fp(0x13),
-        ),
+        projection_output:
+            uor_foundation::user::morphism::SymbolSequenceHandle::<DefaultHostTypes>::new(
+                nonzero_fp(0x13),
+            ),
         projection_source: uor_foundation::PartitionHandle::<DefaultHostTypes>::from_fingerprint(
             nonzero_fp(0x14),
         ),
@@ -307,9 +337,9 @@ fn oa_state_grounding_populated_mint_succeeds() {
     // BindingHandle::new isn't const over a runtime fingerprint, so use a
     // function-local lifetime via Box::leak (test-only).
     let bindings: &'static [uor_foundation::user::state::BindingHandle<DefaultHostTypes>] =
-        Box::leak(Box::new([
-            uor_foundation::user::state::BindingHandle::<DefaultHostTypes>::new(nonzero_fp(0xBB)),
-        ]));
+        Box::leak(Box::new([uor_foundation::user::state::BindingHandle::<
+            DefaultHostTypes,
+        >::new(nonzero_fp(0xBB))]));
     let inputs = MintStateGroundingWitnessInputs::<DefaultHostTypes> {
         witness_binding: bindings,
         witness_step: 3,
@@ -362,9 +392,10 @@ fn fingerprints_distinguish_witnesses_across_families() {
         MintCompletenessWitness::ontology_mint::<DefaultHostTypes>(
             MintCompletenessWitnessInputs::<DefaultHostTypes> {
                 sites_closed: 1,
-                witness_constraint: uor_foundation::user::type_::ConstraintHandle::<
-                    DefaultHostTypes,
-                >::new(nonzero_fp(0xC1)),
+                witness_constraint:
+                    uor_foundation::user::type_::ConstraintHandle::<DefaultHostTypes>::new(
+                        nonzero_fp(0xC1),
+                    ),
             },
         )
         .unwrap()
@@ -385,9 +416,11 @@ fn fingerprints_distinguish_witnesses_across_families() {
         .content_fingerprint(),
     );
     fps.insert(
-        MintWitness::ontology_mint::<DefaultHostTypes>(MintWitnessInputs::<DefaultHostTypes>::default())
-            .unwrap()
-            .content_fingerprint(),
+        MintWitness::ontology_mint::<DefaultHostTypes>(
+            MintWitnessInputs::<DefaultHostTypes>::default(),
+        )
+        .unwrap()
+        .content_fingerprint(),
     );
     assert!(
         fps.len() >= 4,

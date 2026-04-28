@@ -303,6 +303,8 @@ foundation/src/lib.rs: trait HostTypes
 foundation/src/lib.rs: use enforcement
 foundation/src/lib.rs: use enums
 foundation/src/lib.rs: use witness_scaffolds
+foundation/src/pipeline.rs: const AFFINE_MAX_COEFFS
+foundation/src/pipeline.rs: const CONJUNCTION_MAX_TERMS
 foundation/src/pipeline.rs: const INTERACTION_DIVERGENCE_BUDGET
 foundation/src/pipeline.rs: const PREFLIGHT_CHECK_IRIS
 foundation/src/pipeline.rs: const REDUCTION_STAGE_IRIS
@@ -310,6 +312,7 @@ foundation/src/pipeline.rs: const WITT_MAX_BITS
 foundation/src/pipeline.rs: const fn
 foundation/src/pipeline.rs: enum ConstraintRef
 foundation/src/pipeline.rs: enum FragmentKind
+foundation/src/pipeline.rs: enum LeafConstraintRef
 foundation/src/pipeline.rs: enum StepResult
 foundation/src/pipeline.rs: fn certify_grounding_aware_const
 foundation/src/pipeline.rs: fn certify_incremental_completeness_const

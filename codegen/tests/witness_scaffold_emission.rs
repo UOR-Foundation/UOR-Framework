@@ -95,10 +95,7 @@ fn primitive_files_emit_codegen_exempt_banner() {
         if path == "primitives/mod.rs" {
             continue;
         }
-        let first_nonblank = content
-            .lines()
-            .find(|l| !l.trim().is_empty())
-            .unwrap_or("");
+        let first_nonblank = content.lines().find(|l| !l.trim().is_empty()).unwrap_or("");
         assert!(
             first_nonblank.trim().starts_with("// @codegen-exempt"),
             "{path}: first non-blank line must be `// @codegen-exempt`; got `{first_nonblank}`"

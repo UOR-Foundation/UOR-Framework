@@ -7,10 +7,9 @@
 
 use uor_foundation::enforcement::ContentFingerprint;
 use uor_foundation::witness_scaffolds::{
-    MintBornRuleVerificationInputs, MintCompletenessWitnessInputs,
-    MintDisjointnessWitnessInputs, MintImpossibilityWitnessInputs,
-    MintInhabitanceImpossibilityWitnessInputs, MintLiftObstructionInputs,
-    MintMorphismGroundingWitnessInputs, MintProjectionWitnessInputs,
+    MintBornRuleVerificationInputs, MintCompletenessWitnessInputs, MintDisjointnessWitnessInputs,
+    MintImpossibilityWitnessInputs, MintInhabitanceImpossibilityWitnessInputs,
+    MintLiftObstructionInputs, MintMorphismGroundingWitnessInputs, MintProjectionWitnessInputs,
     MintStateGroundingWitnessInputs, MintWitnessInputs,
 };
 use uor_foundation::DefaultHostTypes;
@@ -42,12 +41,10 @@ fn born_rule_verification_inputs_field_surface() {
 fn disjointness_witness_inputs_field_surface() {
     let fp = ContentFingerprint::default();
     let inputs = MintDisjointnessWitnessInputs::<DefaultHostTypes> {
-        disjointness_left: uor_foundation::kernel::effect::EffectTargetHandle::<
-            DefaultHostTypes,
-        >::new(fp),
-        disjointness_right: uor_foundation::kernel::effect::EffectTargetHandle::<
-            DefaultHostTypes,
-        >::new(fp),
+        disjointness_left:
+            uor_foundation::kernel::effect::EffectTargetHandle::<DefaultHostTypes>::new(fp),
+        disjointness_right:
+            uor_foundation::kernel::effect::EffectTargetHandle::<DefaultHostTypes>::new(fp),
     };
     let _l = inputs.disjointness_left;
     let _r = inputs.disjointness_right;

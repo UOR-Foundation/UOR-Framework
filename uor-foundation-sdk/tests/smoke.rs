@@ -4,12 +4,15 @@
 //! verifies the resulting `ConstrainedTypeShape` impl matches the amendment's
 //! site-count / site-budget arithmetic.
 
-use uor_foundation::pipeline::{CartesianProductShape, ConstrainedTypeShape, ConstraintRef};
+use uor_foundation::pipeline::{
+    CartesianProductShape, ConstrainedTypeShape, ConstraintRef, AFFINE_MAX_COEFFS,
+};
 use uor_foundation_sdk::{cartesian_product_shape, coproduct_shape, product_shape};
 
-// Leaf shapes — SDK operands must contain only the SDK-supported
-// ConstraintRef variants (Site, Carry, Residue, Hamming, Depth, SatClauses,
-// Bound), never Affine or Conjunction.
+// Leaf shapes — Phase 17 expanded the SDK operand-support catalogue
+// to every ConstraintRef variant. Affine and Conjunction now compose
+// correctly through the macros because the variants store fixed-size
+// arrays the const-eval can build inline.
 
 pub struct LeafA;
 impl ConstrainedTypeShape for LeafA {
@@ -100,7 +103,11 @@ fn coproduct_shape_emits_two_tag_pinners() {
     // Tag site is at max(SITE_COUNT(A), SITE_COUNT(B)) = 3.
     // A's tag-pinner comes after A's constraints at index 2.
     match constraints[2] {
-        ConstraintRef::Affine { coefficients, bias } => {
+        ConstraintRef::Affine {
+            coefficients,
+            coefficient_count: _,
+            bias,
+        } => {
             assert_eq!(bias, 0, "left variant tag-pinner carries bias 0");
             assert_eq!(coefficients[3], 1, "coefficient at tag_site = 1");
         }
@@ -112,7 +119,11 @@ fn coproduct_shape_emits_two_tag_pinners() {
 
     // B's tag-pinner comes after B's constraints at index 6.
     match constraints[6] {
-        ConstraintRef::Affine { coefficients, bias } => {
+        ConstraintRef::Affine {
+            coefficients,
+            coefficient_count: _,
+            bias,
+        } => {
             assert_eq!(bias, -1, "right variant tag-pinner carries bias -1");
             assert_eq!(coefficients[3], 1, "coefficient at tag_site = 1");
         }
@@ -157,4 +168,77 @@ fn cartesian_product_shape_canonicalized_iri() {
         <LeafATensorLeafB as ConstrainedTypeShape>::IRI,
         "urn:uor:cartesian:LeafA:LeafB"
     );
+}
+
+// --- Phase 17: Affine + Conjunction operand support ----------------------
+
+const AFFINE_TWO_PLUS_THREE: ([i64; AFFINE_MAX_COEFFS], u32) = {
+    let mut a = [0i64; AFFINE_MAX_COEFFS];
+    a[0] = 2;
+    a[1] = 3;
+    (a, 2)
+};
+
+/// Leaf shape carrying an `Affine` constraint — pre-Phase-17 this would
+/// have been unsupported by the SDK macros.
+pub struct LeafAffine;
+impl ConstrainedTypeShape for LeafAffine {
+    const IRI: &'static str = "https://example.org/sdk-smoke/LeafAffine";
+    const SITE_COUNT: usize = 2;
+    const CONSTRAINTS: &'static [ConstraintRef] = &[ConstraintRef::Affine {
+        coefficients: AFFINE_TWO_PLUS_THREE.0,
+        coefficient_count: AFFINE_TWO_PLUS_THREE.1,
+        bias: 0,
+    }];
+}
+
+product_shape!(LeafAffineTimesLeafB, LeafAffine, LeafB);
+
+#[test]
+fn product_shape_supports_affine_operand() {
+    // Pre-Phase-17 this expansion produced a `Site { position: u32::MAX }`
+    // sentinel for the Affine constraint and the combined shape's
+    // `validate_const()` rejected it. Post-Phase-17 the const-eval builds
+    // a real shifted Affine — assert the constraint count covers L's
+    // Affine + R's three constraints.
+    let constraints = <LeafAffineTimesLeafB as ConstrainedTypeShape>::CONSTRAINTS;
+    assert_eq!(constraints.len(), 4, "1 (L Affine) + 3 (R) = 4");
+    // L's Affine pass-through (no shift since it's the first operand).
+    match constraints[0] {
+        ConstraintRef::Affine {
+            coefficient_count, ..
+        } => {
+            assert_eq!(coefficient_count, 2, "L's affine prefix length preserved");
+        }
+        _ => panic!("expected Affine at index 0"),
+    }
+}
+
+coproduct_shape!(LeafAffinePlusLeafB, LeafAffine, LeafB);
+
+#[test]
+fn coproduct_shape_supports_affine_operand() {
+    let constraints = <LeafAffinePlusLeafB as ConstrainedTypeShape>::CONSTRAINTS;
+    // L's Affine + L's tag-pinner + R's 3 + R's tag-pinner = 6.
+    assert_eq!(constraints.len(), 6);
+    match constraints[0] {
+        ConstraintRef::Affine {
+            coefficient_count, ..
+        } => {
+            assert_eq!(coefficient_count, 2, "L's Affine prefix length preserved");
+        }
+        _ => panic!("expected Affine at index 0"),
+    }
+    // L's tag-pinner at index 1.
+    match constraints[1] {
+        ConstraintRef::Affine {
+            coefficient_count,
+            bias,
+            ..
+        } => {
+            assert!(coefficient_count > 0, "tag-pinner has non-zero prefix");
+            assert_eq!(bias, 0, "L tag-pinner bias 0");
+        }
+        _ => panic!("expected Affine tag-pinner at index 1"),
+    }
 }

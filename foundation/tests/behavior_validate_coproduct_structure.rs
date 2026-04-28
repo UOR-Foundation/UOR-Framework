@@ -11,8 +11,15 @@
 //!   (case (d) in the three-way classification);
 //! - semantically-equivalent but non-canonical `Affine` tag-pinner
 //!   byte patterns (case (b), `foundation/CoproductTagEncoding`).
+//!
+//! Phase 17 — `Affine` carries a fixed-size
+//! `[i64; AFFINE_MAX_COEFFS]` array + `coefficient_count`, and
+//! `Conjunction.conjuncts` is a `[LeafConstraintRef; CONJUNCTION_MAX_TERMS]`
+//! depth-1 array + `conjunct_count`. All literals updated accordingly.
 
-use uor_foundation::pipeline::ConstraintRef;
+use uor_foundation::pipeline::{
+    ConstraintRef, LeafConstraintRef, AFFINE_MAX_COEFFS, CONJUNCTION_MAX_TERMS,
+};
 use uor_foundation::{
     ContentFingerprint, PartitionCoproductMintInputs, PartitionCoproductWitness, VerifiedMint,
 };
@@ -26,7 +33,12 @@ fn fp(byte: u8) -> ContentFingerprint {
 // All tests in this file share a (2 + 3) operand layout with tag_site = 3
 // (same as behavior_partition_coproduct_witness.rs).
 
-static TAG_COEFFS: [i64; 4] = [0, 0, 0, 1];
+const TAG_COEFFS: [i64; AFFINE_MAX_COEFFS] = {
+    let mut a = [0i64; AFFINE_MAX_COEFFS];
+    a[3] = 1;
+    a
+};
+const TAG_COEFF_COUNT: u32 = 4;
 
 fn numerics(combined_constraints: &'static [ConstraintRef]) -> PartitionCoproductMintInputs {
     PartitionCoproductMintInputs {
@@ -59,25 +71,44 @@ fn numerics(combined_constraints: &'static [ConstraintRef]) -> PartitionCoproduc
 
 // --- Conjunction recursion --------------------------------------------------
 
+const fn pad_conjuncts(
+    items: &[LeafConstraintRef],
+) -> ([LeafConstraintRef; CONJUNCTION_MAX_TERMS], u32) {
+    let mut out = [LeafConstraintRef::Site { position: 0 }; CONJUNCTION_MAX_TERMS];
+    let mut i = 0;
+    while i < items.len() && i < CONJUNCTION_MAX_TERMS {
+        out[i] = items[i];
+        i += 1;
+    }
+    (out, items.len() as u32)
+}
+
 #[test]
 fn conjunction_with_valid_data_site_passes() {
     // L has a Conjunction wrapping two data-site constraints. Both are
     // within `tag_site = 3`, so the recursion passes them through.
-    static INNER: [ConstraintRef; 2] = [
-        ConstraintRef::Site { position: 0 },
-        ConstraintRef::Site { position: 1 },
+    const INNER_PAIR: [LeafConstraintRef; 2] = [
+        LeafConstraintRef::Site { position: 0 },
+        LeafConstraintRef::Site { position: 1 },
     ];
+    const INNER_CONJ: ([LeafConstraintRef; CONJUNCTION_MAX_TERMS], u32) =
+        pad_conjuncts(&INNER_PAIR);
     static COMBINED: [ConstraintRef; 6] = [
-        ConstraintRef::Conjunction { conjuncts: &INNER },
+        ConstraintRef::Conjunction {
+            conjuncts: INNER_CONJ.0,
+            conjunct_count: INNER_CONJ.1,
+        },
         ConstraintRef::Affine {
-            coefficients: &TAG_COEFFS,
+            coefficients: TAG_COEFFS,
+            coefficient_count: TAG_COEFF_COUNT,
             bias: 0,
         },
         ConstraintRef::Site { position: 0 },
         ConstraintRef::Carry { site: 1 },
         ConstraintRef::Site { position: 2 },
         ConstraintRef::Affine {
-            coefficients: &TAG_COEFFS,
+            coefficients: TAG_COEFFS,
+            coefficient_count: TAG_COEFF_COUNT,
             bias: -1,
         },
     ];
@@ -93,23 +124,27 @@ fn conjunction_with_valid_data_site_passes() {
 fn conjunction_containing_site_at_tag_site_cites_op_st_6() {
     // The outer Conjunction masks a Site at index 3 — must be detected
     // by the recursive classification and rejected as ST_6.
-    static INNER_BAD: [ConstraintRef; 2] = [
-        ConstraintRef::Site { position: 0 },
-        ConstraintRef::Site { position: 3 }, // collides with tag_site
+    const INNER_BAD: [LeafConstraintRef; 2] = [
+        LeafConstraintRef::Site { position: 0 },
+        LeafConstraintRef::Site { position: 3 }, // collides with tag_site
     ];
+    const INNER_CONJ: ([LeafConstraintRef; CONJUNCTION_MAX_TERMS], u32) = pad_conjuncts(&INNER_BAD);
     static COMBINED: [ConstraintRef; 6] = [
         ConstraintRef::Conjunction {
-            conjuncts: &INNER_BAD,
+            conjuncts: INNER_CONJ.0,
+            conjunct_count: INNER_CONJ.1,
         },
         ConstraintRef::Affine {
-            coefficients: &TAG_COEFFS,
+            coefficients: TAG_COEFFS,
+            coefficient_count: TAG_COEFF_COUNT,
             bias: 0,
         },
         ConstraintRef::Site { position: 0 },
         ConstraintRef::Carry { site: 1 },
         ConstraintRef::Site { position: 2 },
         ConstraintRef::Affine {
-            coefficients: &TAG_COEFFS,
+            coefficients: TAG_COEFFS,
+            coefficient_count: TAG_COEFF_COUNT,
             bias: -1,
         },
     ];
@@ -123,20 +158,24 @@ fn conjunction_containing_site_at_tag_site_cites_op_st_6() {
 #[test]
 fn conjunction_containing_carry_at_tag_site_cites_op_st_6() {
     // Carry at the tag site is a site-bearing constraint collision.
-    static INNER_BAD: [ConstraintRef; 1] = [ConstraintRef::Carry { site: 3 }];
+    const INNER_BAD: [LeafConstraintRef; 1] = [LeafConstraintRef::Carry { site: 3 }];
+    const INNER_CONJ: ([LeafConstraintRef; CONJUNCTION_MAX_TERMS], u32) = pad_conjuncts(&INNER_BAD);
     static COMBINED: [ConstraintRef; 6] = [
         ConstraintRef::Conjunction {
-            conjuncts: &INNER_BAD,
+            conjuncts: INNER_CONJ.0,
+            conjunct_count: INNER_CONJ.1,
         },
         ConstraintRef::Affine {
-            coefficients: &TAG_COEFFS,
+            coefficients: TAG_COEFFS,
+            coefficient_count: TAG_COEFF_COUNT,
             bias: 0,
         },
         ConstraintRef::Site { position: 0 },
         ConstraintRef::Carry { site: 1 },
         ConstraintRef::Site { position: 2 },
         ConstraintRef::Affine {
-            coefficients: &TAG_COEFFS,
+            coefficients: TAG_COEFFS,
+            coefficient_count: TAG_COEFF_COUNT,
             bias: -1,
         },
     ];
@@ -159,14 +198,16 @@ fn alternate_bias_value_cites_coproduct_tag_encoding() {
         ConstraintRef::Site { position: 0 },
         ConstraintRef::Site { position: 1 },
         ConstraintRef::Affine {
-            coefficients: &TAG_COEFFS,
+            coefficients: TAG_COEFFS,
+            coefficient_count: TAG_COEFF_COUNT,
             bias: 5, // nonsense bias
         },
         ConstraintRef::Site { position: 0 },
         ConstraintRef::Carry { site: 1 },
         ConstraintRef::Site { position: 2 },
         ConstraintRef::Affine {
-            coefficients: &TAG_COEFFS,
+            coefficients: TAG_COEFFS,
+            coefficient_count: TAG_COEFF_COUNT,
             bias: -1,
         },
     ];
@@ -187,22 +228,30 @@ fn multisite_affine_reaching_tag_site_cites_op_st_6() {
     // AND at another index is NOT a tag-pinner candidate; per case (d) of
     // the three-way classifier, it's a data-site constraint reaching the
     // reserved tag site, which violates ST_6.
-    static MULTISITE_COEFFS: [i64; 4] = [1, 0, 0, 1]; // touches sites 0 and 3
+    const MULTISITE_COEFFS: [i64; AFFINE_MAX_COEFFS] = {
+        let mut a = [0i64; AFFINE_MAX_COEFFS];
+        a[0] = 1;
+        a[3] = 1;
+        a
+    };
     static BAD: [ConstraintRef; 7] = [
         ConstraintRef::Site { position: 0 },
         ConstraintRef::Affine {
-            coefficients: &MULTISITE_COEFFS,
+            coefficients: MULTISITE_COEFFS,
+            coefficient_count: 4,
             bias: 0,
         },
         ConstraintRef::Affine {
-            coefficients: &TAG_COEFFS,
+            coefficients: TAG_COEFFS,
+            coefficient_count: TAG_COEFF_COUNT,
             bias: 0,
         },
         ConstraintRef::Site { position: 0 },
         ConstraintRef::Carry { site: 1 },
         ConstraintRef::Site { position: 2 },
         ConstraintRef::Affine {
-            coefficients: &TAG_COEFFS,
+            coefficients: TAG_COEFFS,
+            coefficient_count: TAG_COEFF_COUNT,
             bias: -1,
         },
     ];
@@ -227,7 +276,8 @@ fn residue_hamming_depth_satclauses_bound_pass_through() {
         },
         ConstraintRef::Hamming { bound: 2 },
         ConstraintRef::Affine {
-            coefficients: &TAG_COEFFS,
+            coefficients: TAG_COEFFS,
+            coefficient_count: TAG_COEFF_COUNT,
             bias: 0,
         },
         ConstraintRef::Depth { min: 0, max: 5 },
@@ -243,7 +293,8 @@ fn residue_hamming_depth_satclauses_bound_pass_through() {
         ConstraintRef::Site { position: 0 },
         ConstraintRef::Site { position: 2 },
         ConstraintRef::Affine {
-            coefficients: &TAG_COEFFS,
+            coefficients: TAG_COEFFS,
+            coefficient_count: TAG_COEFF_COUNT,
             bias: -1,
         },
     ];

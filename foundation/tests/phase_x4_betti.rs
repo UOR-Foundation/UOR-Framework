@@ -12,7 +12,27 @@
 //! rank-over-ℤ for totally unimodular boundary matrices.
 
 use uor_foundation::enforcement::{primitive_simplicial_nerve_betti, MAX_BETTI_DIMENSION};
-use uor_foundation::pipeline::{ConstrainedTypeShape, ConstraintRef};
+use uor_foundation::pipeline::{ConstrainedTypeShape, ConstraintRef, AFFINE_MAX_COEFFS};
+
+/// Phase 17 helper: build an Affine coefficient buffer from a const
+/// slice, zero-padding to `AFFINE_MAX_COEFFS`.
+const fn pad_coeffs(items: &[i64]) -> ([i64; AFFINE_MAX_COEFFS], u32) {
+    let mut out = [0i64; AFFINE_MAX_COEFFS];
+    let mut i = 0;
+    while i < items.len() && i < AFFINE_MAX_COEFFS {
+        out[i] = items[i];
+        i += 1;
+    }
+    (out, items.len() as u32)
+}
+
+const X4_CIRCLE_C0: ([i64; AFFINE_MAX_COEFFS], u32) = pad_coeffs(&[1, 1, 0, 0]);
+const X4_CIRCLE_C1: ([i64; AFFINE_MAX_COEFFS], u32) = pad_coeffs(&[0, 1, 1, 0]);
+const X4_CIRCLE_C2: ([i64; AFFINE_MAX_COEFFS], u32) = pad_coeffs(&[1, 0, 1, 0]);
+const X4_TETRA_C0: ([i64; AFFINE_MAX_COEFFS], u32) = pad_coeffs(&[1, 1, 1, 1, 0, 0, 0]);
+const X4_TETRA_C1: ([i64; AFFINE_MAX_COEFFS], u32) = pad_coeffs(&[1, 1, 1, 0, 1, 0, 0]);
+const X4_TETRA_C2: ([i64; AFFINE_MAX_COEFFS], u32) = pad_coeffs(&[1, 1, 0, 1, 1, 0, 0]);
+const X4_TETRA_C3: ([i64; AFFINE_MAX_COEFFS], u32) = pad_coeffs(&[1, 0, 1, 1, 1, 0, 0]);
 
 /// Phase 1a wrapper: `primitive_simplicial_nerve_betti` now returns
 /// `Result<[u32; MAX_BETTI_DIMENSION], GenericImpossibilityWitness>` and
@@ -89,15 +109,18 @@ impl ConstrainedTypeShape for CircleNerve {
     const SITE_COUNT: usize = 4;
     const CONSTRAINTS: &'static [ConstraintRef] = &[
         ConstraintRef::Affine {
-            coefficients: &[1, 1, 0, 0],
+            coefficients: X4_CIRCLE_C0.0,
+            coefficient_count: X4_CIRCLE_C0.1,
             bias: 0,
         },
         ConstraintRef::Affine {
-            coefficients: &[0, 1, 1, 0],
+            coefficients: X4_CIRCLE_C1.0,
+            coefficient_count: X4_CIRCLE_C1.1,
             bias: 0,
         },
         ConstraintRef::Affine {
-            coefficients: &[1, 0, 1, 0],
+            coefficients: X4_CIRCLE_C2.0,
+            coefficient_count: X4_CIRCLE_C2.1,
             bias: 0,
         },
     ];
@@ -124,19 +147,23 @@ impl ConstrainedTypeShape for TetrahedronBoundary {
     const SITE_COUNT: usize = 7;
     const CONSTRAINTS: &'static [ConstraintRef] = &[
         ConstraintRef::Affine {
-            coefficients: &[1, 1, 1, 1, 0, 0, 0],
+            coefficients: X4_TETRA_C0.0,
+            coefficient_count: X4_TETRA_C0.1,
             bias: 0,
         },
         ConstraintRef::Affine {
-            coefficients: &[1, 1, 1, 0, 1, 0, 0],
+            coefficients: X4_TETRA_C1.0,
+            coefficient_count: X4_TETRA_C1.1,
             bias: 0,
         },
         ConstraintRef::Affine {
-            coefficients: &[1, 1, 0, 1, 1, 0, 0],
+            coefficients: X4_TETRA_C2.0,
+            coefficient_count: X4_TETRA_C2.1,
             bias: 0,
         },
         ConstraintRef::Affine {
-            coefficients: &[1, 0, 1, 1, 1, 0, 0],
+            coefficients: X4_TETRA_C3.0,
+            coefficient_count: X4_TETRA_C3.1,
             bias: 0,
         },
     ];

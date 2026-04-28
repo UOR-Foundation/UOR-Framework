@@ -118,7 +118,10 @@ pub fn validate(workspace: &Path) -> Result<ConformanceReport> {
         ),
         (
             "ConstraintRef::Conjunction parametric variant",
-            "Conjunction { conjuncts: &'static [ConstraintRef] },",
+            // Phase 17 — `Conjunction.conjuncts` is now a fixed-size
+            // `[LeafConstraintRef; CONJUNCTION_MAX_TERMS]` array with
+            // an active prefix length, not a variable-length slice.
+            "conjuncts: [LeafConstraintRef; CONJUNCTION_MAX_TERMS],",
         ),
         (
             "encode_constraint_to_clauses dispatch",

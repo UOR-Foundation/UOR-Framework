@@ -15,10 +15,31 @@
 //! should.
 
 use uor_foundation::enforcement::{primitive_simplicial_nerve_betti, MAX_BETTI_DIMENSION};
-use uor_foundation::pipeline::{ConstrainedTypeShape, ConstraintRef};
+use uor_foundation::pipeline::{ConstrainedTypeShape, ConstraintRef, AFFINE_MAX_COEFFS};
 use uor_foundation::{
     ContentFingerprint, PartitionCoproductMintInputs, PartitionCoproductWitness, VerifiedMint,
 };
+
+/// Phase 17 helper: build an Affine coefficient buffer from a const
+/// slice of `i64` values, zero-padding to `AFFINE_MAX_COEFFS`. Returns
+/// `(coefficients, coefficient_count)` for inline construction.
+const fn pad_coeffs(items: &[i64]) -> ([i64; AFFINE_MAX_COEFFS], u32) {
+    let mut out = [0i64; AFFINE_MAX_COEFFS];
+    let mut i = 0;
+    while i < items.len() && i < AFFINE_MAX_COEFFS {
+        out[i] = items[i];
+        i += 1;
+    }
+    (out, items.len() as u32)
+}
+
+const CIRCLE_C0: ([i64; AFFINE_MAX_COEFFS], u32) = pad_coeffs(&[1, 1, 0, 0]);
+const CIRCLE_C1: ([i64; AFFINE_MAX_COEFFS], u32) = pad_coeffs(&[0, 1, 1, 0]);
+const CIRCLE_C2: ([i64; AFFINE_MAX_COEFFS], u32) = pad_coeffs(&[1, 0, 1, 0]);
+const TETRA_C0: ([i64; AFFINE_MAX_COEFFS], u32) = pad_coeffs(&[1, 1, 1, 1, 0, 0, 0]);
+const TETRA_C1: ([i64; AFFINE_MAX_COEFFS], u32) = pad_coeffs(&[1, 1, 1, 0, 1, 0, 0]);
+const TETRA_C2: ([i64; AFFINE_MAX_COEFFS], u32) = pad_coeffs(&[1, 1, 0, 1, 1, 0, 0]);
+const TETRA_C3: ([i64; AFFINE_MAX_COEFFS], u32) = pad_coeffs(&[1, 0, 1, 1, 1, 0, 0]);
 
 /// Phase 1a wrapper: `primitive_simplicial_nerve_betti` now returns
 /// `Result<[u32; MAX_BETTI_DIMENSION], GenericImpossibilityWitness>` and
@@ -41,15 +62,18 @@ impl ConstrainedTypeShape for CircleNerve {
     const SITE_COUNT: usize = 4;
     const CONSTRAINTS: &'static [ConstraintRef] = &[
         ConstraintRef::Affine {
-            coefficients: &[1, 1, 0, 0],
+            coefficients: CIRCLE_C0.0,
+            coefficient_count: CIRCLE_C0.1,
             bias: 0,
         },
         ConstraintRef::Affine {
-            coefficients: &[0, 1, 1, 0],
+            coefficients: CIRCLE_C1.0,
+            coefficient_count: CIRCLE_C1.1,
             bias: 0,
         },
         ConstraintRef::Affine {
-            coefficients: &[1, 0, 1, 0],
+            coefficients: CIRCLE_C2.0,
+            coefficient_count: CIRCLE_C2.1,
             bias: 0,
         },
     ];
@@ -63,19 +87,23 @@ impl ConstrainedTypeShape for TetrahedronBoundary {
     const SITE_COUNT: usize = 7;
     const CONSTRAINTS: &'static [ConstraintRef] = &[
         ConstraintRef::Affine {
-            coefficients: &[1, 1, 1, 1, 0, 0, 0],
+            coefficients: TETRA_C0.0,
+            coefficient_count: TETRA_C0.1,
             bias: 0,
         },
         ConstraintRef::Affine {
-            coefficients: &[1, 1, 1, 0, 1, 0, 0],
+            coefficients: TETRA_C1.0,
+            coefficient_count: TETRA_C1.1,
             bias: 0,
         },
         ConstraintRef::Affine {
-            coefficients: &[1, 1, 0, 1, 1, 0, 0],
+            coefficients: TETRA_C2.0,
+            coefficient_count: TETRA_C2.1,
             bias: 0,
         },
         ConstraintRef::Affine {
-            coefficients: &[1, 0, 1, 1, 1, 0, 0],
+            coefficients: TETRA_C3.0,
+            coefficient_count: TETRA_C3.1,
             bias: 0,
         },
     ];
@@ -161,48 +189,57 @@ fn st_9_st_10_mint_accepts_additive_prediction_end_to_end() {
     // §4d, with tag_site = max(SITE_COUNT(A), SITE_COUNT(B)) = 7. The
     // tag-pinner coefficient slice is length 8 (tag_site + 1) with a
     // single 1 at position 7.
-    static TAG_COEFFS: [i64; 8] = [0, 0, 0, 0, 0, 0, 0, 1];
+    const TAG_COEFFS_8: ([i64; AFFINE_MAX_COEFFS], u32) = pad_coeffs(&[0, 0, 0, 0, 0, 0, 0, 1]);
     static COMBINED_CONSTRAINTS: [ConstraintRef; 9] = [
         // CircleNerve's 3 Affine constraints (sites 0..3, no overlap with
         // tag site at 7).
         ConstraintRef::Affine {
-            coefficients: &[1, 1, 0, 0],
+            coefficients: CIRCLE_C0.0,
+            coefficient_count: CIRCLE_C0.1,
             bias: 0,
         },
         ConstraintRef::Affine {
-            coefficients: &[0, 1, 1, 0],
+            coefficients: CIRCLE_C1.0,
+            coefficient_count: CIRCLE_C1.1,
             bias: 0,
         },
         ConstraintRef::Affine {
-            coefficients: &[1, 0, 1, 0],
+            coefficients: CIRCLE_C2.0,
+            coefficient_count: CIRCLE_C2.1,
             bias: 0,
         },
         // L's tag-pinner.
         ConstraintRef::Affine {
-            coefficients: &TAG_COEFFS,
+            coefficients: TAG_COEFFS_8.0,
+            coefficient_count: TAG_COEFFS_8.1,
             bias: 0,
         },
         // TetrahedronBoundary's 4 Affine constraints (sites 0..6, no
         // overlap with tag site at 7).
         ConstraintRef::Affine {
-            coefficients: &[1, 1, 1, 1, 0, 0, 0],
+            coefficients: TETRA_C0.0,
+            coefficient_count: TETRA_C0.1,
             bias: 0,
         },
         ConstraintRef::Affine {
-            coefficients: &[1, 1, 1, 0, 1, 0, 0],
+            coefficients: TETRA_C1.0,
+            coefficient_count: TETRA_C1.1,
             bias: 0,
         },
         ConstraintRef::Affine {
-            coefficients: &[1, 1, 0, 1, 1, 0, 0],
+            coefficients: TETRA_C2.0,
+            coefficient_count: TETRA_C2.1,
             bias: 0,
         },
         ConstraintRef::Affine {
-            coefficients: &[1, 0, 1, 1, 1, 0, 0],
+            coefficients: TETRA_C3.0,
+            coefficient_count: TETRA_C3.1,
             bias: 0,
         },
         // R's tag-pinner.
         ConstraintRef::Affine {
-            coefficients: &TAG_COEFFS,
+            coefficients: TAG_COEFFS_8.0,
+            coefficient_count: TAG_COEFFS_8.1,
             bias: -1,
         },
     ];

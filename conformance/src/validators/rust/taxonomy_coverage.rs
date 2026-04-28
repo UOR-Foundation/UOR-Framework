@@ -146,19 +146,13 @@ pub fn validate(workspace: &Path) -> Result<ConformanceReport> {
             ),
         ));
     } else {
-        let mut summary = format!(
-            "TaxonomyCoverage drift: {} issue(s):",
-            failures.len()
-        );
+        let mut summary = format!("TaxonomyCoverage drift: {} issue(s):", failures.len());
         for f in failures.iter().take(20) {
             summary.push_str("\n       - ");
             summary.push_str(f);
         }
         if failures.len() > 20 {
-            summary.push_str(&format!(
-                "\n       - ... ({} more)",
-                failures.len() - 20
-            ));
+            summary.push_str(&format!("\n       - ... ({} more)", failures.len() - 20));
         }
         report.push(TestResult::fail(VALIDATOR, summary));
     }

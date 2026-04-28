@@ -1504,6 +1504,22 @@ fn emit_constants(f: &mut RustFile, ontology: &Ontology) {
 }
 
 fn emit_constraint_ref(f: &mut RustFile) {
+    // Phase 17 fixed-capacity caps. Aligned with foundation's existing
+    // 8-wide stack-allocation discipline (`MAX_BETTI_DIMENSION`,
+    // `JACOBIAN_MAX_SITES`, `NERVE_CONSTRAINTS_CAP`).
+    f.doc_comment("Phase 17: maximum number of `i64` coefficients an `Affine`");
+    f.doc_comment("constraint can carry. Stable-Rust const evaluation cannot allocate a");
+    f.doc_comment("new `&'static [i64]` at compile time, so `Affine` stores a fixed-");
+    f.doc_comment("size buffer + an active prefix length. Aligned with the foundation's");
+    f.doc_comment("8-wide capacity caps (`MAX_BETTI_DIMENSION` / `JACOBIAN_MAX_SITES` /");
+    f.doc_comment("`NERVE_CONSTRAINTS_CAP`).");
+    f.line("pub const AFFINE_MAX_COEFFS: usize = 8;");
+    f.blank();
+    f.doc_comment("Phase 17: maximum number of `LeafConstraintRef` conjuncts a");
+    f.doc_comment("`Conjunction` can carry. Same reasoning as `AFFINE_MAX_COEFFS`.");
+    f.line("pub const CONJUNCTION_MAX_TERMS: usize = 8;");
+    f.blank();
+
     f.doc_comment("Opaque constraint reference carried by `ConstrainedTypeShape` impls.");
     f.doc_comment("");
     f.doc_comment("Variants mirror the v0.2.1 `type:Constraint` enumerated subclasses");
@@ -1511,8 +1527,25 @@ fn emit_constraint_ref(f: &mut RustFile) {
     f.doc_comment("Phase D parametric form (`Bound` / `Conjunction`) which references");
     f.doc_comment("`BoundConstraint` kinds by their (observable, shape) IRIs. The");
     f.doc_comment("`SatClauses` variant carries a compact 2-SAT/Horn-SAT clause list.");
+    f.doc_comment("");
+    f.doc_comment("**Phase 17 — fixed-array Affine and Conjunction.** The pre-Phase-17");
+    f.doc_comment("`Affine { coefficients: &'static [i64], … }` and");
+    f.doc_comment("`Conjunction { conjuncts: &'static [ConstraintRef] }` have been");
+    f.doc_comment("replaced with fixed-capacity arrays of length `AFFINE_MAX_COEFFS`");
+    f.doc_comment("and `CONJUNCTION_MAX_TERMS` respectively. Stable Rust const");
+    f.doc_comment("evaluation can build these inline; the SDK macros now support");
+    f.doc_comment("Affine-bearing operands without falling back to the");
+    f.doc_comment("`Site { position: u32::MAX }` sentinel. `Conjunction` is depth-");
+    f.doc_comment("limited to one level: its conjuncts are `LeafConstraintRef`");
+    f.doc_comment("(every variant of `ConstraintRef` except `Conjunction` itself).");
+    // Phase 17: the fixed-size Affine + Conjunction arrays make
+    // ConstraintRef intentionally large (~640 bytes for the
+    // Conjunction variant). The size is the price of stable-Rust
+    // const-eval support without slice allocations. Suppress
+    // `clippy::large_enum_variant` because the layout is by design.
     f.line("#[derive(Debug, Clone, Copy)]");
     f.line("#[non_exhaustive]");
+    f.line("#[allow(clippy::large_enum_variant)]");
     f.line("pub enum ConstraintRef {");
     f.line("    /// `type:ResidueConstraint`: value ≡ residue (mod modulus).");
     f.line("    Residue { modulus: u64, residue: u64 },");
@@ -1525,7 +1558,13 @@ fn emit_constraint_ref(f: &mut RustFile) {
     f.line("    /// `type:SiteConstraint`: site-position restriction.");
     f.line("    Site { position: u32 },");
     f.line("    /// `type:AffineConstraint`: affine relation over sites.");
-    f.line("    Affine { coefficients: &'static [i64], bias: i64 },");
+    f.line("    /// `coefficients[..coefficient_count as usize]` is the active prefix;");
+    f.line("    /// trailing entries are unused and must be zero.");
+    f.line("    Affine {");
+    f.line("        coefficients: [i64; AFFINE_MAX_COEFFS],");
+    f.line("        coefficient_count: u32,");
+    f.line("        bias: i64,");
+    f.line("    },");
     f.line("    /// Opaque clause list for 2-SAT / Horn-SAT inputs.");
     f.line("    /// Each clause is a slice of `(variable_index, is_negated)`.");
     f.line("    SatClauses { clauses: &'static [&'static [(u32, bool)]], num_vars: u32 },");
@@ -1538,9 +1577,117 @@ fn emit_constraint_ref(f: &mut RustFile) {
     f.line("        bound_shape_iri: &'static str,");
     f.line("        args_repr: &'static str,");
     f.line("    },");
-    f.line("    /// v0.2.2 Phase D / T2.2 (cleanup): parametric `Conjunction` over");
-    f.line("    /// a fixed-capacity slice of nested `ConstraintRef` values.");
-    f.line("    Conjunction { conjuncts: &'static [ConstraintRef] },");
+    f.line("    /// v0.2.2 Phase D / T2.2 (cleanup): parametric `Conjunction`.");
+    f.line("    /// Phase 17: depth-limited to one level — conjuncts are");
+    f.line("    /// `LeafConstraintRef` (every `ConstraintRef` variant except");
+    f.line("    /// `Conjunction` itself). Active prefix is");
+    f.line("    /// `conjuncts[..conjunct_count as usize]`.");
+    f.line("    Conjunction {");
+    f.line("        conjuncts: [LeafConstraintRef; CONJUNCTION_MAX_TERMS],");
+    f.line("        conjunct_count: u32,");
+    f.line("    },");
+    f.line("}");
+    f.blank();
+
+    // LeafConstraintRef — same as ConstraintRef minus Conjunction.
+    f.doc_comment("`ConstraintRef` minus the recursive `Conjunction` variant — the");
+    f.doc_comment("element type of `ConstraintRef::Conjunction.conjuncts`. Phase 17");
+    f.doc_comment("caps Conjunction depth at one level; deeper structure must be");
+    f.doc_comment("flattened by the constructor.");
+    f.line("#[derive(Debug, Clone, Copy)]");
+    f.line("#[non_exhaustive]");
+    f.line("pub enum LeafConstraintRef {");
+    f.line("    /// See [`ConstraintRef::Residue`].");
+    f.line("    Residue { modulus: u64, residue: u64 },");
+    f.line("    /// See [`ConstraintRef::Hamming`].");
+    f.line("    Hamming { bound: u32 },");
+    f.line("    /// See [`ConstraintRef::Depth`].");
+    f.line("    Depth { min: u32, max: u32 },");
+    f.line("    /// See [`ConstraintRef::Carry`].");
+    f.line("    Carry { site: u32 },");
+    f.line("    /// See [`ConstraintRef::Site`].");
+    f.line("    Site { position: u32 },");
+    f.line("    /// See [`ConstraintRef::Affine`].");
+    f.line("    Affine {");
+    f.line("        coefficients: [i64; AFFINE_MAX_COEFFS],");
+    f.line("        coefficient_count: u32,");
+    f.line("        bias: i64,");
+    f.line("    },");
+    f.line("    /// See [`ConstraintRef::SatClauses`].");
+    f.line("    SatClauses { clauses: &'static [&'static [(u32, bool)]], num_vars: u32 },");
+    f.line("    /// See [`ConstraintRef::Bound`].");
+    f.line("    Bound {");
+    f.line("        observable_iri: &'static str,");
+    f.line("        bound_shape_iri: &'static str,");
+    f.line("        args_repr: &'static str,");
+    f.line("    },");
+    f.line("}");
+    f.blank();
+
+    // Conversions between ConstraintRef and LeafConstraintRef.
+    f.doc_comment("Project a non-`Conjunction` [`ConstraintRef`] into the");
+    f.doc_comment("[`LeafConstraintRef`] subtype. Returns a `Site { position: 0 }`");
+    f.doc_comment("placeholder if `self` is `Conjunction` (the only non-injective");
+    f.doc_comment("case); callers should flatten Conjunction structure before");
+    f.doc_comment("calling.");
+    f.line("impl ConstraintRef {");
+    f.line("    /// Phase 17 — leaf projection.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn as_leaf(self) -> LeafConstraintRef {");
+    f.line("        match self {");
+    f.line("            ConstraintRef::Residue { modulus, residue } => LeafConstraintRef::Residue { modulus, residue },");
+    f.line("            ConstraintRef::Hamming { bound } => LeafConstraintRef::Hamming { bound },");
+    f.line(
+        "            ConstraintRef::Depth { min, max } => LeafConstraintRef::Depth { min, max },",
+    );
+    f.line("            ConstraintRef::Carry { site } => LeafConstraintRef::Carry { site },");
+    f.line("            ConstraintRef::Site { position } => LeafConstraintRef::Site { position },");
+    f.line("            ConstraintRef::Affine { coefficients, coefficient_count, bias } => {");
+    f.line("                LeafConstraintRef::Affine { coefficients, coefficient_count, bias }");
+    f.line("            }");
+    f.line("            ConstraintRef::SatClauses { clauses, num_vars } => {");
+    f.line("                LeafConstraintRef::SatClauses { clauses, num_vars }");
+    f.line("            }");
+    f.line("            ConstraintRef::Bound { observable_iri, bound_shape_iri, args_repr } => {");
+    f.line(
+        "                LeafConstraintRef::Bound { observable_iri, bound_shape_iri, args_repr }",
+    );
+    f.line("            }");
+    f.line(
+        "            ConstraintRef::Conjunction { .. } => LeafConstraintRef::Site { position: 0 },",
+    );
+    f.line("        }");
+    f.line("    }");
+    f.line("}");
+    f.blank();
+
+    f.line("impl LeafConstraintRef {");
+    f.indented_doc_comment("Phase 17 — embed a leaf into the parent `ConstraintRef` enum.");
+    f.line("    #[inline]");
+    f.line("    #[must_use]");
+    f.line("    pub const fn into_constraint(self) -> ConstraintRef {");
+    f.line("        match self {");
+    f.line("            LeafConstraintRef::Residue { modulus, residue } => ConstraintRef::Residue { modulus, residue },");
+    f.line("            LeafConstraintRef::Hamming { bound } => ConstraintRef::Hamming { bound },");
+    f.line(
+        "            LeafConstraintRef::Depth { min, max } => ConstraintRef::Depth { min, max },",
+    );
+    f.line("            LeafConstraintRef::Carry { site } => ConstraintRef::Carry { site },");
+    f.line("            LeafConstraintRef::Site { position } => ConstraintRef::Site { position },");
+    f.line("            LeafConstraintRef::Affine { coefficients, coefficient_count, bias } => {");
+    f.line("                ConstraintRef::Affine { coefficients, coefficient_count, bias }");
+    f.line("            }");
+    f.line("            LeafConstraintRef::SatClauses { clauses, num_vars } => {");
+    f.line("                ConstraintRef::SatClauses { clauses, num_vars }");
+    f.line("            }");
+    f.line(
+        "            LeafConstraintRef::Bound { observable_iri, bound_shape_iri, args_repr } => {",
+    );
+    f.line("                ConstraintRef::Bound { observable_iri, bound_shape_iri, args_repr }");
+    f.line("            }");
+    f.line("        }");
+    f.line("    }");
     f.line("}");
     f.blank();
 
@@ -1582,16 +1729,16 @@ fn emit_constraint_ref(f: &mut RustFile) {
     f.line("        | ConstraintRef::Depth { .. }");
     f.line("        | ConstraintRef::Hamming { .. }");
     f.line("        | ConstraintRef::Site { .. } => Some(EMPTY),");
-    f.line("        ConstraintRef::Affine { coefficients, bias } => {");
-    f.line("            if is_affine_consistent(coefficients, *bias) {");
+    f.line("        ConstraintRef::Affine { coefficients, coefficient_count, bias } => {");
+    f.line("            if is_affine_consistent(coefficients, *coefficient_count, *bias) {");
     f.line("                Some(EMPTY)");
     f.line("            } else {");
     f.line("                Some(UNSAT_SENTINEL)");
     f.line("            }");
     f.line("        }");
     f.line("        ConstraintRef::Bound { .. } => Some(EMPTY),");
-    f.line("        ConstraintRef::Conjunction { conjuncts } => {");
-    f.line("            if conjunction_all_sat(conjuncts) {");
+    f.line("        ConstraintRef::Conjunction { conjuncts, conjunct_count } => {");
+    f.line("            if conjunction_all_sat(conjuncts, *conjunct_count) {");
     f.line("                Some(EMPTY)");
     f.line("            } else {");
     f.line("                Some(UNSAT_SENTINEL)");
@@ -1601,36 +1748,44 @@ fn emit_constraint_ref(f: &mut RustFile) {
     f.line("}");
     f.blank();
     f.doc_comment("Workstream E: single-row consistency for `Affine { coefficients,");
-    f.doc_comment("bias }`. The constraint is `sum(c_i) · x = bias (mod 2^n)`; when");
-    f.doc_comment("the coefficient sum is zero the system is consistent iff bias is");
-    f.doc_comment("zero. Non-zero sums are always consistent over Z/(2^n)Z for");
-    f.doc_comment("some `x` value.");
+    f.doc_comment("coefficient_count, bias }`. The constraint is");
+    f.doc_comment("`sum(c_i) · x = bias (mod 2^n)`; when the coefficient sum is");
+    f.doc_comment("zero the system is consistent iff bias is zero. Non-zero sums");
+    f.doc_comment("are always consistent over Z/(2^n)Z for some `x` value. Iterates");
+    f.doc_comment("only the active prefix `coefficients[..coefficient_count as usize]`.");
     f.line("#[inline]");
     f.line("#[must_use]");
-    f.line("const fn is_affine_consistent(coefficients: &[i64], bias: i64) -> bool {");
+    f.line("const fn is_affine_consistent(");
+    f.line("    coefficients: &[i64; AFFINE_MAX_COEFFS],");
+    f.line("    coefficient_count: u32,");
+    f.line("    bias: i64,");
+    f.line(") -> bool {");
     f.line("    let mut sum: i128 = 0;");
+    f.line("    let count = coefficient_count as usize;");
     f.line("    let mut i = 0;");
-    f.line("    while i < coefficients.len() {");
+    f.line("    while i < count && i < AFFINE_MAX_COEFFS {");
     f.line("        sum += coefficients[i] as i128;");
     f.line("        i += 1;");
     f.line("    }");
-    f.line("    if sum == 0 {");
-    f.line("        bias == 0");
-    f.line("    } else {");
-    f.line("        true");
-    f.line("    }");
+    f.line("    if sum == 0 { bias == 0 } else { true }");
     f.line("}");
     f.blank();
-    f.doc_comment("Workstream E: satisfiability of a `Conjunction` reduces to every");
-    f.doc_comment("conjunct being satisfiable. Each conjunct's encoder returns");
-    f.doc_comment("`EMPTY` (trivially SAT) or `UNSAT_SENTINEL` (contradictory); the");
-    f.doc_comment("conjunction is SAT iff no conjunct emits the contradiction.");
+    f.doc_comment("Workstream E + Phase 17: satisfiability of a `Conjunction`.");
+    f.doc_comment("Iterates only the active prefix `conjuncts[..conjunct_count as");
+    f.doc_comment("usize]` and lifts each `LeafConstraintRef` back to a");
+    f.doc_comment("`ConstraintRef` for re-encoding (the leaf form omits Conjunction,");
+    f.doc_comment("so this terminates at depth 1).");
     f.line("#[inline]");
     f.line("#[must_use]");
-    f.line("const fn conjunction_all_sat(conjuncts: &[ConstraintRef]) -> bool {");
+    f.line("const fn conjunction_all_sat(");
+    f.line("    conjuncts: &[LeafConstraintRef; CONJUNCTION_MAX_TERMS],");
+    f.line("    conjunct_count: u32,");
+    f.line(") -> bool {");
+    f.line("    let count = conjunct_count as usize;");
     f.line("    let mut i = 0;");
-    f.line("    while i < conjuncts.len() {");
-    f.line("        match encode_constraint_to_clauses(&conjuncts[i]) {");
+    f.line("    while i < count && i < CONJUNCTION_MAX_TERMS {");
+    f.line("        let lifted = conjuncts[i].into_constraint();");
+    f.line("        match encode_constraint_to_clauses(&lifted) {");
     f.line("            Some([]) => {}");
     f.line("            _ => return false,");
     f.line("        }");
@@ -1789,21 +1944,26 @@ fn emit_cartesian_product_shape(f: &mut RustFile) {
     f.doc_comment("`cartesian_product_shape!` macros to splice an operand's constraints into");
     f.doc_comment("a combined shape at a post-operand offset.");
     f.doc_comment("");
+    f.doc_comment("**Phase 17: full operand-catalogue support.** Affine and");
+    f.doc_comment("Conjunction now shift correctly at const time because the");
+    f.doc_comment("variants store fixed-size arrays (no `&'static [i64]` allocation");
+    f.doc_comment("required). The pre-Phase-17 `Site { position: u32::MAX }`");
+    f.doc_comment("sentinel is removed.");
+    f.doc_comment("");
     f.doc_comment("**Variant coverage.**");
     f.doc_comment("- `Site { position }` → position += offset.");
     f.doc_comment("- `Carry { site }` → site += offset.");
     f.doc_comment("- `Residue`, `Hamming`, `Depth`, `SatClauses`, `Bound`: pass through (no");
     f.doc_comment("  site references at this layer).");
-    f.doc_comment("- `Affine { coefficients, bias }`: returned with the sentinel form");
-    f.doc_comment("  `Site { position: u32::MAX }`. Stable Rust const-fns cannot allocate a");
-    f.doc_comment("  new `&'static [i64]` with prepended zeros, so the SDK cannot shift an");
-    f.doc_comment("  operand's multi-site `Affine` coefficient slice at const time. Consumers");
-    f.doc_comment("  needing `Affine`-bearing operands must use the Manual-construction");
-    f.doc_comment("  pattern documented in the amendment §Gap 2. The sentinel triggers a");
-    f.doc_comment("  `foundation/ProductLayoutWidth` failure at mint time so misuse produces a");
-    f.doc_comment("  typed error rather than silently wrong output.");
-    f.doc_comment("- `Conjunction { conjuncts }`: returned with the same sentinel for the");
-    f.doc_comment("  same reason (nested conjunct rebuild would require const allocation).");
+    f.doc_comment("- `Affine { coefficients, coefficient_count, bias }`: builds a fresh");
+    f.doc_comment("  `[i64; AFFINE_MAX_COEFFS]` of zeros, copies the active prefix into");
+    f.doc_comment("  positions `[offset, offset + coefficient_count)`. If the shift");
+    f.doc_comment("  would overflow the fixed buffer, returns an Affine with");
+    f.doc_comment("  `coefficient_count = 0` (vacuously consistent).");
+    f.doc_comment("- `Conjunction { conjuncts, conjunct_count }`: builds a fresh");
+    f.doc_comment("  `[LeafConstraintRef; CONJUNCTION_MAX_TERMS]` and shifts each leaf");
+    f.doc_comment("  via `shift_leaf_constraint`. One-level depth — leaves cannot be");
+    f.doc_comment("  Conjunction.");
     f.line("pub const fn shift_constraint(c: ConstraintRef, offset: u32) -> ConstraintRef {");
     f.line("    match c {");
     f.line("        ConstraintRef::Site { position } => ConstraintRef::Site {");
@@ -1823,9 +1983,96 @@ fn emit_cartesian_product_shape(f: &mut RustFile) {
     f.line("        ConstraintRef::Bound { observable_iri, bound_shape_iri, args_repr } => {");
     f.line("            ConstraintRef::Bound { observable_iri, bound_shape_iri, args_repr }");
     f.line("        }");
-    f.line("        ConstraintRef::Affine { .. } | ConstraintRef::Conjunction { .. } => {");
-    f.line("            // Sentinel — see doc comment above.");
-    f.line("            ConstraintRef::Site { position: u32::MAX }");
+    f.line("        ConstraintRef::Affine { coefficients, coefficient_count, bias } => {");
+    f.line("            let (out, new_count) =");
+    f.line("                shift_affine_coefficients(&coefficients, coefficient_count, offset);");
+    f.line("            ConstraintRef::Affine {");
+    f.line("                coefficients: out,");
+    f.line("                coefficient_count: new_count,");
+    f.line("                bias,");
+    f.line("            }");
+    f.line("        }");
+    f.line("        ConstraintRef::Conjunction { conjuncts, conjunct_count } => {");
+    f.line("            let mut out = [LeafConstraintRef::Site { position: 0 }; CONJUNCTION_MAX_TERMS];");
+    f.line("            let count = conjunct_count as usize;");
+    f.line("            let mut i = 0;");
+    f.line("            while i < count && i < CONJUNCTION_MAX_TERMS {");
+    f.line("                out[i] = shift_leaf_constraint(conjuncts[i], offset);");
+    f.line("                i += 1;");
+    f.line("            }");
+    f.line("            ConstraintRef::Conjunction {");
+    f.line("                conjuncts: out,");
+    f.line("                conjunct_count,");
+    f.line("            }");
+    f.line("        }");
+    f.line("    }");
+    f.line("}");
+    f.blank();
+
+    // Helper: shift a fixed-size i64 coefficient array by `offset`.
+    f.doc_comment("Phase 17 helper: shift the active prefix of an `Affine`");
+    f.doc_comment("coefficient array right by `offset`, returning a fresh");
+    f.doc_comment("`[i64; AFFINE_MAX_COEFFS]` and the new active count. If the");
+    f.doc_comment("shift would overflow the fixed buffer, returns count `0`");
+    f.doc_comment("(vacuously consistent — no constraint).");
+    f.line("#[inline]");
+    f.line("#[must_use]");
+    f.line("const fn shift_affine_coefficients(");
+    f.line("    coefficients: &[i64; AFFINE_MAX_COEFFS],");
+    f.line("    coefficient_count: u32,");
+    f.line("    offset: u32,");
+    f.line(") -> ([i64; AFFINE_MAX_COEFFS], u32) {");
+    f.line("    let mut out = [0i64; AFFINE_MAX_COEFFS];");
+    f.line("    let count = coefficient_count as usize;");
+    f.line("    let off = offset as usize;");
+    f.line("    if off >= AFFINE_MAX_COEFFS {");
+    f.line("        return (out, 0);");
+    f.line("    }");
+    f.line("    let mut i = 0;");
+    f.line("    while i < count && i + off < AFFINE_MAX_COEFFS {");
+    f.line("        out[i + off] = coefficients[i];");
+    f.line("        i += 1;");
+    f.line("    }");
+    f.line("    let new_count = (i + off) as u32;");
+    f.line("    (out, new_count)");
+    f.line("}");
+    f.blank();
+
+    // Helper: leaf-flavored shift.
+    f.doc_comment("Phase 17 helper: same as [`shift_constraint`] but operating on a");
+    f.doc_comment("[`LeafConstraintRef`]. Used by Conjunction-shifting paths that");
+    f.doc_comment("must preserve the leaf-only depth limit.");
+    f.line("#[inline]");
+    f.line("#[must_use]");
+    f.line("pub const fn shift_leaf_constraint(c: LeafConstraintRef, offset: u32) -> LeafConstraintRef {");
+    f.line("    match c {");
+    f.line("        LeafConstraintRef::Site { position } => LeafConstraintRef::Site {");
+    f.line("            position: position.saturating_add(offset),");
+    f.line("        },");
+    f.line("        LeafConstraintRef::Carry { site } => LeafConstraintRef::Carry {");
+    f.line("            site: site.saturating_add(offset),");
+    f.line("        },");
+    f.line("        LeafConstraintRef::Residue { modulus, residue } => {");
+    f.line("            LeafConstraintRef::Residue { modulus, residue }");
+    f.line("        }");
+    f.line("        LeafConstraintRef::Hamming { bound } => LeafConstraintRef::Hamming { bound },");
+    f.line(
+        "        LeafConstraintRef::Depth { min, max } => LeafConstraintRef::Depth { min, max },",
+    );
+    f.line("        LeafConstraintRef::SatClauses { clauses, num_vars } => {");
+    f.line("            LeafConstraintRef::SatClauses { clauses, num_vars }");
+    f.line("        }");
+    f.line("        LeafConstraintRef::Bound { observable_iri, bound_shape_iri, args_repr } => {");
+    f.line("            LeafConstraintRef::Bound { observable_iri, bound_shape_iri, args_repr }");
+    f.line("        }");
+    f.line("        LeafConstraintRef::Affine { coefficients, coefficient_count, bias } => {");
+    f.line("            let (out, new_count) =");
+    f.line("                shift_affine_coefficients(&coefficients, coefficient_count, offset);");
+    f.line("            LeafConstraintRef::Affine {");
+    f.line("                coefficients: out,");
+    f.line("                coefficient_count: new_count,");
+    f.line("                bias,");
+    f.line("            }");
     f.line("        }");
     f.line("    }");
     f.line("}");
@@ -1969,21 +2216,22 @@ fn emit_admission_fns(f: &mut RustFile) {
     f.line("            ConstraintRef::Depth { min, max } => *min <= *max,");
     f.line("            ConstraintRef::Hamming { bound } => *bound <= 32_768,");
     f.line("            ConstraintRef::Site { .. } => true,");
-    f.line("            ConstraintRef::Affine { coefficients, bias } => {");
+    f.line("            ConstraintRef::Affine { coefficients, coefficient_count, bias } => {");
     f.line("                // Mirror preflight_feasibility's Affine arm in const context.");
-    f.line("                if coefficients.is_empty() {");
+    f.line("                let count = *coefficient_count as usize;");
+    f.line("                if count == 0 {");
     f.line("                    false");
     f.line("                } else {");
     f.line("                    let mut ok_coeff = true;");
     f.line("                    let mut idx = 0;");
-    f.line("                    while idx < coefficients.len() {");
+    f.line("                    while idx < count && idx < AFFINE_MAX_COEFFS {");
     f.line("                        if coefficients[idx] == i64::MIN {");
     f.line("                            ok_coeff = false;");
     f.line("                            break;");
     f.line("                        }");
     f.line("                        idx += 1;");
     f.line("                    }");
-    f.line("                    ok_coeff && is_affine_consistent(coefficients, *bias)");
+    f.line("                    ok_coeff && is_affine_consistent(coefficients, *coefficient_count, *bias)");
     f.line("                }");
     f.line("            }");
     f.line("            ConstraintRef::Bound { observable_iri, .. } => {");
@@ -1994,8 +2242,8 @@ fn emit_admission_fns(f: &mut RustFile) {
     f.line("                    \"https://uor.foundation/observable/LandauerCost\",");
     f.line("                )");
     f.line("            }");
-    f.line("            ConstraintRef::Conjunction { conjuncts } => {");
-    f.line("                conjunction_all_sat(conjuncts)");
+    f.line("            ConstraintRef::Conjunction { conjuncts, conjunct_count } => {");
+    f.line("                conjunction_all_sat(conjuncts, *conjunct_count)");
     f.line("            }");
     f.line("        };");
     f.line("        if !ok {");
@@ -2624,26 +2872,27 @@ fn emit_preflight_checks(f: &mut RustFile, ontology: &Ontology) {
     f.line("            ConstraintRef::Hamming { bound } => *bound <= 32_768,");
     f.line("            // Structural invariant of site indexing \u{2014} bounds enforced by SITE_COUNT typing.");
     f.line("            ConstraintRef::Site { .. } => true,");
-    f.line("            ConstraintRef::Affine { coefficients, bias } => {");
-    f.line("                if coefficients.is_empty() {");
+    f.line("            ConstraintRef::Affine { coefficients, coefficient_count, bias } => {");
+    f.line("                let count = *coefficient_count as usize;");
+    f.line("                if count == 0 {");
     f.line("                    false");
     f.line("                } else {");
     f.line("                    let mut ok_coeff = true;");
     f.line("                    let mut idx = 0;");
-    f.line("                    while idx < coefficients.len() {");
+    f.line("                    while idx < count && idx < AFFINE_MAX_COEFFS {");
     f.line("                        if coefficients[idx] == i64::MIN {");
     f.line("                            ok_coeff = false;");
     f.line("                            break;");
     f.line("                        }");
     f.line("                        idx += 1;");
     f.line("                    }");
-    f.line("                    ok_coeff && is_affine_consistent(coefficients, *bias)");
+    f.line("                    ok_coeff && is_affine_consistent(coefficients, *coefficient_count, *bias)");
     f.line("                }");
     f.line("            }");
     f.line("            // Handled above via early `if let`; unreachable here.");
     f.line("            ConstraintRef::Bound { .. } => true,");
     f.line(
-        "            ConstraintRef::Conjunction { conjuncts } => conjunction_all_sat(conjuncts),",
+        "            ConstraintRef::Conjunction { conjuncts, conjunct_count } => conjunction_all_sat(conjuncts, *conjunct_count),",
     );
     f.line("        };");
     f.line("        if !ok {");

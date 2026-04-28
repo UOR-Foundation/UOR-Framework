@@ -64,19 +64,26 @@ fn partition_product_witness_implements_trait_with_null_partition_assoc() {
 
 #[test]
 fn partition_coproduct_witness_implements_trait_with_null_partition_assoc() {
-    static TAG_COEFFS: [i64; 4] = [0, 0, 0, 1];
+    const TAG_COEFFS: [i64; uor_foundation::pipeline::AFFINE_MAX_COEFFS] = {
+        let mut a = [0i64; uor_foundation::pipeline::AFFINE_MAX_COEFFS];
+        a[3] = 1;
+        a
+    };
+    const TAG_COEFF_COUNT: u32 = 4;
     static CONSTRAINTS: [uor_foundation::pipeline::ConstraintRef; 7] = [
         uor_foundation::pipeline::ConstraintRef::Site { position: 0 },
         uor_foundation::pipeline::ConstraintRef::Site { position: 1 },
         uor_foundation::pipeline::ConstraintRef::Affine {
-            coefficients: &TAG_COEFFS,
+            coefficients: TAG_COEFFS,
+            coefficient_count: TAG_COEFF_COUNT,
             bias: 0,
         },
         uor_foundation::pipeline::ConstraintRef::Site { position: 0 },
         uor_foundation::pipeline::ConstraintRef::Carry { site: 1 },
         uor_foundation::pipeline::ConstraintRef::Site { position: 2 },
         uor_foundation::pipeline::ConstraintRef::Affine {
-            coefficients: &TAG_COEFFS,
+            coefficients: TAG_COEFFS,
+            coefficient_count: TAG_COEFF_COUNT,
             bias: -1,
         },
     ];

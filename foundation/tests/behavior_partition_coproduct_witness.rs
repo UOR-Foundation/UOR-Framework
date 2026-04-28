@@ -29,7 +29,13 @@ fn fp(byte: u8) -> ContentFingerprint {
 //     ∪ [R::CONSTRAINTS] ∪ {R tag-pinner (bias = -1)}
 // Total length: 2 + 1 + 3 + 1 = 7.
 
-static TAG_COEFFS: [i64; 4] = [0, 0, 0, 1];
+use uor_foundation::pipeline::AFFINE_MAX_COEFFS;
+const TAG_COEFFS: [i64; AFFINE_MAX_COEFFS] = {
+    let mut a = [0i64; AFFINE_MAX_COEFFS];
+    a[3] = 1;
+    a
+};
+const TAG_COEFF_COUNT: u32 = 4;
 
 static COPRODUCT_CONSTRAINTS: [ConstraintRef; 7] = [
     // L's constraints.
@@ -37,7 +43,8 @@ static COPRODUCT_CONSTRAINTS: [ConstraintRef; 7] = [
     ConstraintRef::Site { position: 1 },
     // L's tag-pinner: coefficient 1 at tag_site = 3, bias 0.
     ConstraintRef::Affine {
-        coefficients: &TAG_COEFFS,
+        coefficients: TAG_COEFFS,
+        coefficient_count: TAG_COEFF_COUNT,
         bias: 0,
     },
     // R's constraints (unshifted — variants share data-site space per ST_1).
@@ -46,7 +53,8 @@ static COPRODUCT_CONSTRAINTS: [ConstraintRef; 7] = [
     ConstraintRef::Site { position: 2 },
     // R's tag-pinner: same coefficients, bias -1.
     ConstraintRef::Affine {
-        coefficients: &TAG_COEFFS,
+        coefficients: TAG_COEFFS,
+        coefficient_count: TAG_COEFF_COUNT,
         bias: -1,
     },
 ];
@@ -175,7 +183,8 @@ fn missing_right_tag_pinner_cites_op_st_6() {
         ConstraintRef::Site { position: 0 },
         ConstraintRef::Site { position: 1 },
         ConstraintRef::Affine {
-            coefficients: &TAG_COEFFS,
+            coefficients: TAG_COEFFS,
+            coefficient_count: TAG_COEFF_COUNT,
             bias: 0,
         },
         ConstraintRef::Site { position: 0 },
@@ -199,14 +208,16 @@ fn wrong_bias_cites_op_st_7() {
         ConstraintRef::Site { position: 0 },
         ConstraintRef::Site { position: 1 },
         ConstraintRef::Affine {
-            coefficients: &TAG_COEFFS,
+            coefficients: TAG_COEFFS,
+            coefficient_count: TAG_COEFF_COUNT,
             bias: -1, // wrong — should be 0 for the left variant
         },
         ConstraintRef::Site { position: 0 },
         ConstraintRef::Carry { site: 1 },
         ConstraintRef::Site { position: 2 },
         ConstraintRef::Affine {
-            coefficients: &TAG_COEFFS,
+            coefficients: TAG_COEFFS,
+            coefficient_count: TAG_COEFF_COUNT,
             bias: -1,
         },
     ];
@@ -225,19 +236,25 @@ fn non_canonical_tag_encoding_cites_foundation_invariant() {
     // pattern content-addressing depends on. Must cite
     // foundation/CoproductTagEncoding, NOT op/ST_6 — the logical tag-site
     // existence claim holds, only the encoding normalization fails.
-    static NONCANON_COEFFS: [i64; 4] = [0, 0, 0, 2];
+    const NONCANON_COEFFS: [i64; AFFINE_MAX_COEFFS] = {
+        let mut a = [0i64; AFFINE_MAX_COEFFS];
+        a[3] = 2;
+        a
+    };
     static BAD: [ConstraintRef; 7] = [
         ConstraintRef::Site { position: 0 },
         ConstraintRef::Site { position: 1 },
         ConstraintRef::Affine {
-            coefficients: &NONCANON_COEFFS,
+            coefficients: NONCANON_COEFFS,
+            coefficient_count: 4,
             bias: 0,
         },
         ConstraintRef::Site { position: 0 },
         ConstraintRef::Carry { site: 1 },
         ConstraintRef::Site { position: 2 },
         ConstraintRef::Affine {
-            coefficients: &TAG_COEFFS,
+            coefficients: TAG_COEFFS,
+            coefficient_count: TAG_COEFF_COUNT,
             bias: -1,
         },
     ];
@@ -260,14 +277,16 @@ fn operand_site_at_tag_site_cites_op_st_6() {
         ConstraintRef::Site { position: 0 },
         ConstraintRef::Site { position: 3 }, // collides with tag_site
         ConstraintRef::Affine {
-            coefficients: &TAG_COEFFS,
+            coefficients: TAG_COEFFS,
+            coefficient_count: TAG_COEFF_COUNT,
             bias: 0,
         },
         ConstraintRef::Site { position: 0 },
         ConstraintRef::Carry { site: 1 },
         ConstraintRef::Site { position: 2 },
         ConstraintRef::Affine {
-            coefficients: &TAG_COEFFS,
+            coefficients: TAG_COEFFS,
+            coefficient_count: TAG_COEFF_COUNT,
             bias: -1,
         },
     ];

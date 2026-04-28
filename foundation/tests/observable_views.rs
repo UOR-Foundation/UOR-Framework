@@ -37,46 +37,75 @@ fn validated_no_longer_impls_observable_directly() {
     fn assert_view_required<T: ConstrainedTypeShape>() {
         // ValidatedLandauerView IS Observable<DefaultHostTypes>.
         fn check<O: Observable<DefaultHostTypes>>() {}
-        check::<uor_foundation::blanket_impls::ValidatedLandauerView<T, uor_foundation::enforcement::Runtime>>();
+        check::<
+            uor_foundation::blanket_impls::ValidatedLandauerView<
+                T,
+                uor_foundation::enforcement::Runtime,
+            >,
+        >();
     }
     assert_view_required::<EmptyShape>();
 }
 
 #[test]
 fn landauer_view_value_matches_landauer_nats() {
-    let view = uor_foundation::blanket_impls::ValidatedLandauerView::<EmptyShape, uor_foundation::enforcement::Runtime>::new();
+    let view = uor_foundation::blanket_impls::ValidatedLandauerView::<
+        EmptyShape,
+        uor_foundation::enforcement::Runtime,
+    >::new();
     let v = <_ as Observable<DefaultHostTypes>>::value(&view);
     let n = <_ as LandauerBudget<DefaultHostTypes>>::landauer_nats(&view);
     // Both should be derived from primitive_descent_metrics's entropy bits.
-    assert_eq!(v, n, "ValidatedLandauerView::value must equal landauer_nats");
+    assert_eq!(
+        v, n,
+        "ValidatedLandauerView::value must equal landauer_nats"
+    );
 }
 
 #[test]
 fn landauer_view_implements_thermo_observable() {
-    let view = uor_foundation::blanket_impls::ValidatedLandauerView::<EmptyShape, uor_foundation::enforcement::Runtime>::new();
+    let view = uor_foundation::blanket_impls::ValidatedLandauerView::<
+        EmptyShape,
+        uor_foundation::enforcement::Runtime,
+    >::new();
     let _h = <_ as ThermoObservable<DefaultHostTypes>>::hardness_estimate(&view);
 }
 
 #[test]
 fn jacobian_view_value_is_l1_of_jacobian_row() {
-    let view = uor_foundation::blanket_impls::ValidatedJacobianView::<EmptyShape, uor_foundation::enforcement::Runtime>::new();
+    let view = uor_foundation::blanket_impls::ValidatedJacobianView::<
+        EmptyShape,
+        uor_foundation::enforcement::Runtime,
+    >::new();
     let v = <_ as Observable<DefaultHostTypes>>::value(&view);
     // EmptyShape has no constraints, so the Jacobian row is all zeros
     // and the L1 sum is 0.0.
     assert_eq!(v, 0.0_f64);
     fn assert_leaf<O: JacobianObservable<DefaultHostTypes>>() {}
-    assert_leaf::<uor_foundation::blanket_impls::ValidatedJacobianView<EmptyShape, uor_foundation::enforcement::Runtime>>();
+    assert_leaf::<
+        uor_foundation::blanket_impls::ValidatedJacobianView<
+            EmptyShape,
+            uor_foundation::enforcement::Runtime,
+        >,
+    >();
 }
 
 #[test]
 fn carry_depth_view_value_is_dihedral_orbit_size() {
-    let view =
-        uor_foundation::blanket_impls::ValidatedCarryDepthView::<EmptyShape, uor_foundation::enforcement::Runtime>::new();
+    let view = uor_foundation::blanket_impls::ValidatedCarryDepthView::<
+        EmptyShape,
+        uor_foundation::enforcement::Runtime,
+    >::new();
     let v = <_ as Observable<DefaultHostTypes>>::value(&view);
     // SITE_COUNT = 0 → orbit_size = 1 by primitive convention.
     assert_eq!(v, 1.0_f64);
     fn assert_leaf<O: CarryDepthObservable<DefaultHostTypes>>() {}
-    assert_leaf::<uor_foundation::blanket_impls::ValidatedCarryDepthView<EmptyShape, uor_foundation::enforcement::Runtime>>();
+    assert_leaf::<
+        uor_foundation::blanket_impls::ValidatedCarryDepthView<
+            EmptyShape,
+            uor_foundation::enforcement::Runtime,
+        >,
+    >();
 }
 
 #[test]
@@ -90,30 +119,64 @@ fn derivation_depth_view_value_routes_through_terminal_reduction() {
     // it returns without panicking.
     fn assert_leaf<O: DerivationDepthObservable<DefaultHostTypes>>() {}
     assert_leaf::<
-        uor_foundation::blanket_impls::ValidatedDerivationDepthView<EmptyShape, uor_foundation::enforcement::Runtime>,
+        uor_foundation::blanket_impls::ValidatedDerivationDepthView<
+            EmptyShape,
+            uor_foundation::enforcement::Runtime,
+        >,
     >();
 }
 
 #[test]
 fn free_rank_view_value_routes_through_descent_metrics() {
-    let view = uor_foundation::blanket_impls::ValidatedFreeRankView::<EmptyShape, uor_foundation::enforcement::Runtime>::new();
+    let view = uor_foundation::blanket_impls::ValidatedFreeRankView::<
+        EmptyShape,
+        uor_foundation::enforcement::Runtime,
+    >::new();
     let v = <_ as Observable<DefaultHostTypes>>::value(&view);
     // EmptyShape: SITE_COUNT = 0; nerve-betti returns Ok(zeros);
     // descent_metrics's residual = max(SITE_COUNT - chi, 0) = 0 - 0 = 0.
     assert_eq!(v, 0.0_f64);
     fn assert_leaf<O: FreeRankObservable<DefaultHostTypes>>() {}
-    assert_leaf::<uor_foundation::blanket_impls::ValidatedFreeRankView<EmptyShape, uor_foundation::enforcement::Runtime>>();
+    assert_leaf::<
+        uor_foundation::blanket_impls::ValidatedFreeRankView<
+            EmptyShape,
+            uor_foundation::enforcement::Runtime,
+        >,
+    >();
 }
 
 #[test]
 fn view_newtypes_are_zero_cost_copy_clone_default() {
     fn assert_traits<T: Copy + Clone + core::fmt::Debug + Default + PartialEq + Eq>() {}
 
-    assert_traits::<uor_foundation::blanket_impls::ValidatedLandauerView<EmptyShape, uor_foundation::enforcement::Runtime>>();
-    assert_traits::<uor_foundation::blanket_impls::ValidatedJacobianView<EmptyShape, uor_foundation::enforcement::Runtime>>();
-    assert_traits::<uor_foundation::blanket_impls::ValidatedCarryDepthView<EmptyShape, uor_foundation::enforcement::Runtime>>();
     assert_traits::<
-        uor_foundation::blanket_impls::ValidatedDerivationDepthView<EmptyShape, uor_foundation::enforcement::Runtime>,
+        uor_foundation::blanket_impls::ValidatedLandauerView<
+            EmptyShape,
+            uor_foundation::enforcement::Runtime,
+        >,
     >();
-    assert_traits::<uor_foundation::blanket_impls::ValidatedFreeRankView<EmptyShape, uor_foundation::enforcement::Runtime>>();
+    assert_traits::<
+        uor_foundation::blanket_impls::ValidatedJacobianView<
+            EmptyShape,
+            uor_foundation::enforcement::Runtime,
+        >,
+    >();
+    assert_traits::<
+        uor_foundation::blanket_impls::ValidatedCarryDepthView<
+            EmptyShape,
+            uor_foundation::enforcement::Runtime,
+        >,
+    >();
+    assert_traits::<
+        uor_foundation::blanket_impls::ValidatedDerivationDepthView<
+            EmptyShape,
+            uor_foundation::enforcement::Runtime,
+        >,
+    >();
+    assert_traits::<
+        uor_foundation::blanket_impls::ValidatedFreeRankView<
+            EmptyShape,
+            uor_foundation::enforcement::Runtime,
+        >,
+    >();
 }

@@ -610,3 +610,15 @@ symbols = [
     "blanket_impls",
 ]
 behavior = "phase11_blanket_impls"
+
+# ─── Mapping: Phase 17 — ConstraintRef Affine/Conjunction const-buildable
+# refactor. `LeafConstraintRef` is the depth-1 conjunct element type;
+# `AFFINE_MAX_COEFFS` and `CONJUNCTION_MAX_TERMS` cap the fixed-size
+# arrays that replace the pre-Phase-17 `&'static` slices.
+[coverage.phase17_constraintref_fixed_arrays]
+symbols = [
+    "AFFINE_MAX_COEFFS",
+    "CONJUNCTION_MAX_TERMS",
+    "LeafConstraintRef",
+]
+behavior = "behavior_constraintref_fixed_arrays"

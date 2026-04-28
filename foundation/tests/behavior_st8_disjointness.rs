@@ -11,9 +11,17 @@
 //! `behavior_partition_coproduct_witness.rs` and
 //! `behavior_validate_coproduct_structure.rs` (2 + 3 operand, tag_site = 3).
 
-use uor_foundation::pipeline::ConstraintRef;
+use uor_foundation::pipeline::{ConstraintRef, AFFINE_MAX_COEFFS};
 
-static TAG_COEFFS: [i64; 4] = [0, 0, 0, 1];
+// Phase 17: Affine coefficients are now stored inline as a fixed-size
+// `[i64; AFFINE_MAX_COEFFS]` array. We zero-pad the original 4-wide
+// pattern out to AFFINE_MAX_COEFFS and use coefficient_count = 4.
+const TAG_COEFFS: [i64; AFFINE_MAX_COEFFS] = {
+    let mut a = [0i64; AFFINE_MAX_COEFFS];
+    a[3] = 1;
+    a
+};
+const TAG_COEFF_COUNT: u32 = 4;
 
 // Canonical coproduct layout: L's constraints + L's tag-pinner (bias 0) +
 // R's constraints + R's tag-pinner (bias -1). tag_site = 3.
@@ -23,7 +31,8 @@ static COPRODUCT_CONSTRAINTS: [ConstraintRef; 7] = [
     ConstraintRef::Site { position: 1 },
     // L's tag-pinner: pins site 3 to value 0.
     ConstraintRef::Affine {
-        coefficients: &TAG_COEFFS,
+        coefficients: TAG_COEFFS,
+        coefficient_count: TAG_COEFF_COUNT,
         bias: 0,
     },
     // R's constraints — Site + Carry + Site at 0, 1, 2 (sharing data-site
@@ -33,7 +42,8 @@ static COPRODUCT_CONSTRAINTS: [ConstraintRef; 7] = [
     ConstraintRef::Site { position: 2 },
     // R's tag-pinner: pins site 3 to value 1.
     ConstraintRef::Affine {
-        coefficients: &TAG_COEFFS,
+        coefficients: TAG_COEFFS,
+        coefficient_count: TAG_COEFF_COUNT,
         bias: -1,
     },
 ];
@@ -53,9 +63,14 @@ fn satisfies(c: &ConstraintRef, assignment: &[i64]) -> bool {
     match c {
         ConstraintRef::Site { .. } => true,
         ConstraintRef::Carry { .. } => true,
-        ConstraintRef::Affine { coefficients, bias } => {
+        ConstraintRef::Affine {
+            coefficients,
+            coefficient_count,
+            bias,
+        } => {
             let mut sum: i64 = 0;
-            for (i, coeff) in coefficients.iter().enumerate() {
+            let count = (*coefficient_count as usize).min(AFFINE_MAX_COEFFS);
+            for (i, coeff) in coefficients.iter().take(count).enumerate() {
                 let site_value = assignment.get(i).copied().unwrap_or(0);
                 sum += coeff * site_value;
             }

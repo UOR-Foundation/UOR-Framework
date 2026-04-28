@@ -66,10 +66,6 @@ pub fn verify_effect_disjointness_witness<H: HostTypes + 'static>(
     }
     let left_bytes = inputs.disjointness_left.fingerprint.as_bytes();
     let right_bytes = inputs.disjointness_right.fingerprint.as_bytes();
-    let fp = fingerprint_for_inputs(&[
-        b"https://uor.foundation/op/FX_4",
-        left_bytes,
-        right_bytes,
-    ]);
+    let fp = fingerprint_for_inputs(&[b"https://uor.foundation/op/FX_4", left_bytes, right_bytes]);
     Ok(MintDisjointnessWitness::from_fingerprint(fp))
 }

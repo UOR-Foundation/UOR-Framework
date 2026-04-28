@@ -22,11 +22,15 @@
 //!
 //! # Operand support
 //!
-//! Operand `CONSTRAINTS` arrays may contain `Residue`, `Hamming`,
-//! `Depth`, `Carry`, `Site`, `SatClauses`, and `Bound` variants. Operands
-//! bearing `Affine` or `Conjunction` constraints are not supported by the
-//! SDK; use the manual-construction pattern from the amendment's §Gap 2
-//! for those cases.
+//! Operand `CONSTRAINTS` arrays may contain every `ConstraintRef`
+//! variant: `Residue`, `Hamming`, `Depth`, `Carry`, `Site`, `Affine`,
+//! `SatClauses`, `Bound`, and `Conjunction`. Phase 17 stores
+//! `Affine.coefficients` as a fixed-size
+//! `[i64; AFFINE_MAX_COEFFS]` array (capacity 8) and limits
+//! `Conjunction.conjuncts` to a `[LeafConstraintRef; CONJUNCTION_MAX_TERMS]`
+//! depth-1 array; both are stable-Rust const-buildable, so the SDK
+//! macros support the full operand catalogue. Inputs exceeding the
+//! caps fail `validate_const()` with a typed `ShapeViolation`.
 
 #![deny(
     clippy::unwrap_used,
@@ -193,6 +197,7 @@ pub fn coproduct_shape(input: TokenStream) -> TokenStream {
     let len_const = format_ident_suffix(&name, "__CONSTRAINTS_LEN");
     let tag_coeffs_l = format_ident_suffix(&name, "__TAG_COEFFS_L");
     let tag_coeffs_r = format_ident_suffix(&name, "__TAG_COEFFS_R");
+    let tag_coeff_count = format_ident_suffix(&name, "__TAG_COEFF_COUNT");
 
     let expansion = quote! {
         /// UOR SumType shape, emitted by `coproduct_shape!`.
@@ -203,18 +208,33 @@ pub fn coproduct_shape(input: TokenStream) -> TokenStream {
         // the tag_site position fits regardless of how wide the
         // operands' SITE_COUNTs are (bounded by NERVE_CONSTRAINTS_CAP
         // each, so tag_site = max(L::SITE_COUNT, R::SITE_COUNT) <
-        // 2 * NERVE_CONSTRAINTS_CAP).
-        const #tag_coeffs_l: [i64; 2 * ::uor_foundation::enforcement::NERVE_CONSTRAINTS_CAP] = {
-            let mut out = [0i64; 2 * ::uor_foundation::enforcement::NERVE_CONSTRAINTS_CAP];
+        // Phase 17: tag-pinner coefficient buffer is now a fixed-size
+        // `[i64; AFFINE_MAX_COEFFS]` array stored inline in the
+        // ConstraintRef::Affine variant. The active prefix runs to
+        // `tag_site + 1`. For coproduct shapes whose
+        // `max(L::SITE_COUNT, R::SITE_COUNT) + 1` exceeds
+        // AFFINE_MAX_COEFFS = 8, the const-eval clamps the tag-pinner
+        // to a no-op (count = 0), and `validate_const` rejects the
+        // shape at admission time as Affine-unsatisfiable.
+        const #tag_coeffs_l: [i64; ::uor_foundation::pipeline::AFFINE_MAX_COEFFS] = {
+            let mut out = [0i64; ::uor_foundation::pipeline::AFFINE_MAX_COEFFS];
             let tag_site = {
                 let a = <#l as ::uor_foundation::pipeline::ConstrainedTypeShape>::SITE_COUNT;
                 let b = <#r as ::uor_foundation::pipeline::ConstrainedTypeShape>::SITE_COUNT;
                 if a > b { a } else { b }
             };
-            out[tag_site] = 1;
+            if tag_site < ::uor_foundation::pipeline::AFFINE_MAX_COEFFS {
+                out[tag_site] = 1;
+            }
             out
         };
-        const #tag_coeffs_r: [i64; 2 * ::uor_foundation::enforcement::NERVE_CONSTRAINTS_CAP] = #tag_coeffs_l;
+        const #tag_coeffs_r: [i64; ::uor_foundation::pipeline::AFFINE_MAX_COEFFS] = #tag_coeffs_l;
+        const #tag_coeff_count: u32 = {
+            let a = <#l as ::uor_foundation::pipeline::ConstrainedTypeShape>::SITE_COUNT;
+            let b = <#r as ::uor_foundation::pipeline::ConstrainedTypeShape>::SITE_COUNT;
+            let tag_site = if a > b { a } else { b };
+            (tag_site as u32).saturating_add(1)
+        };
 
         // Full constraint buffer: L constraints + L tag-pinner (bias=0)
         // + R constraints (shifted by L::SITE_COUNT? — per amendment §4d
@@ -244,7 +264,8 @@ pub fn coproduct_shape(input: TokenStream) -> TokenStream {
             }
             // L's tag-pinner: bias 0.
             out[i] = ::uor_foundation::pipeline::ConstraintRef::Affine {
-                coefficients: &#tag_coeffs_l,
+                coefficients: #tag_coeffs_l,
+                coefficient_count: #tag_coeff_count,
                 bias: 0,
             };
             let left_boundary = i + 1;
@@ -255,7 +276,8 @@ pub fn coproduct_shape(input: TokenStream) -> TokenStream {
             }
             // R's tag-pinner: bias -1.
             out[left_boundary + right_arr.len()] = ::uor_foundation::pipeline::ConstraintRef::Affine {
-                coefficients: &#tag_coeffs_r,
+                coefficients: #tag_coeffs_r,
+                coefficient_count: #tag_coeff_count,
                 bias: -1,
             };
             out

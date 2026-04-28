@@ -52,8 +52,7 @@ fn fingerprint_for_inputs(chunks: &[&[u8]]) -> ContentFingerprint {
 pub fn verify_morphism_grounding_witness<H: HostTypes + 'static>(
     inputs: MintMorphismGroundingWitnessInputs<H>,
 ) -> Result<MintMorphismGroundingWitness, GenericImpossibilityWitness> {
-    if inputs.surface_symbol.fingerprint.is_zero()
-        || inputs.grounded_address.fingerprint.is_zero()
+    if inputs.surface_symbol.fingerprint.is_zero() || inputs.grounded_address.fingerprint.is_zero()
     {
         return Err(GenericImpossibilityWitness::for_identity(
             "https://uor.foundation/op/surfaceSymmetry",

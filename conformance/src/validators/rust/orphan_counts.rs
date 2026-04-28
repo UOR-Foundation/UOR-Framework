@@ -355,8 +355,7 @@ fn classify_target(target: &str, trait_name: &str) -> ImplCategory {
     }
     // Phase 16: per-class observable views land on
     // `Validated{Foo}View<T, Phase>` newtypes (not on `Validated<T, Phase>`).
-    if stripped == "Validated"
-        || (stripped.starts_with("Validated") && stripped.ends_with("View"))
+    if stripped == "Validated" || (stripped.starts_with("Validated") && stripped.ends_with("View"))
     {
         return ImplCategory::ValidatedBlanket;
     }

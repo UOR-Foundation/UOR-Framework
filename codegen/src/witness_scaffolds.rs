@@ -132,10 +132,7 @@ fn is_already_implemented_partition(range_iri: &str) -> bool {
 /// a transitive ancestor (subclass_of chain), excluding annotation
 /// properties and OWL_THING. Returns properties in deterministic order
 /// (sorted by label).
-fn gather_inherited_properties<'a>(
-    class: &'a Class,
-    ontology: &'a Ontology,
-) -> Vec<&'a Property> {
+fn gather_inherited_properties<'a>(class: &'a Class, ontology: &'a Ontology) -> Vec<&'a Property> {
     let class_iris = gather_class_and_ancestors(class, ontology);
     let mut seen: HashSet<&'a str> = HashSet::new();
     let mut out: Vec<&'a Property> = Vec::new();
@@ -164,8 +161,7 @@ fn gather_inherited_properties<'a>(
 /// Returns the class IRI plus every non-OWL_THING, non-enum-class
 /// ancestor reachable via `subclass_of`, deduplicated.
 fn gather_class_and_ancestors<'a>(class: &'a Class, ontology: &'a Ontology) -> Vec<&'a str> {
-    let enum_names: HashSet<&'static str> =
-        Ontology::enum_class_names().iter().copied().collect();
+    let enum_names: HashSet<&'static str> = Ontology::enum_class_names().iter().copied().collect();
     let mut result: Vec<&'a str> = vec![class.id];
     let mut frontier: Vec<&'a str> = class.subclass_of.to_vec();
     while let Some(parent_iri) = frontier.pop() {
@@ -202,8 +198,7 @@ fn range_field_emission(
     let snake = to_snake_case(prop.label);
     let range = prop.range;
     let range_local = local_name(range);
-    let enum_names: HashSet<&'static str> =
-        Ontology::enum_class_names().iter().copied().collect();
+    let enum_names: HashSet<&'static str> = Ontology::enum_class_names().iter().copied().collect();
 
     // 1. Enum class (or WittLevel-as-struct) — emitted in `crate::enums`,
     //    re-exported at crate root. Use the `crate::enums::{Name}` path
@@ -211,10 +206,7 @@ fn range_field_emission(
     if enum_names.contains(range_local) {
         let type_str = format!("crate::enums::{range_local}");
         let (final_type, final_default) = if !prop.functional {
-            (
-                format!("&'static [{type_str}]"),
-                "&[]".to_string(),
-            )
+            (format!("&'static [{type_str}]"), "&[]".to_string())
         } else {
             (type_str.clone(), format!("{type_str}::default()"))
         };
@@ -285,7 +277,11 @@ fn range_field_emission(
         // The Amendment-emitted `PartitionHandle::<H>::from_fingerprint`
         // is the public ctor for AlreadyImplemented partition classes;
         // Phase-8 `*Handle::new` is the public ctor for Path-1 classes.
-        let ctor = if already_impl { "from_fingerprint" } else { "new" };
+        let ctor = if already_impl {
+            "from_fingerprint"
+        } else {
+            "new"
+        };
         let handle_default = format!(
             "{module_path}::{range_local}Handle::<H>::{ctor}(crate::enforcement::ContentFingerprint::zero())"
         );
