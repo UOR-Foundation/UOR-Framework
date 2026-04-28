@@ -1,93 +1,151 @@
-// @codegen-exempt — Phase 12 hand-written verification bodies.
-// Initial baseline emitted by `uor-crate`; subsequent edits
-// are preserved by emit::write_file's banner check.
+// @codegen-exempt — Phase 15 hand-written verification bodies for the IH family.
+// emit::write_file's banner check preserves this file across `uor-crate` runs.
 
-//! Phase 12 verification primitives for the `ih` theorem family.
+//! Phase 15 verification primitives for the `ih` (Inhabitance) theorem family.
 //!
-//! Each `verify_*` validates a `Mint{Foo}Inputs<H>` against the
-//! theorem its `Mint{Foo}` witness attests, then mints the
-//! witness with a content-addressed fingerprint derived from
-//! `(THEOREM_IDENTITY, canonical(inputs))`. On theorem failure
-//! the function returns a typed `GenericImpossibilityWitness`
-//! whose IRI cites the specific failing identity.
-//!
-//! The Phase-12 baseline accepts every input unconditionally
-//! because `Mint{Foo}Inputs<H>` is currently a `PhantomData<H>`
-//! placeholder. Hand-edit each body with the per-theorem checks
-//! once Phase 10b's R5 field mapping populates the inputs with
-//! per-property fields.
+//! Two functions: `verify_proof_impossibility_witness` checks the abstract
+//! ImpossibilityWitness shape; `verify_proof_inhabitance_impossibility_witness`
+//! adds the InhabitanceImpossibility-specific structural invariants
+//! (op:IH_1..IH_3).
 
 use crate::enforcement::{ContentFingerprint, GenericImpossibilityWitness};
 use crate::witness_scaffolds::{
-    MintImpossibilityWitness, MintImpossibilityWitnessInputs, MintInhabitanceImpossibilityWitness,
-    MintInhabitanceImpossibilityWitnessInputs,
+    MintImpossibilityWitness, MintImpossibilityWitnessInputs,
+    MintInhabitanceImpossibilityWitness, MintInhabitanceImpossibilityWitnessInputs,
 };
 use crate::HostTypes;
 
-/// Deterministic 32-byte fingerprint derived from `iri` via
-/// index-salted XOR fold across the full byte sequence. Every
-/// IRI byte contributes to the output buffer cyclically; the
-/// `i as u8` salt prevents byte-swap collisions. The fold is
-/// `no_std` + `const`-friendly and avoids the host-supplied
-/// `Hasher` dependency that the production mint paths use.
-fn fingerprint_for_identity(iri: &str) -> ContentFingerprint {
+/// Index-salted XOR fold over chunked bytes — see `br.rs` for rationale.
+fn fingerprint_for_inputs(chunks: &[&[u8]]) -> ContentFingerprint {
     let mut buf = [0u8; crate::enforcement::FINGERPRINT_MAX_BYTES];
-    let bytes = iri.as_bytes();
-    let mut i = 0;
-    while i < bytes.len() {
-        let pos = i % crate::enforcement::FINGERPRINT_MAX_BYTES;
-        #[allow(clippy::cast_possible_truncation)]
-        let salt = i as u8;
-        buf[pos] ^= bytes[i].wrapping_add(salt);
-        i += 1;
+    let mut global: usize = 0;
+    let mut chunk_idx = 0;
+    while chunk_idx < chunks.len() {
+        let chunk = chunks[chunk_idx];
+        let mut i = 0;
+        while i < chunk.len() {
+            let pos = global % crate::enforcement::FINGERPRINT_MAX_BYTES;
+            #[allow(clippy::cast_possible_truncation)]
+            let salt = global as u8;
+            buf[pos] ^= chunk[i].wrapping_add(salt);
+            i += 1;
+            global += 1;
+        }
+        let pos = global % crate::enforcement::FINGERPRINT_MAX_BYTES;
+        buf[pos] ^= 0xFFu8;
+        global += 1;
+        chunk_idx += 1;
     }
     #[allow(clippy::cast_possible_truncation)]
     ContentFingerprint::from_buffer(buf, crate::enforcement::FINGERPRINT_MAX_BYTES as u8)
 }
 
-/// Phase-12 verification primitive for `https://uor.foundation/proof/ImpossibilityWitness`.
+/// Phase 15 verification primitive for
+/// `https://uor.foundation/proof/ImpossibilityWitness`.
 ///
-/// Theorem identity: `https://uor.foundation/op/IH_1`.
-///
-/// Phase-12 baseline: accepts every input and mints a
-/// witness with a fingerprint derived from the class
-/// IRI. Replace this body with theorem-specific checks
-/// once `MintImpossibilityWitnessInputs<H>` carries per-property fields.
+/// Theorem identity: `https://uor.foundation/op/IH_1` (inhabitance
+/// soundness — bidirectional).
 ///
 /// # Errors
 ///
-/// Returns a `GenericImpossibilityWitness::for_identity(IRI)`
-/// citing the specific failing op-namespace identity
-/// when a future hand-edited body rejects the inputs.
-#[allow(unused_variables)]
+/// * `op:IH_1` — `verified == false`.
+/// * `op:IH_2a` — `impossibility_reason` is the empty sentinel.
+/// * `op:IH_2b` — `proves_identity` handle is the zero sentinel
+///   (no theorem identity attested).
 pub fn verify_proof_impossibility_witness<H: HostTypes + 'static>(
     inputs: MintImpossibilityWitnessInputs<H>,
 ) -> Result<MintImpossibilityWitness, GenericImpossibilityWitness> {
-    let _ = inputs;
-    let fp = fingerprint_for_identity("https://uor.foundation/proof/ImpossibilityWitness");
+    if !inputs.verified {
+        return Err(GenericImpossibilityWitness::for_identity(
+            "https://uor.foundation/op/IH_1",
+        ));
+    }
+    if core::ptr::eq(
+        inputs.impossibility_reason as *const _,
+        H::EMPTY_HOST_STRING as *const _,
+    ) {
+        return Err(GenericImpossibilityWitness::for_identity(
+            "https://uor.foundation/op/IH_2a",
+        ));
+    }
+    if inputs.proves_identity.fingerprint.is_zero() {
+        return Err(GenericImpossibilityWitness::for_identity(
+            "https://uor.foundation/op/IH_2b",
+        ));
+    }
+    let proves_bytes = inputs.proves_identity.fingerprint.as_bytes();
+    let formal_bytes = inputs.formal_derivation.fingerprint.as_bytes();
+    let verified_byte = [u8::from(inputs.verified)];
+    let fp = fingerprint_for_inputs(&[
+        b"https://uor.foundation/op/IH_1",
+        proves_bytes,
+        formal_bytes,
+        &verified_byte,
+    ]);
     Ok(MintImpossibilityWitness::from_fingerprint(fp))
 }
 
-/// Phase-12 verification primitive for `https://uor.foundation/proof/InhabitanceImpossibilityWitness`.
+/// Phase 15 verification primitive for
+/// `https://uor.foundation/proof/InhabitanceImpossibilityWitness`.
 ///
-/// Theorem identity: `https://uor.foundation/op/IH_1`.
-///
-/// Phase-12 baseline: accepts every input and mints a
-/// witness with a fingerprint derived from the class
-/// IRI. Replace this body with theorem-specific checks
-/// once `MintInhabitanceImpossibilityWitnessInputs<H>` carries per-property fields.
+/// Inherits ImpossibilityWitness's invariants (IH_1, IH_2a, IH_2b)
+/// and adds:
 ///
 /// # Errors
 ///
-/// Returns a `GenericImpossibilityWitness::for_identity(IRI)`
-/// citing the specific failing op-namespace identity
-/// when a future hand-edited body rejects the inputs.
-#[allow(unused_variables)]
+/// * `op:IH_3` — `contradiction_proof` is empty (no negation evidence).
+/// * `op:IH_3` — `grounded` handle is zero (no ConstrainedType
+///   reference for the impossibility claim).
+/// * `op:IH_3` — `search_trace` handle is zero (no decision trace).
 pub fn verify_proof_inhabitance_impossibility_witness<H: HostTypes + 'static>(
     inputs: MintInhabitanceImpossibilityWitnessInputs<H>,
 ) -> Result<MintInhabitanceImpossibilityWitness, GenericImpossibilityWitness> {
-    let _ = inputs;
-    let fp =
-        fingerprint_for_identity("https://uor.foundation/proof/InhabitanceImpossibilityWitness");
+    // Inherited invariants from ImpossibilityWitness.
+    if !inputs.verified {
+        return Err(GenericImpossibilityWitness::for_identity(
+            "https://uor.foundation/op/IH_1",
+        ));
+    }
+    if core::ptr::eq(
+        inputs.impossibility_reason as *const _,
+        H::EMPTY_HOST_STRING as *const _,
+    ) {
+        return Err(GenericImpossibilityWitness::for_identity(
+            "https://uor.foundation/op/IH_2a",
+        ));
+    }
+    if inputs.proves_identity.fingerprint.is_zero() {
+        return Err(GenericImpossibilityWitness::for_identity(
+            "https://uor.foundation/op/IH_2b",
+        ));
+    }
+    // InhabitanceImpossibility-specific invariants.
+    if core::ptr::eq(
+        inputs.contradiction_proof as *const _,
+        H::EMPTY_HOST_STRING as *const _,
+    ) {
+        return Err(GenericImpossibilityWitness::for_identity(
+            "https://uor.foundation/op/IH_3",
+        ));
+    }
+    if inputs.grounded.fingerprint.is_zero() {
+        return Err(GenericImpossibilityWitness::for_identity(
+            "https://uor.foundation/op/IH_3",
+        ));
+    }
+    if inputs.search_trace.fingerprint.is_zero() {
+        return Err(GenericImpossibilityWitness::for_identity(
+            "https://uor.foundation/op/IH_3",
+        ));
+    }
+    let proves_bytes = inputs.proves_identity.fingerprint.as_bytes();
+    let grounded_bytes = inputs.grounded.fingerprint.as_bytes();
+    let trace_bytes = inputs.search_trace.fingerprint.as_bytes();
+    let fp = fingerprint_for_inputs(&[
+        b"https://uor.foundation/op/IH_1",
+        proves_bytes,
+        grounded_bytes,
+        trace_bytes,
+    ]);
     Ok(MintInhabitanceImpossibilityWitness::from_fingerprint(fp))
 }

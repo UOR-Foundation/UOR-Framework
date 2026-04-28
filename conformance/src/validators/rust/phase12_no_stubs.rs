@@ -78,6 +78,19 @@ pub fn validate(workspace: &Path) -> Result<ConformanceReport> {
                 ));
             }
         }
+
+        // Phase 15 close: every primitive file must contain at least
+        // one `for_identity(` call signalling that the verify_*
+        // bodies route at least some failure modes to specific
+        // op-namespace identities. Catches accidental
+        // unconditional-Ok regressions where someone removes all
+        // structural-invariant checks.
+        if !body.contains("GenericImpossibilityWitness::for_identity(") {
+            failures.push(format!(
+                "primitives/{label}: missing `GenericImpossibilityWitness::for_identity(...)` call \
+                 (Phase 15 expects every verify_* to route at least one failure mode)"
+            ));
+        }
     }
 
     if failures.is_empty() {

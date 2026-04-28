@@ -1,21 +1,11 @@
-// @codegen-exempt — Phase 12 hand-written verification bodies.
-// Initial baseline emitted by `uor-crate`; subsequent edits
-// are preserved by emit::write_file's banner check.
+// @codegen-exempt — Phase 15 hand-written verification bodies for the OA family.
+// emit::write_file's banner check preserves this file across `uor-crate` runs.
 
-//! Phase 12 verification primitives for the `oa` theorem family.
-//!
-//! Each `verify_*` validates a `Mint{Foo}Inputs<H>` against the
-//! theorem its `Mint{Foo}` witness attests, then mints the
-//! witness with a content-addressed fingerprint derived from
-//! `(THEOREM_IDENTITY, canonical(inputs))`. On theorem failure
-//! the function returns a typed `GenericImpossibilityWitness`
-//! whose IRI cites the specific failing identity.
-//!
-//! The Phase-12 baseline accepts every input unconditionally
-//! because `Mint{Foo}Inputs<H>` is currently a `PhantomData<H>`
-//! placeholder. Hand-edit each body with the per-theorem checks
-//! once Phase 10b's R5 field mapping populates the inputs with
-//! per-property fields.
+//! Phase 15 verification primitives for the `oa` (Surface-Symmetry /
+//! grounding+projection) theorem family. Five Path-2 classes route
+//! here: morphism::GroundingWitness, morphism::ProjectionWitness,
+//! morphism::Witness (abstract), state::GroundingWitness, all under
+//! `op:surfaceSymmetry` (P∘Π∘G commutes when G and P share a Frame).
 
 use crate::enforcement::{ContentFingerprint, GenericImpossibilityWitness};
 use crate::witness_scaffolds::{
@@ -25,115 +15,125 @@ use crate::witness_scaffolds::{
 };
 use crate::HostTypes;
 
-/// Deterministic 32-byte fingerprint derived from `iri` via
-/// index-salted XOR fold across the full byte sequence. Every
-/// IRI byte contributes to the output buffer cyclically; the
-/// `i as u8` salt prevents byte-swap collisions. The fold is
-/// `no_std` + `const`-friendly and avoids the host-supplied
-/// `Hasher` dependency that the production mint paths use.
-fn fingerprint_for_identity(iri: &str) -> ContentFingerprint {
+/// Index-salted XOR fold over chunked bytes — see `br.rs` for rationale.
+fn fingerprint_for_inputs(chunks: &[&[u8]]) -> ContentFingerprint {
     let mut buf = [0u8; crate::enforcement::FINGERPRINT_MAX_BYTES];
-    let bytes = iri.as_bytes();
-    let mut i = 0;
-    while i < bytes.len() {
-        let pos = i % crate::enforcement::FINGERPRINT_MAX_BYTES;
-        #[allow(clippy::cast_possible_truncation)]
-        let salt = i as u8;
-        buf[pos] ^= bytes[i].wrapping_add(salt);
-        i += 1;
+    let mut global: usize = 0;
+    let mut chunk_idx = 0;
+    while chunk_idx < chunks.len() {
+        let chunk = chunks[chunk_idx];
+        let mut i = 0;
+        while i < chunk.len() {
+            let pos = global % crate::enforcement::FINGERPRINT_MAX_BYTES;
+            #[allow(clippy::cast_possible_truncation)]
+            let salt = global as u8;
+            buf[pos] ^= chunk[i].wrapping_add(salt);
+            i += 1;
+            global += 1;
+        }
+        let pos = global % crate::enforcement::FINGERPRINT_MAX_BYTES;
+        buf[pos] ^= 0xFFu8;
+        global += 1;
+        chunk_idx += 1;
     }
     #[allow(clippy::cast_possible_truncation)]
     ContentFingerprint::from_buffer(buf, crate::enforcement::FINGERPRINT_MAX_BYTES as u8)
 }
 
-/// Phase-12 verification primitive for `https://uor.foundation/morphism/GroundingWitness`.
+/// Phase 15 verification primitive for
+/// `https://uor.foundation/morphism/GroundingWitness`.
 ///
 /// Theorem identity: `https://uor.foundation/op/surfaceSymmetry`.
 ///
-/// Phase-12 baseline: accepts every input and mints a
-/// witness with a fingerprint derived from the class
-/// IRI. Replace this body with theorem-specific checks
-/// once `MintMorphismGroundingWitnessInputs<H>` carries per-property fields.
-///
 /// # Errors
 ///
-/// Returns a `GenericImpossibilityWitness::for_identity(IRI)`
-/// citing the specific failing op-namespace identity
-/// when a future hand-edited body rejects the inputs.
-#[allow(unused_variables)]
+/// * `op:surfaceSymmetry` — `surface_symbol` or `grounded_address`
+///   handle is zero (no concrete grounding evidence).
 pub fn verify_morphism_grounding_witness<H: HostTypes + 'static>(
     inputs: MintMorphismGroundingWitnessInputs<H>,
 ) -> Result<MintMorphismGroundingWitness, GenericImpossibilityWitness> {
-    let _ = inputs;
-    let fp = fingerprint_for_identity("https://uor.foundation/morphism/GroundingWitness");
+    if inputs.surface_symbol.fingerprint.is_zero()
+        || inputs.grounded_address.fingerprint.is_zero()
+    {
+        return Err(GenericImpossibilityWitness::for_identity(
+            "https://uor.foundation/op/surfaceSymmetry",
+        ));
+    }
+    let symbol_bytes = inputs.surface_symbol.fingerprint.as_bytes();
+    let addr_bytes = inputs.grounded_address.fingerprint.as_bytes();
+    let fp = fingerprint_for_inputs(&[
+        b"https://uor.foundation/op/surfaceSymmetry",
+        symbol_bytes,
+        addr_bytes,
+    ]);
     Ok(MintMorphismGroundingWitness::from_fingerprint(fp))
 }
 
-/// Phase-12 verification primitive for `https://uor.foundation/morphism/ProjectionWitness`.
+/// Phase 15 verification primitive for
+/// `https://uor.foundation/morphism/ProjectionWitness`.
 ///
 /// Theorem identity: `https://uor.foundation/op/surfaceSymmetry`.
 ///
-/// Phase-12 baseline: accepts every input and mints a
-/// witness with a fingerprint derived from the class
-/// IRI. Replace this body with theorem-specific checks
-/// once `MintProjectionWitnessInputs<H>` carries per-property fields.
-///
 /// # Errors
 ///
-/// Returns a `GenericImpossibilityWitness::for_identity(IRI)`
-/// citing the specific failing op-namespace identity
-/// when a future hand-edited body rejects the inputs.
-#[allow(unused_variables)]
+/// * `op:surfaceSymmetry` — `projection_source` (PartitionHandle) or
+///   `projection_output` (SymbolSequenceHandle) is zero.
 pub fn verify_morphism_projection_witness<H: HostTypes + 'static>(
     inputs: MintProjectionWitnessInputs<H>,
 ) -> Result<MintProjectionWitness, GenericImpossibilityWitness> {
-    let _ = inputs;
-    let fp = fingerprint_for_identity("https://uor.foundation/morphism/ProjectionWitness");
+    let src_fp = inputs.projection_source.fingerprint();
+    if src_fp.is_zero() || inputs.projection_output.fingerprint.is_zero() {
+        return Err(GenericImpossibilityWitness::for_identity(
+            "https://uor.foundation/op/surfaceSymmetry",
+        ));
+    }
+    let src_bytes = src_fp.as_bytes();
+    let out_bytes = inputs.projection_output.fingerprint.as_bytes();
+    let fp = fingerprint_for_inputs(&[
+        b"https://uor.foundation/op/surfaceSymmetry",
+        src_bytes,
+        out_bytes,
+    ]);
     Ok(MintProjectionWitness::from_fingerprint(fp))
 }
 
-/// Phase-12 verification primitive for `https://uor.foundation/morphism/Witness`.
+/// Phase 15 verification primitive for
+/// `https://uor.foundation/morphism/Witness` (abstract supertype).
 ///
-/// Theorem identity: `https://uor.foundation/op/surfaceSymmetry`.
-///
-/// Phase-12 baseline: accepts every input and mints a
-/// witness with a fingerprint derived from the class
-/// IRI. Replace this body with theorem-specific checks
-/// once `MintWitnessInputs<H>` carries per-property fields.
-///
-/// # Errors
-///
-/// Returns a `GenericImpossibilityWitness::for_identity(IRI)`
-/// citing the specific failing op-namespace identity
-/// when a future hand-edited body rejects the inputs.
-#[allow(unused_variables)]
+/// MintWitnessInputs has zero fields (PhantomData<H> only) — there
+/// are no structural invariants to check. Always succeeds; mints with
+/// the IRI-derived fingerprint.
 pub fn verify_morphism_witness<H: HostTypes + 'static>(
-    inputs: MintWitnessInputs<H>,
+    _inputs: MintWitnessInputs<H>,
 ) -> Result<MintWitness, GenericImpossibilityWitness> {
-    let _ = inputs;
-    let fp = fingerprint_for_identity("https://uor.foundation/morphism/Witness");
+    let fp = fingerprint_for_inputs(&[b"https://uor.foundation/op/surfaceSymmetry"]);
     Ok(MintWitness::from_fingerprint(fp))
 }
 
-/// Phase-12 verification primitive for `https://uor.foundation/state/GroundingWitness`.
+/// Phase 15 verification primitive for
+/// `https://uor.foundation/state/GroundingWitness`.
 ///
 /// Theorem identity: `https://uor.foundation/op/surfaceSymmetry`.
 ///
-/// Phase-12 baseline: accepts every input and mints a
-/// witness with a fingerprint derived from the class
-/// IRI. Replace this body with theorem-specific checks
-/// once `MintStateGroundingWitnessInputs<H>` carries per-property fields.
-///
 /// # Errors
 ///
-/// Returns a `GenericImpossibilityWitness::for_identity(IRI)`
-/// citing the specific failing op-namespace identity
-/// when a future hand-edited body rejects the inputs.
-#[allow(unused_variables)]
+/// * `op:surfaceSymmetry` — `witness_step == 0` (no decision-step
+///   evidence) or `witness_binding` slice is empty (no Binding
+///   handles attached).
 pub fn verify_state_grounding_witness<H: HostTypes + 'static>(
     inputs: MintStateGroundingWitnessInputs<H>,
 ) -> Result<MintStateGroundingWitness, GenericImpossibilityWitness> {
-    let _ = inputs;
-    let fp = fingerprint_for_identity("https://uor.foundation/state/GroundingWitness");
+    if inputs.witness_step == 0 || inputs.witness_binding.is_empty() {
+        return Err(GenericImpossibilityWitness::for_identity(
+            "https://uor.foundation/op/surfaceSymmetry",
+        ));
+    }
+    let step_bytes = inputs.witness_step.to_le_bytes();
+    let binding_count_bytes = (inputs.witness_binding.len() as u64).to_le_bytes();
+    let fp = fingerprint_for_inputs(&[
+        b"https://uor.foundation/op/surfaceSymmetry",
+        &step_bytes,
+        &binding_count_bytes,
+    ]);
     Ok(MintStateGroundingWitness::from_fingerprint(fp))
 }

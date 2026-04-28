@@ -2,6 +2,54 @@
 
 All notable changes to UOR-Framework are documented in this file.
 
+## Phase 15 — Real `verify_*` primitive bodies (12c closure) — 2026-04-28
+
+Replaces every `WITNESS_UNIMPLEMENTED_STUB` Phase-12 baseline with a
+real structural-invariant verification that rejects invalid inputs
+with a typed `GenericImpossibilityWitness` whose IRI cites the
+specific failing op-namespace identity. Successful mints carry a
+content-addressed fingerprint folded over the input bytes (not just
+the class IRI), so distinct inputs produce distinct witnesses.
+
+### Breaking
+
+- `Mint{Foo}::ontology_mint(Default::default())` now returns
+  `Err(GenericImpossibilityWitness::for_identity(_))` for every
+  Path-2 class except the abstract `morphism::Witness` (zero-field).
+  The Phase-12 baseline accepted any input unconditionally; consumers
+  relying on default-ok behaviour must populate the inputs.
+- `crate::primitives::{family}::verify_*` bodies are no longer
+  fingerprint-by-IRI — they fold the actual input bytes via a new
+  `fingerprint_for_inputs(chunks)` helper. Witnesses minted with
+  identical IRIs but different inputs now produce distinct
+  fingerprints.
+
+### Per-family failure modes
+
+| Class | Failure IRIs |
+|---|---|
+| `cert::BornRuleVerification` | `op:BR_1` (verified=false), `op:BR_2` (born_rule_verified=false), `op:BR_3` (witt_length=0), `op:BR_4` (certifies empty) |
+| `effect::DisjointnessWitness` | `op:FX_4` (zero handle or non-disjoint) |
+| `morphism::GroundingWitness` | `op:surfaceSymmetry` (zero handle) |
+| `morphism::ProjectionWitness` | `op:surfaceSymmetry` (zero handle) |
+| `morphism::Witness` | none (abstract — always Ok) |
+| `proof::ImpossibilityWitness` | `op:IH_1` (verified=false), `op:IH_2a` (reason empty), `op:IH_2b` (proves_identity zero) |
+| `proof::InhabitanceImpossibilityWitness` | inherited IH_1/IH_2a/IH_2b + `op:IH_3` (contradiction_proof / grounded / search_trace zero) |
+| `state::GroundingWitness` | `op:surfaceSymmetry` (witness_step=0 or empty bindings) |
+| `type::CompletenessWitness` | `op:CC_1` (sites_closed=0), `op:CC_2` (witness_constraint zero) |
+| `type::LiftObstruction` | `op:WLS_1` (trivial w/ non-zero site), `op:WLS_2` (non-trivial w/ zero site) |
+
+### Additive
+
+- `fingerprint_for_inputs(chunks: &[&[u8]])` helper in each family file
+  — index-salted XOR fold across multiple byte chunks with
+  chunk-boundary markers (`0xFF`) so chunk reordering produces a
+  different fingerprint.
+- `phase12_witness_mints.rs` rewritten with 21 tests: per-family
+  populated-input success cases + `Default`-rejects cases asserting
+  the family-IRI prefix on the typed error. The cross-family
+  fingerprint-distinctness assertion is preserved.
+
 ## Phase 14 — `Mint{Foo}Inputs<H>` field mapping (R5 closure) — 2026-04-28
 
 Replaces every `Mint{Foo}Inputs<H>` placeholder

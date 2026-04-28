@@ -1,66 +1,74 @@
-// @codegen-exempt — Phase 12 hand-written verification bodies.
-// Initial baseline emitted by `uor-crate`; subsequent edits
-// are preserved by emit::write_file's banner check.
+// @codegen-exempt — Phase 15 hand-written verification bodies for the CC family.
+// emit::write_file's banner check preserves this file across `uor-crate` runs.
 
-//! Phase 12 verification primitives for the `cc` theorem family.
+//! Phase 15 verification primitives for the `cc` (Completeness) theorem family.
 //!
-//! Each `verify_*` validates a `Mint{Foo}Inputs<H>` against the
-//! theorem its `Mint{Foo}` witness attests, then mints the
-//! witness with a content-addressed fingerprint derived from
-//! `(THEOREM_IDENTITY, canonical(inputs))`. On theorem failure
-//! the function returns a typed `GenericImpossibilityWitness`
-//! whose IRI cites the specific failing identity.
-//!
-//! The Phase-12 baseline accepts every input unconditionally
-//! because `Mint{Foo}Inputs<H>` is currently a `PhantomData<H>`
-//! placeholder. Hand-edit each body with the per-theorem checks
-//! once Phase 10b's R5 field mapping populates the inputs with
-//! per-property fields.
+//! `verify_type_completeness_witness` validates a populated
+//! [`MintCompletenessWitnessInputs<H>`] against the structural
+//! invariants for op:CC_1..CC_5. Failure routes to a specific
+//! impossibility IRI; success mints with a content-addressed
+//! fingerprint folded over the input fields.
 
 use crate::enforcement::{ContentFingerprint, GenericImpossibilityWitness};
 use crate::witness_scaffolds::{MintCompletenessWitness, MintCompletenessWitnessInputs};
 use crate::HostTypes;
 
-/// Deterministic 32-byte fingerprint derived from `iri` via
-/// index-salted XOR fold across the full byte sequence. Every
-/// IRI byte contributes to the output buffer cyclically; the
-/// `i as u8` salt prevents byte-swap collisions. The fold is
-/// `no_std` + `const`-friendly and avoids the host-supplied
-/// `Hasher` dependency that the production mint paths use.
-fn fingerprint_for_identity(iri: &str) -> ContentFingerprint {
+/// Index-salted XOR fold over chunked bytes — see `br.rs` for rationale.
+fn fingerprint_for_inputs(chunks: &[&[u8]]) -> ContentFingerprint {
     let mut buf = [0u8; crate::enforcement::FINGERPRINT_MAX_BYTES];
-    let bytes = iri.as_bytes();
-    let mut i = 0;
-    while i < bytes.len() {
-        let pos = i % crate::enforcement::FINGERPRINT_MAX_BYTES;
-        #[allow(clippy::cast_possible_truncation)]
-        let salt = i as u8;
-        buf[pos] ^= bytes[i].wrapping_add(salt);
-        i += 1;
+    let mut global: usize = 0;
+    let mut chunk_idx = 0;
+    while chunk_idx < chunks.len() {
+        let chunk = chunks[chunk_idx];
+        let mut i = 0;
+        while i < chunk.len() {
+            let pos = global % crate::enforcement::FINGERPRINT_MAX_BYTES;
+            #[allow(clippy::cast_possible_truncation)]
+            let salt = global as u8;
+            buf[pos] ^= chunk[i].wrapping_add(salt);
+            i += 1;
+            global += 1;
+        }
+        let pos = global % crate::enforcement::FINGERPRINT_MAX_BYTES;
+        buf[pos] ^= 0xFFu8;
+        global += 1;
+        chunk_idx += 1;
     }
     #[allow(clippy::cast_possible_truncation)]
     ContentFingerprint::from_buffer(buf, crate::enforcement::FINGERPRINT_MAX_BYTES as u8)
 }
 
-/// Phase-12 verification primitive for `https://uor.foundation/type/CompletenessWitness`.
+/// Phase 15 verification primitive for
+/// `https://uor.foundation/type/CompletenessWitness`.
 ///
-/// Theorem identity: `https://uor.foundation/op/CC_1`.
-///
-/// Phase-12 baseline: accepts every input and mints a
-/// witness with a fingerprint derived from the class
-/// IRI. Replace this body with theorem-specific checks
-/// once `MintCompletenessWitnessInputs<H>` carries per-property fields.
+/// Theorem identity: `https://uor.foundation/op/CC_1` (completeness
+/// implies O(1) resolution).
 ///
 /// # Errors
 ///
-/// Returns a `GenericImpossibilityWitness::for_identity(IRI)`
-/// citing the specific failing op-namespace identity
-/// when a future hand-edited body rejects the inputs.
-#[allow(unused_variables)]
+/// * `op:CC_1` — `sites_closed == 0` (no closed sites means the type
+///   isn't complete).
+/// * `op:CC_2` — `witness_constraint` handle is the zero sentinel
+///   (no constraint-evidence handle attached).
 pub fn verify_type_completeness_witness<H: HostTypes + 'static>(
     inputs: MintCompletenessWitnessInputs<H>,
 ) -> Result<MintCompletenessWitness, GenericImpossibilityWitness> {
-    let _ = inputs;
-    let fp = fingerprint_for_identity("https://uor.foundation/type/CompletenessWitness");
+    if inputs.sites_closed == 0 {
+        return Err(GenericImpossibilityWitness::for_identity(
+            "https://uor.foundation/op/CC_1",
+        ));
+    }
+    if inputs.witness_constraint.fingerprint.is_zero() {
+        return Err(GenericImpossibilityWitness::for_identity(
+            "https://uor.foundation/op/CC_2",
+        ));
+    }
+    let sites_bytes = inputs.sites_closed.to_le_bytes();
+    let constraint_bytes = inputs.witness_constraint.fingerprint.as_bytes();
+    let fp = fingerprint_for_inputs(&[
+        b"https://uor.foundation/op/CC_1",
+        &sites_bytes,
+        constraint_bytes,
+    ]);
     Ok(MintCompletenessWitness::from_fingerprint(fp))
 }

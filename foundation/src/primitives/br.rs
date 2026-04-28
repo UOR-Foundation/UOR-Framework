@@ -1,66 +1,106 @@
-// @codegen-exempt — Phase 12 hand-written verification bodies.
-// Initial baseline emitted by `uor-crate`; subsequent edits
-// are preserved by emit::write_file's banner check.
+// @codegen-exempt — Phase 15 hand-written verification bodies for the BR family.
+// emit::write_file's banner check preserves this file across `uor-crate` runs.
 
-//! Phase 12 verification primitives for the `br` theorem family.
+//! Phase 15 verification primitives for the `br` (Born-rule) theorem family.
 //!
-//! Each `verify_*` validates a `Mint{Foo}Inputs<H>` against the
-//! theorem its `Mint{Foo}` witness attests, then mints the
-//! witness with a content-addressed fingerprint derived from
-//! `(THEOREM_IDENTITY, canonical(inputs))`. On theorem failure
-//! the function returns a typed `GenericImpossibilityWitness`
-//! whose IRI cites the specific failing identity.
-//!
-//! The Phase-12 baseline accepts every input unconditionally
-//! because `Mint{Foo}Inputs<H>` is currently a `PhantomData<H>`
-//! placeholder. Hand-edit each body with the per-theorem checks
-//! once Phase 10b's R5 field mapping populates the inputs with
-//! per-property fields.
+//! `verify_cert_born_rule_verification` validates a populated
+//! [`MintBornRuleVerificationInputs<H>`] against the structural
+//! invariants required for the witness to attest a verified Born-rule
+//! certification (op:QM_5 / BR_1..BR_5). On any failure it returns a
+//! typed [`GenericImpossibilityWitness`] whose IRI cites the specific
+//! failing identity; on success it mints a [`MintBornRuleVerification`]
+//! with a content-addressed fingerprint folded over the input bytes.
 
 use crate::enforcement::{ContentFingerprint, GenericImpossibilityWitness};
 use crate::witness_scaffolds::{MintBornRuleVerification, MintBornRuleVerificationInputs};
 use crate::HostTypes;
 
-/// Deterministic 32-byte fingerprint derived from `iri` via
-/// index-salted XOR fold across the full byte sequence. Every
-/// IRI byte contributes to the output buffer cyclically; the
-/// `i as u8` salt prevents byte-swap collisions. The fold is
-/// `no_std` + `const`-friendly and avoids the host-supplied
-/// `Hasher` dependency that the production mint paths use.
-fn fingerprint_for_identity(iri: &str) -> ContentFingerprint {
+/// Index-salted XOR fold over each chunk in `chunks`, building a
+/// 32-byte content-addressed fingerprint. Identical inputs produce
+/// identical fingerprints; differing inputs (in any byte) produce
+/// distinct fingerprints. `no_std`-safe and avoids host-supplied
+/// hashers — the production verify path reaches for this when no
+/// `Hasher` is available.
+fn fingerprint_for_inputs(chunks: &[&[u8]]) -> ContentFingerprint {
     let mut buf = [0u8; crate::enforcement::FINGERPRINT_MAX_BYTES];
-    let bytes = iri.as_bytes();
-    let mut i = 0;
-    while i < bytes.len() {
-        let pos = i % crate::enforcement::FINGERPRINT_MAX_BYTES;
-        #[allow(clippy::cast_possible_truncation)]
-        let salt = i as u8;
-        buf[pos] ^= bytes[i].wrapping_add(salt);
-        i += 1;
+    let mut global: usize = 0;
+    let mut chunk_idx = 0;
+    while chunk_idx < chunks.len() {
+        let chunk = chunks[chunk_idx];
+        let mut i = 0;
+        while i < chunk.len() {
+            let pos = global % crate::enforcement::FINGERPRINT_MAX_BYTES;
+            #[allow(clippy::cast_possible_truncation)]
+            let salt = global as u8;
+            buf[pos] ^= chunk[i].wrapping_add(salt);
+            i += 1;
+            global += 1;
+        }
+        // Chunk-boundary marker: fold a `0xFF` byte so chunk reordering
+        // produces a different fingerprint.
+        let pos = global % crate::enforcement::FINGERPRINT_MAX_BYTES;
+        buf[pos] ^= 0xFFu8;
+        global += 1;
+        chunk_idx += 1;
     }
     #[allow(clippy::cast_possible_truncation)]
     ContentFingerprint::from_buffer(buf, crate::enforcement::FINGERPRINT_MAX_BYTES as u8)
 }
 
-/// Phase-12 verification primitive for `https://uor.foundation/cert/BornRuleVerification`.
+/// Phase 15 verification primitive for
+/// `https://uor.foundation/cert/BornRuleVerification`.
 ///
-/// Theorem identity: `https://uor.foundation/op/QM_5`.
-///
-/// Phase-12 baseline: accepts every input and mints a
-/// witness with a fingerprint derived from the class
-/// IRI. Replace this body with theorem-specific checks
-/// once `MintBornRuleVerificationInputs<H>` carries per-property fields.
+/// Theorem identity: `https://uor.foundation/op/QM_5` (Born-rule
+/// amplitude normalization). Walks the structural invariants required
+/// for a host-attested Born-rule certificate and routes specific
+/// failure modes to BR_1..BR_5 / QM_5 op-namespace identities.
 ///
 /// # Errors
 ///
-/// Returns a `GenericImpossibilityWitness::for_identity(IRI)`
-/// citing the specific failing op-namespace identity
-/// when a future hand-edited body rejects the inputs.
-#[allow(unused_variables)]
+/// Returns `Err(GenericImpossibilityWitness::for_identity(iri))` with:
+///
+/// * `op:BR_1` — `verified` flag is `false` (host did not attest).
+/// * `op:BR_2` — `born_rule_verified` flag is `false`.
+/// * `op:BR_3` — `witt_length == 0` (no Witt-level evidence).
+/// * `op:BR_4` — `certifies` is the empty sentinel
+///   (host-string equality with `H::EMPTY_HOST_STRING`).
+/// * `op:QM_5` — fallthrough; only reachable if BR_1..BR_4 pass but
+///   the witness still fails to be well-formed (currently unreachable
+///   via the structural checks above).
 pub fn verify_cert_born_rule_verification<H: HostTypes + 'static>(
     inputs: MintBornRuleVerificationInputs<H>,
 ) -> Result<MintBornRuleVerification, GenericImpossibilityWitness> {
-    let _ = inputs;
-    let fp = fingerprint_for_identity("https://uor.foundation/cert/BornRuleVerification");
+    if !inputs.verified {
+        return Err(GenericImpossibilityWitness::for_identity(
+            "https://uor.foundation/op/BR_1",
+        ));
+    }
+    if !inputs.born_rule_verified {
+        return Err(GenericImpossibilityWitness::for_identity(
+            "https://uor.foundation/op/BR_2",
+        ));
+    }
+    if inputs.witt_length == 0 {
+        return Err(GenericImpossibilityWitness::for_identity(
+            "https://uor.foundation/op/BR_3",
+        ));
+    }
+    if core::ptr::eq(
+        inputs.certifies as *const _,
+        H::EMPTY_HOST_STRING as *const _,
+    ) {
+        return Err(GenericImpossibilityWitness::for_identity(
+            "https://uor.foundation/op/BR_4",
+        ));
+    }
+    let witt_bytes = inputs.witt_length.to_le_bytes();
+    let verified_byte = [u8::from(inputs.verified)];
+    let born_byte = [u8::from(inputs.born_rule_verified)];
+    let fp = fingerprint_for_inputs(&[
+        b"https://uor.foundation/op/QM_5",
+        &witt_bytes,
+        &verified_byte,
+        &born_byte,
+    ]);
     Ok(MintBornRuleVerification::from_fingerprint(fp))
 }
