@@ -12,17 +12,36 @@ use crate::report::{ConformanceReport, TestResult};
 const VALIDATOR: &str = "rust/blanket_impls_exempt";
 
 /// Phase 11a Path-3 traits whose blanket impls must appear in
-/// `foundation/src/blanket_impls.rs`. Mirrors
-/// `uor_codegen::classification::PATH3_ALLOW_LIST` (5 entries) plus
-/// the two supertraits (`Observable`, `ThermoObservable`).
+/// `foundation/src/blanket_impls.rs`. Phase 16 moved the impls from
+/// the bare `Validated<T, Phase>` carrier onto five per-class newtype
+/// views: `ValidatedLandauerView` (Observable + ThermoObservable +
+/// LandauerBudget), `ValidatedJacobianView`, `ValidatedCarryDepthView`,
+/// `ValidatedDerivationDepthView`, `ValidatedFreeRankView` (each
+/// Observable + its leaf marker trait).
 const REQUIRED_BLANKET_IMPLS: &[&str] = &[
-    "impl<T, Phase, H> Observable<H> for Validated<T, Phase>",
-    "impl<T, Phase, H> ThermoObservable<H> for Validated<T, Phase>",
-    "impl<T, Phase, H> LandauerBudget<H> for Validated<T, Phase>",
-    "impl<T, Phase, H> JacobianObservable<H> for Validated<T, Phase>",
-    "impl<T, Phase, H> CarryDepthObservable<H> for Validated<T, Phase>",
-    "impl<T, Phase, H> DerivationDepthObservable<H> for Validated<T, Phase>",
-    "impl<T, Phase, H> FreeRankObservable<H> for Validated<T, Phase>",
+    "impl<T, Phase, H> Observable<H> for ValidatedLandauerView<T, Phase>",
+    "impl<T, Phase, H> ThermoObservable<H> for ValidatedLandauerView<T, Phase>",
+    "impl<T, Phase, H> LandauerBudget<H> for ValidatedLandauerView<T, Phase>",
+    "impl<T, Phase, H> Observable<H> for ValidatedJacobianView<T, Phase>",
+    "impl<T, Phase, H> JacobianObservable<H> for ValidatedJacobianView<T, Phase>",
+    "impl<T, Phase, H> Observable<H> for ValidatedCarryDepthView<T, Phase>",
+    "impl<T, Phase, H> CarryDepthObservable<H> for ValidatedCarryDepthView<T, Phase>",
+    "impl<T, Phase, H> Observable<H> for ValidatedDerivationDepthView<T, Phase>",
+    "impl<T, Phase, H> DerivationDepthObservable<H> for ValidatedDerivationDepthView<T, Phase>",
+    "impl<T, Phase, H> Observable<H> for ValidatedFreeRankView<T, Phase>",
+    "impl<T, Phase, H> FreeRankObservable<H> for ValidatedFreeRankView<T, Phase>",
+];
+
+/// Phase 16 — the five per-class newtype views must be public types
+/// in `blanket_impls.rs`. Their constructors and inherent
+/// `Validated::as_*` accessors are documented but not enumerated
+/// here (they're checked indirectly via the impl set above).
+const REQUIRED_PATH3_VIEW_NEWTYPES: &[&str] = &[
+    "pub struct ValidatedLandauerView",
+    "pub struct ValidatedJacobianView",
+    "pub struct ValidatedCarryDepthView",
+    "pub struct ValidatedDerivationDepthView",
+    "pub struct ValidatedFreeRankView",
 ];
 
 /// Runs the Phase 11c blanket_impls_exempt validator.
@@ -67,6 +86,12 @@ pub fn validate(workspace: &Path) -> Result<ConformanceReport> {
     for needle in REQUIRED_BLANKET_IMPLS {
         if !body.contains(needle) {
             failures.push(format!("missing blanket impl: `{needle}`"));
+        }
+    }
+
+    for needle in REQUIRED_PATH3_VIEW_NEWTYPES {
+        if !body.contains(needle) {
+            failures.push(format!("missing Phase-16 view newtype: `{needle}`"));
         }
     }
 

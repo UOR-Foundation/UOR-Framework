@@ -353,7 +353,11 @@ fn classify_target(target: &str, trait_name: &str) -> ImplCategory {
     if stripped.starts_with(&mint_prefix) {
         return ImplCategory::VerifiedMint;
     }
-    if stripped == "Validated" {
+    // Phase 16: per-class observable views land on
+    // `Validated{Foo}View<T, Phase>` newtypes (not on `Validated<T, Phase>`).
+    if stripped == "Validated"
+        || (stripped.starts_with("Validated") && stripped.ends_with("View"))
+    {
         return ImplCategory::ValidatedBlanket;
     }
     if stripped.ends_with("Witness") || stripped.ends_with("Certificate") {

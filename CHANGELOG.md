@@ -2,6 +2,61 @@
 
 All notable changes to UOR-Framework are documented in this file.
 
+## Phase 16 — Per-class observable view newtypes — 2026-04-28
+
+Replaces the bare `Validated<T, Phase>: Observable<H>` blanket impls
+(which returned `H::EMPTY_DECIMAL` from `value()` for four of the five
+Path-3 observables) with **five per-kind newtype views**, each
+providing a primitive-backed `value()`. Consumers reach for an
+explicit kind via inherent `Validated::as_*` accessors. Conformance
+reports **543 passed, 0 warnings, 0 failed**.
+
+### Breaking
+
+- `<Validated<T, Phase> as Observable<H>>::value(&v)` no longer
+  compiles — the bare `Validated` type doesn't impl `Observable<H>`
+  any more. Callers MUST select a view first:
+  `validated.as_landauer()` for Landauer-cost (or
+  `as_jacobian()`/`as_carry_depth()`/`as_derivation_depth()`/`as_free_rank()`).
+- The four leaf-trait impls (`JacobianObservable`,
+  `CarryDepthObservable`, `DerivationDepthObservable`,
+  `FreeRankObservable`) on `Validated<T, Phase>` are removed; impls
+  now land on the corresponding view newtype only.
+
+### Additive
+
+- Five new public `pub struct Validated{Foo}View<T, Phase>(...)`
+  types in [`foundation/src/blanket_impls.rs`](foundation/src/blanket_impls.rs):
+  `ValidatedLandauerView`, `ValidatedJacobianView`,
+  `ValidatedCarryDepthView`, `ValidatedDerivationDepthView`,
+  `ValidatedFreeRankView`. Each carries `PhantomData<(fn() -> T, Phase)>`
+  so the wrapper is `Send + Sync` regardless of `T`.
+- Five new inherent `Validated::as_*` accessor methods on
+  `Validated<T, Phase>` for ergonomic construction.
+- Per-view `Observable<H>::value()` bodies:
+  - **LandauerView** — delegates to `landauer_nats(&self)` (existing
+    Phase-11 logic).
+  - **JacobianView** — L1 sum of `primitive_curvature_jacobian::<T>()`,
+    lifted via `H::Decimal::from_u64`.
+  - **CarryDepthView** — orbit size from
+    `primitive_dihedral_signature::<T>()`, via `from_u32`.
+  - **DerivationDepthView** — reduction-step count from
+    `primitive_terminal_reduction::<T>(W8)`, via `from_u32`.
+  - **FreeRankView** — residual from
+    `primitive_descent_metrics::<T>(&nerve_betti).0`, via `from_u32`.
+- `blanket_impls_exempt` validator now requires the 11 new
+  `impl<...> {Trait} for Validated{Foo}View<...>` blocks plus the
+  five `pub struct Validated{Foo}View` declarations.
+- `orphan_counts` validator's `validated_blanket` category-detection
+  recognises `Validated*View` newtypes alongside the bare `Validated`.
+
+### Tests
+
+- New `foundation/tests/observable_views.rs` — 8 tests covering each
+  view's `value()` body, leaf-trait conformance, the
+  Copy/Clone/Default/Debug/PartialEq/Eq trait surface, and a
+  `validated_no_longer_impls_observable_directly` regression check.
+
 ## Phase 15 — Real `verify_*` primitive bodies (12c closure) — 2026-04-28
 
 Replaces every `WITNESS_UNIMPLEMENTED_STUB` Phase-12 baseline with a
