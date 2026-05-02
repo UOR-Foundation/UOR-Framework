@@ -67,6 +67,36 @@ impl Parse for ShapeArgs {
 }
 
 /// Product-type shape constructor. See crate-level docs.
+///
+/// # Example
+///
+/// ```
+/// use uor_foundation::pipeline::{ConstrainedTypeShape, ConstraintRef};
+/// use uor_foundation_sdk::product_shape;
+///
+/// pub struct A;
+/// impl ConstrainedTypeShape for A {
+///     const IRI: &'static str = "https://example.org/A";
+///     const SITE_COUNT: usize = 1;
+///     const CONSTRAINTS: &'static [ConstraintRef] = &[
+///         ConstraintRef::Residue { modulus: 7, residue: 3 },
+///     ];
+/// }
+///
+/// pub struct B;
+/// impl ConstrainedTypeShape for B {
+///     const IRI: &'static str = "https://example.org/B";
+///     const SITE_COUNT: usize = 1;
+///     const CONSTRAINTS: &'static [ConstraintRef] = &[
+///         ConstraintRef::Hamming { bound: 1 },
+///     ];
+/// }
+///
+/// product_shape!(MyProduct, A, B);
+///
+/// assert!(<MyProduct as ConstrainedTypeShape>::IRI.starts_with("urn:uor:product:"));
+/// assert_eq!(<MyProduct as ConstrainedTypeShape>::SITE_COUNT, 2);
+/// ```
 #[proc_macro]
 pub fn product_shape(input: TokenStream) -> TokenStream {
     let ShapeArgs { name, left, right } = parse_macro_input!(input as ShapeArgs);
@@ -171,6 +201,46 @@ pub fn product_shape(input: TokenStream) -> TokenStream {
 }
 
 /// Coproduct shape constructor. See crate-level docs.
+///
+/// # Example
+///
+/// Demonstrates the post-Phase-17 fixed-array `Affine` operand variant.
+///
+/// ```
+/// use uor_foundation::pipeline::{
+///     AFFINE_MAX_COEFFS, ConstrainedTypeShape, ConstraintRef,
+/// };
+/// use uor_foundation_sdk::coproduct_shape;
+///
+/// const A_COEFFS: [i64; AFFINE_MAX_COEFFS] = {
+///     let mut a = [0i64; AFFINE_MAX_COEFFS];
+///     a[0] = 1;
+///     a
+/// };
+///
+/// pub struct A;
+/// impl ConstrainedTypeShape for A {
+///     const IRI: &'static str = "https://example.org/A";
+///     const SITE_COUNT: usize = 1;
+///     const CONSTRAINTS: &'static [ConstraintRef] = &[
+///         ConstraintRef::Affine {
+///             coefficients: A_COEFFS,
+///             coefficient_count: 1,
+///             bias: 0,
+///         },
+///     ];
+/// }
+///
+/// pub struct B;
+/// impl ConstrainedTypeShape for B {
+///     const IRI: &'static str = "https://example.org/B";
+///     const SITE_COUNT: usize = 1;
+///     const CONSTRAINTS: &'static [ConstraintRef] = &[];
+/// }
+///
+/// coproduct_shape!(MySum, A, B);
+/// assert!(<MySum as ConstrainedTypeShape>::IRI.starts_with("urn:uor:coproduct:"));
+/// ```
 #[proc_macro]
 pub fn coproduct_shape(input: TokenStream) -> TokenStream {
     let ShapeArgs { name, left, right } = parse_macro_input!(input as ShapeArgs);
@@ -382,6 +452,33 @@ pub fn coproduct_shape(input: TokenStream) -> TokenStream {
 }
 
 /// Cartesian-product shape constructor. See crate-level docs.
+///
+/// # Example
+///
+/// ```
+/// use uor_foundation::pipeline::{
+///     CartesianProductShape, ConstrainedTypeShape, ConstraintRef,
+/// };
+/// use uor_foundation_sdk::cartesian_product_shape;
+///
+/// pub struct A;
+/// impl ConstrainedTypeShape for A {
+///     const IRI: &'static str = "https://example.org/A";
+///     const SITE_COUNT: usize = 1;
+///     const CONSTRAINTS: &'static [ConstraintRef] = &[];
+/// }
+/// pub struct B;
+/// impl ConstrainedTypeShape for B {
+///     const IRI: &'static str = "https://example.org/B";
+///     const SITE_COUNT: usize = 1;
+///     const CONSTRAINTS: &'static [ConstraintRef] = &[];
+/// }
+///
+/// cartesian_product_shape!(MyCartesian, A, B);
+///
+/// fn assert_marker<T: CartesianProductShape>() {}
+/// assert_marker::<MyCartesian>();
+/// ```
 #[proc_macro]
 pub fn cartesian_product_shape(input: TokenStream) -> TokenStream {
     let ShapeArgs { name, left, right } = parse_macro_input!(input as ShapeArgs);

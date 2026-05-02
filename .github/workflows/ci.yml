@@ -47,6 +47,11 @@ jobs:
       - name: Run tests
         run: cargo test
 
+      - name: Cross-crate consumer smoke
+        run: |
+          cargo test -p uor-consumer-smoke
+          cargo build -p uor-consumer-smoke --release
+
       - name: Generate Rust crate
         run: cargo run --bin uor-crate
 

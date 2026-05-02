@@ -115,6 +115,18 @@
 //! (`primitive_descent_metrics`, `primitive_curvature_jacobian`,
 //! `primitive_dihedral_signature`, etc.).
 //!
+//! Calling `.landauer_nats()` on the view requires the
+//! `bridge::observable::LandauerBudget` *trait* to be in scope —
+//! distinct from the `enforcement::LandauerBudget` *struct*
+//! re-exported at the crate root. Likewise for `as_jacobian` →
+//! `bridge::observable::JacobianObservable`,
+//! `as_carry_depth` → `kernel::carry::CarryDepthObservable`,
+//! `as_derivation_depth` →
+//! `bridge::derivation::DerivationDepthObservable`, and
+//! `as_free_rank` → `bridge::partition::FreeRankObservable`.
+//! `<_ as Observable<H>>::value(&view)` works for every view
+//! once `Observable` itself is in scope.
+//!
 //! # Resolvers (v0.2.2 W12)
 //!
 //! Verdict-producing resolvers are free functions in module-per-resolver

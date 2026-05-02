@@ -392,6 +392,18 @@ fn generate_lib_rs(ontology: &Ontology) -> String {
          //! (`primitive_descent_metrics`, `primitive_curvature_jacobian`,\n\
          //! `primitive_dihedral_signature`, etc.).\n\
          //!\n\
+         //! Calling `.landauer_nats()` on the view requires the\n\
+         //! `bridge::observable::LandauerBudget` *trait* to be in scope —\n\
+         //! distinct from the `enforcement::LandauerBudget` *struct*\n\
+         //! re-exported at the crate root. Likewise for `as_jacobian` →\n\
+         //! `bridge::observable::JacobianObservable`,\n\
+         //! `as_carry_depth` → `kernel::carry::CarryDepthObservable`,\n\
+         //! `as_derivation_depth` →\n\
+         //! `bridge::derivation::DerivationDepthObservable`, and\n\
+         //! `as_free_rank` → `bridge::partition::FreeRankObservable`.\n\
+         //! `<_ as Observable<H>>::value(&view)` works for every view\n\
+         //! once `Observable` itself is in scope.\n\
+         //!\n\
          //! # Resolvers (v0.2.2 W12)\n\
          //!\n\
          //! Verdict-producing resolvers are free functions in module-per-resolver\n\

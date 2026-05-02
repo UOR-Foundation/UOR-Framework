@@ -13,6 +13,7 @@ members = [
     "clients",
     "cargo-uor",
     "xtask",
+    "examples/consumer-smoke",
 ]
 resolver = "2"
 

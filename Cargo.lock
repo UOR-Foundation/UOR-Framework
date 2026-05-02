@@ -673,6 +673,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "uor-consumer-smoke"
+version = "0.1.0"
+dependencies = [
+ "uor-foundation",
+ "uor-foundation-sdk",
+]
+
+[[package]]
 name = "uor-docs"
 version = "0.3.0"
 dependencies = [
