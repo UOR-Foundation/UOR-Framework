@@ -1,0 +1,16 @@
+{
+  "@context": {
+    "uor": "https://uor.foundation/core/",
+    "nemesis": "https://uor.foundation/nemesis/"
+  },
+  "@id": "nemesis:OcteractCypher",
+  "@type": "uor:TopologicalSpace",
+  "uor:name": "Octeract Cypher 256-State Matrix",
+  "uor:description": "A high-dimensional scalar geometry bridging the 8-bit feature vector to the Cayley-Dickson 256D resonance.",
+  "uor:algebraicBase": "Z/(256)Z",
+  "nemesis:properties": {
+    "dimensions": 256,
+    "associativity": "Non-associative",
+    "torsionCapacitanceActive": true
+  }
+}
