@@ -54,7 +54,7 @@ CI enforces:
 
 Every member crate must declare or inherit:
 - `edition` (via `edition.workspace = true` or explicit `edition = "2021"`)
-- `license` (via `license.workspace = true` or explicit `license = "Apache-2.0"`)
+- `license` (via `license.workspace = true` or explicit `license = "MIT"`)
 - `description`
 
 ## References

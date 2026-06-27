@@ -84,4 +84,4 @@ Then register it in `spec/src/namespaces/mod.rs` and `spec/src/lib.rs`.
 
 ## License
 
-Contributions are licensed under Apache-2.0.
+Contributions are licensed under MIT.

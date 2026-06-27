@@ -26,12 +26,17 @@ path = "src/bin/website.rs"
 name = "uor-crate"
 path = "src/bin/crate_.rs"
 
+[[bin]]
+name = "uor-lean"
+path = "src/bin/lean.rs"
+
 [dependencies]
 uor-ontology = { path = "../spec" }
 uor-codegen = { path = "../codegen" }
 uor-conformance = { path = "../conformance" }
 uor-docs = { path = "../docs" }
 uor-website = { path = "../website" }
+uor-lean-codegen = { path = "../lean-codegen" }
 clap = { workspace = true }
 anyhow = { workspace = true }
 serde_json = { workspace = true }

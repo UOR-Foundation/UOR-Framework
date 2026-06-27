@@ -97,6 +97,18 @@ fn classes() -> Vec<Class> {
             subclass_of: &[OWL_THING],
             disjoint_with: &[],
         },
+        // v0.2.1: Inhabitance Verdict Instantiation
+        Class {
+            id: "https://uor.foundation/trace/InhabitanceSearchTrace",
+            label: "InhabitanceSearchTrace",
+            comment: "A subclass of trace:ComputationTrace specialised to \
+                      inhabitance-search execution. Records the sequence of \
+                      derivation:InhabitanceStep entries the resolver \
+                      traversed and any derivation:InhabitanceCheckpoint \
+                      entries it crossed.",
+            subclass_of: &["https://uor.foundation/trace/ComputationTrace"],
+            disjoint_with: &[],
+        },
     ]
 }
 
@@ -108,6 +120,7 @@ fn properties() -> Vec<Property> {
             comment: "The input datum of this computation.",
             kind: PropertyKind::Object,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/trace/ComputationTrace"),
             range: "https://uor.foundation/schema/Datum",
         },
@@ -117,6 +130,7 @@ fn properties() -> Vec<Property> {
             comment: "The output datum of this computation.",
             kind: PropertyKind::Object,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/trace/ComputationTrace"),
             range: "https://uor.foundation/schema/Datum",
         },
@@ -126,6 +140,7 @@ fn properties() -> Vec<Property> {
             comment: "A computation step in this trace.",
             kind: PropertyKind::Object,
             functional: false,
+            required: false,
             domain: Some("https://uor.foundation/trace/ComputationTrace"),
             range: "https://uor.foundation/trace/ComputationStep",
         },
@@ -136,6 +151,7 @@ fn properties() -> Vec<Property> {
                       dihedral group element produced by the full operation sequence.",
             kind: PropertyKind::Object,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/trace/ComputationTrace"),
             range: "https://uor.foundation/observable/DihedralElement",
         },
@@ -145,6 +161,7 @@ fn properties() -> Vec<Property> {
             comment: "The input datum of this computation step.",
             kind: PropertyKind::Object,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/trace/ComputationStep"),
             range: "https://uor.foundation/schema/Datum",
         },
@@ -154,6 +171,7 @@ fn properties() -> Vec<Property> {
             comment: "The output datum of this computation step.",
             kind: PropertyKind::Object,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/trace/ComputationStep"),
             range: "https://uor.foundation/schema/Datum",
         },
@@ -163,6 +181,7 @@ fn properties() -> Vec<Property> {
             comment: "The operation applied in this computation step.",
             kind: PropertyKind::Object,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/trace/ComputationStep"),
             range: "https://uor.foundation/op/Operation",
         },
@@ -172,6 +191,7 @@ fn properties() -> Vec<Property> {
             comment: "The zero-based sequential index of this step within its trace.",
             kind: PropertyKind::Datatype,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/trace/ComputationStep"),
             range: XSD_NON_NEGATIVE_INTEGER,
         },
@@ -181,6 +201,7 @@ fn properties() -> Vec<Property> {
             comment: "Total number of computation steps in this trace.",
             kind: PropertyKind::Datatype,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/trace/TraceMetrics"),
             range: XSD_NON_NEGATIVE_INTEGER,
         },
@@ -190,6 +211,7 @@ fn properties() -> Vec<Property> {
             comment: "Total ring-metric distance accumulated across all steps.",
             kind: PropertyKind::Datatype,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/trace/TraceMetrics"),
             range: XSD_NON_NEGATIVE_INTEGER,
         },
@@ -199,6 +221,7 @@ fn properties() -> Vec<Property> {
             comment: "Total Hamming-metric distance accumulated across all steps.",
             kind: PropertyKind::Datatype,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/trace/TraceMetrics"),
             range: XSD_NON_NEGATIVE_INTEGER,
         },
@@ -209,6 +232,7 @@ fn properties() -> Vec<Property> {
                       computation trace.",
             kind: PropertyKind::Object,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/trace/ComputationTrace"),
             range: "https://uor.foundation/cert/Certificate",
         },
@@ -220,6 +244,7 @@ fn properties() -> Vec<Property> {
                       trace, linking to the ThermoObservable taxonomy (TH_9 connection).",
             kind: PropertyKind::Object,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/trace/ComputationTrace"),
             range: "https://uor.foundation/observable/ResidualEntropy",
         },
@@ -231,19 +256,17 @@ fn properties() -> Vec<Property> {
                       condition (GD_1): AR_1-ordered and DC_10-selected.",
             kind: PropertyKind::Datatype,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/trace/ComputationTrace"),
             range: XSD_BOOLEAN,
         },
-        Property {
-            id: "https://uor.foundation/trace/geodesicCertificate",
-            label: "geodesicCertificate",
-            comment: "The GeodesicCertificate attesting that this trace satisfied \
-                      both GD_1 conditions.",
-            kind: PropertyKind::Object,
-            functional: true,
-            domain: Some("https://uor.foundation/trace/GeodesicTrace"),
-            range: "https://uor.foundation/cert/GeodesicCertificate",
-        },
+        // Amendment 96 (2026-04-12): `trace:geodesicCertificate`
+        // removed. `cert:certifiedGeodesic` in cert.rs is the
+        // authoritative direction of the trace/certificate
+        // attestation; storing both sides created a mutual dependency
+        // cycle with no finite inhabitant in Lean. Reverse lookup
+        // ("given a trace, find its certificate") is available via
+        // SPARQL query against `cert:certifiedGeodesic`.
         Property {
             id: "https://uor.foundation/trace/geodesicViolation",
             label: "geodesicViolation",
@@ -251,6 +274,7 @@ fn properties() -> Vec<Property> {
                       deviated from the geodesic condition.",
             kind: PropertyKind::Object,
             functional: false,
+            required: false,
             domain: Some("https://uor.foundation/trace/ComputationTrace"),
             range: "https://uor.foundation/trace/GeodesicViolation",
         },
@@ -261,6 +285,7 @@ fn properties() -> Vec<Property> {
                       this equals ln 2 for every step (GD_2).",
             kind: PropertyKind::Datatype,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/trace/ComputationStep"),
             range: XSD_DECIMAL,
         },
@@ -271,6 +296,7 @@ fn properties() -> Vec<Property> {
                       On a geodesic, equals freeRank_initial × ln 2 (GD_3).",
             kind: PropertyKind::Datatype,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/trace/ComputationTrace"),
             range: XSD_DECIMAL,
         },
@@ -281,6 +307,7 @@ fn properties() -> Vec<Property> {
                       GeodesicValidator to check DC_10 maximality.",
             kind: PropertyKind::Datatype,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/trace/ComputationStep"),
             range: XSD_DECIMAL,
         },
@@ -291,6 +318,7 @@ fn properties() -> Vec<Property> {
                       adiabatic ordering (decreasing freeRank × cost-per-site).",
             kind: PropertyKind::Datatype,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/trace/ComputationTrace"),
             range: XSD_BOOLEAN,
         },
@@ -301,6 +329,7 @@ fn properties() -> Vec<Property> {
                       occurred, citing the step index and the unused higher-J_k option.",
             kind: PropertyKind::Datatype,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/trace/GeodesicViolation"),
             range: XSD_STRING,
         },
@@ -311,6 +340,7 @@ fn properties() -> Vec<Property> {
             comment: "A MeasurementEvent step within this computation trace.",
             kind: PropertyKind::Object,
             functional: false,
+            required: false,
             domain: Some("https://uor.foundation/trace/ComputationTrace"),
             range: "https://uor.foundation/trace/MeasurementEvent",
         },
@@ -321,6 +351,7 @@ fn properties() -> Vec<Property> {
                       before projective collapse.",
             kind: PropertyKind::Datatype,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/trace/MeasurementEvent"),
             range: XSD_DECIMAL,
         },
@@ -331,6 +362,7 @@ fn properties() -> Vec<Property> {
                       Equals preCollapseEntropy at β* = ln 2 (QM_1).",
             kind: PropertyKind::Datatype,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/trace/MeasurementEvent"),
             range: XSD_DECIMAL,
         },
@@ -341,6 +373,7 @@ fn properties() -> Vec<Property> {
                       which this projective collapse occurred.",
             kind: PropertyKind::Datatype,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/trace/MeasurementEvent"),
             range: XSD_NON_NEGATIVE_INTEGER,
         },
@@ -353,6 +386,7 @@ fn properties() -> Vec<Property> {
                       (QM_5): P(outcome k) = |α_k|² / Σ|αᵢ|².",
             kind: PropertyKind::Datatype,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/trace/MeasurementEvent"),
             range: XSD_DECIMAL,
         },
@@ -365,6 +399,7 @@ fn properties() -> Vec<Property> {
                       One of the two sub-predicates of isGeodesic (GD_6).",
             kind: PropertyKind::Datatype,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/trace/ComputationTrace"),
             range: XSD_BOOLEAN,
         },
@@ -376,6 +411,7 @@ fn properties() -> Vec<Property> {
                       One of the two sub-predicates of isGeodesic (GD_6).",
             kind: PropertyKind::Datatype,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/trace/ComputationTrace"),
             range: XSD_BOOLEAN,
         },
@@ -387,6 +423,7 @@ fn properties() -> Vec<Property> {
                       in this measurement outcome.",
             kind: PropertyKind::Datatype,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/trace/MeasurementOutcome"),
             range: XSD_NON_NEGATIVE_INTEGER,
         },
@@ -397,8 +434,22 @@ fn properties() -> Vec<Property> {
                       |α_k|² where α_k is the amplitude of the collapsed site.",
             kind: PropertyKind::Datatype,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/trace/MeasurementOutcome"),
             range: XSD_DECIMAL,
+        },
+        // v0.2.1: InhabitanceSearchTrace property
+        Property {
+            id: "https://uor.foundation/trace/checkpoint",
+            label: "checkpoint",
+            comment: "Checkpoints crossed by the inhabitance search. Each \
+                      checkpoint marks an audit point where the resolver state \
+                      can be restored if the search backtracks.",
+            kind: PropertyKind::Object,
+            functional: false,
+            required: false,
+            domain: Some("https://uor.foundation/trace/InhabitanceSearchTrace"),
+            range: "https://uor.foundation/derivation/InhabitanceCheckpoint",
         },
     ]
 }
@@ -485,11 +536,11 @@ fn individuals() -> Vec<Individual> {
             properties: &[
                 (
                     "https://uor.foundation/trace/preCollapseEntropy",
-                    IndividualValue::Str("0.693147"),
+                    IndividualValue::Float(std::f64::consts::LN_2),
                 ),
                 (
                     "https://uor.foundation/trace/postCollapseLandauerCost",
-                    IndividualValue::Str("0.693147"),
+                    IndividualValue::Float(std::f64::consts::LN_2),
                 ),
             ],
         },
@@ -503,11 +554,11 @@ fn individuals() -> Vec<Individual> {
             properties: &[
                 (
                     "https://uor.foundation/trace/preCollapseEntropy",
-                    IndividualValue::Str("0.325083"),
+                    IndividualValue::Float(0.325083),
                 ),
                 (
                     "https://uor.foundation/trace/postCollapseLandauerCost",
-                    IndividualValue::Str("0.325083"),
+                    IndividualValue::Float(0.325083),
                 ),
             ],
         },
@@ -521,11 +572,11 @@ fn individuals() -> Vec<Individual> {
             properties: &[
                 (
                     "https://uor.foundation/trace/preCollapseEntropy",
-                    IndividualValue::Str("0.0"),
+                    IndividualValue::Float(0.0),
                 ),
                 (
                     "https://uor.foundation/trace/postCollapseLandauerCost",
-                    IndividualValue::Str("0.0"),
+                    IndividualValue::Float(0.0),
                 ),
             ],
         },

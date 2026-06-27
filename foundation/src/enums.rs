@@ -6,9 +6,10 @@ use core::fmt;
 
 /// Kernel/user/bridge classification for each namespace module.
 #[repr(u8)]
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
 pub enum Space {
     /// Immutable kernel-space: compiled into ROM.
+    #[default]
     Kernel,
     /// Parameterizable user-space: runtime declarations.
     User,
@@ -26,11 +27,12 @@ impl fmt::Display for Space {
     }
 }
 
-/// The 10 primitive operations defined in the UOR Foundation.
+/// The 18 primitive operations defined in the UOR Foundation. 10 original (Neg/Bnot/Succ/Pred/Add/Sub/Mul/Xor/And/Or), 5 ADR-013/TR-08 substrate amendments (Le/Lt/Ge/Gt/Concat), 3 ADR-053 ring-axis completion (Div/Mod/Pow).
 #[repr(u8)]
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
 pub enum PrimitiveOp {
     /// Ring reflection: neg(x) = (-x) mod 2^n. One of the two generators of the dihedral group D_{2^n}. neg(neg(x)) = x (involution property).
+    #[default]
     Neg,
     /// Hypercube reflection: bnot(x) = (2^n - 1) ⊕ x (bitwise complement). The second generator of D_{2^n}. bnot(bnot(x)) = x.
     Bnot,
@@ -50,6 +52,22 @@ pub enum PrimitiveOp {
     And,
     /// Bitwise or: or(x, y) = x ∨ y. Commutative, associative.
     Or,
+    /// Byte-level less-than-or-equal: le(x, y) = 1 if x ≤ y else 0. Operands compared as big-endian unsigned byte sequences. The catamorphism fold-rule emits Literal(1) on true, Literal(0) on false.
+    Le,
+    /// Byte-level less-than: lt(x, y) = 1 if x < y else 0. Operands compared as big-endian unsigned byte sequences.
+    Lt,
+    /// Byte-level greater-than-or-equal: ge(x, y) = 1 if x ≥ y else 0. Operands compared as big-endian unsigned byte sequences.
+    Ge,
+    /// Byte-level greater-than: gt(x, y) = 1 if x > y else 0. Operands compared as big-endian unsigned byte sequences.
+    Gt,
+    /// Byte-sequence concatenation: concat(x, y) = x ⧺ y. The substrate's byte-packing primitive — admits header serialization and other byte-array construction patterns. Result length is len(x) + len(y), carried by the source-polymorphic TermValue (inline up to the application's carrier width, else borrowed or streamed — no fixed ceiling).
+    Concat,
+    /// Euclidean quotient: div(a, b) = q where a = q·b + r, 0 ⇐ r < b. Total on the ring for b > 0; b = 0 emits a ShapeViolation. Operands read as unsigned big-endian integers at the operand width.
+    Div,
+    /// Euclidean remainder: mod(a, b) = r where a = q·b + r, 0 ⇐ r < b. Total on the ring for b > 0; b = 0 emits a ShapeViolation. Operands read as unsigned big-endian integers at the operand width.
+    Mod,
+    /// Modular exponentiation: pow(base, exp) = base^exp mod 2^n. Fold-rule: square-and-multiply over exp bits. pow(_, 0) = 1; pow(0, b > 0) = 0.
+    Pow,
 }
 
 impl fmt::Display for PrimitiveOp {
@@ -65,15 +83,24 @@ impl fmt::Display for PrimitiveOp {
             Self::Xor => f.write_str("xor"),
             Self::And => f.write_str("and"),
             Self::Or => f.write_str("or"),
+            Self::Le => f.write_str("le"),
+            Self::Lt => f.write_str("lt"),
+            Self::Ge => f.write_str("ge"),
+            Self::Gt => f.write_str("gt"),
+            Self::Concat => f.write_str("concat"),
+            Self::Div => f.write_str("div"),
+            Self::Mod => f.write_str("mod_"),
+            Self::Pow => f.write_str("pow"),
         }
     }
 }
 
 /// The three metric axes in the UOR tri-metric classification.
 #[repr(u8)]
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
 pub enum MetricAxis {
     /// The vertical (ring/additive) metric axis. Constraints on this axis operate through ring arithmetic: residue classes, divisibility, and additive structure.
+    #[default]
     Vertical,
     /// The horizontal (Hamming/bitwise) metric axis. Constraints on this axis operate through bitwise structure: carry patterns, bit positions, and Hamming distance.
     Horizontal,
@@ -93,9 +120,10 @@ impl fmt::Display for MetricAxis {
 
 /// The state of a site: pinned or free.
 #[repr(u8)]
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
 pub enum SiteState {
     /// Site is determined by a constraint.
+    #[default]
     Pinned,
     /// Site is still available for refinement.
     Free,
@@ -110,11 +138,12 @@ impl fmt::Display for SiteState {
     }
 }
 
-/// The geometric character of an operation.
+/// The geometric role of a ring operation in the UOR dual-geometry (ring + hypercube). Every op:Operation individual references exactly one GeometricCharacter via op:hasGeometricCharacter. The nine canonical individuals correspond to the action types of the dihedral group D_{2^n}.
 #[repr(u8)]
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
 pub enum GeometricCharacter {
     /// Reflection through the origin of the additive ring: neg(x) = -x mod 2^n. One of the two generators of D_{2^n}.
+    #[default]
     RingReflection,
     /// Reflection through the centre of the hypercube: bnot(x) = (2^n-1) ⊕ x. The second generator of D_{2^n}.
     HypercubeReflection,
@@ -132,6 +161,12 @@ pub enum GeometricCharacter {
     HypercubeProjection,
     /// Join on the hypercube lattice: or(x,y) = x ∨ y. Idempotent; dual to projection.
     HypercubeJoin,
+    /// Euclidean quotient along the ring axis: div(a,b) — the structural dual of Scaling. Geometric character of `op:div` per ADR-053.
+    Quotient,
+    /// Euclidean remainder along the ring axis: mod(a,b). Complement of Quotient — together they realize the divmod fold-rule. Geometric character of `op:mod` per ADR-053.
+    Remainder,
+    /// Iterated multiplicative scaling along the ring axis: pow(base, exp) = base^exp mod 2^n. Extends the multiplicative Scaling axis via square-and-multiply iteration. Geometric character of `op:pow` per ADR-053.
+    IteratedScaling,
     /// Geometric character of dispatch: constraint-guided selection over the resolver registry lattice.
     ConstraintSelection,
     /// Geometric character of inference: traversal through the φ-pipeline resolution graph P ∘ Π ∘ G.
@@ -156,6 +191,9 @@ impl fmt::Display for GeometricCharacter {
             Self::HypercubeTranslation => f.write_str("hypercube_translation"),
             Self::HypercubeProjection => f.write_str("hypercube_projection"),
             Self::HypercubeJoin => f.write_str("hypercube_join"),
+            Self::Quotient => f.write_str("quotient"),
+            Self::Remainder => f.write_str("remainder"),
+            Self::IteratedScaling => f.write_str("iterated_scaling"),
             Self::ConstraintSelection => f.write_str("constraint_selection"),
             Self::ResolutionTraversal => f.write_str("resolution_traversal"),
             Self::SiteBinding => f.write_str("site_binding"),
@@ -165,11 +203,12 @@ impl fmt::Display for GeometricCharacter {
     }
 }
 
-/// The mathematical domain in which an identity is established.
+/// A named mathematical discipline through which an algebraic identity is established and grounded. Every op:Identity individual references at least one VerificationDomain via op:verificationDomain. The nine canonical domain individuals are kernel-level constants defined in op/.
 #[repr(u8)]
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
 pub enum VerificationDomain {
     /// Established by exhaustive traversal of R_n. Valid for all identities where the ring is finite.
+    #[default]
     Enumerative,
     /// Established by equational reasoning from ring or group axioms. Covers derivations via associativity, commutativity, inverse laws, and group presentations.
     Algebraic,
@@ -179,9 +218,9 @@ pub enum VerificationDomain {
     Analytical,
     /// Established via entropy, Landauer bounds, or Boltzmann distributions. Covers site entropy (TH_), reversible computation (RC_), and phase transitions.
     Thermodynamic,
-    /// Established via simplicial homology, cohomology, or constraint nerve analysis. Covers homological algebra (HA_) and ψ-pipeline identities.
+    /// Established via simplicial homology, cohomology, or constraint nerve analysis. Covers homological algebra (HA_) and the ψ-pipeline base chain ψ_1..ψ_6 (constraint nerve construction, chain functor, homology, Betti extraction, dualization, cohomology).
     Topological,
-    /// Established by the inter-algebra map structure of the resolution pipeline. Covers φ-maps (phi_1–phi_6) and ψ-maps (psi_1–psi_6).
+    /// Established by the inter-algebra map structure of the resolution pipeline. Covers φ-maps (phi_1–phi_6) and the ψ-pipeline tower ψ_7..ψ_9 (Postnikov truncation, homotopy group extraction, k-invariant computation). The earlier ψ_1..ψ_6 chain (constraint nerve → simplicial homology) is established under op:Topological.
     Pipeline,
     /// Established by the composition of Analytical and Topological reasoning. The only domain requiring multiple op:verificationDomain assertions. Covers the UOR Index Theorem (IT_7a–IT_7d).
     IndexTheoretic,
@@ -214,11 +253,12 @@ impl fmt::Display for VerificationDomain {
     }
 }
 
-/// The computational complexity classification of a resolver.
+/// A computational complexity classification for resolvers. Each resolver's asymptotic runtime is typed as a named ComplexityClass individual rather than a free string.
 #[repr(u8)]
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
 pub enum ComplexityClass {
     /// O(1) complexity — the resolver runs in constant time regardless of ring size.
+    #[default]
     Constant,
     /// O(log n) complexity — the resolver runs in logarithmic time in the quantum level.
     Logarithmic,
@@ -239,11 +279,12 @@ impl fmt::Display for ComplexityClass {
     }
 }
 
-/// A named rewrite rule used in term rewriting derivations.
+/// A named rewrite rule that can be applied in a derivation step. Each RewriteRule individual represents a specific algebraic law or normalization strategy used during term rewriting.
 #[repr(u8)]
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
 pub enum RewriteRule {
     /// The rewrite rule applying the critical identity: neg(bnot(x)) → succ(x). Grounded in op:criticalIdentity.
+    #[default]
     CriticalIdentity,
     /// The rewrite rule applying involution cancellation: f(f(x)) → x for any involution f.
     Involution,
@@ -270,11 +311,12 @@ impl fmt::Display for RewriteRule {
     }
 }
 
-/// A unit of measurement for observable quantities.
+/// A unit of measurement for observable quantities. Each MeasurementUnit individual names a specific unit (bits, ring steps, dimensionless) replacing the string-valued observable:unit property.
 #[repr(u8)]
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
 pub enum MeasurementUnit {
     /// Information-theoretic unit: the measurement is in bits (e.g., Hamming weight, entropy).
+    #[default]
     Bits,
     /// Ring-arithmetic unit: the measurement is in ring distance steps (|x - y| mod 2^n).
     RingSteps,
@@ -295,16 +337,17 @@ impl fmt::Display for MeasurementUnit {
     }
 }
 
-/// A classification of triad projection types for coordinate queries.
+/// A classification of coordinate types that a CoordinateQuery can extract. Each TriadProjection individual names a specific coordinate system (stratum, spectrum, address) replacing the string-valued query:coordinate property.
 #[repr(u8)]
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
 pub enum TriadProjection {
     /// The stratum coordinate: the layer position of a datum within the ring's stratification.
+    #[default]
     TwoAdicValuation,
     /// The spectrum coordinate: the spectral decomposition of a datum under the ring's Fourier analysis.
     WalshHadamardImage,
-    /// The address coordinate: the content-addressable position of a datum in the Braille glyph encoding.
-    RingElement,
+    /// The address coordinate: the content-addressable position of a datum in the Braille glyph encoding. Renamed from RingElement in v0.2.2 W8 to unify vocabulary with the schema:Triad bundling properties.
+    Address,
 }
 
 impl fmt::Display for TriadProjection {
@@ -312,16 +355,17 @@ impl fmt::Display for TriadProjection {
         match self {
             Self::TwoAdicValuation => f.write_str("two_adic_valuation"),
             Self::WalshHadamardImage => f.write_str("walsh_hadamard_image"),
-            Self::RingElement => f.write_str("ring_element"),
+            Self::Address => f.write_str("address"),
         }
     }
 }
 
-/// The reason type for a session context-reset boundary.
+/// A typed controlled vocabulary for session boundary reasons. Each individual names a specific reason a context-reset boundary was triggered during a multi-turn session.
 #[repr(u8)]
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
 pub enum SessionBoundaryType {
     /// The caller explicitly requested a context reset. All accumulated bindings are discarded.
+    #[default]
     ExplicitReset,
     /// The session resolver determined that no further queries can reduce the aggregate site deficit.
     ConvergenceBoundary,
@@ -339,11 +383,12 @@ impl fmt::Display for SessionBoundaryType {
     }
 }
 
-/// A classification of phase boundary in the catastrophe diagram.
+/// A classification of phase boundary in the catastrophe diagram: period boundary (g divides 2^n − 1) or power-of-two boundary (g = 2^k).
 #[repr(u8)]
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
 pub enum PhaseBoundaryType {
     /// A phase boundary where g divides 2^n − 1, meaning g is a period of the multiplicative structure of R_n.
+    #[default]
     Period,
     /// A phase boundary where g = 2^k, meaning g aligns with the binary stratification of R_n.
     PowerOfTwo,
@@ -358,11 +403,12 @@ impl fmt::Display for PhaseBoundaryType {
     }
 }
 
-/// The phase of grounding towards the ground state.
+/// A typed controlled vocabulary for the three phases of context saturation: Open (σ = 0), PartialGrounding (0 < σ < 1), and FullGrounding (σ = 1).
 #[repr(u8)]
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
 pub enum GroundingPhase {
     /// The context has σ = 0: no bindings accumulated, all sites are free. The initial phase of every session.
+    #[default]
     Open,
     /// The context has 0 < σ < 1: some sites are pinned by accumulated bindings, but free sites remain. The accumulation phase.
     PartialGrounding,
@@ -380,11 +426,12 @@ impl fmt::Display for GroundingPhase {
     }
 }
 
-/// Whether a signature is achievable or forbidden in the morphospace.
+/// The achievability classification of a topological signature in the morphospace. Either Achievable or Forbidden (witnessed by ImpossibilityWitness).
 #[repr(u8)]
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
 pub enum AchievabilityStatus {
     /// The signature has been verified as achievable at some quantum level by an AxiomaticDerivation proof.
+    #[default]
     Achievable,
     /// The signature has been formally proven impossible by an ImpossibilityWitness deriving from MS_1, MS_2, or other impossibility theorems.
     Forbidden,
@@ -399,11 +446,12 @@ impl fmt::Display for AchievabilityStatus {
     }
 }
 
-/// The scope of validity for an identity across quantum levels.
+/// Root class for validity scope individuals. Instances are the four named scope kinds: Universal, ParametricLower, ParametricRange, and LevelSpecific.
 #[repr(u8)]
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
 pub enum ValidityScopeKind {
     /// Holds for all k in N. No minimum k constraint.
+    #[default]
     Universal,
     /// Holds for all k >= k_min, where k_min is given by validKMin.
     ParametricLower,
@@ -424,11 +472,12 @@ impl fmt::Display for ValidityScopeKind {
     }
 }
 
-/// A typed controlled vocabulary for ExecutionPolicy scheduling strategies.
+/// A typed controlled vocabulary for ExecutionPolicy individuals. Follows the SessionBoundaryType pattern: a single class with named individuals rather than a subclass hierarchy.
 #[repr(u8)]
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
 pub enum ExecutionPolicyKind {
     /// Process queries in arrival order. The implicit pre-Amendment 48 behavior.
+    #[default]
     FifoPolicy,
     /// Process the query with the smallest targetSite.freeRank first. Favors cheapest resolutions, accelerating early grounding gain.
     MinFreeCountFirst,
@@ -449,11 +498,12 @@ impl fmt::Display for ExecutionPolicyKind {
     }
 }
 
-/// The variance of a structural type position under operad composition.
+/// The variance of a structural type position under operad composition. One of Covariant, Contravariant, Invariant, or Bivariant.
 #[repr(u8)]
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
 pub enum VarianceAnnotation {
     /// The structural position preserves TypeInclusion: if T₁ ≤ T₂, then F(T₁) ≤ F(T₂).
+    #[default]
     Covariant,
     /// The structural position reverses TypeInclusion: if T₁ ≤ T₂, then F(T₂) ≤ F(T₁).
     Contravariant,
@@ -474,11 +524,12 @@ impl fmt::Display for VarianceAnnotation {
     }
 }
 
-/// The kind of quantifier: Universal (forall) or Existential (exists).
+/// The kind of quantifier: Universal (forall) or Existential (exists). Controlled vocabulary with exactly 2 individuals.
 #[repr(u8)]
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
 pub enum QuantifierKind {
     /// Universal quantification (forall).
+    #[default]
     Universal,
     /// Existential quantification (exists).
     Existential,
@@ -493,11 +544,12 @@ impl fmt::Display for QuantifierKind {
     }
 }
 
-/// A controlled vocabulary of proof methods for compilation to verified provers.
+/// A controlled vocabulary of proof methods. Each proof individual carries exactly one strategy from this vocabulary, enabling compilation to verified theorem provers.
 #[repr(u8)]
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
 pub enum ProofStrategy {
     /// Follows from ZMod ring axioms. Lean4 tactic: `by ring`.
+    #[default]
     RingAxiom,
     /// Decidable at Q0 by exhaustive evaluation. Lean4: `by native_decide`.
     DecideQ0,
@@ -539,11 +591,12 @@ impl fmt::Display for ProofStrategy {
     }
 }
 
-/// The kind of shape violation reported by a builder's validate method.
+/// The kind of shape violation: Missing, TypeMismatch, CardinalityViolation, ValueCheck, or LevelMismatch.
 #[repr(u8)]
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
 pub enum ViolationKind {
     /// Required property was not set on the builder.
+    #[default]
     Missing,
     /// Property was set but its value is not an instance of the constraintRange.
     TypeMismatch,
@@ -567,11 +620,38 @@ impl fmt::Display for ViolationKind {
     }
 }
 
+/// Closed enumeration of partition component kinds: Irreducible (non-factorizable), Reducible (factorizable into non-trivial parts), Units (invertible), Exterior (outside the factorization domain). Codegen treats this as an enum class with exactly 4 individuals.
+#[repr(u8)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
+pub enum PartitionComponent {
+    /// The irreducible component: elements that admit no non-trivial factorization within the ring.
+    #[default]
+    Irreducible,
+    /// The reducible component: elements that factor into non-trivial parts.
+    Reducible,
+    /// The unit component: invertible elements of the ring.
+    Units,
+    /// The exterior component: elements outside the factorization domain (e.g., zero or ring-boundary values).
+    Exterior,
+}
+
+impl fmt::Display for PartitionComponent {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Irreducible => f.write_str("irreducible"),
+            Self::Reducible => f.write_str("reducible"),
+            Self::Units => f.write_str("units"),
+            Self::Exterior => f.write_str("exterior"),
+        }
+    }
+}
+
 /// The modality of a proof: computation (exhaustive verification at a specific quantum level) or axiomatic (derivation from ring axioms).
 #[repr(u8)]
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
 pub enum ProofModality {
     /// A proof confirmed by exhaustive execution over R_n at a specific quantum level.
+    #[default]
     Computation,
     /// A proof derived from ring axioms that holds at all quantum levels.
     Axiomatic,
@@ -665,6 +745,14 @@ impl WittLevel {
         Self {
             witt_length: self.witt_length + 8,
         }
+    }
+}
+
+impl Default for WittLevel {
+    /// `W8` is the spec-defined minimum Witt level and the canonical base referenced by `schema:WittLevel` individuals.
+    #[inline]
+    fn default() -> Self {
+        Self::W8
     }
 }
 

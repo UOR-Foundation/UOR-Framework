@@ -120,6 +120,7 @@ fn properties() -> Vec<Property> {
             comment: "The expected type of data arriving from this source.",
             kind: PropertyKind::Object,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/boundary/Source"),
             range: "https://uor.foundation/type/TypeDefinition",
         },
@@ -129,35 +130,29 @@ fn properties() -> Vec<Property> {
             comment: "The expected type of data departing through this sink.",
             kind: PropertyKind::Object,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/boundary/Sink"),
             range: "https://uor.foundation/type/TypeDefinition",
         },
-        Property {
-            id: "https://uor.foundation/boundary/sourceGrounding",
-            label: "sourceGrounding",
-            comment: "The grounding map that transforms incoming surface \
-                      data to ring datums.",
-            kind: PropertyKind::Object,
-            functional: true,
-            domain: Some("https://uor.foundation/boundary/Source"),
-            range: "https://uor.foundation/morphism/GroundingMap",
-        },
-        Property {
-            id: "https://uor.foundation/boundary/sinkProjection",
-            label: "sinkProjection",
-            comment: "The projection map that transforms ring datums to \
-                      outgoing surface data.",
-            kind: PropertyKind::Object,
-            functional: true,
-            domain: Some("https://uor.foundation/boundary/Sink"),
-            range: "https://uor.foundation/morphism/ProjectionMap",
-        },
+        // Target §3: `boundary:sourceGrounding` removed. The Rust-side
+        // discipline lives in `Grounding::Map` (enforcement.rs), which
+        // carries the kind discriminator at the type level. The
+        // `source id : T via GroundingMap` grammar form declares the
+        // binding; the materialized `boundary:Source` individual inherits
+        // the binding through its Rust `Grounding` impl.
+        // Target §3: `boundary:sinkProjection` removed. The Rust-side
+        // discipline lives in `Sinking::ProjectionMap` (enforcement.rs),
+        // which carries the kind discriminator at the type level. The
+        // `sink id : T via ProjectionMap` grammar form declares the
+        // binding; the materialized `boundary:Sink` individual inherits
+        // the binding through its Rust `Sinking` impl.
         Property {
             id: "https://uor.foundation/boundary/effectBoundary",
             label: "effectBoundary",
             comment: "The boundary this effect crosses.",
             kind: PropertyKind::Object,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/boundary/BoundaryEffect"),
             range: "https://uor.foundation/boundary/IOBoundary",
         },
@@ -167,6 +162,7 @@ fn properties() -> Vec<Property> {
             comment: "The source being read.",
             kind: PropertyKind::Object,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/boundary/IngestEffect"),
             range: "https://uor.foundation/boundary/Source",
         },
@@ -176,6 +172,7 @@ fn properties() -> Vec<Property> {
             comment: "The sink being written to.",
             kind: PropertyKind::Object,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/boundary/EmitEffect"),
             range: "https://uor.foundation/boundary/Sink",
         },
@@ -185,6 +182,7 @@ fn properties() -> Vec<Property> {
             comment: "The type specification for boundary data.",
             kind: PropertyKind::Object,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/boundary/BoundaryProtocol"),
             range: "https://uor.foundation/type/TypeDefinition",
         },
@@ -194,8 +192,9 @@ fn properties() -> Vec<Property> {
             comment: "Sequencing constraints on boundary data.",
             kind: PropertyKind::Object,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/boundary/BoundaryProtocol"),
-            range: "https://uor.foundation/type/CompositeConstraint",
+            range: "https://uor.foundation/type/Conjunction",
         },
         Property {
             id: "https://uor.foundation/boundary/sessionBoundaries",
@@ -203,6 +202,7 @@ fn properties() -> Vec<Property> {
             comment: "The boundaries crossed during this session.",
             kind: PropertyKind::Object,
             functional: false,
+            required: false,
             domain: Some("https://uor.foundation/boundary/BoundarySession"),
             range: "https://uor.foundation/boundary/IOBoundary",
         },
@@ -214,6 +214,7 @@ fn properties() -> Vec<Property> {
                       the same result as applying it once.",
             kind: PropertyKind::Datatype,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/boundary/BoundaryEffect"),
             range: XSD_BOOLEAN,
         },
@@ -223,6 +224,7 @@ fn properties() -> Vec<Property> {
             comment: "Total number of boundary crossings in this session.",
             kind: PropertyKind::Datatype,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/boundary/BoundarySession"),
             range: XSD_NON_NEGATIVE_INTEGER,
         },

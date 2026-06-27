@@ -7,6 +7,7 @@ pub mod cert;
 pub mod cohomology;
 pub mod conformance_;
 pub mod derivation;
+pub mod foundation;
 pub mod homology;
 pub mod interaction;
 pub mod observable;

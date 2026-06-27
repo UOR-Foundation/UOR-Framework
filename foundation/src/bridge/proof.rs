@@ -8,20 +8,20 @@ use crate::enums::AchievabilityStatus;
 use crate::enums::ProofStrategy;
 use crate::enums::VerificationDomain;
 use crate::enums::WittLevel;
-use crate::Primitives;
+use crate::HostTypes;
 
 /// A kernel-produced attestation that a given algebraic property holds. The root class for all proof types.
-pub trait Proof<P: Primitives> {
+pub trait Proof<H: HostTypes> {
     /// Whether this proof has been verified by the kernel.
-    fn verified(&self) -> P::Boolean;
+    fn verified(&self) -> bool;
     /// The time at which this proof was produced.
-    fn timestamp(&self) -> &P::String;
+    fn timestamp(&self) -> &H::WitnessBytes;
     /// Associated type for `WitnessData`.
-    type WitnessData: WitnessData<P>;
+    type WitnessData: WitnessData<H>;
     /// Supporting witness data for this proof.
     fn witness(&self) -> &[Self::WitnessData];
     /// Associated type for `Identity`.
-    type Identity: crate::kernel::op::Identity<P>;
+    type Identity: crate::kernel::op::Identity<H>;
     /// The algebraic identity this proof establishes. Provides a canonical object reference alongside the existing proof:criticalIdentity string property, which remains for human readability.
     fn proves_identity(&self) -> &Self::Identity;
     /// The specific quantum level at which an empirical verification or impossibility witness was established.
@@ -31,51 +31,51 @@ pub trait Proof<P: Primitives> {
     /// An identity that this proof depends on as a lemma. Forms the proof dependency DAG. Leaf proofs (provable from definitions alone) have no dependsOn assertions.
     fn depends_on(&self) -> &[Self::Identity];
     /// Associated type for `DerivationTerm`.
-    type DerivationTerm: DerivationTerm<P>;
+    type DerivationTerm: DerivationTerm<H>;
     /// The formal proof construction term: a DerivationTerm AST node encoding the tactic script, lemma chain, or induction scaffold that constitutes the proof.
     fn formal_derivation(&self) -> &Self::DerivationTerm;
 }
 
 /// A proof of coherence: the type system and ring structure are mutually consistent at a given quantum level.
-pub trait CoherenceProof<P: Primitives>: Proof<P> {}
+pub trait CoherenceProof<H: HostTypes>: Proof<H> {}
 
 /// A proof confirmed by exhaustive execution over R_n at a specific quantum level. The kernel ran the identity against all 2^n inputs and observed that it holds. The proof:atWittLevel property records the level; proof:witness links to the WitnessData. CriticalIdentityProof is a subclass of ComputationCertificate.
-pub trait ComputationCertificate<P: Primitives>: Proof<P> {
+pub trait ComputationCertificate<H: HostTypes>: Proof<H> {
     /// The quantum level at which this computation certificate was produced. A ComputationCertificate at schema:Q0 confirms the identity holds for all 256 inputs of R_8. A certificate at schema:Q1 confirms it for all 65,536 inputs of R_16.
     fn at_witt_level(&self) -> WittLevel;
 }
 
 /// A proof that follows from previously established axioms or definitions by equational, structural, or topological reasoning. The proof:derivationWitness property links to a derivation:Derivation individual recording the rewrite chain. All pipeline, constraint, observable, and topological identities are AxiomaticDerivations.
-pub trait AxiomaticDerivation<P: Primitives>: Proof<P> {
+pub trait AxiomaticDerivation<H: HostTypes>: Proof<H> {
     /// True when this axiomatic derivation holds for all quantum levels by the definition of Z/(2^n)Z. False when the derivation depends on a property specific to a particular ring size. All current AxiomaticDerivation individuals in the spec carry universalScope true.
-    fn universal_scope(&self) -> P::Boolean;
+    fn universal_scope(&self) -> bool;
     /// Associated type for `Derivation`.
-    type Derivation: crate::bridge::derivation::Derivation<P>;
+    type Derivation: crate::bridge::derivation::Derivation<H>;
     /// The derivation chain that witnesses this axiomatic derivation. Links a proof:AxiomaticDerivation to the derivation:Derivation individual recording the rewrite sequence. Optional at the spec level — the conformance suite requires only that the proof individual exists; full derivation chains live in generated artifacts.
     fn derivation_witness(&self) -> &[Self::Derivation];
 }
 
 /// A proof of the critical identity: neg(bnot(x)) = succ(x) for all x in R_n. This is the foundational theorem of the UOR kernel.
-pub trait CriticalIdentityProof<P: Primitives>: ComputationCertificate<P> {}
+pub trait CriticalIdentityProof<H: HostTypes>: ComputationCertificate<H> {}
 
 /// Supporting data for a proof: specific examples, counter-examples checked, or intermediate computation results.
-pub trait WitnessData<P: Primitives> {
+pub trait WitnessData<H: HostTypes> {
     /// A specific input value used as a witness for the critical identity check.
-    fn x(&self) -> &[P::Integer];
+    fn x(&self) -> &[i64];
     /// The value bnot(x) for a witness x.
-    fn bnot_x(&self) -> &[P::Integer];
+    fn bnot_x(&self) -> &[i64];
     /// The value neg(bnot(x)) for a witness x.
-    fn neg_bnot_x(&self) -> &[P::Integer];
+    fn neg_bnot_x(&self) -> &[i64];
     /// The value succ(x) for a witness x.
-    fn succ_x(&self) -> &[P::Integer];
+    fn succ_x(&self) -> &[i64];
     /// Whether the identity neg(bnot(x)) = succ(x) holds for this specific witness.
-    fn holds(&self) -> &[P::Boolean];
+    fn holds(&self) -> &[bool];
 }
 
 /// A formal witness that a topological signature (χ, β_k) is impossible to achieve for any ConstrainedType. Carries the algebraic reason and the verification domain grounding the impossibility.
-pub trait ImpossibilityWitness<P: Primitives>: Proof<P> {
+pub trait ImpossibilityWitness<H: HostTypes>: Proof<H> {
     /// Human-readable statement of the algebraic reason the signature is impossible (e.g., 'β₀ = 0 violates MS_1').
-    fn impossibility_reason(&self) -> &P::String;
+    fn impossibility_reason(&self) -> &H::HostString;
     /// The verification domain grounding the impossibility (e.g., Pipeline for β₀ = 0, Algebraic for χ > n).
     fn impossibility_domain(&self) -> VerificationDomain;
     /// The achievability classification of a proof-linked observable signature: Achievable or Forbidden.
@@ -83,45 +83,2656 @@ pub trait ImpossibilityWitness<P: Primitives>: Proof<P> {
 }
 
 /// A formal record of a morphospace boundary point — either an achievable or forbidden topological signature. Aggregated by MorphospaceBoundary to form the queryable morphospace map.
-pub trait MorphospaceRecord<P: Primitives> {
+pub trait MorphospaceRecord<H: HostTypes> {
     /// Whether this MorphospaceRecord represents an impossibility boundary (from below) or an achievability boundary (from above).
     fn boundary_type(&self) -> AchievabilityStatus;
 }
 
 /// An aggregate of ImpossibilityWitness instances forming the queryable morphospace map. SPARQL over this structure answers achievability queries in O(1).
-pub trait MorphospaceBoundary<P: Primitives> {
+pub trait MorphospaceBoundary<H: HostTypes> {
     /// Associated type for `MorphospaceRecord`.
-    type MorphospaceRecord: MorphospaceRecord<P>;
+    type MorphospaceRecord: MorphospaceRecord<H>;
     /// Links a MorphospaceBoundary to one of its constituent MorphospaceRecord individuals.
     fn morphospace_record(&self) -> &[Self::MorphospaceRecord];
 }
 
 /// A proof by structural induction on the quantum level index k. Carries a base case proof, an inductive step proof, and the minimum k for which the induction holds.
-pub trait InductiveProof<P: Primitives>: Proof<P> {
+pub trait InductiveProof<H: HostTypes>: Proof<H> {
     /// Associated type for `Proof`.
-    type Proof: Proof<P>;
+    type Proof: Proof<H>;
     /// The proof that the claim holds at the base level k_0.
     fn base_case(&self) -> &Self::Proof;
     /// The proof that if the claim holds at Q_k, it holds at Q_{k+1}.
     fn inductive_step(&self) -> &Self::Proof;
     /// The minimum k for which the induction is valid.
-    fn valid_for_kat_least(&self) -> P::NonNegativeInteger;
+    fn valid_for_kat_least(&self) -> u64;
 }
 
 /// Root AST node for proof construction terms. Distinct from schema:TermExpression which represents mathematical terms; DerivationTerm represents proof constructions (tactic applications, lemma invocations, induction scaffolding).
-pub trait DerivationTerm<P: Primitives> {}
+pub trait DerivationTerm<H: HostTypes> {}
 
 /// A proof step applying a named tactic (from ProofStrategy) with arguments. Maps to a Lean4 tactic invocation.
-pub trait TacticApplication<P: Primitives>: DerivationTerm<P> {}
+pub trait TacticApplication<H: HostTypes>: DerivationTerm<H> {}
 
 /// A proof step invoking a previously proved identity as a lemma. References the identity via proof:dependsOn.
-pub trait LemmaInvocation<P: Primitives>: DerivationTerm<P> {}
+pub trait LemmaInvocation<H: HostTypes>: DerivationTerm<H> {}
 
 /// A proof step performing structural induction: base case derivation, inductive hypothesis, and step derivation.
-pub trait InductionStep<P: Primitives>: DerivationTerm<P> {}
+pub trait InductionStep<H: HostTypes>: DerivationTerm<H> {}
 
 /// A proof step performing exhaustive computation at a specific quantum level as verification witness.
-pub trait ComputationStep<P: Primitives>: DerivationTerm<P> {}
+pub trait ComputationStep<H: HostTypes>: DerivationTerm<H> {}
+
+/// A specialisation of proof:ImpossibilityWitness produced when the inhabitance search determines that the carrier of a ConstrainedType is empty. Aggregates into the existing proof:MorphospaceBoundary alongside other impossibility witnesses, inheriting its O(1) amortised lookup discipline for previously resolved signatures.
+pub trait InhabitanceImpossibilityWitness<H: HostTypes>: ImpossibilityWitness<H> {
+    /// The Lean 4 by-contradiction derivation over the predicate vocabulary attesting that no value tuple satisfies the constraint system.
+    fn contradiction_proof(&self) -> &H::HostString;
+    /// Associated type for `ConstrainedType`.
+    type ConstrainedType: crate::user::type_::ConstrainedType<H>;
+    /// The type:ConstrainedType whose carrier this witness certifies as empty.
+    fn grounded(&self) -> &Self::ConstrainedType;
+    /// Associated type for `InhabitanceSearchTrace`.
+    type InhabitanceSearchTrace: crate::bridge::trace::InhabitanceSearchTrace<H>;
+    /// The audit trail of the inhabitance search up to the contradiction.
+    fn search_trace(&self) -> &Self::InhabitanceSearchTrace;
+}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `Proof<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullProof<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullProof<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullProof<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullProof<H> = NullProof {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> Proof<H> for NullProof<H> {
+    fn verified(&self) -> bool {
+        false
+    }
+    fn timestamp(&self) -> &H::WitnessBytes {
+        H::EMPTY_WITNESS_BYTES
+    }
+    type WitnessData = NullWitnessData<H>;
+    fn witness(&self) -> &[Self::WitnessData] {
+        &[]
+    }
+    type Identity = crate::kernel::op::NullIdentity<H>;
+    fn proves_identity(&self) -> &Self::Identity {
+        &<crate::kernel::op::NullIdentity<H>>::ABSENT
+    }
+    fn verified_at_level(&self) -> &[WittLevel] {
+        &[]
+    }
+    fn strategy(&self) -> ProofStrategy {
+        <ProofStrategy>::default()
+    }
+    fn depends_on(&self) -> &[Self::Identity] {
+        &[]
+    }
+    type DerivationTerm = NullDerivationTerm<H>;
+    fn formal_derivation(&self) -> &Self::DerivationTerm {
+        &<NullDerivationTerm<H>>::ABSENT
+    }
+}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `CoherenceProof<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullCoherenceProof<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullCoherenceProof<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullCoherenceProof<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullCoherenceProof<H> = NullCoherenceProof {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> Proof<H> for NullCoherenceProof<H> {
+    fn verified(&self) -> bool {
+        false
+    }
+    fn timestamp(&self) -> &H::WitnessBytes {
+        H::EMPTY_WITNESS_BYTES
+    }
+    type WitnessData = NullWitnessData<H>;
+    fn witness(&self) -> &[Self::WitnessData] {
+        &[]
+    }
+    type Identity = crate::kernel::op::NullIdentity<H>;
+    fn proves_identity(&self) -> &Self::Identity {
+        &<crate::kernel::op::NullIdentity<H>>::ABSENT
+    }
+    fn verified_at_level(&self) -> &[WittLevel] {
+        &[]
+    }
+    fn strategy(&self) -> ProofStrategy {
+        <ProofStrategy>::default()
+    }
+    fn depends_on(&self) -> &[Self::Identity] {
+        &[]
+    }
+    type DerivationTerm = NullDerivationTerm<H>;
+    fn formal_derivation(&self) -> &Self::DerivationTerm {
+        &<NullDerivationTerm<H>>::ABSENT
+    }
+}
+impl<H: HostTypes> CoherenceProof<H> for NullCoherenceProof<H> {}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `ComputationCertificate<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullComputationCertificate<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullComputationCertificate<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullComputationCertificate<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullComputationCertificate<H> = NullComputationCertificate {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> Proof<H> for NullComputationCertificate<H> {
+    fn verified(&self) -> bool {
+        false
+    }
+    fn timestamp(&self) -> &H::WitnessBytes {
+        H::EMPTY_WITNESS_BYTES
+    }
+    type WitnessData = NullWitnessData<H>;
+    fn witness(&self) -> &[Self::WitnessData] {
+        &[]
+    }
+    type Identity = crate::kernel::op::NullIdentity<H>;
+    fn proves_identity(&self) -> &Self::Identity {
+        &<crate::kernel::op::NullIdentity<H>>::ABSENT
+    }
+    fn verified_at_level(&self) -> &[WittLevel] {
+        &[]
+    }
+    fn strategy(&self) -> ProofStrategy {
+        <ProofStrategy>::default()
+    }
+    fn depends_on(&self) -> &[Self::Identity] {
+        &[]
+    }
+    type DerivationTerm = NullDerivationTerm<H>;
+    fn formal_derivation(&self) -> &Self::DerivationTerm {
+        &<NullDerivationTerm<H>>::ABSENT
+    }
+}
+impl<H: HostTypes> ComputationCertificate<H> for NullComputationCertificate<H> {
+    fn at_witt_level(&self) -> WittLevel {
+        <WittLevel>::default()
+    }
+}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `AxiomaticDerivation<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullAxiomaticDerivation<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullAxiomaticDerivation<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullAxiomaticDerivation<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullAxiomaticDerivation<H> = NullAxiomaticDerivation {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> Proof<H> for NullAxiomaticDerivation<H> {
+    fn verified(&self) -> bool {
+        false
+    }
+    fn timestamp(&self) -> &H::WitnessBytes {
+        H::EMPTY_WITNESS_BYTES
+    }
+    type WitnessData = NullWitnessData<H>;
+    fn witness(&self) -> &[Self::WitnessData] {
+        &[]
+    }
+    type Identity = crate::kernel::op::NullIdentity<H>;
+    fn proves_identity(&self) -> &Self::Identity {
+        &<crate::kernel::op::NullIdentity<H>>::ABSENT
+    }
+    fn verified_at_level(&self) -> &[WittLevel] {
+        &[]
+    }
+    fn strategy(&self) -> ProofStrategy {
+        <ProofStrategy>::default()
+    }
+    fn depends_on(&self) -> &[Self::Identity] {
+        &[]
+    }
+    type DerivationTerm = NullDerivationTerm<H>;
+    fn formal_derivation(&self) -> &Self::DerivationTerm {
+        &<NullDerivationTerm<H>>::ABSENT
+    }
+}
+impl<H: HostTypes> AxiomaticDerivation<H> for NullAxiomaticDerivation<H> {
+    fn universal_scope(&self) -> bool {
+        false
+    }
+    type Derivation = crate::bridge::derivation::NullDerivation<H>;
+    fn derivation_witness(&self) -> &[Self::Derivation] {
+        &[]
+    }
+}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `CriticalIdentityProof<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullCriticalIdentityProof<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullCriticalIdentityProof<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullCriticalIdentityProof<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullCriticalIdentityProof<H> = NullCriticalIdentityProof {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> Proof<H> for NullCriticalIdentityProof<H> {
+    fn verified(&self) -> bool {
+        false
+    }
+    fn timestamp(&self) -> &H::WitnessBytes {
+        H::EMPTY_WITNESS_BYTES
+    }
+    type WitnessData = NullWitnessData<H>;
+    fn witness(&self) -> &[Self::WitnessData] {
+        &[]
+    }
+    type Identity = crate::kernel::op::NullIdentity<H>;
+    fn proves_identity(&self) -> &Self::Identity {
+        &<crate::kernel::op::NullIdentity<H>>::ABSENT
+    }
+    fn verified_at_level(&self) -> &[WittLevel] {
+        &[]
+    }
+    fn strategy(&self) -> ProofStrategy {
+        <ProofStrategy>::default()
+    }
+    fn depends_on(&self) -> &[Self::Identity] {
+        &[]
+    }
+    type DerivationTerm = NullDerivationTerm<H>;
+    fn formal_derivation(&self) -> &Self::DerivationTerm {
+        &<NullDerivationTerm<H>>::ABSENT
+    }
+}
+impl<H: HostTypes> ComputationCertificate<H> for NullCriticalIdentityProof<H> {
+    fn at_witt_level(&self) -> WittLevel {
+        <WittLevel>::default()
+    }
+}
+impl<H: HostTypes> CriticalIdentityProof<H> for NullCriticalIdentityProof<H> {}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `WitnessData<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullWitnessData<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullWitnessData<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullWitnessData<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullWitnessData<H> = NullWitnessData {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> WitnessData<H> for NullWitnessData<H> {
+    fn x(&self) -> &[i64] {
+        &[]
+    }
+    fn bnot_x(&self) -> &[i64] {
+        &[]
+    }
+    fn neg_bnot_x(&self) -> &[i64] {
+        &[]
+    }
+    fn succ_x(&self) -> &[i64] {
+        &[]
+    }
+    fn holds(&self) -> &[bool] {
+        &[]
+    }
+}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `ImpossibilityWitness<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullImpossibilityWitness<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullImpossibilityWitness<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullImpossibilityWitness<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullImpossibilityWitness<H> = NullImpossibilityWitness {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> Proof<H> for NullImpossibilityWitness<H> {
+    fn verified(&self) -> bool {
+        false
+    }
+    fn timestamp(&self) -> &H::WitnessBytes {
+        H::EMPTY_WITNESS_BYTES
+    }
+    type WitnessData = NullWitnessData<H>;
+    fn witness(&self) -> &[Self::WitnessData] {
+        &[]
+    }
+    type Identity = crate::kernel::op::NullIdentity<H>;
+    fn proves_identity(&self) -> &Self::Identity {
+        &<crate::kernel::op::NullIdentity<H>>::ABSENT
+    }
+    fn verified_at_level(&self) -> &[WittLevel] {
+        &[]
+    }
+    fn strategy(&self) -> ProofStrategy {
+        <ProofStrategy>::default()
+    }
+    fn depends_on(&self) -> &[Self::Identity] {
+        &[]
+    }
+    type DerivationTerm = NullDerivationTerm<H>;
+    fn formal_derivation(&self) -> &Self::DerivationTerm {
+        &<NullDerivationTerm<H>>::ABSENT
+    }
+}
+impl<H: HostTypes> ImpossibilityWitness<H> for NullImpossibilityWitness<H> {
+    fn impossibility_reason(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    fn impossibility_domain(&self) -> VerificationDomain {
+        <VerificationDomain>::default()
+    }
+    fn achievability_status(&self) -> AchievabilityStatus {
+        <AchievabilityStatus>::default()
+    }
+}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `MorphospaceRecord<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullMorphospaceRecord<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullMorphospaceRecord<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullMorphospaceRecord<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullMorphospaceRecord<H> = NullMorphospaceRecord {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> MorphospaceRecord<H> for NullMorphospaceRecord<H> {
+    fn boundary_type(&self) -> AchievabilityStatus {
+        <AchievabilityStatus>::default()
+    }
+}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `MorphospaceBoundary<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullMorphospaceBoundary<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullMorphospaceBoundary<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullMorphospaceBoundary<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullMorphospaceBoundary<H> = NullMorphospaceBoundary {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> MorphospaceBoundary<H> for NullMorphospaceBoundary<H> {
+    type MorphospaceRecord = NullMorphospaceRecord<H>;
+    fn morphospace_record(&self) -> &[Self::MorphospaceRecord] {
+        &[]
+    }
+}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `InductiveProof<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullInductiveProof<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullInductiveProof<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullInductiveProof<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullInductiveProof<H> = NullInductiveProof {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> Proof<H> for NullInductiveProof<H> {
+    fn verified(&self) -> bool {
+        false
+    }
+    fn timestamp(&self) -> &H::WitnessBytes {
+        H::EMPTY_WITNESS_BYTES
+    }
+    type WitnessData = NullWitnessData<H>;
+    fn witness(&self) -> &[Self::WitnessData] {
+        &[]
+    }
+    type Identity = crate::kernel::op::NullIdentity<H>;
+    fn proves_identity(&self) -> &Self::Identity {
+        &<crate::kernel::op::NullIdentity<H>>::ABSENT
+    }
+    fn verified_at_level(&self) -> &[WittLevel] {
+        &[]
+    }
+    fn strategy(&self) -> ProofStrategy {
+        <ProofStrategy>::default()
+    }
+    fn depends_on(&self) -> &[Self::Identity] {
+        &[]
+    }
+    type DerivationTerm = NullDerivationTerm<H>;
+    fn formal_derivation(&self) -> &Self::DerivationTerm {
+        &<NullDerivationTerm<H>>::ABSENT
+    }
+}
+impl<H: HostTypes> InductiveProof<H> for NullInductiveProof<H> {
+    type Proof = NullProof<H>;
+    fn base_case(&self) -> &Self::Proof {
+        &<NullProof<H>>::ABSENT
+    }
+    fn inductive_step(&self) -> &Self::Proof {
+        &<NullProof<H>>::ABSENT
+    }
+    fn valid_for_kat_least(&self) -> u64 {
+        0
+    }
+}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `DerivationTerm<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullDerivationTerm<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullDerivationTerm<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullDerivationTerm<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullDerivationTerm<H> = NullDerivationTerm {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> DerivationTerm<H> for NullDerivationTerm<H> {}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `TacticApplication<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullTacticApplication<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullTacticApplication<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullTacticApplication<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullTacticApplication<H> = NullTacticApplication {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> DerivationTerm<H> for NullTacticApplication<H> {}
+impl<H: HostTypes> TacticApplication<H> for NullTacticApplication<H> {}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `LemmaInvocation<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullLemmaInvocation<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullLemmaInvocation<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullLemmaInvocation<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullLemmaInvocation<H> = NullLemmaInvocation {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> DerivationTerm<H> for NullLemmaInvocation<H> {}
+impl<H: HostTypes> LemmaInvocation<H> for NullLemmaInvocation<H> {}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `InductionStep<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullInductionStep<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullInductionStep<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullInductionStep<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullInductionStep<H> = NullInductionStep {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> DerivationTerm<H> for NullInductionStep<H> {}
+impl<H: HostTypes> InductionStep<H> for NullInductionStep<H> {}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `ComputationStep<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullComputationStep<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullComputationStep<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullComputationStep<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullComputationStep<H> = NullComputationStep {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> DerivationTerm<H> for NullComputationStep<H> {}
+impl<H: HostTypes> ComputationStep<H> for NullComputationStep<H> {}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `InhabitanceImpossibilityWitness<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullInhabitanceImpossibilityWitness<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullInhabitanceImpossibilityWitness<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullInhabitanceImpossibilityWitness<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullInhabitanceImpossibilityWitness<H> =
+        NullInhabitanceImpossibilityWitness {
+            _phantom: core::marker::PhantomData,
+        };
+}
+impl<H: HostTypes> Proof<H> for NullInhabitanceImpossibilityWitness<H> {
+    fn verified(&self) -> bool {
+        false
+    }
+    fn timestamp(&self) -> &H::WitnessBytes {
+        H::EMPTY_WITNESS_BYTES
+    }
+    type WitnessData = NullWitnessData<H>;
+    fn witness(&self) -> &[Self::WitnessData] {
+        &[]
+    }
+    type Identity = crate::kernel::op::NullIdentity<H>;
+    fn proves_identity(&self) -> &Self::Identity {
+        &<crate::kernel::op::NullIdentity<H>>::ABSENT
+    }
+    fn verified_at_level(&self) -> &[WittLevel] {
+        &[]
+    }
+    fn strategy(&self) -> ProofStrategy {
+        <ProofStrategy>::default()
+    }
+    fn depends_on(&self) -> &[Self::Identity] {
+        &[]
+    }
+    type DerivationTerm = NullDerivationTerm<H>;
+    fn formal_derivation(&self) -> &Self::DerivationTerm {
+        &<NullDerivationTerm<H>>::ABSENT
+    }
+}
+impl<H: HostTypes> ImpossibilityWitness<H> for NullInhabitanceImpossibilityWitness<H> {
+    fn impossibility_reason(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    fn impossibility_domain(&self) -> VerificationDomain {
+        <VerificationDomain>::default()
+    }
+    fn achievability_status(&self) -> AchievabilityStatus {
+        <AchievabilityStatus>::default()
+    }
+}
+impl<H: HostTypes> InhabitanceImpossibilityWitness<H> for NullInhabitanceImpossibilityWitness<H> {
+    fn contradiction_proof(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    type ConstrainedType = crate::user::type_::NullConstrainedType<H>;
+    fn grounded(&self) -> &Self::ConstrainedType {
+        &<crate::user::type_::NullConstrainedType<H>>::ABSENT
+    }
+    type InhabitanceSearchTrace = crate::bridge::trace::NullInhabitanceSearchTrace<H>;
+    fn search_trace(&self) -> &Self::InhabitanceSearchTrace {
+        &<crate::bridge::trace::NullInhabitanceSearchTrace<H>>::ABSENT
+    }
+}
+
+/// Phase 8 (orphan-closure) — content-addressed handle for `Proof<H>`.
+///
+/// Pairs a [`crate::enforcement::ContentFingerprint`] with a phantom
+/// `H` so type-state checks can't mix handles across `HostTypes` impls.
+#[derive(Debug)]
+pub struct ProofHandle<H: HostTypes> {
+    /// Content fingerprint identifying the resolved record.
+    pub fingerprint: crate::enforcement::ContentFingerprint,
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Copy for ProofHandle<H> {}
+impl<H: HostTypes> Clone for ProofHandle<H> {
+    #[inline]
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+impl<H: HostTypes> PartialEq for ProofHandle<H> {
+    #[inline]
+    fn eq(&self, other: &Self) -> bool {
+        self.fingerprint == other.fingerprint
+    }
+}
+impl<H: HostTypes> Eq for ProofHandle<H> {}
+impl<H: HostTypes> core::hash::Hash for ProofHandle<H> {
+    #[inline]
+    fn hash<S: core::hash::Hasher>(&self, state: &mut S) {
+        self.fingerprint.hash(state);
+    }
+}
+impl<H: HostTypes> ProofHandle<H> {
+    /// Construct a handle from its content fingerprint.
+    #[inline]
+    #[must_use]
+    pub const fn new(fingerprint: crate::enforcement::ContentFingerprint) -> Self {
+        Self {
+            fingerprint,
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+
+/// Phase 8 (orphan-closure) — resolver trait for `Proof<H>`.
+///
+/// Hosts implement this trait to map a handle into a typed record.
+/// The default Null stub does not implement this trait — it carries
+/// no record. Resolution is the responsibility of the host pipeline.
+pub trait ProofResolver<H: HostTypes> {
+    /// Resolve a handle into its record. Returns `None` when the
+    /// handle does not correspond to known content.
+    fn resolve(&self, handle: ProofHandle<H>) -> Option<ProofRecord<H>>;
+}
+
+/// Phase 8 (orphan-closure) — typed record for `Proof<H>`.
+///
+/// Carries a field per functional accessor of the trait. Object
+/// fields hold `{Range}Handle<H>`; iterate via the Resolved wrapper
+/// chain-resolver methods.
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub struct ProofRecord<H: HostTypes> {
+    pub verified: bool,
+    pub timestamp: &'static H::WitnessBytes,
+    pub proves_identity_handle: crate::kernel::op::IdentityHandle<H>,
+    pub strategy: ProofStrategy,
+    pub formal_derivation_handle: DerivationTermHandle<H>,
+    #[doc(hidden)]
+    pub _phantom: core::marker::PhantomData<H>,
+}
+
+/// Phase 8 (orphan-closure) — content-addressed wrapper for `Proof<H>`.
+///
+/// Caches the resolver's lookup at construction. Accessors return
+/// the cached record's fields when present, falling back to the
+/// `Null{Class}<H>` absent sentinels when the resolver returned
+/// `None`. Object accessors always return absent sentinels — use
+/// the `resolve_{m}` chain methods to descend into sub-records.
+pub struct ResolvedProof<'r, R: ProofResolver<H>, H: HostTypes> {
+    handle: ProofHandle<H>,
+    resolver: &'r R,
+    record: Option<ProofRecord<H>>,
+}
+impl<'r, R: ProofResolver<H>, H: HostTypes> ResolvedProof<'r, R, H> {
+    /// Construct the wrapper, eagerly resolving the handle.
+    #[inline]
+    pub fn new(handle: ProofHandle<H>, resolver: &'r R) -> Self {
+        let record = resolver.resolve(handle);
+        Self {
+            handle,
+            resolver,
+            record,
+        }
+    }
+    /// The handle this wrapper resolves.
+    #[inline]
+    #[must_use]
+    pub const fn handle(&self) -> ProofHandle<H> {
+        self.handle
+    }
+    /// The resolver supplied at construction.
+    #[inline]
+    #[must_use]
+    pub const fn resolver(&self) -> &'r R {
+        self.resolver
+    }
+    /// The cached record, or `None` when the resolver returned `None`.
+    #[inline]
+    #[must_use]
+    pub const fn record(&self) -> Option<&ProofRecord<H>> {
+        self.record.as_ref()
+    }
+}
+impl<'r, R: ProofResolver<H>, H: HostTypes> Proof<H> for ResolvedProof<'r, R, H> {
+    fn verified(&self) -> bool {
+        match &self.record {
+            Some(r) => r.verified,
+            None => false,
+        }
+    }
+    fn timestamp(&self) -> &H::WitnessBytes {
+        match &self.record {
+            Some(r) => r.timestamp,
+            None => H::EMPTY_WITNESS_BYTES,
+        }
+    }
+    type WitnessData = NullWitnessData<H>;
+    fn witness(&self) -> &[Self::WitnessData] {
+        &[]
+    }
+    type Identity = crate::kernel::op::NullIdentity<H>;
+    fn proves_identity(&self) -> &Self::Identity {
+        &<crate::kernel::op::NullIdentity<H>>::ABSENT
+    }
+    fn verified_at_level(&self) -> &[WittLevel] {
+        &[]
+    }
+    fn strategy(&self) -> ProofStrategy {
+        match &self.record {
+            Some(r) => r.strategy,
+            None => <ProofStrategy>::default(),
+        }
+    }
+    fn depends_on(&self) -> &[Self::Identity] {
+        &[]
+    }
+    type DerivationTerm = NullDerivationTerm<H>;
+    fn formal_derivation(&self) -> &Self::DerivationTerm {
+        &<NullDerivationTerm<H>>::ABSENT
+    }
+}
+impl<'r, R: ProofResolver<H>, H: HostTypes> ResolvedProof<'r, R, H> {
+    /// Promote the `proves_identity` handle on the cached record into a
+    /// resolved wrapper, given a resolver for the range class.
+    /// Returns `None` if no record was resolved at construction.
+    #[inline]
+    pub fn resolve_proves_identity<'r2, R2: crate::kernel::op::IdentityResolver<H>>(
+        &self,
+        r: &'r2 R2,
+    ) -> Option<crate::kernel::op::ResolvedIdentity<'r2, R2, H>> {
+        let record = self.record.as_ref()?;
+        Some(crate::kernel::op::ResolvedIdentity::new(
+            record.proves_identity_handle,
+            r,
+        ))
+    }
+    /// Promote the `formal_derivation` handle on the cached record into a
+    /// resolved wrapper, given a resolver for the range class.
+    /// Returns `None` if no record was resolved at construction.
+    #[inline]
+    pub fn resolve_formal_derivation<'r2, R2: DerivationTermResolver<H>>(
+        &self,
+        r: &'r2 R2,
+    ) -> Option<ResolvedDerivationTerm<'r2, R2, H>> {
+        let record = self.record.as_ref()?;
+        Some(ResolvedDerivationTerm::new(
+            record.formal_derivation_handle,
+            r,
+        ))
+    }
+}
+
+/// Phase 8 (orphan-closure) — content-addressed handle for `CoherenceProof<H>`.
+///
+/// Pairs a [`crate::enforcement::ContentFingerprint`] with a phantom
+/// `H` so type-state checks can't mix handles across `HostTypes` impls.
+#[derive(Debug)]
+pub struct CoherenceProofHandle<H: HostTypes> {
+    /// Content fingerprint identifying the resolved record.
+    pub fingerprint: crate::enforcement::ContentFingerprint,
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Copy for CoherenceProofHandle<H> {}
+impl<H: HostTypes> Clone for CoherenceProofHandle<H> {
+    #[inline]
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+impl<H: HostTypes> PartialEq for CoherenceProofHandle<H> {
+    #[inline]
+    fn eq(&self, other: &Self) -> bool {
+        self.fingerprint == other.fingerprint
+    }
+}
+impl<H: HostTypes> Eq for CoherenceProofHandle<H> {}
+impl<H: HostTypes> core::hash::Hash for CoherenceProofHandle<H> {
+    #[inline]
+    fn hash<S: core::hash::Hasher>(&self, state: &mut S) {
+        self.fingerprint.hash(state);
+    }
+}
+impl<H: HostTypes> CoherenceProofHandle<H> {
+    /// Construct a handle from its content fingerprint.
+    #[inline]
+    #[must_use]
+    pub const fn new(fingerprint: crate::enforcement::ContentFingerprint) -> Self {
+        Self {
+            fingerprint,
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+
+/// Phase 8 (orphan-closure) — resolver trait for `CoherenceProof<H>`.
+///
+/// Hosts implement this trait to map a handle into a typed record.
+/// The default Null stub does not implement this trait — it carries
+/// no record. Resolution is the responsibility of the host pipeline.
+pub trait CoherenceProofResolver<H: HostTypes> {
+    /// Resolve a handle into its record. Returns `None` when the
+    /// handle does not correspond to known content.
+    fn resolve(&self, handle: CoherenceProofHandle<H>) -> Option<CoherenceProofRecord<H>>;
+}
+
+/// Phase 8 (orphan-closure) — typed record for `CoherenceProof<H>`.
+///
+/// Carries a field per functional accessor of the trait. Object
+/// fields hold `{Range}Handle<H>`; iterate via the Resolved wrapper
+/// chain-resolver methods.
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub struct CoherenceProofRecord<H: HostTypes> {
+    #[doc(hidden)]
+    pub _phantom: core::marker::PhantomData<H>,
+}
+
+/// Phase 8 (orphan-closure) — content-addressed wrapper for `CoherenceProof<H>`.
+///
+/// Caches the resolver's lookup at construction. Accessors return
+/// the cached record's fields when present, falling back to the
+/// `Null{Class}<H>` absent sentinels when the resolver returned
+/// `None`. Object accessors always return absent sentinels — use
+/// the `resolve_{m}` chain methods to descend into sub-records.
+pub struct ResolvedCoherenceProof<'r, R: CoherenceProofResolver<H>, H: HostTypes> {
+    handle: CoherenceProofHandle<H>,
+    resolver: &'r R,
+    record: Option<CoherenceProofRecord<H>>,
+}
+impl<'r, R: CoherenceProofResolver<H>, H: HostTypes> ResolvedCoherenceProof<'r, R, H> {
+    /// Construct the wrapper, eagerly resolving the handle.
+    #[inline]
+    pub fn new(handle: CoherenceProofHandle<H>, resolver: &'r R) -> Self {
+        let record = resolver.resolve(handle);
+        Self {
+            handle,
+            resolver,
+            record,
+        }
+    }
+    /// The handle this wrapper resolves.
+    #[inline]
+    #[must_use]
+    pub const fn handle(&self) -> CoherenceProofHandle<H> {
+        self.handle
+    }
+    /// The resolver supplied at construction.
+    #[inline]
+    #[must_use]
+    pub const fn resolver(&self) -> &'r R {
+        self.resolver
+    }
+    /// The cached record, or `None` when the resolver returned `None`.
+    #[inline]
+    #[must_use]
+    pub const fn record(&self) -> Option<&CoherenceProofRecord<H>> {
+        self.record.as_ref()
+    }
+}
+impl<'r, R: CoherenceProofResolver<H>, H: HostTypes> Proof<H> for ResolvedCoherenceProof<'r, R, H> {
+    fn verified(&self) -> bool {
+        false
+    }
+    fn timestamp(&self) -> &H::WitnessBytes {
+        H::EMPTY_WITNESS_BYTES
+    }
+    type WitnessData = NullWitnessData<H>;
+    fn witness(&self) -> &[Self::WitnessData] {
+        &[]
+    }
+    type Identity = crate::kernel::op::NullIdentity<H>;
+    fn proves_identity(&self) -> &Self::Identity {
+        &<crate::kernel::op::NullIdentity<H>>::ABSENT
+    }
+    fn verified_at_level(&self) -> &[WittLevel] {
+        &[]
+    }
+    fn strategy(&self) -> ProofStrategy {
+        <ProofStrategy>::default()
+    }
+    fn depends_on(&self) -> &[Self::Identity] {
+        &[]
+    }
+    type DerivationTerm = NullDerivationTerm<H>;
+    fn formal_derivation(&self) -> &Self::DerivationTerm {
+        &<NullDerivationTerm<H>>::ABSENT
+    }
+}
+impl<'r, R: CoherenceProofResolver<H>, H: HostTypes> CoherenceProof<H>
+    for ResolvedCoherenceProof<'r, R, H>
+{
+}
+
+/// Phase 8 (orphan-closure) — content-addressed handle for `ComputationCertificate<H>`.
+///
+/// Pairs a [`crate::enforcement::ContentFingerprint`] with a phantom
+/// `H` so type-state checks can't mix handles across `HostTypes` impls.
+#[derive(Debug)]
+pub struct ComputationCertificateHandle<H: HostTypes> {
+    /// Content fingerprint identifying the resolved record.
+    pub fingerprint: crate::enforcement::ContentFingerprint,
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Copy for ComputationCertificateHandle<H> {}
+impl<H: HostTypes> Clone for ComputationCertificateHandle<H> {
+    #[inline]
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+impl<H: HostTypes> PartialEq for ComputationCertificateHandle<H> {
+    #[inline]
+    fn eq(&self, other: &Self) -> bool {
+        self.fingerprint == other.fingerprint
+    }
+}
+impl<H: HostTypes> Eq for ComputationCertificateHandle<H> {}
+impl<H: HostTypes> core::hash::Hash for ComputationCertificateHandle<H> {
+    #[inline]
+    fn hash<S: core::hash::Hasher>(&self, state: &mut S) {
+        self.fingerprint.hash(state);
+    }
+}
+impl<H: HostTypes> ComputationCertificateHandle<H> {
+    /// Construct a handle from its content fingerprint.
+    #[inline]
+    #[must_use]
+    pub const fn new(fingerprint: crate::enforcement::ContentFingerprint) -> Self {
+        Self {
+            fingerprint,
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+
+/// Phase 8 (orphan-closure) — resolver trait for `ComputationCertificate<H>`.
+///
+/// Hosts implement this trait to map a handle into a typed record.
+/// The default Null stub does not implement this trait — it carries
+/// no record. Resolution is the responsibility of the host pipeline.
+pub trait ComputationCertificateResolver<H: HostTypes> {
+    /// Resolve a handle into its record. Returns `None` when the
+    /// handle does not correspond to known content.
+    fn resolve(
+        &self,
+        handle: ComputationCertificateHandle<H>,
+    ) -> Option<ComputationCertificateRecord<H>>;
+}
+
+/// Phase 8 (orphan-closure) — typed record for `ComputationCertificate<H>`.
+///
+/// Carries a field per functional accessor of the trait. Object
+/// fields hold `{Range}Handle<H>`; iterate via the Resolved wrapper
+/// chain-resolver methods.
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub struct ComputationCertificateRecord<H: HostTypes> {
+    pub at_witt_level: WittLevel,
+    #[doc(hidden)]
+    pub _phantom: core::marker::PhantomData<H>,
+}
+
+/// Phase 8 (orphan-closure) — content-addressed wrapper for `ComputationCertificate<H>`.
+///
+/// Caches the resolver's lookup at construction. Accessors return
+/// the cached record's fields when present, falling back to the
+/// `Null{Class}<H>` absent sentinels when the resolver returned
+/// `None`. Object accessors always return absent sentinels — use
+/// the `resolve_{m}` chain methods to descend into sub-records.
+pub struct ResolvedComputationCertificate<'r, R: ComputationCertificateResolver<H>, H: HostTypes> {
+    handle: ComputationCertificateHandle<H>,
+    resolver: &'r R,
+    record: Option<ComputationCertificateRecord<H>>,
+}
+impl<'r, R: ComputationCertificateResolver<H>, H: HostTypes>
+    ResolvedComputationCertificate<'r, R, H>
+{
+    /// Construct the wrapper, eagerly resolving the handle.
+    #[inline]
+    pub fn new(handle: ComputationCertificateHandle<H>, resolver: &'r R) -> Self {
+        let record = resolver.resolve(handle);
+        Self {
+            handle,
+            resolver,
+            record,
+        }
+    }
+    /// The handle this wrapper resolves.
+    #[inline]
+    #[must_use]
+    pub const fn handle(&self) -> ComputationCertificateHandle<H> {
+        self.handle
+    }
+    /// The resolver supplied at construction.
+    #[inline]
+    #[must_use]
+    pub const fn resolver(&self) -> &'r R {
+        self.resolver
+    }
+    /// The cached record, or `None` when the resolver returned `None`.
+    #[inline]
+    #[must_use]
+    pub const fn record(&self) -> Option<&ComputationCertificateRecord<H>> {
+        self.record.as_ref()
+    }
+}
+impl<'r, R: ComputationCertificateResolver<H>, H: HostTypes> Proof<H>
+    for ResolvedComputationCertificate<'r, R, H>
+{
+    fn verified(&self) -> bool {
+        false
+    }
+    fn timestamp(&self) -> &H::WitnessBytes {
+        H::EMPTY_WITNESS_BYTES
+    }
+    type WitnessData = NullWitnessData<H>;
+    fn witness(&self) -> &[Self::WitnessData] {
+        &[]
+    }
+    type Identity = crate::kernel::op::NullIdentity<H>;
+    fn proves_identity(&self) -> &Self::Identity {
+        &<crate::kernel::op::NullIdentity<H>>::ABSENT
+    }
+    fn verified_at_level(&self) -> &[WittLevel] {
+        &[]
+    }
+    fn strategy(&self) -> ProofStrategy {
+        <ProofStrategy>::default()
+    }
+    fn depends_on(&self) -> &[Self::Identity] {
+        &[]
+    }
+    type DerivationTerm = NullDerivationTerm<H>;
+    fn formal_derivation(&self) -> &Self::DerivationTerm {
+        &<NullDerivationTerm<H>>::ABSENT
+    }
+}
+impl<'r, R: ComputationCertificateResolver<H>, H: HostTypes> ComputationCertificate<H>
+    for ResolvedComputationCertificate<'r, R, H>
+{
+    fn at_witt_level(&self) -> WittLevel {
+        match &self.record {
+            Some(r) => r.at_witt_level,
+            None => <WittLevel>::default(),
+        }
+    }
+}
+
+/// Phase 8 (orphan-closure) — content-addressed handle for `AxiomaticDerivation<H>`.
+///
+/// Pairs a [`crate::enforcement::ContentFingerprint`] with a phantom
+/// `H` so type-state checks can't mix handles across `HostTypes` impls.
+#[derive(Debug)]
+pub struct AxiomaticDerivationHandle<H: HostTypes> {
+    /// Content fingerprint identifying the resolved record.
+    pub fingerprint: crate::enforcement::ContentFingerprint,
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Copy for AxiomaticDerivationHandle<H> {}
+impl<H: HostTypes> Clone for AxiomaticDerivationHandle<H> {
+    #[inline]
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+impl<H: HostTypes> PartialEq for AxiomaticDerivationHandle<H> {
+    #[inline]
+    fn eq(&self, other: &Self) -> bool {
+        self.fingerprint == other.fingerprint
+    }
+}
+impl<H: HostTypes> Eq for AxiomaticDerivationHandle<H> {}
+impl<H: HostTypes> core::hash::Hash for AxiomaticDerivationHandle<H> {
+    #[inline]
+    fn hash<S: core::hash::Hasher>(&self, state: &mut S) {
+        self.fingerprint.hash(state);
+    }
+}
+impl<H: HostTypes> AxiomaticDerivationHandle<H> {
+    /// Construct a handle from its content fingerprint.
+    #[inline]
+    #[must_use]
+    pub const fn new(fingerprint: crate::enforcement::ContentFingerprint) -> Self {
+        Self {
+            fingerprint,
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+
+/// Phase 8 (orphan-closure) — resolver trait for `AxiomaticDerivation<H>`.
+///
+/// Hosts implement this trait to map a handle into a typed record.
+/// The default Null stub does not implement this trait — it carries
+/// no record. Resolution is the responsibility of the host pipeline.
+pub trait AxiomaticDerivationResolver<H: HostTypes> {
+    /// Resolve a handle into its record. Returns `None` when the
+    /// handle does not correspond to known content.
+    fn resolve(&self, handle: AxiomaticDerivationHandle<H>)
+        -> Option<AxiomaticDerivationRecord<H>>;
+}
+
+/// Phase 8 (orphan-closure) — typed record for `AxiomaticDerivation<H>`.
+///
+/// Carries a field per functional accessor of the trait. Object
+/// fields hold `{Range}Handle<H>`; iterate via the Resolved wrapper
+/// chain-resolver methods.
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub struct AxiomaticDerivationRecord<H: HostTypes> {
+    pub universal_scope: bool,
+    #[doc(hidden)]
+    pub _phantom: core::marker::PhantomData<H>,
+}
+
+/// Phase 8 (orphan-closure) — content-addressed wrapper for `AxiomaticDerivation<H>`.
+///
+/// Caches the resolver's lookup at construction. Accessors return
+/// the cached record's fields when present, falling back to the
+/// `Null{Class}<H>` absent sentinels when the resolver returned
+/// `None`. Object accessors always return absent sentinels — use
+/// the `resolve_{m}` chain methods to descend into sub-records.
+pub struct ResolvedAxiomaticDerivation<'r, R: AxiomaticDerivationResolver<H>, H: HostTypes> {
+    handle: AxiomaticDerivationHandle<H>,
+    resolver: &'r R,
+    record: Option<AxiomaticDerivationRecord<H>>,
+}
+impl<'r, R: AxiomaticDerivationResolver<H>, H: HostTypes> ResolvedAxiomaticDerivation<'r, R, H> {
+    /// Construct the wrapper, eagerly resolving the handle.
+    #[inline]
+    pub fn new(handle: AxiomaticDerivationHandle<H>, resolver: &'r R) -> Self {
+        let record = resolver.resolve(handle);
+        Self {
+            handle,
+            resolver,
+            record,
+        }
+    }
+    /// The handle this wrapper resolves.
+    #[inline]
+    #[must_use]
+    pub const fn handle(&self) -> AxiomaticDerivationHandle<H> {
+        self.handle
+    }
+    /// The resolver supplied at construction.
+    #[inline]
+    #[must_use]
+    pub const fn resolver(&self) -> &'r R {
+        self.resolver
+    }
+    /// The cached record, or `None` when the resolver returned `None`.
+    #[inline]
+    #[must_use]
+    pub const fn record(&self) -> Option<&AxiomaticDerivationRecord<H>> {
+        self.record.as_ref()
+    }
+}
+impl<'r, R: AxiomaticDerivationResolver<H>, H: HostTypes> Proof<H>
+    for ResolvedAxiomaticDerivation<'r, R, H>
+{
+    fn verified(&self) -> bool {
+        false
+    }
+    fn timestamp(&self) -> &H::WitnessBytes {
+        H::EMPTY_WITNESS_BYTES
+    }
+    type WitnessData = NullWitnessData<H>;
+    fn witness(&self) -> &[Self::WitnessData] {
+        &[]
+    }
+    type Identity = crate::kernel::op::NullIdentity<H>;
+    fn proves_identity(&self) -> &Self::Identity {
+        &<crate::kernel::op::NullIdentity<H>>::ABSENT
+    }
+    fn verified_at_level(&self) -> &[WittLevel] {
+        &[]
+    }
+    fn strategy(&self) -> ProofStrategy {
+        <ProofStrategy>::default()
+    }
+    fn depends_on(&self) -> &[Self::Identity] {
+        &[]
+    }
+    type DerivationTerm = NullDerivationTerm<H>;
+    fn formal_derivation(&self) -> &Self::DerivationTerm {
+        &<NullDerivationTerm<H>>::ABSENT
+    }
+}
+impl<'r, R: AxiomaticDerivationResolver<H>, H: HostTypes> AxiomaticDerivation<H>
+    for ResolvedAxiomaticDerivation<'r, R, H>
+{
+    fn universal_scope(&self) -> bool {
+        match &self.record {
+            Some(r) => r.universal_scope,
+            None => false,
+        }
+    }
+    type Derivation = crate::bridge::derivation::NullDerivation<H>;
+    fn derivation_witness(&self) -> &[Self::Derivation] {
+        &[]
+    }
+}
+
+/// Phase 8 (orphan-closure) — content-addressed handle for `CriticalIdentityProof<H>`.
+///
+/// Pairs a [`crate::enforcement::ContentFingerprint`] with a phantom
+/// `H` so type-state checks can't mix handles across `HostTypes` impls.
+#[derive(Debug)]
+pub struct CriticalIdentityProofHandle<H: HostTypes> {
+    /// Content fingerprint identifying the resolved record.
+    pub fingerprint: crate::enforcement::ContentFingerprint,
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Copy for CriticalIdentityProofHandle<H> {}
+impl<H: HostTypes> Clone for CriticalIdentityProofHandle<H> {
+    #[inline]
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+impl<H: HostTypes> PartialEq for CriticalIdentityProofHandle<H> {
+    #[inline]
+    fn eq(&self, other: &Self) -> bool {
+        self.fingerprint == other.fingerprint
+    }
+}
+impl<H: HostTypes> Eq for CriticalIdentityProofHandle<H> {}
+impl<H: HostTypes> core::hash::Hash for CriticalIdentityProofHandle<H> {
+    #[inline]
+    fn hash<S: core::hash::Hasher>(&self, state: &mut S) {
+        self.fingerprint.hash(state);
+    }
+}
+impl<H: HostTypes> CriticalIdentityProofHandle<H> {
+    /// Construct a handle from its content fingerprint.
+    #[inline]
+    #[must_use]
+    pub const fn new(fingerprint: crate::enforcement::ContentFingerprint) -> Self {
+        Self {
+            fingerprint,
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+
+/// Phase 8 (orphan-closure) — resolver trait for `CriticalIdentityProof<H>`.
+///
+/// Hosts implement this trait to map a handle into a typed record.
+/// The default Null stub does not implement this trait — it carries
+/// no record. Resolution is the responsibility of the host pipeline.
+pub trait CriticalIdentityProofResolver<H: HostTypes> {
+    /// Resolve a handle into its record. Returns `None` when the
+    /// handle does not correspond to known content.
+    fn resolve(
+        &self,
+        handle: CriticalIdentityProofHandle<H>,
+    ) -> Option<CriticalIdentityProofRecord<H>>;
+}
+
+/// Phase 8 (orphan-closure) — typed record for `CriticalIdentityProof<H>`.
+///
+/// Carries a field per functional accessor of the trait. Object
+/// fields hold `{Range}Handle<H>`; iterate via the Resolved wrapper
+/// chain-resolver methods.
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub struct CriticalIdentityProofRecord<H: HostTypes> {
+    #[doc(hidden)]
+    pub _phantom: core::marker::PhantomData<H>,
+}
+
+/// Phase 8 (orphan-closure) — content-addressed wrapper for `CriticalIdentityProof<H>`.
+///
+/// Caches the resolver's lookup at construction. Accessors return
+/// the cached record's fields when present, falling back to the
+/// `Null{Class}<H>` absent sentinels when the resolver returned
+/// `None`. Object accessors always return absent sentinels — use
+/// the `resolve_{m}` chain methods to descend into sub-records.
+pub struct ResolvedCriticalIdentityProof<'r, R: CriticalIdentityProofResolver<H>, H: HostTypes> {
+    handle: CriticalIdentityProofHandle<H>,
+    resolver: &'r R,
+    record: Option<CriticalIdentityProofRecord<H>>,
+}
+impl<'r, R: CriticalIdentityProofResolver<H>, H: HostTypes>
+    ResolvedCriticalIdentityProof<'r, R, H>
+{
+    /// Construct the wrapper, eagerly resolving the handle.
+    #[inline]
+    pub fn new(handle: CriticalIdentityProofHandle<H>, resolver: &'r R) -> Self {
+        let record = resolver.resolve(handle);
+        Self {
+            handle,
+            resolver,
+            record,
+        }
+    }
+    /// The handle this wrapper resolves.
+    #[inline]
+    #[must_use]
+    pub const fn handle(&self) -> CriticalIdentityProofHandle<H> {
+        self.handle
+    }
+    /// The resolver supplied at construction.
+    #[inline]
+    #[must_use]
+    pub const fn resolver(&self) -> &'r R {
+        self.resolver
+    }
+    /// The cached record, or `None` when the resolver returned `None`.
+    #[inline]
+    #[must_use]
+    pub const fn record(&self) -> Option<&CriticalIdentityProofRecord<H>> {
+        self.record.as_ref()
+    }
+}
+impl<'r, R: CriticalIdentityProofResolver<H>, H: HostTypes> Proof<H>
+    for ResolvedCriticalIdentityProof<'r, R, H>
+{
+    fn verified(&self) -> bool {
+        false
+    }
+    fn timestamp(&self) -> &H::WitnessBytes {
+        H::EMPTY_WITNESS_BYTES
+    }
+    type WitnessData = NullWitnessData<H>;
+    fn witness(&self) -> &[Self::WitnessData] {
+        &[]
+    }
+    type Identity = crate::kernel::op::NullIdentity<H>;
+    fn proves_identity(&self) -> &Self::Identity {
+        &<crate::kernel::op::NullIdentity<H>>::ABSENT
+    }
+    fn verified_at_level(&self) -> &[WittLevel] {
+        &[]
+    }
+    fn strategy(&self) -> ProofStrategy {
+        <ProofStrategy>::default()
+    }
+    fn depends_on(&self) -> &[Self::Identity] {
+        &[]
+    }
+    type DerivationTerm = NullDerivationTerm<H>;
+    fn formal_derivation(&self) -> &Self::DerivationTerm {
+        &<NullDerivationTerm<H>>::ABSENT
+    }
+}
+impl<'r, R: CriticalIdentityProofResolver<H>, H: HostTypes> ComputationCertificate<H>
+    for ResolvedCriticalIdentityProof<'r, R, H>
+{
+    fn at_witt_level(&self) -> WittLevel {
+        <WittLevel>::default()
+    }
+}
+impl<'r, R: CriticalIdentityProofResolver<H>, H: HostTypes> CriticalIdentityProof<H>
+    for ResolvedCriticalIdentityProof<'r, R, H>
+{
+}
+
+/// Phase 8 (orphan-closure) — content-addressed handle for `WitnessData<H>`.
+///
+/// Pairs a [`crate::enforcement::ContentFingerprint`] with a phantom
+/// `H` so type-state checks can't mix handles across `HostTypes` impls.
+#[derive(Debug)]
+pub struct WitnessDataHandle<H: HostTypes> {
+    /// Content fingerprint identifying the resolved record.
+    pub fingerprint: crate::enforcement::ContentFingerprint,
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Copy for WitnessDataHandle<H> {}
+impl<H: HostTypes> Clone for WitnessDataHandle<H> {
+    #[inline]
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+impl<H: HostTypes> PartialEq for WitnessDataHandle<H> {
+    #[inline]
+    fn eq(&self, other: &Self) -> bool {
+        self.fingerprint == other.fingerprint
+    }
+}
+impl<H: HostTypes> Eq for WitnessDataHandle<H> {}
+impl<H: HostTypes> core::hash::Hash for WitnessDataHandle<H> {
+    #[inline]
+    fn hash<S: core::hash::Hasher>(&self, state: &mut S) {
+        self.fingerprint.hash(state);
+    }
+}
+impl<H: HostTypes> WitnessDataHandle<H> {
+    /// Construct a handle from its content fingerprint.
+    #[inline]
+    #[must_use]
+    pub const fn new(fingerprint: crate::enforcement::ContentFingerprint) -> Self {
+        Self {
+            fingerprint,
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+
+/// Phase 8 (orphan-closure) — resolver trait for `WitnessData<H>`.
+///
+/// Hosts implement this trait to map a handle into a typed record.
+/// The default Null stub does not implement this trait — it carries
+/// no record. Resolution is the responsibility of the host pipeline.
+pub trait WitnessDataResolver<H: HostTypes> {
+    /// Resolve a handle into its record. Returns `None` when the
+    /// handle does not correspond to known content.
+    fn resolve(&self, handle: WitnessDataHandle<H>) -> Option<WitnessDataRecord<H>>;
+}
+
+/// Phase 8 (orphan-closure) — typed record for `WitnessData<H>`.
+///
+/// Carries a field per functional accessor of the trait. Object
+/// fields hold `{Range}Handle<H>`; iterate via the Resolved wrapper
+/// chain-resolver methods.
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub struct WitnessDataRecord<H: HostTypes> {
+    #[doc(hidden)]
+    pub _phantom: core::marker::PhantomData<H>,
+}
+
+/// Phase 8 (orphan-closure) — content-addressed wrapper for `WitnessData<H>`.
+///
+/// Caches the resolver's lookup at construction. Accessors return
+/// the cached record's fields when present, falling back to the
+/// `Null{Class}<H>` absent sentinels when the resolver returned
+/// `None`. Object accessors always return absent sentinels — use
+/// the `resolve_{m}` chain methods to descend into sub-records.
+pub struct ResolvedWitnessData<'r, R: WitnessDataResolver<H>, H: HostTypes> {
+    handle: WitnessDataHandle<H>,
+    resolver: &'r R,
+    record: Option<WitnessDataRecord<H>>,
+}
+impl<'r, R: WitnessDataResolver<H>, H: HostTypes> ResolvedWitnessData<'r, R, H> {
+    /// Construct the wrapper, eagerly resolving the handle.
+    #[inline]
+    pub fn new(handle: WitnessDataHandle<H>, resolver: &'r R) -> Self {
+        let record = resolver.resolve(handle);
+        Self {
+            handle,
+            resolver,
+            record,
+        }
+    }
+    /// The handle this wrapper resolves.
+    #[inline]
+    #[must_use]
+    pub const fn handle(&self) -> WitnessDataHandle<H> {
+        self.handle
+    }
+    /// The resolver supplied at construction.
+    #[inline]
+    #[must_use]
+    pub const fn resolver(&self) -> &'r R {
+        self.resolver
+    }
+    /// The cached record, or `None` when the resolver returned `None`.
+    #[inline]
+    #[must_use]
+    pub const fn record(&self) -> Option<&WitnessDataRecord<H>> {
+        self.record.as_ref()
+    }
+}
+impl<'r, R: WitnessDataResolver<H>, H: HostTypes> WitnessData<H> for ResolvedWitnessData<'r, R, H> {
+    fn x(&self) -> &[i64] {
+        &[]
+    }
+    fn bnot_x(&self) -> &[i64] {
+        &[]
+    }
+    fn neg_bnot_x(&self) -> &[i64] {
+        &[]
+    }
+    fn succ_x(&self) -> &[i64] {
+        &[]
+    }
+    fn holds(&self) -> &[bool] {
+        &[]
+    }
+}
+
+/// Phase 8 (orphan-closure) — content-addressed handle for `MorphospaceRecord<H>`.
+///
+/// Pairs a [`crate::enforcement::ContentFingerprint`] with a phantom
+/// `H` so type-state checks can't mix handles across `HostTypes` impls.
+#[derive(Debug)]
+pub struct MorphospaceRecordHandle<H: HostTypes> {
+    /// Content fingerprint identifying the resolved record.
+    pub fingerprint: crate::enforcement::ContentFingerprint,
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Copy for MorphospaceRecordHandle<H> {}
+impl<H: HostTypes> Clone for MorphospaceRecordHandle<H> {
+    #[inline]
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+impl<H: HostTypes> PartialEq for MorphospaceRecordHandle<H> {
+    #[inline]
+    fn eq(&self, other: &Self) -> bool {
+        self.fingerprint == other.fingerprint
+    }
+}
+impl<H: HostTypes> Eq for MorphospaceRecordHandle<H> {}
+impl<H: HostTypes> core::hash::Hash for MorphospaceRecordHandle<H> {
+    #[inline]
+    fn hash<S: core::hash::Hasher>(&self, state: &mut S) {
+        self.fingerprint.hash(state);
+    }
+}
+impl<H: HostTypes> MorphospaceRecordHandle<H> {
+    /// Construct a handle from its content fingerprint.
+    #[inline]
+    #[must_use]
+    pub const fn new(fingerprint: crate::enforcement::ContentFingerprint) -> Self {
+        Self {
+            fingerprint,
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+
+/// Phase 8 (orphan-closure) — resolver trait for `MorphospaceRecord<H>`.
+///
+/// Hosts implement this trait to map a handle into a typed record.
+/// The default Null stub does not implement this trait — it carries
+/// no record. Resolution is the responsibility of the host pipeline.
+pub trait MorphospaceRecordResolver<H: HostTypes> {
+    /// Resolve a handle into its record. Returns `None` when the
+    /// handle does not correspond to known content.
+    fn resolve(&self, handle: MorphospaceRecordHandle<H>) -> Option<MorphospaceRecordRecord<H>>;
+}
+
+/// Phase 8 (orphan-closure) — typed record for `MorphospaceRecord<H>`.
+///
+/// Carries a field per functional accessor of the trait. Object
+/// fields hold `{Range}Handle<H>`; iterate via the Resolved wrapper
+/// chain-resolver methods.
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub struct MorphospaceRecordRecord<H: HostTypes> {
+    pub boundary_type: AchievabilityStatus,
+    #[doc(hidden)]
+    pub _phantom: core::marker::PhantomData<H>,
+}
+
+/// Phase 8 (orphan-closure) — content-addressed wrapper for `MorphospaceRecord<H>`.
+///
+/// Caches the resolver's lookup at construction. Accessors return
+/// the cached record's fields when present, falling back to the
+/// `Null{Class}<H>` absent sentinels when the resolver returned
+/// `None`. Object accessors always return absent sentinels — use
+/// the `resolve_{m}` chain methods to descend into sub-records.
+pub struct ResolvedMorphospaceRecord<'r, R: MorphospaceRecordResolver<H>, H: HostTypes> {
+    handle: MorphospaceRecordHandle<H>,
+    resolver: &'r R,
+    record: Option<MorphospaceRecordRecord<H>>,
+}
+impl<'r, R: MorphospaceRecordResolver<H>, H: HostTypes> ResolvedMorphospaceRecord<'r, R, H> {
+    /// Construct the wrapper, eagerly resolving the handle.
+    #[inline]
+    pub fn new(handle: MorphospaceRecordHandle<H>, resolver: &'r R) -> Self {
+        let record = resolver.resolve(handle);
+        Self {
+            handle,
+            resolver,
+            record,
+        }
+    }
+    /// The handle this wrapper resolves.
+    #[inline]
+    #[must_use]
+    pub const fn handle(&self) -> MorphospaceRecordHandle<H> {
+        self.handle
+    }
+    /// The resolver supplied at construction.
+    #[inline]
+    #[must_use]
+    pub const fn resolver(&self) -> &'r R {
+        self.resolver
+    }
+    /// The cached record, or `None` when the resolver returned `None`.
+    #[inline]
+    #[must_use]
+    pub const fn record(&self) -> Option<&MorphospaceRecordRecord<H>> {
+        self.record.as_ref()
+    }
+}
+impl<'r, R: MorphospaceRecordResolver<H>, H: HostTypes> MorphospaceRecord<H>
+    for ResolvedMorphospaceRecord<'r, R, H>
+{
+    fn boundary_type(&self) -> AchievabilityStatus {
+        match &self.record {
+            Some(r) => r.boundary_type,
+            None => <AchievabilityStatus>::default(),
+        }
+    }
+}
+
+/// Phase 8 (orphan-closure) — content-addressed handle for `MorphospaceBoundary<H>`.
+///
+/// Pairs a [`crate::enforcement::ContentFingerprint`] with a phantom
+/// `H` so type-state checks can't mix handles across `HostTypes` impls.
+#[derive(Debug)]
+pub struct MorphospaceBoundaryHandle<H: HostTypes> {
+    /// Content fingerprint identifying the resolved record.
+    pub fingerprint: crate::enforcement::ContentFingerprint,
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Copy for MorphospaceBoundaryHandle<H> {}
+impl<H: HostTypes> Clone for MorphospaceBoundaryHandle<H> {
+    #[inline]
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+impl<H: HostTypes> PartialEq for MorphospaceBoundaryHandle<H> {
+    #[inline]
+    fn eq(&self, other: &Self) -> bool {
+        self.fingerprint == other.fingerprint
+    }
+}
+impl<H: HostTypes> Eq for MorphospaceBoundaryHandle<H> {}
+impl<H: HostTypes> core::hash::Hash for MorphospaceBoundaryHandle<H> {
+    #[inline]
+    fn hash<S: core::hash::Hasher>(&self, state: &mut S) {
+        self.fingerprint.hash(state);
+    }
+}
+impl<H: HostTypes> MorphospaceBoundaryHandle<H> {
+    /// Construct a handle from its content fingerprint.
+    #[inline]
+    #[must_use]
+    pub const fn new(fingerprint: crate::enforcement::ContentFingerprint) -> Self {
+        Self {
+            fingerprint,
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+
+/// Phase 8 (orphan-closure) — resolver trait for `MorphospaceBoundary<H>`.
+///
+/// Hosts implement this trait to map a handle into a typed record.
+/// The default Null stub does not implement this trait — it carries
+/// no record. Resolution is the responsibility of the host pipeline.
+pub trait MorphospaceBoundaryResolver<H: HostTypes> {
+    /// Resolve a handle into its record. Returns `None` when the
+    /// handle does not correspond to known content.
+    fn resolve(&self, handle: MorphospaceBoundaryHandle<H>)
+        -> Option<MorphospaceBoundaryRecord<H>>;
+}
+
+/// Phase 8 (orphan-closure) — typed record for `MorphospaceBoundary<H>`.
+///
+/// Carries a field per functional accessor of the trait. Object
+/// fields hold `{Range}Handle<H>`; iterate via the Resolved wrapper
+/// chain-resolver methods.
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub struct MorphospaceBoundaryRecord<H: HostTypes> {
+    #[doc(hidden)]
+    pub _phantom: core::marker::PhantomData<H>,
+}
+
+/// Phase 8 (orphan-closure) — content-addressed wrapper for `MorphospaceBoundary<H>`.
+///
+/// Caches the resolver's lookup at construction. Accessors return
+/// the cached record's fields when present, falling back to the
+/// `Null{Class}<H>` absent sentinels when the resolver returned
+/// `None`. Object accessors always return absent sentinels — use
+/// the `resolve_{m}` chain methods to descend into sub-records.
+pub struct ResolvedMorphospaceBoundary<'r, R: MorphospaceBoundaryResolver<H>, H: HostTypes> {
+    handle: MorphospaceBoundaryHandle<H>,
+    resolver: &'r R,
+    record: Option<MorphospaceBoundaryRecord<H>>,
+}
+impl<'r, R: MorphospaceBoundaryResolver<H>, H: HostTypes> ResolvedMorphospaceBoundary<'r, R, H> {
+    /// Construct the wrapper, eagerly resolving the handle.
+    #[inline]
+    pub fn new(handle: MorphospaceBoundaryHandle<H>, resolver: &'r R) -> Self {
+        let record = resolver.resolve(handle);
+        Self {
+            handle,
+            resolver,
+            record,
+        }
+    }
+    /// The handle this wrapper resolves.
+    #[inline]
+    #[must_use]
+    pub const fn handle(&self) -> MorphospaceBoundaryHandle<H> {
+        self.handle
+    }
+    /// The resolver supplied at construction.
+    #[inline]
+    #[must_use]
+    pub const fn resolver(&self) -> &'r R {
+        self.resolver
+    }
+    /// The cached record, or `None` when the resolver returned `None`.
+    #[inline]
+    #[must_use]
+    pub const fn record(&self) -> Option<&MorphospaceBoundaryRecord<H>> {
+        self.record.as_ref()
+    }
+}
+impl<'r, R: MorphospaceBoundaryResolver<H>, H: HostTypes> MorphospaceBoundary<H>
+    for ResolvedMorphospaceBoundary<'r, R, H>
+{
+    type MorphospaceRecord = NullMorphospaceRecord<H>;
+    fn morphospace_record(&self) -> &[Self::MorphospaceRecord] {
+        &[]
+    }
+}
+
+/// Phase 8 (orphan-closure) — content-addressed handle for `InductiveProof<H>`.
+///
+/// Pairs a [`crate::enforcement::ContentFingerprint`] with a phantom
+/// `H` so type-state checks can't mix handles across `HostTypes` impls.
+#[derive(Debug)]
+pub struct InductiveProofHandle<H: HostTypes> {
+    /// Content fingerprint identifying the resolved record.
+    pub fingerprint: crate::enforcement::ContentFingerprint,
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Copy for InductiveProofHandle<H> {}
+impl<H: HostTypes> Clone for InductiveProofHandle<H> {
+    #[inline]
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+impl<H: HostTypes> PartialEq for InductiveProofHandle<H> {
+    #[inline]
+    fn eq(&self, other: &Self) -> bool {
+        self.fingerprint == other.fingerprint
+    }
+}
+impl<H: HostTypes> Eq for InductiveProofHandle<H> {}
+impl<H: HostTypes> core::hash::Hash for InductiveProofHandle<H> {
+    #[inline]
+    fn hash<S: core::hash::Hasher>(&self, state: &mut S) {
+        self.fingerprint.hash(state);
+    }
+}
+impl<H: HostTypes> InductiveProofHandle<H> {
+    /// Construct a handle from its content fingerprint.
+    #[inline]
+    #[must_use]
+    pub const fn new(fingerprint: crate::enforcement::ContentFingerprint) -> Self {
+        Self {
+            fingerprint,
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+
+/// Phase 8 (orphan-closure) — resolver trait for `InductiveProof<H>`.
+///
+/// Hosts implement this trait to map a handle into a typed record.
+/// The default Null stub does not implement this trait — it carries
+/// no record. Resolution is the responsibility of the host pipeline.
+pub trait InductiveProofResolver<H: HostTypes> {
+    /// Resolve a handle into its record. Returns `None` when the
+    /// handle does not correspond to known content.
+    fn resolve(&self, handle: InductiveProofHandle<H>) -> Option<InductiveProofRecord<H>>;
+}
+
+/// Phase 8 (orphan-closure) — typed record for `InductiveProof<H>`.
+///
+/// Carries a field per functional accessor of the trait. Object
+/// fields hold `{Range}Handle<H>`; iterate via the Resolved wrapper
+/// chain-resolver methods.
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub struct InductiveProofRecord<H: HostTypes> {
+    pub base_case_handle: ProofHandle<H>,
+    pub inductive_step_handle: ProofHandle<H>,
+    pub valid_for_kat_least: u64,
+    #[doc(hidden)]
+    pub _phantom: core::marker::PhantomData<H>,
+}
+
+/// Phase 8 (orphan-closure) — content-addressed wrapper for `InductiveProof<H>`.
+///
+/// Caches the resolver's lookup at construction. Accessors return
+/// the cached record's fields when present, falling back to the
+/// `Null{Class}<H>` absent sentinels when the resolver returned
+/// `None`. Object accessors always return absent sentinels — use
+/// the `resolve_{m}` chain methods to descend into sub-records.
+pub struct ResolvedInductiveProof<'r, R: InductiveProofResolver<H>, H: HostTypes> {
+    handle: InductiveProofHandle<H>,
+    resolver: &'r R,
+    record: Option<InductiveProofRecord<H>>,
+}
+impl<'r, R: InductiveProofResolver<H>, H: HostTypes> ResolvedInductiveProof<'r, R, H> {
+    /// Construct the wrapper, eagerly resolving the handle.
+    #[inline]
+    pub fn new(handle: InductiveProofHandle<H>, resolver: &'r R) -> Self {
+        let record = resolver.resolve(handle);
+        Self {
+            handle,
+            resolver,
+            record,
+        }
+    }
+    /// The handle this wrapper resolves.
+    #[inline]
+    #[must_use]
+    pub const fn handle(&self) -> InductiveProofHandle<H> {
+        self.handle
+    }
+    /// The resolver supplied at construction.
+    #[inline]
+    #[must_use]
+    pub const fn resolver(&self) -> &'r R {
+        self.resolver
+    }
+    /// The cached record, or `None` when the resolver returned `None`.
+    #[inline]
+    #[must_use]
+    pub const fn record(&self) -> Option<&InductiveProofRecord<H>> {
+        self.record.as_ref()
+    }
+}
+impl<'r, R: InductiveProofResolver<H>, H: HostTypes> Proof<H> for ResolvedInductiveProof<'r, R, H> {
+    fn verified(&self) -> bool {
+        false
+    }
+    fn timestamp(&self) -> &H::WitnessBytes {
+        H::EMPTY_WITNESS_BYTES
+    }
+    type WitnessData = NullWitnessData<H>;
+    fn witness(&self) -> &[Self::WitnessData] {
+        &[]
+    }
+    type Identity = crate::kernel::op::NullIdentity<H>;
+    fn proves_identity(&self) -> &Self::Identity {
+        &<crate::kernel::op::NullIdentity<H>>::ABSENT
+    }
+    fn verified_at_level(&self) -> &[WittLevel] {
+        &[]
+    }
+    fn strategy(&self) -> ProofStrategy {
+        <ProofStrategy>::default()
+    }
+    fn depends_on(&self) -> &[Self::Identity] {
+        &[]
+    }
+    type DerivationTerm = NullDerivationTerm<H>;
+    fn formal_derivation(&self) -> &Self::DerivationTerm {
+        &<NullDerivationTerm<H>>::ABSENT
+    }
+}
+impl<'r, R: InductiveProofResolver<H>, H: HostTypes> InductiveProof<H>
+    for ResolvedInductiveProof<'r, R, H>
+{
+    type Proof = NullProof<H>;
+    fn base_case(&self) -> &Self::Proof {
+        &<NullProof<H>>::ABSENT
+    }
+    fn inductive_step(&self) -> &Self::Proof {
+        &<NullProof<H>>::ABSENT
+    }
+    fn valid_for_kat_least(&self) -> u64 {
+        match &self.record {
+            Some(r) => r.valid_for_kat_least,
+            None => 0,
+        }
+    }
+}
+impl<'r, R: InductiveProofResolver<H>, H: HostTypes> ResolvedInductiveProof<'r, R, H> {
+    /// Promote the `base_case` handle on the cached record into a
+    /// resolved wrapper, given a resolver for the range class.
+    /// Returns `None` if no record was resolved at construction.
+    #[inline]
+    pub fn resolve_base_case<'r2, R2: ProofResolver<H>>(
+        &self,
+        r: &'r2 R2,
+    ) -> Option<ResolvedProof<'r2, R2, H>> {
+        let record = self.record.as_ref()?;
+        Some(ResolvedProof::new(record.base_case_handle, r))
+    }
+    /// Promote the `inductive_step` handle on the cached record into a
+    /// resolved wrapper, given a resolver for the range class.
+    /// Returns `None` if no record was resolved at construction.
+    #[inline]
+    pub fn resolve_inductive_step<'r2, R2: ProofResolver<H>>(
+        &self,
+        r: &'r2 R2,
+    ) -> Option<ResolvedProof<'r2, R2, H>> {
+        let record = self.record.as_ref()?;
+        Some(ResolvedProof::new(record.inductive_step_handle, r))
+    }
+}
+
+/// Phase 8 (orphan-closure) — content-addressed handle for `DerivationTerm<H>`.
+///
+/// Pairs a [`crate::enforcement::ContentFingerprint`] with a phantom
+/// `H` so type-state checks can't mix handles across `HostTypes` impls.
+#[derive(Debug)]
+pub struct DerivationTermHandle<H: HostTypes> {
+    /// Content fingerprint identifying the resolved record.
+    pub fingerprint: crate::enforcement::ContentFingerprint,
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Copy for DerivationTermHandle<H> {}
+impl<H: HostTypes> Clone for DerivationTermHandle<H> {
+    #[inline]
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+impl<H: HostTypes> PartialEq for DerivationTermHandle<H> {
+    #[inline]
+    fn eq(&self, other: &Self) -> bool {
+        self.fingerprint == other.fingerprint
+    }
+}
+impl<H: HostTypes> Eq for DerivationTermHandle<H> {}
+impl<H: HostTypes> core::hash::Hash for DerivationTermHandle<H> {
+    #[inline]
+    fn hash<S: core::hash::Hasher>(&self, state: &mut S) {
+        self.fingerprint.hash(state);
+    }
+}
+impl<H: HostTypes> DerivationTermHandle<H> {
+    /// Construct a handle from its content fingerprint.
+    #[inline]
+    #[must_use]
+    pub const fn new(fingerprint: crate::enforcement::ContentFingerprint) -> Self {
+        Self {
+            fingerprint,
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+
+/// Phase 8 (orphan-closure) — resolver trait for `DerivationTerm<H>`.
+///
+/// Hosts implement this trait to map a handle into a typed record.
+/// The default Null stub does not implement this trait — it carries
+/// no record. Resolution is the responsibility of the host pipeline.
+pub trait DerivationTermResolver<H: HostTypes> {
+    /// Resolve a handle into its record. Returns `None` when the
+    /// handle does not correspond to known content.
+    fn resolve(&self, handle: DerivationTermHandle<H>) -> Option<DerivationTermRecord<H>>;
+}
+
+/// Phase 8 (orphan-closure) — typed record for `DerivationTerm<H>`.
+///
+/// Carries a field per functional accessor of the trait. Object
+/// fields hold `{Range}Handle<H>`; iterate via the Resolved wrapper
+/// chain-resolver methods.
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub struct DerivationTermRecord<H: HostTypes> {
+    #[doc(hidden)]
+    pub _phantom: core::marker::PhantomData<H>,
+}
+
+/// Phase 8 (orphan-closure) — content-addressed wrapper for `DerivationTerm<H>`.
+///
+/// Caches the resolver's lookup at construction. Accessors return
+/// the cached record's fields when present, falling back to the
+/// `Null{Class}<H>` absent sentinels when the resolver returned
+/// `None`. Object accessors always return absent sentinels — use
+/// the `resolve_{m}` chain methods to descend into sub-records.
+pub struct ResolvedDerivationTerm<'r, R: DerivationTermResolver<H>, H: HostTypes> {
+    handle: DerivationTermHandle<H>,
+    resolver: &'r R,
+    record: Option<DerivationTermRecord<H>>,
+}
+impl<'r, R: DerivationTermResolver<H>, H: HostTypes> ResolvedDerivationTerm<'r, R, H> {
+    /// Construct the wrapper, eagerly resolving the handle.
+    #[inline]
+    pub fn new(handle: DerivationTermHandle<H>, resolver: &'r R) -> Self {
+        let record = resolver.resolve(handle);
+        Self {
+            handle,
+            resolver,
+            record,
+        }
+    }
+    /// The handle this wrapper resolves.
+    #[inline]
+    #[must_use]
+    pub const fn handle(&self) -> DerivationTermHandle<H> {
+        self.handle
+    }
+    /// The resolver supplied at construction.
+    #[inline]
+    #[must_use]
+    pub const fn resolver(&self) -> &'r R {
+        self.resolver
+    }
+    /// The cached record, or `None` when the resolver returned `None`.
+    #[inline]
+    #[must_use]
+    pub const fn record(&self) -> Option<&DerivationTermRecord<H>> {
+        self.record.as_ref()
+    }
+}
+impl<'r, R: DerivationTermResolver<H>, H: HostTypes> DerivationTerm<H>
+    for ResolvedDerivationTerm<'r, R, H>
+{
+}
+
+/// Phase 8 (orphan-closure) — content-addressed handle for `TacticApplication<H>`.
+///
+/// Pairs a [`crate::enforcement::ContentFingerprint`] with a phantom
+/// `H` so type-state checks can't mix handles across `HostTypes` impls.
+#[derive(Debug)]
+pub struct TacticApplicationHandle<H: HostTypes> {
+    /// Content fingerprint identifying the resolved record.
+    pub fingerprint: crate::enforcement::ContentFingerprint,
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Copy for TacticApplicationHandle<H> {}
+impl<H: HostTypes> Clone for TacticApplicationHandle<H> {
+    #[inline]
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+impl<H: HostTypes> PartialEq for TacticApplicationHandle<H> {
+    #[inline]
+    fn eq(&self, other: &Self) -> bool {
+        self.fingerprint == other.fingerprint
+    }
+}
+impl<H: HostTypes> Eq for TacticApplicationHandle<H> {}
+impl<H: HostTypes> core::hash::Hash for TacticApplicationHandle<H> {
+    #[inline]
+    fn hash<S: core::hash::Hasher>(&self, state: &mut S) {
+        self.fingerprint.hash(state);
+    }
+}
+impl<H: HostTypes> TacticApplicationHandle<H> {
+    /// Construct a handle from its content fingerprint.
+    #[inline]
+    #[must_use]
+    pub const fn new(fingerprint: crate::enforcement::ContentFingerprint) -> Self {
+        Self {
+            fingerprint,
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+
+/// Phase 8 (orphan-closure) — resolver trait for `TacticApplication<H>`.
+///
+/// Hosts implement this trait to map a handle into a typed record.
+/// The default Null stub does not implement this trait — it carries
+/// no record. Resolution is the responsibility of the host pipeline.
+pub trait TacticApplicationResolver<H: HostTypes> {
+    /// Resolve a handle into its record. Returns `None` when the
+    /// handle does not correspond to known content.
+    fn resolve(&self, handle: TacticApplicationHandle<H>) -> Option<TacticApplicationRecord<H>>;
+}
+
+/// Phase 8 (orphan-closure) — typed record for `TacticApplication<H>`.
+///
+/// Carries a field per functional accessor of the trait. Object
+/// fields hold `{Range}Handle<H>`; iterate via the Resolved wrapper
+/// chain-resolver methods.
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub struct TacticApplicationRecord<H: HostTypes> {
+    #[doc(hidden)]
+    pub _phantom: core::marker::PhantomData<H>,
+}
+
+/// Phase 8 (orphan-closure) — content-addressed wrapper for `TacticApplication<H>`.
+///
+/// Caches the resolver's lookup at construction. Accessors return
+/// the cached record's fields when present, falling back to the
+/// `Null{Class}<H>` absent sentinels when the resolver returned
+/// `None`. Object accessors always return absent sentinels — use
+/// the `resolve_{m}` chain methods to descend into sub-records.
+pub struct ResolvedTacticApplication<'r, R: TacticApplicationResolver<H>, H: HostTypes> {
+    handle: TacticApplicationHandle<H>,
+    resolver: &'r R,
+    record: Option<TacticApplicationRecord<H>>,
+}
+impl<'r, R: TacticApplicationResolver<H>, H: HostTypes> ResolvedTacticApplication<'r, R, H> {
+    /// Construct the wrapper, eagerly resolving the handle.
+    #[inline]
+    pub fn new(handle: TacticApplicationHandle<H>, resolver: &'r R) -> Self {
+        let record = resolver.resolve(handle);
+        Self {
+            handle,
+            resolver,
+            record,
+        }
+    }
+    /// The handle this wrapper resolves.
+    #[inline]
+    #[must_use]
+    pub const fn handle(&self) -> TacticApplicationHandle<H> {
+        self.handle
+    }
+    /// The resolver supplied at construction.
+    #[inline]
+    #[must_use]
+    pub const fn resolver(&self) -> &'r R {
+        self.resolver
+    }
+    /// The cached record, or `None` when the resolver returned `None`.
+    #[inline]
+    #[must_use]
+    pub const fn record(&self) -> Option<&TacticApplicationRecord<H>> {
+        self.record.as_ref()
+    }
+}
+impl<'r, R: TacticApplicationResolver<H>, H: HostTypes> DerivationTerm<H>
+    for ResolvedTacticApplication<'r, R, H>
+{
+}
+impl<'r, R: TacticApplicationResolver<H>, H: HostTypes> TacticApplication<H>
+    for ResolvedTacticApplication<'r, R, H>
+{
+}
+
+/// Phase 8 (orphan-closure) — content-addressed handle for `LemmaInvocation<H>`.
+///
+/// Pairs a [`crate::enforcement::ContentFingerprint`] with a phantom
+/// `H` so type-state checks can't mix handles across `HostTypes` impls.
+#[derive(Debug)]
+pub struct LemmaInvocationHandle<H: HostTypes> {
+    /// Content fingerprint identifying the resolved record.
+    pub fingerprint: crate::enforcement::ContentFingerprint,
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Copy for LemmaInvocationHandle<H> {}
+impl<H: HostTypes> Clone for LemmaInvocationHandle<H> {
+    #[inline]
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+impl<H: HostTypes> PartialEq for LemmaInvocationHandle<H> {
+    #[inline]
+    fn eq(&self, other: &Self) -> bool {
+        self.fingerprint == other.fingerprint
+    }
+}
+impl<H: HostTypes> Eq for LemmaInvocationHandle<H> {}
+impl<H: HostTypes> core::hash::Hash for LemmaInvocationHandle<H> {
+    #[inline]
+    fn hash<S: core::hash::Hasher>(&self, state: &mut S) {
+        self.fingerprint.hash(state);
+    }
+}
+impl<H: HostTypes> LemmaInvocationHandle<H> {
+    /// Construct a handle from its content fingerprint.
+    #[inline]
+    #[must_use]
+    pub const fn new(fingerprint: crate::enforcement::ContentFingerprint) -> Self {
+        Self {
+            fingerprint,
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+
+/// Phase 8 (orphan-closure) — resolver trait for `LemmaInvocation<H>`.
+///
+/// Hosts implement this trait to map a handle into a typed record.
+/// The default Null stub does not implement this trait — it carries
+/// no record. Resolution is the responsibility of the host pipeline.
+pub trait LemmaInvocationResolver<H: HostTypes> {
+    /// Resolve a handle into its record. Returns `None` when the
+    /// handle does not correspond to known content.
+    fn resolve(&self, handle: LemmaInvocationHandle<H>) -> Option<LemmaInvocationRecord<H>>;
+}
+
+/// Phase 8 (orphan-closure) — typed record for `LemmaInvocation<H>`.
+///
+/// Carries a field per functional accessor of the trait. Object
+/// fields hold `{Range}Handle<H>`; iterate via the Resolved wrapper
+/// chain-resolver methods.
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub struct LemmaInvocationRecord<H: HostTypes> {
+    #[doc(hidden)]
+    pub _phantom: core::marker::PhantomData<H>,
+}
+
+/// Phase 8 (orphan-closure) — content-addressed wrapper for `LemmaInvocation<H>`.
+///
+/// Caches the resolver's lookup at construction. Accessors return
+/// the cached record's fields when present, falling back to the
+/// `Null{Class}<H>` absent sentinels when the resolver returned
+/// `None`. Object accessors always return absent sentinels — use
+/// the `resolve_{m}` chain methods to descend into sub-records.
+pub struct ResolvedLemmaInvocation<'r, R: LemmaInvocationResolver<H>, H: HostTypes> {
+    handle: LemmaInvocationHandle<H>,
+    resolver: &'r R,
+    record: Option<LemmaInvocationRecord<H>>,
+}
+impl<'r, R: LemmaInvocationResolver<H>, H: HostTypes> ResolvedLemmaInvocation<'r, R, H> {
+    /// Construct the wrapper, eagerly resolving the handle.
+    #[inline]
+    pub fn new(handle: LemmaInvocationHandle<H>, resolver: &'r R) -> Self {
+        let record = resolver.resolve(handle);
+        Self {
+            handle,
+            resolver,
+            record,
+        }
+    }
+    /// The handle this wrapper resolves.
+    #[inline]
+    #[must_use]
+    pub const fn handle(&self) -> LemmaInvocationHandle<H> {
+        self.handle
+    }
+    /// The resolver supplied at construction.
+    #[inline]
+    #[must_use]
+    pub const fn resolver(&self) -> &'r R {
+        self.resolver
+    }
+    /// The cached record, or `None` when the resolver returned `None`.
+    #[inline]
+    #[must_use]
+    pub const fn record(&self) -> Option<&LemmaInvocationRecord<H>> {
+        self.record.as_ref()
+    }
+}
+impl<'r, R: LemmaInvocationResolver<H>, H: HostTypes> DerivationTerm<H>
+    for ResolvedLemmaInvocation<'r, R, H>
+{
+}
+impl<'r, R: LemmaInvocationResolver<H>, H: HostTypes> LemmaInvocation<H>
+    for ResolvedLemmaInvocation<'r, R, H>
+{
+}
+
+/// Phase 8 (orphan-closure) — content-addressed handle for `InductionStep<H>`.
+///
+/// Pairs a [`crate::enforcement::ContentFingerprint`] with a phantom
+/// `H` so type-state checks can't mix handles across `HostTypes` impls.
+#[derive(Debug)]
+pub struct InductionStepHandle<H: HostTypes> {
+    /// Content fingerprint identifying the resolved record.
+    pub fingerprint: crate::enforcement::ContentFingerprint,
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Copy for InductionStepHandle<H> {}
+impl<H: HostTypes> Clone for InductionStepHandle<H> {
+    #[inline]
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+impl<H: HostTypes> PartialEq for InductionStepHandle<H> {
+    #[inline]
+    fn eq(&self, other: &Self) -> bool {
+        self.fingerprint == other.fingerprint
+    }
+}
+impl<H: HostTypes> Eq for InductionStepHandle<H> {}
+impl<H: HostTypes> core::hash::Hash for InductionStepHandle<H> {
+    #[inline]
+    fn hash<S: core::hash::Hasher>(&self, state: &mut S) {
+        self.fingerprint.hash(state);
+    }
+}
+impl<H: HostTypes> InductionStepHandle<H> {
+    /// Construct a handle from its content fingerprint.
+    #[inline]
+    #[must_use]
+    pub const fn new(fingerprint: crate::enforcement::ContentFingerprint) -> Self {
+        Self {
+            fingerprint,
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+
+/// Phase 8 (orphan-closure) — resolver trait for `InductionStep<H>`.
+///
+/// Hosts implement this trait to map a handle into a typed record.
+/// The default Null stub does not implement this trait — it carries
+/// no record. Resolution is the responsibility of the host pipeline.
+pub trait InductionStepResolver<H: HostTypes> {
+    /// Resolve a handle into its record. Returns `None` when the
+    /// handle does not correspond to known content.
+    fn resolve(&self, handle: InductionStepHandle<H>) -> Option<InductionStepRecord<H>>;
+}
+
+/// Phase 8 (orphan-closure) — typed record for `InductionStep<H>`.
+///
+/// Carries a field per functional accessor of the trait. Object
+/// fields hold `{Range}Handle<H>`; iterate via the Resolved wrapper
+/// chain-resolver methods.
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub struct InductionStepRecord<H: HostTypes> {
+    #[doc(hidden)]
+    pub _phantom: core::marker::PhantomData<H>,
+}
+
+/// Phase 8 (orphan-closure) — content-addressed wrapper for `InductionStep<H>`.
+///
+/// Caches the resolver's lookup at construction. Accessors return
+/// the cached record's fields when present, falling back to the
+/// `Null{Class}<H>` absent sentinels when the resolver returned
+/// `None`. Object accessors always return absent sentinels — use
+/// the `resolve_{m}` chain methods to descend into sub-records.
+pub struct ResolvedInductionStep<'r, R: InductionStepResolver<H>, H: HostTypes> {
+    handle: InductionStepHandle<H>,
+    resolver: &'r R,
+    record: Option<InductionStepRecord<H>>,
+}
+impl<'r, R: InductionStepResolver<H>, H: HostTypes> ResolvedInductionStep<'r, R, H> {
+    /// Construct the wrapper, eagerly resolving the handle.
+    #[inline]
+    pub fn new(handle: InductionStepHandle<H>, resolver: &'r R) -> Self {
+        let record = resolver.resolve(handle);
+        Self {
+            handle,
+            resolver,
+            record,
+        }
+    }
+    /// The handle this wrapper resolves.
+    #[inline]
+    #[must_use]
+    pub const fn handle(&self) -> InductionStepHandle<H> {
+        self.handle
+    }
+    /// The resolver supplied at construction.
+    #[inline]
+    #[must_use]
+    pub const fn resolver(&self) -> &'r R {
+        self.resolver
+    }
+    /// The cached record, or `None` when the resolver returned `None`.
+    #[inline]
+    #[must_use]
+    pub const fn record(&self) -> Option<&InductionStepRecord<H>> {
+        self.record.as_ref()
+    }
+}
+impl<'r, R: InductionStepResolver<H>, H: HostTypes> DerivationTerm<H>
+    for ResolvedInductionStep<'r, R, H>
+{
+}
+impl<'r, R: InductionStepResolver<H>, H: HostTypes> InductionStep<H>
+    for ResolvedInductionStep<'r, R, H>
+{
+}
+
+/// Phase 8 (orphan-closure) — content-addressed handle for `ComputationStep<H>`.
+///
+/// Pairs a [`crate::enforcement::ContentFingerprint`] with a phantom
+/// `H` so type-state checks can't mix handles across `HostTypes` impls.
+#[derive(Debug)]
+pub struct ComputationStepHandle<H: HostTypes> {
+    /// Content fingerprint identifying the resolved record.
+    pub fingerprint: crate::enforcement::ContentFingerprint,
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Copy for ComputationStepHandle<H> {}
+impl<H: HostTypes> Clone for ComputationStepHandle<H> {
+    #[inline]
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+impl<H: HostTypes> PartialEq for ComputationStepHandle<H> {
+    #[inline]
+    fn eq(&self, other: &Self) -> bool {
+        self.fingerprint == other.fingerprint
+    }
+}
+impl<H: HostTypes> Eq for ComputationStepHandle<H> {}
+impl<H: HostTypes> core::hash::Hash for ComputationStepHandle<H> {
+    #[inline]
+    fn hash<S: core::hash::Hasher>(&self, state: &mut S) {
+        self.fingerprint.hash(state);
+    }
+}
+impl<H: HostTypes> ComputationStepHandle<H> {
+    /// Construct a handle from its content fingerprint.
+    #[inline]
+    #[must_use]
+    pub const fn new(fingerprint: crate::enforcement::ContentFingerprint) -> Self {
+        Self {
+            fingerprint,
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+
+/// Phase 8 (orphan-closure) — resolver trait for `ComputationStep<H>`.
+///
+/// Hosts implement this trait to map a handle into a typed record.
+/// The default Null stub does not implement this trait — it carries
+/// no record. Resolution is the responsibility of the host pipeline.
+pub trait ComputationStepResolver<H: HostTypes> {
+    /// Resolve a handle into its record. Returns `None` when the
+    /// handle does not correspond to known content.
+    fn resolve(&self, handle: ComputationStepHandle<H>) -> Option<ComputationStepRecord<H>>;
+}
+
+/// Phase 8 (orphan-closure) — typed record for `ComputationStep<H>`.
+///
+/// Carries a field per functional accessor of the trait. Object
+/// fields hold `{Range}Handle<H>`; iterate via the Resolved wrapper
+/// chain-resolver methods.
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub struct ComputationStepRecord<H: HostTypes> {
+    #[doc(hidden)]
+    pub _phantom: core::marker::PhantomData<H>,
+}
+
+/// Phase 8 (orphan-closure) — content-addressed wrapper for `ComputationStep<H>`.
+///
+/// Caches the resolver's lookup at construction. Accessors return
+/// the cached record's fields when present, falling back to the
+/// `Null{Class}<H>` absent sentinels when the resolver returned
+/// `None`. Object accessors always return absent sentinels — use
+/// the `resolve_{m}` chain methods to descend into sub-records.
+pub struct ResolvedComputationStep<'r, R: ComputationStepResolver<H>, H: HostTypes> {
+    handle: ComputationStepHandle<H>,
+    resolver: &'r R,
+    record: Option<ComputationStepRecord<H>>,
+}
+impl<'r, R: ComputationStepResolver<H>, H: HostTypes> ResolvedComputationStep<'r, R, H> {
+    /// Construct the wrapper, eagerly resolving the handle.
+    #[inline]
+    pub fn new(handle: ComputationStepHandle<H>, resolver: &'r R) -> Self {
+        let record = resolver.resolve(handle);
+        Self {
+            handle,
+            resolver,
+            record,
+        }
+    }
+    /// The handle this wrapper resolves.
+    #[inline]
+    #[must_use]
+    pub const fn handle(&self) -> ComputationStepHandle<H> {
+        self.handle
+    }
+    /// The resolver supplied at construction.
+    #[inline]
+    #[must_use]
+    pub const fn resolver(&self) -> &'r R {
+        self.resolver
+    }
+    /// The cached record, or `None` when the resolver returned `None`.
+    #[inline]
+    #[must_use]
+    pub const fn record(&self) -> Option<&ComputationStepRecord<H>> {
+        self.record.as_ref()
+    }
+}
+impl<'r, R: ComputationStepResolver<H>, H: HostTypes> DerivationTerm<H>
+    for ResolvedComputationStep<'r, R, H>
+{
+}
+impl<'r, R: ComputationStepResolver<H>, H: HostTypes> ComputationStep<H>
+    for ResolvedComputationStep<'r, R, H>
+{
+}
 
 /// Follows from ZMod ring axioms. Lean4 tactic: `by ring`.
 pub mod ring_axiom {}
@@ -400,6 +3011,90 @@ pub mod prf_r_m4 {
 pub mod prf_r_m5 {
     /// `provesIdentity` -> `R_M5`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/R_M5";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of DV_1 (div right-identity). Holds at every quantum level: floor(a / 1) = a.
+pub mod prf_dv_1 {
+    /// `provesIdentity` -> `DV_1`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/DV_1";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of DV_2 (div left-absorbing). Holds by the Euclidean-algorithm rule floor(0 / b) = 0 for b ≠ 0.
+pub mod prf_dv_2 {
+    /// `provesIdentity` -> `DV_2`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/DV_2";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of DV_3 (div-of-mul recovery). Holds whenever mul(a, b) is in the unit cone (no overflow); the Euclidean-algorithm yields q = a and r = 0.
+pub mod prf_dv_3 {
+    /// `provesIdentity` -> `DV_3`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/DV_3";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of DV_4 (Euclidean compatibility). Direct consequence of the Euclidean-algorithm definition: a = q·b + r with 0 ≤ r < b.
+pub mod prf_dv_4 {
+    /// `provesIdentity` -> `DV_4`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/DV_4";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of PW_1 (zero-exp identity). Base case of the square-and-multiply construction: empty product = 1.
+pub mod prf_pw_1 {
+    /// `provesIdentity` -> `PW_1`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/PW_1";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of PW_2 (unit-exp identity). Follows from PW_1 + one square-and-multiply step: a · 1 = a.
+pub mod prf_pw_2 {
+    /// `provesIdentity` -> `PW_2`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/PW_2";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of PW_3 (additive-exp decomposition). Square-and-multiply reduces pow(a, b+c) to interleaved multiplications of pow(a, b) and pow(a, c) within the ring.
+pub mod prf_pw_3 {
+    /// `provesIdentity` -> `PW_3`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/PW_3";
     /// `strategy` -> `RingAxiom`
     pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`
@@ -4654,6 +7349,138 @@ pub mod prf_st_5 {
     pub const VERIFIED: bool = true;
 }
 
+/// Proof of ST_6: unique existence of the PartitionCoproduct tag site. Follows from ST_2's single `ln 2` entropy quantum — distinguishing two variants requires exactly one bit, which fixes exactly one tag site logically disjoint from every data site of either operand.
+pub mod prf_st_6 {
+    /// `provesIdentity` -> `ST_6`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/ST_6";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Proof of ST_7: PartitionCoproduct variant-tagging decomposition. constraints(A + B) = constraints(A) ∪ {tag=0} ∪ constraints(B) ∪ {tag=1}. Each tag-pinning constraint is emitted as an Affine with single-coefficient 1 at the tag site, distinguished by bias (0 for left, -1 for right).
+pub mod prf_st_7 {
+    /// `provesIdentity` -> `ST_7`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/ST_7";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Proof of ST_8: variant nerve disjointness. The two tag-pinning constraints carry incompatible biases (0 vs -1) at the same tag site, so no single assignment satisfies both simultaneously. The variant nerves therefore share no common assignment — the bridge premise ST_3/ST_4 rely on.
+pub mod prf_st_8 {
+    /// `provesIdentity` -> `ST_8`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/ST_8";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Proof of ST_9: χ additivity for PartitionCoproduct constructions. Combines ST_8's disjointness guarantee with the universal ST_3 (χ additive for any disjoint SumType).
+pub mod prf_st_9 {
+    /// `provesIdentity` -> `ST_9`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/ST_9";
+    /// `strategy` -> `Composition`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Composition";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Proof of ST_10: Betti additivity for PartitionCoproduct constructions. Combines ST_8's disjointness guarantee with the universal ST_4 (Betti additive at every dimension for any disjoint SumType).
+pub mod prf_st_10 {
+    /// `provesIdentity` -> `ST_10`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/ST_10";
+    /// `strategy` -> `Composition`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/Composition";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Proof of CPT_1: site additivity for Cartesian partition products. UOR sites are bit widths; |A ⊠ B| = 2^{n_A} · 2^{n_B} = 2^{n_A + n_B}, so sites add. Sister identity to PT_1 (same arithmetic; the two differ at the nerve-topology level per CPT_3 vs PT_3).
+pub mod prf_cpt_1 {
+    /// `provesIdentity` -> `CPT_1`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/CPT_1";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Proof of CPT_2a: Π(A ⊠ B) = CartesianPartitionProduct(Π(A), Π(B)). Structural axiom defining the partition map on Cartesian-product types.
+pub mod prf_cpt_2a {
+    /// `provesIdentity` -> `CPT_2a`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/CPT_2a";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Proof of CPT_3: χ multiplicativity for Cartesian partition products. Classical topology result — the simplicial product nerve has vertex set V(N(A)) × V(N(B)) and Euler characteristic χ(N(A)) · χ(N(B)). Distinguishes CartesianPartitionProduct from the site-disjoint-union PartitionProduct (which is χ-additive per PT_3).
+pub mod prf_cpt_3 {
+    /// `provesIdentity` -> `CPT_3`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/CPT_3";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Proof of CPT_4: Künneth formula for Betti composition under Cartesian partition product. Follows from the classical Künneth theorem applied to the simplicial product nerve of the two component constraint systems.
+pub mod prf_cpt_4 {
+    /// `provesIdentity` -> `CPT_4`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/CPT_4";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Proof of CPT_5: entropy additivity for Cartesian partition products. S(A ⊠ B) = S(A) + S(B) — Shannon additivity for independent subsystems. Consistent pointwise with IT_7a/b on the combined system.
+pub mod prf_cpt_5 {
+    /// `provesIdentity` -> `CPT_5`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/CPT_5";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Proof of CPT_6: distributivity of Cartesian partition product over PartitionCoproduct. A ⊠ (B + C) ≡ (A ⊠ B) + (A ⊠ C) at the siteBudget, SITE_COUNT, χ, and entropy levels simultaneously. Does NOT extend to PartitionProduct (distribution over × duplicates the outer factor at the site-budget level).
+pub mod prf_cpt_6 {
+    /// `provesIdentity` -> `CPT_6`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/CPT_6";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
 /// Inductive proof of TS_8: minimum constraint count for beta_1 = k is 2k + 1. Base case at k=1 requires 3 mutually overlapping constraints.
 pub mod prf_ts_8 {
     /// `baseCase` -> `prf_HA_1`
@@ -7964,6 +10791,54 @@ pub mod prf_cs_6 {
 pub mod prf_cs_7 {
     /// `provesIdentity` -> `CS_7`
     pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/CS_7";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Axiomatic derivation of IH_1 (inhabitance soundness): cert:InhabitanceCertificate(T).verified iff carrier(T) ≠ ∅.
+pub mod prf_ih_1 {
+    /// `provesIdentity` -> `IH_1`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/IH_1";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Cost identity for the 2-SAT decider on Is2SatShape instances. Inherited from the classical 2-SAT polynomial decision procedure.
+pub mod prf_ih_2a {
+    /// `provesIdentity` -> `IH_2a`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/IH_2a";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Cost identity for the Horn-SAT decider on IsHornShape instances. Inherited from the classical Horn-SAT polynomial decision procedure via unit propagation.
+pub mod prf_ih_2b {
+    /// `provesIdentity` -> `IH_2b`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/IH_2b";
+    /// `strategy` -> `RingAxiom`
+    pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
+    /// `universalScope`
+    pub const UNIVERSAL_SCOPE: bool = true;
+    /// `verified`
+    pub const VERIFIED: bool = true;
+}
+
+/// Carrier preservation under basis reduction. Discharged against resolver:JacobianGuidedResolver and resolver:guidingJacobian vocabulary.
+pub mod prf_ih_3 {
+    /// `provesIdentity` -> `IH_3`
+    pub const PROVES_IDENTITY: &str = "https://uor.foundation/op/IH_3";
     /// `strategy` -> `RingAxiom`
     pub const STRATEGY: &str = "https://uor.foundation/proof/RingAxiom";
     /// `universalScope`

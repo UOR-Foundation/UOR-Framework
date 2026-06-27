@@ -222,6 +222,19 @@ fn classes() -> Vec<Class> {
             subclass_of: &["https://uor.foundation/proof/DerivationTerm"],
             disjoint_with: &[],
         },
+        // v0.2.1: Inhabitance Verdict Instantiation
+        Class {
+            id: "https://uor.foundation/proof/InhabitanceImpossibilityWitness",
+            label: "InhabitanceImpossibilityWitness",
+            comment: "A specialisation of proof:ImpossibilityWitness produced \
+                      when the inhabitance search determines that the carrier \
+                      of a ConstrainedType is empty. Aggregates into the \
+                      existing proof:MorphospaceBoundary alongside other \
+                      impossibility witnesses, inheriting its O(1) amortised \
+                      lookup discipline for previously resolved signatures.",
+            subclass_of: &["https://uor.foundation/proof/ImpossibilityWitness"],
+            disjoint_with: &[],
+        },
     ]
 }
 
@@ -233,6 +246,7 @@ fn properties() -> Vec<Property> {
             comment: "Whether this proof has been verified by the kernel.",
             kind: PropertyKind::Datatype,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/proof/Proof"),
             range: XSD_BOOLEAN,
         },
@@ -242,6 +256,7 @@ fn properties() -> Vec<Property> {
             comment: "The time at which this proof was produced.",
             kind: PropertyKind::Datatype,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/proof/Proof"),
             range: XSD_DATETIME,
         },
@@ -251,6 +266,7 @@ fn properties() -> Vec<Property> {
             comment: "Supporting witness data for this proof.",
             kind: PropertyKind::Object,
             functional: false,
+            required: false,
             domain: Some("https://uor.foundation/proof/Proof"),
             range: "https://uor.foundation/proof/WitnessData",
         },
@@ -262,6 +278,7 @@ fn properties() -> Vec<Property> {
                       Annotation only — proof:provesIdentity is the typed reference.",
             kind: PropertyKind::Annotation,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/proof/CriticalIdentityProof"),
             range: XSD_STRING,
         },
@@ -272,6 +289,7 @@ fn properties() -> Vec<Property> {
                       identity check.",
             kind: PropertyKind::Datatype,
             functional: false,
+            required: false,
             domain: Some("https://uor.foundation/proof/WitnessData"),
             range: XSD_INTEGER,
         },
@@ -281,6 +299,7 @@ fn properties() -> Vec<Property> {
             comment: "The value bnot(x) for a witness x.",
             kind: PropertyKind::Datatype,
             functional: false,
+            required: false,
             domain: Some("https://uor.foundation/proof/WitnessData"),
             range: XSD_INTEGER,
         },
@@ -290,6 +309,7 @@ fn properties() -> Vec<Property> {
             comment: "The value neg(bnot(x)) for a witness x.",
             kind: PropertyKind::Datatype,
             functional: false,
+            required: false,
             domain: Some("https://uor.foundation/proof/WitnessData"),
             range: XSD_INTEGER,
         },
@@ -299,6 +319,7 @@ fn properties() -> Vec<Property> {
             comment: "The value succ(x) for a witness x.",
             kind: PropertyKind::Datatype,
             functional: false,
+            required: false,
             domain: Some("https://uor.foundation/proof/WitnessData"),
             range: XSD_INTEGER,
         },
@@ -309,6 +330,7 @@ fn properties() -> Vec<Property> {
                       this specific witness.",
             kind: PropertyKind::Datatype,
             functional: false,
+            required: false,
             domain: Some("https://uor.foundation/proof/WitnessData"),
             range: XSD_BOOLEAN,
         },
@@ -322,6 +344,7 @@ fn properties() -> Vec<Property> {
                       human readability.",
             kind: PropertyKind::Object,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/proof/Proof"),
             range: "https://uor.foundation/op/Identity",
         },
@@ -335,6 +358,7 @@ fn properties() -> Vec<Property> {
                       schema:Q1 confirms it for all 65,536 inputs of R_16.",
             kind: PropertyKind::Object,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/proof/ComputationCertificate"),
             range: "https://uor.foundation/schema/WittLevel",
         },
@@ -345,6 +369,7 @@ fn properties() -> Vec<Property> {
                       Annotation only — proof:atWittLevel is the typed assertion.",
             kind: PropertyKind::Annotation,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/proof/ComputationCertificate"),
             range: XSD_STRING,
         },
@@ -359,6 +384,7 @@ fn properties() -> Vec<Property> {
                       true.",
             kind: PropertyKind::Datatype,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/proof/AxiomaticDerivation"),
             range: XSD_BOOLEAN,
         },
@@ -373,6 +399,7 @@ fn properties() -> Vec<Property> {
                       artifacts.",
             kind: PropertyKind::Object,
             functional: false,
+            required: false,
             domain: Some("https://uor.foundation/proof/AxiomaticDerivation"),
             range: "https://uor.foundation/derivation/Derivation",
         },
@@ -387,6 +414,7 @@ fn properties() -> Vec<Property> {
                       symbolic notation string (e.g., 'β₀ = 0').",
             kind: PropertyKind::Annotation,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/proof/ImpossibilityWitness"),
             range: XSD_STRING,
         },
@@ -397,6 +425,7 @@ fn properties() -> Vec<Property> {
                       signature is impossible (e.g., 'β₀ = 0 violates MS_1').",
             kind: PropertyKind::Datatype,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/proof/ImpossibilityWitness"),
             range: XSD_STRING,
         },
@@ -407,6 +436,7 @@ fn properties() -> Vec<Property> {
                       (e.g., Pipeline for β₀ = 0, Algebraic for χ > n).",
             kind: PropertyKind::Object,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/proof/ImpossibilityWitness"),
             range: "https://uor.foundation/op/VerificationDomain",
         },
@@ -418,6 +448,7 @@ fn properties() -> Vec<Property> {
                       signature: Achievable or Forbidden.",
             kind: PropertyKind::Object,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/proof/ImpossibilityWitness"),
             range: "https://uor.foundation/observable/AchievabilityStatus",
         },
@@ -428,6 +459,7 @@ fn properties() -> Vec<Property> {
                       or impossibility witness was established.",
             kind: PropertyKind::Object,
             functional: false,
+            required: false,
             domain: Some("https://uor.foundation/proof/Proof"),
             range: "https://uor.foundation/schema/WittLevel",
         },
@@ -438,6 +470,7 @@ fn properties() -> Vec<Property> {
                       MorphospaceRecord individuals.",
             kind: PropertyKind::Object,
             functional: false,
+            required: false,
             domain: Some("https://uor.foundation/proof/MorphospaceBoundary"),
             range: "https://uor.foundation/proof/MorphospaceRecord",
         },
@@ -448,6 +481,7 @@ fn properties() -> Vec<Property> {
                       boundary (from below) or an achievability boundary (from above).",
             kind: PropertyKind::Object,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/proof/MorphospaceRecord"),
             range: "https://uor.foundation/observable/AchievabilityStatus",
         },
@@ -458,6 +492,7 @@ fn properties() -> Vec<Property> {
             comment: "The proof that the claim holds at the base level k_0.",
             kind: PropertyKind::Object,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/proof/InductiveProof"),
             range: "https://uor.foundation/proof/Proof",
         },
@@ -467,6 +502,7 @@ fn properties() -> Vec<Property> {
             comment: "The proof that if the claim holds at Q_k, it holds at Q_{k+1}.",
             kind: PropertyKind::Object,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/proof/InductiveProof"),
             range: "https://uor.foundation/proof/Proof",
         },
@@ -476,6 +512,7 @@ fn properties() -> Vec<Property> {
             comment: "The minimum k for which the induction is valid.",
             kind: PropertyKind::Datatype,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/proof/InductiveProof"),
             range: XSD_NON_NEGATIVE_INTEGER,
         },
@@ -488,6 +525,7 @@ fn properties() -> Vec<Property> {
                       `by induction`).",
             kind: PropertyKind::Object,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/proof/Proof"),
             range: "https://uor.foundation/proof/ProofStrategy",
         },
@@ -499,6 +537,7 @@ fn properties() -> Vec<Property> {
                       alone) have no dependsOn assertions.",
             kind: PropertyKind::Object,
             functional: false,
+            required: false,
             domain: Some("https://uor.foundation/proof/Proof"),
             range: "https://uor.foundation/op/Identity",
         },
@@ -511,8 +550,44 @@ fn properties() -> Vec<Property> {
                       scaffold that constitutes the proof.",
             kind: PropertyKind::Object,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/proof/Proof"),
             range: "https://uor.foundation/proof/DerivationTerm",
+        },
+        // v0.2.1: InhabitanceImpossibilityWitness properties
+        Property {
+            id: "https://uor.foundation/proof/contradictionProof",
+            label: "contradictionProof",
+            comment: "The Lean 4 by-contradiction derivation over the predicate \
+                      vocabulary attesting that no value tuple satisfies the \
+                      constraint system.",
+            kind: PropertyKind::Datatype,
+            functional: true,
+            required: false,
+            domain: Some("https://uor.foundation/proof/InhabitanceImpossibilityWitness"),
+            range: XSD_STRING,
+        },
+        Property {
+            id: "https://uor.foundation/proof/grounded",
+            label: "grounded",
+            comment: "The type:ConstrainedType whose carrier this witness \
+                      certifies as empty.",
+            kind: PropertyKind::Object,
+            functional: true,
+            required: false,
+            domain: Some("https://uor.foundation/proof/InhabitanceImpossibilityWitness"),
+            range: "https://uor.foundation/type/ConstrainedType",
+        },
+        Property {
+            id: "https://uor.foundation/proof/searchTrace",
+            label: "searchTrace",
+            comment: "The audit trail of the inhabitance search up to the \
+                      contradiction.",
+            kind: PropertyKind::Object,
+            functional: true,
+            required: false,
+            domain: Some("https://uor.foundation/proof/InhabitanceImpossibilityWitness"),
+            range: "https://uor.foundation/trace/InhabitanceSearchTrace",
         },
     ]
 }
@@ -1106,6 +1181,189 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/provesIdentity",
                     IndividualValue::IriRef("https://uor.foundation/op/R_M5"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
+                ),
+            ],
+        },
+        // ADR-053 ring-axis completion: proofs for the 7 Euclidean-division
+        // and modular-exponentiation identities. Each is an axiomatic
+        // derivation grounded in the Euclidean-algorithm and square-and-
+        // multiply construction of `pipeline::apply_primitive_op` /
+        // `const_ring_eval_w{n}` per ADR-050.
+        Individual {
+            id: "https://uor.foundation/proof/prf_DV_1",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_DV_1",
+            comment: "Axiomatic derivation of DV_1 (div right-identity). Holds at \
+                      every quantum level: floor(a / 1) = a.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/DV_1"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_DV_2",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_DV_2",
+            comment: "Axiomatic derivation of DV_2 (div left-absorbing). Holds by \
+                      the Euclidean-algorithm rule floor(0 / b) = 0 for b ≠ 0.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/DV_2"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_DV_3",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_DV_3",
+            comment: "Axiomatic derivation of DV_3 (div-of-mul recovery). Holds \
+                      whenever mul(a, b) is in the unit cone (no overflow); the \
+                      Euclidean-algorithm yields q = a and r = 0.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/DV_3"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_DV_4",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_DV_4",
+            comment: "Axiomatic derivation of DV_4 (Euclidean compatibility). \
+                      Direct consequence of the Euclidean-algorithm definition: \
+                      a = q·b + r with 0 ≤ r < b.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/DV_4"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_PW_1",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_PW_1",
+            comment: "Axiomatic derivation of PW_1 (zero-exp identity). Base case \
+                      of the square-and-multiply construction: empty product = 1.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/PW_1"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_PW_2",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_PW_2",
+            comment: "Axiomatic derivation of PW_2 (unit-exp identity). Follows \
+                      from PW_1 + one square-and-multiply step: a · 1 = a.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/PW_2"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_PW_3",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_PW_3",
+            comment: "Axiomatic derivation of PW_3 (additive-exp decomposition). \
+                      Square-and-multiply reduces pow(a, b+c) to interleaved \
+                      multiplications of pow(a, b) and pow(a, c) within the ring.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/PW_3"),
                 ),
                 (
                     "https://uor.foundation/proof/universalScope",
@@ -10047,6 +10305,314 @@ fn individuals() -> Vec<Individual> {
                 ),
             ],
         },
+        // Product/Coproduct Completion Amendment — proof individuals for
+        // ST_6..ST_10 and CPT_1..CPT_6 establish the identity-proof bijection
+        // required by conformance/validators/ontology/inventory.rs.
+        Individual {
+            id: "https://uor.foundation/proof/prf_ST_6",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_ST_6",
+            comment: "Proof of ST_6: unique existence of the PartitionCoproduct \
+                      tag site. Follows from ST_2's single `ln 2` entropy quantum — \
+                      distinguishing two variants requires exactly one bit, which \
+                      fixes exactly one tag site logically disjoint from every \
+                      data site of either operand.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/ST_6"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_ST_7",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_ST_7",
+            comment: "Proof of ST_7: PartitionCoproduct variant-tagging \
+                      decomposition. constraints(A + B) = constraints(A) \
+                      ∪ {tag=0} ∪ constraints(B) ∪ {tag=1}. Each tag-pinning \
+                      constraint is emitted as an Affine with single-coefficient \
+                      1 at the tag site, distinguished by bias (0 for left, -1 \
+                      for right).",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/ST_7"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_ST_8",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_ST_8",
+            comment: "Proof of ST_8: variant nerve disjointness. The two \
+                      tag-pinning constraints carry incompatible biases (0 vs -1) \
+                      at the same tag site, so no single assignment satisfies \
+                      both simultaneously. The variant nerves therefore share no \
+                      common assignment — the bridge premise ST_3/ST_4 rely on.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/ST_8"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_ST_9",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_ST_9",
+            comment: "Proof of ST_9: χ additivity for PartitionCoproduct \
+                      constructions. Combines ST_8's disjointness guarantee \
+                      with the universal ST_3 (χ additive for any disjoint \
+                      SumType).",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/ST_9"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Composition"),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_ST_10",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_ST_10",
+            comment: "Proof of ST_10: Betti additivity for PartitionCoproduct \
+                      constructions. Combines ST_8's disjointness guarantee \
+                      with the universal ST_4 (Betti additive at every \
+                      dimension for any disjoint SumType).",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/ST_10"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/Composition"),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_CPT_1",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_CPT_1",
+            comment: "Proof of CPT_1: site additivity for Cartesian partition \
+                      products. UOR sites are bit widths; |A ⊠ B| = \
+                      2^{n_A} · 2^{n_B} = 2^{n_A + n_B}, so sites add. Sister \
+                      identity to PT_1 (same arithmetic; the two differ at the \
+                      nerve-topology level per CPT_3 vs PT_3).",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/CPT_1"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_CPT_2a",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_CPT_2a",
+            comment: "Proof of CPT_2a: Π(A ⊠ B) = CartesianPartitionProduct(Π(A), \
+                      Π(B)). Structural axiom defining the partition map on \
+                      Cartesian-product types.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/CPT_2a"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_CPT_3",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_CPT_3",
+            comment: "Proof of CPT_3: χ multiplicativity for Cartesian partition \
+                      products. Classical topology result — the simplicial \
+                      product nerve has vertex set V(N(A)) × V(N(B)) and Euler \
+                      characteristic χ(N(A)) · χ(N(B)). Distinguishes \
+                      CartesianPartitionProduct from the site-disjoint-union \
+                      PartitionProduct (which is χ-additive per PT_3).",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/CPT_3"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_CPT_4",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_CPT_4",
+            comment: "Proof of CPT_4: Künneth formula for Betti composition \
+                      under Cartesian partition product. Follows from the \
+                      classical Künneth theorem applied to the simplicial \
+                      product nerve of the two component constraint systems.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/CPT_4"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_CPT_5",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_CPT_5",
+            comment: "Proof of CPT_5: entropy additivity for Cartesian partition \
+                      products. S(A ⊠ B) = S(A) + S(B) — Shannon additivity for \
+                      independent subsystems. Consistent pointwise with IT_7a/b \
+                      on the combined system.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/CPT_5"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_CPT_6",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_CPT_6",
+            comment: "Proof of CPT_6: distributivity of Cartesian partition \
+                      product over PartitionCoproduct. A ⊠ (B + C) ≡ \
+                      (A ⊠ B) + (A ⊠ C) at the siteBudget, SITE_COUNT, χ, and \
+                      entropy levels simultaneously. Does NOT extend to \
+                      PartitionProduct (distribution over × duplicates the outer \
+                      factor at the site-budget level).",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/CPT_6"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
+                ),
+            ],
+        },
         // G3: TypeSynthesis reachability
         Individual {
             id: "https://uor.foundation/proof/prf_TS_8",
@@ -16785,6 +17351,110 @@ fn individuals() -> Vec<Individual> {
                 (
                     "https://uor.foundation/proof/provesIdentity",
                     IndividualValue::IriRef("https://uor.foundation/op/CS_7"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
+                ),
+            ],
+        },
+        // v0.2.1: Inhabitance verdict identity proofs
+        Individual {
+            id: "https://uor.foundation/proof/prf_IH_1",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_IH_1",
+            comment: "Axiomatic derivation of IH_1 (inhabitance soundness): \
+                      cert:InhabitanceCertificate(T).verified iff carrier(T) \u{2260} \u{2205}.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/IH_1"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_IH_2a",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_IH_2a",
+            comment: "Cost identity for the 2-SAT decider on Is2SatShape \
+                      instances. Inherited from the classical 2-SAT polynomial \
+                      decision procedure.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/IH_2a"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_IH_2b",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_IH_2b",
+            comment: "Cost identity for the Horn-SAT decider on IsHornShape \
+                      instances. Inherited from the classical Horn-SAT \
+                      polynomial decision procedure via unit propagation.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/IH_2b"),
+                ),
+                (
+                    "https://uor.foundation/proof/universalScope",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/verified",
+                    IndividualValue::Bool(true),
+                ),
+                (
+                    "https://uor.foundation/proof/strategy",
+                    IndividualValue::IriRef("https://uor.foundation/proof/RingAxiom"),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/proof/prf_IH_3",
+            type_: "https://uor.foundation/proof/AxiomaticDerivation",
+            label: "prf_IH_3",
+            comment: "Carrier preservation under basis reduction. Discharged \
+                      against resolver:JacobianGuidedResolver and \
+                      resolver:guidingJacobian vocabulary.",
+            properties: &[
+                (
+                    "https://uor.foundation/proof/provesIdentity",
+                    IndividualValue::IriRef("https://uor.foundation/op/IH_3"),
                 ),
                 (
                     "https://uor.foundation/proof/universalScope",

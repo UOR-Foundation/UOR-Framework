@@ -4,7 +4,7 @@
 
 - `CARGO_REGISTRY_TOKEN` org secret configured at `github.com/UOR-Foundation`
   (Settings > Secrets and variables > Actions). The token must have permission
-  to publish both `uor-foundation` and `uor-foundation-macros`.
+  to publish `uor-foundation`.
 
 ## Release Process
 
@@ -14,57 +14,73 @@
    version = "X.Y.Z"
    ```
 
-2. Update the macros dependency version in `foundation/Cargo.toml`:
-   ```toml
-   [dependencies]
-   uor-foundation-macros = { version = "X.Y.Z", path = "../uor-foundation-macros" }
-   ```
-
-3. Regenerate the foundation crate and commit:
+2. Regenerate the foundation crate and Lean 4 formalization, then commit:
    ```sh
    cargo run --bin uor-crate
-   cargo fmt -- foundation/src/**/*.rs foundation/src/*.rs
-   git add Cargo.toml Cargo.lock foundation/Cargo.toml foundation/src/ uor-foundation-macros/
+   cargo fmt --all
+   cargo run --bin uor-lean
+   git add Cargo.toml Cargo.lock \
+          foundation/Cargo.toml foundation/src/ \
+          uor-foundation-sdk/Cargo.toml uor-foundation-sdk/src/ \
+          lean4/
    git commit -m "Bump version to X.Y.Z"
    ```
 
-4. Tag and push:
+3. Tag and push:
    ```sh
    git tag vX.Y.Z
    git push origin main --tags
    ```
 
-5. The release workflow will automatically:
+4. The release workflow will automatically:
    - Validate the tag matches the `uor-foundation` Cargo.toml version
    - Run all checks (fmt, clippy, test, conformance)
    - Regenerate the foundation crate and verify no drift
-   - Verify `uor-foundation-macros` packaging with `cargo publish --dry-run`
+   - Regenerate the Lean 4 formalization and verify no drift
+   - Build the Lean 4 package with `lake build`
+   - Verify `uor-foundation` packaging with `cargo publish --dry-run`
    - Create a GitHub Release with ontology artifacts
-   - Publish `uor-foundation-macros` to crates.io (must succeed first)
+   - Upload Lean 4 cloud release build via `lake upload`
    - Publish `uor-foundation` to crates.io
 
 ## Published Crates
 
-Two crates are published to crates.io (in this order):
+Two crates are published to crates.io in this release cycle:
 
-1. `uor-foundation-macros` — proc macro providing the `uor!` DSL
-2. `uor-foundation` — typed Rust traits for the ontology (depends on macros)
+1. `uor-foundation` — typed Rust traits for the ontology
+2. `uor-foundation-sdk` — proc-macro ergonomics (`product_shape!`,
+   `coproduct_shape!`, `cartesian_product_shape!`) for composing
+   partition-algebra shapes from other `ConstrainedTypeShape` operands.
 
-The internal crates (`uor-ontology`, `uor-codegen`, `uor-conformance`,
-`uor-docs`, `uor-website`, `uor-clients`) are not published.
+The SDK crate publishes **after** the foundation crate with a
+wait-for-index step between them (see `release.yml`). This avoids the
+classic crates.io ordering failure where the SDK's packaged manifest
+depends on `uor-foundation = { version = "X.Y.Z" }` and the registry
+rejects the SDK publish because the new foundation version is not yet
+visible.
+
+The internal crates (`uor-ontology`, `uor-codegen`, `uor-lean-codegen`,
+`uor-conformance`, `uor-docs`, `uor-website`, `uor-clients`) are not
+published.
+
+## Lean 4 Package
+
+The `uor` Lean 4 package is published via the Lean Reservoir
+(reservoir.lean-lang.org). Reservoir automatically indexes this repo
+because it has a root `lakefile.lean` and `lake-manifest.json`.
+
+On release, `lake upload` attaches pre-built artifacts to the GitHub
+Release so downstream users can skip building from source.
 
 ## Troubleshooting
 
 - **Tag/version mismatch**: The workflow fails early if the tag version
   does not match `Cargo.toml`. Fix the version and re-tag.
-- **Generated code drift**: If `git diff --exit-code foundation/src/` fails
+- **Generated code drift**: If `git diff --exit-code foundation/src/ uor-foundation-sdk/src/` fails
   in CI, the committed generated code doesn't match the generator output.
-  Run `cargo run --bin uor-crate && cargo fmt` locally and commit.
-- **crates.io publish failure**: If `uor-foundation-macros` publishes but
-  `uor-foundation` fails, the GitHub Release will already exist. Fix the
-  issue and manually run `cargo publish -p uor-foundation`.
+  Run `cargo run --bin uor-crate && cargo fmt --all` locally and commit.
 - **Version already published**: crates.io does not allow re-publishing
   the same version. Bump the version and create a new tag.
-- **Macros version mismatch**: If `foundation/Cargo.toml` specifies a
-  different version for `uor-foundation-macros` than what was published,
-  the foundation publish will fail. Ensure both versions match.
+- **Lean 4 drift**: If `git diff --exit-code lean4/` fails in CI,
+  the committed Lean code doesn't match the generator output. Run
+  `cargo run --bin uor-lean` locally and commit.

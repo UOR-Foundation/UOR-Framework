@@ -9,7 +9,8 @@
     "vscode": {
       "extensions": [
         "rust-lang.rust-analyzer",
-        "anthropic.claude-code"
+        "anthropic.claude-code",
+        "leanprover.lean4"
       ],
       "settings": {
         "editor.formatOnSave": true,
@@ -29,6 +30,7 @@
     }
   },
   "remoteEnv": {
-    "PATH": "/home/codespace/.cargo/bin:${containerEnv:PATH}"
-  }
+    "PATH": "/home/codespace/.elan/bin:/home/codespace/.cargo/bin:${containerEnv:PATH}"
+  },
+  "postCreateCommand": "curl https://elan.lean-lang.org/elan-init.sh -sSf | sh -s -- -y --default-toolchain none"
 }

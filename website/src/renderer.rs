@@ -2,6 +2,7 @@
 //!
 //! All HTML is generated directly in Rust for determinism and zero dependencies.
 
+pub use uor_docs::renderer::escape_html;
 use uor_ontology::{IndividualValue, NamespaceModule, Ontology, PropertyKind};
 
 use crate::model::{BreadcrumbItem, ConceptPage, NamespaceSummary};
@@ -53,7 +54,7 @@ pub fn render_page(
 </article>
 </main>
 <footer class="site-footer">
-<p>UOR Foundation — <a href="https://uor.foundation/">uor.foundation</a> — <a href="https://github.com/UOR-Foundation/UOR-Framework">GitHub</a> — Apache-2.0</p>
+<p>UOR Foundation — <a href="https://uor.foundation/">uor.foundation</a> — <a href="https://github.com/UOR-Foundation/UOR-Framework">GitHub</a> — MIT</p>
 </footer>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
 <script src="{js_url}" defer></script>
@@ -444,6 +445,7 @@ fn render_individual_value(value: &IndividualValue) -> String {
         IndividualValue::Str(s) => escape_html(s),
         IndividualValue::Int(i) => i.to_string(),
         IndividualValue::Bool(b) => b.to_string(),
+        IndividualValue::Float(x) => x.to_string(),
         IndividualValue::IriRef(iri) => {
             format!("<code>{}</code>", escape_html(local_name(iri)))
         }
@@ -565,7 +567,11 @@ pub fn render_download_page(base_path: &str) -> String {
          <h2>Rust Crate</h2>\n\
          <p>The <code>uor-foundation</code> crate provides the ontology as typed Rust \
          traits and constants, suitable for <code>#![no_std]</code> environments.</p>\n\
-         <p><a href=\"https://crates.io/crates/uor-foundation\" class=\"cta-primary\">View on crates.io</a></p>"
+         <p><a href=\"https://crates.io/crates/uor-foundation\" class=\"cta-primary\">View on crates.io</a></p>\n\
+         <h2>Lean 4 Package</h2>\n\
+         <p>The <code>uor</code> Lean 4 package provides the ontology as typed \
+         structures and constants for formal verification and theorem proving.</p>\n\
+         <p><a href=\"https://github.com/UOR-Foundation/UOR-Framework/tree/main/lean4\" class=\"cta-primary\">View on GitHub</a></p>"
     )
 }
 
@@ -619,7 +625,7 @@ pub fn render_citation_page() -> String {
      \x20 author       = {{The UOR Foundation}},\n\
      \x20 title        = {{UOR Framework}},\n\
      \x20 url          = {https://github.com/UOR-Foundation/UOR-Framework},\n\
-     \x20 license      = {Apache-2.0},\n\
+     \x20 license      = {MIT},\n\
      \x20 abstract     = {A Rust workspace implementing the UOR Foundation\n\
      \x20                  ontology --- a mathematical framework for\n\
      \x20                  content-addressed, algebraically-structured\n\
@@ -1331,14 +1337,6 @@ fn concept_title(slug: &str) -> String {
         .find(|(s, _, _)| *s == slug)
         .map(|(_, title, _)| (*title).to_string())
         .unwrap_or_else(|| slug.replace('-', " "))
-}
-
-/// Escapes HTML special characters.
-pub fn escape_html(s: &str) -> String {
-    s.replace('&', "&amp;")
-        .replace('<', "&lt;")
-        .replace('>', "&gt;")
-        .replace('"', "&quot;")
 }
 
 /// Extracts the local name from an IRI.

@@ -100,6 +100,99 @@ fn classes() -> Vec<Class> {
             subclass_of: &["https://uor.foundation/observable/Observable"],
             disjoint_with: &[],
         },
+        // Wiki ADR-049 closed-catalog extension: SpectralObservable as a
+        // top-level Observable subclass parallel to the seven
+        // internally-derived categories. Distinct because its values are
+        // structural readings of the σ-projection's frequency-domain
+        // spectrum (Walsh–Hadamard parities at specific frequencies),
+        // not from algebraic / topological structure. Foundation's
+        // `WalshHadamardParity` observable lives under this subclass.
+        Class {
+            id: "https://uor.foundation/observable/SpectralObservable",
+            label: "SpectralObservable",
+            comment: "ADR-049: an observable whose value is a structural \
+                      reading of a digest's frequency-domain spectrum. \
+                      Distinct from the seven internally-derived Observable \
+                      categories (Stratum / Metric / Path / Reduction / \
+                      Catastrophe / Curvature / Holonomy) — its values are \
+                      Walsh–Hadamard parities at specific frequencies, \
+                      not derivable from the framework's internal \
+                      algebraic/topological structure. Foundation's typed \
+                      observable `WalshHadamardParity` per ADR-049 falls \
+                      under this subclass; predicates over its values \
+                      enter the typed-commitment surface per ADR-048 as \
+                      `SingletonCommitment<WalshHadamardParity>` operands.",
+            subclass_of: &["https://uor.foundation/observable/Observable"],
+            disjoint_with: &[],
+        },
+        // Wiki ADR-040 + ADR-049 closed-catalog extension:
+        // ValueThresholdObservable as a top-level Observable subclass
+        // parallel to SpectralObservable / AxisProjectionObservable.
+        // Distinct because its values carry from a byte-sequence
+        // threshold comparison (`digest <= target` under big-endian
+        // unsigned ordering), not from the framework's internal
+        // algebraic/topological structure. Realizes the
+        // `type:LexicographicLessEqBound` bound-shape primitive's
+        // dispatch path per ADR-040; foundation's typed observable
+        // `LexicographicLessEqThreshold` falls under this subclass.
+        // Consumed by `TargetCommitment = SingletonCommitment<…>` as
+        // the canonical search-cost commitment per ADR-048.
+        Class {
+            id: "https://uor.foundation/observable/ValueThresholdObservable",
+            label: "ValueThresholdObservable",
+            comment: "ADR-040 + ADR-049: an observable whose value is a byte-sequence \
+                      threshold comparison reading of a digest. Distinct from the seven \
+                      internally-derived Observable categories (Stratum / Metric / Path / \
+                      Reduction / Catastrophe / Curvature / Holonomy) and from \
+                      SpectralObservable / AxisProjectionObservable — its values carry \
+                      from `(digest as big-endian unsigned integer) <= (target as \
+                      big-endian unsigned integer)`, the predicate form ADR-040 named \
+                      when it committed `type:LexicographicLessEqBound`. Foundation's \
+                      typed observable `LexicographicLessEqThreshold` per ADR-049 falls \
+                      under this subclass; the canonical search-cost commitment alias \
+                      `TargetCommitment = SingletonCommitment<LexicographicLessEqThreshold>` \
+                      per ADR-048 consumes it. The ConstraintRef::Bound.args_repr \
+                      canonical-string-form encoding for ValueThresholdObservable \
+                      arguments carries the target byte sequence as the bound's \
+                      argument directly.",
+            subclass_of: &["https://uor.foundation/observable/Observable"],
+            disjoint_with: &[],
+        },
+        // ADR-038 closed-catalog extension: AxisProjectionObservable as
+        // a top-level Observable subclass parallel to the seven
+        // internally-derived categories (Stratum / Metric / Path /
+        // Reduction / Catastrophe / Curvature / Holonomy). Distinct
+        // because its values carry from the substrate-extension surface
+        // per ADR-030 (axis-realized projections of typed sites through
+        // application-declared AxisTuple kernels), not from the
+        // framework's internal algebraic/topological structure. The
+        // ConstraintRef::Bound.args_repr canonical-string-form encoding
+        // for AxisProjectionObservable arguments is
+        //   `axis_address=<hex>;kernel=<symbolic>;sites=<site-list>[;target=<target-spec>]`
+        // — axis identification by content-address (AXIS_ADDRESS per
+        // ADR-030), not by tuple position, so the encoding is
+        // application-invariant across AxisTuple reorderings.
+        Class {
+            id: "https://uor.foundation/observable/AxisProjectionObservable",
+            label: "AxisProjectionObservable",
+            comment: "ADR-038: an observable whose value is the axis-realized \
+                      projection of typed sites through an application-declared \
+                      AxisTuple kernel per ADR-030. Distinct from the seven \
+                      internally-derived Observable categories (Stratum, Metric, \
+                      Path, Reduction, Catastrophe, Curvature, Holonomy) — its \
+                      values carry from the substrate-extension surface (axis \
+                      kernels), not from the framework's internal algebraic / \
+                      topological structure. The closed-catalog discipline holds: \
+                      foundation owns the subclass; applications consume catalog \
+                      variants through canonical-string-form `args_repr` on \
+                      `ConstraintRef::Bound`. The args_repr encoding (per ADR-038) \
+                      is `axis_address=<hex>;kernel=<symbolic>;sites=<site-list>\
+                      [;target=<target-spec>]` — axis identification by \
+                      content-address (AXIS_ADDRESS per ADR-030), not by tuple \
+                      position, so the encoding is application-invariant.",
+            subclass_of: &["https://uor.foundation/observable/Observable"],
+            disjoint_with: &[],
+        },
         // Metric subclasses
         Class {
             id: "https://uor.foundation/observable/RingMetric",
@@ -124,6 +217,43 @@ fn classes() -> Vec<Class> {
                       divergence between their ring-metric and Hamming-metric \
                       distances, measuring geometric curvature.",
             subclass_of: &["https://uor.foundation/observable/MetricObservable"],
+            disjoint_with: &[],
+        },
+        // v0.2.2 Phase D (Q4) — bound observable for residue and affine
+        // BoundConstraint kinds.
+        Class {
+            id: "https://uor.foundation/observable/ValueModObservable",
+            label: "ValueModObservable",
+            comment: "Observes a Datum's value modulo a configurable modulus. \
+                      Used as the bound observable for BoundConstraint \
+                      instances representing residue and affine constraint \
+                      kinds (residueConstraintKind, affineConstraintKind).",
+            subclass_of: &["https://uor.foundation/observable/MetricObservable"],
+            disjoint_with: &[],
+        },
+        // v0.2.2 Phase E — the grounding completion ratio observable.
+        Class {
+            id: "https://uor.foundation/observable/GroundingSigma",
+            label: "GroundingSigma",
+            comment: "Observes the grounding completion ratio \u{03C3} \u{2208} \
+                      [0, 1] of a context, where \u{03C3} = 1 indicates the \
+                      ground state (state:GroundedContext). Backs the \
+                      sigma_metric BaseMetric accessor on Grounded<T>.",
+            subclass_of: &["https://uor.foundation/observable/Observable"],
+            disjoint_with: &[],
+        },
+        // v0.2.2 Phase E — JacobianObservable: observes the per-site Jacobian
+        // row of a Datum at a particular WittLevel.
+        Class {
+            id: "https://uor.foundation/observable/JacobianObservable",
+            label: "JacobianObservable",
+            comment: "Observes the per-site Jacobian row of a Datum at a \
+                      particular WittLevel, computed as the sequence of \
+                      partial derivatives of the ring operation with respect \
+                      to each site coordinate. Backs the jacobian_metric \
+                      BaseMetric accessor on Grounded<T>; the Rust-side \
+                      JacobianMetric<L> is parametric over the level marker.",
+            subclass_of: &["https://uor.foundation/observable/Observable"],
             disjoint_with: &[],
         },
         // Measurement result types
@@ -317,6 +447,20 @@ fn classes() -> Vec<Class> {
             subclass_of: &["https://uor.foundation/observable/ThermoObservable"],
             disjoint_with: &[],
         },
+        // v0.2.2 Phase A: LandauerBudget — sealed observable carrier for accumulated
+        // Landauer cost. Backs the Rust-side enforcement::LandauerBudget newtype, which
+        // is one of the two clocks of UorTime.
+        Class {
+            id: "https://uor.foundation/observable/LandauerBudget",
+            label: "LandauerBudget",
+            comment: "A sealed observable carrier for accumulated Landauer cost in nats. \
+                      Monotonic within a single pipeline invocation. The UOR ring operates \
+                      at the Landauer temperature (β* = ln 2), so this observable is a \
+                      direct measure of irreversible bit-erasure performed by the \
+                      computation up to the witness it accompanies.",
+            subclass_of: &["https://uor.foundation/observable/ThermoObservable"],
+            disjoint_with: &[],
+        },
         Class {
             id: "https://uor.foundation/observable/ReductionEntropy",
             label: "ReductionEntropy",
@@ -481,6 +625,7 @@ fn properties() -> Vec<Property> {
             comment: "The numeric value of an observable measurement.",
             kind: PropertyKind::Datatype,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/observable/Observable"),
             range: XSD_DECIMAL,
         },
@@ -492,6 +637,7 @@ fn properties() -> Vec<Property> {
                       or path start point).",
             kind: PropertyKind::Object,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/observable/Observable"),
             range: OWL_THING,
         },
@@ -502,6 +648,7 @@ fn properties() -> Vec<Property> {
                       path-end measurements).",
             kind: PropertyKind::Object,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/observable/Observable"),
             range: OWL_THING,
         },
@@ -514,6 +661,7 @@ fn properties() -> Vec<Property> {
                       reference to a MeasurementUnit individual.",
             kind: PropertyKind::Object,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/observable/Observable"),
             range: "https://uor.foundation/observable/MeasurementUnit",
         },
@@ -524,6 +672,7 @@ fn properties() -> Vec<Property> {
             comment: "The site position k at which this Jacobian entry is measured.",
             kind: PropertyKind::Datatype,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/observable/Jacobian"),
             range: XSD_NON_NEGATIVE_INTEGER,
         },
@@ -533,6 +682,7 @@ fn properties() -> Vec<Property> {
             comment: "The discrete derivative value at this site position.",
             kind: PropertyKind::Datatype,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/observable/Jacobian"),
             range: XSD_DECIMAL,
         },
@@ -543,6 +693,7 @@ fn properties() -> Vec<Property> {
                       degree of the Betti number or the dimension of the spectral gap).",
             kind: PropertyKind::Datatype,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/observable/TopologicalObservable"),
             range: XSD_NON_NEGATIVE_INTEGER,
         },
@@ -553,6 +704,7 @@ fn properties() -> Vec<Property> {
             comment: "The Euler characteristic actually achieved by this synthesis signature.",
             kind: PropertyKind::Datatype,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/observable/SynthesisSignature"),
             range: XSD_INTEGER,
         },
@@ -563,6 +715,7 @@ fn properties() -> Vec<Property> {
                       homological degree.",
             kind: PropertyKind::Datatype,
             functional: false,
+            required: false,
             domain: Some("https://uor.foundation/observable/SynthesisSignature"),
             range: XSD_NON_NEGATIVE_INTEGER,
         },
@@ -574,6 +727,7 @@ fn properties() -> Vec<Property> {
                       convergence is declared when all d_r are zero.",
             kind: PropertyKind::Datatype,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/observable/SpectralSequencePage"),
             range: XSD_NON_NEGATIVE_INTEGER,
         },
@@ -584,6 +738,7 @@ fn properties() -> Vec<Property> {
                       lifted homology.",
             kind: PropertyKind::Datatype,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/observable/SpectralSequencePage"),
             range: XSD_BOOLEAN,
         },
@@ -594,6 +749,7 @@ fn properties() -> Vec<Property> {
                       (all subsequent differentials zero).",
             kind: PropertyKind::Datatype,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/observable/SpectralSequencePage"),
             range: XSD_NON_NEGATIVE_INTEGER,
         },
@@ -604,6 +760,7 @@ fn properties() -> Vec<Property> {
             comment: "The cohomology class in H^2(N(C(T))) representing this obstruction.",
             kind: PropertyKind::Object,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/observable/LiftObstructionClass"),
             range: "https://uor.foundation/cohomology/CohomologyGroup",
         },
@@ -614,6 +771,7 @@ fn properties() -> Vec<Property> {
             comment: "The closed path that generates this monodromy value.",
             kind: PropertyKind::Object,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/observable/Monodromy"),
             range: "https://uor.foundation/observable/ClosedConstraintPath",
         },
@@ -624,6 +782,7 @@ fn properties() -> Vec<Property> {
                       The monodromy is trivial iff this element is the group identity.",
             kind: PropertyKind::Object,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/observable/Monodromy"),
             range: "https://uor.foundation/observable/DihedralElement",
         },
@@ -633,6 +792,7 @@ fn properties() -> Vec<Property> {
             comment: "True iff the monodromyElement is the identity in D_{2^n}.",
             kind: PropertyKind::Datatype,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/observable/Monodromy"),
             range: XSD_BOOLEAN,
         },
@@ -644,6 +804,7 @@ fn properties() -> Vec<Property> {
                       per generating monodromy.",
             kind: PropertyKind::Object,
             functional: false,
+            required: false,
             domain: Some("https://uor.foundation/observable/HolonomyGroup"),
             range: "https://uor.foundation/observable/DihedralElement",
         },
@@ -654,6 +815,7 @@ fn properties() -> Vec<Property> {
                       For a FlatType: 1. For full dihedral holonomy: 2^{n+1}.",
             kind: PropertyKind::Datatype,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/observable/HolonomyGroup"),
             range: XSD_POSITIVE_INTEGER,
         },
@@ -664,6 +826,7 @@ fn properties() -> Vec<Property> {
             comment: "The number of constraint application steps in this closed path.",
             kind: PropertyKind::Datatype,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/observable/ClosedConstraintPath"),
             range: XSD_NON_NEGATIVE_INTEGER,
         },
@@ -674,6 +837,7 @@ fn properties() -> Vec<Property> {
                       One assertion per step.",
             kind: PropertyKind::Object,
             functional: false,
+            required: false,
             domain: Some("https://uor.foundation/observable/ClosedConstraintPath"),
             range: "https://uor.foundation/type/Constraint",
         },
@@ -686,6 +850,7 @@ fn properties() -> Vec<Property> {
                       dihedral element when composed.",
             kind: PropertyKind::Object,
             functional: false,
+            required: false,
             domain: Some("https://uor.foundation/observable/DihedralElement"),
             range: "https://uor.foundation/op/Operation",
         },
@@ -695,6 +860,7 @@ fn properties() -> Vec<Property> {
             comment: "True iff this element is the group identity (the trivial monodromy value).",
             kind: PropertyKind::Datatype,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/observable/DihedralElement"),
             range: XSD_BOOLEAN,
         },
@@ -705,6 +871,7 @@ fn properties() -> Vec<Property> {
                       g^k = id. For neg and bnot: order 2.",
             kind: PropertyKind::Datatype,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/observable/DihedralElement"),
             range: XSD_POSITIVE_INTEGER,
         },
@@ -716,6 +883,7 @@ fn properties() -> Vec<Property> {
                       connecting thermodynamic cost to complexity (TH_9 realisation).",
             kind: PropertyKind::Datatype,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/observable/ThermoObservable"),
             range: XSD_DECIMAL,
         },
@@ -726,6 +894,7 @@ fn properties() -> Vec<Property> {
                       phase diagram (PD_1 n-coordinate).",
             kind: PropertyKind::Datatype,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/observable/CatastropheObservable"),
             range: XSD_POSITIVE_INTEGER,
         },
@@ -736,6 +905,7 @@ fn properties() -> Vec<Property> {
                       phase diagram (PD_1 g-coordinate).",
             kind: PropertyKind::Datatype,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/observable/CatastropheObservable"),
             range: XSD_POSITIVE_INTEGER,
         },
@@ -746,6 +916,7 @@ fn properties() -> Vec<Property> {
                       a resonance line in the phase diagram (PD_4).",
             kind: PropertyKind::Datatype,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/observable/CatastropheObservable"),
             range: XSD_BOOLEAN,
         },
@@ -756,6 +927,7 @@ fn properties() -> Vec<Property> {
                       diagram: PeriodBoundary or PowerOfTwoBoundary (PD_2).",
             kind: PropertyKind::Object,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/observable/CatastropheObservable"),
             range: "https://uor.foundation/observable/PhaseBoundaryType",
         },
@@ -767,6 +939,7 @@ fn properties() -> Vec<Property> {
                       topological signature in the morphospace.",
             kind: PropertyKind::Object,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/observable/SynthesisSignature"),
             range: "https://uor.foundation/observable/AchievabilityStatus",
         },
@@ -777,6 +950,7 @@ fn properties() -> Vec<Property> {
                       achievable at some quantum level.",
             kind: PropertyKind::Datatype,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/observable/SynthesisSignature"),
             range: XSD_BOOLEAN,
         },
@@ -787,6 +961,7 @@ fn properties() -> Vec<Property> {
                       by an ImpossibilityWitness.",
             kind: PropertyKind::Datatype,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/observable/SynthesisSignature"),
             range: XSD_BOOLEAN,
         },
@@ -798,6 +973,7 @@ fn properties() -> Vec<Property> {
                       achievability classification.",
             kind: PropertyKind::Object,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/observable/SynthesisSignature"),
             range: "https://uor.foundation/proof/Proof",
         },
@@ -811,6 +987,7 @@ fn properties() -> Vec<Property> {
                       D_\\{2^n\\}.",
             kind: PropertyKind::Datatype,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/observable/DihedralElement"),
             range: XSD_NON_NEGATIVE_INTEGER,
         },
@@ -823,6 +1000,7 @@ fn properties() -> Vec<Property> {
                       r^(a + (-1)^p b) s^(p XOR q).",
             kind: PropertyKind::Datatype,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/observable/DihedralElement"),
             range: XSD_BOOLEAN,
         },
@@ -833,6 +1011,7 @@ fn properties() -> Vec<Property> {
             comment: "The dimension k of this homotopy group \u{03c0}k.",
             kind: PropertyKind::Datatype,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/observable/HomotopyGroup"),
             range: XSD_NON_NEGATIVE_INTEGER,
         },
@@ -842,6 +1021,7 @@ fn properties() -> Vec<Property> {
             comment: "The rank of this homotopy group (number of free generators).",
             kind: PropertyKind::Datatype,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/observable/HomotopyGroup"),
             range: XSD_NON_NEGATIVE_INTEGER,
         },
@@ -851,6 +1031,7 @@ fn properties() -> Vec<Property> {
             comment: "The basepoint vertex v at which this homotopy group is computed.",
             kind: PropertyKind::Object,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/observable/HomotopyGroup"),
             range: "https://uor.foundation/type/Constraint",
         },
@@ -860,6 +1041,7 @@ fn properties() -> Vec<Property> {
             comment: "The dimension k > 1 at which this higher monodromy acts.",
             kind: PropertyKind::Datatype,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/observable/HigherMonodromy"),
             range: XSD_NON_NEGATIVE_INTEGER,
         },
@@ -869,6 +1051,7 @@ fn properties() -> Vec<Property> {
             comment: "True iff this Whitehead product is trivial (zero in \u{03c0}p+q\u{2212}1).",
             kind: PropertyKind::Datatype,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/observable/WhiteheadProduct"),
             range: XSD_BOOLEAN,
         },
@@ -878,6 +1061,7 @@ fn properties() -> Vec<Property> {
             comment: "The Postnikov truncation associated with this spectral sequence page.",
             kind: PropertyKind::Object,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/observable/SpectralSequencePage"),
             range: "https://uor.foundation/homology/PostnikovTruncation",
         },
@@ -888,6 +1072,7 @@ fn properties() -> Vec<Property> {
             comment: "The quantum level at which this stratification is computed.",
             kind: PropertyKind::Object,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/observable/StratificationRecord"),
             range: "https://uor.foundation/schema/WittLevel",
         },
@@ -897,6 +1082,7 @@ fn properties() -> Vec<Property> {
             comment: "A HolonomyStratum in this stratification record.",
             kind: PropertyKind::Object,
             functional: false,
+            required: false,
             domain: Some("https://uor.foundation/observable/StratificationRecord"),
             range: "https://uor.foundation/type/HolonomyStratum",
         },
@@ -907,6 +1093,7 @@ fn properties() -> Vec<Property> {
             comment: "The mathematical domain of this base metric.",
             kind: PropertyKind::Datatype,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/observable/BaseMetric"),
             range: XSD_STRING,
         },
@@ -916,6 +1103,7 @@ fn properties() -> Vec<Property> {
             comment: "The mathematical range (codomain) of this base metric.",
             kind: PropertyKind::Datatype,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/observable/BaseMetric"),
             range: XSD_STRING,
         },
@@ -925,17 +1113,23 @@ fn properties() -> Vec<Property> {
             comment: "How this metric composes with others in the measurement tower.",
             kind: PropertyKind::Object,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/observable/BaseMetric"),
             range: "https://uor.foundation/schema/TermExpression",
         },
         Property {
             id: "https://uor.foundation/observable/referencesClass",
             label: "referencesClass",
-            comment: "The existing observable class that this base metric references.",
-            kind: PropertyKind::Object,
+            comment: "IRI of the existing observable class that this base \
+                      metric references. Annotation-valued (not ObjectProperty) \
+                      because the assertion is a class-level reference, not an \
+                      instance-level one: the metric describes a class of \
+                      Observable phenomena, not a specific individual.",
+            kind: PropertyKind::Annotation,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/observable/BaseMetric"),
-            range: "https://uor.foundation/observable/Observable",
+            range: XSD_STRING,
         },
         Property {
             id: "https://uor.foundation/observable/referencesIdentity",
@@ -943,6 +1137,7 @@ fn properties() -> Vec<Property> {
             comment: "The existing identity that defines this base metric.",
             kind: PropertyKind::Object,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/observable/BaseMetric"),
             range: "https://uor.foundation/op/Identity",
         },
@@ -952,6 +1147,7 @@ fn properties() -> Vec<Property> {
             comment: "The count of pinned sites (numerator of \u{03c3}).",
             kind: PropertyKind::Datatype,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/observable/GroundingObservable"),
             range: XSD_NON_NEGATIVE_INTEGER,
         },
@@ -961,6 +1157,7 @@ fn properties() -> Vec<Property> {
             comment: "The total site count (denominator of \u{03c3}).",
             kind: PropertyKind::Datatype,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/observable/GroundingObservable"),
             range: XSD_POSITIVE_INTEGER,
         },
@@ -970,6 +1167,7 @@ fn properties() -> Vec<Property> {
             comment: "The alternating sum formula for Euler characteristic.",
             kind: PropertyKind::Object,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/observable/EulerCharacteristicObservable"),
             range: "https://uor.foundation/schema/TermExpression",
         },
@@ -980,6 +1178,7 @@ fn properties() -> Vec<Property> {
             comment: "The unit of measurement for this base metric.",
             kind: PropertyKind::Object,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/observable/BaseMetric"),
             range: "https://uor.foundation/observable/MeasurementUnit",
         },
@@ -989,6 +1188,7 @@ fn properties() -> Vec<Property> {
             comment: "The precision or resolution of this base metric.",
             kind: PropertyKind::Datatype,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/observable/BaseMetric"),
             range: XSD_NON_NEGATIVE_INTEGER,
         },
@@ -998,6 +1198,7 @@ fn properties() -> Vec<Property> {
             comment: "Monotonicity property of this metric (e.g., non-decreasing).",
             kind: PropertyKind::Object,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/observable/BaseMetric"),
             range: "https://uor.foundation/schema/TermExpression",
         },
@@ -1007,6 +1208,7 @@ fn properties() -> Vec<Property> {
             comment: "The decomposition rule for this metric into sub-metrics.",
             kind: PropertyKind::Object,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/observable/BaseMetric"),
             range: "https://uor.foundation/schema/TermExpression",
         },
@@ -1016,6 +1218,7 @@ fn properties() -> Vec<Property> {
             comment: "The position of this metric in the metric tower.",
             kind: PropertyKind::Datatype,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/observable/BaseMetric"),
             range: XSD_NON_NEGATIVE_INTEGER,
         },
@@ -1025,6 +1228,7 @@ fn properties() -> Vec<Property> {
             comment: "The computational cost of evaluating this metric.",
             kind: PropertyKind::Object,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/observable/BaseMetric"),
             range: "https://uor.foundation/schema/TermExpression",
         },
@@ -1034,8 +1238,24 @@ fn properties() -> Vec<Property> {
             comment: "Upper or lower bound on the metric value.",
             kind: PropertyKind::Object,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/observable/BaseMetric"),
             range: "https://uor.foundation/schema/TermExpression",
+        },
+        // v0.2.2 Phase A: landauerNats — the single functional payload property of
+        // the LandauerBudget carrier. Records accumulated Landauer cost in observable:Nats.
+        Property {
+            id: "https://uor.foundation/observable/landauerNats",
+            label: "landauerNats",
+            comment: "The accumulated Landauer cost carried by a LandauerBudget instance, \
+                      measured in nats. Monotonic within a pipeline invocation. The unit is \
+                      observable:Nats — every increment corresponds to a number of \
+                      irreversible bit-erasures times ln 2 (op:OA_5).",
+            kind: PropertyKind::Datatype,
+            functional: true,
+            required: false,
+            domain: Some("https://uor.foundation/observable/LandauerBudget"),
+            range: XSD_DECIMAL,
         },
     ]
 }

@@ -130,6 +130,8 @@ pub fn validate(artifacts: &Path) -> Result<ConformanceReport> {
     validate_reduction_completion_vocabulary(&mut report);
     // Amendment 66: Convergence Tower
     validate_convergence_tower_vocabulary(&mut report);
+    // ADR-059: convergence-tower codomain stratification of κ-derivation
+    validate_convergence_codomain_stratification(&mut report);
     // Amendment 67: Division Algebras
     validate_division_algebras_vocabulary(&mut report);
     // Amendment 68: Interaction Algebra
@@ -860,7 +862,7 @@ fn validate_coordinate_kind_individuals(report: &mut ConformanceReport) {
     let ck_iris = [
         "https://uor.foundation/query/TwoAdicValuation",
         "https://uor.foundation/query/WalshHadamardImage",
-        "https://uor.foundation/query/RingElement",
+        "https://uor.foundation/query/Address",
     ];
 
     let mut all_found = true;
@@ -1583,9 +1585,12 @@ fn validate_ebnf_grammar_alignment(report: &mut ConformanceReport) {
     let ontology = uor_ontology::Ontology::full();
     let validator = "ontology/inventory/ebnf_grammar_alignment";
 
-    // The EBNF grammar references 10 PrimitiveOp operations and 4 Witt levels.
+    // The EBNF grammar references 15 PrimitiveOp operations (10 original +
+    // 5 ADR-013/TR-08 substrate-amendment ops: Le, Lt, Ge, Gt, Concat) and
+    // 4 Witt levels.
     let expected_ops = [
-        "neg", "bnot", "succ", "pred", "add", "sub", "mul", "xor", "and", "or",
+        "neg", "bnot", "succ", "pred", "add", "sub", "mul", "xor", "and", "or", "le", "lt", "ge",
+        "gt", "concat",
     ];
     let expected_levels = ["W8", "W16", "W24", "W32"];
 
@@ -2138,8 +2143,53 @@ fn validate_certificate_issuance_coverage(report: &mut ConformanceReport) {
         "https://uor.foundation/cert/LiftChainCertificate",
         "https://uor.foundation/morphism/GroundingCertificate",
         "https://uor.foundation/parallel/DisjointnessCertificate",
+        // v0.2.1: InhabitanceCertificate is governed by IH_1 whose lhs
+        // and forAll reference the type by label, but the inheritance
+        // path goes through proof:ComputationCertificate first; the
+        // structural exemption captures the multi-parent case.
+        "https://uor.foundation/cert/InhabitanceCertificate",
+        // v0.2.2 T1.3 (cleanup): MultiplicationCertificate and
+        // PartitionCertificate exemptions were REMOVED. OA_5 and PT_2
+        // now explicitly cite the certificates in their rdfs:comment /
+        // forAll text; the text-based governance loop below picks them up.
+        // Workstream C (v0.2.2 closure): impossibility certificates are
+        // the failure-path carriers for resolver `certify` functions.
+        // They are minted only when the resolver's decision procedure
+        // produces no success witness; no separate `op:Identity` governs
+        // them — the governing identity is the resolver's own semantics.
+        "https://uor.foundation/cert/GenericImpossibilityCertificate",
+        "https://uor.foundation/cert/InhabitanceImpossibilityCertificate",
     ]
     .into();
+
+    // v0.2.2 T1.3: after `rewrite_identity_ast_refs`, identity `lhs`/`rhs`/
+    // `forAll` values are IriRef pointers to `schema:term_*` individuals whose
+    // `literalValue` / `variableName` properties carry the original strings.
+    // Build a lookup table from term-individual IRI to its stored text so we
+    // can follow the reference when scanning for certificate governance.
+    let term_literal_prop = "https://uor.foundation/schema/literalValue";
+    let term_variable_prop = "https://uor.foundation/schema/variableName";
+    let literal_expression_type = "https://uor.foundation/schema/LiteralExpression";
+    let forall_declaration_type = "https://uor.foundation/schema/ForAllDeclaration";
+    let term_text_by_iri: HashMap<&str, &str> = ontology
+        .namespaces
+        .iter()
+        .flat_map(|m| m.individuals.iter())
+        .filter(|i| i.type_ == literal_expression_type || i.type_ == forall_declaration_type)
+        .filter_map(|i| {
+            i.properties.iter().find_map(|(k, v)| {
+                if *k == term_literal_prop || *k == term_variable_prop {
+                    if let IndividualValue::Str(s) = v {
+                        Some((i.id, *s))
+                    } else {
+                        None
+                    }
+                } else {
+                    None
+                }
+            })
+        })
+        .collect();
 
     let mut all_governed = true;
     for cert_class in &cert_subclasses {
@@ -2158,7 +2208,19 @@ fn validate_certificate_issuance_coverage(report: &mut ConformanceReport) {
                     IndividualValue::Str(s) => {
                         s.contains(cert_class.label) || s.contains(cert_class.id)
                     }
-                    IndividualValue::IriRef(iri) => iri.contains(cert_class.id),
+                    IndividualValue::IriRef(iri) => {
+                        // Direct class-IRI reference:
+                        if iri.contains(cert_class.id) {
+                            return true;
+                        }
+                        // v0.2.2 T1.3: follow `schema:term_*` refs to the
+                        // underlying LiteralExpression/ForAllDeclaration text.
+                        if let Some(text) = term_text_by_iri.get(*iri) {
+                            text.contains(cert_class.label) || text.contains(cert_class.id)
+                        } else {
+                            false
+                        }
+                    }
                     IndividualValue::List(iris) => {
                         iris.iter().any(|iri| iri.contains(cert_class.id))
                     }
@@ -2563,7 +2625,15 @@ fn validate_iri_ref_targets(report: &mut ConformanceReport) {
 
     // Well-known external IRIs that are valid targets but not defined
     // in the ontology itself.
-    let known_external: HashSet<&str> = ["http://www.w3.org/2001/XMLSchema#decimal"].into();
+    let known_external: HashSet<&str> = [
+        "http://www.w3.org/2001/XMLSchema#decimal",
+        "http://www.w3.org/2001/XMLSchema#string",
+        "http://www.w3.org/2001/XMLSchema#integer",
+        "http://www.w3.org/2001/XMLSchema#nonNegativeInteger",
+        "http://www.w3.org/2001/XMLSchema#positiveInteger",
+        "http://www.w3.org/2001/XMLSchema#boolean",
+    ]
+    .into();
 
     let mut violations = Vec::new();
     for ns in &ontology.namespaces {
@@ -4160,6 +4230,132 @@ fn validate_convergence_tower_vocabulary(report: &mut ConformanceReport) {
     }
 }
 
+/// ADR-059: pins the four `convergence:ConvergenceLevel` individuals as the
+/// operator-geometry-coordinate codomain stratification of κ-derivation
+/// (ADR-058). ADR-059 §4 commits the Hopf convergence tower (R / C / H / O at
+/// division-algebra dimensions {1, 2, 4, 8}) as the coarse codomain
+/// stratification; this validator guards the exact normative values the ADR
+/// makes load-bearing — algebra dimension, characteristic identity, Hopf fiber
+/// sphere, and the persistent residual Betti signature (β_0 = 1 and
+/// β_{2^k − 1} = 1 at each level). Without this guard, a regression in the
+/// ontology-generated tower would silently break ADR-059's codomain commitment.
+fn validate_convergence_codomain_stratification(report: &mut ConformanceReport) {
+    let ontology = uor_ontology::Ontology::full();
+    let validator = "ontology/inventory/convergence_codomain_stratification";
+
+    // (level IRI, algebra_dimension, characteristic_identity, fiber IRI,
+    //  betti_signature). The four normed division algebras R/C/H/O per
+    //  ADR-059 §4; the persistent Betti at index 2^k − 1 encodes the Hopf
+    //  fibration's residual β = 1 at each level.
+    let levels: &[(&str, i64, &str, &str, &str)] = &[
+        (
+            "https://uor.foundation/convergence/L0_State",
+            1,
+            "existence",
+            "https://uor.foundation/convergence/hopf_S0",
+            "[1]",
+        ),
+        (
+            "https://uor.foundation/convergence/L1_Memory",
+            2,
+            "feedback",
+            "https://uor.foundation/convergence/hopf_S1",
+            "[1,1]",
+        ),
+        (
+            "https://uor.foundation/convergence/L2_Agency",
+            4,
+            "choice",
+            "https://uor.foundation/convergence/hopf_S3",
+            "[1,0,0,1]",
+        ),
+        (
+            "https://uor.foundation/convergence/L3_Self",
+            8,
+            "self-reference",
+            "https://uor.foundation/convergence/hopf_S7",
+            "[1,0,0,0,0,0,0,1]",
+        ),
+    ];
+
+    let dim_prop = "https://uor.foundation/convergence/algebraDimension";
+    let betti_prop = "https://uor.foundation/convergence/bettiSignature";
+    let fiber_prop = "https://uor.foundation/convergence/fiberType";
+    let identity_prop = "https://uor.foundation/convergence/characteristicIdentity";
+    let mut all_valid = true;
+
+    for (iri, dim, identity, fiber, betti) in levels {
+        match ontology.find_individual(iri) {
+            Some(ind) => {
+                let prop_eq = |key: &str, expect: &IndividualValue| {
+                    ind.properties.iter().any(|(k, v)| *k == key && v == expect)
+                };
+                if !prop_eq(dim_prop, &IndividualValue::Int(*dim)) {
+                    report.push(TestResult::fail(
+                        validator,
+                        format!("{iri} algebraDimension is not {dim} (ADR-059 §4 tower)"),
+                    ));
+                    all_valid = false;
+                }
+                if !prop_eq(identity_prop, &IndividualValue::Str(identity)) {
+                    report.push(TestResult::fail(
+                        validator,
+                        format!("{iri} characteristicIdentity is not \"{identity}\""),
+                    ));
+                    all_valid = false;
+                }
+                if !prop_eq(fiber_prop, &IndividualValue::IriRef(fiber)) {
+                    report.push(TestResult::fail(
+                        validator,
+                        format!("{iri} fiberType is not {fiber}"),
+                    ));
+                    all_valid = false;
+                }
+                if !prop_eq(betti_prop, &IndividualValue::Str(betti)) {
+                    report.push(TestResult::fail(
+                        validator,
+                        format!("{iri} bettiSignature is not {betti} (persistent β_{{2^k-1}} = 1)"),
+                    ));
+                    all_valid = false;
+                }
+            }
+            None => {
+                report.push(TestResult::fail(
+                    validator,
+                    format!("ConvergenceLevel {iri} not found (ADR-059 codomain stratification)"),
+                ));
+                all_valid = false;
+            }
+        }
+    }
+
+    // Exactly four levels — the four normed division algebras, no more.
+    let level_count = ontology
+        .find_namespace("convergence")
+        .map(|ns| {
+            ns.individuals
+                .iter()
+                .filter(|i| i.type_ == "https://uor.foundation/convergence/ConvergenceLevel")
+                .count()
+        })
+        .unwrap_or(0);
+    if level_count != 4 {
+        report.push(TestResult::fail(
+            validator,
+            format!("expected exactly 4 ConvergenceLevel individuals, found {level_count}"),
+        ));
+        all_valid = false;
+    }
+
+    if all_valid {
+        report.push(TestResult::pass(
+            validator,
+            "ADR-059: Hopf convergence tower {R,C,H,O} at dims {1,2,4,8} carries the \
+             committed codomain stratification (identity, fiber sphere, persistent Betti)",
+        ));
+    }
+}
+
 fn validate_division_algebras_vocabulary(report: &mut ConformanceReport) {
     let ontology = uor_ontology::Ontology::full();
     let validator = "ontology/inventory/division_algebras_vocabulary";
@@ -5110,6 +5306,58 @@ fn validate_legitimate_string_properties_only(report: &mut ConformanceReport) {
         "https://uor.foundation/conformance/disjointnessWitness",
         // Amendment 95: Host-value sort (Workstream 5)
         "https://uor.foundation/schema/hostString",
+        // Amendment 96 (2026-04-12): symbolic phase-angle descriptors
+        // on reduction/ individuals carry Greek symbol strings
+        // ("Ω⁰", "Ω¹", "π/6", "e^{iπ/6}") rather than numeric decimals.
+        // Range was xsd:decimal; changed to xsd:string to match the
+        // value shape. See reduction.rs.
+        "https://uor.foundation/reduction/phaseParameter",
+        "https://uor.foundation/reduction/convergenceAngle",
+        "https://uor.foundation/reduction/rotationSchedule",
+        "https://uor.foundation/reduction/baseAngle",
+        "https://uor.foundation/reduction/targetAngle",
+        "https://uor.foundation/reduction/gateExpectedPhase",
+        "https://uor.foundation/reduction/expectedPhase",
+        "https://uor.foundation/reduction/phaseAngle",
+        "https://uor.foundation/reduction/finalGrounding",
+        "https://uor.foundation/reduction/thermodynamicBudget",
+        // Amendment 96: observable/referencesClass is an
+        // annotation-valued IRI reference (the metric describes a
+        // class of phenomena, not a specific instance).
+        "https://uor.foundation/observable/referencesClass",
+        // v0.2.1: Inhabitance Verdict Instantiation
+        "https://uor.foundation/proof/contradictionProof",
+        // v0.2.1: Conformance backing properties
+        "https://uor.foundation/predicate/terminationWitness",
+        "https://uor.foundation/parallel/disjointnessWitness",
+        "https://uor.foundation/stream/productivityWitness",
+        "https://uor.foundation/state/leaseScope",
+        // v0.2.1: Surface-grammar metadata for parametric ebnf emission
+        "https://uor.foundation/conformance/surfaceForm",
+        "https://uor.foundation/conformance/surfaceKeyword",
+        "https://uor.foundation/conformance/surfaceProduction",
+        "https://uor.foundation/conformance/exportRustName",
+        // v0.2.1: PipelineFailure variant-field metadata
+        "https://uor.foundation/reduction/fieldName",
+        "https://uor.foundation/reduction/fieldType",
+        // v0.2.2 Phase D (Q4): BoundConstraint boundArguments carries
+        // the kind-specific parameters in canonical string form
+        // ("modulus=256;residue=0", "bound=0", etc.). String is the
+        // canonical serialization; typed accessors on the Rust side
+        // unpack via per-type-alias constructors.
+        "https://uor.foundation/type/boundArguments",
+        // Product/Coproduct Completion Amendment: productCategoryLevel is
+        // a closed-vocabulary discriminator ("partition_classification" or
+        // "nerve_topology") at the Partition class — using xsd:string is
+        // the canonical encoding since the value is a fixed identifier the
+        // reader interprets, not a parsed numeric or structured type.
+        "https://uor.foundation/partition/productCategoryLevel",
+        // Product/Coproduct Completion Amendment: layoutRule on
+        // foundation:LayoutInvariant carries the human-readable arithmetic
+        // identity ("SITE_COUNT(A × B) = SITE_COUNT(A) + SITE_COUNT(B)"
+        // etc.) for documentation and debugger inspection. Not parsed;
+        // xsd:string is the canonical range.
+        "https://uor.foundation/foundation/layoutRule",
     ]
     .into_iter()
     .collect();
@@ -5294,12 +5542,19 @@ fn validate_constraint_completion(report: &mut ConformanceReport) {
     let ns = ontology.find_namespace("type");
     match ns {
         Some(m) => {
-            let new_classes = [
-                "https://uor.foundation/type/HammingConstraint",
-                "https://uor.foundation/type/SiteConstraint",
-                "https://uor.foundation/type/AffineConstraint",
+            // v0.2.2 Phase D: the 7 enumerated Constraint subclasses from
+            // Amendment 95 (Workstream 3) were folded into the parametric
+            // BoundConstraint<O, B> + Conjunction surface. The check moved
+            // from "the 3 Workstream 3 subclasses exist" to "the parametric
+            // classes, their 4 backing properties, and the 11 former
+            // subclass properties (re-parented to BoundConstraint /
+            // Conjunction) are all present".
+            let parametric_classes = [
+                "https://uor.foundation/type/BoundConstraint",
+                "https://uor.foundation/type/BoundShape",
+                "https://uor.foundation/type/Conjunction",
             ];
-            let classes_ok = new_classes
+            let classes_ok = parametric_classes
                 .iter()
                 .all(|iri| m.classes.iter().any(|c| c.id == *iri));
             let new_props = [
@@ -5308,6 +5563,10 @@ fn validate_constraint_completion(report: &mut ConformanceReport) {
                 "https://uor.foundation/type/siteValue",
                 "https://uor.foundation/type/affineOffset",
                 "https://uor.foundation/type/affineGenerator",
+                "https://uor.foundation/type/boundObservable",
+                "https://uor.foundation/type/boundShape",
+                "https://uor.foundation/type/boundArguments",
+                "https://uor.foundation/type/conjuncts",
             ];
             let props_ok = new_props
                 .iter()
@@ -5319,7 +5578,9 @@ fn validate_constraint_completion(report: &mut ConformanceReport) {
             if classes_ok && props_ok && carry_ok {
                 report.push(TestResult::pass(
                     validator,
-                    "Constraint completion: 3 classes, 5 properties, carryPattern retyped",
+                    "Constraint completion (parametric): BoundConstraint + \
+                     BoundShape + Conjunction classes, 4 parametric + 5 \
+                     kind-specific properties, carryPattern retyped",
                 ));
             } else {
                 report.push(TestResult::fail(

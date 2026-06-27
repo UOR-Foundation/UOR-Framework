@@ -82,6 +82,12 @@ pub struct ConceptPage {
     pub url: String,
     /// Space color coding: `"kernel"`, `"bridge"`, `"user"`, or `"cert"`.
     pub space: String,
+    /// Absolute path to the source markdown file this page renders from. The
+    /// concept catalog is merged from several content roots (the website's own
+    /// `content/concepts/` plus the comprehensive `docs/content/concepts/`), so
+    /// the source is recorded per page rather than reconstructed from the slug.
+    #[serde(skip)]
+    pub source: std::path::PathBuf,
 }
 
 /// An `op:Identity` individual for the identities browser.

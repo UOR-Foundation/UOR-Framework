@@ -113,6 +113,52 @@ fn classes() -> Vec<Class> {
             subclass_of: &[OWL_THING],
             disjoint_with: &[],
         },
+        // v0.2.1: Inhabitance Verdict Instantiation
+        Class {
+            id: "https://uor.foundation/derivation/InhabitanceStep",
+            label: "InhabitanceStep",
+            comment: "A peer of derivation:SynthesisStep specialised to \
+                      inhabitance search. Each step represents one navigation \
+                      in the constraint nerve, either pinning a site to a \
+                      value or confirming that a predicate evaluates true on \
+                      the current partial assignment.",
+            subclass_of: &["https://uor.foundation/derivation/SynthesisStep"],
+            disjoint_with: &[],
+        },
+        Class {
+            id: "https://uor.foundation/derivation/InhabitanceCheckpoint",
+            label: "InhabitanceCheckpoint",
+            comment: "A peer of derivation:SynthesisCheckpoint specialised to \
+                      inhabitance search. Marks an audit point where the \
+                      resolver state can be restored if the search backtracks.",
+            subclass_of: &["https://uor.foundation/derivation/SynthesisCheckpoint"],
+            disjoint_with: &[],
+        },
+        // v0.2.2 Phase D (Q4) — observable backing the depthConstraintKind
+        // BoundConstraint individual.
+        Class {
+            id: "https://uor.foundation/derivation/DerivationDepthObservable",
+            label: "DerivationDepthObservable",
+            comment: "Observes the derivation depth of a Datum, computed as \
+                      the maximum nesting level of derivation:RewriteStep \
+                      applications producing it. Used as the bound \
+                      observable for the depthConstraintKind BoundConstraint.",
+            subclass_of: &["https://uor.foundation/observable/Observable"],
+            disjoint_with: &[],
+        },
+        // v0.2.2 Phase E — DerivationTrace: an ordered sequence of
+        // RewriteStep events produced by `Derivation::replay()`.
+        Class {
+            id: "https://uor.foundation/derivation/DerivationTrace",
+            label: "DerivationTrace",
+            comment: "An ordered sequence of derivation:RewriteStep events \
+                      produced by replaying a Derivation. Used by \
+                      uor-foundation-verify to re-derive a certificate from \
+                      a content-addressed trace without running the deciders. \
+                      The traceEventCount property records the trace length.",
+            subclass_of: &[OWL_THING],
+            disjoint_with: &[],
+        },
     ]
 }
 
@@ -124,6 +170,7 @@ fn properties() -> Vec<Property> {
             comment: "The term at the start of the derivation, before any rewriting.",
             kind: PropertyKind::Object,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/derivation/Derivation"),
             range: "https://uor.foundation/schema/Term",
         },
@@ -133,6 +180,7 @@ fn properties() -> Vec<Property> {
             comment: "The canonical form produced at the end of the derivation.",
             kind: PropertyKind::Object,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/derivation/Derivation"),
             range: "https://uor.foundation/schema/Term",
         },
@@ -142,6 +190,7 @@ fn properties() -> Vec<Property> {
             comment: "The datum value obtained by evaluating the canonical term.",
             kind: PropertyKind::Object,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/derivation/Derivation"),
             range: "https://uor.foundation/schema/Datum",
         },
@@ -151,6 +200,7 @@ fn properties() -> Vec<Property> {
             comment: "A rewrite step in this derivation.",
             kind: PropertyKind::Object,
             functional: false,
+            required: false,
             domain: Some("https://uor.foundation/derivation/Derivation"),
             range: "https://uor.foundation/derivation/RewriteStep",
         },
@@ -160,6 +210,7 @@ fn properties() -> Vec<Property> {
             comment: "Metrics for the canonical term produced by this derivation.",
             kind: PropertyKind::Object,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/derivation/Derivation"),
             range: "https://uor.foundation/derivation/TermMetrics",
         },
@@ -169,6 +220,7 @@ fn properties() -> Vec<Property> {
             comment: "The term before this rewrite step.",
             kind: PropertyKind::Object,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/derivation/RewriteStep"),
             range: "https://uor.foundation/schema/Term",
         },
@@ -178,6 +230,7 @@ fn properties() -> Vec<Property> {
             comment: "The term after this rewrite step.",
             kind: PropertyKind::Object,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/derivation/RewriteStep"),
             range: "https://uor.foundation/schema/Term",
         },
@@ -191,6 +244,7 @@ fn properties() -> Vec<Property> {
                       complementing the string-valued derivation:rule property.",
             kind: PropertyKind::Object,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/derivation/RewriteStep"),
             range: "https://uor.foundation/derivation/RewriteRule",
         },
@@ -202,6 +256,7 @@ fn properties() -> Vec<Property> {
                       justifies its application.",
             kind: PropertyKind::Object,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/derivation/RewriteRule"),
             range: "https://uor.foundation/op/Identity",
         },
@@ -211,6 +266,7 @@ fn properties() -> Vec<Property> {
             comment: "The total number of rewrite steps in this derivation.",
             kind: PropertyKind::Datatype,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/derivation/TermMetrics"),
             range: XSD_NON_NEGATIVE_INTEGER,
         },
@@ -220,6 +276,7 @@ fn properties() -> Vec<Property> {
             comment: "The number of nodes in the canonical term's syntax tree.",
             kind: PropertyKind::Datatype,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/derivation/TermMetrics"),
             range: XSD_NON_NEGATIVE_INTEGER,
         },
@@ -230,6 +287,7 @@ fn properties() -> Vec<Property> {
             comment: "The type before this refinement step was applied.",
             kind: PropertyKind::Object,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/derivation/RefinementStep"),
             range: "https://uor.foundation/type/TypeDefinition",
         },
@@ -239,6 +297,7 @@ fn properties() -> Vec<Property> {
             comment: "The constraint that was applied in this refinement step.",
             kind: PropertyKind::Object,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/derivation/RefinementStep"),
             range: "https://uor.foundation/type/Constraint",
         },
@@ -248,6 +307,7 @@ fn properties() -> Vec<Property> {
             comment: "The type after this refinement step was applied.",
             kind: PropertyKind::Object,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/derivation/RefinementStep"),
             range: "https://uor.foundation/type/TypeDefinition",
         },
@@ -257,6 +317,7 @@ fn properties() -> Vec<Property> {
             comment: "The number of site coordinates pinned by this refinement step.",
             kind: PropertyKind::Datatype,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/derivation/RefinementStep"),
             range: XSD_NON_NEGATIVE_INTEGER,
         },
@@ -267,6 +328,7 @@ fn properties() -> Vec<Property> {
             comment: "Zero-based sequential index of this step within the synthesis derivation.",
             kind: PropertyKind::Datatype,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/derivation/SynthesisStep"),
             range: XSD_NON_NEGATIVE_INTEGER,
         },
@@ -276,6 +338,7 @@ fn properties() -> Vec<Property> {
             comment: "The constraint added in this synthesis step.",
             kind: PropertyKind::Object,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/derivation/SynthesisStep"),
             range: "https://uor.foundation/type/Constraint",
         },
@@ -285,6 +348,7 @@ fn properties() -> Vec<Property> {
             comment: "The constraint nerve signature before this synthesis step.",
             kind: PropertyKind::Object,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/derivation/SynthesisStep"),
             range: "https://uor.foundation/observable/SynthesisSignature",
         },
@@ -294,6 +358,7 @@ fn properties() -> Vec<Property> {
             comment: "The constraint nerve signature after this synthesis step.",
             kind: PropertyKind::Object,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/derivation/SynthesisStep"),
             range: "https://uor.foundation/observable/SynthesisSignature",
         },
@@ -304,6 +369,7 @@ fn properties() -> Vec<Property> {
             comment: "The SynthesisStep at which this checkpoint was taken.",
             kind: PropertyKind::Object,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/derivation/SynthesisCheckpoint"),
             range: "https://uor.foundation/derivation/SynthesisStep",
         },
@@ -314,6 +380,7 @@ fn properties() -> Vec<Property> {
                       checkpoint.",
             kind: PropertyKind::Object,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/derivation/SynthesisCheckpoint"),
             range: "https://uor.foundation/resolver/ConstraintSearchState",
         },
@@ -326,8 +393,71 @@ fn properties() -> Vec<Property> {
                       property: domain is resolver:TowerCompletenessResolver.",
             kind: PropertyKind::Object,
             functional: false,
+            required: false,
             domain: Some("https://uor.foundation/resolver/TowerCompletenessResolver"),
             range: "https://uor.foundation/derivation/SynthesisCheckpoint",
+        },
+        // v0.2.1: InhabitanceStep / InhabitanceCheckpoint properties.
+        // priorState/successorState rather than fromState/toState — the
+        // generated trait methods would otherwise be `fn from_state` and
+        // `fn to_state`, which trip clippy::wrong_self_convention (the
+        // `from_*` family is reserved for constructors).
+        Property {
+            id: "https://uor.foundation/derivation/priorState",
+            label: "priorState",
+            comment: "The ConstraintSearchState before this InhabitanceStep \
+                      was taken.",
+            kind: PropertyKind::Object,
+            functional: true,
+            required: false,
+            domain: Some("https://uor.foundation/derivation/InhabitanceStep"),
+            range: "https://uor.foundation/resolver/ConstraintSearchState",
+        },
+        Property {
+            id: "https://uor.foundation/derivation/successorState",
+            label: "successorState",
+            comment: "The ConstraintSearchState after this InhabitanceStep \
+                      was taken.",
+            kind: PropertyKind::Object,
+            functional: true,
+            required: false,
+            domain: Some("https://uor.foundation/derivation/InhabitanceStep"),
+            range: "https://uor.foundation/resolver/ConstraintSearchState",
+        },
+        Property {
+            id: "https://uor.foundation/derivation/rule",
+            label: "rule",
+            comment: "The predicate:DispatchRule whose evaluation drove this \
+                      InhabitanceStep.",
+            kind: PropertyKind::Object,
+            functional: true,
+            required: false,
+            domain: Some("https://uor.foundation/derivation/InhabitanceStep"),
+            range: "https://uor.foundation/predicate/DispatchRule",
+        },
+        Property {
+            id: "https://uor.foundation/derivation/checkpointIndex",
+            label: "checkpointIndex",
+            comment: "Ordinal index of this checkpoint within the \
+                      InhabitanceSearchTrace's checkpoint sequence.",
+            kind: PropertyKind::Datatype,
+            functional: true,
+            required: false,
+            domain: Some("https://uor.foundation/derivation/InhabitanceCheckpoint"),
+            range: XSD_INTEGER,
+        },
+        // v0.2.2 Phase E — trace event count on DerivationTrace.
+        Property {
+            id: "https://uor.foundation/derivation/traceEventCount",
+            label: "traceEventCount",
+            comment: "Number of RewriteStep events recorded in this \
+                      DerivationTrace. Used by Derivation::replay() to size \
+                      the fixed-capacity event arena without allocation.",
+            kind: PropertyKind::Datatype,
+            functional: true,
+            required: false,
+            domain: Some("https://uor.foundation/derivation/DerivationTrace"),
+            range: XSD_NON_NEGATIVE_INTEGER,
         },
     ]
 }

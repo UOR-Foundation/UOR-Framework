@@ -97,6 +97,18 @@ impl RustFile {
 
 /// Writes a Rust source file to disk, creating parent directories as needed.
 ///
+/// `.rs` files are post-processed through `rustfmt` so the codegen's
+/// output is a fixed point of `cargo fmt --check`. If `rustfmt` is
+/// missing or fails on a particular file, the unformatted content is
+/// written instead — the conformance suite's formatting validator will
+/// surface the regression.
+///
+/// Phase 11c: if the file already exists and its first non-blank line
+/// is `// @codegen-exempt`, the file is preserved verbatim — codegen
+/// does not overwrite hand-written sources marked with this banner.
+/// Used for `foundation/src/blanket_impls.rs` (Phase 11e) and any other
+/// hand-maintained source that lives alongside generated code.
+///
 /// # Errors
 ///
 /// Returns an error if the directory cannot be created or the file cannot be written.
@@ -105,15 +117,240 @@ pub fn write_file(path: &Path, content: &str) -> Result<()> {
         std::fs::create_dir_all(parent)
             .with_context(|| format!("Failed to create directory: {}", parent.display()))?;
     }
-    std::fs::write(path, content)
+
+    // Phase 11c — preserve `@codegen-exempt` files. Reading the existing
+    // file and checking for the banner is cheaper than a syscall race;
+    // only the first non-blank line is consulted so mid-file comments
+    // can't trigger preservation accidentally.
+    if path.exists() && is_codegen_exempt(path) {
+        return Ok(());
+    }
+
+    let final_content = if path.extension().is_some_and(|ext| ext == "rs") {
+        format_rust_source(content).unwrap_or_else(|_| content.to_string())
+    } else {
+        content.to_string()
+    };
+    std::fs::write(path, final_content)
         .with_context(|| format!("Failed to write: {}", path.display()))?;
     Ok(())
 }
 
+/// Phase 11c — true iff `path` starts with the `// @codegen-exempt`
+/// banner. Reads only the first ~256 bytes; missing-file / read-error
+/// returns `false` so non-existent paths pass through to the writer.
+fn is_codegen_exempt(path: &Path) -> bool {
+    let body = match std::fs::read_to_string(path) {
+        Ok(b) => b,
+        Err(_) => return false,
+    };
+    for line in body.lines() {
+        let trimmed = line.trim();
+        if trimmed.is_empty() {
+            continue;
+        }
+        return trimmed.starts_with("// @codegen-exempt");
+    }
+    false
+}
+
+/// Phase 13b — load a named rustdoc fragment from a Markdown phase doc.
+///
+/// Resolution rules (per `docs/orphan-closure/completion-plan.md` §13b):
+///
+///   * `source_path` is relative to `workspace_root` and must exist.
+///     Missing file ⇒ panic with `load_doc_fragment: file not found`.
+///   * The marker line `<!-- doc-key: {key} -->` (case-sensitive) opens
+///     a fragment. The fragment ends at the next of:
+///       - the next `<!-- doc-key: ... -->` marker
+///       - a Markdown heading (`## ` or `### `)
+///       - the literal `<!-- /doc-key -->` terminator
+///       - end of file
+///   * Returned content has leading/trailing whitespace trimmed but
+///     internal Markdown is preserved verbatim.
+///   * Missing key in present file ⇒ panic with
+///     `load_doc_fragment: missing key '{key}' in {source_path}`.
+///
+/// Phase 13b's full migration of every `f.doc_comment("...")` call to
+/// `load_doc_fragment` lands incrementally — each emission site moves
+/// independently as the corresponding phase-doc fragment is authored.
+/// Until then, this helper is available for new emissions.
+///
+/// # Panics
+///
+/// Per the resolution rules above. Panics surface at codegen time
+/// (running `uor-crate`), so missing fragments are caught before
+/// foundation source is regenerated.
+#[allow(clippy::panic, clippy::missing_panics_doc)]
+#[must_use]
+pub fn load_doc_fragment(workspace_root: &Path, source_path: &str, key: &str) -> String {
+    let full_path = workspace_root.join(source_path);
+    let body = match std::fs::read_to_string(&full_path) {
+        Ok(b) => b,
+        Err(e) => panic!(
+            "load_doc_fragment: file not found: {source_path} ({e}; resolved to {})",
+            full_path.display(),
+        ),
+    };
+    let marker = format!("<!-- doc-key: {key} -->");
+    let start = match body.find(&marker) {
+        Some(idx) => idx + marker.len(),
+        None => panic!("load_doc_fragment: missing key '{key}' in {source_path}"),
+    };
+    let tail = &body[start..];
+    let mut end = tail.len();
+    if let Some(off) = tail.find("<!-- doc-key:") {
+        end = off;
+    }
+    if let Some(off) = tail.find("<!-- /doc-key -->") {
+        if off < end {
+            end = off;
+        }
+    }
+    // Heading terminators — search line-by-line, recording cumulative
+    // byte offset into `tail` to compare with `end` from the marker
+    // searches above.
+    let mut byte_pos = 0usize;
+    for line in tail.lines() {
+        let trimmed = line.trim_start();
+        if (trimmed.starts_with("## ") || trimmed.starts_with("### ")) && byte_pos < end {
+            end = byte_pos;
+            break;
+        }
+        byte_pos += line.len() + 1; // +1 for '\n'
+    }
+    tail[..end].trim().to_string()
+}
+
+/// Pipes `source` through `rustfmt --emit stdout`. Returns the formatted
+/// string, or an error if `rustfmt` exits non-zero / produces no output.
+fn format_rust_source(source: &str) -> Result<String> {
+    use std::io::Write;
+    use std::process::{Command, Stdio};
+
+    let mut child = Command::new("rustfmt")
+        .args(["--edition", "2021", "--emit", "stdout"])
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+        .context("failed to spawn rustfmt")?;
+    {
+        let stdin = child.stdin.as_mut().context("rustfmt stdin not captured")?;
+        stdin
+            .write_all(source.as_bytes())
+            .context("write to rustfmt stdin")?;
+    }
+    let output = child.wait_with_output().context("wait rustfmt")?;
+    if !output.status.success() {
+        anyhow::bail!(
+            "rustfmt exit code {:?}: {}",
+            output.status.code(),
+            String::from_utf8_lossy(&output.stderr)
+        );
+    }
+    let formatted = String::from_utf8(output.stdout).context("rustfmt stdout utf-8")?;
+    if formatted.is_empty() {
+        anyhow::bail!("rustfmt produced empty output");
+    }
+    Ok(formatted)
+}
+
 /// Wraps a comment string for doc comments: collapses internal whitespace runs
-/// and escapes brackets to avoid false rustdoc intra-doc link warnings.
+/// and escapes brackets / angle brackets to avoid false rustdoc warnings
+/// (intra-doc links for `[text]`; unclosed HTML tags for `Name<T>`).
 pub fn normalize_comment(s: &str) -> String {
     let collapsed = s.split_whitespace().collect::<Vec<_>>().join(" ");
-    // Escape [ and ] to prevent rustdoc from interpreting them as intra-doc links
-    collapsed.replace('[', r"\[").replace(']', r"\]")
+    let bracketed = collapsed.replace('[', r"\[").replace(']', r"\]");
+    // v0.2.2 T6.23: escape generic-like `<Ident>` runs with backslashes so
+    // rustdoc doesn't treat `Datum<L>`, `Grounded<T>`, etc. as unclosed HTML
+    // tags. Matches the shape `Ident<Ident(, Ident)*>` where Ident is alnum
+    // or `_` (and `::` for turbofish, `:`/space for `<const N: usize>`).
+    //
+    // Iterates over chars (not bytes) to stay UTF-8-safe — the ontology
+    // comments contain Greek letters and other multibyte code points.
+    let chars: Vec<char> = bracketed.chars().collect();
+    let mut out = String::with_capacity(bracketed.len());
+    let mut i = 0;
+    while i < chars.len() {
+        if chars[i] == '<' && i > 0 && is_ident_char(chars[i - 1]) {
+            let mut j = i + 1;
+            let mut ok = j < chars.len() && is_generic_start(chars[j]);
+            while ok && j < chars.len() && chars[j] != '>' {
+                if !is_generic_body(chars[j]) {
+                    ok = false;
+                    break;
+                }
+                j += 1;
+            }
+            if ok && j < chars.len() && chars[j] == '>' {
+                out.push_str(r"\<");
+                for &c in &chars[i + 1..j] {
+                    out.push(c);
+                }
+                out.push_str(r"\>");
+                i = j + 1;
+                continue;
+            }
+        }
+        out.push(chars[i]);
+        i += 1;
+    }
+    out
+}
+
+fn is_ident_char(c: char) -> bool {
+    // Allow `:` before `<` so the regex catches turbofish `fn::<T>` as well
+    // as plain `Generic<T>`.
+    c.is_ascii_alphanumeric() || c == '_' || c == ':'
+}
+
+fn is_generic_start(c: char) -> bool {
+    c.is_ascii_alphabetic() || c == '_'
+}
+
+fn is_generic_body(c: char) -> bool {
+    // Allow `:` and space to match `<const N: usize>` / `<T: Hasher>` shapes.
+    c.is_ascii_alphanumeric() || c == '_' || c == ',' || c == ' ' || c == ':'
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn normalize_comment_preserves_plain_text() {
+        assert_eq!(normalize_comment("hello world"), "hello world");
+    }
+
+    #[test]
+    fn normalize_comment_collapses_whitespace() {
+        assert_eq!(
+            normalize_comment("one   two\n\tthree   four"),
+            "one two three four"
+        );
+    }
+
+    #[test]
+    fn normalize_comment_escapes_single_brackets() {
+        assert_eq!(
+            normalize_comment("a [name] reference"),
+            r"a \[name\] reference"
+        );
+    }
+
+    #[test]
+    fn normalize_comment_escapes_nested_brackets() {
+        assert_eq!(normalize_comment("[[a]]"), r"\[\[a\]\]");
+    }
+
+    #[test]
+    fn normalize_comment_empty_string() {
+        assert_eq!(normalize_comment(""), "");
+    }
+
+    #[test]
+    fn normalize_comment_whitespace_only() {
+        assert_eq!(normalize_comment("  \n\t  "), "");
+    }
 }

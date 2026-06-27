@@ -124,6 +124,7 @@ fn properties() -> Vec<Property> {
             comment: "The type of input the query accepts.",
             kind: PropertyKind::Object,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/query/Query"),
             range: OWL_CLASS,
         },
@@ -133,6 +134,7 @@ fn properties() -> Vec<Property> {
             comment: "The type of output the query produces.",
             kind: PropertyKind::Object,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/query/Query"),
             range: OWL_CLASS,
         },
@@ -146,6 +148,7 @@ fn properties() -> Vec<Property> {
                       reference to a TriadProjection individual.",
             kind: PropertyKind::Object,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/query/CoordinateQuery"),
             range: "https://uor.foundation/query/TriadProjection",
         },
@@ -156,18 +159,21 @@ fn properties() -> Vec<Property> {
             comment: "The ring address of the grounded source symbol.",
             kind: PropertyKind::Object,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/query/RelationQuery"),
             range: "https://uor.foundation/u/Element",
         },
         Property {
             id: "https://uor.foundation/query/relationType",
             label: "relationType",
-            comment: "The transformation type, expressed as a type:CompositeConstraint composed \
-                      from the primitive basis. At inference time this is the output of an observable \
-                      coordinate read on example pairs — computed from (d_R, d_H, d_I). Not an \
-                      externally supplied input; read from the representation space.",
+            comment: "The transformation type, expressed as a type:Conjunction composed \
+                      from the primitive BoundConstraint basis. At inference time this is the \
+                      output of an observable coordinate read on example pairs — computed from \
+                      (d_R, d_H, d_I). Not an externally supplied input; read from the \
+                      representation space.",
             kind: PropertyKind::Object,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/query/RelationQuery"),
             range: "https://uor.foundation/type/Constraint",
         },
@@ -178,6 +184,7 @@ fn properties() -> Vec<Property> {
                       closes to isClosed = true upon resolution.",
             kind: PropertyKind::Object,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/query/RelationQuery"),
             range: "https://uor.foundation/partition/FreeRank",
         },
@@ -187,6 +194,7 @@ fn properties() -> Vec<Property> {
             comment: "The GroundingMap that resolved the source symbol to its ring address.",
             kind: PropertyKind::Object,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/query/RelationQuery"),
             range: "https://uor.foundation/morphism/GroundingMap",
         },
@@ -197,6 +205,7 @@ fn properties() -> Vec<Property> {
                       back to surface symbols.",
             kind: PropertyKind::Object,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/query/RelationQuery"),
             range: "https://uor.foundation/morphism/ProjectionMap",
         },
@@ -209,6 +218,7 @@ fn properties() -> Vec<Property> {
                       the free site space for subsequent queries.",
             kind: PropertyKind::Object,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/query/RelationQuery"),
             range: "https://uor.foundation/state/Context",
         },
@@ -219,6 +229,7 @@ fn properties() -> Vec<Property> {
             comment: "The session this query belongs to.",
             kind: PropertyKind::Object,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/query/SessionQuery"),
             range: "https://uor.foundation/state/Session",
         },
@@ -245,11 +256,13 @@ fn individuals() -> Vec<Individual> {
             properties: &[],
         },
         Individual {
-            id: "https://uor.foundation/query/RingElement",
+            id: "https://uor.foundation/query/Address",
             type_: "https://uor.foundation/query/TriadProjection",
-            label: "RingElement",
+            label: "Address",
             comment: "The address coordinate: the content-addressable position \
-                      of a datum in the Braille glyph encoding.",
+                      of a datum in the Braille glyph encoding. Renamed from \
+                      RingElement in v0.2.2 W8 to unify vocabulary with the \
+                      schema:Triad bundling properties.",
             properties: &[],
         },
     ]

@@ -74,16 +74,28 @@ pub fn generate(out_dir: &Path, readme_path: &Path) -> Result<()> {
     let content_dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("content");
     verifier::verify_content(&content_dir)?;
 
+    // Discover every authored concept page so the index + sidebar are generated
+    // from the source of truth (never hand-maintained, never out of sync).
+    let concept_links = collect_concept_links(&content_dir.join("concepts"));
+
+    // Every namespace (assembly order) so the sidebar lists all of them — the
+    // previous hardcoded sidebar exposed only 16 of the 34.
+    let ontology = Ontology::full();
+    let namespace_prefixes: Vec<&str> = ontology
+        .namespaces
+        .iter()
+        .map(|m| m.namespace.prefix)
+        .collect();
+
     let docs_current = format!("{base_path}/docs/");
     let site_nav_html = nav::render_nav_bootstrap(&nav::build_nav(base_path), &docs_current);
-    let docs_nav_html = build_docs_sidebar_html(base_path);
+    let docs_nav_html = build_docs_sidebar_html(base_path, &namespace_prefixes, &concept_links);
 
     // Generate index page
     let index_html = generate_index_page(&index, &site_nav_html, &docs_nav_html, base_path);
     writer::write_html(&out_dir.join("index.html"), &index_html)?;
 
     // Generate per-namespace reference pages (100% from spec)
-    let ontology = Ontology::full();
     for module in &ontology.namespaces {
         let html = generate_namespace_page(module, &site_nav_html, &docs_nav_html, base_path);
         let path = out_dir
@@ -102,43 +114,12 @@ pub fn generate(out_dir: &Path, readme_path: &Path) -> Result<()> {
         base_path,
     )?;
 
-    // Generate concepts index page
+    // Generate concepts index page — listing EVERY authored concept page,
+    // built from the discovered `content/concepts/*.md` files (ADR: no
+    // hand-maintained list, so a new concept is exposed the moment it is added).
     let concepts_index = render_docs_page(
         "Concepts",
-        r#"<h1>Concepts</h1>
-<p>Explanatory documentation for the key ideas in the UOR Foundation ontology.</p>
-<ul>
-<li><a href="ring.html">Ring — The algebraic substrate Z/(2^n)Z</a></li>
-<li><a href="content-addressing.html">Content Addressing — Content identifiers and the address space</a></li>
-<li><a href="critical-identity.html">Critical Identity — The fundamental equation neg(bnot(x)) = succ(x)</a></li>
-<li><a href="partition.html">Partition — Decomposition of address spaces</a></li>
-<li><a href="resolution.html">Resolution — The PRISM resolution pipeline</a></li>
-<li><a href="type-system.html">Type System — Typed expressions and abstraction layers</a></li>
-<li><a href="state-model.html">State Model — Execution contexts and binding frames</a></li>
-<li><a href="free-rank.html">Free Rank — Completeness criterion for type declarations</a></li>
-<li><a href="constraint-algebra.html">Constraint Algebra — Composable predicates and metric axes</a></li>
-<li><a href="iterative-resolution.html">Iterative Resolution — The resolution-as-learning loop</a></li>
-<li><a href="composition.html">Composition — Categorical composition primitive</a></li>
-<li><a href="factorization.html">Factorization — Dihedral factorization oracle</a></li>
-<li><a href="canonical-form.html">Canonical Form — Term rewriting to normal form</a></li>
-<li><a href="observables.html">Observables — Tri-metric classification taxonomy</a></li>
-<li><a href="evaluation.html">Evaluation — Boolean SAT via ring arithmetic</a></li>
-<li><a href="algebraic-laws.html">Algebraic Laws — The 7 algebras and their identities</a></li>
-<li><a href="differential-calculus.html">Differential Calculus — Discrete derivatives and the Jacobian</a></li>
-<li><a href="analytical-completeness.html">Analytical Completeness — Constraint nerve, Betti numbers, and the index theorem</a></li>
-<li><a href="addressing.html">Addressing — Content-address resolution and Boolean homomorphism</a></li>
-<li><a href="homology.html">Homology — Simplicial complexes and chain homology</a></li>
-<li><a href="cohomology.html">Cohomology — Sheaf cohomology and local-to-global</a></li>
-<li><a href="sheaf-semantics.html">Sheaf Semantics — Sheaf-theoretic view of resolution</a></li>
-<li><a href="type-completeness.html">Type Completeness — IT_7d: Euler characteristic and the completeness criterion</a></li>
-<li><a href="quantum-universality.html">Witt Universality — Identities that hold for all n ≥ 1</a></li>
-<li><a href="session-resolution.html">Session Resolution — Multi-turn PRISM sessions with binding accumulation</a></li>
-<li><a href="type-synthesis.html">Type Synthesis — Inverse ψ-pipeline: synthesising types from topological targets</a></li>
-<li><a href="quantum-spectral-sequence.html">Witt Spectral Sequence — Lifting CompleteTypes across Witt levels</a></li>
-<li><a href="monodromy.html">Monodromy — Holonomy groups and flat/twisted type classification</a></li>
-<li><a href="homotopy-nerve.html">Homotopy Nerve — KanComplex, Postnikov tower, and higher homotopy groups</a></li>
-<li><a href="moduli-space.html">Moduli Space — Deformation complexes and holonomy stratification</a></li>
-</ul>"#,
+        &render_concept_index_body(&concept_links),
         &site_nav_html,
         &docs_nav_html,
         &format!(
@@ -212,8 +193,36 @@ pub fn generate(out_dir: &Path, readme_path: &Path) -> Result<()> {
     Ok(())
 }
 
-/// Generates the docs-specific sidebar navigation tree.
-fn build_docs_sidebar_html(base_path: &str) -> String {
+/// Generates the docs-specific sidebar navigation tree. The Namespaces and
+/// Concepts groups are built from the ontology and the discovered concept
+/// pages, so every namespace and every authored concept appears (the previous
+/// hand-maintained lists silently omitted entries).
+fn build_docs_sidebar_html(
+    base_path: &str,
+    namespace_prefixes: &[&str],
+    concepts: &[ConceptLink],
+) -> String {
+    let namespaces_html = namespace_prefixes
+        .iter()
+        .map(|prefix| {
+            format!(
+                r#"<li><a href="{base_path}/docs/namespaces/{prefix}.html">{prefix}</a></li>"#,
+                prefix = escape_html(prefix),
+            )
+        })
+        .collect::<Vec<_>>()
+        .join("\n");
+    let concepts_html = concepts
+        .iter()
+        .map(|c| {
+            format!(
+                r#"<li><a href="{base_path}/docs/concepts/{slug}.html">{title}</a></li>"#,
+                slug = escape_html(&c.slug),
+                title = escape_html(&c.title),
+            )
+        })
+        .collect::<Vec<_>>()
+        .join("\n");
     format!(
         r#"<ul>
 <li><a href="{base_path}/docs/index.html">Documentation</a></li>
@@ -221,56 +230,12 @@ fn build_docs_sidebar_html(base_path: &str) -> String {
 <li><a href="{base_path}/docs/architecture.html">Architecture</a></li>
 <li class="nav-group"><span>Namespaces</span>
 <ul>
-<li><a href="{base_path}/docs/namespaces/u.html">u</a></li>
-<li><a href="{base_path}/docs/namespaces/schema.html">schema</a></li>
-<li><a href="{base_path}/docs/namespaces/op.html">op</a></li>
-<li><a href="{base_path}/docs/namespaces/query.html">query</a></li>
-<li><a href="{base_path}/docs/namespaces/resolver.html">resolver</a></li>
-<li><a href="{base_path}/docs/namespaces/type.html">type</a></li>
-<li><a href="{base_path}/docs/namespaces/partition.html">partition</a></li>
-<li><a href="{base_path}/docs/namespaces/observable.html">observable</a></li>
-<li><a href="{base_path}/docs/namespaces/homology.html">homology</a></li>
-<li><a href="{base_path}/docs/namespaces/cohomology.html">cohomology</a></li>
-<li><a href="{base_path}/docs/namespaces/proof.html">proof</a></li>
-<li><a href="{base_path}/docs/namespaces/derivation.html">derivation</a></li>
-<li><a href="{base_path}/docs/namespaces/trace.html">trace</a></li>
-<li><a href="{base_path}/docs/namespaces/cert.html">cert</a></li>
-<li><a href="{base_path}/docs/namespaces/morphism.html">morphism</a></li>
-<li><a href="{base_path}/docs/namespaces/state.html">state</a></li>
+{namespaces_html}
 </ul>
 </li>
 <li class="nav-group"><span>Concepts</span>
 <ul>
-<li><a href="{base_path}/docs/concepts/ring.html">Ring</a></li>
-<li><a href="{base_path}/docs/concepts/content-addressing.html">Content Addressing</a></li>
-<li><a href="{base_path}/docs/concepts/critical-identity.html">Critical Identity</a></li>
-<li><a href="{base_path}/docs/concepts/partition.html">Partition</a></li>
-<li><a href="{base_path}/docs/concepts/resolution.html">Resolution</a></li>
-<li><a href="{base_path}/docs/concepts/type-system.html">Type System</a></li>
-<li><a href="{base_path}/docs/concepts/state-model.html">State Model</a></li>
-<li><a href="{base_path}/docs/concepts/free-rank.html">Free Rank</a></li>
-<li><a href="{base_path}/docs/concepts/constraint-algebra.html">Constraint Algebra</a></li>
-<li><a href="{base_path}/docs/concepts/iterative-resolution.html">Iterative Resolution</a></li>
-<li><a href="{base_path}/docs/concepts/composition.html">Composition</a></li>
-<li><a href="{base_path}/docs/concepts/factorization.html">Factorization</a></li>
-<li><a href="{base_path}/docs/concepts/canonical-form.html">Canonical Form</a></li>
-<li><a href="{base_path}/docs/concepts/observables.html">Observables</a></li>
-<li><a href="{base_path}/docs/concepts/evaluation.html">Evaluation</a></li>
-<li><a href="{base_path}/docs/concepts/algebraic-laws.html">Algebraic Laws</a></li>
-<li><a href="{base_path}/docs/concepts/differential-calculus.html">Differential Calculus</a></li>
-<li><a href="{base_path}/docs/concepts/analytical-completeness.html">Analytical Completeness</a></li>
-<li><a href="{base_path}/docs/concepts/addressing.html">Addressing</a></li>
-<li><a href="{base_path}/docs/concepts/homology.html">Homology</a></li>
-<li><a href="{base_path}/docs/concepts/cohomology.html">Cohomology</a></li>
-<li><a href="{base_path}/docs/concepts/sheaf-semantics.html">Sheaf Semantics</a></li>
-<li><a href="{base_path}/docs/concepts/type-completeness.html">Type Completeness</a></li>
-<li><a href="{base_path}/docs/concepts/quantum-universality.html">Witt Universality</a></li>
-<li><a href="{base_path}/docs/concepts/session-resolution.html">Session Resolution</a></li>
-<li><a href="{base_path}/docs/concepts/type-synthesis.html">Type Synthesis</a></li>
-<li><a href="{base_path}/docs/concepts/quantum-spectral-sequence.html">Witt Spectral Sequence</a></li>
-<li><a href="{base_path}/docs/concepts/monodromy.html">Monodromy</a></li>
-<li><a href="{base_path}/docs/concepts/homotopy-nerve.html">Homotopy Nerve</a></li>
-<li><a href="{base_path}/docs/concepts/moduli-space.html">Moduli Space</a></li>
+{concepts_html}
 </ul>
 </li>
 <li class="nav-group"><span>Guides</span>
@@ -453,6 +418,7 @@ fn format_individual_properties(ind: &Individual) -> String {
             IndividualValue::Str(s) => escape_html(s),
             IndividualValue::Int(i) => i.to_string(),
             IndividualValue::Bool(b) => b.to_string(),
+            IndividualValue::Float(x) => x.to_string(),
             IndividualValue::IriRef(iri) => format!("<code>{}</code>", escape_html(iri)),
             IndividualValue::List(items) => {
                 let joined = items
@@ -547,6 +513,193 @@ fn generate_single_page(
     writer::write_html(out, &page)
 }
 
+/// A discovered concept page: its slug, human-readable title, and one-line
+/// summary. Built from the `content/concepts/*.md` files so the concept index
+/// and sidebar are generated from the source of truth and never drift (the
+/// previous hand-maintained lists silently omitted authored concept pages).
+struct ConceptLink {
+    slug: String,
+    title: String,
+    summary: String,
+}
+
+/// Collects every concept page under `concepts_dir`, sorted alphabetically by
+/// title for deterministic output. Title comes from YAML frontmatter `title:`
+/// when present, else the first `# H1`, else a humanized slug; the summary is
+/// the first prose sentence.
+fn collect_concept_links(concepts_dir: &Path) -> Vec<ConceptLink> {
+    let mut links: Vec<ConceptLink> = Vec::new();
+    let read_dir = match std::fs::read_dir(concepts_dir) {
+        Ok(rd) => rd,
+        Err(_) => return links,
+    };
+    for entry in read_dir.flatten() {
+        let path = entry.path();
+        if path.extension().and_then(|e| e.to_str()) != Some("md") {
+            continue;
+        }
+        let slug = match path.file_stem().and_then(|s| s.to_str()) {
+            Some(s) => s.to_string(),
+            None => continue,
+        };
+        let raw = std::fs::read_to_string(&path).unwrap_or_default();
+        let (front_title, body) = strip_frontmatter(&raw);
+        let title = front_title
+            .or_else(|| first_h1(body))
+            .unwrap_or_else(|| humanize_slug(&slug));
+        let summary = concept_summary(body);
+        links.push(ConceptLink {
+            slug,
+            title,
+            summary,
+        });
+    }
+    links.sort_by_key(|c| c.title.to_lowercase());
+    links
+}
+
+/// Splits a leading `---`-delimited YAML frontmatter block from a markdown
+/// document. Returns `(frontmatter title if any, body after frontmatter)`.
+fn strip_frontmatter(raw: &str) -> (Option<String>, &str) {
+    let trimmed = raw.trim_start_matches('\u{feff}');
+    if let Some(rest) = trimmed.strip_prefix("---\n") {
+        if let Some(end) = rest.find("\n---") {
+            let front = &rest[..end];
+            let body = rest[end + 4..].trim_start_matches('\n');
+            let title = front.lines().find_map(|line| {
+                line.trim()
+                    .strip_prefix("title:")
+                    .map(|v| v.trim().trim_matches(['"', '\'']).to_string())
+                    .filter(|s| !s.is_empty())
+            });
+            return (title, body);
+        }
+    }
+    (None, raw)
+}
+
+/// Returns the text of the first `# H1` heading, stripped of inline markdown
+/// emphasis and code ticks.
+fn first_h1(body: &str) -> Option<String> {
+    body.lines()
+        .find_map(|line| line.trim().strip_prefix("# "))
+        .map(strip_inline_markdown)
+        .filter(|s| !s.is_empty())
+}
+
+/// Returns the first prose sentence of `body` (skipping headings, fenced code
+/// blocks, tables, lists, blockquotes, and HTML), stripped of inline markdown
+/// and capped at 160 chars. A line that *begins* with inline code (a single
+/// backtick) is prose and is kept; only ```-fenced blocks are skipped.
+fn concept_summary(body: &str) -> String {
+    let mut in_fence = false;
+    let mut para = "";
+    for line in body.lines().map(str::trim) {
+        if line.starts_with("```") {
+            in_fence = !in_fence;
+            continue;
+        }
+        if in_fence || line.is_empty() {
+            continue;
+        }
+        let is_block = line.starts_with('#')
+            || line.starts_with('|')
+            || line.starts_with("- ")
+            || line.starts_with("* ")
+            || line.starts_with('>')
+            || line.starts_with('<');
+        if !is_block {
+            para = line;
+            break;
+        }
+    }
+    let clean = strip_inline_markdown(para);
+    let sentence = match clean.find(". ") {
+        Some(i) => clean[..=i].trim().to_string(),
+        None => clean,
+    };
+    if sentence.chars().count() > 160 {
+        let mut s: String = sentence.chars().take(157).collect();
+        s.push('…');
+        s
+    } else {
+        sentence
+    }
+}
+
+/// Strips markdown emphasis (`*`), code ticks, and link syntax to plain text,
+/// for use in titles and summaries. `_` is preserved so snake_case identifiers
+/// (e.g. `uor_foundation`) survive — `_`-delimited emphasis is rare in this
+/// corpus and `*` is the conventional marker.
+fn strip_inline_markdown(s: &str) -> String {
+    let mut out = String::with_capacity(s.len());
+    let mut chars = s.chars().peekable();
+    while let Some(c) = chars.next() {
+        match c {
+            '`' | '*' => {}
+            '[' => {
+                // `[text](url)` → keep `text`, drop `](url)`.
+                for inner in chars.by_ref() {
+                    if inner == ']' {
+                        break;
+                    }
+                    out.push(inner);
+                }
+                if matches!(chars.peek(), Some('(')) {
+                    for inner in chars.by_ref() {
+                        if inner == ')' {
+                            break;
+                        }
+                    }
+                }
+            }
+            _ => out.push(c),
+        }
+    }
+    out.trim().to_string()
+}
+
+/// Humanizes a slug (`free-rank` → `Free Rank`) as a last-resort title.
+fn humanize_slug(slug: &str) -> String {
+    slug.split('-')
+        .map(|word| {
+            let mut chars = word.chars();
+            match chars.next() {
+                Some(first) => first.to_uppercase().collect::<String>() + chars.as_str(),
+                None => String::new(),
+            }
+        })
+        .collect::<Vec<_>>()
+        .join(" ")
+}
+
+/// Renders the concept index page body (`<h1>` + intro + `<ul>` of every
+/// concept) from the discovered concept links.
+fn render_concept_index_body(concepts: &[ConceptLink]) -> String {
+    let mut body = String::from(
+        "<h1>Concepts</h1>\n<p>Explanatory documentation for the key ideas in the \
+         UOR Foundation ontology.</p>\n<ul class=\"concept-index\">\n",
+    );
+    for c in concepts {
+        if c.summary.is_empty() {
+            body.push_str(&format!(
+                "<li><a href=\"{slug}.html\">{title}</a></li>\n",
+                slug = escape_html(&c.slug),
+                title = escape_html(&c.title),
+            ));
+        } else {
+            body.push_str(&format!(
+                "<li><a href=\"{slug}.html\">{title}</a> — {summary}</li>\n",
+                slug = escape_html(&c.slug),
+                title = escape_html(&c.title),
+                summary = escape_html(&c.summary),
+            ));
+        }
+    }
+    body.push_str("</ul>");
+    body
+}
+
 /// Generates the machine-generated README.md content.
 fn generate_readme(ontology: &Ontology) -> String {
     format!(
@@ -619,7 +772,7 @@ metadata in [`CITATION.cff`](CITATION.cff).
 
 ## License
 
-Apache-2.0 — see [LICENSE](LICENSE).
+MIT — see [LICENSE](LICENSE).
 
 ---
 

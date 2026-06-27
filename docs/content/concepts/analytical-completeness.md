@@ -24,9 +24,9 @@ Consider three constraints on R_4 = Z/16Z:
 
 | Constraint | Type | Pins |
 |-----------|------|------|
-| C_1 | {@class https://uor.foundation/type/ResidueConstraint} (mod 2, residue 1) | Sites {0} |
-| C_2 | {@class https://uor.foundation/type/DepthConstraint} (depth 1–2) | Sites {0, 1} |
-| C_3 | {@class https://uor.foundation/type/CarryConstraint} (pattern "10") | Sites {1} |
+| C_1 | {@ind https://uor.foundation/type/residueConstraintKind} (mod 2, residue 1) | Sites {0} |
+| C_2 | {@ind https://uor.foundation/type/depthConstraintKind} (depth 1–2) | Sites {0, 1} |
+| C_3 | {@ind https://uor.foundation/type/carryConstraintKind} (pattern "10") | Sites {1} |
 
 Compatible subsets (nonempty pin intersection) form simplices:
 - **0-simplices** (vertices): {C_1}, {C_2}, {C_3}

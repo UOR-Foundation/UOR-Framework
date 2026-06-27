@@ -7,7 +7,7 @@ authors:
 doi: "10.5281/zenodo.19068826"
 repository-code: "https://github.com/UOR-Foundation/UOR-Framework"
 url: "https://uor.foundation/"
-license: Apache-2.0
+license: MIT
 version: "0.1.2"
 date-released: "2026-03-31"
 keywords:

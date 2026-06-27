@@ -198,8 +198,23 @@ mod test273_type_definition_sum;
 mod test274_witness_types;
 mod test275_reduction_advance;
 mod test276_witness_site_budget;
+mod test277_inhabitance_verdict;
+mod test278_v021_cleanup_bounds;
+mod test279_multiplication_certificate;
 mod test27_rewrite_rule;
+mod test280_bridge_completion;
+// Product/Coproduct Completion Amendment — fixtures for the three new
+// kernel/bridge classes added by the amendment. Numbers 281–284 were
+// already taken (test281_impossibility_certificates pre-existed); these
+// land at 285/286/287, the next free range.
+mod test281_impossibility_certificates;
+mod test285_cartesian_partition_product;
+mod test286_tag_site;
+mod test287_layout_invariant;
+mod test288_axis_projection_observable;
+mod test289_spectral_observable;
 mod test28_measurement_unit;
+mod test290_value_threshold_observable;
 mod test29_triad_projection;
 mod test2_primitives;
 mod test30_proof_coverage;
@@ -475,8 +490,23 @@ pub use test273_type_definition_sum::TEST273_TYPE_DEFINITION_SUM;
 pub use test274_witness_types::TEST274_WITNESS_TYPES;
 pub use test275_reduction_advance::TEST275_REDUCTION_ADVANCE;
 pub use test276_witness_site_budget::TEST276_WITNESS_SITE_BUDGET;
+pub use test277_inhabitance_verdict::TEST277_INHABITANCE_VERDICT;
+pub use test278_v021_cleanup_bounds::TEST278_V021_CLEANUP_BOUNDS;
+pub use test279_multiplication_certificate::TEST279_MULTIPLICATION_CERTIFICATE;
 pub use test27_rewrite_rule::TEST27_REWRITE_RULE;
+pub use test280_bridge_completion::TEST280_BRIDGE_COMPLETION;
+pub use test281_impossibility_certificates::TEST281_IMPOSSIBILITY_CERTIFICATES;
+// Product/Coproduct Completion Amendment fixtures.
+pub use test285_cartesian_partition_product::TEST285_CARTESIAN_PARTITION_PRODUCT;
+pub use test286_tag_site::TEST286_TAG_SITE;
+pub use test287_layout_invariant::TEST287_LAYOUT_INVARIANT;
+// Wiki ADR-038: AxisProjectionObservable closed-catalog extension.
+pub use test288_axis_projection_observable::TEST288_AXIS_PROJECTION_OBSERVABLE;
+// Wiki ADR-049: SpectralObservable closed-catalog extension.
+pub use test289_spectral_observable::TEST289_SPECTRAL_OBSERVABLE;
+// Wiki ADR-040 + ADR-049 catalog correspondence: ValueThresholdObservable closed-catalog extension.
 pub use test28_measurement_unit::TEST28_MEASUREMENT_UNIT;
+pub use test290_value_threshold_observable::TEST290_VALUE_THRESHOLD_OBSERVABLE;
 pub use test29_triad_projection::TEST29_TRIAD_PROJECTION;
 pub use test2_primitives::TEST2_PRIMITIVES;
 pub use test30_proof_coverage::TEST30_PROOF_COVERAGE;
@@ -837,5 +867,16 @@ pub fn all_fixture_sources() -> Vec<&'static str> {
         TEST274_WITNESS_TYPES,
         TEST275_REDUCTION_ADVANCE,
         TEST276_WITNESS_SITE_BUDGET,
+        TEST277_INHABITANCE_VERDICT,
+        TEST278_V021_CLEANUP_BOUNDS,
+        TEST279_MULTIPLICATION_CERTIFICATE,
+        TEST280_BRIDGE_COMPLETION,
+        TEST281_IMPOSSIBILITY_CERTIFICATES,
+        TEST285_CARTESIAN_PARTITION_PRODUCT,
+        TEST286_TAG_SITE,
+        TEST287_LAYOUT_INVARIANT,
+        TEST288_AXIS_PROJECTION_OBSERVABLE,
+        TEST289_SPECTRAL_OBSERVABLE,
+        TEST290_VALUE_THRESHOLD_OBSERVABLE,
     ]
 }

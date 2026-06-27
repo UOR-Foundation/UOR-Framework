@@ -8,7 +8,7 @@
 //! `{@ns prefix}`, `{@concept slug}`, and `{@count:KEY}` directives that expand
 //! to Markdown links pointing at website namespace pages.
 
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use anyhow::{Context, Result};
 use uor_ontology::Ontology;
@@ -98,53 +98,64 @@ pub fn concepts_for_namespace(prefix: &str) -> Vec<&'static str> {
 /// # Errors
 ///
 /// Returns an error if the concepts directory cannot be read.
-pub fn concept_page_list(content_dir: &Path, base_path: &str) -> Result<Vec<ConceptPage>> {
-    let concepts_dir = content_dir.join("concepts");
-    if !concepts_dir.exists() {
-        return Ok(Vec::new());
-    }
+pub fn concept_page_list(concept_dirs: &[PathBuf], base_path: &str) -> Result<Vec<ConceptPage>> {
+    // Merge every concept-content root into one catalog. Earlier roots win on
+    // slug conflict, so the website's own curated page is preferred over the
+    // docs reference page for the six overlapping concepts. Every concept the
+    // project authors — in any root — therefore gets a `/concepts/<slug>.html`
+    // page and a card in the concepts index.
+    let mut seen: std::collections::BTreeSet<String> = std::collections::BTreeSet::new();
+    let mut pages: Vec<ConceptPage> = Vec::new();
 
-    let mut entries: Vec<std::fs::DirEntry> = std::fs::read_dir(&concepts_dir)
-        .with_context(|| format!("Failed to read {}", concepts_dir.display()))?
-        .filter_map(|e| e.ok())
-        .filter(|e| e.path().extension().map(|x| x == "md").unwrap_or(false))
-        // prism.md is merged into the pipeline page — skip it as a standalone concept
-        .filter(|e| {
-            e.path()
-                .file_stem()
-                .and_then(|s| s.to_str())
-                .map(|s| s != "prism")
-                .unwrap_or(true)
-        })
-        .collect();
+    for dir in concept_dirs {
+        if !dir.exists() {
+            continue;
+        }
+        let mut entries: Vec<std::fs::DirEntry> = std::fs::read_dir(dir)
+            .with_context(|| format!("Failed to read {}", dir.display()))?
+            .filter_map(|e| e.ok())
+            .filter(|e| e.path().extension().map(|x| x == "md").unwrap_or(false))
+            // prism.md is merged into the pipeline page — skip it as a standalone concept
+            .filter(|e| {
+                e.path()
+                    .file_stem()
+                    .and_then(|s| s.to_str())
+                    .map(|s| s != "prism")
+                    .unwrap_or(true)
+            })
+            .collect();
+        entries.sort_by_key(|e| e.file_name());
 
-    entries.sort_by_key(|e| e.file_name());
-
-    entries
-        .iter()
-        .map(|entry| {
-            let slug = entry
-                .path()
-                .file_stem()
-                .and_then(|s| s.to_str())
-                .unwrap_or("")
-                .to_string();
-            let raw = std::fs::read_to_string(entry.path())
-                .with_context(|| format!("Failed to read {}", entry.path().display()))?;
+        for entry in &entries {
+            let path = entry.path();
+            let slug = match path.file_stem().and_then(|s| s.to_str()) {
+                Some(s) => s.to_string(),
+                None => continue,
+            };
+            if !seen.insert(slug.clone()) {
+                continue; // already provided by an earlier (higher-priority) root
+            }
+            let raw = std::fs::read_to_string(&path)
+                .with_context(|| format!("Failed to read {}", path.display()))?;
             let title = first_h1(&raw).unwrap_or_else(|| slug.replace('-', " "));
             let description = first_paragraph(&raw)
                 .map(|d| strip_directives_to_plain_text(&d))
                 .unwrap_or_default();
             let space = infer_space(&slug);
-            Ok(ConceptPage {
+            pages.push(ConceptPage {
                 url: format!("{base_path}/concepts/{slug}.html"),
                 slug,
                 title,
                 description,
                 space,
-            })
-        })
-        .collect()
+                source: path,
+            });
+        }
+    }
+
+    // Deterministic, alphabetical catalog order for the concept grid.
+    pages.sort_by(|a, b| a.slug.cmp(&b.slug));
+    Ok(pages)
 }
 
 // ── Rendering ───────────────────────────────────────────────────────────────
@@ -166,7 +177,29 @@ pub fn render_concept_from_file(
     let raw = std::fs::read_to_string(path)
         .with_context(|| format!("Failed to read concept file {}", path.display()))?;
     let expanded = expand_directives(&raw, ontology, concept_list, base_path);
-    Ok(markdown_to_html(&expanded))
+    let html = markdown_to_html(&expanded);
+    Ok(retarget_docs_relative_links(&html, base_path))
+}
+
+/// Retargets the docs-relative links some concept sources author
+/// (`../namespaces/<x>.html`, `../guides/<x>.html`) to absolute docs URLs.
+///
+/// Concept pages are rendered into `/concepts/` on the website, but a concept
+/// imported from `docs/content/concepts/` may link to its docs siblings using
+/// docs-relative paths that only resolve under `/docs/concepts/`. Those targets
+/// (per-namespace reference pages, how-to guides) live only in the docs tree,
+/// so the links are rewritten to point there. The website's own concepts use
+/// `{@ns}`/`{@class}` directives and `../pipeline/` (a real website path), none
+/// of which match these patterns, so they are left untouched.
+fn retarget_docs_relative_links(html: &str, base_path: &str) -> String {
+    html.replace(
+        "href=\"../namespaces/",
+        &format!("href=\"{base_path}/docs/namespaces/"),
+    )
+    .replace(
+        "href=\"../guides/",
+        &format!("href=\"{base_path}/docs/guides/"),
+    )
 }
 
 /// Converts CommonMark markdown to HTML.

@@ -16,7 +16,8 @@ Backus-Naur Form (EBNF).
 The generated grammar must contain:
 
 1. **Header** with specification version from `Cargo.toml`
-2. **All 10 PrimitiveOp operations** as terminal strings in unary-op/binary-op rules
+2. **All 15 PrimitiveOp operations** as terminal strings in unary-op/binary-op rules
+   (10 original + 5 ADR-013/TR-08 substrate-amendment ops: Le, Lt, Ge, Gt, Concat)
 3. **All 4 WittLevel labels** (W8-W32) in the witt-level rule
 4. **All 6 RewriteRule names** in the rewrite rules comment section
 5. **Balanced EBNF comments** — every `(*` has a matching `*)`
@@ -25,7 +26,7 @@ The generated grammar must contain:
 
 | Section | Data Source | Content |
 |---------|------------|---------|
-| Operations | `op/` namespace individuals | 4 unary + 6 binary ops with algebraic property comments |
+| Operations | `op/` namespace individuals | 4 unary + 11 binary ops with algebraic property comments |
 | Witt levels | `schema/` namespace individuals | W8-W32 sorted by wittLength |
 | Rewrite rules | `derivation/` namespace individuals | 6 canonical rewrite patterns |
 | Witt generalisation | `schema/` namespace individuals | bits-width and cycle-size per level |

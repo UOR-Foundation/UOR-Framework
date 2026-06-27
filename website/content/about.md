@@ -31,7 +31,7 @@ source, ensuring perfect alignment between specification and documentation.
 ## License
 
 All UOR Foundation specifications and implementations are published under the
-Apache 2.0 license.
+MIT license.
 
 ## Repository
 

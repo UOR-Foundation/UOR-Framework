@@ -26,7 +26,9 @@
 //! **Space classification:** `bridge` — user-requested, kernel-executed.
 
 use crate::model::iris::*;
-use crate::model::{Class, Individual, Namespace, NamespaceModule, Property, PropertyKind, Space};
+use crate::model::{
+    Class, Individual, IndividualValue, Namespace, NamespaceModule, Property, PropertyKind, Space,
+};
 
 /// Returns the `resolver/` namespace module.
 #[must_use]
@@ -284,6 +286,93 @@ fn classes() -> Vec<Class> {
             subclass_of: &["https://uor.foundation/resolver/Resolver"],
             disjoint_with: &[],
         },
+        // v0.2.1: Inhabitance Verdict Instantiation resolvers
+        Class {
+            id: "https://uor.foundation/resolver/InhabitanceResolver",
+            label: "InhabitanceResolver",
+            comment: "A Resolver whose dispatch is governed by a new \
+                      predicate:InhabitanceDispatchTable. Returns either a \
+                      cert:InhabitanceCertificate (verified true with witness) \
+                      or a proof:InhabitanceImpossibilityWitness (verified \
+                      false with contradiction proof). Inherits the \
+                      dual-output termination discipline from \
+                      resolver:TypeSynthesisResolver.",
+            subclass_of: &["https://uor.foundation/resolver/Resolver"],
+            disjoint_with: &[],
+        },
+        Class {
+            id: "https://uor.foundation/resolver/TwoSatDecider",
+            label: "TwoSatDecider",
+            comment: "A Resolver target that decides carrier non-emptiness on \
+                      ConstrainedType instances whose constraint nerve \
+                      contains only disjunctions of width \u{2264} 2, via \
+                      classical 2-SAT in O(n+m). Dispatch rule 1 of the \
+                      InhabitanceDispatchTable.",
+            subclass_of: &["https://uor.foundation/resolver/Resolver"],
+            disjoint_with: &[],
+        },
+        Class {
+            id: "https://uor.foundation/resolver/HornSatDecider",
+            label: "HornSatDecider",
+            comment: "A Resolver target that decides carrier non-emptiness on \
+                      ConstrainedType instances whose disjunctions each \
+                      contain at most one positive literal, via classical \
+                      Horn-SAT unit propagation in O(n+m). Dispatch rule 2 \
+                      of the InhabitanceDispatchTable.",
+            subclass_of: &["https://uor.foundation/resolver/Resolver"],
+            disjoint_with: &[],
+        },
+        Class {
+            id: "https://uor.foundation/resolver/ResidualVerdictResolver",
+            label: "ResidualVerdictResolver",
+            comment: "A Resolver target for the catch-all default dispatch \
+                      rule. Returns the residual-hard verdict without \
+                      promising a polynomial bound; the verdict is \
+                      well-formed but the cost identity is unbounded. \
+                      Dispatch rule 3 of the InhabitanceDispatchTable \
+                      ensuring total coverage (reduction:DispatchMiss is \
+                      unreachable for this table).",
+            subclass_of: &["https://uor.foundation/resolver/Resolver"],
+            disjoint_with: &[],
+        },
+        // v0.2.2 Phase C.4 — MultiplicationResolver.
+        Class {
+            id: "https://uor.foundation/resolver/MultiplicationResolver",
+            label: "MultiplicationResolver",
+            comment: "A Resolver target that decides the cost-optimal Toom-Cook \
+                      splitting factor R for a Datum<L> \u{00d7} Datum<L> \
+                      multiplication at a given call-site context (stack budget \
+                      linear:stackBudgetBytes, const-eval regime). The decision \
+                      procedure is a pure derivation over a closed-form Landauer \
+                      cost function grounded in op:OA_5: for each admissible R, \
+                      the cost is (2R - 1) \u{00b7} (N/R)\u{00b2} \u{00b7} \
+                      64 \u{00b7} ln 2 nats (R > 1) or N\u{00b2} \u{00b7} 64 \
+                      \u{00b7} ln 2 nats (R = 1). The resolver picks the \
+                      cost-minimum R subject to stack-budget and const-eval \
+                      constraints and returns a cert:MultiplicationCertificate \
+                      recording the choice.",
+            subclass_of: &["https://uor.foundation/resolver/Resolver"],
+            disjoint_with: &[],
+        },
+        // v0.2.1: parametric Certify-mapping metadata.
+        // One CertifyMapping individual per resolver class encodes the
+        // (resolver -> certificate, witness) triple. Codegen reads these
+        // individuals to drive Certify trait impl emission, so adding a
+        // new resolver requires only an ontology edit.
+        Class {
+            id: "https://uor.foundation/resolver/CertifyMapping",
+            label: "CertifyMapping",
+            comment: "An ontology fact recording that a resolver:Resolver \
+                      subclass produces a specific cert:Certificate \
+                      subclass on success and a specific \
+                      proof:ImpossibilityWitness subclass on failure. The \
+                      v0.2.1 Rust codegen reads CertifyMapping individuals \
+                      to emit foundation::Certify trait impls for each \
+                      resolver class, keeping the mapping data-driven \
+                      rather than hand-tabulated in source.",
+            subclass_of: &[OWL_THING],
+            disjoint_with: &[],
+        },
         // Amendment 48: Multi-Session Coordination classes
         Class {
             id: "https://uor.foundation/resolver/ExecutionPolicy",
@@ -342,6 +431,7 @@ fn properties() -> Vec<Property> {
             comment: "The type of input this resolver accepts.",
             kind: PropertyKind::Object,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/resolver/Resolver"),
             range: "https://uor.foundation/type/TypeDefinition",
         },
@@ -352,6 +442,7 @@ fn properties() -> Vec<Property> {
                       resolvers, the output is a partition:Partition.",
             kind: PropertyKind::Object,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/resolver/Resolver"),
             range: "https://uor.foundation/partition/Partition",
         },
@@ -362,6 +453,7 @@ fn properties() -> Vec<Property> {
                       this resolver implements.",
             kind: PropertyKind::Object,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/resolver/Resolver"),
             range: "https://uor.foundation/schema/TermExpression",
         },
@@ -373,6 +465,7 @@ fn properties() -> Vec<Property> {
             comment: "The current resolution state of this resolver.",
             kind: PropertyKind::Object,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/resolver/Resolver"),
             range: "https://uor.foundation/resolver/ResolutionState",
         },
@@ -383,6 +476,7 @@ fn properties() -> Vec<Property> {
                       and the partition is fully determined.",
             kind: PropertyKind::Datatype,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/resolver/ResolutionState"),
             range: XSD_BOOLEAN,
         },
@@ -392,6 +486,7 @@ fn properties() -> Vec<Property> {
             comment: "The number of refinement iterations performed so far.",
             kind: PropertyKind::Datatype,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/resolver/ResolutionState"),
             range: XSD_NON_NEGATIVE_INTEGER,
         },
@@ -403,6 +498,7 @@ fn properties() -> Vec<Property> {
                       resolution is complete.",
             kind: PropertyKind::Object,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/resolver/ResolutionState"),
             range: "https://uor.foundation/partition/FreeRank",
         },
@@ -412,6 +508,7 @@ fn properties() -> Vec<Property> {
             comment: "A refinement suggestion for advancing this resolution.",
             kind: PropertyKind::Object,
             functional: false,
+            required: false,
             domain: Some("https://uor.foundation/resolver/ResolutionState"),
             range: "https://uor.foundation/resolver/RefinementSuggestion",
         },
@@ -421,6 +518,7 @@ fn properties() -> Vec<Property> {
             comment: "The metric axis this suggestion recommends exploring.",
             kind: PropertyKind::Object,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/resolver/RefinementSuggestion"),
             range: "https://uor.foundation/type/MetricAxis",
         },
@@ -430,6 +528,7 @@ fn properties() -> Vec<Property> {
             comment: "The constraint class this suggestion recommends applying.",
             kind: PropertyKind::Object,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/resolver/RefinementSuggestion"),
             range: OWL_CLASS,
         },
@@ -439,6 +538,7 @@ fn properties() -> Vec<Property> {
             comment: "The site coordinates this suggestion targets for pinning.",
             kind: PropertyKind::Object,
             functional: false,
+            required: false,
             domain: Some("https://uor.foundation/resolver/RefinementSuggestion"),
             range: "https://uor.foundation/partition/SiteIndex",
         },
@@ -450,6 +550,7 @@ fn properties() -> Vec<Property> {
                       complete resolution.",
             kind: PropertyKind::Datatype,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/resolver/ResolutionState"),
             range: XSD_DECIMAL,
         },
@@ -461,6 +562,7 @@ fn properties() -> Vec<Property> {
                       Replaces the string-valued resolver:complexity property.",
             kind: PropertyKind::Object,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/resolver/Resolver"),
             range: "https://uor.foundation/resolver/ComplexityClass",
         },
@@ -471,6 +573,7 @@ fn properties() -> Vec<Property> {
             comment: "The constraint nerve associated with this resolution state.",
             kind: PropertyKind::Object,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/resolver/ResolutionState"),
             range: "https://uor.foundation/resolver/CechNerve",
         },
@@ -481,6 +584,7 @@ fn properties() -> Vec<Property> {
                       S = freeRank × ln 2. Measures remaining uncertainty.",
             kind: PropertyKind::Datatype,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/resolver/ResolutionState"),
             range: XSD_DECIMAL,
         },
@@ -491,6 +595,7 @@ fn properties() -> Vec<Property> {
                       indicating no topological obstructions to resolution.",
             kind: PropertyKind::Datatype,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/resolver/ResolutionState"),
             range: XSD_BOOLEAN,
         },
@@ -504,6 +609,7 @@ fn properties() -> Vec<Property> {
                       ψ pipeline on each iteration check.",
             kind: PropertyKind::Datatype,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/resolver/ResolutionState"),
             range: XSD_INTEGER,
         },
@@ -514,6 +620,7 @@ fn properties() -> Vec<Property> {
             comment: "The CompletenessCandidate this resolver is certifying.",
             kind: PropertyKind::Object,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/resolver/CompletenessResolver"),
             range: "https://uor.foundation/type/CompletenessCandidate",
         },
@@ -524,6 +631,7 @@ fn properties() -> Vec<Property> {
             comment: "The quantum level this resolver instance is configured for.",
             kind: PropertyKind::Object,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/resolver/WittLevelResolver"),
             range: "https://uor.foundation/schema/WittLevel",
         },
@@ -535,6 +643,7 @@ fn properties() -> Vec<Property> {
                       multiple RelationQuery evaluations.",
             kind: PropertyKind::Object,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/resolver/SessionResolver"),
             range: "https://uor.foundation/state/BindingAccumulator",
         },
@@ -545,6 +654,7 @@ fn properties() -> Vec<Property> {
             comment: "The goal this type synthesis resolver is working to achieve.",
             kind: PropertyKind::Object,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/resolver/TypeSynthesisResolver"),
             range: "https://uor.foundation/type/TypeSynthesisGoal",
         },
@@ -554,6 +664,7 @@ fn properties() -> Vec<Property> {
             comment: "Number of constraint combinations evaluated so far during synthesis.",
             kind: PropertyKind::Datatype,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/resolver/ConstraintSearchState"),
             range: XSD_NON_NEGATIVE_INTEGER,
         },
@@ -563,6 +674,7 @@ fn properties() -> Vec<Property> {
             comment: "The type candidate currently being evaluated during synthesis.",
             kind: PropertyKind::Object,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/resolver/ConstraintSearchState"),
             range: "https://uor.foundation/type/ConstrainedType",
         },
@@ -573,6 +685,7 @@ fn properties() -> Vec<Property> {
             comment: "The WittLift this incremental completeness resolver is evaluating.",
             kind: PropertyKind::Object,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/resolver/IncrementalCompletenessResolver"),
             range: "https://uor.foundation/type/WittLift",
         },
@@ -583,6 +696,7 @@ fn properties() -> Vec<Property> {
                       targets.",
             kind: PropertyKind::Object,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/resolver/LiftRefinementSuggestion"),
             range: "https://uor.foundation/partition/SiteIndex",
         },
@@ -592,6 +706,7 @@ fn properties() -> Vec<Property> {
             comment: "The obstruction class this lift refinement suggestion is designed to kill.",
             kind: PropertyKind::Object,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/resolver/LiftRefinementSuggestion"),
             range: "https://uor.foundation/observable/LiftObstructionClass",
         },
@@ -602,6 +717,7 @@ fn properties() -> Vec<Property> {
             comment: "The type whose holonomy this monodromy resolver is computing.",
             kind: PropertyKind::Object,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/resolver/MonodromyResolver"),
             range: "https://uor.foundation/type/ConstrainedType",
         },
@@ -611,6 +727,7 @@ fn properties() -> Vec<Property> {
             comment: "The HolonomyGroup produced by this monodromy resolver run.",
             kind: PropertyKind::Object,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/resolver/MonodromyResolver"),
             range: "https://uor.foundation/observable/HolonomyGroup",
         },
@@ -622,6 +739,7 @@ fn properties() -> Vec<Property> {
                       at this resolution state (DC_10).",
             kind: PropertyKind::Object,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/resolver/ResolutionState"),
             range: "https://uor.foundation/observable/Jacobian",
         },
@@ -633,6 +751,7 @@ fn properties() -> Vec<Property> {
                       to bypass the ψ-pipeline and return a direct coordinate read.",
             kind: PropertyKind::Datatype,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/resolver/GroundingAwareResolver"),
             range: XSD_BOOLEAN,
         },
@@ -643,6 +762,7 @@ fn properties() -> Vec<Property> {
             comment: "The GeodesicTrace being validated by this GeodesicValidator.",
             kind: PropertyKind::Object,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/resolver/GeodesicValidator"),
             range: "https://uor.foundation/trace/GeodesicTrace",
         },
@@ -654,6 +774,7 @@ fn properties() -> Vec<Property> {
                       collapse by this MeasurementResolver.",
             kind: PropertyKind::Datatype,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/resolver/MeasurementResolver"),
             range: XSD_DECIMAL,
         },
@@ -664,6 +785,7 @@ fn properties() -> Vec<Property> {
                       value) by the projective measurement.",
             kind: PropertyKind::Datatype,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/resolver/MeasurementResolver"),
             range: XSD_NON_NEGATIVE_INTEGER,
         },
@@ -674,6 +796,7 @@ fn properties() -> Vec<Property> {
                       Either 0 or 1 for a single-site measurement.",
             kind: PropertyKind::Datatype,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/resolver/MeasurementResolver"),
             range: XSD_NON_NEGATIVE_INTEGER,
         },
@@ -687,6 +810,7 @@ fn properties() -> Vec<Property> {
                       Must satisfy Σ|αᵢ|² = 1 (QM_5) after normalization.",
             kind: PropertyKind::Datatype,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/resolver/SuperpositionResolver"),
             range: XSD_DECIMAL,
         },
@@ -699,6 +823,7 @@ fn properties() -> Vec<Property> {
                       Born rule verification (QM_5): P(outcome k) = |α_k|².",
             kind: PropertyKind::Datatype,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/resolver/MeasurementResolver"),
             range: XSD_DECIMAL,
         },
@@ -709,6 +834,7 @@ fn properties() -> Vec<Property> {
             comment: "The level at which the tower starts.",
             kind: PropertyKind::Object,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/resolver/TowerCompletenessResolver"),
             range: "https://uor.foundation/schema/WittLevel",
         },
@@ -718,6 +844,7 @@ fn properties() -> Vec<Property> {
             comment: "The level to which the tower is being built.",
             kind: PropertyKind::Object,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/resolver/TowerCompletenessResolver"),
             range: "https://uor.foundation/schema/WittLevel",
         },
@@ -727,6 +854,7 @@ fn properties() -> Vec<Property> {
             comment: "The LiftChain under construction.",
             kind: PropertyKind::Object,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/resolver/TowerCompletenessResolver"),
             range: "https://uor.foundation/type/LiftChain",
         },
@@ -737,6 +865,7 @@ fn properties() -> Vec<Property> {
                       lift.",
             kind: PropertyKind::Object,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/resolver/TowerCompletenessResolver"),
             range: "https://uor.foundation/resolver/IncrementalCompletenessResolver",
         },
@@ -748,6 +877,7 @@ fn properties() -> Vec<Property> {
                       queries. Defaults to FifoPolicy if unset.",
             kind: PropertyKind::Object,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/resolver/SessionResolver"),
             range: "https://uor.foundation/resolver/ExecutionPolicy",
         },
@@ -758,6 +888,7 @@ fn properties() -> Vec<Property> {
             comment: "The CechNerve whose homotopy type this resolver computes.",
             kind: PropertyKind::Object,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/resolver/HomotopyResolver"),
             range: "https://uor.foundation/resolver/CechNerve",
         },
@@ -767,6 +898,7 @@ fn properties() -> Vec<Property> {
             comment: "A HomotopyGroup observable produced by this resolver.",
             kind: PropertyKind::Object,
             functional: false,
+            required: false,
             domain: Some("https://uor.foundation/resolver/HomotopyResolver"),
             range: "https://uor.foundation/observable/HomotopyGroup",
         },
@@ -777,6 +909,7 @@ fn properties() -> Vec<Property> {
             comment: "The CompleteType whose local moduli structure this resolver computes.",
             kind: PropertyKind::Object,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/resolver/ModuliResolver"),
             range: "https://uor.foundation/type/CompleteType",
         },
@@ -786,6 +919,7 @@ fn properties() -> Vec<Property> {
             comment: "The DeformationComplex constructed by this resolver.",
             kind: PropertyKind::Object,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/resolver/ModuliResolver"),
             range: "https://uor.foundation/homology/DeformationComplex",
         },
@@ -797,6 +931,7 @@ fn properties() -> Vec<Property> {
                       this resolver class.",
             kind: PropertyKind::Object,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/resolver/Resolver"),
             range: "https://uor.foundation/predicate/DispatchTable",
         },
@@ -808,8 +943,43 @@ fn properties() -> Vec<Property> {
                       this resolver is chosen.",
             kind: PropertyKind::Object,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/resolver/Resolver"),
             range: "https://uor.foundation/predicate/TypePredicate",
+        },
+        // v0.2.1: CertifyMapping properties (parametric Certify metadata)
+        Property {
+            id: "https://uor.foundation/resolver/forResolver",
+            label: "forResolver",
+            comment: "The resolver:Resolver subclass this CertifyMapping \
+                      describes.",
+            kind: PropertyKind::Object,
+            functional: true,
+            required: false,
+            domain: Some("https://uor.foundation/resolver/CertifyMapping"),
+            range: OWL_CLASS,
+        },
+        Property {
+            id: "https://uor.foundation/resolver/producesCertificate",
+            label: "producesCertificate",
+            comment: "The cert:Certificate (or proof:ComputationCertificate) \
+                      subclass this resolver produces on success.",
+            kind: PropertyKind::Object,
+            functional: true,
+            required: false,
+            domain: Some("https://uor.foundation/resolver/CertifyMapping"),
+            range: OWL_CLASS,
+        },
+        Property {
+            id: "https://uor.foundation/resolver/producesWitness",
+            label: "producesWitness",
+            comment: "The proof:ImpossibilityWitness subclass this resolver \
+                      produces on failure.",
+            kind: PropertyKind::Object,
+            functional: true,
+            required: false,
+            domain: Some("https://uor.foundation/resolver/CertifyMapping"),
+            range: OWL_CLASS,
         },
     ]
 }
@@ -884,6 +1054,130 @@ fn individuals() -> Vec<Individual> {
                       other pending queries' site sets first. Minimizes \
                       contention when operating against a SharedContext.",
             properties: &[],
+        },
+        // v0.2.1: CertifyMapping facts (parametric Certify metadata)
+        Individual {
+            id: "https://uor.foundation/resolver/towerCertifyMapping",
+            type_: "https://uor.foundation/resolver/CertifyMapping",
+            label: "towerCertifyMapping",
+            comment: "TowerCompletenessResolver produces LiftChainCertificate \
+                      on success and ImpossibilityWitness on failure.",
+            properties: &[
+                (
+                    "https://uor.foundation/resolver/forResolver",
+                    IndividualValue::IriRef(
+                        "https://uor.foundation/resolver/TowerCompletenessResolver",
+                    ),
+                ),
+                (
+                    "https://uor.foundation/resolver/producesCertificate",
+                    IndividualValue::IriRef("https://uor.foundation/cert/LiftChainCertificate"),
+                ),
+                (
+                    "https://uor.foundation/resolver/producesWitness",
+                    IndividualValue::IriRef("https://uor.foundation/proof/ImpossibilityWitness"),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/resolver/incrementalCertifyMapping",
+            type_: "https://uor.foundation/resolver/CertifyMapping",
+            label: "incrementalCertifyMapping",
+            comment: "IncrementalCompletenessResolver produces \
+                      LiftChainCertificate (single-step) on success and \
+                      ImpossibilityWitness on failure.",
+            properties: &[
+                (
+                    "https://uor.foundation/resolver/forResolver",
+                    IndividualValue::IriRef(
+                        "https://uor.foundation/resolver/IncrementalCompletenessResolver",
+                    ),
+                ),
+                (
+                    "https://uor.foundation/resolver/producesCertificate",
+                    IndividualValue::IriRef("https://uor.foundation/cert/LiftChainCertificate"),
+                ),
+                (
+                    "https://uor.foundation/resolver/producesWitness",
+                    IndividualValue::IriRef("https://uor.foundation/proof/ImpossibilityWitness"),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/resolver/groundingAwareCertifyMapping",
+            type_: "https://uor.foundation/resolver/CertifyMapping",
+            label: "groundingAwareCertifyMapping",
+            comment: "GroundingAwareResolver produces GroundingCertificate \
+                      on success and ImpossibilityWitness on failure.",
+            properties: &[
+                (
+                    "https://uor.foundation/resolver/forResolver",
+                    IndividualValue::IriRef(
+                        "https://uor.foundation/resolver/GroundingAwareResolver",
+                    ),
+                ),
+                (
+                    "https://uor.foundation/resolver/producesCertificate",
+                    IndividualValue::IriRef("https://uor.foundation/cert/GroundingCertificate"),
+                ),
+                (
+                    "https://uor.foundation/resolver/producesWitness",
+                    IndividualValue::IriRef("https://uor.foundation/proof/ImpossibilityWitness"),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/resolver/inhabitanceCertifyMapping",
+            type_: "https://uor.foundation/resolver/CertifyMapping",
+            label: "inhabitanceCertifyMapping",
+            comment: "InhabitanceResolver produces InhabitanceCertificate \
+                      on success and InhabitanceImpossibilityWitness on \
+                      failure.",
+            properties: &[
+                (
+                    "https://uor.foundation/resolver/forResolver",
+                    IndividualValue::IriRef("https://uor.foundation/resolver/InhabitanceResolver"),
+                ),
+                (
+                    "https://uor.foundation/resolver/producesCertificate",
+                    IndividualValue::IriRef("https://uor.foundation/cert/InhabitanceCertificate"),
+                ),
+                (
+                    "https://uor.foundation/resolver/producesWitness",
+                    IndividualValue::IriRef(
+                        "https://uor.foundation/proof/InhabitanceImpossibilityWitness",
+                    ),
+                ),
+            ],
+        },
+        // v0.2.2 Phase C.4 — MultiplicationResolver CertifyMapping.
+        Individual {
+            id: "https://uor.foundation/resolver/multiplicationCertifyMapping",
+            type_: "https://uor.foundation/resolver/CertifyMapping",
+            label: "multiplicationCertifyMapping",
+            comment: "MultiplicationResolver produces MultiplicationCertificate \
+                      on success and ImpossibilityWitness on failure. The \
+                      resolver is total over admissible call-site contexts \
+                      (stack_budget_bytes > 0), so failure is unreachable for \
+                      well-formed inputs.",
+            properties: &[
+                (
+                    "https://uor.foundation/resolver/forResolver",
+                    IndividualValue::IriRef(
+                        "https://uor.foundation/resolver/MultiplicationResolver",
+                    ),
+                ),
+                (
+                    "https://uor.foundation/resolver/producesCertificate",
+                    IndividualValue::IriRef(
+                        "https://uor.foundation/cert/MultiplicationCertificate",
+                    ),
+                ),
+                (
+                    "https://uor.foundation/resolver/producesWitness",
+                    IndividualValue::IriRef("https://uor.foundation/proof/ImpossibilityWitness"),
+                ),
+            ],
         },
     ]
 }

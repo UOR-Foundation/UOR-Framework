@@ -160,6 +160,80 @@ fn classes() -> Vec<Class> {
             subclass_of: &[OWL_THING],
             disjoint_with: &[],
         },
+        // v0.2.1: Inhabitance Verdict Instantiation.
+        // Multiple inheritance: ComputationCertificate (verdict role) and
+        // Certificate (so cert:verified, cert:wittLength, cert:timestamp
+        // inherit without re-declaration).
+        Class {
+            id: "https://uor.foundation/cert/InhabitanceCertificate",
+            label: "InhabitanceCertificate",
+            comment: "A ComputationCertificate verdict primitive that decides \
+                      carrier non-emptiness on a type:ConstrainedType. Distinct \
+                      from cert:CompletenessCertificate, which decides \
+                      freeRank = 0 on the minimal basis. For ConstrainedType \
+                      instances admitting multiple satisfying value tuples, \
+                      InhabitanceCertificate.verified may be true while \
+                      CompletenessCertificate.verified is false.",
+            subclass_of: &[
+                "https://uor.foundation/proof/ComputationCertificate",
+                "https://uor.foundation/cert/Certificate",
+            ],
+            disjoint_with: &[],
+        },
+        // v0.2.2 Phase C.4 — MultiplicationCertificate.
+        Class {
+            id: "https://uor.foundation/cert/MultiplicationCertificate",
+            label: "MultiplicationCertificate",
+            comment: "A certificate attesting the cost-optimal Toom-Cook splitting \
+                      factor R for a Datum<L> × Datum<L> multiplication at a given \
+                      call-site context (stack budget, const-eval regime). Carries \
+                      the chosen splitting factor, the recursive sub-multiplication \
+                      count, and the accumulated Landauer cost in nats (priced per \
+                      op:OA_5). Produced by resolver:MultiplicationResolver.",
+            subclass_of: &["https://uor.foundation/cert/Certificate"],
+            disjoint_with: &[],
+        },
+        // v0.2.2 Phase E — PartitionCertificate attests the partition
+        // component classification of a Datum (Irreducible / Reducible /
+        // Units / Exterior).
+        Class {
+            id: "https://uor.foundation/cert/PartitionCertificate",
+            label: "PartitionCertificate",
+            comment: "A certificate attesting the partition component \
+                      classification of a Datum, assigning it to one of \
+                      Irreducible, Reducible, Units, or Exterior via the \
+                      partition:PartitionComponent enumeration. Produced by \
+                      the bridge partition walk during grounding.",
+            subclass_of: &["https://uor.foundation/cert/Certificate"],
+            disjoint_with: &[],
+        },
+        // Workstream C — impossibility certificates. Target §4.2 requires
+        // resolver `certify` functions to return `Certified<…>` on both
+        // success and failure sides; these two cert classes are the failure
+        // carriers for the Phase C + Phase D resolvers respectively.
+        Class {
+            id: "https://uor.foundation/cert/GenericImpossibilityCertificate",
+            label: "GenericImpossibilityCertificate",
+            comment: "A certificate attesting that a resolver's verdict path \
+                      produced a generic impossibility witness — the input \
+                      failed the resolver's admissibility precondition or \
+                      decision procedure in a way not covered by a more-\
+                      specific witness. Returned by every Phase D resolver \
+                      on failure.",
+            subclass_of: &["https://uor.foundation/cert/Certificate"],
+            disjoint_with: &[],
+        },
+        Class {
+            id: "https://uor.foundation/cert/InhabitanceImpossibilityCertificate",
+            label: "InhabitanceImpossibilityCertificate",
+            comment: "A certificate attesting that the inhabitance decider \
+                      concluded the input is unsatisfiable — there is no \
+                      value in the carrier that satisfies the declared \
+                      constraint conjunction. Returned by \
+                      `resolver::inhabitance::certify` on failure.",
+            subclass_of: &["https://uor.foundation/cert/Certificate"],
+            disjoint_with: &[],
+        },
     ]
 }
 
@@ -172,6 +246,7 @@ fn properties() -> Vec<Property> {
                       (e.g., 'isometry', 'embedding', 'action').",
             kind: PropertyKind::Object,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/cert/TransformCertificate"),
             range: "https://uor.foundation/schema/TermExpression",
         },
@@ -182,6 +257,7 @@ fn properties() -> Vec<Property> {
                       (e.g., 'exhaustive_check', 'symbolic_proof', 'sampling').",
             kind: PropertyKind::Object,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/cert/Certificate"),
             range: "https://uor.foundation/proof/ProofStrategy",
         },
@@ -191,6 +267,7 @@ fn properties() -> Vec<Property> {
             comment: "The operation this certificate applies to.",
             kind: PropertyKind::Object,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/cert/InvolutionCertificate"),
             range: "https://uor.foundation/op/Operation",
         },
@@ -200,6 +277,7 @@ fn properties() -> Vec<Property> {
             comment: "Whether this certificate has been verified by the kernel.",
             kind: PropertyKind::Datatype,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/cert/Certificate"),
             range: XSD_BOOLEAN,
         },
@@ -209,6 +287,7 @@ fn properties() -> Vec<Property> {
             comment: "The Witt level at which this certificate was produced.",
             kind: PropertyKind::Datatype,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/cert/Certificate"),
             range: XSD_POSITIVE_INTEGER,
         },
@@ -218,6 +297,7 @@ fn properties() -> Vec<Property> {
             comment: "The time at which this certificate was issued.",
             kind: PropertyKind::Datatype,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/cert/Certificate"),
             range: XSD_DATETIME,
         },
@@ -228,6 +308,7 @@ fn properties() -> Vec<Property> {
                       to the observable, transform, or other entity it covers.",
             kind: PropertyKind::Object,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/cert/Certificate"),
             range: OWL_THING,
         },
@@ -240,6 +321,7 @@ fn properties() -> Vec<Property> {
                       on the type's constraint set and confirming IT_7d.",
             kind: PropertyKind::Object,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/cert/CompletenessCertificate"),
             range: "https://uor.foundation/type/CompleteType",
         },
@@ -252,6 +334,7 @@ fn properties() -> Vec<Property> {
                       CompletenessWitness records.",
             kind: PropertyKind::Object,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/cert/CompletenessCertificate"),
             range: "https://uor.foundation/cert/CompletenessAuditTrail",
         },
@@ -261,6 +344,7 @@ fn properties() -> Vec<Property> {
             comment: "Total number of witness steps in this audit trail.",
             kind: PropertyKind::Datatype,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/cert/CompletenessAuditTrail"),
             range: XSD_NON_NEGATIVE_INTEGER,
         },
@@ -272,6 +356,7 @@ fn properties() -> Vec<Property> {
                       attests. Uses IRI string (cert cannot import state).",
             kind: PropertyKind::Object,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/cert/GroundingCertificate"),
             range: "https://uor.foundation/state/GroundedContext",
         },
@@ -282,6 +367,7 @@ fn properties() -> Vec<Property> {
                       of the saturation process.",
             kind: PropertyKind::Object,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/cert/GroundingCertificate"),
             range: "https://uor.foundation/state/GroundingWitness",
         },
@@ -293,6 +379,7 @@ fn properties() -> Vec<Property> {
                       attests. Uses IRI string (cert cannot import trace).",
             kind: PropertyKind::Object,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/cert/GeodesicCertificate"),
             range: "https://uor.foundation/trace/GeodesicTrace",
         },
@@ -304,6 +391,7 @@ fn properties() -> Vec<Property> {
                       direction for queryability.",
             kind: PropertyKind::Object,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/cert/GeodesicCertificate"),
             range: "https://uor.foundation/trace/GeodesicTrace",
         },
@@ -315,6 +403,7 @@ fn properties() -> Vec<Property> {
                       attests. Uses IRI string (cert cannot import trace).",
             kind: PropertyKind::Object,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/cert/MeasurementCertificate"),
             range: "https://uor.foundation/trace/MeasurementEvent",
         },
@@ -325,6 +414,7 @@ fn properties() -> Vec<Property> {
                       SuperposedSiteState, recorded by this certificate.",
             kind: PropertyKind::Datatype,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/cert/MeasurementCertificate"),
             range: XSD_DECIMAL,
         },
@@ -336,6 +426,7 @@ fn properties() -> Vec<Property> {
                       at β* = ln 2 per QM_1.",
             kind: PropertyKind::Datatype,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/cert/MeasurementCertificate"),
             range: XSD_DECIMAL,
         },
@@ -348,6 +439,7 @@ fn properties() -> Vec<Property> {
                       GeodesicCertificate's geodesic claim.",
             kind: PropertyKind::Object,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/cert/GeodesicCertificate"),
             range: "https://uor.foundation/cert/GeodesicEvidenceBundle",
         },
@@ -360,6 +452,7 @@ fn properties() -> Vec<Property> {
                       (QM_5): P(k) = |α_k|² for every site k.",
             kind: PropertyKind::Datatype,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/cert/BornRuleVerification"),
             range: XSD_BOOLEAN,
         },
@@ -370,6 +463,7 @@ fn properties() -> Vec<Property> {
             comment: "The LiftChain this certificate attests to.",
             kind: PropertyKind::Object,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/cert/LiftChainCertificate"),
             range: "https://uor.foundation/type/LiftChain",
         },
@@ -379,6 +473,7 @@ fn properties() -> Vec<Property> {
             comment: "The ordered per-step evidence for this certificate.",
             kind: PropertyKind::Object,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/cert/LiftChainCertificate"),
             range: "https://uor.foundation/cert/ChainAuditTrail",
         },
@@ -388,6 +483,7 @@ fn properties() -> Vec<Property> {
             comment: "The quantum level Q_k at which the certificate was issued.",
             kind: PropertyKind::Object,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/cert/LiftChainCertificate"),
             range: "https://uor.foundation/schema/WittLevel",
         },
@@ -397,6 +493,7 @@ fn properties() -> Vec<Property> {
             comment: "The quantum level Q_j from which the tower was started.",
             kind: PropertyKind::Object,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/cert/LiftChainCertificate"),
             range: "https://uor.foundation/schema/WittLevel",
         },
@@ -409,6 +506,7 @@ fn properties() -> Vec<Property> {
                       witnessCount (domain-locked to CompletenessAuditTrail).",
             kind: PropertyKind::Datatype,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/cert/ChainAuditTrail"),
             range: XSD_NON_NEGATIVE_INTEGER,
         },
@@ -421,6 +519,7 @@ fn properties() -> Vec<Property> {
                       representative first).",
             kind: PropertyKind::Datatype,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/cert/GeodesicEvidenceBundle"),
             range: XSD_BOOLEAN,
         },
@@ -432,8 +531,85 @@ fn properties() -> Vec<Property> {
                       applied.",
             kind: PropertyKind::Datatype,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/cert/GeodesicEvidenceBundle"),
             range: XSD_BOOLEAN,
+        },
+        // v0.2.1: InhabitanceCertificate properties
+        Property {
+            id: "https://uor.foundation/cert/witness",
+            label: "witness",
+            comment: "A specific value tuple in the carrier when verified is \
+                      true; absent otherwise. The witness form for \
+                      cert:InhabitanceCertificate.",
+            kind: PropertyKind::Object,
+            functional: false,
+            required: false,
+            domain: Some("https://uor.foundation/cert/InhabitanceCertificate"),
+            range: "https://uor.foundation/schema/ValueTuple",
+        },
+        Property {
+            id: "https://uor.foundation/cert/searchTrace",
+            label: "searchTrace",
+            comment: "The audit trail of the inhabitance search that produced \
+                      this certificate.",
+            kind: PropertyKind::Object,
+            functional: true,
+            required: false,
+            domain: Some("https://uor.foundation/cert/InhabitanceCertificate"),
+            range: "https://uor.foundation/trace/InhabitanceSearchTrace",
+        },
+        Property {
+            id: "https://uor.foundation/cert/grounded",
+            label: "grounded",
+            comment: "The type:ConstrainedType this InhabitanceCertificate is \
+                      issued for.",
+            kind: PropertyKind::Object,
+            functional: true,
+            required: false,
+            domain: Some("https://uor.foundation/cert/InhabitanceCertificate"),
+            range: "https://uor.foundation/type/ConstrainedType",
+        },
+        // v0.2.2 Phase C.4 — MultiplicationCertificate evidence properties.
+        Property {
+            id: "https://uor.foundation/cert/splittingFactor",
+            label: "splittingFactor",
+            comment: "The Toom-Cook splitting factor R chosen by the multiplication \
+                      resolver. R = 1 is schoolbook (the const-eval bottom-out); \
+                      R = 2 is Karatsuba; R >= 3 is Toom-k. The resolver picks the \
+                      cost-optimal R subject to the call-site's stack budget and \
+                      const-eval depth constraints.",
+            kind: PropertyKind::Datatype,
+            functional: true,
+            required: false,
+            domain: Some("https://uor.foundation/cert/MultiplicationCertificate"),
+            range: XSD_POSITIVE_INTEGER,
+        },
+        Property {
+            id: "https://uor.foundation/cert/subMultiplicationCount",
+            label: "subMultiplicationCount",
+            comment: "The number of recursive sub-multiplications the chosen \
+                      splitting factor induces for one Datum<L> × Datum<L> \
+                      multiplication at this call site. For splitting factor R, \
+                      the count is (2R - 1) for R > 1, and 1 for R = 1.",
+            kind: PropertyKind::Datatype,
+            functional: true,
+            required: false,
+            domain: Some("https://uor.foundation/cert/MultiplicationCertificate"),
+            range: XSD_NON_NEGATIVE_INTEGER,
+        },
+        Property {
+            id: "https://uor.foundation/cert/landauerCostNats",
+            label: "landauerCostNats",
+            comment: "The accumulated Landauer cost of the certified multiplication \
+                      in nats, priced per op:OA_5 (each irreversible bit erasure \
+                      costs ln 2 nats in the Archimedean completion). Unit: \
+                      observable:Nats. The value is an xsd:decimal.",
+            kind: PropertyKind::Datatype,
+            functional: true,
+            required: false,
+            domain: Some("https://uor.foundation/cert/MultiplicationCertificate"),
+            range: XSD_DECIMAL,
         },
     ]
 }

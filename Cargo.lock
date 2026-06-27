@@ -74,6 +74,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "843867be96c8daad0d758b57df9392b6d8d271134fce549de6ce169ff98a92af"
 
 [[package]]
+name = "cargo-uor"
+version = "0.5.2"
+dependencies = [
+ "anyhow",
+ "clap",
+ "serde_json",
+ "uor-foundation",
+ "uor-ontology",
+]
+
+[[package]]
 name = "clap"
 version = "4.5.59"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -211,6 +222,12 @@ name = "lazy_static"
 version = "1.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bbd2bcb4c963f2ddae06a2efc7e9f3591312473c50c6685e1f298068316e66fe"
+
+[[package]]
+name = "libm"
+version = "0.2.16"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b6d2cec3eae94f9f509c767b45932f1ada8350c4bdb85af2fcab4a3c14807981"
 
 [[package]]
 name = "memchr"
@@ -616,7 +633,7 @@ checksum = "b4ac048d71ede7ee76d585517add45da530660ef4390e49b098733c6e897f254"
 
 [[package]]
 name = "uor-clients"
-version = "0.2.0"
+version = "0.5.2"
 dependencies = [
  "anyhow",
  "clap",
@@ -624,13 +641,14 @@ dependencies = [
  "uor-codegen",
  "uor-conformance",
  "uor-docs",
+ "uor-lean-codegen",
  "uor-ontology",
  "uor-website",
 ]
 
 [[package]]
 name = "uor-codegen"
-version = "0.2.0"
+version = "0.5.2"
 dependencies = [
  "anyhow",
  "uor-ontology",
@@ -638,23 +656,33 @@ dependencies = [
 
 [[package]]
 name = "uor-conformance"
-version = "0.2.0"
+version = "0.5.2"
 dependencies = [
  "anyhow",
  "cssparser",
+ "regex",
  "serde",
  "serde_json",
  "sophia_api",
  "sophia_turtle",
  "thiserror",
  "uor-codegen",
+ "uor-lean-codegen",
  "uor-ontology",
  "walkdir",
 ]
 
 [[package]]
+name = "uor-consumer-smoke"
+version = "0.1.0"
+dependencies = [
+ "uor-foundation",
+ "uor-foundation-sdk",
+]
+
+[[package]]
 name = "uor-docs"
-version = "0.2.0"
+version = "0.5.2"
 dependencies = [
  "anyhow",
  "pulldown-cmark",
@@ -668,14 +696,15 @@ dependencies = [
 
 [[package]]
 name = "uor-foundation"
-version = "0.2.0"
+version = "0.5.2"
 dependencies = [
- "uor-foundation-macros",
+ "libm",
+ "uor-foundation-test-helpers",
 ]
 
 [[package]]
-name = "uor-foundation-macros"
-version = "0.2.0"
+name = "uor-foundation-sdk"
+version = "0.5.2"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -684,8 +713,33 @@ dependencies = [
 ]
 
 [[package]]
+name = "uor-foundation-test-helpers"
+version = "0.5.2"
+dependencies = [
+ "uor-foundation",
+]
+
+[[package]]
+name = "uor-foundation-verify"
+version = "0.5.2"
+dependencies = [
+ "uor-foundation",
+ "uor-foundation-test-helpers",
+]
+
+[[package]]
+name = "uor-lean-codegen"
+version = "0.5.2"
+dependencies = [
+ "anyhow",
+ "serde",
+ "serde_json",
+ "uor-ontology",
+]
+
+[[package]]
 name = "uor-ontology"
-version = "0.2.0"
+version = "0.5.2"
 dependencies = [
  "serde",
  "serde_json",
@@ -693,7 +747,7 @@ dependencies = [
 
 [[package]]
 name = "uor-website"
-version = "0.2.0"
+version = "0.5.2"
 dependencies = [
  "anyhow",
  "pulldown-cmark",
@@ -703,6 +757,15 @@ dependencies = [
  "uor-docs",
  "uor-ontology",
  "walkdir",
+]
+
+[[package]]
+name = "uor-xtask"
+version = "0.5.2"
+dependencies = [
+ "anyhow",
+ "clap",
+ "uor-conformance",
 ]
 
 [[package]]

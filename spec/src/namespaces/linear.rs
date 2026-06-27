@@ -97,6 +97,7 @@ fn properties() -> Vec<Property> {
             comment: "The single site consumed by this effect.",
             kind: PropertyKind::Object,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/linear/LinearEffect"),
             range: "https://uor.foundation/linear/LinearSite",
         },
@@ -106,6 +107,7 @@ fn properties() -> Vec<Property> {
             comment: "The sites remaining in the budget.",
             kind: PropertyKind::Object,
             functional: false,
+            required: false,
             domain: Some("https://uor.foundation/linear/LinearBudget"),
             range: "https://uor.foundation/linear/LinearSite",
         },
@@ -115,6 +117,7 @@ fn properties() -> Vec<Property> {
             comment: "The context associated with this budget state.",
             kind: PropertyKind::Object,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/linear/LinearBudget"),
             range: "https://uor.foundation/state/Context",
         },
@@ -124,6 +127,7 @@ fn properties() -> Vec<Property> {
             comment: "The sites claimed by this lease.",
             kind: PropertyKind::Object,
             functional: false,
+            required: false,
             domain: Some("https://uor.foundation/linear/LeaseAllocation"),
             range: "https://uor.foundation/linear/LinearSite",
         },
@@ -133,6 +137,7 @@ fn properties() -> Vec<Property> {
             comment: "The ContextLease individual that owns this allocation.",
             kind: PropertyKind::Object,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/linear/LeaseAllocation"),
             range: "https://uor.foundation/state/ContextLease",
         },
@@ -143,6 +148,7 @@ fn properties() -> Vec<Property> {
                       allocation.",
             kind: PropertyKind::Object,
             functional: true,
+            required: false,
             // Cross-namespace domain: state:ContextLease
             // This property will NOT generate a trait method (cross-NS domain)
             domain: Some("https://uor.foundation/state/ContextLease"),
@@ -156,6 +162,7 @@ fn properties() -> Vec<Property> {
                       associated context.",
             kind: PropertyKind::Datatype,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/linear/LinearBudget"),
             range: XSD_NON_NEGATIVE_INTEGER,
         },
@@ -165,8 +172,26 @@ fn properties() -> Vec<Property> {
             comment: "Number of sites claimed by this lease.",
             kind: PropertyKind::Datatype,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/linear/LeaseAllocation"),
             range: XSD_POSITIVE_INTEGER,
+        },
+        // v0.2.2 Phase C.4 — stack budget bytes.
+        Property {
+            id: "https://uor.foundation/linear/stackBudgetBytes",
+            label: "stackBudgetBytes",
+            comment: "The stack budget available at the call site in bytes. \
+                      On embedded targets this is compile-time-known; on std \
+                      targets it is computed from the thread-local stack frame. \
+                      Consumed by the MultiplicationResolver to bound the \
+                      admissible Toom-Cook splitting factor R: deeper recursion \
+                      requires more stack, so R is capped where stack would \
+                      overflow.",
+            kind: PropertyKind::Datatype,
+            functional: true,
+            required: false,
+            domain: Some("https://uor.foundation/linear/LinearBudget"),
+            range: XSD_NON_NEGATIVE_INTEGER,
         },
     ]
 }

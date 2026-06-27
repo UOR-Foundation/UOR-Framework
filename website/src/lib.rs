@@ -99,8 +99,20 @@ pub fn generate(out_dir: &Path) -> Result<()> {
     let content_dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("content");
 
     // Discover concept pages early (needed by about page, concept rendering, and
-    // pipeline narrative directive expansion)
-    let concept_list = concepts::concept_page_list(&content_dir, base_path)?;
+    // pipeline narrative directive expansion). The catalog is merged from the
+    // website's own curated concepts plus the comprehensive reference set under
+    // `docs/content/concepts/`, so the concepts index exposes EVERY authored
+    // concept — not just the dozen pillar pages. The website root wins on slug
+    // overlap, keeping its hand-tuned page (relations, SVG hooks, reading path).
+    let workspace_root = Path::new(env!("CARGO_MANIFEST_DIR"))
+        .parent()
+        .map(Path::to_path_buf)
+        .unwrap_or_default();
+    let concept_dirs = [
+        content_dir.join("concepts"),
+        workspace_root.join("docs").join("content").join("concepts"),
+    ];
+    let concept_list = concepts::concept_page_list(&concept_dirs, base_path)?;
 
     // Track all pages for sitemap
     let mut sitemap_paths: Vec<String> = Vec::new();
@@ -292,11 +304,12 @@ pub fn generate(out_dir: &Path) -> Result<()> {
     sitemap_paths.push("/concepts/".to_string());
 
     for concept in &concept_list {
-        let content_path = content_dir
-            .join("concepts")
-            .join(format!("{}.md", concept.slug));
-        let content_html =
-            concepts::render_concept_from_file(&content_path, ontology, &concept_list, base_path)?;
+        let content_html = concepts::render_concept_from_file(
+            &concept.source,
+            ontology,
+            &concept_list,
+            base_path,
+        )?;
         let extra_svg = pipeline::CONCEPT_SVG_HOOKS
             .iter()
             .find(|(slug, _)| *slug == concept.slug.as_str())

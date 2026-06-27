@@ -6,64 +6,71 @@
 
 use crate::enums::QuantifierKind;
 use crate::enums::WittLevel;
-use crate::Primitives;
+use crate::HostTypes;
 
 /// An element of the ring Z/(2^n)Z at a specific Witt level n. The primary semantic value type. Disjoint from Term: datums are values, terms are syntactic expressions that evaluate to datums.
 /// Disjoint with: Term.
-pub trait Datum<P: Primitives> {
+pub trait Datum<H: HostTypes> {
     /// The integer value of a datum element. For a Datum in Z/(2^n)Z, this is an integer in \[0, 2^n).
-    fn value(&self) -> P::NonNegativeInteger;
+    fn value(&self) -> u64;
     /// The Witt level n of a datum, where the datum's ring is Z/(2^n)Z. Determines the bit width and modulus of the datum.
-    fn witt_length(&self) -> P::PositiveInteger;
+    fn witt_length(&self) -> u64;
     /// The ring-layer index of a datum, indicating its position in the stratification of Z/(2^n)Z.
-    fn stratum(&self) -> P::NonNegativeInteger;
+    fn stratum(&self) -> u64;
     /// The bit-pattern representation of a datum, encoding its position in the hypercube geometry of Z/(2^n)Z.
-    fn spectrum(&self) -> P::NonNegativeInteger;
+    fn spectrum(&self) -> u64;
     /// Associated type for `Element`.
-    type Element: crate::kernel::address::Element<P>;
+    type Element: crate::kernel::address::Element<H>;
     /// The content-addressable element associated with this datum, linking the algebraic value to its identifier.
     fn element(&self) -> &Self::Element;
 }
 
 /// A syntactic expression in the UOR term language. Terms are evaluated to produce Datums. Disjoint from Datum.
 /// Disjoint with: Datum.
-pub trait Term<P: Primitives> {}
+pub trait Term<H: HostTypes> {}
 
-/// A three-component structure encoding an element's position in the UOR address space: stratum (ring layer), spectrum (bit pattern), and glyph (Braille address).
-pub trait Triad<P: Primitives> {}
+/// A three-component structure encoding an element's position in the UOR address space: stratum (ring layer), spectrum (bit pattern), and address (content-addressable position in the Braille glyph encoding). The three required functional properties schema:triadStratum, schema:triadSpectrum, and schema:triadAddress project a Triad onto its TwoAdicValuation, WalshHadamardImage, and Address coordinates respectively.
+pub trait Triad<H: HostTypes> {
+    /// The stratum component of a Triad: the datum's two-adic valuation, indexing its layer in the ring stratification. Semantically corresponds to query:TwoAdicValuation.
+    fn triad_stratum(&self) -> u64;
+    /// The spectrum component of a Triad: the datum's Walsh-Hadamard transform image, indexing its position in the hypercube spectral decomposition. Semantically corresponds to query:WalshHadamardImage.
+    fn triad_spectrum(&self) -> u64;
+    /// The address component of a Triad: the datum's content-addressable position in the ring's Braille glyph encoding. Semantically corresponds to query:Address (renamed from RingElement in v0.2.2 W8).
+    fn triad_address(&self) -> u64;
+}
 
 /// A term that directly denotes a datum value. A Literal is a leaf node in the term language — it refers to a concrete Datum via schema:denotes without being a Datum itself.
-pub trait Literal<P: Primitives>: Term<P> + SurfaceSymbol<P> {
+pub trait Literal<H: HostTypes>: Term<H> + SurfaceSymbol<H> {
     /// Associated type for `Datum`.
-    type Datum: Datum<P>;
+    type Datum: Datum<H>;
     /// The datum value that a Literal term denotes. Bridges the Term/Datum disjointness: a Literal refers to a Datum without being one. Evaluation of a Literal produces its denoted Datum.
     fn denotes(&self) -> &Self::Datum;
 }
 
 /// A term formed by applying an operation to one or more argument terms. The application's value is the result of evaluating the operator on the evaluated arguments.
-pub trait Application<P: Primitives>: Term<P> {
+pub trait Application<H: HostTypes>: Term<H> {
     /// Associated type for `Operation`.
-    type Operation: crate::kernel::op::Operation<P>;
+    type Operation: crate::kernel::op::Operation<H>;
     /// The operation applied in an Application term.
     fn operator(&self) -> &Self::Operation;
     /// Associated type for `Term`.
-    type Term: Term<P>;
+    type Term: Term<H>;
     /// An argument term in an Application. The ordering of arguments follows rdf:List semantics.
     fn argument(&self) -> &[Self::Term];
 }
 
 /// The ambient ring Z/(2^n)Z at a specific Witt level n. The Ring is the primary data structure of the UOR kernel. Its two generators (negation and complement) produce the dihedral group D_{2^n} that governs the invariance frame.
-pub trait Ring<P: Primitives> {
+pub trait Ring<H: HostTypes> {
     /// The bit width n of the ring Z/(2^n)Z. Distinct from schema:wittLength on Datum — ringWittLength is the container's bit width; datum wittLength is a membership property.
-    fn ring_witt_length(&self) -> P::PositiveInteger;
+    fn ring_witt_length(&self) -> u64;
     /// The modulus 2^n of the ring. Equals 2 raised to the power of ringWittLength.
-    fn modulus(&self) -> P::PositiveInteger;
+    fn modulus(&self) -> u64;
     /// Associated type for `Datum`.
-    type Datum: Datum<P>;
+    type Datum: Datum<H>;
     /// The generator element π₁ (value = 1) of the ring. Under iterated successor application, π₁ generates all ring elements.
     fn generator(&self) -> &Self::Datum;
     /// Associated type for `Involution`.
-    type Involution: crate::kernel::op::Involution<P>;
+    type Involution: crate::kernel::op::Involution<H>;
     /// The ring reflection involution: neg(x) = (-x) mod 2^n. One of the two generators of the dihedral group D_{2^n}.
     fn negation(&self) -> &Self::Involution;
     /// The hypercube reflection involution: bnot(x) = (2^n - 1) ⊕ x. The second generator of the dihedral group D_{2^n}.
@@ -73,56 +80,56 @@ pub trait Ring<P: Primitives> {
 }
 
 /// The concrete ring Z/(2^16)Z at Witt level 16. Subclass of schema:Ring. Carries 65,536 elements. W16Ring is the first extension of the default Q0 ring and is the target of Amendment 26's universality proofs.
-pub trait W16Ring<P: Primitives>: Ring<P> {
+pub trait W16Ring<H: HostTypes>: Ring<H> {
     /// Bit width of the Q1 ring: 16.
-    fn w16bit_width(&self) -> P::PositiveInteger;
+    fn w16bit_width(&self) -> u64;
     /// Carrier set size of the Q1 ring: 65,536 elements.
-    fn w16capacity(&self) -> P::PositiveInteger;
+    fn w16capacity(&self) -> u64;
 }
 
 /// Root AST node for parsed EBNF term expressions. Identity lhs/rhs values are instances of TermExpression subtypes. Maps to the `term` production in the EBNF grammar.
-pub trait TermExpression<P: Primitives> {}
+pub trait TermExpression<H: HostTypes> {}
 
 /// A leaf AST node: an integer literal, variable reference, or named constant.
-pub trait LiteralExpression<P: Primitives>: TermExpression<P> {
+pub trait LiteralExpression<H: HostTypes>: TermExpression<H> {
     /// The string representation of a literal expression value (e.g., '42', 'x', 'pi1').
-    fn literal_value(&self) -> &P::String;
+    fn literal_value(&self) -> &H::HostString;
 }
 
 /// An AST node representing operator application: an operator applied to an argument list (e.g., add(x, y)).
-pub trait ApplicationExpression<P: Primitives>: TermExpression<P> {
+pub trait ApplicationExpression<H: HostTypes>: TermExpression<H> {
     /// Associated type for `Operation`.
-    type Operation: crate::kernel::op::Operation<P>;
+    type Operation: crate::kernel::op::Operation<H>;
     /// The operator in an application expression (e.g., op:add, op:neg).
     fn expression_operator(&self) -> &Self::Operation;
     /// Associated type for `TermExpression`.
-    type TermExpression: TermExpression<P>;
+    type TermExpression: TermExpression<H>;
     /// The argument list of an application expression. Non-functional: an application may take multiple arguments.
     fn arguments(&self) -> &[Self::TermExpression];
 }
 
 /// An AST node for infix relations and logical connectives (e.g., x <= y, P -> Q, a = b).
-pub trait InfixExpression<P: Primitives>: TermExpression<P> {
+pub trait InfixExpression<H: HostTypes>: TermExpression<H> {
     /// Associated type for `TermExpression`.
-    type TermExpression: TermExpression<P>;
+    type TermExpression: TermExpression<H>;
     /// The left operand of an infix expression.
     fn left_operand(&self) -> &Self::TermExpression;
     /// The right operand of an infix expression.
     fn right_operand(&self) -> &Self::TermExpression;
     /// The operator symbol in an infix expression (e.g., '=', '\u{2264}', '\u{2192}').
-    fn infix_operator(&self) -> &P::String;
+    fn infix_operator(&self) -> &H::HostString;
 }
 
 /// An AST node for set-builder notation (e.g., {x : P(x)}).
-pub trait SetExpression<P: Primitives>: TermExpression<P> {}
+pub trait SetExpression<H: HostTypes>: TermExpression<H> {}
 
 /// An AST node for function composition (f compose g).
-pub trait CompositionExpression<P: Primitives>: TermExpression<P> {}
+pub trait CompositionExpression<H: HostTypes>: TermExpression<H> {}
 
 /// A structured quantifier binding: typed variable declarations with a domain and quantifier kind (universal or existential). Replaces the string-valued op:forAll property.
-pub trait ForAllDeclaration<P: Primitives> {
+pub trait ForAllDeclaration<H: HostTypes> {
     /// Associated type for `VariableBinding`.
-    type VariableBinding: VariableBinding<P>;
+    type VariableBinding: VariableBinding<H>;
     /// The variable bindings in a quantifier declaration. Non-functional: a ForAllDeclaration may bind multiple variables.
     fn bound_variables(&self) -> &[Self::VariableBinding];
     /// The kind of quantifier: Universal or Existential.
@@ -130,31 +137,3249 @@ pub trait ForAllDeclaration<P: Primitives> {
 }
 
 /// A single variable binding: a variable name bound to a domain type (e.g., x in R_n).
-pub trait VariableBinding<P: Primitives> {
+pub trait VariableBinding<H: HostTypes> {
     /// The domain type of a variable binding (e.g., schema:Ring, type:ConstrainedType).
-    fn variable_domain(&self) -> &P::String;
+    fn variable_domain(&self) -> &H::HostString;
     /// The name of a bound variable (e.g., 'x', 'y', 'n').
-    fn variable_name(&self) -> &P::String;
+    fn variable_name(&self) -> &H::HostString;
 }
 
 /// An abstract leaf value that a grounding map can accept as surface input. Has no direct instances: every SurfaceSymbol is either a Datum-denoting schema:Literal or an xsd-typed schema:HostValue, and the two cases are disjoint.
-pub trait SurfaceSymbol<P: Primitives> {}
+pub trait SurfaceSymbol<H: HostTypes> {}
 
 /// An xsd-typed value that denotes a host datatype rather than a ring datum. Used in property-position slots whose range is xsd and as the host-side input of a grounding map.
 /// Disjoint with: Term, Datum.
-pub trait HostValue<P: Primitives>: SurfaceSymbol<P> {}
+pub trait HostValue<H: HostTypes>: SurfaceSymbol<H> {}
 
 /// A host string literal carrying an xsd:string value.
-pub trait HostStringLiteral<P: Primitives>: HostValue<P> {
+pub trait HostStringLiteral<H: HostTypes>: HostValue<H> {
     /// The string value carried by a HostStringLiteral.
-    fn host_string(&self) -> &P::String;
+    fn host_string(&self) -> &H::HostString;
 }
 
 /// A host boolean literal carrying an xsd:boolean value.
-pub trait HostBooleanLiteral<P: Primitives>: HostValue<P> {
+pub trait HostBooleanLiteral<H: HostTypes>: HostValue<H> {
     /// The boolean value carried by a HostBooleanLiteral.
-    fn host_boolean(&self) -> P::Boolean;
+    fn host_boolean(&self) -> bool;
 }
+
+/// An ordered tuple of values drawn from a type:ConstrainedType's carrier. Serves as the witness form for cert:InhabitanceCertificate when verified is true.
+pub trait ValueTuple<H: HostTypes> {}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `Datum<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullDatum<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullDatum<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullDatum<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullDatum<H> = NullDatum {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> Datum<H> for NullDatum<H> {
+    fn value(&self) -> u64 {
+        0
+    }
+    fn witt_length(&self) -> u64 {
+        0
+    }
+    fn stratum(&self) -> u64 {
+        0
+    }
+    fn spectrum(&self) -> u64 {
+        0
+    }
+    type Element = crate::kernel::address::NullElement<H>;
+    fn element(&self) -> &Self::Element {
+        &<crate::kernel::address::NullElement<H>>::ABSENT
+    }
+}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `Term<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullTerm<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullTerm<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullTerm<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullTerm<H> = NullTerm {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> Term<H> for NullTerm<H> {}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `Triad<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullTriad<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullTriad<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullTriad<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullTriad<H> = NullTriad {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> Triad<H> for NullTriad<H> {
+    fn triad_stratum(&self) -> u64 {
+        0
+    }
+    fn triad_spectrum(&self) -> u64 {
+        0
+    }
+    fn triad_address(&self) -> u64 {
+        0
+    }
+}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `Literal<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullLiteral<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullLiteral<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullLiteral<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullLiteral<H> = NullLiteral {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> Term<H> for NullLiteral<H> {}
+impl<H: HostTypes> SurfaceSymbol<H> for NullLiteral<H> {}
+impl<H: HostTypes> Literal<H> for NullLiteral<H> {
+    type Datum = NullDatum<H>;
+    fn denotes(&self) -> &Self::Datum {
+        &<NullDatum<H>>::ABSENT
+    }
+}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `Application<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullApplication<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullApplication<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullApplication<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullApplication<H> = NullApplication {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> Term<H> for NullApplication<H> {}
+impl<H: HostTypes> Application<H> for NullApplication<H> {
+    type Operation = crate::kernel::op::NullOperation<H>;
+    fn operator(&self) -> &Self::Operation {
+        &<crate::kernel::op::NullOperation<H>>::ABSENT
+    }
+    type Term = NullTerm<H>;
+    fn argument(&self) -> &[Self::Term] {
+        &[]
+    }
+}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `Ring<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullRing<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullRing<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullRing<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullRing<H> = NullRing {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> Ring<H> for NullRing<H> {
+    fn ring_witt_length(&self) -> u64 {
+        0
+    }
+    fn modulus(&self) -> u64 {
+        0
+    }
+    type Datum = NullDatum<H>;
+    fn generator(&self) -> &Self::Datum {
+        &<NullDatum<H>>::ABSENT
+    }
+    type Involution = crate::kernel::op::NullInvolution<H>;
+    fn negation(&self) -> &Self::Involution {
+        &<crate::kernel::op::NullInvolution<H>>::ABSENT
+    }
+    fn complement(&self) -> &Self::Involution {
+        &<crate::kernel::op::NullInvolution<H>>::ABSENT
+    }
+    fn at_witt_level(&self) -> WittLevel {
+        <WittLevel>::default()
+    }
+}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `W16Ring<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullW16Ring<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullW16Ring<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullW16Ring<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullW16Ring<H> = NullW16Ring {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> Ring<H> for NullW16Ring<H> {
+    fn ring_witt_length(&self) -> u64 {
+        0
+    }
+    fn modulus(&self) -> u64 {
+        0
+    }
+    type Datum = NullDatum<H>;
+    fn generator(&self) -> &Self::Datum {
+        &<NullDatum<H>>::ABSENT
+    }
+    type Involution = crate::kernel::op::NullInvolution<H>;
+    fn negation(&self) -> &Self::Involution {
+        &<crate::kernel::op::NullInvolution<H>>::ABSENT
+    }
+    fn complement(&self) -> &Self::Involution {
+        &<crate::kernel::op::NullInvolution<H>>::ABSENT
+    }
+    fn at_witt_level(&self) -> WittLevel {
+        <WittLevel>::default()
+    }
+}
+impl<H: HostTypes> W16Ring<H> for NullW16Ring<H> {
+    fn w16bit_width(&self) -> u64 {
+        0
+    }
+    fn w16capacity(&self) -> u64 {
+        0
+    }
+}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `TermExpression<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullTermExpression<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullTermExpression<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullTermExpression<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullTermExpression<H> = NullTermExpression {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> TermExpression<H> for NullTermExpression<H> {}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `LiteralExpression<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullLiteralExpression<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullLiteralExpression<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullLiteralExpression<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullLiteralExpression<H> = NullLiteralExpression {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> TermExpression<H> for NullLiteralExpression<H> {}
+impl<H: HostTypes> LiteralExpression<H> for NullLiteralExpression<H> {
+    fn literal_value(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `ApplicationExpression<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullApplicationExpression<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullApplicationExpression<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullApplicationExpression<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullApplicationExpression<H> = NullApplicationExpression {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> TermExpression<H> for NullApplicationExpression<H> {}
+impl<H: HostTypes> ApplicationExpression<H> for NullApplicationExpression<H> {
+    type Operation = crate::kernel::op::NullOperation<H>;
+    fn expression_operator(&self) -> &Self::Operation {
+        &<crate::kernel::op::NullOperation<H>>::ABSENT
+    }
+    type TermExpression = NullTermExpression<H>;
+    fn arguments(&self) -> &[Self::TermExpression] {
+        &[]
+    }
+}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `InfixExpression<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullInfixExpression<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullInfixExpression<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullInfixExpression<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullInfixExpression<H> = NullInfixExpression {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> TermExpression<H> for NullInfixExpression<H> {}
+impl<H: HostTypes> InfixExpression<H> for NullInfixExpression<H> {
+    type TermExpression = NullTermExpression<H>;
+    fn left_operand(&self) -> &Self::TermExpression {
+        &<NullTermExpression<H>>::ABSENT
+    }
+    fn right_operand(&self) -> &Self::TermExpression {
+        &<NullTermExpression<H>>::ABSENT
+    }
+    fn infix_operator(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `SetExpression<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullSetExpression<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullSetExpression<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullSetExpression<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullSetExpression<H> = NullSetExpression {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> TermExpression<H> for NullSetExpression<H> {}
+impl<H: HostTypes> SetExpression<H> for NullSetExpression<H> {}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `CompositionExpression<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullCompositionExpression<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullCompositionExpression<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullCompositionExpression<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullCompositionExpression<H> = NullCompositionExpression {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> TermExpression<H> for NullCompositionExpression<H> {}
+impl<H: HostTypes> CompositionExpression<H> for NullCompositionExpression<H> {}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `ForAllDeclaration<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullForAllDeclaration<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullForAllDeclaration<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullForAllDeclaration<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullForAllDeclaration<H> = NullForAllDeclaration {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> ForAllDeclaration<H> for NullForAllDeclaration<H> {
+    type VariableBinding = NullVariableBinding<H>;
+    fn bound_variables(&self) -> &[Self::VariableBinding] {
+        &[]
+    }
+    fn quantifier_kind(&self) -> QuantifierKind {
+        <QuantifierKind>::default()
+    }
+}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `VariableBinding<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullVariableBinding<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullVariableBinding<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullVariableBinding<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullVariableBinding<H> = NullVariableBinding {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> VariableBinding<H> for NullVariableBinding<H> {
+    fn variable_domain(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    fn variable_name(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `SurfaceSymbol<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullSurfaceSymbol<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullSurfaceSymbol<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullSurfaceSymbol<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullSurfaceSymbol<H> = NullSurfaceSymbol {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> SurfaceSymbol<H> for NullSurfaceSymbol<H> {}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `HostValue<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullHostValue<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullHostValue<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullHostValue<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullHostValue<H> = NullHostValue {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> SurfaceSymbol<H> for NullHostValue<H> {}
+impl<H: HostTypes> HostValue<H> for NullHostValue<H> {}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `HostStringLiteral<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullHostStringLiteral<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullHostStringLiteral<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullHostStringLiteral<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullHostStringLiteral<H> = NullHostStringLiteral {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> SurfaceSymbol<H> for NullHostStringLiteral<H> {}
+impl<H: HostTypes> HostValue<H> for NullHostStringLiteral<H> {}
+impl<H: HostTypes> HostStringLiteral<H> for NullHostStringLiteral<H> {
+    fn host_string(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `HostBooleanLiteral<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullHostBooleanLiteral<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullHostBooleanLiteral<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullHostBooleanLiteral<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullHostBooleanLiteral<H> = NullHostBooleanLiteral {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> SurfaceSymbol<H> for NullHostBooleanLiteral<H> {}
+impl<H: HostTypes> HostValue<H> for NullHostBooleanLiteral<H> {}
+impl<H: HostTypes> HostBooleanLiteral<H> for NullHostBooleanLiteral<H> {
+    fn host_boolean(&self) -> bool {
+        false
+    }
+}
+
+/// Phase 2 (orphan-closure) — resolver-absent default impl of `ValueTuple<H>`.
+/// Every accessor returns `H::EMPTY_*` sentinels (for scalar / host-typed
+/// returns) or a `'static`-lifetime reference to a sibling `Null*`'s `ABSENT`
+/// const (for trait-typed returns).  Downstream provides concrete impls;
+/// this stub closes the ontology-derived trait orphan.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NullValueTuple<H: HostTypes> {
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Default for NullValueTuple<H> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+impl<H: HostTypes> NullValueTuple<H> {
+    /// Absent-value sentinel. `&Self::ABSENT` gives every trait-typed accessor a `'static`-lifetime reference target.
+    pub const ABSENT: NullValueTuple<H> = NullValueTuple {
+        _phantom: core::marker::PhantomData,
+    };
+}
+impl<H: HostTypes> ValueTuple<H> for NullValueTuple<H> {}
+
+/// Phase 8 (orphan-closure) — content-addressed handle for `Datum<H>`.
+///
+/// Pairs a [`crate::enforcement::ContentFingerprint`] with a phantom
+/// `H` so type-state checks can't mix handles across `HostTypes` impls.
+#[derive(Debug)]
+pub struct DatumHandle<H: HostTypes> {
+    /// Content fingerprint identifying the resolved record.
+    pub fingerprint: crate::enforcement::ContentFingerprint,
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Copy for DatumHandle<H> {}
+impl<H: HostTypes> Clone for DatumHandle<H> {
+    #[inline]
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+impl<H: HostTypes> PartialEq for DatumHandle<H> {
+    #[inline]
+    fn eq(&self, other: &Self) -> bool {
+        self.fingerprint == other.fingerprint
+    }
+}
+impl<H: HostTypes> Eq for DatumHandle<H> {}
+impl<H: HostTypes> core::hash::Hash for DatumHandle<H> {
+    #[inline]
+    fn hash<S: core::hash::Hasher>(&self, state: &mut S) {
+        self.fingerprint.hash(state);
+    }
+}
+impl<H: HostTypes> DatumHandle<H> {
+    /// Construct a handle from its content fingerprint.
+    #[inline]
+    #[must_use]
+    pub const fn new(fingerprint: crate::enforcement::ContentFingerprint) -> Self {
+        Self {
+            fingerprint,
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+
+/// Phase 8 (orphan-closure) — resolver trait for `Datum<H>`.
+///
+/// Hosts implement this trait to map a handle into a typed record.
+/// The default Null stub does not implement this trait — it carries
+/// no record. Resolution is the responsibility of the host pipeline.
+pub trait DatumResolver<H: HostTypes> {
+    /// Resolve a handle into its record. Returns `None` when the
+    /// handle does not correspond to known content.
+    fn resolve(&self, handle: DatumHandle<H>) -> Option<DatumRecord<H>>;
+}
+
+/// Phase 8 (orphan-closure) — typed record for `Datum<H>`.
+///
+/// Carries a field per functional accessor of the trait. Object
+/// fields hold `{Range}Handle<H>`; iterate via the Resolved wrapper
+/// chain-resolver methods.
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub struct DatumRecord<H: HostTypes> {
+    pub value: u64,
+    pub witt_length: u64,
+    pub stratum: u64,
+    pub spectrum: u64,
+    pub element_handle: crate::kernel::address::ElementHandle<H>,
+    #[doc(hidden)]
+    pub _phantom: core::marker::PhantomData<H>,
+}
+
+/// Phase 8 (orphan-closure) — content-addressed wrapper for `Datum<H>`.
+///
+/// Caches the resolver's lookup at construction. Accessors return
+/// the cached record's fields when present, falling back to the
+/// `Null{Class}<H>` absent sentinels when the resolver returned
+/// `None`. Object accessors always return absent sentinels — use
+/// the `resolve_{m}` chain methods to descend into sub-records.
+pub struct ResolvedDatum<'r, R: DatumResolver<H>, H: HostTypes> {
+    handle: DatumHandle<H>,
+    resolver: &'r R,
+    record: Option<DatumRecord<H>>,
+}
+impl<'r, R: DatumResolver<H>, H: HostTypes> ResolvedDatum<'r, R, H> {
+    /// Construct the wrapper, eagerly resolving the handle.
+    #[inline]
+    pub fn new(handle: DatumHandle<H>, resolver: &'r R) -> Self {
+        let record = resolver.resolve(handle);
+        Self {
+            handle,
+            resolver,
+            record,
+        }
+    }
+    /// The handle this wrapper resolves.
+    #[inline]
+    #[must_use]
+    pub const fn handle(&self) -> DatumHandle<H> {
+        self.handle
+    }
+    /// The resolver supplied at construction.
+    #[inline]
+    #[must_use]
+    pub const fn resolver(&self) -> &'r R {
+        self.resolver
+    }
+    /// The cached record, or `None` when the resolver returned `None`.
+    #[inline]
+    #[must_use]
+    pub const fn record(&self) -> Option<&DatumRecord<H>> {
+        self.record.as_ref()
+    }
+}
+impl<'r, R: DatumResolver<H>, H: HostTypes> Datum<H> for ResolvedDatum<'r, R, H> {
+    fn value(&self) -> u64 {
+        match &self.record {
+            Some(r) => r.value,
+            None => 0,
+        }
+    }
+    fn witt_length(&self) -> u64 {
+        match &self.record {
+            Some(r) => r.witt_length,
+            None => 0,
+        }
+    }
+    fn stratum(&self) -> u64 {
+        match &self.record {
+            Some(r) => r.stratum,
+            None => 0,
+        }
+    }
+    fn spectrum(&self) -> u64 {
+        match &self.record {
+            Some(r) => r.spectrum,
+            None => 0,
+        }
+    }
+    type Element = crate::kernel::address::NullElement<H>;
+    fn element(&self) -> &Self::Element {
+        &<crate::kernel::address::NullElement<H>>::ABSENT
+    }
+}
+impl<'r, R: DatumResolver<H>, H: HostTypes> ResolvedDatum<'r, R, H> {
+    /// Promote the `element` handle on the cached record into a
+    /// resolved wrapper, given a resolver for the range class.
+    /// Returns `None` if no record was resolved at construction.
+    #[inline]
+    pub fn resolve_element<'r2, R2: crate::kernel::address::ElementResolver<H>>(
+        &self,
+        r: &'r2 R2,
+    ) -> Option<crate::kernel::address::ResolvedElement<'r2, R2, H>> {
+        let record = self.record.as_ref()?;
+        Some(crate::kernel::address::ResolvedElement::new(
+            record.element_handle,
+            r,
+        ))
+    }
+}
+
+/// Phase 8 (orphan-closure) — content-addressed handle for `Term<H>`.
+///
+/// Pairs a [`crate::enforcement::ContentFingerprint`] with a phantom
+/// `H` so type-state checks can't mix handles across `HostTypes` impls.
+#[derive(Debug)]
+pub struct TermHandle<H: HostTypes> {
+    /// Content fingerprint identifying the resolved record.
+    pub fingerprint: crate::enforcement::ContentFingerprint,
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Copy for TermHandle<H> {}
+impl<H: HostTypes> Clone for TermHandle<H> {
+    #[inline]
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+impl<H: HostTypes> PartialEq for TermHandle<H> {
+    #[inline]
+    fn eq(&self, other: &Self) -> bool {
+        self.fingerprint == other.fingerprint
+    }
+}
+impl<H: HostTypes> Eq for TermHandle<H> {}
+impl<H: HostTypes> core::hash::Hash for TermHandle<H> {
+    #[inline]
+    fn hash<S: core::hash::Hasher>(&self, state: &mut S) {
+        self.fingerprint.hash(state);
+    }
+}
+impl<H: HostTypes> TermHandle<H> {
+    /// Construct a handle from its content fingerprint.
+    #[inline]
+    #[must_use]
+    pub const fn new(fingerprint: crate::enforcement::ContentFingerprint) -> Self {
+        Self {
+            fingerprint,
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+
+/// Phase 8 (orphan-closure) — resolver trait for `Term<H>`.
+///
+/// Hosts implement this trait to map a handle into a typed record.
+/// The default Null stub does not implement this trait — it carries
+/// no record. Resolution is the responsibility of the host pipeline.
+pub trait TermResolver<H: HostTypes> {
+    /// Resolve a handle into its record. Returns `None` when the
+    /// handle does not correspond to known content.
+    fn resolve(&self, handle: TermHandle<H>) -> Option<TermRecord<H>>;
+}
+
+/// Phase 8 (orphan-closure) — typed record for `Term<H>`.
+///
+/// Carries a field per functional accessor of the trait. Object
+/// fields hold `{Range}Handle<H>`; iterate via the Resolved wrapper
+/// chain-resolver methods.
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub struct TermRecord<H: HostTypes> {
+    #[doc(hidden)]
+    pub _phantom: core::marker::PhantomData<H>,
+}
+
+/// Phase 8 (orphan-closure) — content-addressed wrapper for `Term<H>`.
+///
+/// Caches the resolver's lookup at construction. Accessors return
+/// the cached record's fields when present, falling back to the
+/// `Null{Class}<H>` absent sentinels when the resolver returned
+/// `None`. Object accessors always return absent sentinels — use
+/// the `resolve_{m}` chain methods to descend into sub-records.
+pub struct ResolvedTerm<'r, R: TermResolver<H>, H: HostTypes> {
+    handle: TermHandle<H>,
+    resolver: &'r R,
+    record: Option<TermRecord<H>>,
+}
+impl<'r, R: TermResolver<H>, H: HostTypes> ResolvedTerm<'r, R, H> {
+    /// Construct the wrapper, eagerly resolving the handle.
+    #[inline]
+    pub fn new(handle: TermHandle<H>, resolver: &'r R) -> Self {
+        let record = resolver.resolve(handle);
+        Self {
+            handle,
+            resolver,
+            record,
+        }
+    }
+    /// The handle this wrapper resolves.
+    #[inline]
+    #[must_use]
+    pub const fn handle(&self) -> TermHandle<H> {
+        self.handle
+    }
+    /// The resolver supplied at construction.
+    #[inline]
+    #[must_use]
+    pub const fn resolver(&self) -> &'r R {
+        self.resolver
+    }
+    /// The cached record, or `None` when the resolver returned `None`.
+    #[inline]
+    #[must_use]
+    pub const fn record(&self) -> Option<&TermRecord<H>> {
+        self.record.as_ref()
+    }
+}
+impl<'r, R: TermResolver<H>, H: HostTypes> Term<H> for ResolvedTerm<'r, R, H> {}
+
+/// Phase 8 (orphan-closure) — content-addressed handle for `Triad<H>`.
+///
+/// Pairs a [`crate::enforcement::ContentFingerprint`] with a phantom
+/// `H` so type-state checks can't mix handles across `HostTypes` impls.
+#[derive(Debug)]
+pub struct TriadHandle<H: HostTypes> {
+    /// Content fingerprint identifying the resolved record.
+    pub fingerprint: crate::enforcement::ContentFingerprint,
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Copy for TriadHandle<H> {}
+impl<H: HostTypes> Clone for TriadHandle<H> {
+    #[inline]
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+impl<H: HostTypes> PartialEq for TriadHandle<H> {
+    #[inline]
+    fn eq(&self, other: &Self) -> bool {
+        self.fingerprint == other.fingerprint
+    }
+}
+impl<H: HostTypes> Eq for TriadHandle<H> {}
+impl<H: HostTypes> core::hash::Hash for TriadHandle<H> {
+    #[inline]
+    fn hash<S: core::hash::Hasher>(&self, state: &mut S) {
+        self.fingerprint.hash(state);
+    }
+}
+impl<H: HostTypes> TriadHandle<H> {
+    /// Construct a handle from its content fingerprint.
+    #[inline]
+    #[must_use]
+    pub const fn new(fingerprint: crate::enforcement::ContentFingerprint) -> Self {
+        Self {
+            fingerprint,
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+
+/// Phase 8 (orphan-closure) — resolver trait for `Triad<H>`.
+///
+/// Hosts implement this trait to map a handle into a typed record.
+/// The default Null stub does not implement this trait — it carries
+/// no record. Resolution is the responsibility of the host pipeline.
+pub trait TriadResolver<H: HostTypes> {
+    /// Resolve a handle into its record. Returns `None` when the
+    /// handle does not correspond to known content.
+    fn resolve(&self, handle: TriadHandle<H>) -> Option<TriadRecord<H>>;
+}
+
+/// Phase 8 (orphan-closure) — typed record for `Triad<H>`.
+///
+/// Carries a field per functional accessor of the trait. Object
+/// fields hold `{Range}Handle<H>`; iterate via the Resolved wrapper
+/// chain-resolver methods.
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub struct TriadRecord<H: HostTypes> {
+    pub triad_stratum: u64,
+    pub triad_spectrum: u64,
+    pub triad_address: u64,
+    #[doc(hidden)]
+    pub _phantom: core::marker::PhantomData<H>,
+}
+
+/// Phase 8 (orphan-closure) — content-addressed wrapper for `Triad<H>`.
+///
+/// Caches the resolver's lookup at construction. Accessors return
+/// the cached record's fields when present, falling back to the
+/// `Null{Class}<H>` absent sentinels when the resolver returned
+/// `None`. Object accessors always return absent sentinels — use
+/// the `resolve_{m}` chain methods to descend into sub-records.
+pub struct ResolvedTriad<'r, R: TriadResolver<H>, H: HostTypes> {
+    handle: TriadHandle<H>,
+    resolver: &'r R,
+    record: Option<TriadRecord<H>>,
+}
+impl<'r, R: TriadResolver<H>, H: HostTypes> ResolvedTriad<'r, R, H> {
+    /// Construct the wrapper, eagerly resolving the handle.
+    #[inline]
+    pub fn new(handle: TriadHandle<H>, resolver: &'r R) -> Self {
+        let record = resolver.resolve(handle);
+        Self {
+            handle,
+            resolver,
+            record,
+        }
+    }
+    /// The handle this wrapper resolves.
+    #[inline]
+    #[must_use]
+    pub const fn handle(&self) -> TriadHandle<H> {
+        self.handle
+    }
+    /// The resolver supplied at construction.
+    #[inline]
+    #[must_use]
+    pub const fn resolver(&self) -> &'r R {
+        self.resolver
+    }
+    /// The cached record, or `None` when the resolver returned `None`.
+    #[inline]
+    #[must_use]
+    pub const fn record(&self) -> Option<&TriadRecord<H>> {
+        self.record.as_ref()
+    }
+}
+impl<'r, R: TriadResolver<H>, H: HostTypes> Triad<H> for ResolvedTriad<'r, R, H> {
+    fn triad_stratum(&self) -> u64 {
+        match &self.record {
+            Some(r) => r.triad_stratum,
+            None => 0,
+        }
+    }
+    fn triad_spectrum(&self) -> u64 {
+        match &self.record {
+            Some(r) => r.triad_spectrum,
+            None => 0,
+        }
+    }
+    fn triad_address(&self) -> u64 {
+        match &self.record {
+            Some(r) => r.triad_address,
+            None => 0,
+        }
+    }
+}
+
+/// Phase 8 (orphan-closure) — content-addressed handle for `Literal<H>`.
+///
+/// Pairs a [`crate::enforcement::ContentFingerprint`] with a phantom
+/// `H` so type-state checks can't mix handles across `HostTypes` impls.
+#[derive(Debug)]
+pub struct LiteralHandle<H: HostTypes> {
+    /// Content fingerprint identifying the resolved record.
+    pub fingerprint: crate::enforcement::ContentFingerprint,
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Copy for LiteralHandle<H> {}
+impl<H: HostTypes> Clone for LiteralHandle<H> {
+    #[inline]
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+impl<H: HostTypes> PartialEq for LiteralHandle<H> {
+    #[inline]
+    fn eq(&self, other: &Self) -> bool {
+        self.fingerprint == other.fingerprint
+    }
+}
+impl<H: HostTypes> Eq for LiteralHandle<H> {}
+impl<H: HostTypes> core::hash::Hash for LiteralHandle<H> {
+    #[inline]
+    fn hash<S: core::hash::Hasher>(&self, state: &mut S) {
+        self.fingerprint.hash(state);
+    }
+}
+impl<H: HostTypes> LiteralHandle<H> {
+    /// Construct a handle from its content fingerprint.
+    #[inline]
+    #[must_use]
+    pub const fn new(fingerprint: crate::enforcement::ContentFingerprint) -> Self {
+        Self {
+            fingerprint,
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+
+/// Phase 8 (orphan-closure) — resolver trait for `Literal<H>`.
+///
+/// Hosts implement this trait to map a handle into a typed record.
+/// The default Null stub does not implement this trait — it carries
+/// no record. Resolution is the responsibility of the host pipeline.
+pub trait LiteralResolver<H: HostTypes> {
+    /// Resolve a handle into its record. Returns `None` when the
+    /// handle does not correspond to known content.
+    fn resolve(&self, handle: LiteralHandle<H>) -> Option<LiteralRecord<H>>;
+}
+
+/// Phase 8 (orphan-closure) — typed record for `Literal<H>`.
+///
+/// Carries a field per functional accessor of the trait. Object
+/// fields hold `{Range}Handle<H>`; iterate via the Resolved wrapper
+/// chain-resolver methods.
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub struct LiteralRecord<H: HostTypes> {
+    pub denotes_handle: DatumHandle<H>,
+    #[doc(hidden)]
+    pub _phantom: core::marker::PhantomData<H>,
+}
+
+/// Phase 8 (orphan-closure) — content-addressed wrapper for `Literal<H>`.
+///
+/// Caches the resolver's lookup at construction. Accessors return
+/// the cached record's fields when present, falling back to the
+/// `Null{Class}<H>` absent sentinels when the resolver returned
+/// `None`. Object accessors always return absent sentinels — use
+/// the `resolve_{m}` chain methods to descend into sub-records.
+pub struct ResolvedLiteral<'r, R: LiteralResolver<H>, H: HostTypes> {
+    handle: LiteralHandle<H>,
+    resolver: &'r R,
+    record: Option<LiteralRecord<H>>,
+}
+impl<'r, R: LiteralResolver<H>, H: HostTypes> ResolvedLiteral<'r, R, H> {
+    /// Construct the wrapper, eagerly resolving the handle.
+    #[inline]
+    pub fn new(handle: LiteralHandle<H>, resolver: &'r R) -> Self {
+        let record = resolver.resolve(handle);
+        Self {
+            handle,
+            resolver,
+            record,
+        }
+    }
+    /// The handle this wrapper resolves.
+    #[inline]
+    #[must_use]
+    pub const fn handle(&self) -> LiteralHandle<H> {
+        self.handle
+    }
+    /// The resolver supplied at construction.
+    #[inline]
+    #[must_use]
+    pub const fn resolver(&self) -> &'r R {
+        self.resolver
+    }
+    /// The cached record, or `None` when the resolver returned `None`.
+    #[inline]
+    #[must_use]
+    pub const fn record(&self) -> Option<&LiteralRecord<H>> {
+        self.record.as_ref()
+    }
+}
+impl<'r, R: LiteralResolver<H>, H: HostTypes> Term<H> for ResolvedLiteral<'r, R, H> {}
+impl<'r, R: LiteralResolver<H>, H: HostTypes> SurfaceSymbol<H> for ResolvedLiteral<'r, R, H> {}
+impl<'r, R: LiteralResolver<H>, H: HostTypes> Literal<H> for ResolvedLiteral<'r, R, H> {
+    type Datum = NullDatum<H>;
+    fn denotes(&self) -> &Self::Datum {
+        &<NullDatum<H>>::ABSENT
+    }
+}
+impl<'r, R: LiteralResolver<H>, H: HostTypes> ResolvedLiteral<'r, R, H> {
+    /// Promote the `denotes` handle on the cached record into a
+    /// resolved wrapper, given a resolver for the range class.
+    /// Returns `None` if no record was resolved at construction.
+    #[inline]
+    pub fn resolve_denotes<'r2, R2: DatumResolver<H>>(
+        &self,
+        r: &'r2 R2,
+    ) -> Option<ResolvedDatum<'r2, R2, H>> {
+        let record = self.record.as_ref()?;
+        Some(ResolvedDatum::new(record.denotes_handle, r))
+    }
+}
+
+/// Phase 8 (orphan-closure) — content-addressed handle for `Application<H>`.
+///
+/// Pairs a [`crate::enforcement::ContentFingerprint`] with a phantom
+/// `H` so type-state checks can't mix handles across `HostTypes` impls.
+#[derive(Debug)]
+pub struct ApplicationHandle<H: HostTypes> {
+    /// Content fingerprint identifying the resolved record.
+    pub fingerprint: crate::enforcement::ContentFingerprint,
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Copy for ApplicationHandle<H> {}
+impl<H: HostTypes> Clone for ApplicationHandle<H> {
+    #[inline]
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+impl<H: HostTypes> PartialEq for ApplicationHandle<H> {
+    #[inline]
+    fn eq(&self, other: &Self) -> bool {
+        self.fingerprint == other.fingerprint
+    }
+}
+impl<H: HostTypes> Eq for ApplicationHandle<H> {}
+impl<H: HostTypes> core::hash::Hash for ApplicationHandle<H> {
+    #[inline]
+    fn hash<S: core::hash::Hasher>(&self, state: &mut S) {
+        self.fingerprint.hash(state);
+    }
+}
+impl<H: HostTypes> ApplicationHandle<H> {
+    /// Construct a handle from its content fingerprint.
+    #[inline]
+    #[must_use]
+    pub const fn new(fingerprint: crate::enforcement::ContentFingerprint) -> Self {
+        Self {
+            fingerprint,
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+
+/// Phase 8 (orphan-closure) — resolver trait for `Application<H>`.
+///
+/// Hosts implement this trait to map a handle into a typed record.
+/// The default Null stub does not implement this trait — it carries
+/// no record. Resolution is the responsibility of the host pipeline.
+pub trait ApplicationResolver<H: HostTypes> {
+    /// Resolve a handle into its record. Returns `None` when the
+    /// handle does not correspond to known content.
+    fn resolve(&self, handle: ApplicationHandle<H>) -> Option<ApplicationRecord<H>>;
+}
+
+/// Phase 8 (orphan-closure) — typed record for `Application<H>`.
+///
+/// Carries a field per functional accessor of the trait. Object
+/// fields hold `{Range}Handle<H>`; iterate via the Resolved wrapper
+/// chain-resolver methods.
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub struct ApplicationRecord<H: HostTypes> {
+    pub operator_handle: crate::kernel::op::OperationHandle<H>,
+    #[doc(hidden)]
+    pub _phantom: core::marker::PhantomData<H>,
+}
+
+/// Phase 8 (orphan-closure) — content-addressed wrapper for `Application<H>`.
+///
+/// Caches the resolver's lookup at construction. Accessors return
+/// the cached record's fields when present, falling back to the
+/// `Null{Class}<H>` absent sentinels when the resolver returned
+/// `None`. Object accessors always return absent sentinels — use
+/// the `resolve_{m}` chain methods to descend into sub-records.
+pub struct ResolvedApplication<'r, R: ApplicationResolver<H>, H: HostTypes> {
+    handle: ApplicationHandle<H>,
+    resolver: &'r R,
+    record: Option<ApplicationRecord<H>>,
+}
+impl<'r, R: ApplicationResolver<H>, H: HostTypes> ResolvedApplication<'r, R, H> {
+    /// Construct the wrapper, eagerly resolving the handle.
+    #[inline]
+    pub fn new(handle: ApplicationHandle<H>, resolver: &'r R) -> Self {
+        let record = resolver.resolve(handle);
+        Self {
+            handle,
+            resolver,
+            record,
+        }
+    }
+    /// The handle this wrapper resolves.
+    #[inline]
+    #[must_use]
+    pub const fn handle(&self) -> ApplicationHandle<H> {
+        self.handle
+    }
+    /// The resolver supplied at construction.
+    #[inline]
+    #[must_use]
+    pub const fn resolver(&self) -> &'r R {
+        self.resolver
+    }
+    /// The cached record, or `None` when the resolver returned `None`.
+    #[inline]
+    #[must_use]
+    pub const fn record(&self) -> Option<&ApplicationRecord<H>> {
+        self.record.as_ref()
+    }
+}
+impl<'r, R: ApplicationResolver<H>, H: HostTypes> Term<H> for ResolvedApplication<'r, R, H> {}
+impl<'r, R: ApplicationResolver<H>, H: HostTypes> Application<H> for ResolvedApplication<'r, R, H> {
+    type Operation = crate::kernel::op::NullOperation<H>;
+    fn operator(&self) -> &Self::Operation {
+        &<crate::kernel::op::NullOperation<H>>::ABSENT
+    }
+    type Term = NullTerm<H>;
+    fn argument(&self) -> &[Self::Term] {
+        &[]
+    }
+}
+impl<'r, R: ApplicationResolver<H>, H: HostTypes> ResolvedApplication<'r, R, H> {
+    /// Promote the `operator` handle on the cached record into a
+    /// resolved wrapper, given a resolver for the range class.
+    /// Returns `None` if no record was resolved at construction.
+    #[inline]
+    pub fn resolve_operator<'r2, R2: crate::kernel::op::OperationResolver<H>>(
+        &self,
+        r: &'r2 R2,
+    ) -> Option<crate::kernel::op::ResolvedOperation<'r2, R2, H>> {
+        let record = self.record.as_ref()?;
+        Some(crate::kernel::op::ResolvedOperation::new(
+            record.operator_handle,
+            r,
+        ))
+    }
+}
+
+/// Phase 8 (orphan-closure) — content-addressed handle for `Ring<H>`.
+///
+/// Pairs a [`crate::enforcement::ContentFingerprint`] with a phantom
+/// `H` so type-state checks can't mix handles across `HostTypes` impls.
+#[derive(Debug)]
+pub struct RingHandle<H: HostTypes> {
+    /// Content fingerprint identifying the resolved record.
+    pub fingerprint: crate::enforcement::ContentFingerprint,
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Copy for RingHandle<H> {}
+impl<H: HostTypes> Clone for RingHandle<H> {
+    #[inline]
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+impl<H: HostTypes> PartialEq for RingHandle<H> {
+    #[inline]
+    fn eq(&self, other: &Self) -> bool {
+        self.fingerprint == other.fingerprint
+    }
+}
+impl<H: HostTypes> Eq for RingHandle<H> {}
+impl<H: HostTypes> core::hash::Hash for RingHandle<H> {
+    #[inline]
+    fn hash<S: core::hash::Hasher>(&self, state: &mut S) {
+        self.fingerprint.hash(state);
+    }
+}
+impl<H: HostTypes> RingHandle<H> {
+    /// Construct a handle from its content fingerprint.
+    #[inline]
+    #[must_use]
+    pub const fn new(fingerprint: crate::enforcement::ContentFingerprint) -> Self {
+        Self {
+            fingerprint,
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+
+/// Phase 8 (orphan-closure) — resolver trait for `Ring<H>`.
+///
+/// Hosts implement this trait to map a handle into a typed record.
+/// The default Null stub does not implement this trait — it carries
+/// no record. Resolution is the responsibility of the host pipeline.
+pub trait RingResolver<H: HostTypes> {
+    /// Resolve a handle into its record. Returns `None` when the
+    /// handle does not correspond to known content.
+    fn resolve(&self, handle: RingHandle<H>) -> Option<RingRecord<H>>;
+}
+
+/// Phase 8 (orphan-closure) — typed record for `Ring<H>`.
+///
+/// Carries a field per functional accessor of the trait. Object
+/// fields hold `{Range}Handle<H>`; iterate via the Resolved wrapper
+/// chain-resolver methods.
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub struct RingRecord<H: HostTypes> {
+    pub ring_witt_length: u64,
+    pub modulus: u64,
+    pub generator_handle: DatumHandle<H>,
+    pub negation_handle: crate::kernel::op::InvolutionHandle<H>,
+    pub complement_handle: crate::kernel::op::InvolutionHandle<H>,
+    pub at_witt_level: WittLevel,
+    #[doc(hidden)]
+    pub _phantom: core::marker::PhantomData<H>,
+}
+
+/// Phase 8 (orphan-closure) — content-addressed wrapper for `Ring<H>`.
+///
+/// Caches the resolver's lookup at construction. Accessors return
+/// the cached record's fields when present, falling back to the
+/// `Null{Class}<H>` absent sentinels when the resolver returned
+/// `None`. Object accessors always return absent sentinels — use
+/// the `resolve_{m}` chain methods to descend into sub-records.
+pub struct ResolvedRing<'r, R: RingResolver<H>, H: HostTypes> {
+    handle: RingHandle<H>,
+    resolver: &'r R,
+    record: Option<RingRecord<H>>,
+}
+impl<'r, R: RingResolver<H>, H: HostTypes> ResolvedRing<'r, R, H> {
+    /// Construct the wrapper, eagerly resolving the handle.
+    #[inline]
+    pub fn new(handle: RingHandle<H>, resolver: &'r R) -> Self {
+        let record = resolver.resolve(handle);
+        Self {
+            handle,
+            resolver,
+            record,
+        }
+    }
+    /// The handle this wrapper resolves.
+    #[inline]
+    #[must_use]
+    pub const fn handle(&self) -> RingHandle<H> {
+        self.handle
+    }
+    /// The resolver supplied at construction.
+    #[inline]
+    #[must_use]
+    pub const fn resolver(&self) -> &'r R {
+        self.resolver
+    }
+    /// The cached record, or `None` when the resolver returned `None`.
+    #[inline]
+    #[must_use]
+    pub const fn record(&self) -> Option<&RingRecord<H>> {
+        self.record.as_ref()
+    }
+}
+impl<'r, R: RingResolver<H>, H: HostTypes> Ring<H> for ResolvedRing<'r, R, H> {
+    fn ring_witt_length(&self) -> u64 {
+        match &self.record {
+            Some(r) => r.ring_witt_length,
+            None => 0,
+        }
+    }
+    fn modulus(&self) -> u64 {
+        match &self.record {
+            Some(r) => r.modulus,
+            None => 0,
+        }
+    }
+    type Datum = NullDatum<H>;
+    fn generator(&self) -> &Self::Datum {
+        &<NullDatum<H>>::ABSENT
+    }
+    type Involution = crate::kernel::op::NullInvolution<H>;
+    fn negation(&self) -> &Self::Involution {
+        &<crate::kernel::op::NullInvolution<H>>::ABSENT
+    }
+    fn complement(&self) -> &Self::Involution {
+        &<crate::kernel::op::NullInvolution<H>>::ABSENT
+    }
+    fn at_witt_level(&self) -> WittLevel {
+        match &self.record {
+            Some(r) => r.at_witt_level,
+            None => <WittLevel>::default(),
+        }
+    }
+}
+impl<'r, R: RingResolver<H>, H: HostTypes> ResolvedRing<'r, R, H> {
+    /// Promote the `generator` handle on the cached record into a
+    /// resolved wrapper, given a resolver for the range class.
+    /// Returns `None` if no record was resolved at construction.
+    #[inline]
+    pub fn resolve_generator<'r2, R2: DatumResolver<H>>(
+        &self,
+        r: &'r2 R2,
+    ) -> Option<ResolvedDatum<'r2, R2, H>> {
+        let record = self.record.as_ref()?;
+        Some(ResolvedDatum::new(record.generator_handle, r))
+    }
+    /// Promote the `negation` handle on the cached record into a
+    /// resolved wrapper, given a resolver for the range class.
+    /// Returns `None` if no record was resolved at construction.
+    #[inline]
+    pub fn resolve_negation<'r2, R2: crate::kernel::op::InvolutionResolver<H>>(
+        &self,
+        r: &'r2 R2,
+    ) -> Option<crate::kernel::op::ResolvedInvolution<'r2, R2, H>> {
+        let record = self.record.as_ref()?;
+        Some(crate::kernel::op::ResolvedInvolution::new(
+            record.negation_handle,
+            r,
+        ))
+    }
+    /// Promote the `complement` handle on the cached record into a
+    /// resolved wrapper, given a resolver for the range class.
+    /// Returns `None` if no record was resolved at construction.
+    #[inline]
+    pub fn resolve_complement<'r2, R2: crate::kernel::op::InvolutionResolver<H>>(
+        &self,
+        r: &'r2 R2,
+    ) -> Option<crate::kernel::op::ResolvedInvolution<'r2, R2, H>> {
+        let record = self.record.as_ref()?;
+        Some(crate::kernel::op::ResolvedInvolution::new(
+            record.complement_handle,
+            r,
+        ))
+    }
+}
+
+/// Phase 8 (orphan-closure) — content-addressed handle for `W16Ring<H>`.
+///
+/// Pairs a [`crate::enforcement::ContentFingerprint`] with a phantom
+/// `H` so type-state checks can't mix handles across `HostTypes` impls.
+#[derive(Debug)]
+pub struct W16RingHandle<H: HostTypes> {
+    /// Content fingerprint identifying the resolved record.
+    pub fingerprint: crate::enforcement::ContentFingerprint,
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Copy for W16RingHandle<H> {}
+impl<H: HostTypes> Clone for W16RingHandle<H> {
+    #[inline]
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+impl<H: HostTypes> PartialEq for W16RingHandle<H> {
+    #[inline]
+    fn eq(&self, other: &Self) -> bool {
+        self.fingerprint == other.fingerprint
+    }
+}
+impl<H: HostTypes> Eq for W16RingHandle<H> {}
+impl<H: HostTypes> core::hash::Hash for W16RingHandle<H> {
+    #[inline]
+    fn hash<S: core::hash::Hasher>(&self, state: &mut S) {
+        self.fingerprint.hash(state);
+    }
+}
+impl<H: HostTypes> W16RingHandle<H> {
+    /// Construct a handle from its content fingerprint.
+    #[inline]
+    #[must_use]
+    pub const fn new(fingerprint: crate::enforcement::ContentFingerprint) -> Self {
+        Self {
+            fingerprint,
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+
+/// Phase 8 (orphan-closure) — resolver trait for `W16Ring<H>`.
+///
+/// Hosts implement this trait to map a handle into a typed record.
+/// The default Null stub does not implement this trait — it carries
+/// no record. Resolution is the responsibility of the host pipeline.
+pub trait W16RingResolver<H: HostTypes> {
+    /// Resolve a handle into its record. Returns `None` when the
+    /// handle does not correspond to known content.
+    fn resolve(&self, handle: W16RingHandle<H>) -> Option<W16RingRecord<H>>;
+}
+
+/// Phase 8 (orphan-closure) — typed record for `W16Ring<H>`.
+///
+/// Carries a field per functional accessor of the trait. Object
+/// fields hold `{Range}Handle<H>`; iterate via the Resolved wrapper
+/// chain-resolver methods.
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub struct W16RingRecord<H: HostTypes> {
+    pub w16bit_width: u64,
+    pub w16capacity: u64,
+    #[doc(hidden)]
+    pub _phantom: core::marker::PhantomData<H>,
+}
+
+/// Phase 8 (orphan-closure) — content-addressed wrapper for `W16Ring<H>`.
+///
+/// Caches the resolver's lookup at construction. Accessors return
+/// the cached record's fields when present, falling back to the
+/// `Null{Class}<H>` absent sentinels when the resolver returned
+/// `None`. Object accessors always return absent sentinels — use
+/// the `resolve_{m}` chain methods to descend into sub-records.
+pub struct ResolvedW16Ring<'r, R: W16RingResolver<H>, H: HostTypes> {
+    handle: W16RingHandle<H>,
+    resolver: &'r R,
+    record: Option<W16RingRecord<H>>,
+}
+impl<'r, R: W16RingResolver<H>, H: HostTypes> ResolvedW16Ring<'r, R, H> {
+    /// Construct the wrapper, eagerly resolving the handle.
+    #[inline]
+    pub fn new(handle: W16RingHandle<H>, resolver: &'r R) -> Self {
+        let record = resolver.resolve(handle);
+        Self {
+            handle,
+            resolver,
+            record,
+        }
+    }
+    /// The handle this wrapper resolves.
+    #[inline]
+    #[must_use]
+    pub const fn handle(&self) -> W16RingHandle<H> {
+        self.handle
+    }
+    /// The resolver supplied at construction.
+    #[inline]
+    #[must_use]
+    pub const fn resolver(&self) -> &'r R {
+        self.resolver
+    }
+    /// The cached record, or `None` when the resolver returned `None`.
+    #[inline]
+    #[must_use]
+    pub const fn record(&self) -> Option<&W16RingRecord<H>> {
+        self.record.as_ref()
+    }
+}
+impl<'r, R: W16RingResolver<H>, H: HostTypes> Ring<H> for ResolvedW16Ring<'r, R, H> {
+    fn ring_witt_length(&self) -> u64 {
+        0
+    }
+    fn modulus(&self) -> u64 {
+        0
+    }
+    type Datum = NullDatum<H>;
+    fn generator(&self) -> &Self::Datum {
+        &<NullDatum<H>>::ABSENT
+    }
+    type Involution = crate::kernel::op::NullInvolution<H>;
+    fn negation(&self) -> &Self::Involution {
+        &<crate::kernel::op::NullInvolution<H>>::ABSENT
+    }
+    fn complement(&self) -> &Self::Involution {
+        &<crate::kernel::op::NullInvolution<H>>::ABSENT
+    }
+    fn at_witt_level(&self) -> WittLevel {
+        <WittLevel>::default()
+    }
+}
+impl<'r, R: W16RingResolver<H>, H: HostTypes> W16Ring<H> for ResolvedW16Ring<'r, R, H> {
+    fn w16bit_width(&self) -> u64 {
+        match &self.record {
+            Some(r) => r.w16bit_width,
+            None => 0,
+        }
+    }
+    fn w16capacity(&self) -> u64 {
+        match &self.record {
+            Some(r) => r.w16capacity,
+            None => 0,
+        }
+    }
+}
+
+/// Phase 8 (orphan-closure) — content-addressed handle for `TermExpression<H>`.
+///
+/// Pairs a [`crate::enforcement::ContentFingerprint`] with a phantom
+/// `H` so type-state checks can't mix handles across `HostTypes` impls.
+#[derive(Debug)]
+pub struct TermExpressionHandle<H: HostTypes> {
+    /// Content fingerprint identifying the resolved record.
+    pub fingerprint: crate::enforcement::ContentFingerprint,
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Copy for TermExpressionHandle<H> {}
+impl<H: HostTypes> Clone for TermExpressionHandle<H> {
+    #[inline]
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+impl<H: HostTypes> PartialEq for TermExpressionHandle<H> {
+    #[inline]
+    fn eq(&self, other: &Self) -> bool {
+        self.fingerprint == other.fingerprint
+    }
+}
+impl<H: HostTypes> Eq for TermExpressionHandle<H> {}
+impl<H: HostTypes> core::hash::Hash for TermExpressionHandle<H> {
+    #[inline]
+    fn hash<S: core::hash::Hasher>(&self, state: &mut S) {
+        self.fingerprint.hash(state);
+    }
+}
+impl<H: HostTypes> TermExpressionHandle<H> {
+    /// Construct a handle from its content fingerprint.
+    #[inline]
+    #[must_use]
+    pub const fn new(fingerprint: crate::enforcement::ContentFingerprint) -> Self {
+        Self {
+            fingerprint,
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+
+/// Phase 8 (orphan-closure) — resolver trait for `TermExpression<H>`.
+///
+/// Hosts implement this trait to map a handle into a typed record.
+/// The default Null stub does not implement this trait — it carries
+/// no record. Resolution is the responsibility of the host pipeline.
+pub trait TermExpressionResolver<H: HostTypes> {
+    /// Resolve a handle into its record. Returns `None` when the
+    /// handle does not correspond to known content.
+    fn resolve(&self, handle: TermExpressionHandle<H>) -> Option<TermExpressionRecord<H>>;
+}
+
+/// Phase 8 (orphan-closure) — typed record for `TermExpression<H>`.
+///
+/// Carries a field per functional accessor of the trait. Object
+/// fields hold `{Range}Handle<H>`; iterate via the Resolved wrapper
+/// chain-resolver methods.
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub struct TermExpressionRecord<H: HostTypes> {
+    #[doc(hidden)]
+    pub _phantom: core::marker::PhantomData<H>,
+}
+
+/// Phase 8 (orphan-closure) — content-addressed wrapper for `TermExpression<H>`.
+///
+/// Caches the resolver's lookup at construction. Accessors return
+/// the cached record's fields when present, falling back to the
+/// `Null{Class}<H>` absent sentinels when the resolver returned
+/// `None`. Object accessors always return absent sentinels — use
+/// the `resolve_{m}` chain methods to descend into sub-records.
+pub struct ResolvedTermExpression<'r, R: TermExpressionResolver<H>, H: HostTypes> {
+    handle: TermExpressionHandle<H>,
+    resolver: &'r R,
+    record: Option<TermExpressionRecord<H>>,
+}
+impl<'r, R: TermExpressionResolver<H>, H: HostTypes> ResolvedTermExpression<'r, R, H> {
+    /// Construct the wrapper, eagerly resolving the handle.
+    #[inline]
+    pub fn new(handle: TermExpressionHandle<H>, resolver: &'r R) -> Self {
+        let record = resolver.resolve(handle);
+        Self {
+            handle,
+            resolver,
+            record,
+        }
+    }
+    /// The handle this wrapper resolves.
+    #[inline]
+    #[must_use]
+    pub const fn handle(&self) -> TermExpressionHandle<H> {
+        self.handle
+    }
+    /// The resolver supplied at construction.
+    #[inline]
+    #[must_use]
+    pub const fn resolver(&self) -> &'r R {
+        self.resolver
+    }
+    /// The cached record, or `None` when the resolver returned `None`.
+    #[inline]
+    #[must_use]
+    pub const fn record(&self) -> Option<&TermExpressionRecord<H>> {
+        self.record.as_ref()
+    }
+}
+impl<'r, R: TermExpressionResolver<H>, H: HostTypes> TermExpression<H>
+    for ResolvedTermExpression<'r, R, H>
+{
+}
+
+/// Phase 8 (orphan-closure) — content-addressed handle for `LiteralExpression<H>`.
+///
+/// Pairs a [`crate::enforcement::ContentFingerprint`] with a phantom
+/// `H` so type-state checks can't mix handles across `HostTypes` impls.
+#[derive(Debug)]
+pub struct LiteralExpressionHandle<H: HostTypes> {
+    /// Content fingerprint identifying the resolved record.
+    pub fingerprint: crate::enforcement::ContentFingerprint,
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Copy for LiteralExpressionHandle<H> {}
+impl<H: HostTypes> Clone for LiteralExpressionHandle<H> {
+    #[inline]
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+impl<H: HostTypes> PartialEq for LiteralExpressionHandle<H> {
+    #[inline]
+    fn eq(&self, other: &Self) -> bool {
+        self.fingerprint == other.fingerprint
+    }
+}
+impl<H: HostTypes> Eq for LiteralExpressionHandle<H> {}
+impl<H: HostTypes> core::hash::Hash for LiteralExpressionHandle<H> {
+    #[inline]
+    fn hash<S: core::hash::Hasher>(&self, state: &mut S) {
+        self.fingerprint.hash(state);
+    }
+}
+impl<H: HostTypes> LiteralExpressionHandle<H> {
+    /// Construct a handle from its content fingerprint.
+    #[inline]
+    #[must_use]
+    pub const fn new(fingerprint: crate::enforcement::ContentFingerprint) -> Self {
+        Self {
+            fingerprint,
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+
+/// Phase 8 (orphan-closure) — resolver trait for `LiteralExpression<H>`.
+///
+/// Hosts implement this trait to map a handle into a typed record.
+/// The default Null stub does not implement this trait — it carries
+/// no record. Resolution is the responsibility of the host pipeline.
+pub trait LiteralExpressionResolver<H: HostTypes> {
+    /// Resolve a handle into its record. Returns `None` when the
+    /// handle does not correspond to known content.
+    fn resolve(&self, handle: LiteralExpressionHandle<H>) -> Option<LiteralExpressionRecord<H>>;
+}
+
+/// Phase 8 (orphan-closure) — typed record for `LiteralExpression<H>`.
+///
+/// Carries a field per functional accessor of the trait. Object
+/// fields hold `{Range}Handle<H>`; iterate via the Resolved wrapper
+/// chain-resolver methods.
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub struct LiteralExpressionRecord<H: HostTypes> {
+    pub literal_value: &'static H::HostString,
+    #[doc(hidden)]
+    pub _phantom: core::marker::PhantomData<H>,
+}
+
+/// Phase 8 (orphan-closure) — content-addressed wrapper for `LiteralExpression<H>`.
+///
+/// Caches the resolver's lookup at construction. Accessors return
+/// the cached record's fields when present, falling back to the
+/// `Null{Class}<H>` absent sentinels when the resolver returned
+/// `None`. Object accessors always return absent sentinels — use
+/// the `resolve_{m}` chain methods to descend into sub-records.
+pub struct ResolvedLiteralExpression<'r, R: LiteralExpressionResolver<H>, H: HostTypes> {
+    handle: LiteralExpressionHandle<H>,
+    resolver: &'r R,
+    record: Option<LiteralExpressionRecord<H>>,
+}
+impl<'r, R: LiteralExpressionResolver<H>, H: HostTypes> ResolvedLiteralExpression<'r, R, H> {
+    /// Construct the wrapper, eagerly resolving the handle.
+    #[inline]
+    pub fn new(handle: LiteralExpressionHandle<H>, resolver: &'r R) -> Self {
+        let record = resolver.resolve(handle);
+        Self {
+            handle,
+            resolver,
+            record,
+        }
+    }
+    /// The handle this wrapper resolves.
+    #[inline]
+    #[must_use]
+    pub const fn handle(&self) -> LiteralExpressionHandle<H> {
+        self.handle
+    }
+    /// The resolver supplied at construction.
+    #[inline]
+    #[must_use]
+    pub const fn resolver(&self) -> &'r R {
+        self.resolver
+    }
+    /// The cached record, or `None` when the resolver returned `None`.
+    #[inline]
+    #[must_use]
+    pub const fn record(&self) -> Option<&LiteralExpressionRecord<H>> {
+        self.record.as_ref()
+    }
+}
+impl<'r, R: LiteralExpressionResolver<H>, H: HostTypes> TermExpression<H>
+    for ResolvedLiteralExpression<'r, R, H>
+{
+}
+impl<'r, R: LiteralExpressionResolver<H>, H: HostTypes> LiteralExpression<H>
+    for ResolvedLiteralExpression<'r, R, H>
+{
+    fn literal_value(&self) -> &H::HostString {
+        match &self.record {
+            Some(r) => r.literal_value,
+            None => H::EMPTY_HOST_STRING,
+        }
+    }
+}
+
+/// Phase 8 (orphan-closure) — content-addressed handle for `ApplicationExpression<H>`.
+///
+/// Pairs a [`crate::enforcement::ContentFingerprint`] with a phantom
+/// `H` so type-state checks can't mix handles across `HostTypes` impls.
+#[derive(Debug)]
+pub struct ApplicationExpressionHandle<H: HostTypes> {
+    /// Content fingerprint identifying the resolved record.
+    pub fingerprint: crate::enforcement::ContentFingerprint,
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Copy for ApplicationExpressionHandle<H> {}
+impl<H: HostTypes> Clone for ApplicationExpressionHandle<H> {
+    #[inline]
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+impl<H: HostTypes> PartialEq for ApplicationExpressionHandle<H> {
+    #[inline]
+    fn eq(&self, other: &Self) -> bool {
+        self.fingerprint == other.fingerprint
+    }
+}
+impl<H: HostTypes> Eq for ApplicationExpressionHandle<H> {}
+impl<H: HostTypes> core::hash::Hash for ApplicationExpressionHandle<H> {
+    #[inline]
+    fn hash<S: core::hash::Hasher>(&self, state: &mut S) {
+        self.fingerprint.hash(state);
+    }
+}
+impl<H: HostTypes> ApplicationExpressionHandle<H> {
+    /// Construct a handle from its content fingerprint.
+    #[inline]
+    #[must_use]
+    pub const fn new(fingerprint: crate::enforcement::ContentFingerprint) -> Self {
+        Self {
+            fingerprint,
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+
+/// Phase 8 (orphan-closure) — resolver trait for `ApplicationExpression<H>`.
+///
+/// Hosts implement this trait to map a handle into a typed record.
+/// The default Null stub does not implement this trait — it carries
+/// no record. Resolution is the responsibility of the host pipeline.
+pub trait ApplicationExpressionResolver<H: HostTypes> {
+    /// Resolve a handle into its record. Returns `None` when the
+    /// handle does not correspond to known content.
+    fn resolve(
+        &self,
+        handle: ApplicationExpressionHandle<H>,
+    ) -> Option<ApplicationExpressionRecord<H>>;
+}
+
+/// Phase 8 (orphan-closure) — typed record for `ApplicationExpression<H>`.
+///
+/// Carries a field per functional accessor of the trait. Object
+/// fields hold `{Range}Handle<H>`; iterate via the Resolved wrapper
+/// chain-resolver methods.
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub struct ApplicationExpressionRecord<H: HostTypes> {
+    pub expression_operator_handle: crate::kernel::op::OperationHandle<H>,
+    #[doc(hidden)]
+    pub _phantom: core::marker::PhantomData<H>,
+}
+
+/// Phase 8 (orphan-closure) — content-addressed wrapper for `ApplicationExpression<H>`.
+///
+/// Caches the resolver's lookup at construction. Accessors return
+/// the cached record's fields when present, falling back to the
+/// `Null{Class}<H>` absent sentinels when the resolver returned
+/// `None`. Object accessors always return absent sentinels — use
+/// the `resolve_{m}` chain methods to descend into sub-records.
+pub struct ResolvedApplicationExpression<'r, R: ApplicationExpressionResolver<H>, H: HostTypes> {
+    handle: ApplicationExpressionHandle<H>,
+    resolver: &'r R,
+    record: Option<ApplicationExpressionRecord<H>>,
+}
+impl<'r, R: ApplicationExpressionResolver<H>, H: HostTypes>
+    ResolvedApplicationExpression<'r, R, H>
+{
+    /// Construct the wrapper, eagerly resolving the handle.
+    #[inline]
+    pub fn new(handle: ApplicationExpressionHandle<H>, resolver: &'r R) -> Self {
+        let record = resolver.resolve(handle);
+        Self {
+            handle,
+            resolver,
+            record,
+        }
+    }
+    /// The handle this wrapper resolves.
+    #[inline]
+    #[must_use]
+    pub const fn handle(&self) -> ApplicationExpressionHandle<H> {
+        self.handle
+    }
+    /// The resolver supplied at construction.
+    #[inline]
+    #[must_use]
+    pub const fn resolver(&self) -> &'r R {
+        self.resolver
+    }
+    /// The cached record, or `None` when the resolver returned `None`.
+    #[inline]
+    #[must_use]
+    pub const fn record(&self) -> Option<&ApplicationExpressionRecord<H>> {
+        self.record.as_ref()
+    }
+}
+impl<'r, R: ApplicationExpressionResolver<H>, H: HostTypes> TermExpression<H>
+    for ResolvedApplicationExpression<'r, R, H>
+{
+}
+impl<'r, R: ApplicationExpressionResolver<H>, H: HostTypes> ApplicationExpression<H>
+    for ResolvedApplicationExpression<'r, R, H>
+{
+    type Operation = crate::kernel::op::NullOperation<H>;
+    fn expression_operator(&self) -> &Self::Operation {
+        &<crate::kernel::op::NullOperation<H>>::ABSENT
+    }
+    type TermExpression = NullTermExpression<H>;
+    fn arguments(&self) -> &[Self::TermExpression] {
+        &[]
+    }
+}
+impl<'r, R: ApplicationExpressionResolver<H>, H: HostTypes>
+    ResolvedApplicationExpression<'r, R, H>
+{
+    /// Promote the `expression_operator` handle on the cached record into a
+    /// resolved wrapper, given a resolver for the range class.
+    /// Returns `None` if no record was resolved at construction.
+    #[inline]
+    pub fn resolve_expression_operator<'r2, R2: crate::kernel::op::OperationResolver<H>>(
+        &self,
+        r: &'r2 R2,
+    ) -> Option<crate::kernel::op::ResolvedOperation<'r2, R2, H>> {
+        let record = self.record.as_ref()?;
+        Some(crate::kernel::op::ResolvedOperation::new(
+            record.expression_operator_handle,
+            r,
+        ))
+    }
+}
+
+/// Phase 8 (orphan-closure) — content-addressed handle for `InfixExpression<H>`.
+///
+/// Pairs a [`crate::enforcement::ContentFingerprint`] with a phantom
+/// `H` so type-state checks can't mix handles across `HostTypes` impls.
+#[derive(Debug)]
+pub struct InfixExpressionHandle<H: HostTypes> {
+    /// Content fingerprint identifying the resolved record.
+    pub fingerprint: crate::enforcement::ContentFingerprint,
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Copy for InfixExpressionHandle<H> {}
+impl<H: HostTypes> Clone for InfixExpressionHandle<H> {
+    #[inline]
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+impl<H: HostTypes> PartialEq for InfixExpressionHandle<H> {
+    #[inline]
+    fn eq(&self, other: &Self) -> bool {
+        self.fingerprint == other.fingerprint
+    }
+}
+impl<H: HostTypes> Eq for InfixExpressionHandle<H> {}
+impl<H: HostTypes> core::hash::Hash for InfixExpressionHandle<H> {
+    #[inline]
+    fn hash<S: core::hash::Hasher>(&self, state: &mut S) {
+        self.fingerprint.hash(state);
+    }
+}
+impl<H: HostTypes> InfixExpressionHandle<H> {
+    /// Construct a handle from its content fingerprint.
+    #[inline]
+    #[must_use]
+    pub const fn new(fingerprint: crate::enforcement::ContentFingerprint) -> Self {
+        Self {
+            fingerprint,
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+
+/// Phase 8 (orphan-closure) — resolver trait for `InfixExpression<H>`.
+///
+/// Hosts implement this trait to map a handle into a typed record.
+/// The default Null stub does not implement this trait — it carries
+/// no record. Resolution is the responsibility of the host pipeline.
+pub trait InfixExpressionResolver<H: HostTypes> {
+    /// Resolve a handle into its record. Returns `None` when the
+    /// handle does not correspond to known content.
+    fn resolve(&self, handle: InfixExpressionHandle<H>) -> Option<InfixExpressionRecord<H>>;
+}
+
+/// Phase 8 (orphan-closure) — typed record for `InfixExpression<H>`.
+///
+/// Carries a field per functional accessor of the trait. Object
+/// fields hold `{Range}Handle<H>`; iterate via the Resolved wrapper
+/// chain-resolver methods.
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub struct InfixExpressionRecord<H: HostTypes> {
+    pub left_operand_handle: TermExpressionHandle<H>,
+    pub right_operand_handle: TermExpressionHandle<H>,
+    pub infix_operator: &'static H::HostString,
+    #[doc(hidden)]
+    pub _phantom: core::marker::PhantomData<H>,
+}
+
+/// Phase 8 (orphan-closure) — content-addressed wrapper for `InfixExpression<H>`.
+///
+/// Caches the resolver's lookup at construction. Accessors return
+/// the cached record's fields when present, falling back to the
+/// `Null{Class}<H>` absent sentinels when the resolver returned
+/// `None`. Object accessors always return absent sentinels — use
+/// the `resolve_{m}` chain methods to descend into sub-records.
+pub struct ResolvedInfixExpression<'r, R: InfixExpressionResolver<H>, H: HostTypes> {
+    handle: InfixExpressionHandle<H>,
+    resolver: &'r R,
+    record: Option<InfixExpressionRecord<H>>,
+}
+impl<'r, R: InfixExpressionResolver<H>, H: HostTypes> ResolvedInfixExpression<'r, R, H> {
+    /// Construct the wrapper, eagerly resolving the handle.
+    #[inline]
+    pub fn new(handle: InfixExpressionHandle<H>, resolver: &'r R) -> Self {
+        let record = resolver.resolve(handle);
+        Self {
+            handle,
+            resolver,
+            record,
+        }
+    }
+    /// The handle this wrapper resolves.
+    #[inline]
+    #[must_use]
+    pub const fn handle(&self) -> InfixExpressionHandle<H> {
+        self.handle
+    }
+    /// The resolver supplied at construction.
+    #[inline]
+    #[must_use]
+    pub const fn resolver(&self) -> &'r R {
+        self.resolver
+    }
+    /// The cached record, or `None` when the resolver returned `None`.
+    #[inline]
+    #[must_use]
+    pub const fn record(&self) -> Option<&InfixExpressionRecord<H>> {
+        self.record.as_ref()
+    }
+}
+impl<'r, R: InfixExpressionResolver<H>, H: HostTypes> TermExpression<H>
+    for ResolvedInfixExpression<'r, R, H>
+{
+}
+impl<'r, R: InfixExpressionResolver<H>, H: HostTypes> InfixExpression<H>
+    for ResolvedInfixExpression<'r, R, H>
+{
+    type TermExpression = NullTermExpression<H>;
+    fn left_operand(&self) -> &Self::TermExpression {
+        &<NullTermExpression<H>>::ABSENT
+    }
+    fn right_operand(&self) -> &Self::TermExpression {
+        &<NullTermExpression<H>>::ABSENT
+    }
+    fn infix_operator(&self) -> &H::HostString {
+        match &self.record {
+            Some(r) => r.infix_operator,
+            None => H::EMPTY_HOST_STRING,
+        }
+    }
+}
+impl<'r, R: InfixExpressionResolver<H>, H: HostTypes> ResolvedInfixExpression<'r, R, H> {
+    /// Promote the `left_operand` handle on the cached record into a
+    /// resolved wrapper, given a resolver for the range class.
+    /// Returns `None` if no record was resolved at construction.
+    #[inline]
+    pub fn resolve_left_operand<'r2, R2: TermExpressionResolver<H>>(
+        &self,
+        r: &'r2 R2,
+    ) -> Option<ResolvedTermExpression<'r2, R2, H>> {
+        let record = self.record.as_ref()?;
+        Some(ResolvedTermExpression::new(record.left_operand_handle, r))
+    }
+    /// Promote the `right_operand` handle on the cached record into a
+    /// resolved wrapper, given a resolver for the range class.
+    /// Returns `None` if no record was resolved at construction.
+    #[inline]
+    pub fn resolve_right_operand<'r2, R2: TermExpressionResolver<H>>(
+        &self,
+        r: &'r2 R2,
+    ) -> Option<ResolvedTermExpression<'r2, R2, H>> {
+        let record = self.record.as_ref()?;
+        Some(ResolvedTermExpression::new(record.right_operand_handle, r))
+    }
+}
+
+/// Phase 8 (orphan-closure) — content-addressed handle for `SetExpression<H>`.
+///
+/// Pairs a [`crate::enforcement::ContentFingerprint`] with a phantom
+/// `H` so type-state checks can't mix handles across `HostTypes` impls.
+#[derive(Debug)]
+pub struct SetExpressionHandle<H: HostTypes> {
+    /// Content fingerprint identifying the resolved record.
+    pub fingerprint: crate::enforcement::ContentFingerprint,
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Copy for SetExpressionHandle<H> {}
+impl<H: HostTypes> Clone for SetExpressionHandle<H> {
+    #[inline]
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+impl<H: HostTypes> PartialEq for SetExpressionHandle<H> {
+    #[inline]
+    fn eq(&self, other: &Self) -> bool {
+        self.fingerprint == other.fingerprint
+    }
+}
+impl<H: HostTypes> Eq for SetExpressionHandle<H> {}
+impl<H: HostTypes> core::hash::Hash for SetExpressionHandle<H> {
+    #[inline]
+    fn hash<S: core::hash::Hasher>(&self, state: &mut S) {
+        self.fingerprint.hash(state);
+    }
+}
+impl<H: HostTypes> SetExpressionHandle<H> {
+    /// Construct a handle from its content fingerprint.
+    #[inline]
+    #[must_use]
+    pub const fn new(fingerprint: crate::enforcement::ContentFingerprint) -> Self {
+        Self {
+            fingerprint,
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+
+/// Phase 8 (orphan-closure) — resolver trait for `SetExpression<H>`.
+///
+/// Hosts implement this trait to map a handle into a typed record.
+/// The default Null stub does not implement this trait — it carries
+/// no record. Resolution is the responsibility of the host pipeline.
+pub trait SetExpressionResolver<H: HostTypes> {
+    /// Resolve a handle into its record. Returns `None` when the
+    /// handle does not correspond to known content.
+    fn resolve(&self, handle: SetExpressionHandle<H>) -> Option<SetExpressionRecord<H>>;
+}
+
+/// Phase 8 (orphan-closure) — typed record for `SetExpression<H>`.
+///
+/// Carries a field per functional accessor of the trait. Object
+/// fields hold `{Range}Handle<H>`; iterate via the Resolved wrapper
+/// chain-resolver methods.
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub struct SetExpressionRecord<H: HostTypes> {
+    #[doc(hidden)]
+    pub _phantom: core::marker::PhantomData<H>,
+}
+
+/// Phase 8 (orphan-closure) — content-addressed wrapper for `SetExpression<H>`.
+///
+/// Caches the resolver's lookup at construction. Accessors return
+/// the cached record's fields when present, falling back to the
+/// `Null{Class}<H>` absent sentinels when the resolver returned
+/// `None`. Object accessors always return absent sentinels — use
+/// the `resolve_{m}` chain methods to descend into sub-records.
+pub struct ResolvedSetExpression<'r, R: SetExpressionResolver<H>, H: HostTypes> {
+    handle: SetExpressionHandle<H>,
+    resolver: &'r R,
+    record: Option<SetExpressionRecord<H>>,
+}
+impl<'r, R: SetExpressionResolver<H>, H: HostTypes> ResolvedSetExpression<'r, R, H> {
+    /// Construct the wrapper, eagerly resolving the handle.
+    #[inline]
+    pub fn new(handle: SetExpressionHandle<H>, resolver: &'r R) -> Self {
+        let record = resolver.resolve(handle);
+        Self {
+            handle,
+            resolver,
+            record,
+        }
+    }
+    /// The handle this wrapper resolves.
+    #[inline]
+    #[must_use]
+    pub const fn handle(&self) -> SetExpressionHandle<H> {
+        self.handle
+    }
+    /// The resolver supplied at construction.
+    #[inline]
+    #[must_use]
+    pub const fn resolver(&self) -> &'r R {
+        self.resolver
+    }
+    /// The cached record, or `None` when the resolver returned `None`.
+    #[inline]
+    #[must_use]
+    pub const fn record(&self) -> Option<&SetExpressionRecord<H>> {
+        self.record.as_ref()
+    }
+}
+impl<'r, R: SetExpressionResolver<H>, H: HostTypes> TermExpression<H>
+    for ResolvedSetExpression<'r, R, H>
+{
+}
+impl<'r, R: SetExpressionResolver<H>, H: HostTypes> SetExpression<H>
+    for ResolvedSetExpression<'r, R, H>
+{
+}
+
+/// Phase 8 (orphan-closure) — content-addressed handle for `CompositionExpression<H>`.
+///
+/// Pairs a [`crate::enforcement::ContentFingerprint`] with a phantom
+/// `H` so type-state checks can't mix handles across `HostTypes` impls.
+#[derive(Debug)]
+pub struct CompositionExpressionHandle<H: HostTypes> {
+    /// Content fingerprint identifying the resolved record.
+    pub fingerprint: crate::enforcement::ContentFingerprint,
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Copy for CompositionExpressionHandle<H> {}
+impl<H: HostTypes> Clone for CompositionExpressionHandle<H> {
+    #[inline]
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+impl<H: HostTypes> PartialEq for CompositionExpressionHandle<H> {
+    #[inline]
+    fn eq(&self, other: &Self) -> bool {
+        self.fingerprint == other.fingerprint
+    }
+}
+impl<H: HostTypes> Eq for CompositionExpressionHandle<H> {}
+impl<H: HostTypes> core::hash::Hash for CompositionExpressionHandle<H> {
+    #[inline]
+    fn hash<S: core::hash::Hasher>(&self, state: &mut S) {
+        self.fingerprint.hash(state);
+    }
+}
+impl<H: HostTypes> CompositionExpressionHandle<H> {
+    /// Construct a handle from its content fingerprint.
+    #[inline]
+    #[must_use]
+    pub const fn new(fingerprint: crate::enforcement::ContentFingerprint) -> Self {
+        Self {
+            fingerprint,
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+
+/// Phase 8 (orphan-closure) — resolver trait for `CompositionExpression<H>`.
+///
+/// Hosts implement this trait to map a handle into a typed record.
+/// The default Null stub does not implement this trait — it carries
+/// no record. Resolution is the responsibility of the host pipeline.
+pub trait CompositionExpressionResolver<H: HostTypes> {
+    /// Resolve a handle into its record. Returns `None` when the
+    /// handle does not correspond to known content.
+    fn resolve(
+        &self,
+        handle: CompositionExpressionHandle<H>,
+    ) -> Option<CompositionExpressionRecord<H>>;
+}
+
+/// Phase 8 (orphan-closure) — typed record for `CompositionExpression<H>`.
+///
+/// Carries a field per functional accessor of the trait. Object
+/// fields hold `{Range}Handle<H>`; iterate via the Resolved wrapper
+/// chain-resolver methods.
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub struct CompositionExpressionRecord<H: HostTypes> {
+    #[doc(hidden)]
+    pub _phantom: core::marker::PhantomData<H>,
+}
+
+/// Phase 8 (orphan-closure) — content-addressed wrapper for `CompositionExpression<H>`.
+///
+/// Caches the resolver's lookup at construction. Accessors return
+/// the cached record's fields when present, falling back to the
+/// `Null{Class}<H>` absent sentinels when the resolver returned
+/// `None`. Object accessors always return absent sentinels — use
+/// the `resolve_{m}` chain methods to descend into sub-records.
+pub struct ResolvedCompositionExpression<'r, R: CompositionExpressionResolver<H>, H: HostTypes> {
+    handle: CompositionExpressionHandle<H>,
+    resolver: &'r R,
+    record: Option<CompositionExpressionRecord<H>>,
+}
+impl<'r, R: CompositionExpressionResolver<H>, H: HostTypes>
+    ResolvedCompositionExpression<'r, R, H>
+{
+    /// Construct the wrapper, eagerly resolving the handle.
+    #[inline]
+    pub fn new(handle: CompositionExpressionHandle<H>, resolver: &'r R) -> Self {
+        let record = resolver.resolve(handle);
+        Self {
+            handle,
+            resolver,
+            record,
+        }
+    }
+    /// The handle this wrapper resolves.
+    #[inline]
+    #[must_use]
+    pub const fn handle(&self) -> CompositionExpressionHandle<H> {
+        self.handle
+    }
+    /// The resolver supplied at construction.
+    #[inline]
+    #[must_use]
+    pub const fn resolver(&self) -> &'r R {
+        self.resolver
+    }
+    /// The cached record, or `None` when the resolver returned `None`.
+    #[inline]
+    #[must_use]
+    pub const fn record(&self) -> Option<&CompositionExpressionRecord<H>> {
+        self.record.as_ref()
+    }
+}
+impl<'r, R: CompositionExpressionResolver<H>, H: HostTypes> TermExpression<H>
+    for ResolvedCompositionExpression<'r, R, H>
+{
+}
+impl<'r, R: CompositionExpressionResolver<H>, H: HostTypes> CompositionExpression<H>
+    for ResolvedCompositionExpression<'r, R, H>
+{
+}
+
+/// Phase 8 (orphan-closure) — content-addressed handle for `ForAllDeclaration<H>`.
+///
+/// Pairs a [`crate::enforcement::ContentFingerprint`] with a phantom
+/// `H` so type-state checks can't mix handles across `HostTypes` impls.
+#[derive(Debug)]
+pub struct ForAllDeclarationHandle<H: HostTypes> {
+    /// Content fingerprint identifying the resolved record.
+    pub fingerprint: crate::enforcement::ContentFingerprint,
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Copy for ForAllDeclarationHandle<H> {}
+impl<H: HostTypes> Clone for ForAllDeclarationHandle<H> {
+    #[inline]
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+impl<H: HostTypes> PartialEq for ForAllDeclarationHandle<H> {
+    #[inline]
+    fn eq(&self, other: &Self) -> bool {
+        self.fingerprint == other.fingerprint
+    }
+}
+impl<H: HostTypes> Eq for ForAllDeclarationHandle<H> {}
+impl<H: HostTypes> core::hash::Hash for ForAllDeclarationHandle<H> {
+    #[inline]
+    fn hash<S: core::hash::Hasher>(&self, state: &mut S) {
+        self.fingerprint.hash(state);
+    }
+}
+impl<H: HostTypes> ForAllDeclarationHandle<H> {
+    /// Construct a handle from its content fingerprint.
+    #[inline]
+    #[must_use]
+    pub const fn new(fingerprint: crate::enforcement::ContentFingerprint) -> Self {
+        Self {
+            fingerprint,
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+
+/// Phase 8 (orphan-closure) — resolver trait for `ForAllDeclaration<H>`.
+///
+/// Hosts implement this trait to map a handle into a typed record.
+/// The default Null stub does not implement this trait — it carries
+/// no record. Resolution is the responsibility of the host pipeline.
+pub trait ForAllDeclarationResolver<H: HostTypes> {
+    /// Resolve a handle into its record. Returns `None` when the
+    /// handle does not correspond to known content.
+    fn resolve(&self, handle: ForAllDeclarationHandle<H>) -> Option<ForAllDeclarationRecord<H>>;
+}
+
+/// Phase 8 (orphan-closure) — typed record for `ForAllDeclaration<H>`.
+///
+/// Carries a field per functional accessor of the trait. Object
+/// fields hold `{Range}Handle<H>`; iterate via the Resolved wrapper
+/// chain-resolver methods.
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub struct ForAllDeclarationRecord<H: HostTypes> {
+    pub quantifier_kind: QuantifierKind,
+    #[doc(hidden)]
+    pub _phantom: core::marker::PhantomData<H>,
+}
+
+/// Phase 8 (orphan-closure) — content-addressed wrapper for `ForAllDeclaration<H>`.
+///
+/// Caches the resolver's lookup at construction. Accessors return
+/// the cached record's fields when present, falling back to the
+/// `Null{Class}<H>` absent sentinels when the resolver returned
+/// `None`. Object accessors always return absent sentinels — use
+/// the `resolve_{m}` chain methods to descend into sub-records.
+pub struct ResolvedForAllDeclaration<'r, R: ForAllDeclarationResolver<H>, H: HostTypes> {
+    handle: ForAllDeclarationHandle<H>,
+    resolver: &'r R,
+    record: Option<ForAllDeclarationRecord<H>>,
+}
+impl<'r, R: ForAllDeclarationResolver<H>, H: HostTypes> ResolvedForAllDeclaration<'r, R, H> {
+    /// Construct the wrapper, eagerly resolving the handle.
+    #[inline]
+    pub fn new(handle: ForAllDeclarationHandle<H>, resolver: &'r R) -> Self {
+        let record = resolver.resolve(handle);
+        Self {
+            handle,
+            resolver,
+            record,
+        }
+    }
+    /// The handle this wrapper resolves.
+    #[inline]
+    #[must_use]
+    pub const fn handle(&self) -> ForAllDeclarationHandle<H> {
+        self.handle
+    }
+    /// The resolver supplied at construction.
+    #[inline]
+    #[must_use]
+    pub const fn resolver(&self) -> &'r R {
+        self.resolver
+    }
+    /// The cached record, or `None` when the resolver returned `None`.
+    #[inline]
+    #[must_use]
+    pub const fn record(&self) -> Option<&ForAllDeclarationRecord<H>> {
+        self.record.as_ref()
+    }
+}
+impl<'r, R: ForAllDeclarationResolver<H>, H: HostTypes> ForAllDeclaration<H>
+    for ResolvedForAllDeclaration<'r, R, H>
+{
+    type VariableBinding = NullVariableBinding<H>;
+    fn bound_variables(&self) -> &[Self::VariableBinding] {
+        &[]
+    }
+    fn quantifier_kind(&self) -> QuantifierKind {
+        match &self.record {
+            Some(r) => r.quantifier_kind,
+            None => <QuantifierKind>::default(),
+        }
+    }
+}
+
+/// Phase 8 (orphan-closure) — content-addressed handle for `VariableBinding<H>`.
+///
+/// Pairs a [`crate::enforcement::ContentFingerprint`] with a phantom
+/// `H` so type-state checks can't mix handles across `HostTypes` impls.
+#[derive(Debug)]
+pub struct VariableBindingHandle<H: HostTypes> {
+    /// Content fingerprint identifying the resolved record.
+    pub fingerprint: crate::enforcement::ContentFingerprint,
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Copy for VariableBindingHandle<H> {}
+impl<H: HostTypes> Clone for VariableBindingHandle<H> {
+    #[inline]
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+impl<H: HostTypes> PartialEq for VariableBindingHandle<H> {
+    #[inline]
+    fn eq(&self, other: &Self) -> bool {
+        self.fingerprint == other.fingerprint
+    }
+}
+impl<H: HostTypes> Eq for VariableBindingHandle<H> {}
+impl<H: HostTypes> core::hash::Hash for VariableBindingHandle<H> {
+    #[inline]
+    fn hash<S: core::hash::Hasher>(&self, state: &mut S) {
+        self.fingerprint.hash(state);
+    }
+}
+impl<H: HostTypes> VariableBindingHandle<H> {
+    /// Construct a handle from its content fingerprint.
+    #[inline]
+    #[must_use]
+    pub const fn new(fingerprint: crate::enforcement::ContentFingerprint) -> Self {
+        Self {
+            fingerprint,
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+
+/// Phase 8 (orphan-closure) — resolver trait for `VariableBinding<H>`.
+///
+/// Hosts implement this trait to map a handle into a typed record.
+/// The default Null stub does not implement this trait — it carries
+/// no record. Resolution is the responsibility of the host pipeline.
+pub trait VariableBindingResolver<H: HostTypes> {
+    /// Resolve a handle into its record. Returns `None` when the
+    /// handle does not correspond to known content.
+    fn resolve(&self, handle: VariableBindingHandle<H>) -> Option<VariableBindingRecord<H>>;
+}
+
+/// Phase 8 (orphan-closure) — typed record for `VariableBinding<H>`.
+///
+/// Carries a field per functional accessor of the trait. Object
+/// fields hold `{Range}Handle<H>`; iterate via the Resolved wrapper
+/// chain-resolver methods.
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub struct VariableBindingRecord<H: HostTypes> {
+    pub variable_domain: &'static H::HostString,
+    pub variable_name: &'static H::HostString,
+    #[doc(hidden)]
+    pub _phantom: core::marker::PhantomData<H>,
+}
+
+/// Phase 8 (orphan-closure) — content-addressed wrapper for `VariableBinding<H>`.
+///
+/// Caches the resolver's lookup at construction. Accessors return
+/// the cached record's fields when present, falling back to the
+/// `Null{Class}<H>` absent sentinels when the resolver returned
+/// `None`. Object accessors always return absent sentinels — use
+/// the `resolve_{m}` chain methods to descend into sub-records.
+pub struct ResolvedVariableBinding<'r, R: VariableBindingResolver<H>, H: HostTypes> {
+    handle: VariableBindingHandle<H>,
+    resolver: &'r R,
+    record: Option<VariableBindingRecord<H>>,
+}
+impl<'r, R: VariableBindingResolver<H>, H: HostTypes> ResolvedVariableBinding<'r, R, H> {
+    /// Construct the wrapper, eagerly resolving the handle.
+    #[inline]
+    pub fn new(handle: VariableBindingHandle<H>, resolver: &'r R) -> Self {
+        let record = resolver.resolve(handle);
+        Self {
+            handle,
+            resolver,
+            record,
+        }
+    }
+    /// The handle this wrapper resolves.
+    #[inline]
+    #[must_use]
+    pub const fn handle(&self) -> VariableBindingHandle<H> {
+        self.handle
+    }
+    /// The resolver supplied at construction.
+    #[inline]
+    #[must_use]
+    pub const fn resolver(&self) -> &'r R {
+        self.resolver
+    }
+    /// The cached record, or `None` when the resolver returned `None`.
+    #[inline]
+    #[must_use]
+    pub const fn record(&self) -> Option<&VariableBindingRecord<H>> {
+        self.record.as_ref()
+    }
+}
+impl<'r, R: VariableBindingResolver<H>, H: HostTypes> VariableBinding<H>
+    for ResolvedVariableBinding<'r, R, H>
+{
+    fn variable_domain(&self) -> &H::HostString {
+        H::EMPTY_HOST_STRING
+    }
+    fn variable_name(&self) -> &H::HostString {
+        match &self.record {
+            Some(r) => r.variable_name,
+            None => H::EMPTY_HOST_STRING,
+        }
+    }
+}
+
+/// Phase 8 (orphan-closure) — content-addressed handle for `SurfaceSymbol<H>`.
+///
+/// Pairs a [`crate::enforcement::ContentFingerprint`] with a phantom
+/// `H` so type-state checks can't mix handles across `HostTypes` impls.
+#[derive(Debug)]
+pub struct SurfaceSymbolHandle<H: HostTypes> {
+    /// Content fingerprint identifying the resolved record.
+    pub fingerprint: crate::enforcement::ContentFingerprint,
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Copy for SurfaceSymbolHandle<H> {}
+impl<H: HostTypes> Clone for SurfaceSymbolHandle<H> {
+    #[inline]
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+impl<H: HostTypes> PartialEq for SurfaceSymbolHandle<H> {
+    #[inline]
+    fn eq(&self, other: &Self) -> bool {
+        self.fingerprint == other.fingerprint
+    }
+}
+impl<H: HostTypes> Eq for SurfaceSymbolHandle<H> {}
+impl<H: HostTypes> core::hash::Hash for SurfaceSymbolHandle<H> {
+    #[inline]
+    fn hash<S: core::hash::Hasher>(&self, state: &mut S) {
+        self.fingerprint.hash(state);
+    }
+}
+impl<H: HostTypes> SurfaceSymbolHandle<H> {
+    /// Construct a handle from its content fingerprint.
+    #[inline]
+    #[must_use]
+    pub const fn new(fingerprint: crate::enforcement::ContentFingerprint) -> Self {
+        Self {
+            fingerprint,
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+
+/// Phase 8 (orphan-closure) — resolver trait for `SurfaceSymbol<H>`.
+///
+/// Hosts implement this trait to map a handle into a typed record.
+/// The default Null stub does not implement this trait — it carries
+/// no record. Resolution is the responsibility of the host pipeline.
+pub trait SurfaceSymbolResolver<H: HostTypes> {
+    /// Resolve a handle into its record. Returns `None` when the
+    /// handle does not correspond to known content.
+    fn resolve(&self, handle: SurfaceSymbolHandle<H>) -> Option<SurfaceSymbolRecord<H>>;
+}
+
+/// Phase 8 (orphan-closure) — typed record for `SurfaceSymbol<H>`.
+///
+/// Carries a field per functional accessor of the trait. Object
+/// fields hold `{Range}Handle<H>`; iterate via the Resolved wrapper
+/// chain-resolver methods.
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub struct SurfaceSymbolRecord<H: HostTypes> {
+    #[doc(hidden)]
+    pub _phantom: core::marker::PhantomData<H>,
+}
+
+/// Phase 8 (orphan-closure) — content-addressed wrapper for `SurfaceSymbol<H>`.
+///
+/// Caches the resolver's lookup at construction. Accessors return
+/// the cached record's fields when present, falling back to the
+/// `Null{Class}<H>` absent sentinels when the resolver returned
+/// `None`. Object accessors always return absent sentinels — use
+/// the `resolve_{m}` chain methods to descend into sub-records.
+pub struct ResolvedSurfaceSymbol<'r, R: SurfaceSymbolResolver<H>, H: HostTypes> {
+    handle: SurfaceSymbolHandle<H>,
+    resolver: &'r R,
+    record: Option<SurfaceSymbolRecord<H>>,
+}
+impl<'r, R: SurfaceSymbolResolver<H>, H: HostTypes> ResolvedSurfaceSymbol<'r, R, H> {
+    /// Construct the wrapper, eagerly resolving the handle.
+    #[inline]
+    pub fn new(handle: SurfaceSymbolHandle<H>, resolver: &'r R) -> Self {
+        let record = resolver.resolve(handle);
+        Self {
+            handle,
+            resolver,
+            record,
+        }
+    }
+    /// The handle this wrapper resolves.
+    #[inline]
+    #[must_use]
+    pub const fn handle(&self) -> SurfaceSymbolHandle<H> {
+        self.handle
+    }
+    /// The resolver supplied at construction.
+    #[inline]
+    #[must_use]
+    pub const fn resolver(&self) -> &'r R {
+        self.resolver
+    }
+    /// The cached record, or `None` when the resolver returned `None`.
+    #[inline]
+    #[must_use]
+    pub const fn record(&self) -> Option<&SurfaceSymbolRecord<H>> {
+        self.record.as_ref()
+    }
+}
+impl<'r, R: SurfaceSymbolResolver<H>, H: HostTypes> SurfaceSymbol<H>
+    for ResolvedSurfaceSymbol<'r, R, H>
+{
+}
+
+/// Phase 8 (orphan-closure) — content-addressed handle for `HostValue<H>`.
+///
+/// Pairs a [`crate::enforcement::ContentFingerprint`] with a phantom
+/// `H` so type-state checks can't mix handles across `HostTypes` impls.
+#[derive(Debug)]
+pub struct HostValueHandle<H: HostTypes> {
+    /// Content fingerprint identifying the resolved record.
+    pub fingerprint: crate::enforcement::ContentFingerprint,
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Copy for HostValueHandle<H> {}
+impl<H: HostTypes> Clone for HostValueHandle<H> {
+    #[inline]
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+impl<H: HostTypes> PartialEq for HostValueHandle<H> {
+    #[inline]
+    fn eq(&self, other: &Self) -> bool {
+        self.fingerprint == other.fingerprint
+    }
+}
+impl<H: HostTypes> Eq for HostValueHandle<H> {}
+impl<H: HostTypes> core::hash::Hash for HostValueHandle<H> {
+    #[inline]
+    fn hash<S: core::hash::Hasher>(&self, state: &mut S) {
+        self.fingerprint.hash(state);
+    }
+}
+impl<H: HostTypes> HostValueHandle<H> {
+    /// Construct a handle from its content fingerprint.
+    #[inline]
+    #[must_use]
+    pub const fn new(fingerprint: crate::enforcement::ContentFingerprint) -> Self {
+        Self {
+            fingerprint,
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+
+/// Phase 8 (orphan-closure) — resolver trait for `HostValue<H>`.
+///
+/// Hosts implement this trait to map a handle into a typed record.
+/// The default Null stub does not implement this trait — it carries
+/// no record. Resolution is the responsibility of the host pipeline.
+pub trait HostValueResolver<H: HostTypes> {
+    /// Resolve a handle into its record. Returns `None` when the
+    /// handle does not correspond to known content.
+    fn resolve(&self, handle: HostValueHandle<H>) -> Option<HostValueRecord<H>>;
+}
+
+/// Phase 8 (orphan-closure) — typed record for `HostValue<H>`.
+///
+/// Carries a field per functional accessor of the trait. Object
+/// fields hold `{Range}Handle<H>`; iterate via the Resolved wrapper
+/// chain-resolver methods.
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub struct HostValueRecord<H: HostTypes> {
+    #[doc(hidden)]
+    pub _phantom: core::marker::PhantomData<H>,
+}
+
+/// Phase 8 (orphan-closure) — content-addressed wrapper for `HostValue<H>`.
+///
+/// Caches the resolver's lookup at construction. Accessors return
+/// the cached record's fields when present, falling back to the
+/// `Null{Class}<H>` absent sentinels when the resolver returned
+/// `None`. Object accessors always return absent sentinels — use
+/// the `resolve_{m}` chain methods to descend into sub-records.
+pub struct ResolvedHostValue<'r, R: HostValueResolver<H>, H: HostTypes> {
+    handle: HostValueHandle<H>,
+    resolver: &'r R,
+    record: Option<HostValueRecord<H>>,
+}
+impl<'r, R: HostValueResolver<H>, H: HostTypes> ResolvedHostValue<'r, R, H> {
+    /// Construct the wrapper, eagerly resolving the handle.
+    #[inline]
+    pub fn new(handle: HostValueHandle<H>, resolver: &'r R) -> Self {
+        let record = resolver.resolve(handle);
+        Self {
+            handle,
+            resolver,
+            record,
+        }
+    }
+    /// The handle this wrapper resolves.
+    #[inline]
+    #[must_use]
+    pub const fn handle(&self) -> HostValueHandle<H> {
+        self.handle
+    }
+    /// The resolver supplied at construction.
+    #[inline]
+    #[must_use]
+    pub const fn resolver(&self) -> &'r R {
+        self.resolver
+    }
+    /// The cached record, or `None` when the resolver returned `None`.
+    #[inline]
+    #[must_use]
+    pub const fn record(&self) -> Option<&HostValueRecord<H>> {
+        self.record.as_ref()
+    }
+}
+impl<'r, R: HostValueResolver<H>, H: HostTypes> SurfaceSymbol<H> for ResolvedHostValue<'r, R, H> {}
+impl<'r, R: HostValueResolver<H>, H: HostTypes> HostValue<H> for ResolvedHostValue<'r, R, H> {}
+
+/// Phase 8 (orphan-closure) — content-addressed handle for `HostStringLiteral<H>`.
+///
+/// Pairs a [`crate::enforcement::ContentFingerprint`] with a phantom
+/// `H` so type-state checks can't mix handles across `HostTypes` impls.
+#[derive(Debug)]
+pub struct HostStringLiteralHandle<H: HostTypes> {
+    /// Content fingerprint identifying the resolved record.
+    pub fingerprint: crate::enforcement::ContentFingerprint,
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Copy for HostStringLiteralHandle<H> {}
+impl<H: HostTypes> Clone for HostStringLiteralHandle<H> {
+    #[inline]
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+impl<H: HostTypes> PartialEq for HostStringLiteralHandle<H> {
+    #[inline]
+    fn eq(&self, other: &Self) -> bool {
+        self.fingerprint == other.fingerprint
+    }
+}
+impl<H: HostTypes> Eq for HostStringLiteralHandle<H> {}
+impl<H: HostTypes> core::hash::Hash for HostStringLiteralHandle<H> {
+    #[inline]
+    fn hash<S: core::hash::Hasher>(&self, state: &mut S) {
+        self.fingerprint.hash(state);
+    }
+}
+impl<H: HostTypes> HostStringLiteralHandle<H> {
+    /// Construct a handle from its content fingerprint.
+    #[inline]
+    #[must_use]
+    pub const fn new(fingerprint: crate::enforcement::ContentFingerprint) -> Self {
+        Self {
+            fingerprint,
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+
+/// Phase 8 (orphan-closure) — resolver trait for `HostStringLiteral<H>`.
+///
+/// Hosts implement this trait to map a handle into a typed record.
+/// The default Null stub does not implement this trait — it carries
+/// no record. Resolution is the responsibility of the host pipeline.
+pub trait HostStringLiteralResolver<H: HostTypes> {
+    /// Resolve a handle into its record. Returns `None` when the
+    /// handle does not correspond to known content.
+    fn resolve(&self, handle: HostStringLiteralHandle<H>) -> Option<HostStringLiteralRecord<H>>;
+}
+
+/// Phase 8 (orphan-closure) — typed record for `HostStringLiteral<H>`.
+///
+/// Carries a field per functional accessor of the trait. Object
+/// fields hold `{Range}Handle<H>`; iterate via the Resolved wrapper
+/// chain-resolver methods.
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub struct HostStringLiteralRecord<H: HostTypes> {
+    pub host_string: &'static H::HostString,
+    #[doc(hidden)]
+    pub _phantom: core::marker::PhantomData<H>,
+}
+
+/// Phase 8 (orphan-closure) — content-addressed wrapper for `HostStringLiteral<H>`.
+///
+/// Caches the resolver's lookup at construction. Accessors return
+/// the cached record's fields when present, falling back to the
+/// `Null{Class}<H>` absent sentinels when the resolver returned
+/// `None`. Object accessors always return absent sentinels — use
+/// the `resolve_{m}` chain methods to descend into sub-records.
+pub struct ResolvedHostStringLiteral<'r, R: HostStringLiteralResolver<H>, H: HostTypes> {
+    handle: HostStringLiteralHandle<H>,
+    resolver: &'r R,
+    record: Option<HostStringLiteralRecord<H>>,
+}
+impl<'r, R: HostStringLiteralResolver<H>, H: HostTypes> ResolvedHostStringLiteral<'r, R, H> {
+    /// Construct the wrapper, eagerly resolving the handle.
+    #[inline]
+    pub fn new(handle: HostStringLiteralHandle<H>, resolver: &'r R) -> Self {
+        let record = resolver.resolve(handle);
+        Self {
+            handle,
+            resolver,
+            record,
+        }
+    }
+    /// The handle this wrapper resolves.
+    #[inline]
+    #[must_use]
+    pub const fn handle(&self) -> HostStringLiteralHandle<H> {
+        self.handle
+    }
+    /// The resolver supplied at construction.
+    #[inline]
+    #[must_use]
+    pub const fn resolver(&self) -> &'r R {
+        self.resolver
+    }
+    /// The cached record, or `None` when the resolver returned `None`.
+    #[inline]
+    #[must_use]
+    pub const fn record(&self) -> Option<&HostStringLiteralRecord<H>> {
+        self.record.as_ref()
+    }
+}
+impl<'r, R: HostStringLiteralResolver<H>, H: HostTypes> SurfaceSymbol<H>
+    for ResolvedHostStringLiteral<'r, R, H>
+{
+}
+impl<'r, R: HostStringLiteralResolver<H>, H: HostTypes> HostValue<H>
+    for ResolvedHostStringLiteral<'r, R, H>
+{
+}
+impl<'r, R: HostStringLiteralResolver<H>, H: HostTypes> HostStringLiteral<H>
+    for ResolvedHostStringLiteral<'r, R, H>
+{
+    fn host_string(&self) -> &H::HostString {
+        match &self.record {
+            Some(r) => r.host_string,
+            None => H::EMPTY_HOST_STRING,
+        }
+    }
+}
+
+/// Phase 8 (orphan-closure) — content-addressed handle for `HostBooleanLiteral<H>`.
+///
+/// Pairs a [`crate::enforcement::ContentFingerprint`] with a phantom
+/// `H` so type-state checks can't mix handles across `HostTypes` impls.
+#[derive(Debug)]
+pub struct HostBooleanLiteralHandle<H: HostTypes> {
+    /// Content fingerprint identifying the resolved record.
+    pub fingerprint: crate::enforcement::ContentFingerprint,
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Copy for HostBooleanLiteralHandle<H> {}
+impl<H: HostTypes> Clone for HostBooleanLiteralHandle<H> {
+    #[inline]
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+impl<H: HostTypes> PartialEq for HostBooleanLiteralHandle<H> {
+    #[inline]
+    fn eq(&self, other: &Self) -> bool {
+        self.fingerprint == other.fingerprint
+    }
+}
+impl<H: HostTypes> Eq for HostBooleanLiteralHandle<H> {}
+impl<H: HostTypes> core::hash::Hash for HostBooleanLiteralHandle<H> {
+    #[inline]
+    fn hash<S: core::hash::Hasher>(&self, state: &mut S) {
+        self.fingerprint.hash(state);
+    }
+}
+impl<H: HostTypes> HostBooleanLiteralHandle<H> {
+    /// Construct a handle from its content fingerprint.
+    #[inline]
+    #[must_use]
+    pub const fn new(fingerprint: crate::enforcement::ContentFingerprint) -> Self {
+        Self {
+            fingerprint,
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+
+/// Phase 8 (orphan-closure) — resolver trait for `HostBooleanLiteral<H>`.
+///
+/// Hosts implement this trait to map a handle into a typed record.
+/// The default Null stub does not implement this trait — it carries
+/// no record. Resolution is the responsibility of the host pipeline.
+pub trait HostBooleanLiteralResolver<H: HostTypes> {
+    /// Resolve a handle into its record. Returns `None` when the
+    /// handle does not correspond to known content.
+    fn resolve(&self, handle: HostBooleanLiteralHandle<H>) -> Option<HostBooleanLiteralRecord<H>>;
+}
+
+/// Phase 8 (orphan-closure) — typed record for `HostBooleanLiteral<H>`.
+///
+/// Carries a field per functional accessor of the trait. Object
+/// fields hold `{Range}Handle<H>`; iterate via the Resolved wrapper
+/// chain-resolver methods.
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub struct HostBooleanLiteralRecord<H: HostTypes> {
+    pub host_boolean: bool,
+    #[doc(hidden)]
+    pub _phantom: core::marker::PhantomData<H>,
+}
+
+/// Phase 8 (orphan-closure) — content-addressed wrapper for `HostBooleanLiteral<H>`.
+///
+/// Caches the resolver's lookup at construction. Accessors return
+/// the cached record's fields when present, falling back to the
+/// `Null{Class}<H>` absent sentinels when the resolver returned
+/// `None`. Object accessors always return absent sentinels — use
+/// the `resolve_{m}` chain methods to descend into sub-records.
+pub struct ResolvedHostBooleanLiteral<'r, R: HostBooleanLiteralResolver<H>, H: HostTypes> {
+    handle: HostBooleanLiteralHandle<H>,
+    resolver: &'r R,
+    record: Option<HostBooleanLiteralRecord<H>>,
+}
+impl<'r, R: HostBooleanLiteralResolver<H>, H: HostTypes> ResolvedHostBooleanLiteral<'r, R, H> {
+    /// Construct the wrapper, eagerly resolving the handle.
+    #[inline]
+    pub fn new(handle: HostBooleanLiteralHandle<H>, resolver: &'r R) -> Self {
+        let record = resolver.resolve(handle);
+        Self {
+            handle,
+            resolver,
+            record,
+        }
+    }
+    /// The handle this wrapper resolves.
+    #[inline]
+    #[must_use]
+    pub const fn handle(&self) -> HostBooleanLiteralHandle<H> {
+        self.handle
+    }
+    /// The resolver supplied at construction.
+    #[inline]
+    #[must_use]
+    pub const fn resolver(&self) -> &'r R {
+        self.resolver
+    }
+    /// The cached record, or `None` when the resolver returned `None`.
+    #[inline]
+    #[must_use]
+    pub const fn record(&self) -> Option<&HostBooleanLiteralRecord<H>> {
+        self.record.as_ref()
+    }
+}
+impl<'r, R: HostBooleanLiteralResolver<H>, H: HostTypes> SurfaceSymbol<H>
+    for ResolvedHostBooleanLiteral<'r, R, H>
+{
+}
+impl<'r, R: HostBooleanLiteralResolver<H>, H: HostTypes> HostValue<H>
+    for ResolvedHostBooleanLiteral<'r, R, H>
+{
+}
+impl<'r, R: HostBooleanLiteralResolver<H>, H: HostTypes> HostBooleanLiteral<H>
+    for ResolvedHostBooleanLiteral<'r, R, H>
+{
+    fn host_boolean(&self) -> bool {
+        match &self.record {
+            Some(r) => r.host_boolean,
+            None => false,
+        }
+    }
+}
+
+/// Phase 8 (orphan-closure) — content-addressed handle for `ValueTuple<H>`.
+///
+/// Pairs a [`crate::enforcement::ContentFingerprint`] with a phantom
+/// `H` so type-state checks can't mix handles across `HostTypes` impls.
+#[derive(Debug)]
+pub struct ValueTupleHandle<H: HostTypes> {
+    /// Content fingerprint identifying the resolved record.
+    pub fingerprint: crate::enforcement::ContentFingerprint,
+    _phantom: core::marker::PhantomData<H>,
+}
+impl<H: HostTypes> Copy for ValueTupleHandle<H> {}
+impl<H: HostTypes> Clone for ValueTupleHandle<H> {
+    #[inline]
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+impl<H: HostTypes> PartialEq for ValueTupleHandle<H> {
+    #[inline]
+    fn eq(&self, other: &Self) -> bool {
+        self.fingerprint == other.fingerprint
+    }
+}
+impl<H: HostTypes> Eq for ValueTupleHandle<H> {}
+impl<H: HostTypes> core::hash::Hash for ValueTupleHandle<H> {
+    #[inline]
+    fn hash<S: core::hash::Hasher>(&self, state: &mut S) {
+        self.fingerprint.hash(state);
+    }
+}
+impl<H: HostTypes> ValueTupleHandle<H> {
+    /// Construct a handle from its content fingerprint.
+    #[inline]
+    #[must_use]
+    pub const fn new(fingerprint: crate::enforcement::ContentFingerprint) -> Self {
+        Self {
+            fingerprint,
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+
+/// Phase 8 (orphan-closure) — resolver trait for `ValueTuple<H>`.
+///
+/// Hosts implement this trait to map a handle into a typed record.
+/// The default Null stub does not implement this trait — it carries
+/// no record. Resolution is the responsibility of the host pipeline.
+pub trait ValueTupleResolver<H: HostTypes> {
+    /// Resolve a handle into its record. Returns `None` when the
+    /// handle does not correspond to known content.
+    fn resolve(&self, handle: ValueTupleHandle<H>) -> Option<ValueTupleRecord<H>>;
+}
+
+/// Phase 8 (orphan-closure) — typed record for `ValueTuple<H>`.
+///
+/// Carries a field per functional accessor of the trait. Object
+/// fields hold `{Range}Handle<H>`; iterate via the Resolved wrapper
+/// chain-resolver methods.
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub struct ValueTupleRecord<H: HostTypes> {
+    #[doc(hidden)]
+    pub _phantom: core::marker::PhantomData<H>,
+}
+
+/// Phase 8 (orphan-closure) — content-addressed wrapper for `ValueTuple<H>`.
+///
+/// Caches the resolver's lookup at construction. Accessors return
+/// the cached record's fields when present, falling back to the
+/// `Null{Class}<H>` absent sentinels when the resolver returned
+/// `None`. Object accessors always return absent sentinels — use
+/// the `resolve_{m}` chain methods to descend into sub-records.
+pub struct ResolvedValueTuple<'r, R: ValueTupleResolver<H>, H: HostTypes> {
+    handle: ValueTupleHandle<H>,
+    resolver: &'r R,
+    record: Option<ValueTupleRecord<H>>,
+}
+impl<'r, R: ValueTupleResolver<H>, H: HostTypes> ResolvedValueTuple<'r, R, H> {
+    /// Construct the wrapper, eagerly resolving the handle.
+    #[inline]
+    pub fn new(handle: ValueTupleHandle<H>, resolver: &'r R) -> Self {
+        let record = resolver.resolve(handle);
+        Self {
+            handle,
+            resolver,
+            record,
+        }
+    }
+    /// The handle this wrapper resolves.
+    #[inline]
+    #[must_use]
+    pub const fn handle(&self) -> ValueTupleHandle<H> {
+        self.handle
+    }
+    /// The resolver supplied at construction.
+    #[inline]
+    #[must_use]
+    pub const fn resolver(&self) -> &'r R {
+        self.resolver
+    }
+    /// The cached record, or `None` when the resolver returned `None`.
+    #[inline]
+    #[must_use]
+    pub const fn record(&self) -> Option<&ValueTupleRecord<H>> {
+        self.record.as_ref()
+    }
+}
+impl<'r, R: ValueTupleResolver<H>, H: HostTypes> ValueTuple<H> for ResolvedValueTuple<'r, R, H> {}
 
 /// Universal quantification (forall).
 pub mod universal {}
@@ -208,14 +3433,310 @@ pub mod w24 {
     pub const WITT_LEVEL_PREDECESSOR: &str = "https://uor.foundation/schema/W16";
 }
 
-/// Witt level 3: 32-bit ring Z/4294967296Z, 4,294,967,296 states. The highest named level in the spec. nextWittLevel is absent — Prism implementations may extend the chain.
+/// Witt level 3: 32-bit ring Z/4294967296Z, 4,294,967,296 states. The highest 32-bit-and-below named level in the v0.2.1 spec; v0.2.2 Phase C extends the tower with the dense and powers-of-two set.
 pub mod w32 {
     /// `bitsWidth`
     pub const BITS_WIDTH: i64 = 32;
     /// `cycleSize`
     pub const CYCLE_SIZE: i64 = 4294967296;
+    /// `nextWittLevel` -> `W40`
+    pub const NEXT_WITT_LEVEL: &str = "https://uor.foundation/schema/W40";
     /// `wittLevelPredecessor` -> `W24`
     pub const WITT_LEVEL_PREDECESSOR: &str = "https://uor.foundation/schema/W24";
+}
+
+/// Witt level 4: 40-bit ring Z/2^40 Z. Backed by u64 with a 40-bit mask at the arithmetic boundary. v0.2.2 Phase C.
+pub mod w40 {
+    /// `bitsWidth`
+    pub const BITS_WIDTH: i64 = 40;
+    /// `cycleSize`
+    pub const CYCLE_SIZE: i64 = 1099511627776;
+    /// `nextWittLevel` -> `W48`
+    pub const NEXT_WITT_LEVEL: &str = "https://uor.foundation/schema/W48";
+    /// `wittLevelPredecessor` -> `W32`
+    pub const WITT_LEVEL_PREDECESSOR: &str = "https://uor.foundation/schema/W32";
+}
+
+/// Witt level 5: 48-bit ring Z/2^48 Z. Backed by u64 with a 48-bit mask at the arithmetic boundary. v0.2.2 Phase C.
+pub mod w48 {
+    /// `bitsWidth`
+    pub const BITS_WIDTH: i64 = 48;
+    /// `cycleSize`
+    pub const CYCLE_SIZE: i64 = 281474976710656;
+    /// `nextWittLevel` -> `W56`
+    pub const NEXT_WITT_LEVEL: &str = "https://uor.foundation/schema/W56";
+    /// `wittLevelPredecessor` -> `W40`
+    pub const WITT_LEVEL_PREDECESSOR: &str = "https://uor.foundation/schema/W40";
+}
+
+/// Witt level 6: 56-bit ring Z/2^56 Z. Backed by u64 with a 56-bit mask at the arithmetic boundary. v0.2.2 Phase C.
+pub mod w56 {
+    /// `bitsWidth`
+    pub const BITS_WIDTH: i64 = 56;
+    /// `cycleSize`
+    pub const CYCLE_SIZE: i64 = 72057594037927936;
+    /// `nextWittLevel` -> `W64`
+    pub const NEXT_WITT_LEVEL: &str = "https://uor.foundation/schema/W64";
+    /// `wittLevelPredecessor` -> `W48`
+    pub const WITT_LEVEL_PREDECESSOR: &str = "https://uor.foundation/schema/W48";
+}
+
+/// Witt level 7: 64-bit ring Z/2^64 Z. Backed by u64 directly (exact fit; no mask). v0.2.2 Phase C. cycle_size = 2^64 exceeds i64 representation and is omitted; codegen derives it from bit_width.
+pub mod w64 {
+    /// `bitsWidth`
+    pub const BITS_WIDTH: i64 = 64;
+    /// `nextWittLevel` -> `W72`
+    pub const NEXT_WITT_LEVEL: &str = "https://uor.foundation/schema/W72";
+    /// `wittLevelPredecessor` -> `W56`
+    pub const WITT_LEVEL_PREDECESSOR: &str = "https://uor.foundation/schema/W56";
+}
+
+/// Witt level 8: 72-bit ring Z/2^72 Z. Backed by u128 with a 72-bit mask at the arithmetic boundary. v0.2.2 Phase C.
+pub mod w72 {
+    /// `bitsWidth`
+    pub const BITS_WIDTH: i64 = 72;
+    /// `nextWittLevel` -> `W80`
+    pub const NEXT_WITT_LEVEL: &str = "https://uor.foundation/schema/W80";
+    /// `wittLevelPredecessor` -> `W64`
+    pub const WITT_LEVEL_PREDECESSOR: &str = "https://uor.foundation/schema/W64";
+}
+
+/// Witt level 9: 80-bit ring Z/2^80 Z. Backed by u128 with an 80-bit mask at the arithmetic boundary. v0.2.2 Phase C.
+pub mod w80 {
+    /// `bitsWidth`
+    pub const BITS_WIDTH: i64 = 80;
+    /// `nextWittLevel` -> `W88`
+    pub const NEXT_WITT_LEVEL: &str = "https://uor.foundation/schema/W88";
+    /// `wittLevelPredecessor` -> `W72`
+    pub const WITT_LEVEL_PREDECESSOR: &str = "https://uor.foundation/schema/W72";
+}
+
+/// Witt level 10: 88-bit ring Z/2^88 Z. Backed by u128 with an 88-bit mask at the arithmetic boundary. v0.2.2 Phase C.
+pub mod w88 {
+    /// `bitsWidth`
+    pub const BITS_WIDTH: i64 = 88;
+    /// `nextWittLevel` -> `W96`
+    pub const NEXT_WITT_LEVEL: &str = "https://uor.foundation/schema/W96";
+    /// `wittLevelPredecessor` -> `W80`
+    pub const WITT_LEVEL_PREDECESSOR: &str = "https://uor.foundation/schema/W80";
+}
+
+/// Witt level 11: 96-bit ring Z/2^96 Z. Backed by u128 with a 96-bit mask at the arithmetic boundary. v0.2.2 Phase C.
+pub mod w96 {
+    /// `bitsWidth`
+    pub const BITS_WIDTH: i64 = 96;
+    /// `nextWittLevel` -> `W104`
+    pub const NEXT_WITT_LEVEL: &str = "https://uor.foundation/schema/W104";
+    /// `wittLevelPredecessor` -> `W88`
+    pub const WITT_LEVEL_PREDECESSOR: &str = "https://uor.foundation/schema/W88";
+}
+
+/// Witt level 12: 104-bit ring Z/2^104 Z. Backed by u128 with a 104-bit mask at the arithmetic boundary. v0.2.2 Phase C.
+pub mod w104 {
+    /// `bitsWidth`
+    pub const BITS_WIDTH: i64 = 104;
+    /// `nextWittLevel` -> `W112`
+    pub const NEXT_WITT_LEVEL: &str = "https://uor.foundation/schema/W112";
+    /// `wittLevelPredecessor` -> `W96`
+    pub const WITT_LEVEL_PREDECESSOR: &str = "https://uor.foundation/schema/W96";
+}
+
+/// Witt level 13: 112-bit ring Z/2^112 Z. Backed by u128 with a 112-bit mask at the arithmetic boundary. v0.2.2 Phase C.
+pub mod w112 {
+    /// `bitsWidth`
+    pub const BITS_WIDTH: i64 = 112;
+    /// `nextWittLevel` -> `W120`
+    pub const NEXT_WITT_LEVEL: &str = "https://uor.foundation/schema/W120";
+    /// `wittLevelPredecessor` -> `W104`
+    pub const WITT_LEVEL_PREDECESSOR: &str = "https://uor.foundation/schema/W104";
+}
+
+/// Witt level 14: 120-bit ring Z/2^120 Z. Backed by u128 with a 120-bit mask at the arithmetic boundary. v0.2.2 Phase C.
+pub mod w120 {
+    /// `bitsWidth`
+    pub const BITS_WIDTH: i64 = 120;
+    /// `nextWittLevel` -> `W128`
+    pub const NEXT_WITT_LEVEL: &str = "https://uor.foundation/schema/W128";
+    /// `wittLevelPredecessor` -> `W112`
+    pub const WITT_LEVEL_PREDECESSOR: &str = "https://uor.foundation/schema/W112";
+}
+
+/// Witt level 15: 128-bit ring Z/2^128 Z. Backed by u128 directly (exact fit; no mask). The largest native-backed Witt level; levels above W128 use the Limbs\<N\> generic kernel emitted in Phase C.3. v0.2.2 Phase C.
+pub mod w128 {
+    /// `bitsWidth`
+    pub const BITS_WIDTH: i64 = 128;
+    /// `nextWittLevel` -> `W160`
+    pub const NEXT_WITT_LEVEL: &str = "https://uor.foundation/schema/W160";
+    /// `wittLevelPredecessor` -> `W120`
+    pub const WITT_LEVEL_PREDECESSOR: &str = "https://uor.foundation/schema/W120";
+}
+
+/// Witt level: 160-bit ring (SHA-1 digest carrier). Backed by Limbs<3> with a 160-bit mask. v0.2.2 Phase C.
+pub mod w160 {
+    /// `bitsWidth`
+    pub const BITS_WIDTH: i64 = 160;
+    /// `nextWittLevel` -> `W192`
+    pub const NEXT_WITT_LEVEL: &str = "https://uor.foundation/schema/W192";
+    /// `wittLevelPredecessor` -> `W128`
+    pub const WITT_LEVEL_PREDECESSOR: &str = "https://uor.foundation/schema/W128";
+}
+
+/// Witt level: 192-bit ring (P-192 carrier). Backed by Limbs<3>. v0.2.2 Phase C.
+pub mod w192 {
+    /// `bitsWidth`
+    pub const BITS_WIDTH: i64 = 192;
+    /// `nextWittLevel` -> `W224`
+    pub const NEXT_WITT_LEVEL: &str = "https://uor.foundation/schema/W224";
+    /// `wittLevelPredecessor` -> `W160`
+    pub const WITT_LEVEL_PREDECESSOR: &str = "https://uor.foundation/schema/W160";
+}
+
+/// Witt level: 224-bit ring (SHA-224 digest carrier). Backed by Limbs<4> with a 224-bit mask. v0.2.2 Phase C.
+pub mod w224 {
+    /// `bitsWidth`
+    pub const BITS_WIDTH: i64 = 224;
+    /// `nextWittLevel` -> `W256`
+    pub const NEXT_WITT_LEVEL: &str = "https://uor.foundation/schema/W256";
+    /// `wittLevelPredecessor` -> `W192`
+    pub const WITT_LEVEL_PREDECESSOR: &str = "https://uor.foundation/schema/W192";
+}
+
+/// Witt level: 256-bit ring (SHA-256, blake3, secp256k1, P-256 carrier). Backed by Limbs<4> directly (exact fit; no mask). v0.2.2 Phase C.
+pub mod w256 {
+    /// `bitsWidth`
+    pub const BITS_WIDTH: i64 = 256;
+    /// `nextWittLevel` -> `W384`
+    pub const NEXT_WITT_LEVEL: &str = "https://uor.foundation/schema/W384";
+    /// `wittLevelPredecessor` -> `W224`
+    pub const WITT_LEVEL_PREDECESSOR: &str = "https://uor.foundation/schema/W224";
+}
+
+/// Witt level: 384-bit ring (SHA-384, P-384 carrier). Backed by Limbs<6> directly (exact fit; no mask). v0.2.2 Phase C.
+pub mod w384 {
+    /// `bitsWidth`
+    pub const BITS_WIDTH: i64 = 384;
+    /// `nextWittLevel` -> `W448`
+    pub const NEXT_WITT_LEVEL: &str = "https://uor.foundation/schema/W448";
+    /// `wittLevelPredecessor` -> `W256`
+    pub const WITT_LEVEL_PREDECESSOR: &str = "https://uor.foundation/schema/W256";
+}
+
+/// Witt level: 448-bit ring (Curve448 carrier). Backed by Limbs<7> directly (exact fit; no mask). v0.2.2 Phase C.
+pub mod w448 {
+    /// `bitsWidth`
+    pub const BITS_WIDTH: i64 = 448;
+    /// `nextWittLevel` -> `W512`
+    pub const NEXT_WITT_LEVEL: &str = "https://uor.foundation/schema/W512";
+    /// `wittLevelPredecessor` -> `W384`
+    pub const WITT_LEVEL_PREDECESSOR: &str = "https://uor.foundation/schema/W384";
+}
+
+/// Witt level: 512-bit ring (SHA-512 carrier). Backed by Limbs<8> directly (exact fit; no mask). v0.2.2 Phase C.
+pub mod w512 {
+    /// `bitsWidth`
+    pub const BITS_WIDTH: i64 = 512;
+    /// `nextWittLevel` -> `W520`
+    pub const NEXT_WITT_LEVEL: &str = "https://uor.foundation/schema/W520";
+    /// `wittLevelPredecessor` -> `W448`
+    pub const WITT_LEVEL_PREDECESSOR: &str = "https://uor.foundation/schema/W448";
+}
+
+/// Witt level: 520-bit ring (P-521 prime carrier, lower-bound). Backed by Limbs<9> with a 520-bit mask. v0.2.2 Phase C.
+pub mod w520 {
+    /// `bitsWidth`
+    pub const BITS_WIDTH: i64 = 520;
+    /// `nextWittLevel` -> `W528`
+    pub const NEXT_WITT_LEVEL: &str = "https://uor.foundation/schema/W528";
+    /// `wittLevelPredecessor` -> `W512`
+    pub const WITT_LEVEL_PREDECESSOR: &str = "https://uor.foundation/schema/W512";
+}
+
+/// Witt level: 528-bit ring (P-521 prime carrier, upper-bound; P-521 elements are constrained by an additional residue check). Backed by Limbs<9> with a 528-bit mask. v0.2.2 Phase C.
+pub mod w528 {
+    /// `bitsWidth`
+    pub const BITS_WIDTH: i64 = 528;
+    /// `nextWittLevel` -> `W1024`
+    pub const NEXT_WITT_LEVEL: &str = "https://uor.foundation/schema/W1024";
+    /// `wittLevelPredecessor` -> `W520`
+    pub const WITT_LEVEL_PREDECESSOR: &str = "https://uor.foundation/schema/W520";
+}
+
+/// Witt level: 1024-bit ring (RSA-1024 carrier). Backed by Limbs<16> directly (exact fit; no mask). v0.2.2 Phase C.
+pub mod w1024 {
+    /// `bitsWidth`
+    pub const BITS_WIDTH: i64 = 1024;
+    /// `nextWittLevel` -> `W2048`
+    pub const NEXT_WITT_LEVEL: &str = "https://uor.foundation/schema/W2048";
+    /// `wittLevelPredecessor` -> `W528`
+    pub const WITT_LEVEL_PREDECESSOR: &str = "https://uor.foundation/schema/W528";
+}
+
+/// Witt level: 2048-bit ring (RSA-2048 carrier). Backed by Limbs<32> directly (exact fit; no mask). v0.2.2 Phase C.
+pub mod w2048 {
+    /// `bitsWidth`
+    pub const BITS_WIDTH: i64 = 2048;
+    /// `nextWittLevel` -> `W4096`
+    pub const NEXT_WITT_LEVEL: &str = "https://uor.foundation/schema/W4096";
+    /// `wittLevelPredecessor` -> `W1024`
+    pub const WITT_LEVEL_PREDECESSOR: &str = "https://uor.foundation/schema/W1024";
+}
+
+/// Witt level: 4096-bit ring (RSA-4096, BFV/CKKS HE ring dimension carrier). Backed by Limbs<64>. v0.2.2 Phase C.
+pub mod w4096 {
+    /// `bitsWidth`
+    pub const BITS_WIDTH: i64 = 4096;
+    /// `nextWittLevel` -> `W8192`
+    pub const NEXT_WITT_LEVEL: &str = "https://uor.foundation/schema/W8192";
+    /// `wittLevelPredecessor` -> `W2048`
+    pub const WITT_LEVEL_PREDECESSOR: &str = "https://uor.foundation/schema/W2048";
+}
+
+/// Witt level: 8192-bit ring (lattice-based crypto carrier). Backed by Limbs<128>. v0.2.2 Phase C.
+pub mod w8192 {
+    /// `bitsWidth`
+    pub const BITS_WIDTH: i64 = 8192;
+    /// `nextWittLevel` -> `W12288`
+    pub const NEXT_WITT_LEVEL: &str = "https://uor.foundation/schema/W12288";
+    /// `wittLevelPredecessor` -> `W4096`
+    pub const WITT_LEVEL_PREDECESSOR: &str = "https://uor.foundation/schema/W4096";
+}
+
+/// Witt level: 12288-bit ring (BFV/BGV HE ring dimension at n=12288). Backed by Limbs<192>. v0.2.2 Phase C.
+pub mod w12288 {
+    /// `bitsWidth`
+    pub const BITS_WIDTH: i64 = 12288;
+    /// `nextWittLevel` -> `W16384`
+    pub const NEXT_WITT_LEVEL: &str = "https://uor.foundation/schema/W16384";
+    /// `wittLevelPredecessor` -> `W8192`
+    pub const WITT_LEVEL_PREDECESSOR: &str = "https://uor.foundation/schema/W8192";
+}
+
+/// Witt level: 16384-bit ring (post-quantum lattice parameter). Backed by Limbs<256>. v0.2.2 Phase C.
+pub mod w16384 {
+    /// `bitsWidth`
+    pub const BITS_WIDTH: i64 = 16384;
+    /// `nextWittLevel` -> `W32768`
+    pub const NEXT_WITT_LEVEL: &str = "https://uor.foundation/schema/W32768";
+    /// `wittLevelPredecessor` -> `W12288`
+    pub const WITT_LEVEL_PREDECESSOR: &str = "https://uor.foundation/schema/W12288";
+}
+
+/// Witt level: 32768-bit ring (post-quantum / extreme-precision arithmetic carrier). Backed by Limbs<512>. The highest foundation-shipped level in v0.2.2; downstream Prism implementations may declare higher levels via the `witt_level` conformance declaration form. v0.2.2 Phase C.
+pub mod w32768 {
+    /// `bitsWidth`
+    pub const BITS_WIDTH: i64 = 32768;
+    /// `wittLevelPredecessor` -> `W16384`
+    pub const WITT_LEVEL_PREDECESSOR: &str = "https://uor.foundation/schema/W16384";
+}
+
+pub mod term_critical_identity_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "neg(bnot(x))";
+}
+
+pub mod term_critical_identity_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "succ(x)";
 }
 
 pub mod term_critical_identity_for_all {
@@ -416,6 +3937,111 @@ pub mod term_r_m5_rhs {
 pub mod term_r_m5_for_all {
     /// `variableName`
     pub const VARIABLE_NAME: &str = "x ∈ R_n";
+}
+
+pub mod term_dv_1_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "div(a, 1)";
+}
+
+pub mod term_dv_1_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "a";
+}
+
+pub mod term_dv_1_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "a ∈ R_n";
+}
+
+pub mod term_dv_2_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "div(0, b)";
+}
+
+pub mod term_dv_2_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "0";
+}
+
+pub mod term_dv_2_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "b ∈ R_n, b ≠ 0";
+}
+
+pub mod term_dv_3_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "div(mul(a, b), b)";
+}
+
+pub mod term_dv_3_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "a";
+}
+
+pub mod term_dv_3_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "a, b ∈ R_n, b ≠ 0, mul(a, b) does not overflow";
+}
+
+pub mod term_dv_4_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "a";
+}
+
+pub mod term_dv_4_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "add(mul(div(a, b), b), mod(a, b))";
+}
+
+pub mod term_dv_4_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "a, b ∈ R_n, b ≠ 0";
+}
+
+pub mod term_pw_1_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "pow(a, 0)";
+}
+
+pub mod term_pw_1_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "1";
+}
+
+pub mod term_pw_1_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "a ∈ R_n";
+}
+
+pub mod term_pw_2_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "pow(a, 1)";
+}
+
+pub mod term_pw_2_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "a";
+}
+
+pub mod term_pw_2_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "a ∈ R_n";
+}
+
+pub mod term_pw_3_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "pow(a, add(b, c))";
+}
+
+pub mod term_pw_3_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "mul(pow(a, b), pow(a, c))";
+}
+
+pub mod term_pw_3_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "a, b, c ∈ R_n";
 }
 
 pub mod term_b_1_lhs {
@@ -4442,7 +8068,7 @@ pub mod term_pt_1_for_all {
 
 pub mod term_pt_2_lhs {
     /// `literalValue`
-    pub const LITERAL_VALUE: &str = "partition(A × B)";
+    pub const LITERAL_VALUE: &str = "partition(A × B); grounds PartitionCertificate";
 }
 
 pub mod term_pt_2_rhs {
@@ -4452,7 +8078,8 @@ pub mod term_pt_2_rhs {
 
 pub mod term_pt_2_for_all {
     /// `variableName`
-    pub const VARIABLE_NAME: &str = "A, B: TypeDefinition";
+    pub const VARIABLE_NAME: &str =
+        "A, B: TypeDefinition; ∀ cert:PartitionCertificate c: c.partitionComponent ∈ {Irreducible, Reducible, Units, Exterior}";
 }
 
 pub mod term_pt_3_lhs {
@@ -5340,6 +8967,172 @@ pub mod term_st_5_for_all {
     pub const VARIABLE_NAME: &str = "SumType A + B";
 }
 
+pub mod term_st_6_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "∃! tagSite(A + B)";
+}
+
+pub mod term_st_6_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str =
+        "uniqueSite ∉ dataSites(A) ∪ dataSites(B) ∧ carries ln 2 entropy (ST_2)";
+}
+
+pub mod term_st_6_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "A, B: TypeDefinition";
+}
+
+pub mod term_st_7_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "constraints(A + B)";
+}
+
+pub mod term_st_7_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "constraints(A) ∪ {tag=0} ∪ constraints(B) ∪ {tag=1}";
+}
+
+pub mod term_st_7_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "A, B: TypeDefinition";
+}
+
+pub mod term_st_8_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "disjoint(N(C(A)), N(C(B)))";
+}
+
+pub mod term_st_8_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "true";
+}
+
+pub mod term_st_8_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "A + B constructed via ST_6 ∧ ST_7 ∧ layoutTagSite";
+}
+
+pub mod term_st_9_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "χ(N(C(A + B)))";
+}
+
+pub mod term_st_9_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "χ(N(C(A))) + χ(N(C(B)))";
+}
+
+pub mod term_st_9_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "A + B constructed via PartitionCoproduct";
+}
+
+pub mod term_st_10_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "β_k(A + B)";
+}
+
+pub mod term_st_10_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "β_k(A) + β_k(B)";
+}
+
+pub mod term_st_10_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "A + B constructed via PartitionCoproduct, k ≥ 0";
+}
+
+pub mod term_cpt_1_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "siteBudget(A ⊠ B)";
+}
+
+pub mod term_cpt_1_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "siteBudget(A) + siteBudget(B)";
+}
+
+pub mod term_cpt_1_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "A, B: TypeDefinition";
+}
+
+pub mod term_cpt_2a_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "Π(A ⊠ B)";
+}
+
+pub mod term_cpt_2a_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "CartesianPartitionProduct(Π(A), Π(B))";
+}
+
+pub mod term_cpt_2a_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "A, B: TypeDefinition";
+}
+
+pub mod term_cpt_3_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "χ(N(C(A ⊠ B)))";
+}
+
+pub mod term_cpt_3_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "χ(N(C(A))) · χ(N(C(B)))";
+}
+
+pub mod term_cpt_3_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "A, B: TypeDefinition";
+}
+
+pub mod term_cpt_4_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "β_k(A ⊠ B)";
+}
+
+pub mod term_cpt_4_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "Σ_{i+j=k} β_i(A) · β_j(B)";
+}
+
+pub mod term_cpt_4_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "A, B: TypeDefinition, k ≥ 0";
+}
+
+pub mod term_cpt_5_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "S(A ⊠ B)";
+}
+
+pub mod term_cpt_5_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "S(A) + S(B)";
+}
+
+pub mod term_cpt_5_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "A, B: TypeDefinition";
+}
+
+pub mod term_cpt_6_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "A ⊠ (B + C)";
+}
+
+pub mod term_cpt_6_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "(A ⊠ B) + (A ⊠ C)";
+}
+
+pub mod term_cpt_6_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "A, B, C: TypeDefinition";
+}
+
 pub mod term_ts_8_lhs {
     /// `literalValue`
     pub const LITERAL_VALUE: &str = "min constraints for beta_1 = k";
@@ -6026,17 +9819,18 @@ pub mod term_oa_4_for_all {
 
 pub mod term_oa_5_lhs {
     /// `literalValue`
-    pub const LITERAL_VALUE: &str = "Information cost of δ (division by 2)";
+    pub const LITERAL_VALUE: &str =
+        "Information cost of delta (division by 2); grounds MultiplicationCertificate";
 }
 
 pub mod term_oa_5_rhs {
     /// `literalValue`
-    pub const LITERAL_VALUE: &str = "ln 2 nats";
+    pub const LITERAL_VALUE: &str = "ln 2 nats per MultiplicationCertificate sub-multiplication";
 }
 
 pub mod term_oa_5_for_all {
     /// `variableName`
-    pub const VARIABLE_NAME: &str = "p = 2";
+    pub const VARIABLE_NAME: &str = "p = 2; every MultiplicationCertificate accumulates OA_5 cost";
 }
 
 pub mod term_ht_1_lhs {
@@ -9473,6 +13267,66 @@ pub mod term_io_5_rhs {
 pub mod term_io_5_for_all {
     /// `variableName`
     pub const VARIABLE_NAME: &str = "BoundaryEffect e";
+}
+
+pub mod term_ih_1_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "InhabitanceCertificate(T).verified";
+}
+
+pub mod term_ih_1_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "carrier(T) ≠ ∅";
+}
+
+pub mod term_ih_1_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "T : type:ConstrainedType";
+}
+
+pub mod term_ih_2a_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "cost(TwoSatDecider, T)";
+}
+
+pub mod term_ih_2a_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "O(n + m)";
+}
+
+pub mod term_ih_2a_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "T : type:ConstrainedType | Is2SatShape(T)";
+}
+
+pub mod term_ih_2b_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "cost(HornSatDecider, T)";
+}
+
+pub mod term_ih_2b_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "O(n + m)";
+}
+
+pub mod term_ih_2b_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "T : type:ConstrainedType | IsHornShape(T)";
+}
+
+pub mod term_ih_3_lhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "carrier(reduce(T))";
+}
+
+pub mod term_ih_3_rhs {
+    /// `literalValue`
+    pub const LITERAL_VALUE: &str = "carrier(T)";
+}
+
+pub mod term_ih_3_for_all {
+    /// `variableName`
+    pub const VARIABLE_NAME: &str = "T : type:ConstrainedType";
 }
 
 pub mod term_boundary_squared_zero_lhs {

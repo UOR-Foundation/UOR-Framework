@@ -9,7 +9,7 @@ pub const TEST29_TRIAD_PROJECTION: &str = r#"
 # TriadProjection vocabulary individuals
 query:TwoAdicValuation a query:TriadProjection .
 query:WalshHadamardImage a query:TriadProjection .
-query:RingElement a query:TriadProjection .
+query:Address a query:TriadProjection .
 
 # CoordinateQuery instances with typed triad projections
 <https://uor.foundation/instance/stratum-query>
@@ -22,5 +22,5 @@ query:RingElement a query:TriadProjection .
 
 <https://uor.foundation/instance/address-query>
     a query:CoordinateQuery ;
-    query:hasTriadProjection query:RingElement .
+    query:hasTriadProjection query:Address .
 "#;

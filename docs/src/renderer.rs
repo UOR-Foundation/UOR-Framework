@@ -186,7 +186,7 @@ pub fn render_docs_page(
 </main>
 </div>
 <footer class="site-footer">
-<p>UOR Foundation — <a href="https://uor.foundation/">uor.foundation</a> — Apache-2.0</p>
+<p>UOR Foundation — <a href="https://uor.foundation/">uor.foundation</a> — MIT</p>
 </footer>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
 <script src="{js_url}" defer></script>

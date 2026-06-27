@@ -122,6 +122,23 @@ pub struct Property {
     pub kind: PropertyKind,
     /// Whether this is also an `owl:FunctionalProperty`.
     pub functional: bool,
+    /// Whether the ontology author commits to asserting this property
+    /// on every individual whose `rdf:type` matches `domain` (or a
+    /// subclass of it).
+    ///
+    /// - `true` → the property is required. Lean generates the
+    ///   corresponding structure field as a bare `T` (functional) or
+    ///   `Array T` (non-functional), and the
+    ///   `meta/required_property_coverage` conformance check fails if
+    ///   any domain-matching individual lacks an assertion.
+    /// - `false` → the property is optional. Lean generates the
+    ///   structure field as `Option T` (functional) or `Array T`
+    ///   (non-functional), and a missing assertion becomes
+    ///   proven-by-absence (`none` / `#[]`) instead of a gap.
+    ///
+    /// Default in existing `Property { ... }` literals is `false` —
+    /// opt into strictness explicitly.
+    pub required: bool,
     /// Full IRI of the domain class, or `None` if unspecified.
     pub domain: Option<&'static str>,
     /// Full IRI of the range class or XSD datatype.
@@ -135,7 +152,7 @@ impl fmt::Display for Property {
 }
 
 /// A value in a named individual's property assertion.
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub enum IndividualValue {
     /// A plain string literal.
@@ -144,11 +161,22 @@ pub enum IndividualValue {
     Int(i64),
     /// A boolean literal.
     Bool(bool),
+    /// A decimal literal, projecting to `xsd:decimal`. Stored as
+    /// IEEE 754 double. The canonical form is a bit pattern so the
+    /// enum retains `PartialEq` and `Hash` via bit-level comparison.
+    Float(f64),
     /// An IRI reference to another resource.
     IriRef(&'static str),
     /// An ordered `rdf:List` of IRI references (used for `op:composedOf`).
     List(&'static [&'static str]),
 }
+
+// `IndividualValue` can no longer derive `Eq`/`Hash` automatically
+// because `f64` is neither `Eq` nor `Hash`. The only public use of
+// these traits was insertion into hash-based collections keyed by
+// `IndividualValue`, which does not happen in the codegen pipeline —
+// we always key by property IRI instead. The trait bounds are
+// therefore relaxed to `PartialEq` alone.
 
 impl fmt::Display for IndividualValue {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -156,6 +184,7 @@ impl fmt::Display for IndividualValue {
             IndividualValue::Str(s) => write!(f, "\"{s}\""),
             IndividualValue::Int(n) => write!(f, "{n}"),
             IndividualValue::Bool(b) => write!(f, "{b}"),
+            IndividualValue::Float(x) => write!(f, "{x}"),
             IndividualValue::IriRef(iri) => write!(f, "<{iri}>"),
             IndividualValue::List(items) => {
                 f.write_str("[")?;
@@ -172,7 +201,12 @@ impl fmt::Display for IndividualValue {
 }
 
 /// A named individual (OWL `owl:NamedIndividual`).
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+///
+/// `Eq`/`Hash` were dropped when `IndividualValue::Float(f64)` was
+/// added, since `f64` has no such instances. No code in the workspace
+/// inserted `Individual` values into hash-based collections — lookups
+/// always key by IRI instead.
+#[derive(Debug, Clone, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct Individual {
     /// Full IRI.
@@ -194,7 +228,11 @@ impl fmt::Display for Individual {
 }
 
 /// A complete namespace module: namespace metadata + classes + properties + individuals.
-#[derive(Debug, Clone, PartialEq, Eq)]
+///
+/// `Eq` dropped because `Individual` no longer implements it (see the
+/// comment on `Individual`). `PartialEq` remains sufficient for test
+/// assertions that compare whole modules.
+#[derive(Debug, Clone, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct NamespaceModule {
     /// Namespace metadata.
@@ -222,7 +260,7 @@ pub struct AnnotationProperty {
 }
 
 /// The complete UOR Foundation ontology.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct Ontology {
     /// Ontology version (e.g., `"1.1.0"`).
@@ -243,6 +281,42 @@ impl Ontology {
             .iter()
             .flat_map(|m| m.classes.iter())
             .find(|c| c.id == iri)
+    }
+
+    /// Looks up a class by its local name (the last `/`-delimited segment of
+    /// its IRI). Used by both Rust and Lean codegen to resolve vocabulary-enum
+    /// class definitions without hardcoding IRIs.
+    #[must_use]
+    pub fn find_class_by_local_name(&self, local: &str) -> Option<&Class> {
+        let suffix = format!("/{local}");
+        self.namespaces
+            .iter()
+            .flat_map(|m| m.classes.iter())
+            .find(|c| c.id.ends_with(&suffix))
+    }
+
+    /// Returns the canonical doc comment for a vocabulary-enum class by local
+    /// name, looked up from the ontology's own class definitions.
+    ///
+    /// Used by both `codegen/` (Rust) and `lean-codegen/` to guarantee that
+    /// enum-class doc comments in the two generators cannot drift.
+    #[must_use]
+    pub fn enum_class_comment(&self, class_local_name: &str) -> Option<&'static str> {
+        self.find_class_by_local_name(class_local_name)
+            .map(|c| c.comment)
+    }
+
+    /// Returns the namespace prefix (e.g. `"op"`, `"resolver"`) owning a
+    /// vocabulary-enum class, looked up by local name.
+    #[must_use]
+    pub fn enum_class_namespace(&self, class_local_name: &str) -> Option<&'static str> {
+        let suffix = format!("/{class_local_name}");
+        for module in &self.namespaces {
+            if module.classes.iter().any(|c| c.id.ends_with(&suffix)) {
+                return Some(module.namespace.prefix);
+            }
+        }
+        None
     }
 
     /// Looks up a property by its full IRI. Returns `None` if not found.
@@ -315,6 +389,7 @@ impl Ontology {
             "VerificationDomain",
             "ViolationKind",
             "WittLevel",
+            "PartitionComponent",
         ]
     }
 }
@@ -386,7 +461,7 @@ pub fn rewrite_identity_ast_refs(mut individuals: Vec<Individual>) -> Vec<Indivi
                 let iri: &'static str = Box::leak(iri.into_boxed_str());
                 new_props.push((prop, IndividualValue::IriRef(iri)));
             } else {
-                new_props.push((prop, val.clone()));
+                new_props.push((prop, *val));
             }
         }
         let leaked: &'static [(&'static str, IndividualValue)] =
@@ -483,6 +558,11 @@ pub mod iris {
 
     /// Effect algebra namespace.
     pub const NS_EFFECT: &str = "https://uor.foundation/effect/";
+    /// Foundation-level layout invariants namespace (Product/Coproduct
+    /// Completion Amendment). Complements op-namespace theorems by
+    /// quantifying over foundation-defined `SITE_COUNT` arithmetic and
+    /// `ConstraintRef` encoding disciplines.
+    pub const NS_FOUNDATION: &str = "https://uor.foundation/foundation/";
 
     // XSD datatypes
     /// `xsd:string`.

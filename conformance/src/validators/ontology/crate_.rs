@@ -43,8 +43,8 @@ pub fn validate(workspace: &Path) -> Result<ConformanceReport> {
     // 4. Individual completeness: every non-enum individual has a const module or enum variant
     validate_individual_completeness(&src_dir, ontology, &mut report)?;
 
-    // 5. Primitives trait exists
-    validate_primitives_trait(&src_dir, &mut report)?;
+    // 5. HostTypes trait exists
+    validate_host_types_trait(&src_dir, &mut report)?;
 
     Ok(report)
 }
@@ -337,39 +337,32 @@ fn validate_individual_completeness(
     Ok(())
 }
 
-/// Validates that the `Primitives` trait exists in lib.rs.
-fn validate_primitives_trait(src_dir: &Path, report: &mut ConformanceReport) -> Result<()> {
+/// Validates that the `HostTypes` trait exists in lib.rs.
+fn validate_host_types_trait(src_dir: &Path, report: &mut ConformanceReport) -> Result<()> {
     let lib_rs = std::fs::read_to_string(src_dir.join("lib.rs"))
         .with_context(|| "Failed to read foundation/src/lib.rs")?;
 
-    if lib_rs.contains("pub trait Primitives") {
+    if lib_rs.contains("pub trait HostTypes") {
         report.push(TestResult::pass(
             VALIDATOR,
-            "Primitives type family trait present in lib.rs",
+            "HostTypes type family trait present in lib.rs",
         ));
     } else {
         report.push(TestResult::fail(
             VALIDATOR,
-            "Primitives type family trait not found in lib.rs",
+            "HostTypes type family trait not found in lib.rs",
         ));
     }
 
-    // Check expected associated types
-    let expected_types = [
-        "String",
-        "Integer",
-        "NonNegativeInteger",
-        "PositiveInteger",
-        "Decimal",
-        "Boolean",
-    ];
+    // Check expected associated types (3 slots: Decimal, HostString, WitnessBytes)
+    let expected_types = ["Decimal", "HostString", "WitnessBytes"];
     let mut all_types = true;
     for t in &expected_types {
         let pattern = format!("type {t}");
         if !lib_rs.contains(&pattern) {
             report.push(TestResult::fail(
                 VALIDATOR,
-                format!("Primitives trait missing associated type: {t}"),
+                format!("HostTypes trait missing associated type: {t}"),
             ));
             all_types = false;
         }
@@ -378,7 +371,7 @@ fn validate_primitives_trait(src_dir: &Path, report: &mut ConformanceReport) -> 
         report.push(TestResult::pass(
             VALIDATOR,
             format!(
-                "Primitives trait has all {} expected associated types",
+                "HostTypes trait has all {} expected associated types",
                 expected_types.len()
             ),
         ));

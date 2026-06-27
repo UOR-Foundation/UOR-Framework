@@ -1403,6 +1403,54 @@ pub fn validate() -> ConformanceReport {
         tests::fixtures::TEST276_WITNESS_SITE_BUDGET,
         &mut report,
     );
+    run_test(
+        "test277_inhabitance_verdict",
+        tests::fixtures::TEST277_INHABITANCE_VERDICT,
+        &mut report,
+    );
+    run_test(
+        "test278_v021_cleanup_bounds",
+        tests::fixtures::TEST278_V021_CLEANUP_BOUNDS,
+        &mut report,
+    );
+    run_test(
+        "test279_multiplication_certificate",
+        tests::fixtures::TEST279_MULTIPLICATION_CERTIFICATE,
+        &mut report,
+    );
+    run_test(
+        "test280_bridge_completion",
+        tests::fixtures::TEST280_BRIDGE_COMPLETION,
+        &mut report,
+    );
+    // Product/Coproduct Completion Amendment SHACL fixtures.
+    run_test(
+        "test285_cartesian_partition_product",
+        tests::fixtures::TEST285_CARTESIAN_PARTITION_PRODUCT,
+        &mut report,
+    );
+    run_test(
+        "test286_tag_site",
+        tests::fixtures::TEST286_TAG_SITE,
+        &mut report,
+    );
+    run_test(
+        "test287_layout_invariant",
+        tests::fixtures::TEST287_LAYOUT_INVARIANT,
+        &mut report,
+    );
+    // Wiki ADR-038: AxisProjectionObservable closed-catalog extension.
+    run_test(
+        "test288_axis_projection_observable",
+        tests::fixtures::TEST288_AXIS_PROJECTION_OBSERVABLE,
+        &mut report,
+    );
+    // Wiki ADR-049: SpectralObservable closed-catalog extension.
+    run_test(
+        "test289_spectral_observable",
+        tests::fixtures::TEST289_SPECTRAL_OBSERVABLE,
+        &mut report,
+    );
 
     // Verify test fixture count matches expected
     let test_count = report.results.len() - before_tests;

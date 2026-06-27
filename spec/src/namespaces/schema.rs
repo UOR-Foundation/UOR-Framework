@@ -62,7 +62,11 @@ fn classes() -> Vec<Class> {
             label: "Triad",
             comment: "A three-component structure encoding an element's position in \
                       the UOR address space: stratum (ring layer), spectrum (bit \
-                      pattern), and glyph (Braille address).",
+                      pattern), and address (content-addressable position in the \
+                      Braille glyph encoding). The three required functional \
+                      properties schema:triadStratum, schema:triadSpectrum, and \
+                      schema:triadAddress project a Triad onto its TwoAdicValuation, \
+                      WalshHadamardImage, and Address coordinates respectively.",
             subclass_of: &[OWL_THING],
             disjoint_with: &[],
         },
@@ -233,6 +237,16 @@ fn classes() -> Vec<Class> {
             subclass_of: &["https://uor.foundation/schema/HostValue"],
             disjoint_with: &[],
         },
+        // v0.2.1: Inhabitance witness carrier
+        Class {
+            id: "https://uor.foundation/schema/ValueTuple",
+            label: "ValueTuple",
+            comment: "An ordered tuple of values drawn from a type:ConstrainedType's \
+                      carrier. Serves as the witness form for cert:InhabitanceCertificate \
+                      when verified is true.",
+            subclass_of: &[OWL_THING],
+            disjoint_with: &[],
+        },
     ]
 }
 
@@ -245,6 +259,7 @@ fn properties() -> Vec<Property> {
                       this is an integer in [0, 2^n).",
             kind: PropertyKind::Datatype,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/schema/Datum"),
             range: XSD_NON_NEGATIVE_INTEGER,
         },
@@ -255,6 +270,7 @@ fn properties() -> Vec<Property> {
                       Z/(2^n)Z. Determines the bit width and modulus of the datum.",
             kind: PropertyKind::Datatype,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/schema/Datum"),
             range: XSD_POSITIVE_INTEGER,
         },
@@ -265,6 +281,7 @@ fn properties() -> Vec<Property> {
                       the stratification of Z/(2^n)Z.",
             kind: PropertyKind::Datatype,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/schema/Datum"),
             range: XSD_NON_NEGATIVE_INTEGER,
         },
@@ -275,6 +292,7 @@ fn properties() -> Vec<Property> {
                       position in the hypercube geometry of Z/(2^n)Z.",
             kind: PropertyKind::Datatype,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/schema/Datum"),
             range: XSD_NON_NEGATIVE_INTEGER,
         },
@@ -285,6 +303,7 @@ fn properties() -> Vec<Property> {
                       linking the algebraic value to its identifier.",
             kind: PropertyKind::Object,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/schema/Datum"),
             range: "https://uor.foundation/u/Element",
         },
@@ -294,6 +313,7 @@ fn properties() -> Vec<Property> {
             comment: "The operation applied in an Application term.",
             kind: PropertyKind::Object,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/schema/Application"),
             range: "https://uor.foundation/op/Operation",
         },
@@ -304,6 +324,7 @@ fn properties() -> Vec<Property> {
                       follows rdf:List semantics.",
             kind: PropertyKind::Object,
             functional: false,
+            required: false,
             domain: Some("https://uor.foundation/schema/Application"),
             range: "https://uor.foundation/schema/Term",
         },
@@ -316,6 +337,7 @@ fn properties() -> Vec<Property> {
                       bit width; datum wittLength is a membership property.",
             kind: PropertyKind::Datatype,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/schema/Ring"),
             range: XSD_POSITIVE_INTEGER,
         },
@@ -326,6 +348,7 @@ fn properties() -> Vec<Property> {
                       of ringWittLength.",
             kind: PropertyKind::Datatype,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/schema/Ring"),
             range: XSD_POSITIVE_INTEGER,
         },
@@ -336,6 +359,7 @@ fn properties() -> Vec<Property> {
                       iterated successor application, π₁ generates all ring elements.",
             kind: PropertyKind::Object,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/schema/Ring"),
             range: "https://uor.foundation/schema/Datum",
         },
@@ -346,6 +370,7 @@ fn properties() -> Vec<Property> {
                       One of the two generators of the dihedral group D_{2^n}.",
             kind: PropertyKind::Object,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/schema/Ring"),
             range: "https://uor.foundation/op/Involution",
         },
@@ -356,6 +381,7 @@ fn properties() -> Vec<Property> {
                       The second generator of the dihedral group D_{2^n}.",
             kind: PropertyKind::Object,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/schema/Ring"),
             range: "https://uor.foundation/op/Involution",
         },
@@ -367,6 +393,7 @@ fn properties() -> Vec<Property> {
                       being one. Evaluation of a Literal produces its denoted Datum.",
             kind: PropertyKind::Object,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/schema/Literal"),
             range: "https://uor.foundation/schema/Datum",
         },
@@ -377,6 +404,7 @@ fn properties() -> Vec<Property> {
             comment: "The bit width 8*(k+1) of this Witt level.",
             kind: PropertyKind::Datatype,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/schema/WittLevel"),
             range: XSD_POSITIVE_INTEGER,
         },
@@ -386,6 +414,7 @@ fn properties() -> Vec<Property> {
             comment: "The number of distinct states 2^(8*(k+1)) at this Witt level.",
             kind: PropertyKind::Datatype,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/schema/WittLevel"),
             range: XSD_POSITIVE_INTEGER,
         },
@@ -397,6 +426,7 @@ fn properties() -> Vec<Property> {
                       in the spec but may be declared by Prism implementations.",
             kind: PropertyKind::Object,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/schema/WittLevel"),
             range: "https://uor.foundation/schema/WittLevel",
         },
@@ -410,6 +440,7 @@ fn properties() -> Vec<Property> {
                       protocol (QL_8).",
             kind: PropertyKind::Object,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/schema/WittLevel"),
             range: "https://uor.foundation/schema/WittLevel",
         },
@@ -420,6 +451,7 @@ fn properties() -> Vec<Property> {
                       concrete Ring individual to its WittLevel.",
             kind: PropertyKind::Object,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/schema/Ring"),
             range: "https://uor.foundation/schema/WittLevel",
         },
@@ -430,6 +462,7 @@ fn properties() -> Vec<Property> {
             comment: "Bit width of the Q1 ring: 16.",
             kind: PropertyKind::Datatype,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/schema/W16Ring"),
             range: XSD_POSITIVE_INTEGER,
         },
@@ -439,6 +472,7 @@ fn properties() -> Vec<Property> {
             comment: "Carrier set size of the Q1 ring: 65,536 elements.",
             kind: PropertyKind::Datatype,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/schema/W16Ring"),
             range: XSD_POSITIVE_INTEGER,
         },
@@ -450,6 +484,7 @@ fn properties() -> Vec<Property> {
                       Non-functional: a ForAllDeclaration may bind multiple variables.",
             kind: PropertyKind::Object,
             functional: false,
+            required: false,
             domain: Some("https://uor.foundation/schema/ForAllDeclaration"),
             range: "https://uor.foundation/schema/VariableBinding",
         },
@@ -460,6 +495,7 @@ fn properties() -> Vec<Property> {
                       type:ConstrainedType).",
             kind: PropertyKind::Object,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/schema/VariableBinding"),
             range: OWL_CLASS,
         },
@@ -469,6 +505,7 @@ fn properties() -> Vec<Property> {
             comment: "The name of a bound variable (e.g., 'x', 'y', 'n').",
             kind: PropertyKind::Datatype,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/schema/VariableBinding"),
             range: XSD_STRING,
         },
@@ -478,6 +515,7 @@ fn properties() -> Vec<Property> {
             comment: "The kind of quantifier: Universal or Existential.",
             kind: PropertyKind::Object,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/schema/ForAllDeclaration"),
             range: "https://uor.foundation/schema/QuantifierKind",
         },
@@ -487,6 +525,7 @@ fn properties() -> Vec<Property> {
             comment: "The operator in an application expression (e.g., op:add, op:neg).",
             kind: PropertyKind::Object,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/schema/ApplicationExpression"),
             range: "https://uor.foundation/op/Operation",
         },
@@ -496,6 +535,7 @@ fn properties() -> Vec<Property> {
             comment: "The left operand of an infix expression.",
             kind: PropertyKind::Object,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/schema/InfixExpression"),
             range: "https://uor.foundation/schema/TermExpression",
         },
@@ -505,6 +545,7 @@ fn properties() -> Vec<Property> {
             comment: "The right operand of an infix expression.",
             kind: PropertyKind::Object,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/schema/InfixExpression"),
             range: "https://uor.foundation/schema/TermExpression",
         },
@@ -515,6 +556,7 @@ fn properties() -> Vec<Property> {
                       an application may take multiple arguments.",
             kind: PropertyKind::Object,
             functional: false,
+            required: false,
             domain: Some("https://uor.foundation/schema/ApplicationExpression"),
             range: "https://uor.foundation/schema/TermExpression",
         },
@@ -525,6 +567,7 @@ fn properties() -> Vec<Property> {
                       (e.g., '42', 'x', 'pi1').",
             kind: PropertyKind::Datatype,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/schema/LiteralExpression"),
             range: XSD_STRING,
         },
@@ -535,6 +578,7 @@ fn properties() -> Vec<Property> {
                       '\\u{2264}', '\\u{2192}').",
             kind: PropertyKind::Datatype,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/schema/InfixExpression"),
             range: XSD_STRING,
         },
@@ -545,6 +589,7 @@ fn properties() -> Vec<Property> {
             comment: "The string value carried by a HostStringLiteral.",
             kind: PropertyKind::Datatype,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/schema/HostStringLiteral"),
             range: XSD_STRING,
         },
@@ -554,8 +599,51 @@ fn properties() -> Vec<Property> {
             comment: "The boolean value carried by a HostBooleanLiteral.",
             kind: PropertyKind::Datatype,
             functional: true,
+            required: false,
             domain: Some("https://uor.foundation/schema/HostBooleanLiteral"),
             range: XSD_BOOLEAN,
+        },
+        // v0.2.2 W8: Triad bundling — functional projection properties.
+        // These form the canonical observable triple of a Datum at grounding time:
+        // (stratum, spectrum, address). Cardinality-exactly-1 is enforced at the
+        // Rust surface by making the Triad<L> struct fields non-Option.
+        Property {
+            id: "https://uor.foundation/schema/triadStratum",
+            label: "triadStratum",
+            comment: "The stratum component of a Triad: the datum's two-adic \
+                      valuation, indexing its layer in the ring stratification. \
+                      Semantically corresponds to query:TwoAdicValuation.",
+            kind: PropertyKind::Datatype,
+            functional: true,
+            required: false,
+            domain: Some("https://uor.foundation/schema/Triad"),
+            range: XSD_NON_NEGATIVE_INTEGER,
+        },
+        Property {
+            id: "https://uor.foundation/schema/triadSpectrum",
+            label: "triadSpectrum",
+            comment: "The spectrum component of a Triad: the datum's \
+                      Walsh-Hadamard transform image, indexing its position in \
+                      the hypercube spectral decomposition. Semantically \
+                      corresponds to query:WalshHadamardImage.",
+            kind: PropertyKind::Datatype,
+            functional: true,
+            required: false,
+            domain: Some("https://uor.foundation/schema/Triad"),
+            range: XSD_NON_NEGATIVE_INTEGER,
+        },
+        Property {
+            id: "https://uor.foundation/schema/triadAddress",
+            label: "triadAddress",
+            comment: "The address component of a Triad: the datum's \
+                      content-addressable position in the ring's Braille glyph \
+                      encoding. Semantically corresponds to query:Address \
+                      (renamed from RingElement in v0.2.2 W8).",
+            kind: PropertyKind::Datatype,
+            functional: true,
+            required: false,
+            domain: Some("https://uor.foundation/schema/Triad"),
+            range: XSD_NON_NEGATIVE_INTEGER,
         },
     ]
 }
@@ -772,8 +860,8 @@ fn individuals() -> Vec<Individual> {
             type_: "https://uor.foundation/schema/WittLevel",
             label: "W32",
             comment: "Witt level 3: 32-bit ring Z/4294967296Z, 4,294,967,296 states. \
-                      The highest named level in the spec. nextWittLevel is absent — Prism \
-                      implementations may extend the chain.",
+                      The highest 32-bit-and-below named level in the v0.2.1 spec; v0.2.2 \
+                      Phase C extends the tower with the dense and powers-of-two set.",
             properties: &[
                 (
                     "https://uor.foundation/schema/bitsWidth",
@@ -784,8 +872,638 @@ fn individuals() -> Vec<Individual> {
                     IndividualValue::Int(4_294_967_296),
                 ),
                 (
+                    "https://uor.foundation/schema/nextWittLevel",
+                    IndividualValue::IriRef("https://uor.foundation/schema/W40"),
+                ),
+                (
                     "https://uor.foundation/schema/wittLevelPredecessor",
                     IndividualValue::IriRef("https://uor.foundation/schema/W24"),
+                ),
+            ],
+        },
+        // ─────────────────────────────────────────────────────────────────
+        // v0.2.2 Phase C.1 — dense u64-backed Witt levels (W40, W48, W56, W64).
+        // bit_width = 8·(k+1), k = 4..7. cycleSize fits in i64 for all four.
+        // ─────────────────────────────────────────────────────────────────
+        Individual {
+            id: "https://uor.foundation/schema/W40",
+            type_: "https://uor.foundation/schema/WittLevel",
+            label: "W40",
+            comment: "Witt level 4: 40-bit ring Z/2^40 Z. Backed by u64 with a \
+                      40-bit mask at the arithmetic boundary. v0.2.2 Phase C.",
+            properties: &[
+                (
+                    "https://uor.foundation/schema/bitsWidth",
+                    IndividualValue::Int(40),
+                ),
+                (
+                    "https://uor.foundation/schema/cycleSize",
+                    IndividualValue::Int(1_099_511_627_776),
+                ),
+                (
+                    "https://uor.foundation/schema/nextWittLevel",
+                    IndividualValue::IriRef("https://uor.foundation/schema/W48"),
+                ),
+                (
+                    "https://uor.foundation/schema/wittLevelPredecessor",
+                    IndividualValue::IriRef("https://uor.foundation/schema/W32"),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/schema/W48",
+            type_: "https://uor.foundation/schema/WittLevel",
+            label: "W48",
+            comment: "Witt level 5: 48-bit ring Z/2^48 Z. Backed by u64 with a \
+                      48-bit mask at the arithmetic boundary. v0.2.2 Phase C.",
+            properties: &[
+                (
+                    "https://uor.foundation/schema/bitsWidth",
+                    IndividualValue::Int(48),
+                ),
+                (
+                    "https://uor.foundation/schema/cycleSize",
+                    IndividualValue::Int(281_474_976_710_656),
+                ),
+                (
+                    "https://uor.foundation/schema/nextWittLevel",
+                    IndividualValue::IriRef("https://uor.foundation/schema/W56"),
+                ),
+                (
+                    "https://uor.foundation/schema/wittLevelPredecessor",
+                    IndividualValue::IriRef("https://uor.foundation/schema/W40"),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/schema/W56",
+            type_: "https://uor.foundation/schema/WittLevel",
+            label: "W56",
+            comment: "Witt level 6: 56-bit ring Z/2^56 Z. Backed by u64 with a \
+                      56-bit mask at the arithmetic boundary. v0.2.2 Phase C.",
+            properties: &[
+                (
+                    "https://uor.foundation/schema/bitsWidth",
+                    IndividualValue::Int(56),
+                ),
+                (
+                    "https://uor.foundation/schema/cycleSize",
+                    IndividualValue::Int(72_057_594_037_927_936),
+                ),
+                (
+                    "https://uor.foundation/schema/nextWittLevel",
+                    IndividualValue::IriRef("https://uor.foundation/schema/W64"),
+                ),
+                (
+                    "https://uor.foundation/schema/wittLevelPredecessor",
+                    IndividualValue::IriRef("https://uor.foundation/schema/W48"),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/schema/W64",
+            type_: "https://uor.foundation/schema/WittLevel",
+            label: "W64",
+            comment: "Witt level 7: 64-bit ring Z/2^64 Z. Backed by u64 directly \
+                      (exact fit; no mask). v0.2.2 Phase C. cycle_size = 2^64 \
+                      exceeds i64 representation and is omitted; codegen derives \
+                      it from bit_width.",
+            properties: &[
+                (
+                    "https://uor.foundation/schema/bitsWidth",
+                    IndividualValue::Int(64),
+                ),
+                (
+                    "https://uor.foundation/schema/nextWittLevel",
+                    IndividualValue::IriRef("https://uor.foundation/schema/W72"),
+                ),
+                (
+                    "https://uor.foundation/schema/wittLevelPredecessor",
+                    IndividualValue::IriRef("https://uor.foundation/schema/W56"),
+                ),
+            ],
+        },
+        // ─────────────────────────────────────────────────────────────────
+        // v0.2.2 Phase C.2 — dense u128-backed Witt levels (W72..W128).
+        // bit_width = 8·(k+1), k = 8..15. cycleSize is omitted for all
+        // (2^bits > i64::MAX). Backing: u128 with bit-width mask at
+        // arithmetic boundary; W128 is exact-fit (no mask).
+        // ─────────────────────────────────────────────────────────────────
+        Individual {
+            id: "https://uor.foundation/schema/W72",
+            type_: "https://uor.foundation/schema/WittLevel",
+            label: "W72",
+            comment: "Witt level 8: 72-bit ring Z/2^72 Z. Backed by u128 with a \
+                      72-bit mask at the arithmetic boundary. v0.2.2 Phase C.",
+            properties: &[
+                (
+                    "https://uor.foundation/schema/bitsWidth",
+                    IndividualValue::Int(72),
+                ),
+                (
+                    "https://uor.foundation/schema/nextWittLevel",
+                    IndividualValue::IriRef("https://uor.foundation/schema/W80"),
+                ),
+                (
+                    "https://uor.foundation/schema/wittLevelPredecessor",
+                    IndividualValue::IriRef("https://uor.foundation/schema/W64"),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/schema/W80",
+            type_: "https://uor.foundation/schema/WittLevel",
+            label: "W80",
+            comment: "Witt level 9: 80-bit ring Z/2^80 Z. Backed by u128 with an \
+                      80-bit mask at the arithmetic boundary. v0.2.2 Phase C.",
+            properties: &[
+                (
+                    "https://uor.foundation/schema/bitsWidth",
+                    IndividualValue::Int(80),
+                ),
+                (
+                    "https://uor.foundation/schema/nextWittLevel",
+                    IndividualValue::IriRef("https://uor.foundation/schema/W88"),
+                ),
+                (
+                    "https://uor.foundation/schema/wittLevelPredecessor",
+                    IndividualValue::IriRef("https://uor.foundation/schema/W72"),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/schema/W88",
+            type_: "https://uor.foundation/schema/WittLevel",
+            label: "W88",
+            comment: "Witt level 10: 88-bit ring Z/2^88 Z. Backed by u128 with an \
+                      88-bit mask at the arithmetic boundary. v0.2.2 Phase C.",
+            properties: &[
+                (
+                    "https://uor.foundation/schema/bitsWidth",
+                    IndividualValue::Int(88),
+                ),
+                (
+                    "https://uor.foundation/schema/nextWittLevel",
+                    IndividualValue::IriRef("https://uor.foundation/schema/W96"),
+                ),
+                (
+                    "https://uor.foundation/schema/wittLevelPredecessor",
+                    IndividualValue::IriRef("https://uor.foundation/schema/W80"),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/schema/W96",
+            type_: "https://uor.foundation/schema/WittLevel",
+            label: "W96",
+            comment: "Witt level 11: 96-bit ring Z/2^96 Z. Backed by u128 with a \
+                      96-bit mask at the arithmetic boundary. v0.2.2 Phase C.",
+            properties: &[
+                (
+                    "https://uor.foundation/schema/bitsWidth",
+                    IndividualValue::Int(96),
+                ),
+                (
+                    "https://uor.foundation/schema/nextWittLevel",
+                    IndividualValue::IriRef("https://uor.foundation/schema/W104"),
+                ),
+                (
+                    "https://uor.foundation/schema/wittLevelPredecessor",
+                    IndividualValue::IriRef("https://uor.foundation/schema/W88"),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/schema/W104",
+            type_: "https://uor.foundation/schema/WittLevel",
+            label: "W104",
+            comment: "Witt level 12: 104-bit ring Z/2^104 Z. Backed by u128 with \
+                      a 104-bit mask at the arithmetic boundary. v0.2.2 Phase C.",
+            properties: &[
+                (
+                    "https://uor.foundation/schema/bitsWidth",
+                    IndividualValue::Int(104),
+                ),
+                (
+                    "https://uor.foundation/schema/nextWittLevel",
+                    IndividualValue::IriRef("https://uor.foundation/schema/W112"),
+                ),
+                (
+                    "https://uor.foundation/schema/wittLevelPredecessor",
+                    IndividualValue::IriRef("https://uor.foundation/schema/W96"),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/schema/W112",
+            type_: "https://uor.foundation/schema/WittLevel",
+            label: "W112",
+            comment: "Witt level 13: 112-bit ring Z/2^112 Z. Backed by u128 with \
+                      a 112-bit mask at the arithmetic boundary. v0.2.2 Phase C.",
+            properties: &[
+                (
+                    "https://uor.foundation/schema/bitsWidth",
+                    IndividualValue::Int(112),
+                ),
+                (
+                    "https://uor.foundation/schema/nextWittLevel",
+                    IndividualValue::IriRef("https://uor.foundation/schema/W120"),
+                ),
+                (
+                    "https://uor.foundation/schema/wittLevelPredecessor",
+                    IndividualValue::IriRef("https://uor.foundation/schema/W104"),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/schema/W120",
+            type_: "https://uor.foundation/schema/WittLevel",
+            label: "W120",
+            comment: "Witt level 14: 120-bit ring Z/2^120 Z. Backed by u128 with \
+                      a 120-bit mask at the arithmetic boundary. v0.2.2 Phase C.",
+            properties: &[
+                (
+                    "https://uor.foundation/schema/bitsWidth",
+                    IndividualValue::Int(120),
+                ),
+                (
+                    "https://uor.foundation/schema/nextWittLevel",
+                    IndividualValue::IriRef("https://uor.foundation/schema/W128"),
+                ),
+                (
+                    "https://uor.foundation/schema/wittLevelPredecessor",
+                    IndividualValue::IriRef("https://uor.foundation/schema/W112"),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/schema/W128",
+            type_: "https://uor.foundation/schema/WittLevel",
+            label: "W128",
+            comment: "Witt level 15: 128-bit ring Z/2^128 Z. Backed by u128 \
+                      directly (exact fit; no mask). The largest native-backed \
+                      Witt level; levels above W128 use the Limbs<N> generic \
+                      kernel emitted in Phase C.3. v0.2.2 Phase C.",
+            properties: &[
+                (
+                    "https://uor.foundation/schema/bitsWidth",
+                    IndividualValue::Int(128),
+                ),
+                (
+                    "https://uor.foundation/schema/nextWittLevel",
+                    IndividualValue::IriRef("https://uor.foundation/schema/W160"),
+                ),
+                (
+                    "https://uor.foundation/schema/wittLevelPredecessor",
+                    IndividualValue::IriRef("https://uor.foundation/schema/W120"),
+                ),
+            ],
+        },
+        // ─────────────────────────────────────────────────────────────────
+        // v0.2.2 Phase C.3 — Limbs<N>-backed Witt levels (W160..W32768).
+        // Each level bit_width is a multiple of 8; backed by `Limbs<N>`
+        // where N = ⌈bit_width / 64⌉. The chain is sorted by bit width:
+        //   semantically-meaningful intermediates: W160 (SHA-1), W192,
+        //   W224 (SHA-224), W384 (SHA-384, P-384), W448, W520, W528 (P-521),
+        //   W12288, W32768.
+        //   powers-of-two above native: W256, W512, W1024, W2048, W4096,
+        //   W8192, W16384.
+        // Total 16 individuals, sorted by bit width below.
+        // ─────────────────────────────────────────────────────────────────
+        Individual {
+            id: "https://uor.foundation/schema/W160",
+            type_: "https://uor.foundation/schema/WittLevel",
+            label: "W160",
+            comment: "Witt level: 160-bit ring (SHA-1 digest carrier). Backed \
+                      by Limbs<3> with a 160-bit mask. v0.2.2 Phase C.",
+            properties: &[
+                (
+                    "https://uor.foundation/schema/bitsWidth",
+                    IndividualValue::Int(160),
+                ),
+                (
+                    "https://uor.foundation/schema/nextWittLevel",
+                    IndividualValue::IriRef("https://uor.foundation/schema/W192"),
+                ),
+                (
+                    "https://uor.foundation/schema/wittLevelPredecessor",
+                    IndividualValue::IriRef("https://uor.foundation/schema/W128"),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/schema/W192",
+            type_: "https://uor.foundation/schema/WittLevel",
+            label: "W192",
+            comment: "Witt level: 192-bit ring (P-192 carrier). Backed by Limbs<3>. \
+                      v0.2.2 Phase C.",
+            properties: &[
+                (
+                    "https://uor.foundation/schema/bitsWidth",
+                    IndividualValue::Int(192),
+                ),
+                (
+                    "https://uor.foundation/schema/nextWittLevel",
+                    IndividualValue::IriRef("https://uor.foundation/schema/W224"),
+                ),
+                (
+                    "https://uor.foundation/schema/wittLevelPredecessor",
+                    IndividualValue::IriRef("https://uor.foundation/schema/W160"),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/schema/W224",
+            type_: "https://uor.foundation/schema/WittLevel",
+            label: "W224",
+            comment: "Witt level: 224-bit ring (SHA-224 digest carrier). Backed by \
+                      Limbs<4> with a 224-bit mask. v0.2.2 Phase C.",
+            properties: &[
+                (
+                    "https://uor.foundation/schema/bitsWidth",
+                    IndividualValue::Int(224),
+                ),
+                (
+                    "https://uor.foundation/schema/nextWittLevel",
+                    IndividualValue::IriRef("https://uor.foundation/schema/W256"),
+                ),
+                (
+                    "https://uor.foundation/schema/wittLevelPredecessor",
+                    IndividualValue::IriRef("https://uor.foundation/schema/W192"),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/schema/W256",
+            type_: "https://uor.foundation/schema/WittLevel",
+            label: "W256",
+            comment: "Witt level: 256-bit ring (SHA-256, blake3, secp256k1, P-256 \
+                      carrier). Backed by Limbs<4> directly (exact fit; no mask). \
+                      v0.2.2 Phase C.",
+            properties: &[
+                (
+                    "https://uor.foundation/schema/bitsWidth",
+                    IndividualValue::Int(256),
+                ),
+                (
+                    "https://uor.foundation/schema/nextWittLevel",
+                    IndividualValue::IriRef("https://uor.foundation/schema/W384"),
+                ),
+                (
+                    "https://uor.foundation/schema/wittLevelPredecessor",
+                    IndividualValue::IriRef("https://uor.foundation/schema/W224"),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/schema/W384",
+            type_: "https://uor.foundation/schema/WittLevel",
+            label: "W384",
+            comment: "Witt level: 384-bit ring (SHA-384, P-384 carrier). Backed by \
+                      Limbs<6> directly (exact fit; no mask). v0.2.2 Phase C.",
+            properties: &[
+                (
+                    "https://uor.foundation/schema/bitsWidth",
+                    IndividualValue::Int(384),
+                ),
+                (
+                    "https://uor.foundation/schema/nextWittLevel",
+                    IndividualValue::IriRef("https://uor.foundation/schema/W448"),
+                ),
+                (
+                    "https://uor.foundation/schema/wittLevelPredecessor",
+                    IndividualValue::IriRef("https://uor.foundation/schema/W256"),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/schema/W448",
+            type_: "https://uor.foundation/schema/WittLevel",
+            label: "W448",
+            comment: "Witt level: 448-bit ring (Curve448 carrier). Backed by \
+                      Limbs<7> directly (exact fit; no mask). v0.2.2 Phase C.",
+            properties: &[
+                (
+                    "https://uor.foundation/schema/bitsWidth",
+                    IndividualValue::Int(448),
+                ),
+                (
+                    "https://uor.foundation/schema/nextWittLevel",
+                    IndividualValue::IriRef("https://uor.foundation/schema/W512"),
+                ),
+                (
+                    "https://uor.foundation/schema/wittLevelPredecessor",
+                    IndividualValue::IriRef("https://uor.foundation/schema/W384"),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/schema/W512",
+            type_: "https://uor.foundation/schema/WittLevel",
+            label: "W512",
+            comment: "Witt level: 512-bit ring (SHA-512 carrier). Backed by Limbs<8> \
+                      directly (exact fit; no mask). v0.2.2 Phase C.",
+            properties: &[
+                (
+                    "https://uor.foundation/schema/bitsWidth",
+                    IndividualValue::Int(512),
+                ),
+                (
+                    "https://uor.foundation/schema/nextWittLevel",
+                    IndividualValue::IriRef("https://uor.foundation/schema/W520"),
+                ),
+                (
+                    "https://uor.foundation/schema/wittLevelPredecessor",
+                    IndividualValue::IriRef("https://uor.foundation/schema/W448"),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/schema/W520",
+            type_: "https://uor.foundation/schema/WittLevel",
+            label: "W520",
+            comment: "Witt level: 520-bit ring (P-521 prime carrier, lower-bound). \
+                      Backed by Limbs<9> with a 520-bit mask. v0.2.2 Phase C.",
+            properties: &[
+                (
+                    "https://uor.foundation/schema/bitsWidth",
+                    IndividualValue::Int(520),
+                ),
+                (
+                    "https://uor.foundation/schema/nextWittLevel",
+                    IndividualValue::IriRef("https://uor.foundation/schema/W528"),
+                ),
+                (
+                    "https://uor.foundation/schema/wittLevelPredecessor",
+                    IndividualValue::IriRef("https://uor.foundation/schema/W512"),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/schema/W528",
+            type_: "https://uor.foundation/schema/WittLevel",
+            label: "W528",
+            comment: "Witt level: 528-bit ring (P-521 prime carrier, upper-bound; \
+                      P-521 elements are constrained by an additional residue check). \
+                      Backed by Limbs<9> with a 528-bit mask. v0.2.2 Phase C.",
+            properties: &[
+                (
+                    "https://uor.foundation/schema/bitsWidth",
+                    IndividualValue::Int(528),
+                ),
+                (
+                    "https://uor.foundation/schema/nextWittLevel",
+                    IndividualValue::IriRef("https://uor.foundation/schema/W1024"),
+                ),
+                (
+                    "https://uor.foundation/schema/wittLevelPredecessor",
+                    IndividualValue::IriRef("https://uor.foundation/schema/W520"),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/schema/W1024",
+            type_: "https://uor.foundation/schema/WittLevel",
+            label: "W1024",
+            comment: "Witt level: 1024-bit ring (RSA-1024 carrier). Backed by \
+                      Limbs<16> directly (exact fit; no mask). v0.2.2 Phase C.",
+            properties: &[
+                (
+                    "https://uor.foundation/schema/bitsWidth",
+                    IndividualValue::Int(1024),
+                ),
+                (
+                    "https://uor.foundation/schema/nextWittLevel",
+                    IndividualValue::IriRef("https://uor.foundation/schema/W2048"),
+                ),
+                (
+                    "https://uor.foundation/schema/wittLevelPredecessor",
+                    IndividualValue::IriRef("https://uor.foundation/schema/W528"),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/schema/W2048",
+            type_: "https://uor.foundation/schema/WittLevel",
+            label: "W2048",
+            comment: "Witt level: 2048-bit ring (RSA-2048 carrier). Backed by \
+                      Limbs<32> directly (exact fit; no mask). v0.2.2 Phase C.",
+            properties: &[
+                (
+                    "https://uor.foundation/schema/bitsWidth",
+                    IndividualValue::Int(2048),
+                ),
+                (
+                    "https://uor.foundation/schema/nextWittLevel",
+                    IndividualValue::IriRef("https://uor.foundation/schema/W4096"),
+                ),
+                (
+                    "https://uor.foundation/schema/wittLevelPredecessor",
+                    IndividualValue::IriRef("https://uor.foundation/schema/W1024"),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/schema/W4096",
+            type_: "https://uor.foundation/schema/WittLevel",
+            label: "W4096",
+            comment: "Witt level: 4096-bit ring (RSA-4096, BFV/CKKS HE ring \
+                      dimension carrier). Backed by Limbs<64>. v0.2.2 Phase C.",
+            properties: &[
+                (
+                    "https://uor.foundation/schema/bitsWidth",
+                    IndividualValue::Int(4096),
+                ),
+                (
+                    "https://uor.foundation/schema/nextWittLevel",
+                    IndividualValue::IriRef("https://uor.foundation/schema/W8192"),
+                ),
+                (
+                    "https://uor.foundation/schema/wittLevelPredecessor",
+                    IndividualValue::IriRef("https://uor.foundation/schema/W2048"),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/schema/W8192",
+            type_: "https://uor.foundation/schema/WittLevel",
+            label: "W8192",
+            comment: "Witt level: 8192-bit ring (lattice-based crypto carrier). \
+                      Backed by Limbs<128>. v0.2.2 Phase C.",
+            properties: &[
+                (
+                    "https://uor.foundation/schema/bitsWidth",
+                    IndividualValue::Int(8192),
+                ),
+                (
+                    "https://uor.foundation/schema/nextWittLevel",
+                    IndividualValue::IriRef("https://uor.foundation/schema/W12288"),
+                ),
+                (
+                    "https://uor.foundation/schema/wittLevelPredecessor",
+                    IndividualValue::IriRef("https://uor.foundation/schema/W4096"),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/schema/W12288",
+            type_: "https://uor.foundation/schema/WittLevel",
+            label: "W12288",
+            comment: "Witt level: 12288-bit ring (BFV/BGV HE ring dimension at \
+                      n=12288). Backed by Limbs<192>. v0.2.2 Phase C.",
+            properties: &[
+                (
+                    "https://uor.foundation/schema/bitsWidth",
+                    IndividualValue::Int(12288),
+                ),
+                (
+                    "https://uor.foundation/schema/nextWittLevel",
+                    IndividualValue::IriRef("https://uor.foundation/schema/W16384"),
+                ),
+                (
+                    "https://uor.foundation/schema/wittLevelPredecessor",
+                    IndividualValue::IriRef("https://uor.foundation/schema/W8192"),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/schema/W16384",
+            type_: "https://uor.foundation/schema/WittLevel",
+            label: "W16384",
+            comment: "Witt level: 16384-bit ring (post-quantum lattice parameter). \
+                      Backed by Limbs<256>. v0.2.2 Phase C.",
+            properties: &[
+                (
+                    "https://uor.foundation/schema/bitsWidth",
+                    IndividualValue::Int(16384),
+                ),
+                (
+                    "https://uor.foundation/schema/nextWittLevel",
+                    IndividualValue::IriRef("https://uor.foundation/schema/W32768"),
+                ),
+                (
+                    "https://uor.foundation/schema/wittLevelPredecessor",
+                    IndividualValue::IriRef("https://uor.foundation/schema/W12288"),
+                ),
+            ],
+        },
+        Individual {
+            id: "https://uor.foundation/schema/W32768",
+            type_: "https://uor.foundation/schema/WittLevel",
+            label: "W32768",
+            comment: "Witt level: 32768-bit ring (post-quantum / extreme-precision \
+                      arithmetic carrier). Backed by Limbs<512>. The highest \
+                      foundation-shipped level in v0.2.2; downstream Prism \
+                      implementations may declare higher levels via the \
+                      `witt_level` conformance declaration form. v0.2.2 Phase C.",
+            properties: &[
+                (
+                    "https://uor.foundation/schema/bitsWidth",
+                    IndividualValue::Int(32768),
+                ),
+                (
+                    "https://uor.foundation/schema/wittLevelPredecessor",
+                    IndividualValue::IriRef("https://uor.foundation/schema/W16384"),
                 ),
             ],
         },

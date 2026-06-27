@@ -45,4 +45,4 @@ let turtle = uor_ontology::serializer::turtle::to_turtle(ontology);
 
 ## License
 
-Apache-2.0 — see [LICENSE](https://github.com/UOR-Foundation/UOR-Framework/blob/main/LICENSE).
+MIT — see [LICENSE](https://github.com/UOR-Foundation/UOR-Framework/blob/main/LICENSE).
