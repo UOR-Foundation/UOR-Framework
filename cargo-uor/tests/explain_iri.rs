@@ -7,18 +7,9 @@
 
 use std::process::Command;
 
-fn binary() -> String {
-    // Locate the built binary under target/debug.
-    let exe = std::env::current_exe().unwrap_or_default();
-    let mut dir = exe
-        .parent()
-        .unwrap_or(std::path::Path::new(""))
-        .to_path_buf();
-    // Strip `deps/` if present.
-    if dir.ends_with("deps") {
-        dir.pop();
-    }
-    dir.join("cargo-uor").to_string_lossy().into_owned()
+fn binary() -> &'static str {
+    // Cargo supplies the executable path for an integration test binary target.
+    env!("CARGO_BIN_EXE_cargo-uor")
 }
 
 #[test]
