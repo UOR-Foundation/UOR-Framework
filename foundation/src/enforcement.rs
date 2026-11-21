@@ -20904,10 +20904,7 @@ impl<Map: GroundingMapKind> GroundingProgram<GroundedCoord, Map> {
                 }
                 let mut last: Option<GroundedCoord> = None;
                 for &op in chain {
-                    match interpret_leaf_op(op, external) {
-                        Some(c) => last = Some(c),
-                        None => return None,
-                    }
+                    last = Some(interpret_leaf_op(op, external)?);
                 }
                 last
             }
@@ -20954,10 +20951,7 @@ impl<const N: usize, Map: GroundingMapKind> GroundingProgram<GroundedTuple<N>, M
                     }
                     let mut last: Option<GroundedCoord> = None;
                     for &op in chain {
-                        match interpret_leaf_op(op, sub) {
-                            Some(c) => last = Some(c),
-                            None => return None,
-                        }
+                        last = Some(interpret_leaf_op(op, sub)?);
                     }
                     last
                 }
