@@ -843,7 +843,7 @@ mod tests {
 
     #[test]
     fn generated_readme_has_visual_and_navigation_contract() {
-        let readme = generate_readme(&Ontology::full());
+        let readme = generate_readme(Ontology::full());
         for expected in [
             "assets/readme-banner.svg",
             "## Contents",
