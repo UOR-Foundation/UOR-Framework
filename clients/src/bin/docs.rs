@@ -5,11 +5,11 @@
 //! - `<out>/namespaces/*.html` — Per-namespace reference pages (auto-generated)
 //! - `<out>/concepts/*.html` — Concept explanation pages
 //! - `<out>/guides/*.html` — How-to guide pages
-//! - `<repo-root>/README.md` — Machine-generated repository README
+//! - `docs/DEVELOPER_REFERENCE.md` — Machine-generated developer reference
 //!
 //! **Usage:**
 //! ```
-//! uor-docs [--out <path>] [--readme <path>]
+//! uor-docs [--out <path>] [--reference <path>]
 //! ```
 
 #![deny(
@@ -37,19 +37,19 @@ struct Args {
     #[arg(long, default_value = "public/docs")]
     out: PathBuf,
 
-    /// Path to write the machine-generated README.md (default: repo root).
-    #[arg(long, default_value = "README.md")]
-    readme: PathBuf,
+    /// Path for the generated developer reference; --readme is a legacy alias.
+    #[arg(long, visible_alias = "readme", default_value = "docs/DEVELOPER_REFERENCE.md")]
+    reference: PathBuf,
 }
 
 fn main() -> Result<()> {
     let args = Args::parse();
 
-    generate(&args.out, &args.readme)?;
+    generate(&args.out, &args.reference)?;
 
     println!("Documentation generated successfully.");
     println!("  Docs: {}", args.out.display());
-    println!("  README: {}", args.readme.display());
+    println!("  Reference: {}", args.reference.display());
 
     Ok(())
 }
