@@ -77,7 +77,6 @@ jobs:
     name: Build, Test, and Conform
     needs: changes
     if: needs.changes.outputs.heavy != 'false'
-    name: Build, Test, and Conform
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
