@@ -10,6 +10,9 @@
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.19068826.svg)](https://doi.org/10.5281/zenodo.19068826)
 [![License: MIT](https://img.shields.io/badge/license-MIT-718096)](LICENSE)
 
+[Why UOR](#why-uor-exists) · [What it provides](#what-this-repository-provides) ·
+[Get started](#get-started) · [Evidence](#documentation-and-evidence)
+
 ## Why UOR exists
 
 The same digital information can have different names, locations, and descriptions across software systems. That makes it harder to recognize when two things are the same, understand how they are related, or check how a result was produced.
