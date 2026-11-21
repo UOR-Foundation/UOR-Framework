@@ -1,11 +1,26 @@
+![UOR Framework banner: ontology, generation, and conformance](assets/readme-banner.svg)
+
 # UOR Framework
 
+[![CI](https://github.com/UOR-Foundation/uor-framework/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/UOR-Foundation/uor-framework/actions/workflows/ci.yml)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.19068826.svg)](https://doi.org/10.5281/zenodo.19068826)
+[![License: MIT](https://img.shields.io/badge/license-MIT-718096)](LICENSE)
 
 The Universal Object Reference (UOR) Framework is a Rust workspace implementing
 the [UOR Foundation](https://uor.foundation/) ontology — a mathematical framework
 for content-addressed, symmetric, multi-metric object spaces with algebraic
 structure based on Z/(2^n)Z.
+
+## Contents
+
+- [Choose a starting point](#choose-a-starting-point)
+- [First steps from source](#first-steps-from-source)
+- [Ontology](#ontology)
+- [Repository structure](#repository-structure)
+- [Building](#building)
+- [CI](#ci)
+- [Citation](#citation)
+- [License](#license)
 
 ## Choose a starting point
 
