@@ -108,33 +108,29 @@ pub fn validate(workspace: &Path) -> Result<ConformanceReport> {
         .collect();
     empty_rq.sort();
 
-    // Phase 7d banner check: for each Path-4 class, locate the
-    // `pub struct Null{Name}<H: HostTypes>` declaration in any foundation
-    // namespace source file and verify the 400-char window preceding it
-    // contains both `#[doc(hidden)]` and the THEORY-DEFERRED marker.
-    let foundation_source = collect_foundation_namespace_sources(workspace);
-    let mut path4_locals: Vec<String> = Vec::new();
-    for e in &entries {
-        if matches!(
-            e.path_kind,
-            uor_codegen::classification::PathKind::Path4TheoryDeferred
-        ) {
-            path4_locals.push(e.class_local.to_string());
-        }
-    }
-    path4_locals.sort();
-
+    // Phase 7d banner check: bind each Path-4 class to its own
+    // namespace source file, not to a concatenation of the repository.
+    // Local names collide: reduction:Epoch is Path 1 and correctly lacks
+    // the banner required for stream:Epoch (Path 4).
     let mut missing_stubs: Vec<String> = Vec::new();
     let mut missing_banners: Vec<String> = Vec::new();
-    for name in &path4_locals {
+    for qualified in &path4 {
+        let Some((namespace, name)) = qualified.split_once(':') else {
+            missing_stubs.push(qualified.clone());
+            continue;
+        };
+        let Some(source) = load_foundation_namespace_source(workspace, namespace) else {
+            missing_stubs.push(qualified.clone());
+            continue;
+        };
         let decl = format!("pub struct Null{name}<H: HostTypes>");
-        match foundation_source.find(&decl) {
-            None => missing_stubs.push(name.clone()),
+        match source.find(&decl) {
+            None => missing_stubs.push(qualified.clone()),
             Some(pos) => {
                 let start = pos.saturating_sub(400);
-                let window = &foundation_source[start..pos];
+                let window = &source[start..pos];
                 if !window.contains("#[doc(hidden)]") || !window.contains(BANNER_MARKER) {
-                    missing_banners.push(name.clone());
+                    missing_banners.push(qualified.clone());
                 }
             }
         }
@@ -209,24 +205,17 @@ pub fn validate(workspace: &Path) -> Result<ConformanceReport> {
     Ok(report)
 }
 
-/// Concatenates every `.rs` file under `foundation/src/{bridge,kernel,user}`
-/// into a single string so the Phase-7d banner search can run as a single
-/// substring scan.
-fn collect_foundation_namespace_sources(workspace: &Path) -> String {
-    let mut out = String::new();
+/// Loads the generated source for exactly one ontology namespace.
+///
+/// Names are not globally unique. Searching all generated files together
+/// can find a Path-1 Null stub before the corresponding Path-4 stub.
+fn load_foundation_namespace_source(workspace: &Path, namespace: &str) -> Option<String> {
+    let root = workspace.join("foundation/src");
     for subdir in ["bridge", "kernel", "user"] {
-        let dir = workspace.join("foundation/src").join(subdir);
-        if let Ok(entries) = std::fs::read_dir(&dir) {
-            for e in entries.flatten() {
-                let p = e.path();
-                if p.extension().is_some_and(|x| x == "rs") {
-                    if let Ok(content) = std::fs::read_to_string(&p) {
-                        out.push_str(&content);
-                        out.push('\n');
-                    }
-                }
-            }
+        let candidate = root.join(subdir).join(format!("{namespace}.rs"));
+        if candidate.is_file() {
+            return std::fs::read_to_string(candidate).ok();
         }
     }
-    out
+    None
 }
