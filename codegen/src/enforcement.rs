@@ -12397,10 +12397,7 @@ fn generate_grounding_combinator_surface(f: &mut RustFile) {
     f.line("                if chain.is_empty() { return None; }");
     f.line("                let mut last: Option<GroundedCoord> = None;");
     f.line("                for &op in chain {");
-    f.line("                    match interpret_leaf_op(op, external) {");
-    f.line("                        Some(c) => last = Some(c),");
-    f.line("                        None => return None,");
-    f.line("                    }");
+    f.line("                    last = Some(interpret_leaf_op(op, external)?);");
     f.line("                }");
     f.line("                last");
     f.line("            }");
@@ -12445,10 +12442,7 @@ fn generate_grounding_combinator_surface(f: &mut RustFile) {
     f.line("                    if chain.is_empty() { return None; }");
     f.line("                    let mut last: Option<GroundedCoord> = None;");
     f.line("                    for &op in chain {");
-    f.line("                        match interpret_leaf_op(op, sub) {");
-    f.line("                            Some(c) => last = Some(c),");
-    f.line("                            None => return None,");
-    f.line("                        }");
+    f.line("                        last = Some(interpret_leaf_op(op, sub)?);");
     f.line("                    }");
     f.line("                    last");
     f.line("                }");
