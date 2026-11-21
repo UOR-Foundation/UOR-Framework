@@ -45,6 +45,8 @@ cargo run --bin uor-conformance
 
 The first command generates the framework's machine-readable artifacts. The second runs its conformance checks. For more build options, generated formats, and the exact technical scope, see the [developer reference](docs/DEVELOPER_REFERENCE.md).
 
+**See something concrete:** after the build, open `public/uor.foundation.jsonld` to inspect the framework's machine-readable vocabulary. The generated `public/uor.shapes.ttl` describes checks that can be applied to data using that vocabulary. Both files come from the build, so they are outputs to inspect, not files to edit by hand.
+
 ## Contents
 
 - [Why UOR exists](#why-uor-exists)
