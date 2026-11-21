@@ -703,7 +703,7 @@ fn render_concept_index_body(concepts: &[ConceptLink]) -> String {
 /// Generates the machine-generated developer reference content.
 fn generate_developer_reference(ontology: &Ontology) -> String {
     format!(
-        r#"![UOR Framework banner: ontology, generation, and conformance](../assets/readme-banner.svg)
+        r#"![UOR Framework banner: ontology, generation, and conformance](../assets/readme-banner-PLACEHOLDER.png)
 
 # UOR Framework: Developer Reference
 
@@ -845,7 +845,7 @@ mod tests {
     fn generated_developer_reference_has_visual_and_navigation_contract() {
         let reference = generate_developer_reference(Ontology::full());
         for expected in [
-            "../assets/readme-banner.svg",
+            "../assets/readme-banner-PLACEHOLDER.png",
             "## Contents",
             "[Choose a starting point](#choose-a-starting-point)",
             "[First steps from source](#first-steps-from-source)",

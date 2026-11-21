@@ -61,7 +61,7 @@ jobs:
             [[ -s "$changed" ]] || heavy=true
             while IFS= read -r path; do
               case "$path" in
-                README.md|assets/readme-banner.svg) ;;
+                README.md|assets/readme-banner.svg|assets/readme-banner-PLACEHOLDER.png) ;;
                 *) heavy=true ;;
               esac
             done < "$changed"

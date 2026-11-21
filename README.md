@@ -1,4 +1,6 @@
-![UOR Framework banner: ontology, generation, and conformance](assets/readme-banner.svg)
+![UOR Framework provisional banner: ontology, generation, and conformance. Placeholder not approved.](assets/readme-banner-PLACEHOLDER.png)
+
+*Illustrative placeholder artwork, pending UOR Foundation brand approval.*
 
 # UOR Framework
 

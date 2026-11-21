@@ -1,4 +1,4 @@
-![UOR Framework banner: ontology, generation, and conformance](../assets/readme-banner.svg)
+![UOR Framework banner: ontology, generation, and conformance](../assets/readme-banner-PLACEHOLDER.png)
 
 # UOR Framework: Developer Reference
 
