@@ -2,49 +2,37 @@
 
 # UOR Framework
 
+**A shared way to identify digital objects, explain their relationships, and check results.**
+
 [![CI](https://github.com/UOR-Foundation/uor-framework/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/UOR-Foundation/uor-framework/actions/workflows/ci.yml)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.19068826.svg)](https://doi.org/10.5281/zenodo.19068826)
 [![License: MIT](https://img.shields.io/badge/license-MIT-718096)](LICENSE)
 
-The Universal Object Reference (UOR) Framework is a Rust workspace implementing
-the [UOR Foundation](https://uor.foundation/) ontology — a mathematical framework
-for content-addressed, symmetric, multi-metric object spaces with algebraic
-structure based on Z/(2^n)Z.
+## Why UOR exists
 
-## Contents
+The same digital information can have different names, locations, and descriptions across software systems. That makes it harder to recognize when two things are the same, understand how they are related, or check how a result was produced.
 
-- [Choose a starting point](#choose-a-starting-point)
-- [First steps from source](#first-steps-from-source)
-- [Ontology](#ontology)
-- [Repository structure](#repository-structure)
-- [Building](#building)
-- [CI](#ci)
-- [Citation](#citation)
-- [License](#license)
+**UOR is an effort to give digital objects a more consistent mathematical foundation.** It defines shared rules for identifying objects by their content, describing relationships, and recording how information is processed.
 
-## Choose a starting point
+For example, two systems might store the same content under different file names. A content-based identifier focuses on the content rather than the file name. UOR builds on that idea with a structured vocabulary for describing objects and their relationships.
 
-The [UOR-Framework wiki](https://github.com/UOR-Foundation/UOR-Framework/wiki)
-defines the normative architecture and its design decisions. The ontology
-encoded in [`spec/`](spec/) is the source for the generated Rust interfaces
-and serialized artifacts. The generated README is a project entry point, not
-an independent proof of every implementation or downstream application.
+## What this repository provides
 
-- **Learn the model:** read the [ontology overview](docs/content/overview.md)
-  before the detailed namespace references.
-- **Use the Rust interface:** inspect [`foundation/`](foundation/) and the
-  [consumer smoke example](examples/consumer-smoke/).
-- **Implement or evaluate a resolver:** start with the
-  [implementation guide](docs/content/guides/implementing-prism.md).
-- **Check artifacts and behavior:** consult the
-  [conformance guide](docs/content/guides/conformance.md) and the
-  [`conformance/`](conformance/) workspace crate.
+This repository implements the [UOR Foundation](https://uor.foundation/) framework in Rust. It includes a shared vocabulary (called an **ontology**), tools that generate software interfaces and machine-readable descriptions, and checks that help keep those outputs consistent.
 
-## First steps from source
+| What you need | Where to start |
+| --- | --- |
+| Understand the ideas without digging into source code | [Framework overview](docs/content/overview.md) |
+| Explore the mathematical definitions | [Developer reference](docs/DEVELOPER_REFERENCE.md) |
+| Use the Rust interfaces | [Foundation crate](foundation/) and [consumer example](examples/consumer-smoke/) |
+| Build a compatible resolver | [Implementation guide](docs/content/guides/implementing-prism.md) |
+| Check an implementation against documented requirements | [Conformance guide](docs/content/guides/conformance.md) |
 
-With Git and the repository's Rust toolchain configured from
-[`rust-toolchain.toml`](rust-toolchain.toml), clone the source and run
-the explicitly declared workspace commands:
+UOR defines a foundation and provides tooling for it. **It does not mean every other system already supports UOR, or that every use of the framework has been formally verified.** Verification claims are limited to the checks and evidence actually produced.
+
+## Get started
+
+To work from the source, install Git and the Rust toolchain described in [`rust-toolchain.toml`](rust-toolchain.toml). Then run:
 
 ```sh
 git clone https://github.com/UOR-Foundation/uor-framework.git
@@ -53,73 +41,34 @@ cargo run --bin uor-build
 cargo run --bin uor-conformance
 ```
 
-These commands build ontology artifacts and invoke repository conformance
-checks. A successful local check is evidence for its tested revision and
-scope; it does not by itself certify every downstream consumer. The
-additional generators and local checks are listed below.
+The first command generates the framework's machine-readable artifacts. The second runs its conformance checks. For more build options, generated formats, and the exact technical scope, see the [developer reference](docs/DEVELOPER_REFERENCE.md).
 
-## Ontology
+## Contents
 
-Version 0.5.2: 34 namespaces · 474 classes · 948 properties · 3601 named individuals
+- [Why UOR exists](#why-uor-exists)
+- [What this repository provides](#what-this-repository-provides)
+- [Get started](#get-started)
+- [How the pieces fit together](#how-the-pieces-fit-together)
+- [Documentation and evidence](#documentation-and-evidence)
+- [Citation and license](#citation-and-license)
 
-All terms are encoded as typed Rust data in `spec/` (`uor-ontology`) and exported as:
-- `foundation/` (`uor-foundation`) — typed Rust traits (published to crates.io)
-- `public/uor.foundation.jsonld` — JSON-LD 1.1
-- `public/uor.foundation.ttl` — Turtle 1.1
-- `public/uor.foundation.nt` — N-Triples
-- `public/uor.foundation.owl` — OWL 2 RDF/XML
-- `public/uor.foundation.schema.json` — JSON Schema (Draft 2020-12)
-- `public/uor.shapes.ttl` — SHACL validation shapes
-- `public/uor.term.ebnf` — EBNF grammar
+## How the pieces fit together
 
-## Repository Structure
+1. **Define:** The [ontology source](spec/) describes the framework's concepts and rules.
+2. **Generate:** The [code generator](codegen/) turns those definitions into Rust interfaces in [`foundation/`](foundation/) and other formats.
+3. **Explain:** The [documentation generator](docs/) produces technical references and guides.
+4. **Check:** The [conformance suite](conformance/) examines the generated outputs and supported requirements.
 
-| Directory | Crate | Role |
-|-----------|-------|------|
-| `spec/` | `uor-ontology` | Ontology source of truth: typed static data + serializers |
-| `codegen/` | `uor-codegen` | Code generation logic for the Rust trait crate |
-| `foundation/` | `uor-foundation` | Generated Rust trait crate (published to crates.io) |
-| `conformance/` | `uor-conformance` | Workspace-wide conformance validators |
-| `docs/` | `uor-docs` | Documentation generator |
-| `website/` | `uor-website` | Static site generator |
-| `clients/` | `uor-clients` | Binaries: build, conformance, docs, website, crate |
+Advanced readers can explore the algebraic structure, including modular arithmetic, in the [technical overview](docs/content/overview.md). Those details matter to the implementation, but you do not need them to understand the project's purpose.
 
-## Building
+## Documentation and evidence
 
-```sh
-# Build ontology artifacts
-cargo run --bin uor-build
+The [framework wiki](https://github.com/UOR-Foundation/UOR-Framework/wiki) records normative architecture and design decisions. The [developer reference](docs/DEVELOPER_REFERENCE.md) explains the repository's generated interfaces, formats, and development commands. The [conformance guide](docs/content/guides/conformance.md) describes what the validation tools check.
 
-# Generate Rust trait crate
-cargo run --bin uor-crate
+A passing test or build means the checks that ran passed. It is not a blanket guarantee about every possible application built with UOR.
 
-# Generate documentation
-cargo run --bin uor-docs
+## Citation and license
 
-# Generate website
-cargo run --bin uor-website
+For academic use, see [`CITATION.cff`](CITATION.cff). This repository uses the [MIT license](LICENSE).
 
-# Run full conformance suite
-cargo run --bin uor-conformance
-```
-
-## CI
-
-```sh
-cargo fmt --check
-cargo clippy -- -D warnings
-cargo test
-```
-
-## Citation
-
-If you use the UOR Framework in academic work, please cite it using the
-metadata in [`CITATION.cff`](CITATION.cff).
-
-## License
-
-MIT — see [LICENSE](LICENSE).
-
----
-
-*This README is machine-generated by `uor-docs`. Do not edit by hand.*
+*This public-facing README is intentionally maintained by people. The technical reference is generated separately, so documentation builds do not overwrite this introduction.*
