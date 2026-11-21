@@ -11,8 +11,8 @@
 //! use uor_docs::generate;
 //!
 //! let out = PathBuf::from("public/docs");
-//! let readme = PathBuf::from("README.md");
-//! generate(&out, &readme).expect("Documentation generation failed");
+//! let reference = PathBuf::from("docs/DEVELOPER_REFERENCE.md");
+//! generate(&out, &reference).expect("Documentation generation failed");
 //! ```
 //!
 //! # Structure
@@ -59,12 +59,12 @@ use uor_ontology::{Individual, IndividualValue, NamespaceModule, Ontology, Prope
 
 /// Generates all documentation artifacts.
 ///
-/// Writes to `out_dir` (HTML docs) and `readme_path` (machine-generated README).
+/// Writes to `out_dir` (HTML docs) and `reference_path` (machine-generated developer reference).
 ///
 /// # Errors
 ///
 /// Returns an error if content verification fails or any file cannot be written.
-pub fn generate(out_dir: &Path, readme_path: &Path) -> Result<()> {
+pub fn generate(out_dir: &Path, reference_path: &Path) -> Result<()> {
     let index = OntologyIndex::from_spec();
 
     let base_path = std::env::var("PUBLIC_BASE_PATH").unwrap_or_default();
@@ -186,9 +186,9 @@ pub fn generate(out_dir: &Path, readme_path: &Path) -> Result<()> {
         base_path,
     )?;
 
-    // Generate machine-generated README.md
-    let readme_content = generate_readme(ontology);
-    writer::write_text(readme_path, &readme_content)?;
+    // Generate machine-generated developer reference
+    let reference_content = generate_developer_reference(ontology);
+    writer::write_text(reference_path, &reference_content)?;
 
     Ok(())
 }
@@ -700,16 +700,16 @@ fn render_concept_index_body(concepts: &[ConceptLink]) -> String {
     body
 }
 
-/// Generates the machine-generated README.md content.
-fn generate_readme(ontology: &Ontology) -> String {
+/// Generates the machine-generated developer reference content.
+fn generate_developer_reference(ontology: &Ontology) -> String {
     format!(
-        r#"![UOR Framework banner: ontology, generation, and conformance](assets/readme-banner.svg)
+        r#"![UOR Framework banner: ontology, generation, and conformance](../assets/readme-banner-PLACEHOLDER.png)
 
-# UOR Framework
+# UOR Framework: Developer Reference
 
 [![CI](https://github.com/UOR-Foundation/uor-framework/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/UOR-Foundation/uor-framework/actions/workflows/ci.yml)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.19068826.svg)](https://doi.org/10.5281/zenodo.19068826)
-[![License: MIT](https://img.shields.io/badge/license-MIT-718096)](LICENSE)
+[![License: MIT](https://img.shields.io/badge/license-MIT-718096)](../LICENSE)
 
 The Universal Object Reference (UOR) Framework is a Rust workspace implementing
 the [UOR Foundation](https://uor.foundation/) ontology — a mathematical framework
@@ -731,24 +731,24 @@ structure based on Z/(2^n)Z.
 
 The [UOR-Framework wiki](https://github.com/UOR-Foundation/UOR-Framework/wiki)
 defines the normative architecture and its design decisions. The ontology
-encoded in [`spec/`](spec/) is the source for the generated Rust interfaces
-and serialized artifacts. The generated README is a project entry point, not
+encoded in [`spec/`](../spec/) is the source for the generated Rust interfaces
+and serialized artifacts. This generated developer reference is a technical entry point, not
 an independent proof of every implementation or downstream application.
 
-- **Learn the model:** read the [ontology overview](docs/content/overview.md)
+- **Learn the model:** read the [ontology overview](../docs/content/overview.md)
   before the detailed namespace references.
-- **Use the Rust interface:** inspect [`foundation/`](foundation/) and the
-  [consumer smoke example](examples/consumer-smoke/).
+- **Use the Rust interface:** inspect [`foundation/`](../foundation/) and the
+  [consumer smoke example](../examples/consumer-smoke/).
 - **Implement or evaluate a resolver:** start with the
-  [implementation guide](docs/content/guides/implementing-prism.md).
+  [implementation guide](../docs/content/guides/implementing-prism.md).
 - **Check artifacts and behavior:** consult the
-  [conformance guide](docs/content/guides/conformance.md) and the
-  [`conformance/`](conformance/) workspace crate.
+  [conformance guide](../docs/content/guides/conformance.md) and the
+  [`conformance/`](../conformance/) workspace crate.
 
 ## First steps from source
 
 With Git and the repository's Rust toolchain configured from
-[`rust-toolchain.toml`](rust-toolchain.toml), clone the source and run
+[`rust-toolchain.toml`](../rust-toolchain.toml), clone the source and run
 the explicitly declared workspace commands:
 
 ```sh
@@ -819,15 +819,15 @@ cargo test
 ## Citation
 
 If you use the UOR Framework in academic work, please cite it using the
-metadata in [`CITATION.cff`](CITATION.cff).
+metadata in [`CITATION.cff`](../CITATION.cff).
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
+MIT — see [LICENSE](../LICENSE).
 
 ---
 
-*This README is machine-generated by `uor-docs`. Do not edit by hand.*
+*This developer reference is machine-generated by `uor-docs`. Do not edit by hand.*
 "#,
         version = ontology.version,
         ns = ontology.namespaces.len(),
@@ -842,21 +842,21 @@ mod tests {
     use super::*;
 
     #[test]
-    fn generated_readme_has_visual_and_navigation_contract() {
-        let readme = generate_readme(Ontology::full());
+    fn generated_developer_reference_has_visual_and_navigation_contract() {
+        let reference = generate_developer_reference(Ontology::full());
         for expected in [
-            "assets/readme-banner.svg",
+            "../assets/readme-banner-PLACEHOLDER.png",
             "## Contents",
             "[Choose a starting point](#choose-a-starting-point)",
             "[First steps from source](#first-steps-from-source)",
             "actions/workflows/ci.yml/badge.svg?branch=main",
             "zenodo.org/badge/DOI/10.5281/zenodo.19068826.svg",
             "[License: MIT]",
-            "This README is machine-generated by `uor-docs`",
+            "This developer reference is machine-generated by `uor-docs`",
         ] {
             assert!(
-                readme.contains(expected),
-                "generated README is missing presentation contract: {expected}"
+                reference.contains(expected),
+                "generated developer reference is missing presentation contract: {expected}"
             );
         }
     }

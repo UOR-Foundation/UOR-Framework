@@ -15,8 +15,68 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  changes:
+    name: Classify changes and check public README
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      heavy: ${{ steps.classify.outputs.heavy }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+          persist-credentials: false
+
+      - name: Classify the entire changed-file set
+        id: classify
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BEFORE_SHA: ${{ github.event.before }}
+        run: |
+          set -euo pipefail
+          heavy=true
+          changed="$RUNNER_TEMP/uor-changed-paths.txt"
+          if [[ "$EVENT_NAME" == "pull_request" ]]; then
+            # checkout uses GitHub's PR merge commit. First parent is the
+            # target branch, so the complete PR diff is inspected.
+            if git rev-parse --verify 'HEAD^1' >/dev/null 2>&1 &&
+               git diff --name-only --no-renames 'HEAD^1' HEAD > "$changed"; then
+              heavy=false
+            fi
+          elif [[ "$EVENT_NAME" == "push" &&
+                  "$BEFORE_SHA" =~ ^[a-f0-9]{40}$ &&
+                  ! "$BEFORE_SHA" =~ ^0{40}$ ]]; then
+            # Compare against the event's previous tip, not just HEAD^:
+            # pushes may contain several commits. A failed fetch is a
+            # conservative full-run, never a silent docs-only classification.
+            if git fetch --no-tags --depth=1 origin "$BEFORE_SHA" &&
+               git diff --name-only --no-renames "$BEFORE_SHA" HEAD > "$changed"; then
+              heavy=false
+            fi
+          fi
+
+          if [[ "$heavy" == "false" ]]; then
+            [[ -s "$changed" ]] || heavy=true
+            while IFS= read -r path; do
+              case "$path" in
+                README.md|assets/readme-banner.svg|assets/readme-banner-PLACEHOLDER.png) ;;
+                *) heavy=true ;;
+              esac
+            done < "$changed"
+          fi
+          echo "heavy=$heavy" >> "$GITHUB_OUTPUT"
+          echo "Full validation needed: $heavy"
+          if [[ -f "$changed" ]]; then cat "$changed"; fi
+
+      - name: Check the public README and local assets
+        run: python3 scripts/ci/check-readme.py
+
   validate:
     name: Build, Test, and Conform
+    needs: changes
+    if: needs.changes.outputs.heavy != 'false'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -117,8 +177,8 @@ jobs:
         env:
           PUBLIC_BASE_PATH: /UOR-Framework
 
-      - name: Verify generated README has no drift
-        run: git diff --exit-code -- README.md
+      - name: Verify generated developer reference has no drift
+        run: git diff --exit-code -- docs/DEVELOPER_REFERENCE.md
 
       - name: Generate website
         run: cargo run --bin uor-website
