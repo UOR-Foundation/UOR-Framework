@@ -24,36 +24,30 @@ fn find_workspace_root() -> PathBuf {
     }
 }
 
-fn load_foundation_source() -> String {
-    let root = find_workspace_root();
-    let mut out = String::new();
+/// Load the generated source file for the class's ontology namespace.
+///
+/// Local names are not globally unique (e.g. stream:Epoch and
+/// reduction:Epoch), so a repository-wide text search can inspect
+/// an unrelated Null stub and report a false missing-banner failure.
+fn load_namespace_source(namespace: &str) -> Option<String> {
+    let root = find_workspace_root().join("foundation/src");
     for subdir in ["bridge", "kernel", "user"] {
-        let dir = root.join("foundation/src").join(subdir);
-        if let Ok(entries) = fs::read_dir(&dir) {
-            for e in entries.flatten() {
-                let p = e.path();
-                if p.extension().is_some_and(|x| x == "rs") {
-                    if let Ok(content) = fs::read_to_string(&p) {
-                        out.push_str(&content);
-                        out.push('\n');
-                    }
-                }
-            }
+        let candidate = root.join(subdir).join(format!("{namespace}.rs"));
+        if candidate.is_file() {
+            return fs::read_to_string(candidate).ok();
         }
     }
-    out
+    None
 }
 
 #[test]
 fn every_path4_class_has_null_stub_with_banner() {
     let ontology = Ontology::full();
     let entries = classify_all(ontology);
-    let source = load_foundation_source();
-
-    let path4: Vec<&str> = entries
+    let path4: Vec<(&str, &str)> = entries
         .iter()
         .filter(|e| matches!(e.path_kind, PathKind::Path4TheoryDeferred))
-        .map(|e| e.class_local)
+        .map(|e| (e.namespace, e.class_local))
         .collect();
 
     assert!(
@@ -61,14 +55,19 @@ fn every_path4_class_has_null_stub_with_banner() {
         "Path-4 class list is empty — classifier regression"
     );
 
-    let mut missing_stub: Vec<&str> = Vec::new();
-    let mut missing_banner: Vec<&str> = Vec::new();
-    for name in &path4 {
+    let mut missing_stub: Vec<String> = Vec::new();
+    let mut missing_banner: Vec<String> = Vec::new();
+    for &(namespace, name) in &path4 {
+        let qualified = format!("{namespace}:{name}");
+        let Some(source) = load_namespace_source(namespace) else {
+            missing_stub.push(qualified);
+            continue;
+        };
         let stub_decl = format!("pub struct Null{name}<H: HostTypes>");
         let stub_pos = match source.find(&stub_decl) {
             Some(p) => p,
             None => {
-                missing_stub.push(name);
+                missing_stub.push(qualified);
                 continue;
             }
         };
@@ -77,7 +76,7 @@ fn every_path4_class_has_null_stub_with_banner() {
         let lookback = stub_pos.saturating_sub(400);
         let window = &source[lookback..stub_pos];
         if !window.contains("#[doc(hidden)]") || !window.contains(BANNER_MARKER) {
-            missing_banner.push(name);
+            missing_banner.push(qualified);
         }
     }
 
