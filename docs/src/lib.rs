@@ -712,6 +712,42 @@ the [UOR Foundation](https://uor.foundation/) ontology — a mathematical framew
 for content-addressed, symmetric, multi-metric object spaces with algebraic
 structure based on Z/(2^n)Z.
 
+## Choose a starting point
+
+The [UOR-Framework wiki](https://github.com/UOR-Foundation/UOR-Framework/wiki)
+defines the normative architecture and its design decisions. The ontology
+encoded in [`spec/`](spec/) is the source for the generated Rust interfaces
+and serialized artifacts. The generated README is a project entry point, not
+an independent proof of every implementation or downstream application.
+
+- **Learn the model:** read the [ontology overview](docs/content/overview.md)
+  before the detailed namespace references.
+- **Use the Rust interface:** inspect [`foundation/`](foundation/) and the
+  [consumer smoke example](examples/consumer-smoke/).
+- **Implement or evaluate a resolver:** start with the
+  [implementation guide](docs/content/guides/implementing-prism.md).
+- **Check artifacts and behavior:** consult the
+  [conformance guide](docs/content/guides/conformance.md) and the
+  [`conformance/`](conformance/) workspace crate.
+
+## First steps from source
+
+With Git and the repository's Rust toolchain configured from
+[`rust-toolchain.toml`](rust-toolchain.toml), clone the source and run
+the explicitly declared workspace commands:
+
+```sh
+git clone https://github.com/UOR-Foundation/uor-framework.git
+cd uor-framework
+cargo run --bin uor-build
+cargo run --bin uor-conformance
+```
+
+These commands build ontology artifacts and invoke repository conformance
+checks. A successful local check is evidence for its tested revision and
+scope; it does not by itself certify every downstream consumer. The
+additional generators and local checks are listed below.
+
 ## Ontology
 
 Version {version}: {ns} namespaces · {classes} classes · {props} properties · {inds} named individuals
