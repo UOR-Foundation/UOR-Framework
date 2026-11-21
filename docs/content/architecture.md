@@ -98,7 +98,7 @@ The conformance suite is the **single gate** — all components must pass before
 ```
 cargo run --bin uor-build       → public/uor.foundation.{json,ttl,nt}
 cargo run --bin uor-crate       → foundation/src/ (generated Rust traits)
-cargo run --bin uor-docs        → public/docs/ + README.md
+cargo run --bin uor-docs        → public/docs/ + docs/DEVELOPER_REFERENCE.md
 cargo run --bin uor-website     → public/ (HTML, CSS, JS, search-index.json)
 cargo run --bin uor-conformance → validates all of the above
 ```
