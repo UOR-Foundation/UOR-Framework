@@ -38,7 +38,11 @@ struct Args {
     out: PathBuf,
 
     /// Path for the generated developer reference; --readme is a legacy alias.
-    #[arg(long, visible_alias = "readme", default_value = "docs/DEVELOPER_REFERENCE.md")]
+    #[arg(
+        long,
+        visible_alias = "readme",
+        default_value = "docs/DEVELOPER_REFERENCE.md"
+    )]
     reference: PathBuf,
 }
 
