@@ -358,15 +358,12 @@ fn parse_pub_item(line: &str) -> Option<String> {
         // parameter list (e.g., `pub fn run<...>(arg: T) -> U`) and an
         // unconditional split would truncate the item kind marker.
         rest
-    } else if let Some(rest) = line.strip_prefix("pub(") {
+    } else {
+        let rest = line.strip_prefix("pub(")?;
         // Restricted visibility — skip until the first `) ` to reach the
         // item kind keyword.
-        match rest.split_once(") ") {
-            Some((_, tail)) => tail,
-            None => return None,
-        }
-    } else {
-        return None;
+        let (_, tail) = rest.split_once(") ")?;
+        tail
     };
     // Match item kinds.
     for (prefix, kind) in [
